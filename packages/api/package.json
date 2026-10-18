@@ -10,7 +10,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@aws-sdk/client-secrets-manager": "^3.1148.0",
+    "@aws-sdk/client-secrets-manager": "^3.1152.0",
     "@parmana/approval": "0.1.0",
     "@parmana/connector-hubspot": "0.1.0",
     "@parmana/connector-paytm": "0.1.0",
@@ -23,27 +23,27 @@
     "@parmana/policy": "0.1.1",
     "@parmana/runtime": "0.1.0",
     "@parmana/storage": "0.1.0",
-    "@vercel/connect": "^2.4.1",
-    "@vercel/oidc-aws-credentials-provider": "^3.3.11",
-    "express": "^5.2.1",
+    "@vercel/connect": "^2.5.2",
+    "@vercel/oidc-aws-credentials-provider": "^3.3.13",
+    "express": "^5.3.0",
     "express-rate-limit": "^8.7.1",
     "pg": "^8.23.1",
-    "resend": "^6.32.1"
+    "resend": "^6.33.0"
   },
   "devDependencies": {
-    "@apidevtools/json-schema-ref-parser": "^16.0.3",
+    "@apidevtools/json-schema-ref-parser": "^16.0.5",
     "@eslint/js": "^10.0.1",
     "@parmana/sdk": "1.1.1",
     "@types/js-yaml": "^4.0.9",
     "@types/pg": "^8.23.1",
     "@types/supertest": "^7.2.1",
-    "dotenv": "^18.0.6",
+    "dotenv": "^18.0.8",
     "eslint": "^10.12.0",
     "eslint-config-prettier": "^10.1.8",
     "js-yaml": "^5.4.3",
     "supertest": "^7.3.1",
     "tsx": "^4.23.15",
-    "typescript-eslint": "^8.71.1",
+    "typescript-eslint": "^8.71.2",
     "vitest": "^5.0.3"
   },
   "license": "SEE LICENSE IN LICENSE"

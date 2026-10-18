@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@parmana/shared": "0.1.0",
-    "dotenv": "^18.0.6"
+    "dotenv": "^18.0.8"
   },
   "devDependencies": {
     "typescript": "^6.0.3"
