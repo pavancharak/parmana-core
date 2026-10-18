@@ -17,7 +17,7 @@ import type { PolicyReference } from "../models/policy.js";
  * objects and keeping three id pairs in sync by hand is exactly the
  * class of mistake that produced every "X must match Y" 400 response
  * documented in docs/site/guides/end-to-end-paytm-flow.mdx. This function exists
- * so that mistake is structurally impossible when going through the
+ * so that mistake cannot arise when going through the
  * SDK, not merely documented as something to be careful about.
  *
  * businessTransactionId defaults to a fresh crypto.randomUUID() if

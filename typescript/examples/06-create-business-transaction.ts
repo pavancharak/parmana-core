@@ -14,7 +14,7 @@ import {
  * point: every "X must match Y" 400 response documented in
  * docs/site/guides/end-to-end-paytm-flow.mdx came from hand-building a request
  * and getting one of those pairs wrong. This function makes that
- * class of mistake structurally impossible.
+ * class of mistake one that cannot arise through it.
  *
  * Targets test:fixture-execute, the same NODE_ENV=test-only capability
  * 02-execute.ts uses, so this example is hermetic and runs against any

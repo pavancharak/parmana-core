@@ -18,7 +18,7 @@ Hand-building a BusinessTransaction by constructing all five nested
 dataclasses and keeping three id pairs in sync by hand is exactly the
 class of mistake that produced every "X must match Y" 400 response
 documented in docs/site/guides/end-to-end-paytm-flow.mdx -- this function exists so
-that mistake is structurally impossible when going through the SDK, not
+that mistake cannot arise when going through the SDK, not
 merely documented as something to be careful about.
 
 Not auto-generated: unlike everything in parmana.models, this is a

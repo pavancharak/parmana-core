@@ -8,7 +8,7 @@ file to examples/quickstart/run.py directly -- the difference is the
 entire point: every "X must match Y" 400 response documented in
 docs/site/guides/end-to-end-paytm-flow.mdx came from hand-building a request and
 getting one of those pairs wrong. This function makes that class of
-mistake structurally impossible.
+mistake one that cannot arise through it.
 
 See README.md in this directory for prerequisites and expected output.
 """

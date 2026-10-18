@@ -2363,7 +2363,7 @@ Examples include:
 
 - That a refused decision escalates to a person who can approve it. A refusal is final and nothing notifies anyone. People can review refusals in the Refusal Records (3.11), and a manager can sign an approval that lets a new request for a large refund run (2.42), and one approver key, `manager-charak1987`, is trusted in `TRUSTED_APPROVAL_ISSUERS` (`packages/api/src/bootstrap/createApprovalIssuerRegistry.ts`).
 
-- That rule violations are structurally impossible, as an unscoped claim. The supported version: an action routed through Parmana does not execute unless the policy bound to it (2.22), approved through governance (2.35), approves it. An agent that holds its own credentials to a system is outside that, and a signal nothing verifies is only as true as the caller says (G-51).
+- The unscoped claim that rule violations cannot happen is not supported. The supported version: an action routed through Parmana does not execute unless the policy bound to it (2.22), approved through governance (2.35), approves it. An agent that holds its own credentials to a system is outside that, and a signal nothing verifies is only as true as the caller says (G-51).
 
 - That enforcement adds no overhead. Each request adds policy evaluation, signing, a nonce check, storage writes and a network hop.
 

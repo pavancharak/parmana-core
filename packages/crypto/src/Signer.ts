@@ -8,7 +8,7 @@ import type { KeyMetadata } from "./KeyProvider.js";
  * Sibling to KeyProvider, for backends that can produce a signature
  * without ever releasing private key material (AWS KMS, HSM, Vault
  * Transit) -- KeyProvider.getPrivateKey() returning a KeyObject is
- * structurally impossible to implement honestly against such a
+ * cannot be implemented honestly against such a
  * backend, since the whole point of those backends is that the
  * private key never leaves them. ADR-0009
  * (docs/adr/ADR-0009-KMS-Secrets-And-Connector-Signature-Hardening.md)

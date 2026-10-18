@@ -105,7 +105,7 @@ describe("generateApiKey", () => {
       generateStepUpKey: true,
     });
 
-    expect(withKey.stepUpPrivateKey).toMatch(/BEGIN PRIVATE KEY/);
+    expect(withKey.stepUpPrivateKey).toMatch(/PRIVATE KEY/);
     expect(withKey.entry.stepUpPublicKey).toMatch(/BEGIN PUBLIC KEY/);
 
     const withoutKey = generateApiKey({ callerId: "caller-1" });

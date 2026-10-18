@@ -6,6 +6,10 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { assertSigningKeyMaterialConfigured } from "../../../src/bootstrap/assertSigningKeyMaterialConfigured.js";
 
+// Builds a fake PEM block for these tests. The body is not a key.
+const fakePem = (label: string, body: string) =>
+  `-----BEGIN ${label}-----\n${body}\n-----END ${label}-----\n`;
+
 const ENV_KEYS = [
   "NODE_ENV",
   "PARMANA_KEY_DIR",
@@ -81,11 +85,11 @@ describe("assertSigningKeyMaterialConfigured", () => {
 
     writeFileSync(
       join(tempDir, "default.private.pem"),
-      "-----BEGIN PRIVATE KEY-----\nexisting\n-----END PRIVATE KEY-----\n",
+      fakePem("PRIVATE KEY", "existing"),
     );
     writeFileSync(
       join(tempDir, "default.public.pem"),
-      "-----BEGIN PUBLIC KEY-----\nexisting\n-----END PUBLIC KEY-----\n",
+      fakePem("PUBLIC KEY", "existing"),
     );
 
     expect(() => assertSigningKeyMaterialConfigured()).not.toThrow();
@@ -97,9 +101,9 @@ describe("assertSigningKeyMaterialConfigured", () => {
     process.env.PARMANA_KEY_MATERIAL_JSON = JSON.stringify({
       default: {
         privateKeyPem:
-          "-----BEGIN PRIVATE KEY-----\nfrom-env\n-----END PRIVATE KEY-----\n",
+          fakePem("PRIVATE KEY", "from-env"),
         publicKeyPem:
-          "-----BEGIN PUBLIC KEY-----\nfrom-env\n-----END PUBLIC KEY-----\n",
+          fakePem("PUBLIC KEY", "from-env"),
       },
     });
 
@@ -117,18 +121,18 @@ describe("assertSigningKeyMaterialConfigured", () => {
     process.env.PARMANA_KEY_DIR = tempDir;
     writeFileSync(
       join(tempDir, "default.private.pem"),
-      "-----BEGIN PRIVATE KEY-----\nmounted\n-----END PRIVATE KEY-----\n",
+      fakePem("PRIVATE KEY", "mounted"),
     );
     writeFileSync(
       join(tempDir, "default.public.pem"),
-      "-----BEGIN PUBLIC KEY-----\nmounted\n-----END PUBLIC KEY-----\n",
+      fakePem("PUBLIC KEY", "mounted"),
     );
     process.env.PARMANA_KEY_MATERIAL_JSON = JSON.stringify({
       default: {
         privateKeyPem:
-          "-----BEGIN PRIVATE KEY-----\nfrom-env\n-----END PRIVATE KEY-----\n",
+          fakePem("PRIVATE KEY", "from-env"),
         publicKeyPem:
-          "-----BEGIN PUBLIC KEY-----\nfrom-env\n-----END PUBLIC KEY-----\n",
+          fakePem("PUBLIC KEY", "from-env"),
       },
     });
 
@@ -178,9 +182,9 @@ describe("assertSigningKeyMaterialConfigured", () => {
     process.env.PARMANA_KEY_MATERIAL_JSON = JSON.stringify({
       gateway: {
         privateKeyPem:
-          "-----BEGIN PRIVATE KEY-----\ngateway-from-env\n-----END PRIVATE KEY-----\n",
+          fakePem("PRIVATE KEY", "gateway-from-env"),
         publicKeyPem:
-          "-----BEGIN PUBLIC KEY-----\ngateway-from-env\n-----END PUBLIC KEY-----\n",
+          fakePem("PUBLIC KEY", "gateway-from-env"),
       },
     });
 

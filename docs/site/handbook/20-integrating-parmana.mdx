@@ -18,8 +18,8 @@ A caller hand-building a request body has to keep three id pairs internally cons
 (`metadata.businessTransactionId` must equal the top level `businessTransactionId`,
 `authorization.authorityId` must equal `authority.authorityId`, `intent.authorizationId` must
 equal `authorization.authorizationId`). Getting any of these wrong produces a 400 from
-`BusinessTransactionValidator`. The SDKs exist specifically to make that class of mistake
-structurally impossible, not merely documented. `typescript/src/builders/createBusinessTransaction.ts`
+`BusinessTransactionValidator`. The SDKs exist specifically so that class of mistake cannot arise
+through them, not merely documented. `typescript/src/builders/createBusinessTransaction.ts`
 says this directly in its own doc comment: this exact mismatch is "the class of mistake that
 produced every 'X must match Y' 400 response documented in the end to end Paytm guide."
 

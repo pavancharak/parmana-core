@@ -7314,7 +7314,7 @@ field (like `vendorId` above) exactly matches its bound intent field.
 **`ValidationError` (400), often "X must equal Y"**
 A hand-built transaction had two of the three cross-checked id pairs out of sync. Use
 `create_business_transaction()` instead of constructing the object by hand. It makes this class
-of mistake structurally impossible.
+of mistake one that cannot arise through it.
 
 ## Next
 
