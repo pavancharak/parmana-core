@@ -153,7 +153,11 @@ export async function refundTransaction(options: {
       },
       createdAt: new Date(),
     },
-    policy: { name: "customer-refund", version: "1.2.0", schemaVersion: "1.0.0" },
+    policy: {
+      name: "customer-refund",
+      version: "1.2.0",
+      schemaVersion: "1.0.0",
+    },
     signals: {
       refundEligible: true,
       managerApproved: true,

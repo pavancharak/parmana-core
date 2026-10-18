@@ -134,7 +134,8 @@ export class CallerAuditChainVerifier {
         return {
           valid: false,
           brokenAtPosition: position,
-          reason: "chain does not end at the anchored chain head (records missing or truncated).",
+          reason:
+            "chain does not end at the anchored chain head (records missing or truncated).",
         };
       }
     }

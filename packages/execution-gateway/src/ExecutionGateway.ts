@@ -260,7 +260,8 @@ export class ExecutionGateway implements ExecutionSystem {
   private readonly executionControl: ExecutionControlOptions | undefined;
   private readonly authorityGrants:
     Pick<AuthorityGrantRepository, "findActive"> | undefined;
-  private readonly authorizationRevocations: AuthorizationRevocationList | undefined;
+  private readonly authorizationRevocations:
+    AuthorizationRevocationList | undefined;
   private readonly verificationOnlyKeys: ExecutionGatewayOptions["verificationOnlyKeys"];
 
   constructor(options: ExecutionGatewayOptions) {

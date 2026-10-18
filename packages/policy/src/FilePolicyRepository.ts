@@ -21,7 +21,9 @@ function canonicalJson(value: unknown): string {
   return JSON.stringify(value, (_key, v: unknown) =>
     v !== null && typeof v === "object" && !Array.isArray(v)
       ? Object.fromEntries(
-          Object.keys(v).sort().map((k) => [k, (v as Record<string, unknown>)[k]]),
+          Object.keys(v)
+            .sort()
+            .map((k) => [k, (v as Record<string, unknown>)[k]]),
         )
       : v,
   );
@@ -133,7 +135,10 @@ export class FilePolicyRepository implements PolicyRepository {
       () => undefined,
     );
 
-    if (existing !== undefined && canonicalJson(existing) !== canonicalJson(content)) {
+    if (
+      existing !== undefined &&
+      canonicalJson(existing) !== canonicalJson(content)
+    ) {
       throw new PolicyVersionImmutableError(name, version);
     }
 

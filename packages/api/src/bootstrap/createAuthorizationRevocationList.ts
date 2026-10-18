@@ -17,7 +17,9 @@ export function createAuthorizationRevocationList(): AuthorizationRevocationList
       const directory = loadConfig().keys.keyDirectory;
 
       if (directory === undefined) {
-        throw new Error("PARMANA_KEY_DIR is not configured; cannot read the revocation list.");
+        throw new Error(
+          "PARMANA_KEY_DIR is not configured; cannot read the revocation list.",
+        );
       }
 
       const path = join(directory, "revoked-authorizations.json");
@@ -31,7 +33,10 @@ export function createAuthorizationRevocationList(): AuthorizationRevocationList
       try {
         parsed = JSON.parse(readFileSync(path, "utf8"));
       } catch (error) {
-        throw new Error(`${path} is not readable JSON: ${(error as Error).message}`, { cause: error });
+        throw new Error(
+          `${path} is not readable JSON: ${(error as Error).message}`,
+          { cause: error },
+        );
       }
 
       const ids = Array.isArray(parsed)
@@ -39,7 +44,9 @@ export function createAuthorizationRevocationList(): AuthorizationRevocationList
         : (parsed as { ids?: unknown })?.ids;
 
       if (!Array.isArray(ids) || !ids.every((id) => typeof id === "string")) {
-        throw new Error(`${path} must be a JSON array of authorization ids, or { "ids": [...] }.`);
+        throw new Error(
+          `${path} must be a JSON array of authorization ids, or { "ids": [...] }.`,
+        );
       }
 
       return ids.includes(authorizationId);

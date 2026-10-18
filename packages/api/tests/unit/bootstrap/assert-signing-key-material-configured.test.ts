@@ -100,10 +100,8 @@ describe("assertSigningKeyMaterialConfigured", () => {
     process.env.PARMANA_KEY_DIR = join(tempDir, "materialized");
     process.env.PARMANA_KEY_MATERIAL_JSON = JSON.stringify({
       default: {
-        privateKeyPem:
-          fakePem("PRIVATE KEY", "from-env"),
-        publicKeyPem:
-          fakePem("PUBLIC KEY", "from-env"),
+        privateKeyPem: fakePem("PRIVATE KEY", "from-env"),
+        publicKeyPem: fakePem("PUBLIC KEY", "from-env"),
       },
     });
 
@@ -129,10 +127,8 @@ describe("assertSigningKeyMaterialConfigured", () => {
     );
     process.env.PARMANA_KEY_MATERIAL_JSON = JSON.stringify({
       default: {
-        privateKeyPem:
-          fakePem("PRIVATE KEY", "from-env"),
-        publicKeyPem:
-          fakePem("PUBLIC KEY", "from-env"),
+        privateKeyPem: fakePem("PRIVATE KEY", "from-env"),
+        publicKeyPem: fakePem("PUBLIC KEY", "from-env"),
       },
     });
 
@@ -181,10 +177,8 @@ describe("assertSigningKeyMaterialConfigured", () => {
     process.env.PARMANA_KEY_DIR = join(tempDir, "materialized");
     process.env.PARMANA_KEY_MATERIAL_JSON = JSON.stringify({
       gateway: {
-        privateKeyPem:
-          fakePem("PRIVATE KEY", "gateway-from-env"),
-        publicKeyPem:
-          fakePem("PUBLIC KEY", "gateway-from-env"),
+        privateKeyPem: fakePem("PRIVATE KEY", "gateway-from-env"),
+        publicKeyPem: fakePem("PUBLIC KEY", "gateway-from-env"),
       },
     });
 

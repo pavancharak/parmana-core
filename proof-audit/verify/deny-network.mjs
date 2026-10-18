@@ -40,7 +40,5 @@ fs.readFileSync = function (path, ...rest) {
 };
 
 process.on("exit", () => {
-  process.stderr.write(
-    `PROOF_AUDIT_BLOCKED:${JSON.stringify(attempts)}\n`,
-  );
+  process.stderr.write(`PROOF_AUDIT_BLOCKED:${JSON.stringify(attempts)}\n`);
 });

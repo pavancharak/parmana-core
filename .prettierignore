@@ -16,3 +16,9 @@ postman/parmana.postman_collection.json
 # (both gitignored).
 .stryker-tmp/
 reports/
+
+# proof-audit evidence: signed artifacts and results written byte for byte by
+# the proof-audit tests (see proof-audit/tests/evidence.ts). Reformatting them
+# would change the evidence, so they are excluded.
+proof-audit/artifacts/
+proof-audit/results/

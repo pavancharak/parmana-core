@@ -5,18 +5,19 @@
 // for every failing case; one call for the control.
 //
 import { writeFileSync, mkdirSync, rmSync } from "node:fs";
-import { join, resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import request from "supertest";
-import { MockSlackServer, SLACK_TEST_MODE_PLACEHOLDER_TOKEN } from "@parmana/connector-slack";
+import {
+  MockSlackServer,
+  SLACK_TEST_MODE_PLACEHOLDER_TOKEN,
+} from "@parmana/connector-slack";
 import { createApplication } from "../../packages/api/src/application.js";
 import { createApp } from "../../packages/api/src/app.js";
 import { createExecutionSystem } from "../../packages/api/src/bootstrap/createExecutionSystem.js";
 import { withTestApproval } from "../../test-support/approvals.js";
 import { evidencePath } from "./evidence.js";
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const cases: Record<string, unknown>[] = [];
 let server: MockSlackServer;
 let gateway: any;
@@ -25,19 +26,53 @@ let mode: "capture" | "release" = "capture";
 const captured: any[] = [];
 
 async function transaction(channel: string) {
-  const id = crypto.randomUUID(); const authorityId = crypto.randomUUID();
-  const authorizationId = crypto.randomUUID(); const intentId = crypto.randomUUID();
+  const id = crypto.randomUUID();
+  const authorityId = crypto.randomUUID();
+  const authorizationId = crypto.randomUUID();
+  const intentId = crypto.randomUUID();
   // A signed human approval for this channel, as the integration test attaches (withTestApproval).
   return withTestApproval({
     businessTransactionId: id,
-    metadata: { businessTransactionId: id, correlationId: crypto.randomUUID(), createdBy: "proof-audit", createdAt: new Date() },
-    authority: { authorityId, authorityType: "USER", principalId: "integration-test", displayName: "Proof Audit", issuedAt: new Date() },
-    authorization: { authorizationId, authorityId, purpose: "Proof audit", authorizedAt: new Date() },
-    intent: { intentId, authorizationId, action: "slack:post-message", target: channel,
-      parameters: Object.freeze({ channel, text: "Deployment succeeded." }), createdAt: new Date() },
-    policy: { name: "slack-post-message", version: "1.1.0", schemaVersion: "1.0.0" },
-    signals: { contentApproved: true, channelAuthorized: true, channelId: channel },
-    decision: { outcome: "APPROVED" }, status: "APPROVED", createdAt: new Date(),
+    metadata: {
+      businessTransactionId: id,
+      correlationId: crypto.randomUUID(),
+      createdBy: "proof-audit",
+      createdAt: new Date(),
+    },
+    authority: {
+      authorityId,
+      authorityType: "USER",
+      principalId: "integration-test",
+      displayName: "Proof Audit",
+      issuedAt: new Date(),
+    },
+    authorization: {
+      authorizationId,
+      authorityId,
+      purpose: "Proof audit",
+      authorizedAt: new Date(),
+    },
+    intent: {
+      intentId,
+      authorizationId,
+      action: "slack:post-message",
+      target: channel,
+      parameters: Object.freeze({ channel, text: "Deployment succeeded." }),
+      createdAt: new Date(),
+    },
+    policy: {
+      name: "slack-post-message",
+      version: "1.1.0",
+      schemaVersion: "1.0.0",
+    },
+    signals: {
+      contentApproved: true,
+      channelAuthorized: true,
+      channelId: channel,
+    },
+    decision: { outcome: "APPROVED" },
+    status: "APPROVED",
+    createdAt: new Date(),
   } as any);
 }
 
@@ -45,18 +80,41 @@ async function mint(channel: string) {
   const before = captured.length;
   const prior = mode;
   mode = "capture";
-  await request(app).post("/execute").send(await transaction(channel));
+  await request(app)
+    .post("/execute")
+    .send(await transaction(channel));
   mode = prior;
   return captured[before]!;
 }
 
-async function attempt(label: string, proof: any, expectCalls: number, extra: Record<string, unknown> = {}) {
+async function attempt(
+  label: string,
+  proof: any,
+  expectCalls: number,
+  extra: Record<string, unknown> = {},
+) {
   const before = server.calls.length;
-  let threw = false; let message = "";
-  try { await gateway.execute(proof); } catch (e) { threw = true; message = (e as Error).message; }
+  let threw = false;
+  let message = "";
+  try {
+    await gateway.execute(proof);
+  } catch (e) {
+    threw = true;
+    message = (e as Error).message;
+  }
   const delta = server.calls.length - before;
-  const ok = expectCalls === 0 ? threw && delta === 0 : !threw && delta === expectCalls;
-  cases.push({ connector: "slack:post-message", case: label, rejected: threw, message: message.slice(0, 160), callsDelta: delta, expected: expectCalls === 0 ? "rejected, 0 calls" : "released, 1 call", verdict: ok ? "PASS" : "FAIL", ...extra });
+  const ok =
+    expectCalls === 0 ? threw && delta === 0 : !threw && delta === expectCalls;
+  cases.push({
+    connector: "slack:post-message",
+    case: label,
+    rejected: threw,
+    message: message.slice(0, 160),
+    callsDelta: delta,
+    expected: expectCalls === 0 ? "rejected, 0 calls" : "released, 1 call",
+    verdict: ok ? "PASS" : "FAIL",
+    ...extra,
+  });
   return ok;
 }
 
@@ -70,7 +128,8 @@ beforeAll(async () => {
   const wrapped = {
     execute: async (r: any) => {
       captured.push(r);
-      if (mode === "capture") throw new Error("proof-audit capture mode: not released");
+      if (mode === "capture")
+        throw new Error("proof-audit capture mode: not released");
       return gateway.execute(r);
     },
   } as any;
@@ -80,7 +139,10 @@ beforeAll(async () => {
 afterAll(async () => {
   await server.close();
   mkdirSync(evidencePath("results"), { recursive: true });
-  writeFileSync(evidencePath("results", "test7.json"), JSON.stringify(cases, null, 2));
+  writeFileSync(
+    evidencePath("results", "test7.json"),
+    JSON.stringify(cases, null, 2),
+  );
 });
 
 describe("TEST 7: Slack post-message gate conditions", () => {
@@ -93,26 +155,46 @@ describe("TEST 7: Slack post-message gate conditions", () => {
 
   it("no proof", async () => {
     const proof = await mint("C_ALLOWED");
-    expect(await attempt("no proof", { ...proof, authorization: undefined }, 0)).toBe(true);
+    expect(
+      await attempt("no proof", { ...proof, authorization: undefined }, 0),
+    ).toBe(true);
   });
 
   it("forged signature", async () => {
     const proof = await mint("C_ALLOWED");
     const sig = proof.authorization.signature as string;
-    const forged = { ...proof, authorization: { ...proof.authorization, signature: (sig[0] === "A" ? "B" : "A") + sig.slice(1) } };
+    const forged = {
+      ...proof,
+      authorization: {
+        ...proof.authorization,
+        signature: (sig[0] === "A" ? "B" : "A") + sig.slice(1),
+      },
+    };
     expect(await attempt("forged signature", forged, 0)).toBe(true);
   });
 
   it("changed channel parameter (approved C_ALLOWED, executed C_OTHER)", async () => {
     const proof = await mint("C_ALLOWED");
-    const tampered = { ...proof, target: "C_OTHER", parameters: { ...proof.parameters, channel: "C_OTHER" } };
-    expect(await attempt("changed channel after approval", tampered, 0)).toBe(true);
+    const tampered = {
+      ...proof,
+      target: "C_OTHER",
+      parameters: { ...proof.parameters, channel: "C_OTHER" },
+    };
+    expect(await attempt("changed channel after approval", tampered, 0)).toBe(
+      true,
+    );
   });
 
   it("revoked authorization", async () => {
     const proof = await mint("C_ALLOWED");
-    const file = join(process.env.PARMANA_KEY_DIR!, "revoked-authorizations.json");
-    writeFileSync(file, JSON.stringify([proof.authorization.payload.authorizationId]));
+    const file = join(
+      process.env.PARMANA_KEY_DIR!,
+      "revoked-authorizations.json",
+    );
+    writeFileSync(
+      file,
+      JSON.stringify([proof.authorization.payload.authorizationId]),
+    );
     const ok = await attempt("single authorization revoked", proof, 0);
     rmSync(file, { force: true });
     expect(ok).toBe(true);
@@ -122,7 +204,9 @@ describe("TEST 7: Slack post-message gate conditions", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-10-15T12:00:00Z"));
     const proof = await mint("C_ALLOWED");
-    vi.setSystemTime(new Date(Date.parse(proof.authorization.payload.expiresAt) + 60_000));
+    vi.setSystemTime(
+      new Date(Date.parse(proof.authorization.payload.expiresAt) + 60_000),
+    );
     const ok = await attempt("expired proof", proof, 0);
     vi.useRealTimers();
     expect(ok).toBe(true);

@@ -7,6 +7,7 @@ Copyright holder for all new material: Parmana Systems Private Limited.
 ## Section 2: Forbidden content
 
 ### 2.1 Forbidden in parmana-verifier (any file, any folder)
+
 - Policy engine code, approval logic, maker-checker logic, execution gate
 - Connector code for any service (Razorpay, Paytm, HubSpot, GitHub, Slack, or others)
 - Signing keys of any kind, including test keys that match production keys
@@ -20,12 +21,15 @@ Copyright holder for all new material: Parmana Systems Private Limited.
 - Any file containing a forbidden claim phrase (section 2.4)
 
 ### 2.2 Forbidden in either repository
+
 - Real secrets of any kind
 - Real customer or transaction data, including test data copied from production
 - Credentials for GitHub, cloud providers, or payment networks
 
 ### 2.3 Patent-drafts list (PATENT-RISK)
+
 Any file that implements or documents these mechanisms is PATENT-RISK. PATENT-RISK files may only go in parmana-core:
+
 1. Runtime Credential Isolation: `SessionCredentialSecureConnector`, `createConnectorRegistry.ts`, and the connector-wrapping logic
 2. Cryptographically Signed Execution Audit Trail: `executeTransaction.ts` and signature-over-parameters-and-timestamp logic
 3. Maker-Checker Policy Enforcement at Execution Time: `policyEngine.ts` and approval-routing logic
@@ -33,7 +37,9 @@ Any file that implements or documents these mechanisms is PATENT-RISK. PATENT-RI
 5. Any other file that the patent attorney later adds to this list
 
 ### 2.4 Forbidden claim phrases
+
 These phrases may not appear in any file in parmana-verifier. Check every file in parmana-core's public-facing docs too. Use case-insensitive matching.
+
 - "structurally impossible"
 - "cannot execute without approval"
 - "no agent can bypass"
@@ -64,6 +70,7 @@ A file can carry a secondary flag. The full per-file labels are in the inventory
 **REVIEW.** 491 files remain in REVIEW. 408 are in `typescript/`, `python/`, `python-connector-sdk/` and `packages/connector-sdk/`, where the root LICENSE grants Apache-2.0 but section 4.1 does not list them. 34 are in `proof-audit/`, 30 are verifier-closure files in `packages/crypto/`, and 14 are in `examples/audit/` and `examples/04-verified-execution/`. Also: `LICENSE`, `NOTICE`, `deploy/sandbox/evidence/check-record.json`, `schemas/common/execution-trust-record.schema.json`, and `.env.example`.
 
 **Deviations.**
+
 1. The original `.env.example` was not copied. This folder has a regenerated `.env.example` containing variable names only with `<set-me>` placeholders, because three of its values could not be confirmed as placeholders.
 2. Step 4 produced no verifier code. The verifier is a scaffold only, pending attorney review of the section 2.3 overlap.
 
@@ -86,6 +93,7 @@ No live credential was found in either history. The findings are kept, not rewri
 **Attorney review.** The owner reported "no issues" on the verifier before it was published. The section 2.3 list has not been separately reviewed.
 
 **Still open, owner decisions:**
+
 1. Whether tests may keep writing evidence into `proof-audit/`, or should write to a temporary folder.
 2. Licensing of the SDK directories under the existing Apache carve-out (408 REVIEW files).
 3. Confirmation of the company name against the incorporation certificate.

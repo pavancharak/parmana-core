@@ -156,7 +156,10 @@ export class HubSpotSignalStateVerifier implements SignalStateVerifier {
           policyName: this.options.policyName,
           policyVersion: this.options.policyVersion,
           ...(this.options.resolvePolicyContentHash !== undefined
-            ? { policyContentHash: await this.options.resolvePolicyContentHash() }
+            ? {
+                policyContentHash:
+                  await this.options.resolvePolicyContentHash(),
+              }
             : {}),
           crypto: this.options.crypto,
           ...(this.options.authorizationTtlSeconds !== undefined

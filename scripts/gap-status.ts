@@ -50,9 +50,15 @@ export function readGaps(text: string): GapRow[] {
  */
 export function renderTable(rows: readonly GapRow[]): string {
   const header = ["Gap", "Item", "Status"];
-  const body = rows.map((r) => [r.id, r.title.replace(/\|/g, "/"), r.status.replace(/\|/g, "/")]);
+  const body = rows.map((r) => [
+    r.id,
+    r.title.replace(/\|/g, "/"),
+    r.status.replace(/\|/g, "/"),
+  ]);
   const all = [header, ...body];
-  const widths = header.map((_, c) => Math.max(...all.map((row) => row[c]!.length)));
+  const widths = header.map((_, c) =>
+    Math.max(...all.map((row) => row[c]!.length)),
+  );
   const line = (cells: string[]) =>
     "| " + cells.map((cell, c) => cell.padEnd(widths[c]!)).join(" | ") + " |";
   const rule = "| " + widths.map((w) => "-".repeat(w)).join(" | ") + " |";
@@ -77,7 +83,9 @@ function main(): void {
 
   if (check) {
     if (next !== current) {
-      console.error("docs/REMAINING-WORK.md gap status table is out of date. Run: npx tsx scripts/gap-status.ts");
+      console.error(
+        "docs/REMAINING-WORK.md gap status table is out of date. Run: npx tsx scripts/gap-status.ts",
+      );
       process.exit(1);
     }
     console.log("gap status table is up to date");
@@ -88,6 +96,9 @@ function main(): void {
   console.log("gap status table written");
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
+if (
+  process.argv[1] &&
+  fileURLToPath(import.meta.url) === resolve(process.argv[1])
+) {
   main();
 }

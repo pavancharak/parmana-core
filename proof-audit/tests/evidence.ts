@@ -10,6 +10,8 @@ import { join } from "node:path";
 // the proof-audit folder, for example:
 //   PARMANA_EVIDENCE_DIR=$PWD/proof-audit npx vitest run proof-audit
 export const evidenceRoot =
-  process.env.PARMANA_EVIDENCE_DIR ?? mkdtempSync(join(tmpdir(), "parmana-evidence-"));
+  process.env.PARMANA_EVIDENCE_DIR ??
+  mkdtempSync(join(tmpdir(), "parmana-evidence-"));
 
-export const evidencePath = (...parts: string[]) => join(evidenceRoot, ...parts);
+export const evidencePath = (...parts: string[]) =>
+  join(evidenceRoot, ...parts);

@@ -11,7 +11,10 @@ import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
 import { PGlite } from "@electric-sql/pglite";
-import { CallerAuditChainVerifier, type ChainedCallerAuditEventRow } from "@parmana/crypto";
+import {
+  CallerAuditChainVerifier,
+  type ChainedCallerAuditEventRow,
+} from "@parmana/crypto";
 import { SupabaseExecutionAuditSink } from "@parmana/storage";
 import { evidencePath } from "./evidence.js";
 
@@ -102,8 +105,12 @@ async function readRows(db: PGlite): Promise<ChainedCallerAuditEventRow[]> {
     if (row.reason !== null) event.reason = row.reason;
     if (row.credential_id !== null) event.credentialId = row.credential_id;
     if (row.gateway_id !== null) event.gatewayId = row.gateway_id;
-    if (row.business_transaction_id !== null) event.businessTransactionId = row.business_transaction_id;
-    const signature = typeof row.signature_json === "string" ? JSON.parse(row.signature_json) : row.signature_json;
+    if (row.business_transaction_id !== null)
+      event.businessTransactionId = row.business_transaction_id;
+    const signature =
+      typeof row.signature_json === "string"
+        ? JSON.parse(row.signature_json)
+        : row.signature_json;
     return {
       event,
       signature,
@@ -116,7 +123,10 @@ async function readRows(db: PGlite): Promise<ChainedCallerAuditEventRow[]> {
 
 afterAll(() => {
   mkdirSync(evidencePath("results"), { recursive: true });
-  writeFileSync(evidencePath("results", "test10.json"), JSON.stringify(cases, null, 2));
+  writeFileSync(
+    evidencePath("results", "test10.json"),
+    JSON.stringify(cases, null, 2),
+  );
 });
 
 describe("TEST 10: execution audit sink on PostgreSQL semantics", () => {
@@ -125,45 +135,85 @@ describe("TEST 10: execution audit sink on PostgreSQL semantics", () => {
     await write(db, 4);
     const rows = await readRows(db);
     const r = await verifier.verifyChain(rows);
-    cases.push({ case: "baseline chain of 4", rows: rows.length, valid: r.valid, verdict: r.valid && rows.length === 4 ? "PASS" : "FAIL" });
+    cases.push({
+      case: "baseline chain of 4",
+      rows: rows.length,
+      valid: r.valid,
+      verdict: r.valid && rows.length === 4 ? "PASS" : "FAIL",
+    });
     await db.close();
     expect(r.valid).toBe(true);
   });
 
   it("edit one record's reason (position 2)", async () => {
-    const db = await freshDb(); await write(db, 4);
-    await db.query("UPDATE execution_audit_events SET reason = 'tampered' WHERE chain_position = 2");
+    const db = await freshDb();
+    await write(db, 4);
+    await db.query(
+      "UPDATE execution_audit_events SET reason = 'tampered' WHERE chain_position = 2",
+    );
     const r = await verifier.verifyChain(await readRows(db));
-    cases.push({ case: "modify record 2", valid: r.valid, reason: r.reason ?? null, verdict: !r.valid ? "PASS" : "FAIL" });
+    cases.push({
+      case: "modify record 2",
+      valid: r.valid,
+      reason: r.reason ?? null,
+      verdict: !r.valid ? "PASS" : "FAIL",
+    });
     await db.close();
     expect(r.valid).toBe(false);
   });
 
   it("delete a middle record (position 2)", async () => {
-    const db = await freshDb(); await write(db, 4);
-    await db.query("DELETE FROM execution_audit_events WHERE chain_position = 2");
+    const db = await freshDb();
+    await write(db, 4);
+    await db.query(
+      "DELETE FROM execution_audit_events WHERE chain_position = 2",
+    );
     const r = await verifier.verifyChain(await readRows(db));
-    cases.push({ case: "delete middle record 2", valid: r.valid, reason: r.reason ?? null, verdict: !r.valid ? "PASS" : "FAIL" });
+    cases.push({
+      case: "delete middle record 2",
+      valid: r.valid,
+      reason: r.reason ?? null,
+      verdict: !r.valid ? "PASS" : "FAIL",
+    });
     await db.close();
     expect(r.valid).toBe(false);
   });
 
   it("delete the LAST record without an anchor is not detected (same limit as the caller chain)", async () => {
-    const db = await freshDb(); await write(db, 4);
-    await db.query("DELETE FROM execution_audit_events WHERE chain_position = 4");
+    const db = await freshDb();
+    await write(db, 4);
+    await db.query(
+      "DELETE FROM execution_audit_events WHERE chain_position = 4",
+    );
     const r = await verifier.verifyChain(await readRows(db));
-    cases.push({ case: "delete last record, no anchor", valid: r.valid, verdict: r.valid ? "FAIL" : "PASS", note: "detection needs the head stored outside the database (G-108)" });
+    cases.push({
+      case: "delete last record, no anchor",
+      valid: r.valid,
+      verdict: r.valid ? "FAIL" : "PASS",
+      note: "detection needs the head stored outside the database (G-108)",
+    });
     await db.close();
     expect(r.valid).toBe(true); // the documented limit, recorded as a FAIL against the claim
   });
 
   it("delete the LAST record with the head anchored outside the database", async () => {
-    const db = await freshDb(); await write(db, 4);
+    const db = await freshDb();
+    await write(db, 4);
     const head = (await readRows(db)).at(-1)!;
-    const anchor = { chainPosition: head.chainPosition!, chainHash: head.chainHash! };
-    await db.query("DELETE FROM execution_audit_events WHERE chain_position = 4");
+    const anchor = {
+      chainPosition: head.chainPosition!,
+      chainHash: head.chainHash!,
+    };
+    await db.query(
+      "DELETE FROM execution_audit_events WHERE chain_position = 4",
+    );
     const r = await verifier.verifyChain(await readRows(db), anchor);
-    cases.push({ case: "delete last record, anchored head", valid: r.valid, reason: r.reason ?? null, verdict: !r.valid ? "PASS" : "FAIL" });
+    cases.push({
+      case: "delete last record, anchored head",
+      valid: r.valid,
+      reason: r.reason ?? null,
+      verdict: !r.valid ? "PASS" : "FAIL",
+    });
     await db.close();
     expect(r.valid).toBe(false);
   });
@@ -171,14 +221,27 @@ describe("TEST 10: execution audit sink on PostgreSQL semantics", () => {
   it("a burst of 10 writes to one authorization yields one consistent chain", async () => {
     const db = await freshDb();
     const sink = new SupabaseExecutionAuditSink(poolOver(db));
-    await Promise.all(Array.from({ length: 10 }, (_, i) => sink.record({
-      type: "execution.completed",
-      occurredAt: new Date(Date.UTC(2026, 9, 15, 13, 0, i)).toISOString(),
-      connectorId: "paytm", authorizationId: AUTH, sessionId: `s-${i}`, action: "paytm:refund",
-    } as any)));
+    await Promise.all(
+      Array.from({ length: 10 }, (_, i) =>
+        sink.record({
+          type: "execution.completed",
+          occurredAt: new Date(Date.UTC(2026, 9, 15, 13, 0, i)).toISOString(),
+          connectorId: "paytm",
+          authorizationId: AUTH,
+          sessionId: `s-${i}`,
+          action: "paytm:refund",
+        } as any),
+      ),
+    );
     const rows = await readRows(db);
     const r = await verifier.verifyChain(rows);
-    cases.push({ case: "10 concurrent writes, one authorization", rows: rows.length, valid: r.valid, verdict: r.valid && rows.length === 10 ? "PASS" : "FAIL", note: "one PGlite connection, transactions serialized by the test pool; the advisory lock itself is not exercised" });
+    cases.push({
+      case: "10 concurrent writes, one authorization",
+      rows: rows.length,
+      valid: r.valid,
+      verdict: r.valid && rows.length === 10 ? "PASS" : "FAIL",
+      note: "one PGlite connection, transactions serialized by the test pool; the advisory lock itself is not exercised",
+    });
     await db.close();
     expect(rows.length).toBe(10);
     expect(r.valid).toBe(true);

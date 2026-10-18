@@ -1,7 +1,8 @@
 import crypto from "node:crypto";
 
 import type { Policy, PolicyRepository } from "@parmana/policy";
-import { PolicyNotFoundError,
+import {
+  PolicyNotFoundError,
   PolicyVersionImmutableError,
 } from "@parmana/policy";
 import type { PolicyChangeCrypto } from "@parmana/crypto";
@@ -119,7 +120,8 @@ export class PolicyChangeApprovalService {
     //
     if (
       before !== null &&
-      contentHashBefore !== (await this.policyChangeCrypto.hashPolicyContent(proposedContent))
+      contentHashBefore !==
+        (await this.policyChangeCrypto.hashPolicyContent(proposedContent))
     ) {
       throw new PolicyVersionImmutableError(change.policyName, writeVersion);
     }

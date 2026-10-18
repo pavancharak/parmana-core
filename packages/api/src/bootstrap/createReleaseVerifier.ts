@@ -7,7 +7,10 @@ import {
   type KeyProvider,
 } from "@parmana/crypto";
 import type { NonceStore } from "@parmana/envelope-verifier";
-import type { ExecutionRelease, ReleaseVerifier } from "@parmana/execution-control";
+import type {
+  ExecutionRelease,
+  ReleaseVerifier,
+} from "@parmana/execution-control";
 import { NonceAlreadyConsumedError } from "@parmana/shared";
 
 /**
@@ -33,7 +36,9 @@ export function createReleaseVerifier(
   const keyProviderPromise: Promise<KeyProvider> =
     keyProvider !== undefined
       ? Promise.resolve(keyProvider)
-      : SignerBootstrap.create().then((signer) => new SignerKeyProviderAdapter(signer));
+      : SignerBootstrap.create().then(
+          (signer) => new SignerKeyProviderAdapter(signer),
+        );
 
   return async (release: ExecutionRelease): Promise<void> => {
     const { authorization, executableContent } = release;
@@ -45,18 +50,29 @@ export function createReleaseVerifier(
       publicKey,
     );
 
-    if (!valid || !checks.signatureVerified || !checks.notExpired || !checks.versionSupported) {
-      throw new Error("Execution Control refused release: authorization did not verify.");
+    if (
+      !valid ||
+      !checks.signatureVerified ||
+      !checks.notExpired ||
+      !checks.versionSupported
+    ) {
+      throw new Error(
+        "Execution Control refused release: authorization did not verify.",
+      );
     }
 
     if (authorization.payload.decisionOutcome !== "APPROVED") {
-      throw new Error("Execution Control refused release: decision is not APPROVED.");
+      throw new Error(
+        "Execution Control refused release: decision is not APPROVED.",
+      );
     }
 
     const actualHash = await contentHasher.hash(executableContent);
 
     if (actualHash !== authorization.payload.businessTransactionHash) {
-      throw new Error("Execution Control refused release: executable content does not match the signed hash.");
+      throw new Error(
+        "Execution Control refused release: executable content does not match the signed hash.",
+      );
     }
 
     //
@@ -69,7 +85,9 @@ export function createReleaseVerifier(
     );
 
     if (!unseen) {
-      throw new NonceAlreadyConsumedError(executableContent.businessTransactionId);
+      throw new NonceAlreadyConsumedError(
+        executableContent.businessTransactionId,
+      );
     }
   };
 }

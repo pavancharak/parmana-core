@@ -168,7 +168,9 @@ describe("FilePolicyRepository.save", () => {
     ).rejects.toBeInstanceOf(PolicyVersionImmutableError);
 
     const loaded = await repository.load("governance-overwrite", "1.0.0");
-    expect((loaded as unknown as { description?: string }).description).toBeUndefined();
+    expect(
+      (loaded as unknown as { description?: string }).description,
+    ).toBeUndefined();
   });
 
   it("allows re-saving identical content (an approved rollback), regardless of key order", async () => {
@@ -178,7 +180,9 @@ describe("FilePolicyRepository.save", () => {
 
     await repository.save("governance-rollback", "1.0.0", original);
 
-    const reordered = Object.fromEntries(Object.entries(original).reverse()) as unknown as Policy;
+    const reordered = Object.fromEntries(
+      Object.entries(original).reverse(),
+    ) as unknown as Policy;
     await expect(
       repository.save("governance-rollback", "1.0.0", reordered),
     ).resolves.toBeUndefined();

@@ -14,7 +14,9 @@ import { verifyExecutionTrustRecordOffline } from "../../packages/crypto/dist/in
 const [proofPath, keysPath, policyPath] = process.argv.slice(2);
 
 if (!proofPath || !keysPath || !policyPath) {
-  console.error("usage: verify-offline.mjs proof.json public-keys.json policy-version.json");
+  console.error(
+    "usage: verify-offline.mjs proof.json public-keys.json policy-version.json",
+  );
   process.exit(2);
 }
 
