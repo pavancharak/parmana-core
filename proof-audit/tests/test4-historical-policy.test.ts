@@ -36,6 +36,7 @@ import {
   type Harness,
 } from "./helpers.js";
 import { createGatewayPublicKey } from "../../packages/api/src/bootstrap/createGatewayPublicKey.js";
+import { evidencePath } from "./evidence.js";
 
 vi.mock("../../packages/api/src/bootstrap/createApprovalIssuerRegistry.js", () => ({
   createApprovalIssuerRegistry: () =>
@@ -86,8 +87,8 @@ beforeAll(async () => {
 afterAll(async () => {
   await closeHarness(harness);
   rmSync(tmp, { recursive: true, force: true });
-  mkdirSync(join(root, "proof-audit/results"), { recursive: true });
-  writeFileSync(join(root, "proof-audit/results/test4.json"), JSON.stringify(cases, null, 2));
+  mkdirSync(evidencePath("results"), { recursive: true });
+  writeFileSync(evidencePath("results", "test4.json"), JSON.stringify(cases, null, 2));
 });
 
 describe("TEST 4: verification against historical policy", () => {

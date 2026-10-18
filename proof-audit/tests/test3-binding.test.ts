@@ -16,6 +16,7 @@ import {
   refundTransaction,
   type Harness,
 } from "./helpers.js";
+import { evidencePath } from "./evidence.js";
 
 vi.mock("../../packages/api/src/bootstrap/createApprovalIssuerRegistry.js", () => ({
   createApprovalIssuerRegistry: () =>
@@ -56,8 +57,8 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await closeHarness(harness);
-  mkdirSync(join(root, "proof-audit/results"), { recursive: true });
-  writeFileSync(join(root, "proof-audit/results/test3.json"), JSON.stringify(cases, null, 2));
+  mkdirSync(evidencePath("results"), { recursive: true });
+  writeFileSync(evidencePath("results", "test3.json"), JSON.stringify(cases, null, 2));
 });
 
 describe("TEST 3: binding to the exact action", () => {

@@ -16,6 +16,7 @@ import { createApplication } from "../../packages/api/src/application.js";
 import { createApp } from "../../packages/api/src/app.js";
 import { createExecutionSystem } from "../../packages/api/src/bootstrap/createExecutionSystem.js";
 import { withTestApproval } from "../../test-support/approvals.js";
+import { evidencePath } from "./evidence.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const cases: Record<string, unknown>[] = [];
@@ -90,8 +91,8 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await server.close();
-  mkdirSync(join(root, "proof-audit/results"), { recursive: true });
-  writeFileSync(join(root, "proof-audit/results/test9.json"), JSON.stringify(cases, null, 2));
+  mkdirSync(evidencePath("results"), { recursive: true });
+  writeFileSync(evidencePath("results", "test9.json"), JSON.stringify(cases, null, 2));
 });
 
 describe("TEST 9: HubSpot deal-update gate conditions", () => {

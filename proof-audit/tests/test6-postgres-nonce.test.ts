@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
 import { PGlite } from "@electric-sql/pglite";
 import { SupabaseNonceStore } from "@parmana/storage";
+import { evidencePath } from "./evidence.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const cases: Record<string, unknown>[] = [];
@@ -23,8 +24,8 @@ function poolOver(db: PGlite): any {
 }
 
 afterAll(() => {
-  mkdirSync(join(root, "proof-audit/results"), { recursive: true });
-  writeFileSync(join(root, "proof-audit/results/test6.json"), JSON.stringify(cases, null, 2));
+  mkdirSync(evidencePath("results"), { recursive: true });
+  writeFileSync(evidencePath("results", "test6.json"), JSON.stringify(cases, null, 2));
 });
 
 describe("TEST 6: production nonce store on PostgreSQL semantics", () => {

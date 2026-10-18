@@ -89,3 +89,9 @@ No live credential was found in either history. The findings are kept, not rewri
 1. Whether tests may keep writing evidence into `proof-audit/`, or should write to a temporary folder.
 2. Licensing of the SDK directories under the existing Apache carve-out (408 REVIEW files).
 3. Confirmation of the company name against the incorporation certificate.
+
+## Resolution: 2026-10-18 (owner decisions)
+
+1. **Evidence files.** Approved. The proof-audit tests write to a temporary folder by default (`proof-audit/tests/evidence.ts`), so a test run no longer changes the committed evidence under `proof-audit/`. The committed evidence is regenerated only on purpose, by setting `PARMANA_EVIDENCE_DIR` to the proof-audit folder. Verified: the full suite passes (3,877 passed, 67 skipped), and `git status` shows no change under `proof-audit/` after the run.
+2. **SDK directories (408 REVIEW files).** Decided: keep private. The root license grants Apache-2.0 to these directories, and this decision does not change that existing grant. Before any public release of these directories, the owner should decide how the existing Apache-2.0 grant applies to them.
+3. **Company name.** Confirmed by the owner against the incorporation certificate: "Parmana Systems Private Limited".

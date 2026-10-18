@@ -15,6 +15,7 @@ import { MockGitHubServer } from "@parmana/connector-github";
 import { createApplication } from "../../packages/api/src/application.js";
 import { createApp } from "../../packages/api/src/app.js";
 import { createExecutionSystem } from "../../packages/api/src/bootstrap/createExecutionSystem.js";
+import { evidencePath } from "./evidence.js";
 
 const approver = vi.hoisted(() => ({ approverId: "manager-github", keyId: "manager-github-key-1" }));
 const approverKeys = generateKeyPairSync("ed25519");
@@ -96,8 +97,8 @@ function setPr() {
 
 afterAll(async () => {
   await server.close();
-  mkdirSync(join(root, "proof-audit/results"), { recursive: true });
-  writeFileSync(join(root, "proof-audit/results/test8.json"), JSON.stringify(cases, null, 2));
+  mkdirSync(evidencePath("results"), { recursive: true });
+  writeFileSync(evidencePath("results", "test8.json"), JSON.stringify(cases, null, 2));
 });
 
 describe("TEST 8: GitHub PR merge gate conditions", () => {

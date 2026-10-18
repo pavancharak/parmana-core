@@ -34,6 +34,7 @@ import { createGatewayPublicKey } from "../../packages/api/src/bootstrap/createG
 import { SignerBootstrap, SignerKeyProviderAdapter, FileKeyExpiryStore } from "@parmana/crypto";
 import { policyRepository } from "../../packages/api/src/application.js";
 import { PAYTM_CONNECTOR_TEST_MODE_PLACEHOLDER_SECRET } from "@parmana/connector-paytm";
+import { evidencePath } from "./evidence.js";
 
 // One nonce store shared by the production gateway and the in-process control,
 // so a replay through either path is seen by both.
@@ -54,7 +55,7 @@ vi.mock("../../packages/api/src/bootstrap/createApprovalIssuerRegistry.js", () =
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../..");
-const resultsDir = join(root, "proof-audit/results");
+const resultsDir = evidencePath("results");
 
 const cases: Record<string, unknown>[] = [];
 const record = (row: Record<string, unknown>) => cases.push(row);

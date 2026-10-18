@@ -12,6 +12,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { PGlite } from "@electric-sql/pglite";
 import { CallerAuditChainVerifier, CryptoBootstrap, TrustRecordHasher, type ChainedCallerAuditEventRow } from "@parmana/crypto";
 import { SupabaseCallerAuditSink } from "../../packages/api/src/auth/SupabaseCallerAuditSink.js";
+import { evidencePath } from "./evidence.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const cases: Record<string, unknown>[] = [];
@@ -119,8 +120,8 @@ async function verdictFor(label: string, expectDetected: boolean, mutate: (db: P
 }
 
 afterAll(() => {
-  mkdirSync(join(root, "proof-audit/results"), { recursive: true });
-  writeFileSync(join(root, "proof-audit/results/test5.json"), JSON.stringify(cases, null, 2));
+  mkdirSync(evidencePath("results"), { recursive: true });
+  writeFileSync(evidencePath("results", "test5.json"), JSON.stringify(cases, null, 2));
 });
 
 describe("TEST 5: audit log tamper evidence", () => {

@@ -20,6 +20,7 @@ import {
   refundTransaction,
   type Harness,
 } from "./helpers.js";
+import { evidencePath } from "./evidence.js";
 
 vi.mock(
   "../../packages/api/src/bootstrap/createApprovalIssuerRegistry.js",
@@ -33,7 +34,7 @@ vi.mock(
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../..");
-const artifacts = join(root, "proof-audit/artifacts/test1");
+const artifacts = evidencePath("artifacts", "test1");
 const verifier = join(root, "proof-audit/verify/verify-offline.mjs");
 const denyHook = pathToFileURL(join(root, "proof-audit/verify/deny-network.mjs")).href;
 
@@ -123,8 +124,8 @@ beforeAll(async () => {
 
 afterAll(async () => {
   if (harness) await closeHarness(harness);
-  mkdirSync(join(root, "proof-audit/results"), { recursive: true });
-  writeFileSync(join(root, "proof-audit/results/test1.json"), JSON.stringify(results, null, 2));
+  mkdirSync(evidencePath("results"), { recursive: true });
+  writeFileSync(evidencePath("results", "test1.json"), JSON.stringify(results, null, 2));
 });
 
 /** Writes a mutated copy of the proof and verifies it in a fresh process. */
