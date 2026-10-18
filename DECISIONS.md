@@ -68,3 +68,24 @@ A file can carry a secondary flag. The full per-file labels are in the inventory
 2. Step 4 produced no verifier code. The verifier is a scaffold only, pending attorney review of the section 2.3 overlap.
 
 **Open decisions for the owner.** Confirm the SDK-directory licensing. Confirm the `PARMANA_GATEWAY_ID` value. Run a dedicated secret scanner (for example gitleaks) across all history before any publication. Confirm the company name against the incorporation certificate. Have the patent attorney review section 2.3 and the verifier contents.
+
+## Update: 2026-10-18 (open items)
+
+**Secret scan, full history (gitleaks 8.21.2, repository `.gitleaks.toml`).** Run read-only over the existing repository (baseline `227182b`) and over this core repository. Each reports the same four findings, all introduced in commit `c60f096` in the existing history:
+
+- `.env.example`, private-key rule: a placeholder header with no key body (`...`).
+- `docs/site/guides/credentials-maker-checker-approver.mdx`, private-key rule: a PowerShell search string for the header. Not a key. Since replaced with a pattern.
+- `python/tests/test_decoder.py` (two lines), generic rule: 23-character key identifiers used as test input, not credentials.
+
+No live credential was found in either history. The findings are kept, not rewritten. Rewriting history is outside this task and would break the existing public repository.
+
+**`PARMANA_GATEWAY_ID`.** The value in `.env.example` is the public default `parmana-gateway`, defined in `packages/api/src/bootstrap/createGatewayIdentity.ts`. It is not a secret.
+
+**Forbidden claim phrases and literal PEM headers.** Resolved in commit `ca366df`. The phrase scan and the header scan both return zero outside this file, which quotes the rules.
+
+**Attorney review.** The owner reported "no issues" on the verifier before it was published. The section 2.3 list has not been separately reviewed.
+
+**Still open, owner decisions:**
+1. Whether tests may keep writing evidence into `proof-audit/`, or should write to a temporary folder.
+2. Licensing of the SDK directories under the existing Apache carve-out (408 REVIEW files).
+3. Confirmation of the company name against the incorporation certificate.
