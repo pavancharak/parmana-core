@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/signed-approval.schema.json",
+  "title": "Signed Approval",
+  "description": "A person's approval of one action, signed with their approver key. A request carries it in signals.approvalArtifact when its policy declares approvalSignals. The server checks the issuer is a trusted approver key, the signature, the capability, the resource, the scope and the expiry, and consumes the nonce, so an approval is used once.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["payload", "signature"],
+  "properties": {
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "approvalId",
+        "issuer",
+        "issuedAt",
+        "expiresAt",
+        "capability",
+        "resourceId",
+        "scope",
+        "nonce"
+      ],
+      "properties": {
+        "version": { "const": 1 },
+        "approvalId": { "type": "string" },
+        "issuer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["approverId", "keyId"],
+          "properties": {
+            "approverId": { "type": "string" },
+            "keyId": { "type": "string" }
+          }
+        },
+        "issuedAt": { "type": "string", "format": "date-time" },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "capability": {
+          "type": "string",
+          "description": "The action approved, the request's intent.action."
+        },
+        "resourceId": {
+          "type": "string",
+          "description": "The resource approved, as the policy's approvalSignals names it, for example the request's target."
+        },
+        "scope": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["field", "comparator", "value"],
+          "description": "What exactly is approved: an amount limit, or exactly this resource.",
+          "properties": {
+            "field": { "type": "string" },
+            "comparator": {
+              "type": "string",
+              "enum": ["eq", "lte", "gte", "lt", "gt", "between"]
+            },
+            "value": {
+              "oneOf": [
+                { "type": "number" },
+                { "type": "string" },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["min", "max"],
+                  "properties": {
+                    "min": { "type": "number" },
+                    "max": { "type": "number" }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "constraints": { "type": "object" },
+        "nonce": {
+          "type": "string",
+          "description": "Consumed when the approval is used, so it is accepted once."
+        }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "keyId", "value", "signedAt"],
+      "properties": {
+        "algorithm": { "type": "string", "const": "ed25519" },
+        "keyId": { "type": "string" },
+        "value": {
+          "type": "string",
+          "description": "Base64 Ed25519 signature over the canonical payload."
+        },
+        "signedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

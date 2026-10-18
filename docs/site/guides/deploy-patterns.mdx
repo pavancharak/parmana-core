@@ -1,0 +1,286 @@
+---
+title: "Deploy Patterns"
+description: "In-memory vs Supabase storage, the full environment variable checklist, and how key management actually works: two separate keypairs, one directory, one optional rotation variable."
+---
+
+<Info>
+  **[AVAILABLE]** for everything below, this is what actually runs today.
+  Multi-instance/HA deployment is [ROADMAP], see [Roadmap](/roadmap). AWS KMS
+  signing is available, see [AWS KMS signing](/deployment/aws-kms-signing).
+</Info>
+
+## Goal
+
+Stand up a real deployment with the storage backend you actually want, and understand
+exactly which keys the server needs, where they live, and what each one is for.
+
+## Prerequisites
+
+- Read [Gateway attestation](/concepts/gateway-attestation), this guide's key management
+  section assumes you know the gateway keypair is separate from the authorization key and
+  why.
+
+## Steps
+
+### 1. Choose a storage provider
+
+```typescript
+// packages/storage/src/StorageFactory.ts
+switch (configuration.provider) {
+  case "memory":
+    return new MemoryStorageProvider();
+  case "supabase":
+  case "postgres":
+    // both need DATABASE_URL, and refuse to start without it
+    return new SupabaseStorageProvider();
+  case "sqlite":
+    throw new Error("SQLite storage provider not implemented.");
+}
+```
+
+`memory` keeps everything in the process and loses it on restart. `supabase` and `postgres`
+are the same implementation: despite its name, `SupabaseStorageProvider` needs only a Postgres
+connection string, so a self hosted Postgres works under either name (G-57). Both refuse to
+start without `DATABASE_URL`. `sqlite` is declared and throws at startup, by design: it fails
+closed rather than silently falling back to something else.
+
+```bash
+PARMANA_STORAGE=memory     # in process, non persistent, no external dependency
+# or
+PARMANA_STORAGE=supabase   # or postgres; needs DATABASE_URL and every migration applied
+DATABASE_URL=postgresql://user:password@host:5432/parmana
+```
+
+Apply the migrations before the first start: `npm run db:migrate -- apply` (status with
+`npm run db:migrate -- status`). See [Production deployment](/deployment/production).
+
+`PARMANA_STORAGE` is the only variable read for this. An older `DATABASE_PROVIDER` variable
+existed briefly as a second, disconnected path to the same setting and is now retired: if
+it's present in the environment, config loading fails at startup naming `PARMANA_STORAGE` as
+the replacement, rather than silently ignoring it.
+
+### 2. Generate both required keypairs
+
+Two, deliberately separate:
+
+```bash
+node_modules/.bin/tsx scripts/generate-keypair.ts --algorithm ed25519 --key-id default
+npm run generate:gateway-keys
+```
+
+Both write into `PARMANA_KEY_DIR` (defaults to `./keys`). `default.*.pem` signs and verifies
+[execution authorizations](/concepts/execution-authorization). `gateway.*.pem` signs
+[gateway attestations](/concepts/gateway-attestation). They protect different things and are
+never the same key, mixing them up is not just a style choice, `assertKeyType` fails closed
+if you sign with the wrong one for a configured provider.
+
+### 3. Generate a caller API key for every system that will call this API
+
+```bash
+npm run generate:api-key -- --caller-id orchestrator-1 --allowed-capabilities "paytm:refund"
+```
+
+Prints a raw key once, and the entry to add to `PARMANA_API_KEYS`. A key with no
+`--allowed-capabilities` may invoke nothing (`403 CAPABILITY_NOT_ALLOWED`); a person who
+proposes or approves governance changes needs `--credential-holder-type USER` instead, see
+[Credentials](/guides/credentials-maker-checker-approver). The raw key is never
+written to disk by the script and cannot be recovered afterward, hand it to the calling
+system now. Repeat once per caller (your AI orchestration service, an internal dashboard,
+anything else that will call this API), and repeat again per caller whenever you rotate a
+key, see [Rotating a caller's key](#rotating-a-callers-key) below.
+
+### 4. Set the full environment checklist
+
+```bash
+PARMANA_STORAGE=memory                        # or: supabase / postgres, with DATABASE_URL
+PARMANA_POLICY_DIR=/absolute/path/to/policies
+PARMANA_KEY_DIR=/absolute/path/to/keys
+PARMANA_GATEWAY_KEY_ID=gateway                 # optional, defaults to "gateway"
+HUBSPOT_PRIVATE_APP_TOKEN=...                  # credential for the hubspot connector, omit to leave it unregistered
+PRIMARY_SIGNATURE_PROVIDER=ed25519             # or: dilithium3, needs Node >= 24
+HASH_PROVIDER=sha256
+PARMANA_API_KEYS=[{"callerId":"orchestrator-1","keyHash":"...","allowedCapabilities":["paytm:refund"]}]  # from step 3
+```
+
+This is the minimum for a local start. Every variable, including `KEY_PROVIDER=aws-kms`,
+`PARMANA_SECRETS_PROVIDER`, the connector credentials and the approval webhook, is in
+[Environment variables](/deployment/environment-variables).
+
+`PARMANA_API_KEYS` is a JSON array. Multiple entries may share the same `callerId`, that is
+how rotation works, see below. The server refuses to start with this unset or empty, unless
+`PARMANA_AUTH_DISABLED=true` is set explicitly for local development, see
+[Caller authentication](#caller-authentication).
+
+### 5. Run it
+
+```bash
+npm run dev
+```
+
+## Verify
+
+Confirm the server actually started and is enforcing what you expect:
+
+```bash
+curl http://localhost:3000/health
+# {"status":"UP"}
+```
+
+If `PARMANA_KEY_DIR` is missing `gateway.private.pem`, the server refuses to start with a
+message naming the exact missing path, it does not start in a degraded, gateway-less mode,
+there is no such mode, see [The gateway](/concepts/the-gateway).
+
+## What `PARMANA_GATEWAY_KEY_ID` is for
+
+Rotating the gateway's key without touching `default.*.pem` or restarting with a completely
+new key directory: generate a second gateway keypair under a different ID (for example
+`gateway-v2`), verify it works, then flip `PARMANA_GATEWAY_KEY_ID=gateway-v2` and restart.
+The old `gateway.*.pem` files can stay in place until you're confident in the rotation, they
+simply won't be read.
+
+## Caller authentication
+
+Every route requires a caller credential, except the liveness/readiness and documentation/
+verification routes listed on [Authentication](/api-reference/authentication): a bearer key
+generated in step 3, sent as `Authorization: Bearer <key>`. Only a SHA-256 hash of each key is ever held
+by the server, comparisons run in constant time against that hash, and the raw key is never
+logged or written to disk anywhere in this codebase.
+
+**This is only safe over TLS.** A bearer key sent over plaintext HTTP is readable by anything
+that can observe the connection. Terminate TLS in front of this server (a reverse proxy, load
+balancer, or service mesh sidecar in your own infrastructure when you host it yourself; on
+Vercel TLS is already terminated for you), and never expose the API on plaintext HTTP outside `localhost`. This
+is not a suggestion, it is the entire security value of the bearer-key scheme.
+
+Caller authentication is a distinct layer from everything else Parmana does. It runs first,
+before a Business Transaction is even constructed, and answers only "should this HTTP
+request be entertained at all." It is independent of, and cannot substitute for, [policy
+evaluation](/concepts/policies-and-the-decision) (a well-authenticated caller submitting a
+policy-rejected transaction is still rejected) or [gateway
+attestation](/concepts/gateway-attestation) (which proves the gateway itself released a
+specific execution, not who called the API). Keeping these layers separate is deliberate,
+see [How Parmana thinks](/how-parmana-thinks).
+
+### Rotating a caller's key
+
+No downtime. The new list takes effect when the server reads its configuration again: a
+restart, or on Vercel a redeploy:
+
+1. Generate a new key for the same `callerId`: `npm run generate:api-key -- --caller-id
+orchestrator-1`.
+2. Add the new `{ callerId, keyHash }` entry to `PARMANA_API_KEYS` alongside the old one.
+   Both are active during migration.
+3. Hand the new raw key to the caller, confirm it works.
+4. Remove the old entry from `PARMANA_API_KEYS`. The old key is now revoked and stops
+   authenticating immediately on the next config reload.
+
+### Upgrading beyond static keys
+
+Caller authentication is implemented behind one interface, `CallerAuthenticator`
+(`packages/api/src/auth/CallerAuthenticator.ts`), with `StaticKeyAuthenticator` as the only
+implementation today. If your environment requires mutual TLS instead (common in banks that
+already run internal PKI for service-to-service traffic), that is a second class implementing
+the same interface, swapped in at one place
+(`packages/api/src/bootstrap/createCallerAuthenticator.ts`), not an architecture change: the
+middleware, the audit trail, and every route's behavior stay exactly as documented above.
+
+### Disabling authentication (local development only)
+
+```bash
+PARMANA_AUTH_DISABLED=true
+```
+
+Skips caller authentication entirely and logs a loud warning at startup every time. This
+exists for local development and running the tutorials, and must never be set in a real
+deployment, doing so removes the only authentication this API has.
+
+### The OpenAPI spec endpoint
+
+`GET /openapi.yaml` serves the bundled spec (`openapi/openapi.bundled.yaml`) as a static
+file and, like `GET /health`, is exempt from caller authentication, see
+`packages/api/src/routes/openapi.ts`. This is deliberate: a caller cannot discover how to
+get a key from a spec it isn't allowed to read, the same reasoning Stripe and most public
+API providers apply to their own spec/docs endpoints.
+
+Three more routes build on that same spec, exempt from caller authentication for the
+identical reason, and none keeps its own separate copy, so none of the four can drift from
+what the server actually does:
+
+- **`GET /openapi.json`**: the identical spec, JSON-serialized instead of YAML
+  (`packages/api/src/routes/openapi-json.ts`). Exists because most tooling, and most AI
+  coding agents, expects a machine-readable spec at a `.json` path by convention.
+- **`GET /documentation`**: a Swagger UI instance (`packages/api/src/routes/documentation.ts`,
+  the `swagger-ui-express` package) that reads `openapi/openapi.bundled.yaml` from disk at
+  startup, with **Try it out** wired up for testing a real request against this exact
+  deployment without leaving the browser.
+- **`GET /reference`**: a single-page ReDoc view (`packages/api/src/routes/reference.ts`) that
+  fetches `GET /openapi.yaml` live, client-side, in the browser. No interactive form. Built
+  for reading the complete spec top to bottom, auditors and integration partners who want the
+  whole surface at a glance, not a form to fill in.
+
+A fifth route, **`GET /api-manifest.json`** (`packages/api/src/routes/api-manifest.ts`), is
+not a spec view but a discovery index built for tooling: it points at the four routes above,
+states the auth scheme, and lists both real SDKs with their package name, registry, and
+actual current version, read from each package's own manifest at startup rather than
+hand-typed, so it can't say a version the published package doesn't have. Also exempt from
+caller authentication, for the same reason.
+
+**Exposing all five in production is almost always the right default.** The spec contains no
+secrets, only route shapes and example payloads with already-rotated or synthetic IDs. If
+your deployment has a reason to hide API surface area entirely (an internal-only service
+behind a network boundary where even the shape of the API is sensitive), any of the five
+routes can be disabled by not mounting it in `packages/api/src/app.ts`, there is no
+environment-variable toggle for this today, it's a code change.
+
+## What this deployment does not give you
+
+- **No KMS in this pattern.** With `KEY_PROVIDER=local` both private keys are files on disk,
+  exactly the exposure that produced the incident noted on [Security](/security/overview).
+  `aws-kms` is implemented, see [AWS KMS signing](/deployment/aws-kms-signing).
+  `azure-key-vault`, `gcp-kms` and `hsm` are declared config values with no implementation.
+  Setting `KEY_PROVIDER` to one of those fails startup loudly rather than silently running
+  as if it were `local`.
+- **No high availability setup.** Several instances on one database are safe for replay: authorization and approval nonces are kept in Postgres
+  (`consumed_nonces`, `consumed_approval_nonces`), so several instances on the same database still
+  accept each one once. Only the test suite (`NODE_ENV=test`) keeps them in memory.
+- **Connectors register only when their own credentials are configured.** HubSpot, GitHub,
+  Paytm, and Slack each check for their own credential environment variable at startup and
+  register only if it's present; with none configured, every capability fails closed with
+  `503 CONNECTOR_NOT_REGISTERED`. Any other HTTPS endpoint can be registered with no code
+  as an [external connector](/guides/connect-any-external-system); a new built in connector is
+  a code change, see the [Connector Development Guide](/integrations/connector-development-guide).
+
+## Troubleshoot
+
+- **`Gateway private key not found`.** Run `npm run generate:gateway-keys`, or confirm
+  `PARMANA_KEY_DIR` points at the directory you actually generated into.
+- **`Key directory does not exist`.** `PARMANA_KEY_DIR` (or the `./keys` default) must exist
+  before the server starts, `FileKeyProvider` doesn't create it.
+- **Config loading fails naming `DATABASE_PROVIDER`.** Remove that variable from your
+  environment, use `PARMANA_STORAGE` instead, see step 1.
+- **`PARMANA_STORAGE=supabase requires DATABASE_URL`.** Set `DATABASE_URL` to a Postgres
+  connection string (`postgres` gives the same message).
+- **`SQLite storage provider not implemented.`** Expected: use `memory`, `supabase` or
+  `postgres`.
+- **`No caller authentication keys are configured`.** `PARMANA_API_KEYS` is unset or `[]`.
+  Generate a key (step 3) and add it, or set `PARMANA_AUTH_DISABLED=true` for local
+  development only.
+- **`401 authentication required` on every request.** Missing or malformed `Authorization`
+  header, confirm you're sending `Authorization: Bearer <key>` with the exact raw key from
+  step 3, not the hash.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="Choose a signature provider"
+    icon="key"
+    href="/guides/choose-a-signature-provider"
+  >
+    What `PRIMARY_SIGNATURE_PROVIDER` actually changes, and its real cost.
+  </Card>
+  <Card title="Roadmap" icon="map" href="/roadmap">
+    What's designed but not built yet for production deployment: HA, network
+    enforcement, other key custody.
+  </Card>
+</CardGroup>

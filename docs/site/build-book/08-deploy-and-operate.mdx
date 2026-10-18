@@ -1,0 +1,89 @@
+---
+title: "8. Deploy and operate"
+description: "Bring Parmana to production: keys, database, callers, policies approved by two people, the checks that prove each step worked, monitoring, upgrades and rotation."
+---
+
+This chapter is the operator's map. Each step has a check; do not go on until it passes. The complete runbook, with
+every command and every failure, is [Production deployment](/deployment/production); every variable is in the
+[Environment variable reference](/deployment/environment-variables).
+
+## What runs
+
+One Node.js process: the API, the policy engine and the gateway together. The same code runs as a container
+(`Dockerfile`, `docker/entrypoint.sh`) or as a Vercel function (`api/index.ts`, `vercel.json`). It needs a Postgres
+database (Supabase works). Production refuses to start without a real database, signing keys and caller
+authentication, and never falls back to something weaker.
+
+## The procedure
+
+| #   | Step             | Do                                                                                                                                                                                          | Check                                                                                                     |
+| --- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| 1   | Signing keys     | `npx tsx scripts/generate-keypair.ts --algorithm ed25519 --key-id default` and `npm run generate:gateway-keys`, or `KEY_PROVIDER=aws-kms`                                                   | `keys/` holds `default` and `gateway`, private and public. Never committed, never in the image.           |
+| 2   | Database schema  | `npm run db:migrate -- status`, then `apply`                                                                                                                                                | `status` ends with `0 pending`.                                                                           |
+| 3   | Caller keys      | `npm run generate:api-key -- --caller-id <id> ...` for each agent, a maker (`--credential-holder-type USER`) and a checker (also `--generate-step-up-key`)                                  | Each raw key given to its owner only; the JSON entries combined into one array.                           |
+| 4   | Connectors       | Set the variables of each built in connector you use ([Chapter 6](/build-book/06-connect-your-systems))                                                                                     | Both or neither of each pair is set.                                                                      |
+| 5   | Environment      | `NODE_ENV=production`, `PARMANA_API_KEYS`, `PARMANA_STORAGE=supabase`, `DATABASE_URL` (the transaction pooler on serverless), keys through `PARMANA_KEY_DIR` or `PARMANA_KEY_MATERIAL_JSON` | `PARMANA_AUTH_DISABLED` is not set; `NODE_ENV` is not `test` or `development`.                            |
+| 6   | Deploy           | Build and start, or deploy on Vercel                                                                                                                                                        | `/health` `200`; `/ready` `200` with `"authDisabled":false`; `POST /execute` with no key `401`.           |
+| 7   | Policies         | Copy them into the database once (`scripts/apply-policies-table-and-backfill.ts`), then approve each one through maker checker ([Chapter 4](/build-book/04-policies))                       | `npx tsx scripts/verify-policy-changes-approved.ts --full-scan` passes.                                   |
+| 8   | Approvers        | Trust at least one approver per action through maker checker ([Chapter 5](/build-book/05-human-approvals))                                                                                  | `GET /approval-issuers` lists them, `"revoked": false`.                                                   |
+| 9   | One real request | A small, harmless action, with a signed approval                                                                                                                                            | A signed Trust Record; the same `businessTransactionId` again answers `409`; the record verifies offline. |
+| 10  | Monitoring       | The alerts below                                                                                                                                                                            | Each alert fires in a test.                                                                               |
+
+At startup the log line `runtime_engine_constructed` must show `policyExecutionVerifierConfigured`,
+`signingReadinessConfigured` and `executionIntentsConfigured` all `true`. In production they are on and cannot be
+switched off.
+
+## Keys and who holds them
+
+| Key                         | Held by                         | Where it is configured                                                    |
+| --------------------------- | ------------------------------- | ------------------------------------------------------------------------- |
+| Signing key `default`       | The server                      | `PARMANA_KEY_DIR`, `PARMANA_KEY_MATERIAL_JSON`, or AWS KMS                |
+| Gateway key                 | The server                      | The same, as a file                                                       |
+| Caller API keys             | Each agent and each person      | Only the SHA-256 hash, in `PARMANA_API_KEYS`                              |
+| Step up keys                | Each checker, on their machine  | The public key, on the checker's API key entry                            |
+| Approver keys               | Each approver, on their machine | The public key, through `/approval-issuers` maker checker                 |
+| Connector credentials       | The server, per execution       | Environment variables or AWS Secrets Manager (`PARMANA_SECRETS_PROVIDER`) |
+| External system credentials | Your endpoint                   | Never in Parmana                                                          |
+
+A caller key grants its `allowedCapabilities` and acts for its `allowedPrincipalIds` (the caller id when none are
+named). Never grant `"*"` to an agent.
+
+## Upgrades
+
+1. **Migrations first.** `npm run db:migrate -- apply` against production **before** deploying the version that needs
+   them. A version that finds a table missing refuses requests (for example `503 EXECUTION_INTENT_UNAVAILABLE`) rather
+   than run without it.
+2. **New policy versions are not deploys.** They take effect when approved ([Chapter 4](/build-book/04-policies)).
+3. **A changed environment variable needs a new deployment** on Vercel before it takes effect.
+4. **Restarts are safe.** On `SIGTERM` in flight requests finish (up to `SHUTDOWN_TIMEOUT_MS`, default 10000), and the
+   replay and audit stores are in the database, not in memory.
+
+## Monitoring
+
+| Watch                                                                       | Alert when                                                                                       |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `GET /ready`, every 30 seconds                                              | Not `200`, or `authDisabled` is `true`                                                           |
+| `503 SIGNING_UNAVAILABLE`, `503 EXECUTION_INTENT_UNAVAILABLE`               | Any. Nothing is being released.                                                                  |
+| `500 EXECUTION_RECORD_INCOMPLETE`                                           | Any. Released with no signed record: finalize it ([Chapter 7](/build-book/07-verify-and-audit)). |
+| `502 EXECUTION_OUTCOME_UNKNOWN`                                             | Any. Check the system and resolve the intent. Several in a row: the connector is down.           |
+| `GET /execution-intents/unfinalized`, every 15 minutes                      | Any entry                                                                                        |
+| Log `execution_intent_*_failed`                                             | Any. Logged at critical severity.                                                                |
+| Log `approval_issuer_lookup_failed`                                         | Any. Approvals from governed approvers are refused until the table can be read.                  |
+| Log `rate_limit_store_not_durable`                                          | Any. Rate limits are per instance: `DATABASE_URL` is missing.                                    |
+| Log `approval_issuer_change_approved`, `external_connector_change_approved` | Every one, as an audit trail of who changed trust.                                               |
+
+## Rotation
+
+| Rotate             | How                                                                                                                       |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| A caller key       | Generate a new entry, replace the old one in `PARMANA_API_KEYS`, redeploy, give the owner the new raw key.                |
+| The signing key    | `npx tsx scripts/rotate-verification-key.ts --algorithm ed25519`. Keep the old public key: old records name their key id. |
+| An approver key    | Add the new key id, switch, revoke the old one, all through maker checker. No deploy.                                     |
+| A connector secret | Change it on the host or in Secrets Manager, then redeploy. Values are read at startup.                                   |
+
+A key that was ever shown in a chat, a ticket or a log is exposed: rotate it.
+
+## Self hosted
+
+To run Parmana on your own infrastructure with one command, with the database included, use the
+[self hosted deployment](/self-hosted/overview). The checks above still apply.

@@ -1,0 +1,297 @@
+---
+title: "Write Your First Policy"
+description: "Write a custom Policy, evaluate a transaction against it, and confirm both the approve and reject paths."
+---
+
+<Info>
+  **[AVAILABLE]**, every command below runs against the repo's actual code.
+</Info>
+
+## Goal
+
+Write a new Policy from scratch, distinct from the shipped `vendor-payment` one, and confirm
+it approves and rejects correctly.
+
+## Prerequisites
+
+- The repo cloned and `npm install` run.
+- Read [Policies and the decision](/concepts/policies-and-the-decision) first if you haven't,
+  this guide assumes you know what first-match-wins and fail-closed mean.
+
+## Steps
+
+### 1. Write the policy document
+
+A Policy is a JSON file at `<policyDir>/<name>/<version>/policy.json`. This exact policy
+already ships at `examples/tutorials/14-custom-policy/policies/high-value-payment/1.0.0/policy.json`
+(step 3 below runs it directly, no file creation needed to follow along). Its core, the two
+rules this walkthrough exercises:
+
+```json
+{
+  "policyId": "high-value-payment",
+  "policyVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes high-value vendor payments requiring Finance Director approval.",
+  "signalsSchema": {
+    "vendorVerified": "boolean",
+    "invoiceVerified": "boolean",
+    "paymentApproved": "boolean",
+    "sufficientFunds": "boolean",
+    "paymentAmount": "number",
+    "riskScore": "number",
+    "financeDirectorApproved": "boolean"
+  },
+  "boundSignals": {
+    "paymentAmount": "parameters.amount"
+  },
+  "unboundSignalReasons": {
+    "vendorVerified": "Independently attested by upstream vendor verification; no Intent-side equivalent field exists to bind against.",
+    "invoiceVerified": "Result of an independent invoice-verification check; not a value the Intent itself declares.",
+    "paymentApproved": "Attested by a separate payment-approval step; the Intent carries no approval-status field to bind against.",
+    "sufficientFunds": "Result of an independent funds-availability check against account state; not expressible via the Intent's target/parameters.",
+    "riskScore": "A computed payment-risk score, not a value the caller's Intent declares or could be checked against."
+  },
+  "approvalSignals": {
+    "financeDirectorApproved": {
+      "resourceId": "target",
+      "value": "parameters.amount"
+    }
+  },
+  "rules": [
+    {
+      "id": "approve-high-value-payment",
+      "condition": {
+        "all": [
+          { "fact": "vendorVerified", "operator": "eq", "value": true },
+          { "fact": "invoiceVerified", "operator": "eq", "value": true },
+          { "fact": "paymentApproved", "operator": "eq", "value": true },
+          { "fact": "sufficientFunds", "operator": "eq", "value": true },
+          { "fact": "paymentAmount", "operator": "gt", "value": 10000 },
+          { "fact": "financeDirectorApproved", "operator": "is_true" },
+          { "fact": "riskScore", "operator": "lte", "value": 20 }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "High-value vendor payment authorized after Finance Director approval."
+      }
+    },
+    {
+      "id": "reject-high-value-without-director-approval",
+      "condition": {
+        "all": [
+          { "fact": "paymentAmount", "operator": "gt", "value": 10000 },
+          {
+            "fact": "financeDirectorApproved",
+            "operator": "eq",
+            "value": false
+          }
+        ]
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "High-value vendor payment rejected because Finance Director approval is required."
+      }
+    },
+    {
+      "id": "reject-default",
+      "condition": { "always": true },
+      "outcome": {
+        "action": "reject",
+        "reason": "One or more required policy conditions were not satisfied."
+      }
+    }
+  ]
+}
+```
+
+`financeDirectorApproved` is declared in `approvalSignals`, so it is true only with a signed
+approval from a trusted approver for this vendor (the Intent's `target`), covering this amount.
+Every approve rule must require such a signal with `is_true` at its top level: no agent action is
+authorized without a signed human approval, and `PolicyValidator` refuses to load a policy that
+breaks this ([Human approval](/concepts/human-approval)).
+
+The real file has more rules than shown above: a lower-value approve path (`paymentAmount`
+at or below 10000, still with the director's signed approval), and individual rejection rules for an
+unverified vendor, unverified invoice, unapproved payment, insufficient funds, an invalid
+amount, and high risk score, each with its own specific reason string, plus the trailing
+`reject-default` catch-all shown above. Without that catch-all, an unmatched transaction
+still rejects (fail-closed is the engine's default, not something the policy has to opt
+into), but writing it explicitly documents the reject-by-default behavior for anyone reading
+the policy file itself.
+
+<Note>
+  `PolicyValidator.validate()` fails closed on any rule-referenced fact that is
+  neither in `boundSignals` nor `unboundSignalReasons`, an uncovered,
+  unacknowledged fact throws `PolicyValidationError` and the policy never loads
+  at all, it does not merely warn. This policy has one fact with a genuine
+  Intent-side equivalent, `paymentAmount` (an amount, bound to
+  `parameters.amount` above), so it belongs in `boundSignals`, where
+  `SignalIntentBinder` checks it before evaluation runs rather than trusting a
+  caller's declaration unchecked. `financeDirectorApproved` is covered by its
+  `approvalSignals` entry. Every other fact here (`vendorVerified`,
+  `invoiceVerified`, `paymentApproved`, `sufficientFunds`, `riskScore`) is an
+  independently attested boolean or score with no Intent-side equivalent, so
+  each needs its own `unboundSignalReasons` entry explaining why, not silence.
+  See [Policies and the decision](/concepts/policies-and-the-decision) for the
+  mechanism and why it exists: failing closed here, instead of an easily-missed
+  load-time warning, is what makes an uncovered fact impossible to ship by
+  accident.
+</Note>
+
+### 2. Reference it from a Business Transaction
+
+```json
+{
+  "policy": {
+    "name": "high-value-payment",
+    "version": "1.0.0",
+    "schemaVersion": "1.0.0"
+  },
+  "signals": {
+    "vendorVerified": true,
+    "invoiceVerified": true,
+    "paymentApproved": true,
+    "sufficientFunds": true,
+    "paymentAmount": 25000,
+    "riskScore": 10,
+    "financeDirectorApproved": true,
+    "approvalArtifact": {
+      "payload": { "...": "..." },
+      "signature": { "...": "..." }
+    }
+  }
+}
+```
+
+`approvalArtifact` is the Finance Director's signed approval for this vendor, up to 25000.
+Without it, `financeDirectorApproved: true` is refused.
+
+### 3. Evaluate it
+
+This exact scenario already exists as `examples/tutorials/14-custom-policy/`, reuse it
+rather than writing a parallel harness: it builds a `FilePolicyRepository` pointed at a
+local `policies/` directory and executes a transaction through `RuntimeFactory.create()`
+directly, no server required. A demo Finance Director, a key made in memory
+(`examples/shared/helpers/demo-approval.ts`), signs the approval and is the only approver the
+tutorial trusts.
+
+```bash
+node_modules/.bin/tsx examples/tutorials/14-custom-policy/run.ts
+```
+
+Before the transaction result, you'll see several `policy_rule_conflict_detected` log lines.
+These are `PolicyValidator.findRuleConflicts()`'s advisory output, harmless, not a failure:
+this policy's extra rejection rules share some overlapping conditions the conflict checker
+can't fully reason about, so it flags them for manual review rather than guessing. See
+[Policies and the decision](/concepts/policies-and-the-decision) for what this check does
+and doesn't catch.
+
+## Verify
+
+Real output, from a run on 2026-10-02 (the hash differs on every run, because it covers timestamps and ids):
+
+```json
+"decision": {
+  "outcome": "APPROVED",
+  "reason": "High-value vendor payment authorized after Finance Director approval.",
+  "policy": { "name": "high-value-payment", "version": "1.0.0", "schemaVersion": "1.0.0" }
+},
+"status": "COMPLETED"
+```
+
+```
+Verification: { "status": "VERIFIED", "trustRecordHash": "0d0dbc6bf76e3bb30f44792e9de59b6e183ed12b4080f0587784a4831b293a70" }
+```
+
+Now confirm the reject path. The tutorial always attaches the Finance Director's signed
+approval (`withDemoApproval` sets `financeDirectorApproved` to true with a matching approval), so
+change a fact the approval does not cover. In a scratch copy of the tutorial folder, set
+`"vendorVerified": false` in `transaction.json`, and rerun. This is what actually happens
+(verified against a real run on 2026-10-02):
+
+```
+RuntimeError: Execution rejected: Vendor payment rejected because the vendor has not been verified.
+    at ExecutionGate.enforce (packages/runtime/src/ExecutionGate.ts:11)
+```
+
+A `REJECTED` decision does not come back as a normal object with `outcome: "REJECTED"`,
+`RuntimeFactory`'s `ExecutionTrustApplication.execute()` throws a `RuntimeError` whose
+message is the matched rule's rejection reason. `examples/tutorials/14-custom-policy/run.ts`
+doesn't catch this specially, so an uncaught rejection crashes the script, that's expected,
+not a bug in the tutorial, a caller that wants to handle rejection gracefully needs a
+`try`/`catch` around `execute()`. The `reject-unverified-vendor` rule is what matched,
+confirmed by the message: first match wins, on different signals, same policy document, no code
+change. Over HTTP the same rejection is `403 POLICY_DENIED` with this reason, and a signed
+Refusal Record is stored. The `reject-high-value-without-director-approval` rule matches when a
+caller sends `financeDirectorApproved: false`; `true` without a valid signed approval is refused
+by the approval check instead (`financeDirectorApproved=true != verified
+financeDirectorApproved=false`).
+
+## Why explicit rejection rules? (Auditability over simplicity)
+
+Parmana policies mix approval and rejection rules in one ordered array, exactly like
+`high-value-payment` above. That's a deliberate choice, not an oversight, some architectures
+prefer "approval-only + implicit default-reject" instead, and it's worth being explicit about
+why this codebase doesn't.
+
+**The engine is fail-closed by default, independent of how you write your policy.**
+`PolicyEngine.evaluate()`'s outcome-mapping switch (`PolicyEngine.ts`) treats any unmatched or
+unrecognized action as `REJECT`, this is the engine's own default branch, not something a
+policy author opts into. You don't have to remember a catch-all rule for the engine to fail
+closed; it already does.
+
+**So why write explicit rejection rules at all?** Because the audit trail records a specific,
+human-readable reason for every rejection, _"the vendor has not been verified"_, not a
+generic _"no rule matched."_ For a system whose refusals are independently, cryptographically
+verifiable (see [Refusal records](/concepts/refusal-records)), a specific reason is the whole
+point: compliance, debugging, and customer communication all need to know _why_, not just
+_that_.
+
+**First-match-wins means rule order matters.** `PolicyEngine.findFirstMatch()` evaluates rules
+in the order they appear in the JSON file and returns on the first one whose condition is
+true, there is no priority system beyond array order. This is a real source of bugs if two
+rules' conditions can both be true for the same input: whichever is listed first silently
+wins, with nothing surfacing that the second rule is partly or wholly shadowed.
+
+<Note>
+  `PolicyValidator.findRuleConflicts(policy)` checks for exactly this, pairs of
+  rules whose conditions can be true simultaneously, and `PolicyRouter.load()`
+  logs a `policy_rule_conflict_detected` warning naming them. It is **advisory,
+  not fail-closed** (unlike `boundSignals` coverage): a flagged pair might be a
+  genuine bug, or might be an intentional priority ordering between two
+  violation reasons that can legitimately co-occur (this repo's own
+  `hubspot-deal-update` policy has exactly one such case). It also only proves
+  `NO_OVERLAP` for condition shapes it can fully reason about (same-fact
+  `eq`/`neq`/numeric comparisons, and `all` conjunctions where at least one
+  conjunct is provably disjoint from the other side), anything more complex is
+  reported as `NEEDS_REVIEW`, an honest "can't tell," never a guessed answer.
+</Note>
+
+## Troubleshoot
+
+- **Decision comes back `REJECTED` with `"reason": "One or more required policy conditions were not satisfied."`, not the reason you expected.** Your transaction's signals matched no earlier rule, only the trailing default. Check `signalsSchema` against what you actually sent, a typo'd signal name is silently `undefined`, which fails every `eq`/`gt`/`lte` condition.
+- **Decision comes back `REJECTED` with `"matchedRuleId": "signal-type-violation"`.** A signal was sent with a type other than the one `signalsSchema` declares, for example an amount as `"500"` instead of `500`. The reason names each signal and the type it must have.
+- **`PolicyValidator` throws about policy identity.** Your Business Transaction's `policy.name`/`policy.version` doesn't match the loaded file's `policyId`/`policyVersion` exactly, these are checked, not inferred from the file path.
+- **Wrong policy loaded, or "policy not found."** `FilePolicyRepository` resolves `<policyDir>/<name>/<version>/policy.json` literally, confirm the directory structure matches, including the version folder.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="Authorize and execute an action end to end"
+    icon="play"
+    href="/guides/authorize-and-execute"
+  >
+    What happens after a policy approves: signing, gateway verification,
+    execution.
+  </Card>
+  <Card
+    title="Policies and the decision"
+    icon="scale-balanced"
+    href="/concepts/policies-and-the-decision"
+  >
+    The concept this guide exercises.
+  </Card>
+</CardGroup>

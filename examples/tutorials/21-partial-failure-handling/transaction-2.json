@@ -1,0 +1,26 @@
+{
+  "businessTransactionId": "22222222-2222-4222-8222-222222222222",
+  "policy": {
+    "name": "vendor-payment",
+    "version": "2.1.0"
+  },
+  "intent": {
+    "action": "release-payment",
+    "target": "vendor",
+    "parameters": {
+      "vendorId": "VENDOR-2001",
+      "invoiceId": "INV-2026-002",
+      "currency": "USD",
+      "amount": 18000
+    }
+  },
+  "signals": {
+    "vendorVerified": false,
+    "invoiceVerified": true,
+    "paymentApproved": true,
+    "sufficientFunds": true,
+    "paymentAmount": 18000,
+    "riskScore": 15,
+    "vendorId": "vendor"
+  }
+}

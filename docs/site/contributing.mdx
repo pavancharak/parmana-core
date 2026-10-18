@@ -1,0 +1,56 @@
+---
+title: "Contributing to This Documentation"
+description: "The rule this entire site follows, and how to add a page without breaking it."
+---
+
+## The rule
+
+**Every capability claim on this site must cite the source file or test that proves it.**
+No exceptions, no "it should work," no describing intended behavior in the present tense.
+
+## `docs/CLAIMS.md` is authoritative
+
+This site mirrors `docs/CLAIMS.md`; it never overrides it. If something on this site
+contradicts CLAIMS.md, the site is wrong and should be fixed to match, or, if you have
+new evidence CLAIMS.md doesn't yet reflect, that evidence goes into CLAIMS.md first,
+through its own lifecycle (Idea → Implementation → Automated Tests → Audit → Documented
+Proof → Public Claim), and only then onto this site. Do not promote a claim on this site
+that hasn't been promoted in CLAIMS.md.
+
+If you find a real capability that CLAIMS.md hasn't caught up to yet, the correct move is:
+tag it `[PARTIAL]` on the site, add one line to `docs/REMAINING-WORK.md`, and flag it for a CLAIMS.md update as a separate piece of work. Do not
+quietly upgrade the tag on the site alone.
+
+## Status tags are mandatory
+
+Every page, and every major section within a page that makes a capability claim, must
+carry one of:
+
+- **`[AVAILABLE]`**, built and tested in the current repo. Cite the file(s) and/or
+  test(s).
+- **`[PARTIAL]`**, exists but incomplete. State exactly what works and what doesn't; don't
+  round up to [AVAILABLE].
+- **`[ROADMAP]`**, designed, not yet built. Say so in the first sentence. Describe intent
+  and design in a way that cannot be mistaken for present-tense "the system does X."
+
+A page with no tag is a bug, file it, or fix it, on sight.
+
+## Before writing a code sample
+
+Every code sample, request/response, and config snippet must be one of:
+
+1. Copied verbatim from real source (cite `file:line`).
+2. Copied from a passing test's fixture/assertion.
+3. Captured output from an actual local run (state the date; note that IDs/hashes will
+   differ on the reader's own run).
+
+If you can't do one of the three, mark the sample `[ROADMAP]` pseudocode explicitly, never
+present unverified code as runnable.
+
+## Before downgrading is wrong, but upgrading without proof is worse
+
+When genuinely unsure whether something is [AVAILABLE] or [PARTIAL], downgrade. This
+site's TypeScript SDK page exists precisely because an initial [AVAILABLE] label didn't
+survive five minutes of checking `grep` for whether its error classes were ever
+constructed. That's the standard: check, don't assume, and prefer the more conservative
+tag when evidence is incomplete.

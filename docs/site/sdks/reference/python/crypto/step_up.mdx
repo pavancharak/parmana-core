@@ -1,0 +1,57 @@
+---
+sidebar_label: step_up
+title: parmana.crypto.step_up
+---
+
+Signs a policy governance step up authorization on the approver's own
+machine.
+
+The result is accepted by POST /policies/pending-changes/\{id\}/approve and
+.../reject exactly as one made by the server's
+PolicyChangeStepUpAuthorizationSigner (packages/crypto/src/
+PolicyChangeStepUpAuthorizationCrypto.ts) or by the TypeScript SDK's
+signPolicyChangeStepUp(): the same payload, the same canonical JSON, the same
+Ed25519 signature. The private key never leaves the process that calls this
+function.
+
+Needs the optional `cryptography` dependency: `pip install "parmana[verify]"`.
+
+#### sign_policy_change_step_up
+
+```python
+def sign_policy_change_step_up(
+        *,
+        pending_policy_change_id: str,
+        action: str,
+        private_key_pem: str,
+        key_id: str,
+        ttl_seconds: float = DEFAULT_TTL_SECONDS) -> dict[str, Any]
+```
+
+Sign a step up authorization for one action on one policy change.
+
+## Parameters
+
+pending_policy_change_id:
+The change to approve or reject.
+
+action:
+"approve" or "reject".
+
+private_key_pem:
+The approver's Ed25519 step up private key, PEM (PKCS `8`), as made
+by `openssl genpkey -algorithm ed25519`.
+
+key_id:
+A label for the key. It is recorded with the authorization; the
+server verifies with the public key registered on the approver's API
+key, not by this label.
+
+ttl_seconds:
+How long the authorization stays valid. Default 120.
+
+## Returns
+
+The authorization as a JSON ready dict, to pass to
+`client.approve_policy_change()` or `client.reject_policy_change()`.
+It is valid once, until its `expiresAt`.

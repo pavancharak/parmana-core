@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/business-signal-source-change-response.schema.json",
+  "title": "Business Signal Source Change Response",
+  "description": "Response of POST /business-signal-sources/changes (201) and of approve and reject (200). A bare Business Signal Source Change, no wrapper.",
+  "$ref": "../common/business-signal-source-change.schema.json"
+}

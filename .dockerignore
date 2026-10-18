@@ -1,0 +1,38 @@
+# Never bake secrets or local dev credentials into the image.
+keys/
+parmana-local/
+.env
+.env.*
+!.env.example
+
+# Rebuilt fresh inside the image; committed dist/tsbuildinfo could be
+# stale or built for a different platform/arch.
+node_modules
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+
+# Version control and editor/OS noise.
+.git
+.gitignore
+.vscode
+.idea
+*.log
+.DS_Store
+Thumbs.db
+
+# Not needed to build or run the API image.
+python/
+examples/
+# The API serves the handbook PDF and refuses to start without it, so that one
+# file is kept. Everything else under docs/ is left out.
+docs/*
+!docs/site
+docs/site/*
+!docs/site/parmana-handbook.pdf
+coverage/
+*.md
+
+# Test artifacts.
+**/tests
+**/*.test.ts

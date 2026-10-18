@@ -1,0 +1,299 @@
+---
+title: "TypeScript SDK Quickstart"
+description: "Install to your first authorized execution with the TypeScript SDK, in under 10 minutes, using the in-memory server."
+---
+
+<Note>
+  This walkthrough uses `test:fixture-execute`, a generic, credential-free
+  capability built for local testing, evaluated against a policy named
+  `vendor-payment`. That policy name is unrelated to any connector, it's just
+  the example policy this transaction runs against. See
+  [Quickstart](/quickstart) for the same flow driven from the repository
+  directly rather than an installed package; this page installs `@parmana/sdk`
+  as a real dependency the way you would in your own project.
+</Note>
+
+<Tip>
+  **Want to see it work before you clone anything?** Point the SDK at the public sandbox:
+  `new ParmanaClient({ endpoint: "https://parmana-sandbox.vercel.app", apiKey: "2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME", timeout: 120_000 })`.
+  The [Playground](/playground) has a complete script for the published `@parmana/sdk`, run against the sandbox
+  before it was published.
+</Tip>
+
+## Prerequisites
+
+- **Node.js** installed (`node --version`)
+- A running Parmana Runtime to talk to: either your own deployment, or the local
+  in-memory server this walkthrough starts from a clone of this repository
+
+<Steps>
+  <Step title="Start a local Runtime">
+    From a clone of this repository:
+
+    ```bash
+    cp .env.example .env
+    npm ci
+    npm run build
+    ```
+
+    Generate the local signing keys. `keys/` is gitignored, so a fresh clone has none: the server
+    signs with `default`, and the Execution Gateway signs its own attestations with `gateway`:
+
+    ```bash
+    npx tsx scripts/generate-keypair.ts --algorithm ed25519 --key-id default
+    npm run generate:gateway-keys
+    ```
+
+    No AI agent action is authorized without a signed human approval, reads included
+    ([Human approval](/concepts/human-approval)), so you also play the approver. Make an
+    approver key:
+
+    ```bash
+    npx tsx scripts/generate-approver-key.ts \
+      --approver-id local-test-approver --key-id local-test-approver-key-1 \
+      --out-dir ~/.parmana
+    ```
+
+    Start the server fully locally, no external database, trusting that key (honored only with
+    `NODE_ENV=test`):
+
+    ```bash
+    NODE_ENV=test \
+      PARMANA_STORAGE=memory \
+      PARMANA_API_KEYS='[{"callerId":"demo","keyHash":"325ededd6c3b9988f623c7f964abb9b016b76b0f8b3474df0f7d7c23b941381f","allowedCapabilities":["test:fixture-execute"]}]' \
+      PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE=~/.parmana/local-test-approver__local-test-approver-key-1.public.pem \
+      npm run dev
+    ```
+
+    Confirm it's up:
+
+    ```bash
+    curl http://localhost:3000/health
+    # {"status":"UP"}
+    ```
+
+    With `NODE_ENV=test`, a generic, credential-free test connector (`test-fixture`) registers
+    automatically, no connector credentials required for this walkthrough. Every other route,
+    including `/version`, fails closed with a `401` until you send the demo bearer key in
+    `PARMANA_API_KEYS` above, raw key `my-secret-api-key`. It is for local development only: it may
+    use `test:fixture-execute` and act as `demo`, and its raw key is public:
+
+    ```bash
+    curl http://localhost:3000/version -H "Authorization: Bearer my-secret-api-key"
+    # {"name":"Parmana","version":"0.4.0","api":"v1"}
+    ```
+
+    See [Deploy patterns](/guides/deploy-patterns) for running against something other than the
+    in-memory local server.
+
+  </Step>
+
+  <Step title="Install the SDK">
+    In a separate project (or a new terminal, same repo):
+
+    ```bash
+    npm install @parmana/sdk
+    ```
+
+    Real, published package. `npm view @parmana/sdk version` confirms the current version
+    directly from npm.
+
+  </Step>
+
+  <Step title="Sign an approval, then build and execute a Business Transaction">
+    Create `quickstart.ts`. The approver signs first (on the approver's machine in real use),
+    then the agent sends the transaction with the approval attached:
+
+    ```typescript
+    import { readFileSync } from "node:fs";
+    import { homedir } from "node:os";
+    import { join } from "node:path";
+
+    import {
+      ParmanaClient,
+      HttpTransport,
+      createBusinessTransaction,
+      signApproval,
+      ExecutionRejectedError,
+    } from "@parmana/sdk";
+
+    const endpoint = "http://localhost:3000";
+    const apiKey = "my-secret-api-key";
+
+    const client = new ParmanaClient({
+      endpoint,
+      apiKey,
+      transport: new HttpTransport({ endpoint, apiKey }),
+    });
+
+    const approval = signApproval({
+      privateKeyPem: readFileSync(
+        join(homedir(), ".parmana/local-test-approver__local-test-approver-key-1.private.pem"),
+        "utf8",
+      ),
+      approverId: "local-test-approver",
+      keyId: "local-test-approver-key-1",
+      capability: "test:fixture-execute",
+      resourceId: "vendor://payments",
+      maxAmount: 1000,
+    });
+
+    const transaction = createBusinessTransaction({
+      principalId: "demo", // the key may act only as its own caller id
+      purpose: "Quickstart demo",
+      action: "test:fixture-execute",
+      target: "vendor://payments",
+      parameters: { amount: 1000, currency: "USD" },
+      policy: { name: "vendor-payment", version: "2.1.0", schemaVersion: "1.0.0" },
+      signals: {
+        humanApproved: true, // counts only with the signed approval below
+        approvalArtifact: approval,
+        vendorVerified: true,
+        invoiceVerified: true,
+        paymentApproved: true,
+        sufficientFunds: true,
+        paymentAmount: 1000,
+        riskScore: 5,
+        vendorId: "vendor://payments", // must exactly equal `target`
+      },
+    });
+
+    async function main() {
+      try {
+        const trustRecord = await client.execute(transaction);
+        console.log("Business Transaction ID:", transaction.businessTransactionId);
+        console.log("Trust Record ID:        ", trustRecord.trustRecordId);
+        console.log("Signature Algorithm:    ", trustRecord.signature.algorithm);
+        console.log(JSON.stringify(trustRecord, null, 2));
+      } catch (error) {
+        if (error instanceof ExecutionRejectedError) {
+          console.error("Rejected:", error.message);
+          process.exitCode = 1;
+          return;
+        }
+        throw error;
+      }
+    }
+
+    main();
+    ```
+
+    Run it:
+
+    ```bash
+    npx tsx quickstart.ts
+    ```
+
+  </Step>
+
+  <Step title="Real output">
+
+Captured on 2026-10-02 from a run against a local server (trimmed), using the same
+`createBusinessTransaction()` call this page documents (see
+`typescript/examples/06-create-business-transaction.ts` in this repository for the exact
+source, and `typescript/test/integration/examples.integration.test.ts` for the test that
+proves it stays runnable):
+
+```json
+{
+  "trustRecordId": "7966d3f2-758b-4fef-8ef4-119f7c759560",
+  "businessTransactionId": "54958790-351c-4c0f-bf52-918676952b53",
+  "transaction": {
+    "businessTransactionId": "54958790-351c-4c0f-bf52-918676952b53",
+    "authority": {
+      "authorityId": "22d127fe-d55a-4188-ba16-469b1eb7688f",
+      "authorityType": "SERVICE",
+      "principalId": "alice@example.com",
+      "displayName": "Alice",
+      "issuedAt": "2026-10-02T11:16:44.451Z"
+    },
+    "intent": {
+      "action": "test:fixture-execute",
+      "target": "vendor/vendor-123",
+      "parameters": {
+        "amount": 100,
+        "currency": "USD"
+      }
+    },
+    "policy": {
+      "name": "vendor-payment",
+      "version": "2.1.0",
+      "schemaVersion": "1.0.0",
+      "contentHash": "18f4acca151fef1c45c867f622bdd4edd5d640aa38b95e026430aba10756ee2d",
+      "governanceAnchor": {
+        "status": "NO_APPROVAL_RECORD"
+      }
+    },
+    "status": "RECEIVED"
+  }
+}
+```
+
+The full `ExecutionTrustRecord` also includes `executions[0].decision`
+(`outcome: "APPROVED"`), `executions[0].evidence` (what the connector actually did), and the
+`signature` block covered in [Verify independently](/guides/verify-independently). Field names
+are `camelCase` here; the same record from the Python SDK uses `snake_case` for the same
+fields (see [Python SDK Quickstart](/guides/python-sdk-quickstart)).
+
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+**`NetworkError: connect ECONNREFUSED`**: the Runtime isn't running, or you're pointed at
+the wrong `endpoint`. Confirm step 1's `curl http://localhost:3000/health` succeeds first.
+
+**`AuthenticationError` on every call**: either you omitted `apiKey` against a server that
+doesn't have `PARMANA_AUTH_DISABLED=true` set, or the key is wrong. The demo key above,
+`my-secret-api-key`, only works against a server started exactly as shown in step 1, with its
+`PARMANA_API_KEYS` entry.
+
+**`ExecutionRejectedError: Execution rejected: ...`**: the policy evaluated your signals
+and declined. The message names which rule failed; check
+[Write your first policy](/guides/write-your-first-policy) for how `vendor-payment@2.1.0`
+reads its signals. A message naming `humanApproved` means the approval is missing, expired,
+already used, for another target, below the amount, or from a key the server does not trust:
+sign a fresh one.
+
+**A `400` about a mismatched id**: you built the `BusinessTransaction` object by hand
+instead of through `createBusinessTransaction()`. See [`createBusinessTransaction()`, no
+more hand-synced ids](/sdks/typescript#createbusinesstransaction-no-more-hand-synced-ids)
+for exactly which three id pairs the server cross-checks.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="TypeScript SDK Overview"
+    icon="book-open"
+    href="/guides/typescript-sdk-overview"
+  >
+    The concepts behind what you just ran: transactions, decisions, proofs.
+  </Card>
+  <Card
+    title="TypeScript SDK for AI Agents"
+    icon="robot"
+    href="/guides/typescript-sdk-ai-agents"
+  >
+    Wire this exact call into LangChain.js, the Vercel AI SDK, or a server
+    endpoint.
+  </Card>
+  <Card
+    title="End-to-end: agent → Parmana → Paytm"
+    icon="route"
+    href="/guides/end-to-end-paytm-flow"
+  >
+    The same flow against a real connector and real infrastructure, not the
+    local test fixture.
+  </Card>
+  <Card
+    title="Verify independently"
+    icon="check-double"
+    href="/guides/verify-independently"
+  >
+    Read back or re-verify the `ExecutionTrustRecord` you just created.
+  </Card>
+  <Card title="TypeScript SDK reference" icon="js" href="/sdks/typescript">
+    The full error taxonomy, model types, and test suite.
+  </Card>
+</CardGroup>

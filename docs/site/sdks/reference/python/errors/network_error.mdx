@@ -1,0 +1,32 @@
+---
+sidebar_label: network_error
+title: parmana.errors.network_error
+---
+
+## NetworkError Objects
+
+```python
+class NetworkError(ApiError)
+```
+
+Raised when the SDK cannot communicate
+with the Parmana Runtime.
+
+## TimeoutError Objects
+
+```python
+class TimeoutError(NetworkError)
+```
+
+Raised when a Runtime request times out. Mirrors
+typescript/src/errors/TimeoutError.ts.
+
+Subclasses NetworkError (unlike the TS hierarchy, where it's a
+sibling) so existing `except NetworkError` call sites built before
+this class existed keep catching timeouts unchanged; `except
+TimeoutError` now also lets a caller distinguish the two.
+
+Shadows the builtin `TimeoutError` only within this module's/
+package's namespace, exactly as the canonical SDK error model
+(docs/site/sdks/api-coverage.mdx, parity rules) requires this class be named; the
+builtin remains reachable as `builtins.TimeoutError`.

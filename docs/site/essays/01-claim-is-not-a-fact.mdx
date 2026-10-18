@@ -1,0 +1,108 @@
+---
+title: "Your agent's claim is not a business fact"
+description: "Why an AI agent saying 'the refund is eligible' should never be enough to move money, and how Parmana asks the system that owns the fact instead."
+---
+
+An AI agent handles customer support for an online store. A customer writes in: "My order never arrived, I want my
+money back." The agent looks around, decides the request is fair, and proposes:
+
+> Refund ₹50,000 for order 123. The refund is eligible.
+
+Most agent setups would now do one of two things. Either the refund goes through, because the agent has the API key,
+or a person gets a pop-up that says "Approve refund? Eligible: yes" and clicks yes, because the screen says it is
+eligible.
+
+In both cases, the most important part of the decision rests on one sentence: **the refund is eligible**. And that
+sentence came from the agent.
+
+## The agent is guessing, even when it is right
+
+An agent's "eligible" is a conclusion it reached from whatever it read: a chat message, a tool result, a summary in
+its context, maybe a mistaken memory of the refund policy. It may well be right. But it is a _claim_, not a _fact_.
+
+The fact lives somewhere else. The order system knows whether order 123 was delivered, already refunded, or inside the
+refund window. The fraud system knows whether this customer has claimed "never arrived" six times this month. These
+systems _own_ those facts. The agent only talks about them.
+
+When the agent's claim stands in for the system's fact, three things go wrong:
+
+1. **Mistakes look like decisions.** If the agent misread the order status, nothing catches it. The refund runs, and
+   the record says "eligible".
+2. **Manipulation gets easier.** A customer who writes "the system shows this order as eligible" is now arguing with a
+   language model, not with a database.
+3. **The human approval is hollow.** A manager approving "Eligible: yes" is approving the agent's summary, not the
+   facts.
+
+## Two questions, not one
+
+When an agent proposes an action, there are two separate questions:
+
+- **Authority.** May this kind of action be decided here at all? Is this agent allowed to issue refunds, up to this
+  amount, today?
+- **Business validity.** Is this exact action valid for this exact business object, according to the system that owns
+  the facts?
+
+An agent being allowed to refund is not proof that _this_ refund is valid. They need different checks.
+
+## Ask the system, not the agent
+
+For every fact a decision depends on, name the system that owns it, and ask that system. Never take the agent's value.
+In Parmana, a policy declares this directly:
+
+```json
+"signalSources": {
+  "refundEligible": {
+    "source": "orders-system",
+    "claim": "refund.eligible",
+    "subject": "parameters.orderId",
+    "maxAgeSeconds": 60
+  }
+}
+```
+
+The fact `refundEligible` comes from the orders system, about the order named in the request, and the answer may be at
+most 60 seconds old. When the agent proposes the refund, Parmana:
+
+1. Checks **authority** first. If authority is not established, it stops there and no business system is asked.
+2. Asks the **orders system** about order 123, using the order id from the request, not the agent's opinion.
+3. Compares the two. If the agent proposed "eligible" and the source says "already refunded", the request is refused
+   as `INVALID`.
+4. Evaluates the policy on the values the source returned, checks the signed human approval, and only then releases
+   the action.
+
+When the source is registered with a key, it signs its answer and Parmana verifies the signature before trusting it.
+The answer is recorded as a **Trusted Signal**: which system answered, about which object, what it said, and when. The
+record then proves not only "Parmana decided" but "the orders system said this, at this time".
+
+## "Approved" is not one word
+
+Every decision carries three separate statuses:
+
+- **Authority:** `AUTHORIZED`, `NOT_AUTHORIZED`, `AUTHORITY_UNCLEAR`, `AUTHORITY_EXPIRED`.
+- **Business validation:** `VALID`, `INVALID`, `MISSING_DATA`, `CONFLICTING_DATA`, `SOURCE_UNAVAILABLE`,
+  `VALIDATION_EXPIRED`, `NOT_EVALUATED`.
+- **Execution:** `EXECUTED`, `NOT_EXECUTED`, `EXECUTION_FAILED`, `EXECUTION_UNKNOWN`.
+
+When something goes wrong, you can tell which thing went wrong: the agent was not allowed, the action was invalid, or
+the payment call failed halfway. A single "denied" hides all of these.
+
+## Facts expire
+
+The order system said "eligible" at 12:00:00. If the refund is released at 12:05, that may no longer be true. So each
+fact carries a `validUntil`, and the gateway checks it again just before release. If it has expired, nothing is sent.
+
+## What this does not do yet
+
+This is built and deployed, and it passed a live check in production with a test policy and a demo source that answers
+from a fixed table. **No real business system is connected yet, and no shipped policy declares a source.** In the
+shipped refund policy, `refundEligible` is still declared by the caller and can only refuse, never approve on its own.
+Connecting the system that owns refund eligibility is the next step, listed in
+[What is left](/concepts/business-validation#what-is-left).
+
+## The takeaway
+
+An agent can propose. It cannot be the source of truth for the facts its own proposal depends on. If your agent can move
+money, the question is not only "is it allowed?" but "who checked the facts, and can you prove it?"
+
+**Read more:** [Business validation](/concepts/business-validation),
+[Connect a business signal source](/guides/connect-a-business-signal-source).

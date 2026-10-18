@@ -1,0 +1,232 @@
+---
+title: "Connect an External Agent"
+description: "Complete guide for a new developer: what's needed, why, how to build and send the request, and how to troubleshoot every failure mode, grounded in the actual source, using the real parmana-phinite-agent integration as the worked example."
+---
+
+<Info>
+  Covers the caller (agent) side. The repository's
+  `docs/connectors/CONNECTING_AN_AGENT.md` points here. For what happens after
+  approval (gateway, connector, the real business system), see [Connect any
+  external system](/guides/connect-any-external-system), the [Connector
+  Development Guide](/integrations/connector-development-guide) and
+  `docs/connectors/PAYTM_CONNECTOR.md`.
+</Info>
+
+## The mental model
+
+```text
+AI Agent  --------------------------------------------------->  Parmana
+   |  understands the request, extracts an intent                  |
+   |  never decides whether the action is authorized                |
+   v                                                                v
+"I want to refund order X for ₹500"                    caller auth -> capability check
+                                                         -> CapabilityPolicyBinder
+                                                         -> SignalIntentBinder
+                                                         -> PolicyEngine.evaluate
+                                                         -> APPROVE or REJECT (binary, signed)
+```
+
+The agent proposes an intent. Parmana decides whether it's authorized. Only Parmana's decision can
+unlock execution. If your integration ever lets the agent set a value that determines the outcome ,
+an approval flag, a fraud-check result, a policy name, the model is broken, even if it "works."
+
+## What you need, and why
+
+| #   | You need                                                      | Why                                                                                                                                                         |
+| --- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | A reachable Parmana deployment                                | Nothing to connect to without one.                                                                                                                          |
+| 2   | A capability name (e.g. `paytm:refund`)                       | Parmana authorizes capabilities, not free-form actions. Exact string matching, `refund` ≠ `paytm:refund`.                                                   |
+| 3   | A deployed policy bound to that capability                    | Decides APPROVE/REJECT. Missing → `404`; a version other than the one in effect → `403 POLICY_DENIED`.                                                      |
+| 4   | The policy's exact `signalsSchema`/`boundSignals`             | You must send every referenced signal; any `boundSignals` entry must equal the real `intent.parameters` value or the request is rejected before evaluation. |
+| 5   | An API key scoped to exactly that capability                  | Your agent's identity, see below.                                                                                                                           |
+| 6   | A trusted-signal source that is not the conversation          | Signals must come from an independent business system, never inferred from what the customer said.                                                          |
+| 7   | Real UUID generation                                          | `businessTransactionId` is checked against a UUID shaped regex (versions 1 to 5); anything else is a `400` before any other logic runs.                     |
+| 8   | A registered connector for your capability on this deployment | Without one an approved request is refused with `503 CONNECTOR_NOT_REGISTERED` and nothing runs. See step 8 below.                                          |
+
+## Step by step
+
+**1. Read the policy file directly.** `cat policies/customer-refund/1.2.0/policy.json`; don't guess
+field names from a description. Ask the server which version is in effect:
+`GET /policies/in-effect?capability=paytm:refund`.
+
+**2. Pick the exact capability string.** Case- and character-exact. This single detail is the most
+common integration failure in practice.
+
+**3. Mint a scoped API key:**
+
+```bash
+npx tsx scripts/generate-api-key.ts \
+  --caller-id my-refund-agent \
+  --allowed-capabilities "paytm:refund" \
+  --credential-holder-type SERVICE
+```
+
+Use `SERVICE`, never `"AGENT"`, that value doesn't exist in `AuthorityType`. Never grant `"*"` to a
+single-purpose agent; `/callers/me`'s `unrestrictedCapabilities` is literally
+`allowedCapabilities.includes("*")`.
+
+<Warning>
+  **If you're the deployment operator adding this key** (not just the agent
+  developer): `PARMANA_API_KEYS` is one environment variable holding a JSON
+  **array**. Two real mistakes were made hand-editing a live deployment's value
+  in a hosting dashboard: pasting the new entry as the *entire* value instead of
+  appending it to the array (every caller gets a 500 until fixed, the server
+  fails closed on malformed JSON), and losing existing entries by replacing
+  rather than appending. Always paste the complete array, every existing entry
+  plus the new one. Full account: the 2026-09-15 KMS migration troubleshooting
+  guide (in git history).
+</Warning>
+
+**4. Verify the key before writing agent code:**
+
+```bash
+curl -i "https://<deployment>/callers/me" -H "Authorization: Bearer <key>"
+```
+
+If this fails, fix authentication first, nothing about your agent's request shape is relevant yet.
+
+**5. Wire up real trusted-signal sources** for every field in the policy's `signalsSchema`. Not a
+placeholder to fix later, from day one.
+
+**6. Build the request:**
+
+<Warning>
+  **This example was missing `metadata` until 2026-09-14**, found while running
+  [End-to-end: agent → Parmana → Paytm](/guides/end-to-end-paytm-flow) against a real
+  deployment. Omitting it fails with
+  `{"error":"metadata.businessTransactionId must match businessTransactionId."}` (400),
+  before policy is ever evaluated. It's now included below.
+</Warning>
+
+```json
+{
+  "businessTransactionId": "<uuid v4>",
+  "metadata": {
+    "businessTransactionId": "<same uuid v4 as above>"
+  },
+  "authority": {
+    "authorityId": "<uuid>",
+    "authorityType": "SERVICE",
+    "principalId": "my-refund-agent",
+    "issuedAt": "<iso8601>"
+  },
+  "authorization": {
+    "authorizationId": "<uuid>",
+    "authorityId": "<uuid>",
+    "purpose": "Authorize Paytm customer refund",
+    "issuedAt": "<iso8601>"
+  },
+  "intent": {
+    "intentId": "<uuid>",
+    "authorizationId": "<uuid>",
+    "action": "paytm:refund",
+    "target": "<orderId>",
+    "parameters": {
+      "orderId": "<orderId>",
+      "transactionId": "<txnId>",
+      "amount": 500
+    },
+    "createdAt": "<iso8601>"
+  },
+  "policy": {
+    "name": "customer-refund",
+    "version": "1.2.0",
+    "schemaVersion": "1.0.0"
+  },
+  "signals": {
+    "refundEligible": true,
+    "managerApproved": true,
+    "fraudCheckPassed": true,
+    "refundAmount": 500,
+    "approvalArtifact": {
+      "...": "the signed manager approval for this order and amount"
+    }
+  },
+  "status": "RECEIVED"
+}
+```
+
+`policy.name`/`policy.version` is never inferred from `intent.action`: name it explicitly, or a
+caller could pair a real capability with an unrelated policy. Under `customer-refund` 1.2.0 every
+refund needs a signed manager approval (G-75); without one the request is refused with `403
+POLICY_DENIED`, whatever your agent declares about eligibility and fraud.
+
+**7. Send it, handle the response**, see the complete reference table below.
+
+**8. Confirm a connector is registered** for your capability on this deployment. A `200` means
+the action was released and executed and its Trust Record signed; with no connector the answer is
+`503 CONNECTOR_NOT_REGISTERED` and nothing ran. To practise end to end with nothing installed, use
+the public sandbox's `sandbox:receipt` ([Playground](/playground)). To connect your own system
+without code, see [Connect any external system](/guides/connect-any-external-system).
+
+**9. Verify independently**: `GET /refusal/:id` + `POST /refusal/verify` for a rejection,
+`GET /trust-records/:id` (only once a connector is wired) for an execution, or fully offline with
+`verifyExecutionTrustRecordOffline`.
+
+## Complete response reference
+
+Every row is what the server returns today (2026-10-02); the [Error
+catalog](/api-reference/error-catalog) has every code.
+
+| Status | `code`                                                | Meaning                                                                                                                                                                                 | Do this                                                                                                                                        |
+| ------ | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `200`  | none                                                  | Approved, released to the connector, executed, and the signed Execution Trust Record is the response.                                                                                   | Record the `trustRecordId`. This is the only answer that means the action ran.                                                                 |
+| `400`  | none                                                  | Invalid `businessTransactionId`, malformed JSON, or a field that breaks the transaction's own rules.                                                                                    | Fix the request: the message names the field.                                                                                                  |
+| `401`  | none                                                  | No key, or a key the server does not know.                                                                                                                                              | Check the key with `GET /callers/me`.                                                                                                          |
+| `403`  | none                                                  | Your key may not assert this `authority.principalId`.                                                                                                                                   | Use your own `callerId`, or ask the operator for `allowedPrincipalIds`.                                                                        |
+| `403`  | `CAPABILITY_NOT_ALLOWED`                              | `intent.action` is not in your key's `allowedCapabilities`. **The most common real bug.**                                                                                               | Compare `/callers/me`'s `allowedCapabilities` with your `intent.action`, character for character.                                              |
+| `403`  | `POLICY_DENIED`                                       | The policy refused: a rule matched, the approval is missing, expired, for something else or already used, or the policy version is not the one in effect. The message names the reason. | Respect it. For a missing approval, get a signed approval and send a **new** request. Never retry with altered parameters.                     |
+| `404`  | none                                                  | `policy.name` or `version` does not exist on this deployment.                                                                                                                           | Ask `GET /policies/in-effect?capability=...`.                                                                                                  |
+| `409`  | none                                                  | `businessTransactionId` already used.                                                                                                                                                   | Read what happened to it, see [Idempotency](/api-reference/idempotency-and-nonces).                                                            |
+| `429`  | `RATE_LIMITED`                                        | Too many requests for this key.                                                                                                                                                         | Wait for `Retry-After`, then retry the same request.                                                                                           |
+| `502`  | `EXECUTION_OUTCOME_UNKNOWN`                           | Released, but the call to the connector failed. It may have run.                                                                                                                        | **Do not send it again as a new transaction.** The operator checks the target system and resolves the intent.                                  |
+| `503`  | `CONNECTOR_NOT_REGISTERED`                            | Approved, but no connector serves this capability here. Nothing ran.                                                                                                                    | The operator configures the connector; then send a new request.                                                                                |
+| `503`  | `SIGNING_UNAVAILABLE`, `EXECUTION_INTENT_UNAVAILABLE` | The server could not sign or store evidence before release. Nothing ran.                                                                                                                | Retry later with a new `businessTransactionId`.                                                                                                |
+| `500`  | `EXECUTION_RECORD_INCOMPLETE`                         | Released, then the Trust Record could not be stored. The action ran.                                                                                                                    | **Do not send it again.** The operator finalizes the intent.                                                                                   |
+| `500`  | none                                                  | Anything unexpected, including a gateway rejection of a tampered envelope.                                                                                                              | Ask the operator to read the server log before assuming your request was wrong.                                                                |
+| (none) | none                                                  | Timeout or network error. Unknown whether Parmana received it; an approved request can take tens of seconds (G-84).                                                                     | Set the timeout to 120 seconds. After a timeout, read `GET /trust-records/{id}` and `GET /refusal/{id}` with the same id before anything else. |
+
+## Common mistakes
+
+- Capability string mismatch between `intent.action` and your key's `allowedCapabilities`.
+- `authorityType: "AGENT"`, invalid; use `"SERVICE"`.
+- A signal inferred from the customer's words instead of an independent business system.
+- Treating `POLICY_DENIED` as a bug instead of a correct decision.
+- Treating a timeout as a failure and sending the action again under a new id.
+- Granting `"*"` "to get it working" and never narrowing it.
+- Hand-editing `PARMANA_API_KEYS` by pasting a single entry instead of the complete array.
+- Assuming a bare `500` means your request was wrong: ask for the server log first.
+
+## Reference implementation
+
+`pavancharak/parmana-phinite-agent` is a real, working implementation of every step above. Two bugs
+were found and fixed in it: the exact `CAPABILITY_NOT_ALLOWED` mistake from the table above
+(`"refund"` instead of `"paytm:refund"`), and error handling that crashed instead of resolving
+unrecognized failures to an unresolved client-side state. See that repository's README for the full
+writeup.
+
+**Second round, entirely on Parmana's own side (2026-09-15/16):** after those agent-side fixes, this
+same integration hit a sequence of purely Parmana-operator issues onboarding as a new caller on a
+freshly KMS-migrated deployment: no `PARMANA_API_KEYS` entry at all (401) → a malformed hand-edited
+entry (500 for every caller) → no `allowedPrincipalIds` grant for the asserted principal (403) → a
+genuine Parmana-side bug where the gateway's signing and verification paths silently used different
+keys after a KMS migration (500, unrelated to the request itself ,
+`examples/tutorials/114-signing-verification-key-agreement/` reproduces it). None of these were agent
+bugs. Full account: the 2026-09-15 KMS migration troubleshooting guide (in git history).
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Add a connector" icon="plug" href="/guides/add-a-connector">
+    What happens after APPROVED: Execution Gateway, connector dispatch,
+    execution evidence.
+  </Card>
+  <Card
+    title="Live API and Demos"
+    icon="server"
+    href="/guides/live-api-and-demos"
+  >
+    Call the real, deployed Parmana API directly and see what's and isn't wired
+    on it today.
+  </Card>
+</CardGroup>

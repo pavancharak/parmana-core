@@ -1,0 +1,67 @@
+{
+  "verificationId": "verification-000001",
+
+  "trustRecordId": "etr-000001",
+
+  "verifiedAt": "2026-01-01T09:05:04Z",
+
+  "status": "VERIFIED",
+
+  "result": "PASS",
+
+  "algorithm": {
+    "hash": "SHA-256",
+    "signature": "Ed25519"
+  },
+
+  "checks": [
+    {
+      "name": "Execution Trust Record Exists",
+      "status": "PASS"
+    },
+    {
+      "name": "Trust Record Integrity",
+      "status": "PASS"
+    },
+    {
+      "name": "Decision Integrity",
+      "status": "PASS"
+    },
+    {
+      "name": "Policy Reference",
+      "status": "PASS"
+    },
+    {
+      "name": "Signal Integrity",
+      "status": "PASS"
+    },
+    {
+      "name": "Execution Evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "Receipt Chain",
+      "status": "PASS"
+    }
+  ],
+
+  "summary": {
+    "checksPerformed": 7,
+    "checksPassed": 7,
+    "checksFailed": 0
+  },
+
+  "verifiedArtifacts": {
+    "authority": "authority-finance-manager-001",
+    "authorization": "authorization-vendor-payment-001",
+    "intent": "intent-vendor-payment-001",
+    "businessTransaction": "txn-vendor-payment-000001",
+    "policy": {
+      "policyId": "vendor-payment",
+      "policyVersion": "2.0.0"
+    },
+    "executionTrustRecord": "etr-000001"
+  },
+
+  "message": "Execution Trust Record successfully verified. All integrity, policy, and execution evidence checks passed."
+}

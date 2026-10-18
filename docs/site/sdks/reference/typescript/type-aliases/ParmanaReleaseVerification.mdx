@@ -1,0 +1,49 @@
+---
+title: "Type Alias: ParmanaReleaseVerification"
+---
+
+> **ParmanaReleaseVerification** = \{ `valid`: `true`; `release`: [`ParmanaRelease`](/sdks/reference/typescript/interfaces/ParmanaRelease); `alreadyExecuted`: `boolean`; `errors`: readonly \[\]; \} \| \{ `valid`: `false`; `errors`: readonly `string`[]; \}
+
+Defined in: [typescript/src/crypto/release.ts:117](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/release.ts#L117)
+
+## Union Members
+
+### Type Literal
+
+\{ `valid`: `true`; `release`: [`ParmanaRelease`](/sdks/reference/typescript/interfaces/ParmanaRelease); `alreadyExecuted`: `boolean`; `errors`: readonly \[\]; \}
+
+#### valid
+
+> `readonly` **valid**: `true`
+
+#### release
+
+> `readonly` **release**: [`ParmanaRelease`](/sdks/reference/typescript/interfaces/ParmanaRelease)
+
+#### alreadyExecuted
+
+> `readonly` **alreadyExecuted**: `boolean`
+
+True: answer with the result you stored the first time, and do
+not act again.
+
+#### errors
+
+> `readonly` **errors**: readonly \[\]
+
+---
+
+### Type Literal
+
+\{ `valid`: `false`; `errors`: readonly `string`[]; \}
+
+#### valid
+
+> `readonly` **valid**: `false`
+
+#### errors
+
+> `readonly` **errors**: readonly `string`[]
+
+Every failed check, in plain words, in the order checked:
+shape, signature, audience, expiry.

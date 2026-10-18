@@ -1,0 +1,272 @@
+---
+title: "Chapter 3: Cryptography"
+description: "packages/crypto is where every signature Parmana produces or checks actually happens:"
+---
+
+## What it is
+
+`packages/crypto` is where every signature Parmana produces or checks actually happens:
+signing an `ExecutionTrustRecord`, an `ExecutionAuthorization`, a `Receipt`, a `PolicyChangeApprovalRecord`,
+a caller-audit chain entry, and verifying every one of those independently. It provides a
+pluggable set of hash and signature algorithms, a deterministic serialization step every one
+of them depends on, and two key-custody models: local files on disk, and AWS KMS
+("sign-without-release," the private key never leaves KMS).
+
+## Why it was built
+
+The trust model in Chapter 1 is only as strong as the signatures backing it. Every artifact
+in the chain of custody claims to be "signed by Parmana," and that claim needs to be checkable
+by a third party who was never in the room, using nothing but the public key and the artifact
+itself. That requirement drives three design choices covered below: canonical serialization
+(so the same logical content always produces the same bytes to sign, regardless of how it was
+constructed in memory), a `Signer` abstraction separate from `KeyProvider` (so a key that can
+never be exported, like an AWS KMS key, is a first-class option, not a workaround), and hybrid
+signing (so a future break of one algorithm doesn't retroactively invalidate everything signed
+under it, as long as a second algorithm was also applied).
+
+## How it works
+
+### `CanonicalSerializer`: the thing every signature is actually computed over
+
+`packages/crypto/src/CanonicalSerializer.ts` is nineteen lines of `normalize()` plus a
+`serialize()` that runs `JSON.stringify` over the result. The normalization rule: objects
+have their keys recursively sorted lexicographically before serialization; arrays keep their
+original order (element order is meaningful, key order in an object is not); `Date` becomes
+its ISO string; everything else passes through unchanged. This single function is what makes
+two logically-identical objects with different key insertion order, or objects that came from
+different sources (a hand-typed JSON literal vs. a value round-tripped through a Postgres
+JSONB column, which does not guarantee to preserve key order) hash and sign identically.
+Every cryptographic operation in this codebase is required to go through it, `ArtifactSigner.sign()`,
+`TrustRecordHasher.hash()`, and every `*Crypto` class (`PolicyChangeCrypto`, `RefusalCrypto`,
+`VerificationCrypto`, `AuditEventCrypto`) all construct their own `CanonicalSerializer`
+instance rather than hashing raw `JSON.stringify` output directly.
+
+A real, recent incident makes the "array order still matters" half of that rule concrete: on
+2026-09-16, a batch of policy approvals initially appeared to fail a content-hash check purely
+because a database round-trip had reordered object keys in the stored `proposedContent`, that
+turned out to be a red herring, since `CanonicalSerializer` normalizes object key order
+away. The real, separate finding underneath it was that the stored content was missing an
+entire field (`unboundSignalReasons`, and for two policies, `boundSignals`) relative to the
+current file, a genuine content difference no amount of key-order normalization could paper
+over. See `docs/CLAIMS.md` §2.26's "Legacy-policy backfill" entry for the full account ,
+worth reading as a caution against assuming a hash mismatch has an obvious cause before
+actually diffing the two objects field by field.
+
+### Hash and signature providers: pluggable, registered, resolved through `CryptoBootstrap`
+
+`packages/crypto/src/providers/hash/SHA256HashProvider.ts` implements `HashProvider`: one
+method, `hash(data: Uint8Array): Promise<string>`, returning a hex digest via Node's
+`node:crypto` `createHash("sha256")`. Two more hash algorithms (`sha3-512`, `blake3`) are
+recognized by `Config.ts`'s validation but have no registered provider class yet, selecting
+either at the config layer would fail when `HashRegistry.get()` tries to resolve them; `sha256`
+is the only one with a real implementation.
+
+Signature providers implement `SignatureProvider` (`sign`/`verify`, plus a readonly
+`algorithm` field): `Ed25519SignatureProvider.ts` (46 lines, wraps `node:crypto`'s `sign`/`verify`
+with no options object, i.e. pure Ed25519, not Ed25519ph) and `Dilithium3SignatureProvider.ts`
+(53 lines, near-identical shape, using Node's native `"ml-dsa-65"` key type, this is the
+ML-DSA-65/FIPS 204 standard, and `ConfigValidation.ts` accepts the string `"ml-dsa-65"` as a
+config-time alias that resolves to the same internal `"dilithium3"` identifier, so an operator
+can write either name in `PRIMARY_SIGNATURE_PROVIDER`). ML-DSA-65 signatures are randomized ,
+signing the same message twice with the same key produces two different, both valid,
+signatures, noted directly in that provider's own doc comment, worth knowing before assuming
+a signature mismatch across two runs means something is broken. `MlDsaSupport.ts` detects at
+runtime (cached after first call) whether the current Node/OpenSSL build actually supports
+`generateKeyPairSync("ml-dsa-65")`, this requires Node ≥24 with OpenSSL ≥3.5; tests that need
+it skip cleanly with `ML_DSA_65_SKIP_REASON` on older runtimes rather than failing. Two more
+algorithms (`ecdsa-p256`, `sphincs-plus`) are recognized by config validation with no
+registered provider at all.
+
+`CryptoBootstrap.create()` is the actual resolution point: it builds a `CryptoProvider`
+(hash + signature bundled) by registering the built-in providers into `HashRegistry`/
+`SignatureRegistry` and selecting by whatever `loadConfig().crypto.hashProvider`/
+`primarySignatureProvider` say. `createHybrid()` builds both primary and secondary providers
+at once, throwing if `CRYPTO_MODE=hybrid` but no `SECONDARY_SIGNATURE_PROVIDER` is set.
+`ProviderFactory` (`providers/ProviderFactory.ts`) is a three-line compatibility wrapper
+around `CryptoBootstrap.create()`, nothing more.
+
+### `Signer` vs. `KeyProvider`: two abstractions for a real constraint
+
+`KeyProvider` (`KeyProvider.ts`) has a `getPrivateKey(keyId): Promise<KeyObject>` method, it
+assumes the caller can obtain the raw private key material. That assumption is structurally
+false for AWS KMS, an HSM, or Vault Transit, where the entire point is that the private key
+never leaves the custody boundary. `Signer` (`Signer.ts`) exists for exactly that case: it
+drops `getPrivateKey` and adds `sign(keyId, data): Promise<string>` instead, the backend
+signs on the caller's behalf and only ever returns a signature, never key material. Read
+operations (`getPublicKey`, `getMetadata`, `hasKey`, `listKeys`) are identical on both
+interfaces, since verification never needed private key material regardless of custody model.
+
+Two implementations exist for each side today. `FileKeyProvider` (`providers/key/FileKeyProvider.ts`,
+192 lines) reads `<keyId>.private.pem`/`<keyId>.public.pem` from `PARMANA_KEY_DIR`, this is
+the only real `KeyProvider`, and `KeyBootstrap.create()` (Chapter 2) throws for any other
+`KEY_PROVIDER` value rather than silently falling back to it. `LocalFileSigner` wraps that
+same file-reading logic behind the `Signer` interface (so `local` custody works through either
+abstraction), and `KmsSigner` (`providers/signer/KmsSigner.ts`, 217 lines) is the real AWS KMS
+implementation, resolved only through `SignerBootstrap`, never through `KeyBootstrap`.
+
+### `KmsSigner`: sign-without-release, against real AWS KMS
+
+`KmsSigner` supports exactly one key spec/algorithm pair ,
+`ECC_NIST_EDWARDS25519`/`ED25519_SHA_512`, matching this codebase's `ed25519` default, noted
+in-source as deliberate: AWS KMS added Ed25519 support in November 2025, so adopting it needed
+no signature-algorithm migration. `sign()`/`getPublicKey()`/`getMetadata()`/`hasKey()` each
+call a real `KMSClient` command (`SignCommand`, `GetPublicKeyCommand`, `DescribeKeyCommand`);
+`listKeys()` returns only the logical ids this process signs with (`default` and the current
+`PARMANA_VERIFICATION_KEY_ID`), each if its alias exists, so `GET /.well-known/jwks.json`
+answers under KMS. It does not enumerate the account's keys: an account wide list would
+publish keys unrelated to Parmana. (Before 2026-10-03 it was unimplemented, and the endpoint
+answered `501` in production.)
+
+Credentials are never a static access key/secret pair read from this codebase's own
+configuration. If `AWS_ROLE_ARN` is set, `KmsSigner` dynamically imports the optional
+`@vercel/oidc-aws-credentials-provider` peer dependency and exchanges Vercel's per-invocation
+OIDC token for short-lived STS credentials; otherwise it falls back to the AWS SDK's own
+default credential provider chain.
+
+**`resolveKmsKeyId()`** is a small, standalone, exported function (`KmsSigner.ts`) that
+matters more than its size suggests. Every real signing call site in this codebase passes a
+_logical_ keyId, `"default"`, or a tenant-scoped `"tenant.acme"`, never a raw AWS identifier.
+AWS KMS's `KeyId` parameter requires a real key ID (UUID), a full ARN, or an alias name/ARN
+(which must carry the `alias/` prefix); a bare `"default"` matches none of those and AWS
+rejects it outright. `resolveKmsKeyId()` maps a bare logical keyId to `alias/<keyId>`
+(mirroring `FileKeyProvider`'s own `<keyId>.private.pem` filename convention), with each `.`
+replaced by `/` because KMS alias names cannot contain a dot, so `"tenant.acme"` is
+`alias/tenant/acme`. It passes an explicit `alias/` name through unchanged, and refuses AWS's
+reserved `alias/aws/` prefix. It refuses a full key ARN: a keyId often comes from
+the record being verified, and an ARN can name a key in another AWS account whose public key
+anyone may read (audit, 2026-10-03). A UUID shaped keyId is treated as an alias name, never as a
+raw key ID. This was a real bug,
+found by code review before any production traffic hit it: the very first version of this
+class passed the logical keyId straight through, which meant `KmsSigner.sign("default", data)`
+would have called AWS with `{ KeyId: "default" }` and failed immediately on every real
+signing attempt. Because of this function, `alias/default` has to actually exist in AWS, it
+is not a naming convenience, it is the literal resolution target for the logical id every call
+site already uses.
+
+### Large messages: the 4096 byte KMS limit and the commitment scheme
+
+AWS KMS refuses a raw Ed25519 message longer than 4096 bytes. `KmsSigner.sign()` originally passed the
+full canonical bytes of whatever it was signing, so signing a full `ExecutionTrustRecord` (with its
+bound authorization, connector evidence and governance anchor) failed with `ValidationException:
+Member must have length less than or equal to 4096`. It was found in production on 2026-09-20,
+because earlier KMS tests only used the small `test:fixture-execute` record (ADR-0010,
+`docs/VERIFICATION-GAPS.md` gap 59).
+
+The fix is `packages/crypto/src/SignatureCommitment.ts`. A message of 4096 bytes or fewer is signed
+raw, exactly as before. A longer message is signed as a fixed 97 byte commitment: the prefix
+`PARMANA-ED25519-LARGE-MESSAGE-V1`, a NUL byte, and the SHA-512 digest of the message. The signature is
+still ordinary Ed25519. The scheme depends only on message length, so nothing is stored on a record to
+say which form was used, and every signature issued before the change verifies unchanged.
+
+Verification lives in `Ed25519SignatureProvider.verify()`, which every TypeScript verification path goes
+through. It tries the raw signature first, and only for a message over 4096 bytes also tries the
+commitment form. A commitment signature over a small message is rejected, so a small message cannot be
+downgraded to the commitment form. The prefix contains a NUL byte, which a canonical JSON message never
+starts with, so the two forms cannot be confused.
+
+Two consequences worth knowing. A verifier written elsewhere has to implement the same rule to verify a
+large record signed under KMS, and the Python SDK's offline verifier already does. This also does not
+change the order of operations in a request: the connector is still called before the Execution Trust
+Record is signed. Since ADR-0012 a signed Execution Intent is stored before the connector is called, so a
+released action always has signed evidence behind it (Chapter 8).
+
+### `SignerKeyProviderAdapter`: closing a real signing/verification divergence
+
+`providers/SignerKeyProviderAdapter.ts` is the fix for the most serious of the real incidents
+this migration produced, found against live production traffic on 2026-09-16 (see
+`docs/VERIFICATION-GAPS.md` G-48/G-49 and the KMS migration troubleshooting guide's item 7).
+The bug: `EnvelopeVerifier.resolveKey()` uses a `KeyProvider` to look up the public key for
+_every_ authorization it verifies, including ones signed under the plain `"default"` keyId ,
+not only tenant-scoped ones, contrary to an earlier assessment in this same codebase's own
+comments that this path was "currently inert." `createExecutionGateway.ts` unconditionally
+constructed a fresh `new FileKeyProvider()` for that lookup, regardless of `KEY_PROVIDER`. Once
+`KEY_PROVIDER=aws-kms` was set, every authorization was _signed_ by the real KMS key (via
+`SignerBootstrap`) but _verified_ against whatever stale local `default.public.pem` happened
+to still be materialized from a pre-migration `PARMANA_KEY_MATERIAL_JSON` entry. Signing and
+verification silently used two different keys, every real request's `signatureVerified`
+check (and everything that cascades from it: `businessTransactionHashMatches`, `nonceUnseen`)
+failed. `SignerKeyProviderAdapter` closes this by wrapping the _same_ `Signer` instance
+`createGatewayPublicKey()` already uses, so signing and per-authorization verification now
+resolve through one identical source, KMS-backed or file-backed, whichever `KEY_PROVIDER`
+actually says.
+
+### `HybridSignatureProvider`: two independent signatures, fail-closed on either
+
+`HybridSignatureProvider.ts` is not a `SignatureProvider` implementer, that interface signs
+with exactly one key and produces exactly one signature. Hybrid mode needs two of each.
+`sign()` produces a fixed `[primary, secondary]` pair of `SignatureEntry` values; `verify()`
+requires _exactly_ two entries, one matching each configured algorithm, both independently
+verified, a missing, extra, duplicated, or mismatched-algorithm entry is rejected outright,
+never a partial pass. The stated purpose (its own doc comment) is "harvest now, decrypt/forge
+later" defense for the classical-to-post-quantum transition: if a future quantum computer ever
+breaks the classical primary algorithm, the post-quantum secondary signature alone still
+holds, and vice versa if a weakness is ever found in the newer PQ scheme instead.
+`HYBRID_SIGNATURE_REQUIRED=true` (Chapter 2) makes `VerificationCrypto` reject any record
+whose `signatures` array is absent or partial, rather than silently falling back to the legacy
+single-signature check, off by default so turning `CRYPTO_MODE=hybrid` on never retroactively
+invalidates records signed before that flag was set.
+
+### A note on what `.env.example` gets wrong
+
+`.env.example`'s comment on `KEY_PROVIDER` states that only `local` has an implementing class
+and that setting it to anything else "does nothing." That was true when written and is no
+longer true: `SignerBootstrap.ts` implements `aws-kms` for real. Separately, a live `.env` in
+this repository was observed carrying `KMS_REGION` and `KMS_KEY_ALIAS` variables, neither
+name is read anywhere in `packages/*/src` (confirmed by a repo-wide grep returning zero
+matches). The variables `KmsSigner`/`assertKmsSigningKeyReachable` actually read are
+`AWS_REGION` and `AWS_ROLE_ARN`. If you are configuring KMS custody for a real deployment, set
+those two, not `KMS_REGION`/`KMS_KEY_ALIAS`, the latter pair currently does nothing at all.
+
+## How it enables things, with a concrete example
+
+- `examples/tutorials/113-kms-key-id-resolution` exercises `resolveKmsKeyId()` directly against
+  six real input shapes (bare logical id, tenant-scoped id, already-qualified alias, full ARN,
+  reserved `alias/aws/` name, raw UUID), no AWS credentials needed since it's a pure string-mapping function.
+- `examples/tutorials/114-signing-verification-key-agreement` exercises the
+  `SignerKeyProviderAdapter` fix, proving signing and verification now resolve through the
+  same key source.
+- `examples/tutorials/47-canonical-json` demonstrates `CanonicalSerializer`'s normalization
+  behavior directly.
+- `packages/crypto/tests/unit/kms-signer.test.ts` and `signer-key-provider-adapter.test.ts`
+  are the permanent, mocked-AWS-SDK regression coverage for both fixes above; the KMS
+  migration's own troubleshooting guide notes a real, one-time end-to-end test was also run
+  against actual AWS KMS before this coverage was trusted, then deleted once confirmed.
+
+## How to validate this yourself
+
+- `packages/crypto/src/CanonicalSerializer.ts`, read the whole file, it's short and the
+  normalization rule is the single most load-bearing piece of logic in this chapter.
+- `packages/crypto/src/CryptoBootstrap.ts`, `KeyBootstrap.ts`, `SignerBootstrap.ts`, the
+  three composition roots (Chapter 2 also covers these from the config-and-startup angle).
+- `packages/crypto/src/Signer.ts`, `KeyProvider.ts`, the two interfaces, both with doc
+  comments explaining exactly why they're separate.
+- `packages/crypto/src/providers/signer/KmsSigner.ts`, `providers/SignerKeyProviderAdapter.ts` ,
+  the real AWS KMS implementation and the incident it closes.
+- the 2026-09-15 KMS migration troubleshooting guide (in git history), the real incident
+  timeline this chapter draws from; each entry names its symptom, root cause, and fix
+  separately, and is worth reading end to end for the migration's own stated lesson: "a
+  migration that changes _where_ a system's trust boundary sits needs to be verified against
+  the real target platform's actual runtime behavior, not just a mocked test double of it."
+- `docs/VERIFICATION-GAPS.md` G-48/G-49, the ledger entries for the `SignerKeyProviderAdapter`
+  fix specifically.
+
+## Integration requirements
+
+For local-file signing (the default): `PARMANA_KEY_DIR` pointing at a directory containing
+`default.private.pem`/`default.public.pem` (Ed25519 PEM pair), or `PARMANA_KEY_MATERIAL_JSON`
+set so the process materializes them itself at startup.
+
+For AWS KMS signing: `KEY_PROVIDER=aws-kms`, `AWS_REGION` set, an Ed25519 KMS key
+(`ECC_NIST_EDWARDS25519` key spec) with an alias matching your logical keyId (`alias/default`
+for the default signing key), and either `AWS_ROLE_ARN` (for Vercel OIDC federation) or a
+real AWS credential chain reachable in the runtime environment. `@vercel/oidc-aws-credentials-provider`
+is an optional peer dependency, only needed if `AWS_ROLE_ARN` is set. Note the Vercel-specific
+cold-start constraint from the troubleshooting guide's item 3: on Vercel specifically, KMS
+calls that need the OIDC token cannot run at module top level, they need a real in-flight
+HTTP request to read the token header from. A long-running process (`server.ts`) is not
+subject to this, since it calls `assertKmsSigningKeyReachable()` once at real process startup,
+not per-request.
+
+For hybrid mode: `CRYPTO_MODE=hybrid`, `SECONDARY_SIGNATURE_PROVIDER` set to a different
+algorithm than `PRIMARY_SIGNATURE_PROVIDER`, and a second key pair present at
+`<PARMANA_KEY_DIR>/default-secondary.{private,public}.pem`.

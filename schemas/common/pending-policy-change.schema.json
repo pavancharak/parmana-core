@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/pending-policy-change.schema.json",
+  "title": "Pending Policy Change",
+  "description": "A proposed change to a policy's content, held in a durable pending state until a second, distinct human explicitly approves or rejects it (Policy Governance, maker-checker). Only ever moves from PENDING_APPROVAL to APPROVED or REJECTED, exactly once.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "pendingPolicyChangeId",
+    "policyName",
+    "policyVersion",
+    "proposedContent",
+    "proposedBy",
+    "proposedAt",
+    "status",
+    "reason"
+  ],
+  "properties": {
+    "pendingPolicyChangeId": {
+      "type": "string",
+      "description": "Unique Pending Policy Change identifier."
+    },
+    "policyName": {
+      "type": "string",
+      "description": "The policy this proposal targets, same identifier as Policy.policyId."
+    },
+    "policyVersion": {
+      "type": "string",
+      "description": "The existing version this proposal is a change against (\"the version being replaced\"). Not necessarily equal to proposedContent's own declared version: an in-place patch and a version bump are both legitimate."
+    },
+    "proposedContent": {
+      "type": "object",
+      "description": "The full proposed policy.json content, in its entirety, not a diff or patch.",
+      "additionalProperties": true
+    },
+    "proposedBy": {
+      "type": "string",
+      "description": "Identity of the proposer (maker). Always a human-authenticated (credentialHolderType USER) caller."
+    },
+    "proposedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["PENDING_APPROVAL", "APPROVED", "REJECTED"]
+    },
+    "reason": {
+      "type": "string",
+      "description": "Free-text justification from the proposer, required at creation."
+    },
+    "resolvedBy": {
+      "type": "string",
+      "description": "Identity of the resolver (checker). Absent while PENDING_APPROVAL. Never equal to proposedBy."
+    },
+    "resolvedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Absent while PENDING_APPROVAL."
+    },
+    "rejectionReason": {
+      "type": "string",
+      "description": "Present only when status is REJECTED."
+    },
+    "coverageWarnings": {
+      "type": "array",
+      "description": "Present only when non-empty: uncovered-fact warnings from PolicyValidator.findUncoveredFacts against proposedContent.",
+      "items": { "type": "string" }
+    },
+    "ruleConflicts": {
+      "type": "array",
+      "description": "Present only when non-empty: advisory rule-conflict warnings from PolicyValidator.findRuleConflicts against proposedContent, never blocking.",
+      "items": { "type": "string" }
+    }
+  },
+  "examples": [
+    {
+      "pendingPolicyChangeId": "6f4e4020-adf5-4449-938d-27aab58f66b7",
+      "policyName": "openapi-capture-demo",
+      "policyVersion": "1.0.0",
+      "proposedContent": {
+        "policyId": "openapi-capture-demo",
+        "policyVersion": "1.0.0",
+        "schemaVersion": "1.0.0",
+        "rules": [
+          {
+            "id": "always-approve",
+            "condition": { "always": true },
+            "outcome": {
+              "action": "approve",
+              "reason": "OpenAPI spec capture fixture"
+            }
+          }
+        ]
+      },
+      "proposedBy": "human-maker",
+      "proposedAt": "2026-09-15T03:47:13.920Z",
+      "status": "APPROVED",
+      "reason": "Capture a real Pending Policy Change for the OpenAPI spec",
+      "resolvedBy": "human-checker",
+      "resolvedAt": "2026-09-15T03:48:03.586Z"
+    }
+  ]
+}

@@ -1,0 +1,143 @@
+---
+title: "Choose a Signature Provider"
+description: "Ed25519 by default, ML-DSA-65 (post-quantum) as a configured alternative, and hybrid signing with both at once. What each one actually requires and costs."
+---
+
+<Info>**[AVAILABLE]**, all three runs below are real output, Node 24.</Info>
+
+## Goal
+
+Sign and verify with Ed25519, then ML-DSA-65, then both together, and understand the one
+real cost difference between them: ML-DSA-65 signatures are randomized, Ed25519's are not.
+
+<Note>
+  **Production signs with AWS KMS, and KMS signing is Ed25519 only.** With
+  `KEY_PROVIDER=aws-kms`, `KmsSigner` accepts only an `ECC_NIST_EDWARDS25519`
+  key and fails closed on any other key spec. ML-DSA-65 and hybrid signing below
+  use local keys (`KEY_PROVIDER=local`). See [AWS KMS
+  signing](/deployment/aws-kms-signing).
+</Note>
+
+## Prerequisites
+
+- **Node ≥ 24** for native `node:crypto` ML-DSA-65 support, this is a hard requirement, not
+  a recommendation.
+- A gateway or default key already generated for local dev (see [Quickstart](/quickstart)).
+
+## Steps
+
+### 1. Ed25519, the default
+
+```bash
+node_modules/.bin/tsx examples/tutorials/50-ed25519/run.ts
+```
+
+```
+Algorithm : ed25519
+Key ID    : default
+
+Ed25519 Verification
+--------------------------------------------------
+Signature : KpXZRodXH7USoCihwL47+m4OZYVQkzQj4aOrb3rRelvjwSqro8rqWCowyhW7+SjBrMiRmciUyCZIK55MpcXnAg==
+Verified : true
+```
+
+### 2. ML-DSA-65, opt-in
+
+Set `PRIMARY_SIGNATURE_PROVIDER=dilithium3` before `CryptoBootstrap.create()` runs (the
+codebase calls this algorithm `dilithium3` throughout, its formal name is ML-DSA-65, FIPS
+204), and sign with the `pq` key instead of `default`:
+
+```bash
+node_modules/.bin/tsx examples/tutorials/51-dilithium3/run.ts
+```
+
+```
+Algorithm : dilithium3
+Key ID    : pq
+
+Dilithium3 Verification
+--------------------------------------------------
+Signature Length : 4412 characters
+Verified : true
+```
+
+Compare the signature lengths: Ed25519's is 88 base64 characters, ML-DSA-65's is 4,412.
+That's roughly 50x larger, a real bandwidth and storage cost, not just a config flag flip.
+
+<Warning>
+  **Run this twice and the signature will differ both times, even with the same
+  key and the same message.** ML-DSA-65 signatures are randomized, not
+  deterministic. Only *verification* is deterministic. Don't build tooling,
+  caching, or dedup logic that assumes identical input produces an identical
+  ML-DSA-65 signature, it won't.
+</Warning>
+
+### 3. Hybrid: both at once
+
+```bash
+node_modules/.bin/tsx examples/tutorials/52-hybrid-signatures/run.ts
+```
+
+```
+Algorithm : ed25519
+Key ID    : default
+Length    : 88 characters
+
+Algorithm : dilithium3
+Key ID    : default-secondary
+Length    : 4412 characters
+
+Verified : true
+```
+
+`CryptoBootstrap.createHybrid()` builds both a primary and secondary `CryptoProvider` from
+`PRIMARY_SIGNATURE_PROVIDER` and `SECONDARY_SIGNATURE_PROVIDER`, and produces one bundle
+signed by both. The secondary key's id is `default-secondary` (`PARMANA_VERIFICATION_SECONDARY_KEY_ID`,
+see [Cryptography](/cryptography/overview)), not `pq`, that key id is only used by the
+standalone Dilithium3 tutorial above. This is the migration path: an artifact signed by both
+algorithms can be verified by a consumer that only trusts one of them yet, while you migrate
+the rest.
+
+## Verify
+
+All three runs above printed `Verified : true` for the algorithm(s) they exercised. The
+hybrid run's two signature lengths (88 and 4,412 characters) match the standalone Ed25519 and
+ML-DSA-65 runs exactly, the hybrid bundle isn't a different computation, it's both existing
+ones run together.
+
+## Key/algorithm binding guard
+
+Signing or verifying with the wrong key type for the configured provider fails closed with
+an error naming both the expected and actual key type, it does not silently dispatch based
+on the key's own type (`assertKeyType`, used by both signature providers). See
+[Determinism and clocks](/concepts/determinism-and-clocks) for an unrelated but similarly
+precise scoping note.
+
+## Troubleshoot
+
+- **`CryptoError: sign() expected a "X" key but received "Y"`.** Your configured
+  `PRIMARY_SIGNATURE_PROVIDER` doesn't match the key you're signing with, `default.*.pem` is
+  Ed25519, `pq.*.pem` is ML-DSA-65, they are not interchangeable.
+- **ML-DSA-65 throws about unsupported algorithm.** Confirm `node --version` is 24 or
+  higher, native support was added there.
+- **No algorithm migration in production.** `AuthorizationVerifier` supports exactly one
+  configured `PRIMARY_SIGNATURE_PROVIDER` at a time for envelope verification, re-keying while
+  retaining the ability to verify previously-signed records is not yet built, see
+  [Roadmap](/roadmap).
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Deploy patterns" icon="server" href="/guides/deploy-patterns">
+    Where these keys live in a running deployment, and how key custody works
+    today.
+  </Card>
+  <Card
+    title="Execution authorization"
+    icon="file-signature"
+    href="/concepts/execution-authorization"
+  >
+    Where `algorithm` shows up in the signed envelope itself.
+  </Card>
+</CardGroup>

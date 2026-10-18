@@ -1,0 +1,93 @@
+---
+title: "Signed, single-use, short-lived: the execution authorization"
+description: ""
+---
+
+A payouts agent has been approved to pay a vendor ₹18,500 for a delivery of packaging. The approval exists. Now
+something has to carry it from the place that decided to the place that pays.
+
+Think about what that "something" is. If it can be copied, it is a cheque that can be cashed twice. If it never
+expires, it can be cashed next month, after the vendor has been blocked. If it names only a transaction id, someone
+can change ₹18,500 to ₹1,85,000 under the same id. And if the paying system has to call back to the decider to ask
+"did you really approve this?", it is trusting the decider's server and database, which is exactly what an attacker
+would go after.
+
+## The idea
+
+Turn the decision into an object another system can check on its own, with nothing but a public key. Sign it, bind it
+to the exact content approved, give it a short life, and let it be used once.
+
+## How Parmana does it
+
+When a policy approves a request, Parmana signs an execution authorization. It is only ever signed after approval: a
+refused decision never produces one, and no policy can approve without a signed human approval for the action.
+
+The signed payload carries:
+
+- a unique authorization id and a single-use nonce;
+- the decision and business transaction it authorizes, and the policy name and version that decided;
+- when it was authorized and when it expires;
+- a hash of the exact executable content (action, target, parameters), so ₹18,500 cannot become ₹1,85,000 under it;
+- a hash of the exact policy content, and optionally a hash of the facts the decision was evaluated on;
+- the authenticated caller and the capability they were allowed.
+
+Signatures are Ed25519 by default, with ML-DSA-65 (a post-quantum scheme) selectable by configuration. Timestamps are
+stored as strings, so the object is byte-identical before signing and after it travels as JSON. That sounds like a
+detail; without it, independent verification does not work.
+
+**Short-lived.** The default lifetime is 120 seconds, and the gateway rejects any authorization whose lifetime is
+more than 300 seconds. The verifier enforces a maximum lifetime of its own, so even a compromised signer cannot mint
+an authorization that lasts a week and have it accepted.
+
+**Single-use.** Each authorization has a nonce, and a receiving system must reject one it has seen before. The tests
+prove the edges: a second use is rejected; of two concurrent uses exactly one succeeds; a forged or expired
+authorization is rejected without burning the nonce; and the exact expiry instant already counts as expired.
+
+**Checked independently.** On the receiving side there is a small package, the envelope verifier. You give it
+Parmana's public key and a nonce store. It checks the version, the signature, expiry, maximum lifetime and the nonce,
+and reports each check separately, so you can tell "forged" from "expired". It makes no network calls and reads no
+keys from disk. There is an Express middleware that rejects a request before your handler runs. It does not check
+the content hash; that needs the actual content, and is the gateway's job one layer up.
+
+## The part people get wrong: where "single-use" lives
+
+Single-use is only as wide as the nonce store that checks it.
+
+If you run three instances of a receiving service and each keeps its own store in memory, the same authorization can
+be accepted three times, once by each. If one instance restarts, its memory is gone, and an authorization still
+within its lifetime can be accepted again.
+
+Parmana's own gateway avoids this by default. It records consumed nonces in Postgres, shared by every instance on
+the same database, and it refuses to start if that store is not configured rather than falling back to memory. An
+integration test against a real Postgres proves that a nonce consumed through one store instance is still consumed
+for a fresh instance, and that of two simultaneous inserts of one nonce exactly one wins.
+
+But the envelope verifier package ships only an in-memory store, scoped to one process and lost on restart. If you
+use it in your own system, you must bring a persistent store shared by every instance. The good news is that it only
+needs to remember a nonce for the maximum lifetime you allow; after that, the expiry check rejects the authorization
+anyway.
+
+Over Parmana's HTTP API a caller never sees any of this. A repeated business transaction id is refused with a 409
+before a second authorization exists, and the human approval carries its own nonce, also accepted once.
+
+## What it does not do
+
+- **It does not re-run the policy.** A valid authorization proves that the holder of Parmana's signing key approved
+  this content, under this policy version, within this window. Why it was approved lives in the signed record, not
+  in the envelope.
+- **It is only as good as the signing key.** Whoever holds the key, or can make the signing service sign, can produce
+  authorizations the verifier accepts. "Not authorized by Parmana" means "not signed with that key". I learned this
+  the hard way: an earlier default key was publicly exposed before July 2026 and every signature it made is void. It
+  was rotated.
+- **It only protects systems that use it.** The guarantee holds for a receiver that runs the verifier and gates every
+  code path that can act on its result. Parmana enforces nothing at the network level.
+- **Single-use across a fleet needs a shared store**, as above. The verifier package does not provide one.
+- **The envelope verifier is not published to npm.** Today you use it from a clone of the repository.
+- **A verifier checks one algorithm.** Moving from Ed25519 to ML-DSA-65 while still verifying older authorizations
+  is not supported yet.
+
+## Takeaway
+
+An approval that travels must carry its own proof: what was approved, under which rules, until when, and that it has
+not been used. Sign it, bind it to content, keep its life short, and put the "used once" memory somewhere every
+instance shares. Get the last part wrong and "single-use" quietly becomes "once per server".

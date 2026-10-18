@@ -1,0 +1,229 @@
+---
+title: "4. Policies"
+description: "Write a policy that decides one action, make every signal it reads accountable, get it approved by two people, and change or roll it back with no deploy."
+---
+
+A policy is a JSON file that decides one kind of action. Its rules read the request's signals; the first rule that
+matches decides approve or reject. A policy authorizes nothing until one person proposes it and a different person
+approves it.
+
+## The shape of a policy
+
+The real `customer-refund` 1.2.0, shortened:
+
+```json
+{
+  "policyId": "customer-refund",
+  "policyVersion": "1.2.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes customer refunds. Every refund above 0 and up to 100000 needs a signed manager approval ...",
+
+  "signalsSchema": {
+    "refundEligible": "boolean",
+    "managerApproved": "boolean",
+    "fraudCheckPassed": "boolean",
+    "refundAmount": "number"
+  },
+
+  "boundSignals": { "refundAmount": "parameters.amount" },
+
+  "approvalSignals": {
+    "managerApproved": {
+      "resourceId": "parameters.orderId",
+      "value": "parameters.amount"
+    }
+  },
+
+  "unboundSignalReasons": {
+    "refundEligible": "Declared by the caller; nothing checks it against the order. It can refuse a refund, never authorize one on its own ...",
+    "fraudCheckPassed": "Declared by the caller; nothing checks it against a fraud system. ..."
+  },
+
+  "rules": [
+    {
+      "id": "reject-fraud-check",
+      "condition": { "fact": "fraudCheckPassed", "operator": "is_false" },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refund rejected because the transaction did not pass fraud assessment."
+      }
+    },
+    {
+      "id": "reject-above-maximum",
+      "condition": {
+        "fact": "refundAmount",
+        "operator": "gt",
+        "value": 100000
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refund rejected because the requested refund amount exceeds the maximum of 100000, even with a manager approval."
+      }
+    },
+    {
+      "id": "approve-refund-with-manager-approval",
+      "condition": {
+        "all": [
+          { "fact": "managerApproved", "operator": "is_true" },
+          { "fact": "refundEligible", "operator": "is_true" },
+          { "fact": "fraudCheckPassed", "operator": "is_true" },
+          { "fact": "refundAmount", "operator": "gt", "value": 0 },
+          { "fact": "refundAmount", "operator": "lte", "value": 100000 }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Refund authorized with a verified manager approval for this order and amount."
+      }
+    },
+    {
+      "id": "reject-manager-approval-required",
+      "condition": { "always": true },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refund rejected. Every refund needs a signed manager approval ..."
+      }
+    }
+  ]
+}
+```
+
+The full file is `policies/customer-refund/1.2.0/policy.json`. A policy lives at
+`policies/<policyId>/<policyVersion>/policy.json`.
+
+| Field                  | Required                          | What it is                                                                                                                                                                 |
+| ---------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `policyId`             | yes                               | The policy's name. Agents send it as `policy.name`.                                                                                                                        |
+| `policyVersion`        | yes                               | Its version. A change is a new version in a new folder, never an edit of an approved one.                                                                                  |
+| `schemaVersion`        | yes                               | The policy format, `1.0.0`.                                                                                                                                                |
+| `description`          | no                                | What it allows, in words. Returned by `GET /policies/in-effect`.                                                                                                           |
+| `signalsSchema`        | no                                | The type of each signal: `boolean`, `number` or `string`. Returned to agents as `signals.schema`. A request whose signal has another type is refused before any rule runs. |
+| `boundSignals`         | no                                | Signals that must equal a field of the request.                                                                                                                            |
+| `approvalSignals`      | no in the format, yes in practice | Signals that count as true only with a signed approval. An approve rule needs one.                                                                                         |
+| `unboundSignalReasons` | no                                | Why a signal the rules read is neither bound nor an approval signal.                                                                                                       |
+| `rules`                | yes                               | At least one, each with a unique `id`, a `condition` and an `outcome`.                                                                                                     |
+
+## Rules and conditions
+
+Rules run in order and the **first match decides**. If none matches, the request is refused (`no_rule_matched`). End
+every policy with an `always` rule that rejects with a reason the agent can act on, as above.
+
+An `outcome` is `{ "action": "approve" | "reject", "reason": "..." }`. The reason is returned to the agent and stored
+in the record, so write it for the person who reads it.
+
+A `condition` is one of:
+
+| Condition                                          | Matches when                      |
+| -------------------------------------------------- | --------------------------------- |
+| `{ "fact": "x", "operator": "...", "value": ... }` | The operator holds for signal `x` |
+| `{ "all": [ ... ] }`                               | Every child matches               |
+| `{ "any": [ ... ] }`                               | At least one child matches        |
+| `{ "always": true }`                               | Always                            |
+
+The operators (`packages/policy/src/OperatorEvaluator.ts`):
+
+| Group    | Operators                                                                                    |
+| -------- | -------------------------------------------------------------------------------------------- |
+| Equality | `eq`, `neq`                                                                                  |
+| Numbers  | `gt`, `gte`, `lt`, `lte`, `between`                                                          |
+| Lists    | `in`, `not_in` (value is a list); `contains`, `not_contains`, `contains_all`, `contains_any` |
+| Text     | `starts_with`, `ends_with`, `matches` (a regular expression)                                 |
+| Presence | `exists`, `not_exists`, `is_null`, `is_not_null`                                             |
+| Booleans | `is_true`, `is_false` (only the value `true` or `false`, never "truthy")                     |
+| Length   | `length_eq`, `length_gt`, `length_gte`, `length_lt`, `length_lte`                            |
+
+## Every signal must be accountable
+
+A signal is a claim. The policy says how each claim the rules read is held to account, or it does not load:
+
+| The signal is             | Declare it in          | What the server does                                                                             |
+| ------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------ |
+| A copy of a request field | `boundSignals`         | Refuses the request unless the signal equals that field (`"refundAmount": "parameters.amount"`). |
+| A person's decision       | `approvalSignals`      | Treats it as `true` only with a valid signed approval for this action and resource (and amount). |
+| Anything else             | `unboundSignalReasons` | Nothing. The reason says why, so a reviewer sees the gap. Such a signal should only ever refuse. |
+
+An approval signal's `resourceId` is `"target"` or a path into `parameters`; its optional `value` is a path into
+`parameters` to a number the approval must cover. With more than one approval signal, give each its own `artifact`
+(the signal that carries its approval; the default is `approvalArtifact`).
+
+## The rule the validator enforces: no approval without a person
+
+Every rule whose outcome is `approve` must require an approval signal with `is_true`, either as its whole condition or
+directly inside its top level `all`. A nested `any` does not count, because another branch could match. A policy that
+breaks this does not load, and every request under it is refused with:
+
+```text
+Policy rule '<id>' approves without a signed human approval. Every approve rule must require an approvalSignals fact
+with is_true, as its whole condition or directly inside its top level 'all'.
+```
+
+The consequence for design: **the agent's own facts can refuse, only a person can approve.** Put the facts the agent
+declares in `unboundSignalReasons` and use them in reject rules and as extra conditions next to the approval.
+
+## Check a policy before proposing it
+
+```bash
+npx vitest run packages/policy/tests/unit/ReferencePolicies.test.ts
+```
+
+It loads every file under `policies/` through `PolicyValidator`, the same check the server runs. Common refusals:
+
+| Message                                                                                      | Fix                                                                                                 |
+| -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `Policy references fact(s) 'x' with no boundSignals entry and no unboundSignalReasons entry` | Bind it, make it an approval signal, or give a reason.                                              |
+| `approves without a signed human approval`                                                   | Add `{ "fact": "<approval signal>", "operator": "is_true" }` to the approve rule's top level `all`. |
+| `unboundSignalReasons['x'] is contradictory`                                                 | A bound signal needs no reason. Remove one of the two entries.                                      |
+| `Duplicate policy rule id 'x'`                                                               | Rule ids are unique within a policy.                                                                |
+
+## From a file to the policy in effect
+
+A policy takes effect when a second person approves it. No deploy.
+
+| Step | Who      | What                                                                                                                                              |
+| ---- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | Author   | Writes `policies/<name>/<version>/policy.json` and checks it.                                                                                     |
+| 2    | Maker    | `POST /policies/<name>/<version>/pending-changes` with `{ reason, proposedContent }`. Answer: `201`, `pendingPolicyChangeId`, `PENDING_APPROVAL`. |
+| 3    | Checker  | `GET /policies/pending-changes?status=PENDING_APPROVAL`, reads the content.                                                                       |
+| 4    | Checker  | Signs a step up authorization for this change on their own machine and posts it to `.../<id>/approve` within 120 seconds.                         |
+| 5    | Server   | Checks the checker is a human, is not the maker, and the step up signature; writes a signed, chained approval record; saves the policy.           |
+| 6    | Everyone | From the next request, the new version is the one in effect for the action bound to the policy.                                                   |
+
+Maker and checker each need an API key registered as a human (`credentialHolderType USER`); the checker also needs a
+registered step up public key. The exact commands, in bash and PowerShell, with every answer and error, are in
+[Policy lifecycle and approvals](/guides/policy-lifecycle-and-approvals). The SDKs sign the step up authorization too:
+`signPolicyChangeStepUp()` and `sign_policy_change_step_up()`.
+
+The same flow is in the SDKs as `proposePolicyChange`, `policyChanges`, `approvePolicyChange` and
+`rejectPolicyChange` (TypeScript), and `propose_policy_change`, `policy_changes`, `approve_policy_change` and
+`reject_policy_change` (Python) ([SDK reference](/build-book/reference-sdk)).
+
+## Change and roll back
+
+- **Change.** Copy the folder to a new version, edit, check, propose, approve. Agents that read the policy in effect
+  ([Chapter 3](/build-book/03-connect-an-agent)) follow at once. A request naming the old version is refused before
+  any rule runs, with a message naming the version in effect.
+- **Roll back.** Propose and approve the older version again. The most recent approval decides the version in effect.
+- **Send the file unchanged.** The approval record stores a hash of the approved content. CI's
+  `verify-policy-approvals` job and the server at startup compare it with the file in Git; one changed character fails
+  the check. `npx tsx scripts/verify-policy-changes-approved.ts --full-scan` runs the same comparison.
+
+What still needs a deploy: binding a **built in** action to a different policy name. A new action for your own system
+needs neither: register it as an external connector, with its policy, through maker checker
+([Chapter 6](/build-book/06-connect-your-systems)).
+
+## What is checked on every request
+
+- The policy named is the one bound to the action, at the version in effect.
+- The policy has an approval record, the record's signature verifies, and its content hash equals the live content. A
+  policy edited in the database outside this flow authorizes nothing.
+- The gateway checks the approval record again just before release.
+
+These checks are always on in production. In `NODE_ENV` `test` or `development` they are off unless
+`POLICY_EXECUTION_VERIFICATION_ENFORCED=true`, which is why the local server in
+[Chapter 2](/build-book/02-your-first-governed-action) accepts unapproved example policies.
+
+## See it run
+
+- Tutorial 119: the real `customer-refund` 1.2.0, each rule in turn.
+- `examples/tutorials/14-custom-policy`: a custom policy, approved and refused.
+- [Write your first policy](/guides/write-your-first-policy): a policy from scratch, step by step.

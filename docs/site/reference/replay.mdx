@@ -1,0 +1,78 @@
+---
+title: "@parmana/replay"
+description: "Genuinely re-evaluates a recorded policy decision against its recorded signals. Real, tested, and disconnected from packages/api and packages/runtime."
+---
+
+<Info>
+  **[PARTIAL]**. Real semantic re-evaluation, for one execution at a time, not
+  reachable from `POST /replay` or any other route. See
+  [Replay](/replay/overview) for the full disambiguation from the unrelated
+  `POST /replay` route.
+</Info>
+
+## Purpose
+
+Re-runs `PolicyEngine.evaluate()` against a trust record's recorded signals and compares
+the outcome to what was originally decided, this is genuine semantic verification, not a
+signature or hash recheck.
+
+## Install
+
+Not published to npm. This is an internal package of this repository, used from a clone of it: `npm ci` at the repository root links every workspace package. The packages published to npm are [`@parmana/sdk`](/sdks/typescript), [`@parmana/connector-sdk`](/reference/connector-sdk) and [`@parmana/sign`](/sdks/parmana-sign/overview).
+
+## Key exports
+
+| Export                                           | Stability                                                                                                                                                              |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ReplayEngine`                                   | [PARTIAL]. `.replay(input: ReplayInput): ReplayResult`. Real `PolicyEngine` re-evaluation, scoped to `trustRecord.executions[0]`, one execution, not the whole record. |
+| `ReplayBuilder`                                  | [AVAILABLE]. `.build(): ReplayEngine`                                                                                                                                  |
+| `ReplayVerifier`                                 | [AVAILABLE]. `.verify(original, replayed): boolean`, deep-equality via `JSON.stringify` comparison                                                                     |
+| `ReplayPipeline`, `ReplayExecutor`, `ReplayPlan` | [AVAILABLE]. Build and run a multi-step replay plan from recorded execution IDs                                                                                        |
+| `ReplayError`                                    | Thrown on an invalid or incomplete trust record                                                                                                                        |
+
+## `ReplayResult` shape
+
+```typescript
+interface ReplayResult {
+  recordedDecision: Decision;
+  replayedDecision: Decision;
+  matches: boolean; // recordedDecision.outcome === replayedDecision.outcome
+  replayedAt: string;
+}
+```
+
+## Minimal example
+
+```typescript
+import { ReplayEngine } from "@parmana/replay";
+
+const engine = new ReplayEngine();
+const result = engine.replay({ trustRecord, transaction, policy });
+// result.matches === true if the recorded and re-evaluated outcomes agree
+```
+
+Full runnable version: `examples/tutorials/06-replay/run.ts`.
+
+<Warning>
+  **Not reachable from the server.** Confirmed by grep: nothing in
+  `packages/api` or `packages/runtime` imports `@parmana/replay`. `POST /replay`
+  is an unrelated route, a signature recheck via
+  `ExecutionTrustApplication.replay()`, see [REST API
+  Introduction](/api-reference/introduction). Don't assume calling the HTTP
+  route exercises this package.
+</Warning>
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Replay" icon="rotate" href="/replay/overview">
+    The full disambiguation between this package and the unrelated HTTP route.
+  </Card>
+  <Card
+    title="Policies and the decision"
+    icon="scale-balanced"
+    href="/concepts/policies-and-the-decision"
+  >
+    The `PolicyEngine` this package re-invokes.
+  </Card>
+</CardGroup>

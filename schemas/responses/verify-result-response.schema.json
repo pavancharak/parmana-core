@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/verify-result-response.schema.json",
+  "title": "Verify Result Response",
+  "description": "Response shared by POST /refusal/verify and POST /audit/verify: a bare signature-validity result, no wrapper, no partial-failure detail. Both routes verify a signature over bytes with no database lookup, so there is nothing more specific to report than valid or not.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["valid"],
+  "properties": {
+    "valid": {
+      "type": "boolean",
+      "description": "Whether the signature verifies against Parmana's public key for the stated algorithm and key ID."
+    }
+  },
+  "examples": [{ "valid": true }, { "valid": false }]
+}

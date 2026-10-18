@@ -1,0 +1,198 @@
+---
+title: "Chapter 13: The Storage Layer"
+description: "The storage layer is the set of repositories that give every durable Parmana concept (a"
+---
+
+## What It Is
+
+The storage layer is the set of repositories that give every durable Parmana concept (a
+business transaction, an execution trust record, a refusal record, a pending policy change,
+a policy approval record, and, as of 2026-09-16, live policy content itself) a place to live
+beyond a single process's memory. It is accessed through one interface,
+`StorageProvider` (`packages/storage/src/StorageProvider.ts`), with two real
+implementations selected at startup: an in-memory one for tests and local development, and a
+Postgres-backed one for anything real.
+
+## Why It Was Built
+
+Parmana's whole value proposition depends on durable, independently verifiable evidence. A
+signed execution trust record that only exists in process memory and disappears on restart
+proves nothing to anyone after the fact. The storage layer exists to make every artifact this
+system produces outlive the process that produced it, without forcing every package that
+needs to persist something to independently decide how.
+
+## How It Works
+
+### The interface
+
+`StorageProvider` exposes five repositories:
+
+```ts
+export interface StorageProvider {
+  readonly businessTransactions: BusinessTransactionRepository;
+  readonly trustRecords: ExecutionTrustRecordRepository;
+  readonly refusalRecords: RefusalRecordRepository;
+  readonly pendingPolicyChanges: PendingPolicyChangeRepository;
+  readonly policyChangeApprovalRecords: PolicyChangeApprovalRecordRepository;
+}
+```
+
+(`packages/storage/src/StorageProvider.ts`)
+
+### Two implementations, chosen by `StorageFactory`
+
+`StorageFactory.create({ provider })` (`packages/storage/src/StorageFactory.ts`) switches on
+the configured provider:
+
+| Provider value | Class returned                                        | Notes                                                                                                                      |
+| -------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `"memory"`     | `MemoryStorageProvider`                               | Five in-memory repository classes, nothing external touched.                                                               |
+| `"supabase"`   | `SupabaseStorageProvider`                             | Requires `DATABASE_URL`; throws immediately if missing, rather than constructing a pool that would only fail on first use. |
+| `"postgres"`   | throws `"Postgres storage provider not implemented."` | Reserved name, not built.                                                                                                  |
+| `"sqlite"`     | throws `"SQLite storage provider not implemented."`   | Reserved name, not built.                                                                                                  |
+
+`StorageFactory.createFromEnvironment()` is the real entry point every caller actually uses.
+It has one hardcoded override: under `NODE_ENV=test`, it always returns
+`MemoryStorageProvider`, regardless of what `PARMANA_STORAGE` is set to. This exists because
+of a real incident (G-15, `docs/VERIFICATION-GAPS.md`): this method used to construct
+whatever `PARMANA_STORAGE` named as a pure import-time side effect, which crashed test
+collection with supabase-js's generic `"supabaseUrl is required."` the moment `SUPABASE_*`
+was unset, regardless of what any individual test actually needed.
+
+### Lazy construction, everywhere that matters
+
+`packages/api/src/repositories.ts` wraps every repository export in a `Proxy` via a local
+`lazyRepository()` helper, so importing `repositories.ts` (which every route file
+transitively does) never itself constructs a live Supabase client. Only the first actual
+method call on a repository triggers `StorageFactory.createFromEnvironment()`.
+
+This exact discipline was violated, then fixed, in this codebase on 2026-09-16. The first
+version of `packages/api/src/application.ts`'s new `policyRepository` export constructed
+`SupabasePolicyRepository(PostgresPoolFactory.create())` directly at module scope:
+
+```ts
+export const policyRepository: PolicyRepository =
+  process.env.NODE_ENV !== "test" && config.storage.provider !== "memory"
+    ? new SupabasePolicyRepository(PostgresPoolFactory.create())
+    : new FilePolicyRepository(config.policy.directory);
+```
+
+Because `PostgresPoolFactory.create()` is a process-wide singleton (see below), this opened
+a real connection against whatever `DATABASE_URL` happened to be set at the moment
+`application.ts` was first imported, before any caller had a chance to configure it
+differently. This broke `examples/tutorials/89-readiness-probe/run.ts`'s own "genuinely
+unreachable database" scenario: the tutorial tries to swap in a bad `DATABASE_URL` for one
+specific test case, but the pool had already been created against the real, working one by
+the time that scenario ran, so the readiness check kept reporting `READY` when it should
+have reported `NOT_READY`. The fix (`packages/api/src/application.ts`, current version)
+wraps `policyRepository` in the identical `Proxy`-based lazy pattern `repositories.ts`
+already uses, deferring construction to the first real `load()`/`save()`/`listAll()` call.
+
+### Direct Postgres, not PostgREST
+
+`PostgresPoolFactory` (`packages/storage/src/postgres/PostgresPoolFactory.ts`) is a lazy,
+process-wide singleton `pg.Pool`. Every Supabase-backed repository in this codebase connects
+through it directly, not through `supabase-js`'s REST-based client (PostgREST). The class
+that used to provide that client, `SupabaseClientFactory`, was deleted 2026-09-09
+(`docs/VERIFICATION-GAPS.md` G-34) after `PostgresPoolFactory`'s own pattern had already
+replaced it everywhere it was still used. This removes an entire layer (PostgREST) from the
+failure modes of every table these repositories touch, an incident class this codebase's
+own history names explicitly (see `SupabaseCallerAuditSink`'s own comments for the
+originating case).
+
+As of 2026-09-16, `PostgresPoolFactory.create()`'s `Pool` is constructed with
+`connectionTimeoutMillis: 5000`. Before that, an unreachable or misconfigured
+`DATABASE_URL` hung a connecting query indefinitely rather than failing fast, found via the
+same readiness-probe tutorial above, whose "genuinely unreachable database" scenario never
+returned before this was added.
+
+### The rate-limit store, a Postgres-backed class with no repository interface
+
+`PostgresRateLimitStore` (`packages/storage/src/postgres/PostgresRateLimitStore.ts`) is not
+part of `StorageProvider`, it implements `express-rate-limit`'s own `Store` contract
+directly (structurally, via a locally-defined `RateLimitStoreLike` interface, so
+`@parmana/storage` never depends on the `express-rate-limit` package itself). It exists to
+close a fleet-wide gap: `express-rate-limit`'s default `MemoryStore` counts per-process, so
+on a horizontally-scaled deployment the effective ceiling for a caller becomes
+`limitPerMinute * machineCount` rather than the configured limit. See Chapter 16 for the
+full rate-limiting story, including a real `ERR_ERL_STORE_REUSE` bug this class's `prefix`
+field exists to resolve.
+
+### An orphaned repository, honestly
+
+`packages/storage/src/memory/MemoryPolicyRepository.ts` exists, is exported from
+`@parmana/storage`'s public index, and implements `PolicyRepository`. As of this writing, it
+is not referenced anywhere in `MemoryStorageProvider`, `StorageProvider`, or
+`application.ts`, the actual in-memory policy path uses `FilePolicyRepository` against a
+scratch or configured directory instead. This is the same category of finding as `@parmana/replay`: real, presumably tested code
+that is not part of the live wiring. Confirm this yourself before
+relying on it (see "How to Validate" below), it may simply be unused, or it may be a recent
+addition not yet wired in.
+
+### The schema itself
+
+`supabase/migrations/*.sql` is the real source of truth for every table these repositories
+read and write. As one directly-verified example, the `policies` table added 2026-09-16
+(`supabase/migrations/20260916060000_add_policies_table.sql`) is a two-column-key table:
+
+```sql
+CREATE TABLE IF NOT EXISTS policies (
+    policy_name TEXT NOT NULL,
+    policy_version TEXT NOT NULL,
+    content_json JSONB NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (policy_name, policy_version)
+);
+```
+
+Note this table is read and written by `SupabasePolicyRepository`
+(`packages/policy/src/SupabasePolicyRepository.ts`), which lives in the `@parmana/policy`
+package, not `@parmana/storage`, it is constructed directly in `application.ts`, not
+exposed through `StorageProvider`. This is a real architectural asymmetry: every other
+Postgres-backed repository in this codebase goes through the `StorageProvider` facade;
+policy content does not. Neither the code nor any comment currently explains why this one
+repository sits outside the facade rather than being added to it as a sixth field, treat
+this as an open question rather than an assumed design decision.
+
+The [Database Schema Reference](/storage/schema-reference) is a detailed, table by table
+reference covering every table in this schema; this chapter verified one table directly
+against the migration SQL rather than only citing that page, and recommends the same discipline for
+any other table you need to rely on.
+
+## How It Enables Things, With a Concrete Example
+
+`examples/tutorials/116-supabase-policy-repository/run.ts` exercises `SupabasePolicyRepository`
+directly against a minimal fake `pg.Pool` (no real network), proving `save()` then `load()`
+round-trips exactly, `load()` on a missing entry throws `PolicyNotFoundError`, and `listAll()`
+reports what was saved, the same contract `FilePolicyRepository` upholds, just backed by a
+table instead of the filesystem.
+
+`examples/tutorials/115-per-limiter-rate-limit-stores/run.ts` exercises `PostgresRateLimitStore`
+against a similar fake `pg.Pool`, proving the real `ERR_ERL_STORE_REUSE` failure mode and its
+fix (Chapter 16 covers this fully).
+
+## How to Validate This Yourself
+
+- `packages/storage/src/StorageProvider.ts`, `StorageFactory.ts`, the interface and the
+  selection logic.
+- `packages/storage/src/memory/MemoryStorageProvider.ts`, `packages/storage/src/supabase/SupabaseStorageProvider.ts`
+  , the two real implementations.
+- `packages/storage/src/postgres/PostgresPoolFactory.ts`, the shared connection pool, its
+  own comments name the real incidents that shaped it.
+- `packages/api/src/repositories.ts` and `packages/api/src/application.ts`, the lazy
+  construction pattern, and the place it was once violated.
+- `supabase/migrations/*.sql`, the real, current schema. Read the actual files; a reference
+  document can drift, the migration files cannot (they are the thing that ran).
+- `packages/storage/tests/unit/postgres-pool-factory.test.ts`, confirms the exact `Pool`
+  constructor arguments, including `connectionTimeoutMillis`.
+- Search the codebase yourself for `MemoryPolicyRepository` usage before trusting this
+  chapter's claim that it is orphaned; that kind of claim is exactly the kind that goes stale
+  fastest.
+
+## Integration Requirements
+
+| Variable          | Required when                 | Effect                                                                                                                                                                                                          |
+| ----------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PARMANA_STORAGE` | Always (defaults to `memory`) | `memory` or `supabase`; selects the `StorageProvider`.                                                                                                                                                          |
+| `DATABASE_URL`    | `PARMANA_STORAGE=supabase`    | Direct Postgres connection string. `StorageFactory.create()` throws immediately if this is missing under `supabase`, naming both knobs, rather than deferring to a confusing `PostgresPoolFactory` error later. |
+| `NODE_ENV=test`   | Test runs                     | Forces `MemoryStorageProvider` regardless of `PARMANA_STORAGE`.                                                                                                                                                 |

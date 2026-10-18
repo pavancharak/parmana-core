@@ -1,0 +1,89 @@
+---
+title: "@parmana/execution-control"
+description: "Gateway-authenticated, session-scoped credential isolation for connectors."
+---
+
+<Info>
+  **[AVAILABLE]** for credential isolation, wired into the default server.
+</Info>
+
+## Purpose
+
+Authenticates a calling gateway, issues single-use session credentials, and routes a
+verified release to a connector, auditing every step. See [Credential
+isolation](/concepts/credential-isolation) and [Gateway attestation](/concepts/gateway-attestation)
+for the concepts.
+
+## Install
+
+Not published to npm. This is an internal package of this repository, used from a clone of it: `npm ci` at the repository root links every workspace package. The packages published to npm are [`@parmana/sdk`](/sdks/typescript), [`@parmana/connector-sdk`](/reference/connector-sdk) and [`@parmana/sign`](/sdks/parmana-sign/overview).
+
+## Key exports: the wired credential-isolation path
+
+| Export                                                                                                                                     | Stability                                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ExecutionControlService`                                                                                                                  | [AVAILABLE]. Authenticates a gateway, opens a session, routes to a connector, audits each step.                                                                                                                                                                                                                                                                   |
+| `SessionCredentialExecutionControl`                                                                                                        | [AVAILABLE]. Wraps `ExecutionControlService` so no session can be created without a valid, request-bound gateway attestation.                                                                                                                                                                                                                                     |
+| `GatewayAttestationSigner` / `GatewayAttestation`                                                                                          | [AVAILABLE]. See [Gateway attestation](/concepts/gateway-attestation).                                                                                                                                                                                                                                                                                            |
+| `SignedTokenConnectorAuthenticator`                                                                                                        | [AVAILABLE]. Verifies a `GatewayAttestation`'s signature and that it's bound to the request's `authorizationId`.                                                                                                                                                                                                                                                  |
+| `SessionCredentialVault`, `InMemorySessionCredentialVault`                                                                                 | [AVAILABLE]. Single-use, time-bounded credential leases. See [Issue and verify session credentials](/guides/session-credentials).                                                                                                                                                                                                                                 |
+| `SessionCredentialSecureConnector`                                                                                                         | [AVAILABLE]. Wraps a raw executor so it only runs after policy, attestation, and session checks all pass.                                                                                                                                                                                                                                                         |
+| `Clock`, `SystemClock`, `IdGenerator`, `RandomIdGenerator`                                                                                 | [AVAILABLE]. See [Determinism and clocks](/concepts/determinism-and-clocks) for their real, narrow scope.                                                                                                                                                                                                                                                         |
+| `MemoryExecutionAuditSink`                                                                                                                 | [AVAILABLE]. In-memory only, records `session.created` / `execution.completed` / `execution.rejected` / `authorization.verified` events. Used for tests (`NODE_ENV=test`); production uses `SupabaseExecutionAuditSink` (`@parmana/storage`) instead — durable, signed, chained per `authorizationId`, and queryable. See [@parmana/storage](/reference/storage). |
+| `ConnectorRegistry`, `ConnectorAuthenticator`, `CredentialVault`, `GatewaySessionStore`, `ConnectorPolicy`, `SecureConnector` (interfaces) | [AVAILABLE]. The seams `@parmana/connector-sdk` implements.                                                                                                                                                                                                                                                                                                       |
+
+<Note>
+  **Signed caller-capability check.** `DefaultConnectorPolicy.assertAllowed()`
+  checks the connector's own declared capabilities and three pre-verified
+  `verifiedTransaction` booleans, then — when the authorization's
+  `grantedCapability` (see [Execution
+  authorization](/concepts/execution-authorization)) is present — additionally
+  requires it to equal the action actually being executed, before the
+  connector's credential is ever resolved. This is defense-in-depth, not a
+  second signature re-verification: `ExecutionGateway` already independently
+  re-verifies the authorization's signature before the one production call site
+  that reaches this check is ever invoked. Its value is against a *future* code
+  path that might reach `assertAllowed()` without going through that
+  already-verified route — see `docs/CLAIMS.md` §2.31 for the full,
+  honestly-scoped writeup.
+</Note>
+
+## Minimal example
+
+```typescript
+import {
+  InMemorySessionCredentialVault,
+  RandomIdGenerator,
+  SystemClock,
+} from "@parmana/execution-control";
+
+const vault = new InMemorySessionCredentialVault({
+  credentials,
+  clock: new SystemClock(),
+  idGenerator: new RandomIdGenerator(),
+  lifetimeMs: 30_000,
+});
+const session = await vault.issue("hubspot", authorizationId);
+const credential = await vault.consume(session.sessionCredentialId); // only once
+```
+
+Full runnable version: [Issue and verify session credentials](/guides/session-credentials).
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="Issue and verify session credentials"
+    icon="key"
+    href="/guides/session-credentials"
+  >
+    Issue, consume, expire, reuse-reject, and revoke, run live.
+  </Card>
+  <Card
+    title="@parmana/execution-gateway"
+    icon="shield-check"
+    href="/reference/execution-gateway"
+  >
+    The boundary that verifies an authorization before anything here runs.
+  </Card>
+</CardGroup>

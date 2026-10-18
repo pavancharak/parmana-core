@@ -1,0 +1,58 @@
+---
+title: "Type Alias: ProposeExternalConnectorChangeInput"
+---
+
+> **ProposeExternalConnectorChangeInput** = \{ `action`: `"register"`; `capability`: `string`; `endpointUrl`: `string`; `policy`: `string`; `allowedParameters`: readonly `string`[]; `timeoutMs?`: `number`; `reason`: `string`; \} \| \{ `action`: `"revoke"`; `capability`: `string`; `reason`: `string`; \}
+
+Defined in: typescript/src/models/external-connector.ts:70
+
+What proposeExternalConnectorChange() sends.
+
+## Union Members
+
+### Type Literal
+
+\{ `action`: `"register"`; `capability`: `string`; `endpointUrl`: `string`; `policy`: `string`; `allowedParameters`: readonly `string`[]; `timeoutMs?`: `number`; `reason`: `string`; \}
+
+#### action
+
+> `readonly` **action**: `"register"`
+
+#### capability
+
+> `readonly` **capability**: `string`
+
+namespace:action, outside the built in namespaces (paytm,
+hubspot, github, slack, test).
+
+#### endpointUrl
+
+> `readonly` **endpointUrl**: `string`
+
+https, a public host name, no user name, password or fragment.
+
+#### policy
+
+> `readonly` **policy**: `string`
+
+#### allowedParameters
+
+> `readonly` **allowedParameters**: readonly `string`[]
+
+May be empty.
+
+#### timeoutMs?
+
+> `readonly` `optional` **timeoutMs?**: `number`
+
+1000 to 30000. Defaults to 10000.
+
+#### reason
+
+> `readonly` **reason**: `string`
+
+---
+
+### Type Literal
+
+\{ `action`: `"revoke"`; `capability`: `string`; `reason`: `string`; \}

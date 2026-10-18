@@ -1,0 +1,139 @@
+---
+title: "Class: ApproverApi"
+---
+
+Defined in: [typescript/src/client/ApproverApi.ts:24](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ApproverApi.ts#L24)
+
+## Constructors
+
+### Constructor
+
+> **new ApproverApi**(`transport`): `ApproverApi`
+
+Defined in: [typescript/src/client/ApproverApi.ts:25](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ApproverApi.ts#L25)
+
+#### Parameters
+
+##### transport
+
+[`Transport`](/sdks/reference/typescript/interfaces/Transport)
+
+#### Returns
+
+`ApproverApi`
+
+## Methods
+
+### list()
+
+> **list**(): `Promise`\<[`ApprovalIssuer`](/sdks/reference/typescript/interfaces/ApprovalIssuer)[]\>
+
+Defined in: [typescript/src/client/ApproverApi.ts:31](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ApproverApi.ts#L31)
+
+Every approver key the server trusts or trusted, revoked ones marked.
+Maps to GET /approval-issuers.
+
+#### Returns
+
+`Promise`\<[`ApprovalIssuer`](/sdks/reference/typescript/interfaces/ApprovalIssuer)[]\>
+
+---
+
+### proposeChange()
+
+> **proposeChange**(`input`): `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)\>
+
+Defined in: [typescript/src/client/ApproverApi.ts:44](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ApproverApi.ts#L44)
+
+Proposes adding or revoking an approver key. Nothing changes until a
+different person approves it. Maps to POST /approval-issuers/changes.
+
+#### Parameters
+
+##### input
+
+[`ProposeApproverChangeInput`](/sdks/reference/typescript/type-aliases/ProposeApproverChangeInput)
+
+#### Returns
+
+`Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)\>
+
+---
+
+### listChanges()
+
+> **listChanges**(`status?`): `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)[]\>
+
+Defined in: [typescript/src/client/ApproverApi.ts:62](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ApproverApi.ts#L62)
+
+Lists approver changes, newest first. Maps to GET
+/approval-issuers/changes.
+
+#### Parameters
+
+##### status?
+
+[`PendingPolicyChangeStatus`](/sdks/reference/typescript/type-aliases/PendingPolicyChangeStatus)
+
+Only changes in this state. Omit for all.
+
+#### Returns
+
+`Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)[]\>
+
+---
+
+### approveChange()
+
+> **approveChange**(`changeId`, `stepUpAuthorization`): `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)\>
+
+Defined in: [typescript/src/client/ApproverApi.ts:85](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ApproverApi.ts#L85)
+
+Approves and applies an approver change. Maps to POST
+/approval-issuers/changes/{id}/approve. The caller must not be the
+proposer and must have a registered step up key. Make
+`stepUpAuthorization` with `signPolicyChangeStepUp()`, the change id
+as `pendingPolicyChangeId`, and action "approve".
+
+#### Parameters
+
+##### changeId
+
+`string`
+
+##### stepUpAuthorization
+
+[`PolicyChangeStepUpAuthorization`](/sdks/reference/typescript/interfaces/PolicyChangeStepUpAuthorization)
+
+#### Returns
+
+`Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)\>
+
+---
+
+### rejectChange()
+
+> **rejectChange**(`changeId`, `rejectionReason`, `stepUpAuthorization`): `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)\>
+
+Defined in: [typescript/src/client/ApproverApi.ts:102](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ApproverApi.ts#L102)
+
+Rejects an approver change. Same caller rules as approveChange(); sign
+with action "reject". A reason is required.
+
+#### Parameters
+
+##### changeId
+
+`string`
+
+##### rejectionReason
+
+`string`
+
+##### stepUpAuthorization
+
+[`PolicyChangeStepUpAuthorization`](/sdks/reference/typescript/interfaces/PolicyChangeStepUpAuthorization)
+
+#### Returns
+
+`Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)\>

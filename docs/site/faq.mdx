@@ -1,0 +1,80 @@
+---
+title: "FAQ"
+description: "Direct answers, including the ones that aren't flattering."
+---
+
+<AccordionGroup>
+  <Accordion title="Can an AI agent do anything without a person's approval?">
+    No, reads included. Every policy must require a signed approval from a
+    trusted person, for the action and its resource, in every rule that
+    approves: `PolicyValidator` refuses to load or accept a proposal for a
+    policy that does not. The agent can set the approval signal to `true`, but
+    it counts only with a valid signed approval, checked before authorization
+    and again at the gateway, and used once. See [Human
+    approval](/concepts/human-approval). The approval names the action and the
+    resource (and the amount for payments and refunds), not every parameter, and
+    a refused request is not held: the agent sends a new one with the approval.
+  </Accordion>
+  <Accordion title="Does Parmana prevent an AI from executing an unauthorized action?">
+    Within a scope that's now the default, yes, see [Content Binding &
+    TOCTOU](/concepts/content-binding-toctou) and [The
+    gateway](/concepts/the-gateway). The default local server wires the
+    Execution Gateway unconditionally, every `POST /execute` gets independent
+    content-binding re-verification, and every registered connector runs behind
+    [credential isolation](/concepts/credential-isolation), so the calling AI
+    never holds that connector's credential. What's still scoped: adding a new
+    connector today is a deliberate bootstrap code change, not something the
+    architecture does for you, and Parmana enforces nothing at the network
+    level, this is a property of a gateway-integrated system, not a network
+    guarantee. See [Limitations](/security/limitations) for the full picture.
+  </Accordion>
+  <Accordion title="Is Parmana's signing key stored securely?">
+    It depends on `KEY_PROVIDER`. With `local` it's a PEM file on disk, read by
+    `FileKeyProvider`. With `aws-kms` the signing key lives in AWS KMS and is
+    never released, see [AWS KMS signing](/deployment/aws-kms-signing). The
+    gateway attestation key is still a file in both modes. There's a live
+    incident on record: an earlier committed key was publicly exposed and is
+    permanently compromised (rotated 2026-07-05). Azure Key Vault, Google Cloud
+    KMS and HSM custody are not built, see
+    [Cryptography](/cryptography/overview) and [Roadmap](/roadmap).
+  </Accordion>
+  <Accordion title="Which SDK should I use?">
+    Either, both are published and actively maintained. Python's models are
+    generated from the same TypeScript domain types the server uses,
+    drift-guarded in CI; the TypeScript SDK's models are hand-maintained and
+    kept in sync against the real schemas. Both raise a typed exception per HTTP
+    status and are tested against a real running server, not just mocks. `npm
+    install @parmana/sdk`, `pip install parmana`. See [Python SDK](/sdks/python)
+    and [TypeScript SDK](/sdks/typescript).
+  </Accordion>
+  <Accordion title="Can I use Go / Java / .NET?">
+    Not via an SDK, none exists. Call the [REST
+    API](/api-reference/introduction) directly; it's 14 small, documented
+    routes. See [Other Languages](/sdks/other-languages).
+  </Accordion>
+  <Accordion title="Does Parmana support post-quantum signatures?">
+    Yes, ML-DSA-65 (FIPS 204), selectable via
+    `PRIMARY_SIGNATURE_PROVIDER=dilithium3`, real and tested. Requires Node ≥
+    24. Its signatures are randomized, not deterministic, don't build tooling
+    that assumes otherwise. See [Cryptography](/cryptography/overview).
+  </Accordion>
+  <Accordion title="What does 'replay' actually do?">
+    Two different things share the name, and neither is what you might assume.
+    See [Replay](/replay/overview), this is worth reading in full before relying
+    on either.
+  </Accordion>
+  <Accordion title="Is there an 'Execution Permit'?">
+    Not anymore, under that name. An early prototype used it; it was deleted the
+    same session it was replaced by the current `SignedExecutionAuthorization` +
+    Execution Gateway architecture, which is what actually ships. See
+    [Glossary](/glossary).
+  </Accordion>
+  <Accordion title="Is this API authenticated?">
+    Yes. Every route except `/health`, `/ready`, `/openapi.yaml`, and
+    `/documentation` requires a bearer key and fails closed with a `401` if it's
+    missing or wrong (`createCallerAuthenticator.ts`). See
+    [Authentication](/api-reference/authentication). This is a separate question
+    from whether the underlying business action was authorized, see
+    [Security](/security/overview) for that boundary.
+  </Accordion>
+</AccordionGroup>

@@ -1,0 +1,113 @@
+{
+  "policyId": "vendor-payment",
+  "policyVersion": "2.0.0",
+  "schemaVersion": "1.0.0",
+
+  "description": "Authorizes vendor payments after validating vendor identity, invoice verification, payment approval, available funds, and operational risk.",
+
+  "signalsSchema": {
+    "vendorVerified": "boolean",
+    "invoiceVerified": "boolean",
+    "paymentApproved": "boolean",
+    "sufficientFunds": "boolean",
+    "paymentAmount": "number",
+    "riskScore": "number"
+  },
+
+  "rules": [
+    {
+      "id": "approve-vendor-payment",
+      "condition": {
+        "all": [
+          {
+            "fact": "vendorVerified",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "invoiceVerified",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "paymentApproved",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "sufficientFunds",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "riskScore",
+            "operator": "lte",
+            "value": 20
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Vendor payment satisfies all policy requirements."
+      }
+    },
+    {
+      "id": "reject-high-risk",
+      "condition": {
+        "fact": "riskScore",
+        "operator": "gt",
+        "value": 20
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Operational risk exceeds the permitted threshold."
+      }
+    },
+    {
+      "id": "reject-insufficient-funds",
+      "condition": {
+        "fact": "sufficientFunds",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Insufficient funds are available."
+      }
+    },
+    {
+      "id": "reject-unverified-invoice",
+      "condition": {
+        "fact": "invoiceVerified",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Invoice verification failed."
+      }
+    },
+    {
+      "id": "reject-unverified-vendor",
+      "condition": {
+        "fact": "vendorVerified",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Vendor verification failed."
+      }
+    },
+    {
+      "id": "reject-default",
+      "condition": {
+        "always": true
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "One or more required policy conditions were not satisfied."
+      }
+    }
+  ]
+}

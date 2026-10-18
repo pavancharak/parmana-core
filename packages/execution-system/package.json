@@ -1,0 +1,31 @@
+{
+  "name": "@parmana/execution-system",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Parmana Execution System Protocol",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@parmana/shared": "0.1.0",
+    "dotenv": "^18.0.6"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  },
+  "license": "SEE LICENSE IN LICENSE"
+}

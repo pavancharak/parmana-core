@@ -1,0 +1,119 @@
+---
+title: "Cryptography"
+description: "Ed25519 default, ML-DSA-65 (post-quantum) configurable. Local PEM keys or AWS KMS for the signing key; other key custody is roadmap."
+---
+
+<Info>
+  **[AVAILABLE]** for the core primitives below, and for AWS KMS custody of the
+  signing key (see [AWS KMS signing](/deployment/aws-kms-signing)).
+  **[ROADMAP]** for Azure Key Vault, Google Cloud KMS and HSM custody, clearly
+  separated.
+</Info>
+
+## Signature algorithms
+
+| Algorithm                                                               | Status                                 | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ----------------------------------------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ed25519                                                                 | [AVAILABLE], default                   | Deterministic signatures. `Ed25519SignatureProvider`.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ML-DSA-65 (FIPS 204, historically called "dilithium3" in this codebase) | [AVAILABLE], opt-in                    | Selectable via `PRIMARY_SIGNATURE_PROVIDER=dilithium3` **or** the equivalent, accepted alias `PRIMARY_SIGNATURE_PROVIDER=ml-dsa-65` (either resolves to the same provider; the internal identifier itself is `dilithium3` and stays that way for backward compatibility). Requires **Node ≥ 24** for native `node:crypto` ml-dsa-65 support. **Signatures are randomized, not deterministic**, signing the same message twice produces two different, both-valid signatures. Only verification is deterministic. |
+| ECDSA P-256                                                             | Declared in `SignatureAlgorithms` enum | No dedicated provider class, treat as unimplemented until a provider ships.                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+
+Evidence: `packages/crypto/tests/unit/signature-provider.test.ts`,
+`dilithium3-signature-provider.test.ts`, `dilithium3-cross-instance.test.ts`.
+
+## Hash algorithms
+
+`HashAlgorithms`: `sha256`, `sha3-512`, `blake3` (`packages/shared/src/config/CryptoAlgorithms.ts`).
+Configured via `HASH_PROVIDER`. Used for `trustRecordHash`, `businessTransactionHash`
+(via `ExecutableContentHasher` → `TrustRecordHasher`, the same computation on signing and
+verifying sides), and receipt hashing.
+
+## Key/algorithm binding guard
+
+Signing or verifying with the wrong key type for the configured provider (e.g. an Ed25519
+key against an ML-DSA-65 provider) fails closed with an error naming both the expected and
+actual key type, it does not silently dispatch based on the key's own type
+(`assertKeyType`, used by both signature providers).
+
+## Key custody today: local PEM files
+
+```bash
+KEY_PROVIDER=local
+PARMANA_KEY_DIR=./keys
+```
+
+`FileKeyProvider` reads `<PARMANA_KEY_DIR>/<keyId>.private.pem` /
+`<PARMANA_KEY_DIR>/<keyId>.public.pem` from disk, one directory, keys distinguished by ID
+(`default`, `pq`, `gateway`), not by separate per-file path variables. This is the **only**
+implemented key provider. See [Deploy patterns](/guides/deploy-patterns) for the full set of
+keys a running server needs.
+
+## Per-tenant signing keys (opt-in)
+
+A transaction whose `metadata.tenantId` is set signs its Execution Authorization under a
+dedicated `tenant.<tenantId>` key when one has been provisioned (same `FileKeyProvider`
+layout: `scripts/generate-keypair.ts --algorithm ed25519 --key-id tenant.<tenantId>`),
+instead of the single shared `default` key every deployment uses otherwise
+(`TenantKeyResolver`, `packages/runtime/src/TenantKeyResolver.ts`). Verification already
+resolves the right public key per-authorization via its own `keyId` field (the key/algorithm
+binding guard above, and 2.28's `keyProvider`/`keyExpiryStore` options), so a tenant key just
+needs to exist — no verifier-side configuration change.
+
+<Note>
+  This is naming-convention key **selection**, not KMS/HSM custody: the tenant's
+  private key still lives as a local PEM file, provisioned by hand, one
+  `generate-keypair` run per tenant. An unprovisioned or malformed `tenantId`
+  falls back to the shared `default` key rather than failing closed, deliberate,
+  so adoption is incremental, but worth knowing before relying on it for
+  isolation. Over HTTP, a caller may only send a `tenantId` its API key lists in
+  `allowedTenantIds`; any other is refused with `403 TENANT_NOT_ALLOWED`, so one
+  tenant's caller cannot have its authorization signed with another tenant's
+  key. Under AWS KMS, the key `tenant.<id>` is the alias `alias/tenant/<id>`,
+  because KMS alias names cannot contain a dot (unit tested, not yet run
+  against real AWS).
+</Note>
+
+<Warning>
+  `KeyProviders` (`packages/shared/src/config/KeyProviders.ts`) declares
+  `local`, `aws-kms`, `azure-key-vault`, `gcp-kms`, and `hsm` as valid **config
+  values**. Only `local` (`FileKeyProvider`) and `aws-kms` (`KmsSigner`) are
+  implemented. `azure-key-vault`, `gcp-kms` and `hsm` are a declared config
+  surface for planned work, not a working integration. Setting `KEY_PROVIDER` to
+  one of those **fails startup loudly** (the server refuses to start, naming the
+  value) rather than silently falling back to `FileKeyProvider`. To use AWS KMS,
+  follow [AWS KMS signing](/deployment/aws-kms-signing). See [Roadmap](/roadmap)
+  for the other custody options.
+</Warning>
+
+<Note>
+  There is a live incident on record: the default signing key committed to this
+  repository before 2026-07-05 was publicly exposed and is permanently
+  compromised. It was rotated on 2026-07-05. This is exactly the kind of
+  exposure KMS custody is designed to prevent. AWS KMS custody is available, see
+  [AWS KMS signing](/deployment/aws-kms-signing).
+</Note>
+
+## Key rotation, same algorithm
+
+Distinct from the algorithm-migration gap below: rotating to a _new key pair under the
+same algorithm_, because a key may be compromised, or on a routine schedule, is built and
+tested for every durable evidence signer (Trust Records, Refusal Records, Audit Events),
+mirroring the pattern the Authorization/Gateway envelope already had via
+`keyProvider`/`keyExpiryStore`. `PARMANA_VERIFICATION_KEY_ID` /
+`PARMANA_VERIFICATION_SECONDARY_KEY_ID` point new signing at a freshly generated keyId
+(`scripts/rotate-verification-key.ts`); every already-issued record keeps verifying
+unaffected, since verification always resolves the public key by the record's own stored
+`keyId`, never a hardcoded "current" one. `FileKeyProvider.listKeys()` enumerates every
+key a deployment currently holds, and `GET /keys/:keyId` / `GET /.well-known/jwks.json`
+make them fetchable by a third party.
+
+## No algorithm migration path yet
+
+`AuthorizationVerifier` does not dispatch verification based on the envelope's `algorithm`
+field, a verifying process supports exactly one configured `PRIMARY_SIGNATURE_PROVIDER` at a
+time. Re-keying from Ed25519 to ML-DSA-65 while retaining the ability to verify
+previously-signed records is an explicit Future Claim, not yet built. The
+key rotation above is same-algorithm only (a new Ed25519 key replacing an old Ed25519 key,
+for example) — it does not close this gap, which is specifically about _changing which
+algorithm_ a verifying process trusts while old records under the previous algorithm
+remain verifiable.

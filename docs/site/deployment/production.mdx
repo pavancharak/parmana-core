@@ -1,0 +1,318 @@
+---
+title: "Production deployment runbook"
+description: "A numbered procedure to deploy the Parmana server to production, with the check that proves each step worked and the fix when it did not."
+---
+
+To run Parmana on your own infrastructure with one command, use the [self hosted deployment](/self-hosted/overview) instead. This runbook is for a hand built deployment, for example on Vercel with a Supabase database.
+
+This runbook takes you from an empty environment to a server that is running, authenticated, governed and verified. Do the steps in order. Every step ends with a **Check**. Do not go to the next step until the check passes.
+
+The exact meaning of every variable is in the [Environment variable reference](/deployment/environment-variables). If a startup error appears, look it up in the table at the bottom of that page.
+
+## What you deploy
+
+One container image, one process. `docker/entrypoint.sh` starts `node packages/api/dist/server.js` and forwards `SIGTERM` and `SIGINT` to it. There is no second process.
+
+The same code also runs as a Vercel function, through `api/index.ts` and `vercel.json`. The steps below are the same on both. Section [Host specific steps](#host-specific-steps) lists the differences.
+
+## Before you start
+
+You need:
+
+| You need                          | Why                                                                                                  |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| A clone of the repository         | The scripts below run from the repository root.                                                      |
+| Node and npm                      | The image uses Node 24. Run `npm install` once in the clone, then scripts run with `npx tsx`.        |
+| A Postgres database               | Production storage. A Supabase project works. Note its **transaction pooler** connection string.     |
+| A host for the container          | Fly.io, any Docker platform, or Vercel.                                                              |
+| Two people, each with a human key | One proposes policy changes (the maker) and a different one approves them (the checker). See step 7. |
+
+Production requires a real database, real signing keys and caller authentication. The server refuses to start without them, and it never falls back to something weaker.
+
+## Step 1: Generate the signing keys
+
+Run from the repository root:
+
+```bash
+npx tsx scripts/generate-keypair.ts --algorithm ed25519 --key-id default
+npm run generate:gateway-keys
+```
+
+Both write into `./keys` unless `PARMANA_KEY_DIR` is set. They refuse to overwrite existing files unless you add `--force`.
+
+**Check:** `keys/` contains `default.private.pem`, `default.public.pem`, `gateway.private.pem` and `gateway.public.pem`.
+
+Never commit the private files and never bake them into the image. The image starts with an empty `keys/` directory on purpose. To keep the signing key inside AWS KMS instead, set `KEY_PROVIDER=aws-kms` and read the signing keys section of the environment reference. The gateway key is still a file.
+
+## Step 2: Create the database schema
+
+The server needs the tables in `supabase/migrations/`. Apply them with the tracked migration runner, from the repository root, with `DATABASE_URL` set to the production database. It applies each migration once, each in its own transaction, and records it in the table `parmana_schema_migrations`, so every later run applies only what is new.
+
+```bash
+npm run db:migrate -- status          # read only: lists applied and pending migrations
+npm run db:migrate -- apply --dry-run # read only: lists what apply would run
+npm run db:migrate -- apply           # applies the pending migrations
+```
+
+The first line of every command names the database it is using and whether it writes, for example `Database: db.example.supabase.co:5432/postgres as postgres (writes)`. `DATABASE_URL` is taken from your shell, or from the repository's `.env` file when the shell does not set it: check that line before you run `apply`.
+
+**A database that already has the schema but no `parmana_schema_migrations` table** (it was set up with `scripts/apply-all-migrations.sql`, the Supabase SQL Editor or `supabase db push`) must be baselined once, so that `apply` does not run old migrations again:
+
+```bash
+npm run db:migrate -- baseline --through <the newest migration the database already has>
+```
+
+This records every migration up to and including that file as applied, without running any of them. Take the file name exactly as `status` lists it. Only baseline migrations the database really has.
+
+<Warning>
+  Do not run `scripts/apply-all-migrations.sql` on a database that holds data.
+  It applies every migration again, several migrations drop and add back the
+  same CHECK constraint, and a second run fails on rows written since
+  (`docs/VERIFICATION-GAPS.md` G-61). It is only for a new, empty database,
+  pasted into the Supabase SQL Editor.
+</Warning>
+
+**Check:** `npm run db:migrate -- status` ends with `0 pending`, and in the SQL Editor `select to_regclass('consumed_nonces'), to_regclass('execution_audit_events'), to_regclass('policies'), to_regclass('execution_intents'), to_regclass('approval_issuers'), to_regclass('external_connectors');` returns six names and no empty value.
+
+<Warning>
+  **Upgrading a deployment that already exists.** Apply new migrations
+  **before** you deploy the version that needs them: `npm run db:migrate --
+  apply`. Execution Intents are enforced by default and cannot be switched off
+  in production, so a new version running without the `execution_intents` table
+  refuses every execution with `503 EXECUTION_INTENT_UNAVAILABLE`. See
+  [Execution
+  Intents](/concepts/execution-intents#turn-it-on-the-deployment-order-matters).
+</Warning>
+
+If a request later fails with `PGRST205` ("Could not find the table"), the schema cache is stale. Run `NOTIFY pgrst, 'reload schema';` in the SQL Editor, or use Dashboard, Database, API, Reload schema cache.
+
+## Step 3: Create the caller keys
+
+Each caller gets its own key. Generate one for your first caller:
+
+```bash
+npm run generate:api-key -- --caller-id my-agent --allowed-capabilities paytm:refund
+```
+
+The command prints the raw key **once**, and a JSON entry. Give the raw key to the caller and store it nowhere else. Keep the JSON entry for step 5.
+
+Make two human keys now, one for the maker and one for the checker, because step 7 needs both. **Every policy governance endpoint, including proposing a change, refuses a key that is not `credentialHolderType` `USER`.** A service caller such as `my-agent` cannot be the maker.
+
+```bash
+npm run generate:api-key -- --caller-id my-maker --credential-holder-type USER
+npm run generate:api-key -- --caller-id my-checker --credential-holder-type USER --generate-step-up-key
+```
+
+The second command prints a bearer key, a step up private key, and a JSON entry. The checker keeps the bearer key and the private key. Only the JSON entries go to the server.
+
+**Check:** you hold three JSON entries (the caller, the maker and the checker). Combine them into one array for `PARMANA_API_KEYS`, for example `[{...},{...},{...}]`. Each entry has a 64 character lowercase `keyHash`.
+
+## Step 4: Decide the connector settings
+
+A connector registers only when its settings are present. If you do not set a connector, the server still starts and every request for that connector's actions fails. For the refund connector set both of these, or neither:
+
+| Variable                        | Value                                                    |
+| ------------------------------- | -------------------------------------------------------- |
+| `PAYTM_CONNECTOR_URL`           | The `https://` URL of your `parmana-paytm-agent` service |
+| `PAYTM_CONNECTOR_SHARED_SECRET` | The shared secret that service expects                   |
+
+The other connectors (HubSpot, Slack, GitHub) are in the [connector section of the environment reference](/deployment/environment-variables#connectors). To keep connector credentials in AWS Secrets Manager set `PARMANA_SECRETS_PROVIDER=aws-secrets-manager`.
+
+## Step 5: Set the environment on your host
+
+Set these in your platform, not in a file in the image. The minimum for production is:
+
+| Variable             | Value                                                                                   |
+| -------------------- | --------------------------------------------------------------------------------------- |
+| `NODE_ENV`           | `production`                                                                            |
+| `PARMANA_POLICY_DIR` | `./policies` (already set in the image)                                                 |
+| `PARMANA_API_KEYS`   | The JSON array from step 3                                                              |
+| `PARMANA_STORAGE`    | `supabase`                                                                              |
+| `DATABASE_URL`       | Your Postgres connection string. Use the transaction pooler string on serverless hosts. |
+| `PARMANA_KEY_DIR`    | `./keys`, with the four PEM files from step 1 mounted there                             |
+
+If your host cannot mount files, set `PARMANA_KEY_MATERIAL_JSON` instead. It is a JSON object of the form `{"default":{"privateKeyPem":"...","publicKeyPem":"..."},"gateway":{...}}`. It writes any key file that does not already exist into `PARMANA_KEY_DIR` at startup.
+
+Do not set `PARMANA_AUTH_DISABLED`. Do not set `NODE_ENV` to `test` or `development`. Do not set `SUPABASE_URL` or the other `SUPABASE_*` variables on the server, because it does not read them and only `DATABASE_URL` is used.
+
+**Check:** the list of variables on your host includes all six from the table, and none of the two forbidden ones.
+
+Optional: to notify approvers when a request waits for their approval, set `APPROVAL_EMAIL_TO` with the Resend integration, or `APPROVAL_WEBHOOK_URL` (https) and `APPROVAL_WEBHOOK_SECRET`, or both. See [Approval notifications](/guides/approval-notifications).
+
+## Step 6: Deploy and confirm it started
+
+Build and run the image:
+
+```bash
+docker build -t parmana-api .
+```
+
+Or use the image published with each GitHub release, `ghcr.io/pavancharak/parmana-api:<release tag>`. Check it with
+`slsa-verifier` first and run it by digest, as shown in
+[Verifying the server image](/security/overview#verifying-the-server-image).
+
+Then start it on your host with the variables from step 5. The server validates every required setting before it opens the port. A wrong value makes it exit at once with a message that names the variable.
+
+**Check** (replace `$URL` with your server's base URL):
+
+```bash
+curl -s "$URL/health"
+curl -s "$URL/ready"
+curl -s -o /dev/null -w "%{http_code}\n" -X POST "$URL/execute" -H "Content-Type: application/json" -d "{}"
+```
+
+The expected answers are:
+
+| Request                     | Expect                                                                                                                                                   |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /health`               | `200` with `"status":"UP"`. This checks that the process is alive.                                                                                       |
+| `GET /ready`                | `200` with `"status":"READY"` and `"authDisabled":false`. It runs `SELECT 1` against the database, and checks that the `execution_intents` table exists. |
+| `POST /execute` with no key | `401` with a `WWW-Authenticate` header. This proves caller authentication is on.                                                                         |
+
+Then read the startup log. The line `runtime_engine_constructed` must show `policyExecutionVerifierConfigured`, `signingReadinessConfigured` and `executionIntentsConfigured` all `true`: those are the policy approval check, the signing check before release, and the signed intent stored before release. They are on by default in production and cannot be switched off there.
+
+If `/ready` returns `503` with `NOT_READY`, read the `reason`. Either the database is unreachable (check `DATABASE_URL` and the network path), or the `execution_intents` table does not exist (apply `supabase/migrations/20260921120000_add_execution_intents.sql` from step 2). If `authDisabled` is `true`, remove `PARMANA_AUTH_DISABLED` and redeploy at once.
+
+## Step 7: Load and approve your policies
+
+In production with Supabase storage, policies live in the `policies` table, not on disk. Do these two things.
+
+**7a. Copy the policies into the database, once.** From the repository root, with `DATABASE_URL` and `PARMANA_POLICY_DIR` set in your shell:
+
+```bash
+npx tsx scripts/apply-policies-table-and-backfill.ts
+```
+
+It creates the `policies` table if needed and copies every policy found under `PARMANA_POLICY_DIR`. It prints one line per policy.
+
+**7b. Give every policy a signed approval.** In production the gateway refuses to release an action for a policy that has no signed approval record whose hash matches the live policy. This gate is always on and cannot be switched off by a variable. Approve each policy you will use with the maker checker flow: the maker proposes it with their own key, and a different person, the checker, reviews it and approves it on their own machine with their step up key:
+
+1. The maker: `POST $URL/policies/<name>/<version>/pending-changes` with the policy file, unchanged, as `proposedContent`.
+2. The checker: `npx tsx scripts/local-review-action.ts --pending-policy-change-id <id> --action approve --private-key-file ./my-checker.step-up.private.pem --key-id my-checker --api-base "$URL"`, with their own key in `REVIEWER_KEY`.
+
+Pass `--api-base` every time. Its default is a fixed address that is not your server. `--key-id` is the checker's caller id from step 3, and the private key file is the one that step printed. Do not use `scripts/refresh-approved-policy-content.ts` here: it proposes and approves in one process, so one person holds both keys and the approval record names a second person who did not decide.
+
+The full procedure, and how to do it step by step by hand, is in [Policy governance: maker checker approval](/guides/policy-governance-maker-checker). Three rules matter here. The maker and the checker must be different callers. Both must have `credentialHolderType` set to `USER`. The checker also needs a step up public key.
+
+<Warning>
+  `scripts/backfill-legacy-policy-approvals.ts` can create approvals for every
+  policy in one run under a fixed system identity. Those approvals are labeled
+  as system approvals and do not record a human decision. Use it only if you
+  accept that, and run it first without `--apply` to see what it would do. Never
+  insert rows into `policy_change_approval_records` by hand: the table is the
+  evidence of who approved what, and a hand written row cannot be told apart
+  from a real approval afterwards.
+</Warning>
+
+**Check:**
+
+```bash
+export SUPABASE_URL="<your Supabase project URL>"
+export SUPABASE_ANON_KEY="<your Supabase anon key>"
+npx tsx scripts/verify-policy-changes-approved.ts --full-scan
+```
+
+This script is the one place that reads `SUPABASE_URL` and `SUPABASE_ANON_KEY`, and it reads them from your shell, not from the server. That is deliberate: it uses the low privilege `anon` role, which can only read approval records, so a CI credential cannot write. It needs a Supabase project, because it uses the REST layer. On a plain Postgres, read `policy_change_approval_records` with SQL instead. It is fail closed. It exits with a non zero code if it cannot complete the check or finds a live policy with no matching approval record, and it reports each one.
+
+## Step 8: Run one real request
+
+Send one transaction that your policy approves, using the procedure in [Integrate Parmana: specification for AI agents](/agents/integrate) or one of the SDKs. Use a small, harmless action first.
+
+The action needs a configured connector (step 4). Without one, the request still passes the policy and the approval check, and then stops at release with `503 CONNECTOR_NOT_REGISTERED` and nothing executed. Configure the connector, then retry with a new `businessTransactionId`.
+
+**Check:** the response is the signed Execution Trust Record, and a repeat call with the same `businessTransactionId` returns `409`. Then verify the record independently with [Verify independently](/guides/verify-independently).
+
+A `403 POLICY_DENIED` means the policy refused, which is a correct answer. A `503 SIGNING_UNAVAILABLE` or `503 EXECUTION_INTENT_UNAVAILABLE` means nothing was executed and you can retry later with a new `businessTransactionId`. A `500 EXECUTION_RECORD_INCOMPLETE` means the action was released, so do not resubmit it. A signed intent exists for it: read it with `GET /execution-intents/<businessTransactionId>`, and if its state is `RELEASED`, rebuild the record with `POST /execution-intents/<businessTransactionId>/finalize`. See [Execution Intents](/concepts/execution-intents) and [Troubleshooting](/troubleshooting).
+
+## Step 9: Turn on monitoring
+
+Set up these before you send real traffic:
+
+| Monitor                                                                                                                         | Alert when                                                                                                                                                                                                                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /ready` every 30 seconds                                                                                                   | The status is not `200`, or `authDisabled` is `true`.                                                                                                                                                                                                                                   |
+| Log event `rate_limit_store_not_durable`                                                                                        | It appears. It means rate limits are counted per instance, so `DATABASE_URL` is missing.                                                                                                                                                                                                |
+| Response codes `503` with `SIGNING_UNAVAILABLE`                                                                                 | Any occurrence. The signing path is unhealthy and nothing is being released.                                                                                                                                                                                                            |
+| Response codes `503` with `EXECUTION_INTENT_UNAVAILABLE`                                                                        | Any occurrence. The intent store or signing path is unhealthy and nothing is being released.                                                                                                                                                                                            |
+| Response codes `500` with `EXECUTION_RECORD_INCOMPLETE`                                                                         | Any occurrence. An action was released with no signed record. Repair it with `POST /execution-intents/<id>/finalize`.                                                                                                                                                                   |
+| Response codes `502` with `EXECUTION_OUTCOME_UNKNOWN`                                                                           | Any occurrence. An action was released and its connector call failed; its outcome must be checked and the intent closed with resolve. Several in a row mean the connector is down.                                                                                                      |
+| `GET /execution-intents/unfinalized` (human credential), for example every 15 minutes                                           | Any entry in state `RELEASED`, which is a repairable released action with no signed record. Entries in `PREPARED` or `ERRORED` mean an action whose outcome must be checked at the connector, then closed with `POST /execution-intents/<id>/resolve`. A closed intent leaves the list. |
+| Log events `execution_intent_prepare_failed`, `execution_intent_mark_released_failed`, `execution_intent_mark_finalized_failed` | Any occurrence. All are logged at critical severity.                                                                                                                                                                                                                                    |
+| Log event `approval_issuer_lookup_failed`                                                                                       | Any occurrence. The `approval_issuers` table could not be read, so approvals from approvers added through [Manage approvers](/guides/manage-approvers) are refused until it can.                                                                                                        |
+| Log event `approval_issuer_change_approved`                                                                                     | Every occurrence, as an audit trail: an approver key was added or revoked, with who proposed and who approved it.                                                                                                                                                                       |
+| Log event `approval_needed_notification_failed`                                                                                 | Repeated occurrences. The approval webhook is failing; refused requests are still in the Refusal Records.                                                                                                                                                                               |
+| Log level                                                                                                                       | Set `LOG_LEVEL=info`. Use `debug` only while investigating.                                                                                                                                                                                                                             |
+
+## Host specific steps
+
+### Fly.io
+
+`fly.toml` sets the app name, the primary region and a health check on `GET /ready` every 30 seconds.
+
+1. Generate the secrets file without printing it: `node scripts/generate-fly-secrets.mjs`. It writes `.flysecrets/secrets.env` with `PARMANA_KEY_MATERIAL_JSON` and `PARMANA_API_KEYS`, and leaves the database values for you to fill in. Add `DATABASE_URL`, `NODE_ENV` and `PARMANA_STORAGE` to it.
+2. Apply them: `fly secrets import < .flysecrets/secrets.env`.
+3. Deploy: `fly deploy`.
+4. Confirm with `fly status`. Every machine should show a recent update and a passing check. Machine placement is Fly's choice, so confirm the region there and do not assume the configured one.
+
+Changing any secret restarts every machine. Treat the new value as live only after `fly status` shows passing checks.
+
+### Vercel
+
+The function entry is `api/index.ts`, configured by `vercel.json`. The policy files ship inside the function through `includeFiles`. The filesystem is read only, which is why production policies live in the `policies` table.
+
+1. Set the variables from step 5 in the Vercel project for the Production environment. Use the Supabase transaction pooler string for `DATABASE_URL`.
+2. Deploy to production, then run the checks in step 6 against your production URL.
+3. Changing an environment variable needs a new deployment before it takes effect.
+
+### Any Docker platform
+
+Run the image with the variables from step 5, publish port `3000` (or set `PORT`), and mount the key files at `/app/keys` read only. Point the platform's health check at `GET /ready`.
+
+## Agent network egress
+
+Parmana checks the actions that go through it. An agent host that can open its own connections to a connector's API, or to any other system, bypasses every check. This happened in the October 2026 agent incidents: the models "used internet access in unintended ways" (Reuters, 2 October 2026).
+
+Requirements for every host that runs an agent:
+
+1. **Outbound traffic is allowed only to the Parmana endpoint.** Enforce this at the network layer: a firewall rule, a container network policy, or a sandbox with no default route. An application-level setting is not enough, because the agent can change it.
+2. **No connector credential is present on an agent host.** Connector credentials (`HUBSPOT_PRIVATE_APP_TOKEN`, `PAYTM_CONNECTOR_SHARED_SECRET`, GitHub App keys and similar) belong only on the Parmana host. The agent holds its own Parmana caller key and nothing else.
+3. **Check it.** From the agent host, each of these must fail, and the Parmana endpoint must succeed:
+
+```bash
+curl --max-time 5 https://api.hubapi.com/      # must fail: connection refused or timed out
+curl --max-time 5 https://api.github.com/      # must fail
+curl --max-time 5 https://<your-parmana-endpoint>/health   # must return 200
+```
+
+Denied connection attempts are not recorded as Parmana evidence today. Your network layer's logs are the only record of them. See `docs/REMAINING-WORK.md` section P for the open decision on reporting denied egress to Parmana.
+
+## Shutdown and restarts
+
+On `SIGTERM` or `SIGINT` the server stops accepting connections and lets in flight requests finish, then exits. `SHUTDOWN_TIMEOUT_MS` (default `10000`) is the longest a stuck request can delay that. Rolling restarts are safe, because the replay nonce store and the audit trails are always in the database and not in process memory.
+
+## Rotating secrets
+
+| To rotate            | Do this                                                                                                                                                                                                                                                   |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A caller key         | Generate a new entry as in step 3, replace that caller's entry in `PARMANA_API_KEYS`, and redeploy. Give the caller the new raw key. The old key stops working when the new deployment is live.                                                           |
+| The verification key | Run `npx tsx scripts/rotate-verification-key.ts --algorithm ed25519`. It creates a new key under a fresh id and prints the variable to set. Never delete the old key files, because records already signed with them are verified by their stored key id. |
+| A connector secret   | Change the variable on your host, or the secret in Secrets Manager, then redeploy. Values are read once at startup.                                                                                                                                       |
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="Environment variable reference"
+    icon="list"
+    href="/deployment/environment-variables"
+  >
+    Every variable, its default and its effect.
+  </Card>
+  <Card
+    title="Deploy Parmana: specification for AI agents"
+    icon="robot"
+    href="/agents/deploy"
+  >
+    The same procedure as exact, checkable steps for an AI agent.
+  </Card>
+</CardGroup>

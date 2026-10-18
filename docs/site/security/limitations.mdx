@@ -1,0 +1,229 @@
+---
+title: "Limitations"
+description: "What Parmana does not claim, the specific threats its tests actually cover, and what you're responsible for."
+---
+
+Every real, tested guarantee Parmana makes holds only within a stated boundary. This page
+states those boundaries precisely instead of leaving them implicit, and names, threat by
+threat, what's actually tested versus what's an honest gap.
+
+## What a signed approval does and does not cover
+
+Every agent action needs a signed human approval ([Human approval](/concepts/human-approval)).
+Its limits, stated plainly:
+
+- **It names the action and the resource, not every parameter.** A Slack approval does not fix
+  the message text, and a HubSpot approval does not fix the new stage or amount. Payment,
+  expense and refund approvals do cover the amount.
+- **It trusts the approver.** Parmana checks that a trusted, unrevoked key signed it; it cannot
+  check that the person read the request. Today one approver key is trusted in production.
+- **No request waits for it.** A refused request stays refused; the agent sends a new one with
+  the approval.
+
+## What Parmana does not claim
+
+These are not "not yet" items, no implementation could honestly back them, so Parmana does
+not claim them:
+
+- Execution is impossible to bypass under all circumstances.
+- Mathematical proof of execution correctness, or cryptographic proof of every aspect of
+  runtime behavior.
+- Guaranteed regulatory compliance (SOC2, GDPR, ISO 27001, or a specific regulator's
+  approval).
+- Absolute prevention of all unauthorized execution, or tamper-proof operation in every
+  deployment environment.
+- "Non-bypassable" as an unscoped, system-wide claim. [The gateway](/concepts/the-gateway)
+  enforces nothing at the network level, it's a property of systems that route through it.
+- That an AI agent cannot act at all without an approval. Parmana governs the actions routed
+  through it. An agent that holds its own credentials to a system, or anyone who controls the
+  host or image Parmana runs from, is outside that boundary.
+- Deterministic signature output for ML-DSA-65 (those signatures are randomized by design,
+  only verification is deterministic; see
+  [Choose a signature provider](/guides/choose-a-signature-provider)).
+
+## Where real guarantees are scoped, not absent
+
+- **Envelope verification is non-bypassable only for a system that runs it.** A system you
+  build that doesn't call `@parmana/envelope-verifier` gets none of this protection.
+- **Single use enforcement is scoped to whichever nonce store checks it.** Parmana's own
+  server keeps authorization and approval nonces in Postgres, so every instance on one database
+  accepts each once. A system you build with its own per instance store gets once per instance,
+  not once fleet wide.
+- **Credential isolation is proven for the built in connectors** (HubSpot, GitHub, Paytm,
+  Slack, each registering only when its own credentials are configured), not automatically for
+  a new built in one you add. An external connector holds no credential at all. The mechanism is generic and tested, but wiring a new
+  connector into it is a deliberate step, not something the architecture does for you; see
+  [Credential isolation](/concepts/credential-isolation).
+- **Key custody is local files or AWS KMS, nothing else.** `KEY_PROVIDER=local` reads PEM
+  files through `FileKeyProvider`. `KEY_PROVIDER=aws-kms` signs through AWS KMS
+  (`KmsSigner`), so the signing key is never released. `azure-key-vault`, `gcp-kms`, and `hsm`
+  are declared configuration values with no implementing class; setting one fails startup
+  loudly rather than silently doing nothing. Key rotation exists
+  (`scripts/rotate-verification-key.ts`) but is a manual operator procedure, not automated.
+- **Verifiers must implement the large message rule.** AWS KMS refuses a raw Ed25519 message over
+  4096 bytes, so a record or authorization larger than that is signed by KMS as a fixed commitment
+  (ADR-0010). The Parmana TypeScript packages and the Python SDK verify it. A verifier you write
+  yourself must accept the commitment form for messages over 4096 bytes, or it will reject large
+  KMS signed records.
+- **Route access is scoped by kind of caller, not per route.** There is no per key allowlist
+  of endpoints; governance routes refuse a key not provisioned as a human. Also scoped: which `authority.principalId` a
+  caller may assert (default: only itself), and which transactions/records a caller may
+  read (cross-caller reads 404, not 403).
+- **Two people approve an approver change, not two proven people.** Adding or revoking an
+  approver key needs one human credential to propose and a different one, with its own step up
+  key, to approve. The server cannot tell whether two credentials belong to two people. An
+  operator with database access can also change `approval_issuers` directly, which bypasses
+  this; the change rows record what was done.
+- **An external connector's answer is its claim.** Registering a capability to your own HTTPS
+  endpoint needs two human credentials, as for approver changes, and the endpoint must resolve
+  only to public addresses, checked again at every release. Parmana releases only what a person
+  approved, signed and bound to that endpoint, and records what the endpoint answers as its claim,
+  not as proof that it acted. Releasing to a registered endpoint was checked live in production on
+  2026-10-01, with an endpoint that acts on nothing.
+- **Approval notifications are best effort.** One attempt, 3 seconds, no retry. A lost event
+  changes nothing about the refusal, and the Refusal Records stay the list to review (a Refusal
+  Record whose write fails is logged, not retried; see [Refusal Records](/concepts/refusal-records)).
+- **Mocks are labeled as mocks.** `SapConnector`, `OracleConnector`, `WorkdayConnector`, and
+  `SalesforceConnector` are explicit, self-documented reference mocks. None calls a real
+  system, and none is wired into the default server.
+
+## Open issues
+
+Every gap still open, as of 2026-10-10. Each has an entry in
+[docs/VERIFICATION-GAPS.md](https://github.com/pavancharak/parmana/blob/main/docs/VERIFICATION-GAPS.md), where the
+evidence and the proposed fix are.
+
+| Entry      | What is open                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | What to do meanwhile                                                                             |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| G-50       | Any trusted approver can approve any policy change, and sign an approval for any action.                                                                                                                                                                                                                                                                                                                                                                                                                      | Give approver keys only to people who may approve everything the deployment can do.              |
+| G-51, G-76 | Facts an agent declares (for example `refundEligible`, Slack `contentApproved`) are not checked against another system. They can only make a rule refuse.                                                                                                                                                                                                                                                                                                                                                     | Rely on the signed approval, which is what authorizes.                                           |
+| G-92       | [Business validation](/concepts/business-validation): business systems can be [registered as sources](/guides/connect-a-business-signal-source) and their signed answers are verified, but no real system is connected yet; a source without a key is trusted on TLS alone; Parmana proves the source said it, not that it is right. Verified in production with a demo source by a [live check](https://github.com/pavancharak/parmana/tree/main/examples/live-checks/business-signal-source) on 2026-10-11. | Register sources with a key, keep amount limits in policy rules and rely on the signed approval. |
+| G-93       | [Authority grants](/guides/grant-an-agent-authority) are opt in per policy and no shipped policy requires one; limits are per request, not per day. Verified in production with a test policy by a [live check](https://github.com/pavancharak/parmana/tree/main/examples/live-checks/authority-grant) on 2026-10-11.                                                                                                                                                                                         | Require grants in the policies that matter, keep cumulative caps in the business system.         |
+| G-94       | At release the gateway re-checks the facts and the grant a decision rests on, but an [external endpoint](/guides/connect-any-external-system) must check the release's `conditions` itself to execute only if they still hold; built in connectors get only the gateway re-check.                                                                                                                                                                                                                             | Check `conditions` in your endpoint, in the same transaction as the action.                      |
+| G-65       | A refused request is not held for review: the agent sends it again with the signed approval, as a new transaction.                                                                                                                                                                                                                                                                                                                                                                                            | Set `APPROVAL_WEBHOOK_URL` so approvers hear of requests that wait on them.                      |
+| G-66       | Binding a built in action to a different policy name, or adding a built in action, needs a deploy.                                                                                                                                                                                                                                                                                                                                                                                                            | New policy versions, approvers and external connectors need none.                                |
+| G-82       | An external endpoint's answer is its claim, not proof that it acted.                                                                                                                                                                                                                                                                                                                                                                                                                                          | Keep the endpoint's own records and reconcile them against Trust Records.                        |
+| G-84       | An approved request took 24 to 32 seconds in production on 2026-10-01.                                                                                                                                                                                                                                                                                                                                                                                                                                        | Use a 120 second timeout; after a timeout, read the record before sending anything new.          |
+| G-53       | If an action ran and neither its record nor its result could be saved, the outcome is established from the connector by hand.                                                                                                                                                                                                                                                                                                                                                                                 | Watch for intents left `PREPARED` (`409 EXECUTION_INTENT_RESULT_NOT_RECORDED`).                  |
+| G-4        | Hybrid (Ed25519 and ML-DSA-65) signing covers Trust Records and receipts; refusal records, audit events and authorizations have one signature.                                                                                                                                                                                                                                                                                                                                                                | Treat post-quantum protection as covering records and receipts only.                             |
+| G-86       | Visitor data in the public sandbox was deleted around its retention job's first run; the cause is not established. Production was not affected.                                                                                                                                                                                                                                                                                                                                                               | Do not keep anything in the sandbox you need later.                                              |
+| G-9        | Two audit records are written for each execution.                                                                                                                                                                                                                                                                                                                                                                                                                                                             | None needed; the connector's record is the one with the credential id.                           |
+
+## Threat model
+
+For each threat below: what's actually tested, and what the honest gap is. The full threat
+model, with assets, trust boundaries, attackers and an attack scenario per threat, is
+[THREAT-MODEL.md](https://github.com/pavancharak/parmana/blob/main/THREAT-MODEL.md).
+
+### Policy bypass
+
+A caller lacking a capability is blocked before policy evaluation ever runs; a caller with no
+capabilities configured is denied everything by default (fail-closed). A tampered or forged
+signed authorization fails signature verification, every field participates in the signature
+(decision id, expiry, signals hash, granted capability, submitted-by). A policy edited after
+an authorization was signed doesn't retroactively change what that authorization approved,
+and an authorization is rejected at execution time if the policy's content has changed since
+signing. The capability check takes no input describing a caller's intent, a "jailbroken"
+agent request and a merely mistaken one are denied by the identical, unconditional check.
+
+**Honest gap:** none of this catches a policy that was _authored_ wrong, an over-broad rule
+that approves something it shouldn't is a policy-authoring problem, not something signature
+verification can detect. See [Write your first policy](/guides/write-your-first-policy) for
+how to scope rules correctly, and `PolicyValidator.findRuleConflicts()` for advisory
+detection of rules that can both match at once.
+
+### Credential theft
+
+A session credential is scoped to one connector, single-use, and time-bounded; it's rejected
+after expiry or after revocation, including at the exact boundary instant. It can't be used
+twice, including under concurrent access (exactly one of two simultaneous consume calls
+succeeds). A failed execution still burns the credential, a retry always gets a fresh one.
+
+**Honest gap:** a session credential's scope is in-memory state, not itself signed, the
+provable guarantee lives one layer up on the authorization's content hash. And if the
+long-term signing key itself is stolen, anything an attacker signs with it verifies as fully
+legitimate, because it is a legitimate signature. This is true of every signature scheme, not
+a gap specific to this system. What limits exposure: key-id-aware verification means a
+compromised key can be replaced without invalidating already-issued records, but this is a
+mitigation _after_ a compromise is discovered and the key is revoked, not a prevention, and
+it's a manual operator procedure today, not automatic rotation.
+
+### Insider threat / audit tampering
+
+No `delete` method exists on any trust record, refusal record, or audit event repository.
+Every caller-authentication event is signed (`AuditEventCrypto`) and chained to the caller's
+own immediately-preceding event, a deleted row breaks the chain, provable standalone with no
+server or database required. Every execution outcome has a record path (trust record, refusal record, or audit event). One
+path fails open by design: if a Refusal Record write fails, the refusal still happens and the
+failure is logged (`refusal_record_write_failed`), but that record can be missing (CLAIMS.md 3.11,
+[Refusal Records](/concepts/refusal-records)).
+
+**Honest gap:** deleting an entire caller's history at once, or reordering audit rows across
+different callers, isn't caught by the per-caller chain. Verification tools are ordinary,
+public packages (`@parmana/envelope-verifier`, `@parmana/crypto`), not proprietary, so this
+isn't something only Parmana can check, but it also means the tooling itself provides no
+protection against an attacker who has direct database access and the signing key.
+
+### Connector / fail-closed behavior
+
+If the database is unreachable at startup, the server fails to start rather than running
+degraded. Signature verification has no retry-with-a-weaker-check path, denial is immediate
+and single-pass. Every independent check in the Gateway's pipeline is ANDed together, one
+check failing denies the whole request even if every other check passed. Every connector
+adapter fails closed on a non-2xx response or a timeout, never a partial success.
+
+**Honest gap:** there's no throughput or load test in this codebase. In memory, one
+authorization and execution round trip takes a few milliseconds (roughly 0.1 ms to sign); in
+production on Vercel an approved request took 24 to 32 seconds end to end, most of it in
+sequential database and KMS round trips, not yet broken down (`docs/VERIFICATION-GAPS.md`
+G-84). Connector calls have timeouts (Paytm 10 s by default, an external connector its
+registered `timeoutMs`); the pipeline as a whole has none of its own, so a client should wait
+120 seconds and, after a timeout, read the record before sending again.
+
+## Your responsibilities as an operator
+
+- **Key custody.** Rotate signing keys on a schedule, and move to a real KMS/HSM if your
+  threat model requires it, this system doesn't do it for you.
+- **Policy authoring.** Signature verification proves a policy ran unmodified, it doesn't
+  prove the policy itself is correct. Review policy content the way you'd review any access
+  control rule.
+- **Connector scope.** Wiring in a new connector is a deliberate integration step. Credential
+  isolation is proven for the built in connectors, not automatically inherited by one you add
+  without following the same pattern; see the [Connector Development
+  Guide](/integrations/connector-development-guide). An [external
+  connector](/guides/connect-any-external-system) is your own endpoint: verify each signed
+  release and keep what it answers honest.
+- **Rate limiting and availability.** `/execute` is rate-limited per caller, `/health`/`/ready`
+  per IP, this protects the service, it isn't a substitute for your own capacity planning.
+
+- **Credential custody for agents.** Give connector credentials to Parmana, never to the
+  agent. An agent that holds its own token to a system can act there without Parmana; where
+  the downstream system can, have it accept only Parmana's signed release.
+- **Runtime integrity.** Run an image you have verified
+  ([Verifying the server image](/security/overview#verifying-the-server-image)) on a host you
+  control. Parmana cannot defend against changes to the code, container or machine it runs
+  on.
+
+## How these claims are verified
+
+Every claim on this site cites a real source file or test, not a description written from
+memory. You can check any of it yourself: clone the repository, run `npm test`, read the
+cited file at the cited path, or verify a trust record independently with the server turned
+off entirely, see [Verify a trust record independently](/guides/verify-independently). The
+full evidentiary detail behind every claim lives in `docs/CLAIMS.md` in the repository.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Security overview" icon="shield" href="/security/overview">
+    What Parmana actually guarantees, with its precise scope.
+  </Card>
+  <Card
+    title="Verify independently"
+    icon="check-double"
+    href="/guides/verify-independently"
+  >
+    Verify a trust record with the server turned off, trusting nothing but the
+    artifact and a public key.
+  </Card>
+</CardGroup>

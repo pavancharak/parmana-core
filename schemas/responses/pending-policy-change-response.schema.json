@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/pending-policy-change-response.schema.json",
+  "title": "Pending Policy Change Response",
+  "description": "Response returned by POST /policies/{name}/{version}/pending-changes (201), POST /policies/pending-changes/{id}/approve (200), and POST /policies/pending-changes/{id}/reject (200). A bare Pending Policy Change, no wrapper.",
+  "$ref": "../common/pending-policy-change.schema.json"
+}

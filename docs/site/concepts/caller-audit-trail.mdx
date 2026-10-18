@@ -1,0 +1,158 @@
+---
+title: "Caller Audit Trail"
+description: "Every caller-authentication event (success, denial, or structural rejection) is signed, durable, and, per caller, chained so a deleted row is detectable."
+---
+
+<Info>
+  **[AVAILABLE]**. `packages/api/src/auth/CallerAuditSink.ts`,
+  `SupabaseCallerAuditSink.ts`, `packages/crypto/src/AuditEventCrypto.ts`,
+  `CallerAuditChainVerifier.ts`. See [Limitations](/security/limitations)
+  ("Insider threat / audit tampering") for the full evidence list this page
+  draws from.
+</Info>
+
+## What it is
+
+Every event at the caller-authentication layer, a successful authentication, a rejection, a
+denied capability or principal, a non-human credential hitting a governance endpoint, or a
+structurally malformed request, produces a `CallerAuditEvent`, written through a
+`CallerAuditSink`. This is a separate trail from [Execution Trust
+Records](/concepts/execution-trust-records) and [Refusal Records](/concepts/refusal-records):
+those two answer "was this specific business action approved or rejected," this one answers
+"who tried to talk to this API at all, and what happened." See
+[Authentication](/api-reference/authentication) for the layer this audits.
+
+```typescript
+// packages/api/src/auth/CallerAuditSink.ts
+export interface CallerAuditEvent {
+  readonly type:
+    | "caller.authenticated"
+    | "caller.rejected"
+    | "caller.capability_granted"
+    | "caller.capability_denied"
+    | "caller.principal_denied"
+    | "caller.non_human_denied"
+    | "caller.structural_rejected";
+  readonly occurredAt: string;
+  readonly route: string;
+  readonly callerId?: string; // absent when caller-auth itself rejected first
+  readonly reason?: string;
+  readonly businessTransactionId?: string;
+  readonly capability?: string;
+  readonly principalId?: string;
+  readonly severity?: "flagged"; // non-human credential at a governance endpoint
+}
+
+export interface CallerAuditSink {
+  record(event: CallerAuditEvent): Promise<void>;
+}
+```
+
+## Two implementations, one deliberate split
+
+- **`InMemoryCallerAuditSink`**, `NODE_ENV=test` only. Process-local, unsigned, unchained.
+- **`SupabaseCallerAuditSink`**, every other environment. Fails closed at startup
+  (`assertDatabaseUrlConfigured`) if `DATABASE_URL` isn't configured, there is no silent
+  fallback to the in-memory sink outside tests. Every event is signed
+  (`AuditEventCrypto`, with the same signer and key as every other artifact this
+  system produces) before being written, and, since the per-caller chaining milestone
+  below, chained per caller as well.
+
+## Per-caller tamper-evident chaining
+
+A signature proves a _surviving_ row wasn't edited. It says nothing about a row that's simply
+gone, and `caller.authenticated` fires on every authenticated request to every route, making
+`caller_audit_events` the highest-write-volume table in this system. A single global hash
+chain (each row signing over the previous row's hash) would need a lock serializing every
+write through one predecessor lookup, a real bottleneck on the busiest table.
+
+Instead, each caller gets an independent chain:
+
+```
+Caller Alice:                          Caller Bob (independent):
+  event 1: previousChainHash = null      event 1: previousChainHash = null
+  event 2: previousChainHash = hash(1)   event 2: previousChainHash = hash(1)
+  event 3: previousChainHash = hash(2)
+```
+
+`SupabaseCallerAuditSink.record()`, when the event carries a `callerId`, opens a transaction
+and takes a Postgres advisory lock scoped to `hashtext(callerId)`, this serializes only that
+caller's own concurrent writes, never a different caller's. It reads that caller's most recent
+`chain_hash`/`chain_position` (`ORDER BY id DESC LIMIT 1`), folds `previousChainHash`/
+`chainPosition` into the exact object `AuditEventCrypto` already signs, the existing
+`signature_json` column covers the chain link too, no second signature column, and computes
+`chainHash` via `TrustRecordHasher`, the same idiom `RuntimeEngine` uses for
+`policyContentHash`/`signalsHash`.
+
+Events with no `callerId` (the earliest possible rejection, malformed JSON or an oversized
+body, rejected before caller-auth middleware or any route handler runs, and
+`caller.rejected`, no caller identified) get `NULL` chain fields: there's no per-caller chain
+to link them into, the same "absent means not covered" discipline every other optional column
+on this table follows.
+
+<Warning>
+  **What this catches, and what it doesn't.** Deleting any row for a caller who
+  has other rows before or after it breaks the chain, the surviving next row's
+  `previousChainHash` still points at the deleted row's hash, which no longer
+  matches what's now immediately before it. It does **not** catch deleting an
+  entire caller's history at once (nothing remains to show a gap), and it does
+  not detect reordering or deletion across *different* callers' independent
+  chains. Both are stated limits, not oversights, see `docs/CLAIMS.md` §2.32.
+
+**Deleting the newest row for a caller is not detected by the chain alone.** Nothing
+remains after it to break. The verifier accepts a chain head recorded outside the
+database; a chain that no longer ends at that head then fails. Detection depends on
+that head being stored somewhere the database cannot rewrite. See `docs/CLAIMS.md`
+§2.57 and §2.32.
+
+</Warning>
+
+<Note>
+  **In the public sandbox, chains start partway.** The sandbox deletes visitor
+  data on a schedule (see [Playground](/playground)), including caller audit
+  events, and on 2026-10-02 all of it was deleted at once. A sandbox caller's
+  oldest surviving event therefore still names the hash of a deleted one, and
+  `verifyChain` reports a break at position 1. That is expected there; in
+  production nothing deletes these rows.
+</Note>
+
+## Verifying a chain, standalone
+
+```typescript
+import { CallerAuditChainVerifier } from "@parmana/crypto";
+
+// rows: fetched from caller_audit_events for one caller_id,
+// ordered by chain_position ascending
+const result = await new CallerAuditChainVerifier().verifyChain(rows);
+
+if (!result.valid) {
+  console.log(
+    `Chain broken at position ${result.brokenAtPosition}: ${result.reason}`,
+  );
+}
+```
+
+No network call, no database, no running Parmana process, the same standalone discipline
+[Verify a trust record independently](/guides/verify-independently) demonstrates for
+`ExecutionTrustRecord`, extended here to the caller-audit trail.
+
+## Verifying one event over HTTP, without a caller credential
+
+**`POST /audit/verify`**, takes `{ event, signature }` directly (not a lookup by id) and
+returns `{ valid }`. Deliberately mounted **ahead of** caller-auth middleware
+(`packages/api/src/app.ts`), mirroring `POST /refusal/verify`'s exact reasoning ([Refusal
+Records](/concepts/refusal-records)): no API key needed, nothing but the artifact and
+Parmana's public key. This is what makes a stored row independently third-party verifiable by
+whoever received it, not only by Parmana. See [Error catalog](/api-reference/error-catalog)
+for this route's error shapes.
+
+## Related
+
+- [Refusal Records](/concepts/refusal-records), the policy-REJECT-path evidence trail;
+  `POST /audit/verify` and `POST /refusal/verify` share the same open-verification design.
+- [Execution Trust Records](/concepts/execution-trust-records), the APPROVE-path counterpart,
+  with its own, longer-standing `previousChainHash`/`chainHash` chaining
+  (`ExecutionChainCrypto`) that the per-caller chain above follows the same idiom of.
+- [Authentication](/api-reference/authentication), the layer this trail audits.
+- [Limitations](/security/limitations): "Insider threat / audit tampering," the full
+  evidence this page's claims are drawn from.

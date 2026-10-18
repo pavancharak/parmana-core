@@ -1,0 +1,87 @@
+---
+title: "Ready to sign before releasing anything"
+description: "Why Parmana proves it can sign evidence before it releases an action, and why a failure after release is reported loudly instead of as an ordinary error."
+---
+
+Picture this, as an example. It is late on a Friday. An agent proposes an ₹8,000 refund for a damaged parcel, a manager
+signs the approval, and Parmana releases it to the payment connector. The money moves. Then Parmana tries to sign the
+Trust Record for that refund, and the signing key does not answer: a permission was changed that afternoon, or the cloud
+key service is having a bad hour.
+
+The caller gets a plain `500`. To the agent, and to anyone reading the logs on Monday, a plain `500` looks like
+"nothing happened". So the agent retries, or a person reissues the refund by hand. Now the customer has been paid twice,
+and there is no signed record of the first payment at all.
+
+## Two failures, one wrong message
+
+There are really two problems here.
+
+The first is ordering. Parmana released an action at a moment when it could not have produced the evidence for it. If
+signing was going to fail, it was better to find out before anything left the building.
+
+The second is the message. "Something went wrong" is the right answer for a request that was refused. It is the wrong
+answer for a request that was carried out and then could not be recorded. Those need different responses from the
+people reading them: one says try again, the other says go and check what already happened.
+
+This was not hypothetical. On 2026-09-20, AWS KMS refused to sign a large Trust Record in production, after the refund
+connector had already been called. That size limit was fixed the same day. The lesson about ordering stayed.
+
+## The idea: check the pen before you sign the cheque
+
+Before an action is released, prove that the signing path works right now: the same key, the same signer, a message
+large enough to exercise the same code a real record will. If it fails, refuse, and release nothing. If an action does
+get released and the record still cannot be made, say exactly that, with the identifiers someone needs to reconcile it.
+
+## How Parmana does it
+
+**A probe before release.** Just before release, the runtime signs a synthetic artifact through the same signer and key
+id used for Trust Records, padded past 4096 bytes so the large message path is exercised, and verifies the signature
+against the public key the same signer publishes. Nothing it signs is stored or trusted. It catches a missing, disabled
+or access denied key, a KMS or network outage, a signing key that does not match the published public key, and the size
+limit.
+
+**Refuse if it fails.** If the probe fails, the request is refused with `503 SIGNING_UNAVAILABLE` and nothing is
+executed. A refusal that happened earlier for another reason, such as a policy rejection, stays what it was.
+
+**Cheap enough to run always.** A success is trusted for 60 seconds. A failure is never cached, so recovery is noticed
+on the next request. Concurrent requests share one probe. Under KMS that is at most one signature and one public key
+read a minute per server instance.
+
+**No switch to turn it off.** It is enforced everywhere except when the environment is exactly test or development, and
+no setting turns it off in production.
+
+**Loud failure after release.** If the action was released and the signed Trust Record then cannot be produced or
+stored, the answer is `500 EXECUTION_RECORD_INCOMPLETE`. It names the business transaction id and the authorization id,
+and logs at critical severity. Nobody should read that as "nothing happened".
+
+This is claim 2.38, and the decision is recorded in ADR-0011.
+
+## What came next
+
+The probe narrows the window. It does not close it: a key can fail in the second between the probe and the real
+signature, and a database can fail after release. So the next day a second step was added. Before release, Parmana now
+signs and stores an Execution Intent, a record of exactly what it is about to release. If that cannot be stored,
+nothing is released. If the Trust Record is later missing, it can be rebuilt from what was saved after release, without
+calling the connector again.
+
+## What it does not do
+
+- **It does not guarantee a signed Trust Record for every executed action.** `EXECUTION_RECORD_INCOMPLETE` can still
+  happen. The Execution Intent makes it repairable in most cases, but not when the save after release also failed; then
+  the outcome has to be established from the connector by hand.
+- **The failure paths have not been seen live.** The success path was verified in production on 2026-09-20: the probe
+  had to pass against the real KMS key for a live test refund to succeed. The `503` and the `500` are proven in unit tests,
+  not by breaking the production key on purpose.
+- **It proves the signer works, not that the action is right.** A working pen signs a bad cheque just as neatly. Whether
+  the action should happen is the policy's and the approver's job.
+- **It costs a little.** At most one extra signature and key read a minute per instance. That cost was not measured on
+  its own.
+
+## The takeaway
+
+Evidence that might not exist is a promise, not evidence. Check that you can write the record before you do the thing,
+and if the record fails afterwards anyway, say so in words nobody can mistake for "nothing happened".
+
+**Read more:** [Execution Intents](/concepts/execution-intents),
+[Execution Trust Records](/concepts/execution-trust-records),
+[Write it down before you do it](/essays/12-write-it-down-first).

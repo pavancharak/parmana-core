@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/execution-intent-finalize-response.schema.json",
+  "title": "Finalize Execution Intent Response",
+  "description": "Response returned by POST /execution-intents/{businessTransactionId}/finalize. The finalize operation never calls a connector. It is safe to run more than once: FINALIZED means a Trust Record was rebuilt by this call, ALREADY_FINALIZED means one already existed and nothing was built.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "outcome",
+    "businessTransactionId",
+    "trustRecordId",
+    "trustRecord"
+  ],
+  "properties": {
+    "outcome": {
+      "type": "string",
+      "enum": ["FINALIZED", "ALREADY_FINALIZED"]
+    },
+    "businessTransactionId": {
+      "type": "string"
+    },
+    "trustRecordId": {
+      "type": "string",
+      "description": "Identifier of the Execution Trust Record. Equal to trustRecord.trustRecordId."
+    },
+    "trustRecord": {
+      "$ref": "../common/execution-trust-record.schema.json"
+    }
+  }
+}

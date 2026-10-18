@@ -1,0 +1,22 @@
+---
+title: "Function: signPolicyChangeStepUp()"
+---
+
+> **signPolicyChangeStepUp**(`input`): [`PolicyChangeStepUpAuthorization`](/sdks/reference/typescript/interfaces/PolicyChangeStepUpAuthorization)
+
+Defined in: [typescript/src/crypto/step-up.ts:56](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/step-up.ts#L56)
+
+Signs a step up authorization for one decision (approve or reject) on one
+change: a policy, an approver or an external connector. Valid for
+ttlSeconds (default 120) and usable once. Run by the checker, with their
+own step up private key.
+
+## Parameters
+
+### input
+
+[`SignPolicyChangeStepUpInput`](/sdks/reference/typescript/interfaces/SignPolicyChangeStepUpInput)
+
+## Returns
+
+[`PolicyChangeStepUpAuthorization`](/sdks/reference/typescript/interfaces/PolicyChangeStepUpAuthorization)

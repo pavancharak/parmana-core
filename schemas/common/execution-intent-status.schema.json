@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/execution-intent-status.schema.json",
+  "title": "Execution Intent Status",
+  "description": "Operational status kept next to a signed Execution Intent. It is NOT part of what is signed, so it changes as the request progresses. PREPARED: the intent is signed and stored, and the action may or may not have been released. An intent that stays PREPARED needs reconciliation with the connector. RELEASED: the release stage returned and the execution context was saved, so the Trust Record can be rebuilt. FINALIZED: a signed Execution Trust Record exists for this transaction. ERRORED: the release stage raised an error. The action may still have been executed, so the outcome is unknown and must be reconciled. RESOLVED: a verified human reconciled a PREPARED or ERRORED intent at the connector and closed it with POST /execution-intents/{businessTransactionId}/resolve, recording what they found and a note. The resolution is an attributed operator statement stored in this unsigned status. It is NOT tamper evident and it is not a Trust Record.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["state"],
+  "properties": {
+    "state": {
+      "type": "string",
+      "enum": ["PREPARED", "RELEASED", "FINALIZED", "ERRORED", "RESOLVED"]
+    },
+    "releasedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the release stage returned and the execution context was saved. Absent from PREPARED and from an ERRORED intent."
+    },
+    "finalizedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the intent was marked FINALIZED. Present only when state is FINALIZED."
+    },
+    "finalizationMode": {
+      "type": "string",
+      "enum": ["INLINE", "REPAIRED"],
+      "description": "INLINE: the Trust Record was produced in the original request. REPAIRED: it was rebuilt afterwards by POST /execution-intents/{businessTransactionId}/finalize. Present only when state is FINALIZED."
+    },
+    "trustRecordId": {
+      "type": "string",
+      "description": "The Execution Trust Record for this transaction. Present only when state is FINALIZED."
+    },
+    "failureReason": {
+      "type": "string",
+      "description": "The error message the release stage raised. Present only when state is ERRORED."
+    },
+    "resolution": {
+      "type": "string",
+      "enum": ["NOT_EXECUTED", "EXECUTED"],
+      "description": "What the operator found at the connector. Present only when state is RESOLVED."
+    },
+    "resolutionNote": {
+      "type": "string",
+      "description": "The operator's note. Required when resolving. Present only when state is RESOLVED."
+    },
+    "resolvedBy": {
+      "type": "string",
+      "description": "The authenticated caller who resolved it. Absent when caller authentication is disabled."
+    },
+    "resolvedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When it was resolved. Present only when state is RESOLVED."
+    }
+  },
+  "examples": [
+    {
+      "state": "FINALIZED",
+      "releasedAt": "2026-09-21T05:40:32.743Z",
+      "finalizedAt": "2026-09-21T05:40:32.855Z",
+      "finalizationMode": "INLINE",
+      "trustRecordId": "a3c8d068-af6a-46c7-9976-e43612d5ab9c"
+    }
+  ]
+}

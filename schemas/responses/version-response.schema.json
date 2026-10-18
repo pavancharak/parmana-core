@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/version-response.schema.json",
+  "title": "Version Response",
+  "description": "Response returned by GET /version. All three fields are hardcoded literals in packages/api/src/routes/version.ts, not read from package.json or any build metadata.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "version", "api"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "enum": ["Parmana"]
+    },
+    "version": {
+      "type": "string",
+      "description": "Hardcoded running service version string."
+    },
+    "api": {
+      "type": "string",
+      "enum": ["v1"]
+    }
+  },
+  "examples": [
+    {
+      "name": "Parmana",
+      "version": "0.4.0",
+      "api": "v1"
+    }
+  ]
+}

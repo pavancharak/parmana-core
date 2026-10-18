@@ -1,0 +1,228 @@
+---
+title: "Troubleshooting"
+description: "Real problems encountered while building and using this repo, with real causes."
+---
+
+## `npm run <script>` or `npx <bin>` does something unexpected at the repo root
+
+**Cause, confirmed:** `package.json` and `typescript/package.json` both declare `"name":
+"parmana"`. This duplicate workspace name breaks npm's resolution: `npm run <script>`
+cascades across every workspace instead of running only the root script, and `npx <bin>`
+resolves paths relative to an arbitrary workspace directory instead of the repo root.
+
+**Workaround:** invoke the local binary directly:
+
+```bash
+./node_modules/.bin/tsx packages/api/src/server.ts
+./node_modules/.bin/vitest run   # from the repository root, or with a path: vitest run packages/runtime
+```
+
+## `POST /execute` (or `runtime.execute()`) rejects with "declared signal(s) do not match the executed intent"
+
+**Not a bug — this is `SignalIntentBinder` doing its job.** Your transaction's `policy`
+declares `boundSignals` (check `policies/<name>/<version>/policy.json`), and at least one
+signal you declared doesn't exactly equal the value at its bound `intent` dot-path — often
+because you never declared that signal at all (`vendorId=undefined` is the most common
+shape of this). See [Policies and the decision](/concepts/policies-and-the-decision) for the
+mechanism, and [Security](/security/overview) for why it exists: this closed a real,
+previously live bypass where a caller's declared signals didn't have to describe the same
+action `intent` actually executed. Fix: add the missing/mismatched signal so it equals the
+real `intent` field the policy binds it to, exactly.
+
+## `POST /execute` returns 404 "Policy '...' was not found"
+
+**Cause:** the referenced `policy.version` doesn't match a real
+`policies/<name>/<version>/policy.json` on disk. Check `PARMANA_POLICY_DIR` and the exact
+version folder, for example `policies/vendor-payment/` currently only has a `2.0.0/`
+folder, not `1.0.0/`.
+
+## Execution is rejected with "Execution Gateway rejected request: failed checks [policyStillCurrent]" or "policy approval check failed"
+
+**Cause:** the gateway fails closed on policy binding. The rejection names the reason. "has no
+PolicyChangeApprovalRecord" means the policy was never approved through the maker checker flow.
+"does not match approval record contentHashAfter" means the policy file was edited outside the
+approval API, or the record is stale. "policyContentHash mismatch" means the policy changed after
+the authorization was signed. "absent: authorization carries no policyContentHash" means the
+authorization predates that field. `policyBindingNotVerified` means a required policy check did
+not run.
+
+**Fix:** approve the policy version through `POST /policies/:name/:version/pending-changes` and
+`.../approve` (see [Policy governance](/guides/policy-governance-maker-checker)), then submit a
+new transaction so a fresh authorization is signed. Nothing was executed and the nonce was not
+consumed.
+
+## `POST /execute` returns 500 and the log shows "Member must have length less than or equal to 4096"
+
+**Cause:** AWS KMS refuses to sign a raw Ed25519 message longer than 4096 bytes, and a full Execution
+Trust Record is larger. This is fixed by signing a message over that size as a fixed 97 byte commitment
+(ADR-0010), so first check that your deployment includes that change. The stack is
+`KmsSigner.sign` called from `VerificationCrypto.sign`.
+
+**Important:** on a build without ADR-0011 the connector may already have run by the time this error is returned. Do not assume the action did not happen. A current build returns `503 SIGNING_UNAVAILABLE` before release when signing is unhealthy, and `500 EXECUTION_RECORD_INCOMPLETE` when the action was released and the record then failed, so check which code you received. Query `execution_audit_events` for the `business_transaction_id` to see what the
+connector did, and generate a fresh `businessTransactionId` for any retry, since the original was
+already recorded.
+
+## `POST /execute` returns 503 `SIGNING_UNAVAILABLE`
+
+**Cause:** before releasing the action, the runtime proves it can sign an Execution Trust Record. The
+probe failed, so nothing was executed. The message includes the cause, for example a KMS
+`AccessDeniedException`, a disabled key, a network outage or a signing key that does not match its
+published public key.
+
+**Fix:** restore the signing path (check the KMS key state, the role's `kms:Sign` and `kms:GetPublicKey`
+permissions and the key id), then retry with a new `businessTransactionId`, because the original was
+already accepted. Nothing was sent to the connector.
+
+## `POST /execute` returns 503 `EXECUTION_INTENT_UNAVAILABLE`
+
+**Cause:** before releasing the action, the runtime signs and stores an [Execution Intent](/concepts/execution-intents). That failed, so **nothing was released**. The message includes the cause. The two usual causes are a database failure, and a database that is missing the `execution_intents` table because the migration was not applied before this version was deployed. A signing failure at that step is the third.
+
+**Fix:**
+
+1. Check `GET /ready`. If the table is missing it returns `503` with `status: NOT_READY` and a `reason` that names the migration file.
+2. If the table is missing, apply the migration, then check `GET /ready` again:
+
+   ```bash
+   psql "$DATABASE_URL" -f supabase/migrations/20260921120000_add_execution_intents.sql
+   psql "$DATABASE_URL" -tA -c "select to_regclass('public.execution_intents')"
+   ```
+
+   The second command must print `execution_intents`.
+
+3. Otherwise restore the database or the signing path, then retry with a new `businessTransactionId`, because the original was already accepted.
+
+Nothing was sent to the connector, so a retry with a new `businessTransactionId` cannot repeat the action.
+
+## `GET /ready` returns 503 and the reason mentions `execution_intents`
+
+**Cause:** Execution Intents are enforced on this deployment, and the `execution_intents` table does not exist. Every execution would be refused with `EXECUTION_INTENT_UNAVAILABLE`.
+
+**Fix:** apply `supabase/migrations/20260921120000_add_execution_intents.sql`, as in the section above. The migration only adds a table and is safe to run twice.
+
+## `POST /execute` returns 503 `CONNECTOR_NOT_REGISTERED`
+
+**Cause:** the request passed authentication, the policy and the approval check, but no connector is registered for its action on this deployment. A connector registers only when its own credentials are configured, for example `PAYTM_CONNECTOR_URL` and `PAYTM_CONNECTOR_SHARED_SECRET` for `paytm:refund`. Nothing was executed. Before this code existed the same case was a bare `500` with no code, so on an older server, look for `No connector registered for capability` in the log.
+
+**Fix:** configure the connector on the server (see the [connector section of the environment reference](/deployment/environment-variables#connectors)), deploy again, then retry with a new `businessTransactionId`, because the original was already accepted.
+
+## `POST /execute` returns 502 `EXECUTION_OUTCOME_UNKNOWN`
+
+**Cause:** the action was released to the connector and the call failed: the connector could not be reached, timed out, or answered with an error. Whether the action was performed is unknown. The response names the `businessTransactionId` and `authorizationId`; the connector's own error is never in the response.
+
+**Do not retry as a new transaction.** That could perform the action twice.
+
+1. Find the cause. The server log has a critical `execution_outcome_unknown` event, and the Execution Intent has it as `status.failureReason`:
+
+   ```bash
+   curl -s "$PARMANA_API_URL/execution-intents/<businessTransactionId>" \
+     -H "Authorization: Bearer $PARMANA_OPERATOR_KEY"
+   ```
+
+   `status.state` is `ERRORED`.
+
+2. Check the target system for this transaction.
+3. Close the intent with what you found, `EXECUTED` or `NOT_EXECUTED`, and a note. This needs a verified human credential and never calls the connector:
+
+   ```bash
+   curl -s -X POST "$PARMANA_API_URL/execution-intents/<businessTransactionId>/resolve" \
+     -H "Authorization: Bearer $PARMANA_OPERATOR_KEY" -H "Content-Type: application/json" \
+     -d '{"resolution":"NOT_EXECUTED","note":"Agent was unreachable; no refund in Paytm for this order."}'
+   ```
+
+4. Fix the connector before sending new requests. If the action was not executed and is still wanted, send it again with a **new** `businessTransactionId`.
+
+Before 2026-09-25 this failure returned a bare `500 Internal Server Error` with no identifiers (`docs/VERIFICATION-GAPS.md` G-63).
+
+## `POST /execute` returns 500 `EXECUTION_RECORD_INCOMPLETE`
+
+**Cause:** the action was released to the connector, but the signed Execution Trust Record could not be
+produced or persisted afterwards. The response names the `businessTransactionId` and `authorizationId`.
+
+**Do not retry as a new transaction.** That could repeat the action.
+
+A signed [Execution Intent](/concepts/execution-intents) exists for it, because it was stored before the action was released. Read it:
+
+```bash
+curl -s "$PARMANA_API_URL/execution-intents/<businessTransactionId>" \
+  -H "Authorization: Bearer $PARMANA_OPERATOR_KEY"
+```
+
+- `status.state` is `RELEASED`: the execution context was saved. Fix the underlying cause (the runtime log has a critical `execution_released_record_failed` or `execution_released_record_persist_failed` event with the cause), then rebuild the record. This never calls the connector:
+
+  ```bash
+  curl -s -X POST "$PARMANA_API_URL/execution-intents/<businessTransactionId>/finalize" \
+    -H "Authorization: Bearer $PARMANA_OPERATOR_KEY"
+  ```
+
+  Both calls need a credential provisioned as a verified human (`credentialHolderType: USER`).
+
+- `status.state` is `PREPARED`: the context was not saved, so finalize refuses with `409 EXECUTION_INTENT_RESULT_NOT_RECORDED`. Query `execution_audit_events` for the `businessTransactionId` and check the connector's own record to see what ran, then close the intent with `POST /execution-intents/<businessTransactionId>/resolve`, giving what you found (`NOT_EXECUTED` or `EXECUTED`) and a note. Record the outcome in your own systems as well.
+- `404 EXECUTION_INTENT_NOT_FOUND`: the transaction predates Execution Intents, or Execution Intents are off on this deployment. Use the manual reconciliation above.
+
+## `POST /execution-intents/<id>/finalize` returns 409 `EXECUTION_INTENT_RESULT_NOT_RECORDED`
+
+**Cause:** the intent exists, but the execution result was never saved, so the signed Trust Record cannot be rebuilt from nothing. The action may or may not have been released. Nothing was called and nothing was changed.
+
+**Fix:** establish the outcome at the connector, using the `businessTransactionId`, `action` and `target` from `GET /execution-intents/<id>`, then close the intent with `POST /execution-intents/<id>/resolve`, giving what you found (`NOT_EXECUTED` or `EXECUTED`) and a required note. Closing it takes it out of `GET /execution-intents/unfinalized`. See [Execution Intents](/concepts/execution-intents#step-4-close-an-intent-you-reconciled-at-the-connector-prepared-or-errored).
+
+## `GET /execution-intents/unfinalized` lists an intent in state `ERRORED`
+
+**Cause:** the release stage raised an error, most often a connector timeout, and the intent recorded `status.failureReason`. **The action may still have been executed**, for example when the connector received the request and answered too slowly.
+
+**Fix:** check the connector for the `businessTransactionId` and `target` before doing anything else. Finalize cannot help, because no result was saved. Once you know what happened, close the intent with `POST /execution-intents/<id>/resolve`, which records what you found and a required note, and takes it out of the list.
+
+## A signed approval is refused, and the approver was added through approver changes
+
+Check, in order:
+
+1. `GET /approval-issuers` lists the approver and key with `revoked: false`. A change that is
+   still `PENDING_APPROVAL` trusts nothing yet.
+2. The approval's `payload.issuer.approverId` and `keyId` match that entry exactly.
+3. The server log has no `approval_issuer_lookup_failed`. If it has, the `approval_issuers`
+   table could not be read: apply the migration `20260929120000_add_approval_issuers.sql` or fix
+   the database connection. Until then those approvers are unknown, so their approvals are refused.
+
+The approval's own checks (expiry, action, resource, amount, used once) are on
+[Human approval](/concepts/human-approval).
+
+## `POST /approval-issuers/changes` returns 409 `CONFLICT`
+
+The message says which case applies: the key id is listed in the server code, it already exists
+(revoked keys included: key ids are used once, so add the next one), the key to revoke is not
+an active key added through approver changes, or another change for the same key is still
+pending. See [Manage approvers](/guides/manage-approvers#errors).
+
+## No approval email or `approval.needed` event arrives
+
+- For email: `APPROVAL_EMAIL_TO` is set, the Resend integration is installed, and the sending
+  domain shows **Verified** in Resend. Until it is, the log has `approval_needed_notification_failed`
+  with Resend's reason. Check the spam folder once, and mark the first email as not spam.
+- For the webhook: both `APPROVAL_WEBHOOK_URL` and `APPROVAL_WEBHOOK_SECRET` are set.
+- The server was redeployed after setting them.
+- The request was refused only for want of an approval. A refusal for any other reason, such as
+  a failed fraud check, sends nothing, by design.
+- The server log has `approval_needed_notification_failed` with the reason: your endpoint
+  answered something other than `2xx`, took longer than 3 seconds, or redirected. There is no
+  retry. See [Approval notifications](/guides/approval-notifications#delivery).
+
+## `PARMANA_POLICY_DIR` and running from a fresh clone
+
+The server refuses to start when `PARMANA_POLICY_DIR` is not set, with an error naming it
+(`packages/shared/src/config/Config.ts`). There is no default directory, so set it
+explicitly (for example `./policies`), as shown in [Quickstart](/quickstart).
+
+## A resubmitted, modified transaction under the same ID isn't rejected the way I expected
+
+As of commit `651497a`, content-binding protection **is** wired in by default for
+`POST /execute` against the default server, see [Content Binding &
+TOCTOU](/concepts/content-binding-toctou) and [The gateway](/concepts/the-gateway) before
+debugging further. If you're seeing a resubmitted, modified transaction succeed anyway, check
+that you're actually hitting the Execution Gateway path (the default server always does) and
+not a lower-level API call that bypasses it, this is more likely a setup mismatch than a
+regression.
+
+## The TypeScript SDK isn't throwing on a 4xx/5xx response
+
+Confirmed, not a misunderstanding on your part, see [TypeScript SDK](/sdks/typescript).
+Check `response.status` on the returned object yourself, or use the
+[Python SDK](/sdks/python), which raises structured exceptions.

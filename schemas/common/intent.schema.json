@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/intent.schema.json",
+  "title": "Intent",
+  "description": "Immutable declaration of the action an Authority intends to be executed under an Authorization.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "intentId",
+    "authorizationId",
+    "action",
+    "target",
+    "parameters",
+    "createdAt"
+  ],
+  "properties": {
+    "intentId": {
+      "type": "string",
+      "description": "Unique Intent identifier."
+    },
+    "authorizationId": {
+      "type": "string",
+      "description": "Authorization under which this Intent was created. Must match authorization.authorizationId. Parmana rejects a mismatch with a 400."
+    },
+    "action": {
+      "type": "string",
+      "description": "Business action being requested. Required and non-empty. Parmana rejects an empty action with a 400.",
+      "examples": ["VendorPayment", "TransferFunds", "DeployApplication"]
+    },
+    "target": {
+      "type": "string",
+      "description": "Target of the intended action.",
+      "examples": ["vendor/V-100", "account/12345"]
+    },
+    "parameters": {
+      "type": "object",
+      "description": "Immutable business parameters describing the intended action. Not evaluated by policy, see signals.",
+      "additionalProperties": true
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when the Intent was created."
+    }
+  },
+  "examples": [
+    {
+      "intentId": "ae5865f6-181b-409a-90ec-1b4b8b8414ba",
+      "authorizationId": "6e9d6aa6-6d20-40a8-b05d-383516365cc7",
+      "action": "payments:execute",
+      "target": "vendor/V-100",
+      "parameters": {
+        "amount": 4500,
+        "currency": "USD"
+      },
+      "createdAt": "2026-07-07T16:38:59.285Z"
+    }
+  ]
+}

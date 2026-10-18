@@ -1,0 +1,39 @@
+[
+  {
+    "case": "baseline chain of 4",
+    "rows": 4,
+    "valid": true,
+    "verdict": "PASS"
+  },
+  {
+    "case": "modify record 2",
+    "valid": false,
+    "reason": "signature does not match recomputed content.",
+    "verdict": "PASS"
+  },
+  {
+    "case": "delete middle record 2",
+    "valid": false,
+    "reason": "previousChainHash does not reference the prior event's chainHash.",
+    "verdict": "PASS"
+  },
+  {
+    "case": "delete last record, no anchor",
+    "valid": true,
+    "verdict": "FAIL",
+    "note": "detection needs the head stored outside the database (G-108)"
+  },
+  {
+    "case": "delete last record, anchored head",
+    "valid": false,
+    "reason": "chain does not end at the anchored chain head (records missing or truncated).",
+    "verdict": "PASS"
+  },
+  {
+    "case": "10 concurrent writes, one authorization",
+    "rows": 10,
+    "valid": true,
+    "verdict": "PASS",
+    "note": "one PGlite connection, transactions serialized by the test pool; the advisory lock itself is not exercised"
+  }
+]

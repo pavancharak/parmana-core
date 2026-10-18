@@ -1,0 +1,185 @@
+---
+title: "Verify a Trust Record Independently"
+description: "Take a trust record someone else gave you and verify its hash and signature with only the public key, no Parmana server, no database, no network call."
+---
+
+<Info>
+  **[AVAILABLE]**, demonstrated below with the Parmana server confirmed stopped
+  throughout the verify step.
+</Info>
+
+## Goal
+
+Prove the independent-verification claim literally: take a trust record as plain JSON,
+verify it with nothing but Parmana's public key, while Parmana itself is not running.
+
+<Tip>
+  To check one record without installing anything, paste it into [Verify a
+  record in your browser](/verification/verify-in-browser).
+</Tip>
+
+## Prerequisites
+
+- A trust record to verify, saved as JSON. Get one from [Quickstart](/quickstart), or reuse
+  any `ExecutionTrustRecord` you already have on disk.
+- Parmana's public key. Two ways to get it, covering both the local-dev case and the genuine
+  third party case (added 2026-09-11, see below):
+  - Already on this machine for local dev: `keys/default.public.pem`.
+  - **A real third party (regulator, auditor, customer) who has never touched this
+    deployment's filesystem** fetches it over HTTP instead: `GET /keys/default` or
+    `GET /.well-known/jwks.json` (unauthenticated, no API key needed, see
+    [Authentication](/api-reference/authentication)). This is what actually makes the claim
+    below true for someone who isn't the operator, not just "the server process happens
+    to be stopped on the same box the key file already lives on."
+    You do **not** need the private key, `default.private.pem`, for any step in this guide.
+- Read [Execution trust records](/concepts/execution-trust-records) first, this guide
+  verifies exactly the hash and signature that page describes.
+
+## Steps
+
+### 1. Get a trust record and save it, then stop the server
+
+```bash
+curl -s -X POST http://localhost:3000/execute \
+  -H "Authorization: Bearer $PARMANA_API_KEY" \
+  -H "Content-Type: application/json" -d '{ ... }' \
+  > trust-record.json
+```
+
+Now stop the server completely. Everything after this point runs with no Parmana process
+alive:
+
+```bash
+curl -m 3 http://localhost:3000/health
+# curl: (7) Failed to connect to localhost port 3000
+```
+
+### 2. Verify it with `VerificationCrypto`, offline
+
+`VerificationCrypto` (`@parmana/crypto`) takes a plain `ExecutionTrustRecord` object and a
+`FileKeyProvider` reading only local PEM files, no network call, no database, no running
+Runtime:
+
+```typescript
+import { readFileSync } from "node:fs";
+import { VerificationCrypto } from "@parmana/crypto";
+
+const trustRecord = JSON.parse(readFileSync("trust-record.json", "utf8"));
+const crypto = new VerificationCrypto();
+
+const recomputedHash = await crypto.hash(trustRecord);
+const hashMatches = recomputedHash === trustRecord.trustRecordHash;
+const signatureValid = await crypto.verifySignature(trustRecord);
+const fullyVerified = await crypto.verify(trustRecord);
+```
+
+`FileKeyProvider.getPublicKey()` only checks for `<keyId>.public.pem`
+(`packages/crypto/src/providers/key/FileKeyProvider.ts`), it never reads or checks
+for the private key. Verifying a record you received from someone else never needs, and
+never has access to, the key that signed it.
+
+### 2b. Or: the standalone, zero-config offline verifier (2026-09-11)
+
+`VerificationCrypto` above still resolves its key through `FileKeyProvider`, i.e.
+`PARMANA_KEY_DIR` and a local file on disk. That is fine for local dev, but not what a genuine
+third party (who fetched the key over HTTP per the prerequisites above, and has it as a
+PEM string, not a file at a path this process's env vars name) actually has. For that case,
+use `verifyExecutionTrustRecordOffline` instead: no `PARMANA_KEY_DIR`, no env vars, no
+`FileKeyProvider` at all, just the record and the key string, and it also checks a hybrid
+`signatures` array (ML-DSA-65) if the record has one, which `VerificationCrypto.verify()`
+above does too but this function reports the hybrid result explicitly:
+
+```typescript
+import { readFileSync } from "node:fs";
+import { verifyExecutionTrustRecordOffline } from "@parmana/crypto";
+
+const trustRecord = JSON.parse(readFileSync("trust-record.json", "utf8"));
+const publicKeyPem = readFileSync("default.public.pem", "utf8"); // e.g. fetched via GET /keys/default
+
+const result = await verifyExecutionTrustRecordOffline(trustRecord, {
+  default: publicKeyPem,
+});
+console.log(result); // { valid, hashValid, legacySignatureValid, hybridSignaturesValid?, algorithmsChecked, errors }
+```
+
+Same logic exists as a CLI (`scripts/verify-trust-record.ts`) and, independently reimplemented
+in Python (`python/parmana/crypto/offline_verifier.py`, Ed25519 only today), see the
+troubleshoot note below.
+
+## Verify
+
+Real output, server confirmed stopped (see step 1):
+
+```
+Recomputed hash:   4d695da8e1d39d45599fdc0d91561ba680891a9d199d410db7d4d02a8b9ea66d
+Stored hash:       4d695da8e1d39d45599fdc0d91561ba680891a9d199d410db7d4d02a8b9ea66d
+Hash matches:      true
+Signature valid:   true
+Fully verified:    true
+```
+
+Now the negative case, proving this isn't just always returning `true`. Change one nested
+field, `executions[0].evidence.parameters.amount`, in the saved JSON, and rerun the exact
+same script against the tampered file:
+
+```
+Recomputed hash:   6ea2874ad4a6db6312d5c2a531edac17b789976af80d07ed01081f2be38cfab5
+Stored hash:       4d695da8e1d39d45599fdc0d91561ba680891a9d199d410db7d4d02a8b9ea66d
+Hash matches:      false
+Signature valid:   false
+Fully verified:    false
+```
+
+The hash comparison alone would have caught this. `verifySignature()` also fails because it
+verifies the signature against the _current_ (now-mutated) content, not a cached original,
+the mutation invalidates both checks independently, matching [what the hash and signature
+actually cover](/concepts/execution-trust-records).
+
+## Troubleshoot
+
+- **A large record fails to verify in your own implementation.** A record over 4096 bytes of
+  canonical content may have been signed by AWS KMS as a fixed 97 byte commitment, because KMS refuses
+  a longer raw Ed25519 message. Build the commitment as the bytes of `PARMANA-ED25519-LARGE-MESSAGE-V1`,
+  one NUL byte, then the SHA-512 digest of the canonical bytes, and verify the same signature over
+  that. Try the raw signature first, and try the commitment form only when the record is over 4096
+  bytes, never for a smaller one. `verifyExecutionTrustRecordOffline` (TypeScript) and
+  `verify_execution_trust_record_offline` (Python) both do this.
+- **`Public key not found: default`.** `VerificationCrypto` resolves keys via
+  `PARMANA_KEY_DIR` (or `./keys` if unset), confirm `keys/default.public.pem` exists at that
+  path relative to where you run the script.
+- **Verification fails on a record you're sure is untampered.** Confirm you copied the JSON
+  exactly as returned, re-serializing through a tool that reorders keys or reformats
+  timestamps can change byte-level content even though the JSON is semantically identical,
+  canonical serialization is order-sensitive by design.
+- **You need this in Python, not TypeScript.** The Python SDK's `client.verification.verify()`
+  calls `POST /verify` over HTTP and requires a running server, so it is not offline.
+  **As of 2026-09-11**, `parmana.crypto.verify_execution_trust_record_offline` (a separate,
+  standalone module, `python/parmana/crypto/offline_verifier.py`) does the same offline
+  check as the TypeScript example above, independently reimplemented, not a wrapper around
+  the TypeScript code. Cross-language determinism is proven by
+  `python/tests/test_offline_verifier.py`, which signs a record with the real TypeScript
+  signer and verifies it with only the Python module. Install it with
+  `pip install "parmana[verify]"`, since the module needs the `cryptography` package,
+  which the `verify` extra provides. On 1.4.0 and earlier, pass the record as the plain
+  JSON the server returned, not a decoded model: a decoded record whose
+  `previousChainHash` is `null` fails to verify there (G-85, fixed in 1.5.0).
+  **Ed25519 only for now**: the
+  `cryptography` package version this SDK depends on has no `ml_dsa` module yet, so a
+  hybrid-signed record's ML-DSA-65 signature cannot be checked from Python until that
+  lands upstream; use the TypeScript version for a complete hybrid check today.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Detect tampering" icon="bug" href="/guides/detect-tampering">
+    The same tamper-then-verify pattern, applied to the authorization envelope
+    instead.
+  </Card>
+  <Card
+    title="Execution trust records"
+    icon="file-shield"
+    href="/concepts/execution-trust-records"
+  >
+    Exactly what's inside the hash this guide recomputed.
+  </Card>
+</CardGroup>

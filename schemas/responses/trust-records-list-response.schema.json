@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/trust-records-list-response.schema.json",
+  "title": "Trust Records List Response",
+  "description": "Response returned by GET /trust-records (bulk/compliance export). A bare array, no pagination envelope (no page/pageSize/totalItems metadata) -- the same shape convention as GET /transactions. Each item is a full Execution Trust Record, the same shape GET /trust-records/{businessTransactionId} returns for one.",
+  "type": "array",
+  "items": {
+    "$ref": "execution-trust-record-response.schema.json"
+  }
+}

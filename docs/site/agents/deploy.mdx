@@ -1,0 +1,207 @@
+---
+title: "Deploy Parmana: specification for AI agents"
+description: "An exact, ordered procedure to deploy the Parmana server to production. Every step says what to run, what you should see, and what to do if you do not."
+---
+
+This page is written to be followed literally by an AI agent or a person. It contains no options to weigh. If your situation is not covered, **stop and ask the operator**. Do not guess.
+
+The human readable version, with more explanation, is the [Production deployment runbook](/deployment/production). Every variable is defined in the [Environment variable reference](/deployment/environment-variables). If the two disagree with this page, the environment reference wins, and you must tell the operator.
+
+## Rules that apply to every step
+
+1. Do the steps in order. Do not skip one.
+2. After each step compare what you saw with **Expect**. If it differs, follow **If not** and stop.
+3. Never print, log, commit or paste a secret. Secrets are: raw API keys, bearer keys, private key files, `DATABASE_URL`, `PARMANA_KEY_MATERIAL_JSON`, connector secrets and tokens.
+4. Never set `PARMANA_AUTH_DISABLED`, and never set `NODE_ENV` to `test` or `development` on a production server.
+5. Never deploy to production, write production environment variables or publish anything unless the operator has told you to in this session. Preparing the values and the commands is always allowed.
+6. The maker and the checker in step 8 must be two different human identities, and both keys must have `credentialHolderType` `USER`. You act as the maker only if the operator gave you the maker's key and said so. You must never approve your own proposal. The checker is a human.
+
+## Inputs you need before you start
+
+| Input                | Where it comes from                                                        | How to check it                                                               |
+| -------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `REPO`               | A clone of the Parmana repository.                                         | The file `package.json` exists at its root.                                   |
+| `DATABASE_URL`       | The operator. A Postgres connection string.                                | It starts with `postgresql://`. On a serverless host it is the pooler string. |
+| `HOST_KIND`          | The operator: `fly`, `vercel` or `docker`.                                 | It is exactly one of those three words.                                       |
+| `URL`                | The operator, or the host after deploy. The base URL, no trailing slash.   | It starts with `https://`.                                                    |
+| `FIRST_CALLER_ID`    | The operator. The name of the first caller, for example `my-agent`.        | It is non empty and has no spaces.                                            |
+| `FIRST_CAPABILITIES` | The operator. The actions that caller may use, for example `paytm:refund`. | It is non empty. Never use `*` unless the operator says so in words.          |
+| `MAKER_ID`           | The operator. The name of the human maker.                                 | It differs from `FIRST_CALLER_ID` and from `CHECKER_ID`.                      |
+| `CHECKER_ID`         | The operator. The name of the human checker.                               | It differs from `FIRST_CALLER_ID` and from `MAKER_ID`.                        |
+
+If any input is missing, stop and ask for it.
+
+## Step 1: Generate the signing keys
+
+Run from `REPO`:
+
+```bash
+npx tsx scripts/generate-keypair.ts --algorithm ed25519 --key-id default
+npm run generate:gateway-keys
+```
+
+**Expect:** the directory `keys` holds `default.private.pem`, `default.public.pem`, `gateway.private.pem` and `gateway.public.pem`.
+
+**If not:** a command reports that a file already exists. Do not add `--force`. Stop and ask the operator whether those keys are the ones in use.
+
+## Step 2: Create the database schema
+
+Ask the operator to apply the schema, or apply it if you have Supabase CLI access. There is exactly one accepted method for an agent: run `supabase db push` in a directory linked to the project. Otherwise give the operator the file `scripts/apply-all-migrations.sql` and ask them to run it in the Supabase SQL Editor.
+
+**Expect:** the query `select count(*) from consumed_nonces;` returns a number.
+
+**If not:** the query says the table does not exist. The schema is not applied. Stop and report it. If a later request says `PGRST205`, run `NOTIFY pgrst, 'reload schema';` and try once more.
+
+## Step 3: Generate the caller keys
+
+```bash
+npm run generate:api-key -- --caller-id FIRST_CALLER_ID --allowed-capabilities FIRST_CAPABILITIES
+npm run generate:api-key -- --caller-id MAKER_ID --credential-holder-type USER
+npm run generate:api-key -- --caller-id CHECKER_ID --credential-holder-type USER --generate-step-up-key
+```
+
+Replace the capitalised words with the input values. Each command prints a raw key, and a JSON entry. The third also prints a step up private key.
+
+**Expect:** three JSON entries, each with `callerId` and a `keyHash` of 64 lowercase hexadecimal characters. The second and third have `credentialHolderType` set to `USER`, and the third has a `stepUpPublicKey`.
+
+**If not:** stop and report the output, with any key values removed.
+
+Do the following with the printed values, and nothing else:
+
+1. Hand the first raw key to the caller through the channel the operator names.
+2. Hand the maker bearer key to the maker, and the checker bearer key and the step up private key to the checker, and to nobody else.
+3. Keep the three JSON entries. Join them into one array. That array is `PARMANA_API_KEYS`.
+
+## Step 4: Set the environment on the host
+
+Set exactly these variables on the host, in the Production environment:
+
+| Variable             | Value                    |
+| -------------------- | ------------------------ |
+| `NODE_ENV`           | `production`             |
+| `PARMANA_POLICY_DIR` | `./policies`             |
+| `PARMANA_API_KEYS`   | The array from step 3    |
+| `PARMANA_STORAGE`    | `supabase`               |
+| `DATABASE_URL`       | The input `DATABASE_URL` |
+| `PARMANA_KEY_DIR`    | `./keys`                 |
+
+If the host cannot mount the four key files, also set `PARMANA_KEY_MATERIAL_JSON` to `{"default":{"privateKeyPem":"<contents>","publicKeyPem":"<contents>"},"gateway":{"privateKeyPem":"<contents>","publicKeyPem":"<contents>"}}`, with the file contents from step 1.
+
+If the operator wants a connector, also set its variables from the [connector section](/deployment/environment-variables#connectors). For the refund connector set both `PAYTM_CONNECTOR_URL` (it must start with `https://`) and `PAYTM_CONNECTOR_SHARED_SECRET`, or neither.
+
+**Expect:** the host lists all six variables, and does not list `PARMANA_AUTH_DISABLED`.
+
+**If not:** stop and report which variable is wrong. Never repeat a secret value in your report.
+
+Rule 5 applies. If the operator has not told you to write to the host, print the variable names and stop, and let the operator set the values.
+
+## Step 5: Deploy
+
+| `HOST_KIND` | Command                                                                                        |
+| ----------- | ---------------------------------------------------------------------------------------------- |
+| `fly`       | `fly deploy`                                                                                   |
+| `vercel`    | `vercel deploy --prod`                                                                         |
+| `docker`    | `docker build -t parmana-api .` then run the image with the variables from step 4, port `3000` |
+
+Environment variables are read once at startup, so a change to any of them needs a new deploy.
+
+**Expect:** the deploy finishes and the host shows the new version live.
+
+**If not:** read the host's log. A startup failure names the variable it dislikes. Look the message up in the [startup errors table](/deployment/environment-variables#startup-errors-and-what-to-do), fix that one thing and deploy again. Do not change anything else.
+
+## Step 6: Check the server
+
+Replace `URL` with the input value.
+
+```bash
+curl -s "URL/health"
+curl -s "URL/ready"
+curl -s -o /dev/null -w "%{http_code}" -X POST "URL/execute" -H "Content-Type: application/json" -d "{}"
+```
+
+**Expect:**
+
+| Request                 | Answer                                               |
+| ----------------------- | ---------------------------------------------------- |
+| `GET /health`           | `200` and `"status":"UP"`                            |
+| `GET /ready`            | `200`, `"status":"READY"` and `"authDisabled":false` |
+| `POST /execute`, no key | The three digit code `401`                           |
+
+**If not:**
+
+| You saw                                    | Meaning                               | Do                                                                               |
+| ------------------------------------------ | ------------------------------------- | -------------------------------------------------------------------------------- |
+| `/ready` returns `503` `NOT_READY`         | The database is unreachable.          | Check `DATABASE_URL` and the network path. Stop and report.                      |
+| `"authDisabled":true`                      | Authentication is off.                | Remove `PARMANA_AUTH_DISABLED` and deploy again at once, then tell the operator. |
+| `POST /execute` returns anything but `401` | Caller authentication is not working. | Stop. Do not send any real request. Report it.                                   |
+
+## Step 7: Copy the policies into the database
+
+Run from `REPO`, with `DATABASE_URL` and `PARMANA_POLICY_DIR=./policies` set in your shell:
+
+```bash
+npx tsx scripts/apply-policies-table-and-backfill.ts
+```
+
+**Expect:** one line per policy, then `Backfilled N policies into the 'policies' table.`
+
+**If not:** stop and report the error message.
+
+## Step 8: Approve each policy
+
+For every policy the operator lists, in the form `POLICY_NAME` and `POLICY_VERSION`:
+
+1. You never hold the checker's keys. You act as the maker only if the operator gave you a maker's bearer key and said so. Otherwise ask the operator to propose.
+2. Propose the change as the maker, following the [Policy governance guide](/guides/policy-governance-maker-checker), step 1. The response has status `201` and a `pendingPolicyChangeId`.
+3. Tell the checker the `pendingPolicyChangeId` and ask them to review it and approve it with their own key, as in steps 2 to 4 of that guide, or with `scripts/local-review-action.ts`.
+4. Wait until the checker confirms.
+
+**Expect:** `GET URL/policies/pending-changes?status=PENDING_APPROVAL` no longer lists your `pendingPolicyChangeId`.
+
+**If not:**
+
+| You saw                                  | Meaning                                                                   | Do                                                     |
+| ---------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------ |
+| The approve call returns `403`           | The checker key is not `USER`, or the maker and the checker are the same. | Stop and tell the operator. Never approve it yourself. |
+| The approve call fails after 120 seconds | The step up signature expired.                                            | Ask the checker to sign and submit again, in one step. |
+
+Do not run `scripts/backfill-legacy-policy-approvals.ts`. It records a system approval that is not a human decision. Only the operator may choose that, in words.
+
+Then run the check. Set `SUPABASE_URL` and `SUPABASE_ANON_KEY` in your shell first. They are for this script only:
+
+```bash
+npx tsx scripts/verify-policy-changes-approved.ts --full-scan
+```
+
+**Expect:** the script exits with code `0`.
+
+**If not:** it lists each live policy without a matching approval. Approve those, and run the check again.
+
+## Step 9: Send one real request
+
+Follow [Integrate Parmana: specification for AI agents](/agents/integrate) with a small, harmless action that the policy allows. The action needs a configured connector from step 4.
+
+**Expect:** the response is a signed Execution Trust Record. Sending the same `businessTransactionId` again returns `409`.
+
+**If not:** a `503` with code `CONNECTOR_NOT_REGISTERED` means the connector is not configured. Nothing was executed. Configure it as in step 4 and deploy again. For anything else use the table in that page. Never send the same action again under a new id after a `500` with the code `EXECUTION_RECORD_INCOMPLETE`. That action was released. Tell the operator.
+
+## Step 10: Report
+
+Give the operator one message with:
+
+1. The base URL and the answers from step 6.
+2. The number of policies approved and the result of the check in step 8.
+3. The result of step 9.
+4. Anything you skipped, and why.
+
+Do not include any secret in the message.
+
+## When to stop and ask
+
+Stop and ask the operator when:
+
+1. An input is missing, or two inputs conflict.
+2. A command tells you a file already exists, and you were not told to overwrite it.
+3. You are asked to deploy, write production variables or publish, and you were not told to.
+4. Anything in **Expect** differs and its **If not** row says to stop.
+5. You would have to guess a value, a name or a person.

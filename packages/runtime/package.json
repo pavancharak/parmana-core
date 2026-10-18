@@ -1,0 +1,47 @@
+{
+  "name": "@parmana/runtime",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Parmana Runtime",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rmdir /s /q dist",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@parmana/crypto": "0.1.0",
+    "@parmana/execution-system": "0.1.0",
+    "@parmana/policy": "0.1.1",
+    "@parmana/shared": "0.1.0",
+    "express": "^5.2.1",
+    "vitest": "^5.0.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.19.1",
+    "dotenv": "^18.0.6",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.1"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "SEE LICENSE IN LICENSE"
+}

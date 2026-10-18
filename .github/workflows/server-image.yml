@@ -1,0 +1,86 @@
+# Builds the API server image from the Dockerfile when a GitHub release is
+# published, pushes it to the GitHub Container Registry as
+# ghcr.io/pavancharak/parmana-api:<release tag>, and attaches SLSA build
+# provenance to the image in the registry: a statement, signed with GitHub's
+# OIDC identity for this workflow, of which commit and workflow produced the
+# image digest. Anyone can check a pulled image against it with
+# slsa-verifier (see docs/site/security/overview.mdx).
+#
+# The provenance covers this image only. The hosted API and the sandbox are
+# built by Vercel from the same commits, not from this image, and carry no
+# SLSA provenance.
+
+name: Server image
+
+on:
+  release:
+    types: [published]
+
+permissions: read-all
+
+env:
+  IMAGE: ghcr.io/pavancharak/parmana-api
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # push the image
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build the image
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        # The source label links the package to this repository on GitHub.
+        run: |
+          docker build --pull -t "$IMAGE:$TAG" \
+            --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
+            --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+            .
+
+      - name: Check the handbook PDF is in the image
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: docker run --rm --entrypoint ls "$IMAGE:$TAG" -l /app/docs/site/parmana-handbook.pdf
+
+      - name: Push the image
+        id: push
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          GH_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
+          docker push "$IMAGE:$TAG"
+          # The digest the registry stores, which is what the provenance names.
+          ref="$(docker inspect --format '{{index .RepoDigests 0}}' "$IMAGE:$TAG")"
+          digest="${ref##*@}"
+          case "$digest" in
+            sha256:*) ;;
+            *) echo "No registry digest for $IMAGE:$TAG"; exit 1 ;;
+          esac
+          echo "$IMAGE@$digest"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          docker logout ghcr.io
+
+  provenance:
+    needs: build
+    permissions:
+      actions: read # read the workflow run
+      id-token: write # sign the provenance with GitHub's OIDC identity
+      packages: write # attach the provenance to the image in the registry
+    # Referenced by tag, not commit, for the same reason as in release.yml:
+    # the generator verifies its own ref and only accepts a release tag.
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0 # zizmor: ignore[unpinned-uses]
+    with:
+      image: ghcr.io/pavancharak/parmana-api
+      digest: ${{ needs.build.outputs.digest }}
+      registry-username: ${{ github.actor }}
+    secrets:
+      registry-password: ${{ secrets.GITHUB_TOKEN }}

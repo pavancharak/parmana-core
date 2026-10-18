@@ -1,0 +1,130 @@
+---
+title: "Manage API keys"
+description: "List, add, rotate and remove the API keys of a self hosted deployment."
+---
+
+Every request to Parmana carries an API key in the header `Authorization: Bearer <key>`. The deployment stores only the SHA-256 hash of each key, in `parmana-local/api-keys.json`. Manage that file with `docker/local/api-keys.mjs`, never by hand: the script checks every change with the same rules the server uses, so it never saves a file the server would refuse to start with.
+
+All commands run from the repository root. On Windows in Git Bash, run `export MSYS_NO_PATHCONV=1` first.
+
+<Info>
+  The server reads the keys only when it starts. After every `add` or `remove`,
+  run `docker compose restart api`.
+</Info>
+
+## List keys
+
+```bash
+docker compose run --rm --no-deps --entrypoint node setup \
+  /app/docker/local/api-keys.mjs list
+```
+
+Example output:
+
+```text
+callerId=local-operator  credentialHolderType=(none)  allowedCapabilities=paytm:refund  allowedPrincipalIds=(own caller ID only)  stepUpKey=no
+callerId=alice  credentialHolderType=USER  allowedCapabilities=(none)  allowedPrincipalIds=(own caller ID only)  stepUpKey=no
+callerId=bob  credentialHolderType=USER  allowedCapabilities=(none)  allowedPrincipalIds=(own caller ID only)  stepUpKey=yes
+[api-keys] 3 key(s)
+```
+
+It never prints a key or a hash.
+
+## Add a key
+
+```bash
+docker compose run --rm --no-deps --entrypoint node setup \
+  /app/docker/local/api-keys.mjs add --caller-id <caller-id> [options]
+```
+
+| Option                            | Required | Meaning                                                                                                                                                                                                           |
+| --------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--caller-id <id>`                | Yes      | Who the key belongs to. Appears in every audit event and record the key produces.                                                                                                                                 |
+| `--allowed-capabilities <a,b>`    | No       | Capabilities the key may request in `POST /execute`, for example `paytm:refund`. `*` allows every capability. **Without this option the key may request none.**                                                   |
+| `--allowed-principal-ids <a,b>`   | No       | Principal IDs the key may act for in a request's `authority.principalId`. **Without this option the key may act only for its own caller ID.**                                                                     |
+| `--credential-holder-type <type>` | No       | `USER`, `ROLE`, `SERVICE` or `ORGANIZATION`. Only `USER` marks the holder as a verified human, which proposing and approving policies requires.                                                                   |
+| `--step-up-public-key-stdin`      | No       | Reads the holder's Ed25519 step up public key, in PEM form, from standard input. Needed to approve or reject policy changes. Requires `--credential-holder-type USER`, and `-T` right after `docker compose run`. |
+
+The command prints the new key once, on the line that starts with `pk_local_`:
+
+```text
+[api-keys] added a key for caller "alice". It is shown once:
+pk_local_mOXw4Gdd5ZrCtt9Ifz88bpJ_Rq_za8nsWfoeVLrDixo
+[api-keys] run `docker compose restart api` for it to take effect.
+```
+
+It cannot be shown again. Give it to its holder through your secret store.
+
+### Examples
+
+A service that sends refund requests:
+
+```bash
+docker compose run --rm --no-deps --entrypoint node setup \
+  /app/docker/local/api-keys.mjs add --caller-id refund-service \
+  --allowed-capabilities paytm:refund --credential-holder-type SERVICE
+```
+
+A person who proposes policy changes:
+
+```bash
+docker compose run --rm --no-deps --entrypoint node setup \
+  /app/docker/local/api-keys.mjs add --caller-id alice --credential-holder-type USER
+```
+
+A person who approves policy changes. They first make a step up key pair on their own machine and send you only the public key, as described in [Approve a policy](/self-hosted/policy-approval#1-each-approver-makes-a-step-up-key):
+
+```bash
+docker compose run --rm -T --no-deps --entrypoint node setup \
+  /app/docker/local/api-keys.mjs add --caller-id bob --credential-holder-type USER \
+  --step-up-public-key-stdin < bob-step-up.public.pem
+```
+
+## Rotate a key
+
+1. Add a second key for the same caller ID, with the same options as the first:
+
+   ```bash
+   docker compose run --rm --no-deps --entrypoint node setup \
+     /app/docker/local/api-keys.mjs add --caller-id refund-service \
+     --allowed-capabilities paytm:refund --credential-holder-type SERVICE
+   docker compose restart api
+   ```
+
+   Both keys now work.
+
+2. Give the holder the new key and wait until they use it.
+
+3. Remove every older key of that caller ID, keeping the one added last:
+
+   ```bash
+   docker compose run --rm --no-deps --entrypoint node setup \
+     /app/docker/local/api-keys.mjs remove --caller-id refund-service --keep-newest
+   docker compose restart api
+   ```
+
+**Check:** the old key now gets `401` and the new key `200` from `GET /callers/me`.
+
+## Remove a key
+
+```bash
+docker compose run --rm --no-deps --entrypoint node setup \
+  /app/docker/local/api-keys.mjs remove --caller-id <caller-id>
+docker compose restart api
+```
+
+It removes every key of that caller ID. Add `--keep-newest` to keep the key added last, as in a rotation. It refuses to remove the last key in the file, because the server cannot start without one.
+
+## Errors
+
+| Message                                                                                                           | Cause                                                                                                               |
+| ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `--caller-id is required.`                                                                                        | `add` or `remove` without `--caller-id`.                                                                            |
+| `--credential-holder-type must be one of USER, ROLE, SERVICE, ORGANIZATION.`                                      | Any other value.                                                                                                    |
+| `a step up key is only used by a verified human; add --credential-holder-type USER.`                              | `--step-up-public-key-stdin` without `--credential-holder-type USER`.                                               |
+| ``no PEM public key on standard input. Pipe the approver's public key in, and run `docker compose run` with -T.`` | Nothing, or no PEM key, arrived on standard input. Add `-T` after `docker compose run` and `< file.pem` at the end. |
+| `the step up public key must be an Ed25519 public key.`                                                           | The file holds another kind of key.                                                                                 |
+| `no key has caller ID "<id>".`                                                                                    | `remove` for a caller ID that does not exist.                                                                       |
+| `caller "<id>" has only one key; --keep-newest has nothing to remove.`                                            | Nothing to rotate away.                                                                                             |
+| `refusing to remove the last key: the API cannot start without one.`                                              | Add another key first.                                                                                              |
+| `.../api-keys.json does not exist. Start the deployment once first.`                                              | Run `docker compose up -d --build --wait` first.                                                                    |

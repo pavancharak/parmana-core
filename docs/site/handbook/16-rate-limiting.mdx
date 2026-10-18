@@ -1,0 +1,135 @@
+---
+title: "Chapter 16: Rate Limiting"
+description: "Two independent express-rate-limit limiters, one for POST /execute (keyed by"
+---
+
+## What It Is
+
+Three independent `express-rate-limit` limiters, one for `POST /execute` (keyed by
+authenticated caller identity), one for `GET /health`/`GET /ready` (keyed by IP, far more
+permissive) and, since 2026-09-28 (G-78), one shared by the unauthenticated routes that check
+signatures or write data (`POST /refusal/verify`, `POST /execution-intents/verify`,
+`POST /audit/verify`, `/handbook`; keyed by IP, 60 per minute by default). Each is backed by either
+an in process store or a durable, fleet wide Postgres store depending on deployment
+configuration.
+
+## Why It Was Built
+
+Two separate problems. First, ordinary abuse/overload protection on the one endpoint that
+actually does real work (signing, storage writes). Second, a real production-readiness gap
+found 2026-09-10: `express-rate-limit`'s default `MemoryStore` counts per-process, so on a
+horizontally-scaled deployment the effective ceiling for a caller becomes
+`limitPerMinute * machineCount` rather than the configured, intended limit. `PostgresRateLimitStore`
+exists to close that gap for any deployment where it matters.
+
+## How It Works
+
+### Two limiters, deliberately different keying
+
+`createExecuteRateLimiter()` (`packages/api/src/middleware/rate-limit.ts:71-90`) keys by
+`req.callerId`, not IP, a design-partner integration commonly calls from a shared backend
+IP, where an IP-keyed limit would either starve every caller behind it or be too loose to
+mean anything. It is only ever mounted when caller authentication is enabled (`app.ts`),
+since `req.callerId` does not exist otherwise, and it runs ahead of the route handler, so a
+rejected request never reaches policy evaluation, signing, or storage, nothing is consumed
+for a request this middleware rejects.
+
+`createHealthReadyRateLimiter()` (`:103-115`) keys by IP (the package default, IPv6-safe in
+`express-rate-limit` v8), and is deliberately far more permissive, these routes are cheap and
+legitimately polled on a fixed interval by PaaS health-check infrastructure (`fly.toml`'s own
+check runs every 30 seconds per machine); this limiter must never be tight enough to throttle
+that.
+
+Both share one 429 response shape via `rateLimitHandler()`, which sets `Retry-After`
+explicitly from the store's own `resetTime` rather than trusting a package default header.
+
+### The real bug: one shared Store, two limiters
+
+Found 2026-09-15, during the same session as the AWS KMS migration: `createApp()`'s first
+version constructed a single `PostgresRateLimitStore` and passed it to both limiters.
+`express-rate-limit` v8's own documented contract disallows this, a `Store` instance must
+not back more than one limiter, and the library throws `ERR_ERL_STORE_REUSE` the moment a
+second limiter's `init()` runs against an already-initialized store. Passing one shared
+instance to both `createExecuteRateLimiter` and `createHealthReadyRateLimiter` crashed every
+request on a fresh cold start.
+
+**A documented correction, not silently fixed:** it was first assumed this crashed the whole
+request (`docs/VERIFICATION-GAPS.md`, and item 5 of the 2026-09-15 KMS migration troubleshooting
+guide, in git history), inferred from seeing the `ERR_ERL_STORE_REUSE` log line next to a real HTTP 500.
+Reading `express-rate-limit`'s actual installed source shows every validation is wrapped in a
+try/catch that only logs the violation and never re-throws, the reuse warning is real, but
+harmless on its own. The 500 that request actually returned was caused by a completely
+different, unrelated bug (see `examples/tutorials/114-signing-verification-key-agreement`).
+The fix (two separate `Store` instances, each with a distinct `prefix`) is still correct and
+worth having, independent of the corrected causal story, it is the library's own documented
+usage contract, and a stricter `validate` config in a future version could make this fatal for
+real.
+
+The fix itself: `RateLimitOption` (`packages/api/src/app.ts`) carries two distinct
+fields, `executeStore` and `healthStore`, never one shared `store`. `createRateLimitStore()`
+(`packages/api/src/bootstrap/createRateLimitStore.ts`) is called once per limiter, each with
+its own `prefix` (e.g. `"execute:"` and `"health:"`), so their counters can never collide in
+the shared `rate_limit_counters` table even though both instances share the same underlying
+`Pool` (`PostgresPoolFactory.create()` is itself a singleton, so calling this twice does not
+open a second connection pool).
+
+`PostgresRateLimitStore.prefix` (`packages/storage/src/postgres/PostgresRateLimitStore.ts:80`)
+is deliberately **public**, not a private implementation detail, this is
+`express-rate-limit`'s own documented `Store.prefix` contract, and naming the field exactly
+`prefix` is what lets the library's own reuse/double-count validation recognize two instances
+with different prefixes as legitimately distinct.
+
+### Three-way store selection
+
+`createRateLimitStore(prefix)` returns:
+
+| Condition                 | Returns                                                                                              |
+| ------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `NODE_ENV=test`           | `undefined`, falls back to `express-rate-limit`'s own in-process `MemoryStore`.                      |
+| No `DATABASE_URL`         | `undefined`, with a loud `console.warn` naming the exact tradeoff. Deliberately **not** fail-closed. |
+| `DATABASE_URL` configured | `new PostgresRateLimitStore(PostgresPoolFactory.create(), prefix)`, durable, fleet-wide.             |
+
+The "no `DATABASE_URL`" case is deliberately not fail-closed the way this codebase's nonce
+store (`createNonceStore.ts`) is: an in-process rate limiter is a real, working control on a
+single instance (this deployment's actual current shape, `fly.toml` pins
+`min_machines_running = 1`), just not fleet-wide accurate the moment a second machine joins.
+A missing nonce store means replay protection silently vanishes, a security bypass; a missing
+shared rate-limit store means the ceiling is merely looser than configured, not absent.
+Refusing to start over that would break every single-instance and local deployment that works
+correctly today.
+
+## How It Enables Things, With a Concrete Example
+
+`examples/tutorials/115-per-limiter-rate-limit-stores/run.ts` reproduces the real
+`ERR_ERL_STORE_REUSE` warning directly (Scenario 1: one shared store, logged but not thrown)
+and confirms the fix (Scenario 2: two prefixed stores, no warning at all), hermetically,
+against a minimal fake `pg.Pool`, no real database needed. Its own README documents the
+corrected diagnosis explicitly, kept visible rather than quietly rewritten.
+
+`packages/api/tests/integration/rate-limit.integration.test.ts` exercises both limiters at
+the real HTTP boundary: normal traffic passing through, a rate-limited caller not blocking a
+different caller, a 429 with a correct `Retry-After` header and no execution side effects, and
+confirms the limiter is entirely skipped when caller-auth is disabled.
+
+## How to Validate This Yourself
+
+- `packages/api/src/middleware/rate-limit.ts`, both limiter factories.
+- `packages/api/src/bootstrap/createRateLimitStore.ts`, the three-way selection logic, with
+  its own comment stating the exact tradeoff for each branch.
+- `packages/storage/src/postgres/PostgresRateLimitStore.ts`, the durable store, including
+  the `prefix` field's own doc comment explaining exactly why it must be named that and be
+  public.
+- `packages/api/src/app.ts, 149-171, 248-264`, where both limiters are actually
+  constructed and mounted.
+- `examples/tutorials/115-per-limiter-rate-limit-stores/README.md`, the full incident
+  account, including the corrected diagnosis.
+
+## Integration Requirements
+
+| Variable                             | Effect                                                                                                                                       |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RATE_LIMIT_EXECUTE_PER_MINUTE`      | Overrides the default execute limiter ceiling (`DEFAULT_EXECUTE_PER_MINUTE = 30`).                                                           |
+| `RATE_LIMIT_HEALTH_PER_MINUTE`       | Overrides the default health and ready limiter ceiling (`DEFAULT_HEALTH_PER_MINUTE = 300`).                                                  |
+| `RATE_LIMIT_PUBLIC_PER_MINUTE`       | Overrides the default ceiling for the unauthenticated verify routes, `/handbook` and key discovery (`DEFAULT_PUBLIC_PER_MINUTE = 60`).       |
+| `RATE_LIMIT_AUTH_FAILURE_PER_MINUTE` | Overrides the default ceiling for failed caller authentications per IP (`DEFAULT_AUTH_FAILURE_PER_MINUTE = 30`). Only `401` responses count. |
+| `DATABASE_URL`                       | If set, every limiter uses the durable, fleet wide `PostgresRateLimitStore` instead of per process memory.                                   |

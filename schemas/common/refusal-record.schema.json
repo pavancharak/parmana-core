@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/refusal-record.schema.json",
+  "title": "Refusal Record",
+  "description": "Durable, signed, independently verifiable evidence that a policy decision rejected a transaction (RFC-0021). Scope is deliberately narrow: covers PolicyEngine.evaluate REJECTs and SignalIntentBinder binding-violation REJECTs only, not caller-authentication failures or webhook signature failures, which are a separate, unsigned audit-sink capability. At most one Refusal Record exists per businessTransactionId.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "refusalRecordId",
+    "businessTransactionId",
+    "decision",
+    "evaluatedIntent",
+    "refusalRecordHash",
+    "signature",
+    "createdAt"
+  ],
+  "properties": {
+    "refusalRecordId": {
+      "type": "string",
+      "description": "Unique Refusal Record identifier."
+    },
+    "businessTransactionId": {
+      "type": "string",
+      "description": "Business Transaction this refusal is about."
+    },
+    "decision": {
+      "$ref": "./decision.schema.json"
+    },
+    "evaluatedIntent": {
+      "type": "object",
+      "description": "The Intent snapshot the signals were evaluated against: target and parameters only, present for every refusal, not only binding violations.",
+      "additionalProperties": true,
+      "properties": {
+        "target": {
+          "type": "string"
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "bindingViolations": {
+      "type": "array",
+      "description": "Present only when the rejection came from SignalIntentBinder. Absent (not an empty array) for an ordinary PolicyEngine.evaluate REJECT that never reached binding-violation logic at all.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["signalKey", "intentPath", "signalValue", "intentValue"],
+        "properties": {
+          "signalKey": {
+            "type": "string"
+          },
+          "intentPath": {
+            "type": "string"
+          },
+          "signalValue": {},
+          "intentValue": {}
+        }
+      }
+    },
+    "submittedBy": {
+      "type": "string",
+      "description": "Authenticated caller who submitted the rejected request. Absent when caller authentication is disabled."
+    },
+    "policyContentHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 hash of the policy content that decided the refusal, the same value an Execution Trust Record carries in transaction.policy.contentHash. Inside the signed record. Absent on Refusal Records written before 2026-10-06."
+    },
+    "refusalRecordHash": {
+      "type": "string",
+      "description": "Canonical hash of this Refusal Record, same convention as ExecutionTrustRecord.trustRecordHash."
+    },
+    "signature": {
+      "type": "object",
+      "description": "Cryptographic signature over the canonical Refusal Record, signed with the same key as ExecutionTrustRecord, one root of trust for both approvals and refusals.",
+      "additionalProperties": true,
+      "required": ["algorithm", "keyId", "value", "signedAt"],
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "examples": ["ed25519"]
+        },
+        "keyId": {
+          "type": "string",
+          "description": "Identifier of the signing key."
+        },
+        "value": {
+          "type": "string",
+          "description": "Base64-encoded signature value."
+        },
+        "signedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when this Refusal Record was created."
+    }
+  },
+  "examples": [
+    {
+      "refusalRecordId": "eddc5dd1-a791-4470-9534-11b3fc573ab8",
+      "businessTransactionId": "353c73fb-5e87-4dbe-8bfc-c15c8f18d871",
+      "decision": {
+        "decisionId": "3919f4b6-cbc8-44ec-a6a1-8887ee85f314",
+        "intentId": "4ba6b14a-c593-4f5c-ab58-dcef38a29364",
+        "policy": {
+          "name": "vendor-payment",
+          "version": "2.0.0",
+          "schemaVersion": "1.0.0"
+        },
+        "signals": {
+          "vendorVerified": false,
+          "invoiceVerified": true,
+          "paymentApproved": true,
+          "sufficientFunds": true,
+          "paymentAmount": 1000,
+          "riskScore": 5,
+          "vendorId": "vendor://payments"
+        },
+        "outcome": "REJECTED",
+        "reason": "Vendor payment rejected because the vendor has not been verified.",
+        "evaluatedAt": "2026-09-15T03:27:45.666Z"
+      },
+      "evaluatedIntent": {
+        "target": "vendor://payments",
+        "parameters": { "amount": 1000, "currency": "USD" }
+      },
+      "createdAt": "2026-09-15T03:27:45.666Z",
+      "refusalRecordHash": "47d8200e839f9b4a1a53dba941e318553c9b024bc64d26c5b613e5ae2aeb65ca",
+      "signature": {
+        "algorithm": "ed25519",
+        "keyId": "default",
+        "value": "tT32/iJ0bEDxjc+/KPeAegTBSrzpRFW14f9Vyv3Ykx+H/rLHcgd7SlFH/BAXut8sEH2mpo0smg82tSoXmZkpDQ==",
+        "signedAt": "2026-09-15T03:27:45.668Z"
+      }
+    }
+  ]
+}

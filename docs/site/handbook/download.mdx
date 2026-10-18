@@ -1,0 +1,68 @@
+---
+title: "Download the Handbook (PDF)"
+description: "Every chapter in one PDF file. Just an email address, no verification step."
+---
+
+<Info>
+  One email address, no verification link sent. This just records who asked for
+  the download, it doesn't gate the file behind a confirmed inbox. Submitting
+  this form takes you straight to the PDF, no separate click required.
+</Info>
+
+<form
+  action="https://parmana-api-real.vercel.app/handbook/download-leads"
+  method="get"
+  onSubmit={(event) => {
+    event.preventDefault();
+    const email = new FormData(event.currentTarget).get("email");
+    window.location.assign(
+      "https://parmana-api-real.vercel.app/handbook/download-leads?email=" +
+        encodeURIComponent(String(email ?? "")),
+    );
+  }}
+>
+  <input
+    type="email"
+    name="email"
+    placeholder="you@company.com"
+    required
+    style={{
+      padding: "10px 14px",
+      fontSize: "14px",
+      border: "1px solid #ccc",
+      borderRadius: "6px",
+      width: "320px",
+      marginRight: "8px",
+    }}
+  />
+  <button
+    type="submit"
+    style={{
+      padding: "10px 18px",
+      fontSize: "14px",
+      fontWeight: 600,
+      background: "#6366F1",
+      color: "white",
+      border: "none",
+      borderRadius: "6px",
+      cursor: "pointer",
+    }}
+  >
+    Get the PDF
+  </button>
+</form>
+
+## What you're downloading
+
+The complete Parmana Handbook: 23 chapters, every capability this codebase has, explained by
+reading the actual source. See the [overview page](/handbook/overview) for the full chapter
+list, or read any chapter directly on this site without downloading anything.
+
+The PDF is generated from the exact same source files as the pages on this site
+(`docs/site/handbook/*.mdx` in the repository), by `scripts/generate-handbook-pdf.ts`. It
+is not a separately-maintained document that can drift from what's published here.
+
+If the download doesn't start after submitting the form above, the direct link is
+[parmana-api-real.vercel.app/parmana-handbook.pdf](https://parmana-api-real.vercel.app/parmana-handbook.pdf)
+(served by the API directly, not by this docs site, because PDF file serving on Mintlify
+requires an Enterprise plan).

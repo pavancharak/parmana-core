@@ -1,0 +1,150 @@
+---
+title: "Class: ExecutionIntentApi"
+---
+
+Defined in: [typescript/src/client/ExecutionIntentApi.ts:16](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ExecutionIntentApi.ts#L16)
+
+## Constructors
+
+### Constructor
+
+> **new ExecutionIntentApi**(`transport`): `ExecutionIntentApi`
+
+Defined in: [typescript/src/client/ExecutionIntentApi.ts:17](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ExecutionIntentApi.ts#L17)
+
+#### Parameters
+
+##### transport
+
+[`Transport`](/sdks/reference/typescript/interfaces/Transport)
+
+#### Returns
+
+`ExecutionIntentApi`
+
+## Methods
+
+### verify()
+
+> **verify**(`intent`): `Promise`\<`boolean`\>
+
+Defined in: [typescript/src/client/ExecutionIntentApi.ts:29](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ExecutionIntentApi.ts#L29)
+
+Verifies an Execution Intent's hash and signature. Maps to POST
+/execution-intents/verify. Takes the intent itself, and needs no caller
+authentication: like RefusalApi.verify(), it is the capability that makes
+the record independently third party verifiable.
+
+A `true` result proves the intent was signed by the holder of the key and
+has not been altered. It does NOT prove the action was released, or what
+its result was.
+
+#### Parameters
+
+##### intent
+
+[`ExecutionIntent`](/sdks/reference/typescript/interfaces/ExecutionIntent)
+
+#### Returns
+
+`Promise`\<`boolean`\>
+
+---
+
+### get()
+
+> **get**(`businessTransactionId`): `Promise`\<[`ExecutionIntentView`](/sdks/reference/typescript/interfaces/ExecutionIntentView)\>
+
+Defined in: [typescript/src/client/ExecutionIntentApi.ts:44](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ExecutionIntentApi.ts#L44)
+
+Retrieves an Execution Intent and its status. Maps to
+GET /execution-intents/:businessTransactionId. Behind caller
+authentication and ownership scoping, like TrustRecordApi.get().
+
+#### Parameters
+
+##### businessTransactionId
+
+`string`
+
+#### Returns
+
+`Promise`\<[`ExecutionIntentView`](/sdks/reference/typescript/interfaces/ExecutionIntentView)\>
+
+---
+
+### listUnfinalized()
+
+> **listUnfinalized**(`limit?`): `Promise`\<[`UnfinalizedExecutionIntents`](/sdks/reference/typescript/interfaces/UnfinalizedExecutionIntents)\>
+
+Defined in: [typescript/src/client/ExecutionIntentApi.ts:63](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ExecutionIntentApi.ts#L63)
+
+Lists intents that never reached a signed Trust Record and were not closed
+by hand, oldest first. Maps to GET /execution-intents/unfinalized.
+Requires a credential provisioned as a verified human.
+
+#### Parameters
+
+##### limit?
+
+`number`
+
+Maximum number to return. The server default is 50 and the
+maximum is 200.
+
+#### Returns
+
+`Promise`\<[`UnfinalizedExecutionIntents`](/sdks/reference/typescript/interfaces/UnfinalizedExecutionIntents)\>
+
+---
+
+### finalize()
+
+> **finalize**(`businessTransactionId`): `Promise`\<[`FinalizeExecutionIntentResult`](/sdks/reference/typescript/interfaces/FinalizeExecutionIntentResult)\>
+
+Defined in: [typescript/src/client/ExecutionIntentApi.ts:84](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ExecutionIntentApi.ts#L84)
+
+Rebuilds the signed Execution Trust Record for a released action whose
+record was never produced. Maps to POST
+/execution-intents/:businessTransactionId/finalize. It never calls a
+connector and is safe to run twice. Requires a credential provisioned as a
+verified human.
+
+#### Parameters
+
+##### businessTransactionId
+
+`string`
+
+#### Returns
+
+`Promise`\<[`FinalizeExecutionIntentResult`](/sdks/reference/typescript/interfaces/FinalizeExecutionIntentResult)\>
+
+---
+
+### resolve()
+
+> **resolve**(`businessTransactionId`, `input`): `Promise`\<[`ResolveExecutionIntentResult`](/sdks/reference/typescript/interfaces/ResolveExecutionIntentResult)\>
+
+Defined in: [typescript/src/client/ExecutionIntentApi.ts:103](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ExecutionIntentApi.ts#L103)
+
+Closes a PREPARED or ERRORED intent that a verified human reconciled at
+the connector. Maps to POST /execution-intents/:businessTransactionId/resolve.
+The note is required. It never calls a connector and is idempotent.
+
+The resolution is an attributed operator statement in unsigned status. It
+is NOT tamper evident and it is NOT a Trust Record.
+
+#### Parameters
+
+##### businessTransactionId
+
+`string`
+
+##### input
+
+[`ResolveExecutionIntentInput`](/sdks/reference/typescript/interfaces/ResolveExecutionIntentInput)
+
+#### Returns
+
+`Promise`\<[`ResolveExecutionIntentResult`](/sdks/reference/typescript/interfaces/ResolveExecutionIntentResult)\>

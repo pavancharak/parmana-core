@@ -1,0 +1,159 @@
+---
+title: "Chapter 12: Connectors"
+description: "A connector is the piece of code that actually performs a real-world action, a HubSpot deal"
+---
+
+## What it is
+
+A connector is the piece of code that actually performs a real-world action, a HubSpot deal
+update, a GitHub pull request merge, a Paytm refund, a Slack message, after every governance
+check upstream (policy evaluation, signal verification, capability binding, execution
+authorization) has already approved it. Connectors are deliberately dumb: they validate
+requests, execute one already-authorized operation using an already-resolved credential
+(Chapter 11), and return a deterministic response. They never evaluate policy, never authorize
+anything, and never resolve credentials themselves.
+
+## Why it was built
+
+Every governed action this system can take needs an actual integration with the outside
+world, and that integration needs to be swappable, testable in isolation, and structurally
+incapable of bypassing the governance layers above it. The `Connector` contract
+(`packages/connector-sdk/src/ConnectorTypes.ts:104-111`) exists to enforce that boundary in
+code, not just in documentation: its own doc comment states plainly that "a Connector never
+receives a request directly from the Runtime or AI, only from `SdkConnectorExecutor`, itself
+only reachable through execution-control's `SecureConnector`, itself only reachable through
+the Execution Gateway" (`ConnectorTypes.ts:99-102`).
+
+## How it works
+
+The `Connector` interface itself is small:
+
+```ts
+export interface Connector {
+  readonly connectorId: string;
+  readonly capabilities: ConnectorCapabilities;
+  execute(
+    request: ConnectorRequest,
+    context: ConnectorExecutionContext,
+  ): Promise<ConnectorResponse>;
+}
+```
+
+`ConnectorExecutionContext` (`ConnectorTypes.ts:85-89`) carries a `credential` (a
+`CredentialHandle`, already resolved by the session credential vault from Chapter 11, not a
+raw secret the connector has to go fetch), a `timeoutMs`, and a `requestedAt` timestamp.
+
+Each real connector in this codebase splits into two files: a `*-Capabilities.ts` file in a
+dedicated `@parmana/connector-{name}` package (pure metadata: capability identifier constants
+and request/response DTOs, no execution logic at all), and an executable adapter under
+`packages/execution-gateway/src/connector-execution/Gateway{Name}Adapter.ts` that actually
+performs the HTTP call. This split is deliberate and consistent across every connector; each
+capabilities file says so explicitly in its own header comment (e.g.
+`HubSpotCapabilities.ts:1-5`, `GitHubCapabilities.ts:1-5`).
+
+## The four real, live connectors
+
+| Connector | Capability string(s)                        | Governing policy                                                        | Status             |
+| --------- | ------------------------------------------- | ----------------------------------------------------------------------- | ------------------ |
+| HubSpot   | `hubspot:deal-fetch`, `hubspot:deal-update` | `hubspot-deal-read@1.0.0` (fetch), `hubspot-deal-update@1.1.0` (update) | Live               |
+| GitHub    | `github:pr-fetch`, `github:pr-merge`        | `github-pr-read@1.1.0` (fetch), `github-pr-approval@1.1.0` (merge)      | Live               |
+| Paytm     | `paytm:refund`                              | `customer-refund@1.2.0`                                                 | Live               |
+| Slack     | `slack:post-message`                        | `slack-post-message@1.1.0`                                              | Live               |
+| Razorpay  | (historical)                                | (historical)                                                            | Removed 2026-08-12 |
+
+This table's policy column is read directly from
+`packages/capability-registry/src/CapabilityPolicyBinding.ts`,
+`CANONICAL_CAPABILITY_POLICY_BINDINGS`, the same table Chapter 6 covers in depth. A request
+declaring `hubspot:deal-update` must be evaluated against exactly `hubspot-deal-update@1.1.0`
+(or the version most recently approved through governance), or it is rejected before any policy
+file is even loaded. Every policy in this table needs a signed human approval for the action and
+its resource, reads included ([Human approval](/concepts/human-approval)).
+
+**HubSpot** (`packages/connector-hubspot/src/`): two capabilities, fetch and update a deal.
+`HubSpotSignalStateVerifier` (a separate file in the same package) independently confirms a
+caller-declared signal like "this deal's stage really is X" against HubSpot's own API rather
+than trusting the caller's assertion, the concrete example Chapter 5 (signal-state
+verification) points to.
+
+**GitHub** (`packages/connector-github/src/`): fetch a PR's state, merge a PR. Uses a GitHub
+App JWT (`GitHubAppJwt.ts`) and an installation-token credential provider
+(`GitHubAppCredentialProvider.ts`, in `execution-gateway`) rather than a static personal
+access token.
+
+**Paytm** (`packages/connector-paytm/src/`): exactly one capability, `paytm:refund`, by
+design. Its own doc comment is explicit that this is deliberate: "there is no `paytm:*`
+wildcard and no additional Paytm capability... declared here; adding one is a deliberate,
+separate milestone" (`PaytmCapabilities.ts:6-11`). Structurally different from the other three
+connectors in one respect: it never talks to Paytm's own API directly. `baseUrl` is required,
+not optional, because every request goes to a separate, trusted, out-of-process service
+(`parmana-paytm-agent`, a different repository, the "Pfinite" integration referenced
+elsewhere in this codebase's operational history), which is the only thing that ever holds a
+real Paytm merchant key (`PaytmCapabilities.ts:60-66`). The wire-level action string this
+remote service expects, `"paytm-refund"` (`PAYTM_AGENT_WIRE_ACTION`), is a pure
+transport-boundary translation; Parmana's own internal capability identity stays
+`"paytm:refund"` everywhere else and is never renamed to satisfy the remote service's naming
+convention (`PaytmCapabilities.ts:30-40`).
+
+**Slack** (`packages/connector-slack/src/`): exactly one capability, `slack:post-message`,
+same "no wildcard, deliberate scope" discipline as Paytm (`SlackCapabilities.ts:6-11`).
+
+## Razorpay: a historical case study
+
+A Razorpay connector (`RazorpayConnector`, `RazorpayRefundService`,
+`RazorpaySignalStateVerifier`, `RazorpayDailyRefundLedger`, `RazorpayCumulativeRefundLedger`,
+`RazorpaySettlementProcessor`, and supporting files under
+`packages/connector-sdk/src/connectors/razorpay/`) was built, ran in production, and was
+**deliberately removed from this codebase in its entirety on 2026-08-12**, commit `d8a6ded`
+("Add HubSpot integration evidence and update TRL assessment"). `git log --all` for any of
+those paths shows no file at current `HEAD`, confirmed directly, not inferred.
+
+Being honest about what the record does and doesn't say: `docs/VERIFICATION-GAPS.md`'s own
+"stale-narrative notice" (added 2026-08-24, search for "blocks-pilot") documents the removal
+happened and exactly when, and confirms `HubSpotSignalStateVerifier` and the HubSpot/GitHub
+capability pairs are what's actually reachable in production today in its place. It does not
+state an explicit business reason for the removal beyond the coincidence with the HubSpot
+integration landing in the same commit. Three residual database tables
+(`razorpay_webhook_events`, `razorpay_webhook_audit_events`, `razorpay_daily_refund_reservations`)
+survived the code removal until this session, 2026-09-16, when they were finally dropped
+(`supabase/migrations/20260916120000_drop_razorpay_tables.sql`) as pure schema cleanup, over a
+month after the connector code itself was gone.
+
+The practical lesson this case study leaves: `docs/VERIFICATION-GAPS.md` entries that predate
+2026-08-12 and describe Razorpay-specific mechanisms as "wired into production" are accurate
+history, not current fact, and the document itself now flags this explicitly rather than
+silently going stale.
+
+## How to validate this yourself
+
+- `packages/connector-sdk/src/ConnectorTypes.ts`, the `Connector` contract itself.
+- `packages/connector-hubspot/src/`, `connector-github/src/`, `connector-paytm/src/`,
+  `connector-slack/src/`, each connector's capability metadata and DTOs.
+- `packages/execution-gateway/src/connector-execution/Gateway{HubSpot,GitHub,Paytm,Slack}Adapter.ts`
+  , the actual executable adapters.
+- `packages/capability-registry/src/CapabilityPolicyBinding.ts`, the canonical
+  capability-to-policy table.
+- `packages/api/src/bootstrap/create{HubSpot,GitHub,Paytm,Slack}Connector.ts` and
+  `assertConnectorCapabilitiesBound.ts`, how connectors get registered at startup, and the
+  startup assertion that every declared capability has a canonical policy binding.
+- Integration tests: `packages/api/tests/integration/hubspot-deal-update.integration.test.ts`,
+  `github-pr-merge.integration.test.ts`, `paytm-refund.integration.test.ts`, each connector's
+  real, HTTP-boundary proof, including its mock server (`MockHubSpotServer.ts`,
+  `MockGitHubServer.ts`, `MockPaytmConnectorServer.ts`, `MockSlackServer.ts`) for hermetic
+  testing without real vendor credentials.
+
+## Integration requirements
+
+Each connector needs its own credentials configured, only when actually used:
+
+- HubSpot: `HUBSPOT_PRIVATE_APP_TOKEN` (defaults to HubSpot's real API; tests point `baseUrl`
+  at a local mock instead).
+- GitHub: `GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY`.
+- Paytm: a `baseUrl` pointing at a deployed `parmana-paytm-agent` instance, required, with no
+  default, since there is no direct-to-Paytm path at all.
+- Slack: (see `createSlackConnector.ts` for the exact env var; defaults to Slack's real Web
+  API base URL otherwise).
+
+A connector with no credentials configured is simply not registered at startup rather than
+registered in a broken state, each `create*Connector.ts` bootstrap file logs an
+`*_connector_unavailable` event naming the missing configuration, visible in this codebase's
+own startup logs.

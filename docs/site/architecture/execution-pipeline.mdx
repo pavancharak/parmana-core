@@ -1,0 +1,117 @@
+---
+title: "The Execution Pipeline"
+description: "Stage by stage: what runs on every request through the default server today."
+---
+
+The gateway and connector-enforcement stages (7-8 below) run on every request through the
+default server, not only some of them. Signal/Intent binding (stage 3) rejects a transaction
+before any policy rule evaluates, if the declared signal doesn't match its bound `intent`
+field, see [Security](/security/overview) for what this closed.
+
+## Stage-by-stage status
+
+| Stage                                           | What it does                                                                                                                                                                                                                                                                                                                                                                                               | Status                                                                                                                                                                                                      | Evidence                                                                                                                                    |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Accept Business Transaction                  | Validates trust-chain invariants (IDs match across the chain, policy/action present)                                                                                                                                                                                                                                                                                                                       | [AVAILABLE]                                                                                                                                                                                                 | `BusinessTransactionValidator`, `packages/runtime/src/validators/BusinessTransactionValidator.ts`                                           |
+| 2. Policy load                                  | Loads the exact referenced policy (name+version)                                                                                                                                                                                                                                                                                                                                                           | [AVAILABLE]                                                                                                                                                                                                 | `PolicyRouter`, CLAIMS.md 2.2                                                                                                               |
+| 3. Signal/Intent binding                        | For every `boundSignals` entry the loaded policy declares, checks the declared signal equals the value at its `intent` dot-path — before any rule evaluates. A violation is built into an ordinary `REJECT` Decision; no rule runs, no authorization is ever generated. See [Policies and the decision](/concepts/policies-and-the-decision) and [Security](/security/overview) for the bypass this closed | [AVAILABLE]                                                                                                                                                                                                 | `SignalIntentBinder`, `packages/runtime/src/RuntimeEngine.ts`                                                                               |
+| 4. Policy evaluation                            | Evaluates signals against the loaded policy's sequential rules, first match wins                                                                                                                                                                                                                                                                                                                           | [AVAILABLE]                                                                                                                                                                                                 | `PolicyEngine`, CLAIMS.md 2.3                                                                                                               |
+| 5. Execution gate                               | Refuses to execute when the Decision is not `APPROVED` or required trust artifacts are missing                                                                                                                                                                                                                                                                                                             | [AVAILABLE]                                                                                                                                                                                                 | `ExecutionGate`, `TrustChainValidationComponent`, CLAIMS.md 2.4                                                                             |
+| 6. Signed Execution Authorization               | Signs a payload scoped to one Decision, bound to a single-use nonce, valid only within a bounded window, only after the gate approves                                                                                                                                                                                                                                                                      | [AVAILABLE]                                                                                                                                                                                                 | `RuntimeAuthorizationSigner`, CLAIMS.md 2.8/2.12                                                                                            |
+| 7. Execution Gateway (content-binding)          | Recomputes the executable-content hash, compares to the authorization's `businessTransactionHash`, rejects a mismatch before consuming the nonce                                                                                                                                                                                                                                                           | [AVAILABLE], wired into the default server unconditionally                                                                                                                                                  | `ExecutionGateway.ts:141-195`; see [The gateway](/concepts/the-gateway)                                                                     |
+| 8. Credential Isolation / Connector Enforcement | Resolves a credential handle inside the Gateway boundary, then forwards verified content to the target system through a capability-checked Connector                                                                                                                                                                                                                                                       | [AVAILABLE] for the registered connectors (`hubspot`, `github`, `paytm`, `slack`, each registering only when its own credentials are configured); reaching a new connector requires a bootstrap code change | `packages/connector-sdk/src/{HttpConnector,MockConnector,SdkConnectorExecutor}.ts`, `packages/api/src/bootstrap/createConnectorRegistry.ts` |
+| 9. Execution Trust Record                       | Assembles the immutable record: transaction, executions, overrides, verifications, receipts, canonical hash, signature                                                                                                                                                                                                                                                                                     | [AVAILABLE]                                                                                                                                                                                                 | `BusinessTrustRecordBuilder`, CLAIMS.md 2.5                                                                                                 |
+| 10. Verification                                | Recomputes hash, verifies signature, checks authorization binding on every `APPROVED` execution                                                                                                                                                                                                                                                                                                            | [AVAILABLE], exactly 3 checks                                                                                                                                                                               | `VerificationService`, CLAIMS.md 2.15                                                                                                       |
+| 11. Replay                                      | Genuinely re-evaluates the recorded policy decision, scoped to one execution, disconnected from the API                                                                                                                                                                                                                                                                                                    | [PARTIAL]                                                                                                                                                                                                   | See [Replay](/replay/overview)                                                                                                              |
+
+## What actually runs when you call `POST /execute` today
+
+All eleven stages run, in order, on every request. Stage 8's connector enforcement is real
+only for the connectors actually wired into `createConnectorRegistry.ts`, an action with no
+matching connector fails closed with `503 CONNECTOR_NOT_REGISTERED` before anything is released, it does not
+silently skip stages 7-8. See [The gateway](/concepts/the-gateway) for the mechanism and
+[Quickstart](/quickstart) for a live run through the full pipeline. Stage 3 (signal/intent
+binding) is the one stage that can reject a transaction before stage 4 (policy evaluation)
+ever runs a single rule, see [Security](/security/overview) for why that ordering matters.
+
+## One request, class by class
+
+The same pipeline, traced through the classes that run it for one `POST /execute`.
+
+1. **Route.** `packages/api/src/routes/execute.ts` calls `ExecutionTrustApplication.execute()`
+   (`packages/runtime/src/ExecutionTrustApplication.ts`). The application is built once at
+   startup by `RuntimeFactory.create()` and wired in `packages/api/src/application.ts`.
+2. **Accept.** `BusinessTransactionService.accept()` stores the transaction as received,
+   before any policy work.
+3. **Decide.** `Runtime.execute()` calls `RuntimeEngine.execute()`
+   (`packages/runtime/src/RuntimeEngine.ts`), which in order: loads the policy
+   (`PolicyRouter.load`), hashes its content, checks the policy's approval record when policy
+   governance is enforced (`matchedRuleId: "policy-execution-verification-violation"`),
+   checks the capability is paired with its bound policy (`CapabilityPolicyBinder`,
+   `"capability-policy-binding-violation"`), checks signals against the intent
+   (`SignalIntentBinder`, `"signal-intent-binding-violation"`), and only then evaluates rules
+   (`PolicyEngine.evaluate`). Each earlier check that fails becomes an ordinary `REJECT` with
+   no rule evaluated.
+4. **Verify signals against real state.** Only for a provisional `APPROVE`, the configured
+   `SignalStateVerifier` runs. In production it is a `CompositeSignalStateVerifier` of the
+   HubSpot verifier and the `ApprovalSignalVerifier` (the policy's `approvalSignals`). A
+   mismatch overrides the decision to `REJECT` (`"signal-state-verification-violation"`).
+5. **Refuse or authorize.** Any decision that is not `APPROVED` gets a signed Refusal Record
+   (RFC-0021), then `ExecutionGate.enforce()` throws. An approved decision is signed by
+   `RuntimeAuthorizationSigner`: the frozen `ExecutableContent`, the policy content hash, the
+   signals hash and a TTL.
+6. **Before release.** The signing readiness check (G-52) proves the evidence signing path
+   works, and `ExecutionIntentService.prepare()` signs and stores an Execution Intent
+   (ADR-0012). If either fails, the caller gets 503 and nothing is released.
+7. **Runtime pipeline.** `RuntimePipeline` runs `TrustChainValidationComponent`, then
+   `ExecutionComponent`, which builds the `ExecutionRequest` and calls the injected
+   `ExecutionSystem`. In production that is always `ExecutionGateway`, bound in
+   `packages/api/src/bootstrap/createExecutionSystem.ts`. This is the boundary between runtime
+   and gateway.
+8. **Gateway.** `ExecutionGateway.execute()` verifies again, independently: version,
+   signature, expiry, TTL, the business transaction hash, that the policy is still current,
+   its approval record, that the signals are still current, and finally the nonce, which is
+   consumed last and only if everything else passed. It then deep freezes the content and
+   calls `ExecutionControlService.execute()` with a gateway attestation minted for this
+   authorization.
+9. **Execution control.** `ExecutionControlService` authenticates the gateway, resolves the
+   connector for the action, opens a one time `GatewaySession`, and records `session.created`
+   on the audit sink.
+10. **Credential isolation.** `SessionCredentialSecureConnector` checks the connector's own
+    `ConnectorPolicy` again, issues a single use session credential, calls
+    `SdkConnectorExecutor`, which calls the vendor adapter (`GatewayHubSpotAdapter`,
+    `GatewayPaytmAdapter`, `GatewayGitHubAdapter`, `GatewaySlackAdapter` or
+    `GatewayHttpAdapter`), then revokes the credential on every exit path and records the
+    outcome.
+11. **Record.** Back in `RuntimeEngine`, `BusinessTrustPipeline` builds the signed Execution
+    Trust Record and `Runtime` stores it. If the action ran but the record cannot be made or
+    stored, the error says so explicitly rather than inviting a blind retry.
+12. **Verify and receipt.** `ExecutionTrustApplication` calls `VerificationService.verify()`
+    and `ReceiptService.generate()`, then returns the stored record as the response.
+
+### Where a request can stop
+
+| Stop point                                                   | Step  | What is produced instead                                                                                                                                                           |
+| ------------------------------------------------------------ | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Policy approval, capability binding or signal/intent binding | 3     | `REJECT` and a Refusal Record, no external call                                                                                                                                    |
+| Ordinary policy `REJECT`                                     | 3     | Refusal Record, no external call                                                                                                                                                   |
+| Signal state or approval signal mismatch                     | 4     | `REJECT` and a Refusal Record; the state check itself may call out                                                                                                                 |
+| Signing not ready or Execution Intent not stored             | 6     | 503, nothing released                                                                                                                                                              |
+| Gateway verification failure                                 | 8     | A replayed nonce returns its own error; any other failed check is thrown naming every failed check, the intent is marked `ERRORED` and the caller gets `EXECUTION_OUTCOME_UNKNOWN` |
+| Gateway authentication or connector policy failure           | 9, 10 | Thrown before the vendor is called; reported as above                                                                                                                              |
+| Vendor answers with a failure                                | 10    | Recorded as evidence with `success: false` in the Trust Record                                                                                                                     |
+| Vendor unreachable, timeout or thrown error                  | 10    | Intent marked `ERRORED`, `EXECUTION_OUTCOME_UNKNOWN` with the transaction and authorization ids                                                                                    |
+
+## Fail-closed properties that do hold today
+
+- A rejected Decision **never** produces a Signed Execution Authorization, authorization
+  signing happens only after `executionGate.enforce()` approves
+  (`packages/runtime/src/RuntimeEngine.ts`, CLAIMS.md 2.12,
+  `packages/runtime/tests/unit/execution-authorization-wiring.test.ts`, "rejected transaction
+  produces no authorization"). It throws rather than returning a rejected result, see [Write
+  your first policy](/guides/write-your-first-policy).
+- Signing or verifying with the wrong key type (e.g. an Ed25519 key against an ML-DSA-65
+  provider) fails closed with a named error rather than silently dispatching on the key's
+  own type (`assertKeyType`, CLAIMS.md 2.13).
+- The Trust Record's `authorizationId` is part of the canonically-hashed content, not
+  attached alongside it, tampering with it changes the recomputed hash (CLAIMS.md 2.11).

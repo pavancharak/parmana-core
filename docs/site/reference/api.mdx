@@ -1,0 +1,77 @@
+---
+title: "@parmana/api"
+description: "The Express server and its bootstrap composition root. For the REST surface itself, see the API Reference section."
+---
+
+<Info>
+  **[AVAILABLE]**. `packages/api`. Not a library other packages import, it's the
+  running server. No public exports (`src/index.ts` is empty).
+</Info>
+
+## Purpose
+
+Composes every other package into one running Express process: policy loading, the
+[gateway](/concepts/the-gateway), [credential isolation](/concepts/credential-isolation),
+caller authentication, and 14 HTTP routes. For the routes themselves, request/response
+shapes, and verified error codes, see [REST API Introduction](/api-reference/introduction),
+this page covers the server's internal structure.
+
+## Install
+
+Not installed as a dependency, this package is the deployable server itself. See [Deploy
+patterns](/guides/deploy-patterns).
+
+## Structure
+
+| Path                                       | Purpose                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/server.ts`                            | Entry point. Builds the execution system, the application, then the Express app, and listens on port 3000.                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `src/app.ts`                               | Mounts the caller-auth middleware (every route except `/health`), all routes, and the error handler, in order, the error handler must be registered last.                                                                                                                                                                                                                                                                                                                                                                                                |
+| `src/application.ts`                       | `createApplication(executionSystem)`, wires `RuntimeFactory.create()` with the repositories and policy repository.                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `src/routes/*.ts`                          | One file per route (or router factory), see [REST API Introduction](/api-reference/introduction) for each one's behavior.                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `src/middleware/error-handler.ts`          | Maps thrown errors to HTTP status codes by `instanceof`, falls through to an unstructured 500 for anything unrecognized.                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `src/middleware/caller-auth.ts`            | Bearer-key caller authentication, see [Authentication](/api-reference/authentication).                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `src/mappers/BusinessTransactionMapper.ts` | `fromRequest(body)`, forces `status: RECEIVED` and `createdAt: now` regardless of client input.                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `src/bootstrap/*.ts`                       | The composition root: `createExecutionSystem`, `createExecutionGateway`, `createExecutionControl`, `createConnectorRegistry`, `createConnectorRoute`, `createConnectorAuthenticator`, `createCallerAuthenticator`, `createHubSpotCredentialProvider`, `createGatewayKeyPair`, `createGatewayPublicKey`, `createGatewayIdentity`, `createNonceStore`, `createSessionStore`, `createExecutionAuditSink`. Every bootstrap decision described on [The gateway](/concepts/the-gateway) and [Credential isolation](/concepts/credential-isolation) lives here. |
+
+<Warning>
+**One file in `src/bootstrap/` is dead code, not wired into anything**: `ConnectorCatalog.ts`
+lists connectors (including disabled stubs like `stripe`/`sap`) but is not imported anywhere
+in `packages/api/src`. The real, running connector registration path is
+`createConnectorRegistry.ts`, see [The gateway](/concepts/the-gateway). `scripts/generate-keys.ts`
+(repo root) is an empty, 0-byte stub file, also unused.
+
+`ExecutionControlComposition.ts` and `ConnectorFactory.ts` (a _different_, class-based
+composition root for the same responsibility as `createExecutionControl.ts` —
+not the `ConnectorFactory` interface from `@parmana/connector-sdk` described on
+[this page](/reference/connector-sdk)) previously sat alongside the real path with zero
+callers anywhere in the repository. Removed in Phase 2I
+(the Phase 2I composition root cleanup record, in git history) after independent verification
+confirmed they were never wired into production, tests, or any published surface.
+
+</Warning>
+
+## Minimal example
+
+```bash
+npm run generate:gateway-keys
+NODE_ENV=test PARMANA_STORAGE=memory PARMANA_POLICY_DIR=/absolute/path/to/policies \
+  npm run dev
+```
+
+Full walkthrough: [Quickstart](/quickstart).
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="REST API Introduction"
+    icon="route"
+    href="/api-reference/introduction"
+  >
+    Every route's request, response, and verified error codes.
+  </Card>
+  <Card title="Deploy patterns" icon="server" href="/guides/deploy-patterns">
+    Storage, keys, and the full environment checklist for running this server.
+  </Card>
+</CardGroup>

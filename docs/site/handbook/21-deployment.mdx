@@ -1,0 +1,154 @@
+---
+title: "Chapter 21: Deployment"
+description: "This codebase ships with real configuration for two deployment targets: Vercel"
+---
+
+## What it is
+
+This codebase ships with real configuration for two deployment targets: Vercel
+(`vercel.json`, serverless Functions) and Fly.io (`fly.toml`, `Dockerfile`, a long-running
+process). Both run the identical application code; what differs is the execution model, and
+that difference has produced at least one real production incident worth understanding in
+detail.
+
+## Why it was built this way
+
+Two genuinely different deployment shapes were supported deliberately: Vercel for
+zero-maintenance serverless hosting with automatic scaling, Fly.io for a conventional
+always-on process with a persistent filesystem and predictable warm state. Neither is
+presented as strictly better in this codebase; they trade off differently, and the
+`PARMANA_STORAGE`/repository-selection logic (Chapter 13) is written to work correctly under
+both.
+
+## How it works
+
+### Vercel
+
+`vercel.json`:
+
+```json
+{
+  "buildCommand": "npm run openapi && node node_modules/typescript7/bin/tsc -b",
+  "installCommand": "npm install --include=dev",
+  "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
+  "functions": {
+    "api/index.ts": {
+      "includeFiles": "{openapi/**,policies/**,node_modules/swagger-ui-dist/**,typescript/package.json,python/pyproject.toml,packages/connector-sdk/package.json,python-connector-sdk/pyproject.toml}"
+    }
+  }
+}
+```
+
+The build compiles with TypeScript 7, installed as the `typescript7` alias next to TypeScript 6,
+which lint and documentation tools still need (ADR-0015 in the repository).
+
+Every route is rewritten to a single serverless Function, `api/index.ts`. `includeFiles` is
+notable: it explicitly bundles `policies/**` into the deployed Function, since the Function's
+filesystem is otherwise whatever the build produced, nothing more. This is also the exact
+filesystem that turned out to be **read only** at runtime, which is the deployment-specific
+incident below.
+
+### Fly.io
+
+`fly.toml`:
+
+```toml
+app = 'parmana-api'
+primary_region = 'bom'
+
+[http_service]
+  internal_port = 3000
+  auto_stop_machines = false
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    interval = "30s"
+    method = "GET"
+    path = "/ready"
+```
+
+A conventional container (built from the repo's `Dockerfile`), always running at least one
+machine, with Fly's own health check hitting `GET /ready` every 30 seconds, the same readiness
+probe covered in Chapter 19. Unlike Vercel, this filesystem is genuinely persistent and
+writable for the life of the machine.
+
+### The read-only filesystem incident, a concrete illustration
+
+`PolicyChangeApprovalService.approve()` (Chapter 7) writes the newly approved policy content via
+`PolicyRepository.save()`. The original implementation, `FilePolicyRepository`, writes to the
+local filesystem, this works perfectly on Fly.io (writable, persistent) and in local
+development, but Vercel's serverless Functions run on a **read only** filesystem outside
+`/tmp`. The very first real production approval attempt against the deployed Vercel instance
+failed immediately with `EROFS`. The fix, `SupabasePolicyRepository` (added 2026-09-16, see
+Chapter 13), writes to a `policies` table in Postgres instead, which works identically on both
+platforms. This is the clearest concrete example in this codebase of why "which platform am I
+deploying to" is not a cosmetic choice, it changes which filesystem assumptions are safe to
+make in application code.
+
+### AWS KMS and Vercel OIDC
+
+For real production signing (as opposed to a local Ed25519 key file), this codebase integrates
+with AWS KMS via Vercel's native OIDC federation, no static, long-lived AWS credentials stored
+anywhere. `KmsSigner.ts` reads exactly two environment variables directly:
+
+```
+AWS_REGION       # e.g. ap-south-1
+AWS_ROLE_ARN     # the IAM role Vercel's OIDC token assumes
+```
+
+(Confirmed by grepping `packages/crypto/src/providers/signer/KmsSigner.ts` directly; these are
+the only two `process.env` reads in that file, `KmsSigner requires AWS_REGION to be set` is a
+real thrown error if `AWS_REGION` is missing.) [AWS KMS signing](/deployment/aws-kms-signing)
+documents the Vercel side of the setup (`vercel env add AWS_REGION production`, and the trust
+policy connecting Vercel's OIDC issuer to the IAM role). The 2026-09-15 KMS migration troubleshooting guide (in git history)
+records the real incidents hit while migrating to this from static keys, cross-check its
+specific claims against current source rather than assuming they still describe live bugs; the
+migration referenced there is complete as of this session.
+
+`KEY_PROVIDER=local` remains the only fully implemented local-key path; setting `KEY_PROVIDER`
+to anything else (`aws-kms`, `azure-key-vault`, `gcp-kms`, `hsm` were once silently ignored, a
+real gap closed by making `KeyBootstrap.create()` throw explicitly naming the unimplemented
+value, see `docs/VERIFICATION-GAPS.md` gap 40 in the July session's table). The actual KMS
+signing path used in production goes through `KmsSigner`/`SignerKeyProviderAdapter`
+independently of that specific `KEY_PROVIDER` flag, verify the current wiring in
+`packages/crypto/src/SignerBootstrap.ts` if you need the precise selection logic.
+
+### Agent network egress
+
+Parmana checks only the actions that go through it, so an agent host must not be able to reach connector APIs or other systems directly. Enforce this at the network layer, and keep connector credentials off agent hosts. The required checks and the commands to run are in the production guide under "Agent network egress".
+
+## Concrete example
+
+There is no example tutorial that actually deploys to either platform (that would require real
+cloud credentials and is out of scope for a hermetic tutorial suite), but
+`docs/site/guides/deploy-patterns.mdx` and [AWS KMS signing](/deployment/aws-kms-signing)
+walk through the real, current deployment steps for each target.
+
+## How to validate this yourself
+
+- `vercel.json`, `fly.toml`, `Dockerfile` (repo root) for the two real platform configs.
+- `packages/crypto/src/providers/signer/KmsSigner.ts` for the exact AWS env vars actually read.
+- `packages/policy/src/SupabasePolicyRepository.ts`'s own doc comment for the EROFS incident
+  account.
+- `supabase/migrations/20260916060000_add_policies_table.sql` for the schema the fix depends on.
+- the 2026-09-15 KMS migration troubleshooting guide (in git history) and
+  [AWS KMS signing](/deployment/aws-kms-signing) for the full operational history.
+
+## Requirements
+
+**Vercel deployment:**
+
+- `AWS_REGION`, `AWS_ROLE_ARN` (for KMS signing) or local key material via
+  `PARMANA_KEY_MATERIAL_JSON` (for local Ed25519 signing, not recommended for production but
+  functional).
+- `PARMANA_STORAGE=supabase` with `DATABASE_URL` set, since the filesystem cannot be relied on
+  for anything written at runtime, including approved policy content.
+- Every other env var from Chapter 20's requirements table.
+
+**Fly.io deployment:**
+
+- The same core env vars, `PARMANA_STORAGE=memory` is viable here if you genuinely want no
+  external database (the filesystem is real and persistent), but `supabase` remains the
+  production-realistic choice for durability across machine restarts.
+- `fly.toml`'s health check expects `GET /ready` to respond within its configured timeout (5s);
+  see Chapter 19 for what that route actually checks.

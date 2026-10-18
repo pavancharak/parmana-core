@@ -1,0 +1,28 @@
+---
+title: "Function: verifyParmanaRelease()"
+---
+
+> **verifyParmanaRelease**(`body`, `options`): `Promise`\<[`ParmanaReleaseVerification`](/sdks/reference/typescript/type-aliases/ParmanaReleaseVerification)\>
+
+Defined in: [typescript/src/crypto/release.ts:222](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/release.ts#L222)
+
+Checks, in order: the body's shape, the signature over the canonical
+JSON of `release` with the key named in signature.keyId, that
+release.audience equals `audience`, and that release.expiresAt has not
+passed (with the clock skew allowance). Only then does it ask
+isAlreadyExecuted. Never throws for a bad body; returns
+`{ valid: false, errors }`.
+
+## Parameters
+
+### body
+
+`unknown`
+
+### options
+
+[`VerifyParmanaReleaseOptions`](/sdks/reference/typescript/interfaces/VerifyParmanaReleaseOptions)
+
+## Returns
+
+`Promise`\<[`ParmanaReleaseVerification`](/sdks/reference/typescript/type-aliases/ParmanaReleaseVerification)\>

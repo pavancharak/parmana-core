@@ -1,0 +1,89 @@
+---
+title: "For a security lead: what to look at, and in what order"
+description: "A reading order for a security lead deciding whether Parmana belongs between their agents and their systems: run it, read the scoped claims, read the open gaps, then the threat model."
+---
+
+Picture a security lead at a lending company in Pune, for example. The product team wants a support agent that can
+issue refunds of up to ₹40,000 without a ticket going to finance. Someone has suggested Parmana as the control in
+the middle. She has one afternoon to form a view, and the docs site has hundreds of pages.
+
+This essay is the order I would read them in, if I were her and did not trust me.
+
+## The problem with reading a security product
+
+Most security pages are written to be believed. They list guarantees in the present tense and leave the boundary
+to the reader. A security lead learns to read them backwards: find the conditions first, then decide whether the
+claims survive them.
+
+I have tried to write Parmana's pages so that this reading is the easy one. But you should not have to take that on
+faith either. So the order below starts with things you run, not things you read.
+
+## Step one: run it before you read it
+
+Start with [Evaluate Parmana](/evaluation/overview). It needs a clone, Node.js and no accounts. `npm test` runs
+the suite against in memory storage and throwaway keys. Then `npm run evaluate` runs 16 attack scenarios: replaying a
+used authorization, forging one, acting without a person's signed approval, declaring one action and executing
+another, having an action judged by a weaker policy, changing a policy without a second person, altering a signed
+record afterwards, and others. It ends with how many were blocked, and writes a report with the commit, whether the
+tree was clean and a hash of every test file it ran. Attach that report to your review.
+
+Be clear about what this proves. These are tests of the code in the repository, run on your machine. They say
+nothing about a deployment's configuration, its key custody or its network. The page says so itself.
+
+## Step two: read the claims with their scope
+
+Next, [Security](/security/overview). It mirrors the claims register, and every claim carries a scope clause that
+is load bearing. The one I would read twice: a receiving system cannot accept an action Parmana did not authorize
+only if it runs the verifier, gates every execution path behind it, and Parmana's signing key is not compromised.
+Parmana enforces nothing at the network level.
+
+The same page lists what Parmana deliberately does not claim: that execution cannot be bypassed under all
+circumstances, guaranteed regulatory compliance, tamper proof operation everywhere. It also lists the known
+incidents. The worst was found on 2026-07-28 by an outside adversarial exercise: the signals a policy evaluated were
+not tied to the action executed, so a request could describe a small verified payment and execute a different,
+much larger one. It is fixed, with regression tests that reproduce the exploit. The full account is in [the security overview](/security/overview#known-incidents). You should know it happened.
+
+## Step three: read the open gaps
+
+Then [Limitations](/security/limitations), and specifically its table of open issues. This is where your
+afternoon is best spent, because it tells you what you would be accepting. A few that matter for a refund agent:
+
+- Any trusted approver can approve any action. Give approver keys only to people who may approve everything.
+- Facts the agent declares, such as "this refund is eligible", are not checked against another system. Under the
+  shipped policies they can only make a rule refuse; the signed approval is what authorizes.
+- Business systems can be registered as sources of facts, and per agent grants with limits and end dates exist.
+  Both are deployed and passed live checks in production with test policies. No shipped policy uses either, no real
+  business system is connected, and grant limits are per request, not per day.
+- An approved request has taken 24 to 32 seconds end to end in production.
+
+A signed approval names the action and the resource. For a refund it also covers the amount. It does not fix
+every parameter, and Parmana cannot tell whether the approver read the request.
+
+## Step four: the threat model and the OWASP lists
+
+Finally, [the threat model](https://github.com/pavancharak/parmana/blob/main/THREAT-MODEL.md) and the
+[OWASP mapping](/security/owasp-mapping). The threat model lists its assumptions plainly: signing keys are not
+compromised, the maker and checker are two people, the database is not writable by an attacker, agents hold no
+credentials of their own to the systems Parmana governs. Check each against your environment. The OWASP page rates
+each risk as covered, partly covered or not covered. Prompt injection is "partly": Parmana does not detect it, it
+limits what an injected agent can do.
+
+## What this does not do
+
+- **It does not replace an independent review.** Every review so far has been internal. No independent audit has
+  been completed.
+- **It does not test your deployment.** The attack scenarios run against the code, not against your hosts, your
+  key custody or your network.
+- **It does not mean two people approved.** In Parmana's own production (October 2026), one person holds the maker,
+  checker and approver keys. The records show two credentials, not two people.
+- **It does not cover an agent with its own keys.** If the refund agent keeps a payment provider key, it can refund
+  without Parmana, and nothing is refused or recorded.
+
+## The takeaway
+
+Read Parmana in this order: run the attacks, read the scoped claims, read the open gaps, then check the assumptions
+against your own environment. If the gaps are ones you can live with, the rest is worth your time. If one is not,
+you will have found it in an afternoon rather than after an incident.
+
+**Read more:** [Evaluate Parmana](/evaluation/overview), [Limitations](/security/limitations),
+[Audit guide](/evaluation/audit-guide).

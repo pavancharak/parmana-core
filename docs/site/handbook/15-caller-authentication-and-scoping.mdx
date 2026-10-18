@@ -1,0 +1,138 @@
+---
+title: "Chapter 15: Caller Authentication and Scoping"
+description: "The layer that decides whether an HTTP request is entertained at all, who it came from, and"
+---
+
+## What It Is
+
+The layer that decides whether an HTTP request is entertained at all, who it came from, and
+what that identity is actually allowed to do (which principal it may assert, which
+capabilities it may invoke). It runs before a Business Transaction is even constructed and is
+entirely independent of policy evaluation and gateway attestation, which run later and answer
+different questions.
+
+## Why It Was Built
+
+Without an identity layer, authority/authorization fields on a submitted transaction are
+purely caller-declared and never cross-checked against who is actually calling, any caller
+holding any valid API key could claim to be any human or role in the resulting signed trust
+record. Caller authentication and scoping close that gap at the door, before anything
+downstream has a chance to trust a claim it shouldn't.
+
+## How It Works
+
+### Authentication: `StaticKeyAuthenticator`
+
+`packages/api/src/auth/StaticKeyAuthenticator.ts` authenticates against a static, pre-hashed
+set of API keys (`ApiKeyEntry[]`, from `PARMANA_API_KEYS`). Keys are never held in plaintext,
+only a SHA-256 hash of each is compared, via `timingSafeEqual` against the hash bytes (never
+the raw key), so a leaked config never yields a usable secret and comparison timing never
+leaks information about a partial match.
+
+Multiple entries may share the same `callerId`, this is how key rotation works: add the new
+key's hash, keep the old one active during migration, then remove the old entry to revoke it,
+with no downtime and no code change.
+
+`ApiKeyEntry` (`packages/shared/src/config/ApiKeyEntry.ts`):
+
+```ts
+export interface ApiKeyEntry {
+  readonly callerId: string;
+  readonly keyHash: string;
+  readonly credentialHolderType?: AuthorityType;
+  readonly allowedPrincipalIds?: readonly string[];
+  readonly allowedCapabilities?: readonly string[];
+  readonly stepUpPublicKey?: string;
+}
+```
+
+`credentialHolderType` is operator-declared metadata set only at issuance time, distinct
+from `Authority.authorityType`, which is caller-declared and lives on the Business
+Transaction itself describing the business action's asserted authority. The two must not be
+conflated: one describes who was handed the credential, the other describes what a specific
+request claims. `isHumanCaller.ts` is the only consumer of `credentialHolderType`, and treats
+every value other than exactly `AuthorityType.USER`, including `undefined`, as non-human,
+fail-closed by default.
+
+### The middleware itself
+
+`createCallerAuthMiddleware()` (`packages/api/src/middleware/caller-auth.ts`) extracts a
+bearer token, authenticates it, and on success attaches `callerId`,
+`callerAllowedPrincipalIds`, `callerAllowedCapabilities`, `callerCredentialHolderType`, and
+`callerStepUpPublicKey` onto the Express `Request` object (a local type augmentation, same
+pattern `@parmana/envelope-verifier`'s own Express typing uses). On failure it returns 401
+with a `WWW-Authenticate: Bearer` header, and either way it records a `caller.rejected` or
+`caller.authenticated` audit event through `recordCallerAuditEvent` before proceeding ,
+**fail-closed**: if the audit write itself fails, the request is rejected with
+`AuditUnavailableError` (503) rather than proceeding unaudited. This applies to both outcomes,
+not just denials, a perfectly valid credential whose `caller.authenticated` write fails also
+gets 503, not the 200 it would otherwise get.
+
+### Scoping: principal and capability
+
+Two independent checks, deliberately opposite in their fail-closed default:
+
+**`isPrincipalAllowed()`** (`packages/api/src/auth/isPrincipalAllowed.ts`) decides whether a
+caller may assert a given `authority.principalId`. Default (no `allowedPrincipalIds`
+configured): a key may only assert **itself**, `principalId` must equal `callerId` exactly.
+An unconfigured key proves its own identity and nothing more.
+
+**`isCapabilityAllowed()`** (`packages/api/src/auth/isCapabilityAllowed.ts`) decides whether a
+caller may invoke a given capability (the transaction's `intent.action`) at all. Default (no
+`allowedCapabilities`, or an empty list): **every** capability is denied. There is no
+meaningful "may invoke its own capability" fallback the way "may only assert itself" is for
+principals, an unconfigured key is authorized to invoke nothing until explicitly granted.
+The literal string `"*"` in `allowedCapabilities` is an explicit, auditable wildcard, never an
+implicit default.
+
+### `PARMANA_AUTH_DISABLED`
+
+A deployment can set `PARMANA_AUTH_DISABLED=true` to accept every request with no caller
+authentication at all. This is surfaced not just as a startup log line but as a field on
+`GET /ready`'s own response body (`packages/api/src/routes/ready.ts:44-52`):
+
+```json
+{
+  "authDisabled": true,
+  "warning": "PARMANA_AUTH_DISABLED=true -- this deployment is accepting requests with no caller authentication. Must never be set in a real deployment."
+}
+```
+
+This exists because a log line is easy to miss after the fact in a log-aggregation tool; a
+field on the readiness probe every PaaS orchestrator already polls every 30 seconds is
+something an operator's own monitoring can assert and alert on directly.
+
+## How It Enables Things, With a Concrete Example
+
+`examples/tutorials/101-fail-closed-caller-audit-writes/run.ts` proves the audit-write
+fail-closed guarantee directly: it simulates the storage outage `SupabaseCallerAuditSink`
+would surface, and shows both `caller.rejected` and `caller.authenticated` outcomes react
+identically (503, not their otherwise-normal status) when the audit write itself fails. There
+is no retry, buffering, or queueing, a failure fails closed immediately, once, per request.
+
+`packages/api/tests/integration/caller-scoping.integration.test.ts`,
+`caller-principal-scoping.integration.test.ts`, and
+`caller-capability-scoping.integration.test.ts` exercise the two scoping checks at the real
+HTTP boundary, including a documented IDOR-regression suite (blocking one caller from reading
+another's transactions, receipts, trust records, and refusal records by ID).
+
+## How to Validate This Yourself
+
+- `packages/api/src/middleware/caller-auth.ts`, the middleware itself.
+- `packages/api/src/auth/StaticKeyAuthenticator.ts`, `hashApiKey.ts`, authentication.
+- `packages/api/src/auth/isPrincipalAllowed.ts`, `isCapabilityAllowed.ts`,
+  `isHumanCaller.ts`, `isOwnedByCaller.ts`, the four scoping/identity predicates.
+- `packages/shared/src/config/ApiKeyEntry.ts`, the credential shape.
+- `packages/api/src/routes/ready.ts`, the `authDisabled` warning field.
+- `packages/api/tests/integration/caller-*.integration.test.ts`, the real HTTP-level proof
+  for every claim above.
+
+## Integration Requirements
+
+| Variable                | Effect                                                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `PARMANA_API_KEYS`      | JSON array of `ApiKeyEntry` objects, the entire credential set for a deployment.                                               |
+| `PARMANA_AUTH_DISABLED` | `true` disables caller-auth entirely. Never set this in a real deployment; the `/ready` endpoint will say so loudly if you do. |
+
+Provisioning a new credential: `scripts/generate-api-key.ts` (see Chapter 7 for the
+step-up-keypair variant used by Policy Governance checkers).

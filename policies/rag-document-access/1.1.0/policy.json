@@ -1,0 +1,114 @@
+{
+  "policyId": "rag-document-access",
+  "policyVersion": "1.1.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes retrieval of enterprise documents after validating requester authorization, document access permissions, data classification, and retrieval risk assessment. Every authorization also needs a signed approval from a trusted person for this target, in signals.approvalArtifact with humanApproved true. The other signals can only refuse, never authorize on their own.",
+  "signalsSchema": {
+    "humanApproved": "boolean",
+    "requesterAuthenticated": "boolean",
+    "requesterAuthorized": "boolean",
+    "documentAccessible": "boolean",
+    "classificationPermitted": "boolean",
+    "riskScore": "number"
+  },
+  "unboundSignalReasons": {
+    "requesterAuthenticated": "Attested by the identity provider at authentication time; not a value the Intent itself declares.",
+    "requesterAuthorized": "Result of an independent authorization check against the requester's entitlements; not something the Intent's target/parameters could express.",
+    "documentAccessible": "Result of an independent document-availability check; not a value the Intent itself declares.",
+    "classificationPermitted": "Result of comparing the requester's clearance to the document's classification, independently verified; not an Intent field.",
+    "riskScore": "A computed retrieval-risk score, not a value the caller's Intent declares or could be checked against."
+  },
+  "approvalSignals": {
+    "humanApproved": {
+      "resourceId": "target"
+    }
+  },
+  "rules": [
+    {
+      "id": "approve-document-access",
+      "condition": {
+        "all": [
+          {
+            "fact": "humanApproved",
+            "operator": "is_true"
+          },
+          {
+            "fact": "requesterAuthenticated",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "requesterAuthorized",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "documentAccessible",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "classificationPermitted",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "riskScore",
+            "operator": "lte",
+            "value": 20
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Document access authorized. Authentication, authorization, document permissions, classification requirements, and risk assessment were satisfied, with a verified human approval."
+      }
+    },
+    {
+      "id": "reject-high-risk-request",
+      "condition": {
+        "fact": "riskScore",
+        "operator": "gt",
+        "value": 20
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Document access rejected because the assessed retrieval risk exceeds the maximum permitted threshold."
+      }
+    },
+    {
+      "id": "reject-document-not-accessible",
+      "condition": {
+        "fact": "documentAccessible",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Document access rejected because the requested document is not accessible."
+      }
+    },
+    {
+      "id": "reject-classification-not-permitted",
+      "condition": {
+        "fact": "classificationPermitted",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Document access rejected because the requester is not authorized to access the document's classification level."
+      }
+    },
+    {
+      "id": "reject-default",
+      "condition": {
+        "always": true
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Document access rejected because one or more required policy conditions were not satisfied."
+      }
+    }
+  ]
+}

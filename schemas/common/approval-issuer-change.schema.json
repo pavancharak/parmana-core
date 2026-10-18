@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/approval-issuer-change.schema.json",
+  "title": "Approver Change",
+  "description": "A proposal to add an approver key, or to revoke one added this way, and its resolution. One person proposes it; a different person approves or rejects it with a step up authorization. Only an approved change affects which approvals verify.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "changeId",
+    "action",
+    "approverId",
+    "keyId",
+    "reason",
+    "proposedBy",
+    "proposedAt",
+    "status"
+  ],
+  "properties": {
+    "changeId": {
+      "type": "string",
+      "description": "Unique id of the change, a UUID. The step up authorization for approve or reject names it in payload.pendingPolicyChangeId."
+    },
+    "action": {
+      "type": "string",
+      "enum": ["add", "revoke"],
+      "description": "add trusts a new key; revoke stops trusting a key added this way, and every approval it ever signed."
+    },
+    "approverId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]{1,128}$",
+      "description": "The approver, as named in the payload.issuer.approverId of the approvals they sign."
+    },
+    "keyId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]{1,128}$",
+      "description": "The approver's key, as named in payload.issuer.keyId. A key id is used once: a revoked key id cannot be added again."
+    },
+    "publicKeyPem": {
+      "type": "string",
+      "description": "The approver's Ed25519 public key, PEM (SPKI), as the server stored it. Present on add, absent on revoke."
+    },
+    "reason": {
+      "type": "string",
+      "maxLength": 2000,
+      "description": "Why, from the proposer."
+    },
+    "proposedBy": {
+      "type": "string",
+      "description": "The proposer's caller id. Always a human credential."
+    },
+    "proposedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["PENDING_APPROVAL", "APPROVED", "REJECTED"],
+      "description": "PENDING_APPROVAL until a second person approves or rejects it; then APPROVED or REJECTED, once."
+    },
+    "resolvedBy": {
+      "type": "string",
+      "description": "Who approved or rejected it. Never the proposer."
+    },
+    "resolvedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "rejectionReason": {
+      "type": "string",
+      "description": "Present when REJECTED."
+    }
+  },
+  "examples": [
+    {
+      "changeId": "ba7c5827-5844-4069-94fc-9b438ef08f78",
+      "action": "add",
+      "approverId": "manager-priya",
+      "keyId": "manager-priya-key-1",
+      "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=\n-----END PUBLIC KEY-----\n",
+      "reason": "Priya approves refunds for the West region from October.",
+      "proposedBy": "human-maker",
+      "proposedAt": "2026-09-28T19:05:59.726Z",
+      "status": "APPROVED",
+      "resolvedBy": "human-checker",
+      "resolvedAt": "2026-09-28T19:05:59.738Z"
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+---
+title: "Class: ExecutionApi"
+---
+
+Defined in: [typescript/src/client/ExecutionApi.ts:28](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ExecutionApi.ts#L28)
+
+Execution API.
+
+## Responsibilities
+
+- Runtime health check
+- Execute Business Transactions
+
+This API does NOT:
+
+- verify trust records
+- replay executions
+- generate receipts
+- validate policies
+
+## Constructors
+
+### Constructor
+
+> **new ExecutionApi**(`transport`): `ExecutionApi`
+
+Defined in: [typescript/src/client/ExecutionApi.ts:29](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ExecutionApi.ts#L29)
+
+#### Parameters
+
+##### transport
+
+[`Transport`](/sdks/reference/typescript/interfaces/Transport)
+
+#### Returns
+
+`ExecutionApi`
+
+## Methods
+
+### health()
+
+> **health**(): `Promise`\<`unknown`\>
+
+Defined in: [typescript/src/client/ExecutionApi.ts:34](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ExecutionApi.ts#L34)
+
+Returns the Runtime health status.
+
+#### Returns
+
+`Promise`\<`unknown`\>
+
+---
+
+### version()
+
+> **version**(): `Promise`\<`unknown`\>
+
+Defined in: [typescript/src/client/ExecutionApi.ts:47](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ExecutionApi.ts#L47)
+
+Returns the Runtime name, version, and API version. Requires caller
+authentication, unlike GET /health.
+
+#### Returns
+
+`Promise`\<`unknown`\>
+
+---
+
+### execute()
+
+> **execute**(`transaction`): `Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)\>
+
+Defined in: [typescript/src/client/ExecutionApi.ts:59](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ExecutionApi.ts#L59)
+
+Execute a Business Transaction.
+
+#### Parameters
+
+##### transaction
+
+[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)
+
+#### Returns
+
+`Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)\>

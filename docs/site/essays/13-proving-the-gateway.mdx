@@ -1,0 +1,60 @@
+---
+title: "Proving the gateway is the gateway"
+description: 'A signed approval says "this may happen". It does not say who is making it happen.'
+---
+
+A refund agent asks to send ₹8,400 back to a customer. The policy checks out, a person has signed off, and Parmana mints a signed execution authorization: a small, signed, single-use envelope that says this exact refund is allowed, for the next few minutes.
+
+Now follow that envelope. It travels from the decision side of Parmana to the part that actually releases the action: the layer that hands a connector a short-lived credential so it can call the payment system. That layer sees a valid envelope. The signature checks out. The question it cannot answer from the envelope alone is: who is handing this to me?
+
+That is the question this post is about.
+
+## The problem: a valid envelope is not a valid messenger
+
+The signature on an execution authorization proves that Parmana's policy engine approved an action. It does not prove that the thing presenting it is the gateway, the one component that is supposed to do the releasing, after running its own checks on expiry, content, policy and nonce.
+
+If the release layer trusts the envelope alone, then anything that gets hold of a valid envelope looks the same as a legitimate release. In a well-wired system that "anything" should not exist. But "should not exist" is an assumption, and I would rather have a check than an assumption.
+
+## The idea: two signatures, two questions
+
+So there are two signatures, and each answers one question.
+
+- The execution authorization answers: did policy approve this action?
+- The gateway attestation answers: is the gateway, holding its own key, releasing this specific authorization right now?
+
+Keeping them separate matters. If one signature tried to answer both, a single key would carry two kinds of trust, and losing it would lose both.
+
+## How Parmana does it
+
+Every time the gateway releases an execution, it signs a fresh attestation. The signed content is small: the gateway's id, the id of the authorization being released, a random nonce, and the time it was issued.
+
+The authorization id is the important part. It ties the attestation to one request. An attestation minted for my ₹8,400 refund cannot be reused to vouch for a different request, because the ids will not match.
+
+Before the release layer creates any session or issues any credential, it checks three things:
+
+- The identity presented matches the configured gateway.
+- The signature verifies against the gateway's public key.
+- The authorization id inside the attestation equals the authorization id of the request in front of it.
+
+If any of these fails, the request is rejected before a session exists, so no connector credential is ever created for it.
+
+The gateway signs with its own key pair, deliberately separate from the key that signs authorizations. Different trust domain, smaller blast radius: if one key is ever compromised, the other still means something. The server refuses to start if the signing key material is not there. Nothing is generated automatically.
+
+This is tested, not just described. Unit tests cover a correctly bound attestation being accepted, and rejection of an attestation signed with the wrong key, a tampered payload, an attestation minted for a different authorization, and a missing one. An integration test drives a real HTTP request through the real gateway and release chain and shows that a spoofed attestation results in zero session credentials being issued.
+
+## What it does not do
+
+This is a narrow check, and the source code says so in its own comments. Here is the honest list.
+
+- **It is not a replay defense by itself.** The nonce in the attestation exists so two attestations for the same request can be told apart. Nothing records which nonces have been seen. Replay is stopped elsewhere: the gateway session is single-use, and the authorization's own nonce is checked against a nonce store upstream.
+- **It has no expiry of its own.** The issue time is signed, but the check does not compare it against a time window. It leans on the authorization's expiry and nonce check upstream. That is a known, recorded gap, deliberately left alone because changing a shared signing primitive deserves its own piece of work.
+- **It is not hardware or remote attestation.** "Attestation" here does not mean a secure enclave or a measured boot. It proves possession of a private key, nothing about what code is running. Anyone holding the gateway key can mint valid attestations, and my threat model assumes that key is not compromised.
+- **It is checked inside Parmana's own server.** In the default server, the gateway and the release layer run in the same process, and this is where the attestation is checked. A remote connector service does not receive the attestation and verify it independently. For example, the remote refund connector service authenticates the gateway with a separate transport secret, a different mechanism.
+- **It only holds if the wrapper is the path in use.** The rule "no session without a matching attestation" holds because the checking wrapper is the only path wired in production. That was confirmed by inspecting the code, not enforced by a lock.
+- **It is not post-quantum.** Trust Records and receipts can carry a hybrid signature. Gateway attestations are signed with one algorithm only, and I decided not to change that for now.
+- **It is a release-time check, not stored evidence.** As far as I can see in the code, attestations are not kept in the Trust Record. You cannot pull one up next year in an audit; their job is to stop a bad release at the moment it happens.
+- **The session layer behind it is in memory, single process.** Fine for the current deployment shape, not a fleet design.
+
+## The takeaway
+
+An approval and a release are different events, and they deserve different proof. Parmana signs the first with one key and the second with another, and binds the second to the first by its id. It is a small mechanism. It does not claim to be more than it is: proof of who released a request, and which request. Replay protection, expiry and key safety are separate jobs, and I have tried to say which part does each one.

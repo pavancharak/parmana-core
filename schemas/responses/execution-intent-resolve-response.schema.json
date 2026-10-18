@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/execution-intent-resolve-response.schema.json",
+  "title": "Resolve Execution Intent Response",
+  "description": "Response returned by POST /execution-intents/{businessTransactionId}/resolve. RESOLVED means this call closed the intent. ALREADY_RESOLVED means it was already closed and nothing was changed: the original resolution, note and author are returned, never the new request's.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["outcome", "businessTransactionId", "intent", "status"],
+  "properties": {
+    "outcome": {
+      "type": "string",
+      "enum": ["RESOLVED", "ALREADY_RESOLVED"]
+    },
+    "businessTransactionId": {
+      "type": "string"
+    },
+    "intent": {
+      "$ref": "../common/execution-intent.schema.json"
+    },
+    "status": {
+      "$ref": "../common/execution-intent-status.schema.json"
+    }
+  }
+}

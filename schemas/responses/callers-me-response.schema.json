@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/callers-me-response.schema.json",
+  "title": "Callers Me Response",
+  "description": "Response returned by GET /callers/me (packages/api/src/routes/callers-me.ts). Resolved, not raw: allowedPrincipalIds/allowedCapabilities reflect the effective scope after defaults are applied (isPrincipalAllowed.ts / isCapabilityAllowed.ts), not the raw ApiKeyEntry configuration. Never returns key material.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "callerId",
+    "allowedPrincipalIds",
+    "allowedCapabilities",
+    "unrestrictedCapabilities"
+  ],
+  "properties": {
+    "callerId": {
+      "type": "string",
+      "description": "The authenticated caller's identity."
+    },
+    "allowedPrincipalIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Principal IDs this caller may assert as authority.principalId. Defaults to [callerId] when the key's allowedPrincipalIds is unset."
+    },
+    "allowedCapabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Capabilities (intent.action values) this caller may execute. Defaults to an empty array, not all capabilities, when the key's allowedCapabilities is unset."
+    },
+    "unrestrictedCapabilities": {
+      "type": "boolean",
+      "description": "True when allowedCapabilities contains the wildcard \"*\"."
+    }
+  },
+  "examples": [
+    {
+      "callerId": "demo",
+      "allowedPrincipalIds": ["demo"],
+      "allowedCapabilities": ["test:fixture-execute"],
+      "unrestrictedCapabilities": false
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+---
+title: "Chapter 9: The Execution Authorization Envelope"
+description: "A SignedExecutionAuthorization is the cryptographic proof that Parmana decided a specific"
+---
+
+## What it is
+
+A `SignedExecutionAuthorization` is the cryptographic proof that Parmana decided a specific
+request should execute. It's what crosses the boundary between "Parmana decided APPROVE" and
+"a connector actually did something in the real world." Its own doc comment states the
+guarantee directly: "Enterprise systems should execute only requests carrying a valid,
+verified `SignedExecutionAuthorization`." Nothing downstream is trusted to re-derive that a
+decision was made; the envelope carries the proof itself.
+
+## Why it was built
+
+Without a signed, independently verifiable authorization, a connector (or anything holding
+the ability to call one) would have to trust that whatever called it had genuinely gone
+through `RuntimeEngine`, with no way to check. The envelope makes "was this actually
+authorized, by this exact decision, under this exact policy content, for this exact content,
+within this time window" a question anyone downstream can answer themselves, from the
+envelope alone, without a network call back to Parmana. Every field on the payload
+(`packages/shared/src/domain/execution-authorization.ts`) exists to close one specific gap
+this system's own incident history (Chapter 22) found real.
+
+## How it works
+
+`ExecutionAuthorizationPayload` (the signed content) carries:
+
+| Field                          | Purpose                                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `version`                      | Must be `1`. A verifier rejects any other value, including a missing field, before even attempting signature verification.                                                                                                                                                                                                                                                          |
+| `authorizationId`              | Unique identifier for this authorization.                                                                                                                                                                                                                                                                                                                                           |
+| `nonce`                        | Single-use. A receiving system must reject a previously-seen nonce, replay protection.                                                                                                                                                                                                                                                                                              |
+| `decisionId`                   | The approved `Decision` this authorization corresponds to.                                                                                                                                                                                                                                                                                                                          |
+| `businessTransactionId`        | The transaction.                                                                                                                                                                                                                                                                                                                                                                    |
+| `policyName` / `policyVersion` | Which policy produced the decision.                                                                                                                                                                                                                                                                                                                                                 |
+| `authorizedAt` / `expiresAt`   | ISO-8601 UTC. A receiving system must reject an expired authorization.                                                                                                                                                                                                                                                                                                              |
+| `businessTransactionHash`      | Canonical hash of the `ExecutableContent` (`businessTransactionId`, `action`, `target`, `parameters`) approved for execution, computed identically on the signing side (from the runtime's in-memory transaction) and the verifying side (from the JSON-parsed request), so a mismatch means the payload was modified after signing while keeping the same `businessTransactionId`. |
+| `policyContentHash` (optional) | The G-24 content hash of the _exact policy document_ that produced this decision, not merely the version string. Optional so authorizations signed before this field existed keep verifying, absent means "not covered by the policy-freshness check," never "policy is stale."                                                                                                     |
+| `signalsHash` (optional)       | Canonical hash of the runtime signals evaluated for this decision, the real-world conditions (vendor status, risk exposure, etc.) that justified it, distinct from both the content hash and the policy hash.                                                                                                                                                                       |
+| `submittedBy` (optional)       | The authenticated caller identity, when caller-auth was enabled.                                                                                                                                                                                                                                                                                                                    |
+| `grantedCapability` (optional) | The capability the caller-to-capability check confirmed this caller was permitted to invoke, carried forward as a signed fact rather than discarded once the request passes, a receiving system can confirm this equals the executed action, catching any divergence between what a caller was cleared for and what's actually presented for execution.                             |
+
+The complete envelope (`SignedExecutionAuthorization`) wraps this payload with `signature`
+(over the canonical serialization of the payload, see Chapter 3 for `CanonicalSerializer`),
+`keyId` (so a verifier can select the right public key), and `algorithm`.
+
+Signing happens in `RuntimeAuthorizationSigner` (`packages/runtime/src/RuntimeAuthorizationSigner.ts`),
+which composes `@parmana/crypto`'s `AuthorizationSigner` against whichever `Signer` (
+`LocalFileSigner` or `KmsSigner`, resolved once through `SignerBootstrap`, see Chapter 3) is
+configured, using a per-tenant key resolved through `TenantKeyResolver` (falling back to the
+shared `"default"` key when no tenant-specific key exists). `RuntimeEngine.execute()` calls
+this once, at the "Authorization" step (Chapter 8, step 12), only ever reached after policy
+evaluation approved the request.
+
+Verification happens twice, in two different places, checking different things:
+
+1. **`@parmana/envelope-verifier`'s `EnvelopeVerifier`**, used by `ExecutionGateway`
+   (Chapter 10), checks the envelope itself: version, signature, expiry, TTL policy, then the
+   `businessTransactionHash` recompute-and-compare, then (if wired) the policy-freshness and
+   signal-freshness checks, then nonce consumption last (the only side-effecting check, run
+   only once everything else has passed).
+2. Anyone holding the receiving system's copy of Parmana's public key can independently
+   re-verify the same signature offline, without calling back to Parmana at all, this is
+   what Chapter 18 (Independent Verification) covers.
+
+## How it enables things, with examples
+
+- `examples/tutorials/11-execution-authorization`, the payload itself, signed and inspected.
+- `examples/tutorials/26-execution-authorization-verification`, independent verification.
+- `examples/tutorials/27-authorization-expiration`, the `expiresAt` check rejecting a stale
+  envelope.
+- `examples/tutorials/29-authorization-tampering`, mutating a signed payload and watching
+  signature verification catch it.
+- `examples/tutorials/31-authorization-binding`, the `businessTransactionHash` binding
+  content to the authorization.
+- `examples/tutorials/41-expired-authorization`, `43-stolen-authorization`, further negative
+  cases against the same envelope.
+
+## How to validate this yourself
+
+- `packages/shared/src/domain/execution-authorization.ts`, the type definitions; every claim
+  above about a field's purpose is quoted or closely paraphrased from this file's own doc
+  comments.
+- `packages/runtime/src/RuntimeAuthorizationSigner.ts`, the signing side.
+- `packages/crypto/src/AuthorizationSigner.ts`, `AuthorizationVerifier.ts`, the shared
+  signing/verification logic.
+- `packages/envelope-verifier/src/`, `EnvelopeVerifier`'s own check ordering.
+- `packages/runtime/tests/unit/execution-authorization-wiring.test.ts`, proves the fields get
+  populated correctly from a real `RuntimeEngine.execute()` call.
+
+## Integration requirements
+
+- A configured signer (`KEY_PROVIDER=local` with `PARMANA_KEY_DIR`, or `KEY_PROVIDER=aws-kms`
+  with the relevant AWS configuration, see Chapter 3).
+- `EXECUTION_AUTHORIZATION_TTL_SECONDS` (defaults to 120 per this repo's own `.env`) controls
+  how long a signed authorization remains valid before a receiving system must reject it.
+- A receiving system that wants to verify authorizations itself needs Parmana's public key ,
+  see Chapter 18 for the discovery mechanism (`GET /keys/:keyId`, `/.well-known/jwks.json`).

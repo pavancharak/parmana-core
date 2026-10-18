@@ -1,0 +1,55 @@
+---
+title: "Policies as data: same input, same decision"
+description: 'Why the rule that decides a refund is a JSON file, not a prompt, and exactly what "deterministic" does and does not promise.'
+---
+
+An agent asks to refund ₹1,20,000 on an order. The refund policy says no: above 100,000 a refund is refused, even with a manager's signed approval. The agent asks again a minute later. Same answer. An auditor asks six months from now why it was refused. Same answer, the same rule, the same reason, and a signed record showing which rule matched.
+
+That sounds obvious. It is not how most agent controls work today.
+
+## The problem with a judge that thinks
+
+The easy way to control an agent is to ask a model. "Is this refund reasonable?" goes to a second LLM, or into the system prompt as an instruction. It often works. But ask twice and you may get two answers, and a model upgrade may give a third. When a customer, an auditor or a regulator asks why money moved, "the model thought so at the time" is not a defence.
+
+An authorization decision has to be something a person can read and a machine can evaluate identically every time.
+
+## The idea: a policy is data
+
+In Parmana, a policy is a JSON file. It has a name, a version, and an ordered list of rules. Each rule pairs a condition over named facts ("signals") with an outcome: approve or reject, and a reason written for the person who will read it.
+
+Evaluation is plain. Rules run top to bottom. The first rule that matches decides. If none matches, the request is refused. There is no code path where an unmatched request is approved. No model call, no randomness, no hidden state.
+
+The refund policy in production reads, in order: refuse if the fraud check failed; refuse above 100,000; approve if a manager signed for this order and amount, the refund is eligible, the fraud check passed and the amount is between 0 and 100,000; otherwise refuse, saying a signed manager approval is needed.
+
+## How Parmana does it
+
+- **Exactly one policy, by name and version.** The request names the policy it wants judged under. Parmana does not discover policies, pick "latest" or substitute another. The named version must also be the one in effect for that action. A refund naming a Slack policy, or an older, weaker refund version, is refused before any rule runs.
+
+- **Versions change by approval, not by deploy.** A new version takes effect when one person proposes it and a different person approves it with a step up signature. Rolling back is approving the older version again. The approval record stores a hash of the approved content, and a check compares it with the file in the repository: one changed character fails.
+
+- **Types are checked first.** Each signal has a declared type. We found, through mutation testing, that a rule like "reject if amount is above X" does not fire when the amount arrives as the text "150000", because a numeric comparison is false for text. Now a request whose signals do not have their declared types is refused before any rule runs. No shipped policy was found to approve such a request, since each also needs a signed approval.
+
+- **Every signal must be accountable.** For each fact the rules read, the policy must say how it is held to account. Either it is bound to a field of the request (the refund amount in the signals must equal the amount actually being refunded), or it is an approval signal that counts as true only with a person's signature, or the policy states in writing why nothing checks it. A policy that leaves a fact unaccounted for does not load.
+
+- **No approve rule without a person.** Every approve rule must require a signed human approval, as its whole condition or directly inside its top level "all". The validator refuses anything else.
+
+- **The decision explains itself.** It records the rule that matched, how many rules were tried, their ids in order, and the signals evaluated. That is enough to re-run the same policy version on the same signals and get the same outcome.
+
+## What "deterministic" does not mean
+
+- **It is about the outcome, not the record.** Timestamps and ids in a decision are real wall-clock values and random identifiers. Two runs never produce byte-identical records. What repeats is the decision, given the same recorded signals and the same policy version.
+- **It does not cover post-quantum signatures.** If you configure ML-DSA-65 signing, signatures are randomized by design. Only their verification is deterministic.
+- **The surrounding checks depend on state.** The rules are a pure function. The request around them is not: a signed approval works once, so sending the same request with the same approval twice gets an approval, then a refusal. A version approved tomorrow changes which policy is in effect. That is intended, but "same request, same answer" is only true of the rule evaluation.
+
+## What it does not do
+
+- **It does not make facts true.** A policy evaluates what it is given. The refund eligibility and fraud flags in the refund policy are still the agent's word. They can refuse a refund, never authorize one on their own, but nothing checks them against an order system yet.
+- **It does not count.** Rules see one request. "No more than ₹50,000 a day" cannot be written as a policy rule today.
+- **Replay is only partly wired.** A standalone replay package re-evaluates a recorded decision against its recorded signals. The API's replay route does something narrower: it rechecks the stored record's hash and signature. They share a name; they are different things.
+- **It does not show agents the rules.** An agent can ask what a request must carry and gets the facts, their types and the policy's own description. It does not get the conditions.
+- **It does not write good rules for you.** First match wins, so a reject rule placed below a broad approve rule never fires.
+- **Some changes still need a deploy.** Binding a built-in action, such as a Paytm refund, to a different policy name is code.
+
+## The takeaway
+
+A policy you can read, version, approve and re-run is something you can defend. It will not be clever. That is the point: the clever part, deciding what the rule should be, is done once, by people, in the open, and then applied the same way every time.

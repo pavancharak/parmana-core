@@ -1,0 +1,68 @@
+---
+title: "Running Parmana yourself, even with no internet"
+description: ""
+---
+
+Picture a lender whose loan and refund systems sit on a network with no route to the internet, by design. They want an AI agent to prepare refunds, say ₹500 back to a customer charged twice, with a manager signing off on each one. The agent can live inside that network. But if the thing that decides whether the refund may run lives on my servers in the cloud, two problems follow. Their enforcement now depends on my uptime and on a hole in their firewall. And their decision records, keys and audit trail sit with a vendor.
+
+For a lot of the teams I talk to, that is a non-starter. So Parmana also comes as a deployment you run yourself, and I wanted to prove it works with the network cable pulled out.
+
+## The idea: same server, your machine
+
+Self-hosted Parmana is not a cut-down edition. It is the same production image as the hosted API, packaged with its own Postgres and started with one command:
+
+`docker compose up -d --build --wait`
+
+That starts five services in order:
+
+- **setup** makes two Ed25519 signing key pairs and a first API key on the first start, and keeps them on every later start.
+- **postgres** is the deployment's own database, not reachable from outside Docker.
+- **migrate** creates or upgrades the schema, applying each migration once.
+- **seed** copies the policies shipped with Parmana into the database. It does not approve them.
+- **api** is the server, in production mode.
+
+Decisions run inside the api container against policies in your Postgres. The signing keys are generated on your machine and I never see them. Trust Records, Refusal Records, Execution Intents, the caller audit trail and policy approvals all stay in your database. The server only calls out to a system you configure, such as the connector that performs your refunds. With none configured, it calls nothing.
+
+## No rule is relaxed
+
+This was the part I was most careful about. It would have been easy to make a "local mode" that skips the annoying parts. The self-hosted server keeps every production rule:
+
+- Every request needs an API key, and a key acts only for its own caller unless it lists others.
+- A policy authorizes nothing until two different people approve it, one with a signed step-up authorization. Seeding is not approval: that decision belongs to your people, not to me.
+- No agent action is authorized without a signed human approval, reads included, whatever the amount.
+- Before an action is released, the server signs and stores an Execution Intent. If it cannot, nothing is released.
+- A connector must be reached over HTTPS.
+
+Your approvers sign on their own machines, with the TypeScript or Python SDK installed from the public registries, so they don't need a copy of the repository.
+
+## Proving it with no internet
+
+One script, `docker/local/offline-check/run.sh`, starts an isolated copy of the deployment on a Docker network created with no route to the internet, runs fourteen checks, and cleans up. Some of them:
+
+- the network really cannot reach the internet;
+- a policy proposed by one person, refused when the same person tries to approve it, then approved by a second person with a signed step-up;
+- a refund manager's key added the same way, through maker-checker;
+- a ₹500 refund with that manager's signed approval authorized and delivered to the downstream system exactly once, which checked the gateway's signature with only the public key;
+- a ₹50,000 refund with no approval refused, and never delivered;
+- the Trust Record verified with only the public keys, and a copy with the amount changed failing.
+
+It ends with "14 of 14 checks passed". It has passed on Docker Desktop on Windows 11 and runs in CI on Linux on every change to the deployment files. The record and public keys it leaves behind can be verified again on any machine, with no network call.
+
+## Running it day to day
+
+Upgrading is `git pull` and the same start command. Migrations already applied are skipped, new policy versions are added but not approved, and your keys are kept. A backup is two things taken together: a Postgres dump and the directory that holds the keys and API keys. I tested a full wipe and restore on 2026-09-25; a Refusal Record and a policy approval made before the backup were both there afterwards. After every upgrade, the docs say to run the offline check again.
+
+## What it does not do
+
+- **No customer runs it yet.** The deployment, its one-command start and its enforcement without internet are proven on my machines and in CI. Any bank, fintech or other organization running it on its own infrastructure, with its own people approving its policies, is still a future claim.
+- **Installing needs the internet.** The image is built and Postgres is pulled while online. The claim is about running offline, not installing offline.
+- **The offline check used a stand-in.** The downstream system was a small stand-in that verifies the gateway's signature and calls nothing. Only the Paytm connector path has been run self-hosted.
+- **Other connectors break the isolation.** HubSpot, Slack and GitHub call services on the internet, so a deployment that uses them is not isolated.
+- **One server, one database.** No replicas, no failover.
+- **Signing keys are files on the host.** Protect and back up that directory. There is no key rotation procedure for the self-hosted deployment yet; if you replace a key, keep every old public key so old records still verify.
+- **KMS is untested here.** AWS KMS signing works on the hosted deployment, but has not been tested with the self-hosted one.
+- **Migrations run through Compose.** The container on its own does not migrate.
+
+## The takeaway
+
+An authorization layer that only works while my service is up is a dependency, not a control. Self-hosted Parmana runs the same rules in your network, keeps the keys and records with you, and has a repeatable check that it still enforces with no internet at all. What it doesn't have yet is a customer running it. That is the next proof, and I'll write about it when it exists.

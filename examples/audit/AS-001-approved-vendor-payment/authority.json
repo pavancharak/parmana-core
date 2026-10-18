@@ -1,0 +1,27 @@
+{
+  "authorityId": "authority-finance-manager-001",
+
+  "authorityType": "USER",
+
+  "principalId": "finance.manager",
+
+  "displayName": "Jane Smith",
+
+  "department": "Finance",
+
+  "role": "Finance Manager",
+
+  "organization": "Example Corporation",
+
+  "permissions": [
+    "vendor-payment:approve",
+    "vendor-payment:view",
+    "receipt:view"
+  ],
+
+  "issuedAt": "2026-01-01T09:00:00Z",
+
+  "expiresAt": "2026-12-31T23:59:59Z",
+
+  "status": "ACTIVE"
+}

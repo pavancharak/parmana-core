@@ -1,0 +1,459 @@
+---
+title: "Execution Intents"
+description: "A signed statement, stored before an action is released, of exactly what is about to be released. Why it exists, what it proves and does not prove, every failure and what to do about it, and how to find and repair a released action that has no signed record."
+---
+
+<Info>
+  **[AVAILABLE]** since 2026-09-21. Design:
+  `docs/adr/ADR-0012-Signed-Execution-Intent-Before-Release.md`. Code:
+  `packages/runtime/src/ExecutionIntentService.ts`,
+  `ExecutionIntentFinalizer.ts`, `packages/crypto/src/ExecutionIntentCrypto.ts`.
+  Verified live on 2026-09-21, see [What was verified](#what-was-verified).
+</Info>
+
+## The problem this solves
+
+An [Execution Trust Record](/concepts/execution-trust-records) contains the result of the execution, so it can only be built **after** the action has been released to the connector. Before this feature, that left a window: if the record could not be produced or stored after release, an action had run and nothing signed described it. The runtime reported `500 EXECUTION_RECORD_INCOMPLETE` and logged the identifiers, but the context needed to rebuild the record existed only in the memory of the failed request.
+
+An Execution Intent closes that window. Before the connector is called, the runtime signs and stores a record of what it is about to release. If that cannot be done, **nothing is released**.
+
+## What happens to a request, in order
+
+<Steps>
+  <Step title="Accept">The request is validated and recorded as received.</Step>
+  <Step title="Decide and authorize">
+    Policy is evaluated. If it approves, the runtime signs an execution
+    authorization. A policy refusal ends here with `403`, and nothing is
+    released.
+  </Step>
+  <Step title="Signing readiness check">
+    The runtime proves the signing path works (`503 SIGNING_UNAVAILABLE` if
+    not). Nothing is released.
+  </Step>
+  <Step title="Sign and store the Execution Intent">
+    The runtime signs the intent and writes it to the database. **If this fails,
+    the caller gets `503 EXECUTION_INTENT_UNAVAILABLE` and nothing is
+    released.**
+  </Step>
+  <Step title="Release">The action is released to the connector.</Step>
+  <Step title="Save the execution context">
+    Right after the connector answers, the execution context is saved on the
+    intent, so the Trust Record can be rebuilt later. This step is best effort:
+    if it fails, it is logged at critical severity and the request carries on.
+  </Step>
+  <Step title="Build and store the Trust Record">
+    The signed Execution Trust Record is built and stored. If this fails, the
+    caller gets `500 EXECUTION_RECORD_INCOMPLETE`.
+  </Step>
+  <Step title="Mark the intent FINALIZED">
+    The intent is marked `FINALIZED` with the Trust Record id, and the saved
+    context is deleted. This step is best effort.
+  </Step>
+  <Step title="Verify and issue the receipt">As before.</Step>
+</Steps>
+
+## What is signed
+
+The intent contains only facts that exist before release. It never contains the execution result, and never contains the raw intent parameters.
+
+| Field                              | Meaning                                                                                                                                                                   |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `intentId`                         | Unique id of this intent.                                                                                                                                                 |
+| `businessTransactionId`            | The transaction it belongs to. At most one intent exists per transaction.                                                                                                 |
+| `decisionId`                       | The decision that approved the action.                                                                                                                                    |
+| `authorizationId`                  | The signed execution authorization. Equals `authorization.payload.authorizationId` in the Trust Record.                                                                   |
+| `policyName`, `policyVersion`      | The policy that approved it.                                                                                                                                              |
+| `policyContentHash`                | Hash of the exact policy content in force. Copied from the signed authorization. Present when the authorization has one.                                                  |
+| `signalsHash`                      | Hash of the signals that were evaluated. Copied from the signed authorization. Present when the authorization has one.                                                    |
+| `businessTransactionHash`          | Hash of the executable content (action, target and parameters). Copied from the signed authorization. It binds the intent to the exact parameters without repeating them. |
+| `action`, `target`                 | What is about to be released, for example `paytm:refund` and the order id. Together with `businessTransactionId` this is what an operator searches for at the connector.  |
+| `submittedBy`, `grantedCapability` | The authenticated caller and granted capability, when recorded.                                                                                                           |
+| `createdAt`                        | When the intent was created, before release.                                                                                                                              |
+| `intentHash`, `signature`          | Canonical hash and signature, made with the deployment's signing key (local, or AWS KMS in production).                                                                   |
+
+A real captured intent is in [Get an Execution Intent](/api-reference/endpoints/get-execution-intent).
+
+## What an intent proves, and what it does not
+
+| It proves                                                                                                                       | It does NOT prove                                                                                                          |
+| ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| The runtime, holding the signing key, decided to release exactly this action (this action, target, policy and parameters hash). | That the action was released. An intent is written before release.                                                         |
+| The intent has not been altered since it was signed.                                                                            | What the result of the action was. The result is in the Trust Record, not the intent.                                      |
+| Every released action has one, because release is refused when the intent cannot be stored.                                     | That the request finished. A crash between storing the intent and releasing leaves an intent for an action that never ran. |
+
+The honest reading of an intent with no Trust Record is: **the action may or may not have run, and someone has to check the connector.**
+
+## The five states
+
+The state is operational status kept next to the signed intent. It is **not signed**, so it changes as the request progresses.
+
+| State       | Meaning                                                                                                       | Typical cause                                                                                               | What an operator does                                                                                                                                                 |
+| ----------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PREPARED`  | The intent is signed and stored. The action may or may not have been released. No execution result was saved. | A crash between storing the intent and releasing it, or the release happened but saving the context failed. | Check the connector for the `businessTransactionId` and `target`, then close it with resolve. See [Repair](#find-and-repair-a-released-action-with-no-signed-record). |
+| `RELEASED`  | The connector answered and the execution context was saved. No Trust Record exists yet.                       | The Trust Record could not be built or stored (database or signing failure after release).                  | Run finalize. It rebuilds the record without calling the connector.                                                                                                   |
+| `FINALIZED` | A signed Execution Trust Record exists.                                                                       | The normal outcome.                                                                                         | Nothing.                                                                                                                                                              |
+| `ERRORED`   | The release stage raised an error. The action may still have been executed.                                   | The connector timed out or raised an error.                                                                 | Check the connector for the `businessTransactionId` and `target`. Do not assume nothing happened. Then close it with resolve.                                         |
+| `RESOLVED`  | A verified human reconciled a `PREPARED` or `ERRORED` intent at the connector and closed it.                  | An operator checked the connector after a timeout, a crash, or a failed save.                               | Nothing. It no longer appears in the unfinalized list.                                                                                                                |
+
+`FINALIZED` also records `finalizationMode`: `INLINE` when the Trust Record was produced in the original request, `REPAIRED` when it was rebuilt afterwards by finalize.
+
+`RESOLVED` also records `resolution` (`NOT_EXECUTED` or `EXECUTED`, what the operator found at the connector), `resolutionNote`, `resolvedBy` and `resolvedAt`. **That is an attributed, timestamped statement by a person, stored in the unsigned status. It is not tamper evident, and it is not a signed Trust Record.** For an action that ran, the signed evidence is still the intent, and the operator's note is the trail.
+
+## Every failure, and what the caller sees
+
+| Where it fails                                                        | Caller sees                                                                                                                                                                                                         | What exists afterwards                                                | What to do                                                                                                           |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Policy refuses                                                        | `403 POLICY_DENIED`                                                                                                                                                                                                 | A Refusal Record. No intent.                                          | Nothing was released.                                                                                                |
+| Signing readiness check                                               | `503 SIGNING_UNAVAILABLE`                                                                                                                                                                                           | No intent.                                                            | Nothing was released. Retry later with a **new** `businessTransactionId`.                                            |
+| Sign or store the intent                                              | `503 EXECUTION_INTENT_UNAVAILABLE`                                                                                                                                                                                  | No intent.                                                            | Nothing was released. Retry later with a **new** `businessTransactionId`, because the original was already accepted. |
+| The release stage raises an error                                     | `502 EXECUTION_OUTCOME_UNKNOWN` (since 2026-09-25; before, the connector's error, usually a bare `500`). An error that already has its own response, such as `503 CONNECTOR_NOT_REGISTERED`, is returned unchanged. | Intent in `ERRORED`, with `failureReason`.                            | The action may have run. Check the target system, then close the intent with resolve, recording what you found.      |
+| Release succeeds, saving the context succeeds, the Trust Record fails | `500 EXECUTION_RECORD_INCOMPLETE`                                                                                                                                                                                   | Intent in `RELEASED` with the saved context.                          | Run finalize.                                                                                                        |
+| Release succeeds, saving the context fails, the Trust Record fails    | `500 EXECUTION_RECORD_INCOMPLETE`                                                                                                                                                                                   | Intent in `PREPARED`.                                                 | Finalize will refuse with `409`. Establish the outcome at the connector, then close the intent with resolve.         |
+| The Trust Record is stored, marking the intent fails                  | `200` as normal                                                                                                                                                                                                     | A Trust Record, and an intent still showing `RELEASED` or `PREPARED`. | Run finalize. It returns `ALREADY_FINALIZED` and corrects the status.                                                |
+
+<Warning>
+  On `EXECUTION_RECORD_INCOMPLETE` the action **was released**, and on
+  `EXECUTION_OUTCOME_UNKNOWN` it **may have been**. In both cases do not
+  resubmit it under a new `businessTransactionId`. That could perform the action
+  twice.
+</Warning>
+
+## Find and repair a released action with no signed record
+
+These routes need a credential provisioned as a verified human (`credentialHolderType: USER`). Any other credential gets `403 NON_HUMAN_CALLER_DENIED`. Set two variables first.
+
+<CodeGroup>
+
+```bash bash
+export PARMANA_API_URL="https://parmana-api-real.vercel.app"
+export PARMANA_OPERATOR_KEY="<a human credential>"
+```
+
+```powershell PowerShell
+$env:PARMANA_API_URL = "https://parmana-api-real.vercel.app"
+$env:PARMANA_OPERATOR_KEY = "<a human credential>"
+```
+
+</CodeGroup>
+
+### Step 1. List what needs attention
+
+<CodeGroup>
+
+```bash bash
+curl -s "$PARMANA_API_URL/execution-intents/unfinalized" \
+  -H "Authorization: Bearer $PARMANA_OPERATOR_KEY"
+```
+
+```powershell PowerShell
+Invoke-RestMethod "$env:PARMANA_API_URL/execution-intents/unfinalized" `
+  -Headers @{ Authorization = "Bearer $env:PARMANA_OPERATOR_KEY" }
+```
+
+</CodeGroup>
+
+The response is `{ "intents": [ { "intent": {...}, "status": {...} } ] }`, oldest first, at most 50 by default (`?limit=` up to 200). Every entry is an action that may have been released with no signed record, or whose outcome nobody has reconciled yet. A `RESOLVED` intent no longer appears.
+
+### Step 2. Decide by state
+
+<Tabs>
+  <Tab title="RELEASED">
+    Go to step 3. This is the case finalize exists for.
+  </Tab>
+  <Tab title="PREPARED or ERRORED">
+    Finalize cannot help, because no execution result was saved. Check the
+    connector, then go to step 4.
+  </Tab>
+  <Tab title="FINALIZED">Nothing to do.</Tab>
+</Tabs>
+
+### Step 3. Finalize
+
+<CodeGroup>
+
+```bash bash
+curl -s -X POST "$PARMANA_API_URL/execution-intents/<businessTransactionId>/finalize" \
+  -H "Authorization: Bearer $PARMANA_OPERATOR_KEY"
+```
+
+```powershell PowerShell
+Invoke-RestMethod -Method Post "$env:PARMANA_API_URL/execution-intents/<businessTransactionId>/finalize" `
+  -Headers @{ Authorization = "Bearer $env:PARMANA_OPERATOR_KEY" }
+```
+
+</CodeGroup>
+
+What finalize does, and does not do:
+
+- It **never calls the connector**. It reads the execution context saved right after release and runs the same record building step the runtime uses.
+- It also verifies the record and generates its receipt, so the repaired record ends in the same state as an ordinary one.
+- It is **idempotent**. If a Trust Record already exists it returns it with `outcome: ALREADY_FINALIZED` and builds nothing. Running it twice, or twice at once, produces one record.
+- Success returns `200` with `outcome: FINALIZED` and the Trust Record.
+
+| Response                                   | Meaning                                                                                                                                |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `200`, `outcome: FINALIZED`                | This call rebuilt the record.                                                                                                          |
+| `200`, `outcome: ALREADY_FINALIZED`        | A record already existed. Nothing was built.                                                                                           |
+| `404 EXECUTION_INTENT_NOT_FOUND`           | No intent exists. Transactions created before this feature have none.                                                                  |
+| `409 EXECUTION_INTENT_RESULT_NOT_RECORDED` | The intent exists but no execution result was saved. The record cannot be rebuilt from nothing. Reconcile by hand. Nothing was called. |
+| `403 NON_HUMAN_CALLER_DENIED`              | The credential is not provisioned as a verified human.                                                                                 |
+| `501 EXECUTION_INTENTS_NOT_ENABLED`        | Execution Intents are not enabled on this deployment.                                                                                  |
+
+### Step 4. Close an intent you reconciled at the connector (PREPARED or ERRORED)
+
+Do this only **after** you have checked the connector, using `businessTransactionId`, `action` and `target` from the intent. Then record what you found, and a note saying what you checked.
+
+| `resolution`   | Use it when                                                                                             |
+| -------------- | ------------------------------------------------------------------------------------------------------- |
+| `NOT_EXECUTED` | You checked and the action did not run, for example the request never reached the connector.            |
+| `EXECUTED`     | You checked and the action did run. Record the outcome in your own systems as well, see the note below. |
+
+<CodeGroup>
+
+```bash bash
+curl -s -X POST "$PARMANA_API_URL/execution-intents/<businessTransactionId>/resolve" \
+  -H "Authorization: Bearer $PARMANA_OPERATOR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"resolution":"NOT_EXECUTED","note":"Checked the Paytm dashboard for order 1001. No refund exists."}'
+```
+
+```powershell PowerShell
+$body = @{ resolution = "NOT_EXECUTED"; note = "Checked the Paytm dashboard for order 1001. No refund exists." } | ConvertTo-Json
+Invoke-RestMethod -Method Post "$env:PARMANA_API_URL/execution-intents/<businessTransactionId>/resolve" `
+  -Headers @{ Authorization = "Bearer $env:PARMANA_OPERATOR_KEY" } `
+  -ContentType "application/json" -Body $body
+```
+
+</CodeGroup>
+
+The `note` is required, at most 2000 characters, and is the only record of what you found. `resolvedBy` is taken from your credential, and `resolvedAt` is set by the server.
+
+| Response                                  | Meaning                                                                                                                                                                         |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `200`, `outcome: RESOLVED`                | This call closed the intent. It no longer appears in the unfinalized list.                                                                                                      |
+| `200`, `outcome: ALREADY_RESOLVED`        | It was already closed. **Nothing was changed.** The original resolution, note and author are returned, not the ones in this request.                                            |
+| `400 EXECUTION_INTENT_RESOLUTION_INVALID` | `resolution` is not `NOT_EXECUTED` or `EXECUTED`, or `note` is missing, blank or over 2000 characters.                                                                          |
+| `404 EXECUTION_INTENT_NOT_FOUND`          | No intent exists for that transaction.                                                                                                                                          |
+| `409 EXECUTION_INTENT_NOT_RESOLVABLE`     | The intent is `RELEASED` (use finalize), it is `FINALIZED` (already complete), or a signed Trust Record already exists for the transaction (run finalize). Nothing was changed. |
+| `403 NON_HUMAN_CALLER_DENIED`             | The credential is not provisioned as a verified human.                                                                                                                          |
+
+<Warning>
+  A resolution is an **attributed statement by an operator**, stored in the
+  intent's unsigned status. It is not tamper evident, and it does not create a
+  Trust Record. If you resolve an intent as `EXECUTED`, no signed Trust Record
+  exists for an action that ran, so record the outcome in your own systems. The
+  signed intent, your note and the connector's own record are the evidence. The
+  server writes a log line `execution_intent_resolved` with the transaction and
+  the caller each time.
+</Warning>
+
+Resolving never calls a connector.
+
+### Step 5. Confirm a repair
+
+```bash
+curl -s "$PARMANA_API_URL/execution-intents/<businessTransactionId>" \
+  -H "Authorization: Bearer $PARMANA_OPERATOR_KEY"
+```
+
+`status.state` should now be `FINALIZED` and `status.finalizationMode` should be `REPAIRED`. The rebuilt record is then returned by `GET /trust-records/<businessTransactionId>` like any other.
+
+A repaired record has its own `createdAt`, the time of the repair. The times of the execution itself are inside the record's execution evidence. Compare `status.releasedAt` with the record's `createdAt` to see how long the gap was.
+
+## Verify an intent
+
+<Tabs>
+  <Tab title="With the API (no credential)">
+    `POST /execution-intents/verify` takes the intent itself and returns `{ "valid": true }` or `{ "valid": false }`. It needs no API key, reads no storage, and is documented at [Verify an Execution Intent](/api-reference/endpoints/verify-execution-intent).
+  </Tab>
+  <Tab title="Offline (no network, no database)">
+    Save the `intent` field of `GET /execution-intents/<id>` as `intent.json`, fetch the public key, and run the verifier from a clone of the repository.
+
+    ```bash
+    curl -s "$PARMANA_API_URL/keys/default"   # the response contains the public key PEM; save it as default.public.pem
+    npx tsx scripts/verify-execution-intent.ts intent.json default=default.public.pem
+    ```
+
+    Expected output for a genuine intent:
+
+    ```json
+    {
+      "valid": true,
+      "hashValid": true,
+      "legacySignatureValid": true,
+      "algorithmsChecked": ["ed25519"],
+      "errors": []
+    }
+    ```
+
+    The exit code is `0` when valid, `1` when not, `2` for wrong arguments. If the intent was altered after signing, both `hashValid` and `legacySignatureValid` are `false`.
+
+  </Tab>
+</Tabs>
+
+<Note>
+  Both SDKs have an offline verifier: `verify_execution_intent_offline` in
+  Python, and `verifyExecutionIntentOffline` in TypeScript from 1.3.0 (published
+  2026-09-25). On TypeScript 1.2.0 and earlier, use the API route or the script
+  above. See [Use the SDKs](#use-the-sdks) and [SDK coverage of the
+  API](/sdks/api-coverage).
+</Note>
+
+## Use the SDKs
+
+<Warning>
+  These methods are available from SDK 1.2.0 (published 2026-09-21). On 1.1.6
+  and earlier, use the HTTP API.
+</Warning>
+
+| Task                            | TypeScript (`ParmanaClient`)                       | Python (`ParmanaClient`)                                              | Credential                   |
+| ------------------------------- | -------------------------------------------------- | --------------------------------------------------------------------- | ---------------------------- |
+| Read an intent and its status   | `executionIntent(id)`                              | `execution_intent(id)`                                                | Any caller, ownership scoped |
+| Verify an intent                | `verifyExecutionIntent(intent)`                    | `verify_execution_intent(intent)`                                     | None                         |
+| List intents needing attention  | `unfinalizedExecutionIntents(limit?)`              | `unfinalized_execution_intents(limit=None)`                           | Verified human               |
+| Rebuild a missing Trust Record  | `finalizeExecutionIntent(id)`                      | `finalize_execution_intent(id)`                                       | Verified human               |
+| Close an intent you reconciled  | `resolveExecutionIntent(id, { resolution, note })` | `resolve_execution_intent(id, resolution=..., note=...)`              | Verified human               |
+| Verify offline, public key only | none                                               | `parmana.crypto.verify_execution_intent_offline(intent, public_keys)` | None                         |
+
+A non human credential gets an `AuthorizationError`. Resolving an intent that cannot be closed gets a `ConflictError`. A missing intent gets a `NotFoundError`. `503 EXECUTION_INTENT_UNAVAILABLE` arrives on `execute` as an `InternalServerError` whose server code is `EXECUTION_INTENT_UNAVAILABLE`, and nothing was executed.
+
+<CodeGroup>
+
+```typescript typescript
+import { ParmanaClient } from "@parmana/sdk";
+
+const operator = new ParmanaClient({
+  endpoint: "https://parmana-api-real.vercel.app",
+  apiKey: process.env.PARMANA_OPERATOR_KEY,
+});
+
+const { intents } = await operator.unfinalizedExecutionIntents();
+
+for (const { intent, status } of intents) {
+  if (status.state === "RELEASED") {
+    // The connector answered. Rebuild the signed record. This never calls the connector.
+    await operator.finalizeExecutionIntent(intent.businessTransactionId);
+  }
+}
+```
+
+```python python
+import os
+
+from parmana import ParmanaClient
+
+operator = ParmanaClient(
+    endpoint="https://parmana-api-real.vercel.app",
+    api_key=os.environ["PARMANA_OPERATOR_KEY"],
+)
+
+for item in operator.unfinalized_execution_intents().intents:
+    if item.status.state.value == "RELEASED":
+        # The connector answered. Rebuild the signed record. This never calls the connector.
+        operator.finalize_execution_intent(item.intent.business_transaction_id)
+```
+
+</CodeGroup>
+
+To close an intent after you checked the connector, pass what you found and a note. The note is required.
+
+<CodeGroup>
+
+```typescript typescript
+await operator.resolveExecutionIntent(businessTransactionId, {
+  resolution: "NOT_EXECUTED",
+  note: "Checked the Paytm dashboard for order 1001. No refund exists.",
+});
+```
+
+```python python
+operator.resolve_execution_intent(
+    business_transaction_id,
+    resolution="NOT_EXECUTED",
+    note="Checked the Paytm dashboard for order 1001. No refund exists.",
+)
+```
+
+</CodeGroup>
+
+The Python offline verifier takes the `intent` field of `GET /execution-intents/<id>` as a plain dictionary and the public key as text, and needs no network and no database.
+
+```python
+import json
+
+from parmana.crypto import verify_execution_intent_offline
+
+intent = json.load(open("intent.json"))
+public_key = open("default.public.pem").read()
+
+result = verify_execution_intent_offline(intent, {"default": public_key})
+print(result.valid, result.hash_valid, result.legacy_signature_valid)
+```
+
+It agrees with the server: a real server signed intent, and intents signed by the TypeScript signer including non ASCII text, all verify in Python.
+
+## Turn it on: the deployment order matters
+
+Execution Intents are **enforced by default**. In production, and whenever `NODE_ENV` is not exactly `test` or `development`, there is no switch to turn them off. See `EXECUTION_INTENTS_CHECK` in the [environment variable reference](/deployment/environment-variables).
+
+<Warning>
+  Apply the database migration **before** you deploy this version. With the new
+  code and no `execution_intents` table, every execution is refused with `503
+  EXECUTION_INTENT_UNAVAILABLE`.
+</Warning>
+
+1. Apply `supabase/migrations/20260921120000_add_execution_intents.sql` to the production database. It only adds a table and is safe to run twice.
+
+   ```bash
+   psql "$DATABASE_URL" -f supabase/migrations/20260921120000_add_execution_intents.sql
+   ```
+
+2. Confirm the table exists.
+
+   ```bash
+   psql "$DATABASE_URL" -tA -c "select to_regclass('public.execution_intents')"
+   ```
+
+   The output must be `execution_intents`. Empty output means the migration did not apply.
+
+3. Deploy.
+4. Check `GET /ready`. It returns `READY`. If the table is missing it returns `503` with `status: NOT_READY` and a `reason` naming the migration file, so a skipped migration is caught at the readiness check and not on the first real request.
+5. Check the startup log for `executionIntentsConfigured: true`.
+
+The migration changes no existing table. Rolling the code back leaves the new table in place, and nothing reads it.
+
+## Cost
+
+One more signing operation and one more database write happen before every release, and two more writes after it.
+
+| Item                                  | Measured or stated                                                                                                                                                                                                                                |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Extra signing operation under AWS KMS | About 35 ms median (34 to 40 ms, 10 samples), measured on 2026-09-21 from a Windows machine to a KMS key in `ap-south-1`. **Not measured from Vercel**, so expect a different figure there.                                                       |
+| Extra KMS calls                       | One `kms:Sign` per released action.                                                                                                                                                                                                               |
+| Extra database writes                 | One insert before release, one update after release, one update after the record is stored.                                                                                                                                                       |
+| In production on Vercel               | In one approved request on 2026-10-01 the record's own timestamps put about 4.7 s between the authorization and the stored intent (`docs/VERIFICATION-GAPS.md` G-84). Not broken down further; most of it is likely database and KMS round trips. |
+
+## Limits, stated plainly
+
+- An intent proves what was about to be released. It does not prove release or the result.
+- Finalize can only rebuild a record when the execution context was saved. When that save fails, finalize refuses with `409` and the outcome must be established from the connector.
+- Transactions created before this feature have no intent. Their behavior is unchanged.
+- Closing an intent (resolve) records an operator's statement in unsigned status. It is not tamper evident and it does not create a Trust Record.
+- The list route returns intents across all callers, so it needs a verified human credential.
+- The SDK methods for the intent routes are available from SDK 1.2.0. Earlier versions do not have them. The TypeScript SDK has an offline intent verifier from 1.3.0, published 2026-09-25; 1.2.0 has none.
+
+## What was verified
+
+On 2026-09-21, against the real stack: the production Docker image built from this code, a real Postgres with every migration applied, and the real AWS KMS key `alias/default` in `ap-south-1` (`ECC_NIST_EDWARDS25519`), using the limited IAM user `parmana-kms-operator`. The full refund chain ran through the real `parmana-paytm-agent` with fake Paytm staging credentials, because what was under test is the intent lifecycle and not Paytm. 23 of 23 checks passed:
+
+| Scenario                                        | Result                                                                                                                                                                                                                                                                                                                                     |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A normal request                                | Released exactly once. Intent ended `FINALIZED` with `finalizationMode: INLINE`. The intent verified through the API and offline with only the public key. The Trust Record verified offline with only the public key.                                                                                                                     |
+| The Trust Record cannot be stored after release | `500 EXECUTION_RECORD_INCOMPLETE`. A signed intent survived in `RELEASED`. The list showed it, and refused a non human credential with `403`. Finalize rebuilt the record with the connector called exactly once in total, verified it, issued a receipt, and the record verified offline. A second finalize returned `ALREADY_FINALIZED`. |
+| The intent cannot be stored                     | `503 EXECUTION_INTENT_UNAVAILABLE` with the text "Nothing was executed". The connector was not called and no intent row was written.                                                                                                                                                                                                       |
+
+A separate repeat run produced an intent in state `ERRORED` with the reason `PaytmConnector "paytm" request to capability "paytm:refund" timed out after 10000ms`. That was a real connector timeout on a slow Paytm staging call, and it is the designed behavior: the release stage raised an error, so the intent recorded that the outcome is unknown and did not claim nothing happened.
+
+**Closing an intent by hand (resolve) was verified later the same day, first with local signing keys and then under real AWS KMS.** With the same production image and a real Postgres, the connector was made unreachable, so the release raised a real error (`fetch failed`) and left the intent in `ERRORED`. Finalize refused it with `409`. A resolve with no note was refused with `400`, and a non human credential with `403`. A verified human then closed it: `RESOLVED`, `NOT_EXECUTED`, the note and the author recorded, and the intent left the unfinalized list. A second resolve changed nothing (`ALREADY_RESOLVED`), and resolving a `FINALIZED` intent was refused with `409`. 35 of 35 checks passed with local keys, and the final run under KMS, which has one more check, passed 37 of 37. An earlier attempt under KMS had one scenario fail because the agent's own call to Paytm staging failed on the network (`fetch failed`): the intent correctly ended `ERRORED` and the scenario never reached the state it tests. The check no longer depends on the internet: the rig now answers the agent's one call to Paytm staging with a local stand in (the response shape real staging returned for a bad merchant id), and it passed 37 of 37 three times in a row under KMS. The 23 of 23 run above called real Paytm staging with fake credentials. A later run also failed once because the temporary AWS credentials handed to the container had expired after about 15 minutes, so the rig now records their expiry and stops early with an instruction. The resolve SQL was also run against a real Postgres (12 checks, including both database constraints).
+
+Since then the normal path has run in production on Vercel, with the OIDC role and AWS KMS: the approved requests of the external connector live check on 2026-10-01 (`docs/CLAIMS.md` 2.50) stored a signed intent before release, as production enforces. Not verified: the failure paths (finalize, resolve) on Vercel, or a real Paytm refund. The automated tests cover the lifecycle at unit, storage and HTTP level, and the storage queries were also run against a real Postgres.

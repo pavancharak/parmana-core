@@ -1,0 +1,48 @@
+{
+  "businessTransactionId": "11111111-1111-4111-8111-111111111113",
+
+  "metadata": {
+    "businessTransactionId": "11111111-1111-4111-8111-111111111113",
+    "correlationId": "22222222-2222-4222-8222-222222222222",
+    "createdBy": "api-example",
+    "createdAt": "2026-06-29T00:00:00Z"
+  },
+
+  "authority": {
+    "authorityId": "33333333-3333-4333-8333-333333333333",
+    "authorityType": "USER",
+    "principalId": "finance.manager",
+    "displayName": "Finance Manager",
+    "issuedAt": "2026-06-29T00:00:00Z"
+  },
+
+  "authorization": {
+    "authorizationId": "44444444-4444-4444-8444-444444444444",
+    "authorityId": "33333333-3333-4333-8333-333333333333",
+    "purpose": "Vendor Payment",
+    "authorizedAt": "2026-06-29T00:00:00Z"
+  },
+
+  "intent": {
+    "intentId": "55555555-5555-4555-8555-555555555555",
+    "authorizationId": "44444444-4444-4444-8444-444444444444",
+    "action": "PAY_VENDOR",
+    "resource": "INV-1001",
+    "issuedAt": "2026-06-29T00:00:00Z"
+  },
+
+  "policy": {
+    "name": "vendor-payment",
+    "version": "1.0.0"
+  },
+
+  "signals": {
+    "amount": 2500,
+    "vendorVerified": true,
+    "paymentApproved": true
+  },
+
+  "status": "RECEIVED",
+
+  "createdAt": "2026-06-29T00:00:00Z"
+}

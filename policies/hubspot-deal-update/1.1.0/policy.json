@@ -1,0 +1,70 @@
+{
+  "policyId": "hubspot-deal-update",
+  "policyVersion": "1.1.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes a HubSpot deal's dealstage and/or amount update only with a signed approval from a trusted person for that deal. The dealstage transition must also be on an allowed forward path through the pipeline, as verified against the real deal.",
+
+  "signalsSchema": {
+    "dealUpdateApproved": "boolean",
+    "currentDealStage": "string",
+    "proposedDealStage": "string",
+    "dealStageChangeRequested": "boolean",
+    "dealStageTransitionAllowed": "boolean",
+    "amountChangeRequested": "boolean",
+    "amountDeltaAbs": "number",
+    "amountChangeExceedsThreshold": "boolean"
+  },
+
+  "boundSignals": {
+    "proposedDealStage": "parameters.dealstage",
+    "proposedAmount": "parameters.amount"
+  },
+
+  "approvalSignals": {
+    "dealUpdateApproved": {
+      "resourceId": "parameters.dealId"
+    }
+  },
+
+  "unboundSignalReasons": {
+    "dealStageChangeRequested": "Derived by comparing currentDealStage to proposedDealStage (both bound facts); a computed decision fact, not a raw Intent field to bind independently.",
+    "dealStageTransitionAllowed": "Derived by checking the requested stage transition against an allowed-transitions graph; a computed decision fact with no Intent-side equivalent."
+  },
+
+  "rules": [
+    {
+      "id": "reject-stage-transition-not-allowed",
+      "condition": {
+        "all": [
+          { "fact": "dealStageChangeRequested", "operator": "is_true" },
+          { "fact": "dealStageTransitionAllowed", "operator": "is_false" }
+        ]
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Deal update rejected because the requested dealstage transition is not on an allowed forward path."
+      }
+    },
+    {
+      "id": "approve-deal-update-with-approval",
+      "condition": {
+        "all": [
+          { "fact": "dealUpdateApproved", "operator": "is_true" },
+          { "fact": "dealStageTransitionAllowed", "operator": "is_true" }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Deal update authorized with a verified approval for this deal, and the dealstage transition (if any) is on an allowed path."
+      }
+    },
+    {
+      "id": "reject-approval-required",
+      "condition": { "always": true },
+      "outcome": {
+        "action": "reject",
+        "reason": "Deal update rejected. Every deal update needs a signed approval for this deal in signals.approvalArtifact, with dealUpdateApproved true, and every other policy condition satisfied."
+      }
+    }
+  ]
+}

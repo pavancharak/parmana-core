@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/requests/approve-policy-change-request.schema.json",
+  "title": "Approve Policy Change Request",
+  "description": "Request body for POST /policies/pending-changes/{id}/approve.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["stepUpAuthorization"],
+  "properties": {
+    "stepUpAuthorization": {
+      "$ref": "../common/policy-change-step-up-authorization.schema.json"
+    }
+  },
+  "examples": [
+    {
+      "stepUpAuthorization": {
+        "payload": {
+          "version": 1,
+          "nonce": "343ee454-92c6-4ef9-9cfe-e98329e51f53",
+          "pendingPolicyChangeId": "6f4e4020-adf5-4449-938d-27aab58f66b7",
+          "action": "approve",
+          "authorizedAt": "2026-09-15T03:47:51.939Z",
+          "expiresAt": "2026-09-15T03:49:51.939Z"
+        },
+        "signature": "keOXnzUk8KcGrQTkpXC4Ki8ps3GTvMANwqq96b+toxba07gjkcmpyL/vaPZ7+pPZ1HAOJOOy3rj5XfhcwOTnAw==",
+        "keyId": "human-checker-step-up-key",
+        "algorithm": "ed25519"
+      }
+    }
+  ]
+}

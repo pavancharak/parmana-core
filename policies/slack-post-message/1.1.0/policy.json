@@ -1,0 +1,53 @@
+{
+  "policyId": "slack-post-message",
+  "policyVersion": "1.1.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes posting a message to a Slack channel only with a signed approval from a trusted person for that channel. The content review and channel authorization signals come from the caller, so they can only refuse a post, never authorize one on their own.",
+
+  "signalsSchema": {
+    "postApproved": "boolean",
+    "contentApproved": "boolean",
+    "channelAuthorized": "boolean",
+    "channelId": "string"
+  },
+
+  "boundSignals": {
+    "channelId": "target"
+  },
+
+  "approvalSignals": {
+    "postApproved": {
+      "resourceId": "target"
+    }
+  },
+
+  "unboundSignalReasons": {
+    "contentApproved": "Declared by the caller. It can refuse a post, never authorize one on its own; only the signed approval behind postApproved authorizes a post.",
+    "channelAuthorized": "Declared by the caller. The channel is also checked against the server's allowlist. It can refuse a post, never authorize one on its own."
+  },
+
+  "rules": [
+    {
+      "id": "approve-post-with-approval",
+      "condition": {
+        "all": [
+          { "fact": "postApproved", "operator": "is_true" },
+          { "fact": "contentApproved", "operator": "is_true" },
+          { "fact": "channelAuthorized", "operator": "is_true" }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Message post authorized with a verified approval for this channel."
+      }
+    },
+    {
+      "id": "reject-approval-required",
+      "condition": { "always": true },
+      "outcome": {
+        "action": "reject",
+        "reason": "Message post rejected. A post needs a signed approval for this channel in signals.approvalArtifact, with postApproved true, and every other policy condition satisfied."
+      }
+    }
+  ]
+}

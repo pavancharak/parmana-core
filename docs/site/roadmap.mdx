@@ -1,0 +1,148 @@
+---
+title: "Roadmap"
+description: "What's designed but not built, stated plainly, this is a feature of this documentation, not an apology."
+---
+
+<Warning>
+  Every item on this page is [ROADMAP] unless a specific sub-point says
+  otherwise. None of it ships in the current server by default.
+</Warning>
+
+This page consolidates every real gap between what Parmana does today and full
+"unavoidable, not just verifiable" authorization.
+
+## The unavoidability arc, 3 moves, in dependency order
+
+The provability layer is done: every approved action carries a signed, content-bound,
+single-use authorization that receiving systems verify independently, byte-for-byte. What
+that does not yet do is make Parmana's authorization unavoidable, not just verifiable. The
+gap is narrower than it used to be, though: the default server wires the gateway
+unconditionally and routes every connector it registers through
+[credential isolation](/concepts/credential-isolation), so for a registered connector, the
+calling AI does not hold the execution credential, the gateway does, briefly, and only
+inside its own boundary. Move 2 below covers what's still missing for the broader claim.
+
+### Move 1: KMS / HSM key custody, [ROADMAP], roughly 1-2 weeks once started
+
+**Today:** `FileKeyProvider` reads a PEM file from disk (`KEY_PROVIDER=local`, the only
+implemented provider). `KeyProviders` declares `aws-kms`/`azure-key-vault`/`gcp-kms`/`hsm`
+as config values with **zero implementing classes** behind any of them. This is the exact
+exposure class that produced the committed-key incident on [Security](/security/overview).
+Setting `KEY_PROVIDER` to one of these four fails startup loudly (`KeyBootstrap.create()`
+throws, naming the configured value) rather than silently falling back to `FileKeyProvider`;
+the underlying absence of a real KMS/HSM provider remains.
+
+**Unlocks:** _"Parmana's signing key cannot be exfiltrated from the application process."_
+
+**What's pending, precisely:** a real `KeyProvider` implementation (`getPrivateKey`,
+`getPublicKey`, `hasKey`, `getMetadata`; see `packages/crypto/src/KeyProvider.ts`) for at
+least one of `aws-kms`/`azure-key-vault`/`gcp-kms`/`hsm`, registered in `KeyBootstrap.ts`
+in place of today's fail-closed throw for that value.
+
+**Why it's still pending, not just unscheduled:** this repo's own evidence bar for a
+Supported claim is a **live** test against a real key in a real account. "A fake/mock
+passing proves nothing here" is not a rhetorical flourish, it's the same standard the
+durable rate limiter was held to before being marked working. A `KeyProvider` implementation
+can be written and unit-tested
+against a stubbed cloud SDK client entirely offline, which proves the code is
+_structurally_ correct, not that it actually works against the real service (correct IAM
+permission scoping, correct key ARN/resource-id format, the signature actually verifying
+against the returned public key, etc.). None of that can be verified without a real
+AWS/Azure/GCP account and credentials, which this development environment does not have
+and a code-writing session cannot manufacture for itself.
+
+**What building it actually needs, in order:**
+
+1. **Resolve the algorithm question below first.** It changes what the provider signs,
+   not just how it fetches the key.
+2. **Pick one provider to start with** (AWS KMS is the most likely first target: broadest
+   existing tooling, most common in this codebase's target deployments).
+3. **A real account + credentials** with a KMS key already provisioned, scoped to exactly
+   the sign/verify operations this provider class needs, not broader IAM permissions than
+   required.
+4. **Implement the `KeyProvider` interface** against that SDK, following
+   `FileKeyProvider.ts`'s existing shape (including its `assertValidKeyId` path-safety
+   discipline, translated to whatever the cloud SDK's own key-identifier validation needs
+   to be).
+5. **Wire it into `KeyBootstrap.create()`**, replacing the current throw for that one
+   `KEY_PROVIDER` value only. The other three stay fail-closed until each gets the same
+   treatment.
+6. **Run a live sign/verify round trip against the real key** before claiming this as
+   Supported anywhere in `docs/CLAIMS.md`. A passing unit test against a mock does not
+   satisfy this repo's own bar, stated above.
+
+**Open design questions** (from the strategy doc, not yet resolved, and blocking step 4
+above until answered): does AWS KMS support Ed25519 natively, or does this force a move to
+`ecdsa-p256` (already declared in `SignatureAlgorithms`, unused today) for KMS-backed keys
+specifically? ML-DSA-65 (this codebase's post-quantum signer) is not yet broadly available
+in any major cloud KMS. A KMS-backed deployment may need to run classical-only, or hybrid
+mode with the PQ half still file-based, an inconsistency worth deciding on deliberately
+rather than discovering mid-implementation.
+
+### Move 2: Credential brokering, [PARTIAL], wired for the registered connector, full claim is [ROADMAP]
+
+**Today, precisely:** `packages/execution-control` is real and tested (11 tests) and wired
+into the default server: `ExecutionControlService` authenticates a calling gateway, issues a
+short-lived `InMemoryGatewaySessionStore` session, and only then invokes a connector,
+auditing every step. `InMemorySessionCredentialVault` isolates the credential from the caller
+within that flow. This is real, tested, and running in the default server for each
+registered connector, see [Credential isolation](/concepts/credential-isolation) for the
+precise scope note. It is still an **in-process, in-memory scaffold**, not a cross-system
+claim about arbitrary connectors.
+
+**What's still missing for the actual claim:** real cloud-provider credential minting (the
+plan targets AWS STS: a verified envelope causes the _gateway_ to mint a short-lived,
+action-scoped credential, use it, and discard it, the AI never receives it, structurally),
+and a general-purpose path to register a _new_ connector into this seam without a bootstrap
+code change. `InMemorySessionCredentialVault` and `InMemoryGatewaySessionStore` are
+dev/reference-grade names for a reason, no STS integration, no persistence, no cross-process
+session sharing exists yet. The strategy doc is explicit that this move "needs a design
+partner, not a mock", a fake AWS account proves nothing a diligence review would trust.
+
+**Unlocks (scoped):** _"For [action class] on AWS, AI never possesses execution
+credentials."_ Scoped to the integrated system class, never claimed universally.
+
+**Schema note:** extending the envelope with resource/action fields for this is a
+signed-artifact format change, requiring a dedicated versioned session (the `version` field
+already in `ExecutionAuthorizationPayload` exists for exactly this reason).
+
+### Move 3, Network enforcement + bypass detection, [ROADMAP], needs a partner's red team
+
+**What:** network-policy templates (firewall / security-group / K8s `NetworkPolicy`) so a
+target's ingress accepts traffic only from the gateway, plus a reconciliation loop
+comparing the target's own activity log against issued authorizations, anything without a
+matching envelope raises an alert.
+
+**Why last:** it's a property of a customer's deployment, proven by a partner's security
+team trying to break it, not by a unit test.
+
+**Unlocks (permanently scoped):** _"Non-bypassable per integrated system under the
+reference deployment; bypass detected everywhere."_ The unscoped "non-bypassable, period"
+claim is never made, see [Security](/security/overview).
+
+## Other tracked gaps
+
+| Item                                                                 | Status                                                       | Detail                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| -------------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Additional SDKs (Go, Java, .NET, ...)                                | [ROADMAP]                                                    | No source exists. See [Other Languages](/sdks/other-languages).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| Real third-party connectors (SAP, Salesforce, Oracle, Workday, ...)  | [ROADMAP]                                                    | `HttpConnector` and `MockConnector` are reference implementations; four enterprise-named connectors exist as explicit, self-documented mocks (`packages/connector-sdk/src/connectors/{sap,oracle,workday,salesforce}/`), deterministic, in-memory, standing in until a real one is built. None of the four is wired into the default server's connector registry. See [The gateway](/concepts/the-gateway).                                                                                                                                                                                                              |
+| `postgres` / `sqlite` storage providers                              | [ROADMAP]                                                    | Declared in the type union, throw "not implemented" at construction. See [Storage](/storage/overview).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Replay semantic verification of the full record                      | [ROADMAP]                                                    | `POST /replay` is a signature recheck only. `packages/replay`'s `ReplayEngine` does genuinely re-evaluate the recorded policy decision, real, tested, verified live, but scoped to one execution and disconnected from the API. CLAIMS.md §4's broader "every trust artifact" claim remains unbuilt. See [Replay](/replay/overview).                                                                                                                                                                                                                                                                                     |
+| Algorithm migration (re-key Ed25519 → ML-DSA-65, verify old records) | [ROADMAP]                                                    | `AuthorizationVerifier` supports exactly one configured `PRIMARY_SIGNATURE_PROVIDER` at a time.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| Structured logging / observability                                   | [ROADMAP], partially superseded                              | `createLogger`/`getLogger` (`@parmana/shared`) is a real, tested, `LOG_LEVEL`-gated structured logger. Not yet adopted: the existing `console.*` call sites across the codebase still log unconditionally, unmigrated. No metrics, tracing, or dashboards exist.                                                                                                                                                                                                                                                                                                                                                         |
+| Nonce store persistence (Redis-backed)                               | [ROADMAP], partially superseded                              | `SupabaseNonceStore` (`createNonceStore.ts`) is the default outside `NODE_ENV=test` and is durable across restarts and shared across replicas pointed at the same Supabase project. `MemoryNonceStore` is now the `NODE_ENV=test` / hermetic-example path, not the only implementation. A Redis-backed store, for deployments that want durability without a Postgres dependency, remains unbuilt.                                                                                                                                                                                                                       |
+| Authority/Intent/Evidence verification checks                        | [ROADMAP]                                                    | Only integrity, signature, and authorization-binding exist in `verification-service.ts` today (CLAIMS.md 2.15/§4). Open question on record: does an Authority check add anything the signature check doesn't, before a key/authority registry exists?                                                                                                                                                                                                                                                                                                                                                                    |
+| Fetch-verification of unbound policy signals                         | [ROADMAP]                                                    | `Policy.boundSignals` (see [Security](/security/overview)) only binds the specific signal keys a policy author declares. It does not independently verify that an _unbound_ signal is actually true; those remain caller-declared attestations unless a capability has its own `SignalStateVerifier` (today, `hubspot-deal-update`'s `currentDealStage` and a few others). Closing this for real means extending the fetch-verify pattern to policy signals generally, for every capability, not just the ones with a verifier already wired: real, valuable, materially larger than the binding fix, and not scheduled. |
+| API authentication                                                   | Shipped, see [Authentication](/api-reference/authentication) | Caller bearer-key authentication is real and fails closed by default (`createCallerAuthenticator.ts`). What's still [ROADMAP]: a self-service key-management endpoint, issuing and rotating keys is an operator action today, not an API call.                                                                                                                                                                                                                                                                                                                                                                           |
+| `POST /policies/validate` semantics                                  | Flagged, not scheduled                                       | Validates policy-existence, not a submitted document, a naming mismatch worth knowing about.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `POST /transactions` vs `POST /execute` duplication                  | Flagged, not scheduled                                       | Same core-API findings note.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| A general-purpose way to register a new connector                    | [ROADMAP]                                                    | Today, adding a connector to the running server means editing `createConnectorRoute.ts`, `createConnectorRegistry.ts`, and `createConnectorAuthenticator.ts`, a code change, not configuration. See [The gateway](/concepts/the-gateway).                                                                                                                                                                                                                                                                                                                                                                                |
+| Business validation in real decisions (RFC-0023)                     | Built and deployed; not yet used by a shipped policy         | Sources, grants and the release re-check are live and passed live checks with test policies. Left: connect the system that owns refund eligibility, make the first real grant, change `customer-refund` to use them, and build cumulative grant limits and the re-ask at release for built in connectors. See [What is left](/concepts/business-validation#what-is-left).                                                                                                                                                                                                                                                |
+
+## The permanent ceiling, never claimed, on principle
+
+Unscoped "non-bypassable," absolute prevention of all unauthorized execution, tamper-proof
+operation in every environment, guaranteed regulatory compliance, elimination of all software
+defects. These are not "not yet" items, they're claims Parmana does not intend to ever make
+unscoped, because no implementation could honestly back them. See
+[Limitations](/security/limitations) for the full list.

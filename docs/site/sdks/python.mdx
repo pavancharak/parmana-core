@@ -1,0 +1,638 @@
+---
+title: "Python SDK"
+description: "Generated models, bearer-key authentication, and a typed error taxonomy verified against real HTTP responses."
+---
+
+<Info>
+  **[AVAILABLE]**, **published**, [`parmana` on
+  PyPI](https://pypi.org/project/parmana/). Real, public, installable with a
+  plain `pip install parmana`. This page said `v1.0.5` and described only an
+  editable local install until 2026-09-14; both were stale, confirmed against
+  the live PyPI registry while fixing this page. 119 passing tests (1.3.0), 0
+  placeholders, `black`/`ruff`/`mypy --strict` all clean across the whole
+  package. Bearer-key authentication, the error taxonomy below, and
+  `PolicyApi.validate()` are all closed and verified against a real running
+  local server. `test_quickstart_example.py` proves the documented quickstart
+  script itself runs. v1.1.2 added `create_business_transaction()` (see below)
+  and the `offline_verifier.py` fix. Two quick follow-up releases, v1.1.3 and
+  v1.1.4, corrected the published package metadata (repo name, docs domain,
+  added a `Website` URL); v1.1.5 and v1.1.6, both published 2026-09-20, follow;
+  v1.6.0, published 2026-10-11, is the current version. It adds the business
+  signal source and authority grant methods, and `conditions` on a release: see
+  [New in 1.6.0](#new-in-160). v1.5.0, published 2026-10-04, added the external
+  connector methods, `policy_in_effect()` and `verify_parmana_release()`, fixed
+  offline verification of a decoded record, and moved to the Apache License 2.0:
+  see [New in 1.5.0](#new-in-150). v1.4.0, published 2026-09-29, added
+  `sign_approval()` and the approver methods: see [New in 1.4.0](#new-in-140).
+  v1.3.0, published 2026-09-25, added policy governance, step up signing,
+  `caller()`, `public_key()`, `trust_records.list()` and `latest_receipt()`, and
+  lets the offline verifiers take the SDK's own models: see [New in
+  1.3.0](#new-in-130). v1.2.0, published 2026-09-21, added the Execution Intent
+  methods and an offline intent verifier. v1.1.6 adds `server_code` to
+  `InternalServerError`. v1.1.5 lets the offline verifier accept records over
+  4096 bytes that AWS KMS signed as a fixed size commitment, and declares its
+  `cryptography` dependency as the optional `verify` extra (`pip install
+  "parmana[verify]"`). v1.1.4 was published 2026-09-14. See
+  [Changelog](/changelog) and the fix history at the bottom of this page.
+</Info>
+
+## Install
+
+```bash
+pip install parmana
+```
+
+The SDK is licensed under the Apache License 2.0. It is a client and needs a Parmana server, which is licensed separately. See [License and evaluation](/license).
+
+To use the standalone offline Trust Record verifier (`parmana.crypto`), install the optional
+`verify` extra, which adds the `cryptography` package it needs for Ed25519:
+
+```bash
+pip install "parmana[verify]"
+```
+
+Real registry install, confirmed live against PyPI while fixing this page's own stale
+claim otherwise. To build from source inside this monorepo instead:
+
+```bash
+pip install -e ./python
+```
+
+`py.typed` is shipped, this is a PEP 561 typed distribution, confirmed by installing into
+a clean venv and checking `parmana.__file__`'s directory for the marker.
+
+## Bearer-key authentication
+
+`ParmanaClient(api_key=...)` is sent as `Authorization: Bearer <api_key>` on every request, set
+once on the underlying `requests.Session()`:
+
+```python
+from parmana import ParmanaClient
+
+client = ParmanaClient(
+    endpoint="http://localhost:3000",
+    api_key="my-secret-api-key",
+)
+
+health = client.execution.health()  # GET /health, no key required
+```
+
+`api_key` is optional, for the same reason it's optional server-side: local development against a
+server started with `PARMANA_AUTH_DISABLED=true` needs no key. Every real deployment requires
+one. An omitted or wrong key gets a real `401`, raised as `AuthenticationError` (see below), not
+a silent failure. See [Authentication](/api-reference/authentication) for how keys are minted.
+
+## Models are generated, not hand-maintained
+
+Every model in `python/parmana/models/*.py` is generated directly from the TypeScript AST
+of `packages/shared/src/domain/*.ts` (and `CryptoAlgorithms.ts`) by
+`python/scripts/generate_models.ts`, not hand-aligned copies. A drift guard
+(`npm run check:python-models`, wired into CI) regenerates into memory and fails the build
+if the committed output would change. Spot-checked field-for-field against the real JSON
+schemas (`Authority.display_name` optional, `Authorization.expires_at` optional,
+`BusinessTransactionMetadata` correctly optional-except-`business_transaction_id`,
+`ExecutionTrustRecord.settlement_confirmations` optional): accurate, no drift found.
+
+Enums are real Python `str, Enum` classes (e.g. `SignatureAlgorithm`,
+`VerificationStatus`), not bare strings.
+
+<Note>
+  The auto-generated [Python SDK reference](/sdks/reference/python/client)
+  (built from real docstrings, see below) deliberately excludes
+  `python/parmana/models/*.py`: these dataclasses carry no per-field docstrings
+  for a doc-generation tool to render, since they're generated code, not
+  hand-written. For field-by-field shape, see the [TypeScript SDK reference's
+  Interfaces](/sdks/reference/typescript/interfaces/BusinessTransaction),
+  generated from the exact same source this page describes above, field for
+  field identical modulo the `camelCase`/`snake_case` naming convention each
+  language uses.
+</Note>
+
+## Errors, correctly mapped to real conditions
+
+```python
+from parmana import ConflictError, NotFoundError, ValidationError
+
+try:
+    client.execution.execute(transaction)
+except ConflictError as exc:          # HTTP 409
+    print(exc.status_code, exc)
+```
+
+| Status                                                           | Exception                |
+| ---------------------------------------------------------------- | ------------------------ |
+| 400                                                              | `ValidationError`        |
+| 401                                                              | `AuthenticationError`    |
+| 403, code `POLICY_DENIED`, message starting `Execution rejected` | `ExecutionRejectedError` |
+| 403 (no `code`)                                                  | `AuthorizationError`     |
+| 404                                                              | `NotFoundError`          |
+| 409                                                              | `ConflictError`          |
+| any other 5xx                                                    | `ServerError`            |
+| connection failure                                               | `NetworkError`           |
+
+All inherit `ParmanaHttpError` → `ApiError`. Proven against the real `HttpTransport` (not a
+test double) using `responses`-mocked HTTP built from real, verified response shapes
+(`python/tests/test_http_transport.py`), and against an actual running server in
+`python/tests/test_live_server_integration.py`.
+
+<Warning>
+**Two error-classification edge cases worth knowing about, both closed:**
+1. `403` from the caller-principal-scoping check (`isPrincipalAllowed`, "Caller is not
+   permitted to assert this authority.principalId.") is unrelated to policy rejection and
+   maps to a dedicated `AuthorizationError`, not `ExecutionRejectedError`.
+2. Policy rejection has its own dedicated `403` with `code: "POLICY_DENIED"` (see
+   [Error catalog](/api-reference/error-catalog)), distinct from the caller-identity `403`
+   above (no `code`). `build_http_error` checks for `code == "POLICY_DENIED"` ahead of the
+   generic `403` branch, so the two never collide. A risk-rejected `test:fixture-execute`
+   execution raises `ExecutionRejectedError` with `status_code == 403`.
+
+</Warning>
+
+The client also reuses a `requests.Session()` (connection pooling) and retries idempotent
+GETs with backoff on 429/502/503/504, POSTs are never retried.
+
+## Every product endpoint has a method
+
+```python
+client.execution.execute(transaction)             # POST /execute
+client.execution.health()                         # GET /health
+client.execution.version()                        # GET /version (the server's version)
+client.verification.verify(id)                    # POST /verify        (fresh)
+client.verification.get_latest(id)                # GET /verification/:id (cached)
+client.receipt.generate(id)                       # POST /receipt
+client.receipt.get_latest(id)                     # GET /receipt/latest/:id
+client.replay.replay(id)                          # POST /replay
+client.transactions.create(transaction)           # POST /transactions
+client.transactions.get(id)                       # GET /transactions/:id
+client.transactions.list()                        # GET /transactions
+client.trust_records.get(id)                      # GET /trust-records/:id
+client.trust_records.list()                       # GET /trust-records           (1.3.0)
+client.refusal.get(id)                            # GET /refusal/:id
+client.refusal.verify(record)                     # POST /refusal/verify
+client.audit.verify(event, signature)             # POST /audit/verify
+client.execution_intents.get(id)                  # GET /execution-intents/:id
+client.execution_intents.verify(intent)           # POST /execution-intents/verify
+client.execution_intents.list_unfinalized()       # GET /execution-intents/unfinalized
+client.execution_intents.finalize(id)             # POST /execution-intents/:id/finalize
+client.execution_intents.resolve(id, resolution=..., note=...)  # POST /execution-intents/:id/resolve
+client.policy.validate(policy_id, policy_version) # POST /policies/validate
+client.policy.propose_change(name, version, proposed_content=..., reason=...)  # (1.3.0)
+client.policy.list_changes(status)                # GET /policies/pending-changes (1.3.0)
+client.policy.approve_change(id, step_up)         # POST .../approve             (1.3.0)
+client.policy.reject_change(id, reason, step_up)  # POST .../reject              (1.3.0)
+client.callers.me()                               # GET /callers/me              (1.3.0)
+client.callers.public_key(key_id)                 # GET /keys/:keyId             (1.3.0)
+```
+
+`client.version` (a property, not a call) is the **SDK's** version. The server's version is `client.execution.version()`.
+
+The routes that have no method, and why, are listed on [SDK coverage of the API](/sdks/api-coverage#operations-with-no-sdk-method-and-why): the readiness probe, the JWKS document, the API's own description files and the handbook download. That page also maps every method to its TypeScript equivalent.
+
+`client.transactions.create()` covers `POST /transactions`, a second independent entry point
+into the identical execution pipeline as `execute()`, differing only in its `201` status
+code. `policy.validate` takes `(policy_id, policy_version)`, not a policy document, matching
+what the route actually reads.
+
+<Note>
+**`POST /policies/validate` never uses the shared `{error, code?}` envelope at `400`/`404`.**
+Every status it returns (`200`, `400`, `404`) is `{valid, errors}`, the caller's answer, not
+an SDK-level failure, so `policy.validate()` returns `{"valid": False, "errors": [...]}` for
+an unknown policy rather than raising `NotFoundError`. `401` is not exempted: it's generated
+by caller-auth middleware before this route's own handler runs, using the shared envelope like
+every other route. See [Error handling](/api-reference/error-handling).
+</Note>
+
+## `create_business_transaction()`, no more hand-synced ids
+
+Added 2026-09-14, ships in v1.1.2, published, available via a plain
+`pip install parmana`. A `BusinessTransaction` has three id pairs the server's own
+`BusinessTransactionValidator` cross-checks before policy ever runs:
+`metadata.business_transaction_id` must equal `business_transaction_id`,
+`authorization.authority_id` must equal `authority.authority_id`, `intent.authorization_id`
+must equal `authorization.authorization_id`. Every "X must match Y" `400` documented in
+[the end-to-end Paytm guide](/guides/end-to-end-paytm-flow) came from hand-building a request
+and getting one of those wrong. `create_business_transaction()` derives all three
+automatically:
+
+```python
+from parmana import ParmanaClient, PolicyReference, create_business_transaction
+
+client = ParmanaClient(endpoint=endpoint)
+
+transaction = create_business_transaction(
+    principal_id="alice@example.com",  # must match your key's allowed_principal_ids
+    purpose="Vendor payment approval",
+    action="test:fixture-execute",  # a test capability, registered only with NODE_ENV=test
+    target="vendor/vendor-123",
+    parameters={"amount": 100, "currency": "USD"},
+    policy=PolicyReference(name="vendor-payment", version="2.1.0", schema_version="1.0.0"),
+    signals={
+        # The approver's signed approval for this target, up to this amount
+        # (parmana.crypto.sign_approval). Without it the request is refused.
+        "humanApproved": True,
+        "approvalArtifact": approval,
+        "vendorVerified": True,
+        "invoiceVerified": True,
+        "paymentApproved": True,
+        "sufficientFunds": True,
+        "paymentAmount": 100,
+        "riskScore": 5,
+        "vendorId": "vendor/vendor-123",  # boundSignals: SignalIntentBinder rejects this
+        # request unless this exactly equals `target` above
+    },
+)
+
+trust_record = client.execution.execute(transaction)
+```
+
+`business_transaction_id` defaults to a fresh `uuid4()` if you don't supply one. A value you
+do supply is your own responsibility to keep unique per attempt, since it also doubles as the
+server's idempotency key. `authority_type` defaults to `AuthorityType.SERVICE` (never
+`"AGENT"`, which doesn't exist server-side). See `examples/builder/run.py` (the same flow as
+`examples/quickstart/run.py`, side by side, for direct comparison) and
+`tests/test_builders.py` (9 unit tests) / `tests/test_builder_example.py` (proves the
+generated ids round-trip correctly through a real running server, not just in isolation).
+
+## New in 1.6.0
+
+### Register a business signal source
+
+Register the business system that owns a fact a policy needs, an ERP, an order system, a CRM, so Parmana asks it
+instead of trusting the agent. One person proposes, a different person approves with a step up authorization; both
+need a human key.
+
+```python
+change = maker.business_signal_sources.propose_register(
+    name="erp",
+    endpoint_url="https://orders.example.com/parmana/signals",
+    public_key_pem=Path("erp-answers.public.pem").read_text(),
+    key_id="erp-2026-10",
+    reason="Release goods only against invoices the ERP says are paid.",
+)
+
+checker.approve_business_signal_source_change(
+    change.change_id,
+    sign_policy_change_step_up(
+        pending_policy_change_id=change.change_id,
+        action="approve",
+        private_key_pem=Path("step-up.private.pem").read_text(),
+        key_id="checker-step-up-1",
+    ),
+)
+
+checker.list_business_signal_sources()  # [BusinessSignalSource(name="erp", status="active", ...)]
+```
+
+`business_signal_source_changes(status=None)` lists proposals and `reject_business_signal_source_change(change_id,
+reason, step_up)` rejects one. To end a registration, call `business_signal_sources.propose_revoke(name=...,
+reason=...)` and approve it the same way. The endpoint and the signed protocol are in
+[Connect a business signal source](/guides/connect-a-business-signal-source).
+
+### Grant an agent authority
+
+Say which agent may have which action decided, within which limits, until when. A policy with `requireAuthorityGrant`
+decides a request only for a caller holding a grant in force.
+
+```python
+change = maker.authority_grants.propose_grant(
+    caller_id="warehouse-agent",
+    capability="erp:release-goods",
+    limits={"parameters.amount": {"max": 100000}, "parameters.currency": {"oneOf": ["INR"]}},
+    valid_until="2026-12-30T00:00:00.000Z",
+    reason="The warehouse agent releases goods for paid invoices up to 100000 INR this quarter.",
+)
+
+checker.approve_authority_grant_change(change.change_id, step_up)  # signed as above
+
+checker.list_authority_grants()  # [AuthorityGrant(caller_id="warehouse-agent", status="active", ...)]
+```
+
+`authority_grant_changes(status=None)` and `reject_authority_grant_change(change_id, reason, step_up)` work as for
+sources. To end a grant, call `authority_grants.propose_revoke(caller_id=..., capability=..., reason=...)`. No one
+grants authority to themselves. See [Grant an agent authority](/guides/grant-an-agent-authority).
+
+### Conditions on a release
+
+A release to an external connector now carries `conditions`: the business facts the decision rests on, each with
+`signalKey`, `source`, `claim`, `subject`, `value` and `validUntil`, covered by the signature. After
+`verify_parmana_release`, read them from `result.release["conditions"]`. Act only if each still holds in your records;
+otherwise answer `success: false` with `conditionsNotMet: true`. `python/examples/13_external_connector_endpoint.py`
+takes a `conditions_hold` check.
+
+## New in 1.5.0
+
+### A decoded record verifies offline (fixes a 1.4.0 bug)
+
+A model the SDK decoded keeps the server's own JSON, and encodes back to exactly that JSON. So
+`verify_execution_trust_record_offline(record, keys)` verifies the `ExecutionTrustRecord` returned by
+`client.execute()` or `client.trust_record()` directly, including records with `previousChainHash: null`, and
+`refusal_record` and Execution Intent verification send the server exactly what it signed. In 1.4.0 those records
+failed with a hash mismatch (see the warning under [Verify records offline](#verify-records-offline-straight-from-the-clients-results)).
+A model changed with `dataclasses.replace()` is encoded from its fields, so a changed record still fails.
+
+### What a request must carry, from the server
+
+`client.policy_in_effect(capability)` (also `client.policy.in_effect(...)`) calls `GET /policies/in-effect` and returns
+a `PolicyInEffect`: the policy to declare and what the request must carry. Signal names keep their exact spelling; they
+are never converted to snake_case.
+
+```python
+in_effect = client.policy_in_effect("paytm:refund")
+
+in_effect.policy.version          # "1.2.0"
+in_effect.policy.schema_version   # "1.0.0"
+in_effect.signals.facts           # ["fraudCheckPassed", "managerApproved", "refundAmount", "refundEligible"]
+in_effect.signals.bound           # {"refundAmount": "parameters.amount"}
+in_effect.signals.approval        # {"managerApproved": {"resourceId": "parameters.orderId", "value": "parameters.amount"}}
+```
+
+Call it before every request and declare `name`, `version` and `schemaVersion` exactly as returned. It raises
+`AuthorizationError` (403, `CAPABILITY_NOT_ALLOWED`), `NotFoundError` (404, `CAPABILITY_NOT_BOUND`), `ConflictError`
+(409, `NO_APPROVED_POLICY_VERSION`) or `InternalServerError` (503, `POLICY_VERSION_UNAVAILABLE`); in each case send
+nothing. The step by step use
+is in [Integrate Parmana: specification for AI agents](/agents/integrate), step 3.
+
+### Register an external connector
+
+Connect your own system with no Parmana code change: one person proposes registering a capability to your HTTPS
+endpoint, a different person approves it with a step up authorization. Both need a human key.
+
+```python
+change = maker.external_connectors.propose_register(
+    capability="erp:create-invoice",
+    endpoint_url="https://erp.example.com/parmana/release",
+    policy="erp-invoice",
+    allowed_parameters=["amount", "currency"],
+    reason="Finance creates invoices in the ERP through Parmana.",
+)
+
+checker.approve_external_connector_change(
+    change.change_id,
+    sign_policy_change_step_up(
+        pending_policy_change_id=change.change_id,
+        action="approve",
+        private_key_pem=Path("step-up.private.pem").read_text(),
+        key_id="checker-step-up-1",
+    ),
+)
+
+checker.list_external_connectors()  # [ExternalConnector(capability="erp:create-invoice", status="active", ...)]
+```
+
+`external_connector_changes(status=None)` lists proposals and `reject_external_connector_change(change_id, reason,
+step_up)` rejects one. To end a registration, call `external_connectors.propose_revoke(capability=..., reason=...)` and
+approve it the same way. The whole path, with the endpoint, is in
+[Connect any external system](/guides/connect-any-external-system).
+
+## New in 1.4.0
+
+<Info>
+  Published to PyPI on 2026-09-29. `pip install "parmana[verify]"` installs it
+  with `sign_approval()`.
+</Info>
+
+### Sign an approval on the approver's machine
+
+`parmana.crypto.sign_approval()` makes the signed approval a policy with `approvalSignals`
+asks for, the same one `scripts/sign-approval.ts` makes. It needs `pip install "parmana[verify]"`.
+The private key never leaves the process.
+
+```python
+from pathlib import Path
+from parmana.crypto import sign_approval
+
+approval = sign_approval(
+    private_key_pem=Path("manager-priya__manager-priya-key-1.private.pem").read_text(),
+    approver_id="manager-priya",
+    key_id="manager-priya-key-1",
+    capability="paytm:refund",
+    resource_id="ORD-1042",
+    max_amount=75000,  # leave out when the policy declares no amount
+)
+
+# The agent sends it in signals["approvalArtifact"] on a new request.
+```
+
+The approval is valid for 15 minutes by default (`ttl_seconds`, up to a day) and can be used
+once. See [Human approval](/concepts/human-approval).
+
+### Manage approvers
+
+Add, rotate and revoke the keys trusted to sign approvals, through maker checker, with no
+deploy. Every call needs an API key added as a human.
+
+```python
+from parmana.crypto import sign_policy_change_step_up
+
+# The proposer
+change = proposer.approvers.propose_add(
+    approver_id="manager-priya",
+    key_id="manager-priya-key-1",
+    public_key_pem=public_key_pem,  # the approver's .public.pem file
+    reason="Priya approves refunds for the West region from October.",
+)
+
+# A different person, the checker
+pending = checker.approver_changes("PENDING_APPROVAL")
+checker.approve_approver_change(
+    change.change_id,
+    sign_policy_change_step_up(
+        pending_policy_change_id=change.change_id,
+        action="approve",
+        private_key_pem=checker_step_up_key_pem,
+        key_id="checker-step-up-1",
+    ),
+)
+
+approvers = checker.list_approvers()
+```
+
+`reject_approver_change(change_id, reason, step_up)` rejects one, and
+`approvers.propose_revoke(...)` proposes a revocation. See
+[Manage approvers](/guides/manage-approvers).
+
+## New in 1.3.0
+
+<Info>
+  Published to PyPI on 2026-09-25. `pip install parmana` installs it. On 1.2.0
+  and earlier none of this section exists. The full list of what each version
+  covers is on [SDK coverage of the API](/sdks/api-coverage).
+</Info>
+
+1.3.0 adds policy governance to both SDKs and makes the Python SDK cover the same operations as the TypeScript SDK.
+
+### Who the key is, and the deployment's public key
+
+```python
+from parmana import ParmanaClient
+
+client = ParmanaClient(endpoint="http://127.0.0.1:3000", api_key="pk_local_...")
+
+me = client.caller()
+# CallerIdentity(caller_id='local-operator', allowed_principal_ids=['local-operator'],
+#                allowed_capabilities=['paytm:refund'], unrestricted_capabilities=False)
+
+key = client.public_key("default")
+# key.pem is the SPKI PEM that signs Trust Records, Refusal Records and Execution Intents
+```
+
+`public_key()` needs no API key. Fetch it once and keep it.
+
+### Verify records offline, straight from the client's results
+
+```python
+from parmana import ParmanaClient
+from parmana.crypto import verify_execution_intent_offline, verify_execution_trust_record_offline
+
+client = ParmanaClient(endpoint="http://127.0.0.1:3000", api_key="pk_local_...")
+pem = client.public_key("default").pem
+
+record = client.trust_record("5015499d-b7ba-48fe-a9ad-821862d70ad0")
+result = verify_execution_trust_record_offline(record, {"default": pem})
+# OfflineVerificationResult(valid=True, hash_valid=True, legacy_signature_valid=True, ...)
+
+view = client.execution_intent("5015499d-b7ba-48fe-a9ad-821862d70ad0")
+verify_execution_intent_offline(view.intent, {"default": pem})
+```
+
+From 1.3.0 the verifiers accept the SDK's own models, as above, as well as the raw JSON dict of a response or a file. Needs `pip install "parmana[verify]"`.
+
+<Warning>
+  Known issue in 1.4.0, fixed in [1.5.0](#new-in-150): a decoded
+  `ExecutionTrustRecord` drops a `null` `previousChainHash`, so
+  `verify_execution_trust_record_offline` reports a hash mismatch for a record
+  that carries one, although the record is intact. Records from a Postgres
+  backed server, such as the [public sandbox](/playground), carry it. With
+  1.4.0, verify the record as the server sent it, for example `requests.get(f"
+  {url}/trust-records/
+  {business_transaction_id}", headers=headers).json()`, or a saved JSON file.
+  The TypeScript SDK is not affected.
+</Warning>
+
+### Check a release at an external connector endpoint (1.5.0)
+
+An endpoint registered as an external connector receives each approved request as a signed release.
+It checks the release before it acts. Needs `pip install "parmana[verify]"`.
+
+```python
+from parmana.crypto import verify_parmana_release
+
+result = verify_parmana_release(
+    body,
+    public_keys={"default": pem},  # client.public_key("default").pem
+    audience="https://erp.example.com/parmana/release",  # this endpoint, as registered
+    is_already_executed=lambda business_transaction_id: business_transaction_id in answers,
+)
+
+if not result.valid:
+    ...  # Act on nothing. result.errors says why.
+elif result.already_executed:
+    ...  # Answer with the first result again; do not act twice.
+else:
+    ...  # Act on result.release["capability"], ["target"] and ["parameters"] only.
+```
+
+The same checks, in the same order and with the same error texts, as the TypeScript SDK's
+`verifyParmanaRelease`. A whole endpoint built on it is
+`python/examples/13_external_connector_endpoint.py`.
+
+### Approve a policy change
+
+The approver signs on their own machine; the private key never leaves it. Needs `pip install "parmana[verify]"`.
+
+```python
+import json
+from pathlib import Path
+
+from parmana import ParmanaClient
+from parmana.crypto import sign_policy_change_step_up
+
+endpoint = "http://127.0.0.1:3000"
+proposer = ParmanaClient(endpoint=endpoint, api_key="pk_local_... (alice)")
+approver = ParmanaClient(endpoint=endpoint, api_key="pk_local_... (bob)")
+
+change = proposer.propose_policy_change(
+    "customer-refund",
+    "1.0.0",
+    proposed_content=json.loads(Path("policies/customer-refund/1.2.0/policy.json").read_text()),
+    reason="Adopt the shipped customer-refund policy.",
+)
+
+open_changes = approver.policy_changes("PENDING_APPROVAL")
+# each entry has diff.current and diff.proposed
+
+step_up = sign_policy_change_step_up(
+    pending_policy_change_id=change.pending_policy_change_id,
+    action="approve",
+    private_key_pem=Path("approver/step-up.private.pem").read_text(),
+    key_id="bob",
+)
+
+approved = approver.approve_policy_change(change.pending_policy_change_id, step_up)
+# approved.status is PendingPolicyChangeStatus.APPROVED
+```
+
+To reject, sign with `action="reject"` and call `reject_policy_change(change_id, "Why it is rejected.", step_up)`. A signed authorization is valid once, for one change and one action, for 120 seconds unless you pass `ttl_seconds`. `proposed_content` is sent exactly as given: keys are never rewritten, unlike the SDK's model encoding. The rules and every error are on [Approve a policy](/self-hosted/policy-approval).
+
+### List Trust Records, and the latest receipt
+
+```python
+from parmana import ParmanaClient
+
+client = ParmanaClient(endpoint="http://127.0.0.1:3000", api_key="pk_local_...")
+
+records = client.trust_records.list(page=1, page_size=25, since="2026-09-01T00:00:00Z")
+receipt = client.latest_receipt("5015499d-b7ba-48fe-a9ad-821862d70ad0")
+```
+
+`trust_records.list()` returns only records of transactions this key submitted, newest first. A page counts transactions, so it may hold fewer records than `page_size`. `latest_receipt()` reads the most recent receipt without generating a new one, unlike `receipt()`.
+
+## Test suite
+
+119 tests, `pytest`, confirmed against a real run on 2026-09-25 (1.3.0): unit tests for every error-mapping case
+including the two classification cases above, bearer-key header
+attachment tests, `create_business_transaction()` (9 cases, `tests/test_builders.py`), and three
+real-server integration suites. `test_live_server_integration.py` spawns the actual
+`@parmana/api` process (`npx tsx packages/api/src/server.ts`, the same entry point `npm run dev`
+runs) on a real OS-assigned TCP port and drives it with the real `ParmanaClient` over real HTTP:
+a real `401`, a real `403`, a real `400`, a real policy rejection, a real `404`, a real `409`
+duplicate, and the `policy.validate()` `404` case, each asserted against the exact typed result
+and exact message the server returned. `test_quickstart_example.py` does the same for
+`run_quickstart()`, the quickstart example script itself, additionally asserting its documented
+printed output still matches what it actually prints. `test_builder_example.py` does the same
+for `run_builder_example()` (see above), additionally asserting every builder-derived id pair
+round-trips correctly. `tests/test_sdk_alignment.py` covers everything added in 1.3.0, including
+a step up authorization signed in Python and accepted by the server's own TypeScript verifier.
+
+<Note>
+  `ruff`/`black`/`mypy --strict` are clean across the whole package: `python -m
+  ruff check .`, `python -m black --check .`, and `python -m mypy` all pass with
+  zero findings.
+</Note>
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="End-to-end: agent → Parmana → Paytm"
+    icon="route"
+    href="/guides/end-to-end-paytm-flow"
+  >
+    The full, no-ambiguity runbook this SDK builds toward: real infrastructure,
+    every error message, every fix.
+  </Card>
+  <Card title="TypeScript SDK" icon="js" href="/sdks/typescript">
+    The other maintained SDK: same bearer-key model, same error taxonomy shape.
+  </Card>
+  <Card title="Error catalog" icon="list" href="/api-reference/error-catalog">
+    Every error the real API returns, independent of any SDK.
+  </Card>
+  <Card
+    title="Python SDK reference"
+    icon="book-open"
+    href="/sdks/reference/python/client"
+  >
+    Every class and method, generated from the real docstrings, in the sidebar
+    under SDKs.
+  </Card>
+</CardGroup>

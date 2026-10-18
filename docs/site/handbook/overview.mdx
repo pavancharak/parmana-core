@@ -1,0 +1,141 @@
+---
+title: "The Parmana Handbook"
+description: "Every capability Parmana has, explained by reading the actual source, chapter by chapter."
+---
+
+Every capability this codebase has, no matter how small, explained by reading the actual
+source rather than trusting other documentation. Written 2026-09-16 and checked against the
+code that exists today; where it and the code disagree, the code wins and the chapter is fixed.
+
+## How each chapter is structured
+
+Every chapter answers the same six questions, in the same order:
+
+1. **What it is.** One paragraph, plain language.
+2. **Why it was built.** The real problem, usually quoted from the source's own comments.
+3. **How it works.** Traced to real files, usually with line numbers.
+4. **How it enables things, with an example.** A real tutorial or test that proves the
+   behavior, or an honest note that none exists yet.
+5. **How to validate it yourself.** The exact files to open.
+6. **Integration requirements**, where applicable: env vars, config, external dependencies.
+
+<CardGroup cols={2}>
+  <Card
+    title="Chapter 1: Trust Model and Domain Model"
+    href="/handbook/01-trust-model-and-domain"
+  />
+  <Card
+    title="Chapter 2: Configuration and Bootstrapping"
+    href="/handbook/02-configuration-and-bootstrapping"
+  />
+  <Card title="Chapter 3: Cryptography" href="/handbook/03-cryptography" />
+  <Card
+    title="Chapter 4: The Policy Engine and Evaluation"
+    href="/handbook/04-policy-engine-and-evaluation"
+  />
+  <Card
+    title="Chapter 5: Signal Binding and State Verification"
+    href="/handbook/05-signal-binding-and-state-verification"
+  />
+  <Card
+    title="Chapter 6: Capability and Policy Binding"
+    href="/handbook/06-capability-policy-binding"
+  />
+  <Card
+    title="Chapter 7: Policy Governance and the Maker-Checker Flow"
+    href="/handbook/07-policy-governance-maker-checker"
+  />
+  <Card
+    title="Chapter 8: The Runtime Pipeline"
+    href="/handbook/08-runtime-pipeline"
+  />
+  <Card
+    title="Chapter 9: The Execution Authorization Envelope"
+    href="/handbook/09-execution-authorization-envelope"
+  />
+  <Card
+    title="Chapter 10: The Execution Gateway"
+    href="/handbook/10-execution-gateway"
+  />
+  <Card
+    title="Chapter 11: Credential Isolation"
+    href="/handbook/11-credential-isolation"
+  />
+  <Card title="Chapter 12: Connectors" href="/handbook/12-connectors" />
+  <Card
+    title="Chapter 13: The Storage Layer"
+    href="/handbook/13-storage-layer"
+  />
+  <Card
+    title="Chapter 14: The API and HTTP Boundary"
+    href="/handbook/14-api-http-boundary"
+  />
+  <Card
+    title="Chapter 15: Caller Authentication and Scoping"
+    href="/handbook/15-caller-authentication-and-scoping"
+  />
+  <Card title="Chapter 16: Rate Limiting" href="/handbook/16-rate-limiting" />
+  <Card
+    title="Chapter 17: Audit and Evidence Trails"
+    href="/handbook/17-audit-and-evidence-trails"
+  />
+  <Card
+    title="Chapter 18: Independent Verification"
+    href="/handbook/18-independent-verification"
+  />
+  <Card
+    title="Chapter 19: Health and Readiness"
+    href="/handbook/19-health-and-readiness"
+  />
+  <Card
+    title="Chapter 20: Integrating Parmana"
+    href="/handbook/20-integrating-parmana"
+  />
+  <Card title="Chapter 21: Deployment" href="/handbook/21-deployment" />
+  <Card
+    title="Chapter 22: Testing Philosophy"
+    href="/handbook/22-testing-philosophy"
+  />
+  <Card
+    title="Chapter 23: History and Open Questions"
+    href="/handbook/23-history-and-open-questions"
+  />
+</CardGroup>
+
+## Corrections found while writing this book
+
+Every chapter above was written by reading the actual current source, not by trusting
+existing documentation, tutorial comments, or `.env.example`. That process surfaced real
+places where something written down elsewhere in this repository no longer matches the
+code:
+
+- `.env.example` claims `KEY_PROVIDER=aws-kms` "does nothing." False, see Chapters 2 and 3.
+- A live `.env` sets `KMS_REGION`/`KMS_KEY_ALIAS`, neither of which is read anywhere in
+  `packages/*/src`. The real variables are `AWS_REGION` and `AWS_ROLE_ARN`. See Chapters 2
+  and 21.
+- `KeyBootstrap` is effectively legacy, per its own sibling `SignerBootstrap.ts`'s comment.
+  See Chapter 2.
+- A prior architecture assumption placed `ExecutionGateway` at a path that does not exist.
+  The real location is `packages/execution-gateway/src/ExecutionGateway.ts`. See Chapter 10.
+- An older claim that both `@parmana/replay` and `@parmana/receipt` are unwired is only half
+  true, receipt functionality is real and production-wired inside `@parmana/crypto`. See
+  Chapter 18.
+
+## Other formats
+
+<CardGroup cols={2}>
+  <Card
+    title="Read it in the repository"
+    icon="folder"
+    href="https://github.com/pavancharak/parmana/tree/main/docs/site/handbook"
+  >
+    The MDX source, chapter by chapter, alongside the code it documents.
+  </Card>
+  <Card
+    title="Download the PDF"
+    icon="file-arrow-down"
+    href="/handbook/download"
+  >
+    Single-file download. Just an email address, no verification step.
+  </Card>
+</CardGroup>

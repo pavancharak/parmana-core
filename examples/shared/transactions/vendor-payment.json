@@ -1,0 +1,60 @@
+{
+  "businessTransactionId": "txn-vendor-payment-template",
+
+  "metadata": {
+    "businessTransactionId": "txn-vendor-payment-template",
+    "correlationId": "corr-vendor-payment-template",
+    "createdBy": "example",
+    "createdAt": "2026-01-01T00:00:00Z"
+  },
+
+  "authority": {
+    "authorityId": "authority-finance-manager-001",
+    "authorityType": "USER",
+    "principalId": "finance.manager",
+    "displayName": "Finance Manager",
+    "issuedAt": "2026-01-01T00:00:00Z"
+  },
+
+  "authorization": {
+    "authorizationId": "authorization-vendor-payment-001",
+    "authorityId": "authority-finance-manager-001",
+    "purpose": "Vendor Payment Approval",
+    "authorizedAt": "2026-01-01T00:01:00Z"
+  },
+
+  "intent": {
+    "intentId": "intent-vendor-payment-001",
+    "authorizationId": "authorization-vendor-payment-001",
+    "action": "vendor-payment",
+    "resource": "invoice-INV-1001",
+    "issuedAt": "2026-01-01T00:01:00Z"
+  },
+
+  "policy": {
+    "name": "vendor-payment",
+    "version": "2.1.0",
+    "schemaVersion": "1.0.0"
+  },
+
+  "signals": {
+    "vendorId": "VENDOR-1001",
+    "vendorName": "Acme Industrial Supplies",
+
+    "invoiceNumber": "INV-1001",
+
+    "vendorVerified": true,
+    "invoiceVerified": true,
+    "paymentApproved": true,
+    "sufficientFunds": true,
+
+    "paymentAmount": 5000,
+    "currency": "USD",
+
+    "riskScore": 10
+  },
+
+  "status": "RECEIVED",
+
+  "createdAt": "2026-01-01T00:00:00Z"
+}

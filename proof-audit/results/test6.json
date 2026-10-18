@@ -1,0 +1,23 @@
+[
+  {
+    "case": "first use accepted, replay refused",
+    "first": true,
+    "replay": false,
+    "verdict": "PASS"
+  },
+  {
+    "case": "20 concurrent attempts, same nonce",
+    "winners": 1,
+    "verdict": "PASS"
+  },
+  {
+    "case": "replay after restart (new store, same database)",
+    "accepted": false,
+    "verdict": "PASS"
+  },
+  {
+    "case": "missing table is an error, not a replay",
+    "threw": true,
+    "verdict": "PASS"
+  }
+]

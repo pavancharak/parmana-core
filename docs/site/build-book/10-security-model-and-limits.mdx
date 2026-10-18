@@ -1,0 +1,74 @@
+---
+title: "10. Security model and limits"
+description: "What Parmana guarantees, under which assumptions, what it does not claim, and the known gaps, each with where it is recorded."
+---
+
+Parmana's guarantees are specific and tested, and each holds within a stated boundary. This chapter states both. The
+detailed threat model is [Limitations](/security/limitations); every claim and its evidence is in `docs/CLAIMS.md`;
+every known gap is in `docs/VERIFICATION-GAPS.md`, by number.
+
+## What Parmana guarantees
+
+For a system whose actions go through Parmana:
+
+| Guarantee                                                                                           | Enforced by                                                                                                                 |
+| --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Only a key allowed the action can ask for it, and only for the principals it may act for            | Caller authentication and the capability check, before any policy runs                                                      |
+| Every action is decided by the policy bound to it, at the version two people approved               | The capability policy binding and the policy approval record, checked on every request and again at the gateway             |
+| No action is approved without a signed approval from a trusted person, for that action and resource | The policy validator (no approve rule without an approval signal) and the approval verifier, before deciding and at release |
+| An approval is used once, within its expiry, for at most its amount                                 | The approval verifier and its nonce store                                                                                   |
+| What is released is exactly what was approved, once, within its lifetime                            | The signed execution authorization and the gateway's checks: signature, expiry, content hash, single use                    |
+| The agent never holds a system's credentials                                                        | Connectors with per execution credentials; external endpoints hold their own                                                |
+| Every decision, approved or refused, leaves a signed record anyone can verify offline               | Trust Records, Refusal Records, Execution Intents, chained audit events                                                     |
+| Changes to trust need two human keys                                                                | Maker checker with step up signatures for policies, approvers and external connectors                                       |
+| Failures refuse                                                                                     | Every check is fail closed; there is no weaker fallback                                                                     |
+
+## What it assumes
+
+- **Actions go through Parmana.** The gateway is a property of systems that route through it. An agent that also holds
+  a system's credentials can act around it; give agents no credentials.
+- **Keys stay with their owners.** Parmana proves which key signed, never whose hand held it. Two keys held by one
+  person make the record claim a second person who does not exist.
+- **The signing key is safe.** A stolen signing key signs records that verify. AWS KMS keeps the key from being
+  released; rotation is a manual procedure.
+- **Policies are written well.** An over broad rule approves what it should not; no signature can detect that. The
+  validator catches some mistakes, and two people review every version.
+- **The operator is trusted with the database.** An operator with direct database access can change rows outside maker
+  checker (and, for emergencies, revoke an approver that way); those change rows record it.
+
+## What Parmana does not claim
+
+- That execution cannot be bypassed under any circumstances.
+- Mathematical proof of correct execution.
+- Regulatory compliance (SOC 2, GDPR, ISO 27001) by itself.
+- That an external system did what its endpoint says: the answer is recorded as its claim.
+
+## Known gaps
+
+The open items that matter most when you build with Parmana. The full list, with the status of each, is under
+"Open issues at a glance" in `docs/VERIFICATION-GAPS.md`.
+
+| Gap  | What                                                                                                            | What it means for you                                                                                                                          |
+| ---- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| G-51 | Facts the agent declares (such as `refundEligible`, `fraudCheckPassed`) are not checked against another system. | Use them only to refuse. The signed approval authorizes.                                                                                       |
+| G-82 | An external endpoint's answer is its claim, not proof that it acted.                                            | Keep the endpoint's own records; reconcile them against Trust Records.                                                                         |
+| G-50 | Any trusted approver can approve any policy change, and sign an approval for any action.                        | Give approver keys only to people who may approve everything this deployment can do, until approvers can be limited per policy and per action. |
+| G-84 | An approved request takes 24 to 32 seconds in production, past the SDKs' default 30 second timeout.             | Set a 120 second timeout; after a timeout, read the record before sending anything new.                                                        |
+
+Also scoped, not absent:
+
+- **There is no automatic path.** No action is authorized without a person, by design (G-80 closed the last policies
+  that approved without one). Plan for the first request on every resource to wait for a person.
+- **An approval covers the action and the resource**, and the amount where the policy names one, not every parameter.
+- **Single use is per nonce store.** Instances that share the database share it; separate in memory stores do not.
+- **Route access is not scoped per key.** What is scoped is the action, the principal, and which records a caller can
+  read.
+- **Approval notifications are best effort.** One attempt, no retry; the Refusal Records are the complete list.
+- **Python verifies Ed25519 only.** A record's ML-DSA-65 signatures are checked by the TypeScript verifier.
+- **Releasing to an external endpoint was checked live once**, on 2026-10-01, with an endpoint that acts on nothing
+  (`docs/CLAIMS.md` 2.50).
+
+## Reporting a vulnerability
+
+Email **founder@parmanasystems.com** with the issue, its impact, steps to reproduce and the version affected, as
+`SECURITY.md` in the repository describes. Do not open a public issue for a vulnerability.

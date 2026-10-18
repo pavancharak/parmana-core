@@ -1,0 +1,370 @@
+# Parmana
+
+> Parmana is an authorization layer between a caller (an AI agent, a script or a person) and the business systems that carry out an action. The caller sends a Business Transaction that describes the intended action. A policy engine decides. If the action is approved, Parmana signs an authorization, releases the action to the connector, and returns a signed Execution Trust Record that anyone can verify without trusting Parmana. The caller never holds the credentials for the target system.
+
+This file is generated from the documentation navigation. Do not edit it by hand. Regenerate it with `npm run generate:llms-txt`.
+
+## Facts to rely on
+
+* Documentation: https://docs.parmanasystems.com
+* There is no fixed public API base URL. Every deployment has its own, so ask the operator for it.
+* Authentication: every request carries `Authorization: Bearer <key>`. The operator issues the key.
+* On any running server, the machine readable API description is at `/openapi.json`, `/openapi.yaml` and `/api-manifest.json`.
+* TypeScript SDK: `@parmana/sdk` 1.6.0 on npm.
+* Python SDK: `parmana` 1.6.0 on PyPI.
+* If you are an AI agent, start with https://docs.parmanasystems.com/agents/integrate and follow it exactly.
+* For the integration pages concatenated into one document, read https://docs.parmanasystems.com/llms-full.txt.
+
+## Get started: Start here
+
+* [Welcome](https://docs.parmanasystems.com): Parmana authorizes every action your AI agents propose, and gives you a signed proof you can verify independently.
+* [Playground](https://docs.parmanasystems.com/playground): Send real requests to a live Parmana sandbox with a published demo key: a refusal, a signed approval, an approved and signed release, and an offline check. No install, no account.
+* [Choose your path](https://docs.parmanasystems.com/choose-your-path): One table that tells you exactly where to start, whether you are a developer, an operator, an auditor or an AI agent.
+* [Quickstart](https://docs.parmanasystems.com/quickstart): Your first authorized execution: in one minute against the live sandbox with nothing installed, then in under 10 minutes on your own local server.
+* [How Parmana thinks](https://docs.parmanasystems.com/how-parmana-thinks): The six ideas behind every request Parmana handles: deterministic policy, fail-closed defaults, signed authorization, gateway verification, credential isolation, and trust records.
+* [How Parmana compares](https://docs.parmanasystems.com/how-parmana-compares): Parmana next to IAM, API gateways, LLM guardrails, policy engines and agent framework confirmations: what each answers, what Parmana adds, where Parmana is weaker, and how to use them together.
+## Get started: Evaluate and audit
+
+* [Evaluate Parmana](https://docs.parmanasystems.com/evaluation/overview): The shortest path from a fresh clone to a working local system, and what to read next.
+* [Audit guide](https://docs.parmanasystems.com/evaluation/audit-guide): The system under evaluation, where it blocks execution, what an attacker controls in each case, and how to record which attacks are blocked and which succeed.
+* [Claims and evidence](https://docs.parmanasystems.com/evaluation/claims-and-evidence): Each core claim, where it is stated in full, and the tests and commands that check it.
+* [Proof audit](https://docs.parmanasystems.com/evaluation/proof-audit): An independent audit of the five authorization claims: what passed, what failed, what was fixed, and what is still open.
+* [Case studies: public incidents](https://docs.parmanasystems.com/evaluation/case-studies): Three publicly reported AI agent incidents, what happened, and what Parmana would and would not have changed, under stated conditions.
+* [Technical paper](https://docs.parmanasystems.com/evaluation/paper): Parmana: policy-checked execution with signed human approval and offline-verifiable records for AI agent actions. Design, threat model, evaluation and limitations.
+* [Talk and demo videos](https://docs.parmanasystems.com/evaluation/talk-and-videos): The outline of a 20 minute talk on Parmana, and scripts for four short demo videos you can follow step by step against the public sandbox.
+* [License and evaluation](https://docs.parmanasystems.com/license): The Parmana server is proprietary software, source-available for evaluation only. The client and connector SDKs are Apache 2.0.
+## Get started: For AI agents
+
+* [Integrate Parmana: specification for AI agents](https://docs.parmanasystems.com/agents/integrate): An exact, ordered procedure to send an action to Parmana and act on the answer. Every step says what to do, what you should see, and what to do if you do not.
+* [Deploy Parmana: specification for AI agents](https://docs.parmanasystems.com/agents/deploy): An exact, ordered procedure to deploy the Parmana server to production. Every step says what to run, what you should see, and what to do if you do not.
+## Concepts: Core concepts
+
+* [Policies and the Decision](https://docs.parmanasystems.com/concepts/policies-and-the-decision): Deterministic, first-match rule evaluation over runtime signals: what a Policy is, why it's structured this way, and how a Decision comes out of it.
+* [Execution Authorization](https://docs.parmanasystems.com/concepts/execution-authorization): The signed envelope: proof that Parmana authorized one specific execution request. Single use, time bounded, content bound.
+* [The Gateway](https://docs.parmanasystems.com/concepts/the-gateway): The sole boundary through which Parmana releases approved execution requests to connectors. Wired into the default server unconditionally.
+* [Credential Isolation](https://docs.parmanasystems.com/concepts/credential-isolation): The caller that proposes an action never holds the credential that executes it. Session credentials are issued fresh, scoped to one call, and consumed once.
+* [Gateway Attestation](https://docs.parmanasystems.com/concepts/gateway-attestation): A request-bound signature proving the gateway itself released one specific request, separate from the authorization envelope's own signature. What it proves, and what it does not.
+* [Execution Trust Records](https://docs.parmanasystems.com/concepts/execution-trust-records): The canonical, immutable, cryptographically signed record of everything Parmana knows about a Business Transaction.
+* [Refusal Records](https://docs.parmanasystems.com/concepts/refusal-records): The evidence a rejected transaction leaves behind: a signed, independently verifiable Refusal Record, and the two scope caveats that bound the claim.
+* [Human approval](https://docs.parmanasystems.com/concepts/human-approval): No agent action is authorized without a signed human approval, reads included. How the rule is enforced, how to sign an approval, how to add one to a new action, and how to review refused requests.
+* [Business validation](https://docs.parmanasystems.com/concepts/business-validation): An agent's proposed fact is never a business fact. How a policy names the system that owns each fact, how Parmana asks it and records a Trusted Signal, and the separate authority, validation and execution statuses on every decision.
+* [Execution Intents](https://docs.parmanasystems.com/concepts/execution-intents): A signed statement, stored before an action is released, of exactly what is about to be released. Why it exists, what it proves and does not prove, every failure and what to do about it, and how to find and repair a released action that has no signed record.
+* [Caller Audit Trail](https://docs.parmanasystems.com/concepts/caller-audit-trail): Every caller-authentication event (success, denial, or structural rejection) is signed, durable, and, per caller, chained so a deleted row is detectable.
+* [Determinism and Clocks](https://docs.parmanasystems.com/concepts/determinism-and-clocks): 'Two different things share the word "deterministic" on this site. This page is about the narrower one: injected Clock and IdGenerator, and exactly where that pattern is and isn''t used.'
+* [Content Binding & TOCTOU](https://docs.parmanasystems.com/concepts/content-binding-toctou): The real mechanism that closes the check-vs-use gap between authorization and execution, what it covers, and what it doesn't.
+## Concepts: Architecture
+
+* [Architecture Overview](https://docs.parmanasystems.com/architecture/overview): How Parmana's packages fit together, and which parts of the pipeline actually run today.
+* [Packages](https://docs.parmanasystems.com/architecture/packages): Every package in packages/*, its real purpose, and its evidence-backed status.
+* [The Execution Pipeline](https://docs.parmanasystems.com/architecture/execution-pipeline): Stage by stage: what runs on every request through the default server today.
+## Concepts: Verification and evidence
+
+* [Verification](https://docs.parmanasystems.com/verification/overview): Exactly 3 checks, always run, always reported independently.
+* [Verify a record in your browser](https://docs.parmanasystems.com/verification/verify-in-browser): Paste a signed Execution Trust Record and a public key, and check the hash and the Ed25519 signature in your browser. Nothing is uploaded.
+* [Replay](https://docs.parmanasystems.com/replay/overview): Two separate things share this name today, what each actually does.
+* [Cryptography](https://docs.parmanasystems.com/cryptography/overview): Ed25519 default, ML-DSA-65 (post-quantum) configurable. Local PEM keys or AWS KMS for the signing key; other key custody is roadmap.
+* [Storage](https://docs.parmanasystems.com/storage/overview): Append-only persistence for Business Transactions, Trust Records, and policies.
+## Essays: Start here
+
+* [Essays](https://docs.parmanasystems.com/essays/overview): Parmana explained end to end in 31 plain-language essays: why it exists, how a decision is made, how an action is released, what evidence is left, how the rules are governed, how systems connect, and what is proven and what is not.
+## Essays: Why Parmana exists
+
+* [Your agent's claim is not a business fact](https://docs.parmanasystems.com/essays/01-claim-is-not-a-fact): Why an AI agent saying 'the refund is eligible' should never be enough to move money, and how Parmana asks the system that owns the fact instead.
+* [Prompt guardrails are advice. Authorization is a gate.](https://docs.parmanasystems.com/essays/02-guardrails-are-advice): Why 'the agent was told not to' is not a control, and what a check outside the agent looks like instead.
+* [Agents will rewrite themselves. Their authority should not move when they do.](https://docs.parmanasystems.com/essays/03-agents-will-rewrite-themselves): A Google research paper shows agents improving their own harness. What that means for where the limits on agents must live.
+* [Models as insider risks: what Parmana already does, and what it does not](https://docs.parmanasystems.com/essays/models-as-insider-risks): Satya Nadella argues that frontier models should be treated as insider risks, with controls outside the model. A principle-by-principle look at where Parmana meets that bar and where it does not.
+* [How Parmana works, end to end](https://docs.parmanasystems.com/essays/04-how-parmana-works): The whole system on one page: who proposes, who decides, who releases, and what is left behind.
+* [How Parmana thinks](https://docs.parmanasystems.com/essays/94-how-parmana-thinks): The handful of habits behind every decision Parmana makes: rules over judgment, refusal by default, a person's signature, a second check at release, no keys for the agent, and a record anyone can verify.
+## Essays: The decision
+
+* [Policies as data: same input, same decision](https://docs.parmanasystems.com/essays/05-policies-as-data): 'Why the rule that decides a refund is a JSON file, not a prompt, and exactly what "deterministic" does and does not promise.'
+* [Every action needs a signed human approval, reads included](https://docs.parmanasystems.com/essays/06-signed-human-approval): Why Parmana has no automatic path, how a person approves one action on one resource, and what that approval does not cover.
+* [Giving an agent authority: grants with limits and an end date](https://docs.parmanasystems.com/essays/07-authority-grants): An API key that may call an action is not yet authority over every request for it. A grant says exactly what one agent may do, how much, and until when.
+* [Per-request limits are not enough](https://docs.parmanasystems.com/essays/08-per-request-limits-are-not-enough): ₹9,999 twenty times is still ₹2 lakh. Why agents need limits over time, why who keeps the count matters most, and the design for cumulative grant limits (not built yet).
+* [Writing your first policy](https://docs.parmanasystems.com/essays/41-writing-your-first-policy): What goes into a Parmana policy, why every fact it reads must be accounted for, and why only a person can ever make it say yes.
+* [One capability, one policy](https://docs.parmanasystems.com/essays/42-one-capability-one-policy): Why the agent must never choose which policy judges its own action, and how Parmana ties each capability to exactly one policy name and the version a person approved.
+## Essays: The release
+
+* [The gateway: why your agent should never hold the keys](https://docs.parmanasystems.com/essays/09-the-gateway)
+* [Signed, single-use, short-lived: the execution authorization](https://docs.parmanasystems.com/essays/10-execution-authorization)
+* [Approved what, exactly? Binding approval to content](https://docs.parmanasystems.com/essays/11-binding-approval-to-content)
+* [Write it down before you do it](https://docs.parmanasystems.com/essays/12-write-it-down-first)
+* [Proving the gateway is the gateway](https://docs.parmanasystems.com/essays/13-proving-the-gateway): 'A signed approval says "this may happen". It does not say who is making it happen.'
+* [Signing more than 4 KB with a cloud key: the commitment scheme](https://docs.parmanasystems.com/essays/61-signing-more-than-4kb): How a 4096 byte limit in AWS KMS broke live refunds, and how Parmana signs larger records with a fixed 97 byte commitment that stays ordinary Ed25519 and cannot be used to downgrade small messages.
+* [Ready to sign before releasing anything](https://docs.parmanasystems.com/essays/62-ready-to-sign-before-releasing): Why Parmana proves it can sign evidence before it releases an action, and why a failure after release is reported loudly instead of as an ordinary error.
+## Essays: The evidence
+
+* [An approval you can verify without trusting me](https://docs.parmanasystems.com/essays/14-verify-without-trusting-me): Why 'check our logs' is not good enough for agents that act on your behalf, what signed records and signed approvals prove, and what they do not.
+* [Proving what didn't happen](https://docs.parmanasystems.com/essays/15-proving-what-didnt-happen): An approval leaves a signed record. A refusal used to leave a 403 and a log line.
+* [Who asked? The caller audit trail](https://docs.parmanasystems.com/essays/16-who-asked): Before Parmana decides whether an action is allowed, it records who is asking. Every time, including when the answer is no.
+* [Replay: what it can and can't re-check](https://docs.parmanasystems.com/essays/17-replay): 'Two different things in Parmana share the word "replay". Neither one does everything the word suggests.'
+* [Verify it yourself: offline and in the browser](https://docs.parmanasystems.com/essays/18-verify-it-yourself)
+* [Choosing signatures: Ed25519, post-quantum, and keys in KMS](https://docs.parmanasystems.com/essays/19-choosing-signatures)
+* [A key for one algorithm only: the key/algorithm binding guard](https://docs.parmanasystems.com/essays/59-a-key-for-one-algorithm): Why a signer configured for one signature algorithm must refuse a key made for another, and the small check in Parmana that makes it refuse.
+* [Which key signed this? Key ids, expiry and revocation](https://docs.parmanasystems.com/essays/60-which-key-signed-this): How Parmana names the key behind every signature so keys can be rotated without breaking old records, and how an expired or revoked key stops being accepted.
+## Essays: Governance and operations
+
+* [Maker checker for one person](https://docs.parmanasystems.com/essays/20-maker-checker-for-one-person): What two-person control is worth when one person holds both roles, what Parmana enforces regardless of headcount, and where it stops.
+* [Governing the rules](https://docs.parmanasystems.com/essays/21-governing-the-rules)
+* [Rotating every key in production in one day](https://docs.parmanasystems.com/essays/22-rotating-every-key): A credential recovery told honestly, with the mistakes left in: why recovery means replacement, the order of trust, and seven things that broke.
+* [Running Parmana yourself, even with no internet](https://docs.parmanasystems.com/essays/23-running-parmana-yourself)
+* [Who is calling? API keys, hashes and failing closed](https://docs.parmanasystems.com/essays/51-who-is-calling): How Parmana knows which system is asking before it decides anything, why the server keeps only a hash of each key, and why it refuses to run rather than run without knowing.
+* [Refusing to start misconfigured](https://docs.parmanasystems.com/essays/67-refusing-to-start-misconfigured): Why the Parmana server stops at startup, with a message naming the variable, instead of running half configured and failing on the first real refund.
+* [Healthy versus ready](https://docs.parmanasystems.com/essays/68-healthy-versus-ready): Why Parmana answers two separate questions, is the process alive and can it serve real traffic, and what each answer does and does not tell you.
+## Essays: Connecting agents and systems
+
+* [Connecting an agent](https://docs.parmanasystems.com/essays/24-connecting-an-agent)
+* [Connecting any system](https://docs.parmanasystems.com/essays/25-connecting-any-system)
+* [What a refund agent needs before it touches a payment gateway](https://docs.parmanasystems.com/essays/26-before-a-refund-agent-touches-razorpay): A checklist for letting an AI agent move money back to customers through Razorpay, Paytm or any gateway, and where Parmana stands on each point.
+* [Refunds end to end through Paytm](https://docs.parmanasystems.com/essays/32-refunds-end-to-end-through-paytm): How a refund an agent proposes travels through Parmana to Paytm, what was run live and what was not, and the double refund we found on the way.
+* [Letting an agent update a CRM deal](https://docs.parmanasystems.com/essays/33-letting-an-agent-update-a-crm-deal): What it takes to let an AI agent move a HubSpot deal forward or change its amount, why each update needs a person, and what was proven against a real HubSpot account.
+* [Letting an agent merge a pull request](https://docs.parmanasystems.com/essays/34-letting-an-agent-merge-a-pull-request): How Parmana governs an AI agent merging a GitHub pull request, the bug that let declared facts authorize a merge, and why this connector has never run against a real GitHub App.
+* [An agent that posts to Slack, only where it is allowed](https://docs.parmanasystems.com/essays/35-an-agent-that-posts-to-slack): Why a Slack post is a data leak waiting to happen, how Parmana pins an agent's posts to channels the server allows, and why the message text is still the agent's.
+## Essays: Proof and honesty
+
+* [Testing agent controls in production without moving real money](https://docs.parmanasystems.com/essays/27-testing-in-production-without-moving-money): How authority grants and business signal sources were proven on the live system with endpoints that act on nothing, what passed, and what was not proven.
+* ['What "done" means: deployed, but not yet deciding anything'](https://docs.parmanasystems.com/essays/28-what-done-means): Five meanings of done, and the three public records that keep Parmana honest about which one each feature has reached: the claims register, the gap log and the remaining work list.
+* [What Parmana can't stop](https://docs.parmanasystems.com/essays/29-what-parmana-cant-stop)
+* [Mapping to regulation without overclaiming](https://docs.parmanasystems.com/essays/30-mapping-to-regulation)
+* [Where Parmana fits among agent controls](https://docs.parmanasystems.com/essays/31-how-parmana-compares)
+* [For a security lead: what to look at, and in what order](https://docs.parmanasystems.com/essays/86-for-a-security-lead): A reading order for a security lead deciding whether Parmana belongs between their agents and their systems: run it, read the scoped claims, read the open gaps, then the threat model.
+* [Tests that try to break the tests](https://docs.parmanasystems.com/essays/95-mutation-testing): Why a large test count proved little about Parmana's security checks, what mutation testing found when it deliberately broke the code, and what it still cannot tell you.
+## Guides: Build with Parmana
+
+* [Full Integration Overview](https://docs.parmanasystems.com/guides/full-integration-overview): A map of the four independent pieces a real business system integration needs: policy, caller, connector and signal verification, and how they fit together. Read this before the individual guides.
+* [Write Your First Policy](https://docs.parmanasystems.com/guides/write-your-first-policy): Write a custom Policy, evaluate a transaction against it, and confirm both the approve and reject paths.
+* [Policy Governance: Maker-Checker Approval](https://docs.parmanasystems.com/guides/policy-governance-maker-checker): Propose, review, and approve a policy change end to end, with the exact commands and how to debug each failure mode.
+* [Policy lifecycle and approvals](https://docs.parmanasystems.com/guides/policy-lifecycle-and-approvals): End to end: write a policy, propose it, have a second person approve it, how it takes effect, and how a person signs off on a single critical action.
+* [Manage approvers](https://docs.parmanasystems.com/guides/manage-approvers): Add, rotate and revoke the people whose signed approvals a policy accepts, through maker checker, with no code change and no deploy.
+* [Approval notifications](https://docs.parmanasystems.com/guides/approval-notifications): Email the approver, or send a signed webhook, when a request is refused only because it needs a person's approval.
+* [Credentials for maker, checker, approver and agent](https://docs.parmanasystems.com/guides/credentials-maker-checker-approver): Every key a Parmana deployment needs, who creates each one, every command to create, deploy, test, rotate and use them, and how the production keys were rebuilt on 2026-09-27 and rotated on 2026-09-30.
+* [Authorize and Execute an Action End to End](https://docs.parmanasystems.com/guides/authorize-and-execute): See the signed authorization envelope Quickstart hides behind the REST API, then run the same request through the full gateway-wired server.
+* [Connect an External Agent](https://docs.parmanasystems.com/guides/connect-an-agent): Complete guide for a new developer: what's needed, why, how to build and send the request, and how to troubleshoot every failure mode, grounded in the actual source, using the real parmana-phinite-agent integration as the worked example.
+* [Connect any external system](https://docs.parmanasystems.com/guides/connect-any-external-system): An exact, ordered procedure to put an action in a system Parmana has no code for under Parmana's control: write and approve its policy, run an endpoint, register it through maker checker, grant it, and send requests. Every step says what to do, what you should see, and what to do if you do not.
+* [Connect a business signal source](https://docs.parmanasystems.com/guides/connect-a-business-signal-source): Register any business system that owns facts a policy needs, an ERP, an order system, a CRM or a ledger, so Parmana asks it instead of trusting the agent. The procedure, the signed query and answer protocol, and what each failure does.
+* [Grant an agent authority](https://docs.parmanasystems.com/guides/grant-an-agent-authority): Say which agent may have which action decided, within which limits, until when, through maker checker, and make a policy require it. What each refusal means, and what the signed record holds.
+* [Issue and Verify Session Credentials](https://docs.parmanasystems.com/guides/session-credentials): Issue a single-use, time-bounded session credential, consume it, and confirm expiry, reuse, and revocation are all rejected.
+* [Choose a Signature Provider](https://docs.parmanasystems.com/guides/choose-a-signature-provider): Ed25519 by default, ML-DSA-65 (post-quantum) as a configured alternative, and hybrid signing with both at once. What each one actually requires and costs.
+## Guides: Verify and audit
+
+* [Verify a Trust Record Independently](https://docs.parmanasystems.com/guides/verify-independently): Take a trust record someone else gave you and verify its hash and signature with only the public key, no Parmana server, no database, no network call.
+* [Detect Tampering](https://docs.parmanasystems.com/guides/detect-tampering): Mutate a parameter, a signature, and a nonce, run the same verification each time, and watch each one fail. This mirrors the always-running negative-path tutorials.
+## Guides: Worked examples
+
+* [Live API and Demos](https://docs.parmanasystems.com/guides/live-api-and-demos): Call the real, deployed Parmana API directly: authentication, the request shape, every deployed policy, how to author and deploy a new one, and independent offline verification.
+* [End-to-End: Agent → Parmana → Paytm](https://docs.parmanasystems.com/guides/end-to-end-paytm-flow): Every command, every real error, and every fix required to run a real agent → Parmana → Paytm refund against live infrastructure, start to finish, with no ambiguity.
+* [Tutorials](https://docs.parmanasystems.com/tutorials/index): Numbered examples in examples/tutorials/, grouped by what they demonstrate. This page links to them, it does not duplicate their content.
+## TypeScript SDK: Get started
+
+* [TypeScript SDK](https://docs.parmanasystems.com/sdks/typescript): Real client code, bearer-key authentication, and a typed error taxonomy that is actually thrown.
+* [TypeScript SDK configuration and behavior](https://docs.parmanasystems.com/sdks/typescript-configuration): Every option, default, retry rule, error mapping and method of the TypeScript SDK, each checked against the code.
+* [TypeScript SDK Overview](https://docs.parmanasystems.com/guides/typescript-sdk-overview): What the TypeScript SDK does, when to reach for it, and the four objects every integration is built from.
+* [TypeScript SDK Quickstart](https://docs.parmanasystems.com/guides/typescript-sdk-quickstart): Install to your first authorized execution with the TypeScript SDK, in under 10 minutes, using the in-memory server.
+## TypeScript SDK: Build
+
+* [TypeScript SDK for AI Agents](https://docs.parmanasystems.com/guides/typescript-sdk-ai-agents): Wire Parmana authorization into LangChain.js, the Vercel AI SDK, a server endpoint, or an async/webhook workflow.
+* [TypeScript SDK in Production](https://docs.parmanasystems.com/guides/typescript-sdk-production): Configuration, fail-closed error handling, retries, audit logging, and a deployment checklist for the TypeScript SDK.
+## Python SDK: Get started
+
+* [Python SDK](https://docs.parmanasystems.com/sdks/python): Generated models, bearer-key authentication, and a typed error taxonomy verified against real HTTP responses.
+* [Python SDK configuration and behavior](https://docs.parmanasystems.com/sdks/python-configuration): Every option, default, retry rule, error mapping and method of the Python SDK, each checked against the code.
+* [Python SDK Overview](https://docs.parmanasystems.com/guides/python-sdk-overview): What the Python SDK does, when to reach for it, and the three objects every integration is built from.
+* [Python SDK Quickstart](https://docs.parmanasystems.com/guides/python-sdk-quickstart): Get Parmana running end-to-end with the Python SDK: build a transaction, execute it, and read back a signed proof.
+## Python SDK: Build
+
+* [Python SDK for AI Agents](https://docs.parmanasystems.com/guides/python-sdk-ai-agents): Integrate Parmana authorization into LangChain, CrewAI, FastAPI, and async agent code. Policy decides, not the agent.
+* [Python SDK Production Guide](https://docs.parmanasystems.com/guides/python-sdk-production): Deploy the Python SDK to production: real error handling, audit logging, and a deployment checklist.
+## Verification SDK: Get started
+
+* [Verification SDK](https://docs.parmanasystems.com/sdks/parmana-sign/overview): Verify Parmana records yourself, offline, with @parmana/sign.
+* [Public keys](https://docs.parmanasystems.com/sdks/parmana-sign/public-keys): Where verification keys come from, and how to pass them in.
+## Connector SDKs: Overview
+
+* [Integrations](https://docs.parmanasystems.com/integrations/overview): The Connector SDK foundation is real. Four enterprise-named connectors exist as explicit, self-documented mocks; no real enterprise integration is built on it yet.
+* [Other Languages](https://docs.parmanasystems.com/sdks/other-languages): [ROADMAP], no Go, Java, or .NET SDK exists in this repository today.
+## Connector SDKs: Build a connector
+
+* [Add a Connector with the Connector SDK](https://docs.parmanasystems.com/guides/add-a-connector): This guide moved. The full walkthrough now lives on the Connector Development Guide.
+* [Connector Development Guide](https://docs.parmanasystems.com/integrations/connector-development-guide): How to implement a Connector against @parmana/connector-sdk, every example uses MockConnector, no enterprise-specific example.
+## Connector SDKs: Connector SDK references
+
+* [@parmana/connector-sdk](https://docs.parmanasystems.com/reference/connector-sdk): Connector authoring contracts and reference implementations: the Connector interface, MockConnector, credential handles, and four enterprise-shaped reference mocks.
+* [Connector SDK (Python)](https://docs.parmanasystems.com/reference/connector-sdk-python): Python connector authoring contracts and reference implementations: the Connector protocol, MockConnector, credential handles, and four enterprise-shaped reference mocks.
+## Connector SDKs: Ready made connectors
+
+* [HubSpot](https://docs.parmanasystems.com/integrations/hubspot): Policy-gated updates to a HubSpot Deal's dealstage and amount. Hermetic by default, proven live against a real HubSpot developer/test account.
+## REST API: REST API guide
+
+* [REST API Introduction](https://docs.parmanasystems.com/api-reference/introduction): 45 paths and 48 operations, generated from openapi/openapi.yaml into the sidebar under REST API. This page covers what that spec can't express.
+* [Authentication](https://docs.parmanasystems.com/api-reference/authentication): Send a bearer key on every request. What a key may do, how to check it, where keys come from, the rate limits, and every authentication error with its exact body.
+* [Error Handling](https://docs.parmanasystems.com/api-reference/error-handling): The shared error envelope, and which errors carry a stable code and which do not.
+* [Idempotency and Nonces](https://docs.parmanasystems.com/api-reference/idempotency-and-nonces): There is no Idempotency-Key header. businessTransactionId is the idempotency key: a duplicate is a 409, not a replayed response. Authorizations and human approvals are each accepted once, checked in the database.
+* [Error Catalog](https://docs.parmanasystems.com/api-reference/error-catalog): Every error this API can return: HTTP status, code (when present), the exact condition that produces it, and what a caller should do. Assembled from live-triggered captures, not inferred from code.
+* [SDK coverage of the API](https://docs.parmanasystems.com/sdks/api-coverage): Every API operation, the TypeScript and Python method that calls it, and the reason when there is none.
+## REST API: Execution
+
+* [Execute a Business Transaction](https://docs.parmanasystems.com/api-reference/endpoints/execute-transaction): Sends one action for a decision and, if approved, performs it.
+## REST API: Transactions
+
+* [List Business Transactions](https://docs.parmanasystems.com/api-reference/endpoints/list-transactions): Lists the Business Transactions your key submitted, as a bare array with no paging metadata.
+* [Create (execute) a Business Transaction](https://docs.parmanasystems.com/api-reference/endpoints/create-transaction): The same as `POST /execute` in every way except the success status, `201` instead of `200`.
+* [Get Business Transaction](https://docs.parmanasystems.com/api-reference/endpoints/get-transaction): Returns one Business Transaction as it was stored.
+## REST API: Verification
+
+* [Verify an Execution Trust Record](https://docs.parmanasystems.com/api-reference/endpoints/verify-transaction): Checks a Trust Record again on the server: recomputes its hash, verifies its signature and checks that every approved execution is bound to its authorization.
+* [Get latest Verification](https://docs.parmanasystems.com/api-reference/endpoints/get-latest-verification): Returns the most recent Verification appended to a Trust Record by `POST /verify`.
+## REST API: Receipts
+
+* [Generate a Receipt](https://docs.parmanasystems.com/api-reference/endpoints/generate-receipt): Generates a signed Receipt for a Trust Record: a compact proof of what was decided and executed, to hand to a person or another system.
+* [Get latest Receipt](https://docs.parmanasystems.com/api-reference/endpoints/get-latest-receipt): Returns the most recent Receipt for a Trust Record.
+## REST API: Trust Records
+
+* [Bulk-export Execution Trust Records (compliance/audit)](https://docs.parmanasystems.com/api-reference/endpoints/list-trust-records): Exports your full, signed Trust Records (transaction, decision, executions, verifications, receipts) a page at a time, for audit and compliance.
+* [Get Execution Trust Record](https://docs.parmanasystems.com/api-reference/endpoints/get-trust-record): Returns the complete signed Execution Trust Record for a transaction: what was asked, what the policy decided, what was executed and the connector's answer, with signatures.
+## REST API: Replay
+
+* [Replay an Execution Trust Record](https://docs.parmanasystems.com/api-reference/endpoints/replay-transaction): Verifies the stored signature on a Trust Record and returns its hash with the result.
+## REST API: Policies
+
+* [Get the policy a capability's requests must declare right now](https://docs.parmanasystems.com/api-reference/endpoints/get-policy-in-effect): Tells an agent what a request for a capability must declare and carry right now: the policy name and version, the policy's description, and its signals (every fact the rules read with its type, the facts that must equal a value of the in...
+* [Validate that a Policy exists and is readable](https://docs.parmanasystems.com/api-reference/endpoints/validate-policy): Checks that this server can load a policy at a name and version, the same lookup a request uses.
+## REST API: Policy Governance
+
+* [Propose a policy change (maker)](https://docs.parmanasystems.com/api-reference/endpoints/propose-policy-change): Proposes new content for a policy, the maker's step in maker checker governance.
+* [List pending policy changes (maker-checker)](https://docs.parmanasystems.com/api-reference/endpoints/list-pending-policy-changes): Lists policy changes with a diff: the content in effect today (`current`, or `null` for a new version) next to the proposed content.
+* [Approve a pending policy change (checker)](https://docs.parmanasystems.com/api-reference/endpoints/approve-policy-change): Approves a policy change, the checker's step, and puts it into effect.
+* [Reject a pending policy change (checker)](https://docs.parmanasystems.com/api-reference/endpoints/reject-policy-change): Rejects a policy change.
+## REST API: Approvers
+
+* [List approver keys](https://docs.parmanasystems.com/api-reference/endpoints/list-approval-issuers): Lists every approver key the server trusts, or once trusted, to sign human approvals for policies that require one.
+* [List approver changes](https://docs.parmanasystems.com/api-reference/endpoints/list-approval-issuer-changes): Lists approver changes, newest first.
+* [Propose adding or revoking an approver key](https://docs.parmanasystems.com/api-reference/endpoints/propose-approval-issuer-change): Proposes trusting a new approver key (`add`, with its Ed25519 public key) or revoking one added this way (`revoke`).
+* [Approve an approver change](https://docs.parmanasystems.com/api-reference/endpoints/approve-approval-issuer-change): Approves an approver change and applies it at once: an added key is trusted from the next approval checked; a revoked key's approvals are refused from the next request on, including ones it already signed.
+* [Reject an approver change](https://docs.parmanasystems.com/api-reference/endpoints/reject-approval-issuer-change): Rejects an approver change.
+## REST API: External Connectors
+
+* [List external connectors](https://docs.parmanasystems.com/api-reference/endpoints/list-external-connectors): Lists every external connector registration, active and revoked: the capability, the HTTPS endpoint Parmana releases it to, the policy that governs it and the parameters forwarded.
+* [List external connector changes](https://docs.parmanasystems.com/api-reference/endpoints/list-external-connector-changes): Lists external connector changes, newest first.
+* [Propose registering or revoking an external connector](https://docs.parmanasystems.com/api-reference/endpoints/propose-external-connector-change): Proposes connecting your own system to Parmana with no Parmana code change: `register` names a capability, the HTTPS endpoint to release it to, the policy that governs it, the parameters to forward and optionally a timeout; `revoke` ends...
+* [Approve an external connector change](https://docs.parmanasystems.com/api-reference/endpoints/approve-external-connector-change): Approves an external connector change and applies it at once: `register` makes the registration active, `revoke` ends it.
+* [Reject an external connector change](https://docs.parmanasystems.com/api-reference/endpoints/reject-external-connector-change): Rejects an external connector change.
+## REST API: Business Signal Sources
+
+* [List business signal sources](https://docs.parmanasystems.com/api-reference/endpoints/list-business-signal-sources): Lists every business signal source registration, active and revoked: the name a policy's `signalSources` uses, the HTTPS endpoint Parmana asks, and the Ed25519 key its answers must be signed with, if one is registered.
+* [List business signal source changes](https://docs.parmanasystems.com/api-reference/endpoints/list-business-signal-source-changes): Lists business signal source changes, newest first.
+* [Propose registering or revoking a business signal source](https://docs.parmanasystems.com/api-reference/endpoints/propose-business-signal-source-change): Proposes connecting a business system, any system that owns facts a policy needs (an ERP, an order system, a CRM, a ledger), so Parmana can ask it instead of trusting the agent's claim.
+* [Approve a business signal source change](https://docs.parmanasystems.com/api-reference/endpoints/approve-business-signal-source-change): Approves a business signal source change and applies it at once: `register` makes the registration active, so policies that name it can be evaluated; `revoke` ends it, so they are refused as `SOURCE_UNAVAILABLE`.
+* [Reject a business signal source change](https://docs.parmanasystems.com/api-reference/endpoints/reject-business-signal-source-change): Rejects a business signal source change.
+## REST API: Authority Grants
+
+* [List authority grants](https://docs.parmanasystems.com/api-reference/endpoints/list-authority-grants): Lists every authority grant, active and revoked: which caller may have which capability decided, within which limits, from when until when.
+* [List authority grant changes](https://docs.parmanasystems.com/api-reference/endpoints/list-authority-grant-changes): Lists authority grant changes, newest first.
+* [Propose granting or revoking an agent's authority](https://docs.parmanasystems.com/api-reference/endpoints/propose-authority-grant-change): Proposes per-agent authority (RFC-0023 phase 3): `grant` says the API key with `callerId` may have requests for `capability` decided, within `limits` on the request, until `validUntil` (at most 366 days); `revoke` ends the active grant.
+* [Approve an authority grant change](https://docs.parmanasystems.com/api-reference/endpoints/approve-authority-grant-change): Approves an authority grant change and applies it at once: `grant` makes the grant active, starting now unless it names a later `validFrom`; `revoke` ends it, so the caller's next request under a policy with `requireAuthorityGrant` is re...
+* [Reject an authority grant change](https://docs.parmanasystems.com/api-reference/endpoints/reject-authority-grant-change): Rejects an authority grant change.
+## REST API: Sandbox
+
+* [Get a demo approval (sandbox only)](https://docs.parmanasystems.com/api-reference/endpoints/create-sandbox-approval): **Sandbox only.** Returns an approval signed by the sandbox's demo approver, so you can try an approved request from a browser.
+## REST API: Refusal Records
+
+* [Verify a Refusal Record's signature](https://docs.parmanasystems.com/api-reference/endpoints/verify-refusal-record): Checks a Refusal Record's signature.
+* [Get a Refusal Record by transaction ID](https://docs.parmanasystems.com/api-reference/endpoints/get-refusal-record): Returns the signed Refusal Record kept when a policy refused a transaction: the decision, the rule that refused, the facts it saw and the signature.
+## REST API: Execution Intents
+
+* [Verify an Execution Intent's signature](https://docs.parmanasystems.com/api-reference/endpoints/verify-execution-intent): Checks an Execution Intent's hash and signature.
+* [List Execution Intents that never reached a signed Trust Record](https://docs.parmanasystems.com/api-reference/endpoints/list-unfinalized-execution-intents): The operator's work queue: Execution Intents that never reached a signed Trust Record and were not closed by hand, oldest first.
+* [Get an Execution Intent and its status](https://docs.parmanasystems.com/api-reference/endpoints/get-execution-intent): Returns the signed Execution Intent for a transaction and where it got to.
+* [Rebuild the signed Trust Record for a released action](https://docs.parmanasystems.com/api-reference/endpoints/finalize-execution-intent): Rebuilds the signed Trust Record for an action that was released but whose record was never produced, the repair for a `500` `EXECUTION_RECORD_INCOMPLETE`.
+* [Close an intent you reconciled by hand](https://docs.parmanasystems.com/api-reference/endpoints/resolve-execution-intent): Closes an intent in state `PREPARED` or `ERRORED` after a person checked the target system, the repair for a `502` `EXECUTION_OUTCOME_UNKNOWN`.
+## REST API: Audit
+
+* [Verify a signed caller-authentication audit event](https://docs.parmanasystems.com/api-reference/endpoints/verify-audit-event): Checks the signature of a caller authentication audit event, the record the server keeps of every authentication, denial and governance action.
+## REST API: System
+
+* [Root](https://docs.parmanasystems.com/api-reference/endpoints/get-root): Returns the service name and `UP`.
+* [Health check](https://docs.parmanasystems.com/api-reference/endpoints/get-health): Liveness probe.
+* [Readiness check](https://docs.parmanasystems.com/api-reference/endpoints/get-ready): Readiness probe.
+* [Get the OpenAPI spec](https://docs.parmanasystems.com/api-reference/endpoints/get-open-api-spec): This API's complete OpenAPI 3.1 document as YAML, self contained with no external references.
+* [Get the OpenAPI spec, as JSON](https://docs.parmanasystems.com/api-reference/endpoints/get-open-api-spec-json): The same document as `GET /openapi.yaml`, as JSON, for tools and agents that expect a spec at a `.json` path.
+* [Machine-readable SDK and discovery manifest](https://docs.parmanasystems.com/api-reference/endpoints/get-api-manifest): One index for agents and tools: where the OpenAPI document and the rendered references are, how to authenticate, and both official SDKs with their package name, registry and current version.
+* [Service version](https://docs.parmanasystems.com/api-reference/endpoints/get-version): Returns `name`, `version` and `api`.
+* [Fetch a public signing key for independent, offline verification](https://docs.parmanasystems.com/api-reference/endpoints/get-key): Returns the public half of a signing key, so anyone can verify a Parmana signature without a Parmana account: 'an auditor, a regulator, or an endpoint receiving a release.
+* [List every public signing key this deployment can currently produce](https://docs.parmanasystems.com/api-reference/endpoints/get-jwks): Lists every public signing key this deployment can serve, the enumeration form of `GET /keys/{keyId}`.
+* [Get the authenticated caller's identity and resolved scope](https://docs.parmanasystems.com/api-reference/endpoints/get-caller-me): Returns who your key is and exactly what it may do: the caller id, the principals it may act for, the capabilities it may invoke and whether that includes every capability (`*`), after defaults are applied.
+## REST API: Handbook
+
+* [Download the Parmana Handbook (PDF)](https://docs.parmanasystems.com/api-reference/endpoints/get-handbook-pdf): Downloads the Parmana Handbook as a PDF.
+* [Capture an email address, then redirect straight to the handbook PDF](https://docs.parmanasystems.com/api-reference/endpoints/get-handbook-download-lead): Records an email address, then redirects to the handbook PDF.
+* [Capture an email address before unlocking the handbook PDF download](https://docs.parmanasystems.com/api-reference/endpoints/create-handbook-download-lead): Records an email address and returns the handbook download link as JSON.
+## Deploy and operate: Self hosted
+
+* [Self hosted Parmana](https://docs.parmanasystems.com/self-hosted/overview): Run Parmana on your own infrastructure. What runs, what stays inside your network, what it needs, and what it does not do.
+* [Self hosted quickstart](https://docs.parmanasystems.com/self-hosted/quickstart): Start Parmana on your own machine with one command, approve a policy, and get your first signed decision. About 15 minutes.
+* [Approve a policy](https://docs.parmanasystems.com/self-hosted/policy-approval): Make a policy take effect on a self hosted deployment: one person proposes it, a different person approves it with a signed step up authorization.
+* [Manage API keys](https://docs.parmanasystems.com/self-hosted/api-keys): List, add, rotate and remove the API keys of a self hosted deployment.
+* [Connect a system](https://docs.parmanasystems.com/self-hosted/connectors): Configure the connector a self hosted deployment releases authorized actions to, including one that uses your own certificate authority.
+* [Offline verification](https://docs.parmanasystems.com/self-hosted/offline-verification): Prove, with one command, that a self hosted deployment authorizes, refuses and signs with no internet connection, and that its records verify with only the public keys.
+* [Operate a self hosted deployment](https://docs.parmanasystems.com/self-hosted/operations): Start, stop, upgrade, back up, restore, read logs and change the database password of a self hosted deployment.
+* [Self hosted configuration reference](https://docs.parmanasystems.com/self-hosted/configuration): Every setting, file, service, volume and port of the self hosted deployment, with defaults and exact behavior.
+* [Self hosted troubleshooting](https://docs.parmanasystems.com/self-hosted/troubleshooting): Every error the self hosted deployment is known to produce, what causes it, and the exact fix.
+## Deploy and operate: Deploy
+
+* [Run the server from source](https://docs.parmanasystems.com/deployment/local): Run the Parmana server as a single Node.js process from a clone of the repository, for development. To run Parmana on your own infrastructure, use the self hosted deployment.
+* [Production deployment runbook](https://docs.parmanasystems.com/deployment/production): A numbered procedure to deploy the Parmana server to production, with the check that proves each step worked and the fix when it did not.
+* [AWS KMS signing](https://docs.parmanasystems.com/deployment/aws-kms-signing): Keep the signing key inside AWS KMS so the private key is never released. Set it up, verify it works, and understand the 4096 byte KMS limit.
+* [Environment variable reference](https://docs.parmanasystems.com/deployment/environment-variables): Every environment variable the Parmana server reads: whether it is required, its default, its allowed values, and what it does.
+* [Deploy Patterns](https://docs.parmanasystems.com/guides/deploy-patterns): In-memory vs Supabase storage, the full environment variable checklist, and how key management actually works: two separate keypairs, one directory, one optional rotation variable.
+## Deploy and operate: Security
+
+* [Security](https://docs.parmanasystems.com/security/overview): What Parmana actually guarantees, precisely scoped, and, as important, what it explicitly does not claim.
+* [Limitations](https://docs.parmanasystems.com/security/limitations): What Parmana does not claim, the specific threats its tests actually cover, and what you're responsible for.
+* [OWASP mapping](https://docs.parmanasystems.com/security/owasp-mapping): Each risk in the OWASP Top 10 for LLM Applications (2026) and the OWASP Top 10 for Agentic Applications (2026): what Parmana does about it, the evidence, and what it leaves to you.
+* [Regulation mapping](https://docs.parmanasystems.com/security/regulation-mapping): How Parmana supports human oversight and record keeping under the EU AI Act (Articles 12, 14 and 26), the NIST AI RMF, ISO/IEC 42001 and RBI guidance for Indian banks and NBFCs: what it provides, the evidence, and what stays with your organization.
+## Deploy and operate: Operate
+
+* [Troubleshooting](https://docs.parmanasystems.com/troubleshooting): Real problems encountered while building and using this repo, with real causes.
+* [Database Schema Reference](https://docs.parmanasystems.com/storage/schema-reference): Every live table: what it is for, its columns, which migration built it, what code owns it, plus a library of real SQL for troubleshooting, audit and verification.
+## Reference: Packages
+
+* [@parmana/shared](https://docs.parmanasystems.com/reference/shared): Domain types, config loading, and error classes every other package depends on. No business logic of its own.
+* [@parmana/crypto](https://docs.parmanasystems.com/reference/crypto): Signing, hashing, and verification. Ed25519 and ML-DSA-65 providers, canonical serialization, and the file-based key provider.
+* [@parmana/policy](https://docs.parmanasystems.com/reference/policy): Deterministic, first-match-wins rule evaluation, plus loading and validating policy documents.
+* [@parmana/execution-system](https://docs.parmanasystems.com/reference/execution-system): The single interface every execution boundary implements: a no-op placeholder, an HTTP forwarder, and the real Execution Gateway all plug into the same seam.
+* [@parmana/execution-control](https://docs.parmanasystems.com/reference/execution-control): Gateway-authenticated, session-scoped credential isolation for connectors.
+* [@parmana/envelope-verifier](https://docs.parmanasystems.com/reference/envelope-verifier): Independently verifies a signed execution authorization: version, signature, expiry, TTL, and nonce. Zero third-party runtime dependencies.
+* [@parmana/execution-gateway](https://docs.parmanasystems.com/reference/execution-gateway): The sole boundary through which Parmana releases approved execution requests to connectors. Includes two deprecated fields, documented here with their replacements.
+* [@parmana/runtime](https://docs.parmanasystems.com/reference/runtime): Orchestrates policy evaluation, authorization signing, execution, and trust record assembly. The composition root for everything else.
+* [@parmana/storage](https://docs.parmanasystems.com/reference/storage): Package reference for @parmana/storage. For the conceptual overview and configuration, see Storage.
+* [@parmana/replay](https://docs.parmanasystems.com/reference/replay): Genuinely re-evaluates a recorded policy decision against its recorded signals. Real, tested, and disconnected from packages/api and packages/runtime.
+* [@parmana/api](https://docs.parmanasystems.com/reference/api): The Express server and its bootstrap composition root. For the REST surface itself, see the API Reference section.
+## Reference: Project
+
+* [Glossary](https://docs.parmanasystems.com/glossary): Every term used on this site, mapped to its real source.
+* [FAQ](https://docs.parmanasystems.com/faq): Direct answers, including the ones that aren't flattering.
+* [Roadmap](https://docs.parmanasystems.com/roadmap): What's designed but not built, stated plainly, this is a feature of this documentation, not an apology.
+* [Changelog](https://docs.parmanasystems.com/changelog): What shipped, newest first.
+* [Contributing to This Documentation](https://docs.parmanasystems.com/contributing): The rule this entire site follows, and how to add a page without breaking it.
+## Build book: Build with Parmana
+
+* [Build with Parmana](https://docs.parmanasystems.com/build-book/overview): The integration book: how Parmana works, how to connect an agent and a system to it, how to write and approve policies, how to verify what happened, and how to run it in production. For people and for AI agents.
+* [1. How Parmana works](https://docs.parmanasystems.com/build-book/01-how-parmana-works): One request, from an AI agent to a signed record: the policy decision, the human approval, the release through the gateway, and the evidence left behind.
+* [2. Your first governed action](https://docs.parmanasystems.com/build-book/02-your-first-governed-action): Run Parmana on your machine from a fresh clone: set it up, watch a refund refused until a person signs, release an action to an external system, then call your own local server from the SDK.
+* [3. Connect an agent](https://docs.parmanasystems.com/build-book/03-connect-an-agent): The agent's side of every action, in both SDKs and over plain HTTP: check the key, read the policy in effect, build the request, handle the refusal that asks for a person, send the approved request, and keep the record.
+* [4. Policies](https://docs.parmanasystems.com/build-book/04-policies): Write a policy that decides one action, make every signal it reads accountable, get it approved by two people, and change or roll it back with no deploy.
+* [5. Human approvals](https://docs.parmanasystems.com/build-book/05-human-approvals): Who can approve, how an approver is trusted, what a signed approval covers, how a person learns an approval is needed, and the limits of what an approval fixes.
+* [6. Connect your systems](https://docs.parmanasystems.com/build-book/06-connect-your-systems): How an approved action reaches a real system: the built in connectors, and the external connector that puts any system behind Parmana with no change to Parmana's code.
+* [7. Verify and audit](https://docs.parmanasystems.com/build-book/07-verify-and-audit): The signed records Parmana leaves, how anyone checks them offline without trusting the server, and how an operator closes an action whose outcome is unknown.
+* [8. Deploy and operate](https://docs.parmanasystems.com/build-book/08-deploy-and-operate): Bring Parmana to production: keys, database, callers, policies approved by two people, the checks that prove each step worked, monitoring, upgrades and rotation.
+* [9. Errors and troubleshooting](https://docs.parmanasystems.com/build-book/09-errors-and-troubleshooting): What every answer from Parmana means, which ones are safe to retry, the one that is never retried as a new transaction, and how each maps to an SDK error.
+* [10. Security model and limits](https://docs.parmanasystems.com/build-book/10-security-model-and-limits): What Parmana guarantees, under which assumptions, what it does not claim, and the known gaps, each with where it is recorded.
+## Build book: Reference
+
+* [Reference: every endpoint](https://docs.parmanasystems.com/build-book/reference-endpoints): Every operation of the Parmana REST API, grouped as in the API reference, generated from the OpenAPI file.
+* [Reference: every SDK method](https://docs.parmanasystems.com/build-book/reference-sdk): Every method of ParmanaClient in the TypeScript and Python SDKs, and every signing and verifying function they export, generated from the SDK source.
+* [Reference: every error code](https://docs.parmanasystems.com/build-book/reference-errors): Every error code the server can return, with its HTTP status, where it occurs and a real message, generated from the source and the OpenAPI file.
+
+## Generated reference
+
+* TypeScript SDK API reference: https://docs.parmanasystems.com/sdks/reference/typescript/classes/ParmanaClient
+* Python SDK API reference: https://docs.parmanasystems.com/sdks/reference/python/client
+* The Parmana Handbook (book length, 23 chapters): https://docs.parmanasystems.com/handbook/overview

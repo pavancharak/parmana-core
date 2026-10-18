@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/pending-changes-list-response.schema.json",
+  "title": "Pending Changes List Response",
+  "description": "Response returned by GET /policies/pending-changes. Each entry is a Pending Policy Change plus a diff view: current (the live content at (policyName, policyVersion) today, or null if that version has never been published) and proposed (the change's own proposedContent).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["changes"],
+  "properties": {
+    "changes": {
+      "type": "array",
+      "items": {
+        "allOf": [
+          { "$ref": "../common/pending-policy-change.schema.json" },
+          {
+            "type": "object",
+            "required": ["diff"],
+            "properties": {
+              "diff": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["current", "proposed"],
+                "properties": {
+                  "current": {
+                    "description": "The live policy.json content today, or null if this version has never been published."
+                  },
+                  "proposed": {
+                    "description": "The same value as this entry's own proposedContent."
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "examples": [
+    {
+      "changes": [
+        {
+          "pendingPolicyChangeId": "6f4e4020-adf5-4449-938d-27aab58f66b7",
+          "policyName": "openapi-capture-demo",
+          "policyVersion": "1.0.0",
+          "proposedContent": {
+            "policyId": "openapi-capture-demo",
+            "policyVersion": "1.0.0",
+            "schemaVersion": "1.0.0",
+            "rules": [
+              {
+                "id": "always-approve",
+                "condition": { "always": true },
+                "outcome": {
+                  "action": "approve",
+                  "reason": "OpenAPI spec capture fixture"
+                }
+              }
+            ]
+          },
+          "proposedBy": "human-maker",
+          "proposedAt": "2026-09-15T03:47:13.920Z",
+          "status": "PENDING_APPROVAL",
+          "reason": "Capture a real Pending Policy Change for the OpenAPI spec",
+          "diff": {
+            "current": null,
+            "proposed": {
+              "policyId": "openapi-capture-demo",
+              "policyVersion": "1.0.0",
+              "schemaVersion": "1.0.0",
+              "rules": [
+                {
+                  "id": "always-approve",
+                  "condition": { "always": true },
+                  "outcome": {
+                    "action": "approve",
+                    "reason": "OpenAPI spec capture fixture"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

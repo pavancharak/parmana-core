@@ -1,0 +1,564 @@
+---
+title: "Database Schema Reference"
+description: "Every live table: what it is for, its columns, which migration built it, what code owns it, plus a library of real SQL for troubleshooting, audit and verification."
+---
+
+<Info>
+  Checked against all 31 `supabase/migrations/*.sql` files, read in order.
+  Several tables were altered by later migrations, so the shapes below are the
+  final, cumulative schema, not only what the first `CREATE TABLE` said. See
+  [Storage](/storage/overview) first for the conceptual model.
+</Info>
+
+**Connecting:** the application connects directly to Postgres (`DATABASE_URL`), not through
+PostgREST. A direct connection bypasses Row Level Security the same way a table owner does,
+so RLS below matters for what a different credential (for example Supabase's `anon` role)
+could see, not for what the application's own connection can.
+
+```bash
+psql "$DATABASE_URL"
+```
+
+## Quick index
+
+| Table                                   | Purpose                                                                 | Owning code                                    |
+| --------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------- |
+| `business_transactions`                 | The received request, as submitted                                      | `SupabaseBusinessTransactionRepository`        |
+| `executions`                            | Append only log of execution attempts                                   | `SupabaseExecutionTrustRecordRepository`       |
+| `execution_trust_records`               | The signed, final trust record                                          | `SupabaseExecutionTrustRecordRepository`       |
+| `verifications`                         | Log of independent verification calls                                   | `SupabaseExecutionTrustRecordRepository`       |
+| `receipts`                              | Signed receipts                                                         | `SupabaseExecutionTrustRecordRepository`       |
+| `settlement_confirmations`              | Signed settlement confirmations                                         | `SupabaseExecutionTrustRecordRepository`       |
+| `overrides`                             | `OverrideService` backing table, deliberately unreachable, expect empty | `SupabaseExecutionTrustRecordRepository`       |
+| `refusal_records`                       | Signed record of a refused decision                                     | `SupabaseRefusalRecordRepository`              |
+| `execution_intents`                     | Signed intent stored before an action is released (ADR-0012)            | `SupabaseExecutionIntentRepository`            |
+| `caller_audit_events`                   | Every caller authentication decision, the highest write volume          | `SupabaseCallerAuditSink`                      |
+| `execution_audit_events`                | Execution lifecycle events, **shared with `parmana-paytm-agent`**       | `SupabaseExecutionAuditSink`                   |
+| `policies`                              | Policy content written on approval (Vercel has a read only filesystem)  | `SupabasePolicyRepository`                     |
+| `approval_issuers`                      | Approver keys added through maker checker                               | `SupabaseApprovalIssuerRepository`             |
+| `approval_issuer_changes`               | Proposals to add or revoke an approver key                              | `SupabaseApprovalIssuerRepository`             |
+| `external_connectors`                   | External connectors registered through maker checker (ADR-0013)         | `SupabaseExternalConnectorRepository`          |
+| `external_connector_changes`            | Proposals to register or revoke an external connector                   | `SupabaseExternalConnectorRepository`          |
+| `pending_policy_changes`                | Maker and checker: a proposed change awaiting approval                  | `SupabasePendingPolicyChangeRepository`        |
+| `policy_change_approval_records`        | Maker and checker: signed approval or rejection                         | `SupabasePolicyChangeApprovalRecordRepository` |
+| `consumed_nonces`                       | Replay protection: gateway authorization envelopes                      | `SupabaseNonceStore`                           |
+| `consumed_approval_nonces`              | Replay protection: approval artifacts (separate namespace)              | `SupabaseApprovalNonceStore`                   |
+| `consumed_policy_change_step_up_nonces` | Replay protection: the checker's step up key (separate namespace)       | `SupabasePolicyChangeStepUpNonceStore`         |
+| `challenge_records`                     | Investigation records, the only mutable table                           | `PostgresChallengeRecordRepository`            |
+| `rate_limit_counters`                   | Fleet wide rate limits, the only table without RLS                      | `PostgresRateLimitStore`                       |
+| `handbook_download_leads`               | Email captured before a handbook PDF download                           | `SupabaseHandbookDownloadLeadRepository`       |
+
+<Warning>
+  Three Razorpay tables (`razorpay_webhook_events`,
+  `razorpay_webhook_audit_events`, `razorpay_daily_refund_reservations`) were
+  dropped on 2026-09-16 by `20260916120000_drop_razorpay_tables.sql`. The
+  Razorpay connector itself was removed on 2026-08-12.
+</Warning>
+
+Not covered here: `supabase_migrations.schema_migrations`, the Supabase CLI's own tracking
+table in a different schema (see the migration sync query below).
+
+## Table by table
+
+### `business_transactions`
+
+The durable record of a request exactly as submitted to `POST /execute`, before any
+decision. Created by `20260629013035_initial_schema.sql` and never altered.
+
+| Column                    | Type                   | Notes       |
+| ------------------------- | ---------------------- | ----------- |
+| `business_transaction_id` | `TEXT`                 | Primary key |
+| `status`                  | `TEXT NOT NULL`        |             |
+| `authority_json`          | `JSONB NOT NULL`       |             |
+| `authorization_json`      | `JSONB NOT NULL`       |             |
+| `intent_json`             | `JSONB NOT NULL`       |             |
+| `metadata_json`           | `JSONB NOT NULL`       |             |
+| `policy_json`             | `JSONB NOT NULL`       |             |
+| `signals_json`            | `JSONB NOT NULL`       |             |
+| `created_at`              | `TIMESTAMPTZ NOT NULL` | Indexed     |
+
+`status` is never updated after receipt. The current outcome of a transaction lives in
+`executions`. RLS enabled, no policies.
+
+### `executions`, `verifications`, `receipts`, `overrides`
+
+These four share one shape: an id primary key (`execution_id`, `verification_id`,
+`receipt_id`, `override_id`), a `business_transaction_id` foreign key with
+`ON DELETE RESTRICT`, one JSONB payload column (`execution_json`, `verification_json`,
+`receipt_json`, `override_json`), a timestamp (`created_at`, `verified_at`, `issued_at`,
+`created_at`), and a `seq BIGSERIAL` added by `20260711120000` as an exact insertion order,
+because millisecond timestamps can tie under fast concurrent appends. All created by
+`20260629013035_initial_schema.sql`, indexed on `business_transaction_id` and the timestamp,
+RLS enabled.
+
+- A transaction can have several `executions` rows: it is an append only sequence, not one
+  mutable status.
+- `overrides` is expected to stay empty: `OverrideService` is deliberately not reachable from
+  the API.
+
+### `execution_trust_records`
+
+The final, signed Execution Trust Record, the artifact an independent verifier checks. Not
+every transaction gets one: a refused decision gets a `refusal_records` row instead.
+
+Created by `20260629013035_initial_schema.sql` (`trust_record_id` primary key,
+`business_transaction_id TEXT NOT NULL UNIQUE` with a restricting foreign key,
+`transaction_json`, `trust_record_hash`, `created_at`, `updated_at`). Altered twice:
+
+- `20260702183000` added `signature_json JSONB` (nullable, GIN indexed), storing the
+  record's own signature.
+- `20260907120000` added `authorization_json JSONB` (GIN indexed, the
+  `SignedExecutionAuthorization`), `schema_version INTEGER` and `signatures_json JSONB`
+  (hybrid signatures; without it a hybrid record would lose its second signature on the way
+  through this table).
+
+RLS enabled.
+
+### `settlement_confirmations`
+
+Signed confirmations that a transaction settled. Created by
+`20260718190412_add_settlement_confirmations_and_audit_severity.sql` with the same shape as
+`receipts`: `confirmation_id TEXT` primary key, `business_transaction_id TEXT NOT NULL`,
+`confirmation_json JSONB NOT NULL`, `issued_at TIMESTAMPTZ NOT NULL`, `seq BIGSERIAL`,
+`created_at TIMESTAMPTZ NOT NULL DEFAULT now()`. Indexed on `business_transaction_id`, RLS
+enabled, append only.
+
+Unlike the tables in the initial schema, this one has **no foreign key** back to
+`business_transactions`. Do not rely on referential integrity here the way you can for
+`executions` or `execution_trust_records`.
+
+### `refusal_records`
+
+The signed record of a refused decision (RFC-0021). `RuntimeEngine` writes one for every
+decision that is not `APPROVED`: a policy rule rejection, a policy approval check failure, a
+capability binding violation, a signal to intent binding violation, or a signal state or
+approval signal mismatch. Caller authentication failures go to `caller_audit_events`
+instead, and errors where the policy could not be evaluated at all write nothing here.
+
+Created by `20260802120000_add_refusal_records.sql`: `refusal_record_id` primary key,
+`business_transaction_id TEXT NOT NULL UNIQUE` with a restricting foreign key,
+`decision_json NOT NULL`, `evaluated_intent_json NOT NULL`, `binding_violations_json`
+(nullable), `submitted_by` (nullable), `refusal_record_hash TEXT NOT NULL`,
+`signature_json JSONB NOT NULL`. Signed from creation. Indexed on `created_at`, RLS enabled.
+
+### `execution_intents`
+
+The signed Execution Intent written before an action is released to a connector
+(ADR-0012). If it cannot be stored, nothing is released and the caller gets `503
+EXECUTION_INTENT_UNAVAILABLE`. Created by `20260921120000_add_execution_intents.sql`.
+
+- Identity and binding: `intent_id` primary key, `business_transaction_id TEXT NOT NULL
+UNIQUE` with a restricting foreign key, `decision_id`, `authorization_id`, `policy_name`,
+  `policy_version`, `business_transaction_hash`, `action`, `target`, `intent_hash`,
+  `signature_json JSONB`, `created_at` (all `NOT NULL`); `policy_content_hash`,
+  `signals_hash`, `submitted_by`, `granted_capability` (nullable).
+- Lifecycle: `state` is one of `PREPARED`, `RELEASED`, `FINALIZED`, `ERRORED`, `RESOLVED`
+  (default `PREPARED`); `released_context_json`, `released_at`, `finalized_at`,
+  `finalization_mode` (`INLINE` or `REPAIRED`), `trust_record_id`, `failure_reason`.
+- Resolution by an operator: `resolution` (`NOT_EXECUTED` or `EXECUTED`),
+  `resolution_note`, `resolved_by`, `resolved_at`. A check constraint requires resolution,
+  note and time whenever `state` is `RESOLVED`.
+
+A partial index on `created_at` covers rows not yet `FINALIZED` or `RESOLVED`: these are the
+actions that were, or may have been, released without a finished record. RLS enabled.
+
+### `caller_audit_events`
+
+Every caller authentication and scoping decision; it is written on every authenticated
+request. Created by `20260718090000_add_nonce_and_caller_audit_tables.sql` and altered by
+seven later migrations. Final shape:
+
+| Column                                                | Type                                 | Added by         | Notes                                                                                                                        |
+| ----------------------------------------------------- | ------------------------------------ | ---------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `id`                                                  | `BIGSERIAL PRIMARY KEY`              | initial          |                                                                                                                              |
+| `type`                                                | `TEXT NOT NULL CHECK (...)`          | initial          | Widened five times, see below                                                                                                |
+| `occurred_at`                                         | `TIMESTAMPTZ NOT NULL`               | initial          | Indexed                                                                                                                      |
+| `route`                                               | `TEXT NOT NULL`                      | initial          |                                                                                                                              |
+| `caller_id`                                           | `TEXT`                               | initial          | Present for authenticated callers. Indexed                                                                                   |
+| `reason`                                              | `TEXT`                               | initial          | Rejections only, never a credential value                                                                                    |
+| `inserted_at`                                         | `TIMESTAMPTZ NOT NULL DEFAULT now()` | initial          |                                                                                                                              |
+| `signature_json`                                      | `JSONB`                              | `20260802130000` | Signed from this migration on; older rows stay unsigned                                                                      |
+| `capability`                                          | `TEXT`                               | `20260812120000` | Indexed where not null                                                                                                       |
+| `principal_id`                                        | `TEXT`                               | `20260816120000` | Indexed where not null                                                                                                       |
+| `severity`                                            | `TEXT`                               | `20260818130000` |                                                                                                                              |
+| `business_transaction_id`                             | `TEXT`                               | `20260824090000` | Indexed where not null                                                                                                       |
+| `chain_hash`, `previous_chain_hash`, `chain_position` | `TEXT`, `TEXT`, `BIGINT`             | `20260906120000` | Chained **per `caller_id`** under a Postgres advisory lock on `hashtext(caller_id)`; rows with no `caller_id` stay unchained |
+
+Allowed `type` values, after the widenings in `20260812120000`, `20260816120000`,
+`20260818130000`, `20260824090000` and `20260911090000`: `caller.authenticated`,
+`caller.rejected`, `caller.capability_denied`, `caller.principal_denied`,
+`caller.non_human_denied`, `caller.structural_rejected`, `caller.capability_granted`.
+
+<Warning>
+  `20260911090000` fixed an outage: the application wrote
+  `caller.capability_granted` before any migration allowed it, so every
+  successful authenticated request failed closed with `503 AUDIT_UNAVAILABLE`.
+  Adding a new caller audit event type in code without the matching migration
+  reproduces that outage.
+</Warning>
+
+RLS enabled.
+
+### `execution_audit_events`
+
+Execution control lifecycle events. It is the only table written by code outside this
+repository: `parmana-paytm-agent` writes to it directly, correlated by
+`business_transaction_id` (`authorization_id` is internal to Parmana and never crosses to the
+agent). Created by `20260914120000_add_execution_audit_events.sql`, then:
+
+- `20260914130000` added `business_transaction_id TEXT` (nullable, indexed) as the cross
+  service correlation key, and made `signature_json`, `chain_hash` and `chain_position`
+  nullable, because the agent holds only Parmana's public key and cannot sign or chain.
+- `20260914140000` widened `type` to add `authorization.verified`, the event the agent
+  records after it verifies Parmana's signature.
+
+Columns: `id BIGSERIAL` primary key, `type` (`session.created`, `execution.completed`,
+`execution.rejected`, `authorization.verified`), `occurred_at TIMESTAMPTZ NOT NULL`,
+`connector_id`, `authorization_id`, `session_id` (all `TEXT NOT NULL`), `action`, `reason`
+(rejections only, never a credential), `credential_id`, `gateway_id`, `signature_json`,
+`chain_hash`, `previous_chain_hash`, `chain_position`, `inserted_at`,
+`business_transaction_id`. Chained **per `authorization_id`**. Indexed on `occurred_at`,
+`authorization_id`, `connector_id`, `business_transaction_id`. RLS enabled.
+
+### `policies`
+
+Policy content keyed by `(policy_name, policy_version)`, with `content_json JSONB NOT NULL`
+and `updated_at`. Created by `20260916060000_add_policies_table.sql`. It exists because
+Vercel functions run on a read only filesystem, so approving a pending policy change there
+cannot write a file; `SupabasePolicyRepository` stores the approved content here instead.
+RLS enabled.
+
+### `pending_policy_changes`
+
+A proposed policy change awaiting a checker's approval or rejection. Created by
+`20260818120000_add_policy_governance_tables.sql`: `pending_policy_change_id` primary key,
+`policy_name` and `policy_version` (`TEXT NOT NULL`), `proposed_content_json JSONB NOT
+NULL`, `proposed_by TEXT NOT NULL`, `proposed_at TIMESTAMPTZ NOT NULL`, `status` (one of
+`PENDING_APPROVAL`, `APPROVED`, `REJECTED`), `reason TEXT NOT NULL`, `resolved_by`,
+`resolved_at`, `rejection_reason`.
+
+The partial unique index `ux_pending_policy_changes_open` on `(policy_name, policy_version)`
+where `status = 'PENDING_APPROVAL'` enforces at most one open change per policy version in
+the database itself. Indexed on `status`, RLS enabled.
+
+### `approval_issuers` and `approval_issuer_changes`
+
+Approver keys added without a deploy ([Manage approvers](/guides/manage-approvers)). Created by
+`20260929120000_add_approval_issuers.sql`.
+
+`approval_issuer_changes`: `change_id` primary key, `action` (`add` or `revoke`),
+`approver_id`, `key_id`, `public_key_pem` (present exactly when `action = 'add'`), `reason`,
+`proposed_by`, `proposed_at`, `status` (`PENDING_APPROVAL`, `APPROVED`, `REJECTED`),
+`resolved_by` (never equal to `proposed_by`, a check constraint), `resolved_at`,
+`rejection_reason`. The partial unique index `ux_approval_issuer_changes_open` on
+`(approver_id, key_id)` where `status = 'PENDING_APPROVAL'` allows one open change per key.
+
+`approval_issuers`: primary key `(approver_id, key_id)`, `public_key_pem`, `revoked`,
+`added_by_change_id` and `revoked_by_change_id` (restricting foreign keys to
+`approval_issuer_changes`), `added_at`, `revoked_at`. A check constraint keeps `revoked` true
+exactly when `revoked_by_change_id` is set, so a key is never revoked without a change behind
+it. Rows are never deleted. RLS enabled on both.
+
+Who can sign approvals today, and since when:
+
+```sql
+select approver_id, key_id, revoked, added_at, revoked_at, c.proposed_by, c.resolved_by
+from approval_issuers i
+join approval_issuer_changes c on c.change_id = i.added_by_change_id
+order by added_at;
+```
+
+### `external_connectors` and `external_connector_changes`
+
+External connectors registered without a deploy (ADR-0013): a capability bound to an operator's
+HTTPS endpoint and to the policy that governs it, through `/external-connectors`. Created by
+`20260930120000_add_external_connectors.sql`.
+
+`external_connector_changes`: `change_id` primary key, `action` (`register` or `revoke`),
+`capability`, and for a register only `endpoint_url`, `policy_name`, `allowed_parameters`
+(`TEXT[]`) and `timeout_ms` (1000 to 30000); a check constraint requires all four on a register
+and none on a revoke. Then `reason`, `proposed_by`, `proposed_at`, `status` (`PENDING_APPROVAL`,
+`APPROVED`, `REJECTED`), `resolved_by` (never equal to `proposed_by`, a check constraint),
+`resolved_at`, `rejection_reason`. The partial unique index `ux_external_connector_changes_open`
+on `capability` where `status = 'PENDING_APPROVAL'` allows one open change per capability.
+
+`external_connectors`: `registration_id` primary key, which is the approved register change's
+`change_id` (a restricting foreign key), `capability`, `endpoint_url`, `policy_name`,
+`allowed_parameters`, `timeout_ms`, `status` (`active` or `revoked`), `registered_at`,
+`revoked_by_change_id` (a restricting foreign key) and `revoked_at`. A check constraint keeps
+`status` revoked exactly when `revoked_by_change_id` is set. The partial unique index
+`ux_external_connectors_active` on `capability` where `status = 'active'` allows one active
+registration per capability. Rows are never deleted. RLS enabled on both.
+
+Which endpoints are registered, and who asked and approved:
+
+```sql
+select x.capability, x.endpoint_url, x.status, x.registered_at, c.proposed_by, c.resolved_by
+from external_connectors x
+join external_connector_changes c on c.change_id = x.registration_id
+order by registered_at;
+```
+
+### `policy_change_approval_records`
+
+The signed record of a checker's decision on a pending change. Created with
+`pending_policy_changes`: `policy_change_approval_record_id` primary key,
+`pending_policy_change_id` (a restricting foreign key to `pending_policy_changes`),
+`policy_name`, `policy_version`, `proposed_by`, `approved_by`, `proposed_at`, `approved_at`,
+`content_hash_before` (nullable), `content_hash_after TEXT NOT NULL`,
+`signature_json JSONB NOT NULL`. `20260907130000` added `previous_record_hash` (nullable),
+which chains the approval history itself; `content_hash_after` only proves the live policy
+matches what was approved. Indexed on `(policy_name, policy_version, approved_at DESC)`.
+
+This is the only table with a real RLS policy: `20260818150000` grants the `anon` role read
+only `SELECT` here, for the CI job that checks policy approvals with `SUPABASE_ANON_KEY`.
+Never write rows here by hand.
+
+### `consumed_nonces`, `consumed_approval_nonces`, `consumed_policy_change_step_up_nonces`
+
+Three **deliberately separate** tables, not duplication. Each backs a distinct nonce
+namespace (a gateway envelope, an approval artifact, a checker's step up key) issued by
+different parties; sharing one table would let a collision between unrelated namespaces
+falsely report "already consumed".
+
+| Column         | Type                        | Notes                                                                                                                                                    |
+| -------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| (nonce column) | `TEXT PRIMARY KEY`          | The primary key is the atomicity mechanism: a concurrent duplicate insert gets Postgres `23505 unique_violation`, mapped to "already consumed", no locks |
+| `expires_at`   | `TIMESTAMPTZ NOT NULL`      | Indexed; not read back by application code today                                                                                                         |
+| `consumed_at`  | `TIMESTAMPTZ DEFAULT now()` |                                                                                                                                                          |
+
+Created by `20260718090000_add_nonce_and_caller_audit_tables.sql`,
+`20260805180000_add_consumed_approval_nonces.sql` and
+`20260818140000_add_consumed_policy_change_step_up_nonces.sql`. Never altered, RLS enabled.
+
+### `challenge_records`
+
+Investigation records for a disputed claim (RFC-0022), and the only mutable table: `status`,
+`investigation_steps_json`, `finding_json`, `outcome_json` and `disclosure_json` are updated
+as an investigation proceeds. Created by `20260803150000_add_challenge_records.sql`:
+`challenge_record_id` primary key, `status` (`open`, `investigating`, `resolved`),
+`claim_challenged TEXT NOT NULL`, `source_json JSONB NOT NULL`,
+`investigation_steps_json JSONB NOT NULL DEFAULT '[]'`, the three nullable JSONB result
+columns, `supersedes TEXT` (deliberately no foreign key), `created_at`, `updated_at`.
+Indexed on `status` and `created_at`, RLS enabled.
+
+Deliberately unsigned: the party that writes it is the party that could misrepresent it, so
+a signature would prove the bytes were not altered without answering the real trust
+question. Append only history inside a record is enforced by
+`PostgresChallengeRecordRepository.append`, not by the database.
+
+### `rate_limit_counters`
+
+Fleet wide rate limit counters shared by every process on the same database, the durable
+counterpart to the in process store of `express-rate-limit`. Created by
+`20260910120000_add_rate_limit_counters.sql`: `key TEXT PRIMARY KEY` (prefixed per limiter,
+`execute:` plus a caller id or `health:` plus a client IP, so the two limiters never share a
+key), `count INTEGER NOT NULL`, `reset_time TIMESTAMPTZ NOT NULL` (indexed). An expired row
+resets on its next hit, so no cleanup job is needed.
+
+The only table without RLS, deliberately: it holds no business or trust data and has no
+dashboard access path. See `docs/VERIFICATION-GAPS.md` G-49 for why the keys are prefixed.
+
+### `handbook_download_leads`
+
+The email address given before a handbook PDF download (`packages/api/src/routes/handbook.ts`).
+Created by `20260916150000_add_handbook_download_leads.sql`: `handbook_download_lead_id TEXT`
+primary key, `email TEXT NOT NULL`, `captured_at TIMESTAMPTZ NOT NULL DEFAULT now()`
+(indexed descending). RLS enabled.
+
+## Common SQL for troubleshooting, audit, and verification
+
+Every example assumes a `psql` or `pg` session on `DATABASE_URL`. Replace `$1`, `$2` with real
+values.
+
+### Trace one transaction across every table
+
+Everything that happened for one `business_transaction_id`:
+
+```sql
+SELECT 'business_transactions' AS source, created_at AS at, status::text AS detail
+  FROM business_transactions WHERE business_transaction_id = $1
+UNION ALL
+SELECT 'execution_intents', created_at, state
+  FROM execution_intents WHERE business_transaction_id = $1
+UNION ALL
+SELECT 'executions', created_at, (execution_json->>'status')
+  FROM executions WHERE business_transaction_id = $1
+UNION ALL
+SELECT 'execution_trust_records', created_at, trust_record_hash
+  FROM execution_trust_records WHERE business_transaction_id = $1
+UNION ALL
+SELECT 'refusal_records', created_at, refusal_record_hash
+  FROM refusal_records WHERE business_transaction_id = $1
+UNION ALL
+SELECT 'execution_audit_events', occurred_at, type || COALESCE(': ' || reason, '')
+  FROM execution_audit_events WHERE business_transaction_id = $1
+UNION ALL
+SELECT 'caller_audit_events', occurred_at, type
+  FROM caller_audit_events WHERE business_transaction_id = $1
+ORDER BY at;
+```
+
+This pattern found a case where `parmana-paytm-agent` had recorded `authorization.verified`
+for a transaction that Parmana's own logs only showed as a generic `500`.
+
+### Find released actions without a finished record
+
+```sql
+SELECT intent_id, business_transaction_id, state, created_at, failure_reason
+FROM execution_intents
+WHERE state NOT IN ('FINALIZED', 'RESOLVED')
+ORDER BY created_at;
+```
+
+### Trace one caller's audit history
+
+```sql
+SELECT type, route, occurred_at, capability, principal_id, reason
+FROM caller_audit_events
+WHERE caller_id = $1
+ORDER BY occurred_at DESC LIMIT 50;
+```
+
+### Walk a caller's audit chain
+
+A break between one row's `chain_hash` and the next row's `previous_chain_hash` means a gap
+or an altered row.
+
+```sql
+SELECT id, occurred_at, chain_hash, previous_chain_hash
+FROM caller_audit_events
+WHERE caller_id = $1
+ORDER BY chain_position;
+```
+
+### Capability grants and denials in the last hour
+
+```sql
+SELECT capability, type, COUNT(*)
+FROM caller_audit_events
+WHERE occurred_at > now() - interval '1 hour'
+GROUP BY capability, type
+ORDER BY COUNT(*) DESC;
+```
+
+### Recent refusal reasons
+
+```sql
+SELECT decision_json->>'reason' AS reason, COUNT(*)
+FROM refusal_records
+WHERE created_at > now() - interval '24 hours'
+GROUP BY reason
+ORDER BY COUNT(*) DESC;
+```
+
+### Check a rate limiter's current state for a caller
+
+```sql
+SELECT key, count, reset_time, (reset_time > now()) AS window_still_active
+FROM rate_limit_counters
+WHERE key = 'execute:' || $1;  -- or 'health:' || <ip>
+```
+
+### Confirm a nonce was consumed
+
+```sql
+SELECT nonce, consumed_at, expires_at FROM consumed_nonces WHERE nonce = $1;
+```
+
+### Audit the maker and checker approval queue
+
+```sql
+-- Everything still awaiting a checker
+SELECT policy_name, policy_version, proposed_by, proposed_at, reason
+FROM pending_policy_changes
+WHERE status = 'PENDING_APPROVAL'
+ORDER BY proposed_at;
+
+-- Full approval history for one policy version
+SELECT approved_by, approved_at, content_hash_before, content_hash_after
+FROM policy_change_approval_records
+WHERE policy_name = $1 AND policy_version = $2
+ORDER BY approved_at;
+```
+
+### Row counts (quick health snapshot)
+
+```sql
+SELECT 'business_transactions', COUNT(*) FROM business_transactions
+UNION ALL SELECT 'executions', COUNT(*) FROM executions
+UNION ALL SELECT 'execution_trust_records', COUNT(*) FROM execution_trust_records
+UNION ALL SELECT 'execution_intents', COUNT(*) FROM execution_intents
+UNION ALL SELECT 'caller_audit_events', COUNT(*) FROM caller_audit_events
+UNION ALL SELECT 'execution_audit_events', COUNT(*) FROM execution_audit_events
+UNION ALL SELECT 'refusal_records', COUNT(*) FROM refusal_records
+UNION ALL SELECT 'pending_policy_changes', COUNT(*) FROM pending_policy_changes
+UNION ALL SELECT 'policy_change_approval_records', COUNT(*) FROM policy_change_approval_records;
+```
+
+### Migration sync (files against the tracking table)
+
+```bash
+node -e '
+require("dotenv").config();
+const fs = require("fs");
+const { Pool } = require("pg");
+const pool = new Pool({ connectionString: process.env.DATABASE_URL, min: 1 });
+const fileVersions = fs.readdirSync("supabase/migrations")
+  .filter(f => f.endsWith(".sql")).map(f => f.split("_")[0]).sort();
+(async () => {
+  const { rows } = await pool.query("SELECT version FROM supabase_migrations.schema_migrations ORDER BY version");
+  const dbVersions = rows.map(r => r.version).sort();
+  console.log("Files:", fileVersions.length, "Tracked:", dbVersions.length);
+  console.log("In files, not tracked:", fileVersions.filter(v => !dbVersions.includes(v)));
+  console.log("Tracked, no file:", dbVersions.filter(v => !fileVersions.includes(v)));
+  await pool.end();
+})();
+'
+```
+
+### List live tables and their RLS status
+
+```sql
+SELECT c.relname AS table_name, c.relrowsecurity AS rls_enabled
+FROM pg_class c
+JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE n.nspname = 'public' AND c.relkind = 'r'
+ORDER BY c.relname;
+```
+
+### Check a table's actual CHECK constraints
+
+Several constraints were widened more than once, so do not trust the first `CREATE TABLE`
+alone:
+
+```sql
+SELECT conname, pg_get_constraintdef(oid) AS definition
+FROM pg_constraint
+WHERE conrelid = 'caller_audit_events'::regclass AND contype = 'c';
+```
+
+### Find foreign keys pointing at a table (before ever dropping one)
+
+```sql
+SELECT tc.table_name AS referencing_table, tc.constraint_name
+FROM information_schema.table_constraints tc
+JOIN information_schema.constraint_column_usage ccu
+  ON tc.constraint_name = ccu.constraint_name
+WHERE tc.constraint_type = 'FOREIGN KEY' AND ccu.table_name = $1;
+```
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Storage" icon="database" href="/storage/overview">
+    The conceptual model this reference builds on.
+  </Card>
+  <Card
+    title="Caller Audit Trail"
+    icon="list-check"
+    href="/concepts/caller-audit-trail"
+  >
+    The concept `caller_audit_events` backs.
+  </Card>
+</CardGroup>

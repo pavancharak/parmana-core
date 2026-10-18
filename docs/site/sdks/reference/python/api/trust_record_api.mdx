@@ -1,0 +1,77 @@
+---
+sidebar_label: trust_record_api
+title: parmana.api.trust_record_api
+---
+
+Parmana Trust Record API.
+
+Retrieve Execution Trust Records.
+
+## TrustRecordApi Objects
+
+```python
+class TrustRecordApi()
+```
+
+Trust Record API.
+
+## Responsibilities
+
+- Retrieve Execution Trust Records
+- List Execution Trust Records
+
+This API does NOT:
+
+- execute Business Transactions
+- verify trust records
+- replay executions
+- generate receipts
+
+#### get
+
+```python
+def get(business_transaction_id: str) -> ExecutionTrustRecord
+```
+
+Retrieve an Execution Trust Record.
+
+## Parameters
+
+business_transaction_id:
+Business Transaction identifier.
+
+## Returns
+
+Execution Trust Record.
+
+#### list
+
+```python
+def list(*,
+         page: int = 1,
+         page_size: int = 25,
+         since: str | None = None,
+         until: str | None = None) -> list[ExecutionTrustRecord]
+```
+
+List Execution Trust Records, newest first.
+
+Maps to GET /trust-records. Only records of Business Transactions
+this caller submitted are returned, so a page may hold fewer than
+`page_size` records.
+
+## Parameters
+
+page:
+Page number.
+
+page_size:
+Number of Business Transactions per page.
+
+since:
+Only records of transactions created at or after this ISO 8601
+time.
+
+until:
+Only records of transactions created at or before this ISO 8601
+time.

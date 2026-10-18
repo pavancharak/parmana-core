@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/authorization.schema.json",
+  "title": "Authorization",
+  "description": "Immutable trust artifact proving that an Authority granted approval for an intended execution.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["authorizationId", "authorityId", "purpose", "issuedAt"],
+  "properties": {
+    "authorizationId": {
+      "type": "string",
+      "description": "Unique Authorization identifier."
+    },
+    "authorityId": {
+      "type": "string",
+      "description": "Authority issuing this Authorization. Must match authority.authorityId. Parmana rejects a mismatch with a 400."
+    },
+    "purpose": {
+      "type": "string",
+      "description": "Business purpose for which the Authorization was granted."
+    },
+    "issuedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when the Authorization was issued."
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Optional expiration timestamp. After this time the Authorization is no longer valid."
+    }
+  },
+  "examples": [
+    {
+      "authorizationId": "6e9d6aa6-6d20-40a8-b05d-383516365cc7",
+      "authorityId": "c0c01c23-04a2-45f2-a821-ef24bfca02d3",
+      "purpose": "Authorize vendor payment disbursement",
+      "issuedAt": "2026-07-07T16:38:59.285Z"
+    }
+  ]
+}

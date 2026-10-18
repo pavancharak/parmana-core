@@ -1,0 +1,120 @@
+"""
+Constructs a fully-formed, internally-consistent BusinessTransaction
+from the fields a caller actually decides, deriving every field the
+server's own BusinessTransactionValidator checks for cross-consistency
+(packages/runtime/src/validators/BusinessTransactionValidator.ts) so a
+caller can never build a request that fails one of those checks by
+mistake:
+
+  - metadata.business_transaction_id always equals business_transaction_id
+  - authorization.authority_id always equals authority.authority_id
+  - intent.authorization_id always equals authorization.authorization_id
+
+Hand-building a BusinessTransaction by constructing all five nested
+dataclasses and keeping three id pairs in sync by hand is exactly the
+class of mistake that produced every "X must match Y" 400 response
+documented in docs/site/guides/end-to-end-paytm-flow.mdx -- this function exists so
+that mistake is structurally impossible when going through the SDK, not
+merely documented as something to be careful about.
+
+Not auto-generated: unlike everything in parmana.models, this is a
+hand-maintained convenience layer, not a 1:1 mirror of a TypeScript
+domain type -- python/scripts/generate_models.ts never touches this
+file.
+"""
+
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from typing import Any
+from uuid import uuid4
+
+from .models import (
+    Authority,
+    AuthorityType,
+    Authorization,
+    BusinessTransaction,
+    BusinessTransactionMetadata,
+    BusinessTransactionStatus,
+    Intent,
+    PolicyReference,
+)
+
+
+def create_business_transaction(
+    *,
+    principal_id: str,
+    purpose: str,
+    action: str,
+    target: str,
+    parameters: dict[str, Any],
+    policy: PolicyReference,
+    signals: dict[str, Any],
+    business_transaction_id: str | None = None,
+    authority_type: AuthorityType = AuthorityType.SERVICE,
+    display_name: str | None = None,
+    correlation_id: str | None = None,
+    tenant_id: str | None = None,
+    source_system: str | None = None,
+    submitted_by: str | None = None,
+) -> BusinessTransaction:
+    """
+    Builds a BusinessTransaction with every cross-referenced id
+    derived and kept consistent automatically.
+
+    business_transaction_id defaults to a fresh uuid4() if omitted --
+    a caller providing one explicitly is responsible for it being
+    unique per attempt, since it doubles as the server's own
+    idempotency key (see docs/site/guides/end-to-end-paytm-flow.mdx,
+    "businessTransactionId is an idempotency key").
+
+    authority_type defaults to SERVICE -- the correct value for an
+    autonomous agent. There is no "AGENT" value; it does not exist
+    server-side.
+
+    principal_id must match one of the caller API key's own
+    allowed_principal_ids server-side, or the request is rejected
+    before policy ever runs -- see GET /callers/me.
+    """
+
+    resolved_business_transaction_id = business_transaction_id or str(uuid4())
+    authority_id = str(uuid4())
+    authorization_id = str(uuid4())
+    intent_id = str(uuid4())
+    now = datetime.now(timezone.utc)
+
+    return BusinessTransaction(
+        business_transaction_id=resolved_business_transaction_id,
+        metadata=BusinessTransactionMetadata(
+            business_transaction_id=resolved_business_transaction_id,
+            correlation_id=correlation_id,
+            tenant_id=tenant_id,
+            source_system=source_system,
+            submitted_by=submitted_by,
+        ),
+        authority=Authority(
+            authority_id=authority_id,
+            authority_type=authority_type,
+            principal_id=principal_id,
+            display_name=display_name,
+            issued_at=now,
+        ),
+        authorization=Authorization(
+            authorization_id=authorization_id,
+            authority_id=authority_id,
+            purpose=purpose,
+            issued_at=now,
+        ),
+        intent=Intent(
+            intent_id=intent_id,
+            authorization_id=authorization_id,
+            action=action,
+            target=target,
+            parameters=parameters,
+            created_at=now,
+        ),
+        policy=policy,
+        signals=signals,
+        status=BusinessTransactionStatus.RECEIVED,
+        created_at=now,
+    )

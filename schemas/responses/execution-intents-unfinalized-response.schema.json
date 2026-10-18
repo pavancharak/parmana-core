@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/execution-intents-unfinalized-response.schema.json",
+  "title": "Unfinalized Execution Intents Response",
+  "description": "Response returned by GET /execution-intents/unfinalized: intents that never reached a signed Execution Trust Record and were not closed by hand, oldest first. Each is an action that may have been released with no signed record, or whose outcome nobody has reconciled yet. Entries in state RELEASED are repaired with POST /execution-intents/{businessTransactionId}/finalize. Entries in state PREPARED or ERRORED are reconciled at the connector and then closed with POST /execution-intents/{businessTransactionId}/resolve. A RESOLVED intent no longer appears here.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["intents"],
+  "properties": {
+    "intents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["intent", "status"],
+        "properties": {
+          "intent": {
+            "$ref": "../common/execution-intent.schema.json"
+          },
+          "status": {
+            "$ref": "../common/execution-intent-status.schema.json"
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "intents": []
+    }
+  ]
+}

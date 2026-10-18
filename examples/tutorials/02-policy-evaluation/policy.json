@@ -1,0 +1,68 @@
+{
+  "policyId": "vendor-payment",
+  "policyVersion": "2.0.0",
+  "schemaVersion": "1.0.0",
+
+  "signalsSchema": {
+    "vendorVerified": "boolean",
+    "invoiceVerified": "boolean",
+    "paymentApproved": "boolean",
+    "sufficientFunds": "boolean",
+    "paymentAmount": "number",
+    "riskScore": "number"
+  },
+
+  "rules": [
+    {
+      "id": "approve-payment",
+      "condition": {
+        "all": [
+          {
+            "fact": "vendorVerified",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "invoiceVerified",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "paymentApproved",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "sufficientFunds",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "paymentAmount",
+            "operator": "gt",
+            "value": 0
+          },
+          {
+            "fact": "riskScore",
+            "operator": "lte",
+            "value": 20
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Vendor payment authorized."
+      }
+    },
+    {
+      "id": "reject-default",
+      "condition": {
+        "always": true
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "One or more policy conditions were not satisfied."
+      }
+    }
+  ]
+}

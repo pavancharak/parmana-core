@@ -1,0 +1,218 @@
+name: Docker image
+
+# Builds the production image and boots it. The Dockerfile lists workspace
+# packages by hand, so it can fall behind the repository without any test
+# noticing. This job fails the change that lets that happen.
+#
+# The first boot test uses NODE_ENV=test with authentication off and throwaway
+# keys, so it needs no database. It proves the image builds, starts, serves
+# /health and /ready, and contains the handbook PDF the API needs at startup.
+# A second boot then uses NODE_ENV=production against a real Postgres with every
+# migration applied, requires authentication to be on, and requires a request
+# with a valid key to reach request validation. It does not deploy anywhere. The
+# production runbook covers a real deployment.
+#
+# The self-hosted job starts the self hosted deployment the way a customer
+# does (docker compose up), starts it a second time to prove setup,
+# migrations and policy seeding keep what exists, and then runs the offline
+# check: governance approval, an authorized and a refused refund, and the
+# Trust Record verified with only the public keys, all on a network with no
+# internet route (docs/site/self-hosted/offline-verification.mdx). Before
+# that it runs every command of docs/site/self-hosted/quickstart.mdx and fails
+# if any output differs from the page (docker/local/quickstart-check.sh).
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - Dockerfile
+      - .dockerignore
+      - docker/**
+      - package.json
+      - package-lock.json
+      - packages/**
+      - docs/site/parmana-handbook.pdf
+      - supabase/migrations/**
+      - scripts/apply-all-migrations.sql
+      - docker-compose.yml
+      - docker-compose.offline-check.yml
+      - docs/site/self-hosted/**
+      - scripts/sign-policy-change-step-up.ts
+      - policies/**
+      - .github/workflows/docker-image.yml
+  pull_request:
+    paths:
+      - Dockerfile
+      - .dockerignore
+      - docker/**
+      - package.json
+      - package-lock.json
+      - packages/**
+      - docs/site/parmana-handbook.pdf
+      - supabase/migrations/**
+      - scripts/apply-all-migrations.sql
+      - docker-compose.yml
+      - docker-compose.offline-check.yml
+      - docs/site/self-hosted/**
+      - scripts/sign-policy-change-step-up.ts
+      - policies/**
+      - .github/workflows/docker-image.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-boot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Build the image
+        run: docker build -t parmana-api .
+
+      - name: Check the handbook PDF is in the image
+        run: docker run --rm --entrypoint ls parmana-api -l /app/docs/site/parmana-handbook.pdf
+
+      - name: Make throwaway signing keys
+        run: |
+          mkdir keys
+          for id in default gateway; do
+            openssl genpkey -algorithm ed25519 -out "keys/$id.private.pem"
+            openssl pkey -in "keys/$id.private.pem" -pubout -out "keys/$id.public.pem"
+          done
+          chmod 644 keys/*.pem
+
+      - name: Start the container
+        run: |
+          docker run -d --name parmana -p 3000:3000 \
+            -e NODE_ENV=test \
+            -e PARMANA_ALLOW_UNGOVERNED_POLICY=true \
+            -e PARMANA_AUTH_DISABLED=true \
+            -v "$PWD/keys:/app/keys:ro" \
+            parmana-api
+
+      - name: Wait for /health and check /ready
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3000/health; then
+              echo
+              curl -fsS http://localhost:3000/ready
+              echo
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "The container did not become healthy. Its log follows."
+          docker logs parmana
+          exit 1
+
+      - name: Stop the test mode container
+        run: docker rm -f parmana
+
+      - name: Start Postgres and apply every migration
+        run: |
+          docker run -d --name pg --network host -e POSTGRES_PASSWORD=postgres postgres:16
+          for i in $(seq 1 30); do
+            docker exec pg pg_isready -U postgres && break
+            sleep 2
+          done
+          # Supabase provides these roles. Plain Postgres does not.
+          docker exec pg psql -U postgres -v ON_ERROR_STOP=1 -c "create role anon; create role authenticated; create role service_role;"
+          docker exec -i pg psql -U postgres -v ON_ERROR_STOP=1 < scripts/apply-all-migrations.sql
+          docker exec pg psql -U postgres -tA -c "select to_regclass('consumed_nonces'), to_regclass('execution_audit_events'), to_regclass('policies'), to_regclass('approval_issuers')"
+
+      - name: Set up Node for the repository tests
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Run the Postgres repository tests against these migrations
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+          ALLOW_LIVE_SUPABASE: "1"
+        run: |
+          npm ci
+          npm run build
+          npx vitest run packages/storage/tests/integration/supabase-approval-issuer-repository.integration.test.ts packages/storage/tests/integration/supabase-external-connector-repository.integration.test.ts
+
+      - name: Start the container in production mode
+        run: |
+          KEYHASH=$(printf '%s' "ci-key" | sha256sum | cut -d' ' -f1)
+          docker run -d --name parmana-prod --network host             -e NODE_ENV=production             -e PARMANA_STORAGE=supabase             -e DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/postgres             -e PARMANA_API_KEYS="[{\"callerId\":\"ci\",\"keyHash\":\"$KEYHASH\",\"allowedCapabilities\":[\"paytm:refund\"]}]"             -v "$PWD/keys:/app/keys:ro"             parmana-api
+
+      - name: Check production mode answers correctly
+        run: |
+          for i in $(seq 1 30); do
+            curl -fsS http://localhost:3000/health >/dev/null && break
+            sleep 2
+          done
+          READY=$(curl -fsS http://localhost:3000/ready)
+          echo "ready: $READY"
+          echo "$READY" | grep -q '"status":"READY"'
+          echo "$READY" | grep -q '"authDisabled":false'
+          NOKEY=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:3000/execute -H 'Content-Type: application/json' -d '{}')
+          echo "no key: $NOKEY"
+          test "$NOKEY" = "401"
+          WITHKEY=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:3000/execute -H 'Content-Type: application/json' -H 'Authorization: Bearer ci-key' -d '{}')
+          echo "with key, empty body: $WITHKEY"
+          test "$WITHKEY" = "400"
+
+      - name: Show the container logs if a step failed
+        if: failure()
+        run: |
+          docker logs parmana || true
+          docker logs parmana-prod || true
+
+  self-hosted:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Start the self hosted deployment with one command
+        run: docker compose up -d --build --wait
+
+      - name: Check it answers correctly
+        run: |
+          READY=$(curl -fsS http://127.0.0.1:3000/ready)
+          echo "ready: $READY"
+          echo "$READY" | grep -q '"status":"READY"'
+          echo "$READY" | grep -q '"authDisabled":false'
+          KEY=$(docker compose run --rm --no-deps --entrypoint cat setup /app/parmana-local/api-key.txt | tr -d '\r\n')
+          NOKEY=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:3000/execute -H 'Content-Type: application/json' -d '{}')
+          test "$NOKEY" = "401"
+          WITHKEY=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:3000/execute -H 'Content-Type: application/json' -H "Authorization: Bearer $KEY" -d '{}')
+          test "$WITHKEY" = "400"
+
+      - name: Start it again and check nothing is replaced
+        run: |
+          docker compose down
+          docker compose up -d --wait
+          docker compose logs setup | grep -q 'key "default" already exists, kept'
+          docker compose logs migrate | grep -q '] 0 applied'
+          docker compose logs seed | grep -q ', 0 added'
+
+      - name: Set up Node for the quickstart's signing step
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Build the scripts the quickstart runs
+        run: |
+          npm ci
+          npm run build
+
+      - name: Run the quickstart exactly as documented
+        run: bash docker/local/quickstart-check.sh
+
+      - name: Run the offline check
+        run: bash docker/local/offline-check/run.sh
+
+      - name: Show the logs if a step failed
+        if: failure()
+        run: docker compose logs || true

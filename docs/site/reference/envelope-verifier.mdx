@@ -1,0 +1,75 @@
+---
+title: "@parmana/envelope-verifier"
+description: "Independently verifies a signed execution authorization: version, signature, expiry, TTL, and nonce. Zero third-party runtime dependencies."
+---
+
+<Info>
+  **[AVAILABLE]**. `packages/envelope-verifier`. Zero third-party runtime
+  dependencies, only `@parmana/shared` and `@parmana/crypto`.
+</Info>
+
+## Purpose
+
+Lets a receiving system verify a [signed execution authorization](/concepts/execution-authorization)
+without trusting Parmana's runtime process or database, only Parmana's public key and the
+envelope itself. This is what [The gateway](/concepts/the-gateway) composes and adds exactly
+one more check to (`businessTransactionHash`).
+
+## Install
+
+Not published to npm. This is an internal package of this repository, used from a clone of it: `npm ci` at the repository root links every workspace package. The packages published to npm are [`@parmana/sdk`](/sdks/typescript), [`@parmana/connector-sdk`](/reference/connector-sdk) and [`@parmana/sign`](/sdks/parmana-sign/overview).
+
+## Key exports
+
+| Export                                  | Stability                                                                                                                                                                                                                                                                                              |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `EnvelopeVerifier`                      | [AVAILABLE]. `new EnvelopeVerifier({ publicKey, nonceStore })`, `.verify(authorization): Promise<VerificationResult>`. Checks version, signature, expiry, TTL policy, and nonce, in that order, side-effect-free checks first. Does **not** check `businessTransactionHash`, that's the gateway's job. |
+| `NonceStore` (interface)                | [AVAILABLE]. `{ hasSeen(nonce), markSeen(nonce) }`.                                                                                                                                                                                                                                                    |
+| `MemoryNonceStore`                      | [AVAILABLE]. The only implementation shipped. Scoped to one process, loses state on restart, multiple independent instances each accept the same nonce once (CLAIMS.md 3.2).                                                                                                                           |
+| `requireParmanaAuthorization(verifier)` | [AVAILABLE]. Express middleware, `@parmana/envelope-verifier/express` entry point (kept separate so consumers who don't use Express never pull in Express types). Reads `req.body.authorization`, verifies it, calls `next()` or responds 401/403.                                                     |
+
+## `VerificationResult` shape
+
+```typescript
+interface VerificationResult {
+  readonly valid: boolean;
+  readonly checks: {
+    readonly versionSupported: boolean;
+    readonly signatureVerified: boolean;
+    readonly notExpired: boolean;
+    readonly ttlWithinPolicy: boolean;
+    readonly nonceUnseen: boolean;
+  };
+}
+```
+
+Each check is reported independently, a caller can distinguish "forged" from "expired"
+rather than getting one opaque `false`, verified live in [Detect tampering](/guides/detect-tampering).
+
+## Minimal example
+
+```typescript
+import { EnvelopeVerifier, MemoryNonceStore } from "@parmana/envelope-verifier";
+
+const verifier = new EnvelopeVerifier({
+  publicKey,
+  nonceStore: new MemoryNonceStore(),
+});
+const result = await verifier.verify(authorization);
+// result.checks.signatureVerified === false if forged, distinct from result.checks.notExpired
+```
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Detect tampering" icon="bug" href="/guides/detect-tampering">
+    A forged signature and a reused nonce, both caught, run live.
+  </Card>
+  <Card
+    title="@parmana/execution-gateway"
+    icon="shield-check"
+    href="/reference/execution-gateway"
+  >
+    What composes this package and adds the content-hash check.
+  </Card>
+</CardGroup>

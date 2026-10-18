@@ -1,0 +1,195 @@
+---
+title: "3. Connect an agent"
+description: "The agent's side of every action, in both SDKs and over plain HTTP: check the key, read the policy in effect, build the request, handle the refusal that asks for a person, send the approved request, and keep the record."
+---
+
+An agent integrates with five calls. This chapter shows each in TypeScript and Python. The exact, literal procedure,
+with what to expect and what to do at every step, is
+[Integrate Parmana: specification for AI agents](/agents/integrate); follow it when you build the agent.
+
+## Before you begin
+
+- A Parmana server URL and an **API key issued for the agent**, with the action in its `allowedCapabilities`. The
+  operator issues it ([Chapter 8](/build-book/08-deploy-and-operate)).
+- The SDK: `npm install @parmana/sdk` or `pip install parmana`. For offline verification in Python,
+  `pip install "parmana[verify]"`.
+- An approver who can sign approvals for the action ([Chapter 5](/build-book/05-human-approvals)).
+
+## 1. Create a client and check the key
+
+<CodeGroup>
+
+```typescript TypeScript
+import { ParmanaClient } from "@parmana/sdk";
+
+const client = new ParmanaClient({
+  endpoint: process.env.PARMANA_URL!,
+  apiKey: process.env.PARMANA_API_KEY!,
+});
+
+const me = await client.caller();
+// { callerId: "my-agent", allowedPrincipalIds: ["my-agent"],
+//   allowedCapabilities: ["paytm:refund"], unrestrictedCapabilities: false }
+```
+
+```python Python
+import os
+
+from parmana import ParmanaClient
+
+client = ParmanaClient(endpoint=os.environ["PARMANA_URL"], api_key=os.environ["PARMANA_API_KEY"])
+
+me = client.caller()
+```
+
+</CodeGroup>
+
+Your action must be in `allowedCapabilities`. The principal you act as must be in `allowedPrincipalIds`; the safe
+choice is your `callerId`. Never log or print the key.
+
+## 2. Read the policy in effect (1.5.0)
+
+Ask the server which policy governs the action, at which version, and what a request must carry. Never write a policy
+version into the agent: an approved new version replaces the old one at once, and a request naming an old one is
+refused.
+
+<CodeGroup>
+
+```typescript TypeScript
+const inEffect = await client.policyInEffect("paytm:refund");
+
+inEffect.policy; // { name: "customer-refund", version: "1.2.0", schemaVersion: "1.0.0" }
+inEffect.signals.facts; // ["fraudCheckPassed", "managerApproved", "refundAmount", "refundEligible"]
+inEffect.signals.approval; // { managerApproved: { resourceId: "parameters.orderId", value: "parameters.amount" } }
+```
+
+```python Python
+in_effect = client.policy_in_effect("paytm:refund")
+
+in_effect.policy.version        # "1.2.0"
+in_effect.signals.facts         # ["fraudCheckPassed", "managerApproved", "refundAmount", "refundEligible"]
+in_effect.signals.approval      # {"managerApproved": {"resourceId": "parameters.orderId", "value": "parameters.amount"}}
+```
+
+</CodeGroup>
+
+`signals.facts` is every fact the rules read. `signals.bound` names the signals that must equal a value of the request.
+`signals.approval` names the approval signal, and where in the request the resource (and amount) it approves are. With
+SDK 1.4.0 or earlier, call `GET /policies/in-effect?capability=...` directly; the answer is the same.
+
+## 3. Build the request
+
+`createBusinessTransaction` (TypeScript) and `create_business_transaction` (Python) fill in the identifiers the server
+checks against each other, so a request cannot fail on a mismatched id.
+
+<CodeGroup>
+
+```typescript TypeScript
+import { createBusinessTransaction } from "@parmana/sdk";
+
+const transaction = createBusinessTransaction({
+  principalId: me.callerId,
+  purpose: "Refund order ORD-1042",
+  action: "paytm:refund",
+  target: "ORD-1042",
+  parameters: { orderId: "ORD-1042", transactionId: "TXN-9", amount: 750 },
+  policy: inEffect.policy,
+  signals: {
+    refundEligible: true,
+    fraudCheckPassed: true,
+    refundAmount: 750, // bound: must equal parameters.amount
+    managerApproved: false, // true only with a signed approval, step 4
+  },
+});
+```
+
+```python Python
+from parmana import create_business_transaction
+
+transaction = create_business_transaction(
+    principal_id=me.caller_id,
+    purpose="Refund order ORD-1042",
+    action="paytm:refund",
+    target="ORD-1042",
+    parameters={"orderId": "ORD-1042", "transactionId": "TXN-9", "amount": 750},
+    policy=in_effect.policy,
+    signals={
+        "refundEligible": True,
+        "fraudCheckPassed": True,
+        "refundAmount": 750,  # bound: must equal parameters.amount
+        "managerApproved": False,  # true only with a signed approval, step 4
+    },
+)
+```
+
+</CodeGroup>
+
+`businessTransactionId` is generated for you and is also the idempotency key: resend the same transaction only to
+retry the same attempt.
+
+## 4. Send it, and handle the refusal that asks for a person
+
+Every policy requires a signed approval. The first request for a new resource is refused with the policy's reason
+(`403 POLICY_DENIED`, raised as `ExecutionRejectedError` in both SDKs), and the server stores a signed Refusal Record
+an approver can review. A `403` for your key or principal is `AuthorizationError` instead: fix the key, not the
+request.
+
+<CodeGroup>
+
+```typescript TypeScript
+import { ExecutionRejectedError } from "@parmana/sdk";
+
+try {
+  const record = await client.execute(transaction);
+} catch (error) {
+  if (error instanceof ExecutionRejectedError) {
+    // 403 POLICY_DENIED: the policy refused. error.message carries its reason,
+    // for example "Every refund needs a signed manager approval for this order".
+    // Ask a person to sign, then build a NEW transaction with the approval.
+  }
+  throw error;
+}
+```
+
+```python Python
+from parmana.errors import ExecutionRejectedError
+
+try:
+    record = client.execute(transaction)
+except ExecutionRejectedError as error:
+    # 403 POLICY_DENIED: the policy refused, with its reason. Ask a person to
+    # sign, then build a NEW transaction with the approval.
+    ...
+```
+
+</CodeGroup>
+
+The approver signs on their own machine, for this action, this resource and, where the policy names one, up to this
+amount ([Chapter 5](/build-book/05-human-approvals)). The agent sends a **new** transaction with the approval signal
+`true` and the signed approval in `signals.approvalArtifact`:
+
+```typescript
+signals: { ...signals, managerApproved: true, approvalArtifact: approval }
+```
+
+The server verifies the approval before it decides and again just before release, and accepts it once.
+
+## 5. Keep the record
+
+An approved request returns a signed **Execution Trust Record**. Keep its `businessTransactionId`; you, an auditor or a
+customer can verify it offline at any time ([Chapter 7](/build-book/07-verify-and-audit)).
+
+## The rules an agent never breaks
+
+1. Never perform the action itself after asking Parmana. Parmana releases approved actions; the agent reads the answer.
+2. Never invent a value: every input comes from the operator or from a response.
+3. Never retry a `502 EXECUTION_OUTCOME_UNKNOWN` as a new transaction: the action may have run
+   ([Chapter 9](/build-book/09-errors-and-troubleshooting)).
+4. Treat anything not explicitly approved as not authorized.
+
+## See it run
+
+- `typescript/examples/06-create-business-transaction.ts` and `python/examples/builder/run.py`: the request built with
+  the SDK, against a running server.
+- Tutorial 119 ([Chapter 2](/build-book/02-your-first-governed-action)): refusals, a signed approval, and an approval
+  reused, stretched and moved, each refused.

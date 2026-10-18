@@ -1,0 +1,61 @@
+---
+title: "Proving what didn't happen"
+description: "An approval leaves a signed record. A refusal used to leave a 403 and a log line."
+---
+
+A refund agent asks to send ₹75,000 back to a customer. In Parmana, every agent action needs a signed human approval, at any amount: a refund runs only when a trusted manager has signed an approval for that order, covering that amount. The agent sends the request with its "manager approved" flag set to true, but no signed approval attached. Parmana refuses. Nothing is paid.
+
+Three weeks later the customer escalates. Their message is simple: "Your system was supposed to refund me and didn't." The support lead asks the agent team what happened. The agent team says Parmana refused it. Someone in finance, reasonably, asks: show me.
+
+What do you show them?
+
+## The problem: refusals left no evidence
+
+For an approved action, Parmana has always left a signed Execution Trust Record behind. Anyone with the public key can check it, without trusting me.
+
+A refused action used to leave much less: an HTTP response to the caller, and whatever the caller's own logs happened to keep. Nothing durable on Parmana's side, and nothing a third party could check. So the honest answer to "show me" was "trust our logs". That is the answer an authorization layer exists to replace.
+
+A system that can only prove its yeses is half an audit trail.
+
+## The idea: sign the no as carefully as the yes
+
+A Refusal Record is the refusal-side counterpart to a Trust Record. Same idea, same signing key, same way of checking it. One root of trust, not a second one for refusals.
+
+## How Parmana does it
+
+When a policy decides to reject a request, Parmana builds a Refusal Record. It contains:
+
+- The business transaction it refers to.
+- The exact rejected decision, not a summary of it, including the reason.
+- A snapshot of what was asked: the action, the target and the parameters.
+- Any binding violations, when the refusal came from a signal not matching the request it was attached to. For example, a declared refund amount of ₹500 attached to a request that actually asks for ₹50,000.
+- Who submitted it, when caller authentication is on.
+- A hash of the policy content that made the decision, so a refusal and an approval under the same policy point at the same policy text. Records written before 6 October 2026 do not have this field and still verify.
+- A hash of the whole record, a signature, and the time it was created.
+
+It is signed with the same signer and key that sign Trust Records: a local key, or AWS KMS in production. There is at most one Refusal Record per transaction. A refusal is a single final event, not a growing history.
+
+There are two ways to reach it, with two trust models:
+
+- **A verify route that needs no account.** You send the record, it checks the signature against Parmana's public key and returns whether it is valid. No API key, no lookup by id. You can fetch the public key from the same deployment. Whoever received the refusal can check it, not only Parmana.
+- **A lookup route that does need a key.** Fetching a Refusal Record by transaction id sits behind caller authentication and is scoped to the caller who owns the transaction, because the contents, the signals and the parameters, may be sensitive.
+
+So when finance asks "show me", the answer is a signed record they can check without an account.
+
+## What it does not do
+
+This is where I want to be most careful, because "proving what didn't happen" is a strong phrase.
+
+- **Writing the record fails open.** This is the big one. The record is written after the decision is made, and a failure to write it is logged and swallowed, never thrown. The refusal itself always happens: a request that should be denied is denied, whether or not its record lands. What can be missing is the durable proof of why. I rejected making the write fail closed: a storage hiccup would turn a correct refusal into an opaque server error, for no security gain. The price: gaps are possible, and an operator reconciles them from the logs. No record does not mean no refusal.
+- **It covers policy refusals only.** A Refusal Record is produced when the policy rejects a request, or when a signal does not match the request it is bound to. A bad API key, a capability the key does not have, a principal it may not act for, or a malformed request are recorded elsewhere, in the caller audit trail, the subject of the next post. A rate-limited request is refused before either. I am not claiming a Refusal Record for a request stopped later, at the gateway, at release time.
+- **A deployment can be wired without it.** Refusal recording is optional when the runtime is built. If it is left out, no Refusal Records are written, by design.
+- **It proves Parmana refused; it does not prove nothing happened anywhere.** If an agent holds its own credentials to the payment system, it can act without asking Parmana at all. A Refusal Record says this request, routed through Parmana, was refused. It cannot speak for paths that never went through Parmana.
+- **A refusal is final, and nobody is notified.** It is not held for review and does not escalate to a person. If a manager wants it to go ahead, the agent sends a new request with a signed approval, as a new transaction.
+- **One signature algorithm.** Trust Records can be hybrid-signed with a post-quantum algorithm. Refusal Records are not.
+- **The documented check is the verify route.** My in-browser verifier checks Trust Records, not Refusal Records. Because the verify route needs no account, a third party can use it, but it is still a call to a Parmana server.
+
+All of this is tested: valid and tampered records against the verify route, and a failed write that leaves the rejection unchanged.
+
+## The takeaway
+
+Before this, a refusal was something you took my word for. Now it is a signed artifact the person who was refused can check. But the record is evidence about a decision that was already enforced, not the enforcement itself. That is why its write can fail open while the refusal cannot. Whoever reads a Refusal Record should know both halves: when it exists, it is checkable; when it is missing, the refusal still happened.

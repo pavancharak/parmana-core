@@ -1,0 +1,9 @@
+
+ RUN  v5.0.3 /home/user/parmana
+
+
+ Test Files  10 passed (10)
+      Tests  89 passed (89)
+   Start at  01:42:42
+   Duration  29.17s (tests 79%, import 13%, transform 7%)
+

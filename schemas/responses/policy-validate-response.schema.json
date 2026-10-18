@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/policy-validate-response.schema.json",
+  "title": "Policy Validate Response",
+  "description": "Response returned by POST /policies/validate on every status code (200, 400, and 404 all use this exact shape). This endpoint does NOT use the shared Error envelope (../common/error.schema.json) for its failure responses.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["valid", "errors"],
+  "properties": {
+    "valid": {
+      "type": "boolean",
+      "description": "Whether the referenced policy exists and is readable."
+    },
+    "errors": {
+      "type": "array",
+      "description": "Empty when valid is true; otherwise exactly one human-readable message.",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "examples": [
+    {
+      "valid": true,
+      "errors": []
+    },
+    {
+      "valid": false,
+      "errors": ["Policy 'does-not-exist' version '9.9.9' was not found."]
+    },
+    {
+      "valid": false,
+      "errors": ["policyVersion is required."]
+    }
+  ]
+}

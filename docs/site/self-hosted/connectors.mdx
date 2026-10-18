@@ -1,0 +1,85 @@
+---
+title: "Connect a system"
+description: "Configure the connector a self hosted deployment releases authorized actions to, including one that uses your own certificate authority."
+---
+
+When a policy authorizes a request, Parmana releases the action to a **connector**: the component that performs it in your system. With no connector configured for a capability, an authorized request returns `503 CONNECTOR_NOT_REGISTERED` and nothing is executed.
+
+A self hosted deployment starts with no connector configured. You add one by giving the `api` service the connector's variables.
+
+## Add the variables
+
+Create a file named `docker-compose.override.yml` in the repository root. Docker Compose reads it together with `docker-compose.yml` on every command, so nothing else changes. Example for the Paytm connector, which forwards authorized refunds to your `parmana-paytm-agent` service:
+
+```yaml
+services:
+  api:
+    environment:
+      PAYTM_CONNECTOR_URL: https://paytm-agent.internal.example.com
+      PAYTM_CONNECTOR_SHARED_SECRET: ${PAYTM_CONNECTOR_SHARED_SECRET:?set PAYTM_CONNECTOR_SHARED_SECRET}
+```
+
+The `${...:?...}` form reads the secret from your shell or from `.env`, so it is not written into the file, and it stops Compose with a clear message when it is missing:
+
+```text
+required variable PAYTM_CONNECTOR_SHARED_SECRET is missing a value: set PAYTM_CONNECTOR_SHARED_SECRET
+```
+
+Apply it:
+
+```bash
+export PAYTM_CONNECTOR_SHARED_SECRET='the shared secret your agent expects'
+docker compose up -d --wait
+```
+
+Keep `PAYTM_CONNECTOR_SHARED_SECRET` set, or in `.env`, for every later `docker compose` command. Every command reads the override file.
+
+**Check:** `curl -s http://127.0.0.1:3000/ready` returns `"status":"READY"`, and a request the policy authorizes no longer returns `CONNECTOR_NOT_REGISTERED`. It returns the connector's result instead.
+
+## Connector variables
+
+| Connector | Variables                                                                                               | Calls                         |
+| --------- | ------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| Paytm     | `PAYTM_CONNECTOR_URL`, `PAYTM_CONNECTOR_SHARED_SECRET`, optional `PAYTM_CONNECTOR_TIMEOUT_MS`           | Your `parmana-paytm-agent`    |
+| HubSpot   | `HUBSPOT_PRIVATE_APP_TOKEN`, optional `HUBSPOT_BASE_URL`                                                | HubSpot's API on the internet |
+| Slack     | `SLACK_BOT_TOKEN`, `SLACK_ALLOWED_CHANNEL_IDS` (no post succeeds without it), optional `SLACK_BASE_URL` | Slack's API on the internet   |
+| GitHub    | `GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY`, optional `GITHUB_BASE_URL`         | GitHub's API on the internet  |
+
+What each variable accepts: [Environment variable reference, Connectors](/deployment/environment-variables#connectors).
+
+Only the Paytm connector has been run on the self hosted deployment, by the [offline check](/self-hosted/offline-verification). HubSpot, Slack and GitHub use the same server code as the hosted API but call services on the internet, so a deployment that uses them is not isolated from the internet.
+
+## Rules the server enforces
+
+- **HTTPS only.** `PAYTM_CONNECTOR_URL` must start with `https://`. Otherwise the server refuses to start with `PAYTM_CONNECTOR_URL must use HTTPS in production; received "...". Refusing to start with a plaintext connection configured to the trusted Paytm connector service.`
+- **Both or neither.** Setting only one of `PAYTM_CONNECTOR_URL` and `PAYTM_CONNECTOR_SHARED_SECRET` stops the server at start.
+- **Capability on the key.** A key can request `paytm:refund` only if it was added with `--allowed-capabilities paytm:refund`. See [Manage API keys](/self-hosted/api-keys).
+
+## A connector with a certificate from your own authority
+
+If your connector's certificate is issued by an internal certificate authority, the server must trust that authority. Mount its certificate into the `api` container and point `NODE_EXTRA_CA_CERTS` at it:
+
+```yaml
+services:
+  api:
+    environment:
+      PAYTM_CONNECTOR_URL: https://paytm-agent.internal.example.com
+      PAYTM_CONNECTOR_SHARED_SECRET: ${PAYTM_CONNECTOR_SHARED_SECRET:?set PAYTM_CONNECTOR_SHARED_SECRET}
+      NODE_EXTRA_CA_CERTS: /certs/internal-ca.crt
+    volumes:
+      - ./internal-ca.crt:/certs/internal-ca.crt:ro
+```
+
+Compose adds this mount to the ones in `docker-compose.yml`; it does not replace them. The certificate is added to the ones Node.js already trusts; it replaces none. The offline check uses exactly this mechanism for its stand in connector.
+
+## When the connector cannot be reached
+
+The action has already been authorized, and an Execution Intent signed and stored, before the connector is called. If the call then fails:
+
+- the caller gets `502` with code `EXECUTION_OUTCOME_UNKNOWN`, and a message naming the `businessTransactionId` and `authorizationId`. The connector's own error is never in the response;
+- the Execution Intent is stored in state `ERRORED`, with the cause as its `failureReason`;
+- the API log has a critical `execution_outcome_unknown` event with the cause, for example `getaddrinfo ENOTFOUND paytm-agent.internal.example.com`.
+
+Whether the action happened is unknown. Do not resend it under a new `businessTransactionId`. Check your system, then close the intent with what you found: [`POST /execution-intents/{id}/resolve`](/concepts/execution-intents). The full procedure is in [Troubleshooting](/troubleshooting#post-execute-returns-502-execution_outcome_unknown).
+
+Before 2026-09-25 the caller got a bare `500 Internal Server Error` here instead.

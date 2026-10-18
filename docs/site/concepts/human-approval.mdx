@@ -1,0 +1,432 @@
+---
+title: "Human approval"
+description: "No agent action is authorized without a signed human approval, reads included. How the rule is enforced, how to sign an approval, how to add one to a new action, and how to review refused requests."
+---
+
+**No AI agent action is authorized without a signed human approval. Reads included.** A
+refund, a merge, a Slack post, a HubSpot update, reading a pull request or a deal: each runs
+only when a trusted person has signed an approval for that action, on that resource, and the
+approval has not expired or been used.
+
+People also approve policies before those policies can authorize anything, and review every
+refused request. Parmana does not hold a request while it waits for a person: a refused request
+stays refused, and the agent sends a new one with the approval attached.
+
+| What a person does                                  | Status                                 |
+| --------------------------------------------------- | -------------------------------------- |
+| Sign an approval for every agent action, reads too  | **[REQUIRED]**                         |
+| Approve a policy before it can authorize anything   | **[AVAILABLE]**                        |
+| Review refused requests                             | **[AVAILABLE]**                        |
+| Get notified when a request waits for an approval   | **[AVAILABLE]**, when a webhook is set |
+| Add or revoke an approver without a deploy          | **[AVAILABLE]**                        |
+| Approve a refused request so that same request runs | **[NOT AVAILABLE]**                    |
+
+## Every action needs a signed approval
+
+Two checks enforce this in code, for every policy and every action:
+
+- **When a policy loads.** Every rule that approves must require one of the policy's
+  `approvalSignals` with `is_true`, either as its whole condition or directly inside its top
+  level `all`. A policy with any other approve rule fails to load, so every request under it is
+  refused with `400` and `approves without a signed human approval`. A proposed policy change of
+  that shape is refused the same way, so it cannot get through policy governance either.
+- **When a request is decided.** A signal in `approvalSignals` counts as true only with a valid
+  signed approval in the request: from a trusted, unrevoked approver, for this action and this
+  resource (and amount, where the policy names one), not expired, used once. A runtime with no
+  approval verifier configured refuses every approval instead of trusting the signal.
+
+An agent that sets the approval signal to `true` without a signed approval is refused, whatever
+else it declares. Tutorials 119 to 122 in `examples/tutorials/` show it step by step, for a
+refund, the rule itself, a read, a Slack post and a HubSpot update.
+
+| Action                | Policy in the binding       | The approval covers         |
+| --------------------- | --------------------------- | --------------------------- |
+| `paytm:refund`        | `customer-refund` 1.2.0     | the order, up to the amount |
+| `github:pr-merge`     | `github-pr-approval` 1.1.0  | the pull request            |
+| `github:pr-fetch`     | `github-pr-read` 1.1.0      | the pull request            |
+| `hubspot:deal-update` | `hubspot-deal-update` 1.1.0 | the deal                    |
+| `hubspot:deal-fetch`  | `hubspot-deal-read` 1.0.0   | the deal                    |
+| `slack:post-message`  | `slack-post-message` 1.1.0  | the channel                 |
+
+The reference policies with no connector need one too, for the Intent's `target`:
+`vendor-payment` 2.1.0, `access-control` 1.1.0, `agent-vendor-payment` 1.1.0,
+`api-key-issuance` 1.1.0, `connector-capability` 1.1.0, `database-change` 3.1.0,
+`expense-reimbursement` 1.1.0, `production-deployment` 1.1.0, `rag-document-access` 1.1.0 and
+`llm-tool-call` 1.1.0. The payment and expense policies also cover the amount. Older versions
+that approved without a person stay in the repository as history and are refused when they load.
+
+<Note>
+  Production runs the version most recently approved through policy governance.
+  Every version in the table and list above was approved in production on
+  2026-09-30 and is in effect. Ask the server which version applies to an action
+  with `GET /policies/in-effect?capability=<capability>`, and send that version.
+</Note>
+
+## Approve policies
+
+In production, a policy authorizes nothing until one person proposes it and a second person
+approves it with a signed step up authorization. The same person cannot do both. The whole
+process, with commands, is in [Policy lifecycle and approvals](/guides/policy-lifecycle-and-approvals).
+
+## Approve a refund
+
+The `customer-refund` 1.2.0 policy authorizes a refund only with a signed approval from a
+manager:
+
+| Refund amount     | What it needs                    |
+| ----------------- | -------------------------------- |
+| 0 or less         | Refused                          |
+| Above 0 to 100000 | A signed approval from a manager |
+| Above 100000      | Refused, even with an approval   |
+
+Why every refund: the agent declares `refundEligible` and `fraudCheckPassed` itself, and
+nothing checks them. In 1.1.0 a refund up to 10000 was authorized on those two claims alone, so
+an agent manipulated by prompt injection could approve its own refunds (G-75). In 1.2.0 they can
+only refuse a refund.
+
+<Note>
+  `customer-refund` 1.2.0 has been in effect in production since 2026-09-28. A
+  refund of any amount without a signed manager approval is refused with `403
+  POLICY_DENIED`. There is no amount below which a refund runs on its own.
+</Note>
+
+The flow for a refund of 75000 on order `ORD-1042`:
+
+<Steps>
+  <Step title="The agent's request is refused">
+    The agent sends the refund with `managerApproved: false`. Parmana refuses it with `403
+    POLICY_DENIED`: the refund needs a signed manager approval. Nothing is
+    executed, and a signed [Refusal Record](/concepts/refusal-records) is stored.
+  </Step>
+  <Step title="A manager reviews it">
+    The manager finds the refusal, for example with the query in
+    [Review refused requests](#review-refused-requests).
+  </Step>
+  <Step title="The manager signs an approval, on their own machine">
+    <CodeGroup>
+
+    ```bash Script
+    npx tsx scripts/sign-approval.ts \
+      --private-key-file ~/.parmana/manager-priya__manager-priya-key-1.private.pem \
+      --approver-id manager-priya --key-id manager-priya-key-1 \
+      --capability paytm:refund --resource-id ORD-1042 --max-amount 75000 \
+      --out approval.json
+    ```
+
+    ```typescript TypeScript
+    import { readFileSync, writeFileSync } from "node:fs";
+    import { signApproval } from "@parmana/sdk";
+
+    const approval = signApproval({
+      privateKeyPem: readFileSync("manager-priya__manager-priya-key-1.private.pem", "utf8"),
+      approverId: "manager-priya",
+      keyId: "manager-priya-key-1",
+      capability: "paytm:refund",
+      resourceId: "ORD-1042",
+      maxAmount: 75000,
+    });
+    writeFileSync("approval.json", JSON.stringify(approval));
+    ```
+
+    ```python Python
+    import json
+    from pathlib import Path
+    from parmana.crypto import sign_approval
+
+    approval = sign_approval(
+        private_key_pem=Path("manager-priya__manager-priya-key-1.private.pem").read_text(),
+        approver_id="manager-priya",
+        key_id="manager-priya-key-1",
+        capability="paytm:refund",
+        resource_id="ORD-1042",
+        max_amount=75000,
+    )
+    Path("approval.json").write_text(json.dumps(approval))
+    ```
+
+    </CodeGroup>
+
+    The approval is for this order only, for refunds up to 75000, valid for 15 minutes
+    (`--ttl-seconds` or `ttlSeconds` changes it, up to a day), and can be used once. The SDKs
+    need no clone of the repository; the private key never leaves the process.
+
+  </Step>
+  <Step title="The agent sends a new request with the approval">
+    A new `businessTransactionId`, the same order and amount, `managerApproved: true`, and the
+    contents of `approval.json` in `signals.approvalArtifact`:
+
+    ```json
+    "signals": {
+      "refundEligible": true,
+      "fraudCheckPassed": true,
+      "refundAmount": 75000,
+      "managerApproved": true,
+      "approvalArtifact": { "payload": { "...": "..." }, "signature": { "...": "..." } }
+    }
+    ```
+
+  </Step>
+  <Step title="Parmana verifies the approval and executes">
+    Before authorizing, Parmana checks that the approval is signed by a trusted approver, has
+    not expired or been revoked, is for `paytm:refund`, for this order (the Intent's
+    `parameters.orderId`), covers this amount (the Intent's `parameters.amount`), and has not
+    been used before. The gateway runs the same checks again just before release. Then the
+    refund runs. The policy says which order and amount to check, in its `approvalSignals`
+    (see [Add an approval to any action](#add-an-approval-to-any-action)).
+  </Step>
+</Steps>
+
+`managerApproved: true` without a valid approval is refused, at any amount:
+
+```text
+Execution rejected: Rejected: declared signal(s) do not match independently verified state (managerApproved=true != verified managerApproved=false).
+```
+
+The same happens for an approval for another order, a smaller amount, another action, a
+changed payload, an unknown or revoked approver, an expired approval, or one already used.
+
+## Set up an approver
+
+An approver is a person with an Ed25519 key pair. The private key stays on their machine; the
+server trusts the public key. Add one through maker checker, with no deploy:
+
+<Steps>
+  <Step title="The approver creates a key pair on their own machine">
+
+    ```bash
+    npx tsx scripts/generate-approver-key.ts --approver-id manager-priya --key-id manager-priya-key-1 --out-dir ~/.parmana
+    ```
+
+    They send the public key file, `manager-priya__manager-priya-key-1.public.pem`, to a proposer.
+
+  </Step>
+  <Step title="One person proposes trusting it">
+    `POST /approval-issuers/changes` with `action: "add"`, the ids, the public
+    key and a reason.
+  </Step>
+  <Step title="A different person approves it">
+    `POST /approval-issuers/changes/{id}/approve` with a step up authorization.
+    The key is trusted from the next request on.
+  </Step>
+</Steps>
+
+The full walkthrough, with rotation, revocation and errors, is
+[Manage approvers](/guides/manage-approvers).
+
+<Tip>
+  To try the flow without a key pair, use the public sandbox: `POST
+  /sandbox/approvals` signs a demo approval for `sandbox:receipt`, valid 300
+  seconds. See [Playground](/playground). It exists only in the sandbox.
+</Tip>
+
+Approvers can also be listed in the server code, `TRUSTED_APPROVAL_ISSUERS` in
+`packages/api/src/bootstrap/codeApprovalIssuers.ts`. Those change only with a pull request and a
+deploy. The code list is checked first.
+
+<Info>
+  The hosted deployment's code list holds one key, `manager-charak1987-key-1`,
+  revoked on 2026-09-30; its current approver key was added through maker
+  checker. Approver keys are always Ed25519, whatever signing algorithm the
+  server itself uses.
+</Info>
+
+## Add an approval to any action
+
+A policy declares which of its signals need a signed approval in `approvalSignals`, with a path
+to the resource in the Intent and, optionally, a path to a number the approval must cover. For
+a merge that needs a release manager:
+
+```json
+"approvalSignals": {
+  "releaseManagerApproved": { "resourceId": "target" }
+}
+```
+
+A rule then reads the signal like any other, for example `{ "fact": "releaseManagerApproved",
+"operator": "is_true" }`. The approver signs without `--max-amount`, since there is no amount;
+the approval then names exactly this pull request, `acme/api#42`:
+
+```bash
+npx tsx scripts/sign-approval.ts   --private-key-file ~/.parmana/lead-sam__lead-sam-key-1.private.pem   --approver-id lead-sam --key-id lead-sam-key-1   --capability github:pr-merge --resource-id "acme/api#42" --out approval.json
+```
+
+The change goes live like any policy change: a new version, proposed and approved through
+policy governance. It takes effect when it is approved, with no code change and no deploy. One
+thing still needs a deploy: binding a built in connector's action to a different policy name. An
+action registered as an [external connector](/guides/connect-any-external-system) names its
+policy in its registration, through maker checker, with no deploy. Approvers are added
+through [Manage approvers](/guides/manage-approvers).
+
+Rules for a declaration, checked when the policy loads:
+
+- `resourceId` is `"target"` (the Intent's target, such as `acme/api#42` for a pull request) or a
+  path into the Intent's `parameters`, such as `parameters.orderId`. A number is compared as its
+  decimal string. `value` is a path into `parameters` to a number.
+- The approval's `scope.field` must be `value` when the declaration gives a `value`, and
+  `resourceId` when it does not. The SDKs' `signApproval` and `scripts/sign-approval.ts` write
+  these names. An approval scoped to any other field is refused, even when its bound would
+  compare true.
+- The key must be read by a rule, and must not also be in `boundSignals`.
+- With more than one approval signal, give each its own `artifact`, the signal that carries its
+  approval. The default is `approvalArtifact`.
+
+## Approve a HubSpot update or read
+
+`hubspot-deal-update` 1.1.0 authorizes every deal update only with `dealUpdateApproved: true`
+and a signed approval for that deal in `signals.approvalArtifact`, whatever the amount. Sign it
+with `--capability hubspot:deal-update` and the deal id as `--resource-id`, without
+`--max-amount`. The dealstage transition is still checked against the real deal, and a
+transition that is not allowed is refused even with an approval.
+
+Reading a deal (`hubspot:deal-fetch`) has its own policy, `hubspot-deal-read` 1.0.0. It needs
+`readApproved: true` with an approval for that deal, signed with `--capability
+hubspot:deal-fetch`.
+
+Under 1.0.0 an update within the amount threshold needed no person, and only a larger amount
+change needed `preAuthorizedForAmountChange` with an approval. 1.0.0 now fails to load.
+
+## Review refused requests
+
+Every request that a policy refuses is stored with a signed
+[Refusal Record](/concepts/refusal-records). To list recent refunds that were refused:
+
+```sql
+select
+  refusal_record_id,
+  business_transaction_id,
+  submitted_by,
+  created_at,
+  decision_json ->> 'reason'                   as reason,
+  evaluated_intent_json -> 'parameters'        as parameters
+from refusal_records
+where decision_json -> 'policy' ->> 'name' = 'customer-refund'
+order by created_at desc
+limit 50;
+```
+
+To list only the refunds waiting for a manager, add
+`and decision_json ->> 'matchedRuleId' = 'reject-manager-approval-required'`.
+
+Requests refused before policy runs, such as a failed authentication or a capability the caller
+is not allowed to use, are in `caller_audit_events`:
+
+```sql
+select occurred_at, caller_id, capability, type, reason
+from caller_audit_events
+where type in (
+  'caller.rejected',
+  'caller.capability_denied',
+  'caller.principal_denied',
+  'caller.non_human_denied',
+  'caller.structural_rejected'
+)
+order by occurred_at desc
+limit 50;
+```
+
+<Warning>
+  A Refusal Record is written after the request is refused, and a failed write
+  does not change the refusal. A query can therefore miss a refused request.
+  Each miss is logged as `refusal_record_write_failed`.
+</Warning>
+
+## Get notified
+
+The full guide, with receiver code in Node.js and Python, is
+[Approval notifications](/guides/approval-notifications).
+
+Set `APPROVAL_WEBHOOK_URL` and `APPROVAL_WEBHOOK_SECRET`, and Parmana POSTs an event to that URL
+each time a request is refused **only** for want of an approval: the policy declares
+`approvalSignals`, and the same request with those signals true would have been authorized. A
+refund refused for a failed fraud check, or above the maximum, sends nothing.
+
+```json
+{
+  "type": "approval.needed",
+  "occurredAt": "2026-09-29T10:15:02.114Z",
+  "businessTransactionId": "5f0c...",
+  "decisionId": "a91e...",
+  "action": "paytm:refund",
+  "target": "paytm://orders/ORD-1042",
+  "policyId": "customer-refund",
+  "policyVersion": "1.2.0",
+  "reason": "...",
+  "approvals": [
+    { "signal": "managerApproved", "resourceId": "ORD-1042", "value": 75000 }
+  ]
+}
+```
+
+`approvals` is what to sign: `--capability` is `action`, `--resource-id` is `resourceId`, and
+`--max-amount` is `value` when there is one. The event carries nothing else from the request.
+
+Each request has two headers. `parmana-webhook-timestamp` is Unix seconds.
+`parmana-webhook-signature` is `v1=` and the lowercase hex HMAC SHA256, keyed with the secret,
+of the timestamp, a dot, and the exact body. Check it before acting, and refuse an old
+timestamp:
+
+```typescript
+import { createHmac, timingSafeEqual } from "node:crypto";
+
+function isFromParmana(
+  secret: string,
+  timestamp: string,
+  body: string,
+  signature: string,
+) {
+  const expected =
+    "v1=" +
+    createHmac("sha256", secret).update(`${timestamp}.${body}`).digest("hex");
+  const fresh = Math.abs(Date.now() / 1000 - Number(timestamp)) < 300;
+  return (
+    fresh &&
+    expected.length === signature.length &&
+    timingSafeEqual(Buffer.from(expected), Buffer.from(signature))
+  );
+}
+```
+
+Delivery is best effort: one attempt, at most 3 seconds, no retry. A failed delivery is logged
+as `approval_needed_notification_failed` and changes nothing about the refusal. The refused
+requests query above stays the complete list.
+
+## Not available
+
+**A refused request cannot be approved afterwards.** A policy decision is approve or refuse.
+Nothing waits for a person. After a manager signs an approval, the agent sends a new request.
+
+**Eligibility and fraud signals are still the caller's word.** `refundEligible` and
+`fraudCheckPassed` are not checked against another system (G-51 in
+`docs/VERIFICATION-GAPS.md`). They can only refuse; the signed approval authorizes.
+
+**An approval covers the action and the resource, not every parameter.** An approval for a
+Slack channel does not fix the message text, and an approval for a HubSpot deal does not fix the
+new amount or stage. The approver trusts the agent with those details for that one use. An
+approval for a payment, an expense or a refund does cover the amount.
+
+**There is no automatic path.** No action is authorized without a person, by design. Adding one
+would need a server side check that reads the facts itself, and a change to this rule
+(G-80 in `docs/VERIFICATION-GAPS.md`).
+
+## Why each action is bound to one policy
+
+Each request names the policy that should judge it. If Parmana accepted any approved policy, a
+caller could send a refund and name a policy written for Slack messages, which has no refund
+limit. So each live action is bound to one policy name:
+
+```text
+paytm:refund         ->  customer-refund
+github:pr-merge      ->  github-pr-approval
+github:pr-fetch      ->  github-pr-read
+hubspot:deal-update  ->  hubspot-deal-update
+hubspot:deal-fetch   ->  hubspot-deal-read
+slack:post-message   ->  slack-post-message
+```
+
+For a built in connector the name is fixed in code; for an external connector it is the
+policy its active registration names (in the sandbox, `sandbox:receipt -> sandbox-receipt`).
+The version is not fixed: in production it is the version most recently
+approved through policy governance. Approving `customer-refund` 1.2.0 makes 1.2.0 the version
+refunds must use, with no deploy, and approving 1.1.0 again rolls back. A request that names a
+different policy, or any other version, is refused before any policy runs, with a message that
+names the version in effect. Agents must then send that version.

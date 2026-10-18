@@ -1,0 +1,142 @@
+---
+title: "Execution Authorization"
+description: "The signed envelope: proof that Parmana authorized one specific execution request. Single use, time bounded, content bound."
+---
+
+<Info>
+  **[AVAILABLE]**. `packages/shared/src/domain/execution-authorization.ts`,
+  `AuthorizationSigner`, `AuthorizationVerifier`.
+</Info>
+
+<Note>
+  An earlier prototype called this concept "Execution Permit"
+  (`packages/shared/src/domain/execution-permit.ts`, added then deleted the same
+  day in favor of this architecture, see the [Glossary](/glossary)). If you find
+  "Execution Permit" in older material, this page is the current, shipped
+  equivalent.
+</Note>
+
+## What it is
+
+A `SignedExecutionAuthorization` is the artifact a `PolicyEngine`'s `APPROVED`
+[decision](/concepts/policies-and-the-decision) becomes: a signed envelope proving that
+Parmana authorized exactly one execution, of exactly this content, within a bounded time
+window, usable exactly once.
+
+```typescript
+// packages/shared/src/domain/execution-authorization.ts
+export interface SignedExecutionAuthorization {
+  readonly payload: ExecutionAuthorizationPayload;
+  readonly signature: string;
+  readonly keyId: string;
+  readonly algorithm: string;
+}
+```
+
+`payload` carries: a format `version` (verifiers reject anything but `1`), a unique
+`authorizationId`, a single-use `nonce`, the `decisionId` and `businessTransactionId` it
+authorizes, the exact `policyName`/`policyVersion` that produced the decision, an
+`authorizedAt`/`expiresAt` bounded window, `businessTransactionHash`, the content binding
+covered in depth on [The gateway](/concepts/the-gateway), and further optional fields
+covering questions content binding alone doesn't reach: `policyContentHash` (the exact
+policy _content_, not just its version string, that produced the decision), `signalsHash`
+(the runtime `PolicySignals` the decision was evaluated against: vendor status, risk
+exposure, and similar), and `submittedBy`/`grantedCapability` (the authenticated caller and
+the capability the API-edge caller-to-capability check confirmed for them, carried forward
+as a signed fact rather than discarded once the request passes, see
+[@parmana/execution-control](/reference/execution-control) for where a receiving system
+checks this against the executed action). All four are optional so authorizations signed
+before any of them existed keep verifying unchanged; see [The gateway](/concepts/the-gateway)
+for what `policyContentHash`/`signalsHash` close and their own scope caveats.
+
+## Why it exists
+
+A decision alone isn't something a separate system can trust: it's a claim inside Parmana's
+own process. The signed authorization turns that claim into something a _different_ system
+can check without trusting Parmana's runtime or database at all, using nothing but a public
+key and the envelope itself. Every property below exists so that check is meaningful.
+
+## How it behaves
+
+- **Only with a signed human approval.** No policy can approve without one: every approve
+  rule must require an `approvalSignals` fact, which counts only with a valid signed approval
+  for the action and resource. See [Human approval](/concepts/human-approval).
+- **Signed only after approval.** A `REJECTED` decision never produces a
+  `SignedExecutionAuthorization`, signing happens only after `ExecutionGate.enforce()`
+  approves (`RuntimeEngine`; `execution-authorization-wiring.test.ts`, "rejected transaction
+  produces no authorization").
+- **Single use.** A receiving system must reject an authorization whose nonce has been seen
+  before. Parmana's own gateway records consumed nonces in Postgres (`consumed_nonces`), so
+  this holds across every instance of a deployment. A system that runs its own
+  `EnvelopeVerifier` gets the same guarantee only if its instances share one `NonceStore`.
+- **Time bounded.** `expiresAt` is required; a receiving system must reject an expired
+  authorization.
+- **Content bound.** `businessTransactionHash` binds a canonical hash of the executable
+  content into the signed payload, not just an ID. This is what closes the
+  check-vs-use (TOCTOU) gap: see [The gateway](/concepts/the-gateway) for the mechanism.
+- **Policy bound and fail closed, signal fresh when opted in.** `policyContentHash` is required at the gateway and checked against the signed approval record, while `signalsHash` is optional. Together they let a
+  receiving gateway recompute and re-verify, at execution time, whether the policy content
+  and the real-world conditions the decision rested on are still what they were at
+  authorization time, the same TOCTOU gap `businessTransactionHash` closes for the payload
+  itself, extended to policy and signals. See [Content Binding &
+  TOCTOU](/concepts/content-binding-toctou) for both.
+- **Algorithm agile.** Ed25519 by default; ML-DSA-65 (FIPS 204) selectable via
+  `PRIMARY_SIGNATURE_PROVIDER`. See [Choose a signature provider](/cryptography/overview).
+
+All timestamps in the payload are ISO-8601 UTC **strings**, not `Date` objects, this keeps
+the artifact byte-identical before signing and after JSON transport, which is what makes
+independent signature verification possible at all.
+
+## Minimal example: independent verification
+
+A receiving system can verify a `SignedExecutionAuthorization` **without** trusting
+Parmana's runtime process or database, it needs only Parmana's public key and the envelope
+itself:
+
+```typescript
+// @parmana/envelope-verifier
+const verifier = new EnvelopeVerifier({ publicKey, nonceStore });
+const result = await verifier.verify(authorization);
+// result.valid, result.checks: { versionSupported, signatureVerified, notExpired, ttlWithinPolicy, nonceUnseen }
+// plus keyValid when a keyProvider is given instead of a fixed publicKey
+```
+
+An Express middleware ships for this: `requireParmanaAuthorization(verifier)`
+(`packages/envelope-verifier/src/express.ts`), reads `req.body.authorization`, verifies it,
+and either rejects with 401/403 or calls `next()`.
+
+`EnvelopeVerifier.verify()` checks signature, expiry, TTL policy, and nonce, it does **not**
+check `businessTransactionHash`. That's the [Execution Gateway](/concepts/the-gateway)'s job,
+one layer up, because it needs the actual executable content to hash, not just the envelope.
+
+## Rejections proven by test
+
+`packages/envelope-verifier/tests/unit/envelope-verifier.test.ts` proves: a forged signature is
+rejected and does not burn the nonce; an expired envelope is rejected and does not burn the
+nonce; a second use of the same nonce is rejected, and of two concurrent uses exactly one
+succeeds; an envelope whose lifetime exceeds `maxTtlSeconds` is rejected.
+
+<Note>
+  **Related work.** The Execution Governance framework (Ku, 2026, EG Reference
+  Specification v0.9.7.3) describes a convergent discipline of pre-effect
+  authorization for physical AI systems. Parmana is a running implementation of
+  pre-execution authorization for enterprise financial execution. The vocabulary
+  on this page is Parmana's own; it does not adopt that framework's
+  six-condition terminology.
+</Note>
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="The gateway" icon="shield-check" href="/concepts/the-gateway">
+    Where this envelope gets independently re-verified before anything executes.
+  </Card>
+  <Card
+    title="Gateway attestation"
+    icon="stamp"
+    href="/concepts/gateway-attestation"
+  >
+    A second, separate signature: proof the gateway itself released this
+    specific request.
+  </Card>
+</CardGroup>

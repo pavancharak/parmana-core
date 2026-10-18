@@ -1,0 +1,59 @@
+---
+title: "How Parmana works, end to end"
+description: "The whole system on one page: who proposes, who decides, who releases, and what is left behind."
+---
+
+A support agent decides a customer should get ₹75,000 back on an order. It has read the ticket and the order history it was given, and it is confident. In most agent setups I see, the next line of code is the refund call itself, made with an API key the agent holds. Whatever the agent believed in that moment is what happens to the money.
+
+That is the gap Parmana exists for. Not because the agent is malicious, but because nothing stands between what it believes and what it does. A log written afterwards tells you what went wrong. It does not stop it.
+
+## The idea: proposing is not releasing
+
+Think of a card network. It does not stock the shelves or move the goods. It decides whether a transaction is allowed, and hands back a signed authorization that the merchant's bank acts on.
+
+Parmana plays that role for agent actions. The agent proposes. Parmana decides under a policy a person approved. Only an approved action is released, by Parmana, to the system that performs it. The agent never holds the credentials of that system. Every decision, approved or refused, leaves a signed record.
+
+## One request, in order
+
+Here is what happens to that ₹75,000 refund.
+
+1. **The agent asks what is required.** It asks the server which policy governs the refund and what a request must carry. The answer names the policy, the version in effect and the facts ("signals") the policy reads.
+
+2. **The agent proposes.** It sends one request: who is acting, what to do (refund, this order, ₹75,000), the policy it declares, and its signals.
+
+3. **Checks before any rule runs.** The caller's key must be allowed this action. The declared policy must be the one bound to the action, at the version approved through governance. Signals that copy request fields must equal them, so the agent cannot describe a ₹500 refund in its signals and ask for ₹75,000 in the request. Signals must have their declared types.
+
+4. **Authority and business validation.** A policy can require that this particular agent holds a grant for the action, with limits and an end date. It can also name the business system that owns a fact, such as whether the order is eligible for a refund, so Parmana asks that system instead of taking the agent's word. Both are built and deployed. Neither decides a real action yet: no shipped policy uses them and no real business system is connected.
+
+5. **The policy decides.** Rules run in order, and the first that matches decides. If none matches, the request is refused. The same inputs give the same decision.
+
+6. **A person must have signed.** Every approve rule in every policy requires a signed approval from a trusted person, for this action, on this resource, and for a refund, covering this amount. Reads included. A policy that could approve without a person does not load.
+
+7. **Refused, or authorized.** A refusal gets a reason and a signed Refusal Record, and nothing is released. An approval becomes a signed execution authorization: used once, valid for a short window, bound to the exact content approved.
+
+8. **Written down before release.** Parmana signs and stores an Execution Intent: exactly what it is about to release.
+
+9. **The gateway checks again.** It does not trust the authorization it is handed. It re-checks the signature, the expiry, the content, that the policy and the approval still hold, and only then marks the authorization as used.
+
+10. **The connector acts.** It gets a credential issued for this one execution and revoked afterwards. Built-in connectors exist for Paytm refunds, HubSpot deals, GitHub pull requests and Slack posts. Any other system can be registered as an HTTPS endpoint through maker checker, and it receives a signed release it can verify with Parmana's public key.
+
+11. **A signed record.** Parmana signs an Execution Trust Record: the request, the decision, the authorization and what the connector reported. Anyone with the public key can verify it offline, without trusting my server.
+
+## Why this order
+
+A decision has to exist before anything can be signed. The gateway checks a claim rather than making one, so it sits after the authorization and before the system. That is the last point before real state changes, and the one place built to say no even if everything upstream said yes. Credentials are issued inside that boundary, after the gateway is satisfied, so nothing upstream ever holds one.
+
+Changes to the rules themselves (a new policy version, a new approver key, a new external connector) need one person to propose and a different one to approve with a step up signature. No deploy.
+
+## What it does not do
+
+- **It only governs actions routed through it.** An agent that keeps its own key to Paytm can call Paytm directly. Parmana enforces nothing at the network level. The guarantee is: an action that goes through Parmana does not run unless its approved policy approves it.
+- **It does not make the agent's facts true.** A fact the agent declares and nothing checks is only as true as the agent says. Under the shipped policies such facts can refuse an action, never authorize one.
+- **It proves a key signed, not whose hand held it.** In Parmana's own production (October 2026), one approver is trusted, and I hold that key. The maker and checker credentials are two keys held by one person. The records will say "two approvals"; there were two credentials, not two people.
+- **An external system's answer is its claim.** The record proves what Parmana released and what the endpoint said, not what the endpoint's system did.
+- **It is not fast.** In production, approved requests released to an external endpoint have taken roughly 14 to 32 seconds end to end. Every request adds evaluation, signing, storage writes and a network hop.
+- **It does not survive a stolen signing key.** Whoever can sign with Parmana's key can produce authorizations a verifier accepts.
+
+## The takeaway
+
+Parmana is not one clever check. It is a chain: propose, decide, approve, release, record. Each link is something the agent cannot do for itself. The rest of this series takes the links one at a time, including the ones that are not finished.

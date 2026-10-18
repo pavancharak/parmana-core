@@ -1,0 +1,91 @@
+---
+title: "Signing primitives"
+description: "Sign and verify your own data with the same building blocks."
+---
+
+The Parmana verifiers are built from these exports. Use them to sign and verify your own
+data. Keys are always supplied by you as `node:crypto` `KeyObject`s; the package never reads
+keys from disk, the environment or the network.
+
+## Example
+
+```ts
+import { generateKeyPairSync } from "node:crypto";
+import {
+  CanonicalSerializer,
+  Ed25519SignatureProvider,
+  Sha256HashProvider,
+  SignatureVerifier,
+} from "@parmana/sign";
+
+const { privateKey, publicKey } = generateKeyPairSync("ed25519");
+const provider = new Ed25519SignatureProvider();
+
+const order = { orderId: "ord_123", amount: 4200, currency: "USD" };
+const signature = await provider.sign(
+  new CanonicalSerializer().serialize(order),
+  privateKey,
+);
+
+const verifier = new SignatureVerifier({
+  hash: new Sha256HashProvider(),
+  signature: provider,
+});
+
+await verifier.verify(
+  { currency: "USD", amount: 4200, orderId: "ord_123" },
+  signature,
+  publicKey,
+); // true
+await verifier.verify({ ...order, amount: 42000 }, signature, publicKey); // false
+```
+
+Key order does not matter: equal objects serialize to the same bytes.
+
+## Reference
+
+### `CanonicalSerializer`
+
+`serialize(value: unknown): Uint8Array`. Returns UTF-8 JSON with object keys sorted at every
+level, arrays in order, and `Date` values as ISO 8601 strings. A literal `"__proto__"` key is
+kept as ordinary data. The output matches Parmana's server and Python SDK byte for byte.
+
+### `Ed25519SignatureProvider`
+
+`sign(data, privateKey): Promise<string>` returns a base64 signature.
+`verify(data, signature, publicKey): Promise<boolean>`.
+
+For messages over 4096 bytes, `verify` also accepts Parmana's large-message form, which is
+how records signed through AWS KMS are signed. It never accepts that form for shorter
+messages.
+
+### `Dilithium3SignatureProvider`
+
+ML-DSA-65, same interface as Ed25519. Signatures are randomized: signing the same data twice
+gives two different valid signatures. Check `isMlDsa65Supported()` before using it.
+
+### `SignatureVerifier` and `ArtifactHasher`
+
+`new SignatureVerifier({ hash, signature })`, then
+`verify(artifact, signature, publicKey): Promise<boolean>`.
+
+`new ArtifactHasher({ hash, signature })`, then `hash(value): Promise<string>`.
+
+Both serialize the value with `CanonicalSerializer` first, so the signer and the verifier
+always see the same bytes.
+
+### `Sha256HashProvider`
+
+`hash(data): Promise<string>` returns lowercase hex SHA-256, the format Parmana's record
+hashes use.
+
+### `isMlDsa65Supported()`
+
+Returns `true` when this Node.js build can generate ML-DSA-65 keys (24.6.0 or later with
+OpenSSL 3.5 or later). Check it instead of catching errors from key generation.
+
+### `CryptoError`
+
+Thrown by `sign` and `verify` when a key's type does not match the provider, for example an
+Ed25519 key passed to `Dilithium3SignatureProvider`. This prevents signing with one algorithm
+while labeling the signature as another.

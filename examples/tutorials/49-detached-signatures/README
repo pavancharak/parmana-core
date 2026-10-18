@@ -1,0 +1,137 @@
+# Tutorial 49 — Detached Signatures
+
+## Overview
+
+Parmana stores signatures separately from the business artifact.
+
+The business payload remains immutable while the signature provides cryptographic proof of authenticity and integrity.
+
+This is known as a **detached signature**.
+
+---
+
+## Architecture
+
+```text
+Business Artifact
+        │
+        ▼
+Canonical Serializer
+        │
+        ▼
+Canonical Bytes
+        │
+        ▼
+Digital Signature
+        │
+        ├──────────────► Payload
+        │
+        └──────────────► Signature
+```
+
+The signature is not embedded into the payload.
+
+---
+
+## Why Detached Signatures?
+
+Embedding a signature inside the object being signed creates a recursive problem because the signature changes the payload.
+
+Detached signatures avoid this problem by storing the signature separately.
+
+Benefits include:
+
+- immutable payloads
+- independent verification
+- reusable business objects
+- simpler interoperability
+- audit-friendly storage
+
+---
+
+## Expected Output
+
+```text
+==================================================
+Tutorial 49 - Detached Signatures
+==================================================
+
+SIGN BYTES SHA256 = ...
+SIGN PAYLOAD = ...
+SIGN SIGNATURE = ...
+
+VERIFY BYTES SHA256 = ...
+VERIFY PAYLOAD = ...
+VERIFY SIGNATURE = ...
+VERIFY RESULT = true
+
+Detached Signature
+--------------------------------------------------
+
+Payload
+{
+  ...
+}
+
+Signature : ...
+
+✓ Detached signature verified.
+
+Tutorial completed successfully.
+```
+
+---
+
+## Verification Pipeline
+
+```text
+Business Artifact
+        │
+        ▼
+Canonical JSON
+        │
+        ▼
+SHA-256
+        │
+        ▼
+Digital Signature
+        │
+        ▼
+Detached Signature
+        │
+        ▼
+Independent Verification
+```
+
+---
+
+## Running the Example
+
+```bash
+tsx examples/tutorials/49-detached-signatures/run.ts
+```
+
+or
+
+```bash
+npm run examples
+```
+
+---
+
+## Next Tutorial
+
+**Tutorial 50 — Ed25519 Signatures**
+
+The next tutorial explores Parmana's default signature algorithm and demonstrates signing and verification using Ed25519.
+
+---
+
+## Summary
+
+In this tutorial you learned:
+
+- Parmana uses detached signatures.
+- Business artifacts remain immutable.
+- Signatures are stored independently from payloads.
+- Detached signatures enable independent verification.

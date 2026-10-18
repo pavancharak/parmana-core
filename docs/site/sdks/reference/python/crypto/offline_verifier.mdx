@@ -1,0 +1,61 @@
+---
+sidebar_label: offline_verifier
+title: parmana.crypto.offline_verifier
+---
+
+Standalone, offline verification of an Execution Trust Record.
+
+Python counterpart to packages/crypto/src/OfflineVerifier.ts (PQC
+audit RED-1, docs/VERIFICATION-GAPS.md) -- proves the canonical
+serialization algorithm and Ed25519 verification are independently
+reproducible in a second language, not just documented as "should be
+portable." Zero network calls, zero disk reads (beyond files the
+caller explicitly passes in), zero environment variables.
+
+Large records (over 4096 bytes of canonical content) may have been
+signed by AWS KMS as a fixed size commitment, because KMS caps a raw
+Ed25519 message at 4096 bytes. This module accepts a raw signature for
+any record, and additionally accepts the commitment form for a record
+over that limit (see docs/adr/ADR-0010). A commitment signature over a
+record at or below the limit is rejected.
+
+ML-DSA-65 (Dilithium3) verification is intentionally out of scope
+here: the `cryptography` package version this SDK currently depends
+on does not yet expose `cryptography.hazmat.primitives.asymmetric.
+ml_dsa`. A hybrid-signed record's `signatures` array cannot be
+independently checked from Python until that support lands upstream
+and this module is updated to use it -- stated plainly rather than
+silently skipped or faked.
+
+#### verify_execution_trust_record_offline
+
+```python
+def verify_execution_trust_record_offline(
+        trust_record: Any,
+        public_keys: dict[str, str]) -> OfflineVerificationResult
+```
+
+`trust_record` is a plain dict, exactly as `json.load()` would
+produce from a Trust Record JSON file or API response body, or the
+ExecutionTrustRecord that `client.trust_record()` returns.
+`public_keys` maps keyId -> PEM-encoded public key text.
+
+#### verify_execution_intent_offline
+
+```python
+def verify_execution_intent_offline(
+        intent: Any, public_keys: dict[str, str]) -> OfflineVerificationResult
+```
+
+Python counterpart to verifyExecutionIntentOffline() in
+packages/crypto/src/OfflineVerifier.ts (ADR-0012). No network call, no
+database, no environment variable: only the intent and the public key(s).
+
+`intent` is a plain dict, exactly as `json.load()` would produce from the
+`intent` field of GET /execution-intents/:id, or the ExecutionIntent at
+`client.execution_intent(id).intent`. `public_keys` maps keyId to
+PEM-encoded public key text.
+
+A valid result proves the intent was signed by the holder of that key and
+has not been altered. It does NOT prove the action was released, or what its
+result was: an intent is written BEFORE release.

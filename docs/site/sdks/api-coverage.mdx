@@ -1,0 +1,160 @@
+---
+title: "SDK coverage of the API"
+description: "Every API operation, the TypeScript and Python method that calls it, and the reason when there is none."
+---
+
+Both SDKs cover the same operations. TypeScript exposes each as a method on `ParmanaClient`. Python exposes each area as an attribute of the client, such as `client.policy` or `client.receipt`, and adds a shortcut method on the client for most of them. Both forms are listed.
+
+<Info>
+  **Version.** Rows marked **1.6.0** need SDK 1.6.0, published on 2026-10-11,
+  rows marked **1.5.0** need 1.5.0 or later, rows marked **1.4.0** need 1.4.0 or
+  later, and rows marked **1.3.0** need 1.3.0 or later, both on npm (`npm
+  install @parmana/sdk`) and PyPI (`pip install parmana`). Every other row works
+  in 1.2.0.
+</Info>
+
+## Executing and deciding
+
+| Operation                | TypeScript                       | Python                                                                |
+| ------------------------ | -------------------------------- | --------------------------------------------------------------------- |
+| `POST /execute`          | `execute(transaction)`           | `execute(transaction)`, `execution.execute(transaction)`              |
+| `POST /transactions`     | `createTransaction(transaction)` | `create_transaction(transaction)`, `transactions.create(transaction)` |
+| `GET /transactions`      | `transactions(page, pageSize)`   | `transactions(page=, page_size=)`, `transactions.list(...)`           |
+| `GET /transactions/{id}` | `transaction(id)`                | `transaction(id)`, `transactions.get(id)`                             |
+
+## Evidence and verification
+
+| Operation                                         | TypeScript                                                  | Python                                                               |
+| ------------------------------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------- |
+| `GET /trust-records/{id}`                         | `trustRecord(id)`                                           | `trust_record(id)`, `trust_records.get(id)`                          |
+| `GET /trust-records`                              | `trustRecords(page, pageSize, { since, until })` **1.3.0**  | `trust_records.list(page=, page_size=, since=, until=)` **1.3.0**    |
+| `POST /verify`                                    | `verify(id)`                                                | `verify(id)`, `verification.verify(id)`                              |
+| `GET /verification/{id}`                          | `getLatestVerification(id)`                                 | `get_latest_verification(id)`, `verification.get_latest(id)`         |
+| `POST /receipt`                                   | `receipt(id)`                                               | `receipt(id)`, `receipt.generate(id)`                                |
+| `GET /receipt/latest/{id}`                        | `latestReceipt(id)` **1.3.0**                               | `latest_receipt(id)` **1.3.0**, `receipt.get_latest(id)`             |
+| `POST /replay`                                    | `replay(id)`                                                | `replay(id)`, `replay.replay(id)`                                    |
+| `GET /refusal/{id}`                               | `refusalRecord(id)`                                         | `refusal_record(id)`, `refusal.get(id)`                              |
+| `POST /refusal/verify`                            | `verifyRefusalRecord(record)`                               | `verify_refusal_record(record)`, `refusal.verify(record)`            |
+| `POST /audit/verify`                              | `verifyAuditEvent(event, signature)`                        | `verify_audit_event(event, signature)`, `audit.verify(...)`          |
+| `GET /keys/{keyId}`                               | `publicKey(keyId)` **1.3.0**                                | `public_key(key_id)` **1.3.0**, `callers.public_key(key_id)`         |
+| Trust Record checked with only public keys        | `verifyExecutionTrustRecordOffline(record, keys)` **1.3.0** | `parmana.crypto.verify_execution_trust_record_offline(record, keys)` |
+| Execution Intent checked with only public keys    | `verifyExecutionIntentOffline(intent, keys)` **1.3.0**      | `parmana.crypto.verify_execution_intent_offline(intent, keys)`       |
+| Release checked at an external connector endpoint | `verifyParmanaRelease(body, options)` **1.5.0**             | `parmana.crypto.verify_parmana_release(body, ...)` **1.5.0**         |
+
+The offline verifiers make no network call. Get the public key once with `publicKey()` or `public_key()` and keep it. In Python they need `pip install "parmana[verify]"`, and from 1.3.0 they accept either the raw JSON or the SDK's own model.
+
+## Execution Intents
+
+| Operation                               | TypeScript                          | Python                                                                    |
+| --------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------- |
+| `GET /execution-intents/{id}`           | `executionIntent(id)`               | `execution_intent(id)`, `execution_intents.get(id)`                       |
+| `POST /execution-intents/verify`        | `verifyExecutionIntent(intent)`     | `verify_execution_intent(intent)`, `execution_intents.verify(intent)`     |
+| `GET /execution-intents/unfinalized`    | `unfinalizedExecutionIntents()`     | `unfinalized_execution_intents()`, `execution_intents.list_unfinalized()` |
+| `POST /execution-intents/{id}/finalize` | `finalizeExecutionIntent(id)`       | `finalize_execution_intent(id)`, `execution_intents.finalize(id)`         |
+| `POST /execution-intents/{id}/resolve`  | `resolveExecutionIntent(id, input)` | `resolve_execution_intent(...)`, `execution_intents.resolve(...)`         |
+
+## Policies and governance
+
+| Operation                                                | TypeScript                                            | Python                                                                             |
+| -------------------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `GET /policies/in-effect?capability=`                    | `policyInEffect(capability)` **1.5.0**                | `policy_in_effect(capability)` **1.5.0**, `policy.in_effect(...)`                  |
+| `POST /policies/validate`                                | `validatePolicy(name, version)`                       | `validate_policy(name, version)`, `policy.validate(...)`                           |
+| `POST /policies/{name}/{version}/pending-changes`        | `proposePolicyChange(name, version, input)` **1.3.0** | `propose_policy_change(name, version, proposed_content=, reason=)` **1.3.0**       |
+| `GET /policies/pending-changes`                          | `policyChanges(status?)` **1.3.0**                    | `policy_changes(status=None)` **1.3.0**, `policy.list_changes(...)`                |
+| `POST /policies/pending-changes/{id}/approve`            | `approvePolicyChange(id, stepUp)` **1.3.0**           | `approve_policy_change(id, step_up)` **1.3.0**, `policy.approve_change(...)`       |
+| `POST /policies/pending-changes/{id}/reject`             | `rejectPolicyChange(id, reason, stepUp)` **1.3.0**    | `reject_policy_change(id, reason, step_up)` **1.3.0**, `policy.reject_change(...)` |
+| Sign a step up authorization on the approver's machine   | `signPolicyChangeStepUp({...})` **1.3.0**             | `parmana.crypto.sign_policy_change_step_up(...)` **1.3.0**                         |
+| Sign an approval of one action on the approver's machine | `signApproval({...})` **1.4.0**                       | `parmana.crypto.sign_approval(...)` **1.4.0**                                      |
+
+## Approvers
+
+| Operation                                     | TypeScript                                           | Python                                                                  |
+| --------------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------- |
+| `GET /approval-issuers`                       | `approvers()` **1.4.0**                              | `list_approvers()`, `approvers.list()` **1.4.0**                        |
+| `POST /approval-issuers/changes`              | `proposeApproverChange({ action, ... })` **1.4.0**   | `approvers.propose_add(...)`, `approvers.propose_revoke(...)` **1.4.0** |
+| `GET /approval-issuers/changes`               | `approverChanges(status?)` **1.4.0**                 | `approver_changes(status=None)` **1.4.0**                               |
+| `POST /approval-issuers/changes/{id}/approve` | `approveApproverChange(id, stepUp)` **1.4.0**        | `approve_approver_change(id, step_up)` **1.4.0**                        |
+| `POST /approval-issuers/changes/{id}/reject`  | `rejectApproverChange(id, reason, stepUp)` **1.4.0** | `reject_approver_change(id, reason, step_up)` **1.4.0**                 |
+
+## External connectors
+
+| Operation                                        | TypeScript                                                    | Python                                                                                           |
+| ------------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `GET /external-connectors`                       | `externalConnectors()` **1.5.0**                              | `list_external_connectors()`, `external_connectors.list()` **1.5.0**                             |
+| `POST /external-connectors/changes`              | `proposeExternalConnectorChange({ action, ... })` **1.5.0**   | `external_connectors.propose_register(...)`, `external_connectors.propose_revoke(...)` **1.5.0** |
+| `GET /external-connectors/changes`               | `externalConnectorChanges(status?)` **1.5.0**                 | `external_connector_changes(status=None)` **1.5.0**                                              |
+| `POST /external-connectors/changes/{id}/approve` | `approveExternalConnectorChange(id, stepUp)` **1.5.0**        | `approve_external_connector_change(id, step_up)` **1.5.0**                                       |
+| `POST /external-connectors/changes/{id}/reject`  | `rejectExternalConnectorChange(id, reason, stepUp)` **1.5.0** | `reject_external_connector_change(id, reason, step_up)` **1.5.0**                                |
+
+Sign the step up authorization for approve or reject with `signPolicyChangeStepUp()` or `sign_policy_change_step_up()`, with the `changeId` as `pendingPolicyChangeId`. With an SDK older than 1.5.0, call these routes directly; see [Connect any external system](/guides/connect-any-external-system).
+
+## Business signal sources
+
+| Operation                                            | TypeScript                                                       | Python                                                                                                   |
+| ---------------------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `GET /business-signal-sources`                       | `businessSignalSources()` **1.6.0**                              | `list_business_signal_sources()`, `business_signal_sources.list()` **1.6.0**                             |
+| `POST /business-signal-sources/changes`              | `proposeBusinessSignalSourceChange({ action, ... })` **1.6.0**   | `business_signal_sources.propose_register(...)`, `business_signal_sources.propose_revoke(...)` **1.6.0** |
+| `GET /business-signal-sources/changes`               | `businessSignalSourceChanges(status?)` **1.6.0**                 | `business_signal_source_changes(status=None)` **1.6.0**                                                  |
+| `POST /business-signal-sources/changes/{id}/approve` | `approveBusinessSignalSourceChange(id, stepUp)` **1.6.0**        | `approve_business_signal_source_change(id, step_up)` **1.6.0**                                           |
+| `POST /business-signal-sources/changes/{id}/reject`  | `rejectBusinessSignalSourceChange(id, reason, stepUp)` **1.6.0** | `reject_business_signal_source_change(id, reason, step_up)` **1.6.0**                                    |
+
+With an SDK older than 1.6.0, call these routes directly; see [Connect a business signal source](/guides/connect-a-business-signal-source).
+
+## Authority grants
+
+| Operation                                     | TypeScript                                                 | Python                                                                                  |
+| --------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `GET /authority-grants`                       | `authorityGrants()` **1.6.0**                              | `list_authority_grants()`, `authority_grants.list()` **1.6.0**                          |
+| `POST /authority-grants/changes`              | `proposeAuthorityGrantChange({ action, ... })` **1.6.0**   | `authority_grants.propose_grant(...)`, `authority_grants.propose_revoke(...)` **1.6.0** |
+| `GET /authority-grants/changes`               | `authorityGrantChanges(status?)` **1.6.0**                 | `authority_grant_changes(status=None)` **1.6.0**                                        |
+| `POST /authority-grants/changes/{id}/approve` | `approveAuthorityGrantChange(id, stepUp)` **1.6.0**        | `approve_authority_grant_change(id, step_up)` **1.6.0**                                 |
+| `POST /authority-grants/changes/{id}/reject`  | `rejectAuthorityGrantChange(id, reason, stepUp)` **1.6.0** | `reject_authority_grant_change(id, reason, step_up)` **1.6.0**                          |
+
+With an SDK older than 1.6.0, call these routes directly; see [Grant an agent authority](/guides/grant-an-agent-authority).
+
+## Caller and service
+
+| Operation         | TypeScript           | Python                                                                                                              |
+| ----------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `GET /callers/me` | `caller()` **1.3.0** | `caller()` **1.3.0**, `callers.me()`                                                                                |
+| `GET /health`     | `health()`           | `health()`, `execution.health()`                                                                                    |
+| `GET /version`    | `version()`          | `execution.version()`. Note: `client.version` (a property, no call) is the **SDK's** own version, not the server's. |
+
+## Operations with no SDK method, and why
+
+| Operation                                                                                    | Why there is no method                                                                                                                                       |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /ready`                                                                                 | A readiness probe for load balancers and orchestrators. It answers `503` by design, which is not an error for a client to handle.                            |
+| `GET /.well-known/jwks.json`                                                                 | The same keys as `GET /keys/{keyId}`, in the form JWT libraries read. Use `publicKey()` / `public_key()`.                                                    |
+| `GET /`, `GET /openapi.yaml`, `GET /openapi.json`, `GET /api-manifest.json`                  | Descriptions of the API itself, for tools and people, not for application code.                                                                              |
+| `GET /parmana-handbook.pdf`, `GET /handbook/download-leads`, `POST /handbook/download-leads` | Serve the handbook download on the website. Not part of the product API.                                                                                     |
+| `POST /sandbox/approvals`                                                                    | Exists only on the public sandbox, for trying Parmana from a browser. In production a person signs every approval with `signApproval()` / `sign_approval()`. |
+
+## Errors
+
+Both SDKs raise a typed error for every non 2xx response. From 1.3.0 both carry the HTTP status: `error.statusCode` in TypeScript, `error.status_code` in Python (Python has had it since before 1.3.0). The server's own `code`, for example `CONNECTOR_NOT_REGISTERED` or `SIGNING_UNAVAILABLE`, is on `serverCode` / `server_code` of `InternalServerError` and of `AuthorizationError` when present.
+
+| Status | Server code          | TypeScript               | Python                   |
+| ------ | -------------------- | ------------------------ | ------------------------ |
+| `400`  |                      | `ValidationError`        | `ValidationError`        |
+| `401`  |                      | `AuthenticationError`    | `AuthenticationError`    |
+| `403`  | `POLICY_DENIED`      | `ExecutionRejectedError` | `ExecutionRejectedError` |
+| `403`  | any other, or none   | `AuthorizationError`     | `AuthorizationError`     |
+| `404`  |                      | `NotFoundError`          | `NotFoundError`          |
+| `409`  |                      | `ConflictError`          | `ConflictError`          |
+| `429`  |                      | `RateLimitError`         | `RateLimitError`         |
+| `5xx`  | kept on `serverCode` | `InternalServerError`    | `InternalServerError`    |
+
+Every error, from the server or raised by the SDK itself, extends `ParmanaError`. The ones raised without a server response are `ConfigurationError` (bad client configuration), `NetworkError` and `TimeoutError` (the request did not complete; in Python `TimeoutError` is a subclass of `NetworkError`, in TypeScript both extend `ParmanaError` directly), and `VerificationError` and `ReplayError` (the result failed a check or could not be replayed).
+
+## Parity rules both SDKs keep
+
+- **The same core methods on the client itself**: `execute`, `verify`, `replay`, `validatePolicy` (`validate_policy` in Python) and `health`, in addition to the grouped APIs (`client.policies`, `client.executionIntents` and so on).
+- **The same error class names** as listed above, so one catch clause means the same thing in both languages.
+
+## How this is kept true
+
+- `scripts/check-sdk-docs.ts` fails the build when a page names a method, option or export that does not exist in the SDK.
+- Unit tests in `typescript/test/Alignment.test.ts` and `python/tests/test_sdk_alignment.py` check the method, path and body of every operation added in 1.3.0.
+- Both SDKs verify the same real server signed Execution Intent offline. A step up authorization signed by each SDK is accepted by the server's own verifier.
+- On 2026-09-25 both SDKs were run against a live self hosted deployment: caller, public key, propose, list, sign and approve a policy change, a reused signature refused, a refused request with its Refusal Record verified, an authorized request with no connector (`503`, `CONNECTOR_NOT_REGISTERED`), its Execution Intent verified offline, and Trust Record listing. 11 of 11 checks in each SDK.

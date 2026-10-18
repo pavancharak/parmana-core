@@ -1,0 +1,19 @@
+{
+  "policyId": "github-pr-read",
+  "policyVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes reading a pull request's state (number, mergeable, merged at, head commit, base branch). A read changes nothing, so it needs no caller declared facts. Who may read is decided by the capability grant on the caller's API key.",
+
+  "signalsSchema": {},
+
+  "rules": [
+    {
+      "id": "approve-read",
+      "condition": { "always": true },
+      "outcome": {
+        "action": "approve",
+        "reason": "Pull request read authorized. The caller's API key is granted this capability."
+      }
+    }
+  ]
+}

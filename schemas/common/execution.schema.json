@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/execution.schema.json",
+  "title": "Execution",
+  "description": "Immutable trust artifact recording what actually happened while processing a Business Transaction. Every Execution records exactly one Decision produced by deterministic Policy evaluation.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "executionId",
+    "businessTransactionId",
+    "decision",
+    "status",
+    "mode",
+    "startedAt"
+  ],
+  "properties": {
+    "executionId": {
+      "type": "string",
+      "description": "Unique Execution identifier."
+    },
+    "businessTransactionId": {
+      "type": "string",
+      "description": "Business Transaction to which this Execution belongs."
+    },
+    "decision": {
+      "$ref": "./decision.schema.json"
+    },
+    "status": {
+      "type": "string",
+      "description": "Execution lifecycle state.",
+      "enum": ["PROCESSING", "COMPLETED", "FAILED"]
+    },
+    "mode": {
+      "type": "string",
+      "description": "Execution mode.",
+      "enum": ["SYNC", "ASYNC"]
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when execution started."
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when execution completed. Present only for terminal executions."
+    },
+    "evidence": {
+      "type": "object",
+      "description": "Immutable execution evidence: businessTransactionId, action, target, parameters, success, executedAt, and an optional attributes bag for execution-system-specific evidence (for example Connector SDK evidence, when a Connector executed this Execution).",
+      "additionalProperties": true
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Execution-specific metadata. Currently populated with authorizationId when the Execution is APPROVED.",
+      "additionalProperties": true
+    }
+  },
+  "examples": [
+    {
+      "executionId": "90746492-7721-4228-b244-67bf8a45ca68",
+      "businessTransactionId": "44b34a79-e0f2-49d7-a48e-e52fff88182e",
+      "decision": {
+        "decisionId": "8ec880cb-677a-4889-96f1-5a18a4edc1b5",
+        "intentId": "1e77d0b3-2e57-4e31-b780-03abc92f1b69",
+        "policy": {
+          "name": "vendor-payment",
+          "version": "2.0.0",
+          "schemaVersion": "1.0.0"
+        },
+        "signals": {
+          "vendorVerified": true,
+          "invoiceVerified": true,
+          "paymentApproved": true,
+          "sufficientFunds": true,
+          "paymentAmount": 5000,
+          "riskScore": 12
+        },
+        "outcome": "APPROVED",
+        "reason": "Vendor payment authorized. Vendor verification, invoice verification, payment approval, funding, and risk assessment requirements were satisfied.",
+        "evaluatedAt": "2026-07-13T17:36:00.967Z"
+      },
+      "status": "COMPLETED",
+      "mode": "SYNC",
+      "startedAt": "2026-07-13T17:36:00.968Z",
+      "metadata": {
+        "authorizationId": "dbc09266-2078-4d4e-93d0-f355eb7eebcc"
+      },
+      "evidence": {
+        "businessTransactionId": "44b34a79-e0f2-49d7-a48e-e52fff88182e",
+        "action": "payments:execute",
+        "target": "vendor/V-500",
+        "parameters": {
+          "amount": 5000,
+          "currency": "USD"
+        },
+        "success": true,
+        "executedAt": "2026-07-13T17:36:00.970Z",
+        "attributes": {
+          "connector": {
+            "connectorId": "vendor-payment",
+            "connectorVersion": "1.0.0",
+            "capability": "payments:execute",
+            "sanitizedEndpoint": "vendor/V-500",
+            "credentialProviderId": "environment",
+            "requestSummary": {
+              "businessTransactionId": "44b34a79-e0f2-49d7-a48e-e52fff88182e",
+              "action": "payments:execute",
+              "target": "vendor/V-500",
+              "parameters": {
+                "amount": 5000,
+                "currency": "USD"
+              }
+            },
+            "responseSummary": {
+              "success": true,
+              "metadata": {}
+            },
+            "startedAt": "2026-07-13T17:36:00.970Z",
+            "completedAt": "2026-07-13T17:36:00.970Z",
+            "connectorEvidenceHash": "c97411026a82b608d9b0f8b137a64e26d8af24bdda09310b639e527e08a9aada"
+          }
+        }
+      },
+      "completedAt": "2026-07-13T17:36:00.970Z"
+    }
+  ]
+}

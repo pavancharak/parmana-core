@@ -1,0 +1,122 @@
+---
+title: "Interface: AuthorityGrantChange"
+---
+
+Defined in: typescript/src/models/authority-grant.ts:61
+
+A proposal to grant or revoke authority, and its resolution.
+
+## Properties
+
+### changeId
+
+> `readonly` **changeId**: `string`
+
+Defined in: typescript/src/models/authority-grant.ts:66
+
+Sign the step up authorization for approve or reject with this id as
+`pendingPolicyChangeId`.
+
+---
+
+### action
+
+> `readonly` **action**: `"revoke"` \| `"grant"`
+
+Defined in: typescript/src/models/authority-grant.ts:67
+
+---
+
+### callerId
+
+> `readonly` **callerId**: `string`
+
+Defined in: typescript/src/models/authority-grant.ts:68
+
+---
+
+### capability
+
+> `readonly` **capability**: `string`
+
+Defined in: typescript/src/models/authority-grant.ts:69
+
+---
+
+### limits?
+
+> `readonly` `optional` **limits?**: `Readonly`\<`Record`\<`string`, [`AuthorityGrantLimit`](/sdks/reference/typescript/interfaces/AuthorityGrantLimit)\>\>
+
+Defined in: typescript/src/models/authority-grant.ts:70
+
+---
+
+### validFrom?
+
+> `readonly` `optional` **validFrom?**: `string`
+
+Defined in: typescript/src/models/authority-grant.ts:71
+
+---
+
+### validUntil?
+
+> `readonly` `optional` **validUntil?**: `string`
+
+Defined in: typescript/src/models/authority-grant.ts:72
+
+---
+
+### reason
+
+> `readonly` **reason**: `string`
+
+Defined in: typescript/src/models/authority-grant.ts:73
+
+---
+
+### proposedBy
+
+> `readonly` **proposedBy**: `string`
+
+Defined in: typescript/src/models/authority-grant.ts:74
+
+---
+
+### proposedAt
+
+> `readonly` **proposedAt**: `string`
+
+Defined in: typescript/src/models/authority-grant.ts:75
+
+---
+
+### status
+
+> `readonly` **status**: [`PendingPolicyChangeStatus`](/sdks/reference/typescript/type-aliases/PendingPolicyChangeStatus)
+
+Defined in: typescript/src/models/authority-grant.ts:76
+
+---
+
+### resolvedBy?
+
+> `readonly` `optional` **resolvedBy?**: `string`
+
+Defined in: typescript/src/models/authority-grant.ts:77
+
+---
+
+### resolvedAt?
+
+> `readonly` `optional` **resolvedAt?**: `string`
+
+Defined in: typescript/src/models/authority-grant.ts:78
+
+---
+
+### rejectionReason?
+
+> `readonly` `optional` **rejectionReason?**: `string`
+
+Defined in: typescript/src/models/authority-grant.ts:79

@@ -1,0 +1,177 @@
+---
+title: "The Gateway"
+description: "The sole boundary through which Parmana releases approved execution requests to connectors. Wired into the default server unconditionally."
+---
+
+<Info>**[AVAILABLE]**. `packages/execution-gateway`, 160 tests.</Info>
+
+<Note>
+  `packages/api/src/bootstrap/createExecutionSystem.ts` unconditionally returns
+  `createExecutionGateway()`, there is no server code path that skips it. See
+  [Quickstart](/quickstart) for a live run.
+</Note>
+
+## What it is
+
+`ExecutionGateway` is the sole boundary through which a [signed execution
+authorization](/concepts/execution-authorization) actually results in something running. It
+does not trust the authorization it's handed: it independently re-verifies the envelope and
+re-derives the content hash itself before anything reaches a connector.
+
+## Why it exists
+
+An authorization envelope proves that Parmana _decided_ to approve something. It doesn't by
+itself stop a receiving system from executing something else under that approval, or from
+skipping verification altogether. The gateway is the one place designed to say no even if
+every earlier stage said yes: the last point before a real system state changes.
+
+## How it behaves
+
+`ExecutionGateway` implements `@parmana/execution-system`'s `ExecutionSystem` interface, so
+it plugs into `RuntimeFactory.create()` exactly like any other execution system, no change
+to `RuntimeEngine` or `RuntimePipeline` is required to use it. It composes
+`@parmana/envelope-verifier`'s checks (version, signature, expiry, TTL, nonce) and adds
+more checks. Recomputing the executable content hash and comparing it to `businessTransactionHash`
+is always attempted. Policy binding fails closed: the gateway recomputes the _current_ policy
+content hash and compares it to `policyContentHash` (`policyStillCurrent`), then confirms the
+policy's most recent signed approval record carries that same hash (`policyGovernanceVerified`).
+An authorization with no `policyContentHash`, a missing approval record, or any mismatch is
+rejected before the connector runs, and a gateway built without a policy repository and approval
+verifier refuses to start. Independently re-verifying the authorization's declared runtime
+signals against real-world state is optional, when a `SignalStateVerifier` is supplied
+(`signalsStillCurrent`). See [Content Binding & TOCTOU](/concepts/content-binding-toctou) for
+the full mechanism.
+
+```typescript
+// packages/execution-gateway/src/ExecutionGateway.ts
+if (passed) {
+  const actualHash = await this.contentHasher.hash(executableContent);
+  const expectedHash = request.authorization.payload.businessTransactionHash;
+
+  businessTransactionHashMatches = actualHash === expectedHash;
+
+  if (!businessTransactionHashMatches) {
+    hashMismatch = { expected: expectedHash, actual: actualHash };
+  }
+}
+```
+
+Check order, side-effect-free checks first (`ExecutionGateway.ts`):
+
+```
+version → signature → expiry → TTL policy → businessTransactionHash recompute-and-compare
+    → policyStillCurrent recompute-and-compare (required, fails closed)
+  → policyGovernanceVerified approval record check (required, fails closed)
+  → signalsStillCurrent recompute-and-verify (when wired)
+  → nonce
+```
+
+The nonce (single-use) check runs **last**, and only if every prior check, including the
+content hash, passed. This matters: a forged or mismatched request must never burn a nonce,
+or an attacker who observes a nonce in transit could poison it and get the _legitimate_
+request rejected instead (`ExecutionGateway.ts`, `consumeNonce` runs only when every check passed).
+
+`ExecutableContentHasher` delegates to the same `TrustRecordHasher` used elsewhere in the
+system (`packages/crypto/src/ExecutableContentHasher.ts`), the signing side and verifying
+side run identical canonical serialization and hashing, never two parallel implementations
+of the same computation.
+
+<Note>
+  **Single use holds across instances.** The default server gives the gateway a
+  Postgres `NonceStore` (`consumed_nonces`, `createNonceStore.ts`), so every
+  instance on the same database accepts an authorization once. Only the test
+  suite (`NODE_ENV=test`) uses `MemoryNonceStore`. If you build your own
+  gateway, give every instance one shared store.
+</Note>
+
+## Minimal example
+
+```typescript
+const gateway = new ExecutionGateway({
+  publicKey, // Parmana's public key
+  nonceStore, // shared across instances for fleet-wide single-use
+  connector, // e.g. new HttpConnector({ baseUrl, headers })
+  // or: executionControl: { service: executionControlService, route }
+});
+
+const application = createApplication(gateway); // wires it into RuntimeFactory.create()
+```
+
+The default server's own bootstrap (`packages/api/src/bootstrap/createExecutionGateway.ts`)
+follows this exact shape, using `executionControl` rather than a direct `connector`, see
+[Credential isolation](/concepts/credential-isolation).
+
+## Connectors: what's actually wired today
+
+A `Connector` is what the gateway hands verified, frozen content to after every check
+passes. `HttpConnector` and `MockConnector` are reference implementations in
+`@parmana/connector-sdk`. Four real, production-registered connectors exist today,
+[`hubspot`](/integrations/hubspot), `github`, `paytm`, and `slack`, each making genuine
+external API calls, not scripted responses, and each registering only when its own
+credentials are configured. A `razorpay` connector was previously registered here too; it was deliberately removed from
+the repository entirely (see [Changelog](/changelog)). Any other HTTPS endpoint can be
+connected without a code change as an **external connector**: an operator registers a
+capability, its policy and its endpoint through maker checker, and the gateway releases to it
+with a signed release the endpoint verifies (`GatewayExternalAdapter`). See [Connect any
+external system](/guides/connect-any-external-system).
+Four enterprise-named mocks also exist in the codebase
+(`packages/connector-sdk/src/connectors/{sap,oracle,workday,salesforce}/`), each an explicit
+`MockConnector` wrapper, self-documented as _"deterministic, in-memory, used until the real
+enterprise connector is implemented."_ These are reference mocks, not integrations, are
+never registered by `packages/api/src/bootstrap`, and should not be represented as SAP,
+Oracle, Workday, or Salesforce connectivity.
+
+<Note>
+  A generic, `NODE_ENV=test`-only connector (`createTestFixtureConnector.ts`,
+  capability `test:fixture-execute`) also exists, giving this repository's own
+  test fixtures and the [Quickstart](/quickstart) something to execute
+  against. It's internal test scaffolding, not a product feature.
+
+Adding a **built in** connector, one that holds the target system's credential, is a
+bootstrap code change (`createConnectorRegistry.ts`, `createConnectorAuthenticator.ts`), see
+[Add a connector with the Connector SDK](/integrations/connector-development-guide). An
+external connector needs no code change, see above.
+
+</Note>
+
+## Failure reporting
+
+`ExecutionGateway.execute()` throws on any failed check, naming every failing check and, on
+a content mismatch, both hashes:
+
+```
+Execution Gateway rejected request: failed checks [businessTransactionHashMatches].
+businessTransactionHash mismatch: expected <hash>, got <hash>.
+```
+
+The policy checks add their own detail the same way (`ExecutionGateway.ts`, `describeFailure`):
+
+```
+policyContentHash mismatch: expected <hash>, got <hash>.
+policy approval check failed: <reason>.
+signalsHash mismatch: expected <hash>, got <hash>.
+```
+
+This text is for the server log; an API caller sees the outcome through the [Error
+catalog](/api-reference/error-catalog)'s codes.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="Gateway attestation"
+    icon="stamp"
+    href="/concepts/gateway-attestation"
+  >
+    The gateway's own signature: what it proves about a release, and what it
+    doesn't.
+  </Card>
+  <Card
+    title="Credential isolation"
+    icon="key"
+    href="/concepts/credential-isolation"
+  >
+    What happens to the credential a connector needs, once the gateway releases
+    execution.
+  </Card>
+</CardGroup>

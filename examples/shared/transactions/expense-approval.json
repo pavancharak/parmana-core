@@ -1,0 +1,62 @@
+{
+  "businessTransactionId": "txn-expense-approval-template",
+
+  "metadata": {
+    "businessTransactionId": "txn-expense-approval-template",
+    "correlationId": "corr-expense-approval-template",
+    "createdBy": "example",
+    "createdAt": "2026-01-01T00:00:00Z"
+  },
+
+  "authority": {
+    "authorityId": "authority-manager-001",
+    "authorityType": "USER",
+    "principalId": "manager.jane",
+    "displayName": "Jane Smith",
+    "issuedAt": "2026-01-01T00:00:00Z"
+  },
+
+  "authorization": {
+    "authorizationId": "authorization-expense-001",
+    "authorityId": "authority-manager-001",
+    "purpose": "Employee Expense Approval",
+    "authorizedAt": "2026-01-01T00:01:00Z"
+  },
+
+  "intent": {
+    "intentId": "intent-expense-001",
+    "authorizationId": "authorization-expense-001",
+    "action": "expense-approval",
+    "resource": "expense-report-EXP-1001",
+    "issuedAt": "2026-01-01T00:01:00Z"
+  },
+
+  "policy": {
+    "name": "expense-approval",
+    "version": "1.0.0",
+    "schemaVersion": "1.0.0"
+  },
+
+  "signals": {
+    "employeeId": "EMP-1001",
+    "employeeName": "Alice Johnson",
+
+    "department": "Engineering",
+
+    "expenseCategory": "Travel",
+
+    "receiptAttached": true,
+    "managerApproved": true,
+    "withinPolicyLimit": true,
+    "employeeVerified": true,
+
+    "expenseAmount": 850,
+    "currency": "USD",
+
+    "riskScore": 5
+  },
+
+  "status": "RECEIVED",
+
+  "createdAt": "2026-01-01T00:00:00Z"
+}

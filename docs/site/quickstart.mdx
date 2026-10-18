@@ -1,0 +1,388 @@
+---
+title: "Quickstart"
+description: "Your first authorized execution: in one minute against the live sandbox with nothing installed, then in under 10 minutes on your own local server."
+---
+
+## Step 0: try it live, with nothing installed
+
+Before you install anything, call the public sandbox. It is a live Parmana server with a published demo key, and its
+one action, `sandbox:receipt`, acts on nothing. These two requests show the core of Parmana in one minute: the first
+is refused because it has no signed human approval, and the [Playground](/playground) then walks you through getting
+one, sending again, and verifying the signed record.
+
+<CodeGroup>
+
+```bash cURL
+export PARMANA_API_KEY=2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME   # the published sandbox demo key
+
+curl -s https://parmana-sandbox.vercel.app/callers/me   -H "Authorization: Bearer $PARMANA_API_KEY"
+
+curl -s "https://parmana-sandbox.vercel.app/policies/in-effect?capability=sandbox:receipt"   -H "Authorization: Bearer $PARMANA_API_KEY"
+```
+
+```powershell PowerShell
+$env:PARMANA_API_KEY = "2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME"   # the published sandbox demo key
+$Headers = @{ Authorization = "Bearer $env:PARMANA_API_KEY" }
+Invoke-RestMethod https://parmana-sandbox.vercel.app/callers/me -Headers $Headers
+Invoke-RestMethod "https://parmana-sandbox.vercel.app/policies/in-effect?capability=sandbox:receipt" -Headers $Headers
+```
+
+</CodeGroup>
+
+The first answers `"callerId": "sandbox-visitor"`, allowed only `sandbox:receipt`. The second names the policy in
+effect, `sandbox-receipt` 1.0.0, and the facts a request must carry. Continue on the [Playground](/playground), or go
+on below to run the same thing on your own machine, where you play the approver too.
+
+## Run it on your own machine
+
+<Note>
+  This walkthrough uses `test:fixture-execute`, a generic, credential-free
+  capability built for local testing. It's evaluated against a policy named
+  `vendor-payment`. That policy name is unrelated to any connector; it's simply
+  the example policy this transaction runs against. `SignalIntentBinder` rejects
+  a transaction whose declared `vendorId` signal doesn't exactly match its
+  `intent.target` (see [Policies and the
+  decision](/concepts/policies-and-the-decision)), so the execute step below
+  sets both to the same value. Code samples below are shown for Python and
+  TypeScript. Pick whichever matches your client.
+</Note>
+
+<Warning>
+  No AI agent action is authorized without a signed human approval, reads
+  included ([Human approval](/concepts/human-approval)). So this quickstart has
+  you play the approver too: you make an approver key, the local server trusts
+  it, and you sign an approval before the agent's request. On a real deployment
+  the approver is a different person, added through [Manage
+  approvers](/guides/manage-approvers).
+</Warning>
+
+Running Parmana locally to evaluate it is permitted; any other use needs a written agreement, see
+[License and evaluation](/license).
+
+<Steps>
+  <Step title="Install and build">
+    ```bash
+    cp .env.example .env
+    npm ci
+    npm run build
+    ```
+
+    Only `.env.example` is in the repository; `.env` is gitignored and holds your local settings.
+
+  </Step>
+
+  <Step title="Generate the local signing keys">
+    The server signs authorizations and records with the `default` key, and the Execution Gateway
+    signs its own attestations with a separate `gateway` key. `keys/` is gitignored, so a fresh
+    clone has neither. Create both:
+
+    ```bash
+    npx tsx scripts/generate-keypair.ts --algorithm ed25519 --key-id default
+    npm run generate:gateway-keys
+    ```
+
+    This writes `keys/default.private.pem`, `keys/default.public.pem`, `keys/gateway.private.pem`
+    and `keys/gateway.public.pem`. They stay local. See [Deploy patterns](/guides/deploy-patterns)
+    for how to manage keys outside local dev.
+
+  </Step>
+
+  <Step title="Make a local approver key">
+    ```bash
+    npx tsx scripts/generate-approver-key.ts \
+      --approver-id local-test-approver --key-id local-test-approver-key-1 \
+      --out-dir ~/.parmana
+    ```
+
+    This writes `~/.parmana/local-test-approver__local-test-approver-key-1.private.pem` (keep it)
+    and `.public.pem` (the server trusts it in the next step).
+
+  </Step>
+
+  <Step title="Start the Runtime locally">
+    The `.env` copied from `.env.example` defaults to Supabase-backed storage. To run fully locally with no
+    external dependency, override storage to `memory` **and** set `NODE_ENV=test`. Both are
+    required: `PARMANA_STORAGE=memory` alone only affects where Business Transactions and Trust
+    Records are stored, two other components, the Execution Gateway's replay-nonce store and the
+    caller-authentication audit trail, independently default to Supabase outside `NODE_ENV=test`.
+    With `NODE_ENV=test`, a generic, test-only connector (`test-fixture`) registers
+    automatically, no credential environment variable required, and the server trusts
+    `local-test-approver` with the key in `PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE`:
+
+    ```bash
+    NODE_ENV=test \
+      PARMANA_STORAGE=memory \
+      PARMANA_API_KEYS='[{"callerId":"demo","keyHash":"325ededd6c3b9988f623c7f964abb9b016b76b0f8b3474df0f7d7c23b941381f","allowedCapabilities":["test:fixture-execute"]}]' \
+      PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE=~/.parmana/local-test-approver__local-test-approver-key-1.public.pem \
+      npm run dev
+    ```
+
+    `PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE` is honored only when `NODE_ENV` is `test`. With any
+    other `NODE_ENV` the server refuses to start while it is set.
+
+    Confirm it's up:
+
+    ```bash
+    curl http://localhost:3000/health
+    # {"status":"UP"}
+    ```
+
+    <Note>
+      The Execution Gateway is wired into this server unconditionally. Every `POST
+      /execute` is independently re-verified and routed through a real Connector. An
+      action with no registered connector fails closed with `"No connector
+      registered for action"`, it does not silently skip enforcement. See [The
+      gateway](/concepts/the-gateway).
+    </Note>
+
+  </Step>
+
+  <Step title="Authenticate: every other route requires a bearer key">
+    `/health` is the one route exempt from caller authentication (along with `/ready`,
+    `/openapi.yaml`, `/openapi.json`, `/api-manifest.json`, `/documentation`, and
+    `/reference`). Everything else, including `/version`, fails closed with a `401` before a
+    Business Transaction is even constructed:
+
+    ```bash
+    curl http://localhost:3000/version
+    # {"error":"authentication required"}
+    ```
+
+    The `PARMANA_API_KEYS` entry in the previous step is a demo caller key for local development
+    only: `callerId: "demo"`, raw key `my-secret-api-key`, allowed to use `test:fixture-execute`
+    and to act as `demo` (only its SHA-256 hash is stored, see
+    [Authentication](/api-reference/authentication)). Its raw key is public, so never use it on a
+    server anyone else can reach; make real keys with `npm run generate:api-key`. Send it as a
+    bearer token and the same route succeeds:
+
+    ```bash
+    curl http://localhost:3000/version \
+      -H "Authorization: Bearer my-secret-api-key"
+    # {"name":"Parmana","version":"0.4.0","api":"v1"}
+    ```
+
+    This is real, fail-closed authentication, not a placeholder, see
+    [Authentication](/api-reference/authentication) for how keys are minted and rotated outside
+    this demo key.
+
+  </Step>
+
+  <Step title="Install the SDK">
+    <CodeGroup>
+      ```bash Python
+      pip install parmana
+      ```
+
+      ```bash TypeScript
+      npm install @parmana/sdk
+      ```
+    </CodeGroup>
+
+    The SDK sends the bearer key from the previous step on every request:
+
+    <CodeGroup>
+      ```python Python
+      from parmana import ParmanaClient
+
+      client = ParmanaClient(endpoint="http://localhost:3000", api_key="my-secret-api-key")
+      ```
+
+      ```typescript TypeScript
+      import { ParmanaClient, HttpTransport } from "@parmana/sdk";
+
+      const endpoint = "http://localhost:3000";
+      const apiKey = "my-secret-api-key";
+
+      const client = new ParmanaClient({
+        endpoint,
+        apiKey,
+        transport: new HttpTransport({ endpoint, apiKey }),
+      });
+      ```
+    </CodeGroup>
+
+  </Step>
+
+  <Step title="Sign an approval, then execute a Business Transaction">
+    First the approver signs an approval for this action, this target, up to this amount. Then
+    the agent sends the transaction with the approval attached. The `createBusinessTransaction`
+    helper derives every id pair the server checks for consistency, so there's nothing to
+    hand-assemble and get wrong:
+
+    <CodeGroup>
+      ```python Python
+      from pathlib import Path
+
+      from parmana import ParmanaClient, PolicyReference, create_business_transaction
+      from parmana.crypto import sign_approval
+
+      client = ParmanaClient(endpoint="http://localhost:3000", api_key="my-secret-api-key")
+
+      # The approver's step, on the approver's machine.
+      approval = sign_approval(
+          private_key_pem=Path.home().joinpath(
+              ".parmana/local-test-approver__local-test-approver-key-1.private.pem"
+          ).read_text(),
+          approver_id="local-test-approver",
+          key_id="local-test-approver-key-1",
+          capability="test:fixture-execute",
+          resource_id="vendor://payments",
+          max_amount=1000,
+      )
+
+      transaction = create_business_transaction(
+          principal_id="demo",
+          purpose="Quickstart demo",
+          action="test:fixture-execute",
+          target="vendor://payments",
+          parameters={"amount": 1000, "currency": "USD"},
+          policy=PolicyReference(name="vendor-payment", version="2.1.0", schema_version="1.0.0"),
+          signals={
+              "humanApproved": True,
+              "approvalArtifact": approval,
+              "vendorVerified": True,
+              "invoiceVerified": True,
+              "paymentApproved": True,
+              "sufficientFunds": True,
+              "paymentAmount": 1000,
+              "riskScore": 5,
+              "vendorId": "vendor://payments",
+          },
+      )
+
+      trust_record = client.execution.execute(transaction)
+      print(trust_record.trust_record_hash)
+      ```
+
+      ```typescript TypeScript
+      import { readFileSync } from "node:fs";
+      import { homedir } from "node:os";
+      import { join } from "node:path";
+
+      import {
+        ParmanaClient,
+        HttpTransport,
+        createBusinessTransaction,
+        signApproval,
+        ExecutionRejectedError,
+      } from "@parmana/sdk";
+
+      const endpoint = "http://localhost:3000";
+      const apiKey = "my-secret-api-key";
+
+      const client = new ParmanaClient({
+        endpoint,
+        apiKey,
+        transport: new HttpTransport({ endpoint, apiKey }),
+      });
+
+      // The approver's step, on the approver's machine.
+      const approval = signApproval({
+        privateKeyPem: readFileSync(
+          join(homedir(), ".parmana/local-test-approver__local-test-approver-key-1.private.pem"),
+          "utf8",
+        ),
+        approverId: "local-test-approver",
+        keyId: "local-test-approver-key-1",
+        capability: "test:fixture-execute",
+        resourceId: "vendor://payments",
+        maxAmount: 1000,
+      });
+
+      const transaction = createBusinessTransaction({
+        principalId: "demo", // the key may act only as its own caller id
+        purpose: "Quickstart demo",
+        action: "test:fixture-execute",
+        target: "vendor://payments",
+        parameters: { amount: 1000, currency: "USD" },
+        policy: { name: "vendor-payment", version: "2.1.0", schemaVersion: "1.0.0" },
+        signals: {
+          humanApproved: true,
+          approvalArtifact: approval,
+          vendorVerified: true,
+          invoiceVerified: true,
+          paymentApproved: true,
+          sufficientFunds: true,
+          paymentAmount: 1000,
+          riskScore: 5,
+          vendorId: "vendor://payments", // must exactly equal `target`
+        },
+      });
+
+      async function main() {
+        try {
+          const trustRecord = await client.execute(transaction);
+          console.log("Trust Record ID:", trustRecord.trustRecordId);
+        } catch (error) {
+          if (error instanceof ExecutionRejectedError) {
+            console.error("Rejected:", error.message);
+            process.exitCode = 1;
+            return;
+          }
+          throw error;
+        }
+      }
+
+      main();
+      ```
+    </CodeGroup>
+
+    Without `humanApproved` and a valid `approvalArtifact`, the server refuses this transaction
+    with `403 POLICY_DENIED`, whatever else the signals say.
+
+    Full runnable versions: `python/examples/quickstart/run.py` and
+    `typescript/examples/06-create-business-transaction.ts`, the same transactions run against a
+    test server with authentication off, so they act as other principals; each takes the signed approval as an argument, or from the file
+    `PARMANA_APPROVAL_FILE` names when run as a script. `python/tests/test_quickstart_example.py` and
+    `typescript/test/integration/examples.integration.test.ts` run them against a real,
+    freshly-spawned server on every test run, so both examples are verified to work, not just
+    syntax-checked. The two samples above were run as shown, with the demo key, against a server
+    started as in this page, on a fresh clone on 2026-10-01.
+
+  </Step>
+
+  <Step title="Real output">
+    Captured from an actual run against a local server, 2026-09-14:
+
+    ```
+    Trust Record Hash: a08a041317a6f28307a30c97147ef320e896578153118e978f7998a63cf52037
+    ```
+
+    The full `ExecutionTrustRecord` includes the `signature` block, `executions[0].decision`
+    (`outcome: "APPROVED"`, evaluated by the `vendor-payment` policy), `executions[0].evidence`
+    (what the connector actually did, including a `connectorEvidenceHash`), and an initial
+    `verifications` / `receipts` history. See [Trust Record](/concepts/execution-trust-records) for the
+    complete shape, or `python/examples/quickstart/README.md` for the full captured JSON. For
+    the equivalent captured TypeScript output (`camelCase` field names, same record shape), see
+    [TypeScript SDK Quickstart](/guides/typescript-sdk-quickstart)'s own "Real output" step.
+
+  </Step>
+</Steps>
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Playground" icon="play" href="/playground">
+    The full flow against the live sandbox: refusal, signed approval, approved
+    release, offline verification.
+  </Card>
+  <Card title="How Parmana thinks" icon="brain" href="/how-parmana-thinks">
+    The concepts behind what just happened: policy, authorization, the gateway,
+    trust records.
+  </Card>
+  <Card
+    title="Verify & replay"
+    icon="check-double"
+    href="/verification/overview"
+  >
+    Read back or re-run verification against the record you just created.
+  </Card>
+  <Card
+    title="End-to-end: agent to Paytm"
+    icon="route"
+    href="/guides/end-to-end-paytm-flow"
+  >
+    The same flow against a real connector and real infrastructure, not the
+    local test fixture.
+  </Card>
+</CardGroup>

@@ -1,0 +1,32 @@
+---
+title: "Function: verifyExecutionIntentOffline()"
+---
+
+> **verifyExecutionIntentOffline**(`intent`, `publicKeys`): [`OfflineVerificationResult`](/sdks/reference/typescript/interfaces/OfflineVerificationResult)
+
+Defined in: [typescript/src/crypto/offline-verifier.ts:248](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/offline-verifier.ts#L248)
+
+Verifies an Execution Intent with only public keys.
+
+A valid result proves the intent was signed by the holder of that key and
+has not been altered. It does not prove the action was released, or what
+its result was: an intent is written before release.
+
+## Parameters
+
+### intent
+
+`unknown`
+
+The `intent` field of `client.executionIntent()` or
+`GET /execution-intents/{id}`.
+
+### publicKeys
+
+[`PublicKeys`](/sdks/reference/typescript/type-aliases/PublicKeys)
+
+Key ID to PEM public key.
+
+## Returns
+
+[`OfflineVerificationResult`](/sdks/reference/typescript/interfaces/OfflineVerificationResult)

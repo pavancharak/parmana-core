@@ -1,0 +1,71 @@
+---
+title: "Replay"
+description: "Two separate things share this name today, what each actually does."
+---
+
+<Warning>
+  **[PARTIAL], and more precisely split than the name suggests.** There are two
+  unconnected things called "replay" in the current codebase. Conflating them
+  would overclaim what either one does.
+</Warning>
+
+## 1. `POST /replay` (what the SDKs and HTTP API expose)
+
+This is what `client.replay.replay(transaction_id)` actually calls. Its real
+implementation, `ExecutionTrustApplication.replay()`
+(`packages/runtime/src/ExecutionTrustApplication.ts:142-171`):
+
+```typescript
+async replay(businessTransactionId: string): Promise<{
+  businessTransactionId: string;
+  trustRecordHash: string;
+  verified: boolean;
+}> {
+  const trustRecord = await this.trustRecords.findByTransactionId(businessTransactionId);
+  if (!trustRecord) throw new Error("Execution Trust Record not found.");
+  const verified = await this.crypto.verify(trustRecord);
+  return { businessTransactionId, trustRecordHash: trustRecord.trustRecordHash, verified };
+}
+```
+
+**This re-verifies the Trust Record's cryptographic signature, it does not reconstruct or
+re-execute anything.** [AVAILABLE], but narrower than "replay" implies: it's a signature
+recheck with a `replay`-shaped response, not deterministic execution reconstruction.
+
+## 2. `packages/replay` (the deterministic reconstruction engine)
+
+A separate, real package: `ReplayEngine`, `ReplayPipeline`, `ReplayExecutor`,
+`ReplayBuilder`, proven deterministic regardless of input order
+(`ReplayDeterminism.test.ts`, "should produce identical output regardless of input order";
+`ReplayEngine.test.ts`; 9 tests total).
+
+`ReplayEngine.replay()` genuinely re-evaluates the original policy against the recorded
+signals, using a real `PolicyEngine`, not just a signature or hash recheck:
+
+```typescript
+// packages/replay/src/ReplayEngine.ts:38-62 (abridged, real source)
+const policyDecision = this.policyEngine.evaluate(policy, signals);
+const replayedDecision = { ...recordedDecision, outcome: policyDecision.outcome, ... };
+const matches = recordedDecision.outcome === replayedDecision.outcome;
+```
+
+Verified live, `examples/tutorials/06-replay/run.ts`: it prints a `Recorded Decision` and a
+`Replayed Decision` and reports `Replay Match: true` when they agree. This is real semantic
+re-evaluation, scoped to one execution's decision outcome, not the fuller claim below.
+
+<Warning>
+  **Still confirmed disconnected: nothing in `packages/api` or
+  `packages/runtime` imports `@parmana/replay`.** This engine is not reachable
+  through `POST /replay` or any other route today, and it only handles
+  `trustRecord.executions[0]`, one execution, not the whole record. It's real,
+  tested, standalone library code, not yet wired into the runtime or the HTTP
+  surface.
+</Warning>
+
+## What "semantic verification" still withholds
+
+"Replay semantically verifies every trust artifact" is a future goal, not current behavior.
+That's broader than what `ReplayEngine` does today: "every trust artifact" implies
+re-evaluating every execution across a record and every artifact type, not one execution's
+decision outcome. `ReplayEngine`'s real, narrower behavior above is a scoped piece of that
+future goal, not the whole of it. See [Roadmap](/roadmap).

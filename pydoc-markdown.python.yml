@@ -1,0 +1,18 @@
+loaders:
+  - type: python
+    search_path: ["python"]
+    packages: [parmana]
+
+processors:
+  - type: filter
+    skip_empty_modules: true
+  - type: smart
+  - type: crossref
+
+renderer:
+  type: docusaurus
+  docs_base_path: .typedoc-staging/python
+  relative_output_path: "."
+  relative_sidebar_path: sidebar.json
+  markdown:
+    escape_html_in_docstring: false

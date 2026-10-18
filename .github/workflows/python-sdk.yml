@@ -1,0 +1,95 @@
+name: Python SDK
+
+# NOTE: python/.github/workflows/ci.yml exists but is NOT picked up by
+# GitHub Actions in this monorepo -- GitHub only scans
+# <repo-root>/.github/workflows/, and there was no such directory here
+# before this file. That file is written as if python/ were the root of
+# its own standalone repo (plain `pip install -e .`, no working-directory),
+# which is what it becomes if python/ is ever split out on its own. This
+# workflow is the one that actually runs against this monorepo today, and
+# is the only place the model drift guard (which needs packages/shared
+# and the workspace node_modules) can run.
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+  pull_request:
+    paths:
+      - "python/**"
+      # tests/test_docs_code_samples.py checks the Python samples in the docs.
+      - "docs/site/**"
+      - "packages/shared/**"
+      - "package.json"
+      - "package-lock.json"
+
+permissions:
+  contents: read
+
+jobs:
+  python-sdk:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version:
+          - "3.11"
+          - "3.12"
+          - "3.13"
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install workspace
+        run: npm ci
+
+      - name: Build workspace
+        # python/tests/test_live_server_integration.py spawns the real
+        # @parmana/api server, which imports @parmana/shared (and other
+        # workspace packages) via their built dist/ output, not TS source
+        # -- same as ci.yml's own Build step, needed here too since each
+        # workflow gets a fresh checkout with no dist/ committed.
+        run: npm run build
+
+      - name: Check generated models are up to date
+        # python/parmana/models/*.py is generated from
+        # packages/shared/src/domain/*.ts (and CryptoAlgorithms.ts) by
+        # python/scripts/generate_models.ts. This fails the build if
+        # regenerating would change the committed output, so the SDK
+        # cannot silently drift from @parmana/shared.
+        run: npm run check:python-models
+
+      - name: Install Python package
+        # Dependencies come from a hash-pinned lock file
+        # (python/requirements-dev.txt, regeneration command in its header),
+        # then the SDK itself is installed from the checkout without
+        # resolving anything further.
+        run: |
+          pip install --require-hashes -r python/requirements-dev.txt
+          pip install --no-deps -e ./python
+
+      - name: Lint (ruff)
+        run: ruff check .
+        working-directory: python
+
+      - name: Format check (black)
+        run: black --check .
+        working-directory: python
+
+      - name: Type check (mypy)
+        run: mypy
+        working-directory: python
+
+      - name: Run tests
+        run: pytest -v
+        working-directory: python

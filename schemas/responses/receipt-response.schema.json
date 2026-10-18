@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/receipt-response.schema.json",
+  "title": "Receipt Response",
+  "description": "Response returned by POST /receipt and GET /receipt/latest/{businessTransactionId}. A bare Receipt, no wrapper.",
+  "$ref": "../common/receipt.schema.json"
+}

@@ -1,0 +1,83 @@
+---
+title: "Self hosted troubleshooting"
+description: "Every error the self hosted deployment is known to produce, what causes it, and the exact fix."
+---
+
+Messages on this page are copied exactly from the deployment's output or its source code. Find yours by searching this page for a few words of it.
+
+## Starting
+
+### `service "migrate" didn't complete successfully: exit 2`
+
+A database step failed and the server was not started. Read why:
+
+```bash
+docker compose logs migrate
+```
+
+| The log says                                        | Cause                                                                             | Fix                                                                                                                           |
+| --------------------------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `password authentication failed for user "parmana"` | `PARMANA_DB_PASSWORD` differs from the password the database was created with.    | Use the original value, or [change the password](/self-hosted/operations#change-the-database-password) in the database first. |
+| `ERROR:` followed by SQL                            | A migration failed. It changed nothing, because each runs in its own transaction. | Keep the log and report it. Do not edit the database by hand.                                                                 |
+
+### `container parmana-api-1 is unhealthy`, or the `api` container keeps restarting
+
+The server refused to start. Its reason is in the log:
+
+```bash
+docker compose logs api | tail -30
+```
+
+| The log says                                                                                                                                  | Fix                                                                                                                                         |
+| --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PAYTM_CONNECTOR_URL must use HTTPS in production; received "http://..."`                                                                     | Use an `https://` URL. See [Connect a system](/self-hosted/connectors).                                                                     |
+| `Partial Paytm connector configuration detected: PAYTM_CONNECTOR_URL and PAYTM_CONNECTOR_SHARED_SECRET must both be set, or both left unset.` | Set both, or neither.                                                                                                                       |
+| `PARMANA_API_KEYS ...`                                                                                                                        | `parmana-local/api-keys.json` was edited by hand and is not valid. Restore it, and use [`api-keys.mjs`](/self-hosted/api-keys) from now on. |
+
+Any other startup error is listed with its fix in the [Environment variable reference](/deployment/environment-variables#startup-errors-and-what-to-do).
+
+### `service "setup" didn't complete successfully` and the log says `key "..." is incomplete`
+
+One file of a signing key pair is missing from `parmana-local/keys`. `setup` stops rather than make a new key, because that would silently change your signing identity. Restore the missing file from your backup. To start over with a new key pair, delete both files of that pair, knowing that records signed with the old key then verify only with the old public key.
+
+### `required variable ... is missing a value`
+
+A variable used in `docker-compose.override.yml` with the `${NAME:?...}` form is not set in your shell or `.env`. Set it and run the command again.
+
+### `cat: 'C:/Program Files/Git/app/parmana-local/api-key.txt': No such file or directory`
+
+You are in Git Bash on Windows, which rewrote the path before Docker saw it. Run `export MSYS_NO_PATHCONV=1` in the same terminal and run the command again.
+
+## `GET /ready`
+
+| Response                                                | Cause and fix                                                                                                      |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `503` with `"status":"NOT_READY"` and a database error  | The server cannot reach Postgres. Check `docker compose ps -a`: `postgres` must be `Up (healthy)`.                 |
+| `503` with a reason about the `execution_intents` table | A migration is missing. Run `docker compose up -d --build --wait`, which runs `migrate`.                           |
+| `curl: (7) Failed to connect`                           | The server is not running, or it is published on another address or port. Check `PARMANA_BIND` and `PARMANA_PORT`. |
+
+## Requests
+
+| Status | Body                                                                                                                                                   | Cause                                                                                                                                                                                                 | Fix                                                                                                                                                                                |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `401`  | `{"error":"authentication required"}`                                                                                                                  | No `Authorization: Bearer` header, a wrong key, or a key added without `docker compose restart api`.                                                                                                  | Send a valid key. Restart the server after adding keys.                                                                                                                            |
+| `403`  | `{"error":"Caller is not permitted to invoke this capability.","code":"CAPABILITY_NOT_ALLOWED"}`                                                       | The key was not added with this capability in `--allowed-capabilities`.                                                                                                                               | [Add a key](/self-hosted/api-keys#add-a-key) with the capability.                                                                                                                  |
+| `403`  | `{"error":"Caller is not permitted to assert this authority.principalId."}`                                                                            | `authority.principalId` in the request is not the key's caller ID, and the key lists no other principals.                                                                                             | Use the key's caller ID, or add the key with `--allowed-principal-ids`.                                                                                                            |
+| `403`  | `POLICY_DENIED`, reason ends in `has no PolicyChangeApprovalRecord -- it has never completed the Policy Governance approval flow.`                     | The policy was never approved on this deployment.                                                                                                                                                     | [Approve the policy](/self-hosted/policy-approval).                                                                                                                                |
+| `403`  | `POLICY_DENIED` with any other reason                                                                                                                  | The policy's rules refused the request. This is a decision, not an error. A signed Refusal Record exists.                                                                                             | Fetch it with `GET /refusal/{businessTransactionId}`.                                                                                                                              |
+| `400`  | `{"error":"businessTransactionId must be a valid UUID."}`                                                                                              | The ID is not a UUID.                                                                                                                                                                                 | Use a new UUID for every request.                                                                                                                                                  |
+| `409`  | `{"error":"Business Transaction '<id>' already exists."}`                                                                                              | This `businessTransactionId` was already used.                                                                                                                                                        | Use a new UUID for every request.                                                                                                                                                  |
+| `503`  | `{"error":"No connector is registered for capability '<capability>' on this deployment. Nothing was executed. ...","code":"CONNECTOR_NOT_REGISTERED"}` | The request was authorized, but no connector is configured for the capability.                                                                                                                        | [Connect a system](/self-hosted/connectors).                                                                                                                                       |
+| `502`  | `EXECUTION_OUTCOME_UNKNOWN`, message naming the `businessTransactionId`                                                                                | The action was released and the connector call failed: unreachable, timed out, or an error response. The API log's `execution_outcome_unknown` event and the intent's `failureReason` show the cause. | See [When the connector cannot be reached](/self-hosted/connectors#when-the-connector-cannot-be-reached). Do not resend before checking your system: the action may have happened. |
+
+Policy approval errors are listed on [Approve a policy](/self-hosted/policy-approval#errors), and API key tool errors on [Manage API keys](/self-hosted/api-keys#errors). Every error code of the API is in the [error catalog](/api-reference/error-catalog).
+
+## Offline check
+
+`bash docker/local/offline-check/run.sh` prints each check as `PASS` or `FAIL`, and the API log when one fails.
+
+| Failing check                         | Most likely cause                                                                                                                |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `no internet route from this network` | Your Docker does not isolate networks created with `internal: true`. The rest of the result then proves nothing about isolation. |
+| `API reports READY`                   | The server did not start. The printed API log says why; see [Starting](#starting).                                               |
+| Any check from 3 on                   | Keep the full output and report it. The copy it ran on has already been removed; run the check again to reproduce.               |

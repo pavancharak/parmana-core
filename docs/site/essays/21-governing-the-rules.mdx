@@ -1,0 +1,60 @@
+---
+title: "Governing the rules"
+description: ""
+---
+
+Suppose someone steals the API key of a refund agent. They can send requests, but every refund needs a manager's signed approval, and they don't have a manager's private key. So they try the side door. They don't attack the refund. They attack the list of people allowed to approve refunds, and add a key of their own. From then on they can sign their own ₹50,000 approvals, and every record will look perfectly legitimate.
+
+This is the problem with any rules engine. The gate is only as strong as the process that changes the gate. If one credential can rewrite the policy, trust a new approver, or point a capability at a new endpoint, then every check downstream is decoration.
+
+## Five things that decide what an agent can do
+
+In Parmana, the rules are not only policies. Five kinds of thing shape whether an action runs:
+
+- **Policies**, which decide approve or refuse for a capability.
+- **Approver keys**, the public keys trusted to sign human approvals.
+- **External connectors**, which bind a capability to an HTTPS endpoint and the policy that governs it.
+- **Business signal sources**, the systems (an ERP, an order system) a policy asks for facts instead of trusting the agent.
+- **Authority grants**, which give one agent one capability, with limits and an end date.
+
+Each of them changes through the same path, and only that path.
+
+## The path: maker, checker, step up
+
+**Only callers marked as human can touch governance.** Every governance route checks that the caller's API key was issued as a person's (`--credential-holder-type USER`). Any other key, including every agent key, is refused with `NON_HUMAN_CALLER_DENIED`, and the attempt is written to the caller audit trail. An agent cannot propose a policy change, approve one, or even list the pending ones.
+
+**One person proposes, a different one approves.** The server refuses an approval from the proposer with `SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE`. For the newer registries the database enforces it too, with a check constraint. For grants, neither the proposer nor the approver may be the agent receiving the grant.
+
+**The approver signs.** A bearer token is not enough to approve. The checker also sends a step-up authorization signed with an Ed25519 key that lives only on their own machine. The server holds only the public half, from the checker's own key entry. The signature is valid for 120 seconds, for one change and one action (approve or reject), and can be used once. A stolen API key alone cannot approve anything.
+
+**One open change at a time.** Only one pending change per policy version, approver key, connector or grant. A second is refused until the first is resolved.
+
+So in my opening scenario, the stolen agent key fails at the first step: it is not a human caller. Even a stolen human key fails at the third, without the step-up private key.
+
+## What happens after approval
+
+For **policies**, the approval produces a signed approval record, written before the live policy is changed, carrying a hash of the approved content and chained to the previous record for that version. At execution time, outside test and development, a policy with no approval record, a record whose signature fails, or content that no longer matches its record is refused before any rule runs. A new deployment authorizes nothing until its own people approve its policies. In the repository, a CI check refuses to merge a new policy version until it has been approved.
+
+Every approve rule must also require a signed human approval. A proposed policy that approves anything without one fails to load, so it cannot get through governance either. Governance can change the rules, not remove the human from them.
+
+For **approver keys**, an added key is trusted from the next request, and a revoked one is refused from the next request. No deploy. An integration test adds a key, authorizes a refund with it, revokes it, and sees the next refund refused.
+
+For **connectors** and **signal sources**, the endpoint address is checked as public HTTPS when proposed and again when approved, because DNS can change in between. Revoking a signal source makes every policy that names it refuse from the next request.
+
+For **grants**, the grant names one caller, one capability, optional limits per request, and an expiry no more than 366 days away. Revoking it takes effect on the next request.
+
+The review step matters too. A checker sees the proposed content next to what is in effect, with coverage warnings and rule conflicts. The web tool for reviewing never handles the step-up key: approving happens with a script or an SDK on the checker's machine.
+
+## What it does not do
+
+- **It proves distinct credentials, not distinct people.** The server checks that the approver's key differs from the proposer's. It cannot tell whether two keys belong to two humans. "Human" means the operator issued the key as a person's.
+- **The list of callers itself is not under maker-checker.** API keys, including who counts as human, are set by the operator in the deployment's configuration and take effect on redeploy.
+- **An operator with database access can go around the API.** Policy approval records are signed and chained, and a check every five minutes detects an edited policy or a broken chain. Detected, not prevented. Write-once storage or an external anchor for approval records was considered and not built.
+- **Considered, not built:** a three-role flow (maker, reviewer, approver), tiered approval with stronger sign-off for high-stakes changes, and freezing a key or alerting after repeated denied attempts by a non-human caller. Today those attempts are only logged.
+- **Approvers listed in code** change only with a pull request and a deploy, outside this path.
+- **Some checks are shallow.** A connector registration checks the policy name's form, not that the policy exists. A grant to a caller id that does not exist is accepted and has no effect.
+- **Connector secrets are still static configuration values.** An AWS Secrets Manager provider exists but is not provisioned.
+
+## The takeaway
+
+An agent should never be able to change its own rules, and neither should any one person. In Parmana the rules that decide what agents can do, from the policy to the list of approvers, change only when one human proposes, a different human signs, and the change leaves a record. The gaps are around the edges: who counts as a person, and what an operator with database access can do. I'd rather name those than hide them.

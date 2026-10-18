@@ -1,0 +1,43 @@
+---
+title: "Type Alias: ProposeApproverChangeInput"
+---
+
+> **ProposeApproverChangeInput** = \{ `action`: `"add"`; `approverId`: `string`; `keyId`: `string`; `publicKeyPem`: `string`; `reason`: `string`; \} \| \{ `action`: `"revoke"`; `approverId`: `string`; `keyId`: `string`; `reason`: `string`; \}
+
+Defined in: [typescript/src/models/approval-issuer.ts:62](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L62)
+
+What proposeApproverChange() sends.
+
+## Union Members
+
+### Type Literal
+
+\{ `action`: `"add"`; `approverId`: `string`; `keyId`: `string`; `publicKeyPem`: `string`; `reason`: `string`; \}
+
+#### action
+
+> `readonly` **action**: `"add"`
+
+#### approverId
+
+> `readonly` **approverId**: `string`
+
+#### keyId
+
+> `readonly` **keyId**: `string`
+
+#### publicKeyPem
+
+> `readonly` **publicKeyPem**: `string`
+
+The .public.pem file scripts/generate-approver-key.ts writes.
+
+#### reason
+
+> `readonly` **reason**: `string`
+
+---
+
+### Type Literal
+
+\{ `action`: `"revoke"`; `approverId`: `string`; `keyId`: `string`; `reason`: `string`; \}

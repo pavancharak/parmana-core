@@ -1,0 +1,881 @@
+---
+title: "Changelog"
+description: "What shipped, newest first."
+---
+
+Parmana ships continuously, there's no separate server release train with its own version
+numbers (the running server's `GET /version` reports an internal build identifier, not a
+product version). The SDKs are versioned independently on their own registries, see
+[TypeScript SDK](/sdks/typescript) and [Python SDK](/sdks/python) for their current versions
+and per-version notes. This page covers changes that affect what you can build against, not
+every commit, run `git log` in the repository for the complete record.
+
+## 2026-10-12
+
+**Listed: Parmana as a TRACE external evidence source in AgenTrust**
+
+- [agentrust-io/integrations#294](https://github.com/agentrust-io/integrations/pull/294) was merged into the
+  AgenTrust integrations repository. It adds `integrations/parmana-server`, which maps Parmana's signed records to
+  TRACE references (`authorized-intent`, `approval-outcome`, refusals as their own unit), at tier `community` with no
+  conformance level. A maintainer re-ran its tests and reproduced its output. It is a listing, not a certification;
+  its fixtures come from the refund evaluation package, where connector results are mock results. CLAIMS.md 3.23.
+
+**Added: Essays**
+
+- A new [Essays](/essays/overview) tab explains Parmana end to end in plain language, from why it exists to what it
+  does not do, including [Models as insider risks](/essays/models-as-insider-risks).
+
+**Corrected: limitations and comparison pages**
+
+- [Limitations](/security/limitations) no longer says no outcome goes unrecorded: a Refusal Record write fails open
+  by design, so the refusal happens but its record can be missing (CLAIMS.md 3.11).
+- [How Parmana compares](/how-parmana-compares) no longer says most teams require approval only above a risk
+  threshold: every agent action needs a signed human approval (CLAIMS.md 2.47). It also notes that a policy can name
+  a business signal source for a fact.
+
+## 2026-10-11
+
+**Added: live checks for authority grants, business signal sources and a real refund**
+
+- [`examples/live-checks`](https://github.com/pavancharak/parmana/tree/main/examples/live-checks) gains three procedures for production. The `authority-grant` and `business-signal-source` checks passed in production the same day, all four requests each as required; the refund check is ready, not yet run:
+  `authority-grant` (a grant decides: refused before it, approved within its limit, refused over it and after its
+  revoke), `business-signal-source` (a deployed demo source answers, signed; the release carries its answer as a
+  condition) and `paytm-refund` (one real 1 INR refund through the rotated credentials, its record verified offline).
+- `examples/live-checks/governance.ts` runs the maker checker steps for policies, connectors, sources and grants with
+  the SDK, showing each change and asking the checker to type `APPROVE` before signing the step up.
+
+**Published: SDK 1.6.0 and connector SDK 0.3.0**
+
+- `@parmana/sdk` and `parmana` 1.6.0 add the business signal source and authority grant methods, and `conditions`
+  on `ParmanaRelease`. `@parmana/connector-sdk` 0.3.0 adds `ReleaseCondition`. `parmana-connector-sdk` is unchanged
+  at 0.2.0.
+- Published on npm and PyPI from the files of release
+  [sdk-v1.6.0](https://github.com/pavancharak/parmana/releases/tag/sdk-v1.6.0), byte for byte: see
+  [New in 1.6.0](/sdks/typescript#new-in-160).
+
+**Added: re-check at release, and execute only if still valid**
+
+- The authorization Parmana signs now carries what the decision rests on: the business facts with their `validUntil`,
+  and the agent's authority grant. The gateway checks them again at release; if one no longer holds, nothing is sent
+  and the request gets `409 AUTHORIZATION_NO_LONGER_VALID` with `executionStatus: NOT_EXECUTED`.
+- A release to an external connector carries the facts as signed `conditions` and expires no later than the earliest
+  one. An endpoint that finds one no longer holds answers `conditionsNotMet` and does not act. See
+  [Connect any external system](/guides/connect-any-external-system).
+- `502 EXECUTION_OUTCOME_UNKNOWN` now also says `executionStatus: EXECUTION_UNKNOWN`.
+- The SDKs' `ParmanaRelease` type has `conditions`; the example endpoints take a `conditionsHold` check.
+
+**Added: per-agent authority grants**
+
+- Say which agent may have which action decided, within limits on each request (`min`, `max`, `oneOf` by Intent
+  path), until when: `POST /authority-grants/changes`, approved by a second person with a step up authorization. No
+  one grants authority to themselves. See [Grant an agent authority](/guides/grant-an-agent-authority).
+- A policy opts in with `requireAuthorityGrant`. A request from a key with no grant in force, or outside its limits,
+  is refused as `NOT_AUTHORIZED`; after the grant's expiry, as `AUTHORITY_EXPIRED`. The grant checked is in the
+  signed record, under `assessment.authority.grant`.
+- `GET /policies/in-effect` answers `authorityGrantRequired: true` for such a policy.
+- Self managed deployments: apply the new migration with `npm run db:migrate -- apply` before deploying this version.
+- No shipped policy requires a grant; decisions are otherwise unchanged.
+
+**Added: any business system as a trusted signal source**
+
+- Register a business system that owns facts a policy needs, an ERP, an order system, a CRM, a ledger, under a name,
+  through maker checker: `POST /business-signal-sources/changes`, approved by a second person with a step up
+  authorization. See [Connect a business signal source](/guides/connect-a-business-signal-source).
+- Parmana asks it with a query signed by its default key, and, when the source is registered with an Ed25519 key,
+  accepts only answers signed with that key. The Trusted Signal records `sourceProof`, `sourceKeyId` and
+  `sourceProofVerified`. An answer Parmana cannot trust refuses the request as `SOURCE_UNAVAILABLE`.
+- `typescript/examples/08-business-signal-source.ts` is a complete source endpoint.
+- Self managed deployments: apply the new migration with `npm run db:migrate -- apply` before deploying this version.
+- The SDK methods (`proposeBusinessSignalSourceChange()`, `business_signal_sources.propose_register()` and the rest)
+  are in SDK 1.6.0.
+
+## 2026-10-10
+
+**Added: business validation, in the runtime**
+
+- A policy can name the business system that owns a fact (`signalSources`). Parmana asks that system itself,
+  never using the agent's value, records the answer as a Trusted Signal, and evaluates the policy on it. A
+  proposed value that differs from the source's is refused. See [Business validation](/concepts/business-validation).
+- Every decision now carries `assessment`: authority, business validation and, for a refusal, execution, as
+  separate statuses, signed inside the Execution Trust Record and the Refusal Record. Records written before
+  this change have no `assessment` and still verify.
+- `GET /policies/in-effect` lists a policy's sourced facts under `signals.sourced`, when it has any.
+- No business system is registered in the server yet, so a policy that declares one is refused as
+  `SOURCE_UNAVAILABLE`. No shipped policy declares one; decisions are otherwise unchanged.
+
+## 2026-10-06
+
+**Added: policy content hash in Refusal Records**
+
+- A Refusal Record now carries `policyContentHash`, the SHA-256 hash of the policy content that decided the refusal,
+  inside the signed record. It is the same value an Execution Trust Record carries in
+  `transaction.policy.contentHash`, so a refusal and an approval under the same policy can be matched. See
+  [Refusal Records](/concepts/refusal-records).
+- Records written before this change have no `policyContentHash` and still verify.
+- Self managed deployments: apply the new migration with `npm run db:migrate -- apply` before deploying this version.
+  The Docker Compose deployment applies it on start.
+
+**Added: server image with signed build provenance**
+
+- Each GitHub release now builds the API server from the repository's `Dockerfile` and publishes it as
+  `ghcr.io/pavancharak/parmana-api:<release tag>`, with [SLSA](https://slsa.dev) build provenance attached to the
+  image in the registry. See [Verifying the server image](/security/overview#verifying-the-server-image).
+- The provenance covers that image only. The hosted API and the public sandbox are built by Vercel and carry none.
+
+**Added: technical paper, talk and demo videos**
+
+- [Technical paper](/evaluation/paper): Parmana's design, threat model, evaluation (attack scenarios, mutation
+  testing, fuzzing, static analysis) and limitations, with a PDF.
+- [Talk and demo videos](/evaluation/talk-and-videos): the outline of a 20 minute talk, and step by step scripts for
+  four demo videos against the public sandbox.
+
+**Added: case studies and Discussions**
+
+- [Case studies](/evaluation/case-studies) applies Parmana to three publicly reported incidents (Replit, Amazon Q,
+  Air Canada): what happened, with sources, and what Parmana would and would not have changed.
+- Questions and ideas now go to [GitHub Discussions](https://github.com/pavancharak/parmana/discussions), with forms
+  for questions, ideas and show and tell; the new issue page links there and to private security reporting.
+
+**Security: advisory for G-88**
+
+- Published [GHSA-hp43-9p54-wqp9](https://github.com/pavancharak/parmana/security/advisories/GHSA-hp43-9p54-wqp9)
+  (low): a policy name or version of `.` or `..` let the file based policy store read and write a `policy.json` one
+  directory outside the policy directory. Fixed on 2026-10-05; only deployments with `PARMANA_STORAGE` set to
+  `memory` or unset were affected.
+- `POST /policies/{name}/{version}/pending-changes` now refuses a dot-only name, version or
+  `proposedContent.policyVersion` with a 400 when the change is proposed, not when it is applied.
+  `@parmana/policy` is 0.1.1.
+
+**Added: how Parmana compares**
+
+- [How Parmana compares](/how-parmana-compares) sets Parmana next to IAM, API gateways, LLM guardrails, policy
+  engines and agent framework confirmations: what each answers, what Parmana adds, where Parmana is weaker, and how
+  to use them together.
+
+**Added: regulation mapping**
+
+- [Regulation mapping](/security/regulation-mapping) maps Parmana to the EU AI Act's human oversight and record
+  keeping provisions (Articles 12, 14 and 26), the NIST AI RMF (GOVERN 3.2, MAP 3.5, MANAGE 2.4, MEASURE 2.7 and
+  2.8, MANAGE 4.1), ISO/IEC 42001 Annex A and the Reserve Bank of India's IT Governance Master Direction, FREE-AI
+  report and draft model risk management guidance, with the evidence for each and what stays with your organization.
+
+**Added: OWASP mapping**
+
+- [OWASP mapping](/security/owasp-mapping) takes each risk in the OWASP Top 10 for LLM Applications 2026 and the
+  OWASP Top 10 for Agentic Applications 2026 and states what Parmana does about it, rated covered, partly or not
+  covered, with the claim, threat and attack scenario that show it, and what is left to you.
+
+**Fixed: an incomplete request body is a `400`, not a `500`**
+
+- A `POST /execute` or `POST /transactions` body without `metadata`, `authority`, `authorization`, `intent` or
+  `policy`, or with one of them `null` or of the wrong type, or a required field that is not a string, is refused
+  with `400` naming it (G-87). Before, a missing `policy` or `authorization` was a bare `500`. Nothing was executed
+  either way. See [Error handling](/api-reference/error-handling).
+
+**Changed: a release tries the next checked address**
+
+- A release to an external connector whose first resolved address refuses the connection now tries the endpoint's
+  other checked addresses, under one timeout (G-83). Once a connection is made nothing is retried, so the endpoint
+  never receives a release twice.
+
+**Added: fuzz tests**
+
+- Property based tests of the request boundary, policy loading and evaluation, the offline verifier and approval
+  parsing run with every `npm test`. Besides G-87 they found that the policy validator threw a `TypeError` on fields
+  of the wrong type (G-90) and that the offline verifier threw on malformed hybrid signatures (G-91). Both now refuse
+  with a clear error.
+
+**Added: every open issue in one place**
+
+- [Limitations](/security/limitations#open-issues) lists every gap still open and what to do meanwhile; the same
+  list, with evidence, is under "Open issues at a glance" in `docs/VERIFICATION-GAPS.md`.
+
+## 2026-10-05
+
+**Changed: a request whose signals do not have the declared types is refused**
+
+- Every signal a policy declares in `signalsSchema` must now have that type (`boolean`, `number`
+  or `string`) before any rule runs. A mismatch, such as an amount sent as `"500"`, is refused
+  with `matchedRuleId` `signal-type-violation` and a reason naming the signal. Signals the
+  policy does not declare, and signals not sent, are not affected. A policy whose
+  `signalsSchema` uses any other type no longer validates.
+
+**Changed: a partially chained Execution fails the execution chain check**
+
+- Verifying an Execution Trust Record now fails when an `Execution` carries only some of its
+  chain fields (`chainHash`, `chainSignature`, `previousChainHash`), or has none after a chained
+  one. Before, such an `Execution` was skipped as data from before chaining, so an edited one with
+  its `chainSignature` removed passed the chain check; the record's own signature still caught
+  the edit. Records the runtime writes are unaffected: it always writes both fields together.
+  `docs/VERIFICATION-GAPS.md` G-89.
+
+**Added: mutation testing of the security packages**
+
+- `npm run mutation -- <package>` measures how many deliberate changes to the security code the
+  tests catch. First scores: `envelope-verifier` 89.7%, `approval` 77.7%, `policy` 50.3%,
+  `execution-gateway` 67.6%, `crypto` 65.4% (on Node 22, which skips the ML-DSA-65 tests; the
+  command now needs Node 24). Re-run on Node 24 after the fixes: `envelope-verifier` 94.0%,
+  `approval` 93.9%, `policy` 96.0%, `crypto` 85.0%, `execution-gateway` 83.6%. The gaps that
+  matter for security now have tests; see
+  [docs/MUTATION-TESTING.md](https://github.com/pavancharak/parmana/blob/main/docs/MUTATION-TESTING.md).
+
+**Added: an SBOM with every SDK release**
+
+- From the next release on, each SDK package on a
+  [GitHub release](https://github.com/pavancharak/parmana/releases) has a CycloneDX SBOM beside it
+  (`<package file>.cdx.json`), covered by the signed provenance. See
+  [Verifying an SDK package](/security/overview#verifying-an-sdk-package-from-a-github-release).
+
+**Added: verify a record in your browser**
+
+- [Verify a record in your browser](/verification/verify-in-browser) checks a signed Execution
+  Trust Record's hash and Ed25519 signature with Web Crypto, in the reader's browser. It comes
+  with an example record and a changed copy that fails, and can fetch the sandbox's public key.
+  A test runs the page's code against records signed by Parmana's signer.
+
+**Added: a threat model**
+
+- [THREAT-MODEL.md](https://github.com/pavancharak/parmana/blob/main/THREAT-MODEL.md) lists the assets, trust boundaries and
+  attackers, and for each of 17 threats the control, the evidence (an attack scenario or a
+  claim) and the residual risk, plus the assumptions a review should state.
+
+**Added: a security challenge**
+
+- [SECURITY-CHALLENGE.md](https://github.com/pavancharak/parmana/blob/main/SECURITY-CHALLENGE.md) lists what counts as
+  breaking Parmana on a copy you run yourself, what does not, and how a confirmed break is
+  reported and credited. Local copies only; the hosted API and the sandbox are out of scope.
+
+**Added: `npm run evaluate`**
+
+- Runs 16 attack scenarios against the code (replay, forgery, acting without a signed approval,
+  policy substitution, gateway bypass, record tampering and more) and reports each one blocked
+  or not, with a report tied to the commit. See
+  [Run the attack scenarios](/evaluation/overview#3-run-the-attack-scenarios).
+- [Claims and evidence](/evaluation/claims-and-evidence) now gives, for each claim, the command
+  that reproduces its evidence, and `npm run evaluate -- EV-04` runs a single scenario.
+
+**Added: signed build provenance for SDK releases**
+
+- Each SDK release on [GitHub](https://github.com/pavancharak/parmana/releases) carries the four
+  packages built by GitHub Actions from the release's tag, and signed
+  [SLSA](https://slsa.dev) provenance recording the commit and workflow that built each one. See
+  [Verifying an SDK package](/security/overview#verifying-an-sdk-package-from-a-github-release).
+  The first is [sdk-v1.5.0-r1](https://github.com/pavancharak/parmana/releases/tag/sdk-v1.5.0-r1),
+  with the current SDK versions.
+
+**Fixed: build book prerequisites**
+
+- [Your first governed action](/build-book/02-your-first-governed-action) now asks for Node.js 24.6
+  or later, which the repository requires; it said 22.
+
+## 2026-10-04
+
+**Changed: the SDKs are licensed under the Apache License 2.0**
+
+- `@parmana/sdk`, `parmana`, `@parmana/connector-sdk` and `parmana-connector-sdk` are licensed
+  under the Apache License 2.0 again, replacing the proprietary license announced on 2026-10-03.
+  The Parmana server stays proprietary, evaluation only. See [License and evaluation](/license).
+- Published: `@parmana/sdk` and `parmana` 1.5.0, with the
+  [new methods and fixes](/sdks/typescript#new-in-150) and the new license,
+  and `@parmana/connector-sdk` and `parmana-connector-sdk` 0.2.0, with the connector types added
+  since 0.1.0 and the new license.
+
+## 2026-10-03
+
+**Added: evaluation and audit pages**
+
+- New [Evaluate and audit](/evaluation/overview) section: an evaluation guide, an
+  [Audit guide](/evaluation/audit-guide) that names the enforcement points, what an attacker
+  controls in each case and a bounded scenario, and a
+  [Claims and evidence](/evaluation/claims-and-evidence) map from each core claim to its tests.
+
+**Fixed: security and correctness issues from an internal review**
+
+These change behavior a caller or operator can see
+([pavancharak/parmana#6](https://github.com/pavancharak/parmana/pull/6),
+[pavancharak/parmana#7](https://github.com/pavancharak/parmana/pull/7),
+[pavancharak/parmana#8](https://github.com/pavancharak/parmana/pull/8)):
+
+- A rejected or already approved policy change can no longer be approved and applied
+  (`409`). Two approvals of the same change at once apply it only once; a retry by the same
+  approver after a partial failure completes. New migration
+  `20261003120000_unique_policy_change_approval_per_pending_change.sql`.
+- `POST /execute` refuses a `metadata.tenantId` the API key does not list in its new
+  `allowedTenantIds` (`403 TENANT_NOT_ALLOWED`). A request with no tenant id is unaffected.
+- A signed approval's `scope.field` is checked: `value` when the policy declares a `value`,
+  otherwise `resourceId`. The SDKs and `scripts/sign-approval.ts` already write these.
+- The gateway checks a request with no `signals` against the authorization's signed signals
+  hash instead of skipping the check.
+- Failed authentication is rate limited per IP (`RATE_LIMIT_AUTH_FAILURE_PER_MINUTE`, default
+  30), and key discovery shares the public rate limiter.
+- `page` and `pageSize` on `GET /transactions` and `GET /trust-records` must be whole numbers;
+  `pageSize` is at most 100 (`400` otherwise).
+- Under AWS KMS: `GET /.well-known/jwks.json` lists the signing keys instead of answering `501`;
+  a key ARN is refused as a key id; public keys are cached for 5 minutes; a tenant key
+  `tenant.<id>` maps to the alias `alias/tenant/<id>`.
+- The server refuses to start with `CRYPTO_MODE=hybrid` and `KEY_PROVIDER=aws-kms`, or with
+  hybrid key files missing.
+- GitHub targets accept only a valid `owner/repo#number`.
+
+**Changed: the TypeScript and Python SDKs are proprietary**
+
+- From the next release, `@parmana/sdk` and `parmana` are licensed under the same proprietary,
+  evaluation only license as the rest of the repository, replacing the Apache License 2.0.
+  Versions already published keep the license they were published under. `@parmana/sign`
+  stays under the Apache License 2.0.
+
+**Moved: the repository is now github.com/pavancharak/parmana**
+
+- The source moved from `pavancharak/AgentLabsBuildathon` to
+  [`pavancharak/parmana`](https://github.com/pavancharak/parmana), with its full history. Every
+  link in these docs now points to the new repository. Links to older pull requests and issues
+  still open in the old repository.
+
+**Added: the Verification SDK (`@parmana/sign` 0.2.0)**
+
+- [`@parmana/sign`](/sdks/parmana-sign/overview) 0.2.0 is on npm. It verifies Execution Trust
+  Records and Execution Intents offline, with only the record and the public keys, including
+  hybrid (Ed25519 and ML-DSA-65) records and large records signed through AWS KMS.
+- New **Verification SDK** tab: overview and quick start, public keys, a reference page for
+  each verifier and for the signing primitives, and every error message with what to do.
+
+## 2026-10-02
+
+**Fixed: canonical JSON keeps `"__proto__"` keys**
+
+- The server's canonical serializer and the TypeScript SDK's `canonicalSerialize` silently
+  dropped an object key named `"__proto__"`, so its content was not covered by the hash or
+  signature. Both now keep it, matching the Python SDK and `@parmana/sign`. Output for data
+  without that key is unchanged, so existing signatures stay valid.
+
+**Sandbox: visitor data deleted, retention paused**
+
+- Every request and record visitors had sent to the public sandbox was deleted around 03:30 UTC, around the
+  retention job's first run. Production was not affected. The job is paused. Sandbox records are not guaranteed to
+  be kept: keep any record you need.
+- The retention function now refuses any period under 7 days without an explicit confirmation word, and logs every
+  run that deletes.
+
+**Added: sandbox retention**
+
+- A daily job in the sandbox database deletes every request and record visitors sent more than 7 days ago, and keeps
+  the sandbox's policy, approver and registration. Sandbox only: it is not a migration, and it refuses any database
+  without the sandbox's registration.
+
+**Added: the public sandbox and the Playground (ADR-0014 steps 2 to 4)**
+
+- The sandbox is live at `https://parmana-sandbox.vercel.app`: the same code as production, its own database, signing
+  keys and demo approver, one action (`sandbox:receipt`) released to an endpoint that acts on nothing. Its live check
+  passed all nine checks on 2026-10-02.
+- A published demo key, `2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME` (caller `sandbox-visitor`, allowed only `sandbox:receipt`).
+- New [Playground](/playground) page: the whole flow in cURL, PowerShell, TypeScript and Python, each run against the
+  sandbox before publishing, with every real response and every refusal.
+- Every **Try it** panel in the REST API tab now calls the sandbox first, with the demo key filled in. Production is
+  still listed as a server.
+- The [Quickstart](/quickstart) starts with two requests to the sandbox, and [Integrate Parmana](/agents/integrate)
+  says how an agent practises there.
+- Known issue, Python SDK 1.4.0: `verify_execution_trust_record_offline` reports a hash mismatch when given the decoded
+  model of a record whose `previousChainHash` is `null`. Pass the record as plain JSON instead; the TypeScript SDK is
+  not affected. Fixed in the repository the same day for the next Python release: a decoded model keeps the server's
+  JSON and encodes back to exactly it, which also fixes sending a decoded refusal record or Execution Intent back for
+  verification.
+
+## 2026-10-01
+
+**Added: browser access and sandbox mode, for the public playground (ADR-0014 step 1)**
+
+- `PARMANA_CORS_ORIGINS`: lets a browser on the listed origins call the API. Unset, as in production today, no CORS
+  header is sent.
+- `PARMANA_SANDBOX=true` mounts `POST /sandbox/approvals`: the sandbox's demo approver signs an approval for
+  `sandbox:receipt` only, for one resource, valid 5 minutes, accepted once. The server refuses to start in sandbox mode
+  while any Paytm, HubSpot, Slack or GitHub variable is set or caller authentication is disabled, and refuses the demo
+  approver variables outside sandbox mode.
+- Nothing changes in production unless these variables are set. The sandbox was deployed on 2026-10-02 (above).
+- Fixed the same day: the startup guard missed `PARMANA_GITHUB_VERCEL_CONNECT_CONNECTOR_ID`, which also turns on the
+  GitHub connector, and ignored a connector variable defined as an empty string, which the connector factories treat as
+  set. Both are refused now, and a test reads the variables from the code that registers each connector.
+
+**SDK, next release: external connector methods**
+
+- TypeScript: `externalConnectors()`, `proposeExternalConnectorChange()`, `externalConnectorChanges()`,
+  `approveExternalConnectorChange()` and `rejectExternalConnectorChange()`, also on `ExternalConnectorApi`.
+- Python: `client.external_connectors` with `list`, `propose_register`, `propose_revoke`, `list_changes`,
+  `approve_change` and `reject_change`, plus shortcuts on the client.
+- In the repository, not yet on npm or PyPI. The API reference samples for the five `/external-connectors` operations
+  now use them, and Tutorial 123 registers and revokes its connector through them against a real server.
+
+**Docs: the API reference shows code and a real response for every operation**
+
+- Every endpoint page has a cURL, TypeScript and Python sample, each checked as code: the cURL body
+  against the request schema, TypeScript by the compiler, Python by mypy.
+- Every JSON response, success and error, shows a real response captured from the server, 36 of them
+  new. A test checks each example against its response schema. The only responses without one are
+  the OpenAPI document itself, the handbook PDF and a redirect.
+- `GET /keys/{keyId}` documents the JSON error body its 404 returns.
+- Every operation's description now says what it does, when to use it and who may call it, and
+  every response says what happened and what to do next. Every parameter is described.
+- The list of routes that need no key was incomplete: `GET /openapi.json`, `GET /api-manifest.json`,
+  `POST /execution-intents/verify` and the handbook routes were missing. Fixed in the reference
+  and on [Authentication](/api-reference/authentication).
+
+**Added: a registered external connector receives releases (ADR-0013 step 4)**
+
+- An approved request for a capability registered as an external connector is released to the
+  registered endpoint as a signed release: audience the endpoint URL, a 60 second expiry, the
+  authorization id, the policy and the approvers, signed with the key at `GET /keys/default`. The
+  endpoint's address is checked again at every release, and redirects are not followed.
+- The registration's policy is the binding: a request must declare it at the version approved
+  through policy governance, and `GET /policies/in-effect?capability=` answers for the capability.
+  Every request is refused while no version of that policy is approved.
+- Checked live in production on 2026-10-01 against a deployed endpoint: refused with no approval,
+  released and recorded with one, refused when the approval was reused (`docs/CLAIMS.md` 2.50). The
+  SDK helpers `verifyParmanaRelease` and `verify_parmana_release` are not published yet.
+- Found in the live check: an approved request took 24 to 32 seconds in production, longer than the
+  SDKs' default 30 second timeout (`docs/VERIFICATION-GAPS.md` G-84). After a timeout, read the
+  record before sending anything new.
+- **Examples:** an endpoint in TypeScript (`typescript/examples/07-external-connector-endpoint.ts`)
+  and in Python (`python/examples/13_external_connector_endpoint.py`), each checking releases with
+  its SDK helper, and Tutorial 123, which registers the TypeScript one through maker checker and
+  releases to it. The API reference shows real responses for every refusal of the
+  `/external-connectors` routes.
+
+## 2026-09-30
+
+**Added: external connectors, first step (ADR-0013)**
+
+The goal: connect a new external system to Parmana with no change to Parmana's code. An operator
+registers a capability to an HTTPS endpoint they run, and Parmana releases each approved request
+there as a signed release. Built in steps; only the first is live.
+
+- **Live in production: registering an external connector** through maker checker, like approver
+  keys. One human caller proposes at `POST /external-connectors/changes` (a capability, the
+  endpoint, the policy that governs it, the parameters Parmana may forward, a timeout); a
+  different human caller approves with a step up signature. `GET /external-connectors` lists
+  every registration. Refused: a capability in a built in connector's namespace, and an endpoint
+  that is not https, names an IP address or localhost, or resolves to an address that is not
+  public (checked when proposed and again when approved). See the
+  [API reference](/api-reference/endpoints/propose-external-connector-change).
+- **Not yet in effect: a registered connector receives no release yet.** The adapter that sends
+  the signed release, and the SDK helpers an endpoint uses to check it
+  (`verifyParmanaRelease`, `verify_parmana_release`), are merged, but no registration is
+  connected to them yet (the next step), and the helpers are not published yet. A guide to
+  connecting any external system follows when the whole path works.
+
+**Added: the server says what a request must carry**
+
+- **`GET /policies/in-effect` now also returns `description` and `signals`**: every fact the policy's rules read
+  (`facts`), their types (`schema`), the signals that must equal a value of the Intent (`bound`), and the signals that
+  need a signed approval with where its resource and amount are in the request (`approval`). The rule conditions
+  are never returned; `description` is the policy author's text for people. An agent no longer needs a copy of the policy, or the operator, to build a request. See
+  [Integrate Parmana: specification for AI agents](/agents/integrate), step 3.
+- **SDK methods, in the next SDK release**: `policyInEffect(capability)` in TypeScript, `policy_in_effect(capability)`
+  in Python. Not yet published; 1.4.0 does not have them.
+
+**Security: no AI agent action without a signed human approval, reads included**
+
+Merged (PR #87) and deployed to production on 2026-09-30. All 13 new policy versions below were
+approved in production through maker checker the same day, so they are in effect. See
+`docs/VERIFICATION-GAPS.md` G-80 and [Human approval](/concepts/human-approval).
+
+- **Every policy must require a signed approval.** A policy with an approve rule that does not
+  require an `approvalSignals` fact with `is_true` (as its whole condition or directly inside its
+  top level `all`) no longer loads, and cannot be proposed through policy governance. Requests
+  under it are refused with `400`.
+- **A runtime without an approval verifier refuses every approval** instead of trusting the
+  caller's approval signal.
+- **Reads need an approval too.** `github:pr-fetch` is bound to `github-pr-read` 1.1.0
+  (`readApproved`, the pull request). `hubspot:deal-fetch` has its own policy,
+  `hubspot-deal-read` 1.0.0 (`readApproved`, the deal).
+- **Every HubSpot update needs an approval** for the deal (`hubspot-deal-update` 1.1.0,
+  `dealUpdateApproved`), whatever the amount. The separate pre authorization for large amount
+  changes is no longer used.
+- **Every Slack post needs an approval** for the channel (`slack-post-message` 1.1.0,
+  `postApproved`), in addition to the channel allowlist.
+- **Reference policies** have approval backed versions: `vendor-payment` 2.1.0,
+  `access-control` 1.1.0, `agent-vendor-payment` 1.1.0, `api-key-issuance` 1.1.0,
+  `connector-capability` 1.1.0, `database-change` 3.1.0, `expense-reimbursement` 1.1.0,
+  `production-deployment` 1.1.0, `rag-document-access` 1.1.0. Older versions stay as history and
+  are refused at load.
+- **Local test approver.** `PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE` makes a `NODE_ENV=test` server
+  trust `local-test-approver`, so the [Quickstart](/quickstart) can sign its approval. Set with
+  any other `NODE_ENV`, the server refuses to start.
+- **What an integrating agent must do now:** attach a signed approval to every GitHub read,
+  HubSpot read or update, and Slack post, exactly as for refunds and merges. A request without one
+  is refused with `403 POLICY_DENIED`. See [Human approval](/concepts/human-approval).
+- **Documentation fix.** The PowerShell proposal commands in
+  [Policy lifecycle and approvals](/guides/policy-lifecycle-and-approvals) and
+  [Credentials](/guides/credentials-maker-checker-approver) now read `policy.json` as UTF-8.
+  Windows PowerShell 5.1 `Get-Content -Raw` reads a file without a byte order mark in the local
+  codepage, so a policy with a character such as an em dash was proposed, and approved, with
+  different text than the file, and CI `verify-policy-approvals` then failed.
+
+## 2026-09-29
+
+**Added**
+
+- **Approval notifications by email.** Set `APPROVAL_EMAIL_TO` with the Resend integration and each request waiting for an approval is emailed to the approver, with exactly what to sign. See [Approval notifications](/guides/approval-notifications#email).
+
+- **Approval notifications.** With `APPROVAL_WEBHOOK_URL` and `APPROVAL_WEBHOOK_SECRET` set, a request refused only for want of a signed approval sends a signed `approval.needed` event to that URL, naming what to sign. Other refusals send nothing. Best effort, and a failed delivery never changes the refusal. See [Approval notifications](/guides/approval-notifications).
+
+- **Manage approvers without a deploy.** Trust a new approver key, rotate one, or revoke one through the API: one person proposes, a different person approves with a step up signature, and the change applies to the next request. New endpoints under `/approval-issuers`, SDK methods in 1.4.0, and the tables `approval_issuers` and `approval_issuer_changes` (migration `20260929120000_add_approval_issuers.sql`, apply before deploying). See [Manage approvers](/guides/manage-approvers).
+
+**SDK 1.4.0, published on npm and PyPI**
+
+- Sign an approval of one action on the approver's own machine, without a clone of the repository: `signApproval()` in TypeScript, `parmana.crypto.sign_approval()` in Python. The result is the same signed approval `scripts/sign-approval.ts` makes, and the server's own verifier accepts it (tested). See [Human approval](/concepts/human-approval).
+
+## 2026-09-28
+
+**Security**
+
+**Approved in production the same day:** `customer-refund` 1.2.0, `github-pr-approval` 1.1.0, `github-pr-read` 1.0.0 and `llm-tool-call` 1.1.0. Every refund now needs a signed manager approval.
+
+An AI attack review (an agent manipulated by prompt injection calling the API) found facts that an agent declares, and nothing checks, could authorize real actions. See `docs/VERIFICATION-GAPS.md` G-73 to G-78.
+
+- **A pull request merge needs a signed approval** for that pull request (`github-pr-approval` 1.1.0, G-73). The review, check, branch and risk signals come from the caller and can only refuse a merge now. Reading a pull request (`github:pr-fetch`) has its own policy, `github-pr-read` 1.0.0 (superseded on 2026-09-30 by 1.1.0, which needs an approval). Both were approved in production the same day.
+- **An older approved policy version is refused once a newer one is approved** (G-74), for every policy, not only connector actions. Send the version in effect; approving an older version again rolls back.
+- **Self hosted quickstart uses `customer-refund` 1.2.0**: its demo refund is refused without a manager approval. The offline check keeps 1.1.0 to prove the authorized path end to end.
+- **Every refund needs a signed manager approval** (`customer-refund` 1.2.0, G-75). Under 1.1.0 a refund up to 10000 was authorized on the agent's own claim that the order was eligible and passed the fraud check. 1.2.0 also refuses a refund of 0 or less. Approved in production the same day, so it is in effect. Read the version with `GET /policies/in-effect?capability=paytm:refund`.
+- **Slack posts go only to channels on the server's allowlist** (G-76). Set `SLACK_ALLOWED_CHANNEL_IDS` (comma separated channel ids); unset refuses every post. The caller's `channelAuthorized` is no longer trusted, and `parameters.channel` must equal the Intent's `target`. Applies on deploy.
+- **A connector policy cannot let caller facts alone authorize a write** (G-77). A test requires every approve rule of a bound write capability to need a signed approval or a fact the server checks. If you add a connector, classify its capabilities in `connector-policies-not-self-authorizing.test.ts`.
+- **Rate limit on the public routes that do work** (G-78): `POST /refusal/verify`, `POST /execution-intents/verify`, `POST /audit/verify` and `/handbook` share a per IP limit, `RATE_LIMIT_PUBLIC_PER_MINUTE` (default 60). Over it they return `429` with `Retry-After`.
+- **An LLM tool call needs a signed human approval** for that tool (`llm-tool-call` 1.1.0, G-74), instead of the caller declaring `humanApproval: true`.
+
+**Added**
+
+- **`GET /policies/in-effect?capability=paytm:refund`** returns the policy a request for a capability must declare right now: the bound name and the version most recently approved through policy governance. Agents can read it before sending instead of writing a version into their code, so approving a new version needs no change to the agent. See [Get the policy in effect](/api-reference/endpoints/get-policy-in-effect).
+
+**Fixed**
+
+- On the hosted API, a malformed JSON body returned `500`; it now returns `400 Malformed JSON body.` (G-69).
+- **Paytm refund agent (`parmana-paytm-agent`, a separate service): an approved refund could be paid twice** (G-70). Its `/agent/refunds` endpoint asked Parmana to execute the refund and then called Paytm itself as well, while Parmana had already sent the refund to Paytm through its connector. The agent no longer calls Paytm; it returns Paytm's result from the Trust Record. It also reads the policy version from `GET /policies/in-effect` instead of sending 1.0.0, and can forward a signed manager approval (`approvalArtifact`). Deployed 2026-09-28; a refused refund was verified in production, and an approved one has not been observed live yet.
+
+- **Paytm refunds: more than one refund per transaction, and the reason reaches Paytm** (G-71). A `paytm:refund` Intent may carry `refundReference`, the caller's own id for one refund: the Paytm refId is then derived from the order, the transaction and that reference, so separate partial refunds of one transaction get separate refIds while retries of one refund keep the same one. Without it, the refId is exactly what it was. `refundReason` is now passed to the connector service, which sends it to Paytm as the refund comment. Both are optional (at most 128 and 256 characters). The refund agent (`parmana-paytm-agent`) sends both since its release of the same day: its `refId` as `refundReference`, its `reason` as `refundReason`.
+
+## 2026-09-27
+
+**Added**
+
+- **Signed human approval, declared in the policy, for any action.** A policy lists in `approvalSignals` which of its signals need a signed approval and where the resource (and optionally an amount) is in the request. `ApprovalSignalVerifier` enforces it for every action, before authorization and again at the gateway, and each approval is used once. Adding an approval to an action is a policy change. See [Human approval](/concepts/human-approval#add-an-approval-to-any-action).
+- **Large refunds use it first.** A `paytm:refund` above 10000 runs only with a signed approval from a trusted approver, for that order and covering that amount. `managerApproved: true` without one is refused. Approvers create a key with `scripts/generate-approver-key.ts` and sign with `scripts/sign-approval.ts`. No approver is configured by default.
+
+**Changed**
+
+- **A live action's policy version is decided by policy governance.** The policy name for each action stays fixed in code; the version is the one most recently approved for that name. A new version takes effect when it is approved, with no deploy, and approving an older version again rolls back. A request naming any other version is refused with a message naming the version in effect, so agents must send that version. See [Human approval](/concepts/human-approval#why-each-action-is-bound-to-one-policy).
+- **`paytm:refund` now uses `customer-refund` 1.1.0.** Up to 10000 is automatic, with no `managerApproved` needed; above 10000 and up to 100000 needs a signed manager approval; above 100000 is refused. In production, refunds move to 1.1.0 when it is approved through policy governance.
+- Approval signatures are verified with Ed25519 only, whatever the server's own signing algorithm is.
+
+**Fixed**
+
+- An approver could not be added on Vercel, because approver public keys were read only from files the platform cannot provide. A trusted approver entry can now carry its public key as `publicKeyPem` (G-68).
+- A valid signed approval (HubSpot amount changes) was always refused at the gateway, because the approval was used up by the first of the two checks. It is now used once, at authorization (G-67).
+
+**Documentation**
+
+- **Policy lifecycle and approvals.** One guide, end to end: write a policy, propose it, a second person approves it, how it takes effect, and how a person signs off on a single action. Commands for Bash and PowerShell. See [Policy lifecycle and approvals](/guides/policy-lifecycle-and-approvals).
+- **Human approval.** A new page, [Human approval](/concepts/human-approval), states where people approve what agents do today, how to query refused requests, and what is not available yet: a refused request cannot be approved afterwards, and refunds have no checked manager approval. Recorded as G-65 and G-66 in `docs/VERIFICATION-GAPS.md`.
+
+## 2026-09-25
+
+**Added**
+
+- **Self hosted deployment.** `docker compose up -d --build --wait` runs Parmana and its own Postgres on your infrastructure, with signing keys, API keys, migrations and policies handled, and nothing sent to Parmana. See [Self hosted Parmana](/self-hosted/overview) and the [quickstart](/self-hosted/quickstart).
+- **Offline verification.** `bash docker/local/offline-check/run.sh` proves, on a network with no internet route, that policy approval, an authorized and a refused decision, and Trust Record verification with only the public keys all work. See [Offline verification](/self-hosted/offline-verification).
+- `PARMANA_STORAGE=postgres`. It selects the same Postgres storage as `supabase`, which is unchanged. See the [environment variable reference](/deployment/environment-variables#storage).
+
+**SDK 1.3.0, published on npm and PyPI**
+
+Both SDKs now cover the same operations. Both were published on 2026-09-25: `npm install @parmana/sdk` and `pip install parmana` install 1.3.0. See [SDK coverage of the API](/sdks/api-coverage).
+
+- Policy governance in both SDKs: propose, list for review, approve and reject a policy change, and sign the step up authorization on the approver's machine (`signPolicyChangeStepUp()`, `parmana.crypto.sign_policy_change_step_up()`). An approver no longer needs a clone of the repository.
+- `caller()` (`GET /callers/me`), `publicKey()` / `public_key()` (`GET /keys/{keyId}`) and Trust Record listing (`GET /trust-records`) in both SDKs.
+- TypeScript: offline verification of Trust Records and Execution Intents (`verifyExecutionTrustRecordOffline`, `verifyExecutionIntentOffline`), which only the Python SDK had; `latestReceipt()`; and `statusCode` on every HTTP error, which only the Python SDK had (`status_code`).
+- Python: the offline verifiers also accept the SDK's own models, so `client.execution_intent(id).intent` can be passed directly; `latest_receipt()` shortcut.
+
+**Changed**
+
+- A request whose action was released and whose connector call then failed (unreachable, timed out, or an error response) now returns `502` with code `EXECUTION_OUTCOME_UNKNOWN` and a message naming the `businessTransactionId` and `authorizationId`. It used to be a bare `500 Internal Server Error`. The Execution Intent is `ERRORED` as before: do not resubmit, check the target system and close the intent with resolve. See the [error catalog](/api-reference/error-catalog).
+
+**Added**
+
+- `npm run db:migrate`: tracked migrations for any Postgres. `status` and `apply --dry-run` are read only, `apply` runs each pending migration once, and `baseline --through <file>` records the migrations a database already has without running them. See the [production runbook](/deployment/production), step 2.
+
+**Corrected**
+
+- `scripts/apply-all-migrations.sql` is safe to run once on an empty database, and **not** safe to run again on a database that holds data. The docs used to say otherwise. For an existing database, apply only the migration files it does not have yet.
+
+## 2026-09-21
+
+**Added**
+
+- **Execution Intents.** Before an action is released to a connector, the runtime now signs and stores a record of
+  exactly what it is about to release. If that cannot be done, nothing is released and the caller gets
+  `503 EXECUTION_INTENT_UNAVAILABLE`. This closes the ordering gap recorded as G-52 and makes the missing record
+  recorded as G-53 repairable. See [Execution Intents](/concepts/execution-intents).
+- Four routes: `POST /execution-intents/verify` (no credential needed), `GET /execution-intents/{businessTransactionId}`,
+  `GET /execution-intents/unfinalized` and `POST /execution-intents/{businessTransactionId}/finalize`. The last two need a
+  credential provisioned as a verified human. Finalize rebuilds a missing Execution Trust Record for a released action
+  without calling the connector, and is safe to run twice.
+- A fifth route, `POST /execution-intents/{businessTransactionId}/resolve`, lets a verified human close an intent in state `PREPARED` or `ERRORED` after reconciling it at the connector. It records what they found (`NOT_EXECUTED` or `EXECUTED`), a required note, who did it and when, and takes the intent out of the unfinalized list. It is idempotent and never calls a connector. The resolution is an attributed operator statement in unsigned status. It is not tamper evident and it is not a Trust Record.
+- `scripts/verify-execution-intent.ts` verifies an intent offline with only the public key.
+- New error codes: `EXECUTION_INTENT_UNAVAILABLE` (503), `EXECUTION_INTENT_NOT_FOUND` (404),
+  `EXECUTION_INTENT_RESULT_NOT_RECORDED` (409) `EXECUTION_INTENTS_NOT_ENABLED` (501), `EXECUTION_INTENT_NOT_RESOLVABLE` (409) and `EXECUTION_INTENT_RESOLUTION_INVALID` (400). See the
+  [error catalog](/api-reference/error-catalog).
+- The environment variable `EXECUTION_INTENTS_CHECK`, which only has an effect in `test` and `development`.
+
+**Changed, and needs action before you deploy**
+
+- Execution Intents are enforced by default and cannot be switched off in production. **Apply
+  `supabase/migrations/20260921120000_add_execution_intents.sql` before you deploy this version.** Without the table,
+  every execution is refused with `503 EXECUTION_INTENT_UNAVAILABLE`. The migration only adds a table and is safe to run
+  twice.
+- `GET /ready` now also checks that the `execution_intents` table exists, and returns `503` with `NOT_READY` and the
+  migration file name when it does not.
+- `EXECUTION_RECORD_INCOMPLETE` is no longer a dead end. The signed intent exists, and an operator can rebuild the
+  record with `POST /execution-intents/{businessTransactionId}/finalize` when the intent is in state `RELEASED`.
+- Each released action now costs one more signing operation and three more database writes. Under AWS KMS that is one
+  more `kms:Sign`, about 35 ms in the one measurement made, from a Windows machine to `ap-south-1`.
+
+**Known limits**
+
+- A resolution is not tamper evident and does not create a Trust Record. For an action that ran and has no Trust
+  Record, the signed intent, the operator's note and the connector's own record are the evidence.
+
+- The SDK methods for the Execution Intent routes are available from SDK 1.2.0, published on 2026-09-21. Earlier versions do not have them. The TypeScript SDK has no offline intent verifier.
+
+**Added to the SDKs (version 1.2.0 for both, published on 2026-09-21)**
+
+- TypeScript `ParmanaClient`: `executionIntent`, `verifyExecutionIntent`, `unfinalizedExecutionIntents`, `finalizeExecutionIntent`, `resolveExecutionIntent`, with the `ExecutionIntentApi` class and its types.
+- Python `ParmanaClient`: `execution_intent`, `verify_execution_intent`, `unfinalized_execution_intents`, `finalize_execution_intent`, `resolve_execution_intent`, with `ExecutionIntentApi`, the intent models, and `parmana.crypto.verify_execution_intent_offline`, an offline verifier that needs only the public key.
+
+**Fixed**
+
+- The JSON schema `$id` values under `schemas/` used the domain `schemas.parmana.ai`. They now use
+  `schemas.parmanasystems.com`. They are identifiers only and no route or response changed.
+
+## 2026-09-20
+
+**Changed**
+
+- The Execution Gateway now fails closed on policy binding. An authorization with no
+  `policyContentHash`, a policy that has no signed approval record, a policy whose live content
+  differs from its approved content, or an error from the approval check all reject the request
+  before the connector runs. Authorizations signed before `policyContentHash` existed are now
+  rejected instead of skipped, so re-authorize any in flight request.
+- Execution time policy governance verification is now on by default. It is relaxed only when
+  `NODE_ENV` is `test` or `development`, and `POLICY_EXECUTION_VERIFICATION_ENFORCED` can no
+  longer switch it off in production. Every policy you execute against needs a signed approval
+  record before you promote a deployment.
+- `ExecutionGateway` requires a `policyRepository` and a `policyApprovalVerifier` at
+  construction. Tests and examples that predate this can set `allowUnverifiedPolicy: true`,
+  which production must not use. `GatewayVerificationResult` gains
+  `checks.policyGovernanceVerified` and `policyGovernanceViolation`.
+
+**Fixed**
+
+- Signing a full Execution Trust Record under AWS KMS failed with `Member must have length less than
+or equal to 4096`, because KMS refuses a raw Ed25519 message over 4096 bytes. A message over that
+  size is now signed as a fixed 97 byte commitment (a prefix, a NUL byte, and the SHA-512 digest), and
+  verifiers accept it. Signatures issued before this change are unaffected. A verifier you wrote
+  yourself must implement the same rule to verify large KMS signed records, see the
+  [large message rule](/guides/verify-independently). The Python SDK's offline verifier accepts the commitment form. That fix ships in Python SDK 1.1.5, published to PyPI on 2026-09-20.
+- The Python SDK now declares the `cryptography` package that `parmana.crypto` (the offline Trust Record
+  verifier) imports. It is an optional extra, `pip install "parmana[verify]"`, and is included in the `dev`
+  extra. It was previously imported but undeclared, which made the `Python SDK` CI check fail on `mypy`.
+- The runtime now proves the evidence signing path works before it releases an action. If signing
+  is unhealthy the request is refused with `503 SIGNING_UNAVAILABLE` and nothing is executed. If the
+  action was released and the signed record then cannot be produced or persisted, the response is
+  `500 EXECUTION_RECORD_INCOMPLETE` with the `businessTransactionId` and `authorizationId`, and you must
+  reconcile instead of retrying as a new transaction. Enforced everywhere except `NODE_ENV` `test` and
+  `development`. The startup log gains `signingReadinessConfigured`. This mitigates the ordering gap G-52
+  and does not close it.
+- New page [AWS KMS signing](/deployment/aws-kms-signing): create the key, the Vercel role and policy, the environment, and how to verify. Adds `npm run verify:kms` (`scripts/verify-kms-signing.ts`), which signs test data through the repository's own `KmsSigner` on both sides of the 4096 byte KMS limit and requires KMS to refuse a raw message over it. Verified on 2026-09-20 against the real key with a limited IAM user, and end to end with the server signing a full Trust Record under KMS. Pages that said KMS was roadmap or not built (Cryptography, FAQ, Local deployment, Deploy patterns) are corrected. Azure Key Vault, Google Cloud KMS and HSM remain unimplemented.
+- An approved action whose connector is not configured now returns `503` with code `CONNECTOR_NOT_REGISTERED` and the message `No connector is registered for capability '<action>' on this deployment. Nothing was executed.` Before, it was a bare `500` with no code, and only the server log named the cause. Both SDKs already expose the code (`serverCode` in TypeScript, `server_code` in Python 1.1.6).
+- Deployment artifacts found by following the production runbook on a fresh clone. The `Dockerfile` copied a package that no longer exists (`packages/receipt`) and skipped real workspaces, and the image did not contain `docs/site/parmana-handbook.pdf`, which the API needs at startup, so a container built from it could not have started. `scripts/apply-all-migrations.sql` was missing 7 of 30 migrations (including `execution_audit_events` and `policies`) and carried outdated text for others. It is now generated from `supabase/migrations/` with `npm run generate:migration-bundle`, and a test fails when it drifts. The runbook and the policy governance guide now say that proposing a policy change also needs a `USER` (human) key, because a service key is refused with `403 NON_HUMAN_CALLER_DENIED`.
+- TypeScript SDK 1.1.6 and Python SDK 1.1.6 (both published on 2026-09-20, so both SDKs now share one version). TypeScript: the client builds a default `HttpTransport` from its own configuration when `transport` is omitted, so `timeout`, `retryPolicy` and `apiKey` apply with no extra wiring (1.1.5 and earlier threw `Transport is required.`), and `userAgent` is now sent as the `User-Agent` header. Python: `InternalServerError` now carries the server's code on `server_code`, so you can tell `SIGNING_UNAVAILABLE` from `EXECUTION_RECORD_INCOMPLETE`. The Python client docstring now lists 429 among retried statuses.
+- TypeScript SDK 1.1.3 (published to npm on 2026-09-20): `InternalServerError` now carries the
+  Runtime's own `code` on `serverCode`. Use it to tell `SIGNING_UNAVAILABLE` (503, nothing was executed, retry
+  later with a new `businessTransactionId`) from `EXECUTION_RECORD_INCOMPLETE` (500, the action was released,
+  do not retry as a new transaction). The SDK never auto retries `POST /execute`, so nothing is retried for you.
+
+## 2026-09-14
+
+**Added**
+
+- `createBusinessTransaction()` (TypeScript) and `create_business_transaction()` (Python):
+  derives the three id pairs a Business Transaction must keep consistent, removing the most
+  common integration mistake. Both SDKs published: `@parmana/sdk@1.1.2` on npm,
+  `parmana@1.1.4` on PyPI.
+- Documentation-site domain fixed to `docs.parmanasystems.com`; repository links updated to
+  `github.com/pavancharak/parmana`.
+
+## 2026-09-11
+
+**Added**
+
+- Standalone offline signature verifiers with no network/disk dependency, TypeScript
+  (`OfflineVerifier`) and Python (`offline_verifier.py`), cross-verified against each other.
+- Public-key discovery: `GET /keys/:keyId` and `GET /.well-known/jwks.json`.
+- Verification-key rotation support (`PARMANA_VERIFICATION_KEY_ID`, a rotation script), so a
+  key can be rotated without breaking verification of records signed under the old key.
+- Optional `HYBRID_SIGNATURE_REQUIRED` policy flag: an opted-in deployment now detects a
+  stripped post-quantum signature on a record that should have one.
+
+**Fixed**
+
+- A production deployment with real caller authentication surfaced a database constraint gap:
+  successful authenticated requests could fail closed with a `503` before policy ever ran.
+  Fixed via a migration.
+- `FileKeyProvider` reported the wrong signature algorithm for any key other than the default.
+
+## 2026-09-10
+
+**Added**
+
+- `PostgresRateLimitStore`: `/execute` rate limiting is now durable and fleet-wide when
+  `DATABASE_URL` is configured (previously in-process only).
+- `GET /trust-records`: bulk, paginated export of full signed Execution Trust Records.
+- Structured, level-gated logging (`createLogger`/`getLogger`).
+- `npm run loadtest`: a load-testing script for `POST /execute`.
+
+**Fixed**
+
+- A misconfigured KMS/HSM key provider (`KEY_PROVIDER=aws-kms` etc.) now fails closed at
+  startup instead of silently falling back to storing keys on disk.
+- `GET /ready` now reports `authDisabled` explicitly in its JSON response.
+- The Gateway's identity is now configurable (`PARMANA_GATEWAY_ID`) instead of hardcoded.
+- A long-lived HubSpot credential with no rotation in 90 days now triggers a startup warning.
+
+## 2026-09-09
+
+**Added**
+
+- `PolicyValidator.findRuleConflicts()`: flags policy rules whose conditions can both be true
+  at once, advisory only, verified against every shipped policy with zero false positives.
+
+**Fixed**
+
+- Policy validation now fails closed on any rule-referenced fact with no `boundSignals`
+  binding, instead of a load-time warning nobody would see. All shipped policies updated.
+- `TenantKeyResolver`: Execution Authorizations now sign under a per-tenant key when one is
+  provisioned, instead of always the shared default key.
+
+**Changed**
+
+- `PRIMARY_SIGNATURE_PROVIDER`/`SECONDARY_SIGNATURE_PROVIDER` accept `ml-dsa-65` as an alias
+  for the internal `dilithium3` identifier.
+
+## 2026-09-06 to 2026-09-07
+
+**Added**
+
+- Execution-time Policy Governance verification: a tampered or unapproved policy can now be
+  refused before evaluation runs (feature-flagged, off by default).
+- `PolicyChangeApprovalRecord` signatures are now verified (not just content hashes), hash-chained,
+  and re-checked periodically, not just at startup.
+- Per-caller tamper-evident audit-event chaining, with a standalone chain verifier.
+- Signed caller-capability claims in the Execution Authorization payload (defense-in-depth).
+
+## 2026-08-16 to 2026-08-19
+
+**Added**
+
+- GitHub connector, with ephemeral GitHub-App-installation credentials.
+
+**Fixed**
+
+- Stale documentation and code-comment references to the removed Razorpay connector cleaned
+  up across the repository.
+
+## 2026-08-18
+
+**Added**
+
+- Policy Governance: a maker-checker workflow for policy changes (propose, approve, reject,
+  signed approval records), plus a read-only internal review UI.
+
+## 2026-08-12
+
+**Added**
+
+- Caller-to-capability scoping (`allowedCapabilities`).
+
+**Removed**
+
+- The Razorpay connector was removed from the repository entirely. It is not a supported
+  integration path; see [Integrations](/integrations/overview) for what's currently live.
+
+## 2026-08-11
+
+**Added**
+
+- Rate limiting on `POST /execute` (per authenticated caller) and `GET /health`/`GET /ready`
+  (per IP, more permissive).
+- TypeScript SDK renamed `@parmana/legacy-reference` to `@parmana/sdk`, plus retry logic
+  (backoff on idempotent GETs against 502/503/504).
+
+**Fixed**
+
+- Both SDKs' documented quickstart examples are now run against a real server on every test
+  run, not just syntax-checked. Found and fixed several real bugs in the process, including
+  every TypeScript example importing a package name that never existed.
+
+## 2026-08-09
+
+**Added**
+
+- Hybrid signature support completed (classical + post-quantum), see [Security](/security/overview).
+
+## 2026-08-05
+
+- HubSpot Signed Approval Artifact support, closing a policy-verification gap for that
+  connector.
+
+## 2026-07-28
+
+**Security**
+
+- Fixed an execution-authorization bypass: policy signals are now bound to the executed
+  intent (`Policy.boundSignals` + `SignalIntentBinder`), closing a gap where a caller could
+  declare one action's signals while a different action actually executed. Found via an
+  external adversarial security exercise. See [Security](/security/overview).
+
+## 2026-07-18
+
+**Added**
+
+- Caller bearer-key authentication, gating every route except `/health`, `/ready`,
+  `/openapi.yaml`, and `/documentation`. Any documentation describing an unauthenticated API
+  predates this and is stale.
+
+## 2026-07-14
+
+**Added**
+
+- OpenAPI specification published, execution connector framework introduced.
+
+## 2026-07-11 to 2026-07-13
+
+**Added**
+
+- Credential isolation and secure enterprise-connector handling, see
+  [Credential isolation](/concepts/credential-isolation) and
+  [Content binding & TOCTOU](/concepts/content-binding-toctou).
+- Execution Trust pipeline and hybrid signatures introduced.
+
+## Earlier
+
+- **2026-07-01**: Python SDK `v1.0.0` released on PyPI, the first versioned artifact.
+- **2026-06-25**: First commit.
+
+## A note on terminology in older commits
+
+Commit messages from before 2026-08 sometimes use "Execution Governance" as an architecture
+name. The current, public-facing language avoids that term; if you find it in old commit
+history, it refers to what this site now calls Policy Governance and the Execution Gateway,
+not a separate product.
+
+## Full history
+
+```bash
+git log --oneline
+```

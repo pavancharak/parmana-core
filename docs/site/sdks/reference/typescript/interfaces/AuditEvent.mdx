@@ -1,0 +1,40 @@
+---
+title: "Interface: AuditEvent"
+---
+
+Defined in: [typescript/src/models/audit-event.ts:9](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/audit-event.ts#L9)
+
+A signed caller-authentication audit event, as recorded by
+CallerAuditSink (packages/api/src/auth/CallerAuditSink.ts) and
+verified by POST /audit/verify. Deliberately a loose bag beyond the
+three required fields -- event shapes can diverge on every field past
+these, and verification operates on canonical bytes over whatever
+object was actually signed, not a specific parsed shape.
+
+## Indexable
+
+> \[`key`: `string`\]: `unknown`
+
+## Properties
+
+### type
+
+> `readonly` **type**: `string`
+
+Defined in: [typescript/src/models/audit-event.ts:10](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/audit-event.ts#L10)
+
+---
+
+### occurredAt
+
+> `readonly` **occurredAt**: `string`
+
+Defined in: [typescript/src/models/audit-event.ts:11](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/audit-event.ts#L11)
+
+---
+
+### route
+
+> `readonly` **route**: `string`
+
+Defined in: [typescript/src/models/audit-event.ts:12](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/audit-event.ts#L12)

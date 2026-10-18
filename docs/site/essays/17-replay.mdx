@@ -1,0 +1,66 @@
+---
+title: "Replay: what it can and can't re-check"
+description: 'Two different things in Parmana share the word "replay". Neither one does everything the word suggests.'
+---
+
+In March, a refund agent sends ₹6,500 back to a customer. A manager signed the approval, the policy approved it, the gateway released it, and Parmana wrote a signed Trust Record.
+
+In September, an auditor picks that refund out of a sample and asks two questions:
+
+- Has this record changed since it was written?
+- If you put the same facts through the same policy today, would you get the same answer?
+
+Both are fair. "Replay" sounds like it answers both. In Parmana today, it answers narrower versions of each, in two separate places, and I want to be precise about which is which.
+
+## The problem: one word, two meanings
+
+When people hear "replay", they imagine the system rebuilding the whole decision from its inputs and checking that it lands in the same place. That is a strong claim. It would mean re-checking the policy, the signals, the approval, the bindings and the release, for everything in the record.
+
+Parmana does not do that. It has two real, tested pieces that each do part of a smaller job. Calling both of them "replay" without qualification would overclaim.
+
+## Part 1: the replay route is a signature recheck
+
+The HTTP API and both SDKs expose a replay call. You give it a transaction id. It:
+
+- Loads the stored Trust Record for that transaction from Parmana's own storage.
+- Recomputes the record's hash and compares it with the stored hash.
+- Verifies the record's signature, and, when the record carries a post-quantum signature as well, that one too.
+- Returns the transaction id, the record hash and whether it verified.
+
+The route sits behind caller authentication, and a caller can only replay its own transactions. For anyone else's, it answers "not found".
+
+That answers a version of the auditor's first question: the record Parmana holds still matches its signature. It re-executes nothing, reconstructs nothing and re-evaluates nothing. It is the same kind of check as verification, with a replay-shaped response. I have kept it as it is on purpose, because both SDKs are typed against that response, but I will not describe it as more than it is.
+
+## Part 2: the replay engine re-evaluates one decision
+
+Separately, the repository has a replay package. Its engine does something genuinely different: it runs the policy again.
+
+You hand it three things: a Trust Record, the business transaction, and the policy. It takes the recorded decision from the record, runs the real policy engine on the transaction's signals, and compares the two outcomes. It returns the recorded decision, the replayed decision and whether they match.
+
+That answers a version of the auditor's second question: given these signals and this policy, does the policy still reach the same outcome? It is tested to give identical output regardless of input order, nine tests in all, and a tutorial in the repository runs a real decision through it and prints the recorded decision, the replayed decision and "Replay Match: true".
+
+## What it does not do
+
+This is the important section for this post.
+
+- **The replay route does not re-run anything.** It is a hash and signature check of a record from Parmana's own storage.
+- **The replay engine is not connected to the server.** Nothing in the API or the runtime uses it. No HTTP route reaches it, including the replay route. It is standalone library code, used from a clone of the repository. It is not published to npm.
+- **It looks at one execution.** The engine replays the first execution in a Trust Record only, not every execution in it.
+- **It compares outcomes, not reasoning.** "Match" means both sides approved, or both rejected. It does not compare the reason or which rule fired.
+- **It trusts what you hand it.** As I read the code, the engine uses the transaction and policy you give it. It does not check the record's signature, or that the policy you supplied is the one whose content hash the record names. Doing that is up to you, with the verification tools.
+- **It re-evaluates the policy, nothing else.** It does not re-verify the signed human approval, re-check signals against external systems, re-run the check that a signal matches the request, or repeat any of the gateway's release checks. In a live request those checks happen around the policy; the engine runs only the policy step.
+- **It replays approvals, not refusals.** Its input is a Trust Record. There is no replay of a Refusal Record.
+- **"Verified live" means the tutorial.** The engine has been run end to end in the repository tutorial, not against a deployed server.
+- **It never touches the outside world.** Neither replay calls a connector or moves money. That is a feature, but it also means replay says nothing about what the payment system did.
+
+The broader claim, that replay semantically verifies every trust artifact, is on my list of future claims, explicitly not made today.
+
+## Back to the auditor
+
+So what do I tell the auditor about the ₹6,500 refund?
+
+For the first question, the record can be verified: through the replay route, through the verify routes, or offline against the public key, without trusting me. For the second, I can run the replay engine on that record with the policy version it names, and show the outcome still matches. But I have to say what that does and does not cover: the policy's verdict on those signals, not the approval, the bindings or the release.
+
+## The takeaway
+
+A word like "replay" carries a promise. I would rather keep the promise small and true. Parmana can show you a record has not changed, and, separately, that the policy still agrees with the recorded outcome for one execution. Rebuilding the whole decision, and wiring it into the server, is future work, and I will say so until it is not.

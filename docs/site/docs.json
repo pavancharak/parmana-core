@@ -1,0 +1,914 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "maple",
+  "name": "Parmana",
+  "description": "Execution Trust Infrastructure: verifiable trust between business authorization, policy evaluation, runtime execution, and execution evidence.",
+  "colors": {
+    "primary": "#6366F1",
+    "light": "#6366F1",
+    "dark": "#4338CA"
+  },
+  "background": {
+    "color": {
+      "light": "#FFFFFF",
+      "dark": "#1A1A1A"
+    }
+  },
+  "fonts": {
+    "family": "Inter"
+  },
+  "logo": {
+    "light": "/logo/logo-light.svg",
+    "dark": "/logo/logo-dark.svg"
+  },
+  "favicon": "/logo/seal.svg",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Get started",
+        "groups": [
+          {
+            "group": "Start here",
+            "pages": [
+              "index",
+              "playground",
+              "choose-your-path",
+              "quickstart",
+              "how-parmana-thinks",
+              "how-parmana-compares"
+            ]
+          },
+          {
+            "group": "Evaluate and audit",
+            "pages": [
+              "evaluation/overview",
+              "evaluation/audit-guide",
+              "evaluation/claims-and-evidence",
+              "evaluation/proof-audit",
+              "evaluation/case-studies",
+              "evaluation/paper",
+              "evaluation/talk-and-videos",
+              "license"
+            ]
+          },
+          {
+            "group": "For AI agents",
+            "pages": ["agents/integrate", "agents/deploy"]
+          }
+        ]
+      },
+      {
+        "tab": "Concepts",
+        "groups": [
+          {
+            "group": "Core concepts",
+            "pages": [
+              "concepts/policies-and-the-decision",
+              "concepts/execution-authorization",
+              "concepts/the-gateway",
+              "concepts/credential-isolation",
+              "concepts/gateway-attestation",
+              "concepts/execution-trust-records",
+              "concepts/refusal-records",
+              "concepts/human-approval",
+              "concepts/business-validation",
+              "concepts/execution-intents",
+              "concepts/caller-audit-trail",
+              "concepts/determinism-and-clocks",
+              "concepts/content-binding-toctou"
+            ]
+          },
+          {
+            "group": "Architecture",
+            "pages": [
+              "architecture/overview",
+              "architecture/packages",
+              "architecture/execution-pipeline"
+            ]
+          },
+          {
+            "group": "Verification and evidence",
+            "pages": [
+              "verification/overview",
+              "verification/verify-in-browser",
+              "replay/overview",
+              "cryptography/overview",
+              "storage/overview"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Essays",
+        "groups": [
+          {
+            "group": "Start here",
+            "pages": ["essays/overview"]
+          },
+          {
+            "group": "Why Parmana exists",
+            "pages": [
+              "essays/01-claim-is-not-a-fact",
+              "essays/02-guardrails-are-advice",
+              "essays/03-agents-will-rewrite-themselves",
+              "essays/models-as-insider-risks",
+              "essays/04-how-parmana-works",
+              "essays/94-how-parmana-thinks"
+            ]
+          },
+          {
+            "group": "The decision",
+            "pages": [
+              "essays/05-policies-as-data",
+              "essays/06-signed-human-approval",
+              "essays/07-authority-grants",
+              "essays/08-per-request-limits-are-not-enough",
+              "essays/41-writing-your-first-policy",
+              "essays/42-one-capability-one-policy"
+            ]
+          },
+          {
+            "group": "The release",
+            "pages": [
+              "essays/09-the-gateway",
+              "essays/10-execution-authorization",
+              "essays/11-binding-approval-to-content",
+              "essays/12-write-it-down-first",
+              "essays/13-proving-the-gateway",
+              "essays/61-signing-more-than-4kb",
+              "essays/62-ready-to-sign-before-releasing"
+            ]
+          },
+          {
+            "group": "The evidence",
+            "pages": [
+              "essays/14-verify-without-trusting-me",
+              "essays/15-proving-what-didnt-happen",
+              "essays/16-who-asked",
+              "essays/17-replay",
+              "essays/18-verify-it-yourself",
+              "essays/19-choosing-signatures",
+              "essays/59-a-key-for-one-algorithm",
+              "essays/60-which-key-signed-this"
+            ]
+          },
+          {
+            "group": "Governance and operations",
+            "pages": [
+              "essays/20-maker-checker-for-one-person",
+              "essays/21-governing-the-rules",
+              "essays/22-rotating-every-key",
+              "essays/23-running-parmana-yourself",
+              "essays/51-who-is-calling",
+              "essays/67-refusing-to-start-misconfigured",
+              "essays/68-healthy-versus-ready"
+            ]
+          },
+          {
+            "group": "Connecting agents and systems",
+            "pages": [
+              "essays/24-connecting-an-agent",
+              "essays/25-connecting-any-system",
+              "essays/26-before-a-refund-agent-touches-razorpay",
+              "essays/32-refunds-end-to-end-through-paytm",
+              "essays/33-letting-an-agent-update-a-crm-deal",
+              "essays/34-letting-an-agent-merge-a-pull-request",
+              "essays/35-an-agent-that-posts-to-slack"
+            ]
+          },
+          {
+            "group": "Proof and honesty",
+            "pages": [
+              "essays/27-testing-in-production-without-moving-money",
+              "essays/28-what-done-means",
+              "essays/29-what-parmana-cant-stop",
+              "essays/30-mapping-to-regulation",
+              "essays/31-how-parmana-compares",
+              "essays/86-for-a-security-lead",
+              "essays/95-mutation-testing"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Build with Parmana",
+            "pages": [
+              "guides/full-integration-overview",
+              "guides/write-your-first-policy",
+              "guides/policy-governance-maker-checker",
+              "guides/policy-lifecycle-and-approvals",
+              "guides/manage-approvers",
+              "guides/approval-notifications",
+              "guides/credentials-maker-checker-approver",
+              "guides/authorize-and-execute",
+              "guides/connect-an-agent",
+              "guides/connect-any-external-system",
+              "guides/connect-a-business-signal-source",
+              "guides/grant-an-agent-authority",
+              "guides/session-credentials",
+              "guides/choose-a-signature-provider"
+            ]
+          },
+          {
+            "group": "Verify and audit",
+            "pages": ["guides/verify-independently", "guides/detect-tampering"]
+          },
+          {
+            "group": "Worked examples",
+            "pages": [
+              "guides/live-api-and-demos",
+              "guides/end-to-end-paytm-flow",
+              "tutorials/index"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "TypeScript SDK",
+        "groups": [
+          {
+            "group": "Get started",
+            "pages": [
+              "sdks/typescript",
+              "sdks/typescript-configuration",
+              "guides/typescript-sdk-overview",
+              "guides/typescript-sdk-quickstart"
+            ]
+          },
+          {
+            "group": "Build",
+            "pages": [
+              "guides/typescript-sdk-ai-agents",
+              "guides/typescript-sdk-production"
+            ]
+          },
+          {
+            "group": "API reference",
+            "pages": [
+              {
+                "group": "Classes",
+                "pages": [
+                  "sdks/reference/typescript/classes/ApproverApi",
+                  "sdks/reference/typescript/classes/AuditApi",
+                  "sdks/reference/typescript/classes/AuthenticationError",
+                  "sdks/reference/typescript/classes/AuthorityGrantApi",
+                  "sdks/reference/typescript/classes/AuthorizationError",
+                  "sdks/reference/typescript/classes/BusinessSignalSourceApi",
+                  "sdks/reference/typescript/classes/CallerApi",
+                  "sdks/reference/typescript/classes/ConfigurationError",
+                  "sdks/reference/typescript/classes/ConflictError",
+                  "sdks/reference/typescript/classes/ExecutionApi",
+                  "sdks/reference/typescript/classes/ExecutionIntentApi",
+                  "sdks/reference/typescript/classes/ExecutionRejectedError",
+                  "sdks/reference/typescript/classes/ExternalConnectorApi",
+                  "sdks/reference/typescript/classes/HealthApi",
+                  "sdks/reference/typescript/classes/HttpTransport",
+                  "sdks/reference/typescript/classes/InternalServerError",
+                  "sdks/reference/typescript/classes/NetworkError",
+                  "sdks/reference/typescript/classes/NotFoundError",
+                  "sdks/reference/typescript/classes/ParmanaClient",
+                  "sdks/reference/typescript/classes/ParmanaError",
+                  "sdks/reference/typescript/classes/PolicyApi",
+                  "sdks/reference/typescript/classes/RateLimitError",
+                  "sdks/reference/typescript/classes/ReceiptApi",
+                  "sdks/reference/typescript/classes/RefusalApi",
+                  "sdks/reference/typescript/classes/ReplayApi",
+                  "sdks/reference/typescript/classes/ReplayError",
+                  "sdks/reference/typescript/classes/TimeoutError",
+                  "sdks/reference/typescript/classes/TransactionApi",
+                  "sdks/reference/typescript/classes/TrustRecordApi",
+                  "sdks/reference/typescript/classes/ValidationError",
+                  "sdks/reference/typescript/classes/VerificationApi",
+                  "sdks/reference/typescript/classes/VerificationError"
+                ]
+              },
+              {
+                "group": "Interfaces",
+                "pages": [
+                  "sdks/reference/typescript/interfaces/ApprovalIssuer",
+                  "sdks/reference/typescript/interfaces/ApprovalIssuerChange",
+                  "sdks/reference/typescript/interfaces/ApprovalPayload",
+                  "sdks/reference/typescript/interfaces/ApprovalScope",
+                  "sdks/reference/typescript/interfaces/AuditEvent",
+                  "sdks/reference/typescript/interfaces/Authority",
+                  "sdks/reference/typescript/interfaces/AuthorityGrant",
+                  "sdks/reference/typescript/interfaces/AuthorityGrantChange",
+                  "sdks/reference/typescript/interfaces/AuthorityGrantLimit",
+                  "sdks/reference/typescript/interfaces/Authorization",
+                  "sdks/reference/typescript/interfaces/BusinessSignalSource",
+                  "sdks/reference/typescript/interfaces/BusinessSignalSourceChange",
+                  "sdks/reference/typescript/interfaces/BusinessTransaction",
+                  "sdks/reference/typescript/interfaces/BusinessTransactionMetadata",
+                  "sdks/reference/typescript/interfaces/CallerIdentity",
+                  "sdks/reference/typescript/interfaces/Configuration",
+                  "sdks/reference/typescript/interfaces/CreateBusinessTransactionOptions",
+                  "sdks/reference/typescript/interfaces/Decision",
+                  "sdks/reference/typescript/interfaces/EvidenceAnchor",
+                  "sdks/reference/typescript/interfaces/Execution",
+                  "sdks/reference/typescript/interfaces/ExecutionIntent",
+                  "sdks/reference/typescript/interfaces/ExecutionIntentStatus",
+                  "sdks/reference/typescript/interfaces/ExecutionIntentView",
+                  "sdks/reference/typescript/interfaces/ExecutionTrustRecord",
+                  "sdks/reference/typescript/interfaces/ExternalConnector",
+                  "sdks/reference/typescript/interfaces/ExternalConnectorChange",
+                  "sdks/reference/typescript/interfaces/FinalizeExecutionIntentResult",
+                  "sdks/reference/typescript/interfaces/Intent",
+                  "sdks/reference/typescript/interfaces/OfflineVerificationResult",
+                  "sdks/reference/typescript/interfaces/Override",
+                  "sdks/reference/typescript/interfaces/ParmanaErrorOptions",
+                  "sdks/reference/typescript/interfaces/ParmanaRelease",
+                  "sdks/reference/typescript/interfaces/ParmanaReleaseCondition",
+                  "sdks/reference/typescript/interfaces/PendingPolicyChange",
+                  "sdks/reference/typescript/interfaces/PolicyChangeForReview",
+                  "sdks/reference/typescript/interfaces/PolicyChangeStepUpAuthorization",
+                  "sdks/reference/typescript/interfaces/PolicyChangeStepUpAuthorizationPayload",
+                  "sdks/reference/typescript/interfaces/PolicyGovernanceAnchor",
+                  "sdks/reference/typescript/interfaces/PolicyInEffect",
+                  "sdks/reference/typescript/interfaces/PolicyReference",
+                  "sdks/reference/typescript/interfaces/PolicySignalRequirements",
+                  "sdks/reference/typescript/interfaces/PolicyValidationResult",
+                  "sdks/reference/typescript/interfaces/ProposePolicyChangeInput",
+                  "sdks/reference/typescript/interfaces/ProposedPolicyChange",
+                  "sdks/reference/typescript/interfaces/PublicKeyInfo",
+                  "sdks/reference/typescript/interfaces/Receipt",
+                  "sdks/reference/typescript/interfaces/RefusalBindingViolation",
+                  "sdks/reference/typescript/interfaces/RefusalIntentSnapshot",
+                  "sdks/reference/typescript/interfaces/RefusalRecord",
+                  "sdks/reference/typescript/interfaces/ReplayResult",
+                  "sdks/reference/typescript/interfaces/ResolveExecutionIntentInput",
+                  "sdks/reference/typescript/interfaces/ResolveExecutionIntentResult",
+                  "sdks/reference/typescript/interfaces/RetryPolicy",
+                  "sdks/reference/typescript/interfaces/SignApprovalInput",
+                  "sdks/reference/typescript/interfaces/SignPolicyChangeStepUpInput",
+                  "sdks/reference/typescript/interfaces/Signature",
+                  "sdks/reference/typescript/interfaces/SignedApproval",
+                  "sdks/reference/typescript/interfaces/Transport",
+                  "sdks/reference/typescript/interfaces/TransportRequest",
+                  "sdks/reference/typescript/interfaces/TransportResponse",
+                  "sdks/reference/typescript/interfaces/UnfinalizedExecutionIntents",
+                  "sdks/reference/typescript/interfaces/Verification",
+                  "sdks/reference/typescript/interfaces/VerifyParmanaReleaseOptions"
+                ]
+              },
+              {
+                "group": "Enumerations",
+                "pages": [
+                  "sdks/reference/typescript/enumerations/ErrorCode",
+                  "sdks/reference/typescript/enumerations/RetryStrategy"
+                ]
+              },
+              {
+                "group": "Type Aliases",
+                "pages": [
+                  "sdks/reference/typescript/type-aliases/ApprovalScopeComparator",
+                  "sdks/reference/typescript/type-aliases/AuthorityGrantLimits",
+                  "sdks/reference/typescript/type-aliases/BusinessTransactionStatus",
+                  "sdks/reference/typescript/type-aliases/DecisionOutcome",
+                  "sdks/reference/typescript/type-aliases/ExecutionIntentFinalizationMode",
+                  "sdks/reference/typescript/type-aliases/ExecutionIntentResolution",
+                  "sdks/reference/typescript/type-aliases/ExecutionIntentState",
+                  "sdks/reference/typescript/type-aliases/ExecutionMode",
+                  "sdks/reference/typescript/type-aliases/ExecutionStatus",
+                  "sdks/reference/typescript/type-aliases/FinalizeExecutionIntentOutcome",
+                  "sdks/reference/typescript/type-aliases/ParmanaReleaseVerification",
+                  "sdks/reference/typescript/type-aliases/PendingPolicyChangeStatus",
+                  "sdks/reference/typescript/type-aliases/PolicyGovernanceAnchorStatus",
+                  "sdks/reference/typescript/type-aliases/ProposeApproverChangeInput",
+                  "sdks/reference/typescript/type-aliases/ProposeAuthorityGrantChangeInput",
+                  "sdks/reference/typescript/type-aliases/ProposeBusinessSignalSourceChangeInput",
+                  "sdks/reference/typescript/type-aliases/ProposeExternalConnectorChangeInput",
+                  "sdks/reference/typescript/type-aliases/PublicKeys",
+                  "sdks/reference/typescript/type-aliases/ResolveExecutionIntentOutcome",
+                  "sdks/reference/typescript/type-aliases/SignatureAlgorithm",
+                  "sdks/reference/typescript/type-aliases/VerificationStatus"
+                ]
+              },
+              {
+                "group": "Functions",
+                "pages": [
+                  "sdks/reference/typescript/functions/canonicalSerialize",
+                  "sdks/reference/typescript/functions/createBusinessTransaction",
+                  "sdks/reference/typescript/functions/signApproval",
+                  "sdks/reference/typescript/functions/signPolicyChangeStepUp",
+                  "sdks/reference/typescript/functions/verifyExecutionIntentOffline",
+                  "sdks/reference/typescript/functions/verifyExecutionTrustRecordOffline",
+                  "sdks/reference/typescript/functions/verifyParmanaRelease"
+                ]
+              },
+              {
+                "group": "Variables",
+                "pages": [
+                  "sdks/reference/typescript/variables/DEFAULT_APPROVAL_TTL_SECONDS",
+                  "sdks/reference/typescript/variables/DEFAULT_RELEASE_CLOCK_SKEW_SECONDS",
+                  "sdks/reference/typescript/variables/MAX_APPROVAL_TTL_SECONDS",
+                  "sdks/reference/typescript/variables/VERSION"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Python SDK",
+        "groups": [
+          {
+            "group": "Get started",
+            "pages": [
+              "sdks/python",
+              "sdks/python-configuration",
+              "guides/python-sdk-overview",
+              "guides/python-sdk-quickstart"
+            ]
+          },
+          {
+            "group": "Build",
+            "pages": [
+              "guides/python-sdk-ai-agents",
+              "guides/python-sdk-production"
+            ]
+          },
+          {
+            "group": "API reference",
+            "pages": [
+              "sdks/reference/python/api/approver_api",
+              "sdks/reference/python/api/audit_api",
+              "sdks/reference/python/api/authority_grant_api",
+              "sdks/reference/python/api/business_signal_source_api",
+              "sdks/reference/python/api/caller_api",
+              "sdks/reference/python/api/execution_api",
+              "sdks/reference/python/api/execution_intent_api",
+              "sdks/reference/python/api/external_connector_api",
+              "sdks/reference/python/api/policy_api",
+              "sdks/reference/python/api/receipt_api",
+              "sdks/reference/python/api/refusal_api",
+              "sdks/reference/python/api/replay_api",
+              "sdks/reference/python/api/transaction_api",
+              "sdks/reference/python/api/trust_record_api",
+              "sdks/reference/python/api/verification_api",
+              "sdks/reference/python/builders",
+              "sdks/reference/python/client",
+              "sdks/reference/python/config/client_config",
+              "sdks/reference/python/config/transport",
+              "sdks/reference/python/crypto/approval",
+              "sdks/reference/python/crypto/canonical",
+              "sdks/reference/python/crypto/offline_verifier",
+              "sdks/reference/python/crypto/release",
+              "sdks/reference/python/crypto/step_up",
+              "sdks/reference/python/errors/api_error",
+              "sdks/reference/python/errors/configuration_error",
+              "sdks/reference/python/errors/http_error",
+              "sdks/reference/python/errors/network_error",
+              "sdks/reference/python/errors/replay_error",
+              "sdks/reference/python/errors/verification_error",
+              "sdks/reference/python/models/approval_issuer",
+              "sdks/reference/python/models/authority_grant",
+              "sdks/reference/python/models/business_signal_source",
+              "sdks/reference/python/models/caller",
+              "sdks/reference/python/models/execution_intent_results",
+              "sdks/reference/python/models/external_connector",
+              "sdks/reference/python/models/policy_change_results",
+              "sdks/reference/python/models/policy_in_effect",
+              "sdks/reference/python/models/replay_result",
+              "sdks/reference/python/serialization/decoder",
+              "sdks/reference/python/serialization/encoder",
+              "sdks/reference/python/transport/http_transport"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Verification SDK",
+        "groups": [
+          {
+            "group": "Get started",
+            "pages": [
+              "sdks/parmana-sign/overview",
+              "sdks/parmana-sign/public-keys"
+            ]
+          },
+          {
+            "group": "API reference",
+            "pages": [
+              "sdks/parmana-sign/verify-trust-record",
+              "sdks/parmana-sign/verify-execution-intent",
+              "sdks/parmana-sign/signing-primitives",
+              "sdks/parmana-sign/results-and-errors"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Connector SDKs",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": ["integrations/overview", "sdks/other-languages"]
+          },
+          {
+            "group": "Build a connector",
+            "pages": [
+              "guides/add-a-connector",
+              "integrations/connector-development-guide"
+            ]
+          },
+          {
+            "group": "Connector SDK references",
+            "pages": [
+              "reference/connector-sdk",
+              "reference/connector-sdk-python"
+            ]
+          },
+          {
+            "group": "Ready made connectors",
+            "pages": ["integrations/hubspot"]
+          }
+        ]
+      },
+      {
+        "tab": "REST API",
+        "groups": [
+          {
+            "group": "REST API guide",
+            "pages": [
+              "api-reference/introduction",
+              "api-reference/authentication",
+              "api-reference/error-handling",
+              "api-reference/idempotency-and-nonces",
+              "api-reference/error-catalog",
+              "sdks/api-coverage"
+            ]
+          },
+          {
+            "group": "Execution",
+            "pages": ["api-reference/endpoints/execute-transaction"]
+          },
+          {
+            "group": "Transactions",
+            "pages": [
+              "api-reference/endpoints/list-transactions",
+              "api-reference/endpoints/create-transaction",
+              "api-reference/endpoints/get-transaction"
+            ]
+          },
+          {
+            "group": "Verification",
+            "pages": [
+              "api-reference/endpoints/verify-transaction",
+              "api-reference/endpoints/get-latest-verification"
+            ]
+          },
+          {
+            "group": "Receipts",
+            "pages": [
+              "api-reference/endpoints/generate-receipt",
+              "api-reference/endpoints/get-latest-receipt"
+            ]
+          },
+          {
+            "group": "Trust Records",
+            "pages": [
+              "api-reference/endpoints/list-trust-records",
+              "api-reference/endpoints/get-trust-record"
+            ]
+          },
+          {
+            "group": "Replay",
+            "pages": ["api-reference/endpoints/replay-transaction"]
+          },
+          {
+            "group": "Policies",
+            "pages": [
+              "api-reference/endpoints/get-policy-in-effect",
+              "api-reference/endpoints/validate-policy"
+            ]
+          },
+          {
+            "group": "Policy Governance",
+            "pages": [
+              "api-reference/endpoints/propose-policy-change",
+              "api-reference/endpoints/list-pending-policy-changes",
+              "api-reference/endpoints/approve-policy-change",
+              "api-reference/endpoints/reject-policy-change"
+            ]
+          },
+          {
+            "group": "Approvers",
+            "pages": [
+              "api-reference/endpoints/list-approval-issuers",
+              "api-reference/endpoints/list-approval-issuer-changes",
+              "api-reference/endpoints/propose-approval-issuer-change",
+              "api-reference/endpoints/approve-approval-issuer-change",
+              "api-reference/endpoints/reject-approval-issuer-change"
+            ]
+          },
+          {
+            "group": "External Connectors",
+            "pages": [
+              "api-reference/endpoints/list-external-connectors",
+              "api-reference/endpoints/list-external-connector-changes",
+              "api-reference/endpoints/propose-external-connector-change",
+              "api-reference/endpoints/approve-external-connector-change",
+              "api-reference/endpoints/reject-external-connector-change"
+            ]
+          },
+          {
+            "group": "Business Signal Sources",
+            "pages": [
+              "api-reference/endpoints/list-business-signal-sources",
+              "api-reference/endpoints/list-business-signal-source-changes",
+              "api-reference/endpoints/propose-business-signal-source-change",
+              "api-reference/endpoints/approve-business-signal-source-change",
+              "api-reference/endpoints/reject-business-signal-source-change"
+            ]
+          },
+          {
+            "group": "Authority Grants",
+            "pages": [
+              "api-reference/endpoints/list-authority-grants",
+              "api-reference/endpoints/list-authority-grant-changes",
+              "api-reference/endpoints/propose-authority-grant-change",
+              "api-reference/endpoints/approve-authority-grant-change",
+              "api-reference/endpoints/reject-authority-grant-change"
+            ]
+          },
+          {
+            "group": "Sandbox",
+            "pages": ["api-reference/endpoints/create-sandbox-approval"]
+          },
+          {
+            "group": "Refusal Records",
+            "pages": [
+              "api-reference/endpoints/verify-refusal-record",
+              "api-reference/endpoints/get-refusal-record"
+            ]
+          },
+          {
+            "group": "Execution Intents",
+            "pages": [
+              "api-reference/endpoints/verify-execution-intent",
+              "api-reference/endpoints/list-unfinalized-execution-intents",
+              "api-reference/endpoints/get-execution-intent",
+              "api-reference/endpoints/finalize-execution-intent",
+              "api-reference/endpoints/resolve-execution-intent"
+            ]
+          },
+          {
+            "group": "Audit",
+            "pages": ["api-reference/endpoints/verify-audit-event"]
+          },
+          {
+            "group": "System",
+            "pages": [
+              "api-reference/endpoints/get-root",
+              "api-reference/endpoints/get-health",
+              "api-reference/endpoints/get-ready",
+              "api-reference/endpoints/get-open-api-spec",
+              "api-reference/endpoints/get-open-api-spec-json",
+              "api-reference/endpoints/get-api-manifest",
+              "api-reference/endpoints/get-version",
+              "api-reference/endpoints/get-key",
+              "api-reference/endpoints/get-jwks",
+              "api-reference/endpoints/get-caller-me"
+            ]
+          },
+          {
+            "group": "Handbook",
+            "pages": [
+              "api-reference/endpoints/get-handbook-pdf",
+              "api-reference/endpoints/get-handbook-download-lead",
+              "api-reference/endpoints/create-handbook-download-lead"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Deploy and operate",
+        "groups": [
+          {
+            "group": "Self hosted",
+            "pages": [
+              "self-hosted/overview",
+              "self-hosted/quickstart",
+              "self-hosted/policy-approval",
+              "self-hosted/api-keys",
+              "self-hosted/connectors",
+              "self-hosted/offline-verification",
+              "self-hosted/operations",
+              "self-hosted/configuration",
+              "self-hosted/troubleshooting"
+            ]
+          },
+          {
+            "group": "Deploy",
+            "pages": [
+              "deployment/local",
+              "deployment/production",
+              "deployment/aws-kms-signing",
+              "deployment/environment-variables",
+              "guides/deploy-patterns"
+            ]
+          },
+          {
+            "group": "Security",
+            "pages": [
+              "security/overview",
+              "security/limitations",
+              "security/owasp-mapping",
+              "security/regulation-mapping"
+            ]
+          },
+          {
+            "group": "Operate",
+            "pages": ["troubleshooting", "storage/schema-reference"]
+          }
+        ]
+      },
+      {
+        "tab": "Reference",
+        "groups": [
+          {
+            "group": "Packages",
+            "pages": [
+              "reference/shared",
+              "reference/crypto",
+              "reference/policy",
+              "reference/execution-system",
+              "reference/execution-control",
+              "reference/envelope-verifier",
+              "reference/execution-gateway",
+              "reference/runtime",
+              "reference/storage",
+              "reference/replay",
+              "reference/api"
+            ]
+          },
+          {
+            "group": "Project",
+            "pages": ["glossary", "faq", "roadmap", "changelog", "contributing"]
+          }
+        ]
+      },
+      {
+        "tab": "Build book",
+        "groups": [
+          {
+            "group": "Build with Parmana",
+            "pages": [
+              "build-book/overview",
+              "build-book/01-how-parmana-works",
+              "build-book/02-your-first-governed-action",
+              "build-book/03-connect-an-agent",
+              "build-book/04-policies",
+              "build-book/05-human-approvals",
+              "build-book/06-connect-your-systems",
+              "build-book/07-verify-and-audit",
+              "build-book/08-deploy-and-operate",
+              "build-book/09-errors-and-troubleshooting",
+              "build-book/10-security-model-and-limits"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "build-book/reference-endpoints",
+              "build-book/reference-sdk",
+              "build-book/reference-errors"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Handbook",
+        "groups": [
+          {
+            "group": "The Parmana Handbook",
+            "pages": [
+              "handbook/overview",
+              "handbook/01-trust-model-and-domain",
+              "handbook/02-configuration-and-bootstrapping",
+              "handbook/03-cryptography",
+              "handbook/04-policy-engine-and-evaluation",
+              "handbook/05-signal-binding-and-state-verification",
+              "handbook/06-capability-policy-binding",
+              "handbook/07-policy-governance-maker-checker",
+              "handbook/08-runtime-pipeline",
+              "handbook/09-execution-authorization-envelope",
+              "handbook/10-execution-gateway",
+              "handbook/11-credential-isolation",
+              "handbook/12-connectors",
+              "handbook/13-storage-layer",
+              "handbook/14-api-http-boundary",
+              "handbook/15-caller-authentication-and-scoping",
+              "handbook/16-rate-limiting",
+              "handbook/17-audit-and-evidence-trails",
+              "handbook/18-independent-verification",
+              "handbook/19-health-and-readiness",
+              "handbook/20-integrating-parmana",
+              "handbook/21-deployment",
+              "handbook/22-testing-philosophy",
+              "handbook/23-history-and-open-questions",
+              "handbook/download"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "redirects": [
+    {
+      "source": "/runtime/policy-evaluation",
+      "destination": "/concepts/policies-and-the-decision"
+    },
+    {
+      "source": "/authorization/signed-execution-authorization",
+      "destination": "/concepts/execution-authorization"
+    },
+    {
+      "source": "/authorization/execution-gateway",
+      "destination": "/concepts/the-gateway"
+    },
+    {
+      "source": "/integrations/credentials",
+      "destination": "/concepts/credential-isolation"
+    },
+    {
+      "source": "/trust-record/overview",
+      "destination": "/concepts/execution-trust-records"
+    },
+    {
+      "source": "/concepts/execution-trust",
+      "destination": "/concepts/execution-trust-records"
+    },
+    {
+      "source": "/api-reference/endpoints",
+      "destination": "/api-reference/introduction"
+    },
+    {
+      "source": "/trust-and-claims/claims-discipline",
+      "destination": "/security/limitations"
+    },
+    {
+      "source": "/trust-and-claims/what-we-dont-claim",
+      "destination": "/security/limitations"
+    },
+    {
+      "source": "/trust-and-claims/objections-and-evidence",
+      "destination": "/security/limitations"
+    },
+    {
+      "source": "/trust-and-claims/trl7-verification",
+      "destination": "/security/limitations"
+    },
+    {
+      "source": "/trust-and-claims/verification-log",
+      "destination": "/security/limitations"
+    },
+    {
+      "source": "/reference/receipt",
+      "destination": "/reference/crypto"
+    }
+  ],
+  "navbar": {
+    "links": [
+      {
+        "label": "GitHub",
+        "href": "https://github.com/pavancharak/parmana"
+      },
+      {
+        "label": "Discussions",
+        "href": "https://github.com/pavancharak/parmana/discussions"
+      }
+    ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/pavancharak/parmana"
+    },
+    "links": [
+      {
+        "header": "Legal",
+        "items": [
+          {
+            "label": "License and evaluation",
+            "href": "/license"
+          },
+          {
+            "label": "Audit guide",
+            "href": "/evaluation/audit-guide"
+          },
+          {
+            "label": "Security",
+            "href": "https://github.com/pavancharak/parmana/blob/main/SECURITY.md"
+          }
+        ]
+      }
+    ]
+  },
+  "banner": {
+    "content": "Proprietary software, source-available for evaluation only. No license is granted to use, copy, modify, or distribute it without a written agreement with Parmana Systems. [License](/license) · [Evaluation and audit guide](/evaluation/overview)",
+    "dismissible": false
+  }
+}

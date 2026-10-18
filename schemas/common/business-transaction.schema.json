@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/business-transaction.schema.json",
+  "title": "Business Transaction",
+  "description": "Canonical immutable business context accepted by Parmana for execution: Authority -> Authorization -> Intent -> Business Transaction -> Policy. Every Business Transaction produces exactly one Decision, one Execution, and one Execution Trust Record.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "businessTransactionId",
+    "metadata",
+    "authority",
+    "authorization",
+    "intent",
+    "policy",
+    "signals",
+    "status",
+    "createdAt"
+  ],
+  "properties": {
+    "businessTransactionId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique Business Transaction identifier. Same value as metadata.businessTransactionId. Must be a valid UUID on both POST /execute and POST /transactions (rejected with a 400 otherwise)."
+    },
+    "metadata": {
+      "$ref": "./metadata.schema.json"
+    },
+    "authority": {
+      "$ref": "./authority.schema.json"
+    },
+    "authorization": {
+      "$ref": "./authorization.schema.json"
+    },
+    "intent": {
+      "$ref": "./intent.schema.json"
+    },
+    "policy": {
+      "$ref": "./policy.schema.json"
+    },
+    "signals": {
+      "$ref": "./signals.schema.json"
+    },
+    "status": {
+      "type": "string",
+      "description": "Current Business Transaction lifecycle state. Always RECEIVED at creation on both POST /execute and POST /transactions. Parmana sets this field via BusinessTransactionMapper.fromRequest and ignores any status the client sends.",
+      "enum": [
+        "RECEIVED",
+        "POLICY_EVALUATED",
+        "APPROVED",
+        "REJECTED",
+        "OVERRIDDEN",
+        "EXECUTING",
+        "EXECUTED",
+        "FAILED",
+        "VERIFIED"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when the Business Transaction was accepted by Parmana."
+    }
+  },
+  "examples": [
+    {
+      "businessTransactionId": "eed2a972-1bf5-4166-8472-761f76fbf1b2",
+      "metadata": {
+        "businessTransactionId": "eed2a972-1bf5-4166-8472-761f76fbf1b2",
+        "correlationId": "6b97caca-1605-4711-bf00-7e5a65434d93",
+        "sourceSystem": "vendor-payment-service",
+        "submittedBy": "ap-automation",
+        "submittedAt": "2026-07-07T16:38:59.285Z"
+      },
+      "authority": {
+        "authorityId": "c0c01c23-04a2-45f2-a821-ef24bfca02d3",
+        "authorityType": "SERVICE",
+        "principalId": "ap-automation-svc",
+        "displayName": "Accounts Payable Automation",
+        "issuedAt": "2026-07-07T16:38:59.285Z"
+      },
+      "authorization": {
+        "authorizationId": "6e9d6aa6-6d20-40a8-b05d-383516365cc7",
+        "authorityId": "c0c01c23-04a2-45f2-a821-ef24bfca02d3",
+        "purpose": "Authorize vendor payment disbursement",
+        "issuedAt": "2026-07-07T16:38:59.285Z"
+      },
+      "intent": {
+        "intentId": "ae5865f6-181b-409a-90ec-1b4b8b8414ba",
+        "authorizationId": "6e9d6aa6-6d20-40a8-b05d-383516365cc7",
+        "action": "payments:execute",
+        "target": "vendor/V-100",
+        "parameters": {
+          "amount": 4500,
+          "currency": "USD"
+        },
+        "createdAt": "2026-07-07T16:38:59.285Z"
+      },
+      "policy": {
+        "name": "vendor-payment",
+        "version": "2.0.0",
+        "schemaVersion": "1.0.0"
+      },
+      "signals": {
+        "vendorVerified": true,
+        "invoiceVerified": true,
+        "paymentApproved": true,
+        "sufficientFunds": true,
+        "paymentAmount": 4500,
+        "riskScore": 10
+      },
+      "status": "RECEIVED",
+      "createdAt": "2026-07-07T16:38:59.325Z"
+    }
+  ]
+}

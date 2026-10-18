@@ -1,0 +1,77 @@
+---
+title: "Rotating every key in production in one day"
+description: "A credential recovery told honestly, with the mistakes left in: why recovery means replacement, the order of trust, and seven things that broke."
+---
+
+Parmana relies on keys: an API key for each person and agent, step up keys for approvals, approver signing keys, a
+database password. One day, access to some of them was lost. This is what recovering looked like, including the parts
+that made it worse. It holds no key values or account details.
+
+## Recover means replace
+
+The first instinct is to get the old keys back. There is no way, by design. The server stores only a hash of each API
+key. Approver private keys live only with their holders. If they are gone, they are gone. So recovery means:
+
+1. generate new keys;
+2. register them through the same controls that protect the system;
+3. retire the old ones;
+4. prove the new ones work.
+
+## The chain of trust has an order
+
+- **People's keys first:** a maker key that proposes changes and a checker key with a step up key that approves them,
+  two different identities.
+- **Agent keys next**, each limited to its capability.
+- **Deploy them all at once.** That is the moment the old keys stop working. Anything still using one breaks; refunds
+  fail until the agent service has its new key.
+- **Then the approver signing key.** A new approver key cannot be swapped in. It is proposed by the maker and approved
+  by the checker, like any governance change, and the old one is revoked the same way.
+- **Then the database password**, reset at the provider and updated in the deployment.
+
+On paper, an afternoon. Here is what broke.
+
+## What broke
+
+**1. A key was pasted into a chat.** Mid-recovery, the new checker key was pasted into a conversation with an AI
+assistant. One line, but a key that has been shown anywhere it should not be is a lost key. It was rotated again,
+immediately. _Do not debate an exposure; rotate._
+
+**2. The saved copy was not the key.** After that rotation, the new key saved in the password manager did not work: the
+saved copy was not the key that had been generated. It was rotated a third time, and the saved copy was compared with the
+original right after saving. The same check later caught the same problem with the maker key. _"Saved" is not done.
+"Saved, read back and confirmed by the server" is done._
+
+**3. A key was one character short.** Every key is 43 characters. One test kept failing with "authentication
+required": the pasted key had 42. _Check the length of a pasted secret before using it._
+
+**4. A paste answered its own approval prompt.** The approval script shows the change and asks for `APPROVE`. Several
+commands were pasted at once, and the line after the approve command was read as the answer. Nothing was approved; the
+script did the safe thing. _Paste a command that asks a question on its own._
+
+**5. The system refused self-approval.** Changes were proposed with the checker key by mistake, then approval was tried
+with the same key: `SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE`. The maker was given its own step up key, so either identity
+can approve the other's change. _A control you can skip in a hurry is not a control._
+
+**6. A new terminal forgot everything.** A new PowerShell window started with none of the variables (the URL, the key,
+the change id). _Rerun the block that sets them first._
+
+**7. A deploy ran from the wrong folder.** A small test endpoint failed to deploy with an error about a file it did not
+contain: the deploy tool applies the configuration of the folder it runs in, which was the main repository. _Deploy an
+endpoint from inside its own folder._
+
+## What to take from it
+
+- **Write the recovery runbook before you need it**, with an expected result after every step.
+- **Back up what cannot be replaced quietly.** Losing an API key is an annoyance; losing every approver's step up key
+  stops all approvals until trust is rebuilt.
+- **Treat every exposure as a loss.**
+- **Verify against production, not memory.** Ask the server who it thinks a key belongs to.
+- **Let the controls hold, even against you.** A bypass "just for recovery" is the day the controls stop meaning
+  anything.
+
+By the end of the day every human, agent and approver key had been replaced, the old ones retired, the database password
+reset, and each new key confirmed against production. Live checks run afterwards showed the controls behaving as built.
+Nothing was bypassed, and every change went through the same two-person approval as on any other day.
+
+**Read more:** [Credentials: maker, checker and approver](/guides/credentials-maker-checker-approver),
+[Maker checker for one person](/essays/20-maker-checker-for-one-person).

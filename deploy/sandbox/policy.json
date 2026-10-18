@@ -1,0 +1,42 @@
+{
+  "policyId": "sandbox-receipt",
+  "policyVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "description": "The public sandbox's one action (ADR-0014). Releases sandbox:receipt to the sandbox receipt endpoint, which acts on nothing and answers with a receipt, only with a signed approval for the target. In the sandbox anyone can get that approval from POST /sandbox/approvals. A note longer than 200 characters is refused.",
+  "signalsSchema": {
+    "receiptApproved": "boolean",
+    "note": "string"
+  },
+  "boundSignals": {
+    "note": "parameters.note"
+  },
+  "approvalSignals": {
+    "receiptApproved": { "resourceId": "target" }
+  },
+  "rules": [
+    {
+      "id": "reject-long-note",
+      "condition": { "fact": "note", "operator": "length_gt", "value": 200 },
+      "outcome": {
+        "action": "reject",
+        "reason": "The note is longer than 200 characters."
+      }
+    },
+    {
+      "id": "approve-with-approval",
+      "condition": { "fact": "receiptApproved", "operator": "is_true" },
+      "outcome": {
+        "action": "approve",
+        "reason": "Receipt approved for this target."
+      }
+    },
+    {
+      "id": "reject-approval-required",
+      "condition": { "always": true },
+      "outcome": {
+        "action": "reject",
+        "reason": "A receipt needs a signed approval for this target in signals.approvalArtifact, with receiptApproved true. In the sandbox, get one from POST /sandbox/approvals."
+      }
+    }
+  ]
+}

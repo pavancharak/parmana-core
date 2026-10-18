@@ -1,0 +1,60 @@
+---
+title: "Storage"
+description: "Append-only persistence for Business Transactions, Trust Records, and policies."
+---
+
+<Info>
+  **[AVAILABLE]** for `memory`, `supabase` and `postgres`. **Declared but
+  unimplemented** for `sqlite`, see below.
+</Info>
+
+## Providers, precisely
+
+```typescript
+// packages/storage/src/StorageFactory.ts (abridged)
+switch (configuration.provider) {
+  case "memory":
+    return new MemoryStorageProvider();
+  case "supabase":
+  case "postgres":
+    // refuses with a named error when DATABASE_URL is not set
+    return new SupabaseStorageProvider();
+  case "sqlite":
+    throw new Error("SQLite storage provider not implemented.");
+}
+```
+
+`postgres` and `supabase` select the same implementation. Despite its name,
+`SupabaseStorageProvider` writes through a direct Postgres connection (`DATABASE_URL`), so a
+self hosted Postgres works under either name. Both refuse to start without `DATABASE_URL`.
+`sqlite` throws at startup, by design (fails closed rather than silently falling back).
+
+| Provider   | Status                    | Notes                                                                                                                                 |
+| ---------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `memory`   | [AVAILABLE]               | In-process, non-persistent. Used throughout this site's live examples (`PARMANA_STORAGE=memory`) so they have no external dependency. |
+| `supabase` | [AVAILABLE]               | `SupabaseStorageProvider` over `DATABASE_URL`.                                                                                        |
+| `postgres` | [AVAILABLE]               | The same implementation as `supabase`.                                                                                                |
+| `sqlite`   | Declared, not implemented | Throws at startup.                                                                                                                    |
+
+## What's stored
+
+Business Transactions and Execution Trust Records (the append-only ledger behind every
+[Execution Trust Record](/concepts/execution-trust-records)), Execution Intents, Refusal
+Records, pending policy changes and their signed approval records, approval issuers,
+external connectors, the execution and caller audit events, and the single-use nonces for
+authorizations, approvals and step up envelopes. Each has a `Memory*` implementation for
+tests and a `Supabase*` (Postgres) implementation; see `packages/storage/src/index.ts`.
+
+## Configuration
+
+```bash
+PARMANA_STORAGE=memory     # or supabase, or postgres (both need DATABASE_URL)
+```
+
+`PARMANA_STORAGE` is the only variable read. An older `DATABASE_PROVIDER` variable existed
+briefly as a second, disconnected path to the same setting and is now retired: if it's
+present in the environment, config loading fails at startup naming `PARMANA_STORAGE` as the
+replacement, rather than silently ignoring it. Tests: `packages/storage/tests/`.
+
+See [@parmana/storage](/reference/storage) for the package's full export list if you're
+consuming it directly rather than through the default server.

@@ -1,0 +1,86 @@
+---
+title: "Models as insider risks: what Parmana already does, and what it does not"
+description: "Satya Nadella argues that frontier models should be treated as insider risks, with controls outside the model. A principle-by-principle look at where Parmana meets that bar and where it does not."
+---
+
+In October 2026, Satya Nadella published a short essay, "Models as Insider Risks in the Super Intelligence Era". Its
+argument in one line: **"we need to separate the supply of intelligence from the authority over it."**
+
+He does not say models are malicious. He says that "any sufficiently capable actor with access to important systems can
+make mistakes or be compromised", and that we already know how to handle such actors inside a company: establish
+identity, limit privileges, log activity, draw containment boundaries. And he is specific about where those controls
+must live: "the controls that govern what a model can access and what actions it can take must sit outside the model."
+
+That sentence is the reason Parmana exists. So it is worth checking, one principle at a time, where Parmana meets the
+bar he sets, and being just as clear about where it does not.
+
+## The picture
+
+A support agent built on a frontier model proposes: refund ₹50,000 for order 123. The model may be right. It may have
+been misled by a customer's message. It may be running a harness that rewrote itself last week. Under Nadella's framing,
+none of that should matter to whether the refund runs, because the model is not the one deciding.
+
+In Parmana, the model only proposes. A policy it does not hold decides, a person signs an approval for that exact
+refund, the gateway releases it, and a signed record is left behind. The model never holds the payment credentials.
+
+## Principle by principle
+
+**Controls outside the model.** This is the core of Parmana. The agent's request is checked against an approved,
+versioned policy before anything runs. The credentials of the system that acts live behind the gateway, issued for one
+execution, never handed to the agent. Nadella traces this to a 1970s rule: a program must not be able to bypass or
+tamper with what enforces its permissions. The agent cannot edit the policy, its grant or the approver keys; those
+change only through maker checker, and a non-human key is refused on those routes.
+
+**Independent controls.** He wants organisations to "independently determine what a model can access and what actions
+it can take". In Parmana that is the policy bound to each capability, the capabilities each key may call, and authority
+grants with limits and an end date, all set by people, two of them for every change.
+
+**Treat the model as an insider.** Least privilege per key. A signed human approval for every agent action, reads
+included, at any amount, bound to the action, the resource and, for a refund, the amount. Facts can be asked of the
+system that owns them instead of taken from the model's word. These are the old insider controls, applied to agents.
+
+**Observe everything.** He asks that every meaningful action leave evidence, so "we can reproduce how an outcome was
+achieved without relying on the model to attest to it". Every Parmana decision, approved or refused, leaves a signed
+record: what was proposed, which policy version decided, which facts it rested on, who approved, what happened. None of
+it is the model's account of itself.
+
+**Independent auditability.** "Validation must be independent of the intelligence being validated." A Parmana record is
+verified with a public key, offline, by anyone. It does not depend on the model, and it does not depend on Parmana's
+server either.
+
+**Verifiability.** He asks for continuous testing "including failures, attacks, edge cases", not only successful
+tasks. Parmana's production live checks were built mostly from cases that were meant to be refused: no grant, over the
+limit, after a revoke, an agent claiming a fact its source contradicts.
+
+**Incident disclosure.** Parmana keeps a public, dated gap log of what was found wrong in Parmana itself, how severe it
+was, and how and when it was closed, and it corrects claims in place when they turn out broader than the evidence. That
+is disclosure for the control layer, not yet for the incidents of the agents it governs.
+
+## What it does not do
+
+- **It does not make evidence tamper-proof.** Nadella asks for "tamper-proof" evidence. Parmana's records are
+  tamper-evident: a change is detected, not prevented. "Tamper-proof in every environment" is on Parmana's list of claims
+  it deliberately does not make, and an operator with database access could still alter approval records; today that is
+  detected, not prevented.
+- **It is not an emergency brake on a model.** You can revoke an agent's grant or key, or an approver's key, and the
+  gateway re-checks what a decision rests on just before release. But Parmana does not pause a model's reasoning
+  mid-task. It stops actions at the gate, not thoughts.
+- **It does nothing for chain-of-thought transparency or model diversity.** Parmana governs actions, not reasoning, and
+  works with any model. Those principles need other tools.
+- **It only contains what passes through it.** An agent that keeps its own credentials to a system can act there
+  directly. Containment depends on routing every action through the gate.
+- **It is young.** Some of its strongest controls (asking business systems for facts, authority grants) are deployed and
+  checked in production but not yet used by a shipped policy. See [What is left](/concepts/business-validation#what-is-left).
+
+## The takeaway
+
+Nadella ends with this: "The most trustworthy Super Intelligence system will not be the one with the model we trust
+most. It will be the one that enables us to trust the model the least."
+
+That is the design brief for an authorization layer. Let the model be as capable as it can be, and give it no authority
+of its own: the rules, the limits, the approvals and the evidence all sit where the model cannot reach them.
+
+**Source:** Satya Nadella, "Models as Insider Risks in the Super Intelligence Era", October 2026, published on X.
+
+**Read more:** [Agents will rewrite themselves](/essays/03-agents-will-rewrite-themselves),
+[Prompt guardrails are advice](/essays/02-guardrails-are-advice), [Limitations](/security/limitations).

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/metadata.schema.json",
+  "title": "Metadata",
+  "description": "Immutable Business Transaction metadata supplied by the calling application. Not evaluated by Policy. businessTransactionId is the only required field; it must match the top-level businessTransactionId. Parmana rejects a mismatch with a 400.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["businessTransactionId"],
+  "properties": {
+    "businessTransactionId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique Business Transaction identifier. Must be a valid UUID."
+    },
+    "correlationId": {
+      "type": "string",
+      "description": "Optional correlation identifier used by the calling application."
+    },
+    "tenantId": {
+      "type": "string",
+      "description": "Optional tenant identifier for multi-tenant deployments."
+    },
+    "sourceSystem": {
+      "type": "string",
+      "description": "Originating application or service."
+    },
+    "submittedBy": {
+      "type": "string",
+      "description": "Identity of the calling application or principal."
+    },
+    "submittedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when the Business Transaction was submitted."
+    }
+  },
+  "examples": [
+    {
+      "businessTransactionId": "eed2a972-1bf5-4166-8472-761f76fbf1b2",
+      "correlationId": "6b97caca-1605-4711-bf00-7e5a65434d93",
+      "sourceSystem": "vendor-payment-service",
+      "submittedBy": "ap-automation",
+      "submittedAt": "2026-07-07T16:38:59.285Z"
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+---
+title: "Type Alias: ProposeBusinessSignalSourceChangeInput"
+---
+
+> **ProposeBusinessSignalSourceChangeInput** = \{ `action`: `"register"`; `name`: `string`; `endpointUrl`: `string`; `timeoutMs?`: `number`; `publicKeyPem?`: `string`; `keyId?`: `string`; `reason`: `string`; \} \| \{ `action`: `"revoke"`; `name`: `string`; `reason`: `string`; \}
+
+Defined in: typescript/src/models/business-signal-source.ts:74
+
+What proposeBusinessSignalSourceChange() sends.
+
+## Union Members
+
+### Type Literal
+
+\{ `action`: `"register"`; `name`: `string`; `endpointUrl`: `string`; `timeoutMs?`: `number`; `publicKeyPem?`: `string`; `keyId?`: `string`; `reason`: `string`; \}
+
+#### action
+
+> `readonly` **action**: `"register"`
+
+#### name
+
+> `readonly` **name**: `string`
+
+Lowercase letters, digits and hyphens, at most 63 characters.
+
+#### endpointUrl
+
+> `readonly` **endpointUrl**: `string`
+
+https, a public host name, no user name, password or fragment.
+
+#### timeoutMs?
+
+> `readonly` `optional` **timeoutMs?**: `number`
+
+1000 to 30000. Defaults to 10000.
+
+#### publicKeyPem?
+
+> `readonly` `optional` **publicKeyPem?**: `string`
+
+Optional, recommended: the Ed25519 public key in PEM the source
+signs its answers with.
+
+#### keyId?
+
+> `readonly` `optional` **keyId?**: `string`
+
+Optional, only with publicKeyPem.
+
+#### reason
+
+> `readonly` **reason**: `string`
+
+---
+
+### Type Literal
+
+\{ `action`: `"revoke"`; `name`: `string`; `reason`: `string`; \}

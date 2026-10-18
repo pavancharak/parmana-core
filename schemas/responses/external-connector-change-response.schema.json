@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/external-connector-change-response.schema.json",
+  "title": "External Connector Change Response",
+  "description": "Response of POST /external-connectors/changes (201) and of approve and reject (200). A bare External Connector Change, no wrapper.",
+  "$ref": "../common/external-connector-change.schema.json"
+}

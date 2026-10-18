@@ -1,0 +1,102 @@
+---
+title: "Interface: RefusalRecord"
+---
+
+Defined in: [typescript/src/models/refusal-record.ts:34](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/refusal-record.ts#L34)
+
+Refusal Record (RFC-0021).
+
+Durable, signed, independently verifiable evidence that a policy
+decision REJECTED a transaction -- the REJECT-path counterpart to
+ExecutionTrustRecord. At most one RefusalRecord exists per
+businessTransactionId.
+
+## Properties
+
+### refusalRecordId
+
+> `readonly` **refusalRecordId**: `string`
+
+Defined in: [typescript/src/models/refusal-record.ts:35](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/refusal-record.ts#L35)
+
+---
+
+### businessTransactionId
+
+> `readonly` **businessTransactionId**: `string`
+
+Defined in: [typescript/src/models/refusal-record.ts:36](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/refusal-record.ts#L36)
+
+---
+
+### decision
+
+> `readonly` **decision**: [`Decision`](/sdks/reference/typescript/interfaces/Decision)
+
+Defined in: [typescript/src/models/refusal-record.ts:37](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/refusal-record.ts#L37)
+
+---
+
+### evaluatedIntent
+
+> `readonly` **evaluatedIntent**: [`RefusalIntentSnapshot`](/sdks/reference/typescript/interfaces/RefusalIntentSnapshot)
+
+Defined in: [typescript/src/models/refusal-record.ts:38](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/refusal-record.ts#L38)
+
+---
+
+### bindingViolations?
+
+> `readonly` `optional` **bindingViolations?**: readonly [`RefusalBindingViolation`](/sdks/reference/typescript/interfaces/RefusalBindingViolation)[]
+
+Defined in: [typescript/src/models/refusal-record.ts:44](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/refusal-record.ts#L44)
+
+Present only when the rejection came from SignalIntentBinder.
+Absent (not an empty array) for an ordinary PolicyEngine.evaluate
+REJECT that never reached binding-violation logic at all.
+
+---
+
+### submittedBy?
+
+> `readonly` `optional` **submittedBy?**: `string`
+
+Defined in: [typescript/src/models/refusal-record.ts:49](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/refusal-record.ts#L49)
+
+Authenticated caller who submitted the rejected request. Absent
+when caller-auth is disabled.
+
+---
+
+### policyContentHash?
+
+> `readonly` `optional` **policyContentHash?**: `string`
+
+Defined in: [typescript/src/models/refusal-record.ts:54](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/refusal-record.ts#L54)
+
+SHA-256 hash of the policy content that decided the refusal. Absent
+on Refusal Records written before 2026-10-06.
+
+---
+
+### refusalRecordHash
+
+> `readonly` **refusalRecordHash**: `string`
+
+Defined in: [typescript/src/models/refusal-record.ts:55](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/refusal-record.ts#L55)
+
+---
+
+### signature
+
+> `readonly` **signature**: [`Signature`](/sdks/reference/typescript/interfaces/Signature)
+
+Defined in: [typescript/src/models/refusal-record.ts:56](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/refusal-record.ts#L56)
+
+---
+
+### createdAt
+
+> `readonly` **createdAt**: `Date`
+
+Defined in: [typescript/src/models/refusal-record.ts:57](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/refusal-record.ts#L57)

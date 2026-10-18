@@ -1,0 +1,92 @@
+{
+  "policyId": "customer-refund",
+  "policyVersion": "1.2.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes customer refunds. Every refund above 0 and up to 100000 needs a signed manager approval for that order, covering that amount. The eligibility and fraud signals come from the caller, so they can only refuse a refund, never authorize one on their own. Refunds above 100000 are refused.",
+
+  "signalsSchema": {
+    "refundEligible": "boolean",
+    "managerApproved": "boolean",
+    "fraudCheckPassed": "boolean",
+    "refundAmount": "number"
+  },
+
+  "boundSignals": {
+    "refundAmount": "parameters.amount"
+  },
+
+  "approvalSignals": {
+    "managerApproved": {
+      "resourceId": "parameters.orderId",
+      "value": "parameters.amount"
+    }
+  },
+
+  "unboundSignalReasons": {
+    "refundEligible": "Declared by the caller; nothing checks it against the order. It can refuse a refund, never authorize one on its own; only the signed approval behind managerApproved authorizes a refund.",
+    "fraudCheckPassed": "Declared by the caller; nothing checks it against a fraud system. It can refuse a refund, never authorize one on its own; only the signed approval behind managerApproved authorizes a refund."
+  },
+
+  "rules": [
+    {
+      "id": "reject-fraud-check",
+      "condition": { "fact": "fraudCheckPassed", "operator": "is_false" },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refund rejected because the transaction did not pass fraud assessment."
+      }
+    },
+    {
+      "id": "reject-not-eligible",
+      "condition": { "fact": "refundEligible", "operator": "is_false" },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refund rejected because the order is not eligible for a refund."
+      }
+    },
+    {
+      "id": "reject-invalid-amount",
+      "condition": { "fact": "refundAmount", "operator": "lte", "value": 0 },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refund rejected because the refund amount must be greater than 0."
+      }
+    },
+    {
+      "id": "reject-above-maximum",
+      "condition": {
+        "fact": "refundAmount",
+        "operator": "gt",
+        "value": 100000
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refund rejected because the requested refund amount exceeds the maximum of 100000, even with a manager approval."
+      }
+    },
+    {
+      "id": "approve-refund-with-manager-approval",
+      "condition": {
+        "all": [
+          { "fact": "managerApproved", "operator": "is_true" },
+          { "fact": "refundEligible", "operator": "is_true" },
+          { "fact": "fraudCheckPassed", "operator": "is_true" },
+          { "fact": "refundAmount", "operator": "gt", "value": 0 },
+          { "fact": "refundAmount", "operator": "lte", "value": 100000 }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Refund authorized with a verified manager approval for this order and amount."
+      }
+    },
+    {
+      "id": "reject-manager-approval-required",
+      "condition": { "always": true },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refund rejected. Every refund needs a signed manager approval for this order, covering this amount, in signals.approvalArtifact, with managerApproved true, and every other policy condition satisfied."
+      }
+    }
+  ]
+}

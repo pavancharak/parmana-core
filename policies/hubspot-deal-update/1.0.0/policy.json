@@ -1,0 +1,89 @@
+{
+  "policyId": "hubspot-deal-update",
+  "policyVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes a HubSpot deal's dealstage and/or amount update after validating that any requested dealstage transition is on an allowed forward path through the pipeline, and that any amount change above the configured threshold has been pre-authorized.",
+
+  "signalsSchema": {
+    "currentDealStage": "string",
+    "proposedDealStage": "string",
+    "dealStageChangeRequested": "boolean",
+    "dealStageTransitionAllowed": "boolean",
+    "amountChangeRequested": "boolean",
+    "amountDeltaAbs": "number",
+    "amountChangeExceedsThreshold": "boolean",
+    "preAuthorizedForAmountChange": "boolean"
+  },
+
+  "boundSignals": {
+    "proposedDealStage": "parameters.dealstage",
+    "proposedAmount": "parameters.amount"
+  },
+
+  "unboundSignalReasons": {
+    "dealStageChangeRequested": "Derived by comparing currentDealStage to proposedDealStage (both bound facts); a computed decision fact, not a raw Intent field to bind independently.",
+    "dealStageTransitionAllowed": "Derived by checking the requested stage transition against an allowed-transitions graph; a computed decision fact with no Intent-side equivalent.",
+    "amountChangeExceedsThreshold": "Derived from amountDeltaAbs versus a configured threshold; a computed decision fact, not a raw Intent field.",
+    "preAuthorizedForAmountChange": "Attested by a separate pre-authorization record; the Intent carries no such approval-status field to bind against."
+  },
+
+  "rules": [
+    {
+      "id": "reject-stage-transition-not-allowed",
+      "condition": {
+        "all": [
+          { "fact": "dealStageChangeRequested", "operator": "is_true" },
+          { "fact": "dealStageTransitionAllowed", "operator": "is_false" }
+        ]
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Deal update rejected because the requested dealstage transition is not on an allowed forward path."
+      }
+    },
+    {
+      "id": "reject-amount-exceeds-threshold-without-preauth",
+      "condition": {
+        "all": [
+          { "fact": "amountChangeExceedsThreshold", "operator": "is_true" },
+          { "fact": "preAuthorizedForAmountChange", "operator": "is_false" }
+        ]
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Deal update rejected because the requested amount change exceeds the configured threshold and has not been pre-authorized."
+      }
+    },
+    {
+      "id": "approve-deal-update",
+      "condition": {
+        "all": [
+          { "fact": "dealStageTransitionAllowed", "operator": "is_true" },
+          {
+            "any": [
+              {
+                "fact": "amountChangeExceedsThreshold",
+                "operator": "is_false"
+              },
+              { "fact": "preAuthorizedForAmountChange", "operator": "is_true" }
+            ]
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Deal update authorized. The dealstage transition (if any) is on an allowed path, and the amount change (if any) is within threshold or has been pre-authorized."
+      }
+    },
+    {
+      "id": "reject-default",
+      "condition": {
+        "always": true
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Deal update rejected because one or more required policy conditions were not satisfied."
+      }
+    }
+  ]
+}

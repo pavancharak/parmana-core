@@ -1,0 +1,21 @@
+title: "[Idea] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Suggest a connector, a policy feature, a verification tool or a docs change.
+        Parmana is source-available for evaluation; ideas are welcome, outside pull requests are not accepted (see CONTRIBUTING.md).
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What an agent, approver or auditor cannot do today, and why it matters.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: What would change. If it touches a claim or an open gap (G-xx), name it.
+    validations:
+      required: true

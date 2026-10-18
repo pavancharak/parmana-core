@@ -1,0 +1,62 @@
+---
+sidebar_label: execution_api
+title: parmana.api.execution_api
+---
+
+Parmana Execution API.
+
+Execute Business Transactions through the Parmana Runtime.
+
+## ExecutionApi Objects
+
+```python
+class ExecutionApi()
+```
+
+Execution API.
+
+## Responsibilities
+
+- Runtime health check
+- Runtime version info
+- Execute Business Transactions
+
+This API does NOT:
+
+- verify trust records
+- replay executions
+- generate receipts
+- validate policies
+
+#### health
+
+```python
+def health() -> dict[str, Any]
+```
+
+Returns the Runtime health status.
+
+#### version
+
+```python
+def version() -> dict[str, Any]
+```
+
+Returns the Runtime name, version, and API version.
+
+#### execute
+
+```python
+def execute(transaction: BusinessTransaction) -> ExecutionTrustRecord
+```
+
+Execute a Business Transaction.
+
+## Parameters
+
+transaction:
+Business Transaction submitted to the Parmana Runtime.
+
+## Returns
+
+Execution Trust Record.

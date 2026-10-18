@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/approval-issuer-changes-list-response.schema.json",
+  "title": "Approver Changes List Response",
+  "description": "Response of GET /approval-issuers/changes, newest first.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["changes"],
+  "properties": {
+    "changes": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/approval-issuer-change.schema.json"
+      }
+    }
+  }
+}

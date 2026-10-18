@@ -1,0 +1,88 @@
+---
+title: "What a refund agent needs before it touches a payment gateway"
+description: "A checklist for letting an AI agent move money back to customers through Razorpay, Paytm or any gateway, and where Parmana stands on each point."
+---
+
+Refunds are where AI agents in Indian commerce will show up first. A customer writes "my order never came", the agent
+reads the order, checks the policy, apologizes and refunds. No queue and no three-day wait.
+
+The demo takes an afternoon: give the agent the gateway's API key and a `refund` tool. That is also how you end up
+explaining to finance why ₹3 lakh went out on a Sunday night.
+
+Here is what a refund agent needs before it touches a real payment gateway, whether Razorpay, Paytm or another. None of
+it makes the agent smarter. All of it sits between the agent and the money.
+
+## 1. The agent never holds the gateway key
+
+If the agent can call the refund API directly, every other control is a suggestion. The agent **proposes** a refund:
+payment, amount, reason. Something else holds the key and decides whether to send it.
+
+## 2. A limit that belongs to the agent, not the prompt
+
+"Never refund more than ₹10,000" in a prompt is advice. What you want is a **grant**: this agent may refund up to
+₹10,000 per request, until a set date, checked on every request by code the agent cannot influence, and changed only by
+two people.
+
+## 3. Eligibility from the system that knows
+
+The agent's "this refund is eligible" is a claim. The facts live in your order system (delivered, returned, inside the
+refund window) and in the gateway (what was captured, what was already refunded). Ask those systems, using the ids in
+the request. If the agent says "eligible" and the order system says "already refunded", refuse it and record that the
+agent was contradicted.
+
+## 4. A person approves, with a real signature
+
+In Parmana, every refund needs a signed manager approval, at any amount: there is no amount below which a refund runs on
+its own. The approval is bound to this order, covers this amount, expires, and works once, so "the manager approved
+₹4,000" can never become ₹40,000.
+
+## 5. A re-check just before the money moves
+
+Between "approved" and "sent", the grant may be revoked or another refund may land. The facts the decision rested on
+carry an expiry and are checked again just before release. If one no longer holds, nothing is sent.
+
+## 6. One refund, once
+
+Agents retry, networks fail, services restart. Every refund needs a **unique reference** so a retry cannot become a
+second refund, and a recorded answer when a call times out: "we do not know whether it ran" is a state a person
+resolves, never a reason to retry blindly.
+
+## 7. A record your auditor can check without you
+
+For every refund, approved or refused: what was proposed, what was checked, who approved, what happened, **signed**, and
+verifiable later without trusting the system that wrote it.
+
+## 8. Limits over time
+
+Per-request limits stop one big mistake, not ₹9,999 twenty times an hour. A real deployment needs daily limits per
+agent, kept by the authorization layer itself.
+
+## Where Parmana stands
+
+- **Built, deployed and checked in production:** the agent proposes and Parmana decides and releases (1); grants with
+  per-request limits and expiry, changed through two-person approval (2); facts asked of the owning system, with signed
+  answers (3); signed approvals bound to one order and amount (4); re-checks at release (5); signed records verifiable
+  offline (7).
+- **For the Paytm refund connector:** a per-refund reference makes each refund distinct, and an outcome that cannot be
+  known is recorded as `EXECUTION_UNKNOWN` for a person to resolve (6).
+- **Not built:** cumulative limits; the design is written (8).
+- **Not done yet:** connecting a real merchant order system as the source of refund eligibility. Parmana has no
+  Razorpay connector today; an earlier one was removed, and a Razorpay refund flow would use an
+  [external connector](/guides/connect-any-external-system) or a new one.
+
+## The short version
+
+Before your agent touches the refund API, answer yes to all of these:
+
+- Can the agent reach the gateway only through something it cannot control?
+- Is its limit enforced in code, and changeable only by two people?
+- Is eligibility checked with the systems that own it?
+- Is every refund approved by a signature bound to that exact refund?
+- Is everything re-checked just before the money moves?
+- Can a retry ever pay twice?
+- Can your auditor verify every decision without asking you?
+
+If any answer is no, the agent is ready for a demo, not for money.
+
+**Read more:** [End to end Paytm flow](/guides/end-to-end-paytm-flow), [Human approval](/concepts/human-approval),
+[Per-request limits are not enough](/essays/08-per-request-limits-are-not-enough).

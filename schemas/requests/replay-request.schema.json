@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/requests/replay-request.schema.json",
+  "title": "Replay Request",
+  "description": "Request payload for POST /replay. businessTransactionId is required (rejected with a 400 if missing or empty), unlike POST /verify and POST /receipt, this route does not additionally validate UUID format.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["businessTransactionId"],
+  "properties": {
+    "businessTransactionId": {
+      "type": "string",
+      "description": "Business Transaction to replay."
+    }
+  },
+  "examples": [
+    {
+      "businessTransactionId": "eed2a972-1bf5-4166-8472-761f76fbf1b2"
+    }
+  ]
+}

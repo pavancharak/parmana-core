@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/signals.schema.json",
+  "title": "Signals",
+  "description": "Opaque runtime facts evaluated by the resolved Policy's rules. Parmana assigns no business meaning to these values and does not statically validate them beyond the Policy's own signalsSchema declaration (see policies/{name}/{version}/policy.json). Scaled integers, not floats, for numeric signals such as amounts (house convention across every reference policy).",
+  "type": "object",
+  "additionalProperties": true,
+  "examples": [
+    {
+      "vendorVerified": true,
+      "invoiceVerified": true,
+      "paymentApproved": true,
+      "sufficientFunds": true,
+      "paymentAmount": 4500,
+      "riskScore": 10
+    }
+  ]
+}

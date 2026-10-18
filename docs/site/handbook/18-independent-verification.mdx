@@ -1,0 +1,129 @@
+---
+title: "Chapter 18: Independent Verification"
+description: "A third party with no access to a running Parmana instance at all, no API key, no network"
+---
+
+## What it is
+
+A third party with no access to a running Parmana instance at all, no API key, no network
+access to this deployment, should still be able to verify that a signed trust record, receipt,
+or refusal record is genuine and unmodified, given only the artifact itself and the relevant
+public key. This chapter covers the offline verification path, how a public key is discovered
+in the first place, and an honest assessment of two packages that sound like they belong here
+by name but turned out not to both be wired the way their names suggest.
+
+## Why it was built
+
+Every signature this codebase produces is meant to be checkable without trusting Parmana's own
+server to tell you it's valid, that would defeat the purpose of signing anything. Offline
+verification exists so the check can be performed with zero network calls, zero disk reads
+beyond the artifact and a public key you already have, and zero environment configuration.
+
+## How it works
+
+### Offline verification
+
+`verifyExecutionTrustRecordOffline()` (`packages/crypto/src/OfflineVerifier.ts`) is explicitly
+built to have zero external dependencies at call time: the caller supplies the exact public key
+material for every `keyId` a record references, and everything else, canonical serialization,
+the exact field mapping the signature actually covers, the Ed25519/ML-DSA-65 signature
+implementations, is the same code the real, online `VerificationCrypto` uses.
+`ExecutionTrustRecordCanonicalView.ts` is shared between the offline and online paths
+specifically so there is exactly one definition of "which fields participate in the signature,"
+not two implementations that could silently drift apart from each other.
+
+It checks three things, and reports each independently rather than collapsing them into one
+opaque boolean: `hashValid` (does the record's own `trustRecordHash` match a fresh hash of its
+canonical content), `legacySignatureValid` (does the always-present legacy `signature` field
+verify), and `hybridSignaturesValid` (only present when the record actually carries a
+`signatures` array, a hybrid record needs at least two distinct-algorithm entries, and a
+duplicate algorithm in that array is treated as invalid). The function's own comment is explicit
+about a real limitation: the hash check recomputes SHA-256 unconditionally, because that's the
+only hash algorithm this codebase actually implements today (other config-declared algorithms
+like `sha3-512`/`blake3` have no real provider), a record hashed under a genuinely different
+algorithm could not be distinguished from a tampered one by this check alone, since the
+algorithm used isn't itself recorded on the artifact separately from the hash value.
+
+The comment also names a real relationship worth knowing: this module is the reference a
+separately published, independently maintained package,
+`@parmana/sign` (`github.com/pavancharak/parmana-sign`, see `docs/CLAIMS.md` §3.12), is built
+on. Since version 0.2.0 that package also ships this module's Execution Trust Record and
+Execution Intent field mappings, the hybrid envelope, and the Ed25519 large-message
+commitment, as `verifyExecutionTrustRecordOffline` and `verifyExecutionIntentOffline`. Its
+compatibility tests run against records signed by this repository's own code, so a third
+party can verify Parmana records with `npm install @parmana/sign` alone.
+
+### Large records signed under AWS KMS
+
+A record over 4096 bytes of canonical content is signed by the KMS signer as a fixed 97 byte commitment
+(the prefix `PARMANA-ED25519-LARGE-MESSAGE-V1`, a NUL byte, and the SHA-512 digest of the canonical
+bytes), because KMS refuses a longer raw message (ADR-0010). The signature is still Ed25519. An
+independent verifier must accept the raw signature for any record, and additionally the commitment form
+only for a record over 4096 bytes. A commitment signature over a smaller record must be rejected.
+`verifyExecutionTrustRecordOffline()` and the Python `verify_execution_trust_record_offline()` both
+implement this, and the cross language test in `python/tests/test_offline_verifier.py` proves the Python
+implementation accepts a large record TypeScript signed as a commitment. Records signed before this
+change were signed raw and still verify unchanged.
+
+### Public-key discovery
+
+`createKeysRouter()` (`packages/api/src/routes/keys.ts`) exposes `GET /keys/:keyId` and
+`GET /.well-known/jwks.json`. Both are deliberately mounted before this app's caller-auth
+middleware, alongside `/refusal/verify` and `/audit/verify`, a third party cannot be required to
+already hold a Parmana-issued credential just to fetch the key it needs to check a signature
+that credential has nothing to do with. Every response includes a PEM-encoded SPKI public key
+(RFC 7468), which is what `OfflineVerifier.ts` and its Python counterpart both consume directly,
+plus a `jwk` field when the running Node version's `KeyObject.export({format:"jwk"})` supports
+the key's algorithm, the comment notes ML-DSA-65 exports as JOSE/COSE key type `"AKP"`
+(from the IETF draft-ietf-jose-fully-specified-algorithms track, not an identifier this codebase
+invented) and Ed25519 as the long-standardized `"OKP"`. The JWKS endpoint is explicitly not a
+standards-pure RFC 7517 JWK Set, since this codebase's PEM-first shape doesn't fit that spec's
+structure exactly, it's a superset any consumer that only wants the `.jwk` field per entry can
+filter down to.
+
+### An honest assessment of `@parmana/replay` and `@parmana/receipt`
+
+This is worth stating precisely rather than by reputation. Checking actual imports (not package
+existence, actual usage inside `packages/api/src`):
+
+- **`@parmana/replay`** is a real package (`packages/replay/`), with a real `ReplayEngine`,
+  `ReplayExecutor`, `ReplayBuilder`, `ReplayVerifier`, and a real test suite including an
+  integration test and a determinism test. It has **zero imports anywhere inside
+  `packages/api/src`**. It is real, tested, tutorial-capable code with no production wiring ,
+  say this plainly rather than implying it's load-bearing because its name suggests it should
+  be.
+- **`@parmana/receipt`, as a standalone package, does not exist in this repository at all** ,
+  there is no `packages/receipt/` directory and no `package.json` anywhere named
+  `@parmana/receipt`. Receipt functionality is real and genuinely wired into production, but it
+  lives inside `@parmana/crypto` (`ReceiptCrypto.ts`, `ReceiptHasher.ts`) and the `Receipt` type
+  in `@parmana/shared`, used directly by the runtime's trust-record construction, confirmed by
+  real signed receipts appearing in real `ExecutionTrustRecord` output. If you have read or been
+  told that "`@parmana/receipt` and `@parmana/replay` are both unwired," that claim is now only
+  half true: receipts are real and live; replay is the one that remains genuinely unwired.
+
+## How it enables things, with a concrete example
+
+`examples/tutorials/05-verification/run.ts` and `examples/tutorials/12-envelope-verification/run.ts`
+exercise the online verification path. `packages/crypto/tests/unit/` (search for
+`OfflineVerifier` or `offline-verifier`) covers the offline path directly with real, generated
+key material and a deliberately tampered record to confirm detection. `python/parmana/crypto/offline_verifier.py`
+is the Python-side equivalent of the same capability, for a consumer with no Node.js runtime at
+all.
+
+## How to validate this yourself
+
+- `packages/crypto/src/OfflineVerifier.ts`, `ExecutionTrustRecordCanonicalView.ts`
+- `packages/api/src/routes/keys.ts`
+- `python/parmana/crypto/offline_verifier.py`
+- `packages/replay/src/` and `packages/replay/tests/` (real, but check its own package.json's
+  consumers, or the lack of any inside `packages/api/src`, to confirm the unwired claim
+  yourself)
+- `packages/crypto/src/ReceiptCrypto.ts`, `ReceiptHasher.ts` (confirm receipts are real by
+  tracing their usage from `packages/runtime/src/` into an actual trust record)
+
+## Integration requirements
+
+None for offline verification itself, that is the entire point, zero network calls, zero
+environment variables. To exercise `GET /keys/:keyId` or the JWKS endpoint against a real
+deployment, only `PARMANA_KEY_DIR` (or the configured `KEY_PROVIDER`) needs to be set correctly
+server-side; the caller needs nothing.

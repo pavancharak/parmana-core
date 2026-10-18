@@ -1,0 +1,54 @@
+---
+title: "Build with Parmana"
+description: "The integration book: how Parmana works, how to connect an agent and a system to it, how to write and approve policies, how to verify what happened, and how to run it in production. For people and for AI agents."
+---
+
+This book takes you from nothing to a production integration: an AI agent that can act on a real system only when a
+policy and a person allow it, with a signed record of every decision. It is the companion to
+[The Parmana Handbook](/handbook/overview), which explains how each part of Parmana is built. This book explains how to
+**build with** it.
+
+Download it as one PDF: [build-with-parmana.pdf](/build-with-parmana.pdf).
+
+## Who it is for
+
+| You are                                     | Start with                                                                                                                                |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| A developer connecting an agent             | [Chapter 1](/build-book/01-how-parmana-works), then [Chapter 3](/build-book/03-connect-an-agent)                                          |
+| An operator bringing Parmana to production  | [Chapter 8](/build-book/08-deploy-and-operate), then [Chapter 4](/build-book/04-policies) and [Chapter 5](/build-book/05-human-approvals) |
+| Connecting a system Parmana has no code for | [Chapter 6](/build-book/06-connect-your-systems)                                                                                          |
+| Reviewing Parmana for security              | [Chapter 10](/build-book/10-security-model-and-limits), then [Chapter 7](/build-book/07-verify-and-audit)                                 |
+| An AI agent                                 | [Integrate Parmana: specification for AI agents](/agents/integrate), and `llms-full.txt` for this site in one file                        |
+
+## How the book is written
+
+- **Every statement is checked against the code.** Where the book and the code disagree, the code wins and the book
+  is fixed. Anything not verified in production says so.
+- **The reference chapters are generated from the code.** [Every endpoint](/build-book/reference-endpoints),
+  [every SDK method](/build-book/reference-sdk) and [every error code](/build-book/reference-errors) are produced by
+  `scripts/generate-build-book-reference.ts` from the OpenAPI file, the SDK source and the server's error classes. A
+  test fails when they fall behind the code.
+- **Examples are real.** Responses are captured from the running server; tutorial output is what the tutorial prints.
+- **Procedures state what to expect.** Where a step can fail, it says what you see and what to do.
+
+## The chapters
+
+1. [How Parmana works](/build-book/01-how-parmana-works): one request, from an agent to a signed record.
+2. [Your first governed action](/build-book/02-your-first-governed-action): run it on your machine, step by step.
+3. [Connect an agent](/build-book/03-connect-an-agent): the request, the policy in effect, approvals, in both SDKs.
+4. [Policies](/build-book/04-policies): write one, get it approved, change it, roll it back.
+5. [Human approvals](/build-book/05-human-approvals): approvers, signing, and what an approval covers.
+6. [Connect your systems](/build-book/06-connect-your-systems): built in connectors and external connectors.
+7. [Verify and audit](/build-book/07-verify-and-audit): records you can check without trusting the server.
+8. [Deploy and operate](/build-book/08-deploy-and-operate): production, keys, migrations, monitoring.
+9. [Errors and troubleshooting](/build-book/09-errors-and-troubleshooting): what each answer means and what to do.
+10. [Security model and limits](/build-book/10-security-model-and-limits): what is guaranteed, and what is not.
+
+Reference: [every endpoint](/build-book/reference-endpoints), [every SDK method](/build-book/reference-sdk),
+[every error code](/build-book/reference-errors).
+
+## Versions
+
+This edition describes the code on `main` as of 2026-10-01. The published SDKs are 1.6.0 (`@parmana/sdk` on npm,
+`parmana` on PyPI), published 2026-10-11. Methods marked **1.5.0** need that version or later:
+`policyInEffect` and `policy_in_effect`, `verifyParmanaRelease` and `verify_parmana_release`.

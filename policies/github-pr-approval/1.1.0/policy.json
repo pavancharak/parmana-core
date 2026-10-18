@@ -1,0 +1,81 @@
+{
+  "policyId": "github-pr-approval",
+  "policyVersion": "1.1.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes a pull request merge only with a signed approval from a trusted person for that exact pull request. The review, status check, branch protection and risk signals come from the caller, so they can only refuse a merge, never authorize one on their own.",
+
+  "signalsSchema": {
+    "mergeApproved": "boolean",
+    "repositoryAuthorized": "boolean",
+    "requiredReviewsCompleted": "boolean",
+    "statusChecksPassed": "boolean",
+    "branchProtected": "boolean",
+    "riskScore": "number"
+  },
+
+  "approvalSignals": {
+    "mergeApproved": {
+      "resourceId": "target"
+    }
+  },
+
+  "unboundSignalReasons": {
+    "repositoryAuthorized": "Declared by the caller. The Intent's target (owner/repo#pullNumber) names the pull request, not whether the repository is authorized. Only the signed approval behind mergeApproved authorizes a merge.",
+    "requiredReviewsCompleted": "Declared by the caller, not read from GitHub. Only the signed approval behind mergeApproved authorizes a merge.",
+    "statusChecksPassed": "Declared by the caller, not read from GitHub. Only the signed approval behind mergeApproved authorizes a merge.",
+    "branchProtected": "Declared by the caller, not read from GitHub. Only the signed approval behind mergeApproved authorizes a merge.",
+    "riskScore": "A score the caller computes. It can refuse a merge, never authorize one on its own."
+  },
+
+  "rules": [
+    {
+      "id": "reject-high-risk-change",
+      "condition": { "fact": "riskScore", "operator": "gt", "value": 20 },
+      "outcome": {
+        "action": "reject",
+        "reason": "Pull request merge rejected because the assessed risk exceeds the maximum permitted threshold."
+      }
+    },
+    {
+      "id": "reject-failed-status-checks",
+      "condition": { "fact": "statusChecksPassed", "operator": "is_false" },
+      "outcome": {
+        "action": "reject",
+        "reason": "Pull request merge rejected because one or more required status checks did not complete successfully."
+      }
+    },
+    {
+      "id": "reject-branch-not-protected",
+      "condition": { "fact": "branchProtected", "operator": "is_false" },
+      "outcome": {
+        "action": "reject",
+        "reason": "Pull request merge rejected because the target branch is not protected."
+      }
+    },
+    {
+      "id": "approve-merge-with-approval",
+      "condition": {
+        "all": [
+          { "fact": "mergeApproved", "operator": "is_true" },
+          { "fact": "repositoryAuthorized", "operator": "is_true" },
+          { "fact": "requiredReviewsCompleted", "operator": "is_true" },
+          { "fact": "statusChecksPassed", "operator": "is_true" },
+          { "fact": "branchProtected", "operator": "is_true" },
+          { "fact": "riskScore", "operator": "lte", "value": 20 }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Pull request merge authorized with a verified approval for this pull request."
+      }
+    },
+    {
+      "id": "reject-approval-required",
+      "condition": { "always": true },
+      "outcome": {
+        "action": "reject",
+        "reason": "Pull request merge rejected. A merge needs a signed approval for this pull request in signals.approvalArtifact, with mergeApproved true, and every other policy condition satisfied."
+      }
+    }
+  ]
+}

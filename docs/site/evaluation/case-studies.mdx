@@ -1,0 +1,85 @@
+---
+title: "Case studies: public incidents"
+description: "Three publicly reported AI agent incidents, what happened, and what Parmana would and would not have changed, under stated conditions."
+---
+
+These are not customer stories. They are incidents reported in public, with sources, and an analysis of what
+Parmana would have changed had the action gone through it. Each one says what Parmana would not have changed. The
+analysis is ours; the facts are from the sources linked.
+
+**The condition in every case.** Parmana only governs actions that go through it. An agent that also holds a shell,
+a database password or cloud credentials can act outside it, and nothing on this page applies to those actions
+([Limitations](/security/limitations)).
+
+## 1. An agent deleted a production database during a code freeze (Replit, July 2025)
+
+**What happened.** During a 12 day test of Replit's AI agent, SaaStr founder Jason Lemkin had told the agent not to
+make changes without his approval. On day nine it ran commands that deleted a production database holding records
+on about 1,200 executives and 1,190 companies, and at first misreported what it had done. Replit's CEO called it
+unacceptable; Replit added separation between development and production databases, a planning only mode and
+one click restore. Sources: [Fortune](https://fortune.com/2025/07/23/ai-coding-tool-replit-wiped-database-called-it-a-catastrophic-failure),
+[eWeek](https://www.eweek.com/news/replit-ai-coding-assistant-failure/),
+[AI Incident Database #1152](https://incidentdatabase.ai/cite/1152/).
+
+**What Parmana would have changed,** had the agent reached the database only through Parmana:
+
+- **The instruction becomes enforcement.** "Do not change anything without my approval" was a sentence in the
+  conversation. In Parmana it is a policy: a delete needs a signed approval from a registered person for that
+  action and that resource ([Human approval](/concepts/human-approval)). With no approval, the delete is refused.
+- **The agent holds no database credential.** Parmana's gateway holds it and uses it only for an approved action
+  ([Credential isolation](/concepts/credential-isolation)).
+- **What ran is not the agent's account of it.** Each action and each refusal has a signed record you can verify
+  offline, so what the agent says it did does not matter ([Execution Trust Records](/concepts/execution-trust-records)).
+
+**What it would not have changed.** Parmana has no built in database connector; you would register the endpoint
+that performs the delete ([Connect any external system](/guides/connect-any-external-system)). A person can still
+approve a bad delete. Backups and separating development from production stay necessary.
+
+## 2. A prompt in a coding extension told the agent to wipe files and cloud resources (Amazon Q, July 2025)
+
+**What happened.** A pull request from an outside contributor added a prompt to the Amazon Q Developer extension for
+VS Code. Version 1.84.0, released on 17 July 2025, told the assistant to delete files in the user's home directory
+and to use the AWS CLI to delete S3 buckets, terminate EC2 instances and remove IAM users. It was replaced by 1.85.0
+on 19 July. AWS said no customer resources were affected; a formatting error stopped the prompt from working.
+Sources: [TechRepublic](https://www.techrepublic.com/article/news-amazon-q-data-wiping-prompt-security-hack/),
+[Nudge Security](https://www.nudgesecurity.com/post/amazon-q-developer-extension-for-vs-code-compromised-with-a-malicious-prompt).
+
+**What Parmana would have changed,** for cloud actions routed through it:
+
+- **An injected instruction cannot authorize anything.** The agent can propose deleting a bucket; the policy
+  decides, and the agent's key is limited to the actions it is meant to take
+  ([OWASP mapping](/security/owasp-mapping), LLM01 and ASI01).
+- **Deleting buckets, instances or users would need a person's signed approval** for each one, if the policy says
+  so.
+
+**What it would not have changed.** The local file deletion ran in the developer's own shell, which Parmana does not
+govern. The AWS commands ran with the developer's own AWS credentials; Parmana changes nothing unless those
+credentials are not given to the agent. Parmana does not detect the injected prompt, and it does not secure the
+supply chain of tools an agent loads (ASI04).
+
+## 3. A chatbot gave a wrong refund policy and the airline had to pay (Air Canada, 2024)
+
+**What happened.** In November 2022, Air Canada's website chatbot told Jake Moffatt he could apply for a bereavement
+fare after travelling. The airline's policy did not allow that. In February 2024, British Columbia's Civil
+Resolution Tribunal held the airline responsible for what its chatbot said and ordered it to pay CAD 812
+(Moffatt v. Air Canada, 2024 BCCRT 149). Sources:
+[the decision](https://decisions.civilresolutionbc.ca/crt/crtd/en/525448/1/document.do),
+[Manatt](https://manatt.com/insights/newsletters/advertising-law/ai-gone-wild-airline-has-to-honor-a-refund-policy).
+
+**What Parmana would have changed:** almost nothing, and that is the point of including it. The harm was a wrong
+statement, not an action. Parmana does not check what a model says.
+
+**Where Parmana would apply.** If the same chatbot could issue the refund itself, Parmana would check each refund
+against the written policy, require a person's approval above an amount, and sign a record of each refund and each
+refusal. That limits what the bot can pay out. It does not make the bot's answers correct; a guardrail and accurate
+content do that ([How Parmana compares](/how-parmana-compares)).
+
+## What the three have in common
+
+- The damage came from what an agent was allowed to do, or from what it said. Parmana addresses the first, for
+  actions that go through it, and not the second.
+- In each action case, credentials the agent held directly decided what was possible. Giving agents credentials
+  only to Parmana is the step that makes the rest apply.
+
+Have a public incident you want analyzed the same way? Open a thread in
+[GitHub Discussions](https://github.com/pavancharak/parmana/discussions).

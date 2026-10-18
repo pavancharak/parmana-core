@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/health-response.schema.json",
+  "title": "Health Response",
+  "description": "Response returned by GET /health. The route unconditionally returns status: \"UP\"; it does not check storage, policy, or any dependent component; a 200 response means only that the Express process is handling requests.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status"],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["UP"]
+    }
+  },
+  "examples": [
+    {
+      "status": "UP"
+    }
+  ]
+}

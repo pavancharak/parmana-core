@@ -1,0 +1,98 @@
+---
+title: "Run the server from source"
+description: "Run the Parmana server as a single Node.js process from a clone of the repository, for development. To run Parmana on your own infrastructure, use the self hosted deployment."
+---
+
+<Info>
+  **Running Parmana on your own infrastructure?** Use the [self hosted
+  deployment](/self-hosted/overview): one Docker Compose command starts the
+  server and its own Postgres, with keys, migrations and policies handled, and
+  the [quickstart](/self-hosted/quickstart) takes you to a first signed
+  decision. This page is for running the server directly from source, mainly for
+  development.
+</Info>
+
+## What runs today
+
+One Express process (`packages/api/src/server.ts`), single instance, no load balancer or
+orchestration assumed. Signing keys are local PEM files read by `FileKeyProvider`. Storage
+is either fully in-process (`memory`, non-persistent) or Postgres (`postgres`, or its older
+name `supabase`; both use `DATABASE_URL`).
+
+## Configuration
+
+Real `.env` keys (from this repo, values redacted):
+
+```bash
+NODE_ENV=...
+PORT=3000
+PARMANA_STORAGE=postgres     # or: supabase (same thing), memory
+HASH_PROVIDER=sha256
+PRIMARY_SIGNATURE_PROVIDER=ed25519   # or: dilithium3 (needs Node >= 24)
+KEY_PROVIDER=local
+PARMANA_KEY_DIR=./keys
+PARMANA_GATEWAY_KEY_ID=gateway       # optional, defaults to "gateway"
+TRUST_PROFILE=v1
+LOG_LEVEL=...                # read into config; gates @parmana/shared's createLogger/getLogger, not yet threaded through every console.* call site, see Roadmap
+PARMANA_POLICY_DIR=...
+HUBSPOT_PRIVATE_APP_TOKEN=...  # credential for the hubspot connector, omit to leave it unregistered
+PARMANA_API_KEYS=...         # required, fails closed if unset, see Authentication
+```
+
+`PARMANA_KEY_DIR` is a single directory containing every keypair `FileKeyProvider` reads:
+`default.*.pem` (authorization signing/verification) and `gateway.*.pem` (gateway
+attestation, see [Gateway attestation](/concepts/gateway-attestation)). They are
+deliberately separate keys in the same directory, not one key used for two purposes.
+`PARMANA_GATEWAY_KEY_ID` lets you point the gateway at a differently-named key pair (for
+example during rotation, run both `gateway` and `gateway-v2` side by side, then flip the
+env var) without touching `default.*.pem` at all.
+
+## Running it
+
+```bash
+NODE_ENV=test \
+  PARMANA_STORAGE=memory \
+  PARMANA_API_KEYS='[{"callerId":"demo","keyHash":"325ededd6c3b9988f623c7f964abb9b016b76b0f8b3474df0f7d7c23b941381f","allowedCapabilities":["test:fixture-execute"]}]' \
+  npm run dev
+```
+
+`NODE_ENV=test` matters even though `PARMANA_STORAGE=memory` is set: two other components,
+the Execution Gateway's replay-nonce store and the caller-authentication audit trail, default
+to Supabase-backed implementations outside `NODE_ENV=test` (`createNonceStore.ts`,
+`createCallerAuditSink.ts`) and will fail closed without a real, reachable Supabase project.
+`PARMANA_API_KEYS` above is a demo key for local development only, raw key
+`my-secret-api-key`, allowed to use `test:fixture-execute` and to act as `demo`. Its raw key is
+public: make real keys with `npm run generate:api-key`, see [Authentication](/api-reference/authentication).
+
+Generate the `default` and `gateway` keypairs first if you haven't, see
+[Quickstart](/quickstart) step 2. Without it, the server refuses to start: the gateway is
+wired unconditionally (see [The gateway](/concepts/the-gateway)), there is no code path that
+skips needing this key.
+
+## What this deployment does not give you
+
+- **No self-service key management.** Caller authentication is real and fails closed (see
+  [Authentication](/api-reference/authentication)), but issuing and rotating keys is an
+  operator action (`scripts/generate-api-key.ts`), not an API call.
+- **No KMS in this mode.** With `KEY_PROVIDER=local` your private keys, both
+  `default.private.pem` and `gateway.private.pem`, are files on disk, exactly the exposure
+  that produced the incident noted on [Security](/security/overview). Set
+  `KEY_PROVIDER=aws-kms` to keep the `default` key in AWS KMS, see
+  [AWS KMS signing](/deployment/aws-kms-signing).
+- **Single process, single instance.** No HA, no load balancer assumed. Whether replicas
+  share replay-nonce state depends on `NODE_ENV`: `MemoryNonceStore` (`NODE_ENV=test`, as
+  above) is process-local, each process would accept the same authorization once, not once
+  fleet-wide. Outside `NODE_ENV=test`, `SupabaseNonceStore` is durable and shared across
+  replicas pointed at the same Supabase project, but this deployment shape is still one
+  process behind no load balancer.
+- **No connectors registered unless their credentials are configured.** HubSpot, GitHub,
+  Paytm, and Slack each register only when their own environment variable is set
+  (`HUBSPOT_PRIVATE_APP_TOKEN` and similar). See [The gateway](/concepts/the-gateway) for
+  what adding a new connector requires.
+
+## Node version
+
+The Parmana server requires Node 24 or later. The root `package.json` sets `engines.node` to `>=24`, the
+Dockerfile builds from `node:24`, and CI runs Node 24. Use Node 24 or later everywhere, including for
+ML-DSA-65 (post quantum signing), which needs Node 24 or later for native `node:crypto` support. The TypeScript SDK
+(`@parmana/sdk`) is separate and only needs Node 20 or later.

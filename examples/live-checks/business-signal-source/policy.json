@@ -1,0 +1,54 @@
+{
+  "policyId": "livecheck-signal",
+  "policyVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "description": "Live check of business signal sources (RFC-0023 phases 2 and 4). Releases livecheck:signal to the check endpoint, which acts on nothing, only with a signed approval for the target and only when the registered source livecheck-erp answers, signed, that the invoice named in the request is paid. Parmana asks the source; the agent's value is never used.",
+  "signalsSchema": {
+    "invoicePaid": "boolean",
+    "releaseApproved": "boolean"
+  },
+  "signalSources": {
+    "invoicePaid": {
+      "source": "livecheck-erp",
+      "claim": "invoice.paid",
+      "subject": "parameters.invoiceId",
+      "maxAgeSeconds": 60
+    }
+  },
+  "rules": [
+    {
+      "id": "approve-paid-invoice",
+      "condition": {
+        "all": [
+          {
+            "fact": "releaseApproved",
+            "operator": "is_true"
+          },
+          {
+            "fact": "invoicePaid",
+            "operator": "is_true"
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Approved for this target, and the source says the invoice is paid."
+      }
+    },
+    {
+      "id": "reject-otherwise",
+      "condition": {
+        "always": true
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Needs a signed approval for this target, and the source saying the invoice is paid."
+      }
+    }
+  ],
+  "approvalSignals": {
+    "releaseApproved": {
+      "resourceId": "target"
+    }
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/external-connector-change.schema.json",
+  "title": "External Connector Change",
+  "description": "A proposal to register an external connector, or to revoke the active one for a capability, and its resolution (ADR-0013). One person proposes it; a different person approves or rejects it with a step up authorization. Only an approved change affects which external connectors are registered.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "changeId",
+    "action",
+    "capability",
+    "reason",
+    "proposedBy",
+    "proposedAt",
+    "status"
+  ],
+  "properties": {
+    "changeId": {
+      "type": "string",
+      "description": "Unique id of the change, a UUID. The step up authorization for approve or reject names it in payload.pendingPolicyChangeId. An approved register change's id is also the registrationId."
+    },
+    "action": {
+      "type": "string",
+      "enum": ["register", "revoke"],
+      "description": "register binds the capability to the endpoint; revoke ends the active registration for the capability."
+    },
+    "capability": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*:[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*$",
+      "maxLength": 128,
+      "description": "namespace:verb. Never in a built in connector's namespace (paytm, hubspot, github, slack, test)."
+    },
+    "endpointUrl": {
+      "type": "string",
+      "description": "register only. The endpoint as the server stored it, normalized by URL parsing: https, a host name with a domain, no IP literal, no localhost, no user name, password or fragment, resolving only to public addresses. It is the audience of every release to this endpoint."
+    },
+    "policy": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,127}$",
+      "description": "register only. The name of the policy that governs the capability. The version in effect is decided by policy governance."
+    },
+    "allowedParameters": {
+      "type": "array",
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$"
+      },
+      "description": "register only. The only parameter names Parmana will forward to the endpoint."
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "minimum": 1000,
+      "maximum": 30000,
+      "description": "register only. How long Parmana waits for the endpoint's answer. Defaults to 10000."
+    },
+    "reason": {
+      "type": "string",
+      "maxLength": 2000,
+      "description": "Why, from the proposer."
+    },
+    "proposedBy": {
+      "type": "string",
+      "description": "The proposer's caller id. Always a human credential."
+    },
+    "proposedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["PENDING_APPROVAL", "APPROVED", "REJECTED"],
+      "description": "PENDING_APPROVAL until a second person approves or rejects it; then APPROVED or REJECTED, once."
+    },
+    "resolvedBy": {
+      "type": "string",
+      "description": "Who approved or rejected it. Never the proposer."
+    },
+    "resolvedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "rejectionReason": {
+      "type": "string",
+      "description": "Present when REJECTED."
+    }
+  },
+  "examples": [
+    {
+      "changeId": "1aa68ad8-ab5c-4beb-9ff3-7a6b1fc1ff37",
+      "action": "register",
+      "capability": "erp:create-invoice",
+      "endpointUrl": "https://erp.example.com/parmana/release",
+      "policy": "erp-invoice",
+      "allowedParameters": ["amount", "currency", "customerId"],
+      "timeoutMs": 10000,
+      "reason": "Finance creates invoices in the ERP through Parmana from October.",
+      "proposedBy": "human-maker",
+      "proposedAt": "2026-09-30T17:25:46.316Z",
+      "status": "APPROVED",
+      "resolvedBy": "human-checker",
+      "resolvedAt": "2026-09-30T17:25:46.385Z"
+    }
+  ]
+}

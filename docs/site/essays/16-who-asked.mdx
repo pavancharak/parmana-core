@@ -1,0 +1,61 @@
+---
+title: "Who asked? The caller audit trail"
+description: "Before Parmana decides whether an action is allowed, it records who is asking. Every time, including when the answer is no."
+---
+
+On a Monday morning, a developer notices that a refund agent's API key was printed in a build log on Friday. Nobody knows who saw it.
+
+Over the weekend, someone tried to use it. A request for a ₹18,000 refund. Then a ₹45,000 one. Then a request to merge a pull request, an action that agent's key was never given. None of them went anywhere: the key could not ask for the merge at all, and every refund needs a signed approval from a trusted manager, which the person holding a leaked key does not have.
+
+The question on Monday: what exactly was tried, when, and can I trust the record?
+
+## The problem: "who asked" is a separate question
+
+Parmana's other evidence answers questions about business actions. A Trust Record says this refund was approved and released. A Refusal Record says this refund was refused by this policy.
+
+Neither answers "who tried to talk to the API at all". A leaked key turned away at the door never reaches a policy, so it leaves neither record. If the door keeps no record of its own, the weekend is invisible.
+
+## The idea: the door keeps a signed, chained log
+
+Every request carries one API key as a bearer token. The key says which system is calling. Every outcome at that layer is written down as an audit event, signed with the same key that signs everything else Parmana produces, and linked to that caller's previous event, so a missing row shows up as a gap.
+
+## How Parmana does it
+
+**Keys.** The server never stores a raw key, only its SHA-256 hash, and compares in constant time. Records name the caller by its caller id, never by the key. Each key's entry decides what it may do: which actions it may ask for (none, if the list is left out), which principals it may act for (only itself, by default), which tenants, and whether it belongs to a verified person. Only keys held by a person may use the governance routes.
+
+**Events.** These outcomes are recorded:
+
+- A caller authenticated.
+- A key was rejected.
+- An action was allowed for that key, or denied.
+- A key tried to act for a principal it may not act for.
+- A key not held by a person hit a governance route. This one is flagged.
+- A request was structurally invalid: a malformed or oversized body, a malformed transaction id, an invalid transaction, or a duplicate.
+
+**Fail closed.** If an audit event cannot be written, the request fails with a 503. It does not go ahead unrecorded. There is no retry and no buffering. I accepted the availability cost on purpose: an action that runs without an audit record contradicts the whole point.
+
+I know this works because it bit me. On my first real hosted deployment with authentication on, every successful request failed with that 503: a database constraint did not list the "action allowed" event type. Nothing ran unaudited; everything stopped. A migration fixed it the same day.
+
+**Chains, per caller.** A signature proves a surviving row was not edited. It says nothing about a row that is gone. One chain across the whole table would catch deletions, but this is the busiest table in the system, and a global chain would put every write behind one lock.
+
+So each caller gets its own chain. When an event is written for a caller, the database takes a lock scoped to that caller only, reads that caller's latest link, and signs the new event with the previous link's hash folded in. Delete a row from the middle of a caller's history and the next row still points at a hash that is no longer there.
+
+**Checking it.** A chain can be verified with a standalone function: no network, no database, no running Parmana. A single event can also be checked through a verify route that needs no API key, just the event, its signature and Parmana's public key.
+
+On Monday, I pull the leaked key's events, verify the chain, and list every attempt with its route, time and reason. Then I remove the key's entry and redeploy, which is how a key is revoked today.
+
+## What it does not do
+
+- **A key is not an approval.** A valid key proves which system is calling. It does not authorize anything. Every agent action, reads included, still needs a signed human approval and a policy that allows it, checked after the key.
+- **It does not catch every deletion.** Deleting a caller's entire history at once leaves nothing to show a gap. Reordering or deleting across different callers' chains is not detected either. These are stated limits.
+- **Some events are not chained.** An unknown key and a malformed body have no caller to chain to. Those events are signed but not linked. The malformed-body event is also written on a best-effort basis: if that write fails, the 400 still goes out.
+- **Rate-limited requests are not in it.** Over the limit, a request is refused before anything is recorded.
+- **Only the production sink signs.** In test mode the audit sink is in memory, unsigned and unchained. Rows written before signing shipped have no signature.
+- **Authentication can be switched off.** For local development and tutorials, a setting turns caller authentication off. Policy and approval checks still run, but nobody knows who asked. The server warns at every start and reports it on its readiness check, and the public sandbox refuses to start with it.
+- **Key management is manual.** There is no API to create or rotate keys. The operator issues them and redeploys.
+- **It does not stop someone with database access and the signing key.** The chain makes tampering detectable. It does not make it impossible for someone who holds both.
+- **In the public sandbox, chains start partway.** The sandbox deletes visitor data on a schedule, so the oldest surviving event points at a deleted one. In production nothing deletes these rows.
+
+## The takeaway
+
+Trust Records and Refusal Records tell you about actions. The caller audit trail tells you about the people and systems knocking on the door, including the ones who never got in. It is signed, it fails closed, and each caller's history is chained, so most gaps show. It is not a substitute for approval, and its limits are written down next to it.

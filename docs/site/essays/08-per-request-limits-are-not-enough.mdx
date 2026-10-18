@@ -1,0 +1,86 @@
+---
+title: "Per-request limits are not enough"
+description: "₹9,999 twenty times is still ₹2 lakh. Why agents need limits over time, why who keeps the count matters most, and the design for cumulative grant limits (not built yet)."
+---
+
+Give your refund agent a sensible rule: **no single refund above ₹10,000**. Enforce it properly, outside the agent, in
+code the agent cannot touch.
+
+Now a scripted abuse campaign hits your support chat: fifty accounts, each asking for a ₹9,999 refund. Every request is
+within the limit. By the time anyone looks, about ₹5 lakh is gone, and every single decision was "correct". (An
+illustration, not an incident.)
+
+Per-request limits stop **one big mistake**. They do nothing about **many small ones**: a loop, a bug, an attacker who
+has read your limit, or an agent that has decided refunding everyone is the fastest way to close tickets.
+
+The next control is a **cumulative limit**. Parmana's grants have per-request limits today; cumulative limits are
+**designed, not built**. This page is the design, and a lesson from a version that was built wrong.
+
+## What a cumulative limit says
+
+> This agent may refund at most ₹50,000, or 20 refunds, per day, in Indian time.
+
+It sounds like a counter. It is harder than that, for three reasons.
+
+## Problem 1: who is counting?
+
+The tempting shortcut is to let the caller tell you the running total: "this refund brings today's total to ₹42,000".
+
+An early payment connector in Parmana did exactly this: it took the day's cumulative total from the caller. Parmana's
+own certification named it an exception to the core promise that an AI cannot execute what the business has not
+authorized. If the caller says the total is ₹0, the limit is decoration. It was replaced with a server-side ledger that
+Parmana counts itself, and that connector was later removed, but the lesson is now a rule of the design:
+
+**The running total belongs to the authorization layer, counted from its own decisions. It is never declared by the
+agent or read from the request.**
+
+## Problem 2: two requests at the same moment
+
+Two refunds of ₹6,000 arrive in the same millisecond; today's total is ₹40,000. Each reads ₹40,000, adds ₹6,000, gets
+₹46,000 and passes. Together they reach ₹52,000.
+
+The fix is to never "read, then check, then write". Reserve in **one atomic step**: add the amount only if the new
+total stays within the cap. If two requests race, exactly one wins. The earlier server-side ledger did this and was
+proven with 50 concurrent reservations; the design generalizes it from one connector to every grant.
+
+## Problem 3: what counts as spent?
+
+The amount is reserved when the decision is made, but not every decision ends with money moving:
+
+- **Refused later in the same decision** (business validation fails, or the approval is missing): the reservation is
+  released.
+- **Refused at release** (the grant was revoked, or a fact expired): released.
+- **Outcome unknown** (the call failed, so whether it ran is unknown): it keeps counting until a person resolves it.
+  If money might have moved, assume it did.
+
+And the total belongs to the **agent and capability, not the grant**. Otherwise revoking a grant and granting it again
+would reset the day's count.
+
+## What the record shows
+
+Each decision would record, signed, the period, the total before and after, and the cap: "₹42,000 before, ₹48,000
+after, cap ₹50,000". If the counter cannot be read at all, the answer is `AUTHORITY_UNCLEAR`, and the request is
+refused. A limit that switches off when its storage fails is not a limit.
+
+## Open questions
+
+1. **Calendar day or rolling 24 hours?** Calendar periods match how businesses state limits; rolling windows are harder
+   to game at midnight but cost more.
+2. **Can one limit span several capabilities**, for example all refunds across all gateways?
+3. **Can a signed human approval exceed the limit?** The default proposed is no, matching today's per-request grant
+   check, which an approval cannot override.
+4. **Where does the total live without a database?** An in-memory counter restarts at zero.
+
+## What exists today
+
+Grants with **per-request** limits (`min`, `max`, `oneOf`) and an end date are built, deployed and passed a live check
+in production. **Cumulative limits are not built.** The full design, with the tests to write, is in RFC-0023, section
+"Cumulative grant limits".
+
+## The takeaway
+
+Ask three questions about any agent's limits: is there a limit over time, not just per action? Who keeps the running
+total? Does it hold when two requests race, when a call times out, and when the counter is unavailable?
+
+**Read more:** [Grant an agent authority](/guides/grant-an-agent-authority),
+[What is left](/concepts/business-validation#what-is-left).

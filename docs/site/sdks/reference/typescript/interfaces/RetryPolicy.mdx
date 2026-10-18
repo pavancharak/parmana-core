@@ -1,0 +1,72 @@
+---
+title: "Interface: RetryPolicy"
+---
+
+Defined in: [typescript/src/config/RetryPolicy.ts:32](https://github.com/pavancharak/parmana/blob/main/typescript/src/config/RetryPolicy.ts#L32)
+
+Immutable retry configuration.
+
+## Properties
+
+### enabled?
+
+> `readonly` `optional` **enabled?**: `boolean`
+
+Defined in: [typescript/src/config/RetryPolicy.ts:39](https://github.com/pavancharak/parmana/blob/main/typescript/src/config/RetryPolicy.ts#L39)
+
+Enables or disables retries.
+
+Default:
+false
+
+---
+
+### maxAttempts?
+
+> `readonly` `optional` **maxAttempts?**: `number`
+
+Defined in: [typescript/src/config/RetryPolicy.ts:47](https://github.com/pavancharak/parmana/blob/main/typescript/src/config/RetryPolicy.ts#L47)
+
+Maximum retry attempts.
+
+Default:
+0
+
+---
+
+### initialDelayMs?
+
+> `readonly` `optional` **initialDelayMs?**: `number`
+
+Defined in: [typescript/src/config/RetryPolicy.ts:55](https://github.com/pavancharak/parmana/blob/main/typescript/src/config/RetryPolicy.ts#L55)
+
+Initial retry delay in milliseconds.
+
+Default:
+1000
+
+---
+
+### maxDelayMs?
+
+> `readonly` `optional` **maxDelayMs?**: `number`
+
+Defined in: [typescript/src/config/RetryPolicy.ts:63](https://github.com/pavancharak/parmana/blob/main/typescript/src/config/RetryPolicy.ts#L63)
+
+Maximum delay between retries.
+
+Default:
+30000
+
+---
+
+### strategy?
+
+> `readonly` `optional` **strategy?**: [`RetryStrategy`](/sdks/reference/typescript/enumerations/RetryStrategy)
+
+Defined in: [typescript/src/config/RetryPolicy.ts:71](https://github.com/pavancharak/parmana/blob/main/typescript/src/config/RetryPolicy.ts#L71)
+
+Retry backoff strategy.
+
+Default:
+EXPONENTIAL

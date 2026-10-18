@@ -1,0 +1,479 @@
+---
+sidebar_label: client
+title: parmana.client
+---
+
+Parmana Client.
+
+Main entry point for the Parmana Python SDK.
+
+## ParmanaClient Objects
+
+```python
+class ParmanaClient()
+```
+
+Parmana SDK Client.
+
+Parmana ensures AI executes only policy-compliant actions.
+
+## Example
+
+> > > client = ParmanaClient(
+> > > ... endpoint="http://localhost:3000",
+> > > ... )
+
+> > > trust_record = client.execution.execute(transaction)
+
+> > > verification = client.verification.verify(
+> > > ... transaction.business_transaction_id,
+> > > ... )
+
+#### \_\_init\_\_
+
+```python
+def __init__(*,
+             endpoint: str,
+             api_key: str | None = None,
+             timeout: int = DEFAULT_TIMEOUT,
+             max_retries: int = DEFAULT_MAX_RETRIES,
+             backoff_factor: float = DEFAULT_BACKOFF_FACTOR,
+             debug: bool = False) -> None
+```
+
+Create a Parmana SDK client.
+
+## Raises
+
+ConfigurationError:
+If `endpoint` is missing or empty. Mirrors
+typescript/src/client/ParmanaClient.ts's identical
+fail-fast check.
+
+This client is synchronous only. There is no async variant.
+
+## Parameters
+
+endpoint:
+Base URL of the Parmana Runtime.
+
+api_key:
+Caller bearer key, minted by scripts/generate-api-key.ts. Sent
+as `Authorization: Bearer &lt;api_key>` on every request. Omit
+only against a Runtime started with PARMANA_AUTH_DISABLED=true
+(local development only); every other deployment rejects an
+unauthenticated request with a 401 before a Business
+Transaction is even constructed. See
+/api-reference/authentication.
+
+timeout:
+HTTP timeout in seconds, applied per request.
+
+max_retries:
+Retry attempts for idempotent (GET) requests that fail with
+a connection error or a 429/502/503/504 response. POST requests
+(execute, verify, receipt, replay) are never retried.
+
+backoff_factor:
+Exponential backoff factor between retries, in seconds.
+
+debug:
+Enable request/response debug logging on the "parmana" logger.
+
+#### endpoint
+
+```python
+@property
+def endpoint() -> str
+```
+
+Parmana Runtime endpoint.
+
+#### version
+
+```python
+@property
+def version() -> str
+```
+
+Parmana SDK version.
+
+#### health
+
+```python
+def health() -> dict[str, Any]
+```
+
+Returns the Runtime health status.
+
+#### execute
+
+```python
+def execute(transaction: BusinessTransaction) -> ExecutionTrustRecord
+```
+
+Execute a Business Transaction.
+
+#### verify
+
+```python
+def verify(business_transaction_id: str) -> Verification
+```
+
+Run a fresh verification of an Execution Trust Record, appending
+a new Verification to its history. Distinct from
+get_latest_verification(), which reads the most recent one
+without re-verifying.
+
+#### get_latest_verification
+
+```python
+def get_latest_verification(business_transaction_id: str) -> Verification
+```
+
+Returns the latest Verification, without performing a fresh one.
+
+#### create_transaction
+
+```python
+def create_transaction(
+        transaction: BusinessTransaction) -> ExecutionTrustRecord
+```
+
+Creates (executes) a Business Transaction via POST /transactions,
+a second, independent entry point into the identical execution
+pipeline as execute() (POST /execute).
+
+#### transaction
+
+```python
+def transaction(business_transaction_id: str) -> BusinessTransaction
+```
+
+Retrieves a Business Transaction.
+
+#### trust_record
+
+```python
+def trust_record(business_transaction_id: str) -> ExecutionTrustRecord
+```
+
+Retrieves an Execution Trust Record.
+
+#### policy_in_effect
+
+```python
+def policy_in_effect(capability: str) -> PolicyInEffect
+```
+
+The policy a request for `capability` must declare right now, and
+what the request must carry (GET /policies/in-effect). Call it
+before every request and declare `policy` exactly as returned.
+
+#### validate_policy
+
+```python
+def validate_policy(policy_id: str, policy_version: str) -> dict[str, Any]
+```
+
+Validates that a policy (name + version) is loadable.
+
+#### refusal_record
+
+```python
+def refusal_record(business_transaction_id: str) -> RefusalRecord
+```
+
+Retrieves a Refusal Record by Business Transaction ID.
+
+#### verify_refusal_record
+
+```python
+def verify_refusal_record(record: RefusalRecord) -> bool
+```
+
+Verifies a Refusal Record's signature.
+
+#### execution_intent
+
+```python
+def execution_intent(business_transaction_id: str) -> ExecutionIntentView
+```
+
+Retrieves an Execution Intent and its status (ADR-0012). The intent is
+the signed statement, stored before an action is released, of what was
+about to be released.
+
+#### verify_execution_intent
+
+```python
+def verify_execution_intent(intent: ExecutionIntent) -> bool
+```
+
+Verifies an Execution Intent's hash and signature. Needs no
+credential. True proves the intent is genuine and unaltered. It does
+not prove the action was released, or what its result was.
+
+#### unfinalized_execution_intents
+
+```python
+def unfinalized_execution_intents(
+        limit: int | None = None) -> UnfinalizedExecutionIntents
+```
+
+Lists Execution Intents that never reached a signed Trust Record and
+were not closed by hand, oldest first. Needs a credential provisioned
+as a verified human.
+
+#### finalize_execution_intent
+
+```python
+def finalize_execution_intent(
+        business_transaction_id: str) -> FinalizeExecutionIntentResult
+```
+
+Rebuilds the signed Trust Record for a released action whose record
+was never produced. Never calls a connector. Safe to run twice. Needs
+a credential provisioned as a verified human.
+
+#### resolve_execution_intent
+
+```python
+def resolve_execution_intent(business_transaction_id: str, *,
+                             resolution: ExecutionIntentResolution | str,
+                             note: str) -> ResolveExecutionIntentResult
+```
+
+Closes a PREPARED or ERRORED intent that a verified human reconciled at
+the connector. The note is required. The resolution is an attributed
+operator statement in unsigned status, not a Trust Record.
+
+#### verify_audit_event
+
+```python
+def verify_audit_event(event: dict[str, Any], signature: Signature) -> bool
+```
+
+Verifies a signed caller-authentication or Razorpay-webhook
+audit event's signature.
+
+#### latest_receipt
+
+```python
+def latest_receipt(business_transaction_id: str) -> Receipt
+```
+
+Retrieve the most recent receipt without generating a new one.
+See ReceiptApi.get_latest.
+
+#### caller
+
+```python
+def caller() -> CallerIdentity
+```
+
+Who this API key belongs to and what it may do (GET /callers/me).
+
+#### public_key
+
+```python
+def public_key(key_id: str = "default") -> PublicKeyInfo
+```
+
+A signing public key of the deployment (GET /keys/\{keyId\}), for the
+offline verifiers. Records are signed with "default".
+
+#### propose_policy_change
+
+```python
+def propose_policy_change(name: str, version: str, *,
+                          proposed_content: dict[str, Any],
+                          reason: str) -> ProposedPolicyChange
+```
+
+Propose a policy change. See PolicyApi.propose_change.
+
+#### policy_changes
+
+```python
+def policy_changes(status: str | None = None) -> list[PolicyChangeForReview]
+```
+
+List policy changes for review. See PolicyApi.list_changes.
+
+#### approve_policy_change
+
+```python
+def approve_policy_change(
+        pending_policy_change_id: str,
+        step_up_authorization: dict[str, Any]) -> PendingPolicyChange
+```
+
+Approve a policy change with a signed step up authorization. See
+PolicyApi.approve_change and parmana.crypto.sign_policy_change_step_up.
+
+#### reject_policy_change
+
+```python
+def reject_policy_change(
+        pending_policy_change_id: str, rejection_reason: str,
+        step_up_authorization: dict[str, Any]) -> PendingPolicyChange
+```
+
+Reject a policy change with a reason and a signed step up
+authorization. See PolicyApi.reject_change.
+
+#### list_approvers
+
+```python
+def list_approvers() -> list[ApprovalIssuer]
+```
+
+Every approver key the server trusts or trusted. See ApproverApi.list.
+
+#### approver_changes
+
+```python
+def approver_changes(status: str | None = None) -> list[ApprovalIssuerChange]
+```
+
+List approver changes. See ApproverApi.list_changes.
+
+#### approve_approver_change
+
+```python
+def approve_approver_change(
+        change_id: str,
+        step_up_authorization: dict[str, Any]) -> ApprovalIssuerChange
+```
+
+Approve and apply an approver change. See ApproverApi.approve_change.
+
+#### reject_approver_change
+
+```python
+def reject_approver_change(
+        change_id: str, rejection_reason: str,
+        step_up_authorization: dict[str, Any]) -> ApprovalIssuerChange
+```
+
+Reject an approver change. See ApproverApi.reject_change.
+
+#### list_external_connectors
+
+```python
+def list_external_connectors() -> list[ExternalConnector]
+```
+
+Every external connector registration, active and revoked. See
+ExternalConnectorApi.list.
+
+#### external_connector_changes
+
+```python
+def external_connector_changes(
+        status: str | None = None) -> list[ExternalConnectorChange]
+```
+
+List external connector changes. See ExternalConnectorApi.list_changes.
+
+#### approve_external_connector_change
+
+```python
+def approve_external_connector_change(
+        change_id: str,
+        step_up_authorization: dict[str, Any]) -> ExternalConnectorChange
+```
+
+Approve and apply an external connector change. See
+ExternalConnectorApi.approve_change.
+
+#### reject_external_connector_change
+
+```python
+def reject_external_connector_change(
+        change_id: str, rejection_reason: str,
+        step_up_authorization: dict[str, Any]) -> ExternalConnectorChange
+```
+
+Reject an external connector change. See
+ExternalConnectorApi.reject_change.
+
+#### list_business_signal_sources
+
+```python
+def list_business_signal_sources() -> list[BusinessSignalSource]
+```
+
+Every business signal source registration, active and revoked. See
+BusinessSignalSourceApi.list.
+
+#### business_signal_source_changes
+
+```python
+def business_signal_source_changes(
+        status: str | None = None) -> list[BusinessSignalSourceChange]
+```
+
+List business signal source changes. See
+BusinessSignalSourceApi.list_changes.
+
+#### approve_business_signal_source_change
+
+```python
+def approve_business_signal_source_change(
+        change_id: str,
+        step_up_authorization: dict[str, Any]) -> BusinessSignalSourceChange
+```
+
+Approve and apply a business signal source change. See
+BusinessSignalSourceApi.approve_change.
+
+#### reject_business_signal_source_change
+
+```python
+def reject_business_signal_source_change(
+        change_id: str, rejection_reason: str,
+        step_up_authorization: dict[str, Any]) -> BusinessSignalSourceChange
+```
+
+Reject a business signal source change. See
+BusinessSignalSourceApi.reject_change.
+
+#### list_authority_grants
+
+```python
+def list_authority_grants() -> list[AuthorityGrant]
+```
+
+Every authority grant, active and revoked. See AuthorityGrantApi.list.
+
+#### authority_grant_changes
+
+```python
+def authority_grant_changes(
+        status: str | None = None) -> list[AuthorityGrantChange]
+```
+
+List authority grant changes. See AuthorityGrantApi.list_changes.
+
+#### approve_authority_grant_change
+
+```python
+def approve_authority_grant_change(
+        change_id: str,
+        step_up_authorization: dict[str, Any]) -> AuthorityGrantChange
+```
+
+Approve and apply an authority grant change. See
+AuthorityGrantApi.approve_change.
+
+#### reject_authority_grant_change
+
+```python
+def reject_authority_grant_change(
+        change_id: str, rejection_reason: str,
+        step_up_authorization: dict[str, Any]) -> AuthorityGrantChange
+```
+
+Reject an authority grant change. See AuthorityGrantApi.reject_change.

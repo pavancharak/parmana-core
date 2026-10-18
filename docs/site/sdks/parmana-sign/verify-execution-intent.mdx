@@ -1,0 +1,58 @@
+---
+title: "Verify an Execution Intent"
+description: "verifyExecutionIntentOffline(intent, publicKeys)"
+---
+
+Checks a signed Execution Intent offline: the hash and the Ed25519 signature. An intent is
+written before an approved action is released.
+
+```ts
+import { verifyExecutionIntentOffline } from "@parmana/sign";
+
+const result = await verifyExecutionIntentOffline(intent, publicKeys);
+```
+
+## Parameters
+
+<ResponseField name="intent" type="ExecutionIntent" required>
+  The intent. `GET /execution-intents/{businessTransactionId}` returns it under
+  the `intent` key: pass `response.intent`, not the whole response.
+</ResponseField>
+
+<ResponseField
+  name="publicKeys"
+  type="Record<string, string | KeyObject>"
+  required
+>
+  Maps the intent's `signature.keyId` to its public key, as for [Trust
+  Records](/sdks/parmana-sign/verify-trust-record#parameters).
+</ResponseField>
+
+## Returns
+
+The same `OfflineVerificationResult` as
+[`verifyExecutionTrustRecordOffline`](/sdks/parmana-sign/verify-trust-record#returns), without
+`hybridSignaturesValid`: intents are not hybrid signed. `hashValid` compares `intentHash`.
+
+## Example
+
+```ts
+const response = await fetch(
+  `https://parmana-sandbox.vercel.app/execution-intents/${businessTransactionId}`,
+  { headers: { Authorization: `Bearer ${process.env.PARMANA_API_KEY}` } },
+).then((r) => r.json());
+
+const key = await fetch("https://parmana-sandbox.vercel.app/keys/default").then(
+  (r) => r.json(),
+);
+
+const result = await verifyExecutionIntentOffline(response.intent, {
+  [key.keyId]: key.pem,
+});
+```
+
+## What a valid intent proves
+
+The holder of the key signed this intent, and it has not changed since. It does not prove
+the action was released or what the result was. For that, verify the
+[Trust Record](/sdks/parmana-sign/verify-trust-record) for the same `businessTransactionId`.

@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/decision.schema.json",
+  "title": "Decision",
+  "description": "Immutable result of evaluating an Intent against a Policy. Decision does not create authority, grant authorization, or modify Intent; it only records the outcome of deterministic Policy evaluation.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "decisionId",
+    "intentId",
+    "policy",
+    "signals",
+    "outcome",
+    "evaluatedAt"
+  ],
+  "properties": {
+    "decisionId": {
+      "type": "string",
+      "description": "Unique Decision identifier."
+    },
+    "intentId": {
+      "type": "string",
+      "description": "Intent evaluated by this Decision."
+    },
+    "policy": {
+      "$ref": "./policy.schema.json"
+    },
+    "signals": {
+      "$ref": "./signals.schema.json"
+    },
+    "outcome": {
+      "type": "string",
+      "description": "Policy evaluation outcome. There are no intermediate states: a Decision is always exactly one of these two values.",
+      "enum": ["APPROVED", "REJECTED"]
+    },
+    "reason": {
+      "type": "string",
+      "description": "Human-readable explanation, taken from the matching Policy rule's outcome.reason."
+    },
+    "matchedRuleId": {
+      "type": "string",
+      "description": "Identifier of the Policy rule that matched, or \"none\" when no rule matched. Absent on a Decision built before this field existed (docs/VERIFICATION-GAPS.md G-44)."
+    },
+    "evaluatedRules": {
+      "type": "integer",
+      "description": "Number of rules evaluated before reaching a match (or exhausting the rule list). Same optionality as matchedRuleId."
+    },
+    "matchedPath": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Ordered rule-id trace evaluation walked to reach matchedRuleId. Same optionality as matchedRuleId."
+    },
+    "evaluatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when policy evaluation completed."
+    },
+    "assessment": {
+      "type": "object",
+      "description": "Authority, business validation and, for a refusal, execution, each as its own status (RFC-0023). AUTHORIZED means the action type may be decided, not that this action is valid or was executed. Absent on decisions made before it existed.",
+      "required": ["authority", "businessValidation"],
+      "properties": {
+        "authority": {
+          "type": "object",
+          "required": ["status", "reason"],
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "AUTHORIZED",
+                "NOT_AUTHORIZED",
+                "AUTHORITY_UNCLEAR",
+                "AUTHORITY_EXPIRED"
+              ]
+            },
+            "reason": {
+              "type": "string"
+            }
+          }
+        },
+        "businessValidation": {
+          "type": "object",
+          "required": ["status", "reason"],
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "VALID",
+                "INVALID",
+                "MISSING_DATA",
+                "CONFLICTING_DATA",
+                "SOURCE_UNAVAILABLE",
+                "VALIDATION_EXPIRED",
+                "NOT_EVALUATED"
+              ]
+            },
+            "reason": {
+              "type": "string"
+            },
+            "signals": {
+              "type": "array",
+              "description": "Trusted Signals: facts established by their sources for this exact business object and action.",
+              "items": {
+                "type": "object"
+              }
+            },
+            "failures": {
+              "type": "array",
+              "description": "Why business validation did not pass, one entry per signal that failed.",
+              "items": {
+                "type": "object",
+                "required": ["signalKey", "status", "reason"],
+                "properties": {
+                  "signalKey": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "VALID",
+                      "INVALID",
+                      "MISSING_DATA",
+                      "CONFLICTING_DATA",
+                      "SOURCE_UNAVAILABLE",
+                      "VALIDATION_EXPIRED",
+                      "NOT_EVALUATED"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "execution": {
+          "type": "object",
+          "required": ["status", "reason"],
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "EXECUTED",
+                "NOT_EXECUTED",
+                "EXECUTION_FAILED",
+                "EXECUTION_UNKNOWN"
+              ]
+            },
+            "reason": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "decisionId": "9d69dc0b-333a-4be3-b09f-358fece806f3",
+      "intentId": "ae5865f6-181b-409a-90ec-1b4b8b8414ba",
+      "policy": {
+        "name": "vendor-payment",
+        "version": "2.0.0",
+        "schemaVersion": "1.0.0"
+      },
+      "signals": {
+        "vendorVerified": true,
+        "invoiceVerified": true,
+        "paymentApproved": true,
+        "sufficientFunds": true,
+        "paymentAmount": 4500,
+        "riskScore": 10
+      },
+      "outcome": "APPROVED",
+      "reason": "Vendor payment authorized. Vendor verification, invoice verification, payment approval, funding, and risk assessment requirements were satisfied.",
+      "matchedRuleId": "approve-payment",
+      "evaluatedRules": 1,
+      "matchedPath": ["approve-payment"],
+      "evaluatedAt": "2026-07-07T16:38:59.326Z"
+    }
+  ]
+}

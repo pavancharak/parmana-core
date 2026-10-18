@@ -1,0 +1,118 @@
+---
+title: "Determinism and Clocks"
+description: 'Two different things share the word "deterministic" on this site. This page is about the narrower one: injected Clock and IdGenerator, and exactly where that pattern is and isn''t used.'
+---
+
+<Info>
+  **[AVAILABLE], narrowly scoped.** `packages/execution-control/src/Clock.ts`,
+  `IdGenerator.ts`.
+</Info>
+
+## What it is
+
+`Clock` and `IdGenerator` are two small interfaces that let time and identity generation be
+supplied to a component rather than called directly:
+
+```typescript
+// packages/execution-control/src/Clock.ts
+export interface Clock {
+  now(): Date;
+}
+export class SystemClock implements Clock {
+  now(): Date {
+    return new Date();
+  }
+}
+```
+
+```typescript
+// packages/execution-control/src/IdGenerator.ts
+export interface IdGenerator {
+  generate(): string;
+}
+export class RandomIdGenerator implements IdGenerator {
+  generate(): string {
+    return randomUUID();
+  }
+}
+```
+
+## Why it exists
+
+A component that calls `new Date()` or `crypto.randomUUID()` directly is untestable in any
+reproducible way: two test runs never produce the same timestamp or ID, and testing
+time-dependent logic (expiry, ordering, replay windows) means racing the clock. Injecting
+`Clock` and `IdGenerator` lets tests supply fixed or sequential values instead, so
+`issuedAt` ordering or expiry boundaries can be asserted exactly, not approximately.
+
+## How it behaves, and its real scope
+
+<Warning>
+**This is not a system-wide pattern.** `Clock` and `IdGenerator` are defined once, in
+`packages/execution-control`, and used only on the release path, where expiry and single use
+matter: gateway attestation signing, session credential issuance and consumption, and the
+connector registry that wires them together:
+
+- `GatewayAttestationSigner` (`packages/execution-control/src/GatewayAttestation.ts:50-54`)
+  takes a `Clock` and `IdGenerator` in its constructor, used for `issuedAt` and the
+  attestation's `nonce`. See [Gateway attestation](/concepts/gateway-attestation).
+- `InMemorySessionCredentialVault` (`packages/execution-control/src/SessionCredentialVault.ts`)
+  takes the same two, used for a session credential's `issuedAt`, expiry comparison, and
+  `sessionCredentialId`. `SessionCredentialSecureConnector` takes the `Clock` for the same
+  expiry. See [Credential isolation](/concepts/credential-isolation).
+- `GatewayConnectorRegistry` (`packages/execution-gateway/src/connector-execution/`) accepts
+  an optional `Clock` and `IdGenerator` and passes them to the components above, defaulting
+  to `SystemClock` and `RandomIdGenerator`. The default server passes those two explicitly
+  (`createExecutionGateway.ts`, `createExecutionControl.ts`).
+
+Everywhere else on this site, "deterministic" means something different: [policy
+evaluation](/concepts/policies-and-the-decision) producing the same decision for the same
+signals every time. That determinism is about the absence of randomness or hidden state in
+rule evaluation, not about clock injection. `packages/runtime` builders
+(`DecisionBuilder`, `ExecutionBuilder`, `BusinessTrustRecordBuilder`) call `new Date()` and
+`crypto.randomUUID()` directly, they do not take an injected `Clock` or `IdGenerator`. A
+Decision's `evaluatedAt` and an Execution Trust Record's `createdAt` are real wall-clock
+timestamps, not reproducible across runs, and that's fine: what has to be reproducible is
+the _outcome_ of policy evaluation given the same recorded signals, which is what
+[replay](/replay/overview) checks, not the timestamps.
+
+</Warning>
+
+## Minimal example
+
+Test doubles for `Clock` and `IdGenerator` are written ad hoc per test file, there is no
+shared, exported fixed-clock or sequential-ID implementation in the package itself:
+
+```typescript
+// packages/execution-control/tests/unit/gateway-attestation.test.ts
+class SequentialIdGenerator implements IdGenerator {
+  private n = 0;
+  generate(): string {
+    return `id-${++this.n}`;
+  }
+}
+
+const signer = new GatewayAttestationSigner(
+  fixedClock,
+  new SequentialIdGenerator(),
+);
+```
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="Gateway attestation"
+    icon="stamp"
+    href="/concepts/gateway-attestation"
+  >
+    Where injected Clock and IdGenerator are actually used.
+  </Card>
+  <Card
+    title="Policies and the decision"
+    icon="scale-balanced"
+    href="/concepts/policies-and-the-decision"
+  >
+    The other, more load-bearing sense of "deterministic" on this site.
+  </Card>
+</CardGroup>

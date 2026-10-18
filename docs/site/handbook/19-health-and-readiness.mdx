@@ -1,0 +1,98 @@
+---
+title: "Chapter 19: Health and Readiness"
+description: "Two distinct endpoints answer two distinct questions a deployment orchestrator needs answered"
+---
+
+## What it is
+
+Two distinct endpoints answer two distinct questions a deployment orchestrator needs answered
+separately: `GET /health` asks "is this process running at all," and `GET /ready` asks "is this
+process actually able to serve real traffic right now." Conflating them is a common mistake this
+codebase deliberately avoids.
+
+## Why it was built
+
+A process that is up but backed by dead storage is not actually ready to serve traffic, and a
+PaaS orchestrator that only checks liveness has no way to route around it. `/ready` exists
+specifically to catch that case and let the orchestrator act on it.
+
+## How it works
+
+`GET /health` (`packages/api/src/routes/health.ts`) is deliberately trivial: it responds
+`{"status": "UP"}` unconditionally, with no external check of any kind. This is a pure liveness
+probe, if the process can answer HTTP at all, it answers this.
+
+`GET /ready` (`packages/api/src/routes/ready.ts`) is genuinely different: when storage is not
+Supabase-backed (`NODE_ENV=test`, or `PARMANA_STORAGE` set to anything other than `"supabase"`),
+there is no external dependency to probe, so it reports `READY` unconditionally, the same
+distinction `assertStorageConfigured.ts` already draws at boot. Otherwise, it actually queries
+Postgres with `SELECT 1` (cheap, transfers no table rows, just confirms the connection and
+credentials work) via `PostgresPoolFactory`, not `supabase-js`/PostgREST, the route's own
+comment notes this probe previously depended on PostgREST for a `consumed_nonces` HEAD request,
+meaning a PostgREST-layer outage could make the readiness probe itself unreliable; querying
+directly removes that failure mode. A failed query returns `503` with `status: "NOT_READY"` and
+the real error message as `reason`.
+
+Both responses also carry an `authDisabled` field, and a `warning` string when true. This exists
+because `PARMANA_AUTH_DISABLED=true` is exactly the kind of misconfiguration ("copied
+`.env.example` without reading every line") that is easy to miss as a one-time `console.warn` at
+boot but easy for an operator's own monitoring or synthetic checks to catch and alert on
+directly when it's a field on an endpoint already polled every 30 seconds.
+
+### The incident this route was caught in, the night of 2026-09-16
+
+`/ready`'s own test coverage, `examples/tutorials/89-readiness-probe/run.ts`, runs three
+scenarios: `NODE_ENV=test` reports `READY` with zero database calls; explicit
+`PARMANA_STORAGE=memory` outside test mode also reports `READY` with zero database calls; and a
+`DATABASE_URL` pointed at a genuinely unreachable address (`postgresql://unreachable:unreachable@127.0.0.1:1/postgres`)
+reports `NOT_READY`, `503`, with a specific reason.
+
+That third scenario broke twice, from two different, real bugs found and fixed the same night.
+First: `PostgresPoolFactory.create()` (`packages/storage/src/postgres/PostgresPoolFactory.ts`)
+had no `connectionTimeoutMillis` set, so a connection attempt against a genuinely unreachable
+address could hang indefinitely instead of failing fast, fixed by adding a 5-second timeout,
+generous for any real, reachable Postgres instance and short enough that a real outage or this
+readiness check surfaces promptly. Second, and more subtly: a first version of the same night's
+`SupabasePolicyRepository` fix (Chapter 7) constructed it, and therefore called
+`PostgresPoolFactory.create()`, **eagerly at module import time** inside
+`packages/api/src/application.ts`. Because `PostgresPoolFactory` is a process-wide singleton
+(`if (this.pool) return this.pool;`), that eager call created and cached a pool connected to
+whatever `DATABASE_URL` was actually configured at import time, before the tutorial's Scenario 3
+ever got a chance to override it to the deliberately-unreachable address. The result: Scenario 3
+kept reporting `READY`, using the real, working pool, no matter what `DATABASE_URL` the tutorial
+set afterward. The fix was to make that construction lazy, the same discipline
+`packages/api/src/repositories.ts`'s existing `lazyRepository()` helper already establishes for
+every other repository in this codebase (G-15), and for the identical reason: importing a module
+must never itself open a live database connection as a side effect; only an actual repository
+call should. After both fixes, the tutorial's Scenario 3 correctly reports `NOT_READY`, `503`,
+with `reason: "connect ECONNREFUSED 127.0.0.1:1"`.
+
+This is a genuinely instructive incident, not just a bug fixed in passing: it shows how a
+singleton connection pool and an eager module-scope side effect can combine to make a test that
+looks correct on paper silently test nothing at all, and it's exactly the kind of thing a
+readiness-probe tutorial exists to catch before it reaches production.
+
+## How it enables things, with a concrete example
+
+`examples/tutorials/89-readiness-probe/run.ts` is the concrete example, read it directly, it is
+short and the three scenarios described above are exactly what it runs, printing the real status
+code and body for each.
+
+## How to validate this yourself
+
+- `packages/api/src/routes/health.ts`, `packages/api/src/routes/ready.ts`
+- `packages/storage/src/postgres/PostgresPoolFactory.ts` (note the `connectionTimeoutMillis`
+  comment, which names this exact incident)
+- `packages/api/src/application.ts` (the lazy `getPolicyRepository()`/`Proxy` construction, and
+  its own doc comment explaining why an earlier, eager version was wrong)
+- `packages/api/src/repositories.ts` (`lazyRepository()`, the pattern the fix now mirrors)
+- `examples/tutorials/89-readiness-probe/run.ts`
+- `packages/storage/tests/unit/postgres-pool-factory.test.ts` (asserts the exact `Pool`
+  constructor arguments, including the timeout)
+
+## Integration requirements
+
+No additional configuration beyond what storage already requires (`PARMANA_STORAGE`,
+`DATABASE_URL` when Supabase-backed). A PaaS orchestrator should be configured to poll `/health`
+for restart decisions and `/ready` for traffic-routing decisions, treating them as
+interchangeable defeats the reason both exist.

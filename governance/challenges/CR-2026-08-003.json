@@ -1,0 +1,37 @@
+{
+  "challengeRecordId": "CR-2026-08-003",
+  "status": "resolved",
+  "claimChallenged": "That Parmana holds its own handling of challenges to the standard it applies to runtime outcomes: a public commenter asked how the trace from an assumption being questioned to what changed is kept as a durable, checkable record (RFC-0022, Summary).",
+  "source": {
+    "kind": "public-comment",
+    "attribution": "A public commenter; not named in RFC-0022.",
+    "raisedAt": "2026-08-03T00:00:00.000Z"
+  },
+  "investigationSteps": [
+    {
+      "performedAt": "2026-08-03T00:00:00.000Z",
+      "method": "Surveyed every document that recorded past challenges: 04-INCIDENTS-LOG.md, docs/VERIFICATION-GAPS.md, the TRL 7 verification page, RFC motivations and the docs/CLAIMS.md Key Compromise Notice (RFC-0022, Background). The exact date is not recorded; this is the latest date the cited sources support.",
+      "observation": "The investigations were rigorous, but the records were spread over five formats with no shared identifier, schema or lifecycle; 04-INCIDENTS-LOG.md had gone stale and omitted G-24; a challenge ruled out had nowhere to be recorded."
+    }
+  ],
+  "finding": {
+    "outcome": "confirmed",
+    "statement": "There was no single, structured, durable record of what Parmana had been challenged on, what was checked and what changed."
+  },
+  "outcome": {
+    "changed": true,
+    "description": "The ChallengeRecord type, repository and challenge_records table (RFC-0022), scripts/record-challenge.ts to write one, and governance/challenges/ as the public copy. The first record written going forward is CR-2026-10-001.",
+    "references": [
+      "https://github.com/pavancharak/parmana/blob/main/docs/rfcs/RFC-0022-Challenge-Record.md",
+      "https://github.com/pavancharak/parmana/blob/main/packages/shared/src/domain/challenge-record.ts",
+      "https://github.com/pavancharak/parmana/blob/main/scripts/record-challenge.ts",
+      "https://github.com/pavancharak/parmana/blob/main/governance/challenges/README.md"
+    ]
+  },
+  "disclosure": {
+    "disclosedPublicly": true,
+    "location": "docs/rfcs/RFC-0022-Challenge-Record.md and governance/challenges/, in this public repository"
+  },
+  "createdAt": "2026-10-10T00:00:00.000Z",
+  "updatedAt": "2026-10-10T00:00:00.000Z"
+}

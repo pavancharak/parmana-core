@@ -1,0 +1,285 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/execution-trust-record.schema.json",
+  "title": "Execution Trust Record",
+  "description": "Canonical immutable record representing everything Parmana knows about a Business Transaction: the authoritative source for replay, verification, audit, and receipt generation. One Execution Trust Record exists per Business Transaction. overrides, executions, verifications, and receipts are append-only: existing entries are never modified or removed.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "trustRecordId",
+    "businessTransactionId",
+    "transaction",
+    "overrides",
+    "executions",
+    "verifications",
+    "receipts",
+    "trustRecordHash",
+    "signature",
+    "createdAt",
+    "updatedAt"
+  ],
+  "properties": {
+    "trustRecordId": {
+      "type": "string",
+      "description": "Unique Execution Trust Record identifier."
+    },
+    "businessTransactionId": {
+      "type": "string",
+      "description": "Business Transaction identifier."
+    },
+    "transaction": {
+      "$ref": "./business-transaction.schema.json"
+    },
+    "overrides": {
+      "type": "array",
+      "description": "Override history. Append-only; empty on every transaction in this repository today (no route creates an Override).",
+      "items": {
+        "$ref": "./override.schema.json"
+      }
+    },
+    "executions": {
+      "type": "array",
+      "description": "Execution history. Append-only.",
+      "items": {
+        "$ref": "./execution.schema.json"
+      }
+    },
+    "verifications": {
+      "type": "array",
+      "description": "Verification history. Append-only.",
+      "items": {
+        "$ref": "./verification.schema.json"
+      }
+    },
+    "receipts": {
+      "type": "array",
+      "description": "Receipt history. Append-only.",
+      "items": {
+        "$ref": "./receipt.schema.json"
+      }
+    },
+    "trustRecordHash": {
+      "type": "string",
+      "description": "Canonical hash of the Execution Trust Record, computed over its canonical serialized form."
+    },
+    "signature": {
+      "type": "object",
+      "description": "Cryptographic signature over the canonical Execution Trust Record, proving it was produced by Parmana and has not been modified since signing.",
+      "additionalProperties": true,
+      "required": ["algorithm", "keyId", "value", "signedAt"],
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "examples": ["ed25519"]
+        },
+        "keyId": {
+          "type": "string",
+          "description": "Identifier of the signing key."
+        },
+        "value": {
+          "type": "string",
+          "description": "Base64-encoded signature value."
+        },
+        "signedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when the Execution Trust Record was first created."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when the Execution Trust Record was last extended with a new immutable artifact."
+    },
+    "evidenceAnchor": {
+      "type": "object",
+      "description": "Explicit binding linking policy-governance provenance (transaction.policy.contentHash/governanceAnchor) to what a connector actually did (executions[].evidence.attributes.connector). Not a new cryptographic guarantee on its own -- both were already covered by trustRecordHash/signature -- but a single, explicitly-named pointer an auditor can check without reconstructing the binding themselves. Absent on a Trust Record built before this field existed.",
+      "additionalProperties": false,
+      "required": ["anchorHash"],
+      "properties": {
+        "policyContentHash": {
+          "type": "string",
+          "description": "Copied from transaction.policy.contentHash (G-24). Present on every real Execution Trust Record."
+        },
+        "governanceAnchorStatus": {
+          "type": "string",
+          "enum": [
+            "VERIFIED",
+            "NO_APPROVAL_RECORD",
+            "SIGNATURE_INVALID",
+            "CONTENT_MISMATCH"
+          ],
+          "description": "Copied from transaction.policy.governanceAnchor.status (G-45). Absent only when no governance anchor resolver was configured for this deployment."
+        },
+        "connectorEvidenceHash": {
+          "type": "string",
+          "description": "Copied from executions[0].evidence.attributes.connector.connectorEvidenceHash, when a real connector executed."
+        },
+        "anchorHash": {
+          "type": "string",
+          "description": "sha256 of the canonicalized {policyContentHash, governanceAnchorStatus, connectorEvidenceHash} above."
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "trustRecordId": "759e916e-66d2-48c3-8869-55d557acf155",
+      "businessTransactionId": "eed2a972-1bf5-4166-8472-761f76fbf1b2",
+      "transaction": {
+        "businessTransactionId": "eed2a972-1bf5-4166-8472-761f76fbf1b2",
+        "metadata": {
+          "businessTransactionId": "eed2a972-1bf5-4166-8472-761f76fbf1b2",
+          "correlationId": "6b97caca-1605-4711-bf00-7e5a65434d93",
+          "sourceSystem": "vendor-payment-service",
+          "submittedBy": "ap-automation",
+          "submittedAt": "2026-07-07T16:38:59.285Z"
+        },
+        "authority": {
+          "authorityId": "c0c01c23-04a2-45f2-a821-ef24bfca02d3",
+          "authorityType": "SERVICE",
+          "principalId": "ap-automation-svc",
+          "displayName": "Accounts Payable Automation",
+          "issuedAt": "2026-07-07T16:38:59.285Z"
+        },
+        "authorization": {
+          "authorizationId": "6e9d6aa6-6d20-40a8-b05d-383516365cc7",
+          "authorityId": "c0c01c23-04a2-45f2-a821-ef24bfca02d3",
+          "purpose": "Authorize vendor payment disbursement",
+          "issuedAt": "2026-07-07T16:38:59.285Z"
+        },
+        "intent": {
+          "intentId": "ae5865f6-181b-409a-90ec-1b4b8b8414ba",
+          "authorizationId": "6e9d6aa6-6d20-40a8-b05d-383516365cc7",
+          "action": "payments:execute",
+          "target": "vendor/V-100",
+          "parameters": {
+            "amount": 4500,
+            "currency": "USD"
+          },
+          "createdAt": "2026-07-07T16:38:59.285Z"
+        },
+        "policy": {
+          "name": "vendor-payment",
+          "version": "2.0.0",
+          "schemaVersion": "1.0.0"
+        },
+        "signals": {
+          "vendorVerified": true,
+          "invoiceVerified": true,
+          "paymentApproved": true,
+          "sufficientFunds": true,
+          "paymentAmount": 4500,
+          "riskScore": 10
+        },
+        "status": "RECEIVED",
+        "createdAt": "2026-07-07T16:38:59.325Z"
+      },
+      "overrides": [],
+      "executions": [
+        {
+          "executionId": "2be38c15-f93c-4621-9a1c-7570c130dea0",
+          "businessTransactionId": "eed2a972-1bf5-4166-8472-761f76fbf1b2",
+          "decision": {
+            "decisionId": "9d69dc0b-333a-4be3-b09f-358fece806f3",
+            "intentId": "ae5865f6-181b-409a-90ec-1b4b8b8414ba",
+            "policy": {
+              "name": "vendor-payment",
+              "version": "2.0.0",
+              "schemaVersion": "1.0.0"
+            },
+            "signals": {
+              "vendorVerified": true,
+              "invoiceVerified": true,
+              "paymentApproved": true,
+              "sufficientFunds": true,
+              "paymentAmount": 4500,
+              "riskScore": 10
+            },
+            "outcome": "APPROVED",
+            "reason": "Vendor payment authorized. Vendor verification, invoice verification, payment approval, funding, and risk assessment requirements were satisfied.",
+            "evaluatedAt": "2026-07-07T16:38:59.326Z"
+          },
+          "status": "COMPLETED",
+          "mode": "SYNC",
+          "startedAt": "2026-07-07T16:38:59.328Z",
+          "metadata": {
+            "authorizationId": "1dc2d137-fde2-4d9c-b298-79e9f8a0d03e"
+          },
+          "evidence": {
+            "businessTransactionId": "eed2a972-1bf5-4166-8472-761f76fbf1b2",
+            "action": "payments:execute",
+            "target": "vendor/V-100",
+            "parameters": {
+              "amount": 4500,
+              "currency": "USD"
+            },
+            "success": true,
+            "executedAt": "2026-07-07T16:38:59.328Z",
+            "attributes": {
+              "connector": {
+                "connectorId": "vendor-payment",
+                "connectorVersion": "1.0.0",
+                "capability": "payments:execute",
+                "sanitizedEndpoint": "vendor/V-100",
+                "credentialProviderId": "environment",
+                "requestSummary": {
+                  "businessTransactionId": "eed2a972-1bf5-4166-8472-761f76fbf1b2",
+                  "action": "payments:execute",
+                  "target": "vendor/V-100",
+                  "parameters": {
+                    "amount": 4500,
+                    "currency": "USD"
+                  }
+                },
+                "responseSummary": {
+                  "success": true,
+                  "metadata": {}
+                },
+                "startedAt": "2026-07-07T16:38:59.328Z",
+                "completedAt": "2026-07-07T16:38:59.328Z",
+                "connectorEvidenceHash": "7bcacb3e399a713e44a4f48aa2783de8060ae28591e4fc1256b504bd32cd7aea"
+              }
+            }
+          },
+          "completedAt": "2026-07-07T16:38:59.329Z"
+        }
+      ],
+      "verifications": [
+        {
+          "verificationId": "0b96c8b4-9cd8-4162-81fc-086575cf0924",
+          "businessTransactionId": "eed2a972-1bf5-4166-8472-761f76fbf1b2",
+          "status": "VERIFIED",
+          "message": "Execution Trust Record verified successfully.",
+          "verifiedAt": "2026-07-07T16:38:59.331Z",
+          "trustRecordHash": "989aef83d595202ec02bb338ac00461abec0541098ea065f965b5cde342d3b25"
+        }
+      ],
+      "receipts": [
+        {
+          "receiptId": "3073a598-f927-4caf-8bb8-4f083f62b7e9",
+          "businessTransactionId": "eed2a972-1bf5-4166-8472-761f76fbf1b2",
+          "trustRecordHash": "989aef83d595202ec02bb338ac00461abec0541098ea065f965b5cde342d3b25",
+          "receiptHash": "8a5a0e9255dafef5ec588f0834e3c5b81dc7feb98a59f8bfa7083438fa58e231",
+          "issuedAt": "2026-07-07T16:38:59.331Z",
+          "algorithm": "ed25519",
+          "signature": "vzpykBuJhoy/2BdiR1x02KYZqMtKJu39olRJdzM5veSo9nYmoNSYQnt9HELlb2jlGWf07jPhP8ZXlrQnN4KQBA=="
+        }
+      ],
+      "createdAt": "2026-07-07T16:38:59.329Z",
+      "updatedAt": "2026-07-07T16:38:59.329Z",
+      "trustRecordHash": "989aef83d595202ec02bb338ac00461abec0541098ea065f965b5cde342d3b25",
+      "signature": {
+        "algorithm": "ed25519",
+        "keyId": "default",
+        "value": "l41lr6nCUbrzEfoil/3+gkXd4zEQ9TR1qFaSwLuE70L/9U6cVz3VXdM1lPsDfELKh6RO4qcDrFWF/S3k4CAxAQ==",
+        "signedAt": "2026-07-07T16:38:59.330Z"
+      }
+    }
+  ]
+}

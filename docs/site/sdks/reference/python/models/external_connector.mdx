@@ -1,0 +1,51 @@
+---
+sidebar_label: external_connector
+title: parmana.models.external_connector
+---
+
+Parmana external connectors: your own HTTPS endpoint registered for a
+capability through maker checker, with no Parmana code change.
+
+Hand-maintained: the response bodies of the /external-connectors routes
+(packages/api/src/routes/external-connectors.ts).
+
+## ExternalConnector Objects
+
+```python
+@dataclass(frozen=True)
+class ExternalConnector()
+```
+
+A capability registered to an HTTPS endpoint, active or revoked.
+
+#### registration_id
+
+The change_id of the approved register change that created it.
+
+#### policy
+
+The policy that governs the capability. A request must declare the
+version approved through policy governance.
+
+#### allowed_parameters
+
+The intent parameters Parmana forwards to the endpoint.
+
+#### status
+
+"active" or "revoked". At most one active registration per capability.
+
+## ExternalConnectorChange Objects
+
+```python
+@dataclass(frozen=True)
+class ExternalConnectorChange()
+```
+
+A proposal to register or revoke an external connector, and its
+resolution. Sign the step up authorization for approve or reject with
+`change_id` as `pending_policy_change_id`.
+
+#### action
+
+"register" or "revoke".

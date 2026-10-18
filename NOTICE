@@ -1,0 +1,13 @@
+Parmana
+Copyright (c) 2026 Parmana Systems Private Limited. All rights reserved.
+
+This repository is source-available for evaluation only. See LICENSE.
+
+"Parmana" and the Parmana logo are trademarks of Parmana Systems Private
+Limited. The license does not grant any right to use them, except to refer
+to this software accurately.
+
+The client SDKs and connector SDKs in typescript/, python/,
+packages/connector-sdk/ and python-connector-sdk/ are licensed under the
+Apache License 2.0; see the LICENSE file in each directory. So is
+@parmana/sign (https://github.com/pavancharak/parmana-sign).

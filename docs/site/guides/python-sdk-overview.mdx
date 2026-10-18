@@ -1,0 +1,263 @@
+---
+title: "Python SDK Overview"
+description: "What the Python SDK does, when to reach for it, and the three objects every integration is built from."
+---
+
+The Parmana Python SDK lets you integrate authorization into Python applications, AI agents, and
+microservices. Before any consequential action executes, your code asks Parmana: "is this
+allowed?", and gets back either a signed proof of what happened, or a rejection with a reason.
+
+## What it solves
+
+Your AI agent wants to refund a payment. The naive integration hands it the payment provider's
+credentials directly and trusts its judgment. Instead, with Parmana:
+
+1. **Your code proposes** the action (who, what, why, with what supporting facts).
+2. **A policy decides**, deterministically, based on the facts you supplied (amount limits,
+   verification status, risk score, whatever the named policy actually checks).
+3. **Your system executes only if approved**, a rejected proposal raises an exception before any
+   downstream call happens.
+4. **Proof is recorded**: a cryptographically signed [Execution Trust
+   Record](/concepts/execution-trust-records), independently verifiable without trusting Parmana's
+   word for it.
+
+The agent never holds the vendor's credentials. Policy decides, not the agent's own judgment call.
+
+## When to use it
+
+Reach for the SDK if:
+
+- You have an AI agent (LangChain, CrewAI, a custom loop) that takes actions with real consequences.
+- You need a durable, signed record of who did what and why, for audit or compliance.
+- You want a named, versioned policy to make the call, not inline `if` statements scattered
+  through agent code.
+- You're wiring an agent into a payment, CRM, or infrastructure connector.
+
+Skip it if the action is read-only or has no real consequence, plain application logging is
+enough there; [The gateway](/concepts/the-gateway) exists to guard actions that actually change
+something.
+
+## Core concepts
+
+Three objects, one call in between:
+
+```
+BusinessTransaction  →  client.execution.execute(transaction)  →  ExecutionTrustRecord
+ (what you propose)         (policy runs, connector executes)      (signed proof of what happened)
+```
+
+There's no separate "authorize" step to call, `execute()` runs the policy decision and the
+connector call in one request. If the policy denies the transaction, `execute()` raises
+[`ExecutionRejectedError`](/sdks/python#errors-correctly-mapped-to-real-conditions) instead of
+returning; if it approves, the connector runs and you get back a signed
+[`ExecutionTrustRecord`](/concepts/execution-trust-records) with the decision embedded.
+
+### BusinessTransaction
+
+What you propose, built with `create_business_transaction()` rather than assembled by hand, see
+[Why the builder function, not five nested
+objects](/sdks/python#create_business_transaction-no-more-hand-synced-ids) for what it protects
+you from:
+
+```python
+from parmana import PolicyReference, create_business_transaction
+
+# The manager's signed approval for this order and amount (every refund
+# needs one; see Human approval). It arrives from your approval flow,
+# for example the approval email.
+approval = pending_approvals["ORD-1042"]
+transaction = create_business_transaction(
+    principal_id="ai-customer-service-001",  # must match your API key's allowed_principal_ids
+    purpose="Customer-requested refund",
+    action="paytm:refund",
+    target="paytm://orders/ORD-1042",
+    parameters={"orderId": "ORD-1042", "amount": 50000},
+    policy=PolicyReference(name="customer-refund", version="1.2.0", schema_version="1.0.0"),
+    signals={
+        "refundEligible": True,
+        "fraudCheckPassed": True,
+        "refundAmount": 50000,
+        "managerApproved": True,
+        "approvalArtifact": approval,
+    },
+)
+```
+
+- `principal_id`, who's proposing this (an agent id, service name, or user id); checked against
+  your API key's own `allowed_principal_ids` server-side before anything else runs.
+- `action`, the capability being invoked, e.g. `"paytm:refund"`.
+- `parameters`, the business data for the action itself (amount, currency, whatever the
+  connector needs).
+- `policy`, which named, versioned policy evaluates this transaction.
+- `signals`, the facts the named policy actually checks. Every fact a policy rule references
+  must be present here, or the policy has nothing to evaluate.
+
+### ExecutionTrustRecord
+
+What comes back once `execute()` succeeds, a signed record of the decision, the connector's
+evidence, and the resulting proof:
+
+```python
+trust_record = client.execution.execute(transaction)
+
+print(trust_record.trust_record_id)
+print(trust_record.trust_record_hash)
+print(trust_record.signature.algorithm)                 # e.g. "ED25519"
+print(trust_record.executions[0].decision.outcome)       # "APPROVED"
+print(trust_record.executions[0].evidence)               # what the connector actually did
+```
+
+You can [verify this independently](/guides/verify-independently) without trusting Parmana's
+word for it, the signature is checkable against a public key you control.
+
+### Rejection is an exception, not a status field to check
+
+A denied transaction never produces a 200 response with a "REJECTED" status embedded in it, the
+server returns a real `403` and the SDK raises:
+
+```python
+from parmana import ExecutionRejectedError
+
+try:
+    trust_record = client.execution.execute(transaction)
+except ExecutionRejectedError as exc:
+    print(f"Denied: {exc}")  # "Execution rejected: <policy-specific reason>"
+```
+
+See [Errors, correctly mapped to real conditions](/sdks/python#errors-correctly-mapped-to-real-conditions)
+for the full exception taxonomy, connection failures, malformed requests, and auth failures each
+raise their own distinct exception, not a generic one you have to string-match.
+
+## Installation
+
+```bash
+pip install parmana
+```
+
+Real PyPI package, confirmed against the live registry (see [Python SDK](/sdks/python) for the
+current published version). Requires Python 3.8+.
+
+## Quick example
+
+```python
+import json
+
+from parmana import ParmanaClient, PolicyReference, create_business_transaction
+
+client = ParmanaClient(endpoint="http://localhost:3000", api_key="my-secret-api-key")
+
+# The approver's signed approval for vendor://payments up to 1000, made with
+# parmana.crypto.sign_approval on the approver's machine.
+approval = json.load(open("approval.json"))
+
+transaction = create_business_transaction(
+    principal_id="python-sdk",
+    purpose="Quickstart demo",
+    action="test:fixture-execute",
+    target="vendor://payments",
+    parameters={"amount": 1000, "currency": "USD"},
+    policy=PolicyReference(name="vendor-payment", version="2.1.0", schema_version="1.0.0"),
+    signals={
+        # The approver's signed approval for this target, up to this amount
+        # (parmana.crypto.sign_approval). Without it the request is refused.
+        "humanApproved": True,
+        "approvalArtifact": approval,
+        "vendorVerified": True,
+        "invoiceVerified": True,
+        "paymentApproved": True,
+        "sufficientFunds": True,
+        "paymentAmount": 1000,
+        "riskScore": 5,
+        "vendorId": "vendor://payments",
+    },
+)
+
+trust_record = client.execution.execute(transaction)
+print(trust_record.trust_record_hash)
+```
+
+This is the exact call [Quickstart](/quickstart) walks through against a local server, with real
+captured output, see there for the full step-by-step (installing, generating a local Gateway
+keypair, starting the Runtime) if you haven't set up a local server yet.
+
+## Real-world example: a refund an agent proposes
+
+```python
+from parmana import ExecutionRejectedError, ParmanaClient, PolicyReference, create_business_transaction
+
+client = ParmanaClient(endpoint="http://localhost:3000", api_key="my-secret-api-key")
+
+# The manager's signed approval for this order and amount (every refund
+# needs one; see Human approval). It arrives from your approval flow,
+# for example the approval email.
+approval = pending_approvals["ORD-1042"]
+transaction = create_business_transaction(
+    principal_id="ai-customer-service",
+    purpose="Customer requested a refund after a duplicate charge",
+    action="paytm:refund",
+    target="paytm://orders/ORD-1042",
+    parameters={"orderId": "ORD-1042", "amount": 50000},
+    policy=PolicyReference(name="customer-refund", version="1.2.0", schema_version="1.0.0"),
+    signals={
+        "refundEligible": True,
+        "fraudCheckPassed": True,
+        "refundAmount": 50000,
+        "managerApproved": True,
+        "approvalArtifact": approval,
+    },
+)
+
+try:
+    trust_record = client.execution.execute(transaction)
+    print(f"Approved: {trust_record.trust_record_hash}")
+except ExecutionRejectedError as exc:
+    print(f"Denied: {exc}")
+```
+
+No separate credential ever reaches the agent, the `paytm:refund` connector holds its own
+credentials, resolved server-side; see [Credential isolation](/concepts/credential-isolation).
+
+## What Parmana guarantees
+
+- The agent never holds the connector's own credentials, see [Credential
+  isolation](/concepts/credential-isolation).
+- The same transaction, evaluated against the same policy version, produces the same decision ,
+  policy decides, not agent judgment; see [Policies and the
+  decision](/concepts/policies-and-the-decision).
+- Every authorization is single-use and time-bounded, see [The gateway](/concepts/the-gateway).
+- Execution produces a cryptographically signed proof, independently verifiable, see [Execution
+  Trust Records](/concepts/execution-trust-records) and [Verify
+  independently](/guides/verify-independently).
+- What's explicitly **not** guaranteed (compliance certifications, unscoped "non-bypassable"
+  claims, and more) is listed plainly in [Limitations](/security/limitations), read that before
+  making claims of your own downstream.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="Python SDK Quickstart"
+    icon="rocket"
+    href="/guides/python-sdk-quickstart"
+  >
+    Get running end-to-end in under 10 minutes.
+  </Card>
+  <Card
+    title="Python SDK for AI Agents"
+    icon="robot"
+    href="/guides/python-sdk-ai-agents"
+  >
+    Wire this into LangChain, CrewAI, FastAPI, and async agent code.
+  </Card>
+  <Card
+    title="Python SDK Production"
+    icon="server"
+    href="/guides/python-sdk-production"
+  >
+    Error handling, audit logging, and a deployment checklist.
+  </Card>
+  <Card title="Python SDK reference" icon="python" href="/sdks/python">
+    The complete, verified API surface: every method, every error, the test
+    suite backing it.
+  </Card>
+</CardGroup>

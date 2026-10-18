@@ -1,0 +1,35 @@
+{
+  "name": "@parmana/connector-slack",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Slack connector for Parmana: posts a message via Slack's real chat.postMessage Web API after a Parmana-authorized slack:post-message capability. In-process, real HTTP calls (like HubSpot/GitHub), not a proxy to a separate service.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@parmana/connector-sdk": "0.3.0",
+    "@parmana/shared": "0.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "SEE LICENSE IN LICENSE"
+}

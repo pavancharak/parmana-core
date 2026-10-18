@@ -1,0 +1,717 @@
+---
+title: "TypeScript SDK"
+description: "Real client code, bearer-key authentication, and a typed error taxonomy that is actually thrown."
+---
+
+<Info>
+  **[AVAILABLE]**, **published**, [`@parmana/sdk` on
+  npm](https://www.npmjs.com/package/@parmana/sdk). Real, public, installable
+  with a plain `npm install @parmana/sdk`. This page said otherwise ("private,
+  not published to any registry") until 2026-09-14; that was stale even at
+  v1.1.1, confirmed live against the npm registry while fixing this page.
+  Bearer-key authentication, a real thrown error taxonomy, and full test
+  coverage are all in place, along with corrected model types (see below),
+  `client.verify()`/`client.version()`, and `client.createTransaction()`.
+  v1.6.0, published 2026-10-11, is the current version. It adds the business
+  signal source and authority grant methods, and `conditions` on a release: see
+  [New in 1.6.0](#new-in-160). v1.5.0, published 2026-10-04, added the external
+  connector methods, `policyInEffect()` and `verifyParmanaRelease()`, and the
+  Apache License 2.0: see [New in 1.5.0](#new-in-150). v1.4.0, published
+  2026-09-29, added `signApproval()` and the approver methods: see [New in
+  1.4.0](#new-in-140). v1.3.0, published 2026-09-25, added policy governance
+  with step up signing, offline verification, `caller()`, `publicKey()`,
+  `trustRecords()`, `latestReceipt()` and `statusCode` on errors: see [New in
+  1.3.0](#new-in-130). v1.2.0, published 2026-09-21, added the Execution Intent
+  methods. v1.1.6, published 2026-09-20, builds a default `HttpTransport` when
+  you omit `transport`, and sends `userAgent`. v1.1.3 added `serverCode` on
+  `InternalServerError` (see below). v1.1.2, published 2026-09-14, added
+  `createBusinessTransaction()`. See the fix history at the bottom of this page.
+</Info>
+
+<Note>
+  v1.1.2's published package metadata (`homepage`/`repository`/`bugs` in `npm
+  view @parmana/sdk@1.1.2`) still points at this repository's old name,
+  `parmana-exp`, because registry metadata is immutable per version. v1.1.3 and
+  later point at `parmana`. Neither affects installing or using the package.
+</Note>
+
+<Note>
+  Package name history, for anyone who finds an old reference: renamed from
+  `@parmana/legacy-reference`, itself renamed from `@parmana/typescript-sdk`.
+  See [Changelog](/changelog) for when. `@parmana/sdk` is the current, correct,
+  published name.
+</Note>
+
+## Install
+
+```bash
+npm install @parmana/sdk
+```
+
+The SDK is licensed under the Apache License 2.0. It is a client and needs a Parmana server, which is licensed separately. See [License and evaluation](/license).
+
+Real registry install. `npm view @parmana/sdk version` returns the current published
+version directly from npm, confirmed while fixing this page's own stale claim otherwise.
+
+## Bearer-key authentication
+
+`Configuration.apiKey` is sent as `Authorization: Bearer <apiKey>` on every request, by
+`HttpTransport`:
+
+```typescript
+import { ParmanaClient, HttpTransport } from "@parmana/sdk";
+
+const endpoint = "http://localhost:3000";
+const apiKey = "my-secret-api-key";
+
+const client = new ParmanaClient({
+  endpoint,
+  apiKey,
+  transport: new HttpTransport({ endpoint, apiKey }),
+});
+
+const health = await client.health(); // GET /health, no key required
+```
+
+`apiKey` is optional in `Configuration`, for the same reason it's optional server-side: local
+development against a server started with `PARMANA_AUTH_DISABLED=true` needs no key. Every real
+deployment requires one. An omitted or wrong key gets a real `401`, thrown as
+`AuthenticationError` (see below), not a silent failure. See
+[Authentication](/api-reference/authentication) for how keys are minted.
+
+## Errors, they actually throw now
+
+`HttpTransport.send()` checks `response.status` and throws the matching typed error for every
+non-2xx response, built from the real `{error, code?}` envelope
+(`packages/api/src/middleware/error-handler.ts`):
+
+```typescript
+import {
+  ValidationError,
+  AuthenticationError,
+  AuthorizationError,
+  NotFoundError,
+  ConflictError,
+  ExecutionRejectedError,
+  InternalServerError,
+  NetworkError,
+  TimeoutError,
+} from "@parmana/sdk";
+
+try {
+  await client.execute(transaction);
+} catch (error) {
+  if (error instanceof ExecutionRejectedError) {
+    console.log(error.message); // "Execution rejected: <policy-specific reason>"
+  } else if (error instanceof ValidationError) {
+    // 400, malformed request
+  }
+}
+```
+
+| Status                                                           | Exception                                                                          |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| 400                                                              | `ValidationError`                                                                  |
+| 401                                                              | `AuthenticationError`                                                              |
+| 403, code `POLICY_DENIED`, message starting `Execution rejected` | `ExecutionRejectedError`                                                           |
+| 403 (no `code`)                                                  | `AuthorizationError`                                                               |
+| 404                                                              | `NotFoundError`                                                                    |
+| 409                                                              | `ConflictError`                                                                    |
+| any other non-2xx                                                | `InternalServerError`, with the server's `code` on `serverCode` (1.1.3, see below) |
+| connection failure                                               | `NetworkError`                                                                     |
+| request timeout                                                  | `TimeoutError`                                                                     |
+
+### Telling the 5xx signing and record errors apart (1.1.3)
+
+`InternalServerError.serverCode` carries the Runtime's own `code` when the response had one. Two values change what
+you should do next:
+
+- `SIGNING_UNAVAILABLE` (503): the Runtime refused before releasing the action, because it could not sign an
+  Execution Trust Record. **Nothing was executed.** Retry once signing is healthy, with a new `businessTransactionId`,
+  because the original was already accepted.
+- `EXECUTION_INTENT_UNAVAILABLE` (503): the Runtime refused before releasing the action, because it could not sign
+  and store the [Execution Intent](/concepts/execution-intents). **Nothing was executed.** Retry once healthy, with a
+  new `businessTransactionId`.
+- `EXECUTION_RECORD_INCOMPLETE` (500): the action **was** released to the execution system, but its signed record
+  could not be produced. **Do not retry as a new transaction.** Tell the operator: a signed Execution Intent exists,
+  and the operator can rebuild the record without repeating the action. The method is `finalizeExecutionIntent`. It is available from
+  version 1.2.0. On 1.1.6 and earlier the operator uses
+  `POST /execution-intents/<businessTransactionId>/finalize` over HTTP.
+- `EXECUTION_OUTCOME_UNKNOWN` (502, since 2026-09-25): the action was released and the connector call failed, so it
+  **may** have been performed. **Do not retry as a new transaction.** Tell the operator, who checks the target system
+  and closes the intent with `resolveExecutionIntent`.
+
+```typescript
+try {
+  await parmana.execute(transaction);
+} catch (error) {
+  if (error instanceof InternalServerError) {
+    if (error.serverCode === "EXECUTION_RECORD_INCOMPLETE") {
+      // The action ran. Reconcile, never resubmit under a new id.
+    } else if (error.serverCode === "EXECUTION_OUTCOME_UNKNOWN") {
+      // The action may have run. Reconcile, never resubmit under a new id.
+    } else if (
+      error.serverCode === "SIGNING_UNAVAILABLE" ||
+      error.serverCode === "EXECUTION_INTENT_UNAVAILABLE"
+    ) {
+      // Nothing ran. Safe to retry later with a NEW businessTransactionId.
+    }
+  }
+  throw error;
+}
+```
+
+`serverCode` is available in v1.1.3 and later, published 2026-09-20. On v1.1.2 and earlier it is not on `InternalServerError`, and you can read the code from the error message instead.
+
+All extend `ParmanaError`, which carries a stable `code` (`ErrorCode` enum) and optional
+`cause`/`requestId`. `403` (`AuthorizationError`) is a real status this API returns: an
+authenticated caller asserting an `authority.principalId` it isn't permitted to assert
+(`isPrincipalAllowed`, `packages/api/src/routes/execute.ts`), documented in the
+[Error catalog](/api-reference/error-catalog) and the OpenAPI spec.
+
+<Note>
+**One route is deliberately exempt from this mapping.** `POST /policies/validate` never uses
+the shared `{error, code?}` envelope: every status it returns (`200`, `400`, `404`) is
+`{valid, errors}`, the caller's answer, not an SDK-level failure. `PolicyApi.validate` opts
+those two statuses out via `TransportRequest.nonThrowingStatuses`; a `401` on the same route
+still throws `AuthenticationError`, since that one is generated by caller-auth middleware
+before the route's own handler runs, using the shared envelope like every other route. See
+[Error handling](/api-reference/error-handling).
+</Note>
+
+## Model types, matched to the real schemas
+
+`typescript/src/models/*.ts` is hand-maintained, unlike the Python SDK's generated models, and
+kept in sync field-for-field against the real JSON schemas (`schemas/common/*.schema.json`):
+
+- `Authority.displayName` and `Verification.message` are optional, matching the real API.
+- `Authorization.expiresAt` is present (optional).
+- `BusinessTransactionMetadata` requires only `businessTransactionId`; every other field
+  (`tenantId`, `correlationId`, `sourceSystem`, `submittedBy`, `submittedAt`) is optional,
+  matching the real API.
+- `ExecutionTrustRecord` includes the required `signature` field and the optional
+  `settlementConfirmations` field, with their own `SettlementConfirmation`/`Signature` models.
+- `Override.approvedBy` is the real field name (the real schema has no `authorityId` on
+  `Override`), plus the optional `justification` field. Currently unreachable in practice, no
+  route in this repository creates an `Override`.
+- `Decision.outcome`, `Execution.status`, `Execution.mode`, and `BusinessTransaction.status`
+  are literal unions matching the real enums, not bare `string`.
+- `Execution` includes `completedAt`, `evidence` (where Connector evidence lives), and
+  `metadata`.
+
+## `client.verify()` and `client.version()`
+
+- **`client.verify(businessTransactionId)`**: `POST /verify`, runs a fresh verification and
+  appends a new `Verification` to the record's history. `getLatestVerification()`
+  (`GET /verification/:id`) reads a cached verification; this triggers a fresh one.
+- **`client.version()`**: `GET /version`.
+
+## `POST /transactions`
+
+`client.createTransaction(transaction)` is a second, independent entry point into the
+identical execution pipeline as `execute()` (`POST /execute`), differing only in its `201`
+status code. It's a stable, long-standing route with dedicated test coverage
+(`packages/api/tests/unit/transactions-api.test.ts`), not a new or evolving surface.
+
+## `createBusinessTransaction()`, no more hand-synced ids
+
+Added 2026-09-14, ships in v1.1.2, published, available via a plain
+`npm install @parmana/sdk`. A `BusinessTransaction` has three id pairs the server's own
+`BusinessTransactionValidator` cross-checks before policy ever runs:
+`metadata.businessTransactionId` must equal `businessTransactionId`,
+`authorization.authorityId` must equal `authority.authorityId`, `intent.authorizationId` must
+equal `authorization.authorizationId`. Every "X must match Y" `400` documented in
+[the end-to-end Paytm guide](/guides/end-to-end-paytm-flow) came from hand-building a request
+object and getting one of those wrong. `createBusinessTransaction()` derives all three
+automatically:
+
+```typescript
+import {
+  createBusinessTransaction,
+  ParmanaClient,
+  HttpTransport,
+} from "@parmana/sdk";
+
+const client = new ParmanaClient({
+  endpoint,
+  transport: new HttpTransport({ endpoint }),
+});
+
+// The approver's signed approval for this action and resource, made with
+// signApproval() on the approver's machine and passed to the agent.
+const approval = pendingApprovals.get("vendor/vendor-123");
+
+const transaction = createBusinessTransaction({
+  principalId: "alice@example.com", // must match your key's allowedPrincipalIds
+  purpose: "Vendor payment approval",
+  action: "vendor-payment",
+  target: "vendor/vendor-123",
+  parameters: { amount: 100, currency: "USD" },
+  policy: { name: "vendor-payment", version: "2.1.0", schemaVersion: "1.0.0" },
+  signals: {
+    // No agent action is authorized without a signed human approval: a trusted
+    // approver signs one for this target up to this amount (signApproval), and
+    // the agent attaches it. Without it the request is refused.
+    humanApproved: true,
+    approvalArtifact: approval,
+    vendorVerified: true,
+    invoiceVerified: true,
+    paymentApproved: true,
+    sufficientFunds: true,
+    paymentAmount: 100,
+    riskScore: 5,
+    vendorId: "vendor/vendor-123", // boundSignals: SignalIntentBinder rejects this
+    // request unless this exactly equals `target` above
+  },
+});
+
+const trustRecord = await client.execute(transaction);
+```
+
+`businessTransactionId` defaults to a fresh `crypto.randomUUID()` if you don't supply one. A
+value you do supply is your own responsibility to keep unique per attempt, since it also
+doubles as the server's idempotency key. `authorityType` defaults to `"SERVICE"` (never
+`"AGENT"`, which doesn't exist server-side). See
+`typescript/examples/06-create-business-transaction.ts` (the same flow as
+`02-execute.ts`, side by side, for direct comparison) and
+`typescript/test/createBusinessTransaction.test.ts` (11 unit tests) /
+`typescript/test/integration/examples.integration.test.ts` (proves the generated ids round-trip
+correctly through a real running server, not just in isolation).
+
+## New in 1.6.0
+
+### Register a business signal source
+
+Register the business system that owns a fact a policy needs, an ERP, an order system, a CRM, so Parmana asks it
+instead of trusting the agent. One person proposes, a different person approves with a step up authorization; both
+need a human key.
+
+```typescript
+const change = await maker.proposeBusinessSignalSourceChange({
+  action: "register",
+  name: "erp",
+  endpointUrl: "https://orders.example.com/parmana/signals",
+  publicKeyPem: readFileSync("erp-answers.public.pem", "utf8"),
+  keyId: "erp-2026-10",
+  reason: "Release goods only against invoices the ERP says are paid.",
+});
+
+await checker.approveBusinessSignalSourceChange(
+  change.changeId,
+  signPolicyChangeStepUp({
+    pendingPolicyChangeId: change.changeId,
+    action: "approve",
+    privateKeyPem: readFileSync("step-up.private.pem", "utf8"),
+    keyId: "checker-step-up-1",
+  }),
+);
+
+await checker.businessSignalSources(); // [{ name: "erp", status: "active", ... }]
+```
+
+`businessSignalSourceChanges(status?)` lists proposals and `rejectBusinessSignalSourceChange(changeId, reason, stepUp)`
+rejects one. To end a registration, propose `{ action: "revoke", name, reason }` and approve it the same way. The
+endpoint and the signed protocol are in [Connect a business signal source](/guides/connect-a-business-signal-source).
+
+### Grant an agent authority
+
+Say which agent may have which action decided, within which limits, until when. A policy with `requireAuthorityGrant`
+decides a request only for a caller holding a grant in force.
+
+```typescript
+const change = await maker.proposeAuthorityGrantChange({
+  action: "grant",
+  callerId: "warehouse-agent",
+  capability: "erp:release-goods",
+  limits: {
+    "parameters.amount": { max: 100000 },
+    "parameters.currency": { oneOf: ["INR"] },
+  },
+  validUntil: "2026-12-30T00:00:00.000Z",
+  reason:
+    "The warehouse agent releases goods for paid invoices up to 100000 INR this quarter.",
+});
+
+await checker.approveAuthorityGrantChange(change.changeId, stepUp); // signed as above
+
+await checker.authorityGrants(); // [{ callerId: "warehouse-agent", status: "active", ... }]
+```
+
+`authorityGrantChanges(status?)` and `rejectAuthorityGrantChange(changeId, reason, stepUp)` work as for sources. To
+end a grant, propose `{ action: "revoke", callerId, capability, reason }`. No one grants authority to themselves. See
+[Grant an agent authority](/guides/grant-an-agent-authority).
+
+### Conditions on a release
+
+A release to an external connector now carries `conditions`, typed `ParmanaReleaseCondition[]`: the business facts the
+decision rests on, each with `signalKey`, `source`, `claim`, `subject`, `value` and `validUntil`. They are covered by
+the signature. Act only if each still holds in your records; otherwise answer `success: false` with
+`conditionsNotMet: true`. `typescript/examples/07-external-connector-endpoint.ts` takes a `conditionsHold` check.
+
+## New in 1.5.0
+
+### What a request must carry, from the server
+
+`policyInEffect(capability)` calls `GET /policies/in-effect` and returns the policy to declare and what the request
+must carry: every fact the policy's rules read (`signals.facts`), their types (`signals.schema`), the signals that must
+equal a value of the Intent (`signals.bound`), and the signals that need a signed approval, with where the approval's
+resource and amount are in the request (`signals.approval`). It never returns the rules.
+
+```typescript
+const inEffect = await client.policyInEffect("paytm:refund");
+
+inEffect.policy; // { name: "customer-refund", version: "1.2.0", schemaVersion: "1.0.0" }
+inEffect.signals.facts; // ["fraudCheckPassed", "managerApproved", "refundAmount", "refundEligible"]
+inEffect.signals.approval; // { managerApproved: { resourceId: "parameters.orderId", value: "parameters.amount" } }
+```
+
+Call it before every request and send `policy` exactly as returned. It throws `AuthorizationError` (403,
+`CAPABILITY_NOT_ALLOWED`), `NotFoundError` (404, `CAPABILITY_NOT_BOUND`), `ConflictError` (409,
+`NO_APPROVED_POLICY_VERSION`) or `InternalServerError` (503, `POLICY_VERSION_UNAVAILABLE`); in each case send nothing.
+The step by step use is in [Integrate Parmana: specification for AI agents](/agents/integrate), step 3.
+
+### Register an external connector
+
+Connect your own system with no Parmana code change: one person proposes registering a capability to your HTTPS
+endpoint, a different person approves it with a step up authorization. Both need a human key.
+
+```typescript
+const change = await maker.proposeExternalConnectorChange({
+  action: "register",
+  capability: "erp:create-invoice",
+  endpointUrl: "https://erp.example.com/parmana/release",
+  policy: "erp-invoice",
+  allowedParameters: ["amount", "currency"],
+  reason: "Finance creates invoices in the ERP through Parmana.",
+});
+
+await checker.approveExternalConnectorChange(
+  change.changeId,
+  signPolicyChangeStepUp({
+    pendingPolicyChangeId: change.changeId,
+    action: "approve",
+    privateKeyPem: readFileSync("step-up.private.pem", "utf8"),
+    keyId: "checker-step-up-1",
+  }),
+);
+
+await checker.externalConnectors(); // [{ capability: "erp:create-invoice", status: "active", ... }]
+```
+
+`externalConnectorChanges(status?)` lists proposals and `rejectExternalConnectorChange(changeId, reason, stepUp)`
+rejects one. To end a registration, propose `{ action: "revoke", capability, reason }` and approve it the same way.
+Tutorial 123 runs these calls against a real server. The whole path, with the endpoint, is in
+[Connect any external system](/guides/connect-any-external-system).
+
+## New in 1.4.0
+
+<Info>
+  Published to npm on 2026-09-29. `npm install @parmana/sdk` installs it.
+</Info>
+
+### Sign an approval on the approver's machine
+
+`signApproval()` makes the signed approval a policy with `approvalSignals` asks for, the same
+one `scripts/sign-approval.ts` makes. The private key never leaves the process.
+
+```typescript
+import { readFileSync } from "node:fs";
+import { signApproval } from "@parmana/sdk";
+
+const approval = signApproval({
+  privateKeyPem: readFileSync(
+    "manager-priya__manager-priya-key-1.private.pem",
+    "utf8",
+  ),
+  approverId: "manager-priya",
+  keyId: "manager-priya-key-1",
+  capability: "paytm:refund",
+  resourceId: "ORD-1042",
+  maxAmount: 75000, // leave out when the policy declares no amount
+});
+
+// The agent sends it in signals.approvalArtifact on a new request.
+```
+
+The approval is valid for 15 minutes by default (`ttlSeconds`, up to a day) and can be used
+once. See [Human approval](/concepts/human-approval).
+
+### Manage approvers
+
+Add, rotate and revoke the keys trusted to sign approvals, through maker checker, with no
+deploy. Every call needs an API key added as a human.
+
+```typescript
+import { ParmanaClient, signPolicyChangeStepUp } from "@parmana/sdk";
+
+// The proposer
+const change = await proposer.proposeApproverChange({
+  action: "add",
+  approverId: "manager-priya",
+  keyId: "manager-priya-key-1",
+  publicKeyPem, // the approver's .public.pem file
+  reason: "Priya approves refunds for the West region from October.",
+});
+
+// A different person, the checker
+const pending = await checker.approverChanges("PENDING_APPROVAL");
+await checker.approveApproverChange(
+  change.changeId,
+  signPolicyChangeStepUp({
+    pendingPolicyChangeId: change.changeId,
+    action: "approve",
+    privateKeyPem: checkerStepUpKeyPem,
+    keyId: "checker-step-up-1",
+  }),
+);
+
+const approvers = await checker.approvers();
+```
+
+`rejectApproverChange(changeId, reason, stepUp)` rejects one, and `action: "revoke"` proposes a
+revocation. See [Manage approvers](/guides/manage-approvers).
+
+## New in 1.3.0
+
+<Info>
+  Published to npm on 2026-09-25. `npm install @parmana/sdk` installs it. On
+  1.2.0 and earlier none of this section exists. The full list of what each
+  version covers is on [SDK coverage of the API](/sdks/api-coverage).
+</Info>
+
+1.3.0 makes the TypeScript SDK cover the same operations as the Python SDK, and adds policy governance to both.
+
+### Who the key is, and the deployment's public key
+
+```typescript
+import { ParmanaClient } from "@parmana/sdk";
+
+const client = new ParmanaClient({
+  endpoint: "http://127.0.0.1:3000",
+  apiKey: "pk_local_...",
+});
+
+const me = await client.caller();
+// { callerId: "local-operator", allowedPrincipalIds: ["local-operator"], allowedCapabilities: ["paytm:refund"], unrestrictedCapabilities: false }
+
+const key = await client.publicKey("default");
+// key.pem is the SPKI PEM that signs Trust Records, Refusal Records and Execution Intents
+```
+
+`publicKey()` needs no API key. Fetch it once and keep it.
+
+### Verify records offline
+
+```typescript
+import {
+  ParmanaClient,
+  verifyExecutionIntentOffline,
+  verifyExecutionTrustRecordOffline,
+} from "@parmana/sdk";
+
+const client = new ParmanaClient({
+  endpoint: "http://127.0.0.1:3000",
+  apiKey: "pk_local_...",
+});
+const { pem } = await client.publicKey("default");
+
+const record = await client.trustRecord("5015499d-b7ba-48fe-a9ad-821862d70ad0");
+const result = verifyExecutionTrustRecordOffline(record, { default: pem });
+// { valid: true, hashValid: true, legacySignatureValid: true, algorithmsChecked: ["ed25519"], errors: [] }
+
+const view = await client.executionIntent(
+  "5015499d-b7ba-48fe-a9ad-821862d70ad0",
+);
+verifyExecutionIntentOffline(view.intent, { default: pem });
+```
+
+No network call and no database: only the record and the public key. The result has the same fields as the Python SDK's, in camelCase. A record that also carries a hybrid ML-DSA-65 `signatures` array is reported as not valid, with an error that says why, because the SDKs do not verify ML-DSA-65.
+
+### Check a release at an external connector endpoint (1.5.0)
+
+An endpoint registered as an external connector receives each approved request as a signed release.
+It checks the release before it acts:
+
+```typescript
+import { verifyParmanaRelease } from "@parmana/sdk";
+
+const result = await verifyParmanaRelease(body, {
+  publicKeys: { default: pem }, // client.publicKey("default")
+  audience: "https://erp.example.com/parmana/release", // this endpoint, as registered
+  isAlreadyExecuted: (businessTransactionId) =>
+    answers.has(businessTransactionId),
+});
+
+if (!result.valid) {
+  // Act on nothing. result.errors says why.
+} else if (result.alreadyExecuted) {
+  // Answer with the first result again; do not act twice.
+} else {
+  // Act on result.release.capability, target and parameters only, then answer
+  // { businessTransactionId, capability, success, result, executedAt }.
+}
+```
+
+It checks, in order, the body's shape, the signature over the canonical release (including the
+commitment a KMS signed release over 4096 bytes uses), that the release was made for this endpoint,
+and that it has not expired (30 seconds of clock skew by default). A whole endpoint built on it is
+`typescript/examples/07-external-connector-endpoint.ts`; Tutorial 123
+(`examples/tutorials/123-external-connector/run.ts`) registers it and releases to it.
+
+### Approve a policy change
+
+The approver signs on their own machine; the private key never leaves it.
+
+```typescript
+import { readFileSync } from "node:fs";
+
+import { ParmanaClient, signPolicyChangeStepUp } from "@parmana/sdk";
+
+const endpoint = "http://127.0.0.1:3000";
+const proposer = new ParmanaClient({
+  endpoint,
+  apiKey: "pk_local_... (alice)",
+});
+const approver = new ParmanaClient({ endpoint, apiKey: "pk_local_... (bob)" });
+
+const change = await proposer.proposePolicyChange("customer-refund", "1.2.0", {
+  proposedContent: JSON.parse(
+    readFileSync("policies/customer-refund/1.2.0/policy.json", "utf8"),
+  ),
+  reason: "Adopt the shipped customer-refund policy.",
+});
+
+const open = await approver.policyChanges("PENDING_APPROVAL");
+// each entry has diff.current and diff.proposed
+
+const stepUp = signPolicyChangeStepUp({
+  pendingPolicyChangeId: change.pendingPolicyChangeId,
+  action: "approve",
+  privateKeyPem: readFileSync("approver/step-up.private.pem", "utf8"),
+  keyId: "bob",
+});
+
+const approved = await approver.approvePolicyChange(
+  change.pendingPolicyChangeId,
+  stepUp,
+);
+// approved.status === "APPROVED"
+```
+
+To reject, sign with `action: "reject"` and call `rejectPolicyChange(id, "Why it is rejected.", stepUp)`. A signed authorization is valid once, for one change and one action, for 120 seconds unless you pass `ttlSeconds`. The rules and every error are on [Approve a policy](/self-hosted/policy-approval).
+
+### List Trust Records, and the latest receipt
+
+```typescript
+import { ParmanaClient } from "@parmana/sdk";
+
+const client = new ParmanaClient({
+  endpoint: "http://127.0.0.1:3000",
+  apiKey: "pk_local_...",
+});
+
+const records = await client.trustRecords(1, 25, {
+  since: "2026-09-01T00:00:00Z",
+});
+const receipt = await client.latestReceipt(
+  "5015499d-b7ba-48fe-a9ad-821862d70ad0",
+);
+```
+
+`trustRecords()` returns only records of transactions this key submitted, newest first. A page counts transactions, so it may hold fewer records than `pageSize`. `pageSize` is at most 100; a larger value is refused with `400`. `latestReceipt()` reads the most recent receipt without generating a new one, unlike `receipt()`.
+
+### Every HTTP error carries its status
+
+```typescript
+import { InternalServerError, ParmanaClient } from "@parmana/sdk";
+
+const client = new ParmanaClient({
+  endpoint: "http://127.0.0.1:3000",
+  apiKey: "pk_local_...",
+});
+
+try {
+  await client.execute(transaction); // a BusinessTransaction, see createBusinessTransaction()
+} catch (error) {
+  if (
+    error instanceof InternalServerError &&
+    error.serverCode === "CONNECTOR_NOT_REGISTERED"
+  ) {
+    // error.statusCode === 503: authorized, but nothing was executed
+  }
+}
+```
+
+`statusCode` is set on every error made from an HTTP response, matching the Python SDK's `status_code`. It is absent on network errors and timeouts, where no response arrived.
+
+## Building from source / contributing
+
+Installing the published package (above) is the right path for using the SDK. To build from
+source inside this monorepo instead:
+
+```bash
+npm install --workspace=typescript
+npm run build   # typescript/
+npm run test    # vitest
+```
+
+## Test suite
+
+191 tests across 18 files (2026-09-25, 1.3.0). **Run `npx vitest run` from the repo root**, not `typescript/`:
+several tests read `PARMANA_POLICY_DIR` relative to `process.cwd()` and fail with confusing
+`PolicyNotFoundError`-shaped errors otherwise. Coverage includes: unit tests for every
+error-mapping case (`test/HttpTransport.test.ts`, `test/Errors.test.ts`), unit tests for
+`createBusinessTransaction()` (`test/createBusinessTransaction.test.ts`, 11 cases), unit tests
+for `client.verify()`/`client.version()`/`client.createTransaction()`
+(`test/NewApiMethods.test.ts`), a retry-logic suite (`test/RetryPolicy.test.ts`, real backoff
+on idempotent GETs against 502/503/504, POSTs never retried, matching the Python SDK's own
+retry behavior), per-route unit suites (`test/AuditApi.test.ts`, `test/HealthApi.test.ts`,
+`test/PolicyApi.test.ts`, `test/RefusalApi.test.ts`, `test/ReplayApi.test.ts`,
+`test/RuntimeApi.test.ts`, `test/VerificationApi.test.ts`), and two integration suites that
+boot the actual `@parmana/api` Express application: real `StaticKeyAuthenticator`, real
+`PolicyEngine`, real Ed25519 signing, the real, `NODE_ENV=test`-only generic test-fixture
+connector (`createTestFixtureConnector.ts`, successor to the now-removed `vendor-payment`), on
+a real OS-assigned TCP port, driven by the real `ParmanaClient` over real HTTP:
+`test/integration/parmana-client.integration.test.ts` (a real `401`, a real `403`, a real `400`,
+a real policy rejection, a real `404`, a real `409` duplicate, plus `version()`, `verify()`, and
+`createTransaction()`, each asserted against the exact typed result and exact message the server
+returned) and `test/integration/examples.integration.test.ts` (runs the quickstart example
+script itself, see [Changelog](/changelog)). `test/Alignment.test.ts` covers everything added in
+1.3.0, including offline verification of a real server signed Execution Intent and a step up
+authorization accepted by the server's own verifier.
+
+## Errors defined but never thrown
+
+`typescript/src/errors/` also declares `VerificationError` and `ReplayError`. Neither is thrown
+anywhere: no verified HTTP condition in this API corresponds to them (`POST /verify` and
+`POST /replay` return their semantic result, `VERIFIED`/`FAILED`, or a replay outcome, inside
+an ordinary `200`, not as an error). They remain defined, unused: inventing a throw condition
+for them would describe behavior the real API doesn't have.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="End-to-end: agent → Parmana → Paytm"
+    icon="route"
+    href="/guides/end-to-end-paytm-flow"
+  >
+    The full, no-ambiguity runbook this SDK builds toward: real infrastructure,
+    every error message, every fix.
+  </Card>
+  <Card title="Python SDK" icon="python" href="/sdks/python">
+    The other maintained SDK: same bearer-key model, generated (not
+    hand-maintained) models.
+  </Card>
+  <Card title="Error catalog" icon="list" href="/api-reference/error-catalog">
+    Every error the real API returns, independent of any SDK.
+  </Card>
+  <Card
+    title="TypeScript SDK reference"
+    icon="book-open"
+    href="/sdks/reference/typescript/classes/ParmanaClient"
+  >
+    Every class, interface, and type, generated from the real JSDoc, in the
+    sidebar under SDKs.
+  </Card>
+</CardGroup>

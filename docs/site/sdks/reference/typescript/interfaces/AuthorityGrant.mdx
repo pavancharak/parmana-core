@@ -1,0 +1,95 @@
+---
+title: "Interface: AuthorityGrant"
+---
+
+Defined in: typescript/src/models/authority-grant.ts:30
+
+A grant, active or revoked.
+
+## Properties
+
+### grantId
+
+> `readonly` **grantId**: `string`
+
+Defined in: typescript/src/models/authority-grant.ts:34
+
+The changeId of the approved grant change that created it.
+
+---
+
+### callerId
+
+> `readonly` **callerId**: `string`
+
+Defined in: typescript/src/models/authority-grant.ts:39
+
+The callerId of the API key the grant is for.
+
+---
+
+### capability
+
+> `readonly` **capability**: `string`
+
+Defined in: typescript/src/models/authority-grant.ts:40
+
+---
+
+### limits?
+
+> `readonly` `optional` **limits?**: `Readonly`\<`Record`\<`string`, [`AuthorityGrantLimit`](/sdks/reference/typescript/interfaces/AuthorityGrantLimit)\>\>
+
+Defined in: typescript/src/models/authority-grant.ts:41
+
+---
+
+### validFrom
+
+> `readonly` **validFrom**: `string`
+
+Defined in: typescript/src/models/authority-grant.ts:42
+
+---
+
+### validUntil
+
+> `readonly` **validUntil**: `string`
+
+Defined in: typescript/src/models/authority-grant.ts:47
+
+After this, requests are refused as AUTHORITY_EXPIRED.
+
+---
+
+### status
+
+> `readonly` **status**: `"active"` \| `"revoked"`
+
+Defined in: typescript/src/models/authority-grant.ts:52
+
+At most one active grant per caller and capability.
+
+---
+
+### grantedAt
+
+> `readonly` **grantedAt**: `string`
+
+Defined in: typescript/src/models/authority-grant.ts:53
+
+---
+
+### revokedByChangeId?
+
+> `readonly` `optional` **revokedByChangeId?**: `string`
+
+Defined in: typescript/src/models/authority-grant.ts:54
+
+---
+
+### revokedAt?
+
+> `readonly` `optional` **revokedAt?**: `string`
+
+Defined in: typescript/src/models/authority-grant.ts:55

@@ -1,0 +1,64 @@
+---
+title: "Where Parmana fits among agent controls"
+description: ""
+---
+
+A CTO at a payments company listens to my pitch and then pushes back, fairly. "Our agent already authenticates through IAM. Its token has a refunds scope. Everything goes through our API gateway. We run guardrails on the model's input and output. Why do I need another layer?"
+
+It is the right question. Here is the scenario I asked her to picture. The agent's token carries a refunds scope for the life of the token. A customer email persuades the agent that order 4410 deserves a refund of ₹48,000. The scope says yes, because refunds are allowed. The gateway says yes, because the token is valid and the rate is fine. The guardrail sees polite, non-toxic text. The refund goes out.
+
+Nothing in her stack is broken. Each tool answered the question it was built for. None of them was asked "may this exact refund, on this order, for this amount, run now, and did a named person approve it?"
+
+## Comparing categories, not products
+
+Products differ and change, so I compare kinds of tools, not vendors. If you use a specific product, check it yourself; some do more than their category usually does.
+
+## What each kind of tool answers
+
+- **IAM, OAuth scopes and roles** answer "who is calling?" and "may this caller use this API?" That is their main job and they do it well. Scopes are usually coarse and long-lived, so they rarely answer whether one specific action with one amount may run now.
+- **An API gateway** answers whether a request may pass and how fast: routing, quotas, network policy, TLS. It usually does not judge the business content of one action.
+- **LLM guardrails** answer whether text looks harmful, off topic, leaking data, or like a prompt injection. They filter text, not actions.
+- **A general policy engine** can answer almost any authorization question, if you write the rule and feed it the facts. Where it is enforced decides whether it can be skipped.
+- **An agent framework's confirmation step** puts a person in the loop, often as a click inside the agent's own process.
+- **Parmana** answers whether one specific action, with its exact parameters, may run now under a versioned policy, requires a person's signed approval for it, and signs a record of what ran and what was refused that anyone can verify offline.
+
+## Where Parmana adds something
+
+- **A person per action, not per role.** A scope grants a class of actions for a long time. A Parmana approval covers one action on one resource, up to one amount, once, until it expires, and is signed by a registered approver. Every agent action needs one, reads included, at any amount.
+- **The agent does not hold the system credentials.** The gateway holds them and releases each action only after checking the signed authorization. An in-agent confirmation can be skipped by an agent that holds the keys. Parmana's check cannot be skipped by an agent that does not.
+- **Evidence, not logs.** Most tools keep logs that are trusted as stored. Parmana signs a record of each action and each refusal, which an auditor or customer can verify with only a public key.
+- **Governed rules.** Policies, approvers and external connectors change only when one person proposes and a second approves with a step-up signature, and each change is signed. Elsewhere this depends on your own process, often code review.
+
+## Where Parmana is weaker
+
+- **It does not read text.** Parmana does not detect prompt injection, toxic output or data leakage in what the model says. Use a guardrail for that. Parmana limits what an injected agent can do, not what it says.
+- **Only actions that go through it.** Parmana enforces nothing at the network level. An agent with other credentials, or a system reached another way, is outside it.
+- **A person in the loop is slow by design.** Every action waits for a human signature. On top of that, an approved request took 24 to 32 seconds in production.
+- **It sees fewer facts.** Most facts an agent declares are not checked against another system; they can only cause a refusal. A policy engine fed from your own systems can use facts Parmana does not see. Registering a business system as a source is built, but no real one is connected yet.
+- **Approvers are not yet scoped.** Any trusted approver can approve any action. IAM can scope who approves what more finely today.
+- **Few ready-made connectors.** Paytm, HubSpot, GitHub and Slack are built in. Anything else goes through an endpoint you run and register, or a connector you write. An API gateway already fronts all your APIs.
+- **Young, with a small operational surface.** No metrics, tracing or dashboards yet. Key custody is local files or AWS KMS only. IAM products and API gateways have years of production use and operations tooling behind them.
+
+## Using them together
+
+Parmana does not replace any of these. It sits after them, in front of the actions. A typical stack, outside in:
+
+1. **IAM** authenticates the agent and the people, and gives the agent a Parmana caller key only, not system credentials.
+2. **An API gateway** in front of Parmana handles TLS, routing, quotas and network policy.
+3. **Guardrails** check the model's input and output.
+4. **Parmana** checks each proposed action against its policy, requires a signed approval, releases it with the credentials it holds, and signs the record.
+5. **Your logging and SIEM** collect Parmana's records with everything else; the records stay verifiable on their own.
+
+A policy engine you already run can sit beside step 4 for decisions that need facts from your systems. Parmana's policy still decides release.
+
+## What it does not do
+
+- It does not replace IAM, an API gateway, guardrails or your policy engine.
+- It does not judge whether the model is right, safe or honest.
+- It does not govern an agent that holds its own credentials.
+- It does not prove two credentials are two people.
+- It does not yet limit approvers to particular actions, or cap totals per day.
+
+## The takeaway
+
+Back to the ₹48,000 refund. With Parmana after her existing stack, the agent can still ask, but the request is refused until a registered approver signs for order 4410 and that amount, and either way there is a signed record. Her IAM, gateway and guardrails keep doing what they do well. Parmana adds the one question none of them was built to answer.

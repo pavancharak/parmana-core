@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/transactions-list-response.schema.json",
+  "title": "Transactions List Response",
+  "description": "Response returned by GET /transactions. A bare array, no pagination envelope (no page/pageSize/totalItems metadata), even though the endpoint accepts page and pageSize query parameters.",
+  "type": "array",
+  "items": {
+    "$ref": "../common/business-transaction.schema.json"
+  }
+}

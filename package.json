@@ -1,0 +1,112 @@
+{
+  "name": "parmana",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "typescript",
+    "python",
+    "examples"
+  ],
+  "scripts": {
+    "prepare": "git config core.hooksPath scripts/git-hooks || true",
+    "build": "npm run openapi && node node_modules/typescript7/bin/tsc -b && npm run build --workspace=typescript",
+    "build:verbose": "node node_modules/typescript7/bin/tsc -b --verbose",
+    "build:force": "node node_modules/typescript7/bin/tsc -b --force --verbose",
+    "clean": "node node_modules/typescript7/bin/tsc -b --clean",
+    "openapi": "npm run lint:openapi && npx redocly bundle openapi/openapi.yaml -o openapi/openapi.bundled.yaml --ext yaml && npx tsx scripts/strip-openapi-schema-ids.ts && npx tsx scripts/add-openapi-code-samples.ts && npx tsx scripts/copy-openapi-bundle-to-docs.ts && npx tsx scripts/generate-postman-collection.ts",
+    "bundle:openapi": "redocly bundle openapi/openapi.yaml -o openapi/openapi.bundled.yaml --ext yaml && tsx scripts/strip-openapi-schema-ids.ts && tsx scripts/add-openapi-code-samples.ts && tsx scripts/copy-openapi-bundle-to-docs.ts && tsx scripts/generate-postman-collection.ts",
+    "lint:openapi": "redocly lint openapi/openapi.yaml",
+    "rebuild": "npm run clean && npm run build:force",
+    "dev": "tsx packages/api/src/server.ts",
+    "generate:gateway-keys": "tsx scripts/generate-keypair.ts --algorithm ed25519 --key-id gateway",
+    "generate:hybrid-secondary-key": "tsx scripts/generate-keypair.ts --algorithm dilithium3 --key-id default-secondary",
+    "generate:api-key": "tsx scripts/generate-api-key.ts",
+    "generate:migration-bundle": "tsx scripts/generate-migration-bundle.ts",
+    "db:migrate": "tsx scripts/migrate-database.ts",
+    "verify:kms": "tsx scripts/verify-kms-signing.ts",
+    "generate:llms-txt": "tsx scripts/generate-llms-txt.ts",
+    "generate:postman": "tsx scripts/generate-postman-collection.ts",
+    "check:sdk-docs": "tsx scripts/check-sdk-docs.ts",
+    "generate:endpoint-pages": "tsx scripts/generate-endpoint-pages.ts",
+    "generate:build-book-reference": "tsx scripts/generate-build-book-reference.ts",
+    "generate:build-book-pdf": "tsx scripts/generate-build-book-pdf.ts",
+    "generate:typescript-sdk-reference": "tsx scripts/generate-typescript-sdk-reference.ts",
+    "generate:python-sdk-reference": "tsx scripts/generate-python-sdk-reference.ts",
+    "rotate:verification-key": "tsx scripts/rotate-verification-key.ts",
+    "typecheck": "node node_modules/typescript7/bin/tsc --noEmit -p tsconfig.json",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "pretest": "tsx scripts/check-dist-fresh.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "examples": "tsx scripts/run-examples.ts",
+    "preevaluate": "tsx scripts/check-dist-fresh.ts",
+    "evaluate": "tsx scripts/evaluate.ts",
+    "evaluate:agentrust-refund": "tsx scripts/evaluate-agentrust-refund.ts",
+    "mutation": "tsx scripts/mutation.ts",
+    "policy-log:verify": "tsx scripts/policy-approval-log.ts verify",
+    "policy-log:export": "tsx scripts/policy-approval-log.ts export",
+    "policy-log:check-db": "tsx scripts/policy-approval-log.ts check-db",
+    "loadtest": "tsx scripts/load-test.ts",
+    "generate:python-models": "tsx python/scripts/generate_models.ts",
+    "check:python-models": "tsx python/scripts/generate_models.ts --check",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run check:python-models && npm run test && npm run build",
+    "preflight": "npm run check && npm run examples"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@eslint/js": "^10.0.1",
+    "@mdx-js/mdx": "^3.1.1",
+    "@redocly/cli": "^2.60.0",
+    "@stryker-mutator/core": "^10.0.0",
+    "@supabase/supabase-js": "^2.117.3",
+    "@types/autocannon": "^7.12.7",
+    "@types/node": "^24.19.1",
+    "@types/swagger-ui-express": "^4.1.8",
+    "@vitest/coverage-v8": "^5.0.3",
+    "ajv": "^8.20.0",
+    "autocannon": "^8.0.0",
+    "dependency-cruiser": "^18.5.0",
+    "dotenv": "^18.0.6",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "fast-check": "^4.10.2",
+    "get-port": "^7.2.0",
+    "marked": "^18.1.0",
+    "prettier": "^3.9.9",
+    "puppeteer-core": "^25.13.0",
+    "tsx": "^4.23.15",
+    "typedoc": "^0.28.20",
+    "typedoc-plugin-markdown": "^4.13.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.1",
+    "typescript7": "npm:typescript@^7.0.2",
+    "vitest": "^5.0.3"
+  },
+  "dependencies": {
+    "swagger-ui-express": "^5.0.1",
+    "yaml": "^2.9.1"
+  },
+  "overrides": {
+    "qs": "^6.16.0",
+    "express": {
+      "qs": "^6.16.0"
+    },
+    "body-parser": {
+      "qs": "^6.16.0"
+    },
+    "hyperid": {
+      "uuid": "^11.1.1"
+    }
+  },
+  "license": "SEE LICENSE IN LICENSE"
+}

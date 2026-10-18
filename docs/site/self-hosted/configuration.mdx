@@ -1,0 +1,131 @@
+---
+title: "Self hosted configuration reference"
+description: "Every setting, file, service, volume and port of the self hosted deployment, with defaults and exact behavior."
+---
+
+Everything on this page is defined in `docker-compose.yml` and `docker/local/` in the repository.
+
+## Settings
+
+Set these in the shell before running `docker compose`, or in a file named `.env` in the repository root. Compose reads that file only to fill in these values. Nothing else in it reaches the containers.
+
+| Variable                             | Default          | When it is read  | Meaning                                                                                                                                                                                                          |
+| ------------------------------------ | ---------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PARMANA_DB_PASSWORD`                | `parmana-local`  | Every start      | Password of the database user `parmana`. Postgres stores it when the database is first created. To change it later, follow [Change the database password](/self-hosted/operations#change-the-database-password). |
+| `PARMANA_BIND`                       | `127.0.0.1`      | Every start      | Host address the API is published on. The default accepts connections from the same machine only.                                                                                                                |
+| `PARMANA_PORT`                       | `3000`           | Every start      | Host port the API is published on. Inside Docker the API always listens on `3000`.                                                                                                                               |
+| `PARMANA_LOCAL_ALLOWED_CAPABILITIES` | `paytm:refund`   | First start only | Comma separated capabilities the first API key may use. Ignored once `parmana-local/api-keys.json` exists. Use [API keys](/self-hosted/api-keys) to change keys later.                                           |
+| `PARMANA_LOCAL_CALLER_ID`            | `local-operator` | First start only | Caller ID of the first API key. Ignored once `parmana-local/api-keys.json` exists.                                                                                                                               |
+
+<Warning>
+  Set `PARMANA_DB_PASSWORD` to your own value **before the first start**. The
+  default is public.
+</Warning>
+
+<Warning>
+  Setting `PARMANA_BIND` to anything other than `127.0.0.1` publishes the API
+  over plain HTTP. Put a TLS terminating proxy in front of it first. The API key
+  travels in every request.
+</Warning>
+
+## Fixed server settings
+
+The `api` service always runs with these values. They are set in `docker-compose.yml`.
+
+| Variable           | Value                                                              | Meaning                                                 |
+| ------------------ | ------------------------------------------------------------------ | ------------------------------------------------------- |
+| `NODE_ENV`         | `production`                                                       | Every production check is on. None can be switched off. |
+| `PARMANA_STORAGE`  | `postgres`                                                         | Records are stored in Postgres.                         |
+| `DATABASE_URL`     | `postgresql://parmana:<PARMANA_DB_PASSWORD>@postgres:5432/parmana` | The deployment's own database.                          |
+| `PARMANA_KEY_DIR`  | `/app/parmana-local/keys`                                          | Where the server reads its signing keys.                |
+| `PARMANA_API_KEYS` | The contents of `parmana-local/api-keys.json`                      | Read when the `api` container starts.                   |
+
+Any other server variable, for example a connector's, is added as described in [Connectors](/self-hosted/connectors). Every variable the server reads is listed in the [Environment variable reference](/deployment/environment-variables).
+
+## Services
+
+| Service    | Image               | Starts after                              | Exits | Restart policy   |
+| ---------- | ------------------- | ----------------------------------------- | ----- | ---------------- |
+| `setup`    | `parmana-api:local` | nothing                                   | Yes   | none             |
+| `postgres` | `postgres:16`       | nothing                                   | No    | `unless-stopped` |
+| `migrate`  | `postgres:16`       | `postgres` is healthy                     | Yes   | none             |
+| `seed`     | `parmana-api:local` | `migrate` finished without error          | Yes   | none             |
+| `api`      | `parmana-api:local` | `setup` and `seed` finished without error | No    | `unless-stopped` |
+
+`parmana-api:local` is built from the repository's `Dockerfile` by `docker compose up --build`.
+
+### `setup`
+
+Runs `docker/local/setup.mjs` as root inside the image, then hands the files to uid 1000, the user the API runs as. On each start:
+
+| If this file is missing                                  | It does                                                                |
+| -------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `keys/default.private.pem` and `keys/default.public.pem` | Makes a new Ed25519 key pair `default`.                                |
+| `keys/gateway.private.pem` and `keys/gateway.public.pem` | Makes a new Ed25519 key pair `gateway`.                                |
+| `api-keys.json`                                          | Makes one API key, writes its hash there and the key to `api-key.txt`. |
+
+If only one file of a key pair exists, it stops with an error and changes nothing, so a missing file never silently changes your signing key.
+
+### `migrate`
+
+Runs `docker/local/migrate.sh`:
+
+1. Creates the roles `anon`, `authenticated` and `service_role` if they do not exist. Some migrations grant to them. They cannot log in.
+2. Creates the table `parmana_schema_migrations` if it does not exist.
+3. For each file in `supabase/migrations/`, in filename order, that is not listed in that table: applies it and records it, in one transaction. A migration that fails changes nothing, the service exits with an error, and the API does not start.
+
+It prints `[migrate] <n> applied, <m> already applied`.
+
+### `seed`
+
+Runs `docker/local/seed-policies.mjs`. For every policy version under `policies/` in the image, it inserts the version into the `policies` table if that name and version are not there yet. It never changes an existing row. It prints `[seed-policies] <n> policies in the image, <a> added, <k> already present and kept`.
+
+A seeded policy is **not approved**. Until two people approve it, a request under it is refused. See [Approve a policy](/self-hosted/policy-approval).
+
+### `api`
+
+The Parmana server, unchanged from the hosted API. The health check calls `GET /ready` every 10 seconds and marks the container healthy when it returns `"status":"READY"`.
+
+## Files in `./parmana-local`
+
+| Path                       | Created by              | Contains                                                                                                         | Mode   |
+| -------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------- | ------ |
+| `keys/default.private.pem` | `setup`                 | The private key that signs authorizations, Trust Records, Refusal Records and Execution Intents.                 | `0600` |
+| `keys/default.public.pem`  | `setup`                 | Its public key. Give it to anyone who verifies your records.                                                     | `0644` |
+| `keys/gateway.private.pem` | `setup`                 | The private key the Execution Gateway signs its attestations with.                                               | `0600` |
+| `keys/gateway.public.pem`  | `setup`                 | Its public key.                                                                                                  | `0644` |
+| `api-keys.json`            | `setup`, `api-keys.mjs` | The API keys the server accepts: caller ID, SHA-256 hash of the key, and permissions. Never the keys themselves. | `0644` |
+| `api-key.txt`              | `setup`                 | The first API key, in plain text. Move it to a secret store, then delete this file.                              | `0600` |
+| `offline-check/`           | `setup`, offline check  | The Trust Record and public keys saved by the [offline check](/self-hosted/offline-verification).                | `0755` |
+
+On Linux these files belong to uid 1000. Read them through a container, as the pages of this guide show, or as root.
+
+`./parmana-local` is listed in `.gitignore` and `.dockerignore`, so it is never committed and never copied into an image.
+
+<Warning>
+  Deleting `./parmana-local` deletes your signing keys. Records already signed
+  still verify with the public keys, if you kept them. The next start makes new
+  keys, and new records are signed with those.
+</Warning>
+
+## Volumes and ports
+
+| Name                    | Kind          | Holds              | Removed by                    |
+| ----------------------- | ------------- | ------------------ | ----------------------------- |
+| `parmana_postgres-data` | Docker volume | The whole database | `docker compose down -v` only |
+| `./parmana-local`       | Host folder   | Keys and API keys  | Only by you                   |
+
+| Port                 | Published to the host       | Serves                                   |
+| -------------------- | --------------------------- | ---------------------------------------- |
+| `3000` in `api`      | `PARMANA_BIND:PARMANA_PORT` | The Parmana API                          |
+| `5432` in `postgres` | No                          | The database, to the other services only |
+
+## Helper scripts
+
+All run inside the API image through the `setup` service, so the host needs only Docker:
+
+| Script                                     | Purpose                                                     | Page                                                      |
+| ------------------------------------------ | ----------------------------------------------------------- | --------------------------------------------------------- |
+| `docker/local/api-keys.mjs`                | List, add and remove API keys.                              | [API keys](/self-hosted/api-keys)                         |
+| `docker/local/examples/refund-request.mjs` | Print a `paytm:refund` request body with fresh IDs.         | [Quickstart](/self-hosted/quickstart)                     |
+| `docker/local/offline-check/run.sh`        | Prove enforcement with no internet route. Runs on the host. | [Offline verification](/self-hosted/offline-verification) |

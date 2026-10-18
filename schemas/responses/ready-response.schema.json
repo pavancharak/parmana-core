@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/ready-response.schema.json",
+  "title": "Ready Response",
+  "description": "Response returned by GET /ready on both status codes (200 READY, 503 NOT_READY). Distinct from GET /health's pure liveness check: when storage is Supabase-backed, this one actually queries Postgres (SELECT 1) so an orchestrator can route around a process that is up but backed by dead storage.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status"],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["READY", "NOT_READY"]
+    },
+    "storage": {
+      "type": "string",
+      "description": "Present only when status is READY and storage is not Supabase-backed (NODE_ENV=test, or PARMANA_STORAGE=memory outside test): there is no external dependency to probe, so readiness is reported unconditionally.",
+      "enum": ["not-supabase-backed"]
+    },
+    "reason": {
+      "type": "string",
+      "description": "Present only when status is NOT_READY: the underlying Postgres error message."
+    },
+    "authDisabled": {
+      "type": "boolean",
+      "description": "True when this process was started with PARMANA_AUTH_DISABLED=true. Surfaced here, not only as a startup log line, so an operator's own synthetic checks against GET /ready can alert on it directly."
+    },
+    "warning": {
+      "type": "string",
+      "description": "Present only when authDisabled is true."
+    }
+  },
+  "examples": [
+    {
+      "status": "READY",
+      "storage": "not-supabase-backed",
+      "authDisabled": false
+    },
+    {
+      "status": "READY",
+      "storage": "not-supabase-backed",
+      "authDisabled": true,
+      "warning": "PARMANA_AUTH_DISABLED=true -- this deployment is accepting requests with no caller authentication. Must never be set in a real deployment."
+    }
+  ]
+}

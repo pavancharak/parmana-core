@@ -1,0 +1,356 @@
+---
+title: "TypeScript SDK in Production"
+description: "Configuration, fail-closed error handling, retries, audit logging, and a deployment checklist for the TypeScript SDK."
+---
+
+<Note>
+  The patterns on this page — the audit-log schema, the metric names, the rate
+  limiter — are illustrative starting points for your own integration, not
+  claims about what this repository's own infrastructure runs or has test
+  coverage for. The SDK behavior itself (the `Configuration`/`RetryPolicy`
+  shape, the error classes, the retry semantics) is real and verified — see
+  [TypeScript SDK](/sdks/typescript) for what's actually tested.
+</Note>
+
+## Deployment architecture
+
+```
+Your service
+  → @parmana/sdk (ParmanaClient)
+    → Parmana Runtime (Execution Gateway, Policy Engine)
+      → registered Connector
+        → downstream system (Paytm, HubSpot, your own API, ...)
+```
+
+The SDK never talks to a downstream system directly — it talks only to your Parmana
+Runtime deployment. See [Deploy patterns](/guides/deploy-patterns) for running that Runtime
+itself in production (Fly.io/Docker, or any Node-compatible platform).
+
+## Environment variables
+
+| Variable                | Required               | Purpose                                                                                                                                                                                       |
+| ----------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PARMANA_ENDPOINT`      | Yes                    | Your Runtime's base URL.                                                                                                                                                                      |
+| `PARMANA_API_KEY`       | Yes, outside local dev | Bearer key minted by `scripts/generate-api-key.ts`. Omitting it only works against a Runtime started with `PARMANA_AUTH_DISABLED=true` — see [Authentication](/api-reference/authentication). |
+| `PARMANA_TIMEOUT_MS`    | No                     | Request timeout. The SDK default is 30000 ms; use 120000 (G-84).                                                                                                                              |
+| `PARMANA_RETRY_ENABLED` | No                     | Whether your wrapper enables the SDK's retry policy (see below).                                                                                                                              |
+
+## A production-safe client wrapper
+
+```typescript
+import {
+  ParmanaClient,
+  HttpTransport,
+  RetryStrategy,
+  type Configuration,
+} from "@parmana/sdk";
+
+function createParmanaClient(): ParmanaClient {
+  const endpoint = requireEnv("PARMANA_ENDPOINT");
+  const apiKey = requireEnv("PARMANA_API_KEY");
+
+  const configuration: Configuration = {
+    endpoint,
+    apiKey,
+    timeout: Number(process.env.PARMANA_TIMEOUT_MS ?? 120_000), // approved requests can take tens of seconds (G-84)
+    retryPolicy: {
+      enabled: true,
+      maxAttempts: 3,
+      initialDelayMs: 1_000,
+      maxDelayMs: 10_000,
+      strategy: RetryStrategy.EXPONENTIAL,
+    },
+  };
+
+  // Build the transport from the SAME configuration. HttpTransport reads timeout and
+  // retryPolicy from the configuration it is constructed with, not from the client's.
+  return new ParmanaClient({
+    ...configuration,
+    transport: new HttpTransport(configuration),
+  });
+}
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
+export const parmana = createParmanaClient();
+```
+
+**Prefer to omit `transport`.** From 1.1.6 the client builds its own `HttpTransport` from the configuration you pass, so `timeout`, `retryPolicy`, `apiKey` and `userAgent` all apply. If you supply your own transport (1.1.5 and earlier require one), build it from the same configuration object. `HttpTransport` reads `timeout` and `retryPolicy` from the configuration it is constructed with. If you write `transport: new HttpTransport({ endpoint, apiKey })` next to a `retryPolicy` on the client, the transport never sees the retry policy and **nothing is retried**, with no error. Tested against a server that returns `503` twice: with the transport built from a partial configuration there is 1 request and an `InternalServerError`, and with the transport built from the full configuration there are 3 requests and success.
+
+Retries are off unless `retryPolicy.enabled` is `true` and `maxAttempts` is above zero. `maxAttempts` counts retries after the first attempt, so `maxAttempts: 3` makes up to 4 requests. Only `GET` requests are ever retried, on a network failure, a timeout, a `429` or a `5xx`. A `POST`, including `execute()`, is never retried, and a policy rejection is a final answer that must never be retried.
+See [TypeScript SDK configuration and behavior](/sdks/typescript-configuration) for every option and default.
+
+## Error handling: fail closed
+
+Every non-2xx response the Runtime returns maps to a specific, typed error — there is no
+"unknown error, assume success" path:
+
+```typescript
+import {
+  ValidationError,
+  AuthenticationError,
+  AuthorizationError,
+  ExecutionRejectedError,
+  NotFoundError,
+  ConflictError,
+  InternalServerError,
+  NetworkError,
+  TimeoutError,
+} from "@parmana/sdk";
+
+async function executeOrFailClosed(transaction: BusinessTransaction) {
+  try {
+    return await parmana.execute(transaction);
+  } catch (error) {
+    if (error instanceof ExecutionRejectedError) {
+      // A real, final policy decision — do not retry, do not proceed.
+      logDenial(transaction, error.message);
+      throw error;
+    }
+    if (
+      error instanceof AuthenticationError ||
+      error instanceof AuthorizationError
+    ) {
+      // A credentials/permissions problem, not a policy decision — page someone.
+      alertOnCallEngineer("Parmana auth failure", error);
+      throw error;
+    }
+    if (error instanceof ValidationError) {
+      // Your request was malformed — a bug in your own code, not the Runtime's.
+      logBug("Malformed BusinessTransaction", error);
+      throw error;
+    }
+    // NetworkError / TimeoutError / InternalServerError / ConflictError / NotFoundError:
+    // the Runtime's answer is unknown. Treat as not-approved. Never treat "we couldn't
+    // reach Parmana" as "the action is authorized."
+    logUnknownState(transaction, error);
+    throw error;
+  }
+}
+```
+
+| Status               | Exception                                         | Retry?                                  |
+| -------------------- | ------------------------------------------------- | --------------------------------------- |
+| 400                  | `ValidationError`                                 | No — fix the request                    |
+| 401                  | `AuthenticationError`                             | No — fix the key                        |
+| 403, `POLICY_DENIED` | `ExecutionRejectedError`                          | No — final decision                     |
+| 403, no code         | `AuthorizationError`                              | No — fix caller permissions             |
+| 404                  | `NotFoundError`                                   | No                                      |
+| 409                  | `ConflictError`                                   | No — duplicate `businessTransactionId`  |
+| any other non-2xx    | `InternalServerError` (1.1.3: check `serverCode`) | Idempotent GETs only, via `retryPolicy` |
+| connection failure   | `NetworkError`                                    | Idempotent GETs only, via `retryPolicy` |
+| timeout              | `TimeoutError`                                    | Idempotent GETs only, via `retryPolicy` |
+
+**Two kinds of `InternalServerError` need different handling (1.1.3).** Check `error.serverCode`. On
+`SIGNING_UNAVAILABLE` or `EXECUTION_INTENT_UNAVAILABLE` (503) nothing was executed, so retry later with a new
+`businessTransactionId`. On `EXECUTION_RECORD_INCOMPLETE` (500) the action **was** released and only its signed record
+failed, so never resubmit it under a new id: tell the operator, who can rebuild the record without repeating the action
+(see [Execution Intents](/concepts/execution-intents)). On `EXECUTION_OUTCOME_UNKNOWN` (502) the action was released and the connector call failed, so it may have run: never resubmit it either; the operator checks the target system and closes the intent with `resolveExecutionIntent`. The Execution Intent methods (`executionIntent`, `unfinalizedExecutionIntents`, `finalizeExecutionIntent`, `resolveExecutionIntent`) are available from SDK 1.2.0. On 1.1.6 and earlier the operator uses the HTTP API.
+
+`POST /execute` is not itself retried by the SDK's retry policy, see
+[TypeScript SDK](/sdks/typescript#errors-they-actually-throw-now) for exactly which
+operations are retry eligible. **Do not wrap `execute()` in a retry.** After a
+`TimeoutError` or `NetworkError` the request may still have run: an approved request can take
+tens of seconds (G-84). Read what happened first, with the same `businessTransactionId`:
+`trustRecord(id)` answers if it executed, `GET /refusal/{id}` if it was refused. Sending it
+again with the **same** id returns `409 ConflictError`, never the original result; sending it
+with a **new** id asks for the action a second time. See [Idempotency and
+nonces](/api-reference/idempotency-and-nonces).
+
+## Audit logging pattern
+
+Every `ExecutionTrustRecord` is already Parmana's own durable, signed audit record — but
+most teams also want a local, queryable copy alongside their own application logs:
+
+```typescript
+interface AuditLogEntry {
+  businessTransactionId: string;
+  principalId: string;
+  action: string;
+  outcome: "approved" | "denied" | "error";
+  trustRecordId?: string;
+  policyName: string;
+  policyVersion: string;
+  timestamp: string;
+}
+
+async function logExecution(
+  transaction: BusinessTransaction,
+  outcome: AuditLogEntry["outcome"],
+  trustRecordId?: string,
+) {
+  const entry: AuditLogEntry = {
+    businessTransactionId: transaction.businessTransactionId,
+    principalId: transaction.authority.principalId,
+    action: transaction.intent.action,
+    outcome,
+    trustRecordId,
+    policyName: transaction.policy.name,
+    policyVersion: transaction.policy.version,
+    timestamp: new Date().toISOString(),
+  };
+
+  await db.insertInto("agent_audit_log").values(entry).execute();
+}
+```
+
+An illustrative schema for the table above:
+
+```sql
+CREATE TABLE agent_audit_log (
+  id                     BIGSERIAL PRIMARY KEY,
+  business_transaction_id TEXT NOT NULL UNIQUE,
+  principal_id           TEXT NOT NULL,
+  action                 TEXT NOT NULL,
+  outcome                TEXT NOT NULL,
+  trust_record_id        TEXT,
+  policy_name            TEXT NOT NULL,
+  policy_version         TEXT NOT NULL,
+  created_at             TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+```
+
+This is a convenience index into your own systems, not a replacement for the signed record
+itself — for anything compliance-sensitive, verify against the `ExecutionTrustRecord`'s
+`signature` (see [Verify independently](/guides/verify-independently)), which doesn't depend
+on this table being correct.
+
+## Monitoring pattern
+
+Track, at minimum, the shape of decisions your service is producing — a spike in denials or
+a rising Parmana-call latency is usually the first signal something is wrong upstream of
+Parmana (a bad policy deploy, a misconfigured signal), not inside the SDK itself:
+
+```typescript
+function recordExecutionMetric(
+  outcome: "approved" | "denied" | "error",
+  durationMs: number,
+) {
+  metrics.increment(`parmana.execution.${outcome}`);
+  metrics.histogram("parmana.execution.duration_ms", durationMs);
+}
+```
+
+Reasonable alert thresholds to start from: denial rate crossing an unusual baseline for a
+given policy, `error` outcomes (network/timeout/internal, as opposed to `denied`) above
+zero for more than a few minutes, and `p99` latency on `execute()` growing past your
+`PARMANA_TIMEOUT_MS`.
+
+## Rate limiting pattern
+
+The Runtime itself does not currently return a `429`/rate-limit response the SDK maps to a
+dedicated error (see [TypeScript SDK](/sdks/typescript#errors-defined-but-never-thrown) for
+error classes that are defined but not yet thrown by any real condition) — if your own
+call volume needs shaping, do it client-side:
+
+```typescript
+class TokenBucketLimiter {
+  private tokens: number;
+  private readonly capacity: number;
+  private readonly refillPerMs: number;
+  private lastRefill = Date.now();
+
+  constructor(capacity: number, refillPerSecond: number) {
+    this.capacity = capacity;
+    this.tokens = capacity;
+    this.refillPerMs = refillPerSecond / 1000;
+  }
+
+  async acquire(): Promise<void> {
+    this.refill();
+    while (this.tokens < 1) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      this.refill();
+    }
+    this.tokens -= 1;
+  }
+
+  private refill() {
+    const now = Date.now();
+    const elapsed = now - this.lastRefill;
+    this.tokens = Math.min(
+      this.capacity,
+      this.tokens + elapsed * this.refillPerMs,
+    );
+    this.lastRefill = now;
+  }
+}
+
+const limiter = new TokenBucketLimiter(10, 5); // burst of 10, 5/sec sustained
+
+async function executeRateLimited(transaction: BusinessTransaction) {
+  await limiter.acquire();
+  return parmana.execute(transaction);
+}
+```
+
+## Testing in production
+
+A smoke test to run right after every deploy, against the real endpoint you just deployed:
+
+```typescript
+async function smokeTest() {
+  const health = await parmana.health();
+  if (health.status !== "UP") {
+    throw new Error(`Parmana health check failed: ${JSON.stringify(health)}`);
+  }
+
+  const version = await parmana.version();
+  console.log("Deployed against Parmana version:", version);
+}
+```
+
+For a full execution smoke test (not just health), run it against a staging Runtime with a
+dedicated, obviously-named test policy and principal — never against a production policy
+your own smoke test could pollute with real audit entries.
+
+## Deployment checklist
+
+- [ ] `PARMANA_ENDPOINT` and `PARMANA_API_KEY` set from your secrets manager, not committed
+      to source (see [Deploy patterns](/guides/deploy-patterns)).
+- [ ] `retryPolicy` configured deliberately — confirm what's idempotent-safe to retry versus
+      what isn't (see the table above).
+- [ ] Every `client.execute()` / `client.createTransaction()` call site fails closed: a
+      caught, unrecognized error is treated as not-approved, never as approved.
+- [ ] `ExecutionRejectedError` is never silently swallowed — it's a real policy decision
+      your caller needs to see.
+- [ ] `businessTransactionId` reuse on retry is intentional (idempotency), not accidental.
+- [ ] A signature-verification path exists independent of this SDK
+      (see [Verify independently](/guides/verify-independently)) for anything you'll need to
+      prove later without trusting your own logs.
+- [ ] Smoke test wired into your deploy pipeline, hitting `health()`/`version()` at minimum.
+- [ ] Monitoring on denial rate and error rate, not just uptime.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="TypeScript SDK reference" icon="js" href="/sdks/typescript">
+    The full, verified error taxonomy, model types, and test suite this page
+    builds on.
+  </Card>
+  <Card title="Deploy patterns" icon="server" href="/guides/deploy-patterns">
+    Running the Parmana Runtime itself in production, not just the SDK client.
+  </Card>
+  <Card
+    title="Verify independently"
+    icon="check-double"
+    href="/guides/verify-independently"
+  >
+    Re-verify a trust record's signature without trusting this SDK or your own
+    logs.
+  </Card>
+  <Card
+    title="Limitations"
+    icon="triangle-exclamation"
+    href="/security/limitations"
+  >
+    What Parmana does and does not guarantee — read before writing an incident
+    runbook.
+  </Card>
+</CardGroup>

@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/transaction-response.schema.json",
+  "title": "Transaction Response",
+  "description": "Response returned by GET /transactions/{businessTransactionId} (and as each item of GET /transactions' array). A bare Business Transaction, no wrapper, no links, no embedded Decision (that lives on each Execution, not on the transaction).",
+  "$ref": "../common/business-transaction.schema.json"
+}

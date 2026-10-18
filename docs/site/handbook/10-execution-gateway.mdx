@@ -1,0 +1,118 @@
+---
+title: "Chapter 10: The Execution Gateway"
+description: "ExecutionGateway implements @parmana/execution-system's ExecutionSystem interface, the"
+---
+
+## A correction, first
+
+An older architecture document in this repository assumed `ExecutionGateway` lives at
+`packages/api/src/execution-gateway/ExecutionGateway.ts`. That path does not exist. The real,
+current location is `packages/execution-gateway/src/ExecutionGateway.ts`, a separate,
+top-level package, not something nested inside `packages/api`. This chapter is written
+directly from that real file.
+
+## What it is
+
+`ExecutionGateway` implements `@parmana/execution-system`'s `ExecutionSystem` interface, the
+same seam `RuntimeFactory.create()` (Chapter 8) accepts any implementation of. Its own class
+doc comment calls it "the sole release boundary" for whichever `Connector` it's constructed
+with: no execution reaches a connector without passing through this gateway's full
+verification sequence first.
+
+## Why it was built
+
+A signed `ExecutionAuthorizationPayload` (Chapter 9) proves a decision was made, but
+something still has to actually check that proof before letting a connector run, and that
+something needs to independently re-verify, not just trust, every claim the envelope makes,
+including claims about the world having stayed the same since the envelope was signed
+(the policy hasn't changed, the underlying signals haven't drifted). `ExecutionGateway`
+composes `@parmana/envelope-verifier`'s `EnvelopeVerifier` (signature/expiry/TTL/nonce) and
+adds two further checks of its own: a content-hash recompute-and-compare, and, when wired,
+policy-freshness and signal-freshness checks against the _current_ state of the world, not
+just the state at authorization time.
+
+## How it works
+
+Construction (`ExecutionGatewayOptions`) requires a `publicKey` (or a `keyProvider` for
+keyId-aware, rotation-safe lookup) and a `nonceStore`, and exactly one of a `connector` or an
+`executionControl` (constructing with both, or neither, throws immediately). Optional
+`policyRepository` and `signalStateVerifier` enable the two additive checks below; omitting
+either skips that specific check rather than failing closed on it.
+
+`verify(request, now)` runs the checks in this exact order, quoted directly from the class
+doc comment, "Session 3's ordering rule: side-effect-free checks first, nonce consumed last
+and only on success":
+
+1. `version -> signature -> expiry -> TTL policy` (all inside `EnvelopeVerifier.verifyChecks()`).
+2. `businessTransactionHash` recompute-and-compare, only attempted if step 1 passed.
+3. `policyStillCurrent` recompute-and-compare, required and fail closed. The gateway recomputes
+   the _current_ content hash of the named policy and compares it to what the authorization was
+   signed under. An authorization with no `policyContentHash` is rejected, and if the policy no
+   longer exists at all (e.g. replaced in place by a governed change), this is treated
+   identically to a content mismatch, not a separate error case. A gateway built without a
+   `PolicyRepository` and a `policyApprovalVerifier` refuses to construct, unless the explicit
+   `allowUnverifiedPolicy: true` option is set, which production bootstrap never sets.
+4. `policyGovernanceVerified`, required and fail closed. The live hash that just matched the
+   signed hash is handed to the policy approval verifier, which checks that the policy's most
+   recent signed `PolicyChangeApprovalRecord` exists, that its signature verifies, and that its
+   `contentHashAfter` equals that same hash. The approved hash, the signed hash and the live
+   hash must all agree. A missing record, a bad signature, a differing hash, or an error from the
+   verifier all reject the request.
+5. `signalsStillCurrent` recompute-and-verify (when a `SignalStateVerifier` is wired and both
+   the request and authorization carry signals/`signalsHash`), first a hash comparison
+   (catching a request whose signals were altered after authorization), then an independent
+   re-verification of those signals against real-world state via the verifier.
+6. **Nonce consumption, last, only if every prior check passed.** This is the only
+   side-effecting check in the sequence, "a mismatched or forged request must not burn a
+   nonce."
+
+`execute(request)` calls `verify()`, and on any failure throws, specifically,
+`NonceAlreadyConsumedError` when nonce replay is the _sole_ failing check (every other check
+passed), or a generic `Error` naming every failing check and both hash values on a content
+mismatch otherwise. `isSoleFailureNonceReplay()` is the precise logic for that distinction:
+strip out `nonceUnseen`, and check every remaining value is `true` or `undefined` (an
+undefined check means "skipped," which still counts as passing for this purpose, and only occurs
+under the legacy `allowUnverifiedPolicy` opt out, because in the default mode `valid` requires
+`policyStillCurrent` and `policyGovernanceVerified` to be positively `true`). On success,
+the verified `executableContent` is deep-frozen and handed to either the legacy `Connector`
+interface (`this.connector.execute(...)`) or the newer `executionControl` path (a
+`service.execute(...)` call with a freshly minted or static `gatewayAuthentication` value, or
+an `ExecutionChannel.release(...)` call for the deprecated channel-based path).
+
+## How it enables things, with examples
+
+- `examples/tutorials/34-execution-gateway`, the gateway directly.
+- `examples/tutorials/33-execution-boundary`, the boundary concept: what does and doesn't
+  cross it.
+- `examples/tutorials/32-execution-pipeline`, the gateway inside the larger pipeline.
+- `examples/tutorials/81-connector-execution-gateway`, a real connector behind the gateway.
+- `examples/tutorials/86-gateway-attestation`, attestation semantics at this boundary.
+
+## How to validate this yourself
+
+- `packages/execution-gateway/src/ExecutionGateway.ts`, the full verification sequence;
+  every ordering and failure-handling claim above is a direct comment or method in this file.
+- `packages/execution-gateway/src/GatewayVerificationResult.ts`, the structured result shape
+  (`checks`, `hashMismatch`, `policyContentMismatch`, `signalsHashMismatch`,
+  `signalDivergence`).
+- `packages/execution-gateway/tests/unit/execution-gateway.test.ts`, the primary unit
+  coverage.
+- `packages/execution-gateway/tests/unit/execution-gateway.dilithium3.test.ts`, the same
+  gateway logic under a post-quantum signature algorithm (see Chapter 3).
+- `packages/execution-gateway/tests/unit/credential-non-exposure.test.ts`, a separate but
+  closely related guarantee this package also carries, covered in full in Chapter 11
+  (Credential Isolation).
+
+## Integration requirements
+
+- A public key (or `KeyProvider`) matching whatever signed the authorizations this gateway
+  will verify.
+- A `NonceStore` implementation, `MemoryNonceStore` for tests/tutorials,
+  `SupabaseNonceStore` (via the storage layer, Chapter 13) for a real deployment, so replay
+  protection survives a process restart.
+- To enable policy-freshness checking: a `PolicyRepository` (Chapter 4/13) pointed at the same
+  policy content the signing side used.
+- To enable signal-freshness checking: a `SignalStateVerifier` (Chapter 5) capable of
+  re-deriving the relevant real-world facts.
+- Exactly one of a `Connector` implementation or an `executionControl` configuration ,
+  Chapter 12 covers what a real `Connector` looks like.

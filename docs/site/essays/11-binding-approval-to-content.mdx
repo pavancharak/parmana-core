@@ -1,0 +1,95 @@
+---
+title: "Approved what, exactly? Binding approval to content"
+description: ""
+---
+
+A refund agent asks for ₹500 back on a cancelled order. The agent's request says "refund amount: ₹500". The store
+manager reads it and signs an approval. Every check passes.
+
+Then the action that actually reaches the payment system says ₹50,000.
+
+Nobody approved ₹50,000. But if the system checked only a label the agent wrote, not the request itself, the
+approval for ₹500 just paid out ₹50,000. This is an old bug with a clumsy name: time of check to
+time of use. You check one thing, then you act on another.
+
+## Where the gap hides
+
+With agents, the gap shows up in at least four places:
+
+- **The facts and the action disagree.** The agent says "amount 500" in the facts the policy reads, and puts 50,000
+  in the parameters that get executed.
+- **The content changes after approval.** The decision is made on one payload and a different one is sent under the
+  same transaction id.
+- **The rules change after approval.** The policy is edited between the decision and the release.
+- **The world changes after approval.** The approval expires, the approver's key is revoked, the deal moves to
+  another stage, the agent's authority is withdrawn.
+
+An approval that names only an id cannot catch any of these. It has to be bound to the content, the rules and the
+facts it rested on, and those bindings have to be re-checked at the moment of release.
+
+## How Parmana binds it
+
+**The facts must describe the action.** A policy can bind a fact to a field of the request. The refund policy binds
+the refund amount the policy reads to the amount parameter that will be executed. This check runs before the policy
+is evaluated, so the ₹500 versus ₹50,000 request above is refused before any rule runs, and the refund service is
+never called. An integration test covers that case. The mechanism came out of an external adversarial exercise; 28
+regression tests reproduce the exploits it found.
+
+The signed human approval is bound the same way: it counts only for the action and resource it names (and the
+amount, where the policy names one), and it is used once. Every agent action needs one, reads included.
+
+**The content is hashed into the signature.** When Parmana signs the execution authorization, it includes a
+canonical hash of the executable content: action, target and parameters. At release the gateway recomputes that
+hash from the exact content it is about to forward, with the same hashing code the signer used, and refuses on any
+mismatch. After that the content is frozen, and the request handed to the connector is copied from the frozen
+content, not rebuilt.
+
+**The rules are hashed too.** The authorization carries a hash of the exact policy content. At release the gateway
+recomputes the live policy's hash, and it must match both the signed one and the policy's most recent signed checker
+approval. A missing hash is a failure, not a skip.
+
+**The facts are re-checked at release.** The default server re-runs some checks just before release: the human
+approval (still unexpired, approver key still trusted), the live HubSpot deal state for deal updates, and the Slack
+channel against an allowlist.
+
+**What the decision rests on travels with it.** Since 11 October, when a policy names the business system that owns
+a fact, each answer is signed into the authorization with a "valid until" time, and so is the agent's authority
+grant if the policy requires one. The gateway checks them again before release. If a fact has expired, or the grant
+has expired or been revoked, nothing is sent: the request gets a 409 saying the authorization is no longer valid,
+the action is recorded as not executed, and the single-use nonce is not consumed.
+
+An external system connected to Parmana receives those facts as signed conditions in its release, and the release
+expires no later than the earliest of them. An endpoint that checks them in the same transaction as the action can
+decline with "conditions not met", which is recorded as not acted on.
+
+## Honest about timing
+
+In the default server, decision and release happen in the same request, seconds apart. So the release check catches
+what changes in those seconds, such as an approval that just expired. It matters most when an authorization is
+carried to a separate system and released later. For the same reason an HTTP client cannot provoke a content hash
+mismatch through the public API; the tamper case is demonstrated at the library level, in runnable tutorials.
+
+## What it does not do
+
+- **Binding covers only what the policy author binds.** A fact that is not bound to the request, or sourced from a
+  business system, is the caller's word. In the refund policy, refund eligibility and the fraud check are still
+  declared by the agent; they can only cause a refusal.
+- **No real business system is connected as a source yet**, and no shipped policy declares a source or requires a
+  grant. The release re-check of facts and grants is deployed and passed live checks with a test policy and a demo
+  source, but it does not yet decide any real action.
+- **A refusal at release has not been seen in production**, and there is no end to end test of it through the API.
+  Each part is tested separately; timing it needs a test hook.
+- **"Execute only if still valid" at the target system is the endpoint's job.** Parmana signs the conditions; it
+  cannot make an endpoint check them. Built-in connectors (Paytm, HubSpot, GitHub, Slack) get the gateway re-check
+  only.
+- **A request refused at release leaves its Execution Intent in an errored state** until a person closes it as not
+  executed. There is no separate "not released" state.
+- **None of this proves the policy is right.** It proves the approved policy, content and facts are the ones that
+  were acted on.
+- **It covers only actions routed through the gateway.**
+
+## Takeaway
+
+"Approved" is meaningless until you can say what was approved. Bind the facts to the request, hash the content and
+the rules into the signature, carry what the decision rested on with an expiry, and look again at the last moment
+before acting. The approval for ₹500 should be useless for anything except that ₹500.

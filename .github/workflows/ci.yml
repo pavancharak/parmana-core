@@ -1,0 +1,186 @@
+name: CI
+
+# Runs the TypeScript workspace's build and full vitest suite on every push
+# and pull request. Deliberately does not depend on any .env file: every
+# environment variable the app needs to start is provided explicitly below,
+# so this workflow also proves the repo is buildable/testable from a fresh
+# clone with no local secrets present.
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    # A throwaway PostgreSQL for the migration race test (scripts/tests/
+    # run-migrations.test.ts). That test drops and recreates its own tables,
+    # so the database here must not hold anything else.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      NODE_ENV: test
+      PARMANA_TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+      # Required at startup by packages/shared/src/config/Config.ts —
+      # points at the repo's own committed reference policies, not a
+      # separate fixtures directory.
+      PARMANA_POLICY_DIR: ./policies
+      # Explicit default; keeps Supabase-gated integration tests
+      # (packages/api/tests/helpers/supabase-availability.ts) skipped
+      # rather than silently reaching for SUPABASE_* vars that aren't set.
+      PARMANA_STORAGE: memory
+      KEY_PROVIDER: local
+      PRIMARY_SIGNATURE_PROVIDER: ed25519
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Install workspace
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Guard against retired terminology
+        # Locked vocabulary is "execution authorization" / "AI Execution
+        # Authorization". Every exclusion below falls into exactly one of
+        # two legitimate categories — never "we didn't want to fix it":
+        #
+        # (1) Historical self-narration: this repo's own docs describing
+        #     its own retired term and the sweep that replaced it. The
+        #     phrase appears quoted, in the past tense, as a historical
+        #     fact — never as live vocabulary a reader would adopt.
+        #       - docs/VERIFICATION-GAPS.md: narrates the terminology
+        #         sweep itself.
+        #         A per file list is the deliberate choice here, not a
+        #         stopgap; expect it to gain entries over time.
+        #
+        # (2) Third-party citation: docs/site's two "Related work" notes
+        #     cite an unrelated third-party academic framework that is
+        #     itself actually named "Execution Governance" (Ku, 2026) —
+        #     not this repo's retired term, just a name collision.
+        #       - docs/site/how-parmana-thinks.mdx
+        #       - docs/site/concepts/execution-authorization.mdx
+        #
+        # docs/site/changelog.mdx is category (1): it's this repo's public
+        # changelog narrating the same terminology history in past tense.
+        #
+        # ci.yml and tests/architecture/terminology-guard.test.ts (its
+        # regression-test reimplementation) each exclude themselves because
+        # their own comments/patterns/fixtures must name the retired phrase
+        # to check for it.
+        #
+        # If you hit this guard on a new file: first check whether you've
+        # actually typed "execution governance" as live, current
+        # terminology (fix the doc, don't touch this list) — or whether,
+        # like every entry below, you're citing history or an external
+        # work by name (add the file here, in the matching category above,
+        # with a one-line reason, exactly like its neighbors).
+        run: |
+          if grep -rIn \
+            --exclude-dir=node_modules \
+            --exclude-dir=.git \
+            --exclude-dir=dist \
+            --exclude-dir=coverage \
+            --exclude='VERIFICATION-GAPS.md' \
+            --exclude='how-parmana-thinks.mdx' \
+            --exclude='execution-authorization.mdx' \
+            --exclude='changelog.mdx' \
+            --exclude='ci.yml' \
+            --exclude='terminology-guard.test.ts' \
+            -i "execution governance" .; then
+            echo "::error::Found retired term 'execution governance' — replace with 'execution authorization' / 'AI Execution Authorization'."
+            exit 1
+          fi
+
+      - name: Test
+        run: npm test
+
+      - name: Verify the policy approval log
+        # governance/policy-approvals.jsonl: the chain, every signature,
+        # and that a change only appends to it (compared with the base).
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -n "$BASE_SHA" ] && [ "$BASE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            git fetch --no-tags --depth=1 origin "$BASE_SHA"
+            npm run policy-log:verify -- --base "$BASE_SHA"
+          else
+            npm run policy-log:verify
+          fi
+
+  verify-policy-approvals:
+    # Preventive Policy Governance gate (maker-checker): fails the run if
+    # any policies/{name}/{version}/policy.json in the tree has no
+    # matching PolicyChangeApprovalRecord for its exact content -- i.e. a
+    # file edit that bypassed the maker-checker API, or a new policy
+    # version not yet approved. A separate job (not a step in
+    # build-and-test above) so it has its own pass/fail status: it is a
+    # required status check on main (docs/VERIFICATION-GAPS.md D-6, G-79).
+    #
+    # Checks every policy file on every run (--full-scan), not only the
+    # changed ones, so it also catches drift and always proves it can
+    # reach the approval records. A pull request that adds a policy
+    # version passes only after that version is approved in production.
+    #
+    # Fail-CLOSED by design, the opposite discipline of
+    # verifyPolicyGovernanceIntegrityAtStartup.ts's own fail-open startup
+    # check: scripts/verify-policy-changes-approved.ts exits non-zero on
+    # an unapproved file AND on any failure to complete the check at all
+    # (Supabase unreachable, missing secrets, malformed response, ...) --
+    # there is no "couldn't check, let it pass" path here. Pull requests
+    # from forks get no secrets, so they fail this check.
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Install workspace
+        run: npm ci
+
+      - name: Build (needed for @parmana/crypto's compiled hashing code)
+        run: npm run build
+
+      - name: Verify every policy file is approved
+        env:
+          # Scoped, read-only credential -- see
+          # supabase/migrations/20260818150000_add_ci_read_only_policy_for_approval_records.sql.
+          # Deliberately not DATABASE_URL / SUPABASE_SERVICE_ROLE_KEY,
+          # which bypass RLS and grant read+write on every table.
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          # loadConfig() refuses to start without it; the same value
+          # build-and-test sets at job level.
+          PARMANA_POLICY_DIR: ./policies
+        run: npx tsx scripts/verify-policy-changes-approved.ts --full-scan

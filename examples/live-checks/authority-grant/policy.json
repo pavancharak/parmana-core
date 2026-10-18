@@ -1,0 +1,51 @@
+{
+  "policyId": "livecheck-grant",
+  "policyVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "description": "Live check of authority grants (RFC-0023 phase 3). Releases livecheck:grant to the check endpoint, which acts on nothing, only with a signed approval for the target and only for a caller holding an authority grant in force for it and within the grant's limits. The amount is bound to the request, so the agent cannot declare another.",
+  "requireAuthorityGrant": true,
+  "signalsSchema": {
+    "amount": "number",
+    "releaseApproved": "boolean"
+  },
+  "boundSignals": {
+    "amount": "parameters.amount"
+  },
+  "rules": [
+    {
+      "id": "approve-positive-amount",
+      "condition": {
+        "all": [
+          {
+            "fact": "releaseApproved",
+            "operator": "is_true"
+          },
+          {
+            "fact": "amount",
+            "operator": "gt",
+            "value": 0
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Approved for this target, a positive amount, and a caller holding an authority grant in force."
+      }
+    },
+    {
+      "id": "reject-otherwise",
+      "condition": {
+        "always": true
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Needs a signed approval for this target and an amount above 0."
+      }
+    }
+  ],
+  "approvalSignals": {
+    "releaseApproved": {
+      "resourceId": "target"
+    }
+  }
+}

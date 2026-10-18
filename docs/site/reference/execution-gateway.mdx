@@ -1,0 +1,116 @@
+---
+title: "@parmana/execution-gateway"
+description: "The sole boundary through which Parmana releases approved execution requests to connectors. Includes two deprecated fields, documented here with their replacements."
+---
+
+<Info>
+  **[AVAILABLE]**. `packages/execution-gateway`, 25 tests. Wired into the
+  default server unconditionally, see [The gateway](/concepts/the-gateway).
+</Info>
+
+## Purpose
+
+Independently re-verifies a signed execution authorization and its content hash before
+releasing execution to a `Connector`. Implements `@parmana/execution-system`'s
+`ExecutionSystem` interface.
+
+## Install
+
+Not published to npm. This is an internal package of this repository, used from a clone of it: `npm ci` at the repository root links every workspace package. The packages published to npm are [`@parmana/sdk`](/sdks/typescript), [`@parmana/connector-sdk`](/reference/connector-sdk) and [`@parmana/sign`](/sdks/parmana-sign/overview).
+
+## Key exports
+
+| Export                      | Stability                                                                                                                                                                                                |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ExecutionGateway`          | [AVAILABLE]. `new ExecutionGateway(options: ExecutionGatewayOptions)`, `.execute(request)`, `.verify(request)`.                                                                                          |
+| `Connector` (interface)     | [AVAILABLE]. `{ connectorId, execute(request, context) }`                                                                                                                                                |
+| `HttpConnector`             | [AVAILABLE]. Forwards `{ ...transaction, authorization }` to `${baseUrl}/execute` via POST. A different, older class from `@parmana/connector-sdk`'s `HttpConnector`, see that package's reference page. |
+| `GatewayVerificationResult` | [AVAILABLE]. Per-check breakdown: `versionSupported`, `signatureVerified`, `notExpired`, `ttlWithinPolicy`, `businessTransactionHashMatches`, `nonceUnseen`.                                             |
+| `deepFreeze`                | [AVAILABLE]. Freezes executable content before it reaches a connector, so nothing downstream can mutate what was verified.                                                                               |
+
+## `ExecutionGatewayOptions`
+
+```typescript
+interface ExecutionGatewayOptions {
+  readonly publicKey: KeyObject;
+  readonly nonceStore: NonceStore;
+  readonly connector?: Connector; // direct mode
+  readonly executionControl?: ExecutionControlOptions; // controlled-execution mode
+}
+```
+
+Supply either `connector` (direct) or `executionControl` (routes through
+[credential isolation](/concepts/credential-isolation)), not both. The default server uses
+`executionControl`.
+
+## `ExecutionControlOptions`, including deprecated fields
+
+```typescript
+interface ExecutionControlOptions {
+  readonly service?: ExecutionControl; // [AVAILABLE], current
+  readonly gatewayAuthentication?: unknown; // [AVAILABLE], current
+  readonly mintGatewayAuthentication?: (authorizationId: string) => unknown; // [AVAILABLE], current, preferred
+  readonly channel?: ExecutionChannel; // deprecated
+  readonly gatewayIdentity?: GatewayIdentityProvider; // deprecated
+  readonly route: (content: Readonly<ExecutableContent>) => string;
+}
+```
+
+<Warning>
+**Two fields on this interface are deprecated in the source itself**
+(`packages/execution-gateway/src/ExecutionGateway.ts:39-42`), documented here rather than
+omitted:
+
+- **`channel?: ExecutionChannel`**, `@deprecated Embedded prototype retained for backward
+compatibility.` Replacement: `service` (an `ExecutionControl` from
+  `@parmana/execution-control`), combined with `gatewayAuthentication` or
+  `mintGatewayAuthentication`.
+- **`gatewayIdentity?: GatewayIdentityProvider`**, `@deprecated Use gatewayAuthentication
+with service.` Replacement: `gatewayAuthentication` (a static value) or, preferred,
+  `mintGatewayAuthentication` (a per-request minting function, see [Gateway
+  attestation](/concepts/gateway-attestation)).
+
+Neither deprecated field is used by the default server's own bootstrap
+(`packages/api/src/bootstrap/createExecutionGateway.ts`), which uses `service` and
+`mintGatewayAuthentication` exclusively.
+
+</Warning>
+
+## Minimal example
+
+```typescript
+import { ExecutionGateway } from "@parmana/execution-gateway";
+
+const gateway = new ExecutionGateway({
+  publicKey,
+  nonceStore,
+  executionControl: {
+    service: executionControlService,
+    mintGatewayAuthentication: (authorizationId) =>
+      attestationSigner.sign(gatewayId, authorizationId, gatewayPrivateKey),
+    route: (content) => connectorIdForAction(content.action),
+  },
+});
+
+const application = RuntimeFactory.create(
+  transactions,
+  trustRecords,
+  policies,
+  gateway,
+);
+```
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="The gateway" icon="shield-check" href="/concepts/the-gateway">
+    The concept this package implements, plus what's actually wired today.
+  </Card>
+  <Card
+    title="@parmana/execution-control"
+    icon="lock"
+    href="/reference/execution-control"
+  >
+    What `service` and `gatewayAuthentication` actually are.
+  </Card>
+</CardGroup>

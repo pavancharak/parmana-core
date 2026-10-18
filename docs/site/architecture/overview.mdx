@@ -1,0 +1,74 @@
+---
+title: "Architecture Overview"
+description: "How Parmana's packages fit together, and which parts of the pipeline actually run today."
+---
+
+**[AVAILABLE]**
+
+Parmana is an npm/TypeScript monorepo (`packages/*`) plus two SDKs (`typescript/`,
+`python/`). Every package is independently testable; `packages/api` is the only one that
+runs as a long-lived process.
+
+## The real request path today
+
+```
+HTTP request
+     │
+     ▼
+packages/api (Express server, packages/api/src/app.ts)
+     │
+     ▼
+packages/runtime (ExecutionTrustApplication → Runtime → RuntimeEngine)
+     │
+     ├─► packages/policy            (deterministic rule evaluation)
+     ├─► packages/crypto            (signing, hashing)
+     ├─► packages/execution-gateway (independent re-verification, connector routing)
+     ├─► packages/execution-control (session credential issuance)
+     └─► packages/storage           (append-only persistence)
+     │
+     ▼
+ExecutionTrustRecord (returned to caller)
+```
+
+<Note>
+  `packages/api/src/bootstrap/createExecutionSystem.ts` unconditionally returns
+  `createExecutionGateway()`. There is no optional-gateway code path:
+  `packages/execution-gateway` and `packages/execution-control` are in the
+  default request path. Every `POST /execute` against the stock local server
+  gets independent content-binding re-verification, and an action with no
+  registered connector fails closed rather than skipping the check. See
+  [Quickstart](/quickstart) step 3 for a live run, and [Content Binding &
+  TOCTOU](/concepts/content-binding-toctou) for the mechanism itself.
+</Note>
+
+## Package map
+
+See [Packages](/architecture/packages) for the full table with status and evidence per
+package. Grouped by role:
+
+**Trust core**: `shared`, `policy`, `runtime`, `crypto`, `storage` (all `[AVAILABLE]`);
+`replay` is `[PARTIAL]`, real and tested but disconnected from `runtime`/`api`, see
+[@parmana/replay](/reference/replay). Receipts are built by `crypto`'s `ReceiptCrypto`; there
+is no separate receipt package.
+
+**HTTP surface**: `api` (`[AVAILABLE]`) is the only long-running server.
+`execution-system` (`[AVAILABLE]`) is the interface `createExecutionSystem()` implements;
+today that implementation is always a full `ExecutionGateway`, not a bypass.
+
+**Content-binding / release control**: `envelope-verifier` (`[AVAILABLE]` library),
+`execution-gateway` (`[AVAILABLE]`, wired unconditionally into the default server),
+`execution-control` (`[PARTIAL]`, real, tested, and in the default request path for the
+connectors currently registered; not yet the finished cross-system claim for arbitrary
+connectors, see [Roadmap](/roadmap)).
+
+**SDKs**: `python/` (`[AVAILABLE]`), `typescript/` (`[PARTIAL]`, real client code, but its
+entire test suite is currently empty and its HTTP transport does not raise on 4xx/5xx
+responses, see [TypeScript SDK](/sdks/typescript)).
+
+## Why this split exists
+
+The gateway and execution-control remain separate packages from `runtime` so a consuming
+service that embeds only the trust core (no HTTP server, no connectors) doesn't have to pay
+for a `Connector`, `NonceStore`, and public key it doesn't need. The default `packages/api`
+server is not that minimal case: it always builds the full gateway, as shown above. See
+[Content Binding & TOCTOU](/concepts/content-binding-toctou) for the mechanism itself.

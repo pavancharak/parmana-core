@@ -1,0 +1,332 @@
+---
+title: "Python SDK Production Guide"
+description: "Deploy the Python SDK to production: real error handling, audit logging, and a deployment checklist."
+---
+
+<Note>
+  The patterns on this page (retry decorators, an audit-log schema, a rate
+  limiter) are illustrative, adapt them to your own stack. What's specific to
+  Parmana (the client construction, the exception taxonomy, which call raises
+  what) is the real, verified API, see [Python SDK](/sdks/python). For how to
+  actually run the server itself in production (Fly.io, Docker, environment
+  variables the server reads), see [Production
+  deployment](/deployment/production) and [Deploy
+  patterns](/guides/deploy-patterns), this page is about the client side,
+  calling an already-deployed Parmana instance.
+</Note>
+
+## Deployment shape
+
+```
+Your service (FastAPI, a worker, an agent loop)
+        │
+        ▼
+ParmanaClient (Python SDK)
+        │  bearer-key auth, typed errors
+        ▼
+Parmana Runtime (your deployment, see Production deployment)
+        │
+        ▼
+Policy Engine + registered connectors
+```
+
+Your service is the only thing that ever holds the Parmana API key; the connectors' own
+credentials (Paytm, HubSpot, whichever you've registered) never leave the Runtime, see
+[Credential isolation](/concepts/credential-isolation).
+
+## Configuration
+
+```python
+import os
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class ParmanaSettings:
+    endpoint: str
+    api_key: str
+    fail_closed: bool = True
+
+    @classmethod
+    def from_env(cls) -> "ParmanaSettings":
+        endpoint = os.environ["PARMANA_ENDPOINT"]
+        api_key = os.environ["PARMANA_API_KEY"]
+        if not endpoint.startswith("https://") and os.environ.get("ENVIRONMENT") == "production":
+            raise ValueError("PARMANA_ENDPOINT must use HTTPS in production")
+        return cls(endpoint=endpoint, api_key=api_key)
+
+
+settings = ParmanaSettings.from_env()
+```
+
+```python
+from parmana import ParmanaClient
+
+client = ParmanaClient(endpoint=settings.endpoint, api_key=settings.api_key)
+```
+
+There's no `ParmanaConfig` object to pass around, `ParmanaClient` takes `endpoint` and `api_key`
+directly. Keep your own settings object (like `ParmanaSettings` above) if you want centralized
+validation; just unpack it into the two real constructor kwargs.
+
+## Error handling
+
+### Fail-closed by default
+
+A denial should be a denial, not an exception a caller has to remember to interpret correctly.
+Wrap the client so each failure resolves to an explicit outcome. A policy rejection means "did
+not execute". A timeout or network error does **not**: an approved request can take tens of
+seconds (G-84) and may have run, so it means "unknown, read the record before anything else":
+
+```python
+import logging
+from typing import Optional
+
+from parmana import (
+    ExecutionRejectedError,
+    NetworkError,
+    ParmanaClient,
+    TimeoutError as ParmanaTimeoutError,
+)
+
+logger = logging.getLogger(__name__)
+
+
+class SafeParmanaClient:
+    """Wraps ParmanaClient so every non-success path returns None instead of propagating."""
+
+    def __init__(self, client: ParmanaClient, fail_closed: bool = True):
+        self.client = client
+        self.fail_closed = fail_closed
+
+    def execute(self, transaction):
+        try:
+            return self.client.execution.execute(transaction)
+        except ExecutionRejectedError as exc:
+            logger.warning("execution denied", extra={"reason": str(exc)})
+            return None
+        except (NetworkError, ParmanaTimeoutError) as exc:
+            # Unknown, not "did not execute": the request may still have run.
+            # Read it with the same id before doing anything else.
+            logger.error("parmana outcome unknown", extra={"error": str(exc)})
+            raise
+        except Exception:
+            logger.exception("unexpected error calling parmana")
+            if self.fail_closed:
+                return None
+            raise
+```
+
+### Error types
+
+The exception taxonomy is real and verified, see [Errors, correctly mapped to real
+conditions](/sdks/python#errors-correctly-mapped-to-real-conditions) for the complete, tested
+table. The ones worth handling explicitly in production:
+
+| Exception                                       | Cause                                                                                                                                                                                                 | Typical handling                                                                     |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `AuthenticationError` (401)                     | Missing/wrong API key                                                                                                                                                                                 | Alert, this is a config problem, not a runtime one                                   |
+| `ExecutionRejectedError` (403, `POLICY_DENIED`) | Policy denied the transaction                                                                                                                                                                         | Expected outcome, log and return to caller                                           |
+| `AuthorizationError` (403, no code)             | Caller asserting a `principal_id` it isn't permitted to                                                                                                                                               | Config problem, check `allowed_principal_ids`                                        |
+| `NotFoundError` (404)                           | Unknown transaction/record id                                                                                                                                                                         | Usually a caller bug                                                                 |
+| `ConflictError` (409)                           | Duplicate `business_transaction_id`                                                                                                                                                                   | Retried request, check idempotency handling                                          |
+| `ServerError` (5xx), check `server_code`        | `SIGNING_UNAVAILABLE`, `EXECUTION_INTENT_UNAVAILABLE`, `CONNECTOR_NOT_REGISTERED` (503): nothing ran. `EXECUTION_RECORD_INCOMPLETE` (500), `EXECUTION_OUTCOME_UNKNOWN` (502): the action was released | 503: retry later with a **new** id. 500 and 502: **never resend**; tell the operator |
+| `NetworkError`, `TimeoutError`                  | Connection failure or no answer in time                                                                                                                                                               | Outcome unknown: read the record with the same id                                    |
+
+### Retries
+
+`ParmanaClient` already retries idempotent GETs with backoff on `429`/`502`/`503`/`504`; POSTs
+(which `execute()` is) are never retried automatically, since retrying an execution isn't safe.
+**Do not wrap `execute()` in a generic retry.** Sending the same transaction again (same
+`business_transaction_id`) returns `ConflictError` (409), never the original result; sending it
+with a new id asks for the action a second time. Use the server code instead:
+
+```python
+from parmana import ServerError
+
+NOTHING_RAN = {"SIGNING_UNAVAILABLE", "EXECUTION_INTENT_UNAVAILABLE", "CONNECTOR_NOT_REGISTERED"}
+
+try:
+    record = client.execution.execute(transaction)
+except ServerError as exc:
+    if exc.server_code in NOTHING_RAN:
+        # Nothing was executed. Retry later with a NEW business_transaction_id.
+        ...
+    else:
+        # EXECUTION_RECORD_INCOMPLETE (500) or EXECUTION_OUTCOME_UNKNOWN (502): the action
+        # was released. Never resend; the operator finalizes or resolves the Execution Intent.
+        raise
+```
+
+Set `timeout=120` on the client (the default is 30 seconds), and after a timeout read the
+record with the same id before anything else (G-84).
+
+## Audit logging
+
+Parmana already produces a signed [Execution Trust Record](/concepts/execution-trust-records) for
+every approved execution, and a [Refusal Record](/concepts/refusal-records) for a rejected one ,
+both independently verifiable. What you typically still want on your own side is a queryable local
+log tying those records back to your application's own request context:
+
+```python
+import json
+from datetime import datetime, timezone
+
+
+class AuditLogger:
+    def __init__(self, db_connection):
+        self.db = db_connection
+
+    def log_outcome(self, *, business_transaction_id: str, principal_id: str, action: str,
+                     outcome: str, trust_record_id: str | None = None, reason: str | None = None):
+        self.db.execute(
+            """
+            INSERT INTO parmana_audit_log
+                (business_transaction_id, principal_id, action, outcome, trust_record_id, reason, occurred_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                business_transaction_id,
+                principal_id,
+                action,
+                outcome,
+                trust_record_id,
+                reason,
+                datetime.now(timezone.utc),
+            ),
+        )
+```
+
+```sql
+CREATE TABLE parmana_audit_log (
+    id BIGSERIAL PRIMARY KEY,
+    business_transaction_id TEXT NOT NULL,
+    principal_id TEXT NOT NULL,
+    action TEXT NOT NULL,
+    outcome TEXT NOT NULL,          -- 'APPROVED' | 'DENIED' | 'ERROR'
+    trust_record_id TEXT,
+    reason TEXT,
+    occurred_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX ON parmana_audit_log (business_transaction_id);
+CREATE INDEX ON parmana_audit_log (occurred_at);
+```
+
+This is your own local index for fast lookups, the actual [caller-authentication audit
+trail](/concepts/caller-audit-trail) and the signed trust/refusal records remain the source of
+truth if the two ever disagree.
+
+## Monitoring
+
+Track outcomes and latency around every `execute()` call, however your stack already does
+metrics (Prometheus shown here as one example):
+
+```python
+import time
+from prometheus_client import Counter, Histogram
+
+parmana_execute_total = Counter(
+    "parmana_execute_total", "Total execute() calls", ["outcome"]
+)
+parmana_execute_latency_seconds = Histogram(
+    "parmana_execute_latency_seconds", "execute() latency"
+)
+
+start = time.monotonic()
+try:
+    trust_record = safe_client.execute(transaction)
+    parmana_execute_total.labels(outcome="approved" if trust_record else "denied").inc()
+finally:
+    parmana_execute_latency_seconds.observe(time.monotonic() - start)
+```
+
+Reasonable things to alert on: a sustained rise in the denial rate for a policy that's normally
+mostly-approved (could mean a signal pipeline broke upstream), `NetworkError`/`ServerError` rate
+above zero for more than a few minutes, and p99 latency past whatever your own SLA is.
+
+## Rate limiting
+
+If you're calling Parmana from a high-throughput path and want to shed load client-side rather
+than let the server's own limits reject you:
+
+```python
+from collections import deque
+from datetime import datetime, timedelta
+
+
+class RateLimiter:
+    def __init__(self, max_requests: int = 100, window_seconds: int = 60):
+        self.max_requests = max_requests
+        self.window = timedelta(seconds=window_seconds)
+        self.requests: deque[datetime] = deque()
+
+    def allow(self) -> bool:
+        now = datetime.utcnow()
+        cutoff = now - self.window
+        while self.requests and self.requests[0] < cutoff:
+            self.requests.popleft()
+        if len(self.requests) >= self.max_requests:
+            return False
+        self.requests.append(now)
+        return True
+```
+
+## Smoke-testing a deployment
+
+Run something like this after every deploy, it should complete without raising anything other
+than an expected `ExecutionRejectedError`:
+
+```python
+from parmana import ParmanaClient
+
+def smoke_test(endpoint: str, api_key: str) -> None:
+    client = ParmanaClient(endpoint=endpoint, api_key=api_key)
+    health = client.execution.health()
+    assert health["status"] == "UP", f"unexpected health status: {health['status']}"
+    version = client.execution.version()
+    print(f"Connected to {endpoint}, server version {version}")
+```
+
+## Deployment checklist
+
+- [ ] `PARMANA_ENDPOINT` and `PARMANA_API_KEY` (or equivalent) set from your secrets manager, not
+      hardcoded
+- [ ] Fail-closed behavior confirmed for `NetworkError`/`ServerError` (see above)
+- [ ] `ExecutionRejectedError` handled as an expected, logged outcome, not swallowed silently
+- [ ] Your own audit log wired up, keyed by `business_transaction_id`
+- [ ] Basic metrics (outcome counts, latency) exported
+- [ ] Smoke test run against the target environment after deploy
+- [ ] You've read [Limitations](/security/limitations), know what Parmana does and doesn't
+      guarantee before you make claims of your own downstream
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="Production deployment"
+    icon="server"
+    href="/deployment/production"
+  >
+    Running the Parmana server itself in production, the other half of this
+    page.
+  </Card>
+  <Card
+    title="Python SDK for AI Agents"
+    icon="robot"
+    href="/guides/python-sdk-ai-agents"
+  >
+    The integration patterns this guide's error handling wraps around.
+  </Card>
+  <Card
+    title="Limitations"
+    icon="triangle-exclamation"
+    href="/security/limitations"
+  >
+    What Parmana does and doesn't guarantee, read before you write your own SLA
+    on top of it.
+  </Card>
+  <Card title="Python SDK reference" icon="python" href="/sdks/python">
+    The complete, verified API surface: every method, every error, the test
+    suite backing it.
+  </Card>
+</CardGroup>

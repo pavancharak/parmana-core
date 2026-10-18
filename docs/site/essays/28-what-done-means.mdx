@@ -1,0 +1,72 @@
+---
+title: 'What "done" means: deployed, but not yet deciding anything'
+description: "Five meanings of done, and the three public records that keep Parmana honest about which one each feature has reached: the claims register, the gap log and the remaining work list."
+---
+
+In October 2026 Parmana shipped business validation: authority grants with limits, facts checked against the system that
+owns them, and re-checks just before release. It is merged, deployed with its migrations, released in SDK 1.6.0, and it
+passed live checks in production.
+
+It does not decide a single real action yet. That is not a contradiction; it is the most important distinction in the
+project, and most announcements blur it.
+
+## Five meanings of done
+
+1. **Built:** the code exists and its tests pass.
+2. **Deployed:** it runs in production.
+3. **Verified in production:** someone exercised it on the live system and saw it behave.
+4. **In use:** a real policy turns it on, so it affects real decisions.
+5. **Proven on real actions:** a real action went through it, and the record exists.
+
+Business validation is at step 3. No shipped policy requires a grant or declares a source, and no real business system
+is connected; the live check used a demo source. Until the refund policy is changed, through the same two-person
+approval as everything else, real refunds are decided as before.
+
+"Parmana now verifies refund eligibility with your order system" could be defended word by word, and the impression
+would still be false.
+
+## Three public records
+
+Three files sit in the repository, next to the code.
+
+**The claims register (`docs/CLAIMS.md`).** Every claim with its scope and the files and tests that back it. Claims are
+corrected in place, with a date, when they turn out broader than the evidence. It ends with "Claims we intentionally do
+not make": unscoped "non-bypassable", "tamper-proof" in every environment, guaranteed compliance. No implementation could
+back those, so they are excluded on principle.
+
+**The gap log (`docs/VERIFICATION-GAPS.md`).** Every time something is found missing or wrong, it gets an id, a
+severity, a date and, later, how and when it was closed. It holds close to ninety entries.
+
+One example shows why. It was found that in one deployment path the refund agent service could call the payment provider
+itself after Parmana had already released the refund, so an approved refund could have been paid twice. It went into the
+log, was fixed and deployed the next day, and a refusal through that path was verified in production. Even so, the log
+still marks "an approved refund observed live making exactly one payment call" as **not claimed**, because only tests
+cover it.
+
+**The remaining work list (`docs/REMAINING-WORK.md`).** What is left, who has to do it, and in what order. For business
+validation it lists operator steps (one real refund end to end, connect the system that owns refund eligibility, the
+first real grant, switch the refund policy, one real refund under it), evidence not yet collected, what is not built
+(cumulative limits, built-in connectors re-asking at release, limiting which facts a source may answer) and open
+questions. The public version is [What is left](/concepts/business-validation#what-is-left).
+
+## Why bother
+
+- **The product is trust.** Parmana exists so someone else can check, without trusting the operator, what an agent was
+  allowed to do and why. Documentation that must be taken on faith would undermine that.
+- **Security reviews find gaps anyway.** It is better they find them in a dated list with fixes.
+- **It prevents self-deception.** "Deployed" feels like "done"; writing "not yet in use" next to it stops moving on too
+  early.
+- **Progress becomes visible.** Each move from not built to verified to in use is a real step with evidence.
+
+## The status words
+
+Every feature on this site carries a label such as **[AVAILABLE]**, **[REQUIRED]**, **[NOT AVAILABLE]** or
+**[ROADMAP]**, and a "partially" is always followed by exactly which part. A page that says "no real business system
+connected yet" is not exciting. When it changes to "connected, and here is the record", it will mean something.
+
+## Try it
+
+For one week, write next to every feature which of the five meanings of done it has reached, and keep a list of the
+claims you will not make.
+
+**Read more:** [Roadmap](/roadmap), [Limitations](/security/limitations), [Claims and evidence](/evaluation/claims-and-evidence).

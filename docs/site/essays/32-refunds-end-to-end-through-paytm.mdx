@@ -1,0 +1,95 @@
+---
+title: "Refunds end to end through Paytm"
+description: "How a refund an agent proposes travels through Parmana to Paytm, what was run live and what was not, and the double refund we found on the way."
+---
+
+Take a support agent for a small D2C brand in Pune, as an example. A customer's ₹2,400 order arrived damaged, the agent
+reads the ticket and the order, and it wants to refund the customer through Paytm, where the payment was taken. The
+simplest build gives the agent the Paytm merchant key and lets it call the refund API. That is also the build where a
+confused or manipulated agent can refund anything, to anyone, as many times as it likes.
+
+The Paytm connector is my answer to "how should that refund actually flow?" It is also the integration where I learned
+the most from my own mistakes, so this essay covers both.
+
+## The problem: the agent should not hold the merchant key
+
+A refund moves money out of the business. The agent can propose one, but it should not be able to send one. And whatever
+sends it should only send exactly what a person approved: this order, this transaction, this amount, once.
+
+## The idea: three hops, and only one holds the key
+
+The refund path has three separate deployments:
+
+1. **The agent** sends a refund request to Parmana's `POST /execute`, with the order, the Paytm transaction, the amount,
+   and its facts.
+2. **Parmana** decides under the policy `customer-refund`, and if it approves, the Execution Gateway forwards the
+   authorized refund over HTTPS to a separate connector service.
+3. **The connector service** (`parmana-paytm-agent`, its own repository) is the only thing that holds the Paytm merchant
+   key and speaks Paytm's checksum protocol. It verifies Parmana's signature on what it was sent before it calls Paytm.
+
+Parmana itself never holds a Paytm key and never calls Paytm. The gateway authenticates to the connector service with a
+shared secret, but that only proves who is calling. What proves the refund was approved is Parmana's signature, which the
+connector service checks with Parmana's public key.
+
+## How Parmana does it
+
+Under `customer-refund` 1.2.0, in effect in production since 2026-09-28:
+
+- **Every refund needs a signed approval** from a trusted approver, for that order, covering that amount, used once.
+  There is no amount that runs on the agent's word alone. A refund of 0 or less, or above 100000, is refused.
+- **The agent's facts can only refuse.** `refundEligible` and `fraudCheckPassed` are still declared by the caller and
+  nothing checks them. If either is false the refund stops; both being true is not enough to approve it.
+- **The amount is bound.** The amount in the agent's signals must equal the amount in the request, or the request is
+  refused before any rule runs.
+- **Only allowed parameters leave.** The connector accepts the order, the transaction, the amount and two optional
+  fields, a refund reference and a reason. Anything else is refused before any network call.
+- **The answer is checked.** The ids the connector service echoes back must match what was sent, or the response is
+  refused.
+- **Retries keep one refund id.** The Paytm refund id is derived from the order, the transaction and, if given, the
+  refund reference, so a retry sends the same id instead of a new refund.
+
+When nothing approves, nothing is sent. Tests through `POST /execute` show zero calls to the connector service on every
+refusal.
+
+## The double refund we found
+
+On 2026-09-28 a review found a real bug, recorded as G-70. The connector service also had a second endpoint where an agent
+asked it for a refund, and it asked Parmana. When Parmana approved, Parmana released the refund through the path above,
+and then that endpoint called Paytm itself as well, with a different refund id. An approved refund could have been paid
+twice.
+
+Each side had been reviewed alone, and each side was correct alone. The fix, deployed the same day, removed the Paytm
+client from that endpoint entirely: it now returns Paytm's result from Parmana's signed record. Whether any real refund
+was paid twice before then was not checked; that needs Paytm's merchant records.
+
+The same review found G-71: only one refund per Paytm transaction could go through, and the refund reason was accepted
+and silently dropped. Both were fixed and deployed with the optional refund reference and reason fields above.
+
+## What was run live
+
+On 2026-09-21, a live check ran against the production Docker image, a real Postgres, the real AWS KMS signing key and
+the real `parmana-paytm-agent`, with fake Paytm staging credentials. It was about the execution lifecycle, not Paytm,
+so it checked the signed records and the rebuilt record for a released action, not a refund. No money was involved.
+The check passed 37 of 37 scenarios. The end-to-end Paytm flow with a signed approval has not been run live since
+`customer-refund` 1.2.0 took effect.
+
+## What this does not do
+
+- **No approved refund has been observed live with one Paytm call.** The fix for G-70 is covered by tests. The full flow
+  with a signed approval has not been rerun against Paytm since 1.2.0 took effect. A live check with one real ₹1 refund
+  is written down as next work, and needs a paid Paytm order.
+- **No real refund has moved through this path yet.** The live check used fake Paytm credentials.
+- **Eligibility and fraud are still the agent's word.** No system that owns those facts is connected. They can refuse a
+  refund, never approve one.
+- **Paytm's own behaviour was not checked** for a second refund of one transaction, or for its limits on the reason text.
+- **It does not stop a direct call.** Anything that holds the merchant key can call Paytm without Parmana.
+- **One person approves.** In Parmana's own production one approver is trusted, and I hold that key.
+
+## The takeaway
+
+Splitting the refund across three hops, with the key held only at the end, works. But the most serious bug was not in any
+one hop; it was in how two of them were put together. End to end means checking the whole path, and we have not yet seen
+an approved refund go all the way through it.
+
+**Read more:** [End-to-end: Agent to Parmana to Paytm](/guides/end-to-end-paytm-flow),
+[Human approval](/concepts/human-approval).

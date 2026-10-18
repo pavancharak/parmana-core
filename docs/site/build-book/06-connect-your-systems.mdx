@@ -1,0 +1,165 @@
+---
+title: "6. Connect your systems"
+description: "How an approved action reaches a real system: the built in connectors, and the external connector that puts any system behind Parmana with no change to Parmana's code."
+---
+
+Parmana never gives the agent a system's credentials. An approved action is released by the gateway to a
+**connector**, and only the connector touches the system. There are two kinds.
+
+| Kind     | For                                       | Credentials held by                 | Added by                                     |
+| -------- | ----------------------------------------- | ----------------------------------- | -------------------------------------------- |
+| Built in | HubSpot, GitHub, Paytm, Slack             | Parmana's server, one per execution | Code in Parmana, configured by the operator  |
+| External | Any system with an HTTPS endpoint you run | Your endpoint, never Parmana        | Two people, through maker checker, no deploy |
+
+## Built in connectors
+
+Each is registered only when its configuration is present (`packages/api/src/bootstrap/createConnectorRegistry.ts`).
+
+| Capability            | Bound policy          | Configuration                                                       |
+| --------------------- | --------------------- | ------------------------------------------------------------------- |
+| `hubspot:deal-fetch`  | `hubspot-deal-read`   | `HUBSPOT_PRIVATE_APP_TOKEN`                                         |
+| `hubspot:deal-update` | `hubspot-deal-update` | `HUBSPOT_PRIVATE_APP_TOKEN`                                         |
+| `github:pr-fetch`     | `github-pr-read`      | `GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY` |
+| `github:pr-merge`     | `github-pr-approval`  | The same                                                            |
+| `paytm:refund`        | `customer-refund`     | `PAYTM_CONNECTOR_URL`, `PAYTM_CONNECTOR_SHARED_SECRET`              |
+| `slack:post-message`  | `slack-post-message`  | `SLACK_BOT_TOKEN`, `SLACK_ALLOWED_CHANNEL_IDS`                      |
+
+A capability whose connector is not configured is refused with `503 CONNECTOR_NOT_REGISTERED`, before anything is
+sent. Ask the server which policy and version govern a capability with `GET /policies/in-effect?capability=...`.
+
+Adding another built in connector is a change to Parmana's code in several packages (the connector, the gateway
+adapter, the catalog, credentials, signal verification, the policy binding). For a system of your own, use an external
+connector instead.
+
+## External connectors
+
+You run a small HTTPS endpoint in front of your system. Parmana releases every approved request for one capability to
+it as a **signed release**. The endpoint verifies the release with an SDK helper, acts with its own credentials, and
+answers. No shared secret is involved: the signature is the authentication.
+
+### What the endpoint receives
+
+```json
+{
+  "release": {
+    "version": 1,
+    "connectorId": "ext-erp:create-invoice",
+    "audience": "https://erp.example.com/parmana/release",
+    "businessTransactionId": "…",
+    "authorizationId": "…",
+    "capability": "erp:create-invoice",
+    "target": "customer-42",
+    "parameters": { "amount": 1200, "currency": "EUR" },
+    "policy": { "name": "erp-invoice", "version": "1.0.0", "contentHash": "…" },
+    "approvedBy": [
+      {
+        "approverId": "manager-x",
+        "keyId": "manager-x-key-1",
+        "approvalId": "…"
+      }
+    ],
+    "issuedAt": "2026-10-01T10:00:00.000Z",
+    "expiresAt": "2026-10-01T10:01:00.000Z"
+  },
+  "signature": { "algorithm": "ed25519", "keyId": "default", "value": "…" }
+}
+```
+
+`parameters` holds only the names the registration allows. The release expires 60 seconds after it is issued.
+
+### What the endpoint does
+
+The SDK helper does the checks; your code does the action.
+
+<CodeGroup>
+
+```typescript TypeScript
+import { verifyParmanaRelease } from "@parmana/sdk"; // 1.5.0
+
+const check = await verifyParmanaRelease(body, {
+  publicKeys: { default: parmanaPublicKeyPem }, // GET /keys/default
+  audience: "https://erp.example.com/parmana/release", // exactly as registered
+  isAlreadyExecuted: (businessTransactionId) =>
+    store.has(businessTransactionId),
+});
+// check.valid false: answer 401 with check.errors, do nothing.
+// check.alreadyExecuted true: answer with the stored result, do not act again.
+```
+
+```python Python
+from parmana.crypto import verify_parmana_release  # 1.5.0
+
+check = verify_parmana_release(
+    body,
+    public_keys={"default": parmana_public_key_pem},
+    audience="https://erp.example.com/parmana/release",
+    is_already_executed=lambda business_transaction_id: business_transaction_id in store,
+)
+# check.valid False: answer 401 with check.errors, do nothing.
+# check.already_executed True: answer with the stored result, do not act again.
+```
+
+</CodeGroup>
+
+The helper checks, in order: the body's shape, the Ed25519 signature over the canonical release with the key named in
+`signature.keyId`, that `audience` is this endpoint, and that the release has not expired (with 30 seconds of clock
+skew). The complete, runnable endpoints are `typescript/examples/07-external-connector-endpoint.ts` and
+`python/examples/13_external_connector_endpoint.py`; replace their `act` function with the call into your system.
+
+Then the endpoint:
+
+1. Acts only on `capability`, `target` and `parameters` from the verified release.
+2. Records its answer by `businessTransactionId` in durable storage. Parmana may send the same release again after a
+   timeout; the endpoint answers with its first result and does not act twice.
+3. Answers `200` with `{ businessTransactionId, capability, success, result, executedAt }`, echoing the first two
+   from the release. `result` is an object of at most 16 KB.
+
+### Register it: two people, no deploy
+
+| Step | Who            | What                                                                                                                                                                                            |
+| ---- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | Author         | Writes the capability's policy, with an approval signal ([Chapter 4](/build-book/04-policies)).                                                                                                 |
+| 2    | Maker, checker | Propose and approve the policy.                                                                                                                                                                 |
+| 3    | You            | Deploy the endpoint over HTTPS. `POST` with body `{}` must answer `401`.                                                                                                                        |
+| 4    | Maker          | `POST /external-connectors/changes` with `action: "register"`, `capability`, `endpointUrl`, `policy`, `allowedParameters`, optional `timeoutMs` (1000 to 30000, default 10000), and a `reason`. |
+| 5    | Checker        | Reviews and approves with a step up authorization: `POST /external-connectors/changes/<changeId>/approve`.                                                                                      |
+| 6    | Operator       | Adds the capability to the agent key's `allowedCapabilities`.                                                                                                                                   |
+| 7    | Anyone         | `GET /policies/in-effect?capability=...` names the policy and its approval signal.                                                                                                              |
+
+From then on the agent integrates exactly as in [Chapter 3](/build-book/03-connect-an-agent); nothing differs for an
+external connector. The literal procedure, with what to expect and what to do at each step, is
+[Connect any external system](/guides/connect-any-external-system).
+
+### Rules Parmana enforces
+
+| Rule                                                                                                               | Checked                                       |
+| ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------- |
+| The capability is `namespace:verb` and not in a built in namespace (`paytm`, `hubspot`, `github`, `slack`, `test`) | At proposal                                   |
+| The endpoint is `https`, names a host (no IP address, no `localhost`), and resolves only to public addresses       | At proposal, at approval and at every release |
+| Parmana connects to the address it checked and follows no redirect                                                 | At every release                              |
+| Only the allowed parameter names are forwarded; a request naming another is not sent                               | At every release                              |
+| One active registration per capability; a revoke stops releases at once                                            | Always                                        |
+| Nothing is deleted; a revoked registration stays listed                                                            | Always                                        |
+
+### When it goes wrong
+
+| Answer                                  | Meaning                                                                                                                                                                                                                                       |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `400 EXTERNAL_ENDPOINT_ADDRESS_REFUSED` | At proposal or approval: the host is not `https`, is an IP address or `localhost`, or resolves to an address that is not public.                                                                                                              |
+| `409 CONFLICT`                          | The capability already has an active registration or a pending change.                                                                                                                                                                        |
+| `503 CONNECTOR_NOT_REGISTERED`          | No active registration. Nothing was sent.                                                                                                                                                                                                     |
+| `502 EXECUTION_OUTCOME_UNKNOWN`         | The release failed and the endpoint **may have acted**: it answered something other than `200`, timed out, or answered without the echoed fields. Never resend as a new transaction ([Chapter 9](/build-book/09-errors-and-troubleshooting)). |
+
+### Status
+
+Registration through maker checker, and releasing approved requests to the registered endpoint, are live in
+production, checked end to end on 2026-10-01 (`docs/CLAIMS.md` 2.50, `examples/live-checks/external-connector`). An
+approved request took 24 to 32 seconds there (G-84): give agents a timeout of at least 120 seconds. `verifyParmanaRelease` and `verify_parmana_release` are in SDK
+1.5.0 and later. What the endpoint answers is its claim, not proof that it acted
+(`docs/VERIFICATION-GAPS.md` G-82).
+
+## See it run
+
+Tutorial 123 ([Chapter 2](/build-book/02-your-first-governed-action)) registers an ERP endpoint through maker checker,
+releases to the TypeScript example endpoint, answers a retry once, refuses a release made for another endpoint, and
+stops at a revoke. The design and its security reasoning are in `docs/adr/ADR-0013-Generic-External-Connector.md`.

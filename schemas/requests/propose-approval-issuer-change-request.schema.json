@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/requests/propose-approval-issuer-change-request.schema.json",
+  "title": "Propose Approver Change Request",
+  "description": "Request body for POST /approval-issuers/changes.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["action", "approverId", "keyId", "reason"],
+  "properties": {
+    "action": {
+      "type": "string",
+      "enum": ["add", "revoke"]
+    },
+    "approverId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]{1,128}$"
+    },
+    "keyId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]{1,128}$"
+    },
+    "publicKeyPem": {
+      "type": "string",
+      "description": "Required for add, not allowed for revoke. The .public.pem file scripts/generate-approver-key.ts writes."
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    }
+  },
+  "examples": [
+    {
+      "action": "add",
+      "approverId": "manager-priya",
+      "keyId": "manager-priya-key-1",
+      "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=\n-----END PUBLIC KEY-----\n",
+      "reason": "Priya approves refunds for the West region from October."
+    },
+    {
+      "action": "revoke",
+      "approverId": "manager-priya",
+      "keyId": "manager-priya-key-1",
+      "reason": "Priya moved to another team."
+    }
+  ]
+}

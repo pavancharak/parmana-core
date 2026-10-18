@@ -1,0 +1,74 @@
+[
+  {
+    "connector": "slack:post-message",
+    "case": "control: valid proof",
+    "rejected": false,
+    "message": "",
+    "callsDelta": 1,
+    "expected": "released, 1 call",
+    "verdict": "PASS"
+  },
+  {
+    "connector": "slack:post-message",
+    "case": "no proof",
+    "rejected": true,
+    "message": "Execution Gateway rejected request: no authorization was presented.",
+    "callsDelta": 0,
+    "expected": "rejected, 0 calls",
+    "verdict": "PASS"
+  },
+  {
+    "connector": "slack:post-message",
+    "case": "forged signature",
+    "rejected": true,
+    "message": "Execution Gateway rejected request: failed checks [signatureVerified, businessTransactionHashMatches].",
+    "callsDelta": 0,
+    "expected": "rejected, 0 calls",
+    "verdict": "PASS"
+  },
+  {
+    "connector": "slack:post-message",
+    "case": "changed channel after approval",
+    "rejected": true,
+    "message": "Execution Gateway rejected request: failed checks [businessTransactionHashMatches]. businessTransactionHash mismatch: expected cccefffdd7bbbfd132026aaaadb2c463a",
+    "callsDelta": 0,
+    "expected": "rejected, 0 calls",
+    "verdict": "PASS"
+  },
+  {
+    "connector": "slack:post-message",
+    "case": "single authorization revoked",
+    "rejected": true,
+    "message": "Execution Gateway rejected request: failed checks [authorizationNotRevoked].",
+    "callsDelta": 0,
+    "expected": "rejected, 0 calls",
+    "verdict": "PASS"
+  },
+  {
+    "connector": "slack:post-message",
+    "case": "expired proof",
+    "rejected": true,
+    "message": "Execution Gateway rejected request: failed checks [notExpired, businessTransactionHashMatches].",
+    "callsDelta": 0,
+    "expected": "rejected, 0 calls",
+    "verdict": "PASS"
+  },
+  {
+    "connector": "slack:post-message",
+    "case": "replay step 1: first use",
+    "rejected": false,
+    "message": "",
+    "callsDelta": 1,
+    "expected": "released, 1 call",
+    "verdict": "PASS"
+  },
+  {
+    "connector": "slack:post-message",
+    "case": "replay step 2: same proof again",
+    "rejected": true,
+    "message": "Execution Gateway rejected request for Business Transaction '5f18d001-3bf0-4011-8b8f-7b9942524d38': authorization nonce has already been consumed (replay of an ",
+    "callsDelta": 0,
+    "expected": "rejected, 0 calls",
+    "verdict": "PASS"
+  }
+]

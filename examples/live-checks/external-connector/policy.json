@@ -1,0 +1,30 @@
+{
+  "policyId": "livecheck-receipt",
+  "policyVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "description": "Live check of an external connector (ADR-0013 step 6). Releases livecheck:receipt to the check endpoint only with a signed approval from a trusted person for that target. The endpoint acts on nothing; it answers with a receipt.",
+  "signalsSchema": {
+    "receiptApproved": "boolean"
+  },
+  "approvalSignals": {
+    "receiptApproved": { "resourceId": "target" }
+  },
+  "rules": [
+    {
+      "id": "approve-with-approval",
+      "condition": { "fact": "receiptApproved", "operator": "is_true" },
+      "outcome": {
+        "action": "approve",
+        "reason": "Receipt approved by a trusted person for this target."
+      }
+    },
+    {
+      "id": "reject-approval-required",
+      "condition": { "always": true },
+      "outcome": {
+        "action": "reject",
+        "reason": "A receipt needs a signed approval for this target in signals.approvalArtifact, with receiptApproved true."
+      }
+    }
+  ]
+}

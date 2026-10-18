@@ -1,0 +1,35 @@
+---
+title: "Packages"
+description: "Every package in packages/*, its real purpose, and its evidence-backed status."
+---
+
+Every package under `packages/`. To run one package's tests: `npx vitest run packages/<name>`.
+`npm test` from the repository root runs every package.
+
+| Package                                                                       | Purpose                                                                                                                                                    | Status                                 |
+| ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| `shared`                                                                      | Domain types, configuration, canonical JSON types, errors                                                                                                  | [AVAILABLE]                            |
+| `crypto`                                                                      | Signing, hashing, key providers (local files, AWS KMS), canonical serialization, offline verification                                                      | [AVAILABLE]                            |
+| `policy`                                                                      | Deterministic, first match rule evaluation, policy validation, `SignalIntentBinder` (see [Policies and the decision](/concepts/policies-and-the-decision)) | [AVAILABLE]                            |
+| `approval`                                                                    | Verifies signed human approvals against the trusted approver list                                                                                          | [AVAILABLE]                            |
+| `capability-registry`                                                         | Binds each capability to the policy that governs it                                                                                                        | [AVAILABLE]                            |
+| `runtime`                                                                     | Orchestrates policy, decision, authorization, execution and the signed trust record                                                                        | [AVAILABLE]                            |
+| `api`                                                                         | The Express HTTP server, the only long running process                                                                                                     | [AVAILABLE]                            |
+| `envelope-verifier`                                                           | Verifies a `SignedExecutionAuthorization`: signature, expiry, TTL, nonce                                                                                   | [AVAILABLE]                            |
+| `execution-gateway`                                                           | Recomputes the content hash, re-checks policy, approvals and signals, and releases to a connector                                                          | [AVAILABLE]                            |
+| `execution-control`                                                           | Gateway authenticated, session scoped credential isolation for connectors                                                                                  | [AVAILABLE]                            |
+| `execution-system`                                                            | The `ExecutionSystem` interface, plus `DefaultExecutionSystem` (a no-op placeholder used by tutorials, not by the server)                                  | [AVAILABLE]                            |
+| `connector-sdk`                                                               | Connector authoring contracts and reference implementations (published to npm)                                                                             | [AVAILABLE]                            |
+| `connector-hubspot`, `connector-github`, `connector-slack`, `connector-paytm` | The built in connectors                                                                                                                                    | [AVAILABLE]                            |
+| `storage`                                                                     | Append-only persistence: `memory`, and Postgres under `supabase` or `postgres`; `sqlite` is declared and throws                                            | [AVAILABLE] (`sqlite` not implemented) |
+| `replay`                                                                      | `ReplayEngine` re-evaluates a recorded policy decision. Not wired into `runtime` or `api`; `POST /replay` is a signature recheck                           | [PARTIAL]                              |
+| `governance-ui`                                                               | Internal, read only UI to propose and review policy changes                                                                                                | [AVAILABLE]                            |
+
+There is no `receipt` package: receipts are built by `crypto`'s `ReceiptCrypto`.
+
+## SDKs and app
+
+| Package       | Purpose        | Status      | Evidence                                                                                                                             |
+| ------------- | -------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `python/`     | Python SDK     | [AVAILABLE] | Structured HTTP exceptions, generated + drift-guarded models. See [Python SDK](/sdks/python) for the current test count.             |
+| `typescript/` | TypeScript SDK | [AVAILABLE] | Real client/model code with a typed error thrown per HTTP status. See [TypeScript SDK](/sdks/typescript) for the current test count. |

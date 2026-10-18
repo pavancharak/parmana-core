@@ -1,0 +1,66 @@
+---
+sidebar_label: release
+title: parmana.crypto.release
+---
+
+Verifies a signed release from Parmana at an external connector
+endpoint (ADR-0013).
+
+When an operator registers an external connector, Parmana releases every
+approved request for that capability to the endpoint as
+`\{"release": ..., "signature": ...\}`. Before acting, the endpoint calls
+`verify_parmana_release` with the body, Parmana's public key (get it
+once with `client.public_key("default")`), its own URL as registered,
+and a callback that says whether it already executed a
+businessTransactionId.
+
+TypeScript counterpart: typescript/src/crypto/release.ts,
+`verifyParmanaRelease`, with the same checks in the same order and the
+same error texts. No network call, no disk read.
+
+#### DEFAULT_RELEASE_CLOCK_SKEW_SECONDS
+
+How far the endpoint's clock may be behind Parmana's before an expired
+release is refused, in seconds.
+
+## ParmanaReleaseVerification Objects
+
+```python
+@dataclass(frozen=True)
+class ParmanaReleaseVerification()
+```
+
+`valid` is True only when every check passed. Then `release` is
+what Parmana approved (act on capability, target and parameters
+only), and `already_executed` True means: answer with the result
+you stored the first time, and do not act again. Otherwise
+`errors` lists every failed check, in plain words, in the order
+checked: shape, signature, audience, expiry.
+
+#### verify_parmana_release
+
+```python
+def verify_parmana_release(
+    body: Any,
+    *,
+    public_keys: dict[str, str],
+    audience: str,
+    is_already_executed: Callable[[str], bool],
+    now: datetime | None = None,
+    clock_skew_seconds: float = DEFAULT_RELEASE_CLOCK_SKEW_SECONDS
+) -> ParmanaReleaseVerification
+```
+
+Checks, in order: the body's shape, the signature over the canonical
+JSON of `release` with the key named in `signature.keyId`, that
+`release.audience` equals `audience` (this endpoint's URL exactly
+as Parmana stored it at registration), and that `release.expiresAt`
+has not passed, allowing `clock_skew_seconds`. Only then does it
+call `is_already_executed(businessTransactionId)`.
+
+Keep the executed businessTransactionIds durably: Parmana may send the
+same release again after a timeout, and the endpoint must answer with
+its first result, not act twice.
+
+`public_keys` maps keyId to PEM public key text. Never raises for a
+bad body; returns `valid=False` with the errors.

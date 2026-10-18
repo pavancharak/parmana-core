@@ -1,0 +1,108 @@
+---
+title: "Authorize and Execute an Action End to End"
+description: "See the signed authorization envelope Quickstart hides behind the REST API, then run the same request through the full gateway-wired server."
+---
+
+<Info>
+  **[AVAILABLE]**, every command below runs against the repo's actual code.
+</Info>
+
+## Goal
+
+See every stage of [how Parmana thinks](/how-parmana-thinks) fire for one real transaction:
+policy decision, the signed authorization envelope itself (not just its effects), gateway
+re-verification, and the resulting trust record.
+
+## Prerequisites
+
+- Completed [Quickstart](/quickstart) once, or at least read it, this guide assumes the
+  server and keys are already set up the same way.
+- Read [Execution authorization](/concepts/execution-authorization), this guide shows the
+  envelope that page describes.
+
+## Steps
+
+### 1. See the authorization envelope directly
+
+Over HTTP, the envelope comes back inside the Trust Record, in its `authorization` field,
+after [the gateway](/concepts/the-gateway) has verified and consumed it. To see it produced
+step by step, use the Runtime library directly, which is what
+`examples/tutorials/11-execution-authorization/run.ts` does: build a `Runtime` with a
+`FilePolicyRepository`, execute a transaction, and print `result.context.authorization`.
+
+```bash
+node_modules/.bin/tsx examples/tutorials/11-execution-authorization/run.ts
+```
+
+Real output (run again on 2026-10-02):
+
+```
+Authorization Summary
+Payload Version  : 1
+Authorization ID : 30c915ca-4516-459f-aae3-b501b40cd2f1
+Decision ID      : 8e04698b-d56c-4974-a8be-57903907058f
+Transaction ID   : txn-000001
+Policy           : vendor-payment@2.1.0
+Algorithm        : ed25519
+Key ID           : default
+Authorized At    : 2026-10-02T10:35:53.219Z
+Expires At       : 2026-10-02T10:37:53.219Z
+Nonce            : 888534f5-6bb0-43b4-b32c-270f26c58bf1
+Content Hash     : 69b1858cd12ceeee715c5d90e22e68e1f1466a7047c3c7fdbb8056a434b5ec93
+```
+
+`Content Hash` is `businessTransactionHash`, the field [The gateway](/concepts/the-gateway)
+independently recomputes and compares before releasing execution. `Expires At` is two
+minutes after `Authorized At`, the envelope's TTL.
+
+### 2. Run the same shape of request through the full server
+
+This library call skips the gateway and connector entirely, it's the Runtime in isolation.
+To see the _whole_ pipeline, authorization through gateway verification through credential
+issuance through a connector, run [Quickstart](/quickstart) steps 3 and 5 if you haven't:
+start the server, then execute a transaction over HTTP.
+
+```bash
+PARMANA_STORAGE=memory PARMANA_POLICY_DIR=/absolute/path/to/policies NODE_ENV=test npm run dev
+```
+
+```python
+trust_record = client.execution.execute(transaction)
+```
+
+## Verify
+
+Compare what each path returns. The library call above hands you the
+`SignedExecutionAuthorization` on its own. The HTTP call hands you the final
+`ExecutionTrustRecord`, which carries the same envelope in `authorization` (with its
+`payload`: `authorizationId`, `nonce`, `policyContentHash`, `signalsHash`, `expiresAt`,
+`businessTransactionHash` and the rest) and covers it with the record's signature. Both paths
+produce a record whose `executions[0].decision.outcome` is `"APPROVED"` for the same input
+signals and policy.
+
+## Troubleshoot
+
+- **`Execution Authorization was not generated` thrown by the tutorial.** The transaction's
+  Decision came back `REJECTED`, an authorization is signed only after approval, see [Write
+  your first policy](/guides/write-your-first-policy) for what a rejected decision actually
+  does (it throws, it doesn't return a `REJECTED` object).
+- **The HTTP path's trust record has no `authorization` field.** Records created before the
+  field was added have none; every new approved record has it.
+- **`Content Hash` differs between two runs with identical-looking transaction JSON.** Check
+  timestamps and generated IDs (`businessTransactionId`, `intentId`, etc.), the hash covers
+  the full executable content, any field that differs between runs changes it.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Detect tampering" icon="bug" href="/guides/detect-tampering">
+    Mutate this same content and watch the hash comparison reject it.
+  </Card>
+  <Card
+    title="Verify a trust record independently"
+    icon="check-double"
+    href="/guides/verify-independently"
+  >
+    Check the resulting trust record's signature without Parmana running at all.
+  </Card>
+</CardGroup>

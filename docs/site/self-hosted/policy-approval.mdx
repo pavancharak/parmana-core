@@ -1,0 +1,160 @@
+---
+title: "Approve a policy"
+description: "Make a policy take effect on a self hosted deployment: one person proposes it, a different person approves it with a signed step up authorization."
+---
+
+In production a policy decides nothing until it has been approved through policy governance. A request under a policy that was never approved is refused with `403 POLICY_DENIED` and a reason that ends in "has no PolicyChangeApprovalRecord -- it has never completed the Policy Governance approval flow."
+
+This applies to the policies shipped with Parmana too. The `seed` service copies them into your database but does not approve them, because an approval is a decision your own people make.
+
+Approval takes two different people:
+
+| Role         | Needs                                                                                                                                                                                                               | Does                                          |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| **Proposer** | An API key with `--credential-holder-type USER`.                                                                                                                                                                    | Proposes the policy content.                  |
+| **Approver** | An API key with `--credential-holder-type USER` and a step up public key. A step up private key on their own machine. Node.js 24 or newer and a clone of the repository with `npm install`. OpenSSL 1.1.1 or newer. | Signs and sends the approval, or a rejection. |
+
+The server refuses an approval from the proposer, so one person can never make a policy take effect alone. How governance works in general: [Policy governance](/guides/policy-governance-maker-checker).
+
+## 1. Each approver makes a step up key
+
+On the approver's own machine:
+
+```bash
+mkdir -p approver
+openssl genpkey -algorithm ed25519 -out approver/step-up.private.pem
+openssl pkey -in approver/step-up.private.pem -pubout -out approver/step-up.public.pem
+```
+
+The approver keeps `step-up.private.pem` and sends only `step-up.public.pem` to the operator. Anyone holding the private key can approve policies as that person.
+
+## 2. The operator adds the proposer and the approver
+
+On the machine that runs Parmana, in the repository root, with the approver's public key saved as `bob-step-up.public.pem`:
+
+```bash
+docker compose run --rm --no-deps --entrypoint node setup \
+  /app/docker/local/api-keys.mjs add --caller-id alice --credential-holder-type USER
+
+docker compose run --rm -T --no-deps --entrypoint node setup \
+  /app/docker/local/api-keys.mjs add --caller-id bob --credential-holder-type USER \
+  --step-up-public-key-stdin < bob-step-up.public.pem
+
+docker compose restart api
+```
+
+Each `add` prints the new key once. Give each person their own. Details: [Manage API keys](/self-hosted/api-keys).
+
+## 3. The proposer proposes the policy
+
+The request body holds the full policy content and a reason:
+
+```json
+{
+  "reason": "Why this policy should take effect.",
+  "proposedContent": {
+    "policyId": "customer-refund",
+    "policyVersion": "1.2.0",
+    "...": "the whole policy.json"
+  }
+}
+```
+
+For a policy that ships with Parmana, build the body from its file:
+
+```bash
+printf '{"reason":"Adopt the shipped customer-refund policy.","proposedContent":%s}' \
+  "$(cat policies/customer-refund/1.2.0/policy.json)" > proposal.json
+```
+
+Send it. The name and version in the URL must match `policyId` and `policyVersion` in the content:
+
+```bash
+curl -s -X POST http://127.0.0.1:3000/policies/customer-refund/1.2.0/pending-changes \
+  -H "Authorization: Bearer $ALICE_KEY" -H "Content-Type: application/json" \
+  --data @proposal.json > proposed.json
+
+CHANGE_ID=$(sed -n 's/.*"pendingPolicyChangeId":"\([^"]*\)".*/\1/p' proposed.json)
+echo "$CHANGE_ID"
+```
+
+**Check:** it prints the change ID. The response has status `201` and `"status":"PENDING_APPROVAL"`.
+
+Only one proposal per policy name and version can be open at a time. A second one is refused with `CONFLICT` until the first is approved or rejected.
+
+## 4. The approver reviews the change
+
+The approver lists open changes. The response is `{"changes":[...]}`. Each entry holds `pendingPolicyChangeId`, `proposedBy`, `reason`, the proposed content and, under `diff`, the content in effect now next to the proposed one:
+
+```bash
+curl -s "http://127.0.0.1:3000/policies/pending-changes?status=PENDING_APPROVAL" \
+  -H "Authorization: Bearer $BOB_KEY"
+```
+
+`status` may be `PENDING_APPROVAL`, `APPROVED` or `REJECTED`, or left out to list all. Only verified humans may list; any other key gets `403 NON_HUMAN_CALLER_DENIED`.
+
+## 5. The approver signs and sends the decision
+
+**To approve**, on the approver's machine, from the repository clone:
+
+```bash
+npx tsx scripts/sign-policy-change-step-up.ts \
+  --private-key-file approver/step-up.private.pem --key-id bob \
+  --pending-policy-change-id "$CHANGE_ID" --action approve > signed.txt
+
+STEP_UP=$(grep '^{' signed.txt)
+
+curl -s -X POST http://127.0.0.1:3000/policies/pending-changes/$CHANGE_ID/approve \
+  -H "Authorization: Bearer $BOB_KEY" -H "Content-Type: application/json" \
+  -d "{\"stepUpAuthorization\":$STEP_UP}"
+```
+
+**Check:** status `200`, and the body contains `"status":"APPROVED"` and `"resolvedBy":"bob"`. From now on requests under this policy are decided by its rules.
+
+**To reject**, sign with `--action reject` and send a reason:
+
+```bash
+npx tsx scripts/sign-policy-change-step-up.ts \
+  --private-key-file approver/step-up.private.pem --key-id bob \
+  --pending-policy-change-id "$CHANGE_ID" --action reject > signed.txt
+
+STEP_UP=$(grep '^{' signed.txt)
+
+curl -s -X POST http://127.0.0.1:3000/policies/pending-changes/$CHANGE_ID/reject \
+  -H "Authorization: Bearer $BOB_KEY" -H "Content-Type: application/json" \
+  -d "{\"rejectionReason\":\"Why it is rejected.\",\"stepUpAuthorization\":$STEP_UP}"
+```
+
+**Check:** the body contains `"status":"REJECTED"`.
+
+A signed step up authorization:
+
+- is valid for 120 seconds (change it with `--ttl-seconds`);
+- is valid for one change ID and one action only;
+- can be used once.
+
+## Or approve from code, with an SDK
+
+SDK 1.3.0 can do steps 3 to 5 from application code, and signs on the approver's machine without a clone of the repository: `signPolicyChangeStepUp()` and `approvePolicyChange()` in TypeScript, `parmana.crypto.sign_policy_change_step_up()` and `approve_policy_change()` in Python. Examples are on the [TypeScript SDK](/sdks/typescript#approve-a-policy-change) and [Python SDK](/sdks/python#approve-a-policy-change) pages.
+
+<Info>
+  SDK 1.3.0 is published on npm and PyPI, so an approver can `npm install
+  @parmana/sdk` or `pip install "parmana[verify]"` and sign without the
+  repository.
+</Info>
+
+A signature made by either SDK is accepted by the server exactly as one made by the script: this is tested for both SDKs against the server's own verifier, and was run against a live self hosted deployment on 2026-09-25.
+
+## Errors
+
+| Status | Code or message                                                                   | Cause and fix                                                                                                                                                                |
+| ------ | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `403`  | `SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE`                                            | The proposer tried to approve or reject. A different person must.                                                                                                            |
+| `403`  | `STEP_UP_AUTHORIZATION_INVALID`                                                   | The signature is missing, expired, already used, for another change or action, or not made with the key registered for this API key. Sign again and send within 120 seconds. |
+| `403`  | `NON_HUMAN_CALLER_DENIED`                                                         | The API key was not added with `--credential-holder-type USER`.                                                                                                              |
+| `409`  | `CONFLICT`                                                                        | An open proposal already exists for this policy version. Approve or reject it first.                                                                                         |
+| `400`  | `rejectionReason is required.`                                                    | A rejection needs a reason.                                                                                                                                                  |
+| `400`  | `reason is required.`                                                             | A proposal needs a reason.                                                                                                                                                   |
+| `400`  | `proposedContent.policyId ('...') must equal the policy name in the URL ('...').` | The URL and the content name different policies.                                                                                                                             |
+
+The full list of codes is in the [error catalog](/api-reference/error-catalog).

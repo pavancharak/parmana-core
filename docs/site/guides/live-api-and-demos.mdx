@@ -1,0 +1,253 @@
+---
+title: "Live API and Demos"
+description: "Call the real, deployed Parmana API directly: authentication, the request shape, every deployed policy, how to author and deploy a new one, and independent offline verification."
+---
+
+<Info>
+  Production base URL: `https://parmana-api-real.vercel.app`. Checked against
+  the code and the deployment on 2026-10-02.
+</Info>
+
+<Tip>
+  **No key for production? Use the public sandbox.** This page is about the
+  production deployment, which needs a key issued by its operator. To call a
+  live Parmana with no key of your own, use the sandbox at
+  `https://parmana-sandbox.vercel.app` with the published demo key: the same
+  code, its own database and keys, one action that acts on nothing. See
+  [Playground](/playground).
+</Tip>
+
+## Goal
+
+Call the real, running production deployment directly, no local setup, no mocked
+responses. It runs the same `@parmana/api` code as the sandbox, with real connectors and real
+credentials, so it is open only to callers its operator has issued a key.
+
+## What this deployment is, and isn't
+
+**Is:** a real authorization engine. Submit a Business Transaction, it evaluates the named
+policy against your declared signals, produces a real, deterministic, Ed25519-signed
+decision (approve/reject), and persists it durably. Rejections complete end to end,
+signed, durable, retrievable. Genuinely useful for demoing policy authoring, signal
+binding, guardrails correctly declining a request, cryptographic proof of a decision,
+independent offline verification, and audit trails.
+
+`paytm:refund` is a real, wired connector on this deployment:
+`PAYTM_CONNECTOR_URL`/`PAYTM_CONNECTOR_SHARED_SECRET` point at a real, separately deployed
+`parmana-paytm-agent` service, which itself calls Paytm's staging API. An approved
+`paytm:refund` request reaches Paytm's real staging API and returns a real result, with a
+full cross-service audit trail correlated by `businessTransactionId`. Full runbook:
+[End to end: agent to Parmana to Paytm](/guides/end-to-end-paytm-flow).
+
+**Isn't (HubSpot, GitHub, Slack, as last checked by the operator on 2026-09-30):** no HubSpot
+token, GitHub App credentials or Slack bot token is configured, and it isn't running in test
+mode either. An approved request for one of these answers `503 CONNECTOR_NOT_REGISTERED`, which
+is how to check it today. This mirrors a real, documented
+finding in this codebase (see [Limitations](/security/limitations)
+and the `vendor-payment` policy's own history) that a capability should not be wired to a
+connector until its signals are independently verified, not merely caller-declared.
+
+Concretely: an **approved** request for `hubspot:deal-update`, `github:pr-merge`, `slack:post-message`
+and the other HubSpot and GitHub actions is refused with a `503`
+(code `CONNECTOR_NOT_REGISTERED`) before release, and nothing runs, since their
+credentials aren't configured on this deployment. A capability registered as an [external
+connector](/guides/connect-any-external-system) is released to its own endpoint. A **denied** decision never reaches that
+stage (policy rejection happens before dispatch), so it always completes cleanly regardless
+of capability. Plan demos around that: "the system correctly declines" is a complete, real
+demo for any capability; "money/data actually moves" is real and demonstrable specifically
+for `paytm:refund` as of this correction, not yet for HubSpot/GitHub without adding real
+credentials.
+
+## Authentication
+
+Bearer token in the `Authorization` header. Production has **no public or demo key**: every
+key was rebuilt from scratch on 2026-09-27 and again on 2026-09-30, and the operator issues one
+per caller, scoped to the capabilities it needs (for example `paytm-refund-agent`, allowed only
+`paytm:refund`). To try requests without a key of your own, use the [sandbox](/playground).
+
+Raw key values are shown once in a terminal and never committed to the repo; only their
+hashes live in the deployment's environment configuration. To mint a key for an agent, scoped to
+its capabilities:
+
+```bash
+npx tsx scripts/generate-api-key.ts \
+  --caller-id my-agent \
+  --allowed-capabilities "paytm:refund" \
+  --credential-holder-type SERVICE
+```
+
+This prints the raw key once and a config entry to add to the deployment's caller key list,
+then requires a redeploy to take effect. Never grant `"*"` to an agent. See
+[Authentication](/api-reference/authentication) for the full caller auth model, and
+[Credentials: maker, checker and approver](/guides/credentials-maker-checker-approver) for the
+exact commands.
+
+**Principal scoping is a separate check from capability scoping**: a key with no explicit
+principal grant may only assert `authority.principalId` equal to its own caller id.
+Simplest path: set `authority.principalId` to your own caller id.
+
+## The shape of a request
+
+```json
+{
+  "businessTransactionId": "<a real UUID v4>",
+  "metadata": { "businessTransactionId": "<same UUID>" },
+  "authority": {
+    "authorityId": "authority-demo",
+    "authorityType": "SERVICE",
+    "principalId": "my-agent",
+    "issuedAt": "2026-01-01T00:00:00Z"
+  },
+  "authorization": {
+    "authorizationId": "auth-demo",
+    "authorityId": "authority-demo",
+    "purpose": "human-readable reason",
+    "issuedAt": "2026-01-01T00:00:00Z"
+  },
+  "intent": {
+    "intentId": "intent-demo",
+    "authorizationId": "auth-demo",
+    "action": "paytm:refund",
+    "target": "paytm://orders/order-123",
+    "parameters": { "orderId": "order-123", "amount": 50 },
+    "createdAt": "2026-01-01T00:00:00Z"
+  },
+  "policy": {
+    "name": "customer-refund",
+    "version": "1.2.0",
+    "schemaVersion": "1.0.0"
+  },
+  "signals": {
+    "refundEligible": true,
+    "managerApproved": true,
+    "fraudCheckPassed": true,
+    "refundAmount": 50,
+    "approvalArtifact": {
+      "payload": { "...": "..." },
+      "signature": { "...": "..." }
+    }
+  },
+  "status": "RECEIVED",
+  "createdAt": "2026-01-01T00:00:00Z"
+}
+```
+
+Hard requirements, all fail-closed with a clear `400`/`403` if wrong:
+
+- **Every request needs a signed human approval** in `signals.approvalArtifact`, for this
+  action and resource (and amount, where the policy names one), with the policy's approval
+  signal set `true`. `managerApproved: true` without it is refused. See
+  [Human approval](/concepts/human-approval).
+- `businessTransactionId` **must be a real UUID**, not a slug.
+- `authority.authorityType` must be one of `USER`, `ROLE`, `SERVICE`, `ORGANIZATION`. An
+  autonomous agent maps to `SERVICE` (`"AGENT"` is not a valid value, a real mistake made
+  and caught while building this deployment).
+- `policy.name`/`policy.version` must match a real, deployed policy, the caller names the
+  policy explicitly, it is not inferred from `intent.action`.
+- Every fact a policy's rules reference must appear in `signals`. A fact declared as
+  `boundSignals` is additionally cross-checked against the real `intent` field it's bound
+  to, or the whole request is rejected before Policy Engine ever runs.
+
+## Available policies
+
+No AI agent action is authorized without a signed human approval, reads included. Every current
+policy needs one; the column on the right names the signal and what the approval must cover.
+Older versions that approved without a person (such as `vendor-payment@2.0.0` or
+`github-pr-read@1.0.0`) stay in the repository as history and are refused when they load. See
+[Human approval](/concepts/human-approval).
+
+| Policy                        | What it authorizes                                       | Signed approval needed                                   |
+| ----------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| `access-control@1.1.0`        | Access via auth, MFA, device trust and session risk      | `humanApproved`, for `target`                            |
+| `agent-vendor-payment@1.1.0`  | An autonomous agent paying a vendor, within limits       | `humanApproved`, for `target`, up to `parameters.amount` |
+| `api-key-issuance@1.1.0`      | Issuing a new API key                                    | `humanApproved`, for `target`                            |
+| `connector-capability@1.1.0`  | Capability based connector authorization (reference)     | `humanApproved`, for `target`                            |
+| `customer-refund@1.2.0`       | Customer refunds (`paytm:refund`)                        | `managerApproved`, for the order, up to the amount       |
+| `database-change@3.1.0`       | Production DB changes                                    | `humanApproved`, for `target`                            |
+| `expense-reimbursement@1.1.0` | Employee expense reimbursement, the worked example below | `humanApproved`, for `target`, up to `parameters.amount` |
+| `github-pr-approval@1.1.0`    | A pull request merge (`github:pr-merge`)                 | `mergeApproved`, for the pull request                    |
+| `github-pr-read@1.1.0`        | Reading a pull request's state (`github:pr-fetch`)       | `readApproved`, for the pull request                     |
+| `hubspot-deal-read@1.0.0`     | Reading a HubSpot deal (`hubspot:deal-fetch`)            | `readApproved`, for the deal                             |
+| `hubspot-deal-update@1.1.0`   | HubSpot deal stage and amount updates                    | `dealUpdateApproved`, for the deal                       |
+| `llm-tool-call@1.1.0`         | A tool call an AI makes                                  | `humanApproval`, for the tool                            |
+| `production-deployment@1.1.0` | Production deployments                                   | `humanApproved`, for `target`                            |
+| `rag-document-access@1.1.0`   | Enterprise document retrieval                            | `humanApproved`, for `target`                            |
+| `slack-post-message@1.1.0`    | Posting a Slack message (`slack:post-message`)           | `postApproved`, for the channel                          |
+| `vendor-payment@2.1.0`        | Vendor payments                                          | `humanApproved`, for `target`, up to `parameters.amount` |
+
+Full signal schemas for every policy: each policy file under `policies/<name>/<version>/policy.json` (`signalsSchema`).
+
+## Writing a new policy
+
+A policy is one JSON file: `policies/<policyId>/<version>/policy.json`. Four condition
+shapes (leaf comparison, `all`, `any`, `always`), a fixed operator set (`eq`, `neq`, `gt`,
+`gte`, `lt`, `lte`, `between`, `in`, `not_in`, `contains`, `not_contains`, `contains_all`,
+`contains_any`, `starts_with`, `ends_with`, `matches`, `exists`, `not_exists`, `is_true`,
+`is_false`, `is_null`, `is_not_null`, `length_eq`, `length_gt`, `length_gte`, `length_lt`,
+`length_lte`, `type_is`), and one rule that's easy to miss: **every fact your rules
+reference must appear in either `boundSignals` or `unboundSignalReasons`**, or the policy
+fails to load at all, no silent, unacknowledged gaps allowed.
+
+The `expense-reimbursement@1.1.0` policy above is a real, worked example of this, full
+schema, the exact validation rule that would reject a badly-formed policy, and how a new one
+goes live (proposed and approved through policy governance, no deploy) are in
+[Write your first policy](/guides/write-your-first-policy) and
+[Policy lifecycle and approvals](/guides/policy-lifecycle-and-approvals).
+
+## Endpoints
+
+| Method & path                | Auth     | What it does                                                                                           |
+| ---------------------------- | -------- | ------------------------------------------------------------------------------------------------------ |
+| `GET /health` / `GET /ready` | none     | Liveness / readiness                                                                                   |
+| `POST /execute`              | required | Submit a Business Transaction; `200` returns the signed Trust Record of the executed action            |
+| `GET /transactions`          | required | List your own submitted transactions                                                                   |
+| `GET /refusal/:id`           | required | The signed Refusal Record for a rejected transaction                                                   |
+| `POST /refusal/verify`       | none     | Independently verify a Refusal Record's signature                                                      |
+| `POST /audit/verify`         | none     | Verify a signed caller-audit event                                                                     |
+| `GET /keys/:keyId`           | none     | Fetch a public signing key (PEM + JWK where supported)                                                 |
+| `GET /.well-known/jwks.json` | none     | The public keys this deployment signs with (under AWS KMS: `default` and the current verification key) |
+| `GET /trust-records/:id`     | required | The full signed Execution Trust Record of an executed action                                           |
+
+Machine-readable spec: `GET /openapi.yaml` or [the REST API
+reference](/api-reference/introduction).
+
+## Verifying a result independently
+
+An executed action has a Trust Record (`GET /trust-records/:id`); a refused one has a
+**Refusal Record** (`GET /refusal/:id`). Verify a Trust Record with zero further server calls
+using `verifyExecutionTrustRecordOffline` (TypeScript) or `verify_execution_trust_record_offline`
+(Python) and the key from `GET /keys/default`, and a Refusal Record with `POST /refusal/verify`
+(server side, but cryptographic and unauthenticated). See [Verify a trust record
+independently](/guides/verify-independently) for the fully offline path, and
+`examples/tutorials/107-offline-verification/` through `110-hybrid-signature-downgrade-protection/`
+for runnable, tested demonstrations of every scenario, including a hybrid (Ed25519 +
+ML-DSA-65) record and a downgrade-attack proof.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="Write your first policy"
+    icon="file-pen"
+    href="/guides/write-your-first-policy"
+  >
+    A slower, more conceptual walkthrough of policy authoring than the reference
+    above.
+  </Card>
+  <Card
+    title="Verify a trust record independently"
+    icon="check-double"
+    href="/guides/verify-independently"
+  >
+    The fully offline verification path, in depth.
+  </Card>
+  <Card
+    title="Connect an external agent"
+    icon="robot"
+    href="/guides/connect-an-agent"
+  >
+    How an AI agent authenticates, sends a governed request, and handles
+    APPROVED/REJECTED, with the real parmana-phinite-agent integration as the
+    worked example.
+  </Card>
+</CardGroup>

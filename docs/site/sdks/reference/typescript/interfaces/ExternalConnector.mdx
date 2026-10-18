@@ -1,0 +1,96 @@
+---
+title: "Interface: ExternalConnector"
+---
+
+Defined in: typescript/src/models/external-connector.ts:13
+
+A capability registered to an HTTPS endpoint, active or revoked.
+
+## Properties
+
+### registrationId
+
+> `readonly` **registrationId**: `string`
+
+Defined in: typescript/src/models/external-connector.ts:17
+
+The changeId of the approved register change that created it.
+
+---
+
+### capability
+
+> `readonly` **capability**: `string`
+
+Defined in: typescript/src/models/external-connector.ts:18
+
+---
+
+### endpointUrl
+
+> `readonly` **endpointUrl**: `string`
+
+Defined in: typescript/src/models/external-connector.ts:19
+
+---
+
+### policy
+
+> `readonly` **policy**: `string`
+
+Defined in: typescript/src/models/external-connector.ts:25
+
+The policy that governs the capability. A request must declare the
+version approved through policy governance.
+
+---
+
+### allowedParameters
+
+> `readonly` **allowedParameters**: readonly `string`[]
+
+Defined in: typescript/src/models/external-connector.ts:30
+
+The intent parameters Parmana forwards to the endpoint.
+
+---
+
+### timeoutMs
+
+> `readonly` **timeoutMs**: `number`
+
+Defined in: typescript/src/models/external-connector.ts:31
+
+---
+
+### status
+
+> `readonly` **status**: `"active"` \| `"revoked"`
+
+Defined in: typescript/src/models/external-connector.ts:36
+
+At most one active registration per capability.
+
+---
+
+### registeredAt
+
+> `readonly` **registeredAt**: `string`
+
+Defined in: typescript/src/models/external-connector.ts:37
+
+---
+
+### revokedByChangeId?
+
+> `readonly` `optional` **revokedByChangeId?**: `string`
+
+Defined in: typescript/src/models/external-connector.ts:38
+
+---
+
+### revokedAt?
+
+> `readonly` `optional` **revokedAt?**: `string`
+
+Defined in: typescript/src/models/external-connector.ts:39

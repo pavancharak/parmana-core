@@ -1,0 +1,52 @@
+###############################################################################
+# Parmana Git Attributes
+###############################################################################
+
+# Auto-detect text files and normalize to LF in the repository.
+* text=auto eol=lf
+
+###############################################################################
+# Source Code
+###############################################################################
+
+*.ts      text
+*.tsx     text
+*.js      text
+*.mjs     text
+*.cjs     text
+*.json    text
+*.md      text
+*.yml     text
+*.yaml    text
+*.toml    text
+*.xml     text
+*.html    text
+*.css     text
+*.scss    text
+*.sh      text
+*.ps1     text
+*.bat     text
+
+###############################################################################
+# Binary Files
+###############################################################################
+
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.gif     binary
+*.webp    binary
+*.ico     binary
+*.pdf     binary
+*.zip     binary
+*.gz      binary
+*.7z      binary
+*.jar     binary
+*.exe     binary
+*.dll     binary
+
+###############################################################################
+# Lock Files
+###############################################################################
+
+package-lock.json text eol=lf

@@ -1,0 +1,91 @@
+---
+title: "One capability, one policy"
+description: "Why the agent must never choose which policy judges its own action, and how Parmana ties each capability to exactly one policy name and the version a person approved."
+---
+
+Imagine a bank in Chennai that lets an agent update deals in its CRM. For example, the agent proposes moving a deal
+worth ₹18,00,000 to "closed won". The deal update policy is strict: every update needs a signed approval for that
+deal. Now imagine the same deployment also has a loose policy for some unrelated task, one that approves on whatever
+facts the caller declares.
+
+What stops the agent from sending the deal update and saying "judge this under the loose policy"?
+
+## The problem
+
+In Parmana, every request names the policy it wants to be judged under, by name and version. That is deliberate:
+Parmana does not discover policies, pick the latest one, or substitute another. But naming is not the same as being
+allowed to choose.
+
+Loading a policy is keyed by whatever name and version the caller declares. The policy engine itself does not know
+which action will run; it evaluates rules over facts. So without a separate check, a caller could pair a real,
+writing action with an unrelated policy that has none of that action's protections, and the action would run under
+the looser rules. The protections would not be weakened. They would be skipped.
+
+This was not hypothetical. An independent verification of the repository found exactly this shape: a CRM deal
+update paired with an unrelated vendor payment policy that bound nothing about deals. The test suite still carries
+that exploit and proves it is refused.
+
+## The idea
+
+The policy that governs an action should be a property of the action, not a choice the caller makes. One capability,
+one policy name, fixed by the system. The caller still names the policy, so the record says what it asked for, but if
+the name is wrong the request is refused.
+
+The version is a separate question. A fixed version in code would mean every rule change needs a deploy. So the name
+is fixed, and the version is the one a person most recently approved.
+
+## How Parmana does it
+
+**A binding table.** `CANONICAL_CAPABILITY_POLICY_BINDINGS` maps each built in capability to one policy name: for
+example `paytm:refund` to `customer-refund`, `hubspot:deal-update` to `hubspot-deal-update`, `github:pr-merge` to
+`github-pr-approval`, and reads such as `hubspot:deal-fetch` to their own read policies. It covers every capability
+the production connector registry registers.
+
+**Checked before any rule runs.** For a bound capability, the declared name must equal the bound name, and the
+declared version must equal the version in effect. A mismatch is refused with zero rules evaluated. The wrongly paired
+policy may be loaded, but it is never evaluated. The check is built unconditionally into the runtime; it is not a
+configuration option.
+
+**The version comes from governance.** Where policy governance is enforced, which is everywhere except `NODE_ENV`
+test and development, the version in effect is the one most recently approved for that name through maker checker.
+Approving a new version makes it current with no deploy. Approving an older one again is how you roll back. A request
+naming any other version, including one approved in the past, is refused with a message naming the version in effect.
+No approved version, or a failed lookup, also refuses. And since 2026-09-28 a superseded version is refused for every
+policy, not only bound ones, so an older approved version with weaker rules cannot be named instead.
+
+**Agents can ask.** `GET /policies/in-effect` returns the policy to declare right now for a capability, from the same
+binder the check uses, along with the facts a request must carry. An agent that asks before each request needs no
+update when a new version is approved.
+
+**The other direction, at startup.** Every capability a connector registers must have a binding or an explicit,
+reasoned exemption, or the process refuses to start. This makes sure the next connector added cannot quietly ship the
+same gap.
+
+**Systems you register yourself.** An external connector binds a capability to an HTTPS endpoint and to its policy
+through maker checker, with no deploy. The release to it uses the policy bound in that registration.
+
+**Bound again at release.** The policy content hash is signed into the execution authorization, and the gateway
+checks it, and the policy's approval record, once more just before release.
+
+## What it does not do
+
+- **It does not make the bound policy good.** The binding guarantees the right policy is evaluated, not that its rules
+  are wise.
+- **An action with no binding is not covered by this check.** Test, tutorial and example actions are unaffected by the
+  table.
+- **Changing which policy name a built in action uses still needs a code change and a deploy.** So does adding a built
+  in capability.
+- **At registration, an external connector's policy name is checked for form only,** not that the policy exists or has
+  an approved version. A request then refuses if there is no approved version, but the registration itself is accepted.
+- **The version source is read without verifying it first.** The same request then verifies that approval record's
+  signature and content hash, so a record changed outside the API refuses the request.
+- **Approval means distinct credentials, not proven distinct people.** In Parmana's own production one person holds
+  the maker, checker and approver keys.
+
+## The takeaway
+
+The agent may name the policy, but it may not choose it. Each action has one policy, the version a person approved
+most recently, and a request that asks for anything else is refused before a single rule is read.
+
+**Read more:** [Chapter 6: Capability and policy binding](/handbook/06-capability-policy-binding),
+[Policy lifecycle and approvals](/guides/policy-lifecycle-and-approvals).

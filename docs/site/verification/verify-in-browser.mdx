@@ -1,0 +1,93 @@
+---
+title: "Verify a record in your browser"
+description: "Paste a signed Execution Trust Record and a public key, and check the hash and the Ed25519 signature in your browser. Nothing is uploaded."
+---
+
+import { RecordVerifier } from "/snippets/record-verifier.jsx";
+
+export const exampleRecord = {
+  trustRecordId: "cross-language-fixture-txn",
+  businessTransactionId: "cross-language-fixture-txn",
+  transaction: {
+    businessTransactionId: "cross-language-fixture-txn",
+    status: "RECEIVED",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    signals: {
+      amount: 100,
+      vendorId: "vendor-café",
+    },
+  },
+  overrides: [],
+  executions: [],
+  verifications: [],
+  receipts: [],
+  createdAt: "2026-01-01T00:00:00.000Z",
+  updatedAt: "2026-01-01T00:00:00.000Z",
+  trustRecordHash:
+    "dfc3d4d686244a2f79b120eac15886c7472d55a1708d4c71da898a79c9f9238d",
+  signature: {
+    algorithm: "ed25519",
+    keyId: "cross-language-fixture",
+    value:
+      "S0dkK028gp/fH9LJjV9Aq8Ap4BR8w22hZHRECQSbOu3FOyGYljbjCBEjKpRkXjmq1LgJQJxRgcZJeYPy6VZTDw==",
+    signedAt: "2026-10-05T09:25:09.491Z",
+  },
+};
+
+export const examplePublicKey =
+  "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA8DDY1SMMZC/HT+ec/tMAdxofJVCNTj/FFOVgqQKsUdY=\n-----END PUBLIC KEY-----\n";
+
+A signed Execution Trust Record proves two things to anyone holding the public key: its
+content has not changed since it was signed, and it was signed by the holder of that key. This
+page checks both, in your browser, with the Web Crypto API. Nothing you paste leaves your
+machine. The only network call is **Use the sandbox key**, which fetches the sandbox's public
+key.
+
+<RecordVerifier
+  exampleRecord={exampleRecord}
+  examplePublicKey={examplePublicKey}
+/>
+
+## Try it
+
+1. **Load the example**, then **Verify**. The result is valid.
+2. **Load the example, changed**: the same record with the amount changed from 100 to 100000.
+   **Verify** reports that the hash no longer matches. Changing any signed field has the
+   same effect.
+3. Check a record of your own. Run the [Playground](/playground) to get a real signed record
+   from the public sandbox, paste it, click **Use the sandbox key**, then **Verify**.
+
+The example was signed by Parmana's own signer with a throwaway key made for this page, by
+`scripts/generate-offline-verifier-fixture.ts`. The same script produces the fixture that the
+Python SDK's offline verifier is tested against.
+
+## What is checked
+
+| Check         | How                                                                                                                                                                                                                                                                                     |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The hash      | The signed fields (`trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `overrides`, `executions`, `createdAt`) are serialized as canonical JSON, with object keys sorted, and hashed with SHA-256. The result must equal `trustRecordHash`.                       |
+| The signature | The `signature` field must be an Ed25519 signature over the same canonical bytes, by the key you paste. A record over 4096 bytes may be signed as a commitment (a fixed prefix and the SHA-512 of the content), which AWS KMS requires; both forms are accepted, as in `@parmana/sign`. |
+
+The code is
+[docs/site/snippets/record-verifier.jsx](https://github.com/pavancharak/parmana/blob/main/docs/site/snippets/record-verifier.jsx).
+A test in the repository runs that exact code against records signed by Parmana's signer,
+including a large record signed as a commitment, and checks that it agrees with Parmana's
+offline verifier and rejects changed records.
+
+## What this page does not check
+
+- **Who holds the key.** A valid signature proves the record was signed by that key. Get the
+  key from the deployment you trust, for example `GET /keys/default`, not from the person who
+  sent you the record.
+- **Hybrid signatures.** A record can also carry an ML-DSA-65 signature in a `signatures`
+  array. Browsers have no ML-DSA support yet, so this page checks only the Ed25519 signature
+  and says so.
+- **Other record types.** Execution Intents are signed too; verify them with
+  [`@parmana/sign`](/sdks/parmana-sign/overview). Refusal Records are checked with
+  `POST /refusal/verify` ([Refusal Records](/concepts/refusal-records)).
+- **That the action was authorized.** A signature shows what Parmana recorded and that it was
+  not altered. It does not show that nothing bypassed Parmana. See the
+  [Audit guide](/evaluation/audit-guide).
+
+For scripted or bulk checks, use [`@parmana/sign`](/sdks/parmana-sign/overview) or
+[Verify independently](/guides/verify-independently).

@@ -1,0 +1,52 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/shared" },
+    { "path": "./packages/capability-registry" },
+    { "path": "./packages/runtime" },
+    { "path": "./packages/crypto" },
+    { "path": "./packages/storage" },
+    { "path": "./packages/replay" },
+    { "path": "./packages/policy" },
+    { "path": "./packages/api" },
+    { "path": "./packages/governance-ui" },
+    { "path": "./packages/envelope-verifier" },
+    { "path": "./packages/execution-system" },
+    { "path": "./packages/execution-control" },
+    { "path": "./packages/execution-gateway" },
+    { "path": "./packages/connector-sdk" },
+    { "path": "./packages/connector-hubspot" },
+    { "path": "./packages/connector-github" },
+    { "path": "./packages/connector-paytm" },
+    { "path": "./packages/connector-slack" },
+    { "path": "./packages/approval" }
+  ],
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+
+    "composite": true,
+
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+
+    "lib": ["ES2022"],
+
+    "types": ["node"]
+  }
+}

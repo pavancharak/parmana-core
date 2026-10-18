@@ -1,0 +1,29 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+
+    "composite": true,
+
+    "declaration": true,
+    "declarationMap": true,
+
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules", "test"],
+  "references": [
+    { "path": "../shared" },
+    { "path": "../crypto" },
+    { "path": "../envelope-verifier" },
+    { "path": "../execution-control" },
+    { "path": "../policy" },
+    { "path": "../execution-system" },
+    { "path": "../connector-sdk" },
+    { "path": "../connector-hubspot" },
+    { "path": "../connector-github" },
+    { "path": "../connector-paytm" },
+    { "path": "../connector-slack" }
+  ]
+}

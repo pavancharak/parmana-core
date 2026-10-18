@@ -1,0 +1,141 @@
+[build-system]
+requires = [
+    "setuptools>=77.0",
+    "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "parmana"
+version = "1.6.0"
+description = "Python SDK for Parmana Execution Trust Infrastructure."
+
+readme = { file = "README.md", content-type = "text/markdown" }
+
+requires-python = ">=3.10"
+
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+
+authors = [
+    { name = "Parmana" }
+]
+
+keywords = [
+    "ai",
+    "artificial-intelligence",
+    "autonomous-ai",
+    "agents",
+    "governance",
+    "authorization",
+    "execution",
+    "trust",
+    "policy",
+    "sdk"
+]
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+
+
+    "Operating System :: OS Independent",
+
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "requests>=2.32.0,<3",
+]
+
+[project.optional-dependencies]
+# parmana.crypto (the standalone offline Trust Record verifier) needs the
+# `cryptography` package for Ed25519. It is optional so that a plain
+# `pip install parmana` client stays small: install `parmana[verify]` to use
+# parmana.crypto. Without this declaration the module imported an undeclared
+# package and mypy failed in CI.
+verify = [
+    "cryptography>=42.0.0",
+]
+dev = [
+    "cryptography>=42.0.0",
+    "pytest>=8.0.0",
+    "responses>=0.25.0",
+    "ruff>=0.6.0",
+    "black>=24.0.0",
+    "mypy>=1.10.0",
+    "types-requests>=2.32.0",
+    "pydoc-markdown>=4.8.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/pavancharak/parmana"
+Website = "https://parmanasystems.com/"
+Documentation = "https://docs.parmanasystems.com"
+Repository = "https://github.com/pavancharak/parmana"
+Issues = "https://github.com/pavancharak/parmana/issues"
+Releases = "https://github.com/pavancharak/parmana/releases"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["parmana*"]
+
+[tool.setuptools.package-data]
+parmana = ["py.typed"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+# Import order and line length in parmana/models/*.py are produced
+# deterministically by generate_models.ts and enforced by the drift-guard
+# check, not by isort/ruff conventions. The docstring header in particular
+# lists source files and can exceed line-length depending on how many
+# TS files a given model is generated from.
+"parmana/models/*.py" = ["I001", "E501"]
+
+[tool.black]
+line-length = 88
+target-version = ["py310", "py311", "py312", "py313"]
+extend-exclude = '''
+(
+  ^/parmana/models/
+)
+'''
+# parmana/models/*.py formatting is owned by generate_models.ts and
+# enforced by the drift-guard check (npm run check:python-models), not
+# by black.
+
+[tool.mypy]
+python_version = "3.10"
+packages = ["parmana"]
+strict = true
+warn_unused_ignores = true
+
+[tool.pytest.ini_options]
+# tests/test_quickstart_example.py imports `examples.quickstart.run` as a
+# namespace package (no __init__.py, by design -- these are documented,
+# standalone example scripts, not part of the installed `parmana` package).
+# Without this, `examples` only resolves when pytest is invoked as
+# `python -m pytest` (which prepends cwd to sys.path); the CI workflow and
+# the `pytest` console-script entry point both invoke bare `pytest`, which
+# does not, so collection fails with "ModuleNotFoundError: No module named
+# 'examples'". `pythonpath = ["."]` puts this directory (where this file
+# lives, pytest's rootdir) on sys.path for every invocation style.
+pythonpath = ["."]

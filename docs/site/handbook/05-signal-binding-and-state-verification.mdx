@@ -1,0 +1,127 @@
+---
+title: "Chapter 5: Signal-Intent Binding and Signal-State Verification"
+description: "Two separate, deliberately independent checks that run before PolicyEngine.evaluate ever"
+---
+
+## What it is
+
+Two separate, deliberately independent checks that run before `PolicyEngine.evaluate` ever
+sees a request's signals:
+
+1. **Signal-Intent Binding** (`SignalIntentBinder`,
+   `packages/policy/src/SignalIntentBinder.ts`), proves a policy's declared signals describe
+   the _same action_ as the Intent that will actually execute if the transaction is approved.
+2. **Signal-State Verification** (`SignalStateVerifier` port,
+   `packages/policy/src/types/SignalStateVerifier.ts`, composed via
+   `CompositeSignalStateVerifier`), proves those signals are _true_, not merely consistent.
+
+Both exist because a caller-declared signal, on its own, only ever proves what the caller
+_says_. Neither check trusts the caller; each closes a different gap in what a bare signal can
+prove.
+
+## Why it was built
+
+`PolicyEngine` evaluates whatever `PolicySignals` it's handed. Nothing about `PolicyEngine`
+itself prevents a caller from declaring `{"managerApproved": true}` when no manager ever
+approved anything, or from declaring a small, fully-verified signals payload while the real
+`Intent` (the thing that actually gets signed and executed) targets something entirely
+different. `SignalIntentBinder`'s own doc comment states the risk directly
+(`Policy.ts:238-249`): without it, "a caller could otherwise declare a small, fully-verified
+signals payload while Intent silently targets something else entirely, and receive a signed
+APPROVED trust record for it." `SignalStateVerifier`'s doc comment
+(`SignalStateVerifier.ts:24-33`) draws the companion distinction explicitly: "SignalIntentBinder
+proves a policy's signals describe the same action as Intent; it never proves those signals
+are _true_." Two different failure modes, two different, additive mechanisms.
+
+## How it works
+
+### Signal-Intent Binding
+
+A policy's `boundSignals` field (`Policy.ts:266`, e.g. `{"paymentAmount":
+"parameters.amount"}`) declares that a given signal key must equal the value found at a
+specific dot-path into the real `Intent`, an `IntentSnapshot` of `{ target, parameters }`
+(`SignalIntentBinder.ts:9-12`).
+
+`SignalIntentBinder.findViolations(policy, signals, intent)`
+(`SignalIntentBinder.ts:67-95`) walks every `boundSignals` entry, resolves the dot-path against
+the real `Intent` via `resolveIntentPath` (`SignalIntentBinder.ts:32-44`, returns `undefined`
+for any missing path segment rather than throwing, so a missing Intent field is reported as a
+mismatch, not a crash), and compares it by strict equality (`!==`) against the caller-declared
+signal value. Any mismatch becomes a `SignalIntentBindingViolation`, the empty array means
+either the policy declares no `boundSignals` at all, or every declared binding held.
+
+Only signals with a genuine Intent-side equivalent belong in `boundSignals`, an amount, a
+target/vendor identifier. A signal representing an external fact with no Intent-side
+equivalent (`vendorVerified`, `riskScore`) cannot be expressed this way and is deliberately
+left out, acknowledged instead in `unboundSignalReasons` (Chapter 4 covers the validator's
+enforcement of this).
+
+### Signal-State Verification
+
+The `SignalStateVerifier` interface (`SignalStateVerifier.ts:42-47`) is a single async method:
+`findViolations(request, signals) => Promise<readonly SignalStateViolation[]>`. A `request`
+carries `action`, `businessTransactionId`, and `intentParameters`, enough for an
+implementation to decide whether, and how, to independently re-derive the relevant facts from a
+real external source and compare them against what the caller declared.
+
+The interface is explicitly optional and capability-scoped: an implementation that doesn't
+recognize the given `action` returns an empty array, the same "nothing to check" shape
+`SignalIntentBinder` uses when a policy has no `boundSignals`.
+
+`CompositeSignalStateVerifier` (`packages/policy/src/CompositeSignalStateVerifier.ts`) combines
+multiple capability-scoped verifiers into one: it queries each in the supplied order and
+returns the first non-empty result (`CompositeSignalStateVerifier.ts:23-35`). This lets
+`RuntimeEngine`, which accepts exactly one `SignalStateVerifier`, be wired with as many
+capability-specific verifiers as production needs, each responsible for only the action(s) it
+knows how to check.
+
+**A concrete production implementation:** `createHubSpotSignalStateVerifier`
+(`packages/api/src/bootstrap/createHubSpotSignalStateVerifier.ts`) builds a
+`HubSpotSignalStateVerifier` (from `@parmana/connector-hubspot`) wired with the real signing key
+(`FileKeyProvider`, `DEFAULT_KEY_ID`), the real execution gateway, and an `ApprovalVerifier` for
+independently checking `preAuthorizedForAmountChange`, a signal that, without this, would be
+nothing but a caller's unverified claim. Since 2026-09-30 `hubspot-deal-update` 1.1.0 needs one
+signed approval for every update (`dealUpdateApproved`), checked by `ApprovalSignalVerifier`, and
+the HubSpot verifier skips its own pre authorization check whenever the policy declares
+`approvalSignals`, so one approval is not spent twice. Its own doc comment notes `approvalVerifier` is always
+supplied in production, never omitted; only direct unit tests construct the verifier without
+it.
+
+### Where both run
+
+Both checks run inside the runtime pipeline (Chapter 8 covers the full order) before
+`PolicyEngine.evaluate`. A violation from either becomes an ordinary policy `REJECT`, no
+authorization is ever generated for a request whose declared signals don't match the real
+Intent, or don't match independently verified reality.
+
+## How it enables things, with a concrete example
+
+- **Tutorial 62** (`examples/tutorials/62-signal-intent-binding/run.ts`) exercises
+  `SignalIntentBinder` directly, including a deliberate mismatch between declared signals and
+  real Intent parameters.
+- **Tutorial 71** (`examples/tutorials/71-hubspot-signal-state-verification/run.ts`) exercises
+  the real `HubSpotSignalStateVerifier` implementation described above.
+- **Tutorial 82** (`examples/tutorials/82-composite-signal-state-verification/run.ts`)
+  demonstrates `CompositeSignalStateVerifier` combining multiple capability-scoped verifiers.
+- **Tutorial 98** (`examples/tutorials/98-signal-freshness-enforcement/run.ts`) covers a related
+  freshness concern at the execution boundary, worth reading alongside this chapter, though
+  it's a distinct mechanism.
+
+## How to validate this yourself
+
+- `packages/policy/src/SignalIntentBinder.ts` (96 lines) and
+  `packages/policy/tests/unit/SignalIntentBinder.test.ts`.
+- `packages/policy/src/types/SignalStateVerifier.ts` and
+  `packages/policy/src/CompositeSignalStateVerifier.ts` for the port and its composition.
+- `packages/api/src/bootstrap/createHubSpotSignalStateVerifier.ts` for a real, wired production
+  implementation, and its corresponding package under `packages/connector-hubspot/` (or
+  wherever `@parmana/connector-hubspot` actually lives in this checkout) for the verifier's own
+  logic.
+
+## Integration requirements
+
+`SignalIntentBinder` needs nothing beyond the policy and the real Intent, both already present
+in any request. A capability-specific `SignalStateVerifier` (like the HubSpot one) needs
+whatever real credentials that connector needs to make its own independent verification calls
+(a HubSpot private app token, in that case), see the connectors chapter for the full
+credential list per connector.

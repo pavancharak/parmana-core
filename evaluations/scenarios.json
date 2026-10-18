@@ -1,0 +1,208 @@
+{
+  "$comment": "Security evaluation scenarios run by `npm run evaluate`. Each scenario names what an attacker controls, the attack, the invariant that must hold, and the test files that fail if it does not. A scenario is BLOCKED when every test in its files passes. Claim numbers refer to docs/CLAIMS.md. See EVALUATION.md, section 3.",
+  "scenarios": [
+    {
+      "id": "EV-01",
+      "slug": "authorization-replay",
+      "title": "Replay a used authorization",
+      "attackerControls": "A valid execution authorization that has already been used once.",
+      "attack": "Send the same authorization again, including two concurrent uses.",
+      "invariant": "A second use is refused; under concurrent use exactly one succeeds.",
+      "claims": ["2.8", "2.10"],
+      "tests": [
+        "packages/envelope-verifier/tests/unit/envelope-verifier.test.ts",
+        "packages/execution-gateway/tests/unit/execution-gateway.test.ts"
+      ]
+    },
+    {
+      "id": "EV-02",
+      "slug": "authorization-forgery",
+      "title": "Forge or alter an authorization",
+      "attackerControls": "The bytes of an authorization in transit, and any key that is not the signer's.",
+      "attack": "Change a field of a signed authorization, or sign one with another key.",
+      "invariant": "The signature check fails and nothing executes.",
+      "claims": ["2.8", "2.10", "2.15"],
+      "tests": [
+        "packages/envelope-verifier/tests/unit/envelope-verifier.test.ts",
+        "packages/execution-gateway/tests/unit/execution-gateway.test.ts"
+      ]
+    },
+    {
+      "id": "EV-03",
+      "slug": "expired-authorization",
+      "title": "Use an expired authorization or a revoked key",
+      "attackerControls": "An authorization past its expiry, or one signed with an expired or revoked key.",
+      "attack": "Submit it for execution.",
+      "invariant": "It is refused, including at the exact expiry instant.",
+      "claims": ["2.10", "2.28"],
+      "tests": [
+        "packages/envelope-verifier/tests/unit/envelope-verifier.test.ts",
+        "packages/crypto/tests/unit/key-expiry.test.ts"
+      ]
+    },
+    {
+      "id": "EV-04",
+      "slug": "action-without-human-approval",
+      "title": "Act without a person's signed approval (for example after prompt injection)",
+      "attackerControls": "Everything the AI agent sends: the request, its parameters and any text injected into the agent.",
+      "attack": "Request an action with no approval, or claim approval with a plain flag.",
+      "invariant": "No action is authorized without a signed approval from a trusted approver for that action and resource.",
+      "claims": ["2.42", "2.44", "2.47"],
+      "tests": [
+        "packages/approval/tests/unit/ApprovalSignalVerifier.test.ts",
+        "packages/api/tests/integration/paytm-refund.integration.test.ts",
+        "packages/api/tests/unit/connector-policies-not-self-authorizing.test.ts"
+      ]
+    },
+    {
+      "id": "EV-05",
+      "slug": "approval-forgery",
+      "title": "Forge or misuse an approval",
+      "attackerControls": "Approval artifacts: their fields, their signer, and which action they are attached to.",
+      "attack": "Sign an approval with an untrusted key, alter a signed approval, or reuse one for a different action or resource.",
+      "invariant": "Only an untampered approval from a trusted approver, for this action and resource, is accepted.",
+      "claims": ["2.42"],
+      "tests": [
+        "packages/approval/tests/unit/ApprovalVerifier.test.ts",
+        "packages/approval/tests/unit/SignedApprovalGuard.test.ts"
+      ]
+    },
+    {
+      "id": "EV-06",
+      "slug": "intent-signal-mismatch",
+      "title": "Declare one action, execute another",
+      "attackerControls": "The policy signals and the execution intent of a request.",
+      "attack": "Describe a small, approved action in the signals while the intent executes a different amount or target.",
+      "invariant": "Bound signals must match the executed intent; a mismatch or a missing bound signal is refused.",
+      "claims": ["2.44"],
+      "tests": [
+        "packages/policy/tests/unit/SignalIntentBinder.test.ts",
+        "packages/policy/tests/unit/PolicyRouter-boundSignals-coverage.test.ts"
+      ]
+    },
+    {
+      "id": "EV-07",
+      "slug": "policy-substitution",
+      "title": "Have an action judged by a weaker policy",
+      "attackerControls": "The policy name and version a request asks for.",
+      "attack": "Name a more permissive policy than the one bound to the capability.",
+      "invariant": "Each capability is evaluated only under its bound policy; another policy is refused.",
+      "claims": ["2.22", "2.36"],
+      "tests": [
+        "packages/capability-registry/tests/unit/CapabilityPolicyBinder.test.ts",
+        "packages/execution-gateway/tests/unit/policy-binding-fail-closed.test.ts"
+      ]
+    },
+    {
+      "id": "EV-08",
+      "slug": "stale-policy",
+      "title": "Execute under an outdated policy version",
+      "attackerControls": "An authorization issued under a policy version that has since been replaced.",
+      "attack": "Submit it after the policy changed.",
+      "invariant": "The gateway refuses an authorization whose policy is not the approved, current version.",
+      "claims": ["2.27"],
+      "tests": [
+        "packages/execution-gateway/tests/unit/policy-freshness.test.ts"
+      ]
+    },
+    {
+      "id": "EV-09",
+      "slug": "stale-signals",
+      "title": "Rely on facts that changed after approval (time of check, time of use)",
+      "attackerControls": "The timing between authorization and execution.",
+      "attack": "Execute after the facts the decision was based on have changed.",
+      "invariant": "The gateway re-checks the signed signals before release and refuses if they no longer hold.",
+      "claims": ["2.29"],
+      "tests": [
+        "packages/execution-gateway/tests/unit/signal-freshness.test.ts"
+      ]
+    },
+    {
+      "id": "EV-10",
+      "slug": "credential-theft",
+      "title": "Obtain a connector's credentials",
+      "attackerControls": "The caller side of every request and every response it receives.",
+      "attack": "Look for connector credentials in responses, decisions and evidence.",
+      "invariant": "A connector's credential never reaches the caller, the decision or the evidence.",
+      "claims": ["2.23", "3.10", "3.17"],
+      "tests": [
+        "packages/execution-gateway/tests/unit/credential-non-exposure.test.ts",
+        "packages/api/tests/integration/credential-isolation.integration.test.ts"
+      ]
+    },
+    {
+      "id": "EV-11",
+      "slug": "gateway-bypass",
+      "title": "Reach a connector without going through the gateway",
+      "attackerControls": "Any code path in the server that could call a connector.",
+      "attack": "Find a route from a request to a connector that skips the execution gateway.",
+      "invariant": "Only the execution gateway can release an action to a connector.",
+      "claims": ["3.1"],
+      "tests": ["tests/architecture/execution-boundary.test.ts"]
+    },
+    {
+      "id": "EV-12",
+      "slug": "caller-impersonation",
+      "title": "Act without credentials or outside a caller's scope",
+      "attackerControls": "The API key presented, or none, and the principal and capability requested.",
+      "attack": "Call without a key, with an invalid key, or for a principal or capability the key is not allowed.",
+      "invariant": "Every caller is authenticated and limited to its own principals and capabilities.",
+      "claims": ["2.16", "3.16"],
+      "tests": [
+        "packages/api/tests/integration/caller-auth.integration.test.ts",
+        "packages/api/tests/integration/caller-capability-scoping.integration.test.ts",
+        "packages/api/tests/integration/caller-principal-scoping.integration.test.ts"
+      ]
+    },
+    {
+      "id": "EV-13",
+      "slug": "unapproved-policy-change",
+      "title": "Change a policy without a second person",
+      "attackerControls": "One authenticated account with permission to propose policy changes.",
+      "attack": "Propose and approve a change alone, approve without a step-up signature, or propose a policy that approves without a person.",
+      "invariant": "A policy changes only when a second person approves it with a step-up signature.",
+      "claims": ["2.26", "2.34"],
+      "tests": [
+        "packages/api/tests/integration/pending-policy-changes-governance.integration.test.ts",
+        "packages/api/tests/unit/PolicyChangeApprovalService.test.ts",
+        "packages/crypto/tests/unit/policy-change-step-up-authorization.test.ts"
+      ]
+    },
+    {
+      "id": "EV-14",
+      "slug": "evidence-tampering",
+      "title": "Alter a signed record after the fact",
+      "attackerControls": "Stored Execution Trust Records and Refusal Records.",
+      "attack": "Change any field of a signed record, or reorder its JSON keys.",
+      "invariant": "Offline verification fails for any change to the content; key order does not affect the signed bytes.",
+      "claims": ["2.5", "2.6", "3.11"],
+      "tests": [
+        "packages/crypto/tests/unit/offline-verifier.test.ts",
+        "packages/crypto/tests/unit/canonical-serializer.property.test.ts",
+        "packages/api/tests/integration/refusal-record.integration.test.ts"
+      ]
+    },
+    {
+      "id": "EV-15",
+      "slug": "duplicate-transaction-race",
+      "title": "Run the same transaction twice by racing",
+      "attackerControls": "Concurrent submissions of one business transaction id.",
+      "attack": "Send the same transaction twice at the same moment.",
+      "invariant": "A duplicate transaction is rejected atomically; it never executes twice.",
+      "claims": ["2.20"],
+      "tests": [
+        "packages/storage/tests/unit/business-transaction-repository-duplicate-consistency.test.ts"
+      ]
+    },
+    {
+      "id": "EV-16",
+      "slug": "policy-path-traversal",
+      "title": "Read or write a policy file outside the policy directory",
+      "attackerControls": "The policy name and version in a request or a policy change.",
+      "attack": "Use path segments such as `..` or `../x` as the name or version.",
+      "invariant": "Policy reads and writes stay inside the policy directory.",
+      "claims": [],
+      "tests": ["packages/policy/tests/unit/file-policy-repository.test.ts"]
+    }
+  ]
+}

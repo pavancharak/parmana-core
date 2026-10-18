@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/requests/propose-business-signal-source-change-request.schema.json",
+  "title": "Propose Business Signal Source Change Request",
+  "description": "Request body for POST /business-signal-sources/changes. A register carries endpointUrl and optionally timeoutMs, publicKeyPem and keyId; a revoke carries none of them.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["action", "name", "reason"],
+  "properties": {
+    "action": {
+      "type": "string",
+      "enum": ["register", "revoke"]
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+    },
+    "endpointUrl": {
+      "type": "string",
+      "maxLength": 2048,
+      "description": "Required for register. https only, a public host name."
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "minimum": 1000,
+      "maximum": 30000,
+      "default": 10000
+    },
+    "publicKeyPem": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Optional, register only. An Ed25519 public key in PEM. Recommended: without it, Parmana trusts the answer on the strength of the pinned HTTPS connection alone."
+    },
+    "keyId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]{1,128}$",
+      "description": "Optional, register only, and only with publicKeyPem."
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    }
+  },
+  "examples": [
+    {
+      "action": "register",
+      "name": "erp",
+      "endpointUrl": "https://orders.example.com/parmana/signals",
+      "timeoutMs": 5000,
+      "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAsgWd/PtRf9OsENif9bgJegghUpmEOOZN5NROxc3zpPc=\n-----END PUBLIC KEY-----\n",
+      "keyId": "erp-2026-10",
+      "reason": "Release goods only against invoices the ERP says are paid."
+    },
+    {
+      "action": "revoke",
+      "name": "erp",
+      "reason": "The ERP moves to a new host."
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/execution-intent-response.schema.json",
+  "title": "Execution Intent Response",
+  "description": "Response returned by GET /execution-intents/{businessTransactionId}: the signed Execution Intent and its operational status. The saved release context used to rebuild a Trust Record is internal and is never returned.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["intent", "status"],
+  "properties": {
+    "intent": {
+      "$ref": "../common/execution-intent.schema.json"
+    },
+    "status": {
+      "$ref": "../common/execution-intent-status.schema.json"
+    }
+  },
+  "examples": [
+    {
+      "intent": {
+        "intentId": "b41fe9b9-5730-4d34-aab0-4ab63ae69d3b",
+        "businessTransactionId": "4c2eb3b2-3382-4bc2-bf22-2a072e6cf428",
+        "decisionId": "20b4e030-09cd-4447-86fc-b73279d23121",
+        "authorizationId": "5977535b-d887-423d-b422-01ece1fc7bf1",
+        "policyName": "customer-refund",
+        "policyVersion": "1.0.0",
+        "policyContentHash": "6a2e92fbde0f4c5dc56b4e202bf45ce24c99e565cf3ddaacaa21a11c71b7e1ea",
+        "signalsHash": "e22a7b9fd6e0a39e28521f9ffb726d6a57499236055fa6ff2caabd2268f4a395",
+        "businessTransactionHash": "9df286daf38c6eba272f47153e0fb3efef5ee61d778f6baecd5a53861763763a",
+        "action": "paytm:refund",
+        "target": "DRY-ORDER-1789969223742",
+        "submittedBy": "sandbox-agent",
+        "grantedCapability": "paytm:refund",
+        "createdAt": "2026-09-21T05:40:28.434Z",
+        "intentHash": "13922de380518d582c6bb3e88b1d88908e71565f191119f4cadc7de4e30cf5ed",
+        "signature": {
+          "keyId": "default",
+          "value": "UhXnkSnm5A3QU4CVrKGbP3FcTWkShnitn86psJprJpqgEBnsXWzDcZ+ktSO0FJek1X+n9DvO3SjR+WvSofS1CA==",
+          "signedAt": "2026-09-21T05:40:28.555Z",
+          "algorithm": "ed25519"
+        }
+      },
+      "status": {
+        "state": "FINALIZED",
+        "releasedAt": "2026-09-21T05:40:32.743Z",
+        "finalizedAt": "2026-09-21T05:40:32.855Z",
+        "finalizationMode": "INLINE",
+        "trustRecordId": "a3c8d068-af6a-46c7-9976-e43612d5ab9c"
+      }
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+---
+title: "Type Alias: ProposeAuthorityGrantChangeInput"
+---
+
+> **ProposeAuthorityGrantChangeInput** = \{ `action`: `"grant"`; `callerId`: `string`; `capability`: `string`; `limits?`: [`AuthorityGrantLimits`](/sdks/reference/typescript/type-aliases/AuthorityGrantLimits); `validFrom?`: `string`; `validUntil`: `string`; `reason`: `string`; \} \| \{ `action`: `"revoke"`; `callerId`: `string`; `capability`: `string`; `reason`: `string`; \}
+
+Defined in: typescript/src/models/authority-grant.ts:85
+
+What proposeAuthorityGrantChange() sends.
+
+## Union Members
+
+### Type Literal
+
+\{ `action`: `"grant"`; `callerId`: `string`; `capability`: `string`; `limits?`: [`AuthorityGrantLimits`](/sdks/reference/typescript/type-aliases/AuthorityGrantLimits); `validFrom?`: `string`; `validUntil`: `string`; `reason`: `string`; \}
+
+#### action
+
+> `readonly` **action**: `"grant"`
+
+#### callerId
+
+> `readonly` **callerId**: `string`
+
+The callerId of the agent's API key. Not your own.
+
+#### capability
+
+> `readonly` **capability**: `string`
+
+namespace:verb.
+
+#### limits?
+
+> `readonly` `optional` **limits?**: [`AuthorityGrantLimits`](/sdks/reference/typescript/type-aliases/AuthorityGrantLimits)
+
+#### validFrom?
+
+> `readonly` `optional` **validFrom?**: `string`
+
+ISO 8601. Defaults to the approval time.
+
+#### validUntil
+
+> `readonly` **validUntil**: `string`
+
+ISO 8601, in the future, at most 366 days after validFrom.
+
+#### reason
+
+> `readonly` **reason**: `string`
+
+---
+
+### Type Literal
+
+\{ `action`: `"revoke"`; `callerId`: `string`; `capability`: `string`; `reason`: `string`; \}

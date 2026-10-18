@@ -1,0 +1,68 @@
+---
+sidebar_label: refusal_api
+title: parmana.api.refusal_api
+---
+
+Parmana Refusal Record API (RFC-0021).
+
+## RefusalApi Objects
+
+```python
+class RefusalApi()
+```
+
+Refusal Record API (RFC-0021).
+
+## Responsibilities
+
+- Verify a Refusal Record's signature
+- Retrieve a Refusal Record by Business Transaction ID
+
+This API does NOT:
+
+- execute Business Transactions
+- verify Execution Trust Records
+- replay executions
+
+#### verify
+
+```python
+def verify(record: RefusalRecord) -> bool
+```
+
+Verify a Refusal Record's signature.
+
+Maps to POST /refusal/verify -- takes the record itself, not a
+lookup by id. No caller authentication is required by this
+route: it is the capability that makes a refusal independently
+third-party verifiable (RFC-0021).
+
+## Parameters
+
+record:
+The Refusal Record to verify.
+
+## Returns
+
+True if the signature is valid, False otherwise.
+
+#### get
+
+```python
+def get(business_transaction_id: str) -> RefusalRecord
+```
+
+Retrieve a Refusal Record by Business Transaction ID.
+
+Maps to GET /refusal/:businessTransactionId. Unlike verify()
+above, this route is behind caller-auth and ownership scoping,
+identically to TrustRecordApi.get().
+
+## Parameters
+
+business_transaction_id:
+Business Transaction identifier.
+
+## Returns
+
+Refusal Record.

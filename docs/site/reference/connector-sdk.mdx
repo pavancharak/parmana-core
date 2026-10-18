@@ -1,0 +1,121 @@
+---
+title: "@parmana/connector-sdk"
+description: "Connector authoring contracts and reference implementations: the Connector interface, MockConnector, credential handles, and four enterprise-shaped reference mocks."
+---
+
+<Info>
+  **[AVAILABLE]**, **published**, [`@parmana/connector-sdk` on
+  npm](https://www.npmjs.com/package/@parmana/connector-sdk). Real, public,
+  installable with a plain `npm install @parmana/connector-sdk`. This is the
+  authoring surface for a Connector — the last hop in Parmana's pipeline, the
+  thing that actually carries out an already-authorized, already-verified
+  request against a real system. It does not include the registry, executor, or
+  policy-binding seams that wire a Connector into the running server — those are
+  internal to `@parmana/execution-gateway`, not part of this package. See
+  [Connector Development Guide](/integrations/connector-development-guide) for
+  what registering a connector into the default server actually requires.
+</Info>
+
+<Note>
+  Building connectors from Python instead? The identical contract is published
+  as [`parmana-connector-sdk` on
+  PyPI](https://pypi.org/project/parmana-connector-sdk/) — see [Connector SDK
+  (Python)](/reference/connector-sdk-python).
+</Note>
+
+## Purpose
+
+The contract every connector implements (`Connector`), one hermetic reference implementation
+for testing (`MockConnector`), the credential-handle seam (`CredentialProvider` and its two
+implementations), and four enterprise-shaped reference mocks. This package intentionally ships
+no HTTP-calling implementation — see [Connector Development
+Guide](/integrations/connector-development-guide) for a full worked example, including how
+little code a real HTTP-based Connector takes to write directly against the contract.
+
+## Install
+
+```bash
+npm install @parmana/connector-sdk
+```
+
+## Key exports
+
+### The contract
+
+| Export                                                     | Signature                                                                                                                           |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `Connector` (interface)                                    | `{ connectorId, capabilities, execute(request: ConnectorRequest, context: ConnectorExecutionContext): Promise<ConnectorResponse> }` |
+| `ConnectorRequest`                                         | `{ capability, businessTransactionId, action, target, parameters }` — exactly the authorized operation, never re-derived            |
+| `ConnectorExecutionContext`                                | `{ credential, timeoutMs, requestedAt }` — `credential` is an opaque, already-resolved `CredentialHandle`                           |
+| `ConnectorResponse`                                        | `{ success, metadata? }`                                                                                                            |
+| `connectorCapabilities(strings[])`                         | Validates each string as `namespace:verb`, throws at construction on a malformed one, not at execution time                         |
+| `ConnectorFactory` (interface)                             | Construction contract a connector factory can implement. No concrete factory ships.                                                 |
+| `ConnectorMetadata`, `ConnectorVersion`, `ConnectorHealth` | Registration-time descriptive metadata shapes                                                                                       |
+
+### Reference implementations
+
+| Export                                                                                                                        | Purpose                                                                                                                                                                                                                                                                                                                              |
+| ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `MockConnector`                                                                                                               | Scripted responses (`script: { respond }`) or failure injection (`script: { failWith }`) for hermetic testing. `.invocations` records every request received. The only implementation this package ships — see below for why.                                                                                                        |
+| `createSapConnector`, `createOracleConnector`, `createWorkdayConnector`, `createSalesforceConnector` (+ matching `*Metadata`) | **Reference mocks only**, from `@parmana/connector-sdk/dist/connectors/*`. Each is a thin `MockConnector` factory under an enterprise-shaped `connectorId` and one realistic capability. None calls a real SAP, Oracle, Workday, or Salesforce system — read them as a template for your own connector's shape, not as integrations. |
+
+**No HTTP-calling implementation ships from this package, deliberately.** This repository
+enforces, as a tested architectural invariant, that no code inside `packages/*` other than
+`@parmana/execution-gateway` performs real I/O for a Connector — every package under
+`packages/connector-*` is checked to contain zero `fetch()` calls. That invariant only applies
+to this repository's own tree; it does not constrain a connector you write in your own
+codebase. See [Connector Development Guide](/integrations/connector-development-guide) for how
+short a real HTTP-based Connector is to write directly against the `Connector` interface.
+
+### Credential handles
+
+| Export                                        | Purpose                                                                                                                                |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `CredentialHandle`                            | Opaque resolved credential material: `{ providerId, credentialId, value }`. `value` is never logged or serialized into a Trust Record. |
+| `CredentialProvider` (interface)              | `{ providerId, resolve(connectorId): Promise<CredentialHandle> }`                                                                      |
+| `EnvironmentCredentialProvider`               | Resolves from a mapped environment variable                                                                                            |
+| `StaticCredentialProvider`                    | In-memory map — tests and local dev only                                                                                               |
+| `brandCredentialHandle`, `isCredentialHandle` | Marks/checks that a handle was produced by a real `CredentialProvider`, not a raw value supplied directly                              |
+
+A Connector never resolves its own credentials — resolution happens upstream, inside the
+Execution Gateway, before a Connector is ever invoked.
+
+## Minimal example
+
+```typescript
+import { MockConnector, connectorCapabilities } from "@parmana/connector-sdk";
+
+const mock = new MockConnector({
+  connectorId: "example",
+  capabilities: connectorCapabilities(["crm:read"]),
+  script: {
+    respond: () => ({ success: true, metadata: { recordId: "example-1" } }),
+  },
+});
+```
+
+Full worked example, including a real HTTP-based Connector written directly against the
+contract: [Connector Development Guide](/integrations/connector-development-guide).
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="Connector Development Guide"
+    icon="plug"
+    href="/integrations/connector-development-guide"
+  >
+    Implement, test, and see what reaching the default server actually requires.
+  </Card>
+  <Card
+    title="Connector SDK (Python)"
+    icon="python"
+    href="/reference/connector-sdk-python"
+  >
+    The identical contract, published to PyPI, for Python connector authors.
+  </Card>
+  <Card title="TypeScript SDK" icon="js" href="/sdks/typescript">
+    The client SDK for calling Parmana's own API — a different package, for a
+    different audience (callers, not connector authors).
+  </Card>
+</CardGroup>

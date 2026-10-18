@@ -1,0 +1,170 @@
+---
+title: "Chapter 22: Testing Philosophy"
+description: "Two disciplines run through this codebase's tests: hermetic-first testing (no real network,"
+---
+
+## What it is
+
+Two disciplines run through this codebase's tests: hermetic-first testing (no real network,
+no real database, no real cloud credentials required to run the suite), and treating the
+runnable tutorial suite under `examples/tutorials/` as a first-class form of documentation,
+not a separate, optional thing bolted on after the real code and real tests exist.
+
+## Why it was built this way
+
+A test that needs a live Supabase connection or real AWS credentials to run cannot run in CI
+without secrets, cannot run offline, and is slow. A prose document describing behavior can
+silently go stale the moment the underlying code changes, since nothing forces it to be
+re-checked. Both problems have the same root cause, a gap between what is claimed and what is
+actually exercised, and this codebase addresses both with the same tool: code that asserts real
+behavior and fails loudly the moment that behavior regresses.
+
+## How it works
+
+### Hermetic-first testing
+
+Rather than mocking at the framework level, unit tests in this codebase commonly construct a
+minimal fake object implementing just the one method actually called. `packages/storage/tests/unit/`
+has several real examples (`business-transaction-repository-duplicate-consistency.test.ts`,
+`postgres-rate-limit-store.test.ts`, `supabase-business-transaction-repository.test.ts`, among
+others) that build a `FakePool`-shaped object standing in for `pg.Pool`, exposing only
+`.query(sql, params)` against an in-memory data structure, no real network socket ever opens.
+This same pattern is used in the example tutorials that exercise real Postgres-backed classes
+hermetically (`examples/tutorials/115-per-limiter-rate-limit-stores`, `116-supabase-policy-repository`,
+`117-maker-checker-one-shot-scripts`, each fakes just enough of `pg.Pool` for the class under
+test to function correctly, verified by reading their `run.ts` files directly).
+
+`vitest.config.ts` (repo root) sets `NODE_ENV=test` implicitly for the whole suite via Vitest's
+own default behavior, and `packages/storage/src/StorageFactory.createFromEnvironment()` reads
+that explicitly, returning `MemoryStorageProvider` unconditionally under `NODE_ENV=test`,
+regardless of what `PARMANA_STORAGE` happens to be set to in the ambient environment. This exists
+specifically so importing application code during test collection never accidentally constructs
+a live Supabase client (see the `G-15` reference in that factory's own doc comment).
+
+### The tutorial suite as documentation
+
+`examples/tutorials/` currently runs to 117 numbered tutorials plus `examples/scenarios/`,
+invoked together via `npm run examples` (`scripts/run-examples.ts`). Each tutorial is a
+standalone, runnable script that exercises real production code (not a simplified
+re-implementation) against a hermetic environment, either an in-process Express server on an
+ephemeral port, or a fake client standing in for one external dependency, and prints its own
+pass/fail assertion at the end. The reasoning, stated directly in this codebase's own review of
+itself: a runnable tutorial is falsifiable in a way prose is not, if the underlying behavior
+changes, the tutorial's own final assertion fails the next time anyone runs it, where a
+paragraph of documentation making the same claim would simply keep reading as true.
+
+One entry is deliberately excluded from the automated `npm run examples` run:
+`examples/tutorials/09-rest-api`, which POSTs to a live server the runner does not start. A
+comment in `scripts/run-examples.ts` explains why and points at its own `README.md` for how to
+run it individually. `examples/04-verified-execution` used to be excluded too, because it bound
+a fixed port; it stopped running unnoticed, and now listens on a free port and runs with the
+rest.
+
+### Attack scenarios
+
+`npm run evaluate` (`scripts/evaluate.ts`) groups existing tests into 16 attack scenarios,
+listed in `evaluations/scenarios.json`: replay, forgery, acting without a signed approval,
+policy substitution, gateway bypass, record tampering and more. Each scenario names what the
+attacker controls, the invariant and the test files that check it. The runner runs those files
+once and reports each scenario `BLOCKED`, `FAILED` or `NOT RUN`, with an
+`evaluation-report.json` tied to the commit. It adds no new tests: it gives an evaluator one
+result per attack instead of 3,000 test names. `tests/architecture/evaluation-scenarios.test.ts`
+fails if a scenario points at a test file that no longer exists or a claim number missing from
+`docs/CLAIMS.md`.
+
+### Fuzzing
+
+Property based tests with [fast-check](https://fast-check.dev) send damaged and arbitrary input
+where the server reads what others wrote: request bodies (`POST /execute` and
+`POST /transactions`, a valid transaction with fields removed or replaced by arbitrary JSON, and
+arbitrary JSON), policy files (validation must accept or refuse with `PolicyValidationError`, and
+a policy that validates must evaluate any signals to `APPROVE` or `REJECT`), the offline verifier
+(any input is `valid: false` with a reason) and approval parsing. They run with every `npm test`.
+On their first run they found three crashes on malformed input: a missing `policy` or
+`authorization` gave a bare `500` (G-87), the policy validator threw `TypeError` on fields of the
+wrong type (G-90), and the offline verifier threw on malformed hybrid signatures (G-91). All three
+are fixed, each with an exact test.
+
+### Mutation testing
+
+A count of tests, or line coverage, says little about whether tests would notice a wrong
+answer. `npm run mutation -- <package>` (`scripts/mutation.ts`, Stryker) measures that instead:
+it makes small deliberate changes to a package's source, such as turning `<=` into `<` or
+forcing a condition to `true`, one at a time, and runs the package's own tests against each.
+The share of changes the tests catch is the mutation score. It is slow, because every change
+runs the package's whole test suite, so it is run by hand rather than in CI.
+
+The first run on the five security-critical packages scored 89.7% for `envelope-verifier`,
+77.7% for `approval`, 50.3% for `policy`, 67.6% for `execution-gateway` and 65.4% for `crypto`.
+The surviving changes pointed at real gaps: approval scope comparators other than `eq` and `lte`,
+what rule operators do with a value of the wrong type, gateway options that could be dropped on
+the way to the envelope verifier, session binding fields never tested alone, and the offline
+verifier's hybrid path. Two led to behavior changes: a request whose signals do not have the
+policy's declared types is now refused before any rule runs, and an Execution with only some of
+its chain fields now fails the execution chain check (`docs/VERIFICATION-GAPS.md` G-89). Each
+gap that matters for security now has a test, checked by putting the targeted change back by
+hand.
+
+The crypto score was measured on Node 22, where the ML-DSA-65 tests skip themselves, so it
+undercounted. `npm run mutation` now refuses an older Node than 24, the version CI uses. Re-run
+on Node 24 after the fixes: `envelope-verifier` 94.0%, `approval` 93.9%, `policy` 96.0%,
+`crypto` 85.0%, `execution-gateway` 83.6%. What survives is almost all equivalent (a guard a later
+check repeats), advisory (the rule overlap warnings) or message wording. [docs/MUTATION-TESTING.md](https://github.com/pavancharak/parmana/blob/main/docs/MUTATION-TESTING.md) has every score, each
+gap, and what was and was not changed.
+
+### Citation integrity
+
+`docs/CLAIMS.md` and the tutorial `README.md` files cite real file paths as evidence for their
+claims. This codebase treats a stale citation as a real defect worth finding and fixing, not a
+cosmetic nit, a citation nobody automatically checks will eventually go stale, and a claim whose
+evidence has silently rotted is functionally the same as an unverified claim. `docs/CLAIMS.md`
+is explicit that a citation should be understood in the context it was written (a citation may be
+correct as of the date it was added even if later superseded, in which case the surrounding
+prose says so rather than the citation being silently rewritten to point somewhere else, doing
+so would falsify the historical record rather than fix a real problem).
+
+### CI
+
+`.github/workflows/ci.yml` runs, on every push and pull request: install (`npm ci`), build
+(`npm run build`), lint (`npm run lint`), typecheck (`npm run typecheck`), a guard against
+retired terminology (a grep-based check, not a type or lint rule), the full test suite
+(`npm test`), and, in a separate job, `scripts/verify-policy-changes-approved.ts` against
+whichever `policies/**/policy.json` files changed in that push or PR, this is the fail-closed
+governance gate described in Chapter 7, real and enforced in CI today, not yet wired as a GitHub
+required status check due to a plan/visibility limitation external to this codebase (see
+`docs/CLAIMS.md` §2.26's "Preventive Git-layer enforcement" entry for the exact constraint).
+
+The local pre-commit hook (this repo's own `.git` hooks, not GitHub's CI) additionally runs the
+full example suite (`npm run examples`) before allowing a commit, meaning every commit landed on
+`main` has, at minimum, had all currently-registered tutorials pass on the committing machine
+at commit time.
+
+## Concrete example
+
+Any tutorial run demonstrates the philosophy directly:
+
+```bash
+npx tsx examples/tutorials/117-maker-checker-one-shot-scripts/run.ts
+```
+
+spins up a real Express app on an ephemeral local port, exercises the real maker-checker HTTP
+endpoints and the real operational scripts used to approve production policies, and prints a
+final `✓`/`✗` verdict, entirely hermetically, no network access, no real credentials.
+
+## How to validate this yourself
+
+- `packages/storage/tests/unit/` for the fake-`pg.Pool` unit test pattern.
+- `scripts/run-examples.ts` for the full registered tutorial list and the two documented
+  exclusions.
+- `.github/workflows/ci.yml` for the exact CI gates.
+- `docs/CLAIMS.md`'s own header/preface section for the citation-integrity discipline stated in
+  its own words.
+- Any individual `examples/tutorials/*/README.md`, each states what it proves and why it
+  matters, in the same structure this book uses.
+
+## Requirements
+
+None beyond what's already needed to run the codebase locally (Node.js, `npm install`). No
+tutorial or unit test in the default `npm test` / `npm run examples` runs requires real AWS,
+Supabase, or connector credentials; that is the entire point of the hermetic-first discipline
+described above.

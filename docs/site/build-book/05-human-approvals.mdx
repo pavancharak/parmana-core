@@ -1,0 +1,220 @@
+---
+title: "5. Human approvals"
+description: "Who can approve, how an approver is trusted, what a signed approval covers, how a person learns an approval is needed, and the limits of what an approval fixes."
+---
+
+No agent action runs without a person. A policy names an **approval signal**; the agent may set it to `true` only with
+a **signed approval** from a trusted approver, for this action and this resource (and amount, where the policy names
+one), not expired, used once. This chapter is about the people and the signatures.
+
+## Three kinds of people, three kinds of keys
+
+| Person          | Signs                                                    | Key                                                 | Registered through                                            |
+| --------------- | -------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------- |
+| Action approver | One action on one resource: "this refund, once"          | An Ed25519 approver key, on their own machine       | [Manage approvers](/guides/manage-approvers), maker checker   |
+| Maker           | Nothing; proposes changes                                | An API key registered as a human                    | The operator ([Chapter 8](/build-book/08-deploy-and-operate)) |
+| Checker         | Approval of a change: a policy, an approver, a connector | An API key registered as a human, and a step up key | The operator                                                  |
+
+Private keys never leave their owner's machine. Only public keys are sent to anyone.
+
+## Trust an approver
+
+An approver is trusted when their public key is in the server's approver list. Add one through maker checker: no code
+change, no deploy.
+
+1. The approver makes a key pair on their own machine:
+
+   ```bash
+   npx tsx scripts/generate-approver-key.ts --approver-id manager-priya --key-id manager-priya-key-1 --out-dir ~/.parmana
+   ```
+
+   They keep `manager-priya__manager-priya-key-1.private.pem` and send the `.public.pem` file.
+
+2. A maker proposes adding it: `POST /approval-issuers/changes` with `action: "add"`, the ids, the public key and a
+   reason; or `proposeApproverChange()` in TypeScript, `approvers.propose_add()` in Python.
+3. A checker compares the public key with the approver over another channel, signs a step up authorization for the
+   change, and approves: `POST /approval-issuers/changes/<changeId>/approve`.
+4. From the next request on, approvals signed with that key verify. `GET /approval-issuers` lists every trusted key
+   and where it came from (`governed`, or `code` for keys listed in the server's source).
+
+Rotate by adding a new key id, switching, then revoking the old one. Revoking refuses every approval the key ever
+signed, used or not. Key ids are never reused. Every command, in curl and both SDKs, is in
+[Manage approvers](/guides/manage-approvers).
+
+## Sign an approval
+
+The approver signs on their own machine, for one action, one resource and, where the policy names a value, a maximum.
+
+<CodeGroup>
+
+```bash Script
+npx tsx scripts/sign-approval.ts \
+  --private-key-file ~/.parmana/manager-priya__manager-priya-key-1.private.pem \
+  --approver-id manager-priya --key-id manager-priya-key-1 \
+  --capability paytm:refund --resource-id ORD-1042 --max-amount 75000 --out approval.json
+```
+
+```typescript TypeScript
+import { readFileSync } from "node:fs";
+import { signApproval } from "@parmana/sdk";
+
+const approval = signApproval({
+  privateKeyPem: readFileSync(
+    "manager-priya__manager-priya-key-1.private.pem",
+    "utf8",
+  ),
+  approverId: "manager-priya",
+  keyId: "manager-priya-key-1",
+  capability: "paytm:refund",
+  resourceId: "ORD-1042",
+  maxAmount: 75000,
+});
+```
+
+```python Python
+from pathlib import Path
+
+from parmana.crypto import sign_approval
+
+approval = sign_approval(
+    private_key_pem=Path("manager-priya__manager-priya-key-1.private.pem").read_text(),
+    approver_id="manager-priya",
+    key_id="manager-priya-key-1",
+    capability="paytm:refund",
+    resource_id="ORD-1042",
+    max_amount=75000,
+)
+```
+
+</CodeGroup>
+
+A signed approval, as produced in [Chapter 2](/build-book/02-your-first-governed-action):
+
+```json
+{
+  "payload": {
+    "version": 1,
+    "approvalId": "89e8fff3-7a67-4a54-be9b-c2954f9321d5",
+    "issuer": {
+      "approverId": "local-test-approver",
+      "keyId": "local-test-approver-key-1"
+    },
+    "issuedAt": "2026-10-01T01:15:46.863Z",
+    "expiresAt": "2026-10-01T01:30:46.863Z",
+    "capability": "test:fixture-execute",
+    "resourceId": "vendor/vendor-123",
+    "scope": { "field": "value", "comparator": "lte", "value": 100 },
+    "nonce": "d796e70d-63c5-48ac-9e2e-6c3a369b32d5"
+  },
+  "signature": {
+    "algorithm": "ed25519",
+    "keyId": "local-test-approver-key-1",
+    "value": "d1HjmV295NmvPKjQS9nalL3hjvxE+SvoQ3WjTGcaLyO2Z6dFOwTQIENtGCAwrHqS2L2mqPxx2mnckrwE3WoyDA==",
+    "signedAt": "2026-10-01T01:15:46.863Z"
+  }
+}
+```
+
+It lasts 15 minutes unless the approver sets `--ttl-seconds` (`ttlSeconds`, `ttl_seconds`). The signing tools refuse
+more than one day; the server checks only that it has not expired, so a short lifetime is the approver's choice to
+keep.
+
+## What the server checks
+
+The agent sends a new request with the approval signal `true` and the approval in `signals.approvalArtifact` (or the
+signal the policy names as the declaration's `artifact`). Before deciding, and again at the gateway just before
+release, the server checks:
+
+| Check                                                                  | If it fails                                                   |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------- |
+| The approver and key are trusted and not revoked                       | The approval signal counts as `false`; the request is refused |
+| The Ed25519 signature over the payload verifies                        | Same                                                          |
+| `expiresAt` is in the future                                           | Same                                                          |
+| `capability` is the request's action                                   | Same                                                          |
+| `resourceId` equals the request field the policy names                 | Same                                                          |
+| The amount in the request (never the agent's signal) is within `scope` | Same                                                          |
+| `scope.field` is `value` (the policy gives a `value`) or `resourceId`  | Same                                                          |
+| The approval was not used before (its nonce is stored once used)       | Same                                                          |
+
+A refused approval is a `403 POLICY_DENIED`, because the declared signal does not match what the server verified:
+
+```text
+Rejected: declared signal(s) do not match independently verified state (managerApproved=true != verified managerApproved=false).
+```
+
+## How a person learns an approval is needed
+
+A request refused for want of an approval is a normal, expected answer. Three ways to reach the approver:
+
+- **Refusal Records.** Every refusal is stored, signed, with its reason and the request. Query `refusal_records` for
+  the policy and `matchedRuleId` ([Human approval](/concepts/human-approval#review-refused-requests)).
+- **A webhook.** With `APPROVAL_WEBHOOK_URL` and `APPROVAL_WEBHOOK_SECRET` set, Parmana posts an `approval.needed`
+  event, signed with HMAC SHA256, only when the same request with the approval signals `true` would have been
+  approved. Its `approvals` list is exactly what to sign.
+- **Email.** With Resend configured and `APPROVAL_EMAIL_TO` set, the same event is emailed, at most once per refusal.
+
+Delivery of the webhook and the email is best effort: one attempt, no retry, and a failure never changes the refusal.
+The Refusal Records stay the complete list. Setup and receiver code: [Approval notifications](/guides/approval-notifications).
+
+## What an approval does not fix
+
+- **A refused request is never approved later.** Nothing waits. After the approver signs, the agent sends a new
+  request.
+- **An approval covers the action and the resource, and the amount where the policy names one.** It does not fix
+  other parameters: an approval for a Slack channel does not fix the message text. The approver trusts the agent with
+  those details for that one use.
+- **Facts the agent declares stay its word.** A policy should use them only to refuse.
+- **There is no automatic path.** No policy can approve without a person; the validator refuses to load one that
+  tries ([Chapter 4](/build-book/04-policies)).
+
+## Approving changes: the step up authorization
+
+Approving a policy, an approver or an external connector is a different signature: a **step up authorization** from
+the checker, for one change and one decision (`approve` or `reject`), valid for at most 120 seconds and once. The
+server also refuses it when the checker is the maker (`403 SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE`) or not registered as
+a human (`403 NON_HUMAN_CALLER_DENIED`).
+
+<CodeGroup>
+
+```bash Script
+npx tsx scripts/sign-policy-change-step-up.ts --private-key-file step-up.private.pem \
+  --key-id <checker caller id> --pending-policy-change-id <change id> --action approve
+```
+
+```typescript TypeScript
+import { signPolicyChangeStepUp } from "@parmana/sdk";
+
+const stepUp = signPolicyChangeStepUp({
+  pendingPolicyChangeId: changeId,
+  action: "approve",
+  privateKeyPem: readFileSync("step-up.private.pem", "utf8"),
+  keyId: "checker-step-up-1",
+});
+```
+
+```python Python
+from parmana.crypto import sign_policy_change_step_up
+
+step_up = sign_policy_change_step_up(
+    pending_policy_change_id=change_id,
+    action="approve",
+    private_key_pem=Path("step-up.private.pem").read_text(),
+    key_id="checker-step-up-1",
+)
+```
+
+</CodeGroup>
+
+`scripts/local-review-action.ts` signs and submits in one process, so the 120 seconds cannot run out between the two.
+
+## Keep it honest
+
+Parmana proves that a key signed. It cannot prove whose hand held the key. Two keys held by one person make every
+record claim a second person who does not exist. Keep each key on its owner's machine, and never paste a key into a
+chat or a ticket.
+
+## See it run
+
+- Tutorial 119: an approval accepted, then refused when reused, stretched and moved.
+- Tutorials 120 to 122 in `examples/tutorials/`: approvals for the rule itself, a read, a Slack post and a HubSpot
+  update.

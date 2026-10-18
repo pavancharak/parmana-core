@@ -1,0 +1,339 @@
+---
+title: "Connector Development Guide"
+description: "How to implement a Connector against @parmana/connector-sdk, every example uses MockConnector, no enterprise-specific example."
+---
+
+<Info>
+  **[AVAILABLE] as a library**, `packages/connector-sdk`, **[AVAILABLE] wired
+  into the default server** for HubSpot, GitHub, Paytm, and Slack, each
+  registering only when its own credentials are configured. Adding another
+  connector in code is a code change, see the warning below. To connect a system
+  you run an HTTPS endpoint for, with no code change, register an external
+  connector instead: [Connect any external
+  system](/guides/connect-any-external-system).
+</Info>
+
+<Note>
+  Examples below are TypeScript. Building a connector from Python instead? The
+  identical contract is published as [`parmana-connector-sdk` on
+  PyPI](https://pypi.org/project/parmana-connector-sdk/) — see [Connector SDK
+  (Python)](/reference/connector-sdk-python).
+</Note>
+
+## Connector responsibilities, and what a Connector must never do
+
+A Connector validates a request, executes using an already-resolved credential, and
+returns a response with a fixed, predictable shape. A Connector never evaluates policy, authorizes
+execution, interprets AI output, makes a business decision, or resolves a credential
+itself, credential resolution happens exclusively inside the Execution Gateway, before a
+Connector is ever called.
+
+```typescript
+import {
+  connectorCapabilities,
+  type Connector,
+  type ConnectorExecutionContext,
+  type ConnectorRequest,
+  type ConnectorResponse,
+} from "@parmana/connector-sdk";
+
+class ExampleConnector implements Connector {
+  readonly connectorId = "example";
+  readonly capabilities = connectorCapabilities(["crm:read"]);
+
+  async execute(
+    request: ConnectorRequest,
+    context: ConnectorExecutionContext,
+  ): Promise<ConnectorResponse> {
+    if (!this.capabilities.includes(request.capability)) {
+      throw new Error(`does not declare capability "${request.capability}"`);
+    }
+    // context.credential is an opaque CredentialHandle, read it, never log it.
+    return { success: true, metadata: { recordId: "example-1" } };
+  }
+}
+```
+
+## Capabilities are namespaced verbs
+
+`ConnectorCapability` is a plain string, validated eagerly by `connectorCapabilities()`
+against `namespace:verb` (e.g. `http:get`, `crm:read`, `payments:refund`), a malformed
+capability throws at connector construction, not at execution time. By convention,
+`ExecutableContent.action` _is_ the capability string; this is what
+`execution-control`'s `DefaultConnectorPolicy` already checks unchanged.
+
+## Registering a connector
+
+**This step is internal, not something `npm install @parmana/connector-sdk` alone gives you.**
+`@parmana/connector-sdk` lets you build and test a `Connector` in isolation. Wiring a built
+connector into a live Parmana deployment happens through `GatewayConnectorRegistry`
+(`@parmana/execution-gateway`) — a private, unpublished package internal to this repository,
+the same way `packages/api/src/bootstrap/*` registers HubSpot, GitHub, Paytm, and Slack
+today. If you're building a connector against the published `@parmana/connector-sdk` for your
+own deployment, this section shows the shape of that internal step, not an API surface you can
+call from outside this repository.
+
+```typescript
+import { GatewayConnectorRegistry } from "@parmana/execution-gateway";
+import { StaticCredentialProvider, healthyNow } from "@parmana/connector-sdk";
+
+const registry = new GatewayConnectorRegistry();
+
+registry.register({
+  connector: new ExampleConnector(),
+  metadata: {
+    connectorId: "example",
+    displayName: "Example CRM",
+    version: { major: 1, minor: 0, patch: 0 },
+    health: healthyNow(),
+  },
+  connectorIdentity: {
+    connectorId: "example",
+    publicIdentity: "spiffe://parmana/connectors/example",
+    authenticationMetadata: {},
+  },
+  credentialProvider: new StaticCredentialProvider({
+    example: { token: "..." },
+  }),
+  policy, // a ConnectorPolicy, e.g. CapabilityConnectorPolicy(new DefaultConnectorPolicy(...))
+  gatewayAuthentication,
+  crypto, // @parmana/crypto CryptoProvider, reused for evidence hashing, not reimplemented
+});
+```
+
+`registry` implements `execution-control`'s `ConnectorRegistry` interface (`get()`), so it
+plugs directly into `ExecutionControlService` exactly like `InMemoryConnectorRegistry`.
+
+## Testing your connector hermetically
+
+Use `MockConnector` to test anything upstream of your connector (policy wiring, routing)
+without a real target system:
+
+```typescript
+import { MockConnector, connectorCapabilities } from "@parmana/connector-sdk";
+
+const mock = new MockConnector({
+  connectorId: "example",
+  capabilities: connectorCapabilities(["crm:read"]),
+  script: {
+    respond: () => ({ success: true, metadata: { recordId: "example-1" } }),
+  },
+});
+
+const result = await mock.execute(
+  {
+    capability: "crm:read",
+    businessTransactionId: "t1",
+    action: "crm:read",
+    target: "crm://record/1",
+    parameters: {},
+  },
+  { credential: undefined as never },
+);
+```
+
+Real output, checked directly against this exact code:
+
+```
+mock result: { success: true, metadata: { recordId: 'example-1' } }
+mock invocations: 1
+```
+
+To test failure handling, use `script: { failWith: new Error("upstream unavailable") }`.
+`mock.invocations` records every `ConnectorRequest` the connector received, so tests can
+assert exactly what was executed.
+
+## Version and health checks fail closed
+
+`SdkConnectorExecutor` rejects execution, before invoking your connector, if:
+
+- an `expectedVersion` was configured at registration and the connector's own
+  `metadata.version` doesn't match (guards a rolling deployment that swapped connector
+  builds underneath a pinned expectation), or
+- `metadata.health.status === "unavailable"`.
+
+## What every connector's evidence looks like
+
+Every execution produces a `ConnectorEvidence` object, connector ID, version, capability,
+a sanitized endpoint (credentials and query parameters stripped), the credential provider's
+ID, redacted request/response summaries, timestamps, and a hash computed by the existing
+`TrustRecordHasher`, attached at `ExecutionResult.metadata.connector`. See
+[Execution Trust Record](/concepts/execution-trust-records) for how this reaches the Trust Record
+without any change to its schema or hashing pipeline.
+
+## What reaching the default server actually requires
+
+<Warning>
+This is the part that's easy to assume is configuration and isn't. A capability is only
+reachable on the default server when its connector is registered in
+`createConnectorRegistry.ts`, gated behind that connector's own credentials being
+configured. There is no unconditional or environment-only registration path: a capability
+with a signed `APPROVED` decision but no registered connector fails closed at dispatch, it
+never silently succeeds. The real, current registration pattern, copied verbatim from
+source:
+
+```typescript
+// packages/api/src/bootstrap/createConnectorRegistry.ts (abridged, real source)
+const hubspotCredentialProvider = createHubSpotCredentialProvider();
+if (hubspotCredentialProvider === undefined) {
+  console.warn({
+    event: "hubspot_connector_unavailable",
+    reason: "HUBSPOT_PRIVATE_APP_TOKEN is not configured.",
+  });
+} else {
+  registrations.push({
+    connector: createHubSpotConnector(),
+    metadata: HubSpotMetadata,
+    connectorIdentity: {
+      connectorId: "hubspot",
+      publicIdentity: "spiffe://parmana/connectors/hubspot",
+      authenticationMetadata: {},
+    },
+    credentialProvider: hubspotCredentialProvider,
+    policy: new DefaultConnectorPolicy(authenticator, sessions),
+    gatewayAuthentication,
+    crypto,
+    audit,
+  });
+}
+```
+
+Adding a built in connector to the running server is more than one file. Slack, the most recent,
+touches these (checked against the source on 2026-10-02), and a new connector needs the same:
+
+| Where                                                                                                                            | What                                                                                                                                            |
+| -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/connector-<name>/`                                                                                                     | The client for the target system                                                                                                                |
+| `packages/execution-gateway/src/connector-execution/Gateway<Name>Adapter.ts`, `createGateway<Name>Connector.ts`, both `index.ts` | The gateway side that receives verified, frozen content and calls the client                                                                    |
+| `packages/api/src/bootstrap/create<Name>Connector.ts`, `create<Name>CredentialProvider.ts`                                       | Build the connector; resolve its credential (return `undefined` when it is not configured)                                                      |
+| `packages/api/src/bootstrap/createConnectorRegistry.ts`                                                                          | Register it, following the shape above                                                                                                          |
+| `packages/api/src/bootstrap/createConnectorAuthenticator.ts`                                                                     | Trust its identity                                                                                                                              |
+| `packages/api/src/bootstrap/ConnectorCatalog.ts`, `packages/connector-sdk/src/ConnectorFactory.ts`                               | List it                                                                                                                                         |
+| `packages/capability-registry/src/CapabilityPolicyBinding.ts`                                                                    | Bind its capability to one policy name; `assertConnectorCapabilitiesBound` refuses to start with an unbound one                                 |
+| `policies/<name>/<version>/policy.json`                                                                                          | The policy, with `approvalSignals`, then approved through [policy governance](/guides/policy-lifecycle-and-approvals)                           |
+| `packages/api/src/application.ts` and a `create<Name>...SignalVerifier.ts` (optional)                                            | Check a fact against the target system before release, as Slack does for its channel                                                            |
+| `tests/architecture/execution-boundary.test.ts`, `sandbox-connector-variables.test.ts`                                           | List the new connector class; add its variable prefix, and the variables to the guard in `createSandboxOptions.ts`, so the sandbox refuses them |
+
+**Not** `createConnectorRoute.ts`, despite its name: that file's `route()` function is dead
+code in the current production wiring (`createExecutionGateway.ts` always supplies
+`executionControl.service`, which makes the only branch that calls `route()` unreachable);
+editing it has no effect on which connector actually handles a request. There is no dynamic
+registration path for a built in connector and no environment variable that adds one. To
+connect a system with no code change, register it as an [external
+connector](/guides/connect-any-external-system) instead. HubSpot, GitHub, Paytm and Slack are
+the built in connectors, see [HubSpot](/integrations/hubspot) for that connector specifically.
+
+</Warning>
+
+## The pattern, proven twice: Razorpay and HubSpot
+
+<Note>
+  Razorpay was deliberately removed from the codebase in full. The lessons below
+  are kept as a historical, worked example (a second real connector, built after
+  HubSpot's own lessons already existed to apply), not a claim that Razorpay is
+  still registered anywhere in this codebase today.
+</Note>
+
+Both connectors implemented everything above, but the two builds themselves are the more
+useful lesson: Razorpay learned each point below the hard way, on a running connector,
+after the fact. HubSpot applied all of it from its first version instead. Read this before
+starting a new connector.
+
+**Scope to one narrow action first.** Don't build a connector for a whole external API
+surface. Razorpay started with refund creation only, not payouts, not subscriptions, not
+the rest of the payments API. HubSpot started with one property update on one object type,
+a Deal's `dealstage`, optionally alongside `amount`, not Contacts, not Companies, not
+delete. Widen scope in a later milestone, once the first one is fully proven, see
+[HubSpot](/integrations/hubspot)'s own [ROADMAP] section on its page.
+
+**Two structural guards belong in a connector's first version, not a follow-up fix.**
+
+- _Refuse a placeholder test credential against the real endpoint, before any network
+  call._ Don't rely on the vendor happening to reject it, that's an accident of their
+  behavior, not something this codebase controls. `RazorpayConnector` didn't have this
+  check originally, it survived only because Razorpay's real API happened to reject an
+  unrecognized key — a defense-in-depth fix was added after the fact.
+  The HubSpot connector refuses its own placeholder token against
+  `https://api.hubapi.com` from its first commit, see [HubSpot](/integrations/hubspot) and
+  `packages/execution-gateway/src/connector-execution/GatewayHubSpotAdapter.ts`.
+- _Read the documented test-credential environment variable name directly, never through a
+  bridge variable._ `createRazorpayCredentialProvider.ts`'s test-mode branch originally read
+  a word-order-swapped bridge variable instead of the name `.env.example` actually
+  documented, fixed only after it drifted out of sync.
+  `createHubSpotCredentialProvider.ts` reads `TEST_HUBSPOT_PRIVATE_APP_TOKEN`, the exact
+  documented name, with no bridge to get wrong.
+
+**Apply `boundSignals` hardening from the policy's first version, don't wait for an
+adversarial-testing session to find the gap.** `razorpay-refund/1.0.0` didn't declare
+`boundSignals` until a live demonstration showed a caller could declare small, verified
+signals while `intent` executed something else, closed in an adversarial-testing
+hardening session. `hubspot-deal-update/1.0.0` declares
+`boundSignals` binding `proposedDealStage`/`proposedAmount` to their `intent.parameters`
+fields from its first commit, closing the same class of gap before any live demonstration
+of it existed. See [Policies and the decision](/concepts/policies-and-the-decision).
+
+**Require a signed human approval in every approve rule, reads included.** No AI agent action
+is authorized without one. `PolicyValidator` refuses to load a policy whose approve rule does
+not require a fact from `approvalSignals` with `is_true` at its top level, so a new connector's
+policy must declare one, with `resourceId` naming what the approval covers (the Intent's
+`target`, or a path such as `parameters.dealId`) and, for an amount, `value`. Give a read its
+own policy, like `github-pr-read` and `hubspot-deal-read`, so its approval names only what is
+read. See [Human approval](/concepts/human-approval).
+
+**Test order, every time:**
+
+1. **Hermetic first.** The full authorize → verify → execute → confirm chain against a mock
+   server, zero network calls. Both connectors' unit suites run this way on every
+   `npm test`.
+2. **Policy-denial-makes-zero-calls, proven at two layers.** A direct state check against
+   the mock server (nothing changed), and a `fetch` spy at the HTTP boundary (literally zero
+   calls reached the mock or real endpoint). See [HubSpot](/integrations/hubspot) for what
+   that looks like in a captured response.
+3. **A gated live suite last**, behind an `ALLOW_LIVE_<CONNECTOR>=1` flag checked alongside a
+   real test credential, skipped by default so a routine `npm test` never makes a live call
+   by accident.
+
+**Prefer a non-destructive live-test action where the target system allows one.** Read live,
+apply a small reversible change, verify independently, revert, in the same run. HubSpot's
+live suite nudges a real test deal's `amount` by a small within-threshold delta and reverts
+it before finishing, safe to rerun indefinitely. Razorpay's refund is irreversible by
+construction, its captured test payment's refundable remainder depletes by a fixed amount
+on every live run — a real operational cost of testing against a real endpoint.
+
+**Disclose what actually happened, including when the mechanism catches your own mistake.**
+HubSpot's first live amount-change test run failed with a policy denial the test author
+didn't expect, because the test's own signals payload omitted `proposedAmount`,
+`SignalIntentBinder` correctly rejected the mismatch before the intended amount-threshold
+rule ever ran. That's not a connector defect, it's the binding working exactly as designed,
+against a test's own mistake this time instead of a caller's.
+
+## Troubleshoot
+
+- **`does not declare capability "..."` thrown by `MockConnector` or your own connector.**
+  `request.capability` didn't match anything in `connectorCapabilities([...])`. Check for a
+  typo, capability strings are exact, case-sensitive matches.
+- **`SdkConnectorExecutor` rejects with a version mismatch.** An `expectedVersion` was
+  configured at registration and your connector's `metadata.version` doesn't match, this
+  guards a rolling deployment that swapped connector builds underneath a pinned expectation.
+- **Registered your connector but `POST /execute` still answers `503 CONNECTOR_NOT_REGISTERED`.** Registration in a `ConnectorSdkRegistry` you constructed yourself doesn't reach
+  the running default server, that server builds its own registry in
+  `createConnectorRegistry.ts`, see the Warning above.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="Issue and verify session credentials"
+    icon="key"
+    href="/guides/session-credentials"
+  >
+    What your connector's `context.credential` actually is, and its lifecycle.
+  </Card>
+  <Card
+    title="Credential isolation"
+    icon="shield"
+    href="/concepts/credential-isolation"
+  >
+    The concept this guide's credential handling exercises.
+  </Card>
+</CardGroup>

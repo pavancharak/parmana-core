@@ -1,0 +1,26 @@
+{
+  "businessTransactionId": "33333333-3333-4333-8333-333333333333",
+  "policy": {
+    "name": "vendor-payment",
+    "version": "2.1.0"
+  },
+  "intent": {
+    "action": "release-payment",
+    "target": "vendor",
+    "parameters": {
+      "vendorId": "VENDOR-3001",
+      "invoiceId": "INV-2026-003",
+      "currency": "USD",
+      "amount": 75000
+    }
+  },
+  "signals": {
+    "vendorVerified": false,
+    "invoiceVerified": true,
+    "paymentApproved": true,
+    "sufficientFunds": true,
+    "paymentAmount": 75000,
+    "riskScore": 92,
+    "vendorId": "vendor"
+  }
+}

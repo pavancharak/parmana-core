@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/authority.schema.json",
+  "title": "Authority",
+  "description": "Entity empowered to authorize execution within a trust domain. Immutable once issued.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["authorityId", "authorityType", "principalId", "issuedAt"],
+  "properties": {
+    "authorityId": {
+      "type": "string",
+      "description": "Unique Authority identifier."
+    },
+    "authorityType": {
+      "type": "string",
+      "description": "Type of authority.",
+      "enum": ["USER", "ROLE", "SERVICE", "ORGANIZATION"]
+    },
+    "principalId": {
+      "type": "string",
+      "description": "Principal identifier."
+    },
+    "displayName": {
+      "type": "string",
+      "description": "Human-readable display name."
+    },
+    "issuedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when Authority became effective."
+    }
+  },
+  "examples": [
+    {
+      "authorityId": "c0c01c23-04a2-45f2-a821-ef24bfca02d3",
+      "authorityType": "SERVICE",
+      "principalId": "ap-automation-svc",
+      "displayName": "Accounts Payable Automation",
+      "issuedAt": "2026-07-07T16:38:59.285Z"
+    }
+  ]
+}

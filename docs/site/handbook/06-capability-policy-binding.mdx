@@ -1,0 +1,140 @@
+---
+title: "Chapter 6: Capability and Policy Binding"
+description: "CapabilityPolicyBinder (packages/capability-registry/src/CapabilityPolicyBinding.ts) is a"
+---
+
+## What it is
+
+`CapabilityPolicyBinder` (`packages/capability-registry/src/CapabilityPolicyBinding.ts`) is a
+one-method class that enforces a single invariant: for a fixed set of production capabilities
+(a connector action like `hubspot:deal-update` or `paytm:refund`), the policy the caller
+declares must be the one canonical policy Parmana designates for that capability, never a
+different, caller-chosen one.
+
+It lives in its own package, `@parmana/capability-registry`, deliberately depending on nothing
+except `@parmana/shared`, not on `@parmana/policy`, not on either connector package, so that
+anything needing to ask "is this capability bound, and to what" can depend on just this map,
+and `@parmana/policy` itself can depend on it without creating a dependency cycle back through a
+connector package.
+
+## Why it was built
+
+This is a distinct problem from Chapter 5's signal-intent binding, easy to conflate with it
+because both involve the word "binding." Signal-intent binding proves a policy's declared
+signals match the real Intent _once a policy has already been selected_. Capability-policy
+binding is about _which policy gets selected in the first place_.
+
+`CapabilityPolicyBinding.ts`'s own doc comment (lines 74-96) states the gap directly: a
+capability's `boundSignals`/`SignalStateVerifier` protections are scoped to one specific policy.
+Nothing upstream enforces that the request is actually evaluated against _that_ policy ,
+`PolicyRouter`/`FilePolicyRepository` load whatever `policy.name`/`policy.version` the caller
+declares, `PolicyEngine.evaluate` takes no `action` parameter at all, and the connector-level
+capability check only confirms the resolved connector declares the capability, never which
+policy authorized it. A caller could therefore pair a real capability (`hubspot:deal-update`)
+with an unrelated, unprotected policy (say, `vendor-payment/2.0.0` at the time, which declares no
+`boundSignals` for that capability at all), have that unrelated policy's looser rules evaluated
+against self-declared signals, and get the real `hubspot:deal-update` intent executed anyway ,
+bypassing the capability's intended protections entirely, not merely weakening them.
+
+Found by an independent repository verification (Phase 2K, TD-22) and closed as its own
+package extraction (G-30 architecture follow-up, see `docs/VERIFICATION-GAPS.md` G-30 for the full history of why this specific
+package boundary was chosen).
+
+## How it works
+
+### The canonical binding table
+
+`CANONICAL_CAPABILITY_POLICY_BINDINGS` (`CapabilityPolicyBinding.ts`) is a `ReadonlyMap`
+from capability string to `PolicyReference` (`{ name, version, schemaVersion }`). The **name** is
+fixed in code. The **version** in the table applies only where policy governance is not
+enforced (`NODE_ENV` `test` and `development`). Where it is, production included, the version in
+effect is the one most recently approved through policy governance (G-66), so a new version goes
+live when it is approved, with no deploy. Current bindings, with the version used without
+governance:
+
+| Capability            | Bound policy                  |
+| --------------------- | ----------------------------- |
+| `hubspot:deal-fetch`  | `hubspot-deal-read` @ 1.0.0   |
+| `hubspot:deal-update` | `hubspot-deal-update` @ 1.1.0 |
+| `github:pr-fetch`     | `github-pr-read` @ 1.1.0      |
+| `github:pr-merge`     | `github-pr-approval` @ 1.1.0  |
+| `paytm:refund`        | `customer-refund` @ 1.2.0     |
+| `slack:post-message`  | `slack-post-message` @ 1.1.0  |
+
+Every policy in this table needs a signed human approval for the action and its resource,
+reads included (since 2026-09-30, [Human approval](/concepts/human-approval)).
+
+Every entry corresponds to a capability actually registered in production bootstrap
+(`packages/api/src/bootstrap/createConnectorRegistry.ts`) and the one policy file purpose-built
+to authorize it. An action with no entry here, every test/tutorial/example fixture action, and
+any future capability not yet given a canonical policy, is entirely unaffected by
+`CapabilityPolicyBinder`. The table is additive, not a replacement for `PolicyRouter`/
+`PolicyEngine`; it doesn't change how a selected policy is loaded or evaluated, only whether
+the caller was allowed to select a different one.
+
+Since 2026-09-28 (G-73) a read and a merge on GitHub have separate policies, so a merge can
+need a signed approval for its pull request without every read needing one. In production each
+new version applies once it is approved through policy governance.
+
+### The request-time check
+
+`await CapabilityPolicyBinder.findViolation(action, declared)` looks up `action` in the
+canonical table. No entry means nothing to enforce, returns `undefined`. Otherwise the declared
+name must equal the bound name, and the declared version must equal the version in effect: the
+one most recently approved for that name (`findMostRecentForName` on the approval records),
+where policy governance is enforced, or the table's version elsewhere. An older version is
+refused even if it was approved in the past; approving it again makes it current, which is how a
+rollback works. No approved version, or a failed lookup, refuses the request with a `reason`.
+Any mismatch returns a `CapabilityPolicyBindingViolation` (`{ action, expected, declared,
+reason? }`), which the runtime pipeline (Chapter 8) turns into a rejection before the (wrong)
+policy file is even evaluated.
+
+### The startup-time companion check
+
+A second, separate mechanism enforces the other direction: that every capability a connector
+actually registers has _either_ a canonical binding _or_ an explicit, reasoned exemption.
+`assertConnectorCapabilitiesBound`
+(`packages/api/src/bootstrap/assertConnectorCapabilitiesBound.ts`) runs once, at startup, from
+`createConnectorRegistry.ts`, after every connector registration is built and before the
+registry is handed back to the rest of bootstrap. For each registered capability, it checks
+`CANONICAL_CAPABILITY_POLICY_BINDINGS` first, then falls back to
+`INTENTIONALLY_UNBOUND_CAPABILITIES` (`packages/api/src/bootstrap/intentionallyUnboundCapabilities.ts`)
+, a second allowlist for capabilities deliberately left unbound, each entry carrying a reason.
+A capability found in neither map fails the process at startup, before it can bind a port. The
+file's own comment notes this assertion currently never fires outside a test-fixture exemption,
+since every real production capability already has a binding, its purpose is making sure the
+_next_ connector added can't silently ship the same gap `CapabilityPolicyBinder` was built to
+close.
+
+Together, the two checks form a closed loop: the startup check guarantees every real capability
+is accounted for (bound or explicitly exempted), and the request-time check guarantees a caller
+can't route a bound capability through the wrong policy.
+
+## How it enables things, with a concrete example
+
+- **Tutorial 83** (`examples/tutorials/83-capability-policy-binding/run.ts`) exercises
+  `CapabilityPolicyBinder` directly, including the exact TD-22 exploit shape (a real capability
+  paired with an unrelated, unprotected policy) and confirms it's now rejected.
+- **Tutorial 31** (`examples/tutorials/31-authorization-binding/run.ts`) covers a related but
+  distinct binding concern at the execution-authorization layer, worth reading for contrast,
+  not a substitute for Tutorial 83.
+
+## How to validate this yourself
+
+- `packages/capability-registry/src/CapabilityPolicyBinding.ts` (124 lines, read the whole
+  file, every design decision is explained in its own doc comments).
+- `packages/capability-registry/tests/unit/CapabilityPolicyBinder.test.ts`, its own header
+  comment restates the exact exploit this class closes, and the test suite proves it.
+- `packages/api/src/bootstrap/assertConnectorCapabilitiesBound.ts` and
+  `packages/api/src/bootstrap/intentionallyUnboundCapabilities.ts` for the startup-time
+  companion check.
+- `packages/api/src/bootstrap/createConnectorRegistry.ts` to see exactly where and when the
+  startup check runs relative to connector registration.
+
+## Integration requirements
+
+None beyond registering a connector at all, `CapabilityPolicyBinder` needs no configuration.
+Adding a new capability that should be protected this way means adding an entry to
+`CANONICAL_CAPABILITY_POLICY_BINDINGS`; deliberately leaving one unprotected means adding a
+reasoned entry to `INTENTIONALLY_UNBOUND_CAPABILITIES` instead, the startup assertion will
+fail the process if a new capability is registered with neither.

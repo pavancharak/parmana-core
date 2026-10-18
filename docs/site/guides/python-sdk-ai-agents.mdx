@@ -1,0 +1,380 @@
+---
+title: "Python SDK for AI Agents"
+description: "Integrate Parmana authorization into LangChain, CrewAI, FastAPI, and async agent code. Policy decides, not the agent."
+---
+
+Integrate Parmana into your AI agents so a named policy decides before anything consequential
+executes, not the agent's own judgment call.
+
+## The problem
+
+Your AI customer-service agent can refund payments. Without Parmana, the naive integration looks
+like this:
+
+```python
+# The agent decides everything, and holds the vendor's own credentials.
+if agent.decide_to_refund():
+    payment_provider.refund(payment_id, amount)
+```
+
+Whatever the agent decides, happens. No policy, no audit trail, no proof, and the agent needs the
+vendor's real credentials to act at all.
+
+## The solution
+
+```python
+from parmana import ExecutionRejectedError
+
+try:
+    trust_record = client.execution.execute(transaction)  # a named policy decides, not the agent
+except ExecutionRejectedError:
+    ...  # denied; the agent's downstream code never runs
+```
+
+The agent never holds the connector's credentials, those live server-side, resolved per-connector;
+see [Credential isolation](/concepts/credential-isolation). Every call is evaluated against a
+named, versioned policy, and every outcome (approved or denied) is recorded.
+
+All four patterns below build on the same two calls:
+[`create_business_transaction()`](/sdks/python#create_business_transaction-no-more-hand-synced-ids)
+to build the proposal, and `client.execution.execute()` to run it.
+
+## Pattern 1: LangChain Tool
+
+Expose Parmana as a tool the agent calls instead of calling the vendor API directly.
+
+```python
+from langchain.tools import tool
+from parmana import (
+    ExecutionRejectedError,
+    ParmanaClient,
+    PolicyReference,
+    create_business_transaction,
+)
+
+client = ParmanaClient(endpoint="http://localhost:3000", api_key="your-api-key")
+
+
+@tool
+def refund_payment(payment_id: str, amount: int, reason: str) -> str:
+    """
+    Refund a customer payment.
+
+    Args:
+        payment_id: The payment identifier (e.g. pay_LiZx3eWa).
+        amount: Amount in minor units (e.g. paise, cents).
+        reason: Why the refund is being requested.
+
+    Returns:
+        A confirmation message, or the policy's denial reason.
+    """
+    # The manager's signed approval for this order and amount (every refund
+    # needs one; see Human approval). It arrives from your approval flow,
+    # for example the approval email.
+    approval = pending_approvals[payment_id]
+    transaction = create_business_transaction(
+        principal_id="langchain-agent",
+        purpose=reason,
+        action="paytm:refund",
+        target=f"paytm://orders/{payment_id}",
+        parameters={"orderId": payment_id, "amount": amount},
+        policy=PolicyReference(name="customer-refund", version="1.2.0", schema_version="1.0.0"),
+        signals={
+            "refundEligible": True,
+            "fraudCheckPassed": True,
+            "refundAmount": amount,
+            "managerApproved": True,
+            "approvalArtifact": approval,
+        },
+    )
+
+    try:
+        trust_record = client.execution.execute(transaction)
+        return f"Refund approved and executed. Trust record: {trust_record.trust_record_id}"
+    except ExecutionRejectedError as exc:
+        return f"Refund denied: {exc}"
+
+
+# tools = [refund_payment]
+# agent, executor = ...  # standard LangChain agent wiring around `tools`
+```
+
+The LLM decides _to call_ the tool; it never decides whether the refund is _allowed_, that's the
+named `customer-refund` policy's job, and the tool never touches the payment provider's own
+credentials.
+
+## Pattern 2: CrewAI Task
+
+Same pattern, wired as a CrewAI tool function instead of a LangChain one:
+
+```python
+from crewai import Agent, Task, Crew
+from parmana import (
+    ExecutionRejectedError,
+    ParmanaClient,
+    PolicyReference,
+    create_business_transaction,
+)
+
+client = ParmanaClient(endpoint="http://localhost:3000", api_key="your-api-key")
+
+
+def authorize_and_execute_refund(payment_id: str, amount: int, reason: str) -> str:
+    # The manager's signed approval for this order and amount (every refund
+    # needs one; see Human approval). It arrives from your approval flow,
+    # for example the approval email.
+    approval = pending_approvals[payment_id]
+    transaction = create_business_transaction(
+        principal_id="crewai-customer-service",
+        purpose=reason,
+        action="paytm:refund",
+        target=f"paytm://orders/{payment_id}",
+        parameters={"orderId": payment_id, "amount": amount},
+        policy=PolicyReference(name="customer-refund", version="1.2.0", schema_version="1.0.0"),
+        signals={
+            "refundEligible": True,
+            "fraudCheckPassed": True,
+            "refundAmount": amount,
+            "managerApproved": True,
+            "approvalArtifact": approval,
+        },
+    )
+
+    try:
+        trust_record = client.execution.execute(transaction)
+        return f"Approved: {trust_record.trust_record_id}"
+    except ExecutionRejectedError as exc:
+        return f"Denied: {exc}"
+
+
+customer_service_agent = Agent(
+    role="Customer Service Representative",
+    goal="Resolve customer issues, including refunds where policy allows",
+    backstory="A customer service agent that proposes refunds through Parmana rather than deciding unilaterally.",
+    allow_delegation=False,
+)
+
+refund_task = Task(
+    description="Refund payment pay_LiZx3eWa for 500 INR. Reason: customer requested.",
+    agent=customer_service_agent,
+    expected_output="Confirmation of the refund outcome, approved or denied.",
+    tools=[
+        lambda: authorize_and_execute_refund("pay_LiZx3eWa", 50000, "customer requested"),
+    ],
+)
+
+# crew = Crew(agents=[customer_service_agent], tasks=[refund_task])
+# result = crew.kickoff()
+```
+
+## Pattern 3: FastAPI endpoint
+
+Put Parmana behind an internal endpoint agents (or other services) call over HTTP:
+
+```python
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from parmana import (
+    ExecutionRejectedError,
+    ParmanaClient,
+    PolicyReference,
+    create_business_transaction,
+)
+
+app = FastAPI()
+client = ParmanaClient(endpoint="http://localhost:3000", api_key="your-api-key")
+
+
+class RefundRequest(BaseModel):
+    payment_id: str
+    amount: int
+    reason: str
+
+
+@app.post("/refund")
+async def refund_endpoint(request: RefundRequest):
+    # The manager's signed approval for this order and amount (every refund
+    # needs one; see Human approval). It arrives from your approval flow,
+    # for example the approval email.
+    approval = pending_approvals[request.payment_id]
+    transaction = create_business_transaction(
+        principal_id="ai-agent",
+        purpose=request.reason,
+        action="paytm:refund",
+        target=f"paytm://orders/{request.payment_id}",
+        parameters={"orderId": request.payment_id, "amount": request.amount},
+        policy=PolicyReference(name="customer-refund", version="1.2.0", schema_version="1.0.0"),
+        signals={
+            "refundEligible": True,
+            "fraudCheckPassed": True,
+            "refundAmount": request.amount,
+            "managerApproved": True,
+            "approvalArtifact": approval,
+        },
+    )
+
+    try:
+        trust_record = client.execution.execute(transaction)
+    except ExecutionRejectedError as exc:
+        raise HTTPException(status_code=403, detail=str(exc))
+
+    return {
+        "trust_record_id": trust_record.trust_record_id,
+        "trust_record_hash": trust_record.trust_record_hash,
+    }
+```
+
+An agent (or any other internal caller) then calls this endpoint instead of holding a Parmana
+client, or a Parmana client, of its own, which is a reasonable pattern when you want a single
+service owning the Parmana connection and its API key.
+
+## Pattern 4: Async
+
+`ParmanaClient` is a synchronous client built on `requests.Session()`; use `asyncio.to_thread`
+(or a thread pool) to call it from async code without blocking the event loop:
+
+```python
+import asyncio
+from parmana import (
+    ExecutionRejectedError,
+    ParmanaClient,
+    PolicyReference,
+    create_business_transaction,
+)
+
+client = ParmanaClient(endpoint="http://localhost:3000", api_key="your-api-key")
+
+
+async def refund_payment_async(payment_id: str, amount: int, reason: str) -> dict:
+    # The manager's signed approval for this order and amount (every refund
+    # needs one; see Human approval). It arrives from your approval flow,
+    # for example the approval email.
+    approval = pending_approvals[payment_id]
+    transaction = create_business_transaction(
+        principal_id="async-agent",
+        purpose=reason,
+        action="paytm:refund",
+        target=f"paytm://orders/{payment_id}",
+        parameters={"orderId": payment_id, "amount": amount},
+        policy=PolicyReference(name="customer-refund", version="1.2.0", schema_version="1.0.0"),
+        signals={
+            "refundEligible": True,
+            "fraudCheckPassed": True,
+            "refundAmount": amount,
+            "managerApproved": True,
+            "approvalArtifact": approval,
+        },
+    )
+
+    try:
+        trust_record = await asyncio.to_thread(client.execution.execute, transaction)
+        return {"status": "approved", "trust_record_id": trust_record.trust_record_id}
+    except ExecutionRejectedError as exc:
+        return {"status": "denied", "reason": str(exc)}
+
+
+# asyncio.run(refund_payment_async("pay_LiZx3eWa", 50000, "customer requested"))
+```
+
+If your workflow needs to react to what the connector does _after_ Parmana's own response ,
+settlement confirmation arriving later, for instance, that's a property of the specific
+connector, not the SDK; see [Session credentials](/guides/session-credentials) and the connector's
+own docs (e.g. [HubSpot](/integrations/hubspot)) for what each one actually confirms and when.
+
+## Real example: a CustomerServiceAgent class
+
+```python
+import logging
+from parmana import (
+    ExecutionRejectedError,
+    ParmanaClient,
+    PolicyReference,
+    create_business_transaction,
+)
+
+logger = logging.getLogger(__name__)
+
+
+class CustomerServiceAgent:
+    def __init__(self, agent_id: str = "ai-customer-service", endpoint: str = "http://localhost:3000", api_key: str | None = None):
+        self.agent_id = agent_id
+        self.client = ParmanaClient(endpoint=endpoint, api_key=api_key)
+
+    def refund_payment(self, payment_id: str, amount: int, reason: str) -> dict | None:
+        # The manager's signed approval for this order and amount (every refund
+        # needs one; see Human approval). It arrives from your approval flow,
+        # for example the approval email.
+        approval = pending_approvals[payment_id]
+        transaction = create_business_transaction(
+            principal_id=self.agent_id,
+            purpose=reason,
+            action="paytm:refund",
+            target=f"paytm://orders/{payment_id}",
+            parameters={"orderId": payment_id, "amount": amount},
+            policy=PolicyReference(name="customer-refund", version="1.2.0", schema_version="1.0.0"),
+            signals={
+                "refundEligible": True,
+                "fraudCheckPassed": True,
+                "refundAmount": amount,
+                "managerApproved": True,
+                "approvalArtifact": approval,
+            },
+        )
+
+        try:
+            trust_record = self.client.execution.execute(transaction)
+            logger.info("refund approved", extra={"trust_record_id": trust_record.trust_record_id})
+            return {
+                "trust_record_id": trust_record.trust_record_id,
+                "trust_record_hash": trust_record.trust_record_hash,
+            }
+        except ExecutionRejectedError as exc:
+            logger.warning("refund denied", extra={"reason": str(exc)})
+            return None
+
+
+# agent = CustomerServiceAgent(api_key="your-api-key")
+# agent.refund_payment("pay_LiZx3eWa", 50000, "customer requested")
+```
+
+## Key guarantees
+
+- The agent never holds the connector's own credentials, see [Credential
+  isolation](/concepts/credential-isolation).
+- A named, versioned policy decides, not the agent's own reasoning, see [Policies and the
+  decision](/concepts/policies-and-the-decision).
+- A denied proposal raises before any downstream call happens, there's no code path where the
+  agent can override or retry around a rejection silently.
+- Every approved execution produces a signed, independently verifiable proof, see [Execution
+  Trust Records](/concepts/execution-trust-records).
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="Python SDK Production"
+    icon="server"
+    href="/guides/python-sdk-production"
+  >
+    Error handling, audit logging, monitoring, and a deployment checklist.
+  </Card>
+  <Card
+    title="Write your first policy"
+    icon="scroll"
+    href="/guides/write-your-first-policy"
+  >
+    Define the policy these examples reference instead of reusing
+    `customer-refund`.
+  </Card>
+  <Card
+    title="End-to-end: agent → Parmana → Paytm"
+    icon="route"
+    href="/guides/end-to-end-paytm-flow"
+  >
+    The same shape, against real infrastructure, with every real error message
+    documented.
+  </Card>
+  <Card title="Python SDK reference" icon="python" href="/sdks/python">
+    The complete, verified API surface backing every example on this page.
+  </Card>
+</CardGroup>

@@ -1,0 +1,91 @@
+---
+title: "Write it down before you do it"
+description: ""
+---
+
+A refund agent asks for ₹7,800 back for a customer whose order never arrived. The policy approves, the store manager
+has signed an approval, and Parmana releases the refund to the payment service. Ten seconds pass. The call times out.
+
+Did the customer get ₹7,800?
+
+You do not know. The request may never have reached the payment provider. It may have reached it, been processed,
+and the answer got lost on the way back. A system that reports this as "failed" invites the obvious next step: try
+again. If the first refund went through, the customer now has ₹15,600.
+
+This is not hypothetical for me. A repeat test run of Parmana recorded exactly this: a real timeout from a slow
+payment staging call, after ten seconds.
+
+## Two problems, one idea
+
+The first problem is the record. Parmana's signed Execution Trust Record contains the result of the action, so it
+can only be built after the action is released. If building or storing it fails, an action has run and nothing signed
+describes it. Before 21 September that was possible in Parmana. The context needed to rebuild the record existed only
+in the memory of the request that failed.
+
+The second problem is language. "Failed" and "we don't know" are different facts, and they call for opposite
+actions.
+
+The idea for both is old and simple: write down what you are about to do, before you do it. If you cannot write it
+down, do not do it. And when you do not know the outcome, say so.
+
+## How Parmana does it
+
+**An Execution Intent is signed and stored before release.** After the policy approves, the authorization is signed
+and a signing readiness check passes, the runtime signs an intent and writes it to the database. Only then is the
+action released to the connector. If the intent cannot be signed or stored, the caller gets a 503 and nothing is
+released. This is enforced everywhere except test and development, there is no switch to turn it off in
+production, and the readiness endpoint reports a missing intents table before the first real request hits it.
+
+The intent holds only what exists before release: the ids, the policy reference, the hashes of the policy content,
+the facts and the executable content copied from the signed authorization, the action and target, the caller, and
+when it was created. It never holds the result and never the raw parameters; the content hash binds it to them. It
+is signed with the same key as the Trust Record, so anyone with the public key can verify it, through an API route
+that needs no credential or offline from a clone of the repository. The Python SDK has an offline verifier, and the
+TypeScript SDK has one from version 1.3.0.
+
+**Each intent has a state.** It is kept next to the intent, and it is not signed:
+
+- **Prepared**: signed and stored; the action may or may not have been released.
+- **Released**: the connector answered and the execution context was saved; no Trust Record yet.
+- **Finalized**: a signed Trust Record exists. The normal outcome.
+- **Errored**: the release stage raised an error. The action may still have run.
+- **Resolved**: a verified human checked the target system and closed it.
+
+**A missing record can be rebuilt.** For a released intent, a person with a verified human credential can run
+finalize. It rebuilds the Trust Record from the saved context, verifies it, issues the receipt, and never calls the
+connector. Running it twice, or twice at once, produces one record.
+
+**An unknown outcome is called unknown.** Since 25 September, when the release fails after the request was sent, the
+caller gets a 502 with the outcome marked unknown, not "failed". Execution has four statuses: executed, not
+executed, failed (the target system said it failed), and unknown (the call failed, so nobody knows). The guidance is
+explicit: do not resubmit under a new transaction id; check the target system first. After an operator checks, they
+close the intent as executed or not executed, with a required note. The ₹7,800 refund that timed out becomes an
+errored intent, not a silent failure.
+
+**What was verified.** On 21 September, against the production Docker image, a real Postgres and the real AWS KMS
+signing key, 23 of 23 checks passed: a normal request, a released action whose Trust Record could not be stored and
+was then rebuilt with the connector called exactly once in total, and an intent that could not be stored, which
+released nothing. With closing by hand added, the run passed 37 of 37. Since 1 October the normal path has also run
+in production.
+
+## What it does not do
+
+- **An intent does not prove the action ran**, or what happened. It proves what was about to be released. A crash
+  between storing the intent and releasing leaves an intent for an action that never ran.
+- **Not every released action gets a signed Trust Record.** If the context save after release also failed, finalize
+  refuses with a 409, and the outcome has to be established at the target system by hand.
+- **Closing an intent by hand is not signed.** It is an attributed, timestamped statement by a person. It is not
+  tamper evident and does not create a Trust Record. If an operator closes one as executed, the signed evidence is
+  still only the intent.
+- **Not verified on Vercel**: the failure paths (finalize, resolve) and a real Paytm refund. The extra signing cost
+  (about 35 ms) was measured once from a developer machine, not from production.
+- **An action refused at release stays errored** until a person closes it; there is no "not released" state yet.
+- **Approved requests are slow today.** One took 24 to 32 seconds in production, so clients are told to use a 120
+  second timeout and to read the record before sending anything again.
+- **Transactions from before 21 September have no intent.**
+
+## Takeaway
+
+When an agent can move money, "I don't know if it happened" is a real answer, and the most dangerous thing a system
+can do is round it to "failed". Write down what you are about to do before you do it, refuse to act if you cannot,
+and give the unknown its own name so nobody retries their way into a double refund.

@@ -1,0 +1,73 @@
+---
+title: "Mapping to regulation without overclaiming"
+description: ""
+---
+
+The head of compliance at an NBFC has a refund agent in pilot. It issues refunds of a few hundred rupees, ₹350 here, ₹800 there, through a payment connector. Her board has asked one question, and she forwards it to me word for word: "Does Parmana make this RBI compliant?"
+
+The honest answer is no. No tool makes an organisation compliant. What I can give her is narrower and more useful: for each provision her auditors will cite, what Parmana provides, the evidence, and what stays with her.
+
+## The problem with compliance claims
+
+Security vendors love a badge. "EU AI Act ready." "Built for RBI." These phrases sound like answers and are not. A regulation asks things of an organisation: that people oversee a system, that logs are kept, that roles are assigned, that incidents are reported. Software can help with some of that. It cannot be the organisation.
+
+Parmana's own claims register lists "guaranteed regulatory compliance" among the claims it intentionally does not make. So the regulation mapping had to be written to the same standard as everything else: every row with a rating, evidence you can check, and a column for what remains yours.
+
+## What Parmana is, for these purposes
+
+Parmana is not itself an AI system. It sits between an AI agent and the systems it acts on, refuses any action a person has not approved, and signs a record of each action and each refusal. It is a technical measure a provider or deployer can use towards oversight and logging obligations for the actions an agent takes. It does not cover the model, and the mapping is not legal advice.
+
+## Three ratings
+
+Each provision gets one of three:
+
+- **Supports:** Parmana provides a technical measure that meets the requirement, for actions that go through it, with evidence.
+- **Partly:** Parmana provides part of it, and the rest is named.
+- **Organizational:** the requirement is about people, training or process. Parmana can record it, not do it.
+
+## Some of the rows
+
+The mapping covers the EU AI Act's human oversight and record-keeping articles, the NIST AI Risk Management Framework, ISO/IEC 42001 and the Reserve Bank of India's guidance. A few rows show how the ratings fall.
+
+**EU AI Act, Article 14(1), effective human oversight: Supports.** No agent action runs without a signed approval from a registered approver for that action and resource, and the amount where the policy names one, reads included. What stays with you: designing the agent so the actions that matter go through Parmana.
+
+**Article 14(4)(e), the ability to intervene or stop: Partly.** You can remove an agent's key (effective on restart or redeploy), revoke an approver or an external connector through maker-checker, or approve a policy version that refuses. An action already released is not recalled, and stopping the agent itself is outside Parmana.
+
+**Article 14(4)(b), awareness of automation bias: Organizational.** The approver signs one specific action, not a standing permission. Training approvers is yours.
+
+**Article 12, automatic logging: Supports.** Each approved action has a signed Execution Trust Record, each refusal a signed Refusal Record, and each caller request a chained audit event, all verifiable offline with only the public key. Logging inside the model and the agent is yours.
+
+**Article 26(6), keeping logs for at least six months: Partly.** Records sit in the deployer's own database, no repository has a delete method, and a deleted row breaks the hash chain. Setting and enforcing retention, and backups, are yours.
+
+**NIST AI RMF, MEASURE 2.7, security evaluated and documented: Supports.** There is a threat model, 16 runnable attack scenarios, a public security challenge, and mutation and fuzz tests. Evaluating the model and your own deployment is yours.
+
+**ISO/IEC 42001, A.6.2.8, recording event logs: Supports.** The same signed records. Retention and logs inside the model are yours.
+
+**RBI IT Governance Master Direction, audit trails: Supports.** Parmana's signed records, plus the rule that a failed write to the audit trail refuses the request, are the measure. Monitoring the records, retention, and systems that do not go through Parmana stay with the bank.
+
+**RBI FREE-AI report, Recommendation 21, business continuity: Partly.** Parmana fails closed: a missing or invalid policy, approval or signing key refuses the action. The manual process that takes over when the agent is stopped is yours.
+
+**RBI draft model risk guidance, customer disclosure: Organizational.** Parmana does nothing here directly. I rate it that way rather than leave it out. The guidance is still a draft, so the final text needs checking.
+
+## How the mapping is written
+
+A few rules kept it honest:
+
+- Provisions are summarised, not quoted. Read the source texts.
+- A FREE-AI recommendation is given a number only where it was confirmed.
+- Each source's status is stated: binding direction, committee report, or draft.
+- Dates that move are given with a warning. For the EU AI Act's high-risk obligations, the mapping gives the dates it found and tells readers to check the current text and their system's classification with counsel.
+
+## What it does not do
+
+- **It does not make anyone compliant.** It is a mapping, not a certification or a legal opinion.
+- **It covers only actions that go through Parmana.** An agent with its own credentials to a system is outside it, and so is everything about the model.
+- **Approvers are not limited to particular actions or policies yet.** Any trusted approver can approve anything. Several rows say so in their "what stays with you" column.
+- **Most facts an agent declares are not checked against another system.** They can only cause a refusal. The signed approval is what authorizes.
+- **Two credentials are not proven to be two people.** In my own production deployment one person holds the maker, checker and approver keys. A regulator asking for segregation of duties would need more than the software.
+- **It does not set retention or recall released actions.**
+- **No independent audit has been completed.** The evidence is tests, attack scenarios and published claims, all checkable, none yet reviewed by an outside auditor.
+
+## The takeaway
+
+So the answer to the board is not "yes, compliant". It is: for every refund the agent issues through Parmana, a named person approved that order and amount, the record is signed, an auditor can verify it without access to our systems, and here is the list of what we still have to do ourselves. A list like that survives an audit better than a badge.

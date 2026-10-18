@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/root-response.schema.json",
+  "title": "Root Response",
+  "description": "Response returned by GET / (packages/api/src/app.ts). Distinct from, and simpler than, GET /health and GET /version; it is not registered under any router file.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "status"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "enum": ["Parmana"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["UP"]
+    }
+  },
+  "examples": [
+    {
+      "name": "Parmana",
+      "status": "UP"
+    }
+  ]
+}

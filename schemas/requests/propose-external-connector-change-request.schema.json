@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/requests/propose-external-connector-change-request.schema.json",
+  "title": "Propose External Connector Change Request",
+  "description": "Request body for POST /external-connectors/changes. A register carries endpointUrl, policy, allowedParameters and optionally timeoutMs; a revoke carries none of them.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["action", "capability", "reason"],
+  "properties": {
+    "action": {
+      "type": "string",
+      "enum": ["register", "revoke"]
+    },
+    "capability": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*:[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*$",
+      "maxLength": 128
+    },
+    "endpointUrl": {
+      "type": "string",
+      "maxLength": 2048,
+      "description": "Required for register. https only, a public host name."
+    },
+    "policy": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,127}$",
+      "description": "Required for register."
+    },
+    "allowedParameters": {
+      "type": "array",
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$"
+      },
+      "description": "Required for register. May be empty."
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "minimum": 1000,
+      "maximum": 30000,
+      "default": 10000
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    }
+  },
+  "examples": [
+    {
+      "action": "register",
+      "capability": "erp:create-invoice",
+      "endpointUrl": "https://erp.example.com/parmana/release",
+      "policy": "erp-invoice",
+      "allowedParameters": ["amount", "currency", "customerId"],
+      "timeoutMs": 10000,
+      "reason": "Finance creates invoices in the ERP through Parmana from October."
+    },
+    {
+      "action": "revoke",
+      "capability": "erp:create-invoice",
+      "reason": "The ERP endpoint moves to a new host."
+    }
+  ]
+}

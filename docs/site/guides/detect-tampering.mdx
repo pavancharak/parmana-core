@@ -1,0 +1,143 @@
+---
+title: "Detect Tampering"
+description: "Mutate a parameter, a signature, and a nonce, run the same verification each time, and watch each one fail. This mirrors the always-running negative-path tutorials."
+---
+
+<Info>
+  **[AVAILABLE]**, all three runs below are real output, run again on
+  2026-10-02.
+</Info>
+
+## Goal
+
+Confirm three different kinds of tampering are actually caught, not just documented as
+caught: a changed parameter, a forged signature, and a replayed nonce.
+
+## Prerequisites
+
+- Read [Execution authorization](/concepts/execution-authorization) and [The
+  gateway](/concepts/the-gateway), this guide exercises the checks those pages describe.
+
+## Steps
+
+`examples/tutorials/` 35 through 46 are a dedicated negative-path suite: each one generates
+something valid, mutates exactly one thing, re-verifies, and asserts the mutation is caught.
+They run in CI on every change (`npm run examples`), so "the tests are always green" and
+"the guide's claims are true" are the same fact. Three representative ones:
+
+### 1. Parameter tampering
+
+```bash
+node_modules/.bin/tsx examples/tutorials/36-parameter-tampering/run.ts
+```
+
+```
+Original Hash
+07731bf1f586ca5e3f450bad329888824d1a36502f7289652e4f26f10111b82c
+
+Tampered Hash
+85e8dbd4f66058b39e7185ef5afba112edfd9ce8d0def2a4f5749eb951416eb7
+
+✓ Parameter tampering detected.
+Execution rejected.
+```
+
+Adding a `paymentAmount` field to the executable content's parameters changes the recomputed
+`businessTransactionHash`, this is the exact mechanism [The gateway](/concepts/the-gateway)
+runs on every real request, exercised directly here instead of through HTTP because the REST
+API generates and checks the authorization within one call, giving an external client no
+tamper point to observe.
+
+### 2. Forged signature
+
+```bash
+node_modules/.bin/tsx examples/tutorials/29-authorization-tampering/run.ts
+```
+
+```
+Generating authorization...
+✓ Authorization generated.
+
+Authorization payload modified.
+
+Verifying tampered authorization...
+
+Valid               : false
+Version Supported   : true
+Signature Verified  : false
+Not Expired         : true
+
+✓ Tampering detected.
+```
+
+Note which check failed and which didn't: `Version Supported` and `Not Expired` both stayed
+`true`, only `Signature Verified` flipped. `EnvelopeVerifier` reports each check
+independently, a caller can distinguish "this is forged" from "this is expired" rather than
+getting one opaque `false`.
+
+### 3. Nonce reuse
+
+```bash
+node_modules/.bin/tsx examples/tutorials/42-nonce-reuse/run.ts
+```
+
+```
+First Verification
+--------------------------------------------------
+Accepted     : true
+Nonce Unseen : true
+
+Second Verification
+--------------------------------------------------
+Accepted     : false
+Nonce Unseen : false
+
+✓ Nonce reuse detected.
+Execution rejected.
+```
+
+The exact same, unmodified authorization is verified twice. The first call marks the nonce
+seen; the second call, identical envelope, identical signature, is rejected solely because
+the nonce was already consumed, single-use enforced by the `NonceStore`, not by anything in
+the signature itself.
+
+## Verify
+
+All three runs above completed with their respective `✓ ... detected.` line and a non-zero
+distinguishing signal (`hashMatches: false`, `Signature Verified: false`,
+`Nonce Unseen: false`). None of the three silently passed, none threw an unrelated error
+instead of the expected rejection.
+
+## Troubleshoot
+
+- **You expected an HTTP 4xx from the REST API and got something else.** These three
+  scenarios operate on the authorization envelope directly, at the library level, they don't
+  go through `POST /execute`. Over HTTP, a gateway rejection of this kind is a bare
+  `500 {"error":"Internal Server Error"}`; the failed checks are named only in the server log
+  (`ExecutionGateway.ts`'s `describeFailure`, see [The gateway](/concepts/the-gateway)).
+  Through the REST API you cannot cause one, because the server builds and checks the
+  authorization in the same call.
+- **Want to see more variants?** `examples/tutorials/` also covers action substitution (37),
+  target substitution (38), policy substitution (39), expired authorization (41), stolen
+  authorization (43), direct API bypass (44), connector bypass (45), and TOCTOU protection
+  end to end (46), same pattern each time: generate, mutate one thing, re-verify, confirm
+  rejection.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="Verify a trust record independently"
+    icon="check-double"
+    href="/guides/verify-independently"
+  >
+    The same tamper-then-fail pattern, applied to a trust record's own hash.
+  </Card>
+  <Card
+    title="Content Binding & TOCTOU"
+    icon="shield-check"
+    href="/concepts/content-binding-toctou"
+  >
+    The mechanism behind the parameter-tampering check above.
+  </Card>
+</CardGroup>

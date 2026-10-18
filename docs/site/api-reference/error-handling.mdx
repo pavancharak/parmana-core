@@ -1,0 +1,94 @@
+---
+title: "Error Handling"
+description: "The shared error envelope, and which errors carry a stable code and which do not."
+---
+
+<Info>
+  **[AVAILABLE]**. `packages/api/src/middleware/error-handler.ts`. Every
+  response shown here was captured from the server on 2026-10-02.
+</Info>
+
+## The envelope
+
+Every non 2xx response (except `POST /policies/validate`, see below) is:
+
+```json
+{ "error": "string, always present, human readable" }
+```
+
+and many also carry a stable, machine readable `code`:
+
+```json
+{
+  "error": "No connector is registered for capability 'crm:update-deal' on this deployment. Nothing was executed. The operator must configure the connector.",
+  "code": "CONNECTOR_NOT_REGISTERED"
+}
+```
+
+`error` is always a plain string, never a nested object, so a caller can always display or log it without walking a
+schema. Its wording can change; `code` and the status do not.
+
+**Branch on the status first, then on `code` when it is present. Never match the text of `error`.**
+
+## Which errors carry a code
+
+`code` is present when the failure is one of the server's typed errors. Among them, the ones an integration meets
+most:
+
+| Status | `code`                      | Meaning                                                                                                  |
+| ------ | --------------------------- | -------------------------------------------------------------------------------------------------------- |
+| 403    | `POLICY_DENIED`             | The policy refused the action, including a missing, expired or already used human approval. Nothing ran. |
+| 403    | `CAPABILITY_NOT_ALLOWED`    | Your key may not invoke this capability.                                                                 |
+| 403    | `TENANT_NOT_ALLOWED`        | Your key may not send this `metadata.tenantId`.                                                          |
+| 403    | `NON_HUMAN_CALLER_DENIED`   | A governance route refused a non human caller, such as an agent's key.                                   |
+| 409    | `CONFLICT`                  | A governance change contradicts the current state, for example one is already open.                      |
+| 429    | `RATE_LIMITED`              | Too many requests for this key. Wait and retry.                                                          |
+| 502    | `EXECUTION_OUTCOME_UNKNOWN` | The action was released and the call to the connector failed. **Do not retry as a new transaction.**     |
+| 503    | `CONNECTOR_NOT_REGISTERED`  | No connector serves this capability on this deployment. Nothing was executed.                            |
+| 503    | `SIGNING_UNAVAILABLE`       | The server could not sign. Nothing was released.                                                         |
+
+The [Error catalog](/api-reference/error-catalog) lists every code, its trigger and what to do.
+
+## Which errors have no code
+
+These answer `{ "error": "..." }` only, so tell them apart by status:
+
+| Status | When                                                                                                   | Example `error`                                                    |
+| ------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| 400    | The body is not valid JSON                                                                             | `Malformed JSON body.`                                             |
+| 400    | `businessTransactionId` is missing or not a UUID                                                       | `businessTransactionId must be a valid UUID.`                      |
+| 400    | A field breaks the transaction's own rules, or a policy or signal fails validation                     | `metadata.businessTransactionId must match businessTransactionId.` |
+| 401    | No key, or a key the server does not know                                                              | `authentication required`                                          |
+| 403    | Your key may not assert this `authority.principalId`                                                   | `Caller is not permitted to assert this authority.principalId.`    |
+| 404    | The policy named in the request does not exist                                                         | `Policy 'does-not-exist' version '9.9.9' was not found.`           |
+| 409    | The `businessTransactionId` was already used, see [Idempotency](/api-reference/idempotency-and-nonces) | `Business Transaction '<id>' already exists.`                      |
+| 413    | The body is too large                                                                                  | `Payload too large.`                                               |
+| 500    | Anything unexpected                                                                                    | `Internal Server Error`                                            |
+
+**`POST /policies/validate` does not use this envelope.** Every status it returns (200, 400, 404) is
+`{"valid": boolean, "errors": string[]}`, for example `{"valid": false, "errors": ["policyId is required."]}`. The
+one exception is `401`: caller authentication runs before the route, so a rejected caller sees
+`{"error": "authentication required"}`.
+
+## An incomplete body is a 400
+
+A `POST /execute` or `POST /transactions` body without `metadata`, `authority`, `authorization`, `intent` or
+`policy`, or with one of them `null` or not an object, or with a required field that is not a string, is refused with
+`400` naming it, for example:
+
+```json
+{ "error": "policy is required and must be an object." }
+```
+
+Nothing is executed. Until 2026-10-06 a missing `policy` or `authorization` reached the validator and was answered
+with a bare `500` (G-87 in `docs/VERIFICATION-GAPS.md`). A fuzz test now sends damaged and arbitrary bodies to both
+routes and requires that neither ever answers `500`.
+
+Fixed earlier too: "no connector registered for this capability" used to be a bare `500` too. It is now
+`503 CONNECTOR_NOT_REGISTERED`.
+
+## The SDKs
+
+Both SDKs raise one exception class per status. In the TypeScript SDK, `AuthorizationError` and `InternalServerError`
+keep the server's `code` on `serverCode`. See [TypeScript SDK](/sdks/typescript) and [Python SDK](/sdks/python) for
+each class.

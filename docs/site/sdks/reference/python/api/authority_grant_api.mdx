@@ -1,0 +1,110 @@
+---
+sidebar_label: authority_grant_api
+title: parmana.api.authority_grant_api
+---
+
+Parmana Authority Grant API.
+
+Per-agent authority (RFC-0023 phase 3): list the grants, propose granting
+an agent's key authority for a capability, within limits, until an
+expiry, or revoking it, and approve or reject a proposal with a signed
+step up authorization. Every call needs an API key that belongs to a
+verified human.
+
+## AuthorityGrantApi Objects
+
+```python
+class AuthorityGrantApi()
+```
+
+Authority Grant API.
+
+#### list
+
+```python
+def list() -> list[AuthorityGrant]
+```
+
+Every grant, active and revoked.
+
+Maps to GET /authority-grants.
+
+#### propose_grant
+
+```python
+def propose_grant(
+        *,
+        caller_id: str,
+        capability: str,
+        valid_until: datetime | str,
+        reason: str,
+        limits: dict[str, dict[str, Any]] | None = None,
+        valid_from: datetime | str | None = None) -> AuthorityGrantChange
+```
+
+Propose granting the API key `caller_id` authority for
+`capability`.
+
+Maps to POST /authority-grants/changes with action "grant".
+`valid_until` is required, in the future and at most 366 days
+after `valid_from` (which defaults to the approval time); pass a
+timezone aware datetime or an ISO 8601 string. `limits` maps an
+Intent path ("target", "parameters.&lt;name>") to \{"min", "max",
+"oneOf"\}. You may not propose authority for your own key. Nothing
+changes until a different person approves it.
+
+#### propose_revoke
+
+```python
+def propose_revoke(*, caller_id: str, capability: str,
+                   reason: str) -> AuthorityGrantChange
+```
+
+Propose revoking the active grant of `caller_id` for `capability`.
+
+Maps to POST /authority-grants/changes with action "revoke".
+
+#### list_changes
+
+```python
+def list_changes(
+        status: str | None = None) -> builtins.list[AuthorityGrantChange]
+```
+
+List authority grant changes, newest first.
+
+Maps to GET /authority-grants/changes.
+
+## Parameters
+
+status:
+"PENDING_APPROVAL", "APPROVED" or "REJECTED". Omit for all.
+
+#### approve_change
+
+```python
+def approve_change(
+        change_id: str,
+        step_up_authorization: dict[str, Any]) -> AuthorityGrantChange
+```
+
+Approve and apply an authority grant change.
+
+Maps to POST /authority-grants/changes/\{id\}/approve. The caller
+must be neither the proposer nor the grantee, and must have a
+registered step up key. Make `step_up_authorization` with
+`parmana.crypto.sign_policy_change_step_up()`, `change_id` as
+`pending_policy_change_id`, and action "approve".
+
+#### reject_change
+
+```python
+def reject_change(
+        change_id: str, rejection_reason: str,
+        step_up_authorization: dict[str, Any]) -> AuthorityGrantChange
+```
+
+Reject an authority grant change.
+
+Maps to POST /authority-grants/changes/\{id\}/reject. Same caller
+rules as `approve_change()`; sign with action "reject".

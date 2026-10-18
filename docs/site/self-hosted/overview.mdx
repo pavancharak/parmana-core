@@ -1,0 +1,72 @@
+---
+title: "Self hosted Parmana"
+description: "Run Parmana on your own infrastructure. What runs, what stays inside your network, what it needs, and what it does not do."
+---
+
+Self hosted Parmana is the same server as the hosted API, packaged to run on your own infrastructure with one command. Decisions, signatures, the audit trail and the Trust Records stay in your deployment. Nothing is sent to Parmana or to anyone else.
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" href="/self-hosted/quickstart">
+    Running, with a policy approved and a first signed decision, in about 15
+    minutes.
+  </Card>
+  <Card title="Offline verification" href="/self-hosted/offline-verification">
+    Prove that enforcement works with no internet connection.
+  </Card>
+</CardGroup>
+
+## When to self host
+
+| Choose self hosted when                                                                    | Choose the hosted API when              |
+| ------------------------------------------------------------------------------------------ | --------------------------------------- |
+| Enforcement must not depend on a service outside your control, including Parmana's uptime. | You want nothing to operate.            |
+| Decision records, keys and audit data must stay inside your network.                       | Records held by Parmana are acceptable. |
+| Your auditors must be able to verify records with keys that you hold.                      |                                         |
+
+## What runs
+
+`docker compose up -d --build --wait` starts five services, in this order:
+
+| Service    | Runs         | What it does                                                                                                                  |
+| ---------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `setup`    | Once, exits  | Makes the two signing key pairs and a first API key in `./parmana-local` on the first start. Keeps them on every later start. |
+| `postgres` | Continuously | The deployment's own database. Not reachable from outside Docker.                                                             |
+| `migrate`  | Once, exits  | Creates or upgrades the database schema. Applies each migration once.                                                         |
+| `seed`     | Once, exits  | Copies the policies shipped with Parmana into the database, adding only versions not already there. It does not approve them. |
+| `api`      | Continuously | The Parmana server in production mode, on `http://127.0.0.1:3000`.                                                            |
+
+The `api` service starts only after the other four have finished without error. Full details, including every file and setting: [Configuration reference](/self-hosted/configuration).
+
+## What stays inside your deployment
+
+- **Decisions.** Policy evaluation runs in the `api` container against policies stored in your Postgres.
+- **Signing keys.** Two Ed25519 key pairs, generated on your machine, stored in `./parmana-local/keys`. Parmana never sees them.
+- **Records.** Trust Records, Refusal Records, Execution Intents, the caller audit trail and policy approvals are stored in your Postgres.
+- **Verification.** A record verifies with only your public keys, on any machine, with no network call.
+
+The server makes an outbound call only to a system you configure: a connector such as your Paytm agent, or AWS KMS if you choose it for signing. With none configured it makes none. The [offline check](/self-hosted/offline-verification) proves this by running the whole flow on a Docker network that has no route to the internet.
+
+## Production rules are not relaxed
+
+The self hosted server enforces every rule the hosted API enforces:
+
+- Every request needs an API key, and a key acts only for its own caller ID unless it lists others.
+- A policy authorizes nothing until two different people have approved it, one of them with a signed step up authorization. See [Approve a policy](/self-hosted/policy-approval).
+- Before an action is released, the server signs and stores an Execution Intent. If it cannot, nothing is released.
+- A connector must be reached over HTTPS.
+
+## Requirements
+
+| Requirement                     | Detail                                                                                                                                                                                                                        |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Docker with Docker Compose v2   | Compose v2.24.0 or newer. Tested with Docker 29.8.0 on Windows 11 and with the Docker on GitHub's `ubuntu-latest` runner.                                                                                                     |
+| A clone of the repository       | The Compose file, the helper scripts and the migrations are read from it.                                                                                                                                                     |
+| Network access while installing | Only to build the image and pull `postgres:16`. Running needs none.                                                                                                                                                           |
+| For each policy approver        | OpenSSL 1.1.1 or newer to make a step up key, and one of: Node.js 20 or newer with `npm install @parmana/sdk`; Python 3.10 or newer with `pip install "parmana[verify]"`; Node.js 24 or newer with a clone of the repository. |
+
+## Limits
+
+- **One server, one database.** No replicas and no failover are set up.
+- **Signing keys are files.** They sit in `./parmana-local/keys` on the host. Protect and back up that directory. See [Operations](/self-hosted/operations).
+- **Approvers sign on their own machine.** With either SDK 1.3.0 (`signPolicyChangeStepUp()` from npm, `sign_policy_change_step_up()` from PyPI), or with the repository's script. See [Approve a policy](/self-hosted/policy-approval#or-approve-from-code-with-an-sdk).
+- **Where it is verified.** On Docker Desktop 29.8.0 on Windows 11, and on every change in CI on Linux (`.github/workflows/docker-image.yml`, job `self-hosted`).

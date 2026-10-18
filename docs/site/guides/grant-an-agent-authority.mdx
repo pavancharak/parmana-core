@@ -1,0 +1,133 @@
+---
+title: "Grant an agent authority"
+description: "Say which agent may have which action decided, within which limits, until when, through maker checker, and make a policy require it. What each refusal means, and what the signed record holds."
+---
+
+An API key that may call `POST /execute` for a capability is not yet authority over every request for it. A grant says
+exactly what one agent may do: "the warehouse agent may release goods, up to 100000 INR per request, until 30
+December". A policy with `requireAuthorityGrant` decides a request only when its caller holds a grant in force and the
+request is within the grant's limits ([Business validation](/concepts/business-validation), RFC-0023 phase 3).
+
+<Warning>
+  **Status, 2026-10-11.** Grants, their maker checker and their check at
+  decision time are implemented, tested (`docs/CLAIMS.md` 2.55) and deployed. No
+  shipped policy requires a grant yet. The SDK methods for the routes below are
+  in SDK 1.6.0 (2026-10-11); with an older SDK, call the routes directly.
+</Warning>
+
+## What a grant is
+
+| Field        | Meaning                                                                                                                                                          |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `callerId`   | The API key the grant is for, by its caller id: the identity the server authenticates on every request (`metadata.submittedBy`). The agent cannot claim another. |
+| `capability` | The action, `namespace:verb`, for example `erp:release-goods`.                                                                                                   |
+| `limits`     | Optional. By Intent path, `target` or `parameters.<name>`: `min` and `max` for a number there (inclusive), `oneOf` for the only values allowed there.            |
+| `validFrom`  | Optional. Defaults to the moment the grant is approved.                                                                                                          |
+| `validUntil` | Required. At most 366 days after `validFrom`. Grants always end.                                                                                                 |
+
+One active grant per caller and capability. To change a grant, revoke it and grant again.
+
+## Rules
+
+1. Two different people propose and approve every grant, with the approver's step up signature.
+2. **No one grants authority to themselves**: the proposer and the approver can never be the `callerId`.
+3. Only human keys propose, approve or reject.
+
+## Step 1: require grants in the policy
+
+**Do:** set `"requireAuthorityGrant": true` in the policy that governs the capability, and approve the change through
+[policy governance](/guides/policy-governance-maker-checker).
+
+**Expect:** `GET /policies/in-effect?capability=erp:release-goods` answers with `"authorityGrantRequired": true`.
+
+From then on, every request for the capability from a key without a grant in force is refused. Grant first, or grant
+and change the policy together.
+
+## Step 2: propose the grant
+
+**Do:** as the maker, `POST /authority-grants/changes`:
+
+```json
+{
+  "action": "grant",
+  "callerId": "warehouse-agent",
+  "capability": "erp:release-goods",
+  "limits": {
+    "parameters.amount": { "max": 100000 },
+    "parameters.currency": { "oneOf": ["INR"] }
+  },
+  "validUntil": "2026-12-30T00:00:00.000Z",
+  "reason": "The warehouse agent releases goods for paid invoices up to 100000 INR this quarter."
+}
+```
+
+**Expect:** `201` with `"status": "PENDING_APPROVAL"`. Keep `changeId`.
+
+**If not:** `INVALID_AUTHORITY_GRANT` names the field; `AUTHORITY_SELF_GRANT_DENIED` means the grant is for your own key;
+`409` means the agent already holds a grant for the capability or a change is pending. See
+[Propose an authority grant change](/api-reference/endpoints/propose-authority-grant-change).
+
+## Step 3: approve it
+
+**Do:** as a second person, who is not the agent, sign a step up authorization for `changeId` and action `approve`,
+then `POST /authority-grants/changes/{changeId}/approve`.
+
+**Expect:** `200` with `"status": "APPROVED"`. `GET /authority-grants` lists the grant as `active`, with `validFrom` set
+to the approval time.
+
+## What the agent gets
+
+| The request                                                                            | Authority           |
+| -------------------------------------------------------------------------------------- | ------------------- |
+| From a key with a grant in force, within every limit                                   | `AUTHORIZED`        |
+| From a key with no grant for the capability, or only a revoked one                     | `NOT_AUTHORIZED`    |
+| Before the grant's `validFrom`                                                         | `NOT_AUTHORIZED`    |
+| Outside a limit: above `max`, below `min`, not in `oneOf`, missing, or of another type | `NOT_AUTHORIZED`    |
+| At or after the grant's `validUntil`                                                   | `AUTHORITY_EXPIRED` |
+| With no authenticated caller                                                           | `NOT_AUTHORIZED`    |
+| When the grants cannot be read                                                         | `AUTHORITY_UNCLEAR` |
+
+Every status but `AUTHORIZED` refuses the request before any business system is asked, with a Refusal Record whose
+`matchedRuleId` is `authority-not-authorized`, `authority-expired` or `authority-unclear`. A signed approval cannot
+cure it. `AUTHORIZED` still needs everything else the policy requires, the signed approval included.
+
+## In the record
+
+The decision's `assessment.authority.grant` holds the grant checked, as it stood: its id, the caller, the capability,
+`validFrom`, `validUntil` and limits. It is signed inside the Execution Trust Record or Refusal Record, so a reader can
+see which grant authorized an action, or which one had expired.
+
+```json
+"authority": {
+  "status": "AUTHORITY_EXPIRED",
+  "reason": "The authority grant of \"warehouse-agent\" for \"erp:release-goods\" expired at 2026-12-30T00:00:00.000Z.",
+  "grant": {
+    "grantId": "9f3cf733-a8ed-487c-bb58-a53950388cdf",
+    "callerId": "warehouse-agent",
+    "capability": "erp:release-goods",
+    "validFrom": "2026-10-11T03:29:05.247Z",
+    "validUntil": "2026-12-30T00:00:00.000Z",
+    "limits": { "parameters.amount": { "max": 100000 }, "parameters.currency": { "oneOf": ["INR"] } }
+  }
+}
+```
+
+## Revoke
+
+Propose `{ "action": "revoke", "callerId": "warehouse-agent", "capability": "erp:release-goods", "reason": "…" }` and
+have a second person approve it. The agent's next request is refused. The revoked grant stays listed.
+
+## Prove it in production
+
+Before relying on it, run the live check in the repository,
+[`examples/live-checks/authority-grant`](https://github.com/pavancharak/parmana/tree/main/examples/live-checks/authority-grant): a test policy with `requireAuthorityGrant`, a grant up to 100 for a test agent, and four requests: before the grant, within its limit, over it, and after its revoke. Each carries a valid signed approval, so every refusal shows the grant decides it. The actions change nothing anywhere. It passed in
+production on 2026-10-11, all four requests as required; the results, the steps, what each prints, and what to do when it
+does not are in its README.
+
+## Limits
+
+- A grant limits each request on its own. It does not count: "100000 per day" is not expressible yet.
+- A grant names a caller id that the server does not check exists; a grant to a key that does not exist has no effect.
+- The grant is checked when the request is decided and again at release: a grant that expires or is revoked in
+  between stops the release (`409 AUTHORIZATION_NO_LONGER_VALID`).
+- See [Limitations](/security/limitations), G-93.

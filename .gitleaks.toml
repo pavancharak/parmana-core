@@ -1,0 +1,90 @@
+# Gitleaks configuration for parmana.
+#
+# Extends gitleaks' default rule set (real detectors: AWS, Stripe, GitHub,
+# generic high-entropy secrets, private key headers, connection strings with
+# embedded credentials, etc.) and allowlists the specific, verified-fake
+# values already present in this repo's test fixtures, tutorial examples,
+# and documentation, so the pre-commit hook (scripts/git-hooks/pre-commit)
+# stays quiet on known-safe content instead of training contributors to
+# reflexively bypass it.
+#
+# Every entry below was checked against `git log -p` and confirmed to be a
+# placeholder, a test fixture, an example UUID, or a SHA-256 hash of a
+# publicly documented demo key, never a real, usable credential. If you add
+# a new entry here, the same standard applies: verify it's actually fake
+# before allowlisting it.
+
+title = "parmana gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known-fake fixtures, examples, and hashes, verified during the 2026-07-21 secret audit"
+
+regexes = [
+  # Fake PEM bodies used across FileKeyProvider / signing-key bootstrap tests.
+  # The "key material" is the literal word "existing", "from-env",
+  # "gateway-from-env", or "mounted", never real key bytes. "gateway-from-env"
+  # added 2026-09-16 (assert-signing-key-material-configured.test.ts's new
+  # regression test for materializing the separate "gateway" attestation key
+  # under KEY_PROVIDER=aws-kms -- see docs/VERIFICATION-GAPS.md G-48/G-49's
+  # troubleshooting guide).
+  '''-----BEGIN (PRIVATE|PUBLIC) KEY-----\\n(existing|from-env|gateway-from-env|mounted)\\n-----END (PRIVATE|PUBLIC) KEY-----''',
+
+  # SHA-256 hash of the publicly documented local-dev demo caller key
+  # (raw key "my-secret-api-key", see docs/site/api-reference/authentication.mdx
+  # and docs/site/deployment/local.mdx). A hash is not reversible
+  # and the raw value it hashes is intentionally public.
+  '''325ededd6c3b9988f623c7f964abb9b016b76b0f8b3474df0f7d7c23b941381f''',
+
+  # The raw form of that same demo key, "my-secret-api-key". Its SHA-256 hash
+  # is committed in this repo's own root .env under PARMANA_API_KEYS, and the
+  # raw value is intentionally documented publicly in quickstart.mdx and
+  # api-reference/authentication.mdx for local-dev walkthroughs. Flagged by
+  # gitleaks' default curl-auth-header rule purely because it appears after
+  # "Authorization: Bearer" in example curl commands.
+  '''my-secret-api-key''',
+
+  # The public sandbox's demo key (ADR-0014 section 4), published on purpose in the
+  # docs and the OpenAPI x-default. Caller sandbox-visitor, allowed only sandbox:receipt,
+  # an action that acts on nothing, on https://parmana-sandbox.vercel.app only.
+  # Production refuses it with 401. Written by deploy/sandbox/publish-demo-key.ps1.
+  '''2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME''',
+
+  # Fake mock-connector credential in tutorial 57, self-evidently a fixture.
+  '''sap-secret-1234''',
+
+  # Literal signing-key filenames in FileKeyProvider / generate-keypair.ts,
+  # flagged by the generic-api-key entropy heuristic purely because of their
+  # shape (word-hyphen-word.extension), not because they contain key material.
+  '''ed25519-private\.pem''',
+  '''dilithium3-private\.key''',
+
+  # Literal placeholder text "YOUR_API_KEY" in packages/governance-ui's
+  # diff view -- instructional curl examples telling a checker what to
+  # substitute their own bearer token in for, never a real credential.
+  # Flagged by gitleaks' default curl-auth-header rule purely because it
+  # appears after "Authorization: Bearer" in example curl commands, the
+  # same reasoning as the "my-secret-api-key" entry above.
+  '''YOUR_API_KEY''',
+
+  # AWS KMS's own public KeySpec identifier for an Ed25519 asymmetric
+  # key (packages/crypto/src/providers/signer/KmsSigner.ts, ADR-0009) --
+  # a fixed, documented AWS enum value, not a secret. Flagged by the
+  # generic-api-key entropy heuristic purely because of its
+  # uppercase-with-underscores shape.
+  '''ECC_NIST_EDWARDS25519''',
+]
+
+paths = [
+  # Tutorial READMEs and example scripts only ever contain generated example
+  # ids (trust record ids, session credential ids) and connector-registered
+  # capabilities, never live credentials, connectors here are MockConnector
+  # or MockRazorpayServer only.
+  '''examples/tutorials/.*/README\.md$''',
+
+  # Same reasoning for guide code samples in docs/site, these are narrative
+  # walkthroughs, not files that ever hold a real, working secret.
+  '''docs/site/guides/session-credentials\.mdx$''',
+]

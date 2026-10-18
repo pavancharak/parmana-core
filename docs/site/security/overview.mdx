@@ -1,0 +1,254 @@
+---
+title: "Security"
+description: "What Parmana actually guarantees, precisely scoped, and, as important, what it explicitly does not claim."
+---
+
+<Info>
+  This page is a direct mirror of `docs/CLAIMS.md` sections 3 and 5, read that
+  file for the authoritative version.
+</Info>
+
+## Claims that hold, with their scope
+
+**Non-bypassable envelope verification (Conditional Claim 3.1).** For any system running
+`@parmana/envelope-verifier`, execution requests not authorized by Parmana are
+cryptographically impossible to accept, **only** for a receiving system that (a) runs the
+verifier and (b) gates every execution-triggering code path behind its result, and only
+while Parmana's authorization signing key is not compromised: whoever holds that key, or can
+make the signing service sign, can produce authorizations the verifier accepts. Parmana
+enforces nothing at the network level. See the [Audit guide](/evaluation/audit-guide) for
+what an attacker controls in each case. The default local server does both (a) and (b) for
+each connector it registers, see [The gateway](/concepts/the-gateway) for the mechanism. A new
+built in connector is a code change; an [external connector](/guides/connect-any-external-system)
+is registered through maker checker with no code change, and Parmana signs each release to it.
+
+**Fleet wide single use requires a shared NonceStore (3.2).** Single use enforcement is
+scoped to whichever `NonceStore` instance performs the check. Parmana's own server shares one
+in Postgres (`SupabaseNonceStore`, and the same for approvals), so every instance on one
+database accepts an authorization once, and it fails closed at startup without one. A
+receiving system that runs `@parmana/envelope-verifier` with its own per instance store can
+accept the same authorization once per instance; `MemoryNonceStore`, for tests, loses all
+state on restart. Every envelope's bounded TTL limits, but does not eliminate, that exposure.
+
+**Durable, third-party-verifiable refusal and audit records (3.11).** Every
+policy rejection produces a signed Refusal Record, independently verifiable at `POST
+/refusal/verify` with no API key or database lookup required, just the artifact and
+Parmana's public key. Production caller-authentication audit events
+are signed the same way, verifiable at `POST /audit/verify`. Two scope caveats: Refusal
+Record writing is evidentiary and fails open by design (a rejection is never blocked or
+delayed by it; only the durable record can go silently missing, never the correctness of
+the rejection itself), and only production (Supabase) audit sinks sign; the in-memory
+test sinks don't.
+
+**Hybrid (Ed25519 + ML-DSA-65) signing capability, not yet deployed (3.13).** Trust
+Records and Receipts can be dual-signed with both a classical and a post-quantum
+algorithm at once, with verification requiring both signatures independently, fail-closed.
+This is a built, tested capability (`CRYPTO_MODE=hybrid` is real, validated
+configuration), but it is opt-in and not running anywhere today: every deployed
+environment signs Ed25519 alone.
+**Third-party verification:** `@parmana/sign` 0.2.0 and later, the public verification
+SDK on npm, recognizes the hybrid envelope: `verifyExecutionTrustRecordOffline` checks
+the record hash, the legacy Ed25519 signature, and every entry in `signatures`, offline,
+with only the record and the public keys. This repository's own
+`packages/crypto/src/OfflineVerifier.ts` (TypeScript) does the same, and
+`python/parmana/crypto/offline_verifier.py` (Python) checks Ed25519 only.
+
+**Hybrid-signature downgrade resistance, opt-in.** A genuinely hybrid-signed record's
+`signatures` array (the ML-DSA-65 half) can be stripped entirely with no cryptographic
+trace: `schemaVersion` and `signatures` are outside the hashed content by design (so the
+legacy Ed25519 signature keeps verifying pre-hybrid-era records unchanged), and
+verification silently falls back to the classical signature alone whenever the array is
+absent. An opt-in `HYBRID_SIGNATURE_REQUIRED` flag closes this: when set, a record missing
+its `signatures` array is rejected outright, no fallback. Off by default, so this protects
+only a deployment that turns it on once every record it issues going forward is genuinely
+hybrid-signed.
+
+## Claims Parmana intentionally does not make
+
+Not "not yet" items, no implementation could honestly back these, unscoped:
+
+- Execution is impossible to bypass under all circumstances.
+- Mathematical proof of execution correctness.
+- Cryptographic proof of every aspect of runtime behavior.
+- Guaranteed regulatory compliance.
+- Absolute prevention of all unauthorized execution.
+- Tamper-proof operation in every deployment environment.
+- "Non-bypassable" or "the single execution authority" as an unscoped, system-wide claim,
+  envelope verification is opt-in per receiving endpoint (see 3.1 above).
+- Deterministic signature output for ML-DSA-65, those signatures are randomized by design;
+  only verification is deterministic.
+
+## Known incidents
+
+**Policy-evaluation signals were not bound to the executed Intent (2026-07-28, RESOLVED).**
+The most severe gap found in this project's history: a live, reproducible bypass of the core
+"no unauthorized execution" invariant. `PolicyEngine` evaluated whatever signals a caller
+declared in the request body; `ExecutionGateway` signed and executed `intent.target`/
+`intent.parameters`, a completely disjoint set of fields nothing cross-checked. A caller
+could declare signals describing a small, fully-verified action while `intent` executed
+something else entirely, and still receive a signed, `APPROVED` Execution Trust Record for
+it. Live proof-of-concept: `signals` declared a fully verified, policy-approved **$5,000**
+payment to a known vendor, while `intent`, the part that actually executes, targeted an
+**attacker-controlled account for $999,999,999**. Before the fix: `200`, policy decision
+`APPROVED`, execution `COMPLETED`, a real signed trust record and receipt issued for it, the
+exact artifacts this project's independently-verifiable-execution claim rests on, attesting
+to something that never happened as described. A related, compounding finding:
+`authority.principalId` (who the trust record says approved the action) was likewise
+caller-declared with no binding to the identity `callerId` actually proves, any caller
+holding any valid API key could claim to be any human or role, including a successful
+"impersonate the CEO" proof-of-concept. Found via an external adversarial security exercise,
+not this project's own internal audit process.
+
+Fixed by `Policy.boundSignals` + `SignalIntentBinder` (binds specific signal keys to `intent`
+dot-paths, checked before `PolicyEngine.evaluate`; see [Policies and the
+decision](/concepts/policies-and-the-decision) for the mechanism), `isPrincipalAllowed`
+(binds `authority.principalId` to the authenticated `callerId`), and a compounding IDOR fix,
+`isOwnedByCaller` (any caller could previously read any other caller's complete
+transaction/trust-record/receipt history). 28 regression tests reproduce the exact live
+exploit shapes and assert they're now rejected, plus positive controls proving legitimate
+requests are unaffected. One thing this fix deliberately does not cover, stated plainly
+rather than left implicit: `boundSignals` only binds the specific fields a policy author
+declares, it does not independently verify that an _unbound_ signal (`vendorVerified`,
+`riskScore`, and similar) is actually true; those remain caller-declared attestations.
+
+**The default signing key committed to this repository before 2026-07-05** was publicly
+exposed in the public GitHub repository and must be treated as permanently compromised,
+all signatures produced by that key are void for authenticity purposes regardless of when
+signed. The key pair was rotated on 2026-07-05.
+
+**Four ML-DSA-65 (Dilithium3) private signing keys committed to a feature branch during the
+post-quantum signature provider work** were confirmed, by raw key-byte comparison, to be
+distinct from any key ever trusted by production or local configuration. Unlike the incident
+above, no signature produced by this key pair was ever accepted as authentic by this
+codebase. A fresh keypair was generated regardless, the feature branch's history purged, and
+the exposure independently verified across every remote hosting this repository's history.
+
+## Caller authentication, principal binding, and ownership scoping: three separate layers
+
+`packages/api` gates every route behind a caller bearer key, except the liveness/readiness
+and documentation/verification routes listed on
+[Authentication](/api-reference/authentication). Three distinct claims, not one, and it
+matters which one you're relying on:
+
+- **Route access is scoped by kind of caller, not per route.** There is no per key allowlist
+  of endpoints, but every governance route (policy changes, approvers, external connectors,
+  the Execution Intent list and finalize) refuses a key not provisioned as a human, with `403
+NON_HUMAN_CALLER_DENIED`, and `POST /execute` refuses a capability the key may not invoke
+  (`403 CAPABILITY_NOT_ALLOWED`).
+- **Principal assertion is scoped**, the fix described in "Known incidents" above. A caller
+  may only submit a transaction whose `authority.principalId` is itself, or an identity
+  explicitly granted via `ApiKeyEntry.allowedPrincipalIds`, never "anything," the default
+  with no grant configured is "only itself." `isPrincipalAllowed`,
+  `packages/api/src/auth/isPrincipalAllowed.ts`.
+- **Data ownership is scoped**, the same fix. A caller can no longer read another caller's
+  transactions, trust records, or receipts, `metadata.submittedBy` is stamped server-side
+  from the authenticated caller (never trusted from the client), and `isOwnedByCaller` gates
+  every read route by it; cross-caller access reads as a clean `404`, not a `403` that would
+  confirm the target id exists. `packages/api/src/auth/isOwnedByCaller.ts`.
+
+None of this is mutual TLS (there is none by default), and key rotation is still a manual
+operator procedure with no self-service endpoint, see [Deploy
+patterns](/guides/deploy-patterns#caller-authentication). This authentication layer is
+independent of, and does not substitute for, [Execution
+Authorization](/concepts/execution-authorization) or [gateway
+attestation](/concepts/gateway-attestation).
+
+## Automated checks on the repository
+
+Every pull request to `main` in
+[github.com/pavancharak/parmana](https://github.com/pavancharak/parmana) must pass these before it can
+merge. `main` is protected: no direct pushes, no force pushes, no deletion.
+
+| Check                                                          | What it does                                                                                             |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `build-and-test`                                               | Build, lint, typecheck and the full test suite                                                           |
+| `verify-policy-approvals`                                      | Fails if any policy file in the tree has no matching maker checker approval record for its exact content |
+| CodeQL (`Analyze (javascript-typescript)`, `Analyze (python)`) | Static analysis for security bugs, on every pull request, on push to `main` and weekly                   |
+| `dependency-review`                                            | Blocks a pull request that adds a dependency with a known vulnerability                                  |
+
+Also enabled on the repository:
+
+- [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/pavancharak/parmana): a public
+  supply chain security score, recomputed weekly and on every push to `main`.
+- [OpenSSF Best Practices](https://www.bestpractices.dev/projects/15230): the project's answers to
+  the OpenSSF Best Practices criteria. The badge is "in progress", not "passing": the passing level
+  requires the whole project to be open source, and only the SDKs are.
+- Dependabot alerts and grouped weekly update pull requests for npm, Python, the Dockerfile and
+  GitHub Actions.
+- GitHub secret scanning with push protection, which blocks a commit that contains a known
+  secret format.
+- Private vulnerability reporting, alongside the email route in
+  [SECURITY.md](https://github.com/pavancharak/parmana/blob/main/SECURITY.md).
+- GitHub Actions and Docker base images pinned to exact commits and digests, and workflow tokens
+  limited to read access.
+- Signed build provenance and a CycloneDX SBOM for every SDK release, and signed build provenance for the server
+  image published with each release (below).
+- Mutation testing of the security-critical packages, run by hand (`npm run mutation`). The
+  scores, the gaps found and what was fixed are in
+  [docs/MUTATION-TESTING.md](https://github.com/pavancharak/parmana/blob/main/docs/MUTATION-TESTING.md).
+- Fuzz tests (property based, with fast-check) of the API request boundary, policy loading and
+  evaluation, the offline verifier and approval parsing, run with every `npm test`. They found
+  three crashes on malformed input, all fixed (G-87, G-90, G-91 in `docs/VERIFICATION-GAPS.md`).
+- Every open issue, with what to do meanwhile: [Limitations](/security/limitations#open-issues).
+- Each risk in the OWASP Top 10 for LLM Applications and the OWASP Top 10 for Agentic
+  Applications (2026), with what Parmana does and the evidence: [OWASP mapping](/security/owasp-mapping).
+- Human oversight and record keeping under the EU AI Act (Articles 12, 14, 26), the NIST AI RMF,
+  ISO/IEC 42001 and RBI guidance: [Regulation mapping](/security/regulation-mapping).
+
+### Verifying an SDK package from a GitHub release
+
+Each [GitHub release](https://github.com/pavancharak/parmana/releases) of the SDKs carries the
+four packages built by GitHub Actions from the release's tag, and a `multiple.intoto.jsonl` file:
+[SLSA](https://slsa.dev) build provenance, signed with GitHub's identity for the release
+workflow, recording the commit, the workflow and each file's SHA-256. To check a downloaded
+package with [slsa-verifier](https://github.com/slsa-framework/slsa-verifier):
+
+```bash
+slsa-verifier verify-artifact parmana-sdk-1.6.0.tgz \
+  --provenance-path multiple.intoto.jsonl \
+  --source-uri github.com/pavancharak/parmana \
+  --source-tag sdk-v1.6.0
+```
+
+The provenance covers the files attached to the release. From 1.6.0 on, the files published to npm
+and PyPI are the release's own files, so a registry download has the same hash as the release file
+and the provenance covers it too: `@parmana/sdk` 1.6.0, `@parmana/connector-sdk` 0.3.0 and `parmana`
+1.6.0 are the files of release `sdk-v1.6.0`. Earlier versions (`@parmana/sdk` and `parmana` 1.5.0
+and before, and `parmana-connector-sdk` 0.2.0, still the current version) were built before this
+workflow existed, so they are not byte for byte the files in a release, although they come from the
+same source.
+
+Each npm package and each wheel also has a [CycloneDX](https://cyclonedx.org) 1.5 SBOM beside it,
+named after it (for example `parmana-sdk-1.6.0.tgz.cdx.json`): the package, and every dependency
+installed with it, with versions and package URLs. For the npm packages it lists runtime
+dependencies only; for `parmana` it includes the optional `verify` extra (`cryptography`). The
+versions are the ones resolved when the release was built; a later install can resolve newer
+versions within the declared ranges. The provenance covers the SBOM files too, so the same
+`slsa-verifier` command checks them. Feed an SBOM to a scanner such as
+[Grype](https://github.com/anchore/grype) or [OSV-Scanner](https://github.com/google/osv-scanner) to
+check the dependencies for known vulnerabilities.
+
+### Verifying the server image
+
+From the first release published after 2026-10-06, each release also builds the API server from
+the repository's `Dockerfile` and pushes it to the GitHub Container Registry as
+`ghcr.io/pavancharak/parmana-api:<release tag>`, with SLSA build provenance attached to the image
+in the registry. To check an image before you run it:
+
+```bash
+slsa-verifier verify-image ghcr.io/pavancharak/parmana-api@sha256:<digest> \
+  --source-uri github.com/pavancharak/parmana \
+  --source-tag <release tag>
+```
+
+Verify by digest, not by tag: a tag can be moved, a digest cannot. Then run that digest. The
+provenance covers this image only. The hosted API and the public sandbox are built by Vercel from
+the same repository, not from this image, and carry no SLSA provenance.
+
+These are hygiene checks on the code and its supply chain. They do not replace a review of the
+enforcement design; see the [Audit guide](/evaluation/audit-guide) for that.
+
+## Where hardening work is tracked
+
+KMS/HSM key custody, credential brokering, and network-level enforcement are real,
+specific, sequenced plans, not vague future promises. See [Roadmap](/roadmap).

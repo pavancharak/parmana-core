@@ -1,0 +1,73 @@
+---
+title: "Public keys"
+description: "Where verification keys come from, and how to pass them in."
+---
+
+Every signature names the key that made it, in its `keyId`. Verification needs the public
+half of each named key. Parmana serves them without authentication.
+
+## Fetch a key
+
+```bash
+curl -s https://parmana-sandbox.vercel.app/keys/default
+```
+
+```json Response
+{
+  "keyId": "default",
+  "algorithm": "ed25519",
+  "use": "sig",
+  "pem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAQKyaz9ifANjaew96i34spqhM31mBatJ6TTHaMY7mclI=\n-----END PUBLIC KEY-----\n",
+  "jwk": {
+    "crv": "Ed25519",
+    "x": "QKyaz9ifANjaew96i34spqhM31mBatJ6TTHaMY7mclI"
+  }
+}
+```
+
+Pass the `pem` field to the verifiers, keyed by `keyId`:
+
+```ts
+const key = await fetch("https://parmana-sandbox.vercel.app/keys/default").then(
+  (r) => r.json(),
+);
+
+const publicKeys = { [key.keyId]: key.pem };
+```
+
+`GET /.well-known/jwks.json` lists every key the server holds, as JWKs.
+
+## Which keys a record needs
+
+Collect every `keyId` the record names:
+
+```ts
+function keyIdsOf(record) {
+  const ids = new Set([record.signature.keyId]);
+  for (const entry of record.signatures ?? []) ids.add(entry.keyId);
+  return [...ids];
+}
+
+const publicKeys = {};
+for (const keyId of keyIdsOf(record)) {
+  const key = await fetch(
+    `https://parmana-sandbox.vercel.app/keys/${keyId}`,
+  ).then((r) => r.json());
+  publicKeys[keyId] = key.pem;
+}
+```
+
+A hybrid record typically names `default` (Ed25519) and `default-secondary` (ML-DSA-65).
+
+## Keys in production use
+
+- **Fetch once, then pin.** Store the keys you trust and pass them in from storage. Fetching
+  a key from the same server at verification time only proves the record matches that
+  server's current key.
+- **Rotated keys stay valid.** Rotation signs new records under a new `keyId`. The server
+  keeps serving the old key while it holds it, and older records still name the old
+  `keyId`, so they remain verifiable. Keep every key you have pinned.
+- **Sandbox and production are separate.** Each has its own keys; a record verifies only
+  against the environment that signed it.
+- **A `KeyObject` works too.** `publicKeys` values may be `node:crypto` `KeyObject`s instead
+  of PEM strings.

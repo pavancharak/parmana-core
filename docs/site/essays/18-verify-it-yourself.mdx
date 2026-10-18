@@ -1,0 +1,62 @@
+---
+title: "Verify it yourself: offline and in the browser"
+description: ""
+---
+
+An auditor emails me a file. It is a signed record from Parmana saying a refund of ₹500 was approved by a manager and released to the payment system. Her question is short: "How do I know you didn't edit this last night?"
+
+If my answer is "log in to our dashboard and look", I have answered nothing. The dashboard, the database and the server that would check the record are all mine.
+
+The answer has to be: you don't need me. Here is the public key. Check it yourself, offline if you like.
+
+## The problem with "trust our logs"
+
+Most audit trails are rows in a vendor's database. If the operator, an attacker or a bug can change a row, the row proves only what the database says today.
+
+A signature changes the question. Instead of "do you trust the database", it becomes "do you trust this public key belongs to the deployment you are auditing". That is a much smaller thing to trust, and it is something the auditor can check herself.
+
+## What a Parmana record carries
+
+Every action that goes through Parmana leaves an Execution Trust Record. Two parts of it matter here.
+
+- **A hash.** The signed fields (the transaction, the authorization, the executions and so on) are serialized as canonical JSON with keys sorted, and hashed with SHA-256. The result is stored as `trustRecordHash`.
+- **A signature.** An Ed25519 signature over the same canonical bytes, with the id of the key that made it.
+
+Change any signed field, even one nested deep inside an execution, and the recomputed hash no longer matches. The signature fails too, because it is checked against the content as it is now, not a cached copy.
+
+## Three ways to check, none of them need my server
+
+**In the browser.** The docs site has a page called "Verify a record in your browser". You paste a record and a public key, click Verify, and it recomputes the hash and checks the Ed25519 signature with the browser's own Web Crypto API. Nothing you paste is uploaded. There is an example record on the page, and a second copy with the amount changed from 100 to 100000, so you can watch the hash stop matching. The page's code is in the repository, and a test runs that same code against records signed by Parmana's signer and checks it agrees with the offline verifier.
+
+**From the command line.** `scripts/verify-trust-record.ts` takes a record and one or more public key files and prints `valid`, `hashValid`, which algorithms were checked, and any errors. It makes no network call and needs no database.
+
+**From code, in TypeScript or Python.** `verifyExecutionTrustRecordOffline` takes the record and a public key as a string. No environment variables, no key directory, no running server. The Python SDK has its own version, written separately rather than wrapping the TypeScript code, and a test signs a record with the real TypeScript signer and verifies it with only the Python module.
+
+The public key itself comes from the deployment: `GET /keys/default` or the JWKS endpoint, both unauthenticated. The private key is never needed for any of this.
+
+## I tried to break it
+
+A verifier that always says "valid" is easy to build. So the docs show the negative case. In the "Verify independently" guide, I saved a record, stopped the server completely, confirmed nothing was listening, and verified it: hash matches, signature valid. Then I changed one nested field, the amount inside an execution, and ran the same script on the edited file. Hash mismatch, signature invalid, fully verified false.
+
+The same pattern runs in CI on every change for the authorization envelope that releases an action: a changed parameter, a forged signature and a reused nonce are each generated, mutated and re-checked, and each one is rejected. The verifier reports each check separately, so you can tell "forged" from "expired".
+
+## The offline check
+
+For a self-hosted deployment there is one command that runs the whole flow on a Docker network with no route to the internet, then verifies the result. It ends with "14 of 14 checks passed". The last two checks are the ones this post is about: the Trust Record verifies with only the two public keys, and a copy with the amount changed fails. The check leaves the record and the public keys on disk, so anyone can verify it again on another machine.
+
+## One wrinkle: big records and AWS KMS
+
+AWS KMS refuses to sign a raw Ed25519 message over 4096 bytes, and a full Trust Record is often bigger. So under KMS a large record is signed as a fixed 97-byte commitment (a prefix, a NUL byte, and the SHA-512 of the content), still an ordinary Ed25519 signature. A verifier accepts that form only for records over 4096 bytes. All three verifiers above handle it.
+
+## What it does not do
+
+- **It does not tell you who holds the key.** A valid signature proves the record was signed by that key. Get the key from the deployment you trust, not from whoever sent you the record.
+- **It does not prove nothing bypassed Parmana.** A signature shows what Parmana recorded and that it was not altered. An agent with its own credentials to a system can act without leaving any record at all.
+- **The browser page checks Ed25519 only.** A record can also carry a post-quantum ML-DSA-65 signature. Browsers have no ML-DSA support yet, so the page says so and skips it. The Python verifier is Ed25519 only for the same reason (its crypto library lacks ML-DSA). Use the TypeScript verifier for a full hybrid check.
+- **The browser page checks Trust Records only.** Execution Intents and Refusal Records are checked other ways.
+- **There is no in-browser check on the Playground itself yet.** The Playground shows the offline check in each SDK, and you paste its record into the separate verify page.
+- **Re-serializing breaks it.** If a tool reorders keys or reformats timestamps, a genuine record can fail. Keep the JSON exactly as returned.
+
+## The takeaway
+
+The point of signed evidence is that the person checking it does not have to trust the person who made it. If the only way to check a Parmana record were to ask Parmana, the signature would be decoration. So the check runs in your browser, on your laptop, or in your own code, with a public key and nothing else.

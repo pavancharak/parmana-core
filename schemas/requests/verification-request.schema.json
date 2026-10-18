@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/requests/verification-request.schema.json",
+  "title": "Verification Request",
+  "description": "Request payload for POST /verify. businessTransactionId is required and must be a valid UUID; both are rejected with a 400, with distinct messages depending on which check fails.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["businessTransactionId"],
+  "properties": {
+    "businessTransactionId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Business Transaction to verify."
+    }
+  },
+  "examples": [
+    {
+      "businessTransactionId": "eed2a972-1bf5-4166-8472-761f76fbf1b2"
+    }
+  ]
+}

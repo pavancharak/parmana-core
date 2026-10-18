@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/override.schema.json",
+  "title": "Override",
+  "description": "Immutable trust artifact recording an authorized human override for a Business Transaction. No API route in this repository currently creates an Override; this schema exists only because ExecutionTrustRecord.overrides is part of the append-only Trust Record shape; every captured example has an empty overrides array.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "overrideId",
+    "businessTransactionId",
+    "approvedBy",
+    "reason",
+    "approvedAt"
+  ],
+  "properties": {
+    "overrideId": {
+      "type": "string",
+      "description": "Unique Override identifier."
+    },
+    "businessTransactionId": {
+      "type": "string",
+      "description": "Business Transaction to which this Override belongs."
+    },
+    "approvedBy": {
+      "type": "string",
+      "description": "Authorized user or system that approved the Override."
+    },
+    "reason": {
+      "type": "string",
+      "description": "Human-readable reason for the Override."
+    },
+    "justification": {
+      "type": "string",
+      "description": "Optional business justification."
+    },
+    "approvedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when the Override was approved."
+    }
+  }
+}

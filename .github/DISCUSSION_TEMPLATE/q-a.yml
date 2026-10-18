@@ -1,0 +1,24 @@
+title: "[Question] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ask how Parmana works, how to evaluate it, or how it fits your system.
+        Report a security issue privately instead: see SECURITY.md. Never paste keys, tokens or real customer data.
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What do you want to know?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: What you tried or read
+      description: Commands, docs pages or claims (for example CLAIMS.md 2.47) you looked at.
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: The commit, SDK version or docs page this is about, if any.

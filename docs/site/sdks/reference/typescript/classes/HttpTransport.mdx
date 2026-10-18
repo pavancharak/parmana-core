@@ -1,0 +1,59 @@
+---
+title: "Class: HttpTransport"
+---
+
+Defined in: [typescript/src/transport/HttpTransport.ts:140](https://github.com/pavancharak/parmana/blob/main/typescript/src/transport/HttpTransport.ts#L140)
+
+Canonical SDK transport.
+
+## Implements
+
+- [`Transport`](/sdks/reference/typescript/interfaces/Transport)
+
+## Constructors
+
+### Constructor
+
+> **new HttpTransport**(`configuration`): `HttpTransport`
+
+Defined in: [typescript/src/transport/HttpTransport.ts:141](https://github.com/pavancharak/parmana/blob/main/typescript/src/transport/HttpTransport.ts#L141)
+
+#### Parameters
+
+##### configuration
+
+[`Configuration`](/sdks/reference/typescript/interfaces/Configuration)
+
+#### Returns
+
+`HttpTransport`
+
+## Methods
+
+### send()
+
+> **send**\<`T`\>(`request`): `Promise`\<[`TransportResponse`](/sdks/reference/typescript/interfaces/TransportResponse)\<`T`\>\>
+
+Defined in: [typescript/src/transport/HttpTransport.ts:143](https://github.com/pavancharak/parmana/blob/main/typescript/src/transport/HttpTransport.ts#L143)
+
+Sends a request to the Parmana Runtime.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+#### Parameters
+
+##### request
+
+[`TransportRequest`](/sdks/reference/typescript/interfaces/TransportRequest)
+
+#### Returns
+
+`Promise`\<[`TransportResponse`](/sdks/reference/typescript/interfaces/TransportResponse)\<`T`\>\>
+
+#### Implementation of
+
+[`Transport`](/sdks/reference/typescript/interfaces/Transport).[`send`](/sdks/reference/typescript/interfaces/Transport#send)

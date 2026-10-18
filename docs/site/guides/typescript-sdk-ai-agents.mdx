@@ -1,0 +1,461 @@
+---
+title: "TypeScript SDK for AI Agents"
+description: "Wire Parmana authorization into LangChain.js, the Vercel AI SDK, a server endpoint, or an async/webhook workflow."
+---
+
+## The problem
+
+An AI agent that can call a payment API, a CRM, or a vendor system needs a credential to do
+it. Give the agent that credential directly and the agent's own (probabilistic, sometimes
+wrong) reasoning is the only thing standing between a user's request and a real-world
+action.
+
+```typescript
+// Bad: the agent holds the credential and decides for itself
+const refund = await stripe.refunds.create({ payment_intent: id, amount });
+```
+
+## The solution
+
+The agent proposes the action to Parmana as a Business Transaction. A named, versioned
+policy, not the agent, decides. Your code only calls the downstream system (or, in a
+real deployment, a registered Connector calls it on Parmana's behalf) once Parmana returns
+an approved `ExecutionTrustRecord`.
+
+```typescript
+// Good: policy decides, the agent never sees the downstream credential
+const trustRecord = await client.execute(transaction); // throws ExecutionRejectedError on denial
+```
+
+The four patterns below wire that call into the shapes a Node.js AI stack actually uses:
+a LangChain.js tool, a Vercel AI SDK tool, a plain server endpoint, and an async/webhook
+workflow. Each assumes the `client` and `createBusinessTransaction` setup from
+[the quickstart](/guides/typescript-sdk-quickstart).
+
+## Pattern 1: LangChain.js tool
+
+```typescript
+import { tool } from "@langchain/core/tools";
+import { z } from "zod";
+import {
+  ParmanaClient,
+  HttpTransport,
+  createBusinessTransaction,
+  ExecutionRejectedError,
+} from "@parmana/sdk";
+
+const client = new ParmanaClient({
+  endpoint: process.env.PARMANA_ENDPOINT!,
+  apiKey: process.env.PARMANA_API_KEY,
+  transport: new HttpTransport({
+    endpoint: process.env.PARMANA_ENDPOINT!,
+    apiKey: process.env.PARMANA_API_KEY,
+  }),
+});
+
+// Signed manager approvals, keyed by order id, filled by your approval flow
+// (for example the approval email). See Human approval.
+const pendingApprovals = new Map<string, unknown>(); // the later samples use it too
+
+export const refundTool = tool(
+  async ({ orderId, amount, reason }) => {
+    const transaction = createBusinessTransaction({
+      principalId: "langchain-customer-service-agent",
+      purpose: reason,
+      action: "paytm:refund",
+      target: `paytm://orders/${orderId}`,
+      parameters: { orderId, amount, refundReason: reason },
+      policy: {
+        name: "customer-refund",
+        version: "1.2.0",
+        schemaVersion: "1.0.0",
+      },
+      signals: {
+        refundEligible: true,
+        fraudCheckPassed: true,
+        refundAmount: amount,
+        managerApproved: true,
+        // The manager's signed approval for this order and amount (every refund needs one).
+        approvalArtifact: pendingApprovals.get(orderId),
+      },
+    });
+
+    try {
+      const trustRecord = await client.execute(transaction);
+      return `Refund approved and executed. Trust record: ${trustRecord.trustRecordId}`;
+    } catch (error) {
+      if (error instanceof ExecutionRejectedError) {
+        return `Refund denied by policy: ${error.message}`;
+      }
+      throw error;
+    }
+  },
+  {
+    name: "issue_refund",
+    description:
+      "Issues a refund for a customer order, subject to Parmana policy approval.",
+    schema: z.object({
+      orderId: z.string(),
+      amount: z.number().positive(),
+      reason: z.string(),
+    }),
+  },
+);
+```
+
+The tool's return value is a string the agent reads, a denial reads as a normal tool
+result, not a thrown exception the agent has to recover from mid-conversation.
+
+## Pattern 2: Vercel AI SDK tool calling
+
+```typescript
+import { generateText, tool } from "ai";
+import { z } from "zod";
+import {
+  ParmanaClient,
+  HttpTransport,
+  createBusinessTransaction,
+  ExecutionRejectedError,
+} from "@parmana/sdk";
+
+const client = new ParmanaClient({
+  endpoint: process.env.PARMANA_ENDPOINT!,
+  apiKey: process.env.PARMANA_API_KEY,
+  transport: new HttpTransport({
+    endpoint: process.env.PARMANA_ENDPOINT!,
+    apiKey: process.env.PARMANA_API_KEY,
+  }),
+});
+
+const issueRefund = tool({
+  description:
+    "Issues a refund for a customer order, subject to Parmana policy approval.",
+  inputSchema: z.object({
+    orderId: z.string(),
+    amount: z.number().positive(),
+    reason: z.string(),
+  }),
+  execute: async ({ orderId, amount, reason }) => {
+    const transaction = createBusinessTransaction({
+      principalId: "ai-sdk-customer-service-agent",
+      purpose: reason,
+      action: "paytm:refund",
+      target: `paytm://orders/${orderId}`,
+      parameters: { orderId, amount, refundReason: reason },
+      policy: {
+        name: "customer-refund",
+        version: "1.2.0",
+        schemaVersion: "1.0.0",
+      },
+      signals: {
+        refundEligible: true,
+        fraudCheckPassed: true,
+        refundAmount: amount,
+        managerApproved: true,
+        // The manager's signed approval for this order and amount (every refund needs one).
+        approvalArtifact: pendingApprovals.get(orderId),
+      },
+    });
+
+    try {
+      const trustRecord = await client.execute(transaction);
+      return { approved: true, trustRecordId: trustRecord.trustRecordId };
+    } catch (error) {
+      if (error instanceof ExecutionRejectedError) {
+        return { approved: false, reason: error.message };
+      }
+      throw error;
+    }
+  },
+});
+
+const result = await generateText({
+  model: "openai/gpt-4o", // or any model string your configured AI Gateway/provider serves
+  prompt:
+    "The customer on order ord_9182 wants a $45 refund, they say the item arrived damaged.",
+  tools: { issueRefund },
+});
+```
+
+Returning a structured `{ approved, ... }` object instead of a string works well here since
+the model can reason over the fields directly in a follow-up turn.
+
+## Pattern 3: Express / Fastify endpoint
+
+Putting the Parmana call behind your own endpoint keeps the agent's tool-calling surface
+thin, the agent calls your API, your API calls Parmana:
+
+```typescript
+import express from "express";
+import {
+  ParmanaClient,
+  HttpTransport,
+  createBusinessTransaction,
+  ExecutionRejectedError,
+  ValidationError,
+} from "@parmana/sdk";
+
+const app = express();
+app.use(express.json());
+
+const client = new ParmanaClient({
+  endpoint: process.env.PARMANA_ENDPOINT!,
+  apiKey: process.env.PARMANA_API_KEY,
+  transport: new HttpTransport({
+    endpoint: process.env.PARMANA_ENDPOINT!,
+    apiKey: process.env.PARMANA_API_KEY,
+  }),
+});
+
+app.post("/agent/refund", async (req, res) => {
+  const { orderId, amount, reason, agentId } = req.body;
+
+  const transaction = createBusinessTransaction({
+    principalId: agentId,
+    purpose: reason,
+    action: "paytm:refund",
+    target: `paytm://orders/${orderId}`,
+    parameters: { orderId, amount, refundReason: reason },
+    policy: {
+      name: "customer-refund",
+      version: "1.2.0",
+      schemaVersion: "1.0.0",
+    },
+    signals: {
+      refundEligible: true,
+      fraudCheckPassed: true,
+      refundAmount: amount,
+      managerApproved: true,
+      // The manager's signed approval for this order and amount (every refund needs one).
+      approvalArtifact: pendingApprovals.get(orderId),
+    },
+  });
+
+  try {
+    const trustRecord = await client.execute(transaction);
+    res.status(200).json({ approved: true, trustRecord });
+  } catch (error) {
+    if (error instanceof ExecutionRejectedError) {
+      res.status(403).json({ approved: false, reason: error.message });
+    } else if (error instanceof ValidationError) {
+      res.status(400).json({ error: error.message });
+    } else {
+      throw error;
+    }
+  }
+});
+```
+
+A Fastify route handler follows the same shape, swap `app.post(path, handler)` for
+`fastify.post(path, async (request, reply) => { ... })` and the body is identical.
+
+## Pattern 4: Async workflow with a webhook callback
+
+For an agent whose action needs to run out-of-band (a long-running batch, a human-in-the-loop
+step) rather than inline in the conversation turn, submit the transaction and notify a
+webhook when the trust record lands, instead of blocking on `await`:
+
+```typescript
+async function proposeAndNotify(
+  input: { orderId: string; amount: number; reason: string },
+  webhookUrl: string,
+) {
+  const transaction = createBusinessTransaction({
+    principalId: "async-refund-worker",
+    purpose: input.reason,
+    action: "paytm:refund",
+    target: `paytm://orders/${input.orderId}`,
+    parameters: {
+      orderId: input.orderId,
+      amount: input.amount,
+      refundReason: input.reason,
+    },
+    policy: {
+      name: "customer-refund",
+      version: "1.2.0",
+      schemaVersion: "1.0.0",
+    },
+    signals: {
+      refundEligible: true,
+      fraudCheckPassed: true,
+      refundAmount: input.amount,
+      managerApproved: true,
+      // The manager's signed approval for this order and amount (every refund needs one).
+      approvalArtifact: pendingApprovals.get(input.orderId),
+    },
+  });
+
+  try {
+    const trustRecord = await client.execute(transaction);
+    await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ status: "approved", trustRecord }),
+    });
+  } catch (error) {
+    const status = error instanceof ExecutionRejectedError ? "denied" : "error";
+    await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ status, message: (error as Error).message }),
+    });
+  }
+}
+```
+
+`client.execute()` itself is a single request/response call, not a streaming one, this
+pattern is about decoupling _your_ workflow from the caller's request/response cycle, not
+about Parmana's own API shape.
+
+## Real example: a CustomerServiceAgent class
+
+```typescript
+import {
+  ParmanaClient,
+  HttpTransport,
+  createBusinessTransaction,
+  ExecutionRejectedError,
+  type ExecutionTrustRecord,
+} from "@parmana/sdk";
+
+interface RefundRequest {
+  orderId: string;
+  amount: number;
+  reason: string;
+}
+
+type RefundResult =
+  | { approved: true; trustRecord: ExecutionTrustRecord }
+  | { approved: false; reason: string };
+
+export class CustomerServiceAgent {
+  private readonly client: ParmanaClient;
+  private readonly principalId: string;
+
+  constructor(options: {
+    endpoint: string;
+    apiKey?: string;
+    principalId: string;
+  }) {
+    this.client = new ParmanaClient({
+      endpoint: options.endpoint,
+      apiKey: options.apiKey,
+      transport: new HttpTransport({
+        endpoint: options.endpoint,
+        apiKey: options.apiKey,
+      }),
+    });
+    this.principalId = options.principalId;
+  }
+
+  async issueRefund(request: RefundRequest): Promise<RefundResult> {
+    const transaction = createBusinessTransaction({
+      principalId: this.principalId,
+      purpose: request.reason,
+      action: "paytm:refund",
+      target: `paytm://orders/${request.orderId}`,
+      parameters: {
+        orderId: request.orderId,
+        amount: request.amount,
+        refundReason: request.reason,
+      },
+      policy: {
+        name: "customer-refund",
+        version: "1.2.0",
+        schemaVersion: "1.0.0",
+      },
+      signals: {
+        refundEligible: true,
+        fraudCheckPassed: true,
+        refundAmount: request.amount,
+        managerApproved: true,
+        // The manager's signed approval for this order and amount (every refund needs one).
+        approvalArtifact: pendingApprovals.get(request.orderId),
+      },
+    });
+
+    try {
+      const trustRecord = await this.client.execute(transaction);
+      return { approved: true, trustRecord };
+    } catch (error) {
+      if (error instanceof ExecutionRejectedError) {
+        return { approved: false, reason: error.message };
+      }
+      throw error;
+    }
+  }
+
+  async checkTransactionStatus(businessTransactionId: string) {
+    return this.client.trustRecord(businessTransactionId);
+  }
+
+  async verifyProof(businessTransactionId: string) {
+    return this.client.verify(businessTransactionId);
+  }
+}
+
+// Usage
+const agent = new CustomerServiceAgent({
+  endpoint: process.env.PARMANA_ENDPOINT!,
+  apiKey: process.env.PARMANA_API_KEY,
+  principalId: "customer-service-agent-prod",
+});
+
+const result = await agent.issueRefund({
+  orderId: "order-8842",
+  amount: 500,
+  reason: "Item arrived damaged",
+});
+
+if (result.approved) {
+  console.log("Refund executed:", result.trustRecord.trustRecordId);
+} else {
+  console.log("Refund denied:", result.reason);
+}
+```
+
+## Key guarantees
+
+- The agent (LangChain.js, the Vercel AI SDK, or a hand-rolled loop) never sees the
+  downstream connector credential, only a registered Connector does.
+- A denial surfaces as data (`ExecutionRejectedError`, or a `{ approved: false }` result),
+  not a crash, the calling agent framework's normal error/retry handling applies.
+- Every refund needs a signed manager approval for that order and amount; without one the
+  request is refused with `403 POLICY_DENIED` ([Human approval](/concepts/human-approval)).
+- The policy version is explicit in every call (`policy: { name, version, schemaVersion }`),
+  and it must be the version in effect (`GET /policies/in-effect`), so an agent can't silently
+  drift onto a different policy between calls.
+- Every approved execution returns a signed `ExecutionTrustRecord`, independently
+  verifiable later with `client.verify()` regardless of which pattern above produced it.
+- `signals` are checked against `boundSignals` before policy evaluation, so an agent can't
+  satisfy the policy's signals while pointing `target`/`parameters` somewhere else.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="TypeScript SDK in Production"
+    icon="server"
+    href="/guides/typescript-sdk-production"
+  >
+    Config, retries, audit logging, and a deployment checklist for the pattern
+    above.
+  </Card>
+  <Card
+    title="Write your first policy"
+    icon="scale-balanced"
+    href="/guides/write-your-first-policy"
+  >
+    What `customer-refund@1.2.0` actually evaluates, and how to write your own.
+  </Card>
+  <Card title="Connect an agent" icon="plug" href="/guides/connect-an-agent">
+    The framework-agnostic version of this page's four patterns.
+  </Card>
+  <Card
+    title="End-to-end: agent → Parmana → Paytm"
+    icon="route"
+    href="/guides/end-to-end-paytm-flow"
+  >
+    This exact `paytm:refund` action, run against real, live infrastructure.
+  </Card>
+</CardGroup>

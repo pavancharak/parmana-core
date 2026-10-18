@@ -1,0 +1,115 @@
+{
+  "policyId": "api-key-issuance",
+  "policyVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes issuance of a new API key after validating requester identity, scope authorization, key lifetime, and issuance risk.",
+
+  "signalsSchema": {
+    "requesterVerified": "boolean",
+    "scopeAuthorized": "boolean",
+    "keyLifetimeDays": "number",
+    "riskScore": "number"
+  },
+
+  "boundSignals": {
+    "keyLifetimeDays": "parameters.lifetimeDays"
+  },
+
+  "unboundSignalReasons": {
+    "requesterVerified": "Independently attested by identity verification at authentication time; no Intent-side equivalent field exists to bind against.",
+    "scopeAuthorized": "Result of an independent entitlement check against the requester's granted scopes; not a value the Intent itself declares.",
+    "riskScore": "A computed issuance-risk score (requester history, requested scope breadth), not a value the caller's Intent declares or could be checked against."
+  },
+
+  "rules": [
+    {
+      "id": "approve-key-issuance",
+      "condition": {
+        "all": [
+          {
+            "fact": "requesterVerified",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "scopeAuthorized",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "keyLifetimeDays",
+            "operator": "lte",
+            "value": 90
+          },
+          {
+            "fact": "riskScore",
+            "operator": "lte",
+            "value": 20
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "API key issuance authorized. Requester verification, scope authorization, key lifetime, and risk assessment requirements were satisfied."
+      }
+    },
+    {
+      "id": "reject-high-risk-issuance",
+      "condition": {
+        "fact": "riskScore",
+        "operator": "gt",
+        "value": 20
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "API key issuance rejected because the assessed issuance risk exceeds the maximum permitted threshold."
+      }
+    },
+    {
+      "id": "reject-unverified-requester",
+      "condition": {
+        "fact": "requesterVerified",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "API key issuance rejected because the requester's identity has not been verified."
+      }
+    },
+    {
+      "id": "reject-unauthorized-scope",
+      "condition": {
+        "fact": "scopeAuthorized",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "API key issuance rejected because the requested scope is not within the requester's entitlements."
+      }
+    },
+    {
+      "id": "reject-excessive-lifetime",
+      "condition": {
+        "fact": "keyLifetimeDays",
+        "operator": "gt",
+        "value": 90
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "API key issuance rejected because the requested key lifetime exceeds the maximum permitted duration of 90 days."
+      }
+    },
+    {
+      "id": "reject-default",
+      "condition": {
+        "always": true
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "API key issuance rejected because one or more required policy conditions were not satisfied."
+      }
+    }
+  ]
+}

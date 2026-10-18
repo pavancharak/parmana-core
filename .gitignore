@@ -1,0 +1,113 @@
+﻿GAP-*.md
+PARMANA-*.md
+*test-keys*
+*secret*
+# Un-ignore legitimate source/test files whose path only contains the
+# word "secret(s)" because they implement or test secrets management
+# itself (ADR-0009) -- never actual secret material. Without this, an
+# entire feature directory silently vanishes from git the moment its
+# name matches *secret*, which already happened once
+# (docs/adr/ADR-0009-...) before this negation was added.
+!packages/*/src/**/*[Ss]ecret*
+!packages/*/tests/**/*[Ss]ecret*
+!docs/**/*[Ss]ecret*
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Private keys
+*.pem
+*.key
+keys/
+
+# Node
+node_modules/
+**/node_modules/
+
+# Build output
+dist/
+**/dist/
+*.tsbuildinfo
+.typedoc-staging/
+
+# Python
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+**/*.egg-info/
+.venv/
+**/.venv/
+.mypy_cache/
+**/.mypy_cache/
+.ruff_cache/
+**/.ruff_cache/
+.pytest_cache/
+**/.pytest_cache/
+
+# Local/test artifacts
+scratch-live-test-body.json
+
+# Audit scratch files (temporary verification artifacts)
+00-CLAIMS-FULL-TEXT.md
+01-CLAIMS-EXTRACTED.md
+02-CLAIMS-VALIDATION-RESULTS.md
+03-CLAIMS-AUDIT-SUMMARY.md
+04-REAL-GAPS-FOUND.md
+05-CLAIMS-AUDIT-FINAL-REPORT.md
+CREDENTIAL-FILES-FOUND.md
+CREDENTIAL-TYPE-DEFINITION.md
+CREDENTIAL-CREATION.md
+CREDENTIAL-USAGE.md
+CREDENTIAL-DESTRUCTION.md
+CALLER-RECEIVES.md
+CREDENTIAL-ISOLATION-FINDINGS.md
+CODEBASE-MAP.md
+POLICY-DATASTRUCTURE.md
+RUNTIME-ENGINE-CONSTRUCTOR.md
+SIGNAL-INTENT-BINDER-ACTUAL.md
+SIGNAL-STATE-VERIFIER-ACTUAL.md
+EXECUTION-PATH-TRACED.md
+REAL-GAPS-FOUND.md
+FIXES-FOR-REAL-GAPS.md
+ALL-FIXES-COMPLETE.md
+
+.vercel
+
+.vercel
+
+.env*
+
+# Self hosted deployment state made by docker-compose.yml: signing keys,
+# the API key and offline check output. Never commit it.
+parmana-local/
+
+# Agent skills installed locally by vercel integration add (Resend).
+.agents/
+.claude/skills/
+skills-lock.json
+
+# Private working notes, kept only on the author's machine and never
+# committed or published (for example, unfiled invention ideas).
+docs/private/
+release-dist/
+
+# npm run evaluate output
+evaluation-report.json
+
+# npm run mutation output
+reports/
+.stryker-tmp/
+stryker.log
+
+# Local credential recovery runbook: steps only, but kept off this public
+# repository on purpose. Lives on the operator's machine.
+PARMANA-CREDENTIAL-RECOVERY.md
+*-RECOVERY.local.md
+examples/live-checks/**/evidence/*-record.json
+examples/live-checks/**/record-*.json
+examples/razorpay-refund/record-*.json
+
+# Internal proof audit report: kept local, not published (contains bypass details)
+proof-audit/REPORT.md

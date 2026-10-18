@@ -1,0 +1,86 @@
+---
+title: "Interface: Configuration"
+---
+
+Defined in: [typescript/src/config/Configuration.ts:28](https://github.com/pavancharak/parmana/blob/main/typescript/src/config/Configuration.ts#L28)
+
+Immutable SDK configuration.
+
+The Parmana Runtime gates every route except GET /health, GET /ready,
+GET /openapi.yaml, and GET /documentation behind a caller bearer key
+(packages/api/src/middleware/caller-auth.ts). See apiKey below and
+/api-reference/authentication.
+
+## Properties
+
+### endpoint
+
+> `readonly` **endpoint**: `string`
+
+Defined in: [typescript/src/config/Configuration.ts:35](https://github.com/pavancharak/parmana/blob/main/typescript/src/config/Configuration.ts#L35)
+
+Parmana Runtime endpoint.
+
+Example:
+https://runtime.example.com
+
+---
+
+### apiKey?
+
+> `readonly` `optional` **apiKey?**: `string`
+
+Defined in: [typescript/src/config/Configuration.ts:46](https://github.com/pavancharak/parmana/blob/main/typescript/src/config/Configuration.ts#L46)
+
+Caller bearer key, minted by scripts/generate-api-key.ts.
+
+Sent as `Authorization: Bearer <apiKey>` on every request. Omit only
+against a Runtime started with PARMANA_AUTH_DISABLED=true (local
+development only); every other deployment rejects an unauthenticated
+request with a 401 before a Business Transaction is even
+constructed.
+
+---
+
+### timeout?
+
+> `readonly` `optional` **timeout?**: `number`
+
+Defined in: [typescript/src/config/Configuration.ts:54](https://github.com/pavancharak/parmana/blob/main/typescript/src/config/Configuration.ts#L54)
+
+Request timeout (milliseconds).
+
+Default:
+30000
+
+---
+
+### retryPolicy?
+
+> `readonly` `optional` **retryPolicy?**: [`RetryPolicy`](/sdks/reference/typescript/interfaces/RetryPolicy)
+
+Defined in: [typescript/src/config/Configuration.ts:59](https://github.com/pavancharak/parmana/blob/main/typescript/src/config/Configuration.ts#L59)
+
+Retry configuration.
+
+---
+
+### transport?
+
+> `readonly` `optional` **transport?**: [`Transport`](/sdks/reference/typescript/interfaces/Transport)
+
+Defined in: [typescript/src/config/Configuration.ts:66](https://github.com/pavancharak/parmana/blob/main/typescript/src/config/Configuration.ts#L66)
+
+Transport implementation.
+
+If omitted, the client builds an HttpTransport from this same configuration, so timeout, retryPolicy, apiKey and userAgent apply.
+
+---
+
+### userAgent?
+
+> `readonly` `optional` **userAgent?**: `string`
+
+Defined in: [typescript/src/config/Configuration.ts:71](https://github.com/pavancharak/parmana/blob/main/typescript/src/config/Configuration.ts#L71)
+
+Optional SDK user agent.

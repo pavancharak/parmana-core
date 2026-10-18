@@ -1,0 +1,176 @@
+---
+title: "Chapter 8: The Runtime Pipeline"
+description: "The Runtime Pipeline is the ordered sequence of checks and steps a BusinessTransaction"
+---
+
+## What it is
+
+The Runtime Pipeline is the ordered sequence of checks and steps a `BusinessTransaction`
+passes through, from arrival to a signed `ExecutionTrustRecord`. Its center is
+`RuntimeEngine.execute()` (`packages/runtime/src/RuntimeEngine.ts`), a single method that
+loads a policy, runs every configured pre-authorization protection in a fixed order,
+evaluates the policy, builds a `Decision`, signs an `ExecutionAuthorizationPayload` if
+approved, and hands the result to two further pipelines (`RuntimePipeline` for execution,
+`BusinessTrustPipeline` for the final trust record). Everything downstream of a request
+being accepted runs through this one method.
+
+## Why it was built
+
+A system that authorizes real-world actions needs one place where every protection is
+guaranteed to run, in a guaranteed order, with no way for a caller or a misconfigured
+deployment to skip a step silently. `RuntimeEngine` is that place. Its own class doc comment
+states its responsibilities directly: load the requested policy, evaluate it deterministically,
+create the `Decision` artifact, create the initial `Execution` artifact, execute the Runtime
+Pipeline, and produce the `ExecutionTrustRecord`. Most of the protections wired into it
+(signal-intent binding, capability/policy binding, signal-state verification, policy
+governance verification) were added incrementally, each as an **optional, trailing
+constructor parameter**, specifically so every pre-existing call site keeps compiling and
+behaving identically when a new protection is introduced. This is a deliberate, repeated
+pattern in this codebase, not an accident of growth.
+
+## How it works
+
+`RuntimeEngine`'s constructor takes ten required dependencies (`RuntimePipeline`,
+`PolicyRouter`, `PolicyEngine`, `SignalIntentBinder`, `DecisionBuilder`, `ExecutionGate`,
+`ExecutionBuilder`, `BusinessTrustPipeline`, `RuntimeAuthorizationSigner`,
+`authorizationTtlSeconds`) and eight optional trailing ones (`hooks`, `refusalRecordBuilder`, `refusalRecordRepository`, `signalStateVerifier`, `capabilityPolicyBinder`, `policyExecutionVerifier`, `policyGovernanceAnchorResolver`, `signingReadiness`).
+At construction, it logs which optional protections are actually configured
+(`runtime_engine_constructed`), which is how an operator can confirm, from log output alone,
+exactly which protections are active for a given deployment.
+
+`execute(transaction)` runs these steps, in this exact order (comments quoted verbatim from
+`RuntimeEngine.ts`):
+
+1. **Policy load.** `policyRouter.load(transaction.policy.name, transaction.policy.version)`.
+   `beforePolicyLoad`/`afterPolicyLoad` hooks fire around this.
+2. **Policy content hash (G-24).** `policyContentHash = policyContentHasher.hash(policy)` ,
+   computed from the _actually loaded_ policy document, never from what the caller declared,
+   using the same `TrustRecordHasher` (canonicalize, then SHA-256) every other content hash
+   in this codebase uses.
+3. **Policy Governance evidence anchor (G-45).** If `policyGovernanceAnchorResolver` is
+   configured, it resolves whether this policy has a valid, matching approval record.
+   Purely evidentiary, a resolver error is caught and logged, never allowed to affect the
+   real outcome.
+4. **Policy Governance execution-time verification.** If `policyExecutionVerifier` is
+   configured, it checks the same approval-record question, but this one _can_ reject: "a
+   policy with no approval record, an approval record whose signature does not verify, or
+   live content that no longer matches its approval record is rejected before `PolicyEngine`
+   ever evaluates a single rule in it."
+5. **Capability/Policy binding (TD-22).** If `capabilityPolicyBinder` is configured and step
+   4 found no violation, it checks whether the invoked capability has a canonical policy
+   binding and, if so, whether the declared policy matches it. Runs before signal-intent
+   binding "for the same reason capabilityPolicyBinder runs before signalIntentBinder:
+   checking a narrower guarantee against an already-wrong policy is meaningless."
+6. **Signal-intent binding.** If steps 4 and 5 found no violation,
+   `signalIntentBinder.findViolations(policy, signals, {target, parameters})` checks that
+   every `boundSignals` entry actually matches the real Intent's target/parameters.
+7. **Policy evaluation.** If none of steps 4 through 6 rejected, `policyEngine.evaluate(policy,
+signals)` runs the real rules. Any rejection from steps 4 through 6 becomes a synthetic
+   `PolicyDecision` with `outcome: REJECT`, `evaluatedRules: 0`, no rule is ever evaluated for
+   a request that fails an earlier check.
+8. **Signal-state verification (G-24 residual closure, RFC-0022).** Only runs if the
+   provisional decision is `APPROVE`, "a request already rejected... needs no independent
+   re-fetch of real state." If `signalStateVerifier` is configured, it independently
+   re-derives the declared facts from a real external source; a mismatch overrides the
+   decision to `REJECT`.
+9. **Decision.** `decisionBuilder.build(transaction, policyDecision)`.
+10. **Refusal Record (RFC-0021).** If the decision is not `APPROVED`, a `RefusalRecord` is
+    built and persisted, but this write is explicitly never allowed to affect or block
+    anything downstream; a failure here is only logged (`refusal_record_write_failed`), the
+    method quote: "The refusal itself must never depend on its own evidence being writable."
+11. **Enforce.** `executionGate.enforce(decision)`, this is the actual gate; a `REJECT`
+    throws here and nothing past this point runs for a rejected transaction.
+12. **Authorization.** Only reached on `APPROVE`. `signalsHash` is computed, then
+    `authorizationSigner.sign(...)` produces the `SignedExecutionAuthorization` (Chapter 9
+    covers this envelope's exact fields).
+13. **Execution + Runtime Context.** `executionBuilder.build(...)` and the `RuntimeContext`
+    are assembled, the context carries a _copy_ of `transaction.policy` augmented with
+    `contentHash` and, if resolved, `governanceAnchor`; the original caller-submitted
+    transaction (already persisted before this method ever ran) is never mutated.
+14. **Signing readiness (G-52), then the Execution Intent (ADR-0012), then the Runtime Pipeline, then the Business Trust Pipeline.** If `signingReadiness` is configured, `assertReady()` runs first and throws `SigningUnavailableError` (`503 SIGNING_UNAVAILABLE`) when the evidence signing path cannot produce a signature that verifies, so nothing is released. Then, if `executionIntents` is configured, `executionIntents.prepare(context)` signs the Execution Intent and stores it, and throws `ExecutionIntentUnavailableError` (`503 EXECUTION_INTENT_UNAVAILABLE`) when it cannot, so nothing is released. Then `pipeline.execute(context)` runs the
+    actual execution stages (Chapter 10 covers `ExecutionGateway`, one implementation of the
+    `ExecutionSystem` interface this pipeline calls into). If that raises an error, the intent is marked `ERRORED`. When it returns, `markReleased(...)` saves the execution context on the intent. Then `trustPipeline.execute(...)`
+    produces the final, signed `ExecutionTrustRecord`, and after `Runtime.execute()` stores it the intent is marked `FINALIZED`.
+
+### Signing readiness and failure after release (G-52)
+
+`signingReadiness` is `CachedSigningReadiness` in production. Its probe is `VerificationCrypto.probeSigning()`,
+which signs a synthetic artifact padded past 4096 bytes through the same `Signer` and key id used for
+trust records, then verifies it against the public key that `Signer` publishes. A success is trusted for
+60 seconds, a failure is never cached, and concurrent requests share one probe. It is enforced by
+`createSigningReadiness()` everywhere except when `NODE_ENV` is exactly `test` or `development`.
+
+Everything after `pipeline.execute()` returns happens after the action was released to the connector. A
+failure there, in the trust record pipeline, the `afterExecution` and `beforeTrustRecord` hooks, or
+persisting the record in `Runtime.execute()`, is thrown as `ExecutionRecordIncompleteError`
+(`500 EXECUTION_RECORD_INCOMPLETE`), which names the `businessTransactionId` and `authorizationId`, and a
+critical `execution_released_record_failed` or `execution_released_record_persist_failed` event is
+logged. A failure before release, such as a policy rejection, keeps its own error. See ADR-0011.
+
+### Execution Intents: signed evidence before release, and a repair path (G-52, G-53)
+
+The Execution Trust Record contains the execution result, so it can only be built after release. ADR-0012
+adds a separate record that does not: the Execution Intent. `ExecutionIntentService.prepare()`
+(`packages/runtime/src/ExecutionIntentService.ts`) builds it with `ExecutionIntentBuilder`, signs it with
+`ExecutionIntentCrypto` (the same signing key as the Trust Record, so KMS in production), and stores it,
+immediately before `pipeline.execute()`. It is fail closed: if the intent cannot be signed and stored,
+nothing is released and the caller gets `503 EXECUTION_INTENT_UNAVAILABLE`.
+
+The signed fields are the ids, the policy reference, `policyContentHash`, `signalsHash` and
+`businessTransactionHash` copied from the signed authorization, `action`, `target` and `createdAt`. The
+result and the raw intent parameters are never in it. An intent proves what was about to be released. It
+does not prove the action was released or what its result was.
+
+The intent has an unsigned operational state: `PREPARED` (signed and stored), `RELEASED` (the release stage
+returned and the execution context was saved), `FINALIZED` (a signed Trust Record exists) and `ERRORED` (the
+release stage raised an error, so the outcome is unknown). `markReleased`, `markErrored` and `markFinalized`
+are best effort and never throw, because they run after release. They log at critical severity when they fail.
+Marking an intent `FINALIZED` deletes the saved execution context, since the Trust Record then holds it. A fifth state, `RESOLVED`, is set only by `ExecutionIntentService.resolve()`: a verified human closes a `PREPARED` or `ERRORED` intent after reconciling it at the connector, recording `resolution` (`NOT_EXECUTED` or `EXECUTED`), a required note, who and when. It is idempotent, never calls a connector, refuses `RELEASED` and `FINALIZED` intents and any transaction that has a Trust Record, and is an unsigned operator statement, not a Trust Record.
+
+`ExecutionIntentFinalizer` (`packages/runtime/src/ExecutionIntentFinalizer.ts`) rebuilds a missing Trust
+Record from the saved context. It never calls a connector, it is idempotent, and it refuses with
+`409 EXECUTION_INTENT_RESULT_NOT_RECORDED` when no context was saved. It is exposed as
+`POST /execution-intents/{businessTransactionId}/finalize` for a verified human credential, and it also
+verifies the record and generates the receipt. Enforcement is the rule `createExecutionIntents()` applies:
+on everywhere except `NODE_ENV` `test` or `development`, where `EXECUTION_INTENTS_CHECK=true` turns it on.
+The full operator procedure is in the docs site page Execution Intents.
+
+`RuntimeFactory.create()` (`packages/runtime/src/RuntimeFactory.ts`) is the composition root
+that assembles a fully wired `RuntimeEngine` (via `RuntimeBuilder`) plus the surrounding
+`ExecutionTrustApplication` (transaction/execution/verification/receipt services). It takes
+the same optional protections as trailing parameters and only wires them into `RuntimeBuilder`
+when supplied (`if (signalStateVerifier) { builder.withSignalStateVerifier(...) }`), the same
+"absent means unconfigured, not broken" discipline as the constructor itself.
+
+## How it enables things, with examples
+
+- `examples/tutorials/03-runtime-execution`, the baseline: a transaction through
+  `RuntimeEngine.execute()` to a trust record, no optional protections.
+- `examples/tutorials/16-runtime-pipeline`, the pipeline stages themselves.
+- `examples/tutorials/18-runtime-hooks`, the `RuntimeHook` interface (`beforePolicyLoad`,
+  `afterDecision`, etc.) that lets an integrator observe or extend the pipeline without
+  modifying `RuntimeEngine` itself.
+- `examples/tutorials/19-runtime-composition`, composing multiple pipeline stages.
+- `examples/tutorials/15-custom-runtime-component`, writing a custom pipeline stage.
+
+## How to validate this yourself
+
+- `packages/runtime/src/RuntimeEngine.ts`, the method itself; every ordering claim above is
+  a direct comment in this file.
+- `packages/runtime/src/RuntimeFactory.ts`, `RuntimeBuilder.ts`, how a `RuntimeEngine`
+  actually gets constructed for a real deployment.
+- `packages/runtime/tests/e2e/runtime.e2e.test.ts`, end-to-end proof, including the G-24
+  content-hash-at-decision-time assertion against real on-disk policy content.
+- `packages/runtime/tests/unit/optional-protections-logging.test.ts`, proves the
+  construction-time log line accurately reflects what's wired.
+- `packages/runtime/tests/integration/runtime.integration.test.ts`, the fuller integration
+  surface.
+
+## Integration requirements
+
+None beyond what Chapter 2 (Configuration and Bootstrapping) already covers, `RuntimeEngine`
+itself takes no environment variables directly; every dependency it needs is constructed and
+passed in by `RuntimeFactory`/`application.ts`. The optional protections
+(`signalStateVerifier`, `capabilityPolicyBinder`, `policyExecutionVerifier`,
+`policyGovernanceAnchorResolver`) each have their own configuration surface, covered in the
+chapters specific to them.

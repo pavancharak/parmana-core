@@ -1,0 +1,62 @@
+---
+title: "Every action needs a signed human approval, reads included"
+description: "Why Parmana has no automatic path, how a person approves one action on one resource, and what that approval does not cover."
+---
+
+A customer's parcel never arrived, and a support agent wants to refund ₹1,500. It is a small amount. The agent says the refund is eligible and the fraud check passed. Under Parmana, the refund still does not run until a manager has signed an approval for that order, covering that amount, used once. There is no amount below which a refund runs on its own.
+
+The same holds when an agent only wants to read a pull request or a CRM deal. Every agent action needs a signed human approval. Reads included.
+
+That is a deliberate product decision, and it costs something. Here is why I made it.
+
+## The problem: the agent's word is the only evidence
+
+When an agent asks to refund an order, the facts it sends with the request ("eligible", "fraud check passed") are its own claims. Nothing checks them against the order system today. An agent manipulated by text it read, a prompt injection in a support ticket, can send exactly the claims a policy wants to see.
+
+In September I reviewed every policy against the rule I said Parmana enforced, and found it was not a rule at all. It was a property of some policies. Several actions could be approved on facts the agent declared, or on nothing. Nothing stopped a new policy from doing the same. I fixed it the same day, and it is now enforced in code for every policy.
+
+## The idea: the agent's facts can refuse, only a person can approve
+
+A policy can use what the agent says to turn a request down. It cannot use it to say yes. Saying yes always needs a person's signature.
+
+## How Parmana does it
+
+- **At policy load.** Every rule that approves must require an approval signal to be true, as its whole condition or directly inside its top level "all". A policy with any other approve rule fails to load, so every request under it is refused. A proposed policy change of that shape is refused too, so it cannot get through governance either.
+
+- **At decision.** An approval signal counts as true only with a valid signed approval in the request. Parmana checks that the approver and key are trusted and not revoked, that the Ed25519 signature verifies, that it has not expired, that it is for this action, that it names this resource, and, where the policy names an amount, that it covers the amount in the request itself, never the number the agent put in its signals. Each approval works once. A runtime built without an approval verifier refuses every approval rather than trusting the agent.
+
+- **Again at release.** The gateway runs the same approval checks just before the action is released.
+
+- **Approvers sign on their own machine.** An approver has an Ed25519 key pair. The private key stays with them; the server trusts the public key. They sign with a script or with one function in the TypeScript or Python SDK. An approval lasts 15 minutes unless they choose otherwise, and the signing tools refuse more than a day.
+
+- **Approvers are added and revoked through maker checker.** One person proposes trusting a key, a different person approves with a step up signature. No code change, no deploy. Revoking a key refuses every approval it ever signed.
+
+## The flow, honestly
+
+Parmana does not hold a request while it waits for a person. The ₹1,500 refund is refused, with a signed Refusal Record saying it needs a manager. The manager signs an approval for that order up to ₹1,500. The agent sends a new request with the approval attached, and that one runs.
+
+How does the manager find out? Three ways:
+
+- **Refusal Records.** Every refusal is stored and signed, with its reason. This is the complete list.
+- **A webhook.** Parmana can post an "approval needed" event, signed with HMAC SHA256, naming exactly what to sign.
+- **Email.** The same event, sent to the approvers' inbox, at most once per refusal.
+
+Notifications go out only when an approval would actually help. Parmana evaluates the same policy again with the approval signals set to true; if that would still refuse, as for a failed fraud check or an amount above the maximum, nothing is sent. Delivery is best effort: one attempt, three seconds, no retry, and a failed delivery never changes the refusal.
+
+## Why reads too
+
+A read is not harmless. An agent that can read every deal in a CRM can leak every deal in a CRM. And a rule with exceptions invites more exceptions. "Every action" is easy to check: a test loads every policy in the repository and fails if one can approve without a person.
+
+## What it does not do
+
+- **It does not approve a refused request later.** A decision is approve or refuse. Nothing waits. After the approver signs, the agent sends a new request.
+- **An approval does not fix every detail.** It covers the action and the resource, and the amount where the policy names one. An approval for a Slack channel does not fix the message text; an approval for a HubSpot deal does not fix the new stage. The approver trusts the agent with those details for that one use.
+- **It proves a key signed, not whose hand held it.** In Parmana's own production (October 2026), one approver is trusted, and I hold that key. In practice one person approves every agent action.
+- **Any trusted approver can sign for any action.** Approvers are not yet limited to particular actions or policies.
+- **It does not check the agent's facts.** Eligibility and fraud flags are still the agent's word. They can only refuse.
+- **Notifications are not guaranteed.** They are best effort, and switching them on is a deployment setting.
+- **It is slower, by design.** Every action waits for a person. There is no automatic path, and adding one would be a change to this rule, not a feature.
+
+## The takeaway
+
+The cheapest way to stop a manipulated agent is to make sure it cannot authorize itself. In Parmana it cannot: whatever it claims, a yes needs a person's signature over this action, this resource and this amount, and that signature works once.

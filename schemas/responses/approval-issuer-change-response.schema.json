@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/approval-issuer-change-response.schema.json",
+  "title": "Approver Change Response",
+  "description": "Response of POST /approval-issuers/changes (201) and of approve and reject (200). A bare Approver Change, no wrapper.",
+  "$ref": "../common/approval-issuer-change.schema.json"
+}

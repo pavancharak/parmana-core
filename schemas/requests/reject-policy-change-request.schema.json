@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/requests/reject-policy-change-request.schema.json",
+  "title": "Reject Policy Change Request",
+  "description": "Request body for POST /policies/pending-changes/{id}/reject.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["rejectionReason", "stepUpAuthorization"],
+  "properties": {
+    "rejectionReason": {
+      "type": "string",
+      "description": "Free-text reason. Required, non-empty."
+    },
+    "stepUpAuthorization": {
+      "$ref": "../common/policy-change-step-up-authorization.schema.json"
+    }
+  },
+  "examples": [
+    {
+      "rejectionReason": "Does not meet the bar for this fixture",
+      "stepUpAuthorization": {
+        "payload": {
+          "version": 1,
+          "nonce": "4807fe45-0379-415b-9455-b8cb84eb5554",
+          "pendingPolicyChangeId": "5617ba3c-fb07-437d-9131-232b84bbb863",
+          "action": "reject",
+          "authorizedAt": "2026-09-15T03:48:16.755Z",
+          "expiresAt": "2026-09-15T03:50:16.755Z"
+        },
+        "signature": "Wu5/oibGCjvkTklGQPiDMDemqxCVbSyuoVT7WHW63rGq8Av5KFTW6vMkUCP03pANv8bDu60bZVuVcTDVmLXpDA==",
+        "keyId": "human-checker-step-up-key",
+        "algorithm": "ed25519"
+      }
+    }
+  ]
+}

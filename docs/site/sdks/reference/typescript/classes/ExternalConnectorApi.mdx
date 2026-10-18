@@ -1,0 +1,140 @@
+---
+title: "Class: ExternalConnectorApi"
+---
+
+Defined in: typescript/src/client/ExternalConnectorApi.ts:25
+
+## Constructors
+
+### Constructor
+
+> **new ExternalConnectorApi**(`transport`): `ExternalConnectorApi`
+
+Defined in: typescript/src/client/ExternalConnectorApi.ts:26
+
+#### Parameters
+
+##### transport
+
+[`Transport`](/sdks/reference/typescript/interfaces/Transport)
+
+#### Returns
+
+`ExternalConnectorApi`
+
+## Methods
+
+### list()
+
+> **list**(): `Promise`\<[`ExternalConnector`](/sdks/reference/typescript/interfaces/ExternalConnector)[]\>
+
+Defined in: typescript/src/client/ExternalConnectorApi.ts:32
+
+Every registration, active and revoked. Maps to GET
+/external-connectors.
+
+#### Returns
+
+`Promise`\<[`ExternalConnector`](/sdks/reference/typescript/interfaces/ExternalConnector)[]\>
+
+---
+
+### proposeChange()
+
+> **proposeChange**(`input`): `Promise`\<[`ExternalConnectorChange`](/sdks/reference/typescript/interfaces/ExternalConnectorChange)\>
+
+Defined in: typescript/src/client/ExternalConnectorApi.ts:48
+
+Proposes registering or revoking an external connector. Nothing
+changes until a different person approves it. Maps to POST
+/external-connectors/changes.
+
+#### Parameters
+
+##### input
+
+[`ProposeExternalConnectorChangeInput`](/sdks/reference/typescript/type-aliases/ProposeExternalConnectorChangeInput)
+
+#### Returns
+
+`Promise`\<[`ExternalConnectorChange`](/sdks/reference/typescript/interfaces/ExternalConnectorChange)\>
+
+---
+
+### listChanges()
+
+> **listChanges**(`status?`): `Promise`\<[`ExternalConnectorChange`](/sdks/reference/typescript/interfaces/ExternalConnectorChange)[]\>
+
+Defined in: typescript/src/client/ExternalConnectorApi.ts:66
+
+Lists external connector changes, newest first. Maps to GET
+/external-connectors/changes.
+
+#### Parameters
+
+##### status?
+
+[`PendingPolicyChangeStatus`](/sdks/reference/typescript/type-aliases/PendingPolicyChangeStatus)
+
+Only changes in this state. Omit for all.
+
+#### Returns
+
+`Promise`\<[`ExternalConnectorChange`](/sdks/reference/typescript/interfaces/ExternalConnectorChange)[]\>
+
+---
+
+### approveChange()
+
+> **approveChange**(`changeId`, `stepUpAuthorization`): `Promise`\<[`ExternalConnectorChange`](/sdks/reference/typescript/interfaces/ExternalConnectorChange)\>
+
+Defined in: typescript/src/client/ExternalConnectorApi.ts:89
+
+Approves and applies an external connector change. Maps to POST
+/external-connectors/changes/{id}/approve. The caller must not be the
+proposer and must have a registered step up key. Make
+`stepUpAuthorization` with `signPolicyChangeStepUp()`, the change id
+as `pendingPolicyChangeId`, and action "approve".
+
+#### Parameters
+
+##### changeId
+
+`string`
+
+##### stepUpAuthorization
+
+[`PolicyChangeStepUpAuthorization`](/sdks/reference/typescript/interfaces/PolicyChangeStepUpAuthorization)
+
+#### Returns
+
+`Promise`\<[`ExternalConnectorChange`](/sdks/reference/typescript/interfaces/ExternalConnectorChange)\>
+
+---
+
+### rejectChange()
+
+> **rejectChange**(`changeId`, `rejectionReason`, `stepUpAuthorization`): `Promise`\<[`ExternalConnectorChange`](/sdks/reference/typescript/interfaces/ExternalConnectorChange)\>
+
+Defined in: typescript/src/client/ExternalConnectorApi.ts:106
+
+Rejects an external connector change. Same caller rules as
+approveChange(); sign with action "reject". A reason is required.
+
+#### Parameters
+
+##### changeId
+
+`string`
+
+##### rejectionReason
+
+`string`
+
+##### stepUpAuthorization
+
+[`PolicyChangeStepUpAuthorization`](/sdks/reference/typescript/interfaces/PolicyChangeStepUpAuthorization)
+
+#### Returns
+
+`Promise`\<[`ExternalConnectorChange`](/sdks/reference/typescript/interfaces/ExternalConnectorChange)\>

@@ -1,0 +1,32 @@
+---
+sidebar_label: transport
+title: parmana.config.transport
+---
+
+## Transport Objects
+
+```python
+class Transport(ABC)
+```
+
+Base transport abstraction.
+
+#### send
+
+```python
+@abstractmethod
+def send(
+    *,
+    method: str,
+    path: str,
+    body: Any | None = None,
+    response_model: type[T] | None = None,
+    non_throwing_statuses: frozenset[int] = frozenset()
+) -> T | Any
+```
+
+Send a request to the Parmana Runtime.
+
+non_throwing_statuses lists status codes that must be returned as
+an ordinary payload instead of raising, because the route's
+response body at that status is not the shared error envelope.

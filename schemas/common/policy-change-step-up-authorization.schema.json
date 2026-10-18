@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/policy-change-step-up-authorization.schema.json",
+  "title": "Policy Change Step-Up Authorization",
+  "description": "Signed envelope proving a checker's explicit, fresh intent to approve or reject one specific Pending Policy Change (Policy Governance, Layer 4). Produced by PolicyChangeStepUpAuthorizationSigner (@parmana/crypto) using the checker's own step-up private key, never the bearer API key. Verified server-side against: the checker's registered stepUpPublicKey, payload.pendingPolicyChangeId matching the URL's {id}, payload.action matching the endpoint (approve vs reject), payload.expiresAt not yet passed, and payload.nonce not previously seen (single-use, replay-rejected on a second attempt with the same envelope).",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["payload", "signature", "keyId", "algorithm"],
+  "properties": {
+    "payload": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "version",
+        "nonce",
+        "pendingPolicyChangeId",
+        "action",
+        "authorizedAt",
+        "expiresAt"
+      ],
+      "properties": {
+        "version": {
+          "type": "integer"
+        },
+        "nonce": {
+          "type": "string",
+          "description": "Single-use value; a second request replaying the same envelope is rejected."
+        },
+        "pendingPolicyChangeId": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string",
+          "enum": ["approve", "reject"]
+        },
+        "authorizedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "signature": {
+      "type": "string",
+      "description": "Base64-encoded signature over the canonical payload, signed with the checker's step-up private key."
+    },
+    "keyId": {
+      "type": "string"
+    },
+    "algorithm": {
+      "type": "string",
+      "examples": ["ed25519"]
+    }
+  },
+  "examples": [
+    {
+      "payload": {
+        "version": 1,
+        "nonce": "343ee454-92c6-4ef9-9cfe-e98329e51f53",
+        "pendingPolicyChangeId": "6f4e4020-adf5-4449-938d-27aab58f66b7",
+        "action": "approve",
+        "authorizedAt": "2026-09-15T03:47:51.939Z",
+        "expiresAt": "2026-09-15T03:49:51.939Z"
+      },
+      "signature": "keOXnzUk8KcGrQTkpXC4Ki8ps3GTvMANwqq96b+toxba07gjkcmpyL/vaPZ7+pPZ1HAOJOOy3rj5XfhcwOTnAw==",
+      "keyId": "human-checker-step-up-key",
+      "algorithm": "ed25519"
+    }
+  ]
+}

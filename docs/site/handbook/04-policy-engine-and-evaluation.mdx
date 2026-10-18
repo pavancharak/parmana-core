@@ -1,0 +1,180 @@
+---
+title: "Chapter 4: The Policy Engine and Evaluation"
+description: "PolicyEngine (packages/policy/src/PolicyEngine.ts) is the piece of Parmana that turns a"
+---
+
+## What it is
+
+`PolicyEngine` (`packages/policy/src/PolicyEngine.ts`) is the piece of Parmana that turns a
+policy document and a set of runtime signals into one decision: approve or reject, with a
+reason and a trace of which rule matched. It is deliberately narrow. Its own doc comment
+states what it must never do: authorize execution, execute business actions, access external
+systems, create trust records, replay, or generate timestamps. It is a pure function from
+`(Policy, PolicySignals)` to `PolicyDecision`.
+
+## Why it was built
+
+A policy engine that could reach outside itself (call a database, hit the network, read a
+clock) would make every decision harder to reason about, replay, or audit. Parmana's design
+keeps decisioning pure and pushes every side effect (independent verification of signals,
+persistence, signing) into layers around it. `PolicyEngine` is the load-bearing center that
+everything else in this chapter's neighboring chapters (signal binding, capability binding,
+signal-state verification) exists to protect the inputs of.
+
+## How it works
+
+### The Policy document
+
+A `Policy` (`packages/policy/src/types/Policy.ts:198-300`) has an identity (`policyId`,
+`policyVersion`, `schemaVersion`), an optional `signalsSchema` declaring each signal's type
+(`boolean`, `number` or `string`; a request whose signal has another type is refused before any
+rule runs, as `signal-type-violation`), optional `boundSignals` and `unboundSignalReasons` (covered fully in Chapter 5), and an
+ordered array of `rules`.
+
+Each `PolicyRule` (`Policy.ts:178-193`) has an `id`, a `condition`, and an `outcome`
+(`{ action: "approve" | "reject", reason: string }`). Conditions are recursively composable
+(`Policy.ts:169-173`):
+
+- **Leaf** (`PolicyLeafCondition`): `{ fact, operator, value? }`, a single comparison against
+  one named signal.
+- **`all`**: logical AND over child conditions.
+- **`any`**: logical OR over child conditions.
+- **`always`**: unconditionally true, used as the final catch-all rule.
+
+The full set of supported operators (`PolicyValidator.OPERATORS`,
+`packages/policy/src/PolicyValidator.ts`):
+
+| Category   | Operators                                                                  |
+| ---------- | -------------------------------------------------------------------------- |
+| Equality   | `eq`, `neq`                                                                |
+| Numeric    | `gt`, `gte`, `lt`, `lte`, `between`                                        |
+| Collection | `in`, `not_in`, `contains`, `not_contains`, `contains_all`, `contains_any` |
+| String     | `starts_with`, `ends_with`, `matches`                                      |
+| Existence  | `exists`, `not_exists`                                                     |
+| Boolean    | `is_true`, `is_false`                                                      |
+| Null       | `is_null`, `is_not_null`                                                   |
+| Length     | `length_eq`, `length_gt`, `length_gte`, `length_lt`, `length_lte`          |
+| Type       | `type_is`                                                                  |
+
+The actual comparison logic lives in `OperatorEvaluator` (`packages/policy/src/OperatorEvaluator.ts`,
+imported by `PolicyEngine.ts:1`), `PolicyEngine` itself only walks the condition tree and
+delegates each leaf to it.
+
+### Evaluation: first-match-wins
+
+`PolicyEngine.evaluate(policy, signals)` (`PolicyEngine.ts:35-55`) calls a private
+`findFirstMatch`, which iterates `policy.rules` in array order, pushing each rule's `id` onto a
+`trace` array as it's visited, and returns the first rule whose condition evaluates `true`
+against the supplied `signals`. This is deterministic by construction: the same policy and the
+same signals always produce the same matched rule, because iteration order is fixed array
+order, not a scored or prioritized search.
+
+A missing fact never satisfies a leaf condition (`PolicyEngine.ts:93-95`: `if (signal ===
+undefined) return false`), an absent signal is not treated as a wildcard or a pass.
+
+If no rule matches, `PolicyDecision.outcome` defaults to `REJECT` via `toOutcome`'s `default`
+branch (`PolicyEngine.ts:140-142`) with `reason: "no_rule_matched"` and `matchedRuleId:
+"none"`. Every real policy in this codebase ends with an explicit `always: true` catch-all
+rule specifically so this default path is never actually reached in practice, it exists as a
+safety net, not the intended way to reject.
+
+The returned `PolicyDecision` (`packages/policy/src/types/PolicyDecision.ts`) carries
+`policyId`, `policyVersion`, `outcome`, `reason`, `matchedRuleId`, `evaluatedRules` (how many
+rules were checked before a match), and `matchedPath` (the full trace of rule IDs visited) ,
+enough for an auditor to reconstruct exactly why a decision came out the way it did, without
+re-running the engine.
+
+### Loading and validating: `PolicyRouter`
+
+`PolicyRouter` (`packages/policy/src/PolicyRouter.ts`) is the layer above `PolicyEngine` that
+actually loads a policy by `(name, version)` via a `PolicyRepository`, then validates it before
+handing it back. Two validator calls happen on every load:
+
+1. `validator.validate(policy)` (`PolicyRouter.ts:24`), **fail closed**. Throws
+   `PolicyValidationError` on structural problems (missing identity fields, empty `rules`,
+   malformed `boundSignals`/`unboundSignalReasons`, an oversized or dangerous `matches`
+   regex, see below) and, critically, on any rule-referenced fact that is neither in
+   `boundSignals` nor `unboundSignalReasons` (`findUncoveredFacts`, called internally at
+   `PolicyValidator.ts:229`). An uncovered fact is a hard failure, not a warning: every signal a
+   rule can reference must be either bound to the Intent or explicitly acknowledged as
+   independently verified. **Since 2026-09-30** it also refuses any policy with an approve rule
+   that does not require a fact from `approvalSignals` with `is_true`, as its whole condition or
+   directly inside its top level `all` (`validateEveryApprovalNeedsSignedApproval`): no AI agent
+   action is authorized without a signed human approval, reads included
+   ([Human approval](/concepts/human-approval)). The same check runs on every proposed policy
+   change, so such a policy cannot be approved through governance either.
+2. `validator.findRuleConflicts(policy)` (`PolicyRouter.ts:30`), **advisory only**. Detects
+   rule pairs whose conditions can both be true, which (under first-match-wins) means the
+   earlier rule silently shadows the later one. Logged via `console.warn` with event
+   `policy_rule_conflict_detected`, never thrown. `PolicyValidator.ts:442-466`'s own doc
+   comment explains why: unlike an uncovered fact (unambiguous fix, bind it or acknowledge
+   it), a flagged overlap might be a real bug or the deliberately intended shape (a specific
+   rule followed by a broader fallback). The analysis is also incomplete by design, it only
+   reasons about pairs of single, non-nested-fact conditions; anything involving `all`/`any`
+   is reported as `NEEDS_REVIEW` (level `INFO`) without further analysis.
+
+### The `matches` regex guard
+
+Because a `matches` condition is evaluated against live, potentially attacker-influenced
+signal values, `PolicyValidator.validateRegex` (`PolicyValidator.ts:361-391`) rejects two
+things before a policy is ever accepted: a pattern longer than 200 characters
+(`MAX_PATTERN_LENGTH`, `PolicyValidator.ts:331`), and a pattern containing a quantified group
+whose own contents are themselves quantified (e.g. `(a+)+`), the textbook shape of
+catastrophic regex backtracking (ReDoS). The doc comment is explicit that this is a heuristic,
+not a proof: it catches the single-level nested-quantifier case, not every pattern capable of
+exponential-time backtracking. A linear-time engine or an execution timeout would be needed to
+close that gap completely; this is a deliberate, bounded improvement over no check at all.
+
+### Two `PolicyRepository` implementations
+
+`PolicyRepository` (`packages/policy/src/PolicyRepository.ts`) is a three-method interface:
+`load`, `save`, `listAll`. Two implementations exist:
+
+- `FilePolicyRepository`, reads/writes `policies/{name}/{version}/policy.json` on the local
+  filesystem. Used in local development and in tests.
+- `SupabasePolicyRepository` (`packages/policy/src/SupabasePolicyRepository.ts`), reads/writes
+  a `policies` table via a direct Postgres connection. Added 2026-09-16, the same night as this
+  handbook: Vercel's serverless Functions run on a read-only filesystem, so the very first real
+  production policy approval (`PolicyChangeApprovalService.approve()`'s live-policy write,
+  covered fully in the policy governance chapter) failed with `EROFS` against
+  `FilePolicyRepository`. `packages/api/src/application.ts` now selects between the two based
+  on whether a real database is configured, constructing whichever one lazily rather than at
+  module import time (see that file's own doc comment for why eager construction was tried
+  first and caused a different bug).
+
+`PolicyRegistry` (`packages/policy/src/PolicyRegistry.ts`) is a separate, much smaller piece ,
+an in-memory `Map` from `"name:version"` to registration metadata (`{ name, version, path }`).
+Its own doc comment is explicit that it does not load, evaluate, or choose policies; it only
+tracks what's available.
+
+## How it enables things, with a concrete example
+
+- **Tutorial 02** (`examples/tutorials/02-policy-evaluation/run.ts`) exercises `PolicyEngine`
+  directly against a real policy document, showing both the approve and reject paths.
+- **Tutorial 04** (`examples/tutorials/04-policy-router/run.ts`) exercises `PolicyRouter`
+  loading a real policy from disk, including its validation step.
+- **Tutorial 17** (`examples/tutorials/17-multi-policy-routing/run.ts`) demonstrates routing
+  across multiple distinct policies by name/version.
+- **Tutorial 116** (`examples/tutorials/116-supabase-policy-repository/run.ts`, 2026-09-16)
+  demonstrates `SupabasePolicyRepository` directly, including the `EROFS` failure it fixes.
+
+## How to validate this yourself
+
+- Read the engine itself: `packages/policy/src/PolicyEngine.ts` (145 lines, worth reading in
+  full).
+- Read `packages/policy/src/types/Policy.ts` for the exact shape of every field a policy
+  document can have.
+- Run `packages/policy/tests/unit/PolicyEngine.test.ts`,
+  `packages/policy/tests/unit/PolicyValidator.test.ts`, and
+  `packages/policy/tests/unit/PolicyRouter-boundSignals-coverage.test.ts` to see the full
+  assertion suite, including edge cases (missing facts, conflicting rules, oversized regex
+  patterns) not covered above.
+- Pick any real policy under `policies/*/*/policy.json` and trace a few signal combinations
+  through its rules by hand, the format is simple enough to do this without running code.
+
+## Integration requirements
+
+None beyond what's already required to run the API at all: `PARMANA_POLICY_DIR` (for
+`FilePolicyRepository`, local/test default `./policies`) or `PARMANA_STORAGE=supabase` plus
+`DATABASE_URL` (for `SupabasePolicyRepository` in a real deployment). No policy-engine-specific
+configuration exists, a policy's own content is the only per-policy configuration surface.

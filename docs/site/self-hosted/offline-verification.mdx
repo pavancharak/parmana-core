@@ -1,0 +1,103 @@
+---
+title: "Offline verification"
+description: "Prove, with one command, that a self hosted deployment authorizes, refuses and signs with no internet connection, and that its records verify with only the public keys."
+---
+
+The offline check runs the whole decision flow on a Docker network that has no route to the internet, then verifies the evidence with only your public keys. Run it before you rely on the deployment, and after every upgrade.
+
+```bash
+bash docker/local/offline-check/run.sh
+```
+
+It takes about two minutes after the image is built. It ends with:
+
+```text
+14 of 14 checks passed
+```
+
+and exits with code `0`.
+
+<Note>
+  The check grew from 12 to 14 steps on 2026-09-30, when it started adding a
+  refund manager through maker checker (every refund needs a signed approval).
+  Run the same day: 14 of 14 passed.
+</Note>
+Any failed check makes it exit with `1` and print the API log.
+
+## What it does
+
+1. **Builds while online.** It builds the API image and pulls `postgres:16`. This is the only step that needs a network.
+2. **Makes your keys, if needed.** It runs `setup`, so `./parmana-local` has your signing keys.
+3. **Starts an isolated copy.** It starts a second copy of the deployment under the project name `parmana-offline-check`, with its own empty database, on a Docker network created with `internal: true`. No container on that network has a route to the internet or to Parmana.
+4. **Runs the checks** below, from a container on the same network that holds your **public** keys and its own throwaway API keys, and no private key.
+5. **Cleans up.** It removes the copy's containers and database. Your deployment started with `docker compose up` is not touched, and your API keys are not changed.
+
+The copy signs with your deployment's own keys from `./parmana-local/keys`, so the record it produces is signed exactly as your deployment would sign it.
+
+## The 14 checks
+
+| #   | Check                                                                          | What passing proves                                                                                                      |
+| --- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| 1   | no internet route from this network                                            | `https://1.1.1.1` and `https://registry.npmjs.org` cannot be reached from the network the server runs on.                |
+| 2   | API reports READY                                                              | The server started and its database is reachable, with no internet.                                                      |
+| 3   | policy change proposed by a verified human                                     | Policy governance accepts a proposal (`201`).                                                                            |
+| 4   | the proposer cannot approve their own change                                   | One person cannot make a policy take effect (`403 SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE`).                                |
+| 5   | a different human approves it with a signed step up authorization              | A second person's signed approval makes the policy (`customer-refund` 1.2.0) take effect (`200`).                        |
+| 6   | adding a refund manager key proposed by a verified human                       | Approver governance accepts a proposal to trust a manager's Ed25519 key (`201`).                                         |
+| 7   | a different human approves the manager key with a signed step up authorization | The manager's key is trusted from the next request on (`200`), with no deploy.                                           |
+| 8   | authorized refund executes                                                     | A refund of 500 with the manager's signed approval for that order and amount is authorized and released (`200`).         |
+| 9   | authorized refund reached the downstream system once                           | The downstream system received it exactly once, and verified the Execution Gateway's signature with only the public key. |
+| 10  | refused refund is rejected by the policy's rules                               | A refund of 50,000 with no manager approval is refused with `403 POLICY_DENIED`, for the policy's own reason.            |
+| 11  | refused refund never reached the downstream system                             | A refused action is never released.                                                                                      |
+| 12  | Trust Record stored                                                            | The authorized refund has a Trust Record.                                                                                |
+| 13  | Trust Record verifies with only the public keys                                | The record's hash and signature are valid, checked with the two public keys and nothing else.                            |
+| 14  | a changed Trust Record fails verification                                      | Changing the amount in the record makes verification fail, so check 13 is not vacuous.                                   |
+
+No agent action is authorized without a signed human approval ([Human approval](/concepts/human-approval)), so the
+check adds a refund manager through maker checker, the same way an operator would, with a key it makes inside the
+isolated network. The image itself trusts no approver.
+
+## The stand in for your downstream system
+
+The downstream system in the check is `docker/local/offline-check/paytm-agent-stand-in.mjs`. It takes the place of `parmana-paytm-agent`. It:
+
+- answers `POST /connector/paytm-refund` the way the real agent does;
+- refuses any request whose Execution Gateway signature does not verify with the gateway's public key;
+- never calls Paytm or anything else;
+- serves HTTPS with a certificate made for the run, because the server refuses a plain HTTP connector URL in production. The server trusts that one certificate for the run only.
+
+## Verify the record again, anywhere
+
+The check leaves three files in `parmana-local/offline-check/`: `trust-record.json`, `default.public.pem` and `gateway.public.pem`. Anyone can check the record on any machine with a clone of the repository, `npm install` and Node.js 24 or newer:
+
+```bash
+npx tsx scripts/verify-trust-record.ts parmana-local/offline-check/trust-record.json \
+  default=parmana-local/offline-check/default.public.pem \
+  gateway=parmana-local/offline-check/gateway.public.pem
+```
+
+Expected output, exit code `0`:
+
+```text
+{
+  "valid": true,
+  "hashValid": true,
+  "legacySignatureValid": true,
+  "algorithmsChecked": [
+    "ed25519"
+  ],
+  "errors": []
+}
+```
+
+The script makes no network call and needs no database. More on independent verification: [Verify independently](/guides/verify-independently).
+
+## What it does not cover
+
+- **Building offline.** The image is built while online. The check proves running without the internet, not installing without it.
+- **Your real downstream system.** It uses the stand in. Your own connector is tested by your own requests.
+- **Other connectors.** Only the Paytm connector path is exercised.
+
+## Where it has passed
+
+On Docker Desktop 29.8.0 on Windows 11, on 2026-09-25, and on Linux in CI on every change to the deployment files (`.github/workflows/docker-image.yml`, job `self-hosted`), first on the commit that added it.

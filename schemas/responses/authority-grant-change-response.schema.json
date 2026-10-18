@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/authority-grant-change-response.schema.json",
+  "title": "Authority Grant Change Response",
+  "description": "Response of POST /authority-grants/changes (201) and of approve and reject (200). A bare Authority Grant Change, no wrapper.",
+  "$ref": "../common/authority-grant-change.schema.json"
+}

@@ -1,0 +1,158 @@
+---
+title: "Chapter 20: Integrating Parmana (Requirements and Getting Started)"
+description: "Integrating Parmana means getting a caller, human, AI agent, or automated service, to submit a"
+---
+
+## What it is
+
+Integrating Parmana means getting a caller, human, AI agent, or automated service, to submit a
+Business Transaction to a running Parmana instance and receive back a signed Execution Trust
+Record. There are three real paths to do this: the official TypeScript SDK (`typescript/`,
+published as `@parmana/sdk`), the official Python SDK (`python/`, published as `parmana`), or
+plain HTTP against the REST API directly. All three ultimately call the same two routes,
+`POST /execute` and `POST /transactions`, which run through the identical execution pipeline.
+
+## Why it was built this way
+
+A caller hand-building a request body has to keep three id pairs internally consistent
+(`metadata.businessTransactionId` must equal the top level `businessTransactionId`,
+`authorization.authorityId` must equal `authority.authorityId`, `intent.authorizationId` must
+equal `authorization.authorizationId`). Getting any of these wrong produces a 400 from
+`BusinessTransactionValidator`. The SDKs exist specifically to make that class of mistake
+structurally impossible, not merely documented. `typescript/src/builders/createBusinessTransaction.ts`
+says this directly in its own doc comment: this exact mismatch is "the class of mistake that
+produced every 'X must match Y' 400 response documented in the end to end Paytm guide."
+
+## How it works
+
+### The TypeScript SDK
+
+`@parmana/sdk`'s entry point is `ParmanaClient` (`typescript/src/client/ParmanaClient.ts`). Its
+own doc comment is explicit about what it does and does not do: it holds configuration, composes
+sub-APIs, and delegates, it does not evaluate policy, authorize execution, execute business
+logic, verify trust records, or replay executions, all of that is server side.
+
+Construction requires a `Configuration` (`typescript/src/config/Configuration.ts`):
+
+```ts
+interface Configuration {
+  readonly endpoint: string; // Parmana Runtime endpoint, e.g. https://runtime.example.com
+  readonly apiKey?: string; // Bearer key minted by scripts/generate-api-key.ts
+  readonly timeout?: number; // default 30000ms
+  readonly retryPolicy?: RetryPolicy;
+  readonly transport?: Transport; // defaults to the SDK's own HTTP transport
+  readonly userAgent?: string;
+}
+```
+
+`apiKey` is optional only against a Runtime started with `PARMANA_AUTH_DISABLED=true`, which is
+local development only, every other deployment rejects an unauthenticated request with a 401
+before a Business Transaction is even constructed.
+
+`ParmanaClient` composes ten sub APIs (`HealthApi`, `ExecutionApi`, `VerificationApi`,
+`ReplayApi`, `ReceiptApi`, `TransactionApi`, `TrustRecordApi`, `PolicyApi`, `RefusalApi`,
+`AuditApi`), each a thin wrapper over one or more HTTP calls through the shared `Transport`. The
+public surface includes `execute()`, `createTransaction()` (a second, independent entry point
+into the identical pipeline via `POST /transactions`), `verify()`, `getLatestVerification()`,
+`replay()`, `receipt()`, `transaction()`/`transactions()`, `trustRecord()`, `validatePolicy()`,
+`refusalRecord()`/`verifyRefusalRecord()`, and `verifyAuditEvent()`.
+
+`createBusinessTransaction()` (`typescript/src/builders/createBusinessTransaction.ts`) is the
+recommended way to build a request body. It takes the fields a caller actually decides
+(`principalId`, `purpose`, `action`, `target`, `parameters`, `policy`, `signals`, and optional
+`businessTransactionId`, `authorityType`, `correlationId`, `tenantId`, `sourceSystem`,
+`submittedBy`) and derives every id-consistency field automatically. `authorityType` defaults to
+`"SERVICE"`, described in the source as "the correct value for an autonomous agent" (there is no
+`"AGENT"` value server side, a common first-integration mistake). `businessTransactionId`
+defaults to a fresh `crypto.randomUUID()` if omitted, and if you provide your own, you are
+responsible for its uniqueness, since it doubles as the server's idempotency key.
+
+### The Python SDK
+
+`python/parmana/client.py` mirrors the same shape: a `ParmanaClient`, a `ClientConfig`
+(`python/parmana/config/client_config.py`), and a parallel set of API modules under
+`python/parmana/api/` (`execution_api.py`, `policy_api.py`, `transaction_api.py`,
+`trust_record_api.py`, `verification_api.py`, `replay_api.py`, `receipt_api.py`,
+`refusal_api.py`, `audit_api.py`). `python/parmana/builders.py` is the equivalent of the
+TypeScript builder. Requires Python 3.10+ (from `pyproject.toml`'s `requires-python`).
+
+### The plain HTTP path
+
+Every SDK call ultimately becomes an HTTP request. A minimal integration with no SDK at all
+needs:
+
+1. A bearer key: `Authorization: Bearer <key>` on every request except `/health`, `/ready`,
+   `/openapi.yaml`, `/openapi.json`, `/api-manifest.json`, `/documentation`, `/reference`,
+   `/refusal/verify`, `/audit/verify`, and the key-discovery routes.
+2. A policy that already exists on the target instance, at the exact `(name, version)` you
+   reference, and has a real signed
+   `PolicyChangeApprovalRecord` (see Chapter 7), because production instances enforce this.
+3. A well formed `BusinessTransaction` body, with every fact your chosen policy's rules
+   reference present in `signals`, matching either a `boundSignals` entry (derived automatically
+   from `target`/`parameters` server side, but still worth sending consistently) or an
+   `unboundSignalReasons` entry (must be supplied directly).
+
+## Concrete example
+
+`examples/tutorials/` has dedicated SDK walkthroughs (grep `examples/tutorials/` for `sdk` in the
+directory name): the TypeScript and Python quickstart, AI-agent, and production-pattern
+tutorials each demonstrate a real client construction and a real `execute()` call against a
+locally spun-up server, no live network needed. `docs/site/guides/typescript-sdk-quickstart.mdx`
+and `docs/site/guides/python-sdk-quickstart.mdx` cover the same ground for the docs site; their
+code samples were checked against the actual SDK source above, not copied blind.
+
+## How to validate this yourself
+
+- `typescript/src/client/ParmanaClient.ts`, `typescript/src/config/Configuration.ts`,
+  `typescript/src/builders/createBusinessTransaction.ts`, `typescript/test/` for the SDK's own
+  test suite.
+- `python/parmana/client.py`, `python/parmana/config/client_config.py`,
+  `python/parmana/builders.py`, `python/tests/`.
+- `packages/runtime/src/validators/BusinessTransactionValidator.ts` for the exact
+  cross-consistency checks a hand built transaction must satisfy.
+- [End to end: agent to Parmana to Paytm](/guides/end-to-end-paytm-flow) for the error catalog of what happens when these
+  checks fail.
+
+## Requirements checklist
+
+**On the caller side, to make any real call:**
+
+- A bearer key, provisioned via `npx tsx scripts/generate-api-key.ts --caller-id "<you>"
+--credential-holder-type <TYPE>`. `credentialHolderType` must be `USER` if you intend to act as
+  a policy governance checker (Chapter 7); `SERVICE` is typical for an automated integration.
+- `allowedPrincipalIds`, if your key is scoped to specific principals, must include whatever
+  `principalId` you submit, or the request is rejected before policy runs. Check with
+  `GET /callers/me`.
+- `allowedCapabilities`, if scoped, must include the `action` capability you intend to invoke.
+
+**On the server/instance side, verified against `.env.example` and `packages/shared/src/config/Config.ts`:**
+
+| Variable                                                                                                                                              | Purpose                                                                                                                                                            |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PARMANA_POLICY_DIR`                                                                                                                                  | Local policy file directory (used when storage is not Supabase backed).                                                                                            |
+| `PARMANA_KEY_DIR` / `PARMANA_KEY_MATERIAL_JSON`                                                                                                       | Local Ed25519 key material (`KEY_PROVIDER=local`).                                                                                                                 |
+| `PARMANA_STORAGE`                                                                                                                                     | `memory` or `supabase`. `supabase` requires `DATABASE_URL`.                                                                                                        |
+| `DATABASE_URL`                                                                                                                                        | Direct Postgres connection string (Supabase or otherwise), used by `pg`, not PostgREST.                                                                            |
+| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_ANON_KEY`                                                                                    | Only needed for the handful of code paths that still use the Supabase client directly (e.g. CI's read-only policy verification script), not the main request path. |
+| `CRYPTO_MODE`, `PRIMARY_SIGNATURE_PROVIDER`, `SECONDARY_SIGNATURE_PROVIDER`, `HASH_PROVIDER`                                                          | Signature/hash algorithm selection (see Chapter 3).                                                                                                                |
+| `KEY_PROVIDER`                                                                                                                                        | `local` is the only implemented value as of this writing; anything else throws explicitly (`KeyBootstrap.create()`).                                               |
+| `AWS_REGION`, `AWS_ROLE_ARN`                                                                                                                          | Required only when using real AWS KMS signing (`KmsSigner.ts`), via Vercel OIDC, no static AWS credentials needed.                                                 |
+| `EXECUTION_AUTHORIZATION_TTL_SECONDS`                                                                                                                 | Default 120.                                                                                                                                                       |
+| `PARMANA_API_KEYS`                                                                                                                                    | JSON array of caller entries, the live authentication table.                                                                                                       |
+| `RATE_LIMIT_EXECUTE_PER_MINUTE`, `RATE_LIMIT_HEALTH_PER_MINUTE`                                                                                       | Rate limiting (Chapter 16).                                                                                                                                        |
+| `HUBSPOT_PRIVATE_APP_TOKEN`, `GITHUB_APP_ID`/`GITHUB_INSTALLATION_ID`/`GITHUB_APP_PRIVATE_KEY`, `PAYTM_CONNECTOR_URL`/`PAYTM_CONNECTOR_SHARED_SECRET` | Only needed if you intend to exercise the corresponding connector (Chapter 12); a connector is simply not registered if its config is unset, nothing else fails.   |
+
+## Common first-integration mistakes
+
+- Sending `authorityType: "AGENT"`, which does not exist server side; use `"SERVICE"`.
+- Hand-building the three id-consistency fields instead of using `createBusinessTransaction()`,
+  and getting one wrong.
+- Forgetting that `businessTransactionId` is an idempotency key: resubmitting the same id with
+  different content is rejected as a duplicate before execution, not silently overwritten (see
+  `docs/site/guides/end-to-end-paytm-flow.mdx`).
+- Referencing a policy `(name, version)` that exists on disk but has never been approved, on a
+  production instance (Chapter 7). Enforcement is on by default there, so the request is
+  rejected as an ordinary policy REJECT before any rule runs, and an authorization that somehow
+  carries no `policyContentHash` is rejected at the gateway.
+- Omitting a `signals` entry for a fact the target policy's rules actually reference; the request
+  is rejected, not silently evaluated with a missing/undefined fact.

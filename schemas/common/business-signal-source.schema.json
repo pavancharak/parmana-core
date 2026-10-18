@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/business-signal-source.schema.json",
+  "title": "Business Signal Source",
+  "description": "A business system Parmana asks for the facts a policy declares in signalSources (RFC-0023), registered through business signal source changes. Nothing is deleted: a revoked registration stays listed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "registrationId",
+    "name",
+    "endpointUrl",
+    "timeoutMs",
+    "status",
+    "registeredAt"
+  ],
+  "properties": {
+    "registrationId": {
+      "type": "string",
+      "description": "The changeId of the approved register change that created it."
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+      "description": "The name a policy's signalSources uses in `source`."
+    },
+    "endpointUrl": {
+      "type": "string",
+      "description": "The HTTPS endpoint Parmana posts each signed query to. It is the query's audience."
+    },
+    "timeoutMs": {
+      "type": "integer"
+    },
+    "publicKeyPem": {
+      "type": "string",
+      "description": "The Ed25519 public key, SPKI PEM, the source signs its answers with. When present, an answer without a valid signature is refused as SOURCE_UNAVAILABLE."
+    },
+    "keyId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]{1,128}$",
+      "description": "A label for publicKeyPem. When present, an answer signed under another keyId is refused."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "revoked"],
+      "description": "At most one active registration per name."
+    },
+    "registeredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "revokedByChangeId": {
+      "type": "string",
+      "description": "revoked only: the approved change that revoked it."
+    },
+    "revokedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "revoked only."
+    }
+  }
+}

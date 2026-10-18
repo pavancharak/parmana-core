@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/requests/refusal-verify-request.schema.json",
+  "title": "Refusal Verify Request",
+  "description": "Request body for POST /refusal/verify: the Refusal Record itself, not a lookup by ID. Checked structurally on the server (refusalRecordId, businessTransactionId, decision, refusalRecordHash, signature required) before signature verification runs.",
+  "$ref": "../common/refusal-record.schema.json"
+}

@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/business-signal-source-change.schema.json",
+  "title": "Business Signal Source Change",
+  "description": "A proposal to register a business signal source, or to revoke the active one for a name, and its resolution (RFC-0023 phase 2). One person proposes it; a different person approves or rejects it with a step up authorization. Only an approved change affects which sources Parmana asks.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "changeId",
+    "action",
+    "name",
+    "reason",
+    "proposedBy",
+    "proposedAt",
+    "status"
+  ],
+  "properties": {
+    "changeId": {
+      "type": "string",
+      "description": "Unique id of the change, a UUID. The step up authorization for approve or reject names it in payload.pendingPolicyChangeId. An approved register change's id is also the registrationId."
+    },
+    "action": {
+      "type": "string",
+      "enum": ["register", "revoke"],
+      "description": "register names a source and its endpoint; revoke ends the active registration for the name."
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+      "description": "The name a policy's signalSources uses in `source`."
+    },
+    "endpointUrl": {
+      "type": "string",
+      "description": "register only. The endpoint as the server stored it, normalized by URL parsing: https, a host name with a domain, no IP literal, no localhost, no user name, password or fragment, resolving only to public addresses."
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "minimum": 1000,
+      "maximum": 30000,
+      "description": "register only. How long Parmana waits for the source's answer. Defaults to 10000."
+    },
+    "publicKeyPem": {
+      "type": "string",
+      "description": "register only, optional. The Ed25519 public key the source signs its answers with, as the server stored it (SPKI PEM)."
+    },
+    "keyId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]{1,128}$",
+      "description": "register only, optional, and only with publicKeyPem."
+    },
+    "reason": {
+      "type": "string",
+      "maxLength": 2000,
+      "description": "Why, from the proposer."
+    },
+    "proposedBy": {
+      "type": "string",
+      "description": "The proposer's caller id. Always a human credential."
+    },
+    "proposedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["PENDING_APPROVAL", "APPROVED", "REJECTED"],
+      "description": "PENDING_APPROVAL until a second person approves or rejects it; then APPROVED or REJECTED, once."
+    },
+    "resolvedBy": {
+      "type": "string",
+      "description": "Who approved or rejected it. Never the proposer."
+    },
+    "resolvedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "rejectionReason": {
+      "type": "string",
+      "description": "Present when REJECTED."
+    }
+  },
+  "examples": [
+    {
+      "changeId": "5ba7d3a6-d56d-4e90-b588-402d44aeee0c",
+      "action": "register",
+      "name": "erp",
+      "endpointUrl": "https://orders.example.com/parmana/signals",
+      "timeoutMs": 5000,
+      "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAsgWd/PtRf9OsENif9bgJegghUpmEOOZN5NROxc3zpPc=\n-----END PUBLIC KEY-----\n",
+      "keyId": "erp-2026-10",
+      "reason": "Release goods only against invoices the ERP says are paid.",
+      "proposedBy": "source-maker",
+      "proposedAt": "2026-10-11T02:58:24.725Z",
+      "status": "APPROVED",
+      "resolvedBy": "source-checker",
+      "resolvedAt": "2026-10-11T02:58:24.745Z"
+    }
+  ]
+}

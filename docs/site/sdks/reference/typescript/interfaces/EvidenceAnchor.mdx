@@ -1,0 +1,42 @@
+---
+title: "Interface: EvidenceAnchor"
+---
+
+Defined in: [typescript/src/models/trust-record.ts:15](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/trust-record.ts#L15)
+
+Explicit binding linking policy-governance provenance to what a
+connector actually did -- see the server's EvidenceAnchor domain
+type for the full rationale. Absent on a Trust Record built before
+this field existed.
+
+## Properties
+
+### policyContentHash?
+
+> `readonly` `optional` **policyContentHash?**: `string`
+
+Defined in: [typescript/src/models/trust-record.ts:16](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/trust-record.ts#L16)
+
+---
+
+### governanceAnchorStatus?
+
+> `readonly` `optional` **governanceAnchorStatus?**: [`PolicyGovernanceAnchorStatus`](/sdks/reference/typescript/type-aliases/PolicyGovernanceAnchorStatus)
+
+Defined in: [typescript/src/models/trust-record.ts:17](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/trust-record.ts#L17)
+
+---
+
+### connectorEvidenceHash?
+
+> `readonly` `optional` **connectorEvidenceHash?**: `string`
+
+Defined in: [typescript/src/models/trust-record.ts:18](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/trust-record.ts#L18)
+
+---
+
+### anchorHash
+
+> `readonly` **anchorHash**: `string`
+
+Defined in: [typescript/src/models/trust-record.ts:19](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/trust-record.ts#L19)

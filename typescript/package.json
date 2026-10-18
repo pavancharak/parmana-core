@@ -1,0 +1,58 @@
+{
+  "name": "@parmana/sdk",
+  "version": "1.6.0",
+  "private": false,
+  "description": "Official Parmana TypeScript SDK",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "scripts": {
+    "build": "node ../node_modules/typescript7/bin/tsc -p tsconfig.json",
+    "typecheck": "node ../node_modules/typescript7/bin/tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rimraf dist"
+  },
+  "keywords": [
+    "parmana",
+    "ai",
+    "governance",
+    "authorization",
+    "verification",
+    "execution",
+    "trust",
+    "agentic-ai",
+    "sdk"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pavancharak/parmana.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pavancharak/parmana/issues"
+  },
+  "homepage": "https://github.com/pavancharak/parmana",
+  "dependencies": {
+    "dotenv": "^18.0.6"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.1",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

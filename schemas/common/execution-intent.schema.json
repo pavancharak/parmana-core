@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/execution-intent.schema.json",
+  "title": "Execution Intent",
+  "description": "A signed statement, made and stored BEFORE an action is released to a connector, of exactly what is about to be released (ADR-0012). It exists so that an action that was released always has signed evidence behind it, even when the Execution Trust Record cannot be produced afterwards. It contains only facts that exist before release: never the execution result, and never the raw intent parameters (the businessTransactionHash binds the intent to them). It is a separate record from the Execution Trust Record, which keeps its own format. An intent proves what was about to be released. It does NOT prove the action was released or what its result was. At most one Execution Intent exists per businessTransactionId.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "intentId",
+    "businessTransactionId",
+    "decisionId",
+    "authorizationId",
+    "policyName",
+    "policyVersion",
+    "businessTransactionHash",
+    "action",
+    "target",
+    "createdAt",
+    "intentHash",
+    "signature"
+  ],
+  "properties": {
+    "intentId": {
+      "type": "string",
+      "description": "Unique Execution Intent identifier."
+    },
+    "businessTransactionId": {
+      "type": "string",
+      "description": "The Business Transaction this intent belongs to."
+    },
+    "decisionId": {
+      "type": "string",
+      "description": "The Decision that approved the action."
+    },
+    "authorizationId": {
+      "type": "string",
+      "description": "The signed execution authorization this intent refers to. Matches authorization.payload.authorizationId in the Execution Trust Record."
+    },
+    "policyName": {
+      "type": "string"
+    },
+    "policyVersion": {
+      "type": "string"
+    },
+    "policyContentHash": {
+      "type": "string",
+      "description": "Hash of the exact policy content in force, copied from the signed authorization. Absent when the authorization carries none."
+    },
+    "signalsHash": {
+      "type": "string",
+      "description": "Hash of the signals that were evaluated, copied from the signed authorization. Absent when the authorization carries none."
+    },
+    "businessTransactionHash": {
+      "type": "string",
+      "description": "Hash of the executable content (action, target and parameters), copied from the signed authorization. It binds the intent to the exact parameters that were authorized without repeating them here."
+    },
+    "action": {
+      "type": "string",
+      "description": "The capability about to be released, for example paytm:refund."
+    },
+    "target": {
+      "type": "string",
+      "description": "The target of the action, for example the order being refunded. Together with action and businessTransactionId it is what an operator searches for at the connector."
+    },
+    "submittedBy": {
+      "type": "string",
+      "description": "Authenticated caller who submitted the request. Absent when caller authentication is disabled."
+    },
+    "grantedCapability": {
+      "type": "string",
+      "description": "The capability the caller was granted, when one was recorded."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when the intent was created, before the action was released."
+    },
+    "intentHash": {
+      "type": "string",
+      "description": "Canonical hash of the intent, same convention as ExecutionTrustRecord.trustRecordHash."
+    },
+    "signature": {
+      "type": "object",
+      "description": "Signature over the canonical Execution Intent, made with the deployment's signing key (local or AWS KMS), the same root of trust as the Execution Trust Record.",
+      "additionalProperties": true,
+      "required": ["algorithm", "keyId", "value", "signedAt"],
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "examples": ["ed25519"]
+        },
+        "keyId": {
+          "type": "string",
+          "description": "Identifier of the signing key. Fetch its public half from GET /keys/{keyId}."
+        },
+        "value": {
+          "type": "string",
+          "description": "Base64 encoded signature value."
+        },
+        "signedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "intentId": "b41fe9b9-5730-4d34-aab0-4ab63ae69d3b",
+      "businessTransactionId": "4c2eb3b2-3382-4bc2-bf22-2a072e6cf428",
+      "decisionId": "20b4e030-09cd-4447-86fc-b73279d23121",
+      "authorizationId": "5977535b-d887-423d-b422-01ece1fc7bf1",
+      "policyName": "customer-refund",
+      "policyVersion": "1.0.0",
+      "policyContentHash": "6a2e92fbde0f4c5dc56b4e202bf45ce24c99e565cf3ddaacaa21a11c71b7e1ea",
+      "signalsHash": "e22a7b9fd6e0a39e28521f9ffb726d6a57499236055fa6ff2caabd2268f4a395",
+      "businessTransactionHash": "9df286daf38c6eba272f47153e0fb3efef5ee61d778f6baecd5a53861763763a",
+      "action": "paytm:refund",
+      "target": "DRY-ORDER-1789969223742",
+      "submittedBy": "sandbox-agent",
+      "grantedCapability": "paytm:refund",
+      "createdAt": "2026-09-21T05:40:28.434Z",
+      "intentHash": "13922de380518d582c6bb3e88b1d88908e71565f191119f4cadc7de4e30cf5ed",
+      "signature": {
+        "keyId": "default",
+        "value": "UhXnkSnm5A3QU4CVrKGbP3FcTWkShnitn86psJprJpqgEBnsXWzDcZ+ktSO0FJek1X+n9DvO3SjR+WvSofS1CA==",
+        "signedAt": "2026-09-21T05:40:28.555Z",
+        "algorithm": "ed25519"
+      }
+    }
+  ]
+}

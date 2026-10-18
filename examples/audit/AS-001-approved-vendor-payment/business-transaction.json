@@ -1,0 +1,49 @@
+{
+  "businessTransactionId": "txn-vendor-payment-000001",
+
+  "metadata": {
+    "businessTransactionId": "txn-vendor-payment-000001",
+    "correlationId": "corr-vendor-payment-000001",
+    "createdBy": "accounts-payable",
+    "createdAt": "2026-01-01T09:00:00Z"
+  },
+
+  "authority": {
+    "authorityId": "authority-finance-manager-001"
+  },
+
+  "authorization": {
+    "authorizationId": "authorization-vendor-payment-001"
+  },
+
+  "intent": {
+    "intentId": "intent-vendor-payment-001"
+  },
+
+  "policy": {
+    "name": "vendor-payment",
+    "version": "2.0.0",
+    "schemaVersion": "1.0.0"
+  },
+
+  "signals": {
+    "vendorId": "VENDOR-1001",
+    "vendorName": "Acme Industrial Supplies",
+
+    "invoiceNumber": "INV-2026-000123",
+
+    "vendorVerified": true,
+    "invoiceVerified": true,
+    "paymentApproved": true,
+    "sufficientFunds": true,
+
+    "paymentAmount": 5000,
+    "currency": "USD",
+
+    "riskScore": 10
+  },
+
+  "status": "RECEIVED",
+
+  "createdAt": "2026-01-01T09:00:00Z"
+}

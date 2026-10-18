@@ -1,0 +1,223 @@
+---
+title: "Business validation"
+description: "An agent's proposed fact is never a business fact. How a policy names the system that owns each fact, how Parmana asks it and records a Trusted Signal, and the separate authority, validation and execution statuses on every decision."
+---
+
+An agent proposes an action and the facts it rests on: "refund ₹50,000 for order 123, the
+refund is eligible". The fact that the refund is eligible is the agent's claim, not a business
+fact. Parmana answers two questions separately, and an action runs only when both hold:
+
+- **Authority.** May this kind of action be decided here at all?
+- **Business validity.** Is this exact action valid for this exact business object, according to
+  the system that owns the facts?
+
+| What                                                                     | Status                         |
+| ------------------------------------------------------------------------ | ------------------------------ |
+| Separate authority, validation and execution statuses on every decision  | **[AVAILABLE]**                |
+| A policy naming the source of each fact (`signalSources`)                | **[AVAILABLE]**                |
+| Parmana asking the source and recording a Trusted Signal                 | **[AVAILABLE]** in the runtime |
+| Business systems registered as sources through maker checker             | **[AVAILABLE]**                |
+| Signed queries, and answers verified against the source's registered key | **[AVAILABLE]**                |
+| Per-agent authority grants with limits and expiry                        | **[AVAILABLE]**                |
+| Re-checked at release, and execute only if still valid at the system     | **[AVAILABLE]**                |
+
+The design and its phases are in
+[RFC-0023](https://github.com/pavancharak/parmana/blob/main/docs/rfcs/RFC-0023-Business-Validation.md);
+the claims are [CLAIMS.md 2.53 to 2.56](https://github.com/pavancharak/parmana/blob/main/docs/CLAIMS.md). To
+connect a system, see [Connect a business signal source](/guides/connect-a-business-signal-source); to give an agent
+authority, see [Grant an agent authority](/guides/grant-an-agent-authority).
+
+## The flow
+
+1. The agent proposes an action and facts.
+2. The facts must describe the action being executed (`boundSignals`).
+3. **Authority.** The policy in force must be the approved, current one, and the capability must
+   be decided under its bound policy. At the API, the caller's key must allow the capability. Under
+   a policy with `requireAuthorityGrant`, the caller must also hold a grant in force for the action,
+   and the request must be within its limits. If authority is not established the request is
+   refused, and no business system is asked.
+4. **Business validation.** For each fact the policy declares a source for, Parmana asks that
+   source about the business object it reads from the request, never using the agent's value. If
+   the agent proposed a value, it must equal the source's.
+5. **The policy** is evaluated on the values the sources established.
+6. The signed human approval is checked ([Human approval](/concepts/human-approval)), then the
+   action is authorized and released, and a signed record is written.
+
+## Naming the source of a fact
+
+```json
+"signalSources": {
+  "refundEligible": {
+    "source": "orders-system",
+    "claim": "refund.eligible",
+    "subject": "parameters.orderId",
+    "maxAgeSeconds": 60
+  }
+}
+```
+
+- `source`: the business system to ask, as registered through
+  [maker checker](/guides/connect-a-business-signal-source). Any system that answers the protocol can be one: an ERP,
+  an order system, a CRM, a ledger.
+- `claim`: what to ask it.
+- `subject`: where the business object is in the request, `target` or a `parameters` path.
+- `maxAgeSeconds`: how old the answer may be, from 1 to 86400, default 300.
+
+A policy with a malformed declaration fails to load. So does a policy where the same fact is also
+bound to the request, approval backed, or given an unbound reason, or where no rule reads it.
+`GET /policies/in-effect` lists the declarations under `signals.sourced`, so an agent knows it
+need not send them.
+
+## Trusted Signal
+
+Each answer is recorded as a Trusted Signal, bound to the business object and the action:
+
+```json
+{
+  "signalKey": "refundEligible",
+  "source": "orders-system",
+  "sourceIdentity": "https://orders.example.com/parmana/signals",
+  "claim": "refund.eligible",
+  "subject": "123",
+  "observedValue": true,
+  "observedAt": "2026-10-10T12:00:00.000Z",
+  "validUntil": "2026-10-10T12:01:00.000Z",
+  "action": "refund",
+  "businessTransactionId": "…",
+  "integrityProof": {
+    "algorithm": "sha256",
+    "digest": "…",
+    "sourceProof": "…",
+    "sourceKeyId": "orders-2026-10",
+    "sourceProofVerified": true
+  },
+  "verificationStatus": "VERIFIED"
+}
+```
+
+The digest is the SHA-256 of the signal without its proof, and the decision that carries it is
+signed. That proves what Parmana observed. When the source is registered with a key,
+`sourceProof` is the source's own Ed25519 signature over its answer, which Parmana verified before
+trusting it (`sourceProofVerified: true`). That proves the source said it. A source registered with
+a key cannot give an unsigned answer: it is refused as `SOURCE_UNAVAILABLE`. A source registered
+without one has no `sourceProof`; its answer is trusted on the pinned HTTPS connection alone.
+
+## Statuses
+
+| Answer              | Statuses                                                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Authority           | `AUTHORIZED`, `NOT_AUTHORIZED`, `AUTHORITY_UNCLEAR`, `AUTHORITY_EXPIRED`                                            |
+| Business validation | `VALID`, `INVALID`, `MISSING_DATA`, `CONFLICTING_DATA`, `SOURCE_UNAVAILABLE`, `VALIDATION_EXPIRED`, `NOT_EVALUATED` |
+| Execution           | `EXECUTED`, `NOT_EXECUTED`, `EXECUTION_FAILED`, `EXECUTION_UNKNOWN`                                                 |
+
+- **`AUTHORIZED`** means the action may be decided: the action type, and, under a policy that
+  requires a grant, this request within the caller's grant. It does not mean this action is valid
+  or was executed.
+- **`NOT_AUTHORIZED`**: the capability is decided under the wrong policy, or, under a policy that
+  requires a grant, the caller holds none in force or the request is outside its limits.
+- **`AUTHORITY_EXPIRED`**: the caller's grant has passed its `validUntil`.
+- **`AUTHORITY_UNCLEAR`**: the policy in force could not be established as the approved one, or the
+  caller's grants could not be read.
+- **`INVALID`**: the agent proposed a value the source contradicts, or proposed facts that do not
+  describe the action.
+- **`MISSING_DATA`**: the request names no business object, the source has no such fact, or it
+  answered with the wrong type.
+- **`CONFLICTING_DATA`**: the source holds contradictory facts.
+- **`SOURCE_UNAVAILABLE`**: the source is not registered or was revoked, failed, took longer than
+  10 seconds (or its registered timeout), or gave an answer Parmana cannot trust: incomplete, not
+  echoing the query, or not signed by its registered key.
+- **`VALIDATION_EXPIRED`**: the answer is older than `maxAgeSeconds`, or past the source's own
+  `validUntil`.
+- **`NOT_EVALUATED`**: validation did not run, because authority was not established or the policy
+  declares no sources. It is never `VALID`.
+
+Every status other than `VALID` refuses the request, with one exception: `NOT_EVALUATED` under a
+policy that declares no sources. Such a policy decides as it did before, and still needs a signed
+approval to approve. No status is ever turned into another.
+
+## At release
+
+A decision is not the end. The authorization Parmana signs carries the facts it rests on and the agent's
+grant, each with its `validUntil`. The gateway checks them again just before it releases the action: if a
+fact has expired, or the grant has expired or been revoked, nothing is sent and the request gets
+`409 AUTHORIZATION_NO_LONGER_VALID` with `executionStatus: NOT_EXECUTED`.
+
+An [external connector](/guides/connect-any-external-system) receives the facts as `conditions` in its
+signed release, which expires no later than the earliest of them. Its endpoint acts only if they still
+hold in its own records, in the same transaction, and otherwise answers `conditionsNotMet`.
+
+| Execution           | Means                                                                                          |
+| ------------------- | ---------------------------------------------------------------------------------------------- |
+| `NOT_EXECUTED`      | Refused at decision or at release, or the endpoint declined because a condition no longer held |
+| `EXECUTED`          | Released and performed                                                                         |
+| `EXECUTION_FAILED`  | Released, and the system reported a failure                                                    |
+| `EXECUTION_UNKNOWN` | Released, and the call failed, so whether it ran is unknown (`EXECUTION_OUTCOME_UNKNOWN`)      |
+
+## In the record
+
+Every decision carries `assessment`, inside the signed Execution Trust Record or
+[Refusal Record](/concepts/refusal-records):
+
+```json
+"assessment": {
+  "authority": { "status": "AUTHORIZED", "reason": "…" },
+  "businessValidation": {
+    "status": "INVALID",
+    "reason": "refundEligible: the request proposed true, but source \"orders-system\" reports false for 123.",
+    "signals": [ … ]
+  },
+  "execution": { "status": "NOT_EXECUTED", "reason": "Not executed: business validation failed." }
+}
+```
+
+A refused decision always includes `execution` as `NOT_EXECUTED`. An approved decision's execution
+is in the Trust Record's `executions`. The decision's `signals` keep what the agent proposed, so a
+reader sees the proposal and the source's answer side by side. Changing any status fails
+verification. Records made before this change have no `assessment` and still verify.
+
+## Limits today
+
+- **No real business system connected yet.** Registering sources and asking them is deployed and
+  tested, but no business system has been connected. No shipped policy declares a source. Both live checks passed in production on 2026-10-11, grants with a test policy and sources
+  with a demo source: [`examples/live-checks`](https://github.com/pavancharak/parmana/tree/main/examples/live-checks).
+- **Conditions at the system are opt in.** The gateway always re-checks `validUntil` and the grant at
+  release. An external endpoint must check the release's `conditions` itself to execute only if they
+  still hold; built in connectors get only the gateway re-check.
+- **Grants are opt in, per policy.** A policy without `requireAuthorityGrant` keeps today's
+  authority checks. No shipped policy requires a grant yet. Grant limits are per request, not per
+  day.
+- **Refund eligibility has no source yet.** `refundEligible` and `fraudCheckPassed` in
+  `customer-refund` are still declared by the caller and can only refuse (see
+  [Limitations](/security/limitations)).
+
+## What is left
+
+Business validation is built, deployed and in SDK 1.6.0, but it does not yet decide any real action. The full
+list, with owners and evidence, is section L of
+[REMAINING-WORK.md](https://github.com/pavancharak/parmana/blob/main/docs/REMAINING-WORK.md).
+
+**To make it decide real refunds** (operator steps, in order):
+
+1. Run one real refund end to end with the current keys and verify its record offline.
+2. Name the system that owns refund eligibility (the merchant's order system) and connect it as a signal source.
+3. Make the first real grant, with an amount limit and an end date.
+4. Change `customer-refund` through policy governance to require a grant and to declare its sources.
+5. Run one real refund under the changed policy and record it.
+
+**Evidence not yet collected:** a grant revoked or a fact expiring between decision and release, refused at
+release in production (it needs a test hook to time).
+
+**Not built:**
+
+| Item                                                               | Today                                                                                 |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| Daily or cumulative grant limits ("₹50,000 or 20 refunds per day") | Limits are per request; the design is in RFC-0023, "Cumulative grant limits"          |
+| Built in connectors asking the business system again at release    | External endpoints check `conditions` themselves; built in ones get the gateway check |
+| A "not released" state for an action refused at release            | It is left `ERRORED` until a person closes it                                         |
+| An end to end test of a refusal at release through `POST /execute` | Each part is tested separately                                                        |
+| Checking that a grant's caller exists                              | A grant to an unknown key is accepted and has no effect                               |
+| Limiting which claims a source may answer                          | Any registered source can answer any claim a policy asks it                           |
+
+**Open questions:** which system is the source of truth for refund eligibility; whether a sourced fact can ever
+replace the signed human approval (today it only adds to it); and, for cumulative limits, calendar or rolling
+periods, limits across capabilities, and whether an approval may exceed a limit.

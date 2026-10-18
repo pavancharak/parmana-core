@@ -1,0 +1,35 @@
+{
+  "policyId": "github-pr-read",
+  "policyVersion": "1.1.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes reading a pull request's state (number, mergeable, merged at, head commit, base branch) only with a signed approval from a trusted person for that exact pull request. No agent action is authorized without a signed human approval, reads included.",
+
+  "signalsSchema": {
+    "readApproved": "boolean"
+  },
+
+  "approvalSignals": {
+    "readApproved": {
+      "resourceId": "target"
+    }
+  },
+
+  "rules": [
+    {
+      "id": "approve-read-with-approval",
+      "condition": { "fact": "readApproved", "operator": "is_true" },
+      "outcome": {
+        "action": "approve",
+        "reason": "Pull request read authorized with a verified approval for this pull request."
+      }
+    },
+    {
+      "id": "reject-approval-required",
+      "condition": { "always": true },
+      "outcome": {
+        "action": "reject",
+        "reason": "Pull request read rejected. A read needs a signed approval for this pull request in signals.approvalArtifact, with readApproved true."
+      }
+    }
+  ]
+}

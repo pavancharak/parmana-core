@@ -1,0 +1,23 @@
+{
+  "intentId": "8da2ba3c-ffa4-45cd-84c7-48a5cce00565",
+  "businessTransactionId": "5015499d-b7ba-48fe-a9ad-821862d70ad0",
+  "decisionId": "bf0b88ab-6f75-4efb-b212-347b6d4ba8f9",
+  "authorizationId": "5f13d097-80d7-443a-8465-8fc9a968cb75",
+  "policyName": "customer-refund",
+  "policyVersion": "1.0.0",
+  "policyContentHash": "6a2e92fbde0f4c5dc56b4e202bf45ce24c99e565cf3ddaacaa21a11c71b7e1ea",
+  "signalsHash": "e22a7b9fd6e0a39e28521f9ffb726d6a57499236055fa6ff2caabd2268f4a395",
+  "businessTransactionHash": "2a3b38b92838b826125cdafb398e90e8705538be42dc505ba3202f1827187db9",
+  "action": "paytm:refund",
+  "target": "DRY-ORDER-1789971618759",
+  "submittedBy": "sandbox-agent",
+  "grantedCapability": "paytm:refund",
+  "createdAt": "2026-09-21T06:20:20.495Z",
+  "intentHash": "8540fc260bbd3cd7c128bfd88a6d23dd360609c609ebea6ea13d8b80a0c0f148",
+  "signature": {
+    "keyId": "default",
+    "value": "dVGzTaJdT6Gaul9YhoeRj3uwUAqL8gfyIUxhSu0qUqwrEQTDFPlomsE6bOiFpj0DisCMKWV8VU/kRHxL0NIfBg==",
+    "signedAt": "2026-09-21T06:20:20.499Z",
+    "algorithm": "ed25519"
+  }
+}

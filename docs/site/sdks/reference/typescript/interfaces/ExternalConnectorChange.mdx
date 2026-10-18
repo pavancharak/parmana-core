@@ -1,0 +1,123 @@
+---
+title: "Interface: ExternalConnectorChange"
+---
+
+Defined in: typescript/src/models/external-connector.ts:46
+
+A proposal to register or revoke an external connector, and its
+resolution.
+
+## Properties
+
+### changeId
+
+> `readonly` **changeId**: `string`
+
+Defined in: typescript/src/models/external-connector.ts:51
+
+Sign the step up authorization for approve or reject with this id as
+`pendingPolicyChangeId`.
+
+---
+
+### action
+
+> `readonly` **action**: `"revoke"` \| `"register"`
+
+Defined in: typescript/src/models/external-connector.ts:52
+
+---
+
+### capability
+
+> `readonly` **capability**: `string`
+
+Defined in: typescript/src/models/external-connector.ts:53
+
+---
+
+### endpointUrl?
+
+> `readonly` `optional` **endpointUrl?**: `string`
+
+Defined in: typescript/src/models/external-connector.ts:54
+
+---
+
+### policy?
+
+> `readonly` `optional` **policy?**: `string`
+
+Defined in: typescript/src/models/external-connector.ts:55
+
+---
+
+### allowedParameters?
+
+> `readonly` `optional` **allowedParameters?**: readonly `string`[]
+
+Defined in: typescript/src/models/external-connector.ts:56
+
+---
+
+### timeoutMs?
+
+> `readonly` `optional` **timeoutMs?**: `number`
+
+Defined in: typescript/src/models/external-connector.ts:57
+
+---
+
+### reason
+
+> `readonly` **reason**: `string`
+
+Defined in: typescript/src/models/external-connector.ts:58
+
+---
+
+### proposedBy
+
+> `readonly` **proposedBy**: `string`
+
+Defined in: typescript/src/models/external-connector.ts:59
+
+---
+
+### proposedAt
+
+> `readonly` **proposedAt**: `string`
+
+Defined in: typescript/src/models/external-connector.ts:60
+
+---
+
+### status
+
+> `readonly` **status**: [`PendingPolicyChangeStatus`](/sdks/reference/typescript/type-aliases/PendingPolicyChangeStatus)
+
+Defined in: typescript/src/models/external-connector.ts:61
+
+---
+
+### resolvedBy?
+
+> `readonly` `optional` **resolvedBy?**: `string`
+
+Defined in: typescript/src/models/external-connector.ts:62
+
+---
+
+### resolvedAt?
+
+> `readonly` `optional` **resolvedAt?**: `string`
+
+Defined in: typescript/src/models/external-connector.ts:63
+
+---
+
+### rejectionReason?
+
+> `readonly` `optional` **rejectionReason?**: `string`
+
+Defined in: typescript/src/models/external-connector.ts:64

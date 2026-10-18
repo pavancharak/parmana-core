@@ -1,0 +1,35 @@
+{
+  "challengeRecordId": "CR-2026-07-001",
+  "status": "resolved",
+  "claimChallenged": "That signatures made with Parmana's default signing key are authentic (docs/CLAIMS.md 2.5, 2.6: verifiable execution evidence). The key's private half, keys/default.private.pem, had been committed to a public GitHub repository.",
+  "source": {
+    "kind": "self-identified",
+    "attribution": "How the exposure surfaced is not recorded in 04-INCIDENTS-LOG.md INC-1; recorded here as self-identified.",
+    "raisedAt": "2026-07-05T00:00:00.000Z"
+  },
+  "investigationSteps": [
+    {
+      "performedAt": "2026-07-05T00:00:00.000Z",
+      "method": "Checked whether the committed key could be fetched by an anonymous clone (04-INCIDENTS-LOG.md INC-1). The exact date is not recorded; this is the latest date the cited sources support.",
+      "observation": "Confirmed downloadable by anonymous clone, so anyone could mint valid signatures with it."
+    }
+  ],
+  "finding": {
+    "outcome": "confirmed",
+    "statement": "Every signature made with that key carries no authenticity guarantee, whenever the signed artifact was created. With no external users at the time, practical damage was nil (INC-1)."
+  },
+  "outcome": {
+    "changed": true,
+    "description": "The key is treated as permanently compromised and was rotated to a fresh Ed25519 pair on 2026-07-05; keys/ and *.pem are git-ignored; the Key Compromise Notice at the top of docs/CLAIMS.md voids that key's signatures. INC-1 also lists a history purge and archiving a sibling repository as open; docs/CLAIMS.md states this repository's own history does not carry the exposure.",
+    "references": [
+      "https://github.com/pavancharak/parmana/blob/main/04-INCIDENTS-LOG.md#inc-1--exposed-signing-private-key-security-highest-severity",
+      "https://github.com/pavancharak/parmana/blob/main/docs/CLAIMS.md#key-compromise-notice"
+    ]
+  },
+  "disclosure": {
+    "disclosedPublicly": true,
+    "location": "docs/CLAIMS.md Key Compromise Notice and 04-INCIDENTS-LOG.md INC-1, in this public repository"
+  },
+  "createdAt": "2026-10-10T00:00:00.000Z",
+  "updatedAt": "2026-10-10T00:00:00.000Z"
+}

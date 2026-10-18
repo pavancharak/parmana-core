@@ -1,0 +1,266 @@
+---
+title: "Self hosted quickstart"
+description: "Start Parmana on your own machine with one command, approve a policy, and get your first signed decision. About 15 minutes."
+---
+
+By the end of this page you will have:
+
+1. Parmana and its own Postgres running on your machine.
+2. The shipped `customer-refund` policy approved by two people, the way production requires.
+3. A refund request refused by that policy, with a signed Refusal Record you can verify.
+
+No AI agent action is authorized without a signed human approval, so a refund with no manager
+approval is refused. To see one authorized, add a manager through
+[Manage approvers](/guides/manage-approvers) and attach their signed approval, the way the
+[offline check](/self-hosted/offline-verification) does.
+
+Every command below was run exactly as written on 2026-09-25.
+
+## Before you start
+
+| You need                      | Version                                              | Used for                                     |
+| ----------------------------- | ---------------------------------------------------- | -------------------------------------------- |
+| Docker with Docker Compose v2 | Tested with Docker 29.8.0. Compose v2.24.0 or newer. | Running everything.                          |
+| A clone of the repository     | `main`                                               | The Compose file and the helper scripts.     |
+| A Bash shell                  | Linux, macOS, or on Windows Git Bash or WSL          | Running the commands below.                  |
+| Node.js and npm               | Node.js 24 or newer                                  | Step 4 only: the approver signs an approval. |
+| OpenSSL                       | 1.1.1 or newer, tested with 3.5.4                    | Step 3 only: the approver makes a key.       |
+
+Run every command from the root of the repository.
+
+Each `docker compose run` command first prints two lines such as `Container parmana-setup-run-4031dfc35ccf Creating` and `... Created`. They go to standard error and are not part of the output shown on this page.
+
+<Warning>
+  **Git Bash on Windows only:** run `export MSYS_NO_PATHCONV=1` first, in the
+  same terminal. Without it, Git Bash rewrites paths such as
+  `/app/parmana-local/api-key.txt` into Windows paths before Docker sees them,
+  and the commands fail.
+</Warning>
+
+## Step 1: Start Parmana
+
+```bash
+docker compose up -d --build --wait
+```
+
+The first run builds the image, which takes a few minutes. Later runs take seconds. On the first run this command also creates your signing keys and an API key in the directory `./parmana-local`. What each part does is in [Configuration reference](/self-hosted/configuration).
+
+**Check:**
+
+```bash
+curl -s http://127.0.0.1:3000/ready
+```
+
+Expected output:
+
+```text
+{"status":"READY","authDisabled":false}
+```
+
+If you see anything else, go to [Troubleshooting](/self-hosted/troubleshooting).
+
+## Step 2: Read your API key
+
+The first start made one API key, for the caller ID `local-operator`, allowed to use the capability `paytm:refund`. Print it:
+
+```bash
+docker compose run --rm --no-deps --entrypoint cat setup /app/parmana-local/api-key.txt
+```
+
+The output ends with a line that starts with `pk_local_`. That line is the key. Keep it in a variable for the rest of this page:
+
+```bash
+OPERATOR_KEY=$(docker compose run --rm --no-deps --entrypoint cat setup /app/parmana-local/api-key.txt 2>/dev/null | tr -d '\r\n')
+```
+
+**Check:**
+
+```bash
+curl -s http://127.0.0.1:3000/callers/me -H "Authorization: Bearer $OPERATOR_KEY"
+```
+
+Expected output:
+
+```text
+{"callerId":"local-operator","allowedPrincipalIds":["local-operator"],"allowedCapabilities":["paytm:refund"],"unrestrictedCapabilities":false}
+```
+
+## Step 3: Add the two people who approve policies
+
+In production a policy decides nothing until two different people have approved it: a **proposer**, and an **approver** who confirms with a signature from a key only they hold. Until then every request under that policy is refused with `403 POLICY_DENIED` and the reason "has no PolicyChangeApprovalRecord". This page calls them `alice` (proposer) and `bob` (approver). Use your own names.
+
+**3a. The approver makes a step up key pair, on their own machine.** The private key never leaves that machine.
+
+```bash
+mkdir -p approver
+openssl genpkey -algorithm ed25519 -out approver/step-up.private.pem
+openssl pkey -in approver/step-up.private.pem -pubout -out approver/step-up.public.pem
+```
+
+The approver sends only `step-up.public.pem` to whoever runs Parmana. In this quickstart both are you, on one machine.
+
+**3b. Add both API keys.** Each command prints the new key once, on the line that starts with `pk_local_`. It cannot be shown again. Give each person their own key.
+
+```bash
+docker compose run --rm --no-deps --entrypoint node setup \
+  /app/docker/local/api-keys.mjs add --caller-id alice --credential-holder-type USER
+```
+
+Bob's key also registers his step up public key, which is read from standard input. The `-T` is required for that:
+
+```bash
+docker compose run --rm -T --no-deps --entrypoint node setup \
+  /app/docker/local/api-keys.mjs add --caller-id bob --credential-holder-type USER \
+  --step-up-public-key-stdin < approver/step-up.public.pem
+```
+
+Keep them in variables for the next step:
+
+```bash
+ALICE_KEY=pk_local_...   # the key printed for alice
+BOB_KEY=pk_local_...     # the key printed for bob
+```
+
+**3c. Restart the API.** It reads the keys only when it starts.
+
+```bash
+docker compose restart api
+docker compose up -d --wait api
+```
+
+**Check:**
+
+```bash
+docker compose run --rm --no-deps --entrypoint node setup /app/docker/local/api-keys.mjs list
+```
+
+Expected output:
+
+```text
+callerId=local-operator  credentialHolderType=(none)  allowedCapabilities=paytm:refund  allowedPrincipalIds=(own caller ID only)  stepUpKey=no
+callerId=alice  credentialHolderType=USER  allowedCapabilities=(none)  allowedPrincipalIds=(own caller ID only)  stepUpKey=no
+callerId=bob  credentialHolderType=USER  allowedCapabilities=(none)  allowedPrincipalIds=(own caller ID only)  stepUpKey=yes
+[api-keys] 3 key(s)
+```
+
+## Step 4: Approve the `customer-refund` policy
+
+**4a. Alice proposes the policy** exactly as it ships in `policies/customer-refund/1.2.0/policy.json`:
+
+```bash
+printf '{"reason":"Adopt the shipped customer-refund policy.","proposedContent":%s}' \
+  "$(cat policies/customer-refund/1.2.0/policy.json)" > proposal.json
+
+curl -s -X POST http://127.0.0.1:3000/policies/customer-refund/1.2.0/pending-changes \
+  -H "Authorization: Bearer $ALICE_KEY" -H "Content-Type: application/json" \
+  --data @proposal.json > proposed.json
+
+CHANGE_ID=$(sed -n 's/.*"pendingPolicyChangeId":"\([^"]*\)".*/\1/p' proposed.json)
+echo "$CHANGE_ID"
+```
+
+**Check:** the last command prints an ID such as `99527ea9-16dd-468d-bcc7-88d51daa1779`. If it prints nothing, `proposed.json` holds the error.
+
+**4b. Bob signs his approval, on his own machine.** This needs a clone of the repository with `npm install` run once. The signature is valid for 120 seconds and for this one change only, so do 4c right after.
+
+```bash
+npx tsx scripts/sign-policy-change-step-up.ts \
+  --private-key-file approver/step-up.private.pem --key-id bob \
+  --pending-policy-change-id "$CHANGE_ID" --action approve > signed.txt
+
+STEP_UP=$(grep '^{' signed.txt)
+```
+
+**4c. Bob sends the approval:**
+
+```bash
+curl -s -X POST http://127.0.0.1:3000/policies/pending-changes/$CHANGE_ID/approve \
+  -H "Authorization: Bearer $BOB_KEY" -H "Content-Type: application/json" \
+  -d "{\"stepUpAuthorization\":$STEP_UP}" > approved.json
+
+grep -o '"status":"APPROVED"' approved.json
+```
+
+**Check:** the last command prints `"status":"APPROVED"`.
+
+Parmana refuses the approval if Alice sends it (`403 SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE`), if the signature is reused, expired or made with another key (`STEP_UP_AUTHORIZATION_INVALID`), or if the key is not a verified human (`NON_HUMAN_CALLER_DENIED`).
+
+## Step 5: Get your first decision
+
+Build a request for a refund of 50,000. The policy authorizes a refund only with a signed manager approval for its order and amount, and this request has none:
+
+```bash
+docker compose run --rm --no-deps --entrypoint node setup \
+  /app/docker/local/examples/refund-request.mjs \
+  --amount 50000 > refund.json
+```
+
+Send it:
+
+```bash
+curl -s -w '\nHTTP %{http_code}\n' -X POST http://127.0.0.1:3000/execute \
+  -H "Authorization: Bearer $OPERATOR_KEY" -H "Content-Type: application/json" \
+  --data @refund.json
+```
+
+Expected output:
+
+```text
+{"error":"Execution rejected: Refund rejected. Every refund needs a signed manager approval for this order, covering this amount, in signals.approvalArtifact, with managerApproved true, and every other policy condition satisfied.","code":"POLICY_DENIED"}
+HTTP 403
+```
+
+Nothing was executed, and Parmana stored a signed Refusal Record of the decision. To let a refund like this run, a manager signs an approval for it; see [Human approval](/concepts/human-approval).
+
+## Step 6: Verify the Refusal Record
+
+Fetch it by the request's `businessTransactionId`:
+
+```bash
+BTX=$(sed -n 's/.*"businessTransactionId": "\([^"]*\)".*/\1/p' refund.json | head -1)
+
+curl -s http://127.0.0.1:3000/refusal/$BTX \
+  -H "Authorization: Bearer $OPERATOR_KEY" > refusal.json
+```
+
+Check its signature. This endpoint needs no API key, so anyone you give the record to can run it:
+
+```bash
+curl -s -X POST http://127.0.0.1:3000/refusal/verify \
+  -H "Content-Type: application/json" --data @refusal.json
+```
+
+Expected output:
+
+```text
+{"valid":true}
+```
+
+Change one value and check again:
+
+```bash
+sed 's/"refundAmount":50000/"refundAmount":500/' refusal.json > tampered.json
+
+curl -s -X POST http://127.0.0.1:3000/refusal/verify \
+  -H "Content-Type: application/json" --data @tampered.json
+```
+
+Expected output:
+
+```text
+{"valid":false}
+```
+
+## What you have now
+
+- Parmana running on your machine with its own Postgres, signing keys and API keys. Nothing is sent to Parmana or anywhere else.
+- A policy approved by two people, recorded and signed.
+- A refused request with a signed Refusal Record.
+
+A refund of 500 without an approval is refused the same way: the agent's own claims that the order is eligible and passed the fraud check are not enough (G-75). A request the policy **authorizes**, here a refund with a signed manager approval, is released to a connector, the service that performs the action. Until one is configured, an authorized request returns `503 CONNECTOR_NOT_REGISTERED` and nothing is executed. To see the full authorized path, including a Trust Record verified with only the public keys, run the [offline check](/self-hosted/offline-verification). To connect your own system, see [Connectors](/self-hosted/connectors).
+
+## Clean up
+
+The files this page created on your machine: `approver/`, `proposal.json`, `proposed.json`, `signed.txt`, `approved.json`, `refund.json`, `refusal.json` and `tampered.json`. Delete them when you are done. Keep `approver/step-up.private.pem` if Bob will approve again.
+
+To stop Parmana and keep everything: `docker compose down`. To delete the database too: `docker compose down -v`. Deleting `./parmana-local` deletes your signing keys and API keys.

@@ -1,0 +1,43 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+
+    "composite": true,
+
+    "declaration": true,
+    "declarationMap": true,
+
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+
+  "include": ["src/**/*.ts"],
+
+  "exclude": [
+    "dist",
+    "node_modules",
+    "tests",
+    "test",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ],
+
+  "references": [
+    { "path": "../shared" },
+    { "path": "../crypto" },
+    { "path": "../storage" },
+    { "path": "../policy" },
+    { "path": "../runtime" },
+    { "path": "../replay" },
+    { "path": "../execution-system" },
+    { "path": "../envelope-verifier" },
+    { "path": "../execution-control" },
+    { "path": "../execution-gateway" },
+    { "path": "../connector-sdk" },
+    { "path": "../connector-hubspot" },
+    { "path": "../connector-paytm" },
+    { "path": "../connector-slack" },
+    { "path": "../approval" }
+  ]
+}

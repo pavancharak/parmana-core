@@ -1,0 +1,333 @@
+---
+title: "AWS KMS signing"
+description: "Keep the signing key inside AWS KMS so the private key is never released. Set it up, verify it works, and understand the 4096 byte KMS limit."
+---
+
+With `KEY_PROVIDER=aws-kms`, Parmana signs inside AWS KMS. The private key is created in KMS and never leaves it. The server sends KMS the bytes to sign and receives a signature back.
+
+This page takes you from no key to a verified deployment. Do the steps in order. Every step ends with a **Check**.
+
+## What KMS signs, and what stays a file
+
+| Signed with                                                                                | Where the key lives                                                                           |
+| ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| Execution Trust Records, Execution Intents, Refusal Records and audit event signatures     | The KMS key named by `PARMANA_VERIFICATION_KEY_ID`, alias `default` unless you set it         |
+| Execution authorizations, receipts, policy change approval records and the execution chain | Always the KMS key with the alias `default`                                                   |
+| The gateway attestation                                                                    | Still a file, `gateway.private.pem`, in `PARMANA_KEY_DIR` or from `PARMANA_KEY_MATERIAL_JSON` |
+
+So a KMS deployment still needs the gateway key file. Only the `default` key moves to KMS. See the [Environment variable reference](/deployment/environment-variables#signing-keys-and-gateway-identity).
+
+Only `KEY_PROVIDER` values `local` and `aws-kms` work. `azure-key-vault`, `gcp-kms` and `hsm` pass validation but have no implementation, and the server refuses to start with them.
+
+## Before you start
+
+| You need                       | Why                                                                                                                                                          |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| An AWS account and the AWS CLI | To create the key and the role. Sign in with a limited IAM user, not the account root user. See [Sign in with a limited user](#sign-in-with-a-limited-user). |
+| A Vercel project               | The server reaches KMS from Vercel with short lived credentials (OIDC federation), so no AWS access key is stored anywhere.                                  |
+| The repository cloned          | The verification script (`npm run verify:kms`) runs from it.                                                                                                 |
+
+## Step 1: Create the key
+
+The key must be an asymmetric Ed25519 signing key. The server accepts no other key spec and stops with `KmsSigner only supports ECC_NIST_EDWARDS25519 keys` if it finds one.
+
+```bash
+aws kms create-key \
+  --key-spec ECC_NIST_EDWARDS25519 \
+  --key-usage SIGN_VERIFY \
+  --description "Parmana signing key" \
+  --region ap-south-1
+```
+
+Note the `KeyId` in the output. Then give the key the alias the server looks for. The server turns the key id `default` into `alias/default`:
+
+```bash
+aws kms create-alias \
+  --alias-name alias/default \
+  --target-key-id <the KeyId from above> \
+  --region ap-south-1
+```
+
+If you manage AWS with infrastructure as code, the CloudFormation resource `AWS::KMS::Key` takes the same `KeySpec` and `KeyUsage` values, and `AWS::KMS::Alias` creates the alias.
+
+**Check:**
+
+```bash
+aws kms describe-key --key-id alias/default --region ap-south-1 \
+  --query "KeyMetadata.[KeySpec,KeyUsage,KeyState]" --output text
+```
+
+You should see `ECC_NIST_EDWARDS25519 SIGN_VERIFY Enabled`.
+
+The default region for this project is `ap-south-1`. Use one region everywhere, because `AWS_REGION` in step 3 must match the key.
+
+## Step 2: Create the role that Vercel assumes
+
+The server never holds an AWS access key. On Vercel it exchanges the project's OIDC token for short lived credentials by assuming an IAM role. Create a role with a trust policy and a permission policy.
+
+**Trust policy.** It lets your Vercel project, and only it, assume the role. This is the format from the [Vercel OIDC documentation for AWS](https://vercel.com/docs/oidc/aws). Replace the four values in square brackets:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::[AWS ACCOUNT ID]:oidc-provider/oidc.vercel.com/[TEAM SLUG]"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "oidc.vercel.com/[TEAM SLUG]:sub": "owner:[TEAM SLUG]:project:[PROJECT NAME]:environment:production",
+          "oidc.vercel.com/[TEAM SLUG]:aud": "https://vercel.com/[TEAM SLUG]"
+        }
+      }
+    }
+  ]
+}
+```
+
+The OIDC identity provider `oidc.vercel.com/[TEAM SLUG]` must exist in your AWS account first. Create it as the Vercel documentation describes. Give the role the production environment only. Do not add `preview`, because a preview deployment should not sign with the production key.
+
+**Permission policy.** Three actions on one key, and nothing else:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["kms:Sign", "kms:GetPublicKey", "kms:DescribeKey"],
+      "Resource": "arn:aws:kms:ap-south-1:[AWS ACCOUNT ID]:key/[KEY ID]"
+    }
+  ]
+}
+```
+
+| Action             | Used for                                                                                    |
+| ------------------ | ------------------------------------------------------------------------------------------- |
+| `kms:Sign`         | Signing, and the signing readiness probe that runs before an action is released             |
+| `kms:GetPublicKey` | Publishing the public key at `/keys/default`, verifying signatures, and the readiness probe |
+| `kms:DescribeKey`  | The startup check that the key exists, and reading its key spec                             |
+
+Note the role ARN, which looks like `arn:aws:iam::[AWS ACCOUNT ID]:role/[ROLE NAME]`. You need it in step 3.
+
+**Check:** in the IAM console, open the role and confirm the trust policy names your team and project, and the permission policy names your key.
+
+## Step 3: Set the environment on Vercel
+
+Set these for the **Production** environment. The full meaning of each is in the [Environment variable reference](/deployment/environment-variables).
+
+| Variable       | Value                                               |
+| -------------- | --------------------------------------------------- |
+| `KEY_PROVIDER` | `aws-kms`                                           |
+| `AWS_REGION`   | `ap-south-1` (the region of the key)                |
+| `AWS_ROLE_ARN` | The role ARN from step 2. It is a role, not a user. |
+
+Keep the gateway key set as before, either files in `PARMANA_KEY_DIR` or `PARMANA_KEY_MATERIAL_JSON`. Do not set an AWS access key. The server never reads one.
+
+Turn on OIDC federation for the Vercel project, as the [Vercel documentation](https://vercel.com/docs/oidc/aws) describes, so the function receives an OIDC token. Then deploy again, because variables are read once at startup.
+
+**Check:** `vercel env ls production` lists all three variables.
+
+## Step 4: Deploy and check the key is reachable
+
+```bash
+vercel deploy --prod
+```
+
+Then, with your base URL in `URL`:
+
+```bash
+curl -s "$URL/keys/default"
+curl -s "$URL/ready"
+```
+
+The first call returns the public half of the KMS key:
+
+```json
+{
+  "keyId": "default",
+  "algorithm": "ed25519",
+  "use": "sig",
+  "pem": "-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----\n"
+}
+```
+
+`/ready` should answer `{"status":"READY","authDisabled":false}`.
+
+On Vercel the app is built on the first real request, not when the module loads, because the OIDC token only exists while a request is being handled. The first request after a cold start therefore does the setup work, including the call to KMS.
+
+**Check:** `/keys/default` returns `"algorithm": "ed25519"`. A `500` here means the server could not reach the key. See [Troubleshooting](#troubleshooting).
+
+## Step 5: Verify signing
+
+The repository has a script that signs test data through the same `KmsSigner` the server uses, on both sides of the 4096 byte limit. It changes nothing in AWS. It makes about seven `kms:Sign` calls, one `kms:GetPublicKey` and one `kms:DescribeKey` per run.
+
+Sign in with a limited user first (see [Sign in with a limited user](#sign-in-with-a-limited-user)), then run from the repository root:
+
+```bash
+AWS_REGION=ap-south-1 AWS_PROFILE=<your profile> npm run verify:kms
+```
+
+On PowerShell:
+
+```powershell
+$env:AWS_REGION = "ap-south-1"; $env:AWS_PROFILE = "<your profile>"; npm run verify:kms
+```
+
+Expected output:
+
+```text
+PASS  Key is an Ed25519 signing key  (algorithm ed25519)
+PASS  Signs 300 bytes as they are  (commitment false, 300 bytes signed, verifies true)
+PASS  Signs 4096 bytes as they are (the limit)  (commitment false, 4096 bytes signed, verifies true)
+PASS  Signs 5000 bytes as a 97 byte commitment  (commitment true, 97 bytes signed, verifies true)
+PASS  Signs 60000 bytes as a 97 byte commitment  (commitment true, 97 bytes signed, verifies true)
+PASS  A signature does not verify over different data  (verifies false)
+PASS  KMS refuses 5000 raw bytes (control)  (ValidationException: ... length less than or equal to 4096)
+
+All 7 checks passed.
+```
+
+The last check is a control. It sends 5000 raw bytes straight to KMS and requires KMS to refuse them. It proves the limit is real and that the commitment is what makes larger messages work.
+
+The exit code is `0` when every check passes. If `AWS_ROLE_ARN` is set in your shell, the script ignores it and says so, because that variable selects the Vercel OIDC token, which only exists on Vercel.
+
+**Check:** the last line reads `All 7 checks passed.`
+
+## Step 6: Verify a real record offline
+
+Signing that verifies in a script is not the same as a record that a third party can check. Run one real request as in [Integrate Parmana: specification for AI agents](/agents/integrate). Save the Execution Trust Record it returns, and get the key from the server:
+
+```bash
+curl -s "$URL/keys/default" > key.json
+```
+
+Write the `pem` value into `default.public.pem`, then verify with only that public key:
+
+```bash
+npx tsx scripts/verify-trust-record.ts record.json default=default.public.pem
+```
+
+**Check:** the output has `"valid": true` and `"errors": []`. Verifying the same record against a different public key must fail. A full record is usually larger than 4096 bytes, so this also proves the commitment path end to end. The rule a verifier you write yourself must follow is in [Verify independently](/guides/verify-independently).
+
+## How messages over 4096 bytes are signed
+
+KMS refuses a raw Ed25519 message longer than 4096 bytes. A full Execution Trust Record is larger than that. Parmana signs a message over the limit as a fixed 97 byte commitment instead: the bytes `PARMANA-ED25519-LARGE-MESSAGE-V1`, one NUL byte, then the SHA-512 digest of the message. The result is still an ordinary Ed25519 signature. Messages of 4096 bytes or fewer are signed unchanged. No marker is stored on the record, because the choice depends only on the message length. The decision is recorded in ADR-0010 in `docs/adr`.
+
+## Sign in with a limited user
+
+Do not run checks as the AWS account root user. Use an IAM user that can do only what this page needs. A user with the three actions from step 2, on the one key, is enough to run `npm run verify:kms`. It does not need `iam:*`, and it should have no access keys.
+
+Sign in with the console based login, which stores short lived credentials on your machine and needs no access key:
+
+```bash
+aws login --profile <your profile>
+```
+
+At the browser page choose **IAM user**, and enter the account ID, the user name and the password. Add the AWS managed policy `SignInLocalDevelopmentAccess` to the user, because `aws login` needs it.
+
+**Check:**
+
+```bash
+aws sts get-caller-identity --profile <your profile>
+```
+
+The `Arn` should end in `user/<your user name>` and must not end in `:root`. Then confirm the user is limited: `aws iam list-users --profile <your profile>` should fail with `AccessDenied`.
+
+<Warning>
+  A second `aws login` with the same `--profile` replaces the credentials stored
+  for that profile. If you use one profile for both root and a limited user, the
+  last login wins. Give each its own profile name.
+</Warning>
+
+## Run the whole server against KMS locally
+
+To reproduce a full request with KMS signing on your machine, start the server with these settings, on top of the minimum from the [production runbook](/deployment/production):
+
+| Variable       | Value                                                                                 |
+| -------------- | ------------------------------------------------------------------------------------- |
+| `KEY_PROVIDER` | `aws-kms`                                                                             |
+| `AWS_REGION`   | `ap-south-1`                                                                          |
+| `AWS_PROFILE`  | The limited profile from the previous section                                         |
+| `AWS_ROLE_ARN` | **Not set.** A set value selects the Vercel OIDC token, which does not exist locally. |
+
+The gateway key is still read from `PARMANA_KEY_DIR`. A connector that verifies the gateway's authorization, such as the refund service, must use the same key provider and the same KMS access, or it will report an invalid signature.
+
+## Troubleshooting
+
+| You see                                                                            | Cause                                                                                                                                                                                                              | Fix                                                                                                                                                                                                                                     |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `KEY_PROVIDER=aws-kms is configured, but no KMS key named "default" is reachable`  | Wrong region, missing alias, or the role cannot describe the key                                                                                                                                                   | Check `AWS_REGION`, that `alias/default` exists in that region, and that the role has `kms:DescribeKey` on the key.                                                                                                                     |
+| `KmsSigner only supports ECC_NIST_EDWARDS25519 keys`                               | The key has a different key spec                                                                                                                                                                                   | Create the key as in step 1. A key's spec cannot be changed.                                                                                                                                                                            |
+| `503` with code `SIGNING_UNAVAILABLE` and `AccessDeniedException` in the message   | The role lacks `kms:Sign` or `kms:GetPublicKey`, or the key is disabled                                                                                                                                            | Fix the permission or enable the key, then retry with a new `businessTransactionId`. Nothing was executed. See [Troubleshooting](/troubleshooting).                                                                                     |
+| `VercelOidcTokenError: The 'x-vercel-oidc-token' header is missing`                | Something called AWS while the module loaded, before any request                                                                                                                                                   | Use the current `api/index.ts`, which builds the app on the first request.                                                                                                                                                              |
+| `ValidationException ... length less than or equal to 4096`                        | A build without the large message rule signed a message over the limit                                                                                                                                             | Deploy a build that includes ADR-0010, then run `npm run verify:kms`.                                                                                                                                                                   |
+| `503` with code `EXECUTION_INTENT_UNAVAILABLE`                                     | The signed [Execution Intent](/concepts/execution-intents) could not be signed and stored before release. Under KMS the usual causes are the same as `SIGNING_UNAVAILABLE`, or a missing `execution_intents` table | Fix the permission or apply `supabase/migrations/20260921120000_add_execution_intents.sql`, then retry with a new `businessTransactionId`. Nothing was executed.                                                                        |
+| `500` with code `EXECUTION_RECORD_INCOMPLETE`                                      | The action was released and the signed record could not be produced afterwards                                                                                                                                     | Do not retry as a new transaction. A signed Execution Intent exists, and an operator can rebuild the record without repeating the action. See [Execution Intents](/concepts/execution-intents) and [Troubleshooting](/troubleshooting). |
+| `npm run verify:kms` says the session expired                                      | The local AWS login has expired                                                                                                                                                                                    | Run `aws login --profile <your profile>` again.                                                                                                                                                                                         |
+| A record fails offline verification against your local key                         | It was signed by KMS, and your local `default.public.pem` is a different key                                                                                                                                       | Verify against the public key from `GET /keys/default`.                                                                                                                                                                                 |
+| `AccessDenied` for `iam:` actions when you use the limited user                    | This is correct. The limited user has no such permission                                                                                                                                                           | Nothing to fix.                                                                                                                                                                                                                         |
+| `Gateway private key not found` or `Gateway public key not found`                  | The gateway attestation key is still a file, and KMS does not supply it                                                                                                                                            | Provide `gateway.private.pem` and `gateway.public.pem` in `PARMANA_KEY_DIR` or through `PARMANA_KEY_MATERIAL_JSON`.                                                                                                                     |
+| The gateway rejects a real execution with `failed checks [signatureVerified, ...]` | Signing and verification are using different keys                                                                                                                                                                  | Check that the build includes the 2026-09-16 fix in `packages/api/src/bootstrap/createExecutionGateway.ts`, where the gateway verifies with the same KMS backed key provider the runtime signs with.                                    |
+| A connector service reports only a generic HTTP 500                                | The real reason is recorded on the other side                                                                                                                                                                      | Query `execution_audit_events` by `business_transaction_id`. Both Parmana and `parmana-paytm-agent` write a `reason` there, see the [Database Schema Reference](/storage/schema-reference).                                             |
+
+## Keep in mind
+
+- Do not store a static AWS access key on Vercel for runtime signing. The OIDC role in step 2 exists so that no such key is needed.
+- The code resolves the logical key id `default` to `alias/default`. A descriptive alias on the same key does not replace it.
+- Keep `PARMANA_KEY_MATERIAL_JSON` (or the key files) after moving to KMS: it still carries the gateway key.
+- A per tenant key `tenant.<id>` resolves to `alias/tenant/<id>`: KMS alias names cannot contain a dot, so each dot in a key id becomes a slash. To give a tenant its own key, create a separate KMS key with that alias, for example `alias/tenant/acme` for `tenant.acme`. Without the alias, that tenant's authorizations are signed with `default`. This mapping is covered by unit tests only; it has not been run against real AWS.
+- Public keys and `DescribeKey` answers are cached in memory for 5 minutes per process. A failed or missing lookup is not cached. After repointing an alias to a new key, allow 5 minutes before records signed by the new key verify on every instance.
+- A keyId is always a logical name such as `default`, or an `alias/` name. A full key ARN is refused, including one named by a record being verified.
+- Keep `CRYPTO_MODE=single` (the default). Hybrid signing (Ed25519 and ML-DSA-65) uses local key files for both signatures, so the server refuses to start with `CRYPTO_MODE=hybrid` and `KEY_PROVIDER=aws-kms`.
+- After the key exists, narrow the administrator's own policy. `kms:CreateKey` with no resource limit is more than day to day work needs.
+
+## What has been verified
+
+Verified on 2026-09-20, against a real KMS key (`alias/default`, `ap-south-1`, `ECC_NIST_EDWARDS25519`, enabled), using a limited IAM user with only the three actions above:
+
+| Check                                                                                                                                                                                                          | Result               |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| `npm run verify:kms`: messages of 300, 4096, 5000 and 60000 bytes signed and verified, a signature over other data rejected, and 5000 raw bytes refused by KMS                                                 | 7 of 7 pass          |
+| The full server with `KEY_PROVIDER=aws-kms` signed an Execution Trust Record of about 5.6 KB (over the limit that failed in production on 2026-09-20), and it verified offline against the KMS public key only | Pass                 |
+| The same record verified against a different key                                                                                                                                                               | Failed, as it should |
+| Signing errors in the server log during the full run                                                                                                                                                           | None                 |
+
+Verified again on 2026-09-21 for [Execution Intents](/concepts/execution-intents), with the same key and the same limited IAM user, through the production Docker image, a real Postgres and the real `parmana-paytm-agent` using fake Paytm staging credentials:
+
+| Check                                                                                                                                                       | Result                                                                                                              |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| The full server with `KEY_PROVIDER=aws-kms` signed an Execution Intent before release, and signed the Execution Trust Record and the policy approval record | Pass                                                                                                                |
+| The intent, and the Trust Record, each verified offline against the KMS public key only                                                                     | Pass, 23 of 23 checks in the first run and 37 of 37 in the final run, which added closing an intent by hand         |
+| The extra `kms:Sign` for the intent                                                                                                                         | About 35 ms median (34 to 40 ms, 10 samples), from a Windows machine to `ap-south-1`. **Not measured from Vercel.** |
+
+Each released action now costs **two** `kms:Sign` calls in the request, one for the intent and one for the Trust Record, plus the readiness probe at most once a minute per instance.
+
+Not covered by those runs:
+
+1. **The Vercel OIDC role.** The runs used the local AWS credential chain. ADR-0010 records the live production verification of the OIDC role for the Trust Record, and no run has exercised the OIDC role for the intent signature, although it uses the same signer and the same permissions.
+2. **A real Paytm refund.** The agent chain ran with fake Paytm staging credentials, on purpose, so Paytm rejected the call. No refund was sent.
+3. **Key rotation and other regions.** Neither was tested.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="Production deployment runbook"
+    icon="rocket"
+    href="/deployment/production"
+  >
+    The full procedure to deploy and check a server.
+  </Card>
+  <Card
+    title="Verify independently"
+    icon="shield-check"
+    href="/guides/verify-independently"
+  >
+    Check a signed record without trusting the server, including the large
+    message rule.
+  </Card>
+</CardGroup>

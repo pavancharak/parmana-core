@@ -1,0 +1,40 @@
+{
+  "name": "@parmana/policy",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@parmana/capability-registry": "0.1.0",
+    "@parmana/storage": "0.1.0",
+    "express": "^5.2.1",
+    "pg": "^8.23.1",
+    "vitest": "^5.0.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/express": "^5.0.6",
+    "@types/pg": "^8.23.1",
+    "dotenv": "^18.0.6",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "tsx": "^4.23.15",
+    "typescript-eslint": "^8.71.1"
+  },
+  "license": "SEE LICENSE IN LICENSE"
+}

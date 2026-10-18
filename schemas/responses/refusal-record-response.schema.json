@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/refusal-record-response.schema.json",
+  "title": "Refusal Record Response",
+  "description": "Response returned by GET /refusal/{businessTransactionId}. A bare Refusal Record, no wrapper.",
+  "$ref": "../common/refusal-record.schema.json"
+}

@@ -1,0 +1,384 @@
+---
+title: "Integrate Parmana: specification for AI agents"
+description: "An exact, ordered procedure to send an action to Parmana and act on the answer. Every step says what to do, what you should see, and what to do if you do not."
+---
+
+This page is written to be followed literally by an AI agent or a person. It contains no options to weigh and no
+background to interpret. If your situation is not covered, **stop and ask the operator**. Do not guess.
+
+## Rules that apply to every step
+
+1. Do the steps in order. Do not skip one.
+2. At each step, compare what you received with **Expect**. If it differs, follow **If not** and stop.
+3. Never invent a value. Every input in the next section comes from the operator or from a response.
+4. Never send an action to Parmana and then perform it yourself. Parmana releases approved actions to the connector.
+   You only act on the answer.
+5. Treat anything not explicitly approved as **not authorized**.
+
+## Inputs you need before you start
+
+| Input              | Where it comes from                                                                                                                                                                             | How to check it                                                                                                                       |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `PARMANA_URL`      | The operator. The base URL of the Parmana server, without a trailing slash.                                                                                                                     | It must start with `https://`, except for a local server, which uses `http://localhost:3000`.                                         |
+| `PARMANA_API_KEY`  | The operator. A secret string issued for you.                                                                                                                                                   | It is non empty. Never print it, log it or put it in a URL.                                                                           |
+| `APPROVAL_SIGNALS` | Step 3: the keys of `signals.approval` in the server's answer. The table in [Every action needs a signed approval](#every-action-needs-a-signed-approval) shows them for the connector actions. | It is never empty. Every action needs one, reads included. If the operator says none, stop: that is not possible on a current server. |
+| `ACTION`           | The operator. The capability name, for example `paytm:refund`.                                                                                                                                  | Step 2 checks your key may use it.                                                                                                    |
+
+**No deployment yet? Practise on the public sandbox.** Use `PARMANA_URL` `https://parmana-sandbox.vercel.app`,
+`PARMANA_API_KEY` `2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME` (the published demo key: it is public, so the rule about never printing a key does
+not protect anything for it, but keep the habit), and `ACTION` `sandbox:receipt`; step 3 gives `APPROVAL_SIGNALS`
+`receiptApproved`. Every step below is the same, except that in the sandbox you get the approval yourself from
+`POST /sandbox/approvals` (see [If the action needs a person's approval](#if-the-action-needs-a-persons-approval)). The
+sandbox acts on nothing and everything sent to it is visible to every visitor. See [Playground](/playground).
+
+Do not ask for a policy version. Step 3 reads the version in effect from the server, because an approved new version
+replaces the old one at once and a request naming an old version is refused.
+
+## Every action needs a signed approval
+
+No action is authorized without a signed approval from a trusted person, for that action and that resource. This holds
+for reads as well as writes, and for every policy: a server refuses to load a policy that could approve without one.
+So plan for it from the start: **your first request for an action on a new resource will be refused** until a person
+signs an approval for it.
+
+For the actions with a connector, the approval signal and the resource it names are:
+
+| `ACTION`                         | Policy in effect (step 3 confirms) | Approval signal      | Resource the approval names                                   | Other signals the policy reads                                                                                                                                           |
+| -------------------------------- | ---------------------------------- | -------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `paytm:refund`                   | `customer-refund` 1.2.0            | `managerApproved`    | `intent.parameters.orderId`, up to `intent.parameters.amount` | `refundEligible`, `fraudCheckPassed`, `refundAmount` (equal to `intent.parameters.amount`)                                                                               |
+| `github:pr-merge`                | `github-pr-approval` 1.1.0         | `mergeApproved`      | `intent.target`                                               | `branchProtected`, `repositoryAuthorized`, `requiredReviewsCompleted`, `riskScore`, `statusChecksPassed`                                                                 |
+| `github:pr-fetch`                | `github-pr-read` 1.1.0             | `readApproved`       | `intent.target`                                               | none                                                                                                                                                                     |
+| `hubspot:deal-update`            | `hubspot-deal-update` 1.1.0        | `dealUpdateApproved` | `intent.parameters.dealId`                                    | `dealStageChangeRequested`, `dealStageTransitionAllowed`; `proposedDealStage` and `proposedAmount` equal to `intent.parameters.dealstage` and `intent.parameters.amount` |
+| `hubspot:deal-fetch`             | `hubspot-deal-read` 1.0.0          | `readApproved`       | `intent.parameters.dealId`                                    | none                                                                                                                                                                     |
+| `slack:post-message`             | `slack-post-message` 1.1.0         | `postApproved`       | `intent.target` (the channel id)                              | `channelAuthorized`, `contentApproved`; `channelId` equal to `intent.target`                                                                                             |
+| `sandbox:receipt` (sandbox only) | `sandbox-receipt` 1.0.0            | `receiptApproved`    | `intent.target`                                               | none; `note` equal to `intent.parameters.note`, at most 200 characters                                                                                                   |
+
+For any action, including one not in this table (such as an action an operator registered as an external connector, see [Connect any external system](/guides/connect-any-external-system)), step 3 returns the same information from the server:
+`signals.approval` names the approval signal and where its resource (and amount) are in the request. Use the server's
+answer over this table if they ever differ.
+
+An approval covers the action and the resource, and the amount where the table names one. It does not fix other
+parameters: a Slack approval does not fix the message text, and a HubSpot approval does not fix the new stage.
+
+Every request below carries this header: `Authorization: Bearer <PARMANA_API_KEY>`.
+
+## Step 1: check the server is reachable and safe
+
+**Do:** send `GET {PARMANA_URL}/health`, then `GET {PARMANA_URL}/ready`. Neither needs the header.
+
+**Expect:**
+
+1. `/health` returns HTTP `200` and `{"status":"UP"}`.
+2. `/ready` returns HTTP `200` and a body with `"status":"READY"` and `"authDisabled":false`.
+
+**If not:**
+
+1. `/health` fails or returns anything else: stop. The server is not reachable. Tell the operator.
+2. `/ready` returns HTTP `503` (`"status":"NOT_READY"`): stop. Its storage is not reachable. Tell the operator.
+3. `/ready` shows `"authDisabled":true`: **stop and do not send any real action.** That server accepts requests from
+   anyone. Tell the operator that authentication is switched off.
+
+## Step 2: check what your key may do
+
+**Do:** send `GET {PARMANA_URL}/callers/me` with the header.
+
+**Expect:** HTTP `200` and a body like this:
+
+```json
+{
+  "callerId": "my-agent",
+  "allowedPrincipalIds": ["my-agent"],
+  "allowedCapabilities": ["paytm:refund"],
+  "unrestrictedCapabilities": false
+}
+```
+
+Keep `callerId`. Your `authority.principalId` in step 4 must be one of `allowedPrincipalIds`, and the safe choice is
+`callerId`. Your `ACTION` must be in `allowedCapabilities`, or `unrestrictedCapabilities` must be `true`.
+
+**If not:**
+
+1. HTTP `401`: the key is missing or wrong. Stop. Ask the operator for a valid key.
+2. `allowedCapabilities` is empty and `unrestrictedCapabilities` is `false`: your key may invoke **nothing**. Stop. Ask the
+   operator to grant the capability.
+3. `ACTION` is not in `allowedCapabilities`: stop. Ask the operator to grant it. Do not use a different action.
+
+## Step 3: find the policy in effect
+
+**Do:** send `GET {PARMANA_URL}/policies/in-effect?capability=<ACTION>` with the header.
+
+**Expect:** HTTP `200` and a body like:
+
+```json
+{
+  "capability": "paytm:refund",
+  "policy": {
+    "name": "customer-refund",
+    "version": "1.2.0",
+    "schemaVersion": "1.0.0"
+  },
+  "description": "Authorizes customer refunds. Every refund above 0 and up to 100000 needs a signed manager approval for that order, covering that amount. ...",
+  "signals": {
+    "facts": [
+      "fraudCheckPassed",
+      "managerApproved",
+      "refundAmount",
+      "refundEligible"
+    ],
+    "schema": {
+      "refundEligible": "boolean",
+      "managerApproved": "boolean",
+      "fraudCheckPassed": "boolean",
+      "refundAmount": "number"
+    },
+    "bound": { "refundAmount": "parameters.amount" },
+    "approval": {
+      "managerApproved": {
+        "resourceId": "parameters.orderId",
+        "value": "parameters.amount"
+      }
+    }
+  }
+}
+```
+
+Use it like this in step 4:
+
+| Field in the answer | What you do with it                                                                                                                                                                                                                                                                                                                                   |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `policy`            | Send it, exactly as returned, as the request's `policy`.                                                                                                                                                                                                                                                                                              |
+| `signals.facts`     | Send one entry in `signals` for **every** name in this list, with the type `signals.schema` gives it. A condition on a missing fact is always false, so leaving one out never helps.                                                                                                                                                                  |
+| `signals.bound`     | For each entry, the signal must equal the value at that path of your `intent` (for example `signals.refundAmount` equal to `intent.parameters.amount`). Set both from the same variable.                                                                                                                                                              |
+| `signals.approval`  | Each key is an approval signal. Send it `false` until you hold a signed approval; with one, send it `true` and put the approval in `signals.approvalArtifact`. `resourceId` (and `value`) say where in your request the resource (and amount) the approval must name are: `target` means `intent.target`, `parameters.x` means `intent.parameters.x`. |
+| `description`       | For people. Do not parse it.                                                                                                                                                                                                                                                                                                                          |
+
+The answer never contains the policy's rule conditions. The `description` is the author's text for people and may mention a limit; the server decides with the rules, not the text. Look it up again before every request: it changes when a
+new version is approved, with no notice to you.
+
+**If not:** HTTP `403` with code `CAPABILITY_NOT_ALLOWED` means your key may not use this action: stop and ask the
+operator. HTTP `404` with code `CAPABILITY_NOT_BOUND` means no policy governs this action on this server: stop and ask
+the operator. HTTP `409` with code `NO_APPROVED_POLICY_VERSION` or `503` with code `POLICY_VERSION_UNAVAILABLE` means every
+request for this action is refused right now: stop and tell the operator. Do not guess a policy.
+
+With an SDK: `client.policyInEffect(ACTION)` in TypeScript, `client.policy_in_effect(ACTION)` in Python. Both return
+this answer; the Python fields are `policy.schema_version` and `signals.facts`, and signal names keep their exact
+spelling.
+
+## Step 4: build the Business Transaction
+
+A Business Transaction is one JSON object. Every field below is required unless it says otherwise.
+
+| Field                                             | Type and rule                                                                              | Who sets it |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------ | ----------- |
+| `businessTransactionId`                           | A new UUID, generated by you, **different for every request**. It is the idempotency key.  | You         |
+| `metadata.businessTransactionId`                  | The same UUID as above.                                                                    | You         |
+| `metadata.correlationId`, `metadata.sourceSystem` | Optional strings for your own tracing.                                                     | You         |
+| `metadata.submittedBy`                            | Ignored if you send it. The server sets it from your key.                                  | The server  |
+| `authority.authorityId`                           | A new UUID.                                                                                | You         |
+| `authority.authorityType`                         | Exactly one of `USER`, `ROLE`, `SERVICE`, `ORGANIZATION`. Use `SERVICE` for an agent.      | You         |
+| `authority.principalId`                           | Must be your `callerId`, or another value in `allowedPrincipalIds`.                        | You         |
+| `authority.issuedAt`                              | The current time as an ISO 8601 date time, for example `2026-09-20T10:00:00.000Z`.         | You         |
+| `authorization.authorizationId`                   | A new UUID.                                                                                | You         |
+| `authorization.authorityId`                       | **Equal to** `authority.authorityId`.                                                      | You         |
+| `authorization.purpose`                           | A short sentence stating why the action is being requested.                                | You         |
+| `authorization.issuedAt`                          | The current time, ISO 8601.                                                                | You         |
+| `intent.intentId`                                 | A new UUID.                                                                                | You         |
+| `intent.authorizationId`                          | **Equal to** `authorization.authorizationId`.                                              | You         |
+| `intent.action`                                   | Your `ACTION`, exactly as in step 2.                                                       | You         |
+| `intent.target`                                   | The thing the action applies to, for example an order id.                                  | You         |
+| `intent.parameters`                               | An object with the action's parameters, for example `{"amount": 5}`.                       | You         |
+| `intent.createdAt`                                | The current time, ISO 8601.                                                                | You         |
+| `policy.name`, `policy.version`                   | The `policy` object from step 3, exactly as returned (`name`, `version`, `schemaVersion`). | You         |
+| `policy.schemaVersion`                            | From step 3, with the name and version.                                                    | You         |
+| `signals`                                         | An object with one entry for every name in step 3's `signals.facts`.                       | You         |
+| `status`, `createdAt`                             | Ignored if you send them.                                                                  | The server  |
+
+### The consistency rules
+
+The server rejects a request that breaks rules 1 to 5 with HTTP `400` and a message that names the rule. A request that breaks rule 6 is treated as a policy rejection instead: HTTP `403` with code `POLICY_DENIED` and a message that contains `declared signal(s) do not match the executed intent`.
+
+1. `metadata.businessTransactionId` equals `businessTransactionId`.
+2. `authorization.authorityId` equals `authority.authorityId`.
+3. `intent.authorizationId` equals `authorization.authorizationId`.
+4. `policy.name`, `policy.version` and `intent.action` are not empty.
+5. Every `businessTransactionId` is a valid UUID.
+6. Where the policy binds a signal to an intent value (a `boundSignals` entry), the signal must equal that value
+   exactly. For example the refund policy binds `signals.refundAmount` to `intent.parameters.amount`, so both must be
+   the same number.
+
+### A complete example
+
+This is a real request shape for the `customer-refund` policy. Replace every UUID with a new one, and the timestamps
+with the current time.
+
+```json
+{
+  "businessTransactionId": "5b1c0d2e-3f4a-4b5c-8d6e-7f8091a2b3c4",
+  "metadata": {
+    "businessTransactionId": "5b1c0d2e-3f4a-4b5c-8d6e-7f8091a2b3c4"
+  },
+  "authority": {
+    "authorityId": "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "authorityType": "SERVICE",
+    "principalId": "my-agent",
+    "issuedAt": "2026-09-20T10:00:00.000Z"
+  },
+  "authorization": {
+    "authorizationId": "9c8d7e6f-5a4b-4c3d-8e2f-1a0b9c8d7e6f",
+    "authorityId": "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+    "purpose": "Refund a customer for a cancelled order",
+    "issuedAt": "2026-09-20T10:00:00.000Z"
+  },
+  "intent": {
+    "intentId": "3d2c1b0a-9f8e-4d7c-8b6a-5f4e3d2c1b0a",
+    "authorizationId": "9c8d7e6f-5a4b-4c3d-8e2f-1a0b9c8d7e6f",
+    "action": "paytm:refund",
+    "target": "ORDER-1001",
+    "parameters": {
+      "orderId": "ORDER-1001",
+      "transactionId": "TXN-1001",
+      "amount": 5
+    },
+    "createdAt": "2026-09-20T10:00:00.000Z"
+  },
+  "policy": {
+    "name": "customer-refund",
+    "version": "1.2.0",
+    "schemaVersion": "1.0.0"
+  },
+  "signals": {
+    "refundEligible": true,
+    "managerApproved": false,
+    "fraudCheckPassed": true,
+    "refundAmount": 5
+  }
+}
+```
+
+Sent as it is, this example is refused with `403 POLICY_DENIED`, because `managerApproved` is `false` and every refund
+needs a signed manager approval. That refusal is the normal first step: it is what tells a person to approve. The
+version with the approval is below.
+
+**Never set a signal to `true` unless you have checked it is true.** A policy trusts the signals you send for some
+facts, so a false `true` produces an authorization that should not exist.
+
+**Approval signals are different.** For each signal in `APPROVAL_SIGNALS`, send `false` unless you hold a signed
+approval for this exact action. The server does not believe `true` on its own: it checks the signed approval, and
+refuses the request without one. Step 6 says how to get one.
+
+With a signed approval, send the signal as `true` and put the approval, exactly as you received it, in
+`signals.approvalArtifact`:
+
+```json
+"signals": {
+  "refundEligible": true,
+  "fraudCheckPassed": true,
+  "refundAmount": 5,
+  "managerApproved": true,
+  "approvalArtifact": { "payload": { "...": "..." }, "signature": { "...": "..." } }
+}
+```
+
+## Step 5: send it
+
+**Do:** send `POST {PARMANA_URL}/execute` with the header, `Content-Type: application/json`, and the object from step 4.
+
+**Set a client timeout of at least 120 seconds.** The request runs the whole pipeline before it answers, including the
+call to the connector. In production an approved request took 24 to 32 seconds on 2026-10-01 (G-84), longer than the
+SDKs' default of 30 seconds: pass `timeout: 120_000` (TypeScript) or `timeout=120` (Python) to the client.
+
+**Never retry this request automatically.** A retry could repeat a real action. The rules for a timeout are in step 7.
+
+## Step 6: read the answer
+
+Apply the **first** row that matches. Every error body is `{"error": "<message>"}`, with a `code` when there is one.
+
+| You receive                                                                                                       | Meaning                                                                                | Do                                                                                                                                                                                                  |
+| ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| HTTP `200`, and `executions[0].decision.outcome` is `APPROVED`                                                    | Approved and released. You have a signed Execution Trust Record.                       | Go to step 7, then proceed.                                                                                                                                                                         |
+| HTTP `403`, code `POLICY_DENIED`, and the message says the version was superseded                                 | A newer policy version took effect after step 3.                                       | Go back to step 3, then send again with a **new** `businessTransactionId`.                                                                                                                          |
+| HTTP `403`, code `POLICY_DENIED`, you sent an approval signal as `false`, and every other signal you sent is true | The action needs a person's signed approval. Nothing was executed.                     | Go to [If the action needs a person's approval](#if-the-action-needs-a-persons-approval).                                                                                                           |
+| HTTP `403`, code `POLICY_DENIED`                                                                                  | A policy rule refused. Final.                                                          | Do not proceed. Do not retry. Report the message to the operator.                                                                                                                                   |
+| HTTP `403`, code `CAPABILITY_NOT_ALLOWED`                                                                         | Your key may not invoke this action.                                                   | Stop. Ask the operator to grant it.                                                                                                                                                                 |
+| HTTP `403`, no code                                                                                               | Your key may not assert that `principalId`.                                            | Use your `callerId`, or stop and ask.                                                                                                                                                               |
+| HTTP `401`                                                                                                        | Key missing or wrong.                                                                  | Stop. Ask for a valid key.                                                                                                                                                                          |
+| HTTP `400`                                                                                                        | The request is malformed. The message names the problem.                               | Fix the request. Use a **new** `businessTransactionId`.                                                                                                                                             |
+| HTTP `404`                                                                                                        | The policy was not found.                                                              | Stop. Go back to step 3.                                                                                                                                                                            |
+| HTTP `409`                                                                                                        | That `businessTransactionId` was already used.                                         | Do not resend. Go to step 7 to look up what happened.                                                                                                                                               |
+| HTTP `429`                                                                                                        | Rate limited. Nothing was recorded.                                                    | Wait the seconds in the `Retry-After` header, then send again with a **new** `businessTransactionId`.                                                                                               |
+| HTTP `503`, code `SIGNING_UNAVAILABLE`, `EXECUTION_INTENT_UNAVAILABLE` or `AUDIT_UNAVAILABLE`                     | Refused before release. **Nothing was executed.**                                      | Wait, then retry with a **new** `businessTransactionId`. If it keeps happening, tell the operator.                                                                                                  |
+| HTTP `500`, code `EXECUTION_RECORD_INCOMPLETE`                                                                    | The action **was** released, but its record could not be produced.                     | **Do not resend under any id.** Go to step 7. Tell the operator now. The operator can rebuild the signed record without repeating the action, see [Execution Intents](/concepts/execution-intents). |
+| HTTP `502`, code `EXECUTION_OUTCOME_UNKNOWN`                                                                      | The action was released and the connector call failed. It **may** have been performed. | **Do not resend under any id.** Tell the operator, who checks the target system and closes the Execution Intent.                                                                                    |
+| Any other `5xx`, a timeout, or no response                                                                        | Unknown.                                                                               | Do not proceed. Go to step 7.                                                                                                                                                                       |
+
+## If the action needs a person's approval
+
+A refusal for want of an approval is not a failure. Parmana does not hold the request open; you send a new one once a
+person has approved.
+
+1. **Tell the operator** what needs approving: the `ACTION`, the resource (for a refund, the order id), the amount if
+   there is one, and your refused `businessTransactionId`. If the deployment has approval notifications turned on, the
+   approver was already notified with the same details.
+2. **Wait for a signed approval.** It is a JSON object with `payload` and `signature`, made by the approver on their
+   own machine. You cannot make one, and you must never ask for or hold an approver's private key.
+3. **Check it matches before sending.** `payload.capability` equals `ACTION`, `payload.resourceId` equals the resource,
+   and `payload.expiresAt` is in the future. An approval is usually valid for 15 minutes and works once.
+4. **Send a new request** (step 3 again, then step 4) with a **new** `businessTransactionId`, the same action and amount,
+   the approval signal `true`, and the approval in `signals.approvalArtifact`. Do not change anything else.
+5. If it is refused again, do not retry with the same approval: it may be expired, used, for a different resource or
+   amount, or from an approver the server does not trust. Report the message to the operator.
+
+**In the sandbox only** (`https://parmana-sandbox.vercel.app`, `ACTION` `sandbox:receipt`), steps 1 and 2 are
+replaced by one request you make yourself: `POST /sandbox/approvals` with
+`{ "capability": "sandbox:receipt", "resourceId": "<intent.target>" }`. Expect `201` and an approval valid 5 minutes,
+accepted once. Then do steps 3 and 4. This route exists only in the sandbox; on any other server, never try to make an
+approval yourself. See [Playground](/playground).
+
+For people: [Human approval](/concepts/human-approval) and [Approval notifications](/guides/approval-notifications).
+
+## Step 7: confirm and keep the record
+
+**After an approval (HTTP `200`),** confirm all of these in the response, then store the whole response:
+
+1. `executions[0].decision.outcome` is `APPROVED`.
+2. `verifications[0].status` is `VERIFIED`.
+3. `receipts[0]` exists.
+
+If any is missing, treat the action as **not confirmed** and tell the operator. Store the response and the
+`businessTransactionId` together. They are your proof.
+
+**After a `409`, a timeout, no response, `EXECUTION_RECORD_INCOMPLETE` or `EXECUTION_OUTCOME_UNKNOWN`,** find out what the server recorded. Send
+`GET {PARMANA_URL}/trust-records/{businessTransactionId}` with the header.
+
+| The lookup returns                                                                                   | Meaning                                                                          | Do                                                                                                        |
+| ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| HTTP `200` and a record                                                                              | The request was processed.                                                       | Apply step 6 to the record: check `decision.outcome`, `verifications[0].status` and `receipts[0]`.        |
+| HTTP `404` on the record, and `GET {PARMANA_URL}/transactions/{businessTransactionId}` returns `200` | The server accepted it but has no record. It may still be running, or it failed. | Wait 30 seconds and look up once more. If still no record, **stop and tell the operator.** Do not resend. |
+| HTTP `404` on both                                                                                   | The server never recorded it.                                                    | It is safe to send again with a **new** `businessTransactionId`.                                          |
+
+## Rules that are never broken
+
+1. Never reuse a `businessTransactionId`.
+2. Never resend after `EXECUTION_RECORD_INCOMPLETE` or `EXECUTION_OUTCOME_UNKNOWN`, or after a timeout you have not resolved with step 7.
+3. Never treat "I could not reach Parmana" as "allowed".
+4. Never work around a `POLICY_DENIED` by changing the request until it passes. A denial is a decision. Tell the operator.
+   The two exceptions are in step 6: a superseded version, and a missing approval, which a person resolves, not you.
+5. Never send a signal you have not verified.
+6. Never log the API key.
+
+## Where the machine readable sources are
+
+| Source                  | URL                                             | Use it for                                                               |
+| ----------------------- | ----------------------------------------------- | ------------------------------------------------------------------------ |
+| OpenAPI, JSON           | `{PARMANA_URL}/openapi.json`                    | Exact request and response schemas for every endpoint.                   |
+| OpenAPI, YAML           | `{PARMANA_URL}/openapi.yaml`                    | The same, as YAML.                                                       |
+| API manifest            | `{PARMANA_URL}/api-manifest.json`               | The API version, the authentication scheme and the current SDK versions. |
+| Docs index for agents   | `https://docs.parmanasystems.com/llms.txt`      | A list of every documentation page with a one line description.          |
+| Docs in full for agents | `https://docs.parmanasystems.com/llms-full.txt` | The integration pages concatenated into one file.                        |
+
+If you use an SDK instead of raw requests, the steps and the rules are the same. The
+[TypeScript SDK](/sdks/typescript) and the [Python SDK](/sdks/python) both offer a helper that builds the Business
+Transaction and keeps the identifiers consistent. Neither retries `POST /execute` for you.
+
+For a human reading this page, the same material with explanations is in [Full integration
+overview](/guides/full-integration-overview) and the [Error catalog](/api-reference/error-catalog).

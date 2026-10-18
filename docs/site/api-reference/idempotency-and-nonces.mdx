@@ -1,0 +1,76 @@
+---
+title: "Idempotency and Nonces"
+description: "There is no Idempotency-Key header. businessTransactionId is the idempotency key: a duplicate is a 409, not a replayed response. Authorizations and human approvals are each accepted once, checked in the database."
+---
+
+<Info>
+  **[AVAILABLE]**. No `Idempotency-Key` header exists anywhere in this API. This
+  page describes the real mechanism, not a gap.
+</Info>
+
+## businessTransactionId is the idempotency key, but not Stripe's kind
+
+`POST /execute` and `POST /transactions` require a caller supplied `businessTransactionId` (a UUID). Sending the same
+one twice does **not** replay the first response the way Stripe's `Idempotency-Key` does. The second request fails
+with `409` and no `code`:
+
+```json
+{
+  "error": "Business Transaction 'a1a1a1a1-1111-4111-8111-111111111111' already exists."
+}
+```
+
+The 409 is the same whether the first request was approved, refused or is still running, so it tells you only that
+the id was used. To find out what happened to it, read it back with the same id:
+
+| The first request was                    | Read                                         | Answer                                                                                                        |
+| ---------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Approved and executed                    | `GET /trust-records/{businessTransactionId}` | `200` with the Execution Trust Record                                                                         |
+| Refused (`403 POLICY_DENIED` and others) | `GET /refusal/{businessTransactionId}`       | `200` with the signed Refusal Record. `GET /trust-records/{id}` answers `404`: a refusal has no Trust Record. |
+| Either                                   | `GET /transactions/{businessTransactionId}`  | `200` with the Business Transaction as it was stored                                                          |
+
+**Practical guidance for callers:** derive `businessTransactionId` from your own idempotency key (a UUIDv5 of your
+order id, for example) so a retry uses the same id. Treat a `409` on that id as "already submitted, go and read it",
+not as a failure.
+
+<Warning>
+  **After a timeout, read before you send again.** An approved request can take
+  tens of seconds (see `docs/VERIFICATION-GAPS.md` G-84), longer than a client's
+  default timeout. The request keeps running on the server, and the action may
+  be performed. If your client times out, read `GET /trust-records/
+  {businessTransactionId}` (and `GET /refusal/{id}`) with the same id first.
+  Sending the action again under a **new** id would ask for it a second time.
+  Set your client timeout to 120 seconds.
+</Warning>
+
+## Nonces: each authorization and each approval is accepted once
+
+A caller never sends or manages a nonce. The word means two single use values inside the server's own pipeline:
+
+- **The authorization nonce.** Every approved decision becomes a `SignedExecutionAuthorization` with its own `nonce`.
+  The [gateway](/concepts/the-gateway) consumes it before it releases the action, so one authorization can release
+  one action. Over HTTP you never meet this check: a repeated `businessTransactionId` is refused with `409` before a
+  second authorization exists. It protects a system that calls `@parmana/execution-gateway` directly, which refuses a
+  replay with `NONCE_ALREADY_CONSUMED`.
+- **The approval nonce.** A signed human approval carries a nonce too, and is accepted once. Sending the same approval
+  again, even under a new `businessTransactionId`, is refused with `403 POLICY_DENIED`: the approval no longer
+  verifies, so the policy's approval signal is false (`declared signal(s) do not match independently verified state
+(humanApproved=true != verified humanApproved=false)`). Ask the approver for a new approval. See [Human
+  approval](/concepts/human-approval).
+
+Both are stored in Postgres (`consumed_nonces` and `consumed_approval_nonces`), so they hold across every instance
+of a deployment, not per process. Only the test suite (`NODE_ENV=test`) keeps them in memory. See [Execution
+Authorization](/concepts/execution-authorization) for the full mechanism.
+
+## What this means together
+
+Three replay defenses exist at different layers, and none is an `Idempotency-Key` header:
+
+| Layer                              | Mechanism                           | What repeating gets you                                         |
+| ---------------------------------- | ----------------------------------- | --------------------------------------------------------------- |
+| REST API (`businessTransactionId`) | Unique key in the database          | `409`, not the original response                                |
+| Human approval (approval nonce)    | Single use, checked in the database | `403 POLICY_DENIED`, nothing runs                               |
+| Internal authorization (`nonce`)   | Single use, consumed by the gateway | Refused by the gateway (`NONCE_ALREADY_CONSUMED`), nothing runs |
+
+None of them is configurable per request, and there is no way to opt out of the `businessTransactionId` uniqueness
+check from the API.

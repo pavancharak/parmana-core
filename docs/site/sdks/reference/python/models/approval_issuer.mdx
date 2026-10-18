@@ -1,0 +1,46 @@
+---
+sidebar_label: approval_issuer
+title: parmana.models.approval_issuer
+---
+
+Parmana approvers managed without a deploy.
+
+Hand-maintained: the response bodies of the /approval-issuers routes
+(packages/api/src/routes/approval-issuers.ts).
+
+## ApprovalIssuer Objects
+
+```python
+@dataclass(frozen=True)
+class ApprovalIssuer()
+```
+
+A key the server trusts, or trusted, to sign approvals.
+
+#### public_key_pem
+
+Ed25519 public key, PEM (SPKI).
+
+#### revoked
+
+True: every approval signed with this key is refused.
+
+#### source
+
+"code": listed in the server code, changed only by a deploy.
+"governed": added through an approver change.
+
+## ApprovalIssuerChange Objects
+
+```python
+@dataclass(frozen=True)
+class ApprovalIssuerChange()
+```
+
+A proposal to add or revoke an approver key, and its resolution. Sign
+the step up authorization for approve or reject with `change_id` as
+`pending_policy_change_id`.
+
+#### action
+
+"add" or "revoke".

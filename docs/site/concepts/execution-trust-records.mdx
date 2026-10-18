@@ -1,0 +1,206 @@
+---
+title: "Execution Trust Records"
+description: "The canonical, immutable, cryptographically signed record of everything Parmana knows about a Business Transaction."
+---
+
+<Info>
+  **[AVAILABLE]**. `packages/shared/src/domain/execution-trust-record.ts`,
+  `BusinessTrustRecordBuilder` (`@parmana/runtime`). CLAIMS.md 2.5.
+</Info>
+
+<Note>
+  The record contains the execution result, so it can only be built **after**
+  the action is released. Since 2026-09-21 a separate signed record, the
+  [Execution Intent](/concepts/execution-intents), is stored **before** release,
+  so a released action always has signed evidence behind it even if this record
+  cannot be produced. A missing record can then be rebuilt without calling the
+  connector.
+</Note>
+
+## What it is
+
+Every Business Transaction that is approved and executed produces exactly one Execution
+Trust Record (a refused one produces a [Refusal Record](/concepts/refusal-records) instead): the aggregate of
+everything Parmana knows about it, built from a chain of immutable artifacts, each
+referencing the one before it by ID:
+
+```
+Authority           who is empowered to authorize execution
+     │              packages/shared/src/domain/authority.ts
+     ▼
+Authorization        the grant, with purpose and optional expiry
+     │              packages/shared/src/domain/authorization.ts
+     ▼
+Intent               the specific action + target + parameters requested
+     │              packages/shared/src/domain/intent.ts
+     ▼
+Business Transaction the immutable input to policy evaluation
+     │              packages/shared/src/domain/business-transaction.ts
+     ▼
+Decision              the policy's outcome (APPROVED / REJECTED) + reason + evaluated signals
+     │              packages/shared/src/domain/decision.ts
+     ▼
+Execution             what actually happened: status, mode, evidence
+     │              packages/shared/src/domain/execution.ts
+     ▼
+Execution Trust Record  the aggregate: transaction + executions + overrides +
+                         verifications + receipts + canonical hash + signature
+                       packages/shared/src/domain/execution-trust-record.ts
+```
+
+`BusinessTransactionValidator` enforces structural consistency across the chain before
+anything is evaluated, for example, `authorization.authorityId` must match
+`authority.authorityId`, and `intent.authorizationId` must match
+`authorization.authorizationId` (`packages/runtime/src/validators/BusinessTransactionValidator.ts`).
+A Business Transaction that doesn't hang together structurally never reaches
+[policy evaluation](/concepts/policies-and-the-decision).
+
+## Why it exists
+
+Every earlier concept on this site, policy, authorization, gateway verification, credential
+isolation, produces something. The trust record is where all of it lands: one artifact you,
+or anyone, can verify independently, without running Parmana at all. It's the answer to
+"what actually happened," not "what was supposed to happen."
+
+## Shape
+
+```typescript
+export interface ExecutionTrustRecord {
+  readonly trustRecordId: string;
+  readonly businessTransactionId: string;
+  readonly transaction: BusinessTransaction;
+  readonly overrides: readonly Override[]; // append-only
+  readonly executions: readonly Execution[]; // append-only
+  readonly verifications: readonly Verification[]; // append-only
+  readonly receipts: readonly Receipt[]; // append-only
+  readonly authorization?: SignedExecutionAuthorization; // the authorization that released it
+  readonly trustRecordHash: string;
+  readonly signature: Signature;
+  readonly schemaVersion?: number; // present on records with hybrid signatures
+  readonly signatures?: readonly SignatureEntry[]; // hybrid (post quantum) signatures, when enabled
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+  readonly evidenceAnchor?: EvidenceAnchor;
+}
+```
+
+## What's immutable, and what's append-only
+
+`businessTransactionId`, `metadata`, `policy`, `signals`, and `decision` never change after
+creation. `overrides`, `executions`, `verifications`, and `receipts` may only grow, nothing
+is ever edited or removed from them. For `overrides` and `executions`, this append-only
+invariant is what lets a `trustRecordHash` mean anything: they are inside the signed
+content, so growing them changes the hash in a verifiable way. `verifications` and
+`receipts` are append-only too, but for a different reason: they are outside the signed
+content entirely (see below), so their append-only guarantee comes from repository API
+convention rather than from the signature.
+
+## What the hash and signature actually cover
+
+`canonicalExecutionTrustRecord()` (`packages/crypto/src/ExecutionTrustRecordCanonicalView.ts`)
+builds the exact object that gets hashed and signed, and both `VerificationCrypto` and the
+offline verifier use it. It includes seven fields: `trustRecordId`, `businessTransactionId`,
+`transaction`, `authorization`, `overrides`, `executions`, and `createdAt`. `hash()` and
+`sign()` both call it, so the `trustRecordHash` and `signature` cover precisely this content,
+no more and no less. A record without an `authorization` (older records) hashes exactly as
+before, because the canonical serializer leaves out undefined keys.
+
+<Warning>
+  `verifications` and `receipts` are **not** part of the hashed content, even
+  though they are append-only fields on the same record (CLAIMS.md 2.5). This is
+  intentional, not an oversight: a `Verification`
+  (`packages/shared/src/domain/verification.ts:44`) carries the
+  `trustRecordHash` it checked as one of its own fields. If verifications were
+  inside the hash they verify, appending a new verification would change the
+  hash, invalidating every verification that came before it. Keeping them
+  outside is what lets the signed content stay stable while an unbounded number
+  of verifications and receipts accumulate against it. The append-only guarantee
+  for `verifications` and `receipts` comes from repository API convention, not
+  from being under the signature.
+</Warning>
+
+`execution.metadata.authorizationId` **is** inside the canonically-hashed content, because
+it lives under `executions`. Tampering with it changes the recomputed `trustRecordHash` and
+fails verification (CLAIMS.md 2.11, `execution-authorization-wiring.test.ts`, "trust record
+references the authorization").
+
+## Minimal example: getting one back
+
+```python
+trust_record = client.execution.execute(transaction)     # POST /execute
+trust_record = client.trust_records.get(transaction_id)  # GET /trust-records/:id
+```
+
+Captured from a live local run, 2026-09-14, trimmed:
+
+```json
+{
+  "trust_record_id": "9c82c5c6-b465-41c8-8a03-ac07ec839c20",
+  "business_transaction_id": "40ba54d1-1038-443c-80ec-9cd6ad7757a1",
+  "executions": [
+    {
+      "execution_id": "1d637081-aaba-476f-9d6c-8170a2088359",
+      "decision": {
+        "outcome": "APPROVED",
+        "reason": "Vendor payment authorized. ..."
+      },
+      "status": "COMPLETED",
+      "evidence": {
+        "action": "test:fixture-execute",
+        "target": "vendor://payments",
+        "parameters": { "amount": 1000, "currency": "USD" },
+        "success": true,
+        "attributes": {
+          "connector": {
+            "connectorId": "test-fixture",
+            "capability": "test:fixture-execute"
+          }
+        }
+      },
+      "metadata": { "authorizationId": "e48ff9c8-cdc6-4f63-9324-864471731aaf" }
+    }
+  ],
+  "verifications": [
+    { "status": "VERIFIED", "trust_record_hash": "a08a0413..." }
+  ],
+  "receipts": [{ "algorithm": "ed25519", "receipt_hash": "18840a7c..." }],
+  "trust_record_hash": "a08a041317a6f28307a30c97147ef320e896578153118e978f7998a63cf52037",
+  "signature": { "algorithm": "ed25519", "key_id": "default" }
+}
+```
+
+Field names shown in `snake_case` (Python SDK decode); the wire format from the API is
+`camelCase`. Source: `python/examples/quickstart/`.
+
+## Connector evidence extends `evidence.attributes`, it does not add a new field
+
+`ExecutionEvidence.attributes` (`packages/shared/src/domain/execution-evidence.ts`) has
+always been an open `Record<string, unknown>` bag, and `ExecutionEvidenceBuilder` has
+always forwarded `ExecutionResult.metadata` into it verbatim, neither changed for this
+milestone. `@parmana/connector-sdk`'s `SdkConnectorExecutor` populates
+`ExecutionResult.metadata.connector` with a `ConnectorEvidence` object (connector ID,
+version, capability, sanitized endpoint, redacted request/response summaries, a
+`connectorEvidenceHash` computed by the existing `TrustRecordHasher`, no alternative hash),
+so it lands at `execution.evidence.attributes.connector` through this same, unmodified
+path. Records created before `connector-sdk` existed were serialized, and hashed, without
+this key; that stored content and hash are never recomputed or migrated, so old and new
+records verify identically against their own stored hash.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="Verify a trust record independently"
+    icon="check-double"
+    href="/verification/overview"
+  >
+    The third-party verification story, no Parmana runtime required.
+  </Card>
+  <Card
+    title="Detect tampering"
+    icon="bug"
+    href="/concepts/content-binding-toctou"
+  >
+    Mutate a record, verify, watch it fail: the negative path.
+  </Card>
+</CardGroup>

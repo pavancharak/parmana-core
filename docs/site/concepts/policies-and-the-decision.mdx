@@ -1,0 +1,250 @@
+---
+title: "Policies and the Decision"
+description: "Deterministic, first-match rule evaluation over runtime signals: what a Policy is, why it's structured this way, and how a Decision comes out of it."
+---
+
+<Info>**[AVAILABLE]**. `packages/policy`, 101 tests. CLAIMS.md 2.2/2.3.</Info>
+
+## What it is
+
+A Policy is a named, versioned, ordered list of rules. Each rule pairs a condition (a
+boolean expression over named "signals") with an outcome: approve or reject. `PolicyEngine` evaluates a transaction's signals against a policy's rules and
+returns exactly one [Decision](#what-a-decision-records).
+
+## Why it exists
+
+Every action Parmana authorizes has to be justified by something a human can read and a
+machine can evaluate identically every time. A policy is that something: not a prompt, not
+a model call, a plain data structure that produces the same outcome for the same input,
+every time, forever. That's what makes an authorized action defensible after the fact.
+
+## How it behaves
+
+The runtime executes exactly one, explicitly referenced policy, identified by
+`PolicyReference { name, version, schemaVersion }` on the Business Transaction. It does not
+discover policies, negotiate them, auto-select "latest," or substitute an alternative.
+`PolicyRouter` loads by exact name and version; `PolicyValidator` checks the loaded policy's
+identity before evaluation runs. The version named must also be the one **in effect** for the
+action's capability, the latest version approved through policy governance; a request naming
+any other version is refused with `403 POLICY_DENIED`. Ask `GET /policies/in-effect?capability=...`
+which version that is.
+
+Rules are evaluated **sequentially, first match wins**:
+
+```typescript
+// packages/policy/src/PolicyEngine.ts (findFirstMatch)
+for (const rule of rules) {
+  trace.push(rule.id);
+
+  if (this.evaluateCondition(rule.condition, signals)) {
+    return rule;
+  }
+}
+return null;
+```
+
+If no rule matches, `findFirstMatch` returns `null`, and the outcome defaults to `REJECT`
+(`PolicyEngine.ts`, `toOutcome`'s `default` case). There is no code path where an
+unmatched transaction is approved. This is what "fail closed" means here in practice: the
+absence of a rule is a denial, not a pass-through. A trailing `{ "always": true }` rule
+typically makes the reject-by-default behavior explicit in the policy document itself.
+
+## Binding a signal to the executed Intent
+
+Evaluating `transaction.signals` alone has a gap: nothing, by itself, connects those signals
+to `transaction.intent`, the action, target, and parameters that actually get signed and
+executed if the Decision is `APPROVED`. A caller could declare signals describing a small,
+fully-verified action while `intent` executes something else entirely, and still receive a
+signed `APPROVED` trust record for it. This was a real, live bypass, not a hypothetical one.
+See [Security](/security/overview) for what it looked like in practice and how severe it was.
+
+`Policy.boundSignals` is the fix: an optional map from a signal key to an `intent` dot-path.
+Every entry declares "this signal must equal this exact field of what's actually executed":
+
+```json
+"boundSignals": {
+  "paymentAmount": "parameters.amount",
+  "vendorId": "target"
+}
+```
+
+`SignalIntentBinder` (`packages/policy/src/SignalIntentBinder.ts`) checks every declared
+binding by strict equality. A signal the caller never declared at all counts as a violation,
+not a pass, since `undefined` almost never equals a real `intent` value:
+
+```typescript
+// packages/policy/src/SignalIntentBinder.ts (abridged, real source)
+for (const [signalKey, intentPath] of Object.entries(bindings)) {
+  const signalValue = signals[signalKey];
+  const intentValue = resolveIntentPath(intent, intentPath);
+
+  if (signalValue !== intentValue) {
+    violations.push({ signalKey, intentPath, signalValue, intentValue });
+  }
+}
+```
+
+`RuntimeEngine.execute` (`packages/runtime/src/RuntimeEngine.ts`) runs this check immediately
+before `PolicyEngine.evaluate`, over the exact signals about to be evaluated and the exact
+`intent` that will be signed and executed if approved. A violation is built into an ordinary
+`PolicyDecision` with outcome `REJECT` and a reason naming every mismatched field. No rule is
+ever evaluated, and no authorization is ever generated for a mismatched request, the same
+fail-closed shape as any other policy rejection (see [Write your first
+policy](/guides/write-your-first-policy) for what a rejection actually does).
+
+<Warning>
+  **Binding is opt-in, per field, per policy.** `boundSignals` only closes the
+  *decoupling* between what a policy evaluates and what executes, for the
+  specific fields a policy author declares bound. It does not independently
+  verify that an *unbound* signal is actually true. `vendorVerified`,
+  `paymentApproved`, `riskScore`, and similar remain caller-declared
+  attestations with no independent verification. Closing that gap for real means
+  fetch-verifying those signals from an independent source, the way
+  `HubSpotSignalStateVerifier` already does for `currentDealStage` and a few
+  other `hubspot-deal-update` signals, real and valuable, though not yet
+  extended to policy signals generally. See [HubSpot](/integrations/hubspot) for
+  the one connector where fetch-verification of *some* signals is real today,
+  and its exact scope.
+</Warning>
+
+## Requiring a signed human approval
+
+**Every policy must.** No AI agent action is authorized without a signed human approval, reads
+included. `PolicyValidator` refuses to load a policy with an approve rule that does not require
+a fact from `approvalSignals` with `is_true`, as its whole condition or directly inside its top
+level `all`, so every request under such a policy is refused, and it cannot be proposed through
+policy governance either. See [Human approval](/concepts/human-approval).
+
+A signal in `approvalSignals` is true only when a person approved this exact request: a manager
+for a refund, a release manager for a merge, a reviewer for a read. For each
+key, the caller's `true` counts only with a valid signed approval, for this action, for the
+resource at `resourceId` in the Intent and, when `value` is given, covering the number at that
+path:
+
+```json
+"approvalSignals": {
+  "managerApproved": {
+    "resourceId": "parameters.orderId",
+    "value": "parameters.amount"
+  }
+}
+```
+
+The approval travels in `signals.approvalArtifact` (or the signal named by `artifact`).
+`ApprovalSignalVerifier` checks it for any action, before the authorization is signed and again
+at the gateway just before release, and uses it once. The resource and value come from the
+Intent, never from the caller's signals. Without `value`, the approval must name exactly this
+resource. A declared key counts as covered, like a `boundSignals` key, and the validator
+rejects a key no rule reads, a path other than `target` or one into `parameters`, a key that is
+also bound, or two keys sharing one approval. See [Human approval](/concepts/human-approval).
+
+## Minimal example
+
+From `policies/vendor-payment/2.1.0/policy.json`, a real policy in this repo:
+
+```json
+{
+  "policyId": "vendor-payment",
+  "policyVersion": "2.1.0",
+  "schemaVersion": "1.0.0",
+  "signalsSchema": {
+    "humanApproved": "boolean",
+    "vendorVerified": "boolean",
+    "invoiceVerified": "boolean",
+    "paymentApproved": "boolean",
+    "sufficientFunds": "boolean",
+    "paymentAmount": "number",
+    "riskScore": "number",
+    "vendorId": "string"
+  },
+  "boundSignals": {
+    "paymentAmount": "parameters.amount",
+    "vendorId": "target"
+  },
+  "approvalSignals": {
+    "humanApproved": { "resourceId": "target", "value": "parameters.amount" }
+  },
+  "rules": [
+    {
+      "id": "approve-payment",
+      "condition": {
+        "all": [
+          { "fact": "humanApproved", "operator": "is_true" },
+          { "fact": "vendorVerified", "operator": "eq", "value": true },
+          { "fact": "invoiceVerified", "operator": "eq", "value": true },
+          { "fact": "paymentApproved", "operator": "eq", "value": true },
+          { "fact": "sufficientFunds", "operator": "eq", "value": true },
+          { "fact": "paymentAmount", "operator": "gt", "value": 0 },
+          { "fact": "riskScore", "operator": "lte", "value": 20 }
+        ]
+      },
+      "outcome": { "action": "approve", "reason": "..." }
+    }
+  ]
+}
+```
+
+<Note>
+  Trimmed for this example: the real file also has a `description`, seven reject
+  rules after the approve rule (the last is `reject-default`), and an
+  `unboundSignalReasons` field naming a reason for each of `vendorVerified`,
+  `invoiceVerified`, `paymentApproved`, `sufficientFunds`, and `riskScore`.
+  `PolicyValidator.validate()` fails closed on any rule-referenced fact that is
+  neither in `boundSignals` nor `unboundSignalReasons`, so a policy shaped
+  exactly like the excerpt above, with nothing said about those five facts,
+  would refuse to load. See [Write your first
+  policy](/guides/write-your-first-policy) for a complete, loadable example with
+  both fields.
+</Note>
+
+## What a Decision records
+
+```typescript
+// packages/shared/src/domain/decision.ts
+export interface Decision {
+  readonly decisionId: string;
+  readonly intentId: string;
+  readonly policy: PolicyReference;
+  readonly signals: Record<string, JsonValue>; // captured for deterministic replay
+  readonly outcome: DecisionOutcome; // APPROVED | REJECTED
+  readonly reason?: string;
+  readonly matchedRuleId?: string; // the rule that matched, "none" when no rule did
+  readonly evaluatedRules?: number; // how many rules were tried
+  readonly matchedPath?: readonly string[]; // the ids of the rules tried, in order
+  readonly evaluatedAt: Date;
+  readonly assessment?: DecisionAssessment; // authority, business validation, execution
+}
+```
+
+`assessment` records authority, business validation and, for a refusal, execution as separate
+statuses, the Trusted Signals a policy's `signalSources` established, and, for a policy with
+`requireAuthorityGrant`, the caller's authority grant that was checked. See
+[Business validation](/concepts/business-validation) and
+[Grant an agent authority](/guides/grant-an-agent-authority).
+
+The signals evaluated are captured on the Decision itself, this is what
+[replay](/replay/overview) reconstructs from: given the same recorded signals and the same
+policy version, re-evaluation must produce the same outcome.
+
+`TrustChainValidationComponent` and `RuntimeEngine` refuse to execute when required trust
+artifacts are missing or the Decision is not `APPROVED` (CLAIMS.md 2.4). Only an `APPROVED`
+Decision can produce a [signed execution authorization](/concepts/execution-authorization).
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="Execution authorization"
+    icon="file-signature"
+    href="/concepts/execution-authorization"
+  >
+    What an APPROVED decision becomes: a signed, single-use envelope.
+  </Card>
+  <Card
+    title="Determinism and clocks"
+    icon="clock"
+    href="/concepts/determinism-and-clocks"
+  >
+    What "deterministic" means precisely, and where it does and doesn't apply.
+  </Card>
+</CardGroup>

@@ -1,0 +1,72 @@
+---
+title: "Interface: VerifyParmanaReleaseOptions"
+---
+
+Defined in: [typescript/src/crypto/release.ts:81](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/release.ts#L81)
+
+## Properties
+
+### publicKeys
+
+> `readonly` **publicKeys**: [`PublicKeys`](/sdks/reference/typescript/type-aliases/PublicKeys)
+
+Defined in: [typescript/src/crypto/release.ts:86](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/release.ts#L86)
+
+Key ID to PEM public key. The release names its key in
+signature.keyId, usually `default`.
+
+---
+
+### audience
+
+> `readonly` **audience**: `string`
+
+Defined in: [typescript/src/crypto/release.ts:93](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/release.ts#L93)
+
+This endpoint's URL exactly as Parmana stored it at registration
+(GET /external-connectors shows it). A release made for another
+endpoint is refused.
+
+---
+
+### isAlreadyExecuted
+
+> `readonly` **isAlreadyExecuted**: (`businessTransactionId`) => `boolean` \| `Promise`\<`boolean`\>
+
+Defined in: [typescript/src/crypto/release.ts:102](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/release.ts#L102)
+
+Whether this endpoint already executed the businessTransactionId.
+Keep that record durably: Parmana may send the same release again
+after a timeout, and the endpoint must answer with its first result,
+not act twice. Called only for a release that passed every other
+check.
+
+#### Parameters
+
+##### businessTransactionId
+
+`string`
+
+#### Returns
+
+`boolean` \| `Promise`\<`boolean`\>
+
+---
+
+### now?
+
+> `readonly` `optional` **now?**: `Date`
+
+Defined in: [typescript/src/crypto/release.ts:109](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/release.ts#L109)
+
+Defaults to the current time.
+
+---
+
+### clockSkewSeconds?
+
+> `readonly` `optional` **clockSkewSeconds?**: `number`
+
+Defined in: [typescript/src/crypto/release.ts:114](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/release.ts#L114)
+
+Defaults to DEFAULT_RELEASE_CLOCK_SKEW_SECONDS.

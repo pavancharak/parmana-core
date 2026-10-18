@@ -1,0 +1,28 @@
+---
+title: "Function: verifyExecutionTrustRecordOffline()"
+---
+
+> **verifyExecutionTrustRecordOffline**(`trustRecord`, `publicKeys`): [`OfflineVerificationResult`](/sdks/reference/typescript/interfaces/OfflineVerificationResult)
+
+Defined in: [typescript/src/crypto/offline-verifier.ts:205](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/offline-verifier.ts#L205)
+
+Verifies an Execution Trust Record with only public keys.
+
+## Parameters
+
+### trustRecord
+
+`unknown`
+
+The record exactly as `client.trustRecord()` or
+`GET /trust-records/{id}` returned it, or as parsed from a JSON file.
+
+### publicKeys
+
+[`PublicKeys`](/sdks/reference/typescript/type-aliases/PublicKeys)
+
+Key ID to PEM public key.
+
+## Returns
+
+[`OfflineVerificationResult`](/sdks/reference/typescript/interfaces/OfflineVerificationResult)

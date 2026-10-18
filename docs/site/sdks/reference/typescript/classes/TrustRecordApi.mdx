@@ -1,0 +1,87 @@
+---
+title: "Class: TrustRecordApi"
+---
+
+Defined in: [typescript/src/client/TrustRecordApi.ts:14](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/TrustRecordApi.ts#L14)
+
+Trust Record API.
+
+## Constructors
+
+### Constructor
+
+> **new TrustRecordApi**(`transport`): `TrustRecordApi`
+
+Defined in: [typescript/src/client/TrustRecordApi.ts:15](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/TrustRecordApi.ts#L15)
+
+#### Parameters
+
+##### transport
+
+[`Transport`](/sdks/reference/typescript/interfaces/Transport)
+
+#### Returns
+
+`TrustRecordApi`
+
+## Methods
+
+### get()
+
+> **get**(`businessTransactionId`): `Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)\>
+
+Defined in: [typescript/src/client/TrustRecordApi.ts:20](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/TrustRecordApi.ts#L20)
+
+Retrieve an Execution Trust Record.
+
+#### Parameters
+
+##### businessTransactionId
+
+`string`
+
+#### Returns
+
+`Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)\>
+
+---
+
+### list()
+
+> **list**(`page?`, `pageSize?`, `options?`): `Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)[]\>
+
+Defined in: [typescript/src/client/TrustRecordApi.ts:41](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/TrustRecordApi.ts#L41)
+
+List Execution Trust Records, newest first. Maps to GET /trust-records.
+Only records of Business Transactions this caller submitted are
+returned, so a page may hold fewer than `pageSize` records.
+
+#### Parameters
+
+##### page?
+
+`number` = `1`
+
+##### pageSize?
+
+`number` = `25`
+
+##### options?
+
+###### since?
+
+`string`
+
+Only records of transactions created at or after
+this ISO 8601 time.
+
+###### until?
+
+`string`
+
+Only records of transactions created at or before
+this ISO 8601 time.
+
+#### Returns
+
+`Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)[]\>

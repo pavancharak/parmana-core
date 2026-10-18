@@ -1,0 +1,56 @@
+{
+  "name": "@parmana/connector-sdk",
+  "version": "0.3.0",
+  "private": false,
+  "description": "Connector authoring contracts and reference implementations for Parmana, the authorization layer for AI execution",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.js.map",
+    "dist/**/*.d.ts",
+    "dist/**/*.d.ts.map",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "parmana",
+    "ai",
+    "governance",
+    "authorization",
+    "connector",
+    "integration",
+    "agentic-ai",
+    "sdk"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pavancharak/parmana.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pavancharak/parmana/issues"
+  },
+  "homepage": "https://github.com/pavancharak/parmana",
+  "devDependencies": {
+    "@types/node": "^24.19.1",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "Apache-2.0"
+}

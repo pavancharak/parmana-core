@@ -1,0 +1,131 @@
+---
+title: "Interface: ParmanaRelease"
+---
+
+Defined in: [typescript/src/crypto/release.ts:39](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/release.ts#L39)
+
+What Parmana approved and released. Act on capability, target and
+parameters only.
+
+## Properties
+
+### version
+
+> `readonly` **version**: `1`
+
+Defined in: [typescript/src/crypto/release.ts:40](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/release.ts#L40)
+
+---
+
+### connectorId
+
+> `readonly` **connectorId**: `string`
+
+Defined in: [typescript/src/crypto/release.ts:41](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/release.ts#L41)
+
+---
+
+### audience
+
+> `readonly` **audience**: `string`
+
+Defined in: [typescript/src/crypto/release.ts:42](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/release.ts#L42)
+
+---
+
+### businessTransactionId
+
+> `readonly` **businessTransactionId**: `string`
+
+Defined in: [typescript/src/crypto/release.ts:43](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/release.ts#L43)
+
+---
+
+### authorizationId
+
+> `readonly` **authorizationId**: `string`
+
+Defined in: [typescript/src/crypto/release.ts:44](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/release.ts#L44)
+
+---
+
+### capability
+
+> `readonly` **capability**: `string`
+
+Defined in: [typescript/src/crypto/release.ts:45](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/release.ts#L45)
+
+---
+
+### target
+
+> `readonly` **target**: `string`
+
+Defined in: [typescript/src/crypto/release.ts:46](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/release.ts#L46)
+
+---
+
+### parameters
+
+> `readonly` **parameters**: `Readonly`\<`Record`\<`string`, `unknown`\>\>
+
+Defined in: [typescript/src/crypto/release.ts:47](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/release.ts#L47)
+
+---
+
+### policy
+
+> `readonly` **policy**: `object`
+
+Defined in: [typescript/src/crypto/release.ts:48](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/release.ts#L48)
+
+#### name
+
+> `readonly` **name**: `string`
+
+#### version
+
+> `readonly` **version**: `string`
+
+#### contentHash?
+
+> `readonly` `optional` **contentHash?**: `string`
+
+---
+
+### approvedBy
+
+> `readonly` **approvedBy**: readonly `object`[]
+
+Defined in: [typescript/src/crypto/release.ts:53](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/release.ts#L53)
+
+---
+
+### issuedAt
+
+> `readonly` **issuedAt**: `string`
+
+Defined in: [typescript/src/crypto/release.ts:58](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/release.ts#L58)
+
+---
+
+### expiresAt
+
+> `readonly` **expiresAt**: `string`
+
+Defined in: [typescript/src/crypto/release.ts:59](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/release.ts#L59)
+
+---
+
+### conditions?
+
+> `readonly` `optional` **conditions?**: readonly [`ParmanaReleaseCondition`](/sdks/reference/typescript/interfaces/ParmanaReleaseCondition)[]
+
+Defined in: [typescript/src/crypto/release.ts:69](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/release.ts#L69)
+
+The business facts the release rests on (RFC-0023 phase 4), each
+with the value its source gave and until when it holds. Act only if
+each still holds in your records, in the same transaction as the
+action; otherwise answer `success: false` with
+`conditionsNotMet: true`. Absent when the decision sourced no facts.
+Covered by the signature, like every other field.

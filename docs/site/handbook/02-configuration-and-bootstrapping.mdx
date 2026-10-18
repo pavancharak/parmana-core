@@ -1,0 +1,186 @@
+---
+title: "Chapter 2: Configuration and Bootstrapping"
+description: "Every runtime-configurable choice Parmana makes, which storage backend, which signature"
+---
+
+## What it is
+
+Every runtime-configurable choice Parmana makes, which storage backend, which signature
+algorithm, where keys live, whether caller authentication is on, flows through exactly one
+function: `loadConfig()` in `packages/shared/src/config/Config.ts`. Everything downstream,
+from which `Signer` gets constructed to whether the process refuses to start at all, is
+derived from the single immutable object that function returns.
+
+## Why it was built
+
+`Config.ts`'s own doc comment states the goal plainly: "Centralized immutable configuration.
+This is the only configuration model used by Parmana." The practical reason is fail-closed
+startup. A process that boots successfully, passes `/health`, and only fails on its first
+real request (because a key file is missing, or a database is unreachable) is worse than a
+process that refuses to start at all. Several files across `packages/api/src/bootstrap/`
+exist specifically to convert what would otherwise be a lazy, request-time failure into an
+eager, startup-time one, and their own comments say so directly: `assertSigningKeyMaterialConfigured.ts`
+opens with "Without this, `FileKeyProvider` only throws lazily... A production process could
+otherwise boot 'successfully', pass `/health`, and only fail on its very first real request."
+
+## How it works
+
+### `loadConfig()`, section by section
+
+`loadConfig()` (`Config.ts:305-381`) reads `process.env` exactly once per call and returns a
+frozen `Config` object with eleven sections: `environment`, `storage`, `crypto`, `keys`,
+`secrets`, `authorization`, `policy`, `trust`, `api`, `auth`, `rateLimit`, `logging`. Every
+value is parsed and validated through `ConfigValidation.ts`'s `parse*` functions, each of
+which throws immediately on an unrecognized value rather than silently falling back to a
+default. Two sections fail closed even harder, by refusing an _unset_ value rather than just
+an invalid one: `requirePolicyDirectory()` throws if `PARMANA_POLICY_DIR` is unset, and
+`assertSigningKeyMaterialConfigured.ts` (a separate, startup-only check, not inside
+`loadConfig()` itself) does the same for `PARMANA_KEY_DIR`.
+
+`.env` resolution is location-independent: `findEnvFile()` walks up from
+`Config.ts`'s own directory until it finds a `.env` file, so every package in the monorepo
+shares the same configuration regardless of which package's `cwd` a script happens to run
+from.
+
+### The full environment variable reference
+
+Every variable below is read somewhere in this monorepo; `.env.example` is the canonical
+list (351 lines, heavily commented) and was the primary source for this table, cross-checked
+against `Config.ts`/`ConfigValidation.ts` for the ones that carry a real enum.
+
+| Variable                                                              | Required?                               | Valid values                                                                                                                | Default           | What it controls                                                                                                    |
+| --------------------------------------------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`                                                            | No                                      | free-form; only `"test"` changes behavior anywhere                                                                          | `development`     | Test-mode bypasses (memory storage, skipped startup asserts)                                                        |
+| `PARMANA_POLICY_DIR`                                                  | **Yes**                                 | any directory path                                                                                                          | ,                 | Where `policy.json` files live                                                                                      |
+| `PARMANA_KEY_DIR`                                                     | Yes unless `NODE_ENV=test`              | any directory path                                                                                                          | ,                 | Where signing key `.pem` files live                                                                                 |
+| `PARMANA_KEY_MATERIAL_JSON`                                           | No                                      | JSON object, see below                                                                                                      | unset             | Materializes key files from env on platforms with no volume/secret-file primitive                                   |
+| `PARMANA_GATEWAY_KEY_ID`                                              | No                                      | any string                                                                                                                  | `gateway`         | Key-file prefix for the Gateway's attestation keypair                                                               |
+| `PARMANA_GATEWAY_ID`                                                  | No                                      | `[A-Za-z0-9._-]+`                                                                                                           | `parmana-gateway` | Logical Gateway identity name in audit events                                                                       |
+| `PORT`                                                                | No                                      | number                                                                                                                      | `3000`            | HTTP bind port                                                                                                      |
+| `HOST`                                                                | No                                      | any                                                                                                                         | `0.0.0.0`         | HTTP bind interface                                                                                                 |
+| `SHUTDOWN_TIMEOUT_MS`                                                 | No                                      | number                                                                                                                      | `10000`           | Graceful-shutdown drain window                                                                                      |
+| `LOG_LEVEL`                                                           | No                                      | free-form                                                                                                                   | `info`            | Log verbosity string (no enforcing logger library)                                                                  |
+| `PARMANA_STORAGE`                                                     | No                                      | `memory \| postgres \| supabase`                                                                                            | `memory`          | Storage backend for business transactions/trust records                                                             |
+| `DATABASE_URL`                                                        | Yes unless `NODE_ENV=test`              | Postgres connection string                                                                                                  | ,                 | Direct `pg` connection, used regardless of `PARMANA_STORAGE` by nonce/audit stores                                  |
+| `SUPABASE_URL`                                                        | Yes if `PARMANA_STORAGE=supabase`       | URL                                                                                                                         | ,                 | Supabase project URL                                                                                                |
+| `SUPABASE_SERVICE_ROLE_KEY`                                           | Yes if `PARMANA_STORAGE=supabase`       | `sb_secret_*`                                                                                                               | ,                 | Privileged service-role key                                                                                         |
+| `SUPABASE_ANON_KEY`                                                   | Yes if `PARMANA_STORAGE=supabase`       | `sb_publishable_*`                                                                                                          | ,                 | Low-privilege anon key (used by `scripts/verify-policy-changes-approved.ts`, Chapter 14)                            |
+| `CRYPTO_MODE`                                                         | No                                      | `single \| hybrid \| pq`                                                                                                    | `single`          | Whether a secondary signature algorithm also signs every trust record/receipt                                       |
+| `PRIMARY_SIGNATURE_PROVIDER`                                          | No                                      | `ed25519 \| ecdsa-p256 \| dilithium3 \| dilithium5 \| sphincs-plus` (also accepts `ml-dsa-65` as an alias for `dilithium3`) | `ed25519`         | Primary signature algorithm                                                                                         |
+| `SECONDARY_SIGNATURE_PROVIDER`                                        | Yes if `CRYPTO_MODE=hybrid`             | same list as above                                                                                                          | unset             | Secondary signature algorithm; must differ from primary                                                             |
+| `HYBRID_SIGNATURE_REQUIRED`                                           | No                                      | `"true"` (strict equality)                                                                                                  | `false`           | Rejects a record whose `signatures` array is absent/partial once hybrid mode is trusted                             |
+| `HASH_PROVIDER`                                                       | No                                      | `sha256 \| sha3-512 \| blake3`                                                                                              | `sha256`          | Hash algorithm                                                                                                      |
+| `KEY_PROVIDER`                                                        | No                                      | `local \| aws-kms \| azure-key-vault \| gcp-kms \| hsm`                                                                     | `local`           | Signing-key custody backend, see the note below, `local` and `aws-kms` are real; the other three are reserved       |
+| `AWS_REGION`                                                          | Yes if `KEY_PROVIDER=aws-kms`           | AWS region string                                                                                                           | ,                 | Region for the `KMSClient`                                                                                          |
+| `AWS_ROLE_ARN`                                                        | No                                      | AWS role ARN                                                                                                                | unset             | If set, exchanges Vercel's OIDC token for short-lived STS credentials instead of the SDK's default credential chain |
+| `EXECUTION_AUTHORIZATION_TTL_SECONDS`                                 | No                                      | number                                                                                                                      | `120`             | Default TTL on a signed Execution Authorization                                                                     |
+| `TRUST_PROFILE`                                                       | No                                      | `v1` (only value defined)                                                                                                   | `v1`              | Trust record schema profile                                                                                         |
+| `RECEIPT_VERSION`                                                     | No                                      | free-form                                                                                                                   | `1`               | Receipt schema version string                                                                                       |
+| `PARMANA_API_KEYS`                                                    | Yes unless `PARMANA_AUTH_DISABLED=true` | JSON array, see Chapter 13                                                                                                  | `[]`              | Caller identities and their key hashes                                                                              |
+| `PARMANA_AUTH_DISABLED`                                               | No                                      | `"true"` (strict equality)                                                                                                  | `false`           | Bypasses caller authentication entirely, local development only                                                     |
+| `RATE_LIMIT_EXECUTE_PER_MINUTE`                                       | No                                      | number                                                                                                                      | `30`              | `/execute`, keyed by caller identity                                                                                |
+| `RATE_LIMIT_HEALTH_PER_MINUTE`                                        | No                                      | number                                                                                                                      | `300`             | `/health`, `/ready`, keyed by IP                                                                                    |
+| `HUBSPOT_PRIVATE_APP_TOKEN`                                           | No                                      | HubSpot token                                                                                                               | unset             | HubSpot connector; connector simply isn't registered if unset                                                       |
+| `GITHUB_APP_ID` / `GITHUB_INSTALLATION_ID` / `GITHUB_APP_PRIVATE_KEY` | No, but all-or-nothing                  | ,                                                                                                                           | unset             | GitHub connector                                                                                                    |
+| `PAYTM_CONNECTOR_URL` / `PAYTM_CONNECTOR_SHARED_SECRET`               | No, but all-or-nothing                  | HTTPS URL / string                                                                                                          | unset             | Paytm connector (forwards to a separate trusted service, never calls Paytm directly)                                |
+| `PARMANA_SECRETS_PROVIDER`                                            | No                                      | `env \| aws-secrets-manager`                                                                                                | `env`             | Where connector _bearer_ credentials resolve from                                                                   |
+| `DATABASE_PROVIDER`                                                   | **Never set**                           | ,                                                                                                                           | ,                 | Retired; setting it throws at startup naming `PARMANA_STORAGE` as the replacement                                   |
+
+A genuine discrepancy worth flagging directly: `.env.example`'s own comment on `KEY_PROVIDER`
+says "Only `local` (FileKeyProvider) has an implementing class today, setting this to any of
+the other four values does nothing." That statement is now wrong. `SignerBootstrap.ts`
+(Chapter 3) implements `aws-kms` for real, via `KmsSigner`. The comment predates that work and
+was not updated afterward, exactly the kind of drift this book exists to catch rather than
+repeat.
+
+### `*Bootstrap` classes: composition roots, not dependency injection
+
+Three classes in `packages/crypto/src/` follow an identical shape: a static `create()` method,
+a private static cache, construction driven entirely by `loadConfig()`.
+
+- **`CryptoBootstrap`** (`CryptoBootstrap.ts`) builds a `CryptoProvider` (hash + signature)
+  for a given algorithm, registering built-in providers (`SHA256HashProvider`,
+  `Ed25519SignatureProvider`, `Dilithium3SignatureProvider`) into `HashRegistry`/
+  `SignatureRegistry` and selecting by `config.crypto.hashProvider`/`primarySignatureProvider`.
+  `createHybrid()` builds both primary and secondary providers at once for `CRYPTO_MODE=hybrid`.
+- **`KeyBootstrap`** (`KeyBootstrap.ts`) is the older `KeyProvider` composition root. Its own
+  doc comment is unusually direct about its current status: `KEY_PROVIDER` accepts five
+  values for forward compatibility, but "only `FileKeyProvider` (`local`) is actually
+  implemented," and it throws loudly for anything else rather than silently falling back
+  to file-based keys, closing a real prior gap where a misconfigured `aws-kms` value used to
+  parse cleanly and then quietly construct a `FileKeyProvider` anyway.
+- **`SignerBootstrap`** (`SignerBootstrap.ts`) is the newer, signing-capable sibling
+  (Chapter 3 covers `Signer` vs `KeyProvider` in full). Unlike `KeyBootstrap`, it supports
+  both `local` (`LocalFileSigner`) and `aws-kms` (`KmsSigner`) for real, and is deliberately
+  **not** memoized the way `KeyBootstrap.create()` is, a static singleton here previously
+  poisoned test isolation, since each test sets its own `PARMANA_KEY_DIR` and a cached signer
+  would keep pointing at a deleted temp directory across tests.
+
+### Startup order, traced from `server.ts`
+
+`packages/api/src/server.ts` runs, in this exact order:
+
+1. `assertStorageConfigured()`, refuses to start with `PARMANA_STORAGE=supabase` and no
+   `DATABASE_URL`.
+2. `assertSigningKeyMaterialConfigured()`, materializes `PARMANA_KEY_MATERIAL_JSON` into
+   `PARMANA_KEY_DIR` for any file not already present, then confirms `default.private.pem`/
+   `default.public.pem` exist (skipped for `KEY_PROVIDER=aws-kms`, which has no local file for
+   that key by design).
+3. `await assertKmsSigningKeyReachable()`, for `KEY_PROVIDER=aws-kms` only: constructs a real
+   `SignerBootstrap`-backed signer and confirms the configured KMS key actually exists and is
+   reachable, before binding the port.
+4. `assertPaytmConnectorConfigured()`, refuses to start with only one of
+   `PAYTM_CONNECTOR_URL`/`PAYTM_CONNECTOR_SHARED_SECRET` set.
+5. `createExecutionSystem()`, `createApplication()`, `createCallerAuthenticator()`,
+   `createRateLimitStore()` (twice, once per limiter, see the tutorial 115 case study in
+   Chapter 12), the actual application graph.
+6. `assertPolicyGovernanceIntegrityAtStartup()`, awaited before the port binds. It refuses to
+   start if an approved policy's live file does not match its approval record, or if the
+   approval records cannot be read (Chapter 7 and Chapter 14).
+7. `app.listen(PORT, HOST)`, the port only binds after every check above has passed.
+8. `schedulePolicyGovernanceIntegrityCheck()`, fired _after_ the port is bound, deliberately
+   fail-open (Chapter 14). It re-runs the integrity check on a timer and logs. These must never
+   delay traffic from being accepted, unlike steps 1-6.
+9. `createGracefulShutdown()` wired to `SIGTERM`/`SIGINT`.
+
+The split between steps 1-6 (fail-closed, before the port binds) and step 8 (fail-open, after)
+is a deliberate, named discipline, not an accident of ordering, durable storage and signing
+key material are things a process cannot function without at all, while a Policy Governance
+integrity mismatch is something to detect and log, not something that should keep a
+healthy process from serving traffic.
+
+## How it enables things, with a concrete example
+
+Every tutorial in `examples/tutorials/` that spins up a real `createApplication()` instance
+(the large majority of them) depends on `loadConfig()` succeeding first, `examples/tutorials/89-readiness-probe`
+specifically exercises the boundary between "storage is configured but unreachable" (`NOT_READY`, 503) and "storage isn't configured to need reaching at all" (`READY`, memory-backed), which is
+this exact configuration model in action. `examples/tutorials/113-kms-key-id-resolution`
+exercises `resolveKmsKeyId()`, one concrete function this configuration ultimately drives
+(Chapter 3 covers it in depth).
+
+## How to validate this yourself
+
+- `packages/shared/src/config/Config.ts`, `ConfigValidation.ts`, `StorageProviders.ts`,
+  `KeyProviders.ts`, `SecretsProviders.ts`, `CryptoAlgorithms.ts`, `TrustProfiles.ts`, the
+  full config model and its validation.
+- `packages/api/src/bootstrap/assertStorageConfigured.ts`,
+  `assertSigningKeyMaterialConfigured.ts`, `assertPaytmConnectorConfigured.ts`, the
+  fail-closed startup checks, each with a doc comment explaining exactly what it prevents.
+- `packages/api/src/server.ts`, the real, ordered bootstrap sequence.
+- `packages/crypto/src/CryptoBootstrap.ts`, `KeyBootstrap.ts`, `SignerBootstrap.ts`, the
+  three composition roots.
+- `.env.example`, the canonical, heavily-commented variable reference (verify against
+  `ConfigValidation.ts` for anything you're not sure is still accurate, per the `KEY_PROVIDER`
+  drift noted above).
+
+## Integration requirements
+
+A minimal working `.env` needs, at least: `PARMANA_POLICY_DIR`, `PARMANA_KEY_DIR` (with a
+real `default.private.pem`/`default.public.pem` pair present, or `PARMANA_KEY_MATERIAL_JSON`
+set), and either `PARMANA_STORAGE=memory` (no further storage config needed) or
+`PARMANA_STORAGE=supabase` plus `DATABASE_URL`/`SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`/
+`SUPABASE_ANON_KEY`. Caller authentication needs either `PARMANA_API_KEYS` populated or
+`PARMANA_AUTH_DISABLED=true` (development only). `KEY_PROVIDER=aws-kms` additionally needs
+`AWS_REGION` and either `AWS_ROLE_ARN` (Vercel OIDC federation) or a real AWS credential chain
+reachable in the runtime environment (`~/.aws/credentials` locally, an instance/task role
+elsewhere).

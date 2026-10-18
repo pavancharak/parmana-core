@@ -1,0 +1,114 @@
+{
+  "policyId": "database-change",
+  "policyVersion": "3.1.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes production database changes after validating change approval, migration verification, backup availability, maintenance window, and operational risk. Every authorization also needs a signed approval from a trusted person for this target, in signals.approvalArtifact with humanApproved true. The other signals can only refuse, never authorize on their own.",
+  "signalsSchema": {
+    "humanApproved": "boolean",
+    "changeApproved": "boolean",
+    "migrationValidated": "boolean",
+    "backupAvailable": "boolean",
+    "maintenanceWindow": "boolean",
+    "riskScore": "number"
+  },
+  "unboundSignalReasons": {
+    "changeApproved": "Attested by a separate change-management approval step; the Intent carries no approval-status field to bind against.",
+    "migrationValidated": "Result of an independent migration-validation check; not a value the Intent itself declares.",
+    "backupAvailable": "Result of an independent backup-verification check against operational state; not expressible via the Intent's target/parameters.",
+    "maintenanceWindow": "A point-in-time schedule check against the current clock; not a property of the Intent being executed.",
+    "riskScore": "A computed operational-risk score, not a value the caller's Intent declares or could be checked against."
+  },
+  "approvalSignals": {
+    "humanApproved": {
+      "resourceId": "target"
+    }
+  },
+  "rules": [
+    {
+      "id": "approve-database-change",
+      "condition": {
+        "all": [
+          {
+            "fact": "humanApproved",
+            "operator": "is_true"
+          },
+          {
+            "fact": "changeApproved",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "migrationValidated",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "backupAvailable",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "maintenanceWindow",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "riskScore",
+            "operator": "lte",
+            "value": 20
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Database change authorized. Change approval, migration validation, backup availability, maintenance window, and operational risk requirements were satisfied, with a verified human approval."
+      }
+    },
+    {
+      "id": "reject-high-risk-change",
+      "condition": {
+        "fact": "riskScore",
+        "operator": "gt",
+        "value": 20
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Database change rejected because the assessed operational risk exceeds the maximum permitted threshold."
+      }
+    },
+    {
+      "id": "reject-missing-backup",
+      "condition": {
+        "fact": "backupAvailable",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Database change rejected because a verified backup is not available."
+      }
+    },
+    {
+      "id": "reject-outside-maintenance-window",
+      "condition": {
+        "fact": "maintenanceWindow",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Database change rejected because execution is outside the approved maintenance window."
+      }
+    },
+    {
+      "id": "reject-default",
+      "condition": {
+        "always": true
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Database change rejected because one or more required policy conditions were not satisfied."
+      }
+    }
+  ]
+}

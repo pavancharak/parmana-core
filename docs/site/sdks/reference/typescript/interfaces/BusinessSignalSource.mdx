@@ -1,0 +1,98 @@
+---
+title: "Interface: BusinessSignalSource"
+---
+
+Defined in: typescript/src/models/business-signal-source.ts:13
+
+A business system registered under a name, active or revoked.
+
+## Properties
+
+### registrationId
+
+> `readonly` **registrationId**: `string`
+
+Defined in: typescript/src/models/business-signal-source.ts:17
+
+The changeId of the approved register change that created it.
+
+---
+
+### name
+
+> `readonly` **name**: `string`
+
+Defined in: typescript/src/models/business-signal-source.ts:22
+
+The name a policy's signalSources uses in `source`.
+
+---
+
+### endpointUrl
+
+> `readonly` **endpointUrl**: `string`
+
+Defined in: typescript/src/models/business-signal-source.ts:27
+
+The HTTPS endpoint Parmana posts each signed query to.
+
+---
+
+### timeoutMs
+
+> `readonly` **timeoutMs**: `number`
+
+Defined in: typescript/src/models/business-signal-source.ts:28
+
+---
+
+### publicKeyPem?
+
+> `readonly` `optional` **publicKeyPem?**: `string`
+
+Defined in: typescript/src/models/business-signal-source.ts:34
+
+The Ed25519 public key (SPKI PEM) the source signs its answers with.
+When present, an answer without a valid signature is refused.
+
+---
+
+### keyId?
+
+> `readonly` `optional` **keyId?**: `string`
+
+Defined in: typescript/src/models/business-signal-source.ts:35
+
+---
+
+### status
+
+> `readonly` **status**: `"active"` \| `"revoked"`
+
+Defined in: typescript/src/models/business-signal-source.ts:40
+
+At most one active registration per name.
+
+---
+
+### registeredAt
+
+> `readonly` **registeredAt**: `string`
+
+Defined in: typescript/src/models/business-signal-source.ts:41
+
+---
+
+### revokedByChangeId?
+
+> `readonly` `optional` **revokedByChangeId?**: `string`
+
+Defined in: typescript/src/models/business-signal-source.ts:42
+
+---
+
+### revokedAt?
+
+> `readonly` `optional` **revokedAt?**: `string`
+
+Defined in: typescript/src/models/business-signal-source.ts:43

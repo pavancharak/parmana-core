@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/requests/execution-intent-verify-request.schema.json",
+  "title": "Execution Intent Verify Request",
+  "description": "Request body for POST /execution-intents/verify: the Execution Intent itself (the intent field of GET /execution-intents/{businessTransactionId}), not a lookup by ID. Checked structurally on the server (intentId, businessTransactionId, authorizationId, intentHash, signature required) before signature verification runs.",
+  "$ref": "../common/execution-intent.schema.json"
+}

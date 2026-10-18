@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/requests/transaction-create-request.schema.json",
+  "title": "Transaction Create Request",
+  "description": "Request payload for POST /execute and POST /transactions. status and createdAt are assigned by Parmana and must not be supplied by the client. Validation performed identically by both endpoints (each has its own inline businessTransactionId UUID check, then shares BusinessTransactionMapper.fromRequest and BusinessTransactionValidator): metadata.businessTransactionId must equal businessTransactionId; authorization.authorityId must equal authority.authorityId; intent.authorizationId must equal authorization.authorizationId; policy.name, policy.version, and intent.action must each be non-empty. No other structural validation is performed: authority, authorization, intent, policy, and signals objects are otherwise passed through as supplied, including any additional properties.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "businessTransactionId",
+    "metadata",
+    "authority",
+    "authorization",
+    "intent",
+    "policy",
+    "signals"
+  ],
+  "properties": {
+    "businessTransactionId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique Business Transaction identifier. Must be a valid UUID on both POST /execute and POST /transactions (rejected with 400 otherwise)."
+    },
+    "metadata": {
+      "$ref": "../common/metadata.schema.json"
+    },
+    "authority": {
+      "$ref": "../common/authority.schema.json"
+    },
+    "authorization": {
+      "$ref": "../common/authorization.schema.json"
+    },
+    "intent": {
+      "$ref": "../common/intent.schema.json"
+    },
+    "policy": {
+      "$ref": "../common/policy.schema.json"
+    },
+    "signals": {
+      "$ref": "../common/signals.schema.json"
+    }
+  },
+  "examples": [
+    {
+      "businessTransactionId": "eed2a972-1bf5-4166-8472-761f76fbf1b2",
+      "metadata": {
+        "businessTransactionId": "eed2a972-1bf5-4166-8472-761f76fbf1b2",
+        "correlationId": "6b97caca-1605-4711-bf00-7e5a65434d93",
+        "sourceSystem": "vendor-payment-service",
+        "submittedBy": "ap-automation",
+        "submittedAt": "2026-07-07T16:38:59.285Z"
+      },
+      "authority": {
+        "authorityId": "c0c01c23-04a2-45f2-a821-ef24bfca02d3",
+        "authorityType": "SERVICE",
+        "principalId": "ap-automation-svc",
+        "displayName": "Accounts Payable Automation",
+        "issuedAt": "2026-07-07T16:38:59.285Z"
+      },
+      "authorization": {
+        "authorizationId": "6e9d6aa6-6d20-40a8-b05d-383516365cc7",
+        "authorityId": "c0c01c23-04a2-45f2-a821-ef24bfca02d3",
+        "purpose": "Authorize vendor payment disbursement",
+        "issuedAt": "2026-07-07T16:38:59.285Z"
+      },
+      "intent": {
+        "intentId": "ae5865f6-181b-409a-90ec-1b4b8b8414ba",
+        "authorizationId": "6e9d6aa6-6d20-40a8-b05d-383516365cc7",
+        "action": "payments:execute",
+        "target": "vendor/V-100",
+        "parameters": {
+          "amount": 4500,
+          "currency": "USD"
+        },
+        "createdAt": "2026-07-07T16:38:59.285Z"
+      },
+      "policy": {
+        "name": "vendor-payment",
+        "version": "2.0.0",
+        "schemaVersion": "1.0.0"
+      },
+      "signals": {
+        "vendorVerified": true,
+        "invoiceVerified": true,
+        "paymentApproved": true,
+        "sufficientFunds": true,
+        "paymentAmount": 4500,
+        "riskScore": 10
+      }
+    }
+  ]
+}

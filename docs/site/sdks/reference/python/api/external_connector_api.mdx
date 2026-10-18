@@ -1,0 +1,106 @@
+---
+sidebar_label: external_connector_api
+title: parmana.api.external_connector_api
+---
+
+Parmana External Connector API.
+
+Connect your own system with no Parmana code change: list the
+registrations, propose registering a capability to your HTTPS endpoint or
+revoking it, and approve or reject a proposal with a signed step up
+authorization. Every call needs an API key that belongs to a verified
+human.
+
+## ExternalConnectorApi Objects
+
+```python
+class ExternalConnectorApi()
+```
+
+External Connector API.
+
+#### list
+
+```python
+def list() -> list[ExternalConnector]
+```
+
+Every registration, active and revoked.
+
+Maps to GET /external-connectors.
+
+#### propose_register
+
+```python
+def propose_register(*,
+                     capability: str,
+                     endpoint_url: str,
+                     policy: str,
+                     allowed_parameters: builtins.list[str],
+                     reason: str,
+                     timeout_ms: int | None = None) -> ExternalConnectorChange
+```
+
+Propose registering a capability to your HTTPS endpoint.
+
+Maps to POST /external-connectors/changes with action "register".
+`capability` is namespace:action, outside the built in namespaces
+(paytm, hubspot, github, slack, test). `endpoint_url` is https with
+a public host name. `allowed_parameters` may be empty.
+`timeout_ms` is 1000 to 30000; the server defaults it to 10000.
+Nothing changes until a different person approves it.
+
+#### propose_revoke
+
+```python
+def propose_revoke(*, capability: str, reason: str) -> ExternalConnectorChange
+```
+
+Propose revoking the active registration for a capability.
+
+Maps to POST /external-connectors/changes with action "revoke".
+
+#### list_changes
+
+```python
+def list_changes(
+        status: str | None = None) -> builtins.list[ExternalConnectorChange]
+```
+
+List external connector changes, newest first.
+
+Maps to GET /external-connectors/changes.
+
+## Parameters
+
+status:
+"PENDING_APPROVAL", "APPROVED" or "REJECTED". Omit for all.
+
+#### approve_change
+
+```python
+def approve_change(
+        change_id: str,
+        step_up_authorization: dict[str, Any]) -> ExternalConnectorChange
+```
+
+Approve and apply an external connector change.
+
+Maps to POST /external-connectors/changes/\{id\}/approve. The caller
+must not be the proposer and must have a registered step up key.
+Make `step_up_authorization` with
+`parmana.crypto.sign_policy_change_step_up()`, `change_id` as
+`pending_policy_change_id`, and action "approve".
+
+#### reject_change
+
+```python
+def reject_change(
+        change_id: str, rejection_reason: str,
+        step_up_authorization: dict[str, Any]) -> ExternalConnectorChange
+```
+
+Reject an external connector change.
+
+Maps to POST /external-connectors/changes/\{id\}/reject. Same caller
+rules as `approve_change()`; sign with action "reject".

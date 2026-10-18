@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you refer to Parmana in research or a report, please cite it as below."
+title: "Parmana: policy-checked execution for AI agents, with signed, independently verifiable records"
+type: software
+authors:
+  - family-names: Charak
+    given-names: Pavan Dev Singh
+  - name: Parmana Systems
+repository-code: "https://github.com/pavancharak/parmana"
+url: "https://docs.parmanasystems.com"
+abstract: >-
+  Parmana evaluates each action an AI agent or other system requests against a
+  deterministic policy, requires a signed human approval where the policy asks
+  for one, releases an approved action only through a gateway that checks a
+  signed, single use authorization, and records every decision as a signed
+  record that can be verified offline with only the public keys.
+keywords:
+  - AI agents
+  - authorization
+  - policy enforcement
+  - human approval
+  - digital signatures
+  - audit

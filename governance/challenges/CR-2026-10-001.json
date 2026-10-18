@@ -1,0 +1,45 @@
+{
+  "challengeRecordId": "CR-2026-10-001",
+  "status": "resolved",
+  "claimChallenged": "Security challenge announcement (LinkedIn, 2026-10): \"No AI agent can execute without a signed human approval, ever. Structural. Cryptographically verified.\" The scoped claim is docs/CLAIMS.md 2.47, which holds only for actions routed through Parmana (3.1); docs/CLAIMS.md section 5 disclaims the unscoped form.",
+  "source": {
+    "kind": "public-comment",
+    "attribution": "Ben Smyth, in public LinkedIn comments on the challenge announcement",
+    "raisedAt": "2026-10-07T00:00:00.000Z"
+  },
+  "investigationSteps": [
+    {
+      "performedAt": "2026-10-10T00:00:00.000Z",
+      "method": "Compared the three proposed attacks with SECURITY-CHALLENGE.md, THREAT-MODEL.md and docs/CLAIMS.md: (1) an agent launched alongside Parmana that never calls it; (2) a zero day exploited during download; (3) modifying Docker before Parmana starts.",
+      "observation": "None crosses an enforcement point (E1 to E5). (1) is outside the boundary: the challenge already excluded calling a downstream system directly, but not an agent with its own credentials. (2) and (3) are control of the host or runtime, which the challenge did not list as out of scope. On a self hosted copy the challenger is the operator and holds every key and the host, which the challenge did not say."
+    },
+    {
+      "performedAt": "2026-10-10T00:00:00.000Z",
+      "method": "Ran examples/04-verified-execution to check whether a downstream receiver can refuse an agent that bypasses Parmana.",
+      "observation": "The example had stopped running on main (vendor-payment 2.1.0 binds vendorId; its transaction lacked it), unnoticed because npm run examples excluded it. After the fix, a call with no Parmana authorization is refused with 401, and replayed and tampered releases with 403."
+    }
+  ],
+  "finding": {
+    "outcome": "partially-confirmed",
+    "statement": "No bypass of the authorization boundary. The announcement overstated the claim, and the challenge did not state the operator and attacker roles or exclude agents with their own credentials and control of the host or image."
+  },
+  "outcome": {
+    "changed": true,
+    "description": "The challenge is scoped to the attacker role. Attackers A8 (an agent with its own credentials) and A9 (control of the host, image, build or source) and assumptions 8 and 9 are in the threat model; the audit guide and limitations page match. Example 04 is repaired, labelled as the downstream control for A8, asserts its outcomes and runs in npm run examples.",
+    "references": [
+      "https://github.com/pavancharak/parmana/pull/89",
+      "https://github.com/pavancharak/parmana/pull/90",
+      "https://github.com/pavancharak/parmana/pull/91",
+      "https://github.com/pavancharak/parmana/blob/main/SECURITY-CHALLENGE.md#two-roles-operator-and-attacker",
+      "https://github.com/pavancharak/parmana/blob/main/THREAT-MODEL.md#4-attackers",
+      "https://github.com/pavancharak/parmana/blob/main/examples/04-verified-execution/README.md#an-agent-that-bypasses-parmana"
+    ]
+  },
+  "disclosure": {
+    "disclosedPublicly": true,
+    "location": "The LinkedIn announcement thread, and the pull requests and files listed in outcome.references",
+    "disclosedAt": "2026-10-10T00:00:00.000Z"
+  },
+  "createdAt": "2026-10-10T00:00:00.000Z",
+  "updatedAt": "2026-10-10T00:00:00.000Z"
+}

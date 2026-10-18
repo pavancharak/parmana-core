@@ -1,0 +1,70 @@
+---
+title: "Class: RefusalApi"
+---
+
+Defined in: [typescript/src/client/RefusalApi.ts:9](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/RefusalApi.ts#L9)
+
+## Constructors
+
+### Constructor
+
+> **new RefusalApi**(`transport`): `RefusalApi`
+
+Defined in: [typescript/src/client/RefusalApi.ts:10](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/RefusalApi.ts#L10)
+
+#### Parameters
+
+##### transport
+
+[`Transport`](/sdks/reference/typescript/interfaces/Transport)
+
+#### Returns
+
+`RefusalApi`
+
+## Methods
+
+### verify()
+
+> **verify**(`record`): `Promise`\<`boolean`\>
+
+Defined in: [typescript/src/client/RefusalApi.ts:19](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/RefusalApi.ts#L19)
+
+Verifies a Refusal Record's signature. Maps to POST
+/refusal/verify -- takes the record itself, not a lookup by id.
+No caller authentication is required by this route: it is the
+capability that makes a refusal independently third-party
+verifiable (RFC-0021).
+
+#### Parameters
+
+##### record
+
+[`RefusalRecord`](/sdks/reference/typescript/interfaces/RefusalRecord)
+
+#### Returns
+
+`Promise`\<`boolean`\>
+
+---
+
+### get()
+
+> **get**(`businessTransactionId`): `Promise`\<[`RefusalRecord`](/sdks/reference/typescript/interfaces/RefusalRecord)\>
+
+Defined in: [typescript/src/client/RefusalApi.ts:35](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/RefusalApi.ts#L35)
+
+Retrieves a Refusal Record by Business Transaction ID. Maps to
+GET /refusal/:businessTransactionId. Unlike verify() above, this
+route is behind caller-auth and ownership scoping, identically to
+TrustRecordApi.get().
+
+#### Parameters
+
+##### businessTransactionId
+
+`string`
+
+#### Returns
+
+`Promise`\<[`RefusalRecord`](/sdks/reference/typescript/interfaces/RefusalRecord)\>

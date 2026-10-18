@@ -1,0 +1,140 @@
+---
+title: "Class: BusinessSignalSourceApi"
+---
+
+Defined in: typescript/src/client/BusinessSignalSourceApi.ts:25
+
+## Constructors
+
+### Constructor
+
+> **new BusinessSignalSourceApi**(`transport`): `BusinessSignalSourceApi`
+
+Defined in: typescript/src/client/BusinessSignalSourceApi.ts:26
+
+#### Parameters
+
+##### transport
+
+[`Transport`](/sdks/reference/typescript/interfaces/Transport)
+
+#### Returns
+
+`BusinessSignalSourceApi`
+
+## Methods
+
+### list()
+
+> **list**(): `Promise`\<[`BusinessSignalSource`](/sdks/reference/typescript/interfaces/BusinessSignalSource)[]\>
+
+Defined in: typescript/src/client/BusinessSignalSourceApi.ts:32
+
+Every registration, active and revoked. Maps to GET
+/business-signal-sources.
+
+#### Returns
+
+`Promise`\<[`BusinessSignalSource`](/sdks/reference/typescript/interfaces/BusinessSignalSource)[]\>
+
+---
+
+### proposeChange()
+
+> **proposeChange**(`input`): `Promise`\<[`BusinessSignalSourceChange`](/sdks/reference/typescript/interfaces/BusinessSignalSourceChange)\>
+
+Defined in: typescript/src/client/BusinessSignalSourceApi.ts:48
+
+Proposes registering or revoking a business signal source. Nothing
+changes until a different person approves it. Maps to POST
+/business-signal-sources/changes.
+
+#### Parameters
+
+##### input
+
+[`ProposeBusinessSignalSourceChangeInput`](/sdks/reference/typescript/type-aliases/ProposeBusinessSignalSourceChangeInput)
+
+#### Returns
+
+`Promise`\<[`BusinessSignalSourceChange`](/sdks/reference/typescript/interfaces/BusinessSignalSourceChange)\>
+
+---
+
+### listChanges()
+
+> **listChanges**(`status?`): `Promise`\<[`BusinessSignalSourceChange`](/sdks/reference/typescript/interfaces/BusinessSignalSourceChange)[]\>
+
+Defined in: typescript/src/client/BusinessSignalSourceApi.ts:66
+
+Lists business signal source changes, newest first. Maps to GET
+/business-signal-sources/changes.
+
+#### Parameters
+
+##### status?
+
+[`PendingPolicyChangeStatus`](/sdks/reference/typescript/type-aliases/PendingPolicyChangeStatus)
+
+Only changes in this state. Omit for all.
+
+#### Returns
+
+`Promise`\<[`BusinessSignalSourceChange`](/sdks/reference/typescript/interfaces/BusinessSignalSourceChange)[]\>
+
+---
+
+### approveChange()
+
+> **approveChange**(`changeId`, `stepUpAuthorization`): `Promise`\<[`BusinessSignalSourceChange`](/sdks/reference/typescript/interfaces/BusinessSignalSourceChange)\>
+
+Defined in: typescript/src/client/BusinessSignalSourceApi.ts:89
+
+Approves and applies a business signal source change. Maps to POST
+/business-signal-sources/changes/{id}/approve. The caller must not be the
+proposer and must have a registered step up key. Make
+`stepUpAuthorization` with `signPolicyChangeStepUp()`, the change id
+as `pendingPolicyChangeId`, and action "approve".
+
+#### Parameters
+
+##### changeId
+
+`string`
+
+##### stepUpAuthorization
+
+[`PolicyChangeStepUpAuthorization`](/sdks/reference/typescript/interfaces/PolicyChangeStepUpAuthorization)
+
+#### Returns
+
+`Promise`\<[`BusinessSignalSourceChange`](/sdks/reference/typescript/interfaces/BusinessSignalSourceChange)\>
+
+---
+
+### rejectChange()
+
+> **rejectChange**(`changeId`, `rejectionReason`, `stepUpAuthorization`): `Promise`\<[`BusinessSignalSourceChange`](/sdks/reference/typescript/interfaces/BusinessSignalSourceChange)\>
+
+Defined in: typescript/src/client/BusinessSignalSourceApi.ts:106
+
+Rejects a business signal source change. Same caller rules as
+approveChange(); sign with action "reject". A reason is required.
+
+#### Parameters
+
+##### changeId
+
+`string`
+
+##### rejectionReason
+
+`string`
+
+##### stepUpAuthorization
+
+[`PolicyChangeStepUpAuthorization`](/sdks/reference/typescript/interfaces/PolicyChangeStepUpAuthorization)
+
+#### Returns
+
+`Promise`\<[`BusinessSignalSourceChange`](/sdks/reference/typescript/interfaces/BusinessSignalSourceChange)\>

@@ -1,0 +1,89 @@
+---
+title: "Verification"
+description: "Exactly 3 checks, always run, always reported independently."
+---
+
+<Info>
+  **[AVAILABLE]**, precisely scoped.
+  `packages/runtime/src/services/verification-service.ts`.
+</Info>
+
+<Note>
+  An earlier six-stage verification pipeline (`@parmana/verification`) existed
+  and was removed, it had no real implementation and no test coverage. It is not
+  documented here as existing. If you see references to Authority/Intent/
+  Evidence verification stages elsewhere, they describe that retired package or
+  a not-yet-built future addition, not current behavior.
+</Note>
+
+<Tip>
+  To check a signed record yourself, without installing anything, use [Verify a
+  record in your browser](/verification/verify-in-browser).
+</Tip>
+
+## The 3 checks, exactly
+
+```typescript
+// packages/runtime/src/services/verification-service.ts:90-153
+```
+
+1. **Integrity**, recompute the Trust Record's canonical hash; must match the stored
+   `trustRecordHash`.
+2. **Signature**, the stored cryptographic signature must verify against the stored
+   public key.
+3. **Authorization binding**, every `APPROVED` execution must carry a non-empty
+   `authorizationId` in its metadata. `REJECTED`-decision executions are exempt.
+
+**All three checks always run**, independently, regardless of whether an earlier one
+failed, so a single verification report can name every check that failed, not just the
+first (`runChecks()` accumulates failures into an array rather than short-circuiting).
+
+## Two different operations, two different routes
+
+| SDK call                             | HTTP                    | What it does                                                                        |
+| ------------------------------------ | ----------------------- | ----------------------------------------------------------------------------------- |
+| `client.verification.verify(id)`     | `POST /verify`          | Runs a **fresh** verification; appends a new `Verification` to the record's history |
+| `client.verification.get_latest(id)` | `GET /verification/:id` | Reads back the **most recent** `Verification` without re-verifying                  |
+
+These are genuinely different routes (`packages/api/src/routes/verify.ts` vs.
+`verify-get.ts`), not the same endpoint called twice. See [Python SDK](/sdks/python) for how
+each SDK exposes them.
+
+## Real output
+
+```
+client.verification.verify() -- fresh (POST /verify):
+  status:      VerificationStatus.VERIFIED
+  verified_at: 2026-07-06 04:10:15.021000+00:00
+  hash:        861fe01aaadf904a003d3e6118e74f967164a52d91eb18f97ca6cbce71292768
+
+client.verification.get_latest() -- cached (GET /verification/:id):
+  status:      VerificationStatus.VERIFIED
+  verified_at: 2026-07-06 04:10:15.021000+00:00
+  hash:        861fe01aaadf904a003d3e6118e74f967164a52d91eb18f97ca6cbce71292768
+```
+
+Real run, 2026-07-06, `python/examples/verify/`.
+
+## Tampering is actually caught
+
+`packages/api/tests/integration/verification-negative.integration.test.ts`, "reports FAILED when the
+persisted record is tampered after execution", proves this end to end, not just at the
+unit level.
+
+## Verify without Parmana's server
+
+The checks above run on Parmana's server. To check a record yourself, with no network
+access and no trust in Parmana's servers or database, use the
+[Verification SDK](/sdks/parmana-sign/overview), `@parmana/sign` on npm:
+
+```ts
+import { verifyExecutionTrustRecordOffline } from "@parmana/sign";
+
+const result = await verifyExecutionTrustRecordOffline(record, {
+  [key.keyId]: key.pem,
+});
+```
+
+It checks the record hash and every signature, including the ML-DSA-65 signature on hybrid
+records, using only the record and the public keys from `GET /keys/{keyId}`.

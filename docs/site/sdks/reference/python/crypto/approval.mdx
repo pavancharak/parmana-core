@@ -1,0 +1,63 @@
+---
+sidebar_label: approval
+title: parmana.crypto.approval
+---
+
+Signs an Approval Artifact on the approver's own machine: one approver
+approving one action on one resource, optionally up to an amount, for a
+limited time, once.
+
+The result is accepted by any policy that declares approvalSignals exactly as
+one made by the server's ApprovalArtifactSigner (packages/crypto/src/
+ApprovalArtifactCrypto.ts), scripts/sign-approval.ts or the TypeScript SDK's
+signApproval(): the same payload, the same canonical JSON, the same Ed25519
+signature. The agent sends it in the signal the policy names (by default
+signals.approvalArtifact), with the approval signal set to true. The private
+key never leaves the process that calls this function.
+
+Needs the optional `cryptography` dependency: `pip install "parmana[verify]"`.
+
+#### sign_approval
+
+```python
+def sign_approval(
+        *,
+        private_key_pem: str,
+        approver_id: str,
+        key_id: str,
+        capability: str,
+        resource_id: str,
+        max_amount: float | None = None,
+        ttl_seconds: int = DEFAULT_APPROVAL_TTL_SECONDS) -> dict[str, Any]
+```
+
+Sign an approval of one action on one resource.
+
+## Parameters
+
+private_key_pem:
+The approver's Ed25519 private key, PEM (PKCS `8`), as made by
+scripts/generate-approver-key.ts.
+
+approver_id, key_id:
+The approver and key as registered on the server.
+
+capability:
+The action approved, such as "paytm:refund" or "github:pr-merge".
+
+resource_id:
+The value at the policy's approvalSignals resourceId path: an order
+id, or for "target" the Intent's target, such as "acme/api#42".
+
+max_amount:
+The largest amount approved. Give it when the policy declares a value
+path (an amount), and leave it out when it does not: the approval
+then names exactly this resource.
+
+ttl_seconds:
+How long the approval stays valid. Default 900, at most 86400.
+
+## Returns
+
+The signed approval as a JSON ready dict, to send in the policy's
+approval signal. It is valid once, until its `expiresAt`.

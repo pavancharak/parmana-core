@@ -1,0 +1,8 @@
+{
+  "vendorVerified": true,
+  "invoiceVerified": true,
+  "paymentApproved": true,
+  "sufficientFunds": true,
+  "paymentAmount": 5000,
+  "riskScore": 10
+}

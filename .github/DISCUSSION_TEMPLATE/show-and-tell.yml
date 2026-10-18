@@ -1,0 +1,18 @@
+title: "[Show] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Share an evaluation, a connector you wrote against the connector SDK, an attack scenario you ran, or an analysis of a public AI agent incident.
+        Never paste keys, tokens or real customer data.
+  - type: textarea
+    id: what
+    attributes:
+      label: What you did
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Commands, records or links someone else can use to check it.

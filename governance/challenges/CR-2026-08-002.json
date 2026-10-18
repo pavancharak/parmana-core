@@ -1,0 +1,36 @@
+{
+  "challengeRecordId": "CR-2026-08-002",
+  "status": "resolved",
+  "claimChallenged": "That Parmana's refusals are evidence: being prevention first, a refusal that works executed nothing, so nothing was signed and no trace remained (RFC-0021, Motivation).",
+  "source": {
+    "kind": "public-comment",
+    "attribution": "A public technical objection raised twice; the commenter is not named in RFC-0021.",
+    "raisedAt": "2026-08-02T00:00:00.000Z"
+  },
+  "investigationSteps": [
+    {
+      "performedAt": "2026-08-02T00:00:00.000Z",
+      "method": "Code-level trace of a REJECT through ExecutionGate.enforce, Runtime.execute, the API errorHandler and BusinessTransactionRepository (RFC-0021, Motivation). The exact date is not recorded; this is the latest date the cited sources support.",
+      "observation": "A REJECT threw before any signing or record building, no handler logged or stored it, and the accepted transaction row was never updated, so even the G-24 binding refusal left no durable evidence."
+    }
+  ],
+  "finding": {
+    "outcome": "confirmed",
+    "statement": "Every refusal is a durable, third-party-verifiable record would have been a false claim when the objection was raised."
+  },
+  "outcome": {
+    "changed": true,
+    "description": "Refusal Records: every policy REJECT reachable through RuntimeEngine.execute produces a signed, durable record, verifiable without the server or database (docs/CLAIMS.md 3.11); production audit-sink events are signed at write time.",
+    "references": [
+      "https://github.com/pavancharak/parmana/blob/main/docs/rfcs/RFC-0021-Refusal-Record.md",
+      "https://github.com/pavancharak/parmana/blob/main/docs/CLAIMS.md#311-durable-third-party-verifiable-refusal-and-audit-records-rfc-0021-scoped",
+      "https://github.com/pavancharak/parmana/blob/main/packages/runtime/src/RefusalRecordBuilder.ts"
+    ]
+  },
+  "disclosure": {
+    "disclosedPublicly": true,
+    "location": "docs/rfcs/RFC-0021-Refusal-Record.md and docs/CLAIMS.md 3.11, in this public repository"
+  },
+  "createdAt": "2026-10-10T00:00:00.000Z",
+  "updatedAt": "2026-10-10T00:00:00.000Z"
+}

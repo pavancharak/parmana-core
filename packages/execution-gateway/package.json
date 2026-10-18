@@ -1,0 +1,44 @@
+{
+  "name": "@parmana/execution-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The sole boundary through which Parmana releases approved execution requests to connectors, binding each release to the exact authorized content",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@parmana/connector-github": "0.1.0",
+    "@parmana/connector-hubspot": "0.1.0",
+    "@parmana/connector-paytm": "0.1.0",
+    "@parmana/connector-slack": "0.1.0",
+    "@parmana/connector-sdk": "0.3.0",
+    "@parmana/crypto": "0.1.0",
+    "@parmana/envelope-verifier": "0.1.0",
+    "@parmana/execution-control": "0.1.0",
+    "@parmana/execution-system": "0.1.0",
+    "@parmana/policy": "0.1.1",
+    "@parmana/shared": "0.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "license": "SEE LICENSE IN LICENSE"
+}

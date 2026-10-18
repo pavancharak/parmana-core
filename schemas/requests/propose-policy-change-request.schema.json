@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/requests/propose-policy-change-request.schema.json",
+  "title": "Propose Policy Change Request",
+  "description": "Request body for POST /policies/{name}/{version}/pending-changes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["proposedContent", "reason"],
+  "properties": {
+    "proposedContent": {
+      "type": "object",
+      "description": "The full proposed policy.json content, in its entirety. Its policyId must equal the {name} path parameter, and its policyVersion must match ^[A-Za-z0-9._-]+$ and not be \".\" or \"..\". Validated against the same rules POST /policies/validate checks.",
+      "additionalProperties": true
+    },
+    "reason": {
+      "type": "string",
+      "description": "Free-text justification. Required, non-empty."
+    }
+  },
+  "examples": [
+    {
+      "proposedContent": {
+        "policyId": "openapi-capture-demo",
+        "policyVersion": "1.0.0",
+        "schemaVersion": "1.0.0",
+        "rules": [
+          {
+            "id": "always-approve",
+            "condition": { "always": true },
+            "outcome": {
+              "action": "approve",
+              "reason": "OpenAPI spec capture fixture"
+            }
+          }
+        ]
+      },
+      "reason": "Capture a real Pending Policy Change for the OpenAPI spec"
+    }
+  ]
+}

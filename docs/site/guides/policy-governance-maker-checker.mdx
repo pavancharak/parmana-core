@@ -1,0 +1,196 @@
+---
+title: "Policy Governance: Maker-Checker Approval"
+description: "Propose, review, and approve a policy change end to end, with the exact commands and how to debug each failure mode."
+---
+
+<Info>
+  For the whole process in order, with commands, see [Policy lifecycle and
+  approvals](/guides/policy-lifecycle-and-approvals).
+</Info>
+
+<Info>
+  **[AVAILABLE]**, every command below runs against the repo's real endpoints,
+  scripts, and error paths.
+</Info>
+
+## Goal
+
+Take a policy from "I have an idea for a rule change" to "it's approved and live," using the
+real maker-checker flow, not a mock of it. Cover the full lifecycle, the one-shot scripts that
+make it reliable, and every failure mode this flow actually produces.
+
+## Prerequisites
+
+- Read [Policies and the decision](/concepts/policies-and-the-decision) and
+  [Write your first policy](/guides/write-your-first-policy) first, this guide assumes you can
+  already write a valid `policy.json`.
+- A **maker** credential to propose with. It must be a human key, with `credentialHolderType` `USER`. A service key is refused with `403 NON_HUMAN_CALLER_DENIED`.
+- A **checker** credential, genuinely distinct from the maker, see Step 0 below if you don't
+  have one yet.
+
+## Why this exists, in one paragraph
+
+Policy content decides real outcomes: who gets paid, what gets deployed, what an AI agent is
+allowed to do. A single person silently changing that content, with no second party and no
+durable record, was an unacceptable gap. Now, a policy change only takes effect after one person
+_proposes_ it and a genuinely different person _reviews and cryptographically approves_ it ,
+enforced by the API itself (`SameActorCannotApproveOwnChangeError`), not by convention.
+
+## Steps
+
+### 0. Get a checker credential (one-time, per reviewer)
+
+A checker needs a bearer key **and** a step-up keypair, generated together:
+
+```bash
+npx tsx scripts/generate-api-key.ts --caller-id "<checker-name>" --credential-holder-type USER --generate-step-up-key
+```
+
+This prints a bearer key, a step-up **private** key (PEM), and an `entry` JSON block (hash +
+public key only, safe to store or share, unlike the other two). An operator appends `entry` to
+the `PARMANA_API_KEYS` environment variable and redeploys; the checker keeps the bearer key and
+the private key file on their own machine, never in this repo.
+
+<Warning>
+  If a bearer key or private key is ever pasted somewhere it shouldn't be,
+  rotate it immediately by rerunning the command above, see Troubleshoot below
+  for the one mistake that trips people up when rotating.
+</Warning>
+
+### 1. Propose
+
+```bash
+curl -X POST "<api-base>/policies/<name>/<version>/pending-changes" \
+  -H "Authorization: Bearer <maker's bearer key>" \
+  -H "Content-Type: application/json" \
+  -d '{"proposedContent": <the full policy.json object>, "reason": "why this change"}'
+```
+
+Returns `201` with a `pendingPolicyChangeId`, or `400` if `PolicyValidator` finds a fact with no
+`boundSignals`/`unboundSignalReasons` entry, an approve rule without a signed human approval
+(`approves without a signed human approval`), an oversized `matches` regex, or a malformed body.
+`409 CONFLICT` means a change for that policy version is already open.
+
+### 2. Review
+
+```bash
+curl "<api-base>/policies/pending-changes?status=PENDING_APPROVAL" \
+  -H "Authorization: Bearer <checker's bearer key>"
+```
+
+Read `proposedContent.rules` and the proposal's `reason`. The response includes `diff.current`
+vs. `diff.proposed`, plus `coverageWarnings`/`ruleConflicts` if anything's worth a second look.
+This is a judgment call, nothing in this system makes it for you.
+
+### 3. Sign (on the checker's own machine, only)
+
+```bash
+npx tsx scripts/sign-policy-change-step-up.ts \
+  --private-key-file ./checker.step-up.private.pem \
+  --key-id <checker-name> \
+  --pending-policy-change-id <id> \
+  --action approve
+```
+
+Prints a `stepUpAuthorization` envelope, valid for **120 seconds**. This never contacts the API ,
+signing is entirely local.
+
+### 4. Submit
+
+```bash
+curl -X POST "<api-base>/policies/pending-changes/<id>/approve" \
+  -H "Authorization: Bearer <checker's bearer key>" \
+  -H "Content-Type: application/json" \
+  -d '{"stepUpAuthorization": <envelope from step 3>}'
+```
+
+Must land within 120 seconds of signing. For a rejection: `.../reject` with
+`{"rejectionReason": "...", "stepUpAuthorization": ...}`.
+
+### 5. The one-shot alternative (recommended)
+
+Chaining sign-then-submit by hand across a 120-second window is fragile, see Troubleshoot below
+for exactly how. `scripts/local-review-action.ts` does steps 3 and 4 in one process:
+
+```bash
+export REVIEWER_KEY="<checker's bearer key>"
+npx tsx scripts/local-review-action.ts --pending-policy-change-id <id> --action approve
+```
+
+`scripts/refresh-approved-policy-content.ts` does steps 1 through 4 in one shot, always using the
+_current_ on-disk file content rather than a possibly-stale hand-copied snapshot:
+
+```bash
+export PROPOSER_KEY="<maker's bearer key>"
+export REVIEWER_KEY="<checker's bearer key>"
+npx tsx scripts/refresh-approved-policy-content.ts --policy-name <name> --policy-version <version>
+```
+
+Neither script ever prints your bearer key or private key.
+
+The one shot script holds the maker's and the checker's keys in one process, so one person acts as both, and the
+approval record names a second person who did not decide. Use it only in a test environment. In production the
+maker proposes with their own key, and the checker approves with `local-review-action.ts` on their own machine.
+
+## Verify
+
+```bash
+curl "<api-base>/policies/pending-changes?status=PENDING_APPROVAL" \
+  -H "Authorization: Bearer <a human bearer key, maker or checker>"
+```
+
+The resolved change should no longer appear. To confirm the live file and its approval record
+agree byte-for-byte (canonically hashed):
+
+```bash
+npx tsx scripts/verify-policy-changes-approved.ts --full-scan
+```
+
+## Troubleshoot
+
+- **`{"error":"authentication required"}`, 401.** The bearer key is missing, wrong, or stale, or
+  the header is missing the literal word `Bearer` (`Authorization: <key>` alone doesn't work).
+  Confirm your env var actually holds a value in _this_ shell before assuming the key itself is
+  bad.
+- **`STEP_UP_AUTHORIZATION_INVALID`, 403, even immediately after signing.** The server verifies
+  your signature against whichever `stepUpPublicKey` is _currently_ configured for your
+  `callerId`, not whichever key produced the envelope. This happens most often after rotating a
+  credential: the bearer key gets updated everywhere, but the local `.pem` file doesn't get
+  overwritten with the new private key, so every signature is made with an orphaned key. Confirm
+  the match: derive the public key from your local file
+  (`node -e "const c=require('crypto');const f=require('fs');console.log(c.createPublicKey(c.createPrivateKey(f.readFileSync('checker.step-up.private.pem','utf8'))).export({type:'spki',format:'pem'}))"`)
+  and compare it to the `stepUpPublicKey` in `PARMANA_API_KEYS`.
+- **`400 {"error":"Malformed JSON body."}`.** (Before 2026-09-28 this was a `500` on Vercel.)
+  The request body wasn't valid JSON by the time it reached the server, almost always a shell
+  quoting problem (PowerShell mangling a long inline `-d '{"a":"b"}'` when passing it to a native
+  executable), not a real JSON bug. Write the body to a file and use `--data-binary "@body.json"`
+  instead of an inline string, or use the one-shot scripts above, which build the request in
+  Node and never pass JSON through a shell.
+- **Approved content is missing fields you expect, e.g. `boundSignals`.** You approved a proposal
+  that was created a long time before the live file gained those fields. Proposals are frozen
+  snapshots, nothing re-checks them against the current file while `PENDING_APPROVAL`. Reject the stale
+  proposal, have the maker propose again from the live file, then confirm with `--full-scan`.
+- **`SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE`, 403.** The approving bearer key belongs to the same
+  `callerId` that proposed the change. There is no override, use a genuinely distinct checker
+  credential.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="Write your first policy"
+    icon="file-code"
+    href="/guides/write-your-first-policy"
+  >
+    What a valid policy.json looks like, and how first-match-wins evaluation
+    works.
+  </Card>
+  <Card
+    title="Verify a trust record independently"
+    icon="check-double"
+    href="/guides/verify-independently"
+  >
+    Check a signed artifact's signature without Parmana running at all, the same
+    discipline this flow's step-up signing uses.
+  </Card>
+</CardGroup>

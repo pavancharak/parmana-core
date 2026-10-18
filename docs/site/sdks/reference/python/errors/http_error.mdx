@@ -1,0 +1,168 @@
+---
+sidebar_label: http_error
+title: parmana.errors.http_error
+---
+
+## ParmanaHttpError Objects
+
+```python
+class ParmanaHttpError(ParmanaError)
+```
+
+Base class for errors raised from a non-2xx Runtime HTTP response.
+
+Subclasses map to specific status codes so callers can catch a
+specific failure mode instead of pattern-matching on a message string.
+
+## ValidationError Objects
+
+```python
+class ValidationError(ParmanaHttpError)
+```
+
+Raised on HTTP 400.
+
+The Runtime rejected the request body (for example, an invalid
+businessTransactionId or a missing required field).
+
+## AuthenticationError Objects
+
+```python
+class AuthenticationError(ParmanaHttpError)
+```
+
+Raised on HTTP 401.
+
+## AuthorizationError Objects
+
+```python
+class AuthorizationError(ParmanaHttpError)
+```
+
+Raised on HTTP 403 for a caller that is authenticated but not
+permitted to do the specific thing it asked for. Covers two distinct
+denials, both intentionally collapsed to this one SDK exception since
+both share the same "who you are is known; you can't do this" shape
+-- distinguish them via `server_code`/`message` if needed, not via
+`type()`:
+
+- a caller asserting an authority.principalId it isn't permitted to
+  assert (isPrincipalAllowed, packages/api/src/routes/execute.ts and
+  transactions.ts) -- carries no `code` field of its own.
+- a caller invoking a capability (intent.action) it isn't permitted
+  to invoke (isCapabilityAllowed.ts) -- carries
+  `code: "CAPABILITY_NOT_ALLOWED"`, preserved on `server_code` below.
+
+Distinct from AuthenticationError (401, no valid credential at all).
+
+## ExecutionRejectedError Objects
+
+```python
+class ExecutionRejectedError(ParmanaHttpError)
+```
+
+Raised when Policy evaluation rejects a Business Transaction.
+
+Reached over HTTP 403, code POLICY*DENIED, with a message starting
+"Execution rejected:" (packages/runtime/src/ExecutionGate.ts,
+packages/api/src/middleware/error-handler.ts; see
+docs/site/api-reference/error-catalog.mdx). Distinct from the two
+\_other* 403 shapes this API returns (both AuthorizationError: a
+caller-identity/principal mismatch, no `code` field at all; and a
+capability-scoping denial, `code: "CAPABILITY_NOT_ALLOWED"`) -- see
+build_http_error's POLICY_DENIED check, which runs ahead of the
+generic status-based mapping for exactly this reason.
+
+Previously reached over HTTP 500, code RUNTIME_ERROR (no dedicated
+status of its own). That gap was fixed at the source; this class and
+build_http_error were updated to match the current shape, not kept
+around to work around the old ambiguity -- mirroring
+typescript/src/transport/mapHttpErrorResponse.ts's own documented
+history of the identical change.
+
+## NotFoundError Objects
+
+```python
+class NotFoundError(ParmanaHttpError)
+```
+
+Raised on HTTP 404.
+
+## ConflictError Objects
+
+```python
+class ConflictError(ParmanaHttpError)
+```
+
+Raised on HTTP 409.
+
+For example, a duplicate Business Transaction (see
+DuplicateBusinessTransactionError in packages/runtime).
+
+## RateLimitError Objects
+
+```python
+class RateLimitError(ParmanaHttpError)
+```
+
+Raised on HTTP 429: the caller has exceeded the per-identity rate
+limit on POST /execute, or the IP-keyed limit on GET /health,/ready
+(see packages/api's rate-limiting middleware). Distinct from every
+other 4xx this SDK raises -- it is not a request defect, it is a
+transient condition the caller should back off and retry, so
+`retry_after_seconds` (parsed from the response's `Retry-After`
+header, when present) is exposed for callers that want to honor the
+Runtime's own hint rather than guess a delay.
+
+## InternalServerError Objects
+
+```python
+class InternalServerError(ParmanaHttpError)
+```
+
+Raised on any HTTP 5xx response. Named InternalServerError for
+parity with the canonical error hierarchy (docs/site/sdks/api-coverage.mdx,
+typescript/src/errors/InternalServerError.ts); ServerError below
+is a backward-compatible alias of this class.
+
+#### ServerError
+
+Backward-compatible alias -- this class was previously named
+ServerError. Existing `except ServerError` / `isinstance(e, ServerError)`
+code keeps working unchanged.
+
+#### build_http_error
+
+```python
+def build_http_error(
+        status_code: int,
+        message: str,
+        *,
+        code: str | None = None,
+        request_id: str | None = None,
+        retry_after_seconds: float | None = None) -> ParmanaHttpError
+```
+
+Constructs the specific ParmanaHttpError subclass for a response.
+
+Classification is primarily by HTTP status, with `code` used to
+distinguish the cases that need it. This API returns THREE distinct
+403 shapes, not two -- a fact this docstring previously got wrong:
+
+- `code: "POLICY_DENIED"` -- a policy REJECTED decision, mapped to
+  ExecutionRejectedError, checked first since it needs a wholly
+  different SDK exception.
+- `code: "CAPABILITY_NOT_ALLOWED"` -- a caller invoking a capability
+  it isn't permitted to invoke (isCapabilityAllowed.ts). Checked
+  explicitly (not left to fall through the generic status-map lookup
+  below) so its `code` is preserved on AuthorizationError.server_code
+  instead of being silently dropped.
+- no `code` at all -- a caller asserting an authority.principalId it
+  isn't permitted to assert (isPrincipalAllowed.ts,
+  packages/api/src/routes/execute.ts and transactions.ts). Also maps
+  to AuthorizationError, via the generic status-map lookup below.
+
+429 (rate limited) is handled ahead of the generic map too, since it
+needs to thread `retry_after_seconds` through to RateLimitError --
+mirrors typescript/src/transport/mapHttpErrorResponse.ts's identical,
+identically-ordered checks exactly.

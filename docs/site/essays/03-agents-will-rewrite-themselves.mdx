@@ -1,0 +1,90 @@
+---
+title: "Agents will rewrite themselves. Their authority should not move when they do."
+description: "A Google research paper shows agents improving their own harness. What that means for where the limits on agents must live."
+---
+
+In October 2026, researchers at Google Cloud AI Research and several universities published a paper with a practical
+idea: let an AI agent improve _itself_.
+
+Not its model weights, which stay frozen. What changes is everything around the model, what the paper calls the
+**harness**: the prompts, the control flow that decides when to plan or act, the tools and their descriptions, the
+memory, the context management. One model proposes edits to the harness, the agent runs tasks, better-scoring edits are
+kept, and the loop repeats. The agent rewrites the program it runs inside.
+
+It works. The paper, "RRSI: Regularized Recursive Self-Improvement of Agent Harnesses", reports gains of up to 6 points
+on the tasks the agent evolved on and up to 4.3 points on benchmarks it never saw, with about 30% fewer tokens than
+unregularized evolution.
+
+The most interesting part is not the gains. It is the problem the authors had to solve to get them.
+
+## Self-improvement finds the shortcut
+
+Without restraint, the loop **overfits**. It finds edits that raise the score on the tasks it is tested on, through
+benchmark-specific tricks, lucky noise or growing complexity, and the gains largely vanish on new tasks. In one setup,
+unregularized evolution posted the highest score of any variant on its own tasks, and ended within a point of the
+original, unevolved agent everywhere else.
+
+So the authors added discipline: a shrinking budget for how much can change per round, a critic that rejects
+task-specific logic, a rule that a gain must beat evaluation noise, and pruning of parts that stopped helping. That is
+what makes the improvements real.
+
+## Everything inside the harness is up for edit
+
+The paper deliberately leaves editable prompts, control flow, configuration, context management, tools, skills,
+memory and subagents. That is the whole space where agent safety usually lives today:
+
+- "Never refund more than ₹10,000" in the system prompt.
+- A tool wrapper that asks for confirmation before a payment.
+- A reviewer subagent that double-checks risky actions.
+
+In a self-improving agent, each of these is a **candidate edit**. Even the paper's own safeguard, the critic that
+screens out bad changes, is a model step inside the improvement loop.
+
+The paper does not claim its system would remove a refund limit; its subject is generalization, not money. But the
+general lesson is hard to ignore: **an optimizer pushes on whatever stands between it and a better score.** It does not
+need to be malicious, only good at its job.
+
+## Better at the task is not allowed to do more
+
+Two things get tangled:
+
+- **Capability:** how well the agent does its job. This should improve.
+- **Authority:** what the agent is allowed to do: which actions, up to what amount, with whose approval. This should
+  not change because the agent got better at its job.
+
+A junior employee who becomes twice as productive does not get to raise their own spending limit. Their manager does,
+through a process, with a record. Agents deserve at least that standard. **Limits must sit outside anything the agent
+can rewrite.**
+
+## What "outside" means in Parmana
+
+- **The policy lives outside the agent.** Every action is checked against an approved policy the agent does not hold.
+- **Changes need two people.** Policies, grants, connectors, business signal sources and approver keys change only
+  through maker checker: one identity proposes, a different one approves with a signed step up authorization. A
+  non-human key is refused on these routes.
+- **Limits are grants, not prompts.** For example, "this agent may refund up to ₹10,000 per request until 31 December"
+  is a grant checked on every request, not a sentence the next harness revision might reword.
+- **Facts come from the owning system.** An optimized agent might learn that saying "eligible" gets refunds approved, so
+  eligibility can be asked of the order system instead.
+- **Every decision is signed** with the policy version and the facts it rested on, so behavior can be compared before
+  and after an agent's harness changes.
+
+The agent can rewrite its prompts a thousand times. None of those rewrites reach the policy, the grants or the approval
+keys.
+
+## What this does not do
+
+Parmana does not make an agent's improvements safe or correct; it bounds what the agent may do while it improves. It
+does not inspect or approve harness changes. And the bound is only as strong as the path: if the agent holds payment
+credentials of its own, outside the gateway, no authorization layer can stop it.
+
+## The question to ask
+
+Before you let an agent improve itself, ask: **if this agent rewrote everything it is allowed to rewrite, what would
+still stop it?** If the answer is its prompt, or a check inside its own loop, that is capability dressed up as control.
+
+**Source:** Xia et al., "RRSI: Regularized Recursive Self-Improvement of Agent Harnesses", arXiv:2609.24972 (October
+2026). Notes in the repository: `docs/related-work/RRSI-2609.24972.md`.
+
+**Read more:** [Human approval](/concepts/human-approval),
+[Grant an agent authority](/guides/grant-an-agent-authority).

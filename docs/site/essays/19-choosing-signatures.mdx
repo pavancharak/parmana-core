@@ -1,0 +1,60 @@
+---
+title: "Choosing signatures: Ed25519, post-quantum, and keys in KMS"
+description: ""
+---
+
+A refund agent issues a ₹75,000 refund. A manager signed the approval, Parmana released it, and a signed record of the decision went into storage. Years from now, someone in a dispute pulls that record out and asks two questions.
+
+First: who could have signed this? If the private key sat in a file on a server, the honest answer is "anyone who ever had access to that server". Second: is the signature still worth anything? If the algorithm has been broken by then, a signature that verifies proves very little.
+
+Both answers are partly built and partly not. Here is the map.
+
+## Ed25519 by default
+
+Every Parmana deployment signs with Ed25519 unless you configure otherwise. It is fast, the signatures are small (88 base64 characters), and they are deterministic: the same key and the same message always give the same signature. That makes tests and debugging simple.
+
+## Post-quantum: ML-DSA-65, opt in
+
+For the second question, Parmana can sign with ML-DSA-65, the NIST post-quantum signature standard (FIPS 204). The codebase calls it `dilithium3` for historical reasons, and accepts `ml-dsa-65` as an alias. You select it with one setting and it needs Node 24 or newer, which has native support.
+
+Two costs are real, and I'd rather you hear them from me:
+
+- **Size.** An ML-DSA-65 signature in the tutorial is 4,412 base64 characters, roughly fifty times an Ed25519 one. That is storage and bandwidth on every record.
+- **Randomness.** ML-DSA-65 signatures are randomized. Sign the same message twice with the same key and you get two different, both-valid signatures. Only verification is deterministic. Don't build caching or dedup that assumes otherwise.
+
+## Hybrid: both at once
+
+There is also a hybrid mode. With `CRYPTO_MODE=hybrid`, a Trust Record or a receipt is signed with both Ed25519 and ML-DSA-65. The old single `signature` field is computed exactly as before, and a new `signatures` array carries both. Verification of a hybrid record requires both entries to pass: a missing, extra, duplicated or wrong-algorithm entry is rejected, not quietly downgraded to Ed25519 alone. There is also an opt-in flag that refuses a record whose post-quantum signature has been stripped.
+
+The idea is migration without a cliff. A consumer that only trusts Ed25519 today can still check the legacy field, while a consumer that wants the post-quantum guarantee checks both.
+
+## The key/algorithm guard
+
+One small thing I care about: if you configure ML-DSA-65 and hand the signer an Ed25519 key, or the other way round, it fails closed with an error naming both the expected and the actual key type. It never quietly signs with whatever key it was given.
+
+## Keys in AWS KMS
+
+For the first question, who could have signed, the answer is key custody. Parmana's record here is not clean. A default signing key used before 2026-07-05 was publicly exposed and is treated as permanently compromised; it was rotated that day, and every signature it made is void for authenticity. That is exactly the failure KMS custody exists to prevent.
+
+With `KEY_PROVIDER=aws-kms`, the `default` signing key is created inside AWS KMS and never leaves it. The server sends KMS the bytes and gets a signature back. On Vercel the server gets short-lived AWS credentials through OIDC federation, so no AWS access key is stored. The role needs three actions on one key: sign, get the public key, and describe the key.
+
+Some details that matter:
+
+- **KMS signing is Ed25519 only.** The signer accepts only an Ed25519 KMS key and fails closed on any other.
+- **The 4096-byte limit.** KMS refuses a raw Ed25519 message over 4096 bytes. That broke production refunds on 2026-09-20, because a full Trust Record is bigger. The fix: a larger message is signed as a fixed 97-byte commitment (a prefix, a NUL byte and the SHA-512 of the message). It is still an ordinary Ed25519 signature, smaller messages are signed exactly as before, and a verifier refuses the commitment form for a small message so nothing can be downgraded. A live refund the same day produced a record of about 5 KB that verified offline against the live public key.
+- **It was checked with a limited user.** `npm run verify:kms` signs test data at 300, 4096, 5000 and 60,000 bytes, rejects a signature over other data, and confirms KMS really refuses 5000 raw bytes. All seven checks passed against the real key.
+- **Each released action costs two KMS signatures**, one for the Execution Intent before release and one for the Trust Record. The intent signature added about 35 ms (median), measured from a developer machine, not from Vercel.
+
+## What it does not do
+
+- **One primary signature provider at a time.** The verifier for execution authorizations supports exactly one configured provider. Moving a deployment from Ed25519 to ML-DSA-65 while still verifying old records is not built. It is on the roadmap as a future claim. Same-algorithm key rotation is built: old records keep verifying under their own key id.
+- **Hybrid is not running anywhere.** It is built and tested. Every deployment today, production included, signs with Ed25519 alone.
+- **Hybrid and KMS do not mix.** Hybrid signs both entries with local key files, so the server refuses to start with hybrid mode and KMS together.
+- **Not every key moves to KMS.** The gateway attestation key is still a file.
+- **No other key custody.** Azure Key Vault, Google Cloud KMS and HSMs are declared config values with no implementation; the server refuses to start with them. ECDSA P-256 is declared but has no provider.
+- **Not all of it was tested live.** The KMS checks ran through a local AWS login. The intent signature has not been run through the production OIDC role. Per-tenant KMS aliases are unit tested only. KMS has not been tested with the self-hosted deployment. Key rotation under KMS and other regions were not tested.
+- **The browser and Python verifiers check Ed25519 only**, because neither the browser nor the Python crypto library supports ML-DSA yet. The TypeScript verifier does both.
+
+## The takeaway
+
+Ed25519 today, with the private key held in KMS so no one can copy it. ML-DSA-65 and hybrid signing built and tested for when you want them, with their costs stated. And one gap I won't paper over: switching algorithms on a live deployment, while old records stay verifiable, is still future work.

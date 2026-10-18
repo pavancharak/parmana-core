@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/requests/execution-intent-resolve-request.schema.json",
+  "title": "Resolve Execution Intent Request",
+  "description": "Request body for POST /execution-intents/{businessTransactionId}/resolve. Both fields are required. The note is required on purpose, because it is the only record of what the operator found at the connector.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["resolution", "note"],
+  "properties": {
+    "resolution": {
+      "type": "string",
+      "enum": ["NOT_EXECUTED", "EXECUTED"],
+      "description": "What you established at the connector. NOT_EXECUTED: the action did not run. EXECUTED: it did run."
+    },
+    "note": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "What you checked and found, for example the connector and the reference you looked at. Surrounding space is trimmed."
+    }
+  },
+  "examples": [
+    {
+      "resolution": "NOT_EXECUTED",
+      "note": "Checked the Paytm dashboard for this order. No refund exists."
+    }
+  ]
+}

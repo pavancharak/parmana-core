@@ -1,0 +1,74 @@
+---
+sidebar_label: receipt_api
+title: parmana.api.receipt_api
+---
+
+Parmana Receipt API.
+
+Generate cryptographic execution receipts.
+
+## ReceiptApi Objects
+
+```python
+class ReceiptApi()
+```
+
+Receipt API.
+
+## Responsibilities
+
+- Generate execution receipts
+- Retrieve the latest cached receipt
+
+This API does NOT:
+
+- execute Business Transactions
+- replay executions
+- verify trust records
+- validate policies
+
+#### generate
+
+```python
+def generate(business_transaction_id: str) -> Receipt
+```
+
+Generate an execution receipt.
+
+Maps to POST /receipt.
+
+## Parameters
+
+business_transaction_id:
+Business Transaction identifier.
+
+## Returns
+
+Receipt.
+
+#### \_\_call\_\_
+
+Makes `client.receipt(business_transaction_id)` work directly,
+alongside the existing `client.receipt.generate(...)`, without
+renaming the `ParmanaClient.receipt` attribute out from under
+existing callers (examples/05_receipt.py, examples/11_end_to_end.py).
+
+#### get_latest
+
+```python
+def get_latest(business_transaction_id: str) -> Receipt
+```
+
+Retrieve the most recent Receipt without generating a new one.
+
+Maps to GET /receipt/latest/:id, distinct from `generate()`
+(POST /receipt), which generates a new Receipt.
+
+## Parameters
+
+business_transaction_id:
+Business Transaction identifier.
+
+## Returns
+
+Receipt.

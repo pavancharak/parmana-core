@@ -1,0 +1,107 @@
+{
+  "policyId": "github-pr-approval",
+  "policyVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes pull request approval after validating repository authorization, required reviews, successful status checks, branch protection, and risk assessment.",
+
+  "signalsSchema": {
+    "repositoryAuthorized": "boolean",
+    "requiredReviewsCompleted": "boolean",
+    "statusChecksPassed": "boolean",
+    "branchProtected": "boolean",
+    "riskScore": "number"
+  },
+
+  "unboundSignalReasons": {
+    "repositoryAuthorized": "Result of an independent repository-authorization check; the Intent's target (owner/repo#pullNumber) identifies the PR, not whether the repository is authorized.",
+    "requiredReviewsCompleted": "Attested by GitHub's own review state; not a value the Intent itself declares.",
+    "statusChecksPassed": "Attested by GitHub's own CI/status-check state; not expressible via the Intent's target/parameters.",
+    "branchProtected": "A property of the target branch's GitHub configuration, independently verified; not a field the Intent declares.",
+    "riskScore": "A computed change-risk score, not a value the caller's Intent declares or could be checked against."
+  },
+
+  "rules": [
+    {
+      "id": "approve-pull-request",
+      "condition": {
+        "all": [
+          {
+            "fact": "repositoryAuthorized",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "requiredReviewsCompleted",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "statusChecksPassed",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "branchProtected",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "riskScore",
+            "operator": "lte",
+            "value": 20
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Pull request authorized. Repository authorization, review requirements, status checks, branch protection, and risk assessment requirements were satisfied."
+      }
+    },
+    {
+      "id": "reject-high-risk-change",
+      "condition": {
+        "fact": "riskScore",
+        "operator": "gt",
+        "value": 20
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Pull request rejected because the assessed risk exceeds the maximum permitted threshold."
+      }
+    },
+    {
+      "id": "reject-failed-status-checks",
+      "condition": {
+        "fact": "statusChecksPassed",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Pull request rejected because one or more required status checks did not complete successfully."
+      }
+    },
+    {
+      "id": "reject-branch-not-protected",
+      "condition": {
+        "fact": "branchProtected",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Pull request rejected because the target branch is not protected."
+      }
+    },
+    {
+      "id": "reject-default",
+      "condition": {
+        "always": true
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Pull request rejected because one or more required policy conditions were not satisfied."
+      }
+    }
+  ]
+}

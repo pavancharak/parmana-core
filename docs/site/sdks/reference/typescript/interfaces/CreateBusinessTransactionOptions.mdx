@@ -1,0 +1,160 @@
+---
+title: "Interface: CreateBusinessTransactionOptions"
+---
+
+Defined in: [typescript/src/builders/createBusinessTransaction.ts:29](https://github.com/pavancharak/parmana/blob/main/typescript/src/builders/createBusinessTransaction.ts#L29)
+
+Constructs a fully-formed, internally-consistent BusinessTransaction
+from the fields a caller actually decides, deriving every field the
+server's own BusinessTransactionValidator checks for cross-consistency
+(packages/runtime/src/validators/BusinessTransactionValidator.ts) so a
+caller can never build a request that fails one of those checks by
+mistake:
+
+- metadata.businessTransactionId always equals businessTransactionId
+- authorization.authorityId always equals authority.authorityId
+- intent.authorizationId always equals authorization.authorizationId
+
+Hand-building a BusinessTransaction by writing out all five nested
+objects and keeping three id pairs in sync by hand is exactly the
+class of mistake that produced every "X must match Y" 400 response
+documented in docs/site/guides/end-to-end-paytm-flow.mdx. This function exists
+so that mistake is structurally impossible when going through the
+SDK, not merely documented as something to be careful about.
+
+businessTransactionId defaults to a fresh crypto.randomUUID() if
+omitted. A caller providing one explicitly is responsible for it
+being unique per attempt, since it doubles as the server's own
+idempotency key (see docs/site/guides/end-to-end-paytm-flow.mdx,
+"businessTransactionId is an idempotency key").
+
+## Properties
+
+### businessTransactionId?
+
+> `readonly` `optional` **businessTransactionId?**: `string`
+
+Defined in: [typescript/src/builders/createBusinessTransaction.ts:31](https://github.com/pavancharak/parmana/blob/main/typescript/src/builders/createBusinessTransaction.ts#L31)
+
+Defaults to a fresh crypto.randomUUID() if omitted.
+
+---
+
+### authorityType?
+
+> `readonly` `optional` **authorityType?**: `"USER"` \| `"ROLE"` \| `"SERVICE"` \| `"ORGANIZATION"`
+
+Defined in: [typescript/src/builders/createBusinessTransaction.ts:34](https://github.com/pavancharak/parmana/blob/main/typescript/src/builders/createBusinessTransaction.ts#L34)
+
+Defaults to "SERVICE", the correct value for an autonomous agent. Never "AGENT"; that value does not exist server-side.
+
+---
+
+### principalId
+
+> `readonly` **principalId**: `string`
+
+Defined in: [typescript/src/builders/createBusinessTransaction.ts:41](https://github.com/pavancharak/parmana/blob/main/typescript/src/builders/createBusinessTransaction.ts#L41)
+
+The identity this transaction is submitted as. Must match one of
+the caller API key's own allowedPrincipalIds server-side, or the
+request is rejected before policy ever runs. See GET /callers/me.
+
+---
+
+### displayName?
+
+> `readonly` `optional` **displayName?**: `string`
+
+Defined in: [typescript/src/builders/createBusinessTransaction.ts:43](https://github.com/pavancharak/parmana/blob/main/typescript/src/builders/createBusinessTransaction.ts#L43)
+
+---
+
+### purpose
+
+> `readonly` **purpose**: `string`
+
+Defined in: [typescript/src/builders/createBusinessTransaction.ts:46](https://github.com/pavancharak/parmana/blob/main/typescript/src/builders/createBusinessTransaction.ts#L46)
+
+Human-readable reason for authorization.purpose.
+
+---
+
+### action
+
+> `readonly` **action**: `string`
+
+Defined in: [typescript/src/builders/createBusinessTransaction.ts:49](https://github.com/pavancharak/parmana/blob/main/typescript/src/builders/createBusinessTransaction.ts#L49)
+
+The capability being invoked, e.g. "paytm:refund".
+
+---
+
+### target
+
+> `readonly` **target**: `string`
+
+Defined in: [typescript/src/builders/createBusinessTransaction.ts:51](https://github.com/pavancharak/parmana/blob/main/typescript/src/builders/createBusinessTransaction.ts#L51)
+
+---
+
+### parameters
+
+> `readonly` **parameters**: `Record`\<`string`, `unknown`\>
+
+Defined in: [typescript/src/builders/createBusinessTransaction.ts:53](https://github.com/pavancharak/parmana/blob/main/typescript/src/builders/createBusinessTransaction.ts#L53)
+
+---
+
+### policy
+
+> `readonly` **policy**: [`PolicyReference`](/sdks/reference/typescript/interfaces/PolicyReference)
+
+Defined in: [typescript/src/builders/createBusinessTransaction.ts:55](https://github.com/pavancharak/parmana/blob/main/typescript/src/builders/createBusinessTransaction.ts#L55)
+
+---
+
+### signals
+
+> `readonly` **signals**: `Record`\<`string`, `unknown`\>
+
+Defined in: [typescript/src/builders/createBusinessTransaction.ts:65](https://github.com/pavancharak/parmana/blob/main/typescript/src/builders/createBusinessTransaction.ts#L65)
+
+Facts the named policy evaluates. Every fact a policy rule
+references must appear here, and every boundSignals entry the
+policy declares is cross-checked against the matching intent
+field (see the policy's own boundSignals) before evaluation runs
+at all. A mismatch is rejected as a binding-tamper attempt, not
+silently ignored.
+
+---
+
+### correlationId?
+
+> `readonly` `optional` **correlationId?**: `string`
+
+Defined in: [typescript/src/builders/createBusinessTransaction.ts:67](https://github.com/pavancharak/parmana/blob/main/typescript/src/builders/createBusinessTransaction.ts#L67)
+
+---
+
+### tenantId?
+
+> `readonly` `optional` **tenantId?**: `string`
+
+Defined in: [typescript/src/builders/createBusinessTransaction.ts:68](https://github.com/pavancharak/parmana/blob/main/typescript/src/builders/createBusinessTransaction.ts#L68)
+
+---
+
+### sourceSystem?
+
+> `readonly` `optional` **sourceSystem?**: `string`
+
+Defined in: [typescript/src/builders/createBusinessTransaction.ts:69](https://github.com/pavancharak/parmana/blob/main/typescript/src/builders/createBusinessTransaction.ts#L69)
+
+---
+
+### submittedBy?
+
+> `readonly` `optional` **submittedBy?**: `string`
+
+Defined in: [typescript/src/builders/createBusinessTransaction.ts:70](https://github.com/pavancharak/parmana/blob/main/typescript/src/builders/createBusinessTransaction.ts#L70)

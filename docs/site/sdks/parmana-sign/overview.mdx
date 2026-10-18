@@ -1,0 +1,112 @@
+---
+title: "Verification SDK"
+description: "Verify Parmana records yourself, offline, with @parmana/sign."
+---
+
+<Info>
+  **[AVAILABLE]**, **published**: [`@parmana/sign` on
+  npm](https://www.npmjs.com/package/@parmana/sign), version 0.2.0, Apache
+  License 2.0. Source:
+  [github.com/pavancharak/parmana-sign](https://github.com/pavancharak/parmana-sign).
+</Info>
+
+`@parmana/sign` checks a signed Parmana record using only the record and Parmana's public
+keys. It makes no network calls, reads no files or environment variables, and needs no
+Parmana account. An auditor, a regulator or a counterparty can run it without trusting
+Parmana's servers or database.
+
+It checks three things, and reports each one separately:
+
+1. The record's hash matches its content.
+2. The record's Ed25519 signature is valid for the named key.
+3. If the record is hybrid signed, every entry in its `signatures` array (Ed25519 and
+   ML-DSA-65) is valid.
+
+Changing any signed field, even one number, fails the hash and every signature.
+
+## Install
+
+```bash
+npm install @parmana/sign
+```
+
+Requires Node.js 24.6.0 or later. ML-DSA-65 support in `node:crypto` starts at 24.6.0.
+
+## Quick start
+
+<Steps>
+  <Step title="Get the record">
+    Fetch it from the API, or use one exported from Parmana as JSON.
+
+    ```bash
+    curl -s -H "Authorization: Bearer $PARMANA_API_KEY" \
+      https://parmana-sandbox.vercel.app/trust-records/$BUSINESS_TRANSACTION_ID > record.json
+    ```
+
+  </Step>
+  <Step title="Get the public key">
+    The record names its key in `signature.keyId`. Public keys need no API key.
+
+    ```bash
+    curl -s https://parmana-sandbox.vercel.app/keys/default > key.json
+    ```
+
+    See [Public keys](/sdks/parmana-sign/public-keys) for hybrid records and caching.
+
+  </Step>
+  <Step title="Verify">
+    ```ts verify.mjs
+    import { readFileSync } from "node:fs";
+    import { verifyExecutionTrustRecordOffline } from "@parmana/sign";
+
+    const record = JSON.parse(readFileSync("record.json", "utf8"));
+    const key = JSON.parse(readFileSync("key.json", "utf8"));
+
+    const result = await verifyExecutionTrustRecordOffline(record, {
+      [key.keyId]: key.pem,
+    });
+
+    console.log(result.valid ? "valid" : result.errors);
+    ```
+
+    ```bash
+    node verify.mjs
+    ```
+
+  </Step>
+</Steps>
+
+Records from the sandbox only verify against the sandbox's key, and production records only
+against production's key.
+
+## What you can verify
+
+| Record                       | Function                                 | Reference                                                                |
+| ---------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ |
+| Execution Trust Record       | `verifyExecutionTrustRecordOffline`      | [Verify a Trust Record](/sdks/parmana-sign/verify-trust-record)          |
+| Execution Intent             | `verifyExecutionIntentOffline`           | [Verify an Execution Intent](/sdks/parmana-sign/verify-execution-intent) |
+| Any object you sign yourself | `SignatureVerifier`, signature providers | [Signing primitives](/sdks/parmana-sign/signing-primitives)              |
+
+## How it relates to the other SDKs
+
+The [TypeScript SDK](/sdks/typescript) (`@parmana/sdk`) calls the Parmana API and also
+includes offline verifiers. `@parmana/sign` is the standalone verifier: no API client,
+no dependency on any other Parmana package, and an open source license. Use it when the
+party verifying a record should not depend on Parmana's own client code.
+
+Both use the same field mappings as the server's signer. `@parmana/sign` is tested against
+records signed by the server's own signing code, including hybrid records and large records
+signed through AWS KMS.
+
+## Versioning and support
+
+- Follows [Semantic Versioning](https://semver.org). Below 1.0.0, a minor release may
+  include breaking changes, always listed in the
+  [changelog](https://github.com/pavancharak/parmana-sign/blob/main/CHANGELOG.md).
+- Supported Node.js versions: 24.6.0 and later, on Linux, Windows and macOS.
+- Releases carry SLSA provenance and a Sigstore signature on the
+  [GitHub release](https://github.com/pavancharak/parmana-sign/releases). See
+  [RELEASING.md](https://github.com/pavancharak/parmana-sign/blob/main/RELEASING.md) to check them.
+- Report bugs in [GitHub issues](https://github.com/pavancharak/parmana-sign/issues), and
+  security issues as described in its
+  [SECURITY.md](https://github.com/pavancharak/parmana-sign/blob/main/SECURITY.md).

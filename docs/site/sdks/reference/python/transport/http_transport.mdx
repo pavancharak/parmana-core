@@ -1,0 +1,54 @@
+---
+sidebar_label: http_transport
+title: parmana.transport.http_transport
+---
+
+Parmana HTTP Transport.
+
+Canonical HTTP transport implementation for the Parmana Python SDK.
+
+## HttpTransport Objects
+
+```python
+class HttpTransport(Transport)
+```
+
+Canonical HTTP transport.
+
+## Responsibilities
+
+- Send HTTP requests over a reused connection pool
+- Retry idempotent (GET) requests with backoff
+- Parse Runtime responses
+- Raise structured SDK exceptions for non-2xx responses
+- Decode Runtime responses into Parmana models
+
+#### endpoint
+
+```python
+@property
+def endpoint() -> str
+```
+
+Parmana Runtime endpoint.
+
+#### send
+
+```python
+def send(
+    *,
+    method: str,
+    path: str,
+    body: Any | None = None,
+    response_model: type[T] | None = None,
+    non_throwing_statuses: frozenset[int] = frozenset()
+) -> T | Any
+```
+
+Send a request to the Parmana Runtime.
+
+non_throwing_statuses lists status codes that must be returned as
+an ordinary payload instead of raising, because this specific
+route's response body at that specific status is not the shared
+\{error, code?\} envelope. Today exactly one route needs this: see
+PolicyApi.validate.

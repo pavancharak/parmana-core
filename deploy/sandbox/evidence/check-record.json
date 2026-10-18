@@ -1,0 +1,240 @@
+{
+  "trustRecordId": "4df9cdac-6e4a-4c19-b8cd-7b8f79724c8c",
+  "businessTransactionId": "18ce9222-ca2e-434c-a47e-0a6f72fdd387",
+  "transaction": {
+    "intent": {
+      "action": "sandbox:receipt",
+      "target": "sandbox-check-2026-10-02T01-56-09-324Z",
+      "intentId": "52d88509-97d1-4a8f-ae82-2f70aa9b2867",
+      "createdAt": "2026-10-02T01:56:14.849Z",
+      "parameters": {
+        "note": "live check, acts on nothing"
+      },
+      "authorizationId": "f710237c-029b-447e-89ee-b805db41a643"
+    },
+    "policy": {
+      "name": "sandbox-receipt",
+      "version": "1.0.0",
+      "contentHash": "6515351cdd06ffc8d37c955717b8a4ed1a45d7746d3becdf957429ec9bd6bb2a",
+      "schemaVersion": "1.0.0",
+      "governanceAnchor": {
+        "status": "VERIFIED",
+        "approvalRecordId": "774791e2-987e-4ac6-a3d5-962666433b02"
+      }
+    },
+    "status": "RECEIVED",
+    "signals": {
+      "note": "live check, acts on nothing",
+      "receiptApproved": true,
+      "approvalArtifact": {
+        "payload": {
+          "nonce": "a5369faf-280d-4c9d-ac54-101a53f2dcda",
+          "scope": {
+            "field": "resourceId",
+            "value": "sandbox-check-2026-10-02T01-56-09-324Z",
+            "comparator": "eq"
+          },
+          "issuer": {
+            "keyId": "sandbox-demo-approver-key-1",
+            "approverId": "sandbox-demo-approver"
+          },
+          "version": 1,
+          "issuedAt": "2026-10-02T01:56:14.168Z",
+          "expiresAt": "2026-10-02T02:01:14.168Z",
+          "approvalId": "4f651866-9f06-458d-907e-98331590330d",
+          "capability": "sandbox:receipt",
+          "resourceId": "sandbox-check-2026-10-02T01-56-09-324Z"
+        },
+        "signature": {
+          "keyId": "sandbox-demo-approver-key-1",
+          "value": "AqkjJS9R/nFgBE6Yb1aTiQ+tU3LK4XZi+9qYENoKmzg8oTEuffqpbkuqU4lUne+/Szpj5AMCyWR0G4Kc+TQDCg==",
+          "signedAt": "2026-10-02T01:56:14.168Z",
+          "algorithm": "ed25519"
+        }
+      }
+    },
+    "metadata": {
+      "submittedBy": "sandbox-visitor",
+      "grantedCapability": "sandbox:receipt",
+      "businessTransactionId": "18ce9222-ca2e-434c-a47e-0a6f72fdd387"
+    },
+    "authority": {
+      "issuedAt": "2026-10-02T01:56:14.849Z",
+      "authorityId": "a14f7a18-152a-43d2-985c-a01d826bd21e",
+      "principalId": "sandbox-visitor",
+      "authorityType": "SERVICE"
+    },
+    "createdAt": "2026-10-02T01:56:15.602Z",
+    "authorization": {
+      "purpose": "ADR-0014 step 3: live check of the public sandbox",
+      "issuedAt": "2026-10-02T01:56:14.849Z",
+      "authorityId": "a14f7a18-152a-43d2-985c-a01d826bd21e",
+      "authorizationId": "f710237c-029b-447e-89ee-b805db41a643"
+    },
+    "businessTransactionId": "18ce9222-ca2e-434c-a47e-0a6f72fdd387"
+  },
+  "executions": [
+    {
+      "mode": "SYNC",
+      "status": "COMPLETED",
+      "decision": {
+        "policy": {
+          "name": "sandbox-receipt",
+          "version": "1.0.0",
+          "schemaVersion": "1.0.0"
+        },
+        "reason": "Receipt approved for this target.",
+        "outcome": "APPROVED",
+        "signals": {
+          "note": "live check, acts on nothing",
+          "receiptApproved": true,
+          "approvalArtifact": {
+            "payload": {
+              "nonce": "a5369faf-280d-4c9d-ac54-101a53f2dcda",
+              "scope": {
+                "field": "resourceId",
+                "value": "sandbox-check-2026-10-02T01-56-09-324Z",
+                "comparator": "eq"
+              },
+              "issuer": {
+                "keyId": "sandbox-demo-approver-key-1",
+                "approverId": "sandbox-demo-approver"
+              },
+              "version": 1,
+              "issuedAt": "2026-10-02T01:56:14.168Z",
+              "expiresAt": "2026-10-02T02:01:14.168Z",
+              "approvalId": "4f651866-9f06-458d-907e-98331590330d",
+              "capability": "sandbox:receipt",
+              "resourceId": "sandbox-check-2026-10-02T01-56-09-324Z"
+            },
+            "signature": {
+              "keyId": "sandbox-demo-approver-key-1",
+              "value": "AqkjJS9R/nFgBE6Yb1aTiQ+tU3LK4XZi+9qYENoKmzg8oTEuffqpbkuqU4lUne+/Szpj5AMCyWR0G4Kc+TQDCg==",
+              "signedAt": "2026-10-02T01:56:14.168Z",
+              "algorithm": "ed25519"
+            }
+          }
+        },
+        "intentId": "52d88509-97d1-4a8f-ae82-2f70aa9b2867",
+        "decisionId": "89aa10a2-7bd4-435f-99ec-906b889eff55",
+        "evaluatedAt": "2026-10-02T01:56:18.592Z",
+        "matchedPath": ["reject-long-note", "approve-with-approval"],
+        "matchedRuleId": "approve-with-approval",
+        "evaluatedRules": 2
+      },
+      "evidence": {
+        "action": "sandbox:receipt",
+        "target": "sandbox-check-2026-10-02T01-56-09-324Z",
+        "success": true,
+        "attributes": {
+          "connector": {
+            "startedAt": "2026-10-02T01:56:21.423Z",
+            "capability": "sandbox:receipt",
+            "completedAt": "2026-10-02T01:56:22.184Z",
+            "connectorId": "ext-sandbox:receipt",
+            "requestSummary": {
+              "action": "sandbox:receipt",
+              "target": "sandbox-check-2026-10-02T01-56-09-324Z",
+              "parameters": {
+                "note": "live check, acts on nothing"
+              },
+              "businessTransactionId": "18ce9222-ca2e-434c-a47e-0a6f72fdd387"
+            },
+            "responseSummary": {
+              "success": true,
+              "metadata": {
+                "result": {
+                  "target": "sandbox-check-2026-10-02T01-56-09-324Z",
+                  "receiptId": "RC-18ce9222",
+                  "parameters": {
+                    "note": "live check, acts on nothing"
+                  }
+                },
+                "executedAt": "2026-10-02T01:56:22.173Z",
+                "endpointUrl": "https://parmana-sandbox-receipt.vercel.app/api/release",
+                "releaseIssuedAt": "2026-10-02T01:56:21.424Z"
+              }
+            },
+            "connectorVersion": "1.0.0",
+            "sanitizedEndpoint": "sandbox-check-2026-10-02T01-56-09-324Z",
+            "credentialProviderId": "static",
+            "connectorEvidenceHash": "41ade0fda677485b5b7b7ce8d082401b0addbb5ef941819c5dbf0f1d6ca1fc46",
+            "vendorConfirmationVerified": false
+          }
+        },
+        "executedAt": "2026-10-02T01:56:22.184Z",
+        "parameters": {
+          "note": "live check, acts on nothing"
+        },
+        "businessTransactionId": "18ce9222-ca2e-434c-a47e-0a6f72fdd387"
+      },
+      "metadata": {
+        "authorizationId": "f113376d-a981-451d-91b0-bf649132cd02"
+      },
+      "chainHash": "db045fa77d7bfc34b9ba57ad0cc099185c37e91de944cf928d35af2b7d16cad8",
+      "startedAt": "2026-10-02T01:56:18.974Z",
+      "completedAt": "2026-10-02T01:56:24.423Z",
+      "executionId": "c5279e9a-3828-4d4a-85f9-cadfed64907c",
+      "chainSignature": {
+        "keyId": "default",
+        "value": "OoamIA3hvIuHQFEIhnlHz52OOPGQTpH7PzPcxMpfqnu5MAOhvAZ3dIwI1mjx4FNwgVJ0odrjXrAcdQcGrR2MDg==",
+        "signedAt": "2026-10-02T01:56:24.424Z",
+        "algorithm": "ed25519"
+      },
+      "previousChainHash": null,
+      "businessTransactionId": "18ce9222-ca2e-434c-a47e-0a6f72fdd387"
+    }
+  ],
+  "overrides": [],
+  "verifications": [
+    {
+      "status": "VERIFIED",
+      "message": "Execution Trust Record verified successfully.",
+      "verifiedAt": "2026-10-02T01:56:26.502Z",
+      "verificationId": "f5119006-a330-407c-9ed4-1c256acbd821",
+      "trustRecordHash": "f12b1ed721d84d6ad2a616c593f53f66b888b5be3de6c8755ef8111471f6ca83",
+      "businessTransactionId": "18ce9222-ca2e-434c-a47e-0a6f72fdd387"
+    }
+  ],
+  "receipts": [
+    {
+      "issuedAt": "2026-10-02T01:56:27.258Z",
+      "algorithm": "ed25519",
+      "receiptId": "8b66b536-d090-44d0-8fda-2224a9e5db2e",
+      "signature": "R6O1iB6J3b4Q69vRUuL631+FVvmV2jV9c0viJl/tPyJERb6fOJlCSdWTpLhGvXXD6+c/yt2JmdX/Z9tgMI8bBA==",
+      "receiptHash": "d6a6ac1f2a3c1c074f0b5b77dc2b1bbb37e140ec8937dadc3d8561ab8ad928d8",
+      "trustRecordHash": "f12b1ed721d84d6ad2a616c593f53f66b888b5be3de6c8755ef8111471f6ca83",
+      "businessTransactionId": "18ce9222-ca2e-434c-a47e-0a6f72fdd387"
+    }
+  ],
+  "trustRecordHash": "f12b1ed721d84d6ad2a616c593f53f66b888b5be3de6c8755ef8111471f6ca83",
+  "signature": {
+    "keyId": "default",
+    "value": "NZrYplLSLUEfRVLVb4TdxxGRuQMLZToUkwEUDP++V1YYiN5v+uvO4LsXYQB/upMJM5WNwnPv2W3WZAOPVebdCQ==",
+    "signedAt": "2026-10-02T01:56:24.989Z",
+    "algorithm": "ed25519"
+  },
+  "authorization": {
+    "keyId": "default",
+    "payload": {
+      "nonce": "89edd4cc-1fd6-442f-ac29-45b07f8fdb10",
+      "version": 1,
+      "expiresAt": "2026-10-02T01:58:18.593Z",
+      "decisionId": "89aa10a2-7bd4-435f-99ec-906b889eff55",
+      "policyName": "sandbox-receipt",
+      "signalsHash": "9529190502de27971acd9a00f8c7ddde0e045aad8359b09b641351ec017e3b1d",
+      "submittedBy": "sandbox-visitor",
+      "authorizedAt": "2026-10-02T01:56:18.593Z",
+      "policyVersion": "1.0.0",
+      "authorizationId": "f113376d-a981-451d-91b0-bf649132cd02",
+      "grantedCapability": "sandbox:receipt",
+      "policyContentHash": "6515351cdd06ffc8d37c955717b8a4ed1a45d7746d3becdf957429ec9bd6bb2a",
+      "businessTransactionId": "18ce9222-ca2e-434c-a47e-0a6f72fdd387",
+      "businessTransactionHash": "65e24aa9af315d1f7bc787d21abf0fe6b486cd30e7d9d379dff2207d8fb868fd"
+    },
+    "algorithm": "ed25519",
+    "signature": "VI3+QgeLc07wyj0VvJY7MAXmPMRcrFSUyc48VUONTVUU8LXU9tvuGMxn35nDlFdBUAAlnUDLkcijyGCIr5hvDw=="
+  },
+  "createdAt": "2026-10-02T01:56:24.988Z",
+  "updatedAt": "2026-10-02T01:56:27.447Z"
+}

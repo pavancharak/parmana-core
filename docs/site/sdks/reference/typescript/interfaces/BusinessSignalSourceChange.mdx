@@ -1,0 +1,123 @@
+---
+title: "Interface: BusinessSignalSourceChange"
+---
+
+Defined in: typescript/src/models/business-signal-source.ts:50
+
+A proposal to register or revoke a business signal source, and its
+resolution.
+
+## Properties
+
+### changeId
+
+> `readonly` **changeId**: `string`
+
+Defined in: typescript/src/models/business-signal-source.ts:55
+
+Sign the step up authorization for approve or reject with this id as
+`pendingPolicyChangeId`.
+
+---
+
+### action
+
+> `readonly` **action**: `"revoke"` \| `"register"`
+
+Defined in: typescript/src/models/business-signal-source.ts:56
+
+---
+
+### name
+
+> `readonly` **name**: `string`
+
+Defined in: typescript/src/models/business-signal-source.ts:57
+
+---
+
+### endpointUrl?
+
+> `readonly` `optional` **endpointUrl?**: `string`
+
+Defined in: typescript/src/models/business-signal-source.ts:58
+
+---
+
+### timeoutMs?
+
+> `readonly` `optional` **timeoutMs?**: `number`
+
+Defined in: typescript/src/models/business-signal-source.ts:59
+
+---
+
+### publicKeyPem?
+
+> `readonly` `optional` **publicKeyPem?**: `string`
+
+Defined in: typescript/src/models/business-signal-source.ts:60
+
+---
+
+### keyId?
+
+> `readonly` `optional` **keyId?**: `string`
+
+Defined in: typescript/src/models/business-signal-source.ts:61
+
+---
+
+### reason
+
+> `readonly` **reason**: `string`
+
+Defined in: typescript/src/models/business-signal-source.ts:62
+
+---
+
+### proposedBy
+
+> `readonly` **proposedBy**: `string`
+
+Defined in: typescript/src/models/business-signal-source.ts:63
+
+---
+
+### proposedAt
+
+> `readonly` **proposedAt**: `string`
+
+Defined in: typescript/src/models/business-signal-source.ts:64
+
+---
+
+### status
+
+> `readonly` **status**: [`PendingPolicyChangeStatus`](/sdks/reference/typescript/type-aliases/PendingPolicyChangeStatus)
+
+Defined in: typescript/src/models/business-signal-source.ts:65
+
+---
+
+### resolvedBy?
+
+> `readonly` `optional` **resolvedBy?**: `string`
+
+Defined in: typescript/src/models/business-signal-source.ts:66
+
+---
+
+### resolvedAt?
+
+> `readonly` `optional` **resolvedAt?**: `string`
+
+Defined in: typescript/src/models/business-signal-source.ts:67
+
+---
+
+### rejectionReason?
+
+> `readonly` `optional` **rejectionReason?**: `string`
+
+Defined in: typescript/src/models/business-signal-source.ts:68

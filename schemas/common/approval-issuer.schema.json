@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/approval-issuer.schema.json",
+  "title": "Approver Key",
+  "description": "An approver key the server trusts, or trusted, to sign approvals. source is code for keys listed in the server's code, and governed for keys added through approver changes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["approverId", "keyId", "publicKeyPem", "revoked", "source"],
+  "properties": {
+    "approverId": {
+      "type": "string"
+    },
+    "keyId": {
+      "type": "string"
+    },
+    "publicKeyPem": {
+      "type": "string",
+      "description": "Ed25519 public key, PEM (SPKI)."
+    },
+    "revoked": {
+      "type": "boolean",
+      "description": "true: every approval signed with this key is refused."
+    },
+    "source": {
+      "type": "string",
+      "enum": ["code", "governed"],
+      "description": "code: listed in createApprovalIssuerRegistry.ts, changed only by a deploy. governed: added through POST /approval-issuers/changes."
+    },
+    "addedByChangeId": {
+      "type": "string",
+      "description": "governed only: the approved change that added it."
+    },
+    "addedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "governed only."
+    },
+    "revokedByChangeId": {
+      "type": "string",
+      "description": "governed and revoked only: the approved change that revoked it."
+    },
+    "revokedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "governed and revoked only."
+    }
+  }
+}

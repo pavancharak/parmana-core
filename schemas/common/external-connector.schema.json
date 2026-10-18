@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/external-connector.schema.json",
+  "title": "External Connector",
+  "description": "A capability bound to an HTTPS endpoint an operator runs, and to the policy that governs it, registered through external connector changes (ADR-0013). Nothing is deleted: a revoked registration stays listed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "registrationId",
+    "capability",
+    "endpointUrl",
+    "policy",
+    "allowedParameters",
+    "timeoutMs",
+    "status",
+    "registeredAt"
+  ],
+  "properties": {
+    "registrationId": {
+      "type": "string",
+      "description": "The changeId of the approved register change that created it."
+    },
+    "capability": {
+      "type": "string"
+    },
+    "endpointUrl": {
+      "type": "string"
+    },
+    "policy": {
+      "type": "string"
+    },
+    "allowedParameters": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "timeoutMs": {
+      "type": "integer"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "revoked"],
+      "description": "At most one active registration per capability."
+    },
+    "registeredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "revokedByChangeId": {
+      "type": "string",
+      "description": "revoked only: the approved change that revoked it."
+    },
+    "revokedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "revoked only."
+    }
+  }
+}

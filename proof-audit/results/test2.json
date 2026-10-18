@@ -1,0 +1,156 @@
+[
+  {
+    "path": "paytm:refund via ExecutionGateway",
+    "condition": "valid proof (control)",
+    "expect": "1 call",
+    "observed": "1 call(s)",
+    "verdict": "PASS"
+  },
+  {
+    "path": "paytm:refund via ExecutionGateway",
+    "condition": "no proof",
+    "rejected": true,
+    "expect": "0 calls",
+    "observed": "0 call(s)",
+    "verdict": "PASS"
+  },
+  {
+    "path": "paytm:refund via ExecutionGateway",
+    "condition": "forged signature",
+    "rejected": true,
+    "expect": "0 calls",
+    "observed": "0 call(s)",
+    "verdict": "PASS"
+  },
+  {
+    "path": "paytm:refund via ExecutionGateway",
+    "condition": "expired proof",
+    "rejected": true,
+    "message": "Execution Gateway rejected request: failed checks [notExpired, businessTransactionHashMatches].",
+    "expect": "0 calls",
+    "observed": "0 call(s)",
+    "verdict": "PASS"
+  },
+  {
+    "path": "paytm:refund via ExecutionGateway",
+    "condition": "revoked proof (signing key revoked)",
+    "rejected": true,
+    "expect": "0 calls",
+    "observed": "0 call(s)",
+    "verdict": "PASS",
+    "note": "Revocation is key-level, not per-proof. Per-proof revocation via authority grant is covered by UNABLE TO TEST (see report)."
+  },
+  {
+    "path": "paytm:refund via ExecutionGateway",
+    "condition": "proof issued for different action/content",
+    "rejected": true,
+    "expect": "0 calls",
+    "observed": "0 call(s)",
+    "verdict": "PASS"
+  },
+  {
+    "path": "paytm:refund via ExecutionGateway",
+    "condition": "valid signature, denied decision",
+    "rejected": true,
+    "expect": "0 calls",
+    "observed": "0 call(s)",
+    "verdict": "PASS",
+    "note": "ExecutionGateway never reads the decision outcome; only the runtime gate does."
+  },
+  {
+    "path": "paytm:refund via ExecutionGateway",
+    "condition": "control: re-signed identical payload, decisionOutcome APPROVED",
+    "expect": "1 call",
+    "observed": "1 call(s)",
+    "verdict": "PASS"
+  },
+  {
+    "path": "paytm:refund via ExecutionGateway",
+    "condition": "single authorization revoked (revoked-authorizations.json)",
+    "rejected": true,
+    "message": "Execution Gateway rejected request: failed checks [authorizationNotRevoked].",
+    "expect": "0 calls",
+    "observed": "0 call(s)",
+    "verdict": "PASS"
+  },
+  {
+    "path": "connector registry (legacyInsecure)",
+    "condition": "legacyInsecure: true with NODE_ENV=production",
+    "rejected": true,
+    "message": "Connector \"x\" was registered with legacyInsecure: true, which is refused outside NODE_ENV=test.",
+    "expect": "refused",
+    "observed": "refused",
+    "verdict": "PASS"
+  },
+  {
+    "path": "signal-state check during bootstrap",
+    "condition": "verifier not yet bound",
+    "rejected": true,
+    "expect": "refused",
+    "observed": "refused",
+    "verdict": "PASS"
+  },
+  {
+    "path": "paytm:refund via ExecutionGateway",
+    "condition": "write authorization signed with the verifier key (read-only scope)",
+    "rejected": true,
+    "message": "Execution Gateway rejected request: failed checks [verificationKeyScope].",
+    "expect": "0 calls",
+    "observed": "0 call(s)",
+    "verdict": "PASS"
+  },
+  {
+    "path": "paytm:refund via production bootstrap ExecutionGateway",
+    "condition": "proof without policyContentHash",
+    "rejected": true,
+    "message": "Execution Gateway rejected request: failed checks [policyStillCurrent]. policyContentHash mismatch: expected (absent: authorization carries no policyContentHash",
+    "expect": "0 calls",
+    "observed": "0 call(s)",
+    "verdict": "PASS"
+  },
+  {
+    "path": "paytm:refund via ExecutionGateway, allowUnverifiedPolicy unset",
+    "condition": "proof without policyContentHash",
+    "rejected": true,
+    "message": "Execution Gateway rejected request: failed checks [policyStillCurrent, nonceUnseen]. policyContentHash mismatch: expected (absent: authorization carries no poli",
+    "expect": "0 calls",
+    "observed": "0 call(s)",
+    "verdict": "PASS"
+  },
+  {
+    "path": "paytm:refund via POST /execute, PARMANA_ALLOW_UNGOVERNED_POLICY unset",
+    "condition": "no PolicyChangeApprovalRecord for customer-refund@1.2.0",
+    "rejected": true,
+    "message": "Execution rejected: Rejected: policy \"customer-refund\"@\"1.2.0\" has no PolicyChangeApprovalRecord -- it has never completed the Policy Governance approval flow.",
+    "expect": "0 calls",
+    "observed": "0 call(s)",
+    "verdict": "PASS"
+  },
+  {
+    "path": "paytm:refund via POST /execute, POLICY_EXECUTION_VERIFICATION_ENFORCED=true",
+    "condition": "no PolicyChangeApprovalRecord for customer-refund@1.2.0",
+    "rejected": true,
+    "message": "Execution rejected: Rejected: policy \"customer-refund\"@\"1.2.0\" has no PolicyChangeApprovalRecord -- it has never completed the Policy Governance approval flow.",
+    "expect": "0 calls",
+    "observed": "0 call(s)",
+    "verdict": "PASS"
+  },
+  {
+    "path": "paytm:refund via ExecutionControl (in-process), after gateway release",
+    "condition": "replay of an authorization already released",
+    "rejected": true,
+    "message": "Execution Gateway rejected request for Business Transaction '8fc8b275-1201-4ef9-ab1c-6132a0f3206a': authorization nonce has already been consumed (replay of an ",
+    "expect": "refused, 0 extra calls",
+    "observed": "0 extra call(s); first release made 1",
+    "verdict": "PASS"
+  },
+  {
+    "path": "paytm:refund via ExecutionControl.execute (bypasses ExecutionGateway.verify)",
+    "condition": "unsigned authorization, caller-set verified flags, in-process attestation",
+    "rejected": true,
+    "message": "Execution Control refused release: authorization did not verify.",
+    "expect": "0 calls",
+    "observed": "0 call(s)",
+    "verdict": "PASS"
+  }
+]

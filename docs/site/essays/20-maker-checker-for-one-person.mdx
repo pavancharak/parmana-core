@@ -1,0 +1,66 @@
+---
+title: "Maker checker for one person"
+description: "What two-person control is worth when one person holds both roles, what Parmana enforces regardless of headcount, and where it stops."
+---
+
+Banks have a rule older than computers: **the person who proposes a change cannot be the person who approves it.** One
+clerk enters the payment; a second checks and releases it. It is called maker checker, or the four-eyes principle,
+and it works not because people are dishonest but because people make mistakes, and a second look catches most of them.
+
+Parmana builds maker checker into every change to what agents may do: a policy, an agent's grant, an external
+connector, a business signal source, an approver key. Each must be **proposed by one identity and approved by a
+different one**.
+
+Many teams adopting agents are small. Sometimes one person holds both roles. Is it theater then? No, but it is worth
+being precise about what it gives.
+
+## How it works
+
+- **The maker proposes.** Proposing does nothing on its own; the change waits as pending.
+- **The checker approves**, with two things: their API key, and a **step up authorization** signed with a separate
+  private key on their own machine. It covers that one change and is valid for 120 seconds.
+- **Self-approval is refused.** If the identity that proposed a change tries to approve it, the answer is
+  `SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE`. There is no override.
+- **Agents cannot take part.** Non-human keys are refused on governance routes, and the attempt is logged.
+
+The repository's approval script also prints the full change and asks the checker to type `APPROVE` before it signs.
+Anything else stops it.
+
+## What it gives when one person holds both roles
+
+1. **An agent can never change its own limits.** This does not depend on headcount. The most important separation is
+   between agents and the rules agents run under, and no agent key can propose or approve those changes.
+2. **One leaked key is not enough.** Changing a policy takes the maker's key, the checker's key and the checker's step
+   up private key, which never leaves the checker's machine. A single API key leaked in a log cannot rewrite the rules.
+3. **A forced pause.** Proposing and approving are separate steps with different keys. Propose, step away, then review
+   the change as if someone else wrote it. That is the original point of maker checker.
+4. **It is ready for the second person.** When someone joins, they take the checker role on their own machine with
+   their own step up key. Nothing in the system changes; the control was already enforced.
+5. **It holds when you are rushing.** During a credential recovery, changes proposed with the wrong key could not be
+   approved with that same key. Annoying, and exactly right. The fix was to give both identities step up keys, so each
+   can approve the other's change and never its own.
+
+## What it does not give
+
+- **It is not two-person control.** One person holding both identities can still approve their own idea in two steps.
+  The control stops accidents and outsiders, not that person.
+- **It depends on keeping the keys apart.** If both identities' keys sit together on one laptop, one compromise gets
+  both. Separate storage helps; separate people help more.
+- **It does not judge the change.** The checker approves what is in front of them. A bad change reviewed by a tired
+  checker is still bad, now with a signature on it. The signature tells you who approved, not whether they were right.
+- **Approval records can still be changed by an operator with database service access.** Today such changes are
+  detected, not prevented; write-once storage or an external anchor is considered, not built.
+
+## A sound setup for a small team
+
+- Two identities, even if one person holds both, and never an agent among them.
+- Step up keys for both identities, stored and backed up separately.
+- The habit: propose, step away, review as a stranger.
+- A written plan to add a real second person, on their own device, as soon as possible.
+- Every approval recorded with who proposed, who approved and when, so the history is there for the second person.
+
+Maker checker was never about distrust. It makes important changes slow, visible and attributable. One person can start
+doing that, as long as everyone is honest that the one person is the weak spot.
+
+**Read more:** [Credentials: maker, checker and approver](/guides/credentials-maker-checker-approver),
+[Human approval](/concepts/human-approval).

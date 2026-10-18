@@ -1,0 +1,114 @@
+# Builds the four SDK packages when a GitHub release is published, attaches
+# them to the release with a CycloneDX SBOM for each (<package file>.cdx.json),
+# and attaches SLSA build provenance
+# (multiple.intoto.jsonl): a signed statement, made by GitHub's OIDC identity
+# for this workflow, of which commit and workflow produced each file and its
+# SHA-256. Anyone can check a downloaded package against it with
+# slsa-verifier (see docs/site/security/overview.mdx).
+#
+# It does not publish to npm or PyPI; publishing stays a separate, manual
+# step. The release's tag should be the commit the packages were published
+# from (for example sdk-v1.5.0).
+
+name: Release artifacts
+
+on:
+  release:
+    types: [published]
+
+permissions: read-all
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # upload the packages to the release
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          # No dependency cache: a release builds only from npm ci against
+          # the lock file, never from a cache another run could have written.
+          package-manager-cache: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install workspace
+        run: npm ci
+
+      - name: Build workspace
+        run: npm run build
+
+      - name: Pack the npm packages
+        run: |
+          mkdir -p release-dist
+          npm pack --workspace=typescript --workspace=packages/connector-sdk \
+            --pack-destination release-dist
+
+      - name: Build the Python packages
+        run: |
+          pip install --require-hashes -r .github/release/build-requirements.txt
+          python -m build python --outdir release-dist
+          python -m build python-connector-sdk --outdir release-dist
+
+      - name: Write the SBOMs
+        # One CycloneDX 1.5 file per package, named after it:
+        # <package file>.cdx.json. Written before hashing, so the provenance
+        # covers the SBOMs too. npm packages: from the packed package itself,
+        # runtime dependencies only. Wheels: from a clean environment holding
+        # just the wheel and the user facing extras named here.
+        run: |
+          for tgz in release-dist/*.tgz; do
+            work="$(mktemp -d)"
+            tar -xzf "$tgz" -C "$work"
+            (
+              cd "$work/package"
+              npm install --package-lock-only --omit=dev --ignore-scripts --no-audit --no-fund
+              npm sbom --package-lock-only --omit=dev --sbom-format=cyclonedx --sbom-type=library > sbom.json
+              node -e 'const fs = require("fs"); const sbom = JSON.parse(fs.readFileSync("sbom.json", "utf8")); sbom.metadata.component.name = require("./package.json").name; fs.writeFileSync("sbom.json", JSON.stringify(sbom, null, 2) + "\n");'
+            )
+            mv "$work/package/sbom.json" "$tgz.cdx.json"
+            rm -rf "$work"
+          done
+          for wheel in release-dist/parmana-[0-9]*.whl; do
+            python .github/release/python_sbom.py "$wheel" "$wheel.cdx.json" verify
+          done
+          for wheel in release-dist/parmana_connector_sdk-*.whl; do
+            python .github/release/python_sbom.py "$wheel" "$wheel.cdx.json"
+          done
+
+      - name: Hash the packages
+        id: hash
+        working-directory: release-dist
+        run: |
+          ls -l
+          echo "hashes=$(sha256sum -- * | base64 -w0)" >> "$GITHUB_OUTPUT"
+
+      - name: Attach the packages to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$TAG" release-dist/* --clobber --repo "$GITHUB_REPOSITORY"
+
+  provenance:
+    needs: build
+    permissions:
+      actions: read # read the workflow run
+      id-token: write # sign the provenance with GitHub's OIDC identity
+      contents: write # upload the provenance to the release
+    # Referenced by tag, not commit: the generator verifies its own ref and
+    # only accepts a release tag, so pinning it to a commit breaks it.
+    # OpenSSF Scorecard's Pinned-Dependencies check still flags this line;
+    # that alert is dismissed as "won't fix" for this reason.
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0 # zizmor: ignore[unpinned-uses]
+    with:
+      base64-subjects: ${{ needs.build.outputs.hashes }}
+      upload-assets: true

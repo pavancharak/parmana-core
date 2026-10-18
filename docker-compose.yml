@@ -1,0 +1,131 @@
+# Self hosted Parmana: the API and its own Postgres, started with one command.
+#
+#   docker compose up -d
+#
+# What happens, in order:
+#   setup     makes the Ed25519 signing keys and an API key in ./parmana-local
+#             the first time, and keeps them on every later start.
+#   postgres  the deployment's own database. Nothing is sent anywhere else.
+#   migrate   creates the roles the migrations expect, then applies each
+#             migration in supabase/migrations once, recording it in
+#             parmana_schema_migrations (docker/local/migrate.sh).
+#   seed      copies the shipped policies into the database, adding only
+#             versions that are not there yet.
+#   api       the same image as the hosted API, in production mode.
+#
+# The API key is in ./parmana-local/api-key.txt after the first start. The
+# full guide, including the offline check, is docs/site/self-hosted/
+# (start with quickstart.mdx).
+#
+# Set these in the shell or in a .env file next to this one:
+#   PARMANA_DB_PASSWORD  Postgres password. Change it for anything but a trial.
+#   PARMANA_BIND         host address the API is published on (127.0.0.1).
+#   PARMANA_PORT         host port (3000).
+#   PARMANA_LOCAL_ALLOWED_CAPABILITIES  capabilities the generated API key
+#                        may use, comma separated (paytm:refund). Only read
+#                        the first time, when the key is made.
+
+name: parmana
+
+x-api-image: &api-image
+  image: parmana-api:local
+  build:
+    context: .
+  environment: &api-environment
+    # The code loads a .env file when there is one; there is none in the
+    # image. This only silences dotenv's banner in the logs.
+    DOTENV_CONFIG_QUIET: "true"
+
+x-database-url: &database-url postgresql://parmana:${PARMANA_DB_PASSWORD:-parmana-local}@postgres:5432/parmana
+
+services:
+  setup:
+    <<: *api-image
+    user: "0:0"
+    entrypoint: ["node", "/app/docker/local/setup.mjs"]
+    environment:
+      <<: *api-environment
+      PARMANA_LOCAL_ALLOWED_CAPABILITIES: ${PARMANA_LOCAL_ALLOWED_CAPABILITIES:-paytm:refund}
+    volumes:
+      - ./docker/local:/app/docker/local:ro
+      - ./parmana-local:/app/parmana-local
+    restart: "no"
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: parmana
+      POSTGRES_PASSWORD: ${PARMANA_DB_PASSWORD:-parmana-local}
+      POSTGRES_DB: parmana
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "parmana", "-d", "parmana"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+
+  migrate:
+    image: postgres:16
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${PARMANA_DB_PASSWORD:-parmana-local}
+    command: ["bash", "/migrations/migrate.sh"]
+    volumes:
+      - ./docker/local/migrate.sh:/migrations/migrate.sh:ro
+      - ./docker/local/postgres-roles.sql:/migrations/postgres-roles.sql:ro
+      - ./supabase/migrations:/migrations/supabase:ro
+    restart: "no"
+
+  seed:
+    <<: *api-image
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    entrypoint: ["node", "/app/docker/local/seed-policies.mjs"]
+    environment:
+      <<: *api-environment
+      DATABASE_URL: *database-url
+    volumes:
+      - ./docker/local:/app/docker/local:ro
+    restart: "no"
+
+  api:
+    <<: *api-image
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+      seed:
+        condition: service_completed_successfully
+    # PARMANA_API_KEYS holds only the API key's hash, made by setup.
+    entrypoint:
+      - bash
+      - -c
+      - export PARMANA_API_KEYS="$$(cat /app/parmana-local/api-keys.json)" && exec /app/docker/entrypoint.sh
+    environment:
+      <<: *api-environment
+      NODE_ENV: production
+      PARMANA_STORAGE: postgres
+      DATABASE_URL: *database-url
+      PARMANA_KEY_DIR: /app/parmana-local/keys
+    volumes:
+      - ./parmana-local:/app/parmana-local:ro
+    ports:
+      - "${PARMANA_BIND:-127.0.0.1}:${PARMANA_PORT:-3000}:3000"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3000/ready').then(r=>r.json()).then(b=>process.exit(b.status==='READY'?0:1)).catch(()=>process.exit(1))
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    restart: unless-stopped
+
+volumes:
+  postgres-data:

@@ -1,0 +1,160 @@
+---
+title: "Python SDK configuration and behavior"
+description: "Every option, default, retry rule, error mapping and method of the Python SDK, each checked against the code."
+---
+
+This page states exactly how the `parmana` package behaves. If a guide and this page disagree, this page is right, and please report the guide. Every value here was read from the SDK source.
+
+## Create a client
+
+```python
+from parmana import ParmanaClient
+
+client = ParmanaClient(
+    endpoint="https://your-parmana.example.com",
+    api_key="your API key",
+)
+```
+
+The client is synchronous only. There is no async variant. All arguments are keyword only.
+
+## Configuration options
+
+| Argument         | Type           | Default        | What it does                                                                                                                                                                                                                                                               |
+| ---------------- | -------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `endpoint`       | str            | None, required | The base URL of the Parmana server. It must use `https://`, except `http://localhost` or `http://127.0.0.1` for local development. A missing or empty value raises `ConfigurationError`; plain `http://` to any other host raises `ValueError` when the client is created. |
+| `api_key`        | str or None    | `None`         | When set, every request carries `Authorization: Bearer <api_key>`. When it is `None`, no `Authorization` header is sent and a server with authentication on answers `401`.                                                                                                 |
+| `timeout`        | int, seconds   | `30`           | The timeout applied to each request. A request that exceeds it raises `TimeoutError`.                                                                                                                                                                                      |
+| `max_retries`    | int            | `3`            | The number of retries for a `GET` request. See the next section.                                                                                                                                                                                                           |
+| `backoff_factor` | float, seconds | `0.5`          | The exponential backoff factor between retries.                                                                                                                                                                                                                            |
+| `debug`          | bool           | `False`        | Writes request and response debug logging to the `parmana` logger. Logs show each body's structure with every value replaced by `<redacted>`, and the `Authorization` header is never logged.                                                                              |
+
+Every request also carries `Content-Type: application/json` and `Accept: application/json`.
+
+The API key travels in the `Authorization` header, so the client refuses a plain `http://` endpoint for any host other than localhost. Use `https://` for every deployed server. The client reuses one `requests.Session`, so connections are pooled.
+
+## Retries
+
+Retries are **on by default for `GET` requests**, which is different from the TypeScript SDK, where they are off until you enable them. Set `max_retries=0` to turn them off.
+
+| Request                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Retried?                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET` requests                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Yes, up to `max_retries` times, on a connection error or a `429`, `502`, `503` or `504` response. With the default of `3` that is up to 4 requests. When the server sends a `Retry-After` header on a `429`, the client honors it. After the last retry the response is turned into an error as described below. |
+| `POST` requests (`execute`, `create_transaction`, `verify`, `replay`, `receipt`, `validate_policy`, `verify_refusal_record`, `verify_execution_intent`, `finalize_execution_intent`, `resolve_execution_intent`, `verify_audit_event`, from 1.3.0 `propose_policy_change`, `approve_policy_change`, `reject_policy_change`, from 1.4.0 `approvers.propose_add`, `approvers.propose_revoke`, `approve_approver_change`, `reject_approver_change`, from 1.5.0 `external_connectors.propose_register`, `external_connectors.propose_revoke`, `approve_external_connector_change`, `reject_external_connector_change`, and from 1.6.0 `business_signal_sources.propose_register`, `business_signal_sources.propose_revoke`, `approve_business_signal_source_change`, `reject_business_signal_source_change`, `authority_grants.propose_grant`, `authority_grants.propose_revoke`, `approve_authority_grant_change`, `reject_authority_grant_change`) | **Never.** This is deliberate, because retrying `execute` could repeat a real action.                                                                                                                                                                                                                            |
+
+## Errors
+
+Every non 2xx response, and every failure to get one, is raised as a typed error. All of them extend `ParmanaError`.
+
+| What happened                                 | Error class              | Notes                                                                                                              |
+| --------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| HTTP `400`                                    | `ValidationError`        | The request is malformed.                                                                                          |
+| HTTP `401`                                    | `AuthenticationError`    | The key is missing or wrong.                                                                                       |
+| HTTP `403` with code `POLICY_DENIED`          | `ExecutionRejectedError` | A policy refused. This is final.                                                                                   |
+| HTTP `403` with code `CAPABILITY_NOT_ALLOWED` | `AuthorizationError`     | The server's code is on `server_code`.                                                                             |
+| HTTP `403` with no code                       | `AuthorizationError`     | The key may not assert that principal.                                                                             |
+| HTTP `404`                                    | `NotFoundError`          |                                                                                                                    |
+| HTTP `409`                                    | `ConflictError`          | The `businessTransactionId` was already used.                                                                      |
+| HTTP `429`                                    | `RateLimitError`         | `retry_after_seconds` carries the `Retry-After` value when present.                                                |
+| Any `5xx`, including `500` and `503`          | `InternalServerError`    | `ServerError` is another name for the same class. `status_code` holds the status, `server_code` the server's code. |
+| Any other non 2xx status                      | `ParmanaHttpError`       | The base class, with `status_code`.                                                                                |
+| The connection failed                         | `NetworkError`           |                                                                                                                    |
+| The request timed out                         | `TimeoutError`           | A subclass of `NetworkError`.                                                                                      |
+| A missing or empty `endpoint`                 | `ConfigurationError`     | Raised by the constructor.                                                                                         |
+
+Every HTTP error has `status_code`, `code` and `request_id`. **The `code` is the SDK's own code** (for example `SERVER_ERROR`), not the server's. The server's code is preserved on `server_code` for `CAPABILITY_NOT_ALLOWED` and, from 1.1.6, on any `InternalServerError`.
+
+That matters for the server errors that all arrive as `InternalServerError`:
+
+| Server code                          | Meaning                                                                                                                                                                              | Do                                                                                                                                                                                |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SIGNING_UNAVAILABLE` (503)          | Refused before release. **Nothing was executed.**                                                                                                                                    | Retry later with a new `businessTransactionId`.                                                                                                                                   |
+| `EXECUTION_INTENT_UNAVAILABLE` (503) | Refused before release, because the signed [Execution Intent](/concepts/execution-intents) could not be stored. **Nothing was executed.**                                            | Retry later with a new `businessTransactionId`.                                                                                                                                   |
+| `CONNECTOR_NOT_REGISTERED` (503)     | The action has no connector on this server. **Nothing was executed.**                                                                                                                | Ask the operator to configure the connector, then retry with a new `businessTransactionId`.                                                                                       |
+| `EXECUTION_RECORD_INCOMPLETE` (500)  | The action **was** released but its signed record could not be produced.                                                                                                             | **Do not resubmit.** Tell the operator, who can rebuild the record with `POST /execution-intents/<id>/finalize`. The method is `finalize_execution_intent`, available from 1.2.0. |
+| `EXECUTION_OUTCOME_UNKNOWN` (502)    | The action was released and the connector call failed, so it **may** have been performed. The server sends this since 2026-09-25; before, the same failure was a `500` with no code. | **Do not resubmit.** Tell the operator, who checks the target system and closes the Execution Intent with resolve.                                                                |
+
+From 1.1.6 read `error.server_code`. On 1.1.5 and earlier `server_code` is not set on `InternalServerError`, so use `status_code` (`503` or `500`) and the message: the `SIGNING_UNAVAILABLE` message ends with "Nothing was executed.", and the `EXECUTION_RECORD_INCOMPLETE` message says the action was released and names the `businessTransactionId` and the `authorizationId`.
+
+## Methods
+
+The client has methods for the common calls, and a sub API for each area.
+
+| Client method                                                                                      | Request                                              | Returns                                                                                                              |
+| -------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `execute(transaction)`                                                                             | `POST /execute`                                      | The signed Execution Trust Record.                                                                                   |
+| `create_transaction(transaction)`                                                                  | `POST /transactions`                                 | The same record, from the second entry point.                                                                        |
+| `verify(business_transaction_id)`                                                                  | `POST /verify`                                       | A `Verification`.                                                                                                    |
+| `get_latest_verification(business_transaction_id)`                                                 | `GET /verification/{id}`                             | The latest `Verification`.                                                                                           |
+| `transaction(business_transaction_id)`                                                             | `GET /transactions/{id}`                             | One `BusinessTransaction`.                                                                                           |
+| `trust_record(business_transaction_id)`                                                            | `GET /trust-records/{id}`                            | The Execution Trust Record.                                                                                          |
+| `policy_in_effect(capability)` (1.5.0)                                                             | `GET /policies/in-effect`                            | A `PolicyInEffect`: the policy to declare, its description, and `signals` (facts, schema, bound, approval).          |
+| `validate_policy(policy_id, policy_version)`                                                       | `POST /policies/validate`                            | A dict with `valid` and `errors`.                                                                                    |
+| `propose_policy_change(name, version, proposed_content=..., reason=...)` (1.3.0)                   | `POST /policies/{name}/{version}/pending-changes`    | A `ProposedPolicyChange`. The content is sent exactly as given. Needs a verified human credential.                   |
+| `policy_changes(status=None)` (1.3.0)                                                              | `GET /policies/pending-changes`                      | A list of `PolicyChangeForReview`, each with `diff.current` and `diff.proposed`. Needs a verified human credential.  |
+| `approve_policy_change(pending_policy_change_id, step_up_authorization)` (1.3.0)                   | `POST /policies/pending-changes/{id}/approve`        | The `PendingPolicyChange`, `APPROVED`. Needs a verified human with a step up key who is not the proposer.            |
+| `reject_policy_change(pending_policy_change_id, rejection_reason, step_up_authorization)` (1.3.0)  | `POST /policies/pending-changes/{id}/reject`         | The `PendingPolicyChange`, `REJECTED`. Same caller rules.                                                            |
+| `list_approvers()` (1.4.0)                                                                         | `GET /approval-issuers`                              | A list of `ApprovalIssuer`: keys in code and keys added through approver changes. Needs a verified human credential. |
+| `approver_changes(status=None)` (1.4.0)                                                            | `GET /approval-issuers/changes`                      | A list of `ApprovalIssuerChange`, newest first.                                                                      |
+| `approve_approver_change(change_id, step_up_authorization)` (1.4.0)                                | `POST /approval-issuers/changes/{id}/approve`        | The change, `APPROVED` and applied. Sign the step up with `change_id` as `pending_policy_change_id`.                 |
+| `reject_approver_change(change_id, rejection_reason, step_up_authorization)` (1.4.0)               | `POST /approval-issuers/changes/{id}/reject`         | The change, `REJECTED`.                                                                                              |
+| `list_external_connectors()` (1.5.0)                                                               | `GET /external-connectors`                           | A list of `ExternalConnector`, active and revoked. Needs a verified human credential.                                |
+| `external_connector_changes(status=None)` (1.5.0)                                                  | `GET /external-connectors/changes`                   | A list of `ExternalConnectorChange`, newest first.                                                                   |
+| `approve_external_connector_change(change_id, step_up_authorization)` (1.5.0)                      | `POST /external-connectors/changes/{id}/approve`     | The change, `APPROVED` and applied. Sign the step up with `change_id` as `pending_policy_change_id`.                 |
+| `reject_external_connector_change(change_id, rejection_reason, step_up_authorization)` (1.5.0)     | `POST /external-connectors/changes/{id}/reject`      | The change, `REJECTED`.                                                                                              |
+| `list_business_signal_sources()` (1.6.0)                                                           | `GET /business-signal-sources`                       | A list of `BusinessSignalSource`, active and revoked. Needs a verified human credential.                             |
+| `business_signal_source_changes(status=None)` (1.6.0)                                              | `GET /business-signal-sources/changes`               | A list of `BusinessSignalSourceChange`, newest first.                                                                |
+| `approve_business_signal_source_change(change_id, step_up_authorization)` (1.6.0)                  | `POST /business-signal-sources/changes/{id}/approve` | The change, `APPROVED` and applied. Sign the step up with `change_id` as `pending_policy_change_id`.                 |
+| `reject_business_signal_source_change(change_id, rejection_reason, step_up_authorization)` (1.6.0) | `POST /business-signal-sources/changes/{id}/reject`  | The change, `REJECTED`.                                                                                              |
+| `list_authority_grants()` (1.6.0)                                                                  | `GET /authority-grants`                              | A list of `AuthorityGrant`, active and revoked. Needs a verified human credential.                                   |
+| `authority_grant_changes(status=None)` (1.6.0)                                                     | `GET /authority-grants/changes`                      | A list of `AuthorityGrantChange`, newest first.                                                                      |
+| `approve_authority_grant_change(change_id, step_up_authorization)` (1.6.0)                         | `POST /authority-grants/changes/{id}/approve`        | The change, `APPROVED` and applied. Sign the step up with `change_id` as `pending_policy_change_id`.                 |
+| `reject_authority_grant_change(change_id, rejection_reason, step_up_authorization)` (1.6.0)        | `POST /authority-grants/changes/{id}/reject`         | The change, `REJECTED`.                                                                                              |
+| `refusal_record(business_transaction_id)`                                                          | `GET /refusal/{id}`                                  | A `RefusalRecord`.                                                                                                   |
+| `verify_refusal_record(record)`                                                                    | `POST /refusal/verify`                               | `True` or `False`.                                                                                                   |
+| `execution_intent(business_transaction_id)`                                                        | `GET /execution-intents/{id}`                        | An `ExecutionIntentView`: the signed intent and its status.                                                          |
+| `verify_execution_intent(intent)`                                                                  | `POST /execution-intents/verify`                     | `True` or `False`. No credential needed.                                                                             |
+| `unfinalized_execution_intents(limit=None)`                                                        | `GET /execution-intents/unfinalized`                 | `UnfinalizedExecutionIntents`. Needs a verified human credential.                                                    |
+| `finalize_execution_intent(business_transaction_id)`                                               | `POST /execution-intents/{id}/finalize`              | `FinalizeExecutionIntentResult`. Never calls the connector. Needs a verified human credential.                       |
+| `resolve_execution_intent(business_transaction_id, resolution=..., note=...)`                      | `POST /execution-intents/{id}/resolve`               | `ResolveExecutionIntentResult`. The note is required. Needs a verified human credential.                             |
+| `verify_audit_event(event, signature)`                                                             | `POST /audit/verify`                                 | `True` or `False`.                                                                                                   |
+| `health()`                                                                                         | `GET /health`                                        | A dict with the health status.                                                                                       |
+| `latest_receipt(business_transaction_id)` (1.3.0)                                                  | `GET /receipt/latest/{id}`                           | The most recent `Receipt`, without generating a new one.                                                             |
+| `caller()` (1.3.0)                                                                                 | `GET /callers/me`                                    | A `CallerIdentity`: caller ID, allowed principal IDs and capabilities.                                               |
+| `public_key(key_id="default")` (1.3.0)                                                             | `GET /keys/{keyId}`                                  | A `PublicKeyInfo` with the PEM, for the offline verifiers. No credential needed.                                     |
+
+Two values are properties, not methods, so do not call them: `client.endpoint` is the configured endpoint, and `client.version` is the version of the **SDK package**, for example `1.3.0`. It is not the server's version. To read the server's version call `client.execution.version()`, which sends `GET /version`.
+
+The sub APIs cover the rest, for example `client.replay.replay(...)`, `client.receipt.generate(...)`, `client.receipt.get_latest(...)` and `client.transactions.list(...)`:
+
+| Sub API                          | Methods                                                                                                                    |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `client.execution`               | `health`, `version`, `execute`                                                                                             |
+| `client.verification`            | `verify`, `get_latest`                                                                                                     |
+| `client.replay`                  | `replay`                                                                                                                   |
+| `client.receipt`                 | `generate`, `get_latest`                                                                                                   |
+| `client.transactions`            | `create`, `get`, `list`                                                                                                    |
+| `client.trust_records`           | `get`, `list` (1.3.0)                                                                                                      |
+| `client.policy`                  | `validate`, and from 1.3.0 `propose_change`, `list_changes`, `approve_change`, `reject_change`, and from 1.5.0 `in_effect` |
+| `client.refusal`                 | `verify`, `get`                                                                                                            |
+| `client.execution_intents`       | `verify`, `get`, `list_unfinalized`, `finalize`, `resolve`                                                                 |
+| `client.audit`                   | `verify`                                                                                                                   |
+| `client.callers`                 | `me`, `public_key` (1.3.0)                                                                                                 |
+| `client.approvers`               | `list`, `propose_add`, `propose_revoke`, `list_changes`, `approve_change`, `reject_change` (1.4.0)                         |
+| `client.external_connectors`     | `list`, `propose_register`, `propose_revoke`, `list_changes`, `approve_change`, `reject_change` (1.5.0)                    |
+| `client.business_signal_sources` | `list`, `propose_register`, `propose_revoke`, `list_changes`, `approve_change`, `reject_change` (1.6.0)                    |
+| `client.authority_grants`        | `list`, `propose_grant`, `propose_revoke`, `list_changes`, `approve_change`, `reject_change` (1.6.0)                       |
+
+The full signature of every method is in the [API reference](/sdks/reference/python/client).
+
+## Idempotency
+
+`businessTransactionId` is the idempotency key. Sending the same one twice returns `409` (`ConflictError`). The helper `create_business_transaction()` generates the identifiers and keeps the linked ones consistent, so use it instead of writing them by hand. The SDK never retries a `POST`, so a single call is a single attempt.
+
+## Optional extra for offline verification
+
+`parmana.crypto` (the offline Trust Record verifier, and from 1.5.0 `verify_parmana_release(body, *, public_keys, audience, is_already_executed, now=None, clock_skew_seconds=30)` for an external connector endpoint to check a release from Parmana before it acts) needs the `cryptography` package. Install it with `pip install "parmana[verify]"`. A plain `pip install parmana` does not include it, and `import parmana` does not need it.
+
+## Where to go next
+
+For a client wrapper with logging and a deployment checklist read [Python SDK production guide](/guides/python-sdk-production). For an agent that must fail closed read [Python SDK for AI agents](/guides/python-sdk-ai-agents). For the exact rules an agent follows read [Integrate Parmana: specification for AI agents](/agents/integrate).

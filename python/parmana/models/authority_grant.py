@@ -1,0 +1,89 @@
+"""
+Parmana authority grants (RFC-0023 phase 3): which API key may have which
+capability decided, within which limits, until when, made through maker
+checker. They matter for a policy with requireAuthorityGrant; GET
+/policies/in-effect says so with authority_grant_required.
+
+Hand-maintained: the response bodies of the /authority-grants routes
+(packages/api/src/routes/authority-grants.ts).
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
+
+from .policy_change import PendingPolicyChangeStatus
+
+
+@dataclass(frozen=True)
+class AuthorityGrant:
+    """
+    A grant, active or revoked.
+    """
+
+    #: The change_id of the approved grant change that created it.
+    grant_id: str
+
+    #: The callerId of the API key the grant is for.
+    caller_id: str
+
+    capability: str
+
+    valid_from: datetime
+
+    #: After this, requests are refused as AUTHORITY_EXPIRED.
+    valid_until: datetime
+
+    #: "active" or "revoked". At most one active grant per caller and
+    #: capability.
+    status: str
+
+    granted_at: datetime
+
+    #: By Intent path ("target", "parameters.<name>"): "min", "max" and
+    #: "oneOf", as sent.
+    limits: dict[str, dict[str, Any]] | None = None
+
+    revoked_by_change_id: str | None = None
+
+    revoked_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class AuthorityGrantChange:
+    """
+    A proposal to grant or revoke authority, and its resolution. Sign the
+    step up authorization for approve or reject with `change_id` as
+    `pending_policy_change_id`.
+    """
+
+    change_id: str
+
+    #: "grant" or "revoke".
+    action: str
+
+    caller_id: str
+
+    capability: str
+
+    reason: str
+
+    proposed_by: str
+
+    proposed_at: datetime
+
+    status: PendingPolicyChangeStatus
+
+    limits: dict[str, dict[str, Any]] | None = None
+
+    valid_from: datetime | None = None
+
+    valid_until: datetime | None = None
+
+    resolved_by: str | None = None
+
+    resolved_at: datetime | None = None
+
+    rejection_reason: str | None = None

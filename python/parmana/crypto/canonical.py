@@ -1,0 +1,81 @@
+"""
+Canonical Serializer (Python reimplementation).
+
+Reproduces packages/crypto/src/CanonicalSerializer.ts byte-for-byte,
+for already-JSON-decoded input, as the independent-language proof
+requested by the PQC audit's Layer 5 ("deterministic serialization ...
+Node.js, plus at least one other language").
+
+This module deliberately does NOT reconstruct Date objects from ISO
+strings before re-serializing: an Execution Trust Record read from a
+JSON file (or an API response) already has every timestamp as a plain
+string -- CanonicalSerializer.ts's own Date-handling branch only
+matters on the TypeScript signing side, which starts from real Date
+objects. Re-serializing already-JSON-decoded primitives sidesteps the
+much harder problem of reproducing `Date.prototype.toISOString()`
+exactly and is sufficient for verification, since the signer already
+turned every Date into its canonical string form before ever hashing
+or signing it.
+
+Two concrete cross-language pitfalls this module corrects for --
+found empirically while writing it, not assumed:
+
+- JSON.stringify's default separators are compact (no space after
+  "," or ":"); Python's json.dumps defaults to ", " and ": ". Left
+  uncorrected, every object/array would serialize to different bytes
+  in Python than in Node, and no signature would ever verify.
+- JSON.stringify does not escape non-ASCII characters by default;
+  Python's json.dumps defaults to ensure_ascii=True, which \\uXXXX-
+  escapes them. Same effect: different bytes for any string containing
+  non-ASCII content.
+
+Known, narrow limitation: key sorting uses Python's default string
+ordering (Unicode code point order), while CanonicalSerializer.ts
+sorts by JavaScript's default string ordering (UTF-16 code unit
+order). These are identical for every key actually used in this
+codebase's real payloads (all ASCII identifiers) and for the entire
+Basic Multilingual Plane; they diverge only for object keys containing
+astral-plane Unicode characters (code points above U+FFFF), which
+does not occur anywhere in this system's real payloads today.
+
+A second narrow limitation: number formatting. Python and JavaScript
+print the same JSON number differently in two cases: an exponent below
+1e-6 (Python writes 1e-07, JavaScript 1e-7) and an integer above 2**53
+(JavaScript has already rounded it when parsing). Neither occurs in this
+system's payloads, whose amounts are bounded and have at most two
+decimals.
+"""
+
+from __future__ import annotations
+
+import json
+from typing import Any
+
+
+def _normalize(value: Any) -> Any:
+    if value is None:
+        return None
+
+    if isinstance(value, list):
+        return [_normalize(item) for item in value]
+
+    if isinstance(value, dict):
+        return {key: _normalize(value[key]) for key in sorted(value.keys())}
+
+    return value
+
+
+def canonical_serialize(value: Any) -> bytes:
+    """
+    Serializes an already-JSON-decoded value into the same canonical
+    UTF-8 bytes CanonicalSerializer.ts would produce for the
+    equivalent JavaScript value.
+    """
+
+    canonical = json.dumps(
+        _normalize(value),
+        separators=(",", ":"),
+        ensure_ascii=False,
+    )
+
+    return canonical.encode("utf-8")

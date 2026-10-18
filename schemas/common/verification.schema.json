@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/verification.schema.json",
+  "title": "Verification",
+  "description": "Immutable result of verifying an entire Execution Trust Record: recomputed hash matches the stored hash, signature verifies, and every APPROVED Execution carries a non-empty authorizationId. All checks always run and are reported together in message; a failure in one does not skip the others.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "verificationId",
+    "businessTransactionId",
+    "status",
+    "verifiedAt",
+    "trustRecordHash"
+  ],
+  "properties": {
+    "verificationId": {
+      "type": "string",
+      "description": "Unique Verification identifier."
+    },
+    "businessTransactionId": {
+      "type": "string",
+      "description": "Business Transaction being verified."
+    },
+    "status": {
+      "type": "string",
+      "description": "Verification result.",
+      "enum": ["VERIFIED", "FAILED"]
+    },
+    "message": {
+      "type": "string",
+      "description": "Human-readable verification summary: either the success message, or every failed check's message joined with \"; \"."
+    },
+    "verifiedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when verification completed."
+    },
+    "trustRecordHash": {
+      "type": "string",
+      "description": "Hash of the verified Execution Trust Record, proving exactly which record was verified."
+    }
+  },
+  "examples": [
+    {
+      "verificationId": "0ad69d3f-7fd0-4507-ab38-e386146757ae",
+      "businessTransactionId": "eed2a972-1bf5-4166-8472-761f76fbf1b2",
+      "status": "VERIFIED",
+      "message": "Execution Trust Record verified successfully.",
+      "verifiedAt": "2026-07-07T16:38:59.344Z",
+      "trustRecordHash": "989aef83d595202ec02bb338ac00461abec0541098ea065f965b5cde342d3b25"
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "replayId": "replay-000001",
+
+  "trustRecordId": "etr-000001",
+
+  "executedAt": "2026-01-01T09:05:06Z",
+
+  "status": "MATCH",
+
+  "recordedDecision": {
+    "decisionId": "decision-000001",
+
+    "intentId": "intent-vendor-payment-001",
+
+    "policy": {
+      "policyId": "vendor-payment",
+      "policyVersion": "2.0.0",
+      "schemaVersion": "1.0.0"
+    },
+
+    "matchedRuleId": "approve-vendor-payment",
+
+    "outcome": "APPROVED",
+
+    "reason": "Vendor payment satisfies all policy requirements."
+  },
+
+  "replayedDecision": {
+    "decisionId": "decision-000001",
+
+    "intentId": "intent-vendor-payment-001",
+
+    "policy": {
+      "policyId": "vendor-payment",
+      "policyVersion": "2.0.0",
+      "schemaVersion": "1.0.0"
+    },
+
+    "matchedRuleId": "approve-vendor-payment",
+
+    "outcome": "APPROVED",
+
+    "reason": "Vendor payment satisfies all policy requirements."
+  },
+
+  "comparison": {
+    "policyMatched": true,
+    "signalsMatched": true,
+    "ruleMatched": true,
+    "outcomeMatched": true,
+    "reasonMatched": true,
+    "decisionMatched": true
+  },
+
+  "summary": {
+    "recordedOutcome": "APPROVED",
+    "replayedOutcome": "APPROVED",
+    "deterministicReplay": true
+  },
+
+  "message": "Replay successfully reproduced the original execution. The recorded and replayed decisions are identical."
+}

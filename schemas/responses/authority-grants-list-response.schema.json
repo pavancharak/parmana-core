@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/authority-grants-list-response.schema.json",
+  "title": "Authority Grants List Response",
+  "description": "Response of GET /authority-grants: every grant, active and revoked.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["grants"],
+  "properties": {
+    "grants": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/authority-grant.schema.json"
+      }
+    }
+  }
+}

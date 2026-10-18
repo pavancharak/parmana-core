@@ -1,0 +1,49 @@
+---
+title: "Who is calling? API keys, hashes and failing closed"
+description: "How Parmana knows which system is asking before it decides anything, why the server keeps only a hash of each key, and why it refuses to run rather than run without knowing."
+---
+
+A small team, for example a lending startup in Pune, deploys its own Parmana server on a Friday evening. They copy the example environment file to a real one, fill in the database and the signing key, and go home. On Monday their collections agent starts sending requests that could move ₹2,00,000 a day.
+
+Until September 2026, that example file had one line that would have spoiled their weekend: it switched caller authentication off, uncommented. The server would have started. It would have printed a warning in a log nobody reads on a Friday. And it would have accepted requests from anyone who found the address.
+
+I fixed the file on 2026-09-10. But the story is the reason this layer is built the way it is: the dangerous configuration should never be the one you get by not reading carefully.
+
+## The problem: an API that does not know who is asking
+
+Every later check in Parmana answers a question about an action. Is this refund allowed by the policy in effect? Did a trusted person sign an approval for this order and this amount? None of those answers says which system sent the request.
+
+Without that, three things break. You cannot limit what one caller may ask for. You cannot slow down one caller without slowing everyone. And when something goes wrong, the record says what was tried but not by whom.
+
+## The idea: the door knows, or the door stays shut
+
+The caller layer has one rule: if Parmana cannot establish and record who is calling, it does not proceed. Not at startup, not on a request, not when the record cannot be written.
+
+## How Parmana does it
+
+**One key per caller, sent as a bearer token.** Every route needs it except a short list: the health and readiness probes, the API documentation, and the routes that verify a signed record, which anyone holding a record should be able to use without an account.
+
+**The server keeps only a hash.** Each key's entry holds a SHA-256 hash of the key, never the key itself, and the comparison runs in constant time. Records, responses and audit events name the caller by its caller id. A leaked configuration file gives an attacker hashes, not keys.
+
+**No silent default.** In the code, the option that mounts caller authentication is required. Every place that builds the API must say either "here is the authenticator and the audit sink" or, literally, "disabled". There is no third choice where forgetting means open.
+
+**Refuse to start.** A production server with no keys configured does not start, unless an operator sets the switch that turns authentication off, explicitly. When that switch is on, the readiness check reports it in its own response, with a warning, so monitoring that already polls readiness can alert on a field rather than hope someone reads a log. The public sandbox refuses to start with it at all.
+
+**Refuse to run unrecorded.** Every authentication outcome, accepted or rejected, is written to the caller audit trail before the request goes further. If that write fails, the request fails with `503 AUDIT_UNAVAILABLE`. No retry, no buffer, no queue. A valid key whose "accepted" event cannot be stored gets the 503, not the 200 it would otherwise get. I accepted that availability cost on purpose: an action that runs with no record of who asked contradicts the point of the product.
+
+**Count the failures.** Each rejected key writes a signed audit event, and in production signing is a call to a key service. So a stranger sending bad keys could spend the signing capacity real requests need. Since 2026-10-03, failed authentications are counted per client address, 30 a minute by default, and only failures count.
+
+## What it does not do
+
+- **A key is not an approval.** It says which system is calling. Every agent action, reads included, still needs a policy that allows it and a signed approval from a trusted person, checked after the key.
+- **Whoever holds the key is the caller.** A bearer key proves possession, not intent. A key printed in a build log is that caller until the operator removes it.
+- **Keys are managed by hand.** There is no API to issue, rotate or revoke a key. The operator generates one with a script, adds its entry to the server's configuration and redeploys. Revoking means removing the entry and redeploying.
+- **Switching authentication off removes identity, not authorization.** With the switch on, nobody knows who asked, but the policy, the bound facts and the signed approval are still checked. It is meant for local development and tutorials only.
+- **Failing closed has a price.** A database outage that stops audit writes stops every authenticated request. That is the design, and it is still an outage.
+- **The per-address limit depends on the platform.** How the hosting platform reports client addresses decides how well that limit works, and I have not checked it live.
+
+## The takeaway
+
+Knowing who is calling is not the interesting part of authorization, but everything else leans on it. The rule I hold to is simple: no keys, no start; no record, no request; and no configuration where the open door is the one you get by default.
+
+**Read more:** [Authentication](/api-reference/authentication), [Caller audit trail](/concepts/caller-audit-trail).

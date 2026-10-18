@@ -1,0 +1,97 @@
+---
+title: "The gateway: why your agent should never hold the keys"
+description: ""
+---
+
+A customer writes in: the mixer grinder arrived broken, they want their ₹4,200 back. A support agent reads the
+order, checks the photos, and decides the refund is fair.
+
+The fastest way to build that agent is to hand it the payment provider's merchant key and a "refund" tool. It works.
+It is also the moment every other control you add becomes advice. Whatever can reach that key can refund
+₹4,200, or ₹42,000, or the same ₹4,200 twice. A prompt injection, a retry bug, a key in a debug log: none of them
+need to get past your policy.
+
+## The problem
+
+Most agent safety work happens before the action: better prompts, a classifier on the output, a policy check in the
+agent's own code. All of that runs in the same place as the credential. If the thing that proposes an action also
+holds a live, reusable credential to perform it, the check and the power sit side by side, and the power does not
+depend on the check.
+
+## The idea
+
+Split proposing from doing. The agent proposes. Something else holds the credential, and that something acts only
+after the checks pass, and only for the exact action that was approved. The agent never sees the key, so there is
+nothing for it to leak or reuse.
+
+## How Parmana does it
+
+In Parmana that something is the gateway. It is the only boundary through which an approved request reaches a
+connector, the code that actually calls Paytm, HubSpot, GitHub or Slack. The default server always builds it; there
+is no server code path that skips it.
+
+By the time a request reaches the gateway, a policy has approved it and a person has signed an approval for that
+exact action. Every agent action needs one, reads included, at any amount. Even so, the gateway does not trust the
+authorization it is handed. Before anything reaches a connector it checks, in order:
+
+- the format version and the signature on the authorization;
+- that it has not expired, and that its lifetime is within the allowed maximum;
+- that the content it is about to send hashes to the value that was signed, so nothing was swapped after approval;
+- that the policy is still the exact content a human checker approved, which fails closed if anything is missing;
+- for some actions, that the facts the decision rested on still hold;
+- and only then, last, that the single-use nonce has not been seen.
+
+The order matters. The nonce is consumed only when everything else passed, so a forged request cannot burn the nonce
+of a legitimate one.
+
+Then comes the credential. It is resolved only inside the gateway boundary, after every check has passed. For each
+call a session credential is issued, consumed exactly once, and revoked in a `finally` block on every exit path:
+success, connector failure, or a rejection after issue. The connector receives an opaque, already-resolved handle; it
+never fetches a credential itself, and a raw credential that did not come through that path is rejected. The secret
+is kept out of the connector's evidence, out of error messages and out of the signed Trust Record. This isolation is
+on by default. The only way to turn it off is a flag documented as "for tests only".
+
+It is tested through a real HTTP request, not only at the library level: the credential is issued and destroyed on
+success and on connector failure, and when the gateway's own attestation does not verify, no session or credential
+is created at all.
+
+For systems connected as external connectors there is no credential to protect. Parmana signs each release, the
+endpoint verifies the signature, and the credential handle is empty.
+
+## A lesson from my own refund path
+
+Refunds through Paytm show why where the key lives matters more than how good the checks are.
+
+Parmana never holds the Paytm merchant key. The gateway forwards an approved refund over HTTPS to a separate refund
+service, and that service is the only thing that holds the key and talks to Paytm. Parmana holds only a shared secret
+that proves the gateway is the caller.
+
+In September I found a flaw in that service. It also had a route that agents called to ask for a refund. That route
+asked Parmana, and when Parmana approved and released the refund through the gateway, the route then called Paytm
+itself as well. An approved refund could be paid twice. Every check in Parmana had passed correctly. The problem was
+that a component on the agent's side of the line still had a Paytm client.
+
+The fix removed it: that route no longer has a Paytm client and reads the result from the signed Trust Record. It
+was deployed on 28 September, and a refusal through it was verified in production. An approved refund making exactly
+one Paytm call is covered by that service's tests; I have not yet observed it live.
+
+## What it does not do
+
+- **It governs only what is routed through it.** An agent that has its own credentials to a system and never calls
+  Parmana is outside the boundary. Keeping credentials away from agents is a deployment property; Parmana cannot
+  enforce it.
+- **Enforcement is in software, not the network.** Anyone who holds a connector credential can call the downstream
+  system directly, and nothing records it.
+- **Isolation is proven for the mechanism and the connectors already wired** (Paytm, HubSpot, GitHub, Slack). A new
+  built-in connector needs bootstrap code; there is no "any connector gets this automatically" path yet.
+- **Connector secrets are static environment values in production today.** A provider that reads them from AWS
+  Secrets Manager exists but is not provisioned.
+- **The Paytm merchant key's handling inside the separate refund service is outside this repository** and is not
+  verified here.
+- **It does not prove the policy is right**, only that the approved one was applied.
+
+## Takeaway
+
+Checks you run next to the key are suggestions. Put the key behind the checks, give the agent nothing it could
+reuse, and make the one component that can act re-verify everything itself. And then look for every other place a
+key quietly survived on the wrong side of the line. I found one in my own system.

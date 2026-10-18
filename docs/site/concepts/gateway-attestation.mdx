@@ -1,0 +1,133 @@
+---
+title: "Gateway Attestation"
+description: "A request-bound signature proving the gateway itself released one specific request, separate from the authorization envelope's own signature. What it proves, and what it does not."
+---
+
+<Info>
+  **[AVAILABLE]**. `packages/execution-control/src/GatewayAttestation.ts`.
+</Info>
+
+## What it is
+
+Every time the [gateway](/concepts/the-gateway) releases an execution through
+`execution-control`, it mints a fresh, signed attestation proving it possesses the gateway's
+private key, for this specific request:
+
+```typescript
+// packages/execution-control/src/GatewayAttestation.ts
+export interface GatewayAttestationPayload {
+  readonly gatewayId: string;
+  readonly authorizationId: string;
+  readonly nonce: string;
+  readonly issuedAt: string;
+}
+```
+
+## Why it exists
+
+The [signed execution authorization](/concepts/execution-authorization) proves Parmana's
+policy engine approved an action. It does not, by itself, prove that _this specific gateway
+instance_, at _this specific moment_, is the one releasing it to a connector. A connector
+that trusts an authorization without also checking who's handing it over has no way to
+distinguish a legitimate release from anything else that got hold of a valid envelope.
+Gateway attestation is that second, separate check.
+
+## How it behaves
+
+```typescript
+// packages/execution-control/src/GatewayAttestation.ts:50-76
+export class GatewayAttestationSigner {
+  constructor(
+    private readonly clock: Clock,
+    private readonly idGenerator: IdGenerator,
+  ) {}
+
+  sign(
+    gatewayId: string,
+    authorizationId: string,
+    privateKey: KeyObject,
+  ): GatewayAttestation {
+    const payload = Object.freeze({
+      gatewayId,
+      authorizationId,
+      nonce: this.idGenerator.generate(),
+      issuedAt: this.clock.now().toISOString(),
+    });
+    const signature = sign(
+      null,
+      serializer.serialize(payload),
+      privateKey,
+    ).toString("base64");
+    return Object.freeze({ payload, signature });
+  }
+}
+```
+
+`authorizationId` binds the attestation to one specific request, so it cannot be replayed to
+authenticate a _different_ request. The default server mints one of these per release, using
+its own dedicated keypair (`gateway.private.pem` and `gateway.public.pem` in `PARMANA_KEY_DIR`;
+the key id is `PARMANA_GATEWAY_KEY_ID`, default `gateway`), deliberately separate from the
+authorization-verification key: see [Deploy patterns](/deployment/local) for why the keys
+are kept apart.
+
+## Minimal example
+
+```typescript
+const attestationSigner = new GatewayAttestationSigner(
+  new SystemClock(),
+  new RandomIdGenerator(),
+);
+const attestation = attestationSigner.sign(
+  gatewayId,
+  authorizationId,
+  gatewayPrivateKey,
+);
+// { payload: { gatewayId, authorizationId, nonce, issuedAt }, signature }
+
+const valid = verifyGatewayAttestationSignature(attestation, gatewayPublicKey);
+```
+
+## What it does not prove
+
+<Warning>
+  **This is the honest-scope note from the source code's own doc comment
+  (`GatewayAttestation.ts:10-28`), not a summary of it:** *"nonce is an
+  entropy/uniqueness field only, nothing in this file or in
+  `SignedTokenConnectorAuthenticator` records consumed nonces, so it is not
+  itself a replay defense. It exists so two attestations minted for the same
+  `authorizationId` (e.g. a retried call) are distinguishable, and so the signed
+  payload isn't otherwise fully deterministic from `(gatewayId, authorizationId,
+  issuedAt)` alone. Replay of the SAME attestation against the SAME request is
+  prevented elsewhere: the single-use `GatewaySession`
+  (`InMemoryGatewaySessionStore`) rejects a second execution attempt once a
+  session has been consumed, and replay of the underlying
+  `SignedExecutionAuthorization` itself is the responsibility of
+  `@parmana/envelope-verifier`'s `NonceStore`, upstream of everything in this
+  package. If this attestation's nonce needs to independently defend against
+  replay in the future, a consumer would need to track seen `(gatewayId, nonce)`
+  pairs, nothing here does."*
+</Warning>
+
+In short: gateway attestation proves _who_ released a request and binds that proof to _which_
+request, one signature answering one question. It relies on other, separate mechanisms
+(session consumption, the envelope's own nonce store) for replay protection, it doesn't
+duplicate them.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="Credential isolation"
+    icon="key"
+    href="/concepts/credential-isolation"
+  >
+    What happens after a gateway attestation is accepted: credential issuance.
+  </Card>
+  <Card
+    title="Determinism and clocks"
+    icon="clock"
+    href="/concepts/determinism-and-clocks"
+  >
+    The injected Clock and IdGenerator this attestation signer depends on.
+  </Card>
+</CardGroup>

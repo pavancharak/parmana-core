@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/business-signal-source-changes-list-response.schema.json",
+  "title": "Business Signal Source Changes List Response",
+  "description": "Response of GET /business-signal-sources/changes, newest first.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["changes"],
+  "properties": {
+    "changes": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/business-signal-source-change.schema.json"
+      }
+    }
+  }
+}

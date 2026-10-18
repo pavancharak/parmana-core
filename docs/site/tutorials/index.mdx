@@ -1,0 +1,291 @@
+---
+title: "Tutorials"
+description: "Numbered examples in examples/tutorials/, grouped by what they demonstrate. This page links to them, it does not duplicate their content."
+---
+
+<Info>
+  **[AVAILABLE]**, 113 run unattended via `npm run examples`
+  (`scripts/run-examples.ts`), confirmed passing this pass; one (09, noted
+  below) needs a live server and runs individually. Numbering has a few
+  intentional gaps (61, 63-68, 85), retired when the Razorpay connector was
+  deliberately removed from the codebase, never reused, see the note below. See
+  [Detect tampering](/guides/detect-tampering) and [Choose a signature
+  provider](/guides/choose-a-signature-provider) for guides built directly on
+  several of these.
+</Info>
+
+Run any of them directly: `node_modules/.bin/tsx examples/tutorials/<NN-name>/run.ts`.
+
+No AI agent action is authorized without a signed human approval, so every tutorial that shows
+an approved action has a demo approver sign one first (`examples/shared/helpers/demo-approval.ts`:
+a key made in memory, trusted only by that tutorial's own runtime). On a real deployment the
+approver is a person added through [Manage approvers](/guides/manage-approvers).
+
+<AccordionGroup>
+<Accordion title="Fundamentals (01-24)">
+
+| #   | Name                     | Demonstrates                                                                                                                                      |
+| --- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 01  | Hello World              | Constructing a `BusinessTransaction`, no execution yet                                                                                            |
+| 02  | Policy Evaluation        | `PolicyEngine.evaluate()` in isolation                                                                                                            |
+| 03  | Runtime Execution        | First full `RuntimeFactory` execution, using the `DefaultExecutionSystem` placeholder                                                             |
+| 04  | Policy Router            | Resolving a `PolicyReference` to a loaded policy                                                                                                  |
+| 05  | Verification             | Fresh verification appended to a trust record's history                                                                                           |
+| 06  | Replay                   | `@parmana/replay`'s real, scoped policy re-evaluation, see [Replay](/replay/overview)                                                             |
+| 07  | Receipt Generation       | The real, wired `Receipt` (via `@parmana/crypto`'s `ReceiptCrypto`)                                                                               |
+| 08  | Human Approval           | An `Authority` / `Authorization` / `Intent` chain without executing                                                                               |
+| 09  | REST API                 | `POST /transactions` over HTTP, excluded from the unattended batch, needs a live server, see [REST API Introduction](/api-reference/introduction) |
+| 10  | End-to-End               | Execute, verify, and receipt in one run, still via `DefaultExecutionSystem`                                                                       |
+| 11  | Execution Authorization  | The `SignedExecutionAuthorization` envelope itself, printed directly, see [Authorize and execute end to end](/guides/authorize-and-execute)       |
+| 12  | Envelope Verification    | `EnvelopeVerifier`'s per-check breakdown on a valid envelope                                                                                      |
+| 13  | Post-Quantum Signatures  | `config.crypto.primarySignatureProvider` read and printed                                                                                         |
+| 14  | Custom Policy            | Writing and evaluating a policy outside the shipped `vendor-payment` one, see [Write your first policy](/guides/write-your-first-policy)          |
+| 15  | Custom Runtime Component | Extending `RuntimePipeline` with a custom `RuntimeComponent`                                                                                      |
+| 16  | Runtime Pipeline         | The pipeline's stage composition, inspected directly                                                                                              |
+| 17  | Multi-Policy Routing     | Routing different transactions to different policies                                                                                              |
+| 18  | Runtime Hooks            | `RuntimeHook` / `RuntimeHookRunner` lifecycle callbacks                                                                                           |
+| 19  | Runtime Composition      | Assembling a `Runtime` from individual components                                                                                                 |
+| 20  | Batch Execution          | Multiple transactions through one runtime instance                                                                                                |
+| 21  | Partial Failure Handling | One transaction in a batch failing without stopping the rest                                                                                      |
+| 22  | Idempotent Execution     | Resubmitting the same `businessTransactionId`                                                                                                     |
+| 23  | Production Deployment    | Configuration shape for a non-local deployment                                                                                                    |
+| 24  | SDK Integration Patterns | Common client-side call patterns                                                                                                                  |
+
+</Accordion>
+<Accordion title="Execution authorization and envelope (25-34)">
+
+| #   | Name                                 | Demonstrates                                                                                                            |
+| --- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| 25  | Execution Permit Generation          | The signed execution authorization the runtime produces for an approved transaction                                     |
+| 26  | Execution Authorization Verification | `AuthorizationVerifier` checking a signature independent of the fuller envelope flow                                    |
+| 27  | Authorization Expiration             | An expired `expiresAt` rejected by `EnvelopeVerifier`                                                                   |
+| 28  | Envelope Replay Detection            | A reused nonce rejected on the second check                                                                             |
+| 29  | Authorization Tampering              | A mutated payload failing signature verification, per-check breakdown, see [Detect tampering](/guides/detect-tampering) |
+| 30  | Policy Version Pinning               | An authorization bound to one exact `policyVersion`                                                                     |
+| 31  | Authorization Binding                | `authorizationId` binding an authorization to one decision                                                              |
+| 32  | Execution Pipeline                   | The stages between decision and release, inspected directly                                                             |
+| 33  | Execution Boundary                   | Where policy evaluation ends and release begins                                                                         |
+| 34  | Execution Gateway                    | `ExecutionGateway` constructed and exercised directly, see [The gateway](/concepts/the-gateway)                         |
+
+</Accordion>
+<Accordion title="Gateway hardening: mutate, verify, watch it fail (35-46)">
+
+The same pattern each time: generate something valid, mutate exactly one thing, re-verify,
+confirm rejection. See [Detect tampering](/guides/detect-tampering) for three of these run
+live with real output.
+
+| #   | Name                  | What's mutated                                          |
+| --- | --------------------- | ------------------------------------------------------- |
+| 35  | Replay Attack         | The same authorization submitted twice                  |
+| 36  | Parameter Tampering   | A parameter inside the executable content               |
+| 37  | Action Substitution   | The `action` field                                      |
+| 38  | Target Substitution   | The `target` field                                      |
+| 39  | Policy Substitution   | The referenced policy                                   |
+| 40  | Signature Forgery     | The signature itself, signed by a different key         |
+| 41  | Expired Authorization | The clock, past `expiresAt`                             |
+| 42  | Nonce Reuse           | The nonce, submitted a second time                      |
+| 43  | Stolen Authorization  | A valid envelope replayed by a different party          |
+| 44  | Direct API Bypass     | Attempting to skip the gateway entirely                 |
+| 45  | Connector Bypass      | Attempting to reach a connector without a valid session |
+| 46  | TOCTOU Protection     | The full check-vs-use gap, end to end                   |
+
+</Accordion>
+<Accordion title="Cryptography (47-52)">
+
+| #   | Name                  | Demonstrates                                                                                                        |
+| --- | --------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 47  | Canonical JSON        | `CanonicalSerializer`'s key-sorted, deterministic output                                                            |
+| 48  | Deterministic Hashing | The same content hashing identically every time                                                                     |
+| 49  | Detached Signatures   | Signing content without embedding it in the signature artifact                                                      |
+| 50  | Ed25519               | Default signature provider, sign and verify, see [Choose a signature provider](/guides/choose-a-signature-provider) |
+| 51  | Dilithium3            | ML-DSA-65 (post-quantum), signing with the `pq` key, same guide                                                     |
+| 52  | Hybrid Signatures     | Both algorithms signing the same artifact at once, same guide                                                       |
+
+</Accordion>
+<Accordion title="Hybrid signing end to end (53-56)">
+
+These four once demonstrated a permit and receipt model that has since been deleted. They
+now run the real pipeline with `CRYPTO_MODE=hybrid` (Ed25519 and ML-DSA-65).
+
+| #   | Name                           | Demonstrates                                                                                       |
+| --- | ------------------------------ | -------------------------------------------------------------------------------------------------- |
+| 53  | Execution Permit               | A hybrid signed Execution Trust Record: the unchanged `signature` plus a `signatures` array of two |
+| 54  | Execution Receipt              | A hybrid signed Receipt from the same `application.execute()` call                                 |
+| 55  | Execution Receipt Verification | `application.verify()` on a hybrid record, then the same record with one signature tampered        |
+| 56  | Complete Execution Flow        | Execute, verify the genuine record, verify a tampered copy, and decide from both real results      |
+
+</Accordion>
+<Accordion title="Credential isolation (57-60)">
+
+| #   | Name                            | Demonstrates                                                                                                          |
+| --- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| 57  | Credential Isolation            | The concept end to end, at the library level                                                                          |
+| 58  | Session Credentials             | Issue, consume, expire, reuse-reject, revoke, see [Issue and verify session credentials](/guides/session-credentials) |
+| 59  | Secure Connectors               | Gateway attestation plus a `SessionCredentialSecureConnector`, including a spoofed-attestation rejection              |
+| 60  | End-to-End Enterprise Execution | The full credential-isolated path, one run                                                                            |
+
+</Accordion>
+<Accordion title="Signal/Intent binding (62)">
+
+<Info>
+  Tutorials 61, 63-68, and 85 don't exist. All were retired when the Razorpay
+  connector was deliberately removed from the codebase (`docs/CLAIMS.md`'s "Key
+  Compromise Notice" section and the connector-removal history), never reused.
+  `examples/README.md` in the source repository is the authoritative, current
+  tutorial list.
+</Info>
+
+| #   | Name                  | Demonstrates                                                                                                                                                                                                     |
+| --- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 62  | Signal/Intent Binding | `SignalIntentBinder` rejecting a caller-declared signal that doesn't match `intent`, and the same transaction approved once correctly bound. See [Security](/security/overview) for the live bypass this closed. |
+
+</Accordion>
+<Accordion title="HubSpot: connector, denial, verification, approval artifacts (69-72)">
+
+See [HubSpot](/integrations/hubspot) for the connector these exercise and its exact proven
+scope.
+
+| #   | Name                              | Demonstrates                                                                                                                                                                                |
+| --- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 69  | HubSpot Deal Update Connector     | The full path from a `BusinessTransaction` through policy to a real (mocked) `PATCH` call, via the same production composition `server.ts` itself calls                                     |
+| 70  | HubSpot Policy Denial             | A move out of a terminal pipeline stage rejected, the deal left completely untouched on HubSpot                                                                                             |
+| 71  | HubSpot Signal-State Verification | `HubSpotSignalStateVerifier` independently fetching the real deal and rejecting a caller-declared `currentDealStage` that disagrees with it                                                 |
+| 72  | HubSpot Approval Artifact         | An over-threshold amount change requiring a real, independently-issued, signed Approval Artifact scoped to the right deal and amount, not a bare `preAuthorizedForAmountChange: true` claim |
+
+</Accordion>
+<Accordion title="Refusal records and signed audit events (73-75)">
+
+| #   | Name                     | Demonstrates                                                                                                                                    |
+| --- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| 73  | Refusal Records          | A policy `REJECT` producing a durable, signed Refusal Record, retrievable and independently verifiable afterward                                |
+| 74  | Refusal Record Fail-Open | A Refusal Record write failure never blocking, delaying, or changing the actual rejection a caller receives; the record is evidence, not a gate |
+| 75  | Signed Audit Events      | Caller-authentication audit events signed with the same root of trust as every other Parmana artifact, tampering detectable                     |
+
+</Accordion>
+<Accordion title="Caller scoping and concurrency (76-78)">
+
+| #   | Name                       | Demonstrates                                                                                                                                 |
+| --- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 76  | Caller Principal Scoping   | `isPrincipalAllowed()`: fail-closed by default, an authenticated caller may only assert its own identity absent an explicit operator grant   |
+| 77  | Caller Ownership Scoping   | `isOwnedByCaller()`: one authenticated caller can't read another caller's transaction, trust record, or receipt history                      |
+| 78  | Duplicate Transaction Race | Two concurrent `create()` calls for the identical `businessTransactionId`, exactly one winning, the stored record never silently overwritten |
+
+</Accordion>
+<Accordion title="Storage and config validation (79-80)">
+
+| #   | Name                          | Demonstrates                                                                                                                                  |
+| --- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| 79  | Storage Backend Selection     | `StorageFactory.createFromEnvironment()`, and why `NODE_ENV=test` always resolves to in-memory regardless of other config                     |
+| 80  | Fail-Closed Config Validation | Invalid `CRYPTO_MODE`/`PARMANA_STORAGE`/`PARMANA_API_KEYS` values rejected at load time with a named, specific error, never a silent fallback |
+
+</Accordion>
+<Accordion title="Multi-connector composition (81-83)">
+
+| #   | Name                                | Demonstrates                                                                                                                                                                                                             |
+| --- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 81  | Connector Execution Gateway         | `GatewayConnectorRegistry` resolving a capability string to its registered connector, each connector failing closed independently when its own credentials are absent                                                    |
+| 82  | Composite Signal-State Verification | `CompositeSignalStateVerifier` composing the real `HubSpotSignalStateVerifier` with a second, illustrative hand-written verifier into the one verifier `RuntimeEngine` accepts, with no cross-contamination between them |
+| 83  | Capability/Policy Binding           | `CapabilityPolicyBinder` closing the gap where a real, fund-moving capability could be paired with the wrong, unprotected policy                                                                                         |
+
+</Accordion>
+<Accordion title="HTTP surface hardening (84, 88-91)">
+
+| #   | Name                       | Demonstrates                                                                                                                                                       |
+| --- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 84  | Caller Authentication      | The real Express caller-authentication middleware over a real listening server: valid/missing/invalid credentials, per-caller scoping, key rotation and revocation |
+| 88  | Malformed Request Handling | Malformed JSON and oversized request bodies returning specific `400`/`413` errors, not a generic `500`                                                             |
+| 89  | Readiness Probe            | `GET /ready`, distinct from `GET /health`, across memory-backed and (genuinely unreachable) Supabase-backed storage                                                |
+| 90  | OpenAPI Self-Description   | `GET /openapi.yaml` serving a valid, unauthenticated, fully-dereferenced OpenAPI 3.1 document, no unresolved `$ref`s                                               |
+| 91  | Graceful Shutdown          | The `SIGTERM`/`SIGINT` handler draining in-flight requests before exit, force-exiting on a hung close after a bounded timeout                                      |
+
+</Accordion>
+<Accordion title="Real-world fixtures and gateway internals (86-87, 92-93)">
+
+| #   | Name                        | Demonstrates                                                                                                                                                                      |
+| --- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 86  | Gateway Attestation         | `SignedTokenConnectorAuthenticator`'s full surface: payload tampering, the missing-attestation default, request-bound vs. signature-only checks, the trusted-connector allow-list |
+| 87  | Key Provider Path Traversal | `FileKeyProvider` rejecting a path-traversal `keyId` on every one of its four methods, before ever touching the filesystem                                                        |
+| 92  | Public API Boundary         | `@parmana/execution-gateway`'s internal implementation classes checked directly against the real compiled export surface, none reachable from outside                             |
+| 93  | Trust Record Ordering       | A Trust Record's collections preserving insertion order through a full round trip, hash and signature both still valid on reload                                                  |
+
+</Accordion>
+<Accordion title="SDK and generic verification (94-95)">
+
+| #   | Name                      | Demonstrates                                                                                                                                                 |
+| --- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 94  | SDK HTTP Transport        | The published TypeScript SDK's `HttpTransport`: bearer-key attachment and its full status-code-to-typed-error-class mapping, including `403`/`POLICY_DENIED` |
+| 95  | Generic Approval Verifier | `ApprovalVerifier` exercised directly, connector-agnostic, with its full nine-check breakdown and durable, cross-process replay protection                   |
+
+</Accordion>
+<Accordion title="Not yet indexed above (96-105)">
+
+<Info>
+  Tutorials 96 through 104 exist and pass in CI but aren't yet in the tables
+  above.
+</Info>
+
+**105: Tenant Key Isolation.** Demonstrates the per-tenant signing-key fix: a transaction
+with a provisioned `tenant.<tenantId>` key signs and verifies only under that key, an
+unprovisioned tenantId falls back silently to the shared default key, and a transaction with
+no tenantId is unaffected. Newly added to `scripts/run-examples.ts`'s list: it existed and
+worked standalone since its own commit, but `npm run examples` never exercised it until now.
+
+**106: API Key Issuance (Writing a New Policy).** A brand-new `policies/api-key-issuance/1.0.0`
+policy (now `1.1.0`, which also needs a signed human approval) and worked example showing how to author a policy correctly under the fail-closed
+`boundSignals` discipline and zero-conflict shape from the start, rather than retrofitting it
+afterward the way all 10 pre-existing policies needed. Also in `scripts/run-examples.ts`'s
+list from its first commit.
+
+**107: Offline Verification.** `verifyExecutionTrustRecordOffline` verifying a genuine
+record, a tampered one, and a wrong-key attempt, with zero disk/network/env-var access. One
+level stronger than [Verify a trust record independently](/guides/verify-independently)'s
+"server process stopped" proof.
+
+**108: Public-Key Discovery.** `GET /keys/:keyId` and `GET /.well-known/jwks.json`,
+unauthenticated, plus the full chain: a key fetched over real HTTP verifies a real record
+fully offline via Tutorial 107's function, with zero further server calls.
+
+**109: Durable-Evidence Key Rotation.** `PARMANA_VERIFICATION_KEY_ID` rotating the Trust
+Record/Refusal Record/Audit Event signing key to a freshly generated keyId without
+invalidating any already-issued signature. That property was previously false (the only
+prior "rotation" was overwriting the key file in place).
+
+**110: Hybrid-Signature Downgrade Protection.** The opt-in `HYBRID_SIGNATURE_REQUIRED` flag
+closing the gap where a hybrid-signed record's ML-DSA-65 signature could be silently stripped
+with no cryptographic trace, while leaving every already-issued record (default policy,
+unaffected) exactly as verifiable as before.
+
+</Accordion>
+
+<Accordion title="Human approval for every action (119-122)">
+
+No AI agent action is authorized without a signed human approval, reads included. See
+[Human approval](/concepts/human-approval).
+
+| #   | Name                                 | Demonstrates                                                                                                                                                                                                                  |
+| --- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 119 | Human approval for one action        | A refund under `customer-refund` 1.2.0 runs only with a manager's signed approval for that order and amount, used once; the gateway checks it again at release                                                                |
+| 120 | No action without approval           | `PolicyValidator` refuses every approve rule not gated by a signed approval (`always`, caller facts, an `any` branch, an undeclared signal); every policy in `policies/` checked; a runtime with no approval verifier refuses |
+| 121 | An approval for a read               | `github-pr-read` 1.1.0: a pull request read needs an approval for that pull request and that action; a reused approval, one for another pull request, and one for a merge are refused                                         |
+| 122 | An approval for a post and an update | `slack-post-message` 1.1.0 and `hubspot-deal-update` 1.1.0: an approval covers one channel or one deal; the content review and stage rules still refuse; an update approval is not a read approval (`hubspot-deal-read`)      |
+
+</Accordion>
+</AccordionGroup>
+
+## Scenarios
+
+Two production-shaped scenarios also live in `examples/scenarios/`, run manually via `npm
+run examples` (`scripts/run-examples.ts`), not currently part of CI: `expense-approval`,
+`purchase-order`. (A third, `vendor-payment`, existed here until `payments:execute` was
+removed from the repository entirely.)
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Detect tampering" icon="bug" href="/guides/detect-tampering">
+    Three of the tutorials above, run live with real output.
+  </Card>
+  <Card title="Limitations" icon="scale-balanced" href="/security/limitations">
+    What's tested, what's an honest gap, and how to verify any claim yourself.
+  </Card>
+</CardGroup>

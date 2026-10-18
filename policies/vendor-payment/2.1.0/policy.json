@@ -1,0 +1,162 @@
+{
+  "policyId": "vendor-payment",
+  "policyVersion": "2.1.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes vendor payments after validating vendor eligibility, invoice verification, payment approval, available funds, and payment risk assessment. Every authorization also needs a signed approval from a trusted person for this target, covering this amount, in signals.approvalArtifact with humanApproved true. The other signals can only refuse, never authorize on their own.",
+  "signalsSchema": {
+    "humanApproved": "boolean",
+    "vendorVerified": "boolean",
+    "invoiceVerified": "boolean",
+    "paymentApproved": "boolean",
+    "sufficientFunds": "boolean",
+    "paymentAmount": "number",
+    "riskScore": "number",
+    "vendorId": "string"
+  },
+  "boundSignals": {
+    "paymentAmount": "parameters.amount",
+    "vendorId": "target"
+  },
+  "unboundSignalReasons": {
+    "vendorVerified": "Independently attested by upstream vendor verification; no Intent-side equivalent field exists to bind against.",
+    "invoiceVerified": "Result of an independent invoice-verification check; not a value the Intent itself declares.",
+    "paymentApproved": "Attested by a separate payment-approval step; the Intent carries no approval-status field to bind against.",
+    "sufficientFunds": "Result of an independent funds-availability check against account state; not expressible via the Intent's target/parameters.",
+    "riskScore": "A computed payment-risk score, not a value the caller's Intent declares or could be checked against."
+  },
+  "approvalSignals": {
+    "humanApproved": {
+      "resourceId": "target",
+      "value": "parameters.amount"
+    }
+  },
+  "rules": [
+    {
+      "id": "approve-payment",
+      "condition": {
+        "all": [
+          {
+            "fact": "humanApproved",
+            "operator": "is_true"
+          },
+          {
+            "fact": "vendorVerified",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "invoiceVerified",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "paymentApproved",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "sufficientFunds",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "paymentAmount",
+            "operator": "gt",
+            "value": 0
+          },
+          {
+            "fact": "riskScore",
+            "operator": "lte",
+            "value": 20
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Vendor payment authorized. Vendor verification, invoice verification, payment approval, funding, and risk assessment requirements were satisfied, with a verified human approval."
+      }
+    },
+    {
+      "id": "reject-high-risk-payment",
+      "condition": {
+        "fact": "riskScore",
+        "operator": "gt",
+        "value": 20
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Vendor payment rejected because the assessed payment risk exceeds the maximum permitted threshold."
+      }
+    },
+    {
+      "id": "reject-unverified-vendor",
+      "condition": {
+        "fact": "vendorVerified",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Vendor payment rejected because the vendor has not been verified."
+      }
+    },
+    {
+      "id": "reject-unverified-invoice",
+      "condition": {
+        "fact": "invoiceVerified",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Vendor payment rejected because the invoice has not been verified."
+      }
+    },
+    {
+      "id": "reject-payment-not-approved",
+      "condition": {
+        "fact": "paymentApproved",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Vendor payment rejected because the required payment approval has not been granted."
+      }
+    },
+    {
+      "id": "reject-insufficient-funds",
+      "condition": {
+        "fact": "sufficientFunds",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Vendor payment rejected because sufficient funds are not available."
+      }
+    },
+    {
+      "id": "reject-invalid-payment-amount",
+      "condition": {
+        "fact": "paymentAmount",
+        "operator": "lte",
+        "value": 0
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Vendor payment rejected because the payment amount must be greater than zero."
+      }
+    },
+    {
+      "id": "reject-default",
+      "condition": {
+        "always": true
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Vendor payment rejected because one or more required policy conditions were not satisfied."
+      }
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+[
+  {
+    "connector": "hubspot:deal-update",
+    "case": "control: valid proof",
+    "rejected": false,
+    "message": "",
+    "dealStageAfter": "qualifiedtobuy",
+    "expected": "released, stage changed",
+    "verdict": "PASS"
+  },
+  {
+    "connector": "hubspot:deal-update",
+    "case": "no proof",
+    "rejected": true,
+    "message": "Execution Gateway rejected request: no authorization was presented.",
+    "dealStageAfter": "appointmentscheduled",
+    "expected": "rejected, stage unchanged",
+    "verdict": "PASS"
+  },
+  {
+    "connector": "hubspot:deal-update",
+    "case": "forged signature",
+    "rejected": true,
+    "message": "Execution Gateway rejected request: failed checks [signatureVerified, businessTransactionHashMatches].",
+    "dealStageAfter": "appointmentscheduled",
+    "expected": "rejected, stage unchanged",
+    "verdict": "PASS"
+  },
+  {
+    "connector": "hubspot:deal-update",
+    "case": "changed dealstage after approval",
+    "rejected": true,
+    "message": "Execution Gateway rejected request: failed checks [businessTransactionHashMatches]. businessTransactionHash mismatch: expected 9f1eb812513efa438592e0065fd61f144",
+    "dealStageAfter": "appointmentscheduled",
+    "expected": "rejected, stage unchanged",
+    "verdict": "PASS"
+  },
+  {
+    "connector": "hubspot:deal-update",
+    "case": "single authorization revoked",
+    "rejected": true,
+    "message": "Execution Gateway rejected request: failed checks [authorizationNotRevoked].",
+    "dealStageAfter": "appointmentscheduled",
+    "expected": "rejected, stage unchanged",
+    "verdict": "PASS"
+  },
+  {
+    "connector": "hubspot:deal-update",
+    "case": "expired proof",
+    "rejected": true,
+    "message": "Execution Gateway rejected request: failed checks [notExpired, businessTransactionHashMatches].",
+    "dealStageAfter": "appointmentscheduled",
+    "expected": "rejected, stage unchanged",
+    "verdict": "PASS"
+  },
+  {
+    "connector": "hubspot:deal-update",
+    "case": "replay step 1: first use",
+    "rejected": false,
+    "message": "",
+    "dealStageAfter": "qualifiedtobuy",
+    "expected": "released, stage changed",
+    "verdict": "PASS"
+  },
+  {
+    "connector": "hubspot:deal-update",
+    "case": "replay step 2: same proof again",
+    "rejected": true,
+    "message": "Execution Gateway rejected request for Business Transaction '4e1c0e8f-d3a9-4645-a93c-37e12bdaecc3': authorization nonce has already been consumed (replay of an ",
+    "dealStageAfter": "appointmentscheduled",
+    "expected": "rejected, stage unchanged",
+    "verdict": "PASS"
+  }
+]

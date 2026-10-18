@@ -1,0 +1,44 @@
+---
+sidebar_label: policy_change_results
+title: parmana.models.policy_change_results
+---
+
+Parmana policy governance responses.
+
+Hand-maintained: these are the response bodies of the
+/policies/.../pending-changes routes (packages/api/src/routes/
+pending-policy-changes.ts), which add fields to the generated
+PendingPolicyChange (policy_change.py), so python/scripts/generate_models.ts
+cannot generate them.
+
+## PolicyChangeDiff Objects
+
+```python
+@dataclass(frozen=True)
+class PolicyChangeDiff()
+```
+
+The content in effect now next to the proposed content.
+
+#### current
+
+None for a policy version that has no content in effect yet.
+
+## ProposedPolicyChange Objects
+
+```python
+@dataclass(frozen=True)
+class ProposedPolicyChange()
+```
+
+A proposal as returned when it is created, with any warnings the policy
+validator raised about it.
+
+## PolicyChangeForReview Objects
+
+```python
+@dataclass(frozen=True)
+class PolicyChangeForReview()
+```
+
+A policy change as listed for review.

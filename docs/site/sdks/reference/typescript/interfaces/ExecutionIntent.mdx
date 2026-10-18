@@ -1,0 +1,146 @@
+---
+title: "Interface: ExecutionIntent"
+---
+
+Defined in: [typescript/src/models/execution-intent.ts:18](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution-intent.ts#L18)
+
+Execution Intent (ADR-0012).
+
+A signed statement, made and stored BEFORE an action is released to a
+connector, of exactly what is about to be released. It exists so that an
+action that was released always has signed evidence behind it, even when the
+Execution Trust Record cannot be produced afterwards.
+
+It contains only facts that exist before release: never the execution
+result, and never the raw intent parameters (`businessTransactionHash` binds
+it to them). An intent proves what was about to be released. It does NOT
+prove the action was released, or what its result was. At most one exists per
+businessTransactionId.
+
+## Properties
+
+### intentId
+
+> `readonly` **intentId**: `string`
+
+Defined in: [typescript/src/models/execution-intent.ts:19](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution-intent.ts#L19)
+
+---
+
+### businessTransactionId
+
+> `readonly` **businessTransactionId**: `string`
+
+Defined in: [typescript/src/models/execution-intent.ts:20](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution-intent.ts#L20)
+
+---
+
+### decisionId
+
+> `readonly` **decisionId**: `string`
+
+Defined in: [typescript/src/models/execution-intent.ts:21](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution-intent.ts#L21)
+
+---
+
+### authorizationId
+
+> `readonly` **authorizationId**: `string`
+
+Defined in: [typescript/src/models/execution-intent.ts:22](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution-intent.ts#L22)
+
+---
+
+### policyName
+
+> `readonly` **policyName**: `string`
+
+Defined in: [typescript/src/models/execution-intent.ts:23](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution-intent.ts#L23)
+
+---
+
+### policyVersion
+
+> `readonly` **policyVersion**: `string`
+
+Defined in: [typescript/src/models/execution-intent.ts:24](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution-intent.ts#L24)
+
+---
+
+### policyContentHash?
+
+> `readonly` `optional` **policyContentHash?**: `string`
+
+Defined in: [typescript/src/models/execution-intent.ts:25](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution-intent.ts#L25)
+
+---
+
+### signalsHash?
+
+> `readonly` `optional` **signalsHash?**: `string`
+
+Defined in: [typescript/src/models/execution-intent.ts:26](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution-intent.ts#L26)
+
+---
+
+### businessTransactionHash
+
+> `readonly` **businessTransactionHash**: `string`
+
+Defined in: [typescript/src/models/execution-intent.ts:27](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution-intent.ts#L27)
+
+---
+
+### action
+
+> `readonly` **action**: `string`
+
+Defined in: [typescript/src/models/execution-intent.ts:28](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution-intent.ts#L28)
+
+---
+
+### target
+
+> `readonly` **target**: `string`
+
+Defined in: [typescript/src/models/execution-intent.ts:29](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution-intent.ts#L29)
+
+---
+
+### submittedBy?
+
+> `readonly` `optional` **submittedBy?**: `string`
+
+Defined in: [typescript/src/models/execution-intent.ts:30](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution-intent.ts#L30)
+
+---
+
+### grantedCapability?
+
+> `readonly` `optional` **grantedCapability?**: `string`
+
+Defined in: [typescript/src/models/execution-intent.ts:31](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution-intent.ts#L31)
+
+---
+
+### createdAt
+
+> `readonly` **createdAt**: `Date`
+
+Defined in: [typescript/src/models/execution-intent.ts:32](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution-intent.ts#L32)
+
+---
+
+### intentHash
+
+> `readonly` **intentHash**: `string`
+
+Defined in: [typescript/src/models/execution-intent.ts:33](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution-intent.ts#L33)
+
+---
+
+### signature
+
+> `readonly` **signature**: [`Signature`](/sdks/reference/typescript/interfaces/Signature)
+
+Defined in: [typescript/src/models/execution-intent.ts:34](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution-intent.ts#L34)

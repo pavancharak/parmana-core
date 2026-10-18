@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/requests/propose-authority-grant-change-request.schema.json",
+  "title": "Propose Authority Grant Change Request",
+  "description": "Request body for POST /authority-grants/changes. A grant carries validUntil and optionally limits and validFrom; a revoke carries none of them.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["action", "callerId", "capability", "reason"],
+  "properties": {
+    "action": {
+      "type": "string",
+      "enum": ["grant", "revoke"]
+    },
+    "callerId": {
+      "type": "string",
+      "pattern": "^\\S{1,256}$",
+      "description": "The callerId of the API key the grant is for. Not your own."
+    },
+    "capability": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*:[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*$",
+      "maxLength": 128
+    },
+    "limits": {
+      "type": "object",
+      "description": "Optional, grant only. Limits on the request, by Intent path: target or parameters.<name>. min and max (inclusive) apply to a number there; oneOf lists the only values allowed there. A request whose value is missing, of another type, or outside a limit is NOT_AUTHORIZED.",
+      "maxProperties": 32,
+      "propertyNames": {
+        "pattern": "^(?:target|parameters\\.[A-Za-z_][A-Za-z0-9_]{0,63})$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "minProperties": 1,
+        "properties": {
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          },
+          "oneOf": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 64,
+            "items": {
+              "type": ["string", "number"]
+            }
+          }
+        }
+      }
+    },
+    "validFrom": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Optional, grant only."
+    },
+    "validUntil": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Required for grant. In the future, after validFrom, and at most 366 days after it."
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    }
+  },
+  "examples": [
+    {
+      "action": "grant",
+      "callerId": "warehouse-agent",
+      "capability": "erp:release-goods",
+      "limits": {
+        "parameters.amount": {
+          "max": 100000
+        },
+        "parameters.currency": {
+          "oneOf": ["INR"]
+        }
+      },
+      "validUntil": "2026-12-30T00:00:00.000Z",
+      "reason": "The warehouse agent releases goods for paid invoices up to 100000 INR this quarter."
+    },
+    {
+      "action": "revoke",
+      "callerId": "warehouse-agent",
+      "capability": "erp:release-goods",
+      "reason": "The warehouse agent's key is being rotated."
+    }
+  ]
+}

@@ -1,0 +1,351 @@
+---
+title: "HubSpot"
+description: "Policy-gated updates to a HubSpot Deal's dealstage and amount. Hermetic by default, proven live against a real HubSpot developer/test account."
+---
+
+<Info>
+  **[AVAILABLE]**, hermetic test suite plus a live run against a real HubSpot
+  developer/test account. `packages/connector-hubspot/`. HubSpot, Paytm, GitHub,
+  and Slack are the real, wired connectors on the default server; everything
+  else offered as a reference (SAP, Salesforce, Workday, Oracle) is a mock, and
+  no other capability registers by default at all, see [The
+  gateway](/concepts/the-gateway).
+</Info>
+
+## What this connector does
+
+Updates one property, or two, on one HubSpot object type: a Deal's `dealstage`, optionally
+alongside `amount`, in a single `PATCH /crm/v3/objects/deals/{dealId}` call. Nothing else.
+It does not touch Contacts or Companies, does not delete or archive deals, has no webhook or
+event-driven trigger, and does not perform multi-object writes, see [ROADMAP] below. It does
+not change anything about the Execution Gateway, how policies are evaluated (see [Policies
+and the decision](/concepts/policies-and-the-decision)), Replay, Receipt Generation,
+Verification, or the REST API, those work exactly as documented elsewhere on this site.
+
+`@parmana/connector-hubspot` is a standalone package, not a subdirectory of
+`@parmana/connector-sdk` like the four reference mocks and Razorpay, it depends on
+`@parmana/connector-sdk`'s `Connector` contract the same way they do.
+
+## Deny-by-default at the property level
+
+A `hubspot:deal-update` request naming any property other than `dealstage` or `amount` is
+refused before any network call, not silently dropped:
+
+```typescript
+// packages/connector-hubspot/src/HubSpotConnector.ts (abridged, real source)
+const disallowedKeys = Object.keys(request.parameters).filter(
+  (key) =>
+    key !== "dealId" && !HUBSPOT_ALLOWED_DEAL_UPDATE_PROPERTIES.includes(key),
+);
+if (disallowedKeys.length > 0) {
+  throw new Error(
+    `HubSpotConnector refuses to update unsupported deal propert${disallowedKeys.length === 1 ? "y" : "ies"} ` +
+      `${disallowedKeys.map((key) => `"${key}"`).join(", ")}. Only dealstage, amount are touchable this milestone.`,
+  );
+}
+```
+
+Silently dropping an unsupported property could mask a caller's real intent behind an update
+that quietly did less than requested, refusing outright is the safer failure mode.
+
+## The policy model
+
+**Every deal update and every deal read needs a signed human approval** (since 2026-09-30).
+No AI agent action is authorized without one ([Human approval](/concepts/human-approval)).
+
+- `hubspot:deal-update` is bound to `policies/hubspot-deal-update/1.1.0/policy.json`. It
+  authorizes an update only with `dealUpdateApproved: true` and a signed approval for that deal
+  (`parameters.dealId`) in `signals.approvalArtifact`, whatever the amount. It still rejects a
+  proposed `dealstage` transition unless it moves strictly forward through a fixed default stage
+  order (`appointmentscheduled` → `qualifiedtobuy` → `presentationscheduled` →
+  `decisionmakerboughtin` → `contractsent` → `closedwon`), with one explicit exception: moving
+  to `closedlost` is allowed from any non-terminal stage. Any move backward, any move out of a
+  terminal stage (`closedwon` or `closedlost`), and any move to or from a stage id the order
+  doesn't recognize, are all rejected, even with an approval.
+- `hubspot:deal-fetch` is bound to its own policy, `policies/hubspot-deal-read/1.0.0/policy.json`,
+  which authorizes a read only with `readApproved: true` and a signed approval for that deal.
+
+`HubSpotSignalStateVerifier` (`packages/connector-hubspot/src/HubSpotSignalStateVerifier.ts`)
+still fetches the real deal and refuses an update whose declared stage and amount facts do not
+match it. The approval itself is checked by `ApprovalSignalVerifier`, like every other action:
+trusted and unrevoked approver, signature, expiry, action, deal, single use.
+
+<Note>
+  **Before 1.1.0.** `hubspot-deal-update` 1.0.0 authorized an update within the
+  amount threshold (10,000) with no person, and an amount change above it only
+  with `preAuthorizedForAmountChange: true` backed by a signed approval, which
+  `HubSpotSignalStateVerifier` checked itself. It also governed reads. 1.0.0 now
+  fails to load. Under 1.1.0 the verifier skips that pre authorization check,
+  because the policy declares `approvalSignals` and the one approval covers the
+  whole update. The approval covers the deal, not the new stage or amount: the
+  approver trusts the agent with those for that one use.
+</Note>
+
+`boundSignals` is present from this policy's first version, not added after a live
+demonstration of a signal/intent mismatch the way `razorpay-refund/1.0.0` was, on the
+now-removed Razorpay connector (see [Policies and the
+decision](/concepts/policies-and-the-decision) for that history):
+
+```json
+// policies/hubspot-deal-update/1.1.0/policy.json (excerpt, real source)
+"boundSignals": {
+  "proposedDealStage": "parameters.dealstage",
+  "proposedAmount": "parameters.amount"
+}
+```
+
+A caller's declared `proposedDealStage`/`proposedAmount` signals must exactly equal
+`intent.parameters.dealstage`/`intent.parameters.amount`, checked by `SignalIntentBinder`
+before policy evaluation ever runs, so the facts the policy approved describe the same
+update that actually executes, not just a payload that happens to look correct in
+isolation.
+
+## Try it: an authorized update and a denied one
+
+An authorized request, `dealstage` moving forward one step, and a denied one, an attempted
+backward move, sent to the real, production-wired `POST /execute` route in a hermetic test
+process (`packages/api/tests/integration/hubspot-deal-update.integration.test.ts`), captured
+from an actual local run, 2026-07-31:
+
+```json
+// Authorized: appointmentscheduled -> qualifiedtobuy
+{
+  "intent": {
+    "action": "hubspot:deal-update",
+    "target": "hubspot://deals/9001",
+    "parameters": { "dealId": "9001", "dealstage": "qualifiedtobuy" }
+  },
+  "policy": {
+    "name": "hubspot-deal-update",
+    "version": "1.1.0",
+    "schemaVersion": "1.0.0"
+  },
+  "signals": {
+    "currentDealStage": "appointmentscheduled",
+    "proposedDealStage": "qualifiedtobuy",
+    "dealStageChangeRequested": true,
+    "dealStageTransitionAllowed": true,
+    "amountChangeRequested": false,
+    "amountDeltaAbs": 0,
+    "amountChangeExceedsThreshold": false,
+    "dealUpdateApproved": true,
+    "approvalArtifact": {
+      "payload": { "...": "..." },
+      "signature": { "...": "..." }
+    }
+  }
+}
+```
+
+```
+Response status: 200
+```
+
+```json
+// Response body, trimmed to the fields this connector adds — the full shape is
+// the same ExecutionTrustRecord every route returns, see
+// [Execution Trust Record](/concepts/execution-trust-records)
+{
+  "executions": [
+    {
+      "decision": {
+        "outcome": "APPROVED",
+        "reason": "Deal update authorized. The dealstage transition (if any) is on an allowed path, and the amount change (if any) is within threshold or has been pre-authorized."
+      },
+      "evidence": {
+        "attributes": {
+          "connector": {
+            "connectorId": "hubspot",
+            "capability": "hubspot:deal-update",
+            "responseSummary": {
+              "success": true,
+              "metadata": {
+                "deal": {
+                  "id": "9001",
+                  "properties": {
+                    "dealstage": "qualifiedtobuy",
+                    "amount": "5000",
+                    "pipeline": "default"
+                  }
+                },
+                "bearerRedacted": "HUBSPOT_TEST_TOKEN"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
+```
+
+The denied request, same deal, an attempted backward move (`qualifiedtobuy` back to
+`appointmentscheduled`), rejected before the connector is ever dispatched, zero HubSpot API
+calls, confirmed by a `fetch` spy in the underlying test, not just by inspecting the
+response:
+
+```json
+{
+  "intent": {
+    "action": "hubspot:deal-update",
+    "target": "hubspot://deals/9001",
+    "parameters": { "dealId": "9001", "dealstage": "appointmentscheduled" }
+  },
+  "policy": {
+    "name": "hubspot-deal-update",
+    "version": "1.1.0",
+    "schemaVersion": "1.0.0"
+  },
+  "signals": {
+    "currentDealStage": "qualifiedtobuy",
+    "proposedDealStage": "appointmentscheduled",
+    "dealStageChangeRequested": true,
+    "dealStageTransitionAllowed": false,
+    "amountChangeRequested": false,
+    "amountDeltaAbs": 0,
+    "amountChangeExceedsThreshold": false,
+    "dealUpdateApproved": true,
+    "approvalArtifact": {
+      "payload": { "...": "..." },
+      "signature": { "...": "..." }
+    }
+  }
+}
+```
+
+```json
+// Response status: 403
+{
+  "error": "Execution rejected: Deal update rejected because the requested dealstage transition is not on an allowed forward path.",
+  "code": "POLICY_DENIED"
+}
+```
+
+## Try it without touching HubSpot at all
+
+```bash
+npx tsx examples/tutorials/69-hubspot-deal-update-connector/run.ts
+```
+
+No environment variables, no network calls. This spins up an in-process
+`MockHubSpotServer` with a placeholder test-mode token and drives one deal update through
+the exact same production bootstrap chain `server.ts` calls (`createExecutionSystem` →
+`createApplication`), pointed at the mock server via the connector's test seam, loading the
+real policy above from disk. Real output from a run against this exact code:
+
+```
+==================================================
+Tutorial 69 - HubSpot Deal Update Connector
+==================================================
+
+Decision
+--------------------------------------------------
+Outcome : APPROVED
+Reason  : Deal update authorized. The dealstage transition (if any) is on an allowed path, and the amount change (if any) is within threshold or has been pre-authorized.
+
+HubSpot Mock Server State
+--------------------------------------------------
+Deal 9001 dealstage : qualifiedtobuy
+
+✓ Deal update authorized and executed against the real connector.
+
+Tutorial Complete
+Next: Tutorial 70 - HubSpot Policy Denial
+```
+
+This one script covers the approved path only, tutorials 70-72 in the same directory cover
+policy denial, signal-state verification, and the signed approval-artifact check individually,
+see [Tutorials](/tutorials/index) for the full list. Covers `dealstage`/`amount` update only,
+nothing else demonstrated here.
+
+## Setup
+
+Create a **Private App** in the target HubSpot account (Settings → Integrations → Private
+Apps), scoped to exactly two CRM scopes:
+
+- `crm.objects.deals.read`
+- `crm.objects.deals.write`
+
+No broader scope is needed, and none is checked for by this connector, HubSpot itself will
+reject a request if the token's scopes are insufficient. The Private App generates one
+token, that's the credential this connector reads, there is no separate "key ID" the way
+Razorpay's Basic-auth credential has two parts.
+
+## Configuration
+
+| Variable                         | Purpose                                                                                                                                       |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `HUBSPOT_PRIVATE_APP_TOKEN`      | Production credential. Unset outside test mode means the connector is not registered at all, degrades gracefully rather than failing to boot. |
+| `TEST_HUBSPOT_PRIVATE_APP_TOKEN` | Test-mode override, read directly when `NODE_ENV=test`, no intermediate bridge variable.                                                      |
+| `ALLOW_LIVE_HUBSPOT`             | Opt-in for the gated live suite. Unset, that suite skips cleanly, does not run in a default `npm test`.                                       |
+| `TEST_HUBSPOT_DEAL_ID`           | A real test deal in the same account, required only for the live suite's mutating case. Absent, only that one case skips.                     |
+| `HUBSPOT_BASE_URL`               | Test seam only, points the connector at a mock server. Never set in production.                                                               |
+
+## What's proven where, precisely
+
+This is the part worth reading in full before deciding how much to trust this connector.
+
+- **43 unit tests across two packages** hit `MockHubSpotServer`, not the real network, and run
+  on every `npm test`, no gate required: `packages/connector-hubspot/tests/unit/` (31 tests,
+  including `HubSpotSignalStateVerifier.test.ts`'s Approval Artifact verification suite — a
+  matching artifact, an unknown issuer, a scope-escalated amount, a deal-id mismatch, and a
+  replayed nonce, each independently rejected or approved) and
+  `packages/execution-gateway/tests/unit/hubspot-connector.test.ts` (12 tests). Together
+  these cover the full authorize → verify → execute →
+  confirm chain, every policy rule branch, replay with zero second calls,
+  `businessTransactionHash` tamper rejection, and the placeholder-credential guard against a
+  real-shaped endpoint.
+- **`packages/api/tests/integration/hubspot-deal-update.integration.test.ts`** (6 tests)
+  drives the same real, production-wired `POST /execute` route this page's examples above
+  are captured from, against `MockHubSpotServer`. A policy denial here is proven to make zero
+  HubSpot calls two ways: the mock server's own state is confirmed unchanged, and a `fetch`
+  spy confirms literally nothing reached its base URL.
+- **`packages/api/tests/integration/hubspot-live.integration.test.ts`** (3 tests) is the
+  only test in this codebase that calls the real HubSpot API for this connector. Gated
+  behind `ALLOW_LIVE_HUBSPOT=1` plus a real `TEST_HUBSPOT_PRIVATE_APP_TOKEN` (must start with
+  `pat-`, checked before any network call), does not run in a default `npm test`. Run to
+  completion against a real HubSpot developer/test account: a reachability check against a
+  non-existent deal id, a policy denial proven to make zero real HubSpot calls, and a
+  non-destructive amount change against a real test deal, read live, nudged by a small
+  within-threshold delta, verified via an independent live read, then reverted to its
+  original value in the same run, safe to repeat, unlike an irreversible action.
+
+## [ROADMAP]
+
+- **Contacts and Companies.** No implementation exists. This connector covers Deal
+  `dealstage`/`amount` update only.
+- **Delete or archive a deal.** No implementation exists, deny-by-default this milestone
+  touches only `dealstage`/`amount` on an existing deal.
+- **A webhook or event-driven trigger.** No implementation exists. This connector is
+  request-response only; the now-removed Razorpay connector had an asynchronous
+  confirmation loop for its refund lifecycle, but that mechanism was removed along with it
+  2026-08-12.
+- **Multi-object transactions.** No implementation exists, each `hubspot:deal-update` call
+  is a single Deal write.
+- **Per-pipeline stage-transition rules.** The forward-only stage order above is one global
+  order, not keyed by a deal's own `pipeline` property. `isHubSpotStageTransitionAllowed`
+  accepts a `stageOrder` override, nothing wires it to a pipeline yet.
+- **An approval bound to the new stage or amount.** The signed approval every update needs
+  names the deal, not the values written. Approvers are added through
+  [Manage approvers](/guides/manage-approvers); with none trusted, every HubSpot read and
+  update is refused.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="Connector Development Guide"
+    icon="plug"
+    href="/integrations/connector-development-guide"
+  >
+    The pattern this connector follows, and how to build the next one.
+  </Card>
+  <Card
+    title="Policies and the decision"
+    icon="scale-balanced"
+    href="/concepts/policies-and-the-decision"
+  >
+    What `boundSignals` closes, and why it's here from this policy's first
+    version.
+  </Card>
+</CardGroup>

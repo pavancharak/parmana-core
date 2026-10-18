@@ -1,0 +1,47 @@
+---
+title: "License and evaluation"
+description: "The Parmana server is proprietary software, source-available for evaluation only. The client and connector SDKs are Apache 2.0."
+---
+
+<Warning>
+  **Proprietary software, evaluation only.** The Parmana repository is
+  source-available for evaluation purposes. No license is granted to use, copy,
+  modify, or distribute this software, in whole or in part, without a separate
+  written agreement with Parmana Systems. See
+  [LICENSE](https://github.com/pavancharak/parmana/blob/main/LICENSE). The
+  client SDKs and connector SDKs are the exception: they are licensed under the
+  Apache License 2.0 (see the table below).
+</Warning>
+
+## What evaluation covers
+
+Reading the source, building it, and running it to assess Parmana is permitted: the test
+suite, the examples, a local server, and the public [Playground](/playground). Any other
+use, including production deployment, redistribution, or derivative works, needs a
+separate written agreement.
+
+To evaluate from a fresh clone, follow [Evaluate Parmana](/evaluation/overview) (the same
+steps as [EVALUATION.md](https://github.com/pavancharak/parmana/blob/main/EVALUATION.md)).
+It needs Node.js 24.6 or later and no accounts, credentials or database. For a security
+review, continue with the [Audit guide](/evaluation/audit-guide).
+
+## What each package is licensed under
+
+| Package                                                             | License                                                                                            |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| The Parmana repository, apart from the SDKs below                   | Proprietary, evaluation only ([LICENSE](https://github.com/pavancharak/parmana/blob/main/LICENSE)) |
+| `@parmana/sdk` (npm) and `parmana` (PyPI)                           | Apache License 2.0                                                                                 |
+| `@parmana/connector-sdk` (npm) and `parmana-connector-sdk` (Python) | Apache License 2.0                                                                                 |
+| [`@parmana/sign`](/sdks/parmana-sign/overview)                      | Apache License 2.0, in its own repository                                                          |
+
+## Copyright and trademarks
+
+Copyright (c) 2026 Parmana Systems Private Limited. All rights reserved. "Parmana" and the
+Parmana logo are trademarks of Parmana Systems Private Limited. The license does not grant any
+right to use them, except to refer to this software accurately.
+
+## Licensing and questions
+
+Email [founder@parmanasystems.com](mailto:founder@parmanasystems.com) for a commercial
+license, a guided walkthrough, or questions. Report security issues privately as described
+in [SECURITY.md](https://github.com/pavancharak/parmana/blob/main/SECURITY.md).

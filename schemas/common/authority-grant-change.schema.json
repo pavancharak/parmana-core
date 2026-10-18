@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/authority-grant-change.schema.json",
+  "title": "Authority Grant Change",
+  "description": "A proposal to grant a caller authority for a capability, or to revoke the active grant, and its resolution (RFC-0023 phase 3). One person proposes it; a different person approves or rejects it with a step up authorization; neither may be the caller the grant is for.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "changeId",
+    "action",
+    "callerId",
+    "capability",
+    "reason",
+    "proposedBy",
+    "proposedAt",
+    "status"
+  ],
+  "properties": {
+    "changeId": {
+      "type": "string",
+      "description": "Unique id of the change, a UUID. The step up authorization for approve or reject names it in payload.pendingPolicyChangeId. An approved grant change's id is also the grantId."
+    },
+    "action": {
+      "type": "string",
+      "enum": ["grant", "revoke"]
+    },
+    "callerId": {
+      "type": "string"
+    },
+    "capability": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*:[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*$"
+    },
+    "limits": {
+      "type": "object",
+      "description": "grant only, optional. Limits on the request, by Intent path: target or parameters.<name>. min and max (inclusive) apply to a number there; oneOf lists the only values allowed there. A request whose value is missing, of another type, or outside a limit is NOT_AUTHORIZED.",
+      "maxProperties": 32,
+      "propertyNames": {
+        "pattern": "^(?:target|parameters\\.[A-Za-z_][A-Za-z0-9_]{0,63})$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "minProperties": 1,
+        "properties": {
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          },
+          "oneOf": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 64,
+            "items": {
+              "type": ["string", "number"]
+            }
+          }
+        }
+      }
+    },
+    "validFrom": {
+      "type": "string",
+      "format": "date-time",
+      "description": "grant only, optional. Without it the grant starts when it is approved."
+    },
+    "validUntil": {
+      "type": "string",
+      "format": "date-time",
+      "description": "grant only, required. At most 366 days after validFrom (or the proposal)."
+    },
+    "reason": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "proposedBy": {
+      "type": "string",
+      "description": "The proposer's caller id. Always a human credential, never the grantee."
+    },
+    "proposedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["PENDING_APPROVAL", "APPROVED", "REJECTED"]
+    },
+    "resolvedBy": {
+      "type": "string",
+      "description": "Who approved or rejected it. Never the proposer or the grantee."
+    },
+    "resolvedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "rejectionReason": {
+      "type": "string",
+      "description": "Present when REJECTED."
+    }
+  },
+  "examples": [
+    {
+      "changeId": "9f3cf733-a8ed-487c-bb58-a53950388cdf",
+      "action": "grant",
+      "callerId": "warehouse-agent",
+      "capability": "erp:release-goods",
+      "limits": {
+        "parameters.amount": {
+          "max": 100000
+        },
+        "parameters.currency": {
+          "oneOf": ["INR"]
+        }
+      },
+      "validUntil": "2026-12-30T00:00:00.000Z",
+      "reason": "The warehouse agent releases goods for paid invoices up to 100000 INR this quarter.",
+      "proposedBy": "grant-maker",
+      "proposedAt": "2026-10-11T03:29:05.220Z",
+      "status": "APPROVED",
+      "resolvedBy": "grant-checker",
+      "resolvedAt": "2026-10-11T03:29:05.247Z"
+    }
+  ]
+}

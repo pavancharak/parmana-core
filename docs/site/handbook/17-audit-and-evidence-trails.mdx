@@ -1,0 +1,150 @@
+---
+title: "Chapter 17: Audit and Evidence Trails"
+description: "Parmana keeps several distinct, signed, durable trails of what happened: refusal records for"
+---
+
+## What it is
+
+Parmana keeps several distinct, signed, durable trails of what happened: refusal records for
+rejected policy decisions, caller audit events for every authentication and authorization
+decision, execution audit events for the execution control lifecycle, and an explicit evidence
+anchor that ties a trust record's policy content, governance status, and connector evidence
+together into one checkable pointer. These are separate mechanisms with separate scopes, not
+one generic "audit log," and each exists to answer a specific question an auditor might ask.
+
+## Why it was built
+
+An approval trail is only half the story. A system that only records what it approved cannot
+prove it correctly rejected everything it should have rejected, cannot prove a caller's
+authentication decisions were consistent over time, and cannot prove that a trust record's
+policy content, its governance status, and the connector evidence backing it are genuinely
+linked rather than merely sitting next to each other in the same object. Each trail here closes
+one of those specific gaps, added incrementally as each gap was found.
+
+## How it works
+
+### Refusal Records (RFC-0021)
+
+`RefusalRecord` (`packages/shared/src/domain/refusal-record.ts`) is the durable, signed,
+independently verifiable REJECT-path counterpart to `ExecutionTrustRecord`. Its own doc comment
+is explicit about scope: it covers `PolicyEngine.evaluate` REJECTs and `SignalIntentBinder`
+binding-violation REJECTs only, not every kind of rejection this system can produce. Caller-auth
+failures and webhook signature failures are a separate, unsigned audit-sink milestone (see
+"Caller Audit Events" below), RFC-0021's own Non-Goals section draws this line. Unlike
+`ExecutionTrustRecord`, a `RefusalRecord` is not an append-only aggregate with sub-histories: a
+refusal is a single terminal event, so there is at most one per `businessTransactionId`.
+
+The record carries the exact rejected `Decision` (not summarized or reconstructed, the same
+`Decision` object `RuntimeEngine` already built), the `evaluatedIntent` snapshot, and, only when
+the rejection came from `SignalIntentBinder`, `bindingViolations`. Since 2026-10-06 it also carries
+`policyContentHash`, the hash of the policy content that decided the refusal, computed by `RuntimeEngine` from the
+policy that loaded, the same value an `ExecutionTrustRecord` carries in `transaction.policy.contentHash`; older
+records omit it and still verify. `RefusalRecordBuilder`
+(`packages/runtime/src/RefusalRecordBuilder.ts`) constructs and hashes the draft, then
+`RefusalCrypto` (`packages/crypto/src/RefusalCrypto.ts`) signs it, deliberately reusing the same
+signing stack and `DEFAULT_KEY_ID` as `VerificationCrypto`, so approvals and refusals share one
+root of trust (RFC-0021 §2), not two keys to manage. `RefusalCrypto.canonicalRecord()` excludes
+the signature itself from what gets hashed and signed, the same discipline every other signed
+artifact in this codebase follows.
+
+### Caller Audit Events
+
+`SupabaseCallerAuditSink` (`packages/api/src/auth/SupabaseCallerAuditSink.ts`) durably records
+every caller-authentication decision: success, failure, capability checks, principal checks.
+Its own doc comment traces its own history precisely: it closes G-13 (a prior in-memory-only
+sink lost every event on restart), and four of its columns were each added in a separate,
+dated migration as a distinct milestone landed, `capability` (2026-08-12, capability-scoping),
+`principalId` (2026-08-16, principal-scoping), `severity` (2026-08-18, policy-governance),
+`businessTransactionId` (2026-08-24, G-29 structural-validation audit). Every event is signed at
+write time (`AuditEventCrypto`), before any storage-only field like an insert timestamp is
+added, a plain durable row could otherwise be altered by anyone with direct database access
+with no way to detect it.
+
+One real, named operational detail worth knowing if you ever touch this class: it writes via a
+direct Postgres connection (`PostgresPoolFactory`), not `supabase-js`, because of a confirmed
+Supabase-side bug (ticket SU-437429) where PostgREST's schema cache refused to see the
+`signature_json` column. This is documented in the class's own comment as a temporary
+workaround at the PostgREST layer specifically, not a problem with the database or this
+codebase's own schema.
+
+Failure semantics are explicit and deliberately unchanged from the sink this replaced:
+`record()` is an unguarded `await` in the caller-auth middleware with no try/catch around it. A
+write failure here rejects the promise exactly like any other failed Supabase insert elsewhere
+in this codebase; it is the caller's existing (unmodified) behavior that decides what happens
+next, documented rather than silently changed.
+
+### Execution Audit Events
+
+`SupabaseExecutionAuditSink` (`packages/storage/src/supabase/SupabaseExecutionAuditSink.ts`)
+covers the execution-control lifecycle separately from caller authentication. Per the
+[Database Schema Reference](/storage/schema-reference) (verify this claim yourself if you
+touch this table, it is a real operational fact worth confirming against current deployment
+config, not just trusting a comment), the underlying `execution_audit_events` table is shared
+cross-repository with a separate `parmana-paytm-agent` repository, meaning this table's schema
+is a contract between two codebases, not something to change unilaterally from this one.
+
+### Evidence Anchor
+
+`EvidenceAnchor` (`packages/shared/src/domain/evidence-anchor.ts`) is the newest of these
+mechanisms. Its own doc comment states plainly what it is and is not: not a new cryptographic
+guarantee (`policyContentHash`, the governance anchor, and connector evidence were already
+bound together implicitly, since all three already sit inside the same `ExecutionTrustRecord`
+that `trustRecordHash`/`signature` cover in full), what it adds is a single,
+explicitly-named, independently-computed pointer, `{policyContentHash, governanceAnchorStatus,
+connectorEvidenceHash, anchorHash}`, that an auditor can check without already knowing to reach
+into `transaction.policy` and `executions[].evidence.attributes.connector` separately and
+reconstruct the binding themselves. `anchorHash` is a `TrustRecordHasher` hash of the
+canonicalized triple, computed the same way every other artifact hash in this codebase is.
+`BusinessTrustRecordBuilder.buildEvidenceAnchor()` (`packages/runtime/src/`) builds it; every
+field is optional individually (absent when there was nothing to anchor), but `anchorHash` is
+always present.
+
+### Policy Governance Anchor Resolver
+
+`PolicyGovernanceAnchorResolver` (`packages/api/src/governance/PolicyGovernanceAnchorResolver.ts`)
+performs three checks against `PolicyChangeApprovalRecordRepository`, in order: does an approval
+record exist for this `(policyName, policyVersion)` at all (`NO_APPROVAL_RECORD` if not); does
+its signature verify (`SIGNATURE_INVALID` if not); does its `contentHashAfter` match the policy
+content actually used for this decision (`CONTENT_MISMATCH` if not). A clean pass returns
+`VERIFIED`. Critically, this class is wired unconditionally into `RuntimeEngine`, with no feature
+flag, because it only ever records what it found, it never blocks execution. This is the
+deliberate opposite of `PolicyGovernanceExecutionVerifier` (the execution-time enforcement gate
+covered in Chapter 8/10's territory, not here), which has the same three checks but is
+enforced (on everywhere except `NODE_ENV` `test` and `development`) precisely because a
+violation there must refuse a real execution. The class's own comment names this distinction explicitly and traces it to
+RFC-0022's precedent (`SignalStateVerifier`/`PolicyExecutionVerifier`): keep enforcement and
+evidentiary concerns in separate types even when their logic overlaps, rather than
+deduplicating into one shared helper with two different blast radii.
+
+## How it enables things, with a concrete example
+
+`packages/api/tests/integration/refusal-record.integration.test.ts` and
+`packages/api/tests/integration/structural-validation-audit.integration.test.ts` exercise the
+refusal and caller-audit paths at the real HTTP boundary. No standalone tutorial in
+`examples/tutorials/` exercises `EvidenceAnchor`/`PolicyGovernanceAnchorResolver` directly as of
+this writing, their coverage lives in `packages/api/tests/unit/PolicyGovernanceAnchorResolver.test.ts`
+and two `packages/runtime/tests/e2e/runtime.e2e.test.ts` cases (result stamped correctly on a
+real execution; a resolver failure never blocks one). Said honestly: this is real, tested,
+production-wired code, just not yet demonstrated as a narrative tutorial the way policy
+governance itself is (Chapter 7).
+
+## How to validate this yourself
+
+- `packages/shared/src/domain/refusal-record.ts`, `packages/runtime/src/RefusalRecordBuilder.ts`,
+  `packages/crypto/src/RefusalCrypto.ts`
+- `packages/api/src/auth/SupabaseCallerAuditSink.ts` and its migrations, named in its own
+  comment, under `supabase/migrations/`
+- `packages/storage/src/supabase/SupabaseExecutionAuditSink.ts`
+- `packages/shared/src/domain/evidence-anchor.ts`,
+  `packages/api/src/governance/PolicyGovernanceAnchorResolver.ts`
+- `packages/api/tests/unit/PolicyGovernanceAnchorResolver.test.ts`,
+  `packages/api/tests/integration/refusal-record.integration.test.ts`,
+  `packages/api/tests/integration/structural-validation-audit.integration.test.ts`
+
+## Integration requirements
+
+`DATABASE_URL` (direct Postgres connection) for `SupabaseCallerAuditSink` and
+`SupabaseExecutionAuditSink` to persist durably; without it, this codebase falls back to
+in-memory sinks that lose events on restart (correct for tests, not for production). No
+separate configuration is needed for `EvidenceAnchor`/`PolicyGovernanceAnchorResolver`, they
+are wired unconditionally whenever `RuntimeEngine` is constructed.

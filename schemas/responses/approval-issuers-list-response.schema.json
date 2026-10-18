@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/approval-issuers-list-response.schema.json",
+  "title": "Approver Keys List Response",
+  "description": "Response of GET /approval-issuers: keys in code first, then keys added through approver changes, revoked ones included.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["issuers"],
+  "properties": {
+    "issuers": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/approval-issuer.schema.json"
+      }
+    }
+  }
+}

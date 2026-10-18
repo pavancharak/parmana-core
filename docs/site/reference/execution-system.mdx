@@ -1,0 +1,67 @@
+---
+title: "@parmana/execution-system"
+description: "The single interface every execution boundary implements: a no-op placeholder, an HTTP forwarder, and the real Execution Gateway all plug into the same seam."
+---
+
+<Info>
+  **[AVAILABLE]**. `packages/execution-system`. Note `DefaultExecutionSystem`'s
+  real scope below, it is a placeholder, not a verified boundary.
+</Info>
+
+## Purpose
+
+Defines the one interface `RuntimeFactory.create()` needs to actually release an execution:
+`ExecutionSystem`. `DefaultExecutionSystem`, `HttpExecutionSystem`, and
+`@parmana/execution-gateway`'s `ExecutionGateway` are three different implementations of
+this exact interface, interchangeable without touching `RuntimeEngine` or
+`RuntimePipeline`.
+
+## Install
+
+Not published to npm. This is an internal package of this repository, used from a clone of it: `npm ci` at the repository root links every workspace package. The packages published to npm are [`@parmana/sdk`](/sdks/typescript), [`@parmana/connector-sdk`](/reference/connector-sdk) and [`@parmana/sign`](/sdks/parmana-sign/overview).
+
+## Key exports
+
+| Export                        | Signature / Stability                                                                                                                                                                                                                                                                                      |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ExecutionSystem` (interface) | `{ execute(request: ExecutionRequest): Promise<ExecutionResult> }`. [AVAILABLE]                                                                                                                                                                                                                            |
+| `DefaultExecutionSystem`      | [AVAILABLE], but a **placeholder**: `execute()` unconditionally returns `{ success: true, ... }`, echoing the request back. No policy re-check, no content-binding, no connector. Many tutorials (1-13) use this for simplicity to demonstrate the Runtime in isolation, it performs no real verification. |
+| `HttpExecutionSystem`         | [AVAILABLE]. `new HttpExecutionSystem({ baseUrl })`, `execute()` POSTs to `${baseUrl}/execute` and returns the parsed response.                                                                                                                                                                            |
+| `ExecutionRequest`            | `{ businessTransactionId, action, target, parameters }`                                                                                                                                                                                                                                                    |
+
+<Warning>
+  **`DefaultExecutionSystem` is not a smaller version of the gateway, it is a
+  stand-in that does nothing.** If you see it in a tutorial's source, that
+  tutorial is deliberately demonstrating the Runtime, Policy Engine, or trust
+  record shape in isolation, not the verified end-to-end pipeline. The default
+  `packages/api` server does **not** use `DefaultExecutionSystem`, it always
+  constructs a real `ExecutionGateway`, see [The
+  gateway](/concepts/the-gateway).
+</Warning>
+
+## Minimal example
+
+```typescript
+import { RuntimeFactory } from "@parmana/runtime";
+import { DefaultExecutionSystem } from "@parmana/execution-system";
+
+const application = RuntimeFactory.create(
+  transactionRepository,
+  trustRecordRepository,
+  policyRepository,
+  new DefaultExecutionSystem(), // placeholder, always succeeds
+);
+```
+
+For the real, verified boundary, see [@parmana/execution-gateway](/reference/execution-gateway).
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="The gateway" icon="shield-check" href="/concepts/the-gateway">
+    The real `ExecutionSystem` implementation the default server actually uses.
+  </Card>
+  <Card title="@parmana/runtime" icon="cog" href="/reference/runtime">
+    Where this interface is consumed.
+  </Card>
+</CardGroup>

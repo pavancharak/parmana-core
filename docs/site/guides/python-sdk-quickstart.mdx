@@ -1,0 +1,321 @@
+---
+title: "Python SDK Quickstart"
+description: "Get Parmana running end-to-end with the Python SDK: build a transaction, execute it, and read back a signed proof."
+---
+
+<Note>
+  This walks through the same flow as the top-level [Quickstart](/quickstart),
+  with more explanation at each step and a focus on the SDK's own ergonomics. If
+  you just want the fastest path to a working local server, use
+  [Quickstart](/quickstart) instead. This page assumes you're already inside a
+  local clone of [the Parmana repo](https://github.com/pavancharak/parmana) with
+  a server you can point at.
+</Note>
+
+<Tip>
+  **Want to see it work before you clone anything?** Point the SDK at the public
+  sandbox: `ParmanaClient(endpoint="https://parmana-sandbox.vercel.app",
+  api_key="2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME", timeout=120)`. The
+  [Playground](/playground) has a complete script for the published `parmana`
+  package, run against the sandbox before it was published.
+</Tip>
+
+## Prerequisites
+
+- **Python 3.10 or later** (`python --version`)
+- **Node.js** (to run the Parmana server locally, `node --version`)
+- A local clone of the Parmana repo, set up as in [Quickstart](/quickstart): `.env` copied from
+  `.env.example`, `npm ci` and `npm run build` run, and the `default` and `gateway` keys generated
+
+<Note>
+  No AI agent action is authorized without a signed human approval, reads
+  included ([Human approval](/concepts/human-approval)). In this walkthrough you
+  also play the approver: you make an approver key, the local server trusts it,
+  and you sign an approval before the agent's request.
+</Note>
+
+<Steps>
+  <Step title="Make a local approver key">
+    From the repo root:
+
+    ```bash
+    npx tsx scripts/generate-approver-key.ts \
+      --approver-id local-test-approver --key-id local-test-approver-key-1 \
+      --out-dir ~/.parmana
+    ```
+
+  </Step>
+
+  <Step title="Start the Runtime locally">
+    From the repo root, override storage to run with no external dependency, and trust the
+    approver key (honored only with `NODE_ENV=test`):
+
+    ```bash
+    NODE_ENV=test \
+      PARMANA_STORAGE=memory \
+      PARMANA_API_KEYS='[{"callerId":"demo","keyHash":"325ededd6c3b9988f623c7f964abb9b016b76b0f8b3474df0f7d7c23b941381f","allowedCapabilities":["test:fixture-execute"]}]' \
+      PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE=~/.parmana/local-test-approver__local-test-approver-key-1.public.pem \
+      npm run dev
+    ```
+
+    Confirm it's up:
+
+    ```bash
+    curl http://localhost:3000/health
+    # {"status":"UP"}
+    ```
+
+    With `NODE_ENV=test`, a generic, credential-free test connector (`test-fixture`) registers
+    automatically, no external credentials needed for this walkthrough. See [Quickstart](/quickstart)
+    for what each flag does and how to generate a local Gateway keypair if you haven't already.
+
+  </Step>
+
+  <Step title="Install the SDK">
+    ```bash
+    pip install parmana
+    ```
+
+    Real PyPI package. See [Python SDK](/sdks/python) for the current published version and what's
+    inside it (generated models, a typed error taxonomy, a real bearer-key `requests.Session()`).
+
+  </Step>
+
+  <Step title="Connect the client">
+    ```python
+    from parmana import ParmanaClient
+
+    client = ParmanaClient(endpoint="http://localhost:3000", api_key="my-secret-api-key")
+    ```
+
+    `PARMANA_API_KEYS` in the previous step holds one demo caller key for local development only:
+    `callerId: "demo"`, raw key `my-secret-api-key`, allowed to use `test:fixture-execute` and to
+    act as `demo`. Its raw key is public: never use it on a server anyone else can reach. `api_key` is optional only against a server
+    started with `PARMANA_AUTH_DISABLED=true`. Every real deployment requires one, and an
+    omitted/wrong key raises `AuthenticationError`, not a silent failure.
+
+  </Step>
+
+  <Step title="Sign the approval">
+    The approver's step, on the approver's machine. It approves this action, this target, up to
+    this amount, for 15 minutes, once:
+
+    ```python
+    from pathlib import Path
+
+    from parmana.crypto import sign_approval
+
+    approval = sign_approval(
+        private_key_pem=Path.home().joinpath(
+            ".parmana/local-test-approver__local-test-approver-key-1.private.pem"
+        ).read_text(),
+        approver_id="local-test-approver",
+        key_id="local-test-approver-key-1",
+        capability="test:fixture-execute",
+        resource_id="vendor://payments",
+        max_amount=1000,
+    )
+    ```
+
+    `parmana.crypto` needs `pip install "parmana[verify]"`.
+
+  </Step>
+
+  <Step title="Build a Business Transaction">
+    `create_business_transaction()` derives every id pair the server checks for internal consistency
+    (see [why that matters](/sdks/python#create_business_transaction-no-more-hand-synced-ids)), so
+    there's nothing to hand-assemble and get wrong:
+
+    ```python
+    from parmana import PolicyReference, create_business_transaction
+
+    transaction = create_business_transaction(
+        principal_id="demo",
+        purpose="Quickstart demo",
+        action="test:fixture-execute",
+        target="vendor://payments",
+        parameters={"amount": 1000, "currency": "USD"},
+        policy=PolicyReference(name="vendor-payment", version="2.1.0", schema_version="1.0.0"),
+        signals={
+            # The signed approval. Without it the request is refused.
+            "humanApproved": True,
+            "approvalArtifact": approval,
+            "vendorVerified": True,
+            "invoiceVerified": True,
+            "paymentApproved": True,
+            "sufficientFunds": True,
+            "paymentAmount": 1000,
+            "riskScore": 5,
+            # vendor-payment@2.1.0 declares boundSignals: { "vendorId": "target" }.
+            # This must exactly equal `target` above, checked before policy evaluation
+            # ever runs, or the request is rejected as a binding-tamper attempt.
+            "vendorId": "vendor://payments",
+        },
+    )
+
+    print(transaction.business_transaction_id)
+    ```
+
+    `test:fixture-execute` is a generic, credential-free capability built for exactly this kind of
+    walkthrough. It's unrelated to any real connector, and only registers when the server runs with
+    `NODE_ENV=test`.
+
+  </Step>
+
+  <Step title="Execute it">
+    One call runs the policy decision and, if approved, the connector. There's no separate
+    "authorize" step:
+
+    ```python
+    from parmana import ExecutionRejectedError
+
+    try:
+        trust_record = client.execution.execute(transaction)
+        print(f"Approved: {trust_record.trust_record_hash}")
+    except ExecutionRejectedError as exc:
+        print(f"Denied: {exc}")
+    ```
+
+    If the policy denies the transaction, `execute()` raises `ExecutionRejectedError` with the
+    policy's own reason in the message. It never returns a "REJECTED" status you'd have to check for.
+
+  </Step>
+
+  <Step title="Read the proof">
+    `trust_record` is a real, signed `ExecutionTrustRecord`:
+
+    ```python
+    print(f"Trust Record ID:     {trust_record.trust_record_id}")
+    print(f"Trust Record Hash:   {trust_record.trust_record_hash}")
+    print(f"Signature Algorithm: {trust_record.signature.algorithm}")
+    print(f"Decision:            {trust_record.executions[0].decision.outcome}")
+    print(f"Connector evidence:  {trust_record.executions[0].evidence}")
+    ```
+
+    This same call, run for real against a local server, is captured verbatim in
+    [Quickstart's "Real output" step](/quickstart). Expect the same shape (a fresh hash each run,
+    since the transaction and timestamp differ). See [Execution Trust
+    Records](/concepts/execution-trust-records) for the complete field-by-field shape, and [Verify
+    independently](/guides/verify-independently) to check the signature yourself instead of trusting
+    this output.
+
+  </Step>
+</Steps>
+
+## Full script
+
+```python
+from pathlib import Path
+
+from parmana import (
+    ExecutionRejectedError,
+    ParmanaClient,
+    PolicyReference,
+    create_business_transaction,
+)
+from parmana.crypto import sign_approval
+
+client = ParmanaClient(endpoint="http://localhost:3000", api_key="my-secret-api-key")
+
+approval = sign_approval(
+    private_key_pem=Path.home().joinpath(
+        ".parmana/local-test-approver__local-test-approver-key-1.private.pem"
+    ).read_text(),
+    approver_id="local-test-approver",
+    key_id="local-test-approver-key-1",
+    capability="test:fixture-execute",
+    resource_id="vendor://payments",
+    max_amount=1000,
+)
+
+transaction = create_business_transaction(
+    principal_id="demo",
+    purpose="Quickstart demo",
+    action="test:fixture-execute",
+    target="vendor://payments",
+    parameters={"amount": 1000, "currency": "USD"},
+    policy=PolicyReference(name="vendor-payment", version="2.1.0", schema_version="1.0.0"),
+    signals={
+        "humanApproved": True,
+        "approvalArtifact": approval,
+        "vendorVerified": True,
+        "invoiceVerified": True,
+        "paymentApproved": True,
+        "sufficientFunds": True,
+        "paymentAmount": 1000,
+        "riskScore": 5,
+        "vendorId": "vendor://payments",
+    },
+)
+
+try:
+    trust_record = client.execution.execute(transaction)
+    print(f"Trust Record Hash: {trust_record.trust_record_hash}")
+    print(f"Decision: {trust_record.executions[0].decision.outcome}")
+except ExecutionRejectedError as exc:
+    print(f"Denied: {exc}")
+```
+
+The same, already-tested version of this script lives at `python/examples/quickstart/run.py`;
+`python/tests/test_quickstart_example.py` runs it against a real, freshly-spawned server on every
+test run, so it's verified to work, not just syntax-checked.
+
+## Troubleshooting
+
+**`ConnectionError` / connection refused on `localhost:3000`**
+The server isn't running, or isn't listening on the port you're pointing at. Confirm with
+`curl http://localhost:3000/health`.
+
+**`ExecutionRejectedError` naming `humanApproved`**
+The approval is missing, expired, already used, for another target, below the amount, or signed
+by a key the server does not trust. Sign a fresh one, and check the server was started with
+`PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE` pointing at the matching public key.
+
+**`AuthenticationError` (401)**
+Either no `api_key` was passed against a server that requires one, or the key is wrong. Confirm
+the demo key matches what's in the repo's committed `.env`, or that `PARMANA_AUTH_DISABLED=true`
+is actually set if you intended to skip auth.
+
+**`ExecutionRejectedError`**
+The named policy denied the transaction. The exception message is the policy's own reason. Check
+that every signal the policy references is present in `signals`, and that any `boundSignals`
+field (like `vendorId` above) exactly matches its bound intent field.
+
+**`ValidationError` (400), often "X must equal Y"**
+A hand-built transaction had two of the three cross-checked id pairs out of sync. Use
+`create_business_transaction()` instead of constructing the object by hand. It makes this class
+of mistake structurally impossible.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="Python SDK Overview"
+    icon="book-open"
+    href="/guides/python-sdk-overview"
+  >
+    The concepts behind what you just ran: transactions, decisions, proofs.
+  </Card>
+  <Card
+    title="Python SDK for AI Agents"
+    icon="robot"
+    href="/guides/python-sdk-ai-agents"
+  >
+    Wire this into LangChain, CrewAI, FastAPI, and async agent code.
+  </Card>
+  <Card
+    title="Python SDK Production"
+    icon="server"
+    href="/guides/python-sdk-production"
+  >
+    Error handling, audit logging, and a deployment checklist.
+  </Card>
+  <Card
+    title="End-to-end: agent → Parmana → Paytm"
+    icon="route"
+    href="/guides/end-to-end-paytm-flow"
+  >
+    The same flow against a real connector and real infrastructure, not the
+    local test fixture.
+  </Card>
+</CardGroup>

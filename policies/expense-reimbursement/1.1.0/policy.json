@@ -1,0 +1,98 @@
+{
+  "policyId": "expense-reimbursement",
+  "policyVersion": "1.1.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes employee expense reimbursement after validating employee identity, receipt attachment, expense category approval, and amount limits. Worked example for LIVE-API-GUIDE.md's \"How to Write a New Policy\" section. Every authorization also needs a signed approval from a trusted person for this target, covering this amount, in signals.approvalArtifact with humanApproved true. The other signals can only refuse, never authorize on their own.",
+  "signalsSchema": {
+    "humanApproved": "boolean",
+    "employeeVerified": "boolean",
+    "expenseAmount": "number",
+    "receiptAttached": "boolean",
+    "categoryApproved": "boolean"
+  },
+  "boundSignals": {
+    "expenseAmount": "parameters.amount"
+  },
+  "unboundSignalReasons": {
+    "employeeVerified": "Independently attested by an HR/identity system; no Intent-side equivalent field exists to bind against.",
+    "receiptAttached": "Result of a document-upload check; not a value the Intent itself declares.",
+    "categoryApproved": "Result of an expense-category policy lookup, evaluated independently of this Intent."
+  },
+  "approvalSignals": {
+    "humanApproved": {
+      "resourceId": "target",
+      "value": "parameters.amount"
+    }
+  },
+  "rules": [
+    {
+      "id": "approve-expense",
+      "condition": {
+        "all": [
+          {
+            "fact": "humanApproved",
+            "operator": "is_true"
+          },
+          {
+            "fact": "employeeVerified",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "receiptAttached",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "categoryApproved",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "expenseAmount",
+            "operator": "lte",
+            "value": 5000
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Expense authorized: employee verified, receipt attached, category approved, amount within limit, with a verified human approval."
+      }
+    },
+    {
+      "id": "reject-missing-receipt",
+      "condition": {
+        "fact": "receiptAttached",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Expense rejected: no receipt attached."
+      }
+    },
+    {
+      "id": "reject-excessive-amount",
+      "condition": {
+        "fact": "expenseAmount",
+        "operator": "gt",
+        "value": 5000
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Expense rejected: amount exceeds the $5,000 auto-approval limit."
+      }
+    },
+    {
+      "id": "reject-default",
+      "condition": {
+        "always": true
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Expense rejected: one or more required conditions were not satisfied."
+      }
+    }
+  ]
+}

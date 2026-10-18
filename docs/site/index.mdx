@@ -1,0 +1,141 @@
+---
+title: "Welcome"
+description: "Parmana authorizes every action your AI agents propose, and gives you a signed proof you can verify independently."
+---
+
+Parmana sits between an AI agent (or a script, or a person) and the systems that carry out its
+actions. Before anything executes, Parmana checks it against a policy you write and issues a
+signed, single-use authorization. After it executes, you have an independently verifiable
+signed record of exactly what happened. The [Quickstart](/quickstart) runs a local server step
+by step.
+
+<Info>
+  **Proprietary software, evaluation only.** You may read, build and run Parmana
+  to assess it; any other use needs a written agreement. The client and
+  connector SDKs are the exception: they are open source under the Apache
+  License 2.0. See [License and evaluation](/license). Evaluators and auditors
+  start at [Evaluate Parmana](/evaluation/overview) and the [Audit
+  guide](/evaluation/audit-guide).
+</Info>
+
+<Tip>
+  **Try it now, with nothing to install.** The [Playground](/playground) is a
+  live Parmana sandbox with a published demo key: send a request, watch the
+  policy refuse it, get a signed approval, send it again, and verify the signed
+  record yourself. Every **Try it** panel in the [REST
+  API](/api-reference/introduction) tab calls the sandbox with the demo key
+  filled in.
+</Tip>
+
+<Note>
+  **AI agent reading this?** `GET /api-manifest.json` on any deployment is a
+  single machine-readable index of the OpenAPI spec, auth scheme, and both real
+  SDKs with their actual current package versions, no page-scraping required. To
+  call a live server right away, use the public sandbox at
+  `https://parmana-sandbox.vercel.app` with the demo key on the
+  [Playground](/playground). The [Quickstart](/quickstart) then gets you a
+  working local server and a real, committed test credential (not a production
+  secret) to call it with in under 10 minutes.
+</Note>
+
+## What Parmana is
+
+Think of how a card network authorizes a purchase. Visa doesn't stock the shelves or move the
+money itself. It decides, quickly and cryptographically, whether the transaction is allowed,
+then hands the merchant's bank a signed authorization to act on. **Parmana plays that role for
+automated business actions.** An agent proposes an action. Parmana's policy engine decides,
+deterministically, whether it's allowed. If approved, Parmana issues a signed, single-use,
+time-bounded authorization. Your own systems, through a Connector, are what actually execute
+it. Parmana never touches your systems directly, the same way a card network never touches
+the goods on the shelf.
+
+**No AI agent action is authorized without a signed human approval, reads included.** A policy
+can only approve when a trusted person has signed an approval for that action on that resource,
+and the approval is checked, not taken on the agent's word. See [Human approval](/concepts/human-approval).
+
+## The trust chain, at a glance
+
+```
+Caller (AI agent, script, or person)
+     │  proposes a Business Transaction
+     ▼
+Policy Engine  ──deterministic decision──►  APPROVED or REJECTED
+     │  (no matching rule denies by default: fail closed)
+     ▼  if APPROVED
+Signed Execution Authorization  (single-use, time-bounded, content-bound)
+     │
+     ▼
+Execution Gateway  ──independently re-verifies the signed envelope──►
+     │
+     ├─►  Session Credential Vault  (issues a scoped, single-use credential)
+     ▼
+Connector  (your system: an HTTP call, or a reference mock today)
+     │
+     ▼
+Execution Trust Record  (signed, independently verifiable)
+```
+
+Every stage in that chain is real, tested code, not a diagram of intent. The default local
+server (`packages/api/src/server.ts`) wires the Execution Gateway unconditionally: there is no
+code path where a request skips it. See [How Parmana thinks](/how-parmana-thinks) for what
+each stage guarantees and why.
+
+## Status tags used throughout this site
+
+<CardGroup cols={3}>
+  <Card title="[AVAILABLE]" icon="circle-check">
+    Built and tested in this repo today. Cites the source file(s) and/or test(s)
+    that prove it.
+  </Card>
+  <Card title="[PARTIAL]" icon="circle-half-stroke">
+    Exists, but incomplete. States exactly what works and what doesn't.
+  </Card>
+  <Card title="[ROADMAP]" icon="signpost">
+    Designed, not yet built. Says so in the first sentence, never documented as
+    if it ships.
+  </Card>
+</CardGroup>
+
+A page or section with no tag is a bug in this site, [file it as such](/contributing).
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Install to first authorized execution in under 10 minutes, using the
+    in-memory server.
+  </Card>
+  <Card title="Self hosted" icon="server" href="/self-hosted/overview">
+    Run Parmana on your own infrastructure with one Docker Compose command.
+    Decisions, keys and records stay in your network.
+  </Card>
+  <Card title="How Parmana thinks" icon="brain" href="/how-parmana-thinks">
+    The concepts behind the diagram above: policy, authorization, the gateway,
+    trust records.
+  </Card>
+  <Card
+    title="End-to-end: agent to Paytm"
+    icon="route"
+    href="/guides/end-to-end-paytm-flow"
+  >
+    The same flow against a real connector and real infrastructure, start to
+    finish.
+  </Card>
+  <Card title="SDKs" icon="code" href="/sdks/typescript">
+    TypeScript and Python, both published, both with a builder that removes the
+    most common integration mistake.
+  </Card>
+  <Card
+    title="Explore the REST API"
+    icon="terminal"
+    href="/api-reference/introduction"
+  >
+    One spec, three views: this site's per-route reference, a live Swagger UI to
+    try requests, and a read-only ReDoc page.
+  </Card>
+</CardGroup>
+
+<sub>
+  Content on this site is periodically verified against a specific commit; see
+  [Changelog](/changelog) for what changed and when.
+</sub>

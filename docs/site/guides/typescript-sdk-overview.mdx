@@ -1,0 +1,225 @@
+---
+title: "TypeScript SDK Overview"
+description: "What the TypeScript SDK does, when to reach for it, and the four objects every integration is built from."
+---
+
+The Parmana TypeScript SDK (`@parmana/sdk`) lets you integrate authorization into Node.js
+applications, AI agents, and backend services. Before any action executes, your code asks
+Parmana: "is this allowed?", and gets back a cryptographically signed answer, not just a
+boolean.
+
+## What it solves, in 30 seconds
+
+Your AI agent wants to issue a refund. Instead of handing it a payment-provider API key
+directly, your code:
+
+1. **Proposes** the action to Parmana as a Business Transaction (what, why, who, and the
+   facts a policy needs to decide).
+2. **Parmana decides**, synchronously, evaluating a named policy version against those
+   facts (amount limits, verification state, risk score, whatever the policy declares).
+3. **Your system executes** only if the decision is `APPROVED`, the SDK call throws
+   `ExecutionRejectedError` otherwise, there's no path where a rejected transaction
+   silently proceeds.
+4. **Proof is recorded**: an `ExecutionTrustRecord`, signed (Ed25519 or ML-DSA-65,
+   see [Choose a signature provider](/guides/choose-a-signature-provider)), independently
+   verifiable without trusting Parmana itself.
+
+**Result:** the agent never holds the downstream credential. The policy decides, not the
+agent's own reasoning about whether an action is safe.
+
+## When to use it
+
+Reach for the TypeScript SDK if:
+
+- You have an AI agent (LangChain.js, the Vercel AI SDK, a custom loop) that takes actions
+  with real consequences.
+- You need a durable, signed record of who did what, when, and under which policy, not
+  just an application log line.
+- You want a named, versioned policy to decide, instead of an `if`/`else` chain buried in
+  the agent's own code.
+- You're wiring an agent to a real system, a payment provider, a CRM, a vendor API, and
+  don't want that system's credentials anywhere near agent-generated text.
+
+It's a mismatch if you just need application logging (use a logger), have no
+consequential actions to gate (read-only lookups don't need authorization), or want
+authorization decisions that can't be expressed as a policy document evaluated against a
+fixed set of signals.
+
+## Core concepts
+
+```
+BusinessTransaction  →  Runtime decision   →  Execution   →  ExecutionTrustRecord
+(what you propose)      (policy evaluates)    (if approved)  (signed proof, returned
+                                                               from the same call)
+```
+
+Unlike a design with a separate "authorize" step and a separate "execute" step, Parmana's
+`POST /execute` does both in one round trip: the decision and the execution outcome come
+back together, in the `ExecutionTrustRecord`. There's no intermediate authorization token
+to pass to a second call.
+
+- **`BusinessTransaction`**, the request: an `authority` (who), an `authorization`
+  (why, the stated purpose), an `intent` (what, action, target, parameters), a `policy`
+  reference (name + version + schema version), and `signals` (the facts the policy
+  evaluates). You build one with [`createBusinessTransaction()`](#quick-example) rather
+  than assembling these five nested objects and their cross-referenced ids by hand.
+- **`ExecutionTrustRecord`**, the response: the transaction as accepted, the decision
+  (`outcome: "APPROVED" | "REJECTED"`, which policy rule matched), the execution outcome
+  and evidence if it ran, and a `signature` block you or anyone else can verify
+  independently (see [Verify independently](/guides/verify-independently)).
+- **Policy**, a named, versioned document your Runtime deployment loads
+  (`PARMANA_POLICY_DIR`), not something the SDK defines. See
+  [Write your first policy](/guides/write-your-first-policy).
+- **Signals**, the facts a policy's rules reference. Every signal a rule needs must be
+  present, and any `boundSignals` a policy declares are cross-checked against the matching
+  intent field before evaluation runs at all, a mismatch is rejected as a binding-tamper
+  attempt, not silently ignored (see [Content binding &
+  TOCTOU](/concepts/content-binding-toctou)).
+
+## Install
+
+```bash
+npm install @parmana/sdk
+```
+
+Real, published, installable with a plain `npm install`, see [TypeScript SDK](/sdks/typescript)
+for the install verification and package history.
+
+## Quick example
+
+```typescript
+import {
+  ParmanaClient,
+  HttpTransport,
+  createBusinessTransaction,
+  ExecutionRejectedError,
+} from "@parmana/sdk";
+
+const endpoint = "http://localhost:3000";
+const apiKey = process.env.PARMANA_API_KEY; // omit only for local dev against a server
+// started with PARMANA_AUTH_DISABLED=true
+
+const client = new ParmanaClient({
+  endpoint,
+  apiKey,
+  transport: new HttpTransport({ endpoint, apiKey }),
+});
+
+// The approver's signed approval for this action and resource, made with
+// signApproval() on the approver's machine and passed to the agent.
+const approval = pendingApprovals.get("vendor://payments");
+
+const transaction = createBusinessTransaction({
+  principalId: "ai-agent-001",
+  purpose: "Vendor payment approval",
+  action: "test:fixture-execute", // a test capability; registered only when the server runs with NODE_ENV=test
+  target: "vendor://payments",
+  parameters: { amount: 100, currency: "USD" },
+  policy: { name: "vendor-payment", version: "2.1.0", schemaVersion: "1.0.0" },
+  signals: {
+    // No agent action is authorized without a signed human approval: a trusted
+    // approver signs one for this target up to this amount (signApproval), and
+    // the agent attaches it. Without it the request is refused.
+    humanApproved: true,
+    approvalArtifact: approval,
+    vendorVerified: true,
+    invoiceVerified: true,
+    paymentApproved: true,
+    sufficientFunds: true,
+    paymentAmount: 100,
+    riskScore: 5,
+    vendorId: "vendor://payments", // must exactly equal `target`, see Core concepts above
+  },
+});
+
+try {
+  const trustRecord = await client.execute(transaction);
+  console.log(trustRecord.trustRecordId, trustRecord.signature.algorithm);
+} catch (error) {
+  if (error instanceof ExecutionRejectedError) {
+    console.log("Rejected:", error.message);
+  }
+  throw error;
+}
+```
+
+## Real-world example: a payment refund
+
+The same shape, applied to an actual connector instead of the local test fixture, this is
+what [End-to-end: agent → Parmana → Paytm](/guides/end-to-end-paytm-flow) runs against real,
+live infrastructure:
+
+```typescript
+// The approver's signed approval for this action and resource, made with
+// signApproval() on the approver's machine and passed to the agent.
+const approval = pendingApprovals.get("order-8842");
+
+const refund = createBusinessTransaction({
+  principalId: "ai-customer-service-agent",
+  purpose: "Customer-requested refund",
+  action: "paytm:refund",
+  target: "paytm://orders/order-8842",
+  parameters: {
+    orderId: "order-8842",
+    amount: 500,
+  },
+  policy: { name: "customer-refund", version: "1.2.0", schemaVersion: "1.0.0" },
+  signals: {
+    refundEligible: true,
+    fraudCheckPassed: true,
+    refundAmount: 500,
+    // Every refund needs the manager's signed approval for this order and
+    // amount (signApproval on the manager's machine). Without it: refused.
+    managerApproved: true,
+    approvalArtifact: approval,
+  },
+});
+
+const trustRecord = await client.execute(refund);
+// trustRecord.executions[0].evidence carries what the Paytm connector actually did;
+// trustRecord.signature is the independently verifiable proof.
+```
+
+## What Parmana guarantees
+
+- The agent never holds the downstream credential, only a registered Connector does, and
+  only for connectors currently configured (see
+  [Credential isolation](/concepts/credential-isolation)).
+- The decision is made by a named, versioned policy, not by agent reasoning.
+- A rejected transaction throws `ExecutionRejectedError`, there is no code path where a
+  rejection is silently treated as success.
+- Every execution produces a signed `ExecutionTrustRecord`, verifiable without trusting
+  Parmana itself.
+- Signal-to-intent binding is checked before policy evaluation runs, closing the gap where
+  an agent could satisfy a policy's signals while pointing the actual execution somewhere
+  else.
+- Full audit trail: who proposed it, what was decided, what ran, and proof of both.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="TypeScript SDK Quickstart"
+    icon="bolt"
+    href="/guides/typescript-sdk-quickstart"
+  >
+    Running end-to-end, locally, in under 10 minutes.
+  </Card>
+  <Card
+    title="TypeScript SDK for AI Agents"
+    icon="robot"
+    href="/guides/typescript-sdk-ai-agents"
+  >
+    LangChain.js, the Vercel AI SDK, and server-side integration patterns.
+  </Card>
+  <Card
+    title="TypeScript SDK in Production"
+    icon="server"
+    href="/guides/typescript-sdk-production"
+  >
+    Config, error handling, retries, audit logging, and a deployment checklist.
+  </Card>
+  <Card title="TypeScript SDK reference" icon="js" href="/sdks/typescript">
+    The exhaustive reference: full error taxonomy, model types, test suite.
+  </Card>
+</CardGroup>

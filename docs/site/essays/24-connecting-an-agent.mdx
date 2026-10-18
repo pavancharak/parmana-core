@@ -1,0 +1,79 @@
+---
+title: "Connecting an agent"
+description: ""
+---
+
+A developer has a support agent working. A customer writes in, the order was cancelled, and the agent decides a refund of ₹500 is due. The model can produce the right JSON in a second. The developer's question to me is practical: "What exactly does my agent send to Parmana, and what does it get back?"
+
+## The problem: agents guess
+
+An agent that guesses is a liability. Guess a policy version and it is refused when a new one is approved. Guess which facts a policy reads and it leaves one out. Guess that a timeout means "failed" and the customer is paid twice.
+
+So I tried to remove every guess. The agent asks the server what it needs, sends one object, and reads one answer from a fixed list.
+
+## The idea: the agent proposes, the server tells it what a proposal must carry
+
+The agent never decides whether an action is allowed. It proposes an intent ("refund ₹500 on this order"), Parmana decides, and the agent acts correctly on the answer.
+
+## How it works, step by step
+
+The integration page for agents is an ordered procedure, meant to be followed literally. In short:
+
+1. **Check the server.** `GET /health` and `GET /ready`. If `/ready` reports authentication switched off, the agent stops and sends nothing real. That server accepts requests from anyone.
+2. **Check its own key.** `GET /callers/me` returns the caller id and the actions the key may use. A refund agent's key should list `paytm:refund` and nothing else.
+3. **Ask what the policy needs.** `GET /policies/in-effect?capability=paytm:refund` returns the policy name and version in effect, every fact its rules read with the declared type, which facts must equal a value in the request (the refund amount must equal the amount being refunded), and which fact needs a signed human approval, with where in the request the approved resource and amount are.
+4. **Build one Business Transaction.** A JSON object with a fresh transaction id, the agent's authority, the purpose, the intent (action, target, parameters), the policy exactly as step 3 returned it, and the signals.
+5. **Send it** to `POST /execute`, once.
+6. **Read the answer** and act on the first matching case.
+
+Step 3 matters most. The answer never contains the rule conditions, only what a request must carry. If the server cannot read the policy, it answers `503`, never a partial answer. Ask again before every request: an approved new version takes effect at once.
+
+## The first answer is usually "no", and that is correct
+
+Every action needs a signed approval from a trusted person for that action and that resource, reads included. A server refuses to load a policy that could approve without one. So the agent's first refund request on a new order is refused with `403 POLICY_DENIED`.
+
+That is the normal first step. A person signs an approval on their own machine, naming the action, the order and the amount. It is usually valid for 15 minutes and works once. The agent sends a new request, with a new transaction id, the approval fact set to true and the signed approval attached. The server does not believe "true" on its own. It checks the signature, the approver, the action, the resource, the amount, the expiry and that the approval has not been used.
+
+## What comes back
+
+The agent reads one of a fixed set of answers. The ones that matter most:
+
+- **`200` with outcome `APPROVED`.** The action was released, and the response is a signed Execution Trust Record. Store it with the transaction id. It is the proof.
+- **`403 POLICY_DENIED`.** A rule refused, or an approval is missing. Final for that request. Do not tweak the request until it passes.
+- **`503` with `SIGNING_UNAVAILABLE` or `EXECUTION_INTENT_UNAVAILABLE`.** Refused before release. Nothing ran. Safe to try later with a new transaction id.
+- **`502 EXECUTION_OUTCOME_UNKNOWN` or `500 EXECUTION_RECORD_INCOMPLETE`.** The action was released. It may have happened. Never resend. Tell the operator.
+- **A timeout.** Unknown. Look the transaction up by its id first.
+
+Two rules sit above everything: never retry `POST /execute` automatically, and set a long timeout. In production on 2026-10-01 an approved request took 24 to 32 seconds end to end, longer than the SDKs' default 30 second timeout. The docs now say 120 seconds.
+
+## The SDKs
+
+There are two, at the same version:
+
+- **TypeScript:** `npm install @parmana/sdk`
+- **Python:** `pip install parmana`
+
+Both are at 1.6.0, published 2026-10-11, and cover the same product API. The parts an agent uses:
+
+- **A builder** (`createBusinessTransaction()`, `create_business_transaction()`) that generates the ids and keeps the linked ones consistent. Most early `400` errors were hand-written ids that must match.
+- **`policyInEffect()` and `policy_in_effect()`** for step 3, since 1.5.0.
+- **Typed errors** with the HTTP status and the server's code, so "nothing ran" and "it may have run" are different branches in code, not string matching.
+- **Offline verification** of a returned record with only the public key.
+
+Neither SDK retries `execute()`, deliberately.
+
+A public sandbox with one action that acts on nothing lets you see the refusal, get a demo approval and verify the record before connecting anything real.
+
+## What it does not do
+
+- **It does not check most facts the agent declares.** For a refund, "eligible" and "fraud check passed" are the agent's word. Under the current refund policy they can only cause a refusal, never an approval: the signed approval is what authorizes. Registering the business system that owns those facts is built, but no real one is connected yet.
+- **An approval does not fix every parameter.** It covers the action and the resource, and the amount where the policy names one. A Slack approval does not fix the message text.
+- **It does not hold a refused request open.** The agent sends a new one.
+- **A `200` needs a connector.** On a server with no connector for the action, an approved request gets `503 CONNECTOR_NOT_REGISTERED` and nothing runs.
+- **It is not fast.** Tens of seconds per approved request in production today, and the cause is not yet measured.
+- **Only TypeScript and Python.** No other SDK exists; anything that speaks HTTP can follow the procedure.
+- **It governs only what is routed through it.** An agent that also holds its own payment credentials can refund without asking anyone.
+
+## The takeaway
+
+Connecting an agent should be boring. Ask the server what it needs, send one object, read one answer, never retry blindly, and keep the signed record. The interesting part, the decision, belongs to the server and the person who approves.

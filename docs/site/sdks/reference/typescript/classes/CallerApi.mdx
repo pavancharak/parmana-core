@@ -1,0 +1,62 @@
+---
+title: "Class: CallerApi"
+---
+
+Defined in: [typescript/src/client/CallerApi.ts:14](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/CallerApi.ts#L14)
+
+## Constructors
+
+### Constructor
+
+> **new CallerApi**(`transport`): `CallerApi`
+
+Defined in: [typescript/src/client/CallerApi.ts:15](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/CallerApi.ts#L15)
+
+#### Parameters
+
+##### transport
+
+[`Transport`](/sdks/reference/typescript/interfaces/Transport)
+
+#### Returns
+
+`CallerApi`
+
+## Methods
+
+### me()
+
+> **me**(): `Promise`\<[`CallerIdentity`](/sdks/reference/typescript/interfaces/CallerIdentity)\>
+
+Defined in: [typescript/src/client/CallerApi.ts:22](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/CallerApi.ts#L22)
+
+Maps to GET /callers/me. Useful to check a key before sending
+requests: which principal IDs it may act for and which capabilities it
+may request.
+
+#### Returns
+
+`Promise`\<[`CallerIdentity`](/sdks/reference/typescript/interfaces/CallerIdentity)\>
+
+---
+
+### publicKey()
+
+> **publicKey**(`keyId`): `Promise`\<[`PublicKeyInfo`](/sdks/reference/typescript/interfaces/PublicKeyInfo)\>
+
+Defined in: [typescript/src/client/CallerApi.ts:37](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/CallerApi.ts#L37)
+
+Maps to GET /keys/{keyId}. Records are signed with the key `default`.
+Fetch it once, keep the PEM, and pass it to
+verifyExecutionTrustRecordOffline() or verifyExecutionIntentOffline().
+Needs no API key.
+
+#### Parameters
+
+##### keyId
+
+`string`
+
+#### Returns
+
+`Promise`\<[`PublicKeyInfo`](/sdks/reference/typescript/interfaces/PublicKeyInfo)\>

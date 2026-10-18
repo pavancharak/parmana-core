@@ -1,0 +1,21 @@
+---
+sidebar_label: api_error
+title: parmana.errors.api_error
+---
+
+## ParmanaError Objects
+
+```python
+class ParmanaError(Exception)
+```
+
+Canonical base exception for all Parmana SDK errors (see
+docs/site/sdks/api-coverage.mdx, parity rules). Every SDK-specific exception
+inherits from this class, mirroring
+typescript/src/errors/ParmanaError.ts.
+
+#### ApiError
+
+Backward-compatible alias -- this class was previously named
+ApiError. Existing `except ApiError` / `isinstance(e, ApiError)`
+code keeps working unchanged.

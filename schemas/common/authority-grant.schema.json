@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/authority-grant.schema.json",
+  "title": "Authority Grant",
+  "description": "Authority granted to one caller for one capability, within limits, until an expiry (RFC-0023 phase 3), made through authority grant changes. A policy with requireAuthorityGrant decides a request only when its authenticated caller holds a grant in force and the request is within its limits. Nothing is deleted: a revoked grant stays listed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "grantId",
+    "callerId",
+    "capability",
+    "validFrom",
+    "validUntil",
+    "status",
+    "grantedAt"
+  ],
+  "properties": {
+    "grantId": {
+      "type": "string",
+      "description": "The changeId of the approved grant change that created it."
+    },
+    "callerId": {
+      "type": "string",
+      "description": "The callerId of the API key the grant is for."
+    },
+    "capability": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*:[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*$"
+    },
+    "limits": {
+      "type": "object",
+      "description": "Limits on the request, by Intent path: target or parameters.<name>. min and max (inclusive) apply to a number there; oneOf lists the only values allowed there. A request whose value is missing, of another type, or outside a limit is NOT_AUTHORIZED.",
+      "maxProperties": 32,
+      "propertyNames": {
+        "pattern": "^(?:target|parameters\\.[A-Za-z_][A-Za-z0-9_]{0,63})$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "minProperties": 1,
+        "properties": {
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          },
+          "oneOf": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 64,
+            "items": {
+              "type": ["string", "number"]
+            }
+          }
+        }
+      }
+    },
+    "validFrom": {
+      "type": "string",
+      "format": "date-time",
+      "description": "From when it holds: the proposal's validFrom, or the approval time."
+    },
+    "validUntil": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Until when it holds. After this, requests are refused as AUTHORITY_EXPIRED."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "revoked"],
+      "description": "At most one active grant per caller and capability. Active says not revoked; check validFrom and validUntil for whether it is in force."
+    },
+    "grantedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "revokedByChangeId": {
+      "type": "string",
+      "description": "revoked only: the approved change that revoked it."
+    },
+    "revokedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "revoked only."
+    }
+  }
+}

@@ -1,0 +1,70 @@
+---
+title: "Connecting any system"
+description: ""
+---
+
+A finance team wants their agent to raise an invoice of ₹1,200 in the company's ERP. They have read that Parmana can require a signed approval before the agent acts, and they ask the obvious question: "Do you have an ERP connector?"
+
+No. And I would rather say that plainly than show them a box labelled "SAP" that talks to nothing.
+
+## The problem: every system is different, and connectors are where credentials live
+
+An authorization layer is only useful if the action goes through it. Something has to carry an approved action to the real system, and that something usually holds the keys. Build it badly and you leak a credential to the agent or open a side door around the check.
+
+## What is built in
+
+Four connectors ship with the server. Each registers only when its own credentials are configured:
+
+- **Paytm:** one action, a customer refund. It is a remote connector: Parmana forwards an approved refund to a separate service, which is the only thing that holds the Paytm merchant key.
+- **HubSpot:** updating a deal's stage and amount, and reading a deal. Nothing else. It was run live against a real HubSpot test account through a locally started server, not through the public deployment.
+- **GitHub:** reading a pull request and merging one. Tested against a mock GitHub server. A live run against a real GitHub App installation has not been done yet.
+- **Slack:** posting a message, only to a channel that is the request's target and on the server's allowlist. Slack was not configured in production when I last checked.
+
+In each case the agent never holds the credential. The gateway resolves it only after the decision is made, for that one call.
+
+## What is a mock, and says so
+
+The connector SDK also contains `SapConnector`, `OracleConnector`, `WorkdayConnector` and `SalesforceConnector`. They are reference mocks: in memory, deterministic, each carrying a comment saying it stands in "until the real enterprise connector is implemented". They never call SAP, Oracle, Workday or Salesforce, and none is wired into the default server. They give connector authors a realistic shape to work against.
+
+## The idea: put a small endpoint in front of the system, and register it
+
+For a system with no built-in connector, the answer since 2026-10-01 is an external endpoint, connected with no change to Parmana's code. The finance team runs a small HTTPS service in front of their ERP. Parmana sends it each approved invoice as a signed release. The endpoint checks the signature, acts with its own credentials, and answers. Parmana holds none of the ERP's credentials.
+
+The steps, in order:
+
+1. **Write a policy** for the action, say `erp:create-invoice`. It must require a signed approval: the server refuses a policy whose approve rule does not. Facts the agent declares can refuse, never authorize.
+2. **Two people approve the policy.** One proposes it, a second approves it with a step-up signature.
+3. **Run the endpoint.** There are examples in TypeScript and Python. The SDK helper, `verifyParmanaRelease` or `verify_parmana_release`, published in SDK 1.5.0, checks the signature, that the release is addressed to this endpoint, and that it has not expired.
+4. **Two people approve the registration:** the action, the endpoint, the policy, and the only parameter names Parmana may forward.
+5. **Grant the action to the agent's key**, and make sure an approver is trusted.
+
+From then on the agent follows the same procedure as for any action. Its first invoice for a customer is refused until an approver signs one, naming the customer and capping the amount.
+
+What the endpoint receives is narrow. A release names one capability, one target and the allowed parameters, the policy at its version, the approver, the authorization and the endpoint as its audience. It expires 60 seconds after it is issued. No shared secret is involved: the signature is the authentication.
+
+Parmana is also careful about where it sends things. It refuses an endpoint that is not `https`, names an IP address or `localhost`, or resolves to an address that is not public. It checks the address when the registration is proposed, again when it is approved, and before every release, then connects to the address it checked and follows no redirect.
+
+This was checked live in production once, on 2026-10-01, with an endpoint that acts on nothing. Without an approval the request was refused and nothing released; with one it was released and the record verified offline; the same approval reused was refused.
+
+## Execute only if still valid
+
+When a policy takes facts from a business system ("this invoice is paid"), the release carries them as signed conditions, each with a time it is valid until. The endpoint should check them in its own records, in the same transaction as the action, and decline if one no longer holds. Parmana records that nothing was done.
+
+## Writing a built-in connector
+
+For a deeper integration there is the connector SDK: a `Connector` interface with one `execute` method, a mock for hermetic tests, and a credential provider seam. A built-in connector is a source change: a package, an adapter inside the gateway, and an entry in the server's connector registry. The repository has a checklist for it.
+
+## What it does not do
+
+- **No real SAP, Oracle, Workday or Salesforce connector.** Also none for Stripe, ServiceNow, Jira or a database.
+- **An endpoint's answer is its claim.** The record proves what Parmana released and what the endpoint said, not what the ERP did.
+- **"Execute only if still valid" is the endpoint's job.** Parmana signs the conditions; it cannot make an endpoint check them. Built-in connectors get only the gateway's re-check before release.
+- **A new built-in connector needs a deploy.** New policy versions, approvers and external endpoints do not.
+- **Connector secrets are static environment values.** An AWS Secrets Manager provider exists in code but is not provisioned.
+- **Two credentials, not proven two people.** In the live check one person held the maker, checker and approver keys.
+- **It is slow.** An approved request took 24 to 32 seconds in production.
+- **A registered policy name is checked for form only.** If that policy has no approved version, every request for the action is refused.
+
+## The takeaway
+
+Parmana will not have a connector for every system, and I do not want to pretend otherwise with mocks dressed as integrations. What it can offer any system is a narrow, signed, expiring release that names exactly what a person approved, delivered to an endpoint you run and control, with the credentials staying on your side.

@@ -1,0 +1,79 @@
+---
+title: "An approval you can verify without trusting me"
+description: "Why 'check our logs' is not good enough for agents that act on your behalf, what signed records and signed approvals prove, and what they do not."
+---
+
+An AI agent issued a ₹40,000 refund last Tuesday. Today your auditor asks: **who approved it?**
+
+You open the admin panel. It says: "Approved by Priya (manager), 14:32." (Priya is an example.) Question answered?
+
+Not really. You have shown the auditor a row in a database, displayed by the same system that made the decision. Anyone
+with write access to that database could have written that row. The auditor is not verifying the approval; they are
+trusting whoever controls the logs.
+
+## Three questions a record must answer
+
+When an agent acts, a record is worth something only if it answers these **without asking the system that produced it
+to vouch for itself**:
+
+1. **What exactly was decided?** This action, on this object, with these parameters.
+2. **On what basis?** Which policy, which facts, whose approval.
+3. **Has anyone changed it since?**
+
+A log line can answer the first two. Only a signature answers the third.
+
+## Signatures, not rows
+
+Sign the record when the decision is made, with a private key that never leaves the deciding service. Publish the
+public key. Anyone holding the record and the public key can then check, on their own machine, that the record was
+produced by the holder of that key and that not one byte has changed. Edit the amount, the approver, the time or the
+outcome, and verification fails.
+
+Parmana does this for every decision:
+
+- **An approved and executed action** gets an [Execution Trust Record](/concepts/execution-trust-records): the
+  transaction, the decision, the facts it rested on, what was executed, hashed and signed.
+- **A refused action** gets a signed [Refusal Record](/concepts/refusal-records), so "the agent tried and was
+  stopped" is as provable as "the agent acted".
+- **The release itself is signed.** The system that performs the action receives a signed, short-lived, single-use
+  authorization and can verify it before acting, with the small `@parmana/envelope-verifier` package. A forged or
+  expired authorization is refused.
+
+## The approval is signed by the person
+
+"Approved by Priya" is not a field Parmana fills in. It is a **signature made with Priya's approver key**, over this
+specific action: this refund, this order, this amount, valid until a stated time, usable once. So an auditor can check
+that:
+
+- the approval matches the action; an approval for ₹4,000 cannot be reused for ₹40,000;
+- it was signed by a key registered to Priya, and that registration went through maker checker;
+- it was used once, before it expired.
+
+The signature is not a description of an approval. It is the approval.
+
+## Without trusting the vendor either
+
+The strongest form of the idea: you should not have to trust the authorization service itself. Its records should be
+checkable by your team, your auditor or your regulator, with their own tools, later, even if the service is gone. That
+is why the verification side is deliberately small: a public key, a signature check, an expiry check, a single-use
+check. See [Verify independently](/guides/verify-independently).
+
+## What a signature does not prove
+
+- **It proves who decided and that nothing changed, not that the decision was right.** A bad policy produces a
+  perfectly signed record of a bad decision. That still tells you exactly which policy version to fix.
+- **Facts are only as good as their source.** A record can show that the order system said "eligible" and signed it. It
+  cannot show the order system's data was accurate.
+- **Keys must be protected.** If a signing key leaks, its signatures prove nothing. Keys need rotation, revocation and
+  two-person control over which keys are trusted.
+- **Some gaps remain.** If a Refusal Record fails to save, the refusal still happens, but its record can be missing. See
+  [Refusal Records](/concepts/refusal-records).
+
+## The standard to ask for
+
+Ask any vendor, or your own team: **"If I give my auditor a record of one action and your public key, can they verify it
+on their own machine without asking you anything?"** If not, you do not have an audit trail. You have a story told by
+the system being audited.
+
+**Read more:** [Execution Trust Records](/concepts/execution-trust-records),
+[Human approval](/concepts/human-approval), [Detect tampering](/guides/detect-tampering).

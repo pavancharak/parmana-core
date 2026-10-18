@@ -1,0 +1,84 @@
+---
+title: "How Parmana compares"
+description: "Parmana next to IAM, API gateways, LLM guardrails, policy engines and agent framework confirmations: what each answers, what Parmana adds, where Parmana is weaker, and how to use them together."
+---
+
+Parmana is often compared with tools a team already has. This page sets out what each kind of tool answers, what
+Parmana adds, and where Parmana is weaker. It compares categories, not products: products differ and change, so
+check the ones you use.
+
+**The short version.** IAM decides who may call an API. An API gateway decides whether a request may pass and how
+fast. A guardrail decides whether text looks harmful. Parmana decides whether one specific action, with its exact
+parameters, may run now, requires a person's signed approval for it, and signs a record of what ran and what was
+refused that anyone can verify offline. It does not replace the others; it sits after them, in front of the
+actions an agent takes.
+
+## What each answers
+
+| Question                                                               | IAM, OAuth scopes, RBAC                  | API gateway                           | LLM guardrails                             | Policy engine (for example OPA, Cedar)      | Agent framework confirmation              | Parmana                                                                                          |
+| ---------------------------------------------------------------------- | ---------------------------------------- | ------------------------------------- | ------------------------------------------ | ------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Who is calling?                                                        | Yes, its main job                        | Yes, usually through IAM              | No                                         | Given as input                              | The framework's user                      | Yes: each caller has a key, limited to named actions                                             |
+| May this caller use this API?                                          | Yes                                      | Yes                                   | No                                         | Yes, if you write the rule                  | No                                        | Yes, and per action                                                                              |
+| May this exact action, with these parameters and this amount, run now? | Rarely: scopes are coarse and long lived | Not usually                           | No                                         | Yes, if you write the rule                  | A person can say yes or no                | Yes: a versioned policy per action; no matching rule refuses                                     |
+| Did a named person approve this exact action?                          | No                                       | No                                    | No                                         | No                                          | Often a click, in the agent's own process | Yes: a signed approval bound to the action, resource and amount, single use, expiring            |
+| Can the agent go around the check?                                     | Only if it holds other credentials       | Only if it can reach the API directly | Yes: a guardrail filters text, not actions | Depends where it is enforced                | Yes, if the agent holds the credentials   | Only if it holds other credentials: the agent gets no system credentials; the gateway holds them |
+| Is the text harmful, off topic, leaking data, or a prompt injection?   | No                                       | No                                    | Yes, its main job                          | No                                          | No                                        | No                                                                                               |
+| Can a third party verify, offline, what ran and what was refused?      | Logs, trusted as stored                  | Logs, trusted as stored               | Logs, if any                               | Decision logs, trusted as stored            | Rarely                                    | Yes: signed records, verifiable with only the public key                                         |
+| Is a change to the rules approved by a second person?                  | Depends on your process                  | Depends on your process               | Depends on your process                    | Depends on your process (often code review) | No                                        | Yes: policy, approver and connector changes go through maker checker in the product              |
+
+## Where Parmana adds something
+
+- **A person per action, not per role.** A scope or role grants a class of actions for a long time. A Parmana
+  approval covers one action on one resource, up to one amount, once, until it expires (15 minutes by default, at most 24 hours), and is
+  signed by a registered approver ([Human approval](/concepts/human-approval)).
+- **The agent never holds the credentials.** The gateway holds them and releases each action only after checking
+  the signed authorization ([Credential isolation](/concepts/credential-isolation)). A guardrail or an in-agent
+  confirmation can be skipped by an agent that holds the keys; Parmana's check cannot be skipped by an agent that
+  does not.
+- **Evidence, not logs.** Each action and each refusal has a signed record a regulator, auditor or customer can
+  verify without access to your systems ([Execution Trust Records](/concepts/execution-trust-records),
+  [Refusal records](/concepts/refusal-records)).
+- **Governed rules.** Policies, approvers and external connectors change only through a second person, and each
+  change is signed ([Maker checker](/guides/policy-governance-maker-checker)).
+
+## Where Parmana is weaker
+
+- **It does not read text.** Parmana does not detect prompt injection, toxic output or data leakage in what the
+  model says. Use a guardrail for that. Parmana limits what an injected agent can do, not what it says.
+- **Only actions that go through it.** Parmana enforces nothing at the network level. An agent that holds other
+  credentials, or a system reached another way, is outside it.
+- **A person in the loop is slow by design.** Every agent action needs a signed human approval, reads included, so
+  every action carries human latency. There is no amount or risk level below which an action runs on its own.
+- **Facts the agent declares are not checked against another system** unless the policy names a
+  [business signal source](/concepts/business-validation) for them, and no shipped policy does yet. Undeclared facts
+  can only cause a refusal, never an approval (G-51). A policy engine fed from your own systems can use facts Parmana does not see.
+- **Approvers are not yet limited to particular actions or policies** (G-50). IAM can scope who approves what more
+  finely today.
+- **Few ready made connectors.** HubSpot, GitHub, Paytm and Slack are built in; anything else goes through a
+  registered external endpoint or a connector you write
+  ([Connect any external system](/guides/connect-any-external-system)). An API gateway already fronts all your
+  APIs.
+- **Young, with a small operational surface.** No metrics, tracing or dashboards yet; key custody is local files or
+  AWS KMS only. IAM products and API gateways have years of production use, scale and operations tooling behind
+  them. See [Limitations](/security/limitations) and the [Roadmap](/roadmap).
+
+## Using them together
+
+A typical stack, outside in:
+
+1. **IAM** authenticates the agent and the people, and issues the agent a Parmana caller key only.
+2. **An API gateway** in front of Parmana handles TLS, routing, quotas and network policy.
+3. **Guardrails** check the model's input and output text.
+4. **Parmana** checks each proposed action against its policy, requires a signed approval where the policy says so,
+   releases it through the gateway with the credentials it holds, and signs the record.
+5. **Your logging and SIEM** collect Parmana's records alongside everything else; the records stay verifiable on
+   their own.
+
+A policy engine you already run can sit beside step 4 for decisions that need facts from your systems; Parmana's
+policy still decides release.
+
+## Next
+
+- [How Parmana thinks](/how-parmana-thinks): the six ideas behind every request.
+- [OWASP mapping](/security/owasp-mapping): Parmana against the OWASP Top 10 for LLM and agentic applications.
+- [Limitations](/security/limitations): every open issue, with evidence.

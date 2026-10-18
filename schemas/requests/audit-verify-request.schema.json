@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/requests/audit-verify-request.schema.json",
+  "title": "Audit Verify Request",
+  "description": "Request body for POST /audit/verify: the signed caller-authentication audit event and its stored signature, not a lookup by ID. Checked structurally on the server before signature verification runs. Verification operates on canonical bytes and the signature alone, never on event.type.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event", "signature"],
+  "properties": {
+    "event": {
+      "type": "object",
+      "description": "The caller-authentication audit event as stored. Only type, occurredAt, and route are structurally required; the event may carry further fields depending on what produced it.",
+      "additionalProperties": true,
+      "required": ["type", "occurredAt", "route"],
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "route": {
+          "type": "string"
+        }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "description": "The signature stored alongside the event. Only production (Supabase) audit sinks sign; in-memory test sinks never produce a genuine one of these.",
+      "additionalProperties": true,
+      "required": ["algorithm", "keyId", "value"],
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "examples": ["ed25519"]
+        },
+        "keyId": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "description": "Base64-encoded signature value."
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "event": {
+        "type": "caller_authenticated",
+        "occurredAt": "2026-09-15T03:00:00.000Z",
+        "route": "/version"
+      },
+      "signature": {
+        "algorithm": "ed25519",
+        "keyId": "default",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+      }
+    }
+  ]
+}

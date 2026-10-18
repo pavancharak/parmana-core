@@ -1,0 +1,100 @@
+---
+title: "Refusal Records"
+description: "The evidence a rejected transaction leaves behind: a signed, independently verifiable Refusal Record, and the two scope caveats that bound the claim."
+---
+
+<Info>
+  **[AVAILABLE]**. `packages/runtime/src/RefusalRecordBuilder.ts`,
+  `packages/crypto/src/RefusalCrypto.ts`.
+</Info>
+
+## The gap this closes
+
+An **approved** execution has always left cryptographic evidence behind: the Execution Trust
+Record and its signature (see [Execution Trust Records](/concepts/execution-trust-records)). A
+**refused** one used to leave only an HTTP response and whatever the caller's own logs happened
+to capture, nothing durable, nothing independently checkable. A Refusal Record is the REJECT-path
+counterpart to an Execution Trust Record: durable, signed, and third-party-verifiable the same
+way, without requiring a caller credential or database access to check it.
+
+Scope is deliberately narrow. A Refusal Record is produced only for a policy decision that
+`RuntimeEngine.execute` actually reaches: an ordinary `PolicyEngine.evaluate` REJECT, or a
+`SignalIntentBinder` binding-violation REJECT (see [Policies and the
+decision](/concepts/policies-and-the-decision)). Caller-authentication failures and webhook
+signature failures are a separate, unsigned audit-sink capability by design, treat
+any claim about Refusal Records as "a policy decided to reject," not "every rejection of any
+kind."
+
+## What's in the record
+
+```typescript
+// packages/shared/src/domain/refusal-record.ts
+export interface RefusalRecord {
+  readonly refusalRecordId: string;
+  readonly businessTransactionId: string;
+  readonly decision: Decision; // the exact rejected Decision, not summarized
+  readonly evaluatedIntent: RefusalIntentSnapshot;
+  readonly bindingViolations?: readonly RefusalBindingViolation[]; // present only for a SignalIntentBinder REJECT
+  readonly submittedBy?: string; // absent when caller-auth is disabled
+  readonly policyContentHash?: string; // SHA-256 of the policy content that decided it; absent before 2026-10-06
+  readonly refusalRecordHash: string;
+  readonly signature: Signature; // same signing stack as ExecutionTrustRecord
+  readonly createdAt: Date;
+}
+```
+
+`RefusalRecordBuilder` (`packages/runtime/src/RefusalRecordBuilder.ts`) builds the record from
+the rejected transaction, its `Decision`, any binding violations, and the hash of the policy content
+that decided it (`policyContentHash`), the same value an Execution Trust Record carries in
+`transaction.policy.contentHash`, so a refusal and an approval under the same policy name the same
+policy content. Refusal Records written before 2026-10-06 have no `policyContentHash` and still verify. `RefusalCrypto`
+(`packages/crypto/src/RefusalCrypto.ts`) hashes and signs it with the same
+signer and key every Execution Trust Record uses (`SignerBootstrap`: a local key, or AWS KMS in
+production), one root of trust, not a separate one for refusals. Verify it with the key from
+`GET /keys/default`. At most one `RefusalRecord` exists per
+`businessTransactionId`: unlike an Execution Trust Record, a refusal is a single terminal event,
+not an append-only aggregate.
+
+## Two routes, two different trust models
+
+- **`POST /refusal/verify`**, verifies a submitted Refusal Record's signature, returns
+  `{ valid }`. Deliberately mounted **ahead of** caller-auth middleware
+  (`packages/api/src/app.ts`): no API key, no lookup by ID, nothing but the artifact itself and
+  Parmana's public key. This is what makes a refusal independently checkable by whoever actually
+  received the rejection, not only by Parmana.
+- **`GET /refusal/:businessTransactionId`**, looks up a Refusal Record from Parmana's own
+  storage by transaction ID. Unlike the route above, this one stays behind caller-auth and
+  ownership scoping (`isOwnedByCaller`), identically to `/verify`, `/verification`, and
+  `/trust-records`, the underlying transaction content (signals, intent parameters) may be
+  sensitive, even though the signature-verification capability above is intentionally open.
+
+## Scope caveat: writing fails open
+
+<Warning>
+  **Refusal Record writing fails open, deliberately, not fail closed like caller
+  audit writes.** `RuntimeEngine.writeRefusalRecord` runs after the `Decision`
+  is built and may not delay or change the rejection that follows. A write
+  failure is logged (`refusal_record_write_failed`) and swallowed, never thrown.
+  **The rejection itself is unaffected:** a request that should be denied is
+  denied, whether or not its record lands. What can be missing is the durable
+  proof of *why*, not the refusal. Making the write fail closed was considered
+  and rejected: it would turn a correct policy rejection into an opaque `500` on
+  a storage hiccup, for no security gain, since the request was already denied
+  when the `Decision` was built. Test:
+  `packages/runtime/tests/unit/refusal-record-fail-open.test.ts`.
+</Warning>
+
+Which caller audit events are signed is covered on [Caller Audit Trail](/concepts/caller-audit-trail).
+
+## Related
+
+- [Caller Audit Trail](/concepts/caller-audit-trail) closes the analogous gap for
+  caller-authentication events, signed, durable, and, per caller, chained. `POST
+/audit/verify` mirrors this page's `POST /refusal/verify` exactly: mounted ahead of
+  caller-auth, structurally checks and verifies any signed audit event's signature. See
+  [Error catalog](/api-reference/error-catalog) for both routes' error shapes.
+- [Execution Trust Records](/concepts/execution-trust-records), the APPROVE-path counterpart.
+- [Policies and the decision](/concepts/policies-and-the-decision), how a `Decision` reaches
+  REJECT in the first place, including `SignalIntentBinder` binding violations.
+- [Security](/security/overview) and [Limitations](/security/limitations) for the wider
+  threat model this evidence trail supports.

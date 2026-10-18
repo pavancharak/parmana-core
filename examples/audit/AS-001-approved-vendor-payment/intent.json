@@ -1,0 +1,24 @@
+{
+  "intentId": "intent-vendor-payment-001",
+
+  "authorizationId": "authorization-vendor-payment-001",
+
+  "intentType": "BUSINESS_TRANSACTION",
+
+  "action": "vendor-payment",
+
+  "resource": {
+    "resourceType": "Vendor Invoice",
+    "resourceId": "invoice-INV-2026-000123"
+  },
+
+  "summary": "Approve payment for vendor invoice INV-2026-000123.",
+
+  "requestedBy": "accounts-payable",
+
+  "requestedAt": "2026-01-01T09:04:00Z",
+
+  "issuedAt": "2026-01-01T09:05:00Z",
+
+  "status": "APPROVED"
+}

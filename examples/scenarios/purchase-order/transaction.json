@@ -1,0 +1,53 @@
+{
+  "businessTransactionId": "txn-po-000001",
+
+  "metadata": {
+    "businessTransactionId": "txn-po-000001",
+    "correlationId": "corr-po-000001",
+    "createdBy": "procurement-system",
+    "createdAt": "2026-01-15T09:00:00Z"
+  },
+
+  "authority": {
+    "authorityId": "authority-procurement-manager-001",
+    "authorityType": "USER",
+    "principalId": "procurement.manager",
+    "displayName": "Michael Johnson",
+    "issuedAt": "2026-01-15T09:15:00Z"
+  },
+
+  "authorization": {
+    "authorizationId": "authorization-po-001",
+    "authorityId": "authority-procurement-manager-001",
+    "purpose": "Purchase Order Approval",
+    "authorizedAt": "2026-01-15T09:20:00Z"
+  },
+
+  "intent": {
+    "intentId": "intent-po-001",
+    "authorizationId": "authorization-po-001",
+    "action": "purchase-order",
+    "resource": "purchase-order-PO-2026-001",
+    "issuedAt": "2026-01-15T09:20:00Z"
+  },
+
+  "policy": {
+    "name": "purchase-order",
+    "version": "1.0.0",
+    "schemaVersion": "1.0.0"
+  },
+
+  "signals": {
+    "supplierVerified": true,
+    "budgetApproved": true,
+    "managerApproved": true,
+    "procurementApproved": true,
+    "purchaseAmount": 25000,
+    "currency": "USD",
+    "riskScore": 8
+  },
+
+  "status": "RECEIVED",
+
+  "createdAt": "2026-01-15T09:00:00Z"
+}

@@ -1,0 +1,74 @@
+---
+title: "Giving an agent authority: grants with limits and an end date"
+description: "An API key that may call an action is not yet authority over every request for it. A grant says exactly what one agent may do, how much, and until when."
+---
+
+A warehouse agent releases goods against paid invoices. I want it to release up to ₹1,00,000 per request, in rupees only, until 30 December, and not a day after. If its key leaks, or the agent starts behaving oddly, I want the damage capped by something other than hope.
+
+Before grants, Parmana could say which actions a key may call at all. It could not say "this agent, this action, at most this much, until this date".
+
+## The problem: permission without shape
+
+An API key scoped to an action is a yes or a no. Within that action, every request is judged by the policy and needs a person's signed approval. But the policy is the same for every caller, and the key has no end date. Nothing said that this particular agent was trusted for small releases this quarter and nothing more.
+
+## The idea: authority is its own question
+
+Parmana separates three questions about every request, and records each one separately:
+
+- **Authority.** May this caller have this kind of action decided here at all?
+- **Business validity.** Is this exact action valid for this exact business object, according to the system that owns the facts?
+- **Execution.** Did it run?
+
+A grant answers the first question for one agent. It does not replace the others. A request within a grant still needs everything else its policy requires, a signed human approval included.
+
+## How Parmana does it
+
+A grant names:
+
+- **One caller**: the identity the server authenticates from the API key, which the agent cannot claim to be someone else.
+- **One action**, such as releasing goods in an ERP.
+- **Optional limits**, by a field of the request: a minimum and maximum for a number, or a list of the only values allowed.
+- **A start**, defaulting to the moment it is approved, and a **required end**, at most 366 days later. Grants always end.
+
+One active grant per caller and action. To change one, revoke it and grant again.
+
+**Two people make every grant.** One proposes, a different person approves with a step up signature, and only keys registered as human may do either. Neither the proposer nor the approver may be the agent being granted. No one grants authority to themselves.
+
+**A policy opts in.** Setting the policy's require-grant flag, through the normal policy approval, turns grants on for that action. The server then tells agents that a grant is required.
+
+**The check runs early.** It comes after the policy and binding checks and before any business system is asked. The answers are:
+
+- **AUTHORIZED**: a grant in force, and the request within every limit.
+- **NOT_AUTHORIZED**: no grant, a revoked one, one not yet started, a value outside a limit, missing, or of the wrong type, or no authenticated caller.
+- **AUTHORITY_EXPIRED**: the grant has passed its end.
+- **AUTHORITY_UNCLEAR**: the grants could not be read.
+
+Anything but AUTHORIZED refuses the request with a signed Refusal Record. A signed approval cannot cure it.
+
+**The grant goes into the record.** The decision carries the grant that was checked, as it stood: its id, the caller, the action, the dates and the limits, signed inside the record. A reader can see which grant authorized an action, or which one had expired.
+
+**It is checked again at release.** The authorization Parmana signs carries the grant's id and end date. If the grant expires or is revoked between the decision and the release, the gateway refuses the release before any system is called, and the answer says not executed.
+
+## Seen in production
+
+On 11 October I ran a live check against the production server, with a test policy and an action that changes nothing anywhere. Every request carried a valid signed approval, so each refusal shows the grant deciding:
+
+1. Before any grant: refused, not authorized.
+2. With a grant up to 100 per request, a request for 50: approved, released once, the grant named in the signed record, verified offline.
+3. The same grant, a request for 500: refused, above the granted maximum.
+4. After the grant was revoked: refused.
+
+Then the grant and the test capability were revoked.
+
+## What it does not do
+
+- **Limits are per request.** A grant capped at ₹5,000 lets twenty requests of ₹5,000 through in a day. Cumulative limits, "₹50,000 or 20 refunds per day", are designed, not built. The next post is about them.
+- **No real action uses grants yet.** It is opt in per policy, and no shipped policy opts in. No grant exists in production. The live check used a test policy.
+- **The re-check at release is tested, not seen live.** The gateway, the adapter and the runtime are each tested, but a grant revoked between decision and release cannot be timed through one real request without a test hook.
+- **The grantee is not checked to exist.** API keys live in configuration, not where the grant route can read them. A grant to a key that does not exist is accepted, listed, and has no effect.
+- **Two credentials, not proven two people.** In the live check, the maker and the checker keys were held by one person: me.
+- **It does not replace approval.** A grant narrows what an agent may ask for. A person still signs each action.
+
+## The takeaway
+
+A key says who is calling. A grant says how far you trust them, and for how long. Give every agent the smallest grant that lets it do its job, with an end date, and the worst case of a leaked key becomes something you chose in advance.

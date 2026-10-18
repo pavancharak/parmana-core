@@ -1,0 +1,16 @@
+---
+title: "Type Alias: ExecutionIntentState"
+---
+
+> **ExecutionIntentState** = `"PREPARED"` \| `"RELEASED"` \| `"FINALIZED"` \| `"ERRORED"` \| `"RESOLVED"`
+
+Defined in: [typescript/src/models/execution-intent.ts:47](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution-intent.ts#L47)
+
+Operational state kept next to a signed intent. It is NOT signed.
+
+- PREPARED: signed and stored. The action may or may not have been released.
+- RELEASED: the release stage returned and the execution context was saved.
+- FINALIZED: a signed Execution Trust Record exists.
+- ERRORED: the release stage raised an error. The action may still have run.
+- RESOLVED: a verified human reconciled a PREPARED or ERRORED intent at the
+  connector and closed it.

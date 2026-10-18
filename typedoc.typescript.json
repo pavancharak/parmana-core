@@ -1,0 +1,14 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["typescript/src/index.ts"],
+  "tsconfig": "typescript/tsconfig.json",
+  "out": ".typedoc-staging/typescript",
+  "plugin": ["typedoc-plugin-markdown"],
+  "readme": "none",
+  "gitRevision": "main",
+  "excludeInternal": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "hideGenerator": true,
+  "sort": ["source-order"]
+}

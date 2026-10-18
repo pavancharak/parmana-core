@@ -1,0 +1,74 @@
+[
+  {
+    "connector": "github:pr-merge",
+    "case": "control: valid proof",
+    "rejected": false,
+    "message": "",
+    "callsDelta": 1,
+    "expected": "released, 1 call",
+    "verdict": "PASS"
+  },
+  {
+    "connector": "github:pr-merge",
+    "case": "no proof",
+    "rejected": true,
+    "message": "Execution Gateway rejected request: no authorization was presented.",
+    "callsDelta": 0,
+    "expected": "rejected, 0 calls",
+    "verdict": "PASS"
+  },
+  {
+    "connector": "github:pr-merge",
+    "case": "forged signature",
+    "rejected": true,
+    "message": "Execution Gateway rejected request: failed checks [signatureVerified, businessTransactionHashMatches].",
+    "callsDelta": 0,
+    "expected": "rejected, 0 calls",
+    "verdict": "PASS"
+  },
+  {
+    "connector": "github:pr-merge",
+    "case": "changed merge method after approval",
+    "rejected": true,
+    "message": "Execution Gateway rejected request: failed checks [businessTransactionHashMatches]. businessTransactionHash mismatch: expected 5923bac95cfb5bef874406db74b7774c4",
+    "callsDelta": 0,
+    "expected": "rejected, 0 calls",
+    "verdict": "PASS"
+  },
+  {
+    "connector": "github:pr-merge",
+    "case": "single authorization revoked",
+    "rejected": true,
+    "message": "Execution Gateway rejected request: failed checks [authorizationNotRevoked].",
+    "callsDelta": 0,
+    "expected": "rejected, 0 calls",
+    "verdict": "PASS"
+  },
+  {
+    "connector": "github:pr-merge",
+    "case": "expired proof",
+    "rejected": true,
+    "message": "Execution Gateway rejected request: failed checks [notExpired, businessTransactionHashMatches].",
+    "callsDelta": 0,
+    "expected": "rejected, 0 calls",
+    "verdict": "PASS"
+  },
+  {
+    "connector": "github:pr-merge",
+    "case": "replay step 1: first use",
+    "rejected": false,
+    "message": "",
+    "callsDelta": 1,
+    "expected": "released, 1 call",
+    "verdict": "PASS"
+  },
+  {
+    "connector": "github:pr-merge",
+    "case": "replay step 2: same proof again",
+    "rejected": true,
+    "message": "Execution Gateway rejected request for Business Transaction '92f0f69a-8f71-4eb2-a409-c164c4f6caa3': authorization nonce has already been consumed (replay of an ",
+    "callsDelta": 0,
+    "expected": "rejected, 0 calls",
+    "verdict": "PASS"
+  }
+]

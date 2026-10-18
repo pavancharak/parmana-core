@@ -1,0 +1,74 @@
+{
+  "trustRecordId": "etr-000001",
+
+  "businessTransactionId": "txn-vendor-payment-000001",
+
+  "createdAt": "2026-01-01T09:05:03Z",
+
+  "executions": [
+    {
+      "executionId": "exec-000001",
+
+      "executedAt": "2026-01-01T09:05:03Z",
+
+      "decision": {
+        "decisionId": "decision-000001",
+
+        "intentId": "intent-vendor-payment-001",
+
+        "policy": {
+          "policyId": "vendor-payment",
+          "policyVersion": "2.0.0",
+          "schemaVersion": "1.0.0"
+        },
+
+        "signals": {
+          "vendorVerified": true,
+          "invoiceVerified": true,
+          "paymentApproved": true,
+          "sufficientFunds": true,
+          "paymentAmount": 5000,
+          "currency": "USD",
+          "riskScore": 10
+        },
+
+        "matchedRuleId": "approve-vendor-payment",
+
+        "outcome": "APPROVED",
+
+        "reason": "Vendor payment satisfies all policy requirements.",
+
+        "evaluatedAt": "2026-01-01T09:05:03Z"
+      }
+    }
+  ],
+
+  "verifications": [
+    {
+      "verificationId": "verification-000001",
+
+      "verifiedAt": "2026-01-01T09:05:04Z",
+
+      "status": "VERIFIED",
+
+      "algorithm": "SHA-256",
+
+      "result": "PASS"
+    }
+  ],
+
+  "receipts": [
+    {
+      "receiptId": "receipt-000001",
+
+      "issuedAt": "2026-01-01T09:05:05Z",
+
+      "status": "ISSUED"
+    }
+  ],
+
+  "metadata": {
+    "runtimeVersion": "1.0.0",
+    "schemaVersion": "1.0.0"
+  }
+}

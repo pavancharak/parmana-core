@@ -1,0 +1,128 @@
+---
+title: "How Parmana thinks"
+description: "The six ideas behind every request Parmana handles: deterministic policy, fail-closed defaults, signed authorization, gateway verification, credential isolation, and trust records."
+---
+
+<Info>
+  **[AVAILABLE]**. Every stage below is real, tested code, cited inline.
+</Info>
+
+## The shape of every request
+
+```
+Caller (AI agent, script, or person)
+     │  proposes a Business Transaction
+     ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ Policy Engine                                                   │
+│   First matching rule wins. No matching rule denies. (deterministic, fail-closed) │
+└─────────────────────────────────────────────────────────────────┘
+     │  APPROVED
+     ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ Signed Execution Authorization                                  │
+│   Single use. Time bounded. Bound to the exact request content. │
+└─────────────────────────────────────────────────────────────────┘
+     │
+     ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ Execution Gateway                                                │
+│   Independently re-verifies the envelope. Sole release boundary. │
+└─────────────────────────────────────────────────────────────────┘
+     │
+     ├──► Session Credential Vault  (issues a scoped, single-use credential)
+     ▼
+   Connector  (your system: an HTTP call, or a reference mock today)
+     │
+     ▼
+Execution Trust Record  (signed, independently verifiable, append-only from here)
+```
+
+Six ideas do all the work in that diagram. Each one is a real guarantee, not an aspiration,
+and each links to the page that proves it.
+
+## 1. Deterministic policy
+
+A [Policy](/concepts/policies-and-the-decision) is an ordered list of rules. Parmana evaluates them
+top to bottom and stops at the first match: **first match wins**. If nothing matches, the
+transaction is rejected. There is no default-allow path anywhere in policy evaluation, this
+is what "fail closed" means in practice: the absence of a rule is a denial, not a pass-through.
+The same policy, given the same signals, always produces the same decision, no model call, no
+randomness, no hidden state.
+
+## 2. Signed execution authorization
+
+An APPROVED decision becomes a [signed authorization envelope](/concepts/execution-authorization):
+one intended use, a short validity window, and a hash binding it to the exact request content
+that produced it. Change one field in the request and the hash no longer matches, the
+authorization no longer applies to it.
+
+## 3. The gateway
+
+[The Execution Gateway](/concepts/the-gateway) is the boundary that actually
+releases execution. It does not trust the authorization it's handed, it independently
+re-derives the content hash and re-verifies the signature itself before anything runs. In the
+default local server, this is not optional middleware you opt into: `createExecutionSystem()`
+wires a real `ExecutionGateway` into every request, unconditionally
+(`packages/api/src/bootstrap/createExecutionSystem.ts`).
+
+## 4. Credential isolation
+
+The caller that proposes an action never holds the credential that executes it.
+[Session credentials](/concepts/credential-isolation) are issued fresh, scoped to one connector
+call, and consumed once. An AI agent, or any caller, can request an action; it cannot extract
+a reusable key from the response.
+
+## 5. Gateway attestation
+
+Each time the gateway releases an execution, it mints a fresh, request-bound [signed
+attestation](/concepts/gateway-attestation), it does not reuse or cache one across calls
+(`packages/api/src/bootstrap/createExecutionGateway.ts`, `GatewayAttestationSigner`).
+This proves _that the gateway itself, at this moment, authorized this specific release_, it
+is a separate guarantee from the authorization envelope's own signature, using an injected
+[Clock and IdGenerator](/concepts/determinism-and-clocks) for its timestamp and nonce.
+
+## 6. Execution trust records
+
+Everything above lands in one [execution trust record](/concepts/execution-trust-records) per
+transaction: the decision, the execution evidence, and a hash and signature over exactly
+that content, no more. It is the artifact you, or anyone, can verify independently, without
+running Parmana at all. See [Verification](/verification/overview).
+
+## Why this order, not another
+
+Policy runs before authorization because a decision has to exist before anything can be
+signed. Authorization is signed before the gateway sees it because the gateway's job is to
+check a claim, not originate one. The gateway sits between authorization and the connector
+because that is the last point before a real system state changes, and it is the one place
+built to say no even if everything upstream said yes. Credential issuance happens inside that
+same boundary, after the gateway is already convinced, so nothing upstream ever needs to hold
+a live credential at all.
+
+<Note>
+  **Related work.** The Execution Governance framework (Ku, 2026, EG Reference
+  Specification v0.9.7.3) describes a convergent discipline of pre-effect
+  authorization for physical AI systems. Parmana is a running implementation of
+  pre-execution authorization for enterprise financial execution. The vocabulary
+  on this page is Parmana's own; it does not adopt that framework's
+  six-condition terminology.
+</Note>
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="How Parmana compares"
+    icon="scale-balanced"
+    href="/how-parmana-compares"
+  >
+    Next to IAM, API gateways and LLM guardrails, including where Parmana is
+    weaker.
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    See this pipeline run end to end against a live local server.
+  </Card>
+  <Card title="Architecture" icon="sitemap" href="/architecture/overview">
+    The package-level view: what code implements each stage.
+  </Card>
+</CardGroup>

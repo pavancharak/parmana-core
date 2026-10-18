@@ -1,0 +1,129 @@
+---
+title: "Verify a Trust Record"
+description: "verifyExecutionTrustRecordOffline(record, publicKeys)"
+---
+
+Checks a signed Execution Trust Record offline: the hash, the Ed25519 signature, and, when
+present, the hybrid `signatures` array.
+
+```ts
+import { verifyExecutionTrustRecordOffline } from "@parmana/sign";
+
+const result = await verifyExecutionTrustRecordOffline(record, publicKeys);
+```
+
+## Parameters
+
+<ResponseField name="record" type="ExecutionTrustRecord" required>
+  The record, as returned by `GET /trust-records/{businessTransactionId}` or
+  parsed from exported JSON. Timestamps may be `Date` objects or ISO 8601
+  strings; both verify the same.
+</ResponseField>
+
+<ResponseField
+  name="publicKeys"
+  type="Record<string, string | KeyObject>"
+  required
+>
+  Maps each `keyId` the record names to its public key, as a PEM string (the
+  `pem` field of `GET /keys/{keyId}`) or a `node:crypto` `KeyObject`. A plain
+  record names one key, in `signature.keyId`. A hybrid record also names one per
+  `signatures` entry. See [Public keys](/sdks/parmana-sign/public-keys).
+</ResponseField>
+
+## Returns
+
+A promise for an `OfflineVerificationResult`. It never rejects for bad input: a malformed
+record, a missing key or an unknown algorithm comes back as `valid: false` with a reason in
+`errors`.
+
+<ResponseField name="valid" type="boolean">
+  `true` only when `hashValid` and `legacySignatureValid` are `true`, and
+  `hybridSignaturesValid` is `true` or absent.
+</ResponseField>
+
+<ResponseField name="hashValid" type="boolean">
+  `trustRecordHash` equals the SHA-256 of the record's signed fields.
+</ResponseField>
+
+<ResponseField name="legacySignatureValid" type="boolean">
+  The `signature` field verifies against its key.
+</ResponseField>
+
+<ResponseField name="hybridSignaturesValid" type="boolean | undefined">
+  Present only when the record has a `signatures` array. `true` when it has at
+  least two entries, no two with the same algorithm, and every entry verifies.
+  Absent means the record is not hybrid signed, not that a check failed.
+</ResponseField>
+
+<ResponseField name="algorithmsChecked" type="string[]">
+  Every algorithm actually checked, in order. A hybrid record gives `["ed25519",
+  "ed25519", "dilithium3"]`.
+</ResponseField>
+
+<ResponseField name="errors" type="string[]">
+  One readable reason per failed or skipped check. Empty when `valid` is `true`.
+  See [Results and errors](/sdks/parmana-sign/results-and-errors).
+</ResponseField>
+
+## Example: a hybrid record
+
+```ts
+import { verifyExecutionTrustRecordOffline } from "@parmana/sign";
+
+const result = await verifyExecutionTrustRecordOffline(record, {
+  default: ed25519Pem,
+  "default-secondary": mlDsa65Pem,
+});
+```
+
+```json Valid record
+{
+  "valid": true,
+  "hashValid": true,
+  "legacySignatureValid": true,
+  "hybridSignaturesValid": true,
+  "algorithmsChecked": ["ed25519", "ed25519", "dilithium3"],
+  "errors": []
+}
+```
+
+```json The same record with one amount changed
+{
+  "valid": false,
+  "hashValid": false,
+  "legacySignatureValid": false,
+  "hybridSignaturesValid": false,
+  "algorithmsChecked": ["ed25519", "ed25519", "dilithium3"],
+  "errors": [
+    "trustRecordHash mismatch: expected 40381bb4…, got 91b9bc7f….",
+    "signature verification failed for keyId \"ed-key-1\" (ed25519).",
+    "signature verification failed for keyId \"ed-key-1\" (ed25519).",
+    "signature verification failed for keyId \"pq-key-1\" (dilithium3)."
+  ]
+}
+```
+
+These are real outputs from `@parmana/sign` 0.2.0, on a sample record signed by the server's
+own signing code (key ids are from that sample).
+
+## Requiring hybrid signatures
+
+The function reports what the record carries; it does not decide what a record must carry.
+If your policy requires the post-quantum signature, check for it yourself:
+
+```ts
+if (!result.valid || result.hybridSignaturesValid !== true) {
+  throw new Error("record is not a valid hybrid-signed record");
+}
+```
+
+This catches a hybrid record whose `signatures` array was removed, which otherwise still
+passes on its Ed25519 signature alone.
+
+## What it does not check
+
+- That the key belongs to Parmana. Get keys from a source you trust, such as the server
+  you used, and pin them.
+- Anything about the business outcome. A valid record proves what was recorded and that
+  it has not changed since signing.

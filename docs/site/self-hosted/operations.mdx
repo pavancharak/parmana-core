@@ -1,0 +1,118 @@
+---
+title: "Operate a self hosted deployment"
+description: "Start, stop, upgrade, back up, restore, read logs and change the database password of a self hosted deployment."
+---
+
+All commands run from the repository root. On Windows in Git Bash, run `export MSYS_NO_PATHCONV=1` first.
+
+## Start and stop
+
+| To                                               | Run                                   |
+| ------------------------------------------------ | ------------------------------------- |
+| Start, or apply a change to the configuration    | `docker compose up -d --build --wait` |
+| See what is running                              | `docker compose ps -a`                |
+| Stop, keeping everything                         | `docker compose down`                 |
+| Stop and **delete the database**                 | `docker compose down -v`              |
+| Restart only the server, after an API key change | `docker compose restart api`          |
+
+`--wait` returns when the server is healthy, or with an error if a service failed. After `docker compose ps -a`, the services `setup`, `migrate` and `seed` show `Exited (0)`. That is normal: they run once per start. `postgres` and `api` show `Up (healthy)`.
+
+## Health
+
+```bash
+curl -s http://127.0.0.1:3000/health
+curl -s http://127.0.0.1:3000/ready
+```
+
+`/health` returns `{"status":"UP"}` whenever the server process runs. `/ready` also checks the database and the `execution_intents` table, and returns `503` with `"status":"NOT_READY"` and a `reason` when either is missing. The container's health check uses `/ready`.
+
+## Logs
+
+```bash
+docker compose logs api            # the server
+docker compose logs -f api         # follow
+docker compose logs migrate seed setup
+```
+
+Each start of the server logs which connectors are not configured, then a line `runtime_engine_constructed` in which every value should be `true`, then `API running on http://0.0.0.0:3000`.
+
+## Upgrade
+
+```bash
+git pull
+docker compose up -d --build --wait
+```
+
+This rebuilds the image, then:
+
+- `migrate` applies only migrations the database does not have yet, each in its own transaction, and prints `[migrate] <n> applied, <m> already applied`;
+- `seed` adds only new policy versions, and prints how many it added and kept;
+- `setup` keeps your keys and API keys.
+
+A new policy version shipped in an upgrade is added but not approved. It takes effect only after you [approve it](/self-hosted/policy-approval). Policies already approved are not changed.
+
+After an upgrade, run the [offline check](/self-hosted/offline-verification).
+
+## Back up
+
+A complete backup has two parts. Back up both, at the same time.
+
+**1. The database:**
+
+```bash
+docker compose exec -T postgres pg_dump -U parmana -d parmana --format=custom > parmana.dump
+```
+
+**2. The directory `./parmana-local`**, which holds the signing keys and API keys. Copy it with your usual file backup, as root on Linux, because its files belong to uid 1000.
+
+<Warning>
+  `parmana-local/keys/*.private.pem` are your signing keys. Store the backup
+  where only the people who may sign as your deployment can read it.
+</Warning>
+
+## Restore
+
+Into a deployment with an empty database, from `parmana.dump` and a copy of `./parmana-local`:
+
+```bash
+# 1. Put the parmana-local backup back in place, then:
+docker compose down -v
+docker compose up -d --wait postgres
+docker compose run --rm migrate
+docker compose exec -T postgres pg_restore -U parmana -d parmana --clean --if-exists < parmana.dump
+docker compose up -d --build --wait
+```
+
+`migrate` runs before the restore so the roles the schema grants to exist. `--clean --if-exists` then replaces its empty tables with the backup's.
+
+**Check:** `docker compose logs migrate` ends with `0 applied`, `docker compose logs seed` reports `0 added`, and a record you know, for example `GET /refusal/<businessTransactionId>`, returns `200`.
+
+This procedure was tested on 2026-09-25: a Refusal Record and a policy approval made before the backup were both present after a full wipe and restore.
+
+## Change the database password
+
+Postgres stores the password when the database is first created. Changing `PARMANA_DB_PASSWORD` alone makes `migrate` fail with `password authentication failed for user "parmana"` and the server does not start. Change it in the database first:
+
+```bash
+docker compose exec -T postgres psql -U parmana -d parmana \
+  -c "ALTER USER parmana PASSWORD 'the-new-password'"
+```
+
+Then set the new value and restart:
+
+```bash
+export PARMANA_DB_PASSWORD='the-new-password'   # or set it in .env
+docker compose up -d --wait
+```
+
+**Check:** `curl -s http://127.0.0.1:3000/ready` returns `"status":"READY"`.
+
+## Change the published address or port
+
+Set `PARMANA_BIND` and `PARMANA_PORT`, then run `docker compose up -d --wait`. See [Configuration reference](/self-hosted/configuration#settings). Put a TLS terminating proxy in front before binding to anything other than `127.0.0.1`.
+
+## Signing keys
+
+- The public keys in `parmana-local/keys/*.public.pem` are what others use to verify your records. Publish them to whoever verifies.
+- There is no key rotation procedure for the self hosted deployment yet. Replacing `default` or `gateway` makes the server sign new records with the new key; records signed earlier verify only with the old public key, so keep every old public key.
+- To keep the signing key in AWS KMS instead of a file, see [AWS KMS signing](/deployment/aws-kms-signing). That setup has not been tested with the self hosted deployment.

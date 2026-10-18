@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/execution-trust-record-response.schema.json",
+  "title": "Execution Trust Record Response",
+  "description": "Response returned by POST /execute, POST /transactions, and GET /trust-records/{businessTransactionId}. A bare Execution Trust Record, no wrapper. POST /execute returns this with status 200; POST /transactions returns the identical shape with status 201.",
+  "$ref": "../common/execution-trust-record.schema.json"
+}

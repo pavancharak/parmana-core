@@ -1,0 +1,173 @@
+---
+title: "REST API Introduction"
+description: "45 paths and 48 operations, generated from openapi/openapi.yaml into the sidebar under REST API. This page covers what that spec can't express."
+---
+
+<Info>
+  **[AVAILABLE]**. Every path in the sidebar under **REST API** is generated
+  from `openapi/openapi.yaml`, which is structurally validated in CI (`npm run
+  lint:openapi`, plus `openapi-bundle-refs.test.ts`'s $ref-integrity checks) on
+  every push, and cross-checked against `packages/api/src/app.ts`'s real mounted
+  routes by `openapi-route-parity.test.ts`: every real route needs a matching
+  spec path, and every spec path needs a real, currently-mounted route behind
+  it, in both directions, or the test fails by name. `GET /documentation` and
+  `GET /reference` are the one explicit, allowlisted exception: rendered doc
+  surfaces, not API resources, see [Views of the same
+  spec](#views-of-the-same-spec) below.
+</Info>
+
+## Base URL
+
+| Server         | Base URL                              | Key                                                                                                   | Use it for                                                                                  |
+| -------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Public sandbox | `https://parmana-sandbox.vercel.app`  | The published demo key, `2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME`, allowed only `sandbox:receipt` | Trying every request for real with nothing installed. **Try it** panels call it by default. |
+| Production     | `https://parmana-api-real.vercel.app` | A key issued by the operator                                                                          | Real actions. Not open to the public.                                                       |
+| Local          | `http://localhost:3000`               | The committed demo key or your own, see [Quickstart](/quickstart)                                     | Development on your own machine                                                             |
+
+The sandbox runs the same code as production, with its own database, keys and demo approver; its one action acts on
+nothing, and everything sent to it is visible to every visitor. See [Playground](/playground). The
+raw spec is also served at `GET /openapi.yaml` and, identically, JSON-serialized, at
+`GET /openapi.json` (some tooling and most AI coding agents expect a `.json` path by
+convention; both describe the same spec), see [Deploy
+patterns](/guides/deploy-patterns#the-openapi-spec-endpoint).
+
+<Note>
+  **Are you an AI coding agent?** Fetch `GET /api-manifest.json` first. It's a
+  single machine-readable index: the OpenAPI spec locations above, the auth
+  scheme, and both real SDKs (`@parmana/sdk` on npm, `parmana` on PyPI) with
+  their actual current package name and version, read directly from each
+  package's own manifest, not hand-typed. It never claims a language has an SDK
+  unless one is actually published, see [Other
+  languages](/sdks/other-languages).
+</Note>
+
+## Every endpoint has its own page
+
+The **REST API** tab lists every endpoint on its own page, grouped by area: Execution, Transactions, Verification, Receipts, Trust Records, Replay, Policies, Policy Governance, Approvers, External Connectors, Sandbox, Refusal Records, Execution Intents, Audit, System and Handbook. Each page is generated from the bundled OpenAPI file, so it shows the exact parameters, request body, every response with a real example, and a **Try it** panel that sends a real request to the public sandbox with the demo key filled in (switch the server to call your own). With the demo key, only `sandbox:receipt` and the read routes work; other capabilities return `403`, and governance routes return `403 NON_HUMAN_CALLER_DENIED`, so use their captured examples. A test fails if an endpoint is added to the spec without a page. Start with [Execute a Business Transaction](/api-reference/endpoints/execute-transaction), the endpoint every integration uses.
+
+If you are an AI agent, follow [Integrate Parmana: specification for AI agents](/agents/integrate) instead of reading the pages one by one.
+
+## Views of the same spec
+
+Every route, request/response shape, and status code ultimately comes from one file,
+[`openapi/openapi.yaml`](https://github.com/pavancharak/parmana/blob/main/openapi/openapi.yaml),
+version-controlled alongside the code that implements it. That one spec drives three
+surfaces, so none of them can drift from what the server actually does:
+
+<CardGroup cols={3}>
+  <Card title="This site" icon="book-open" href="/api-reference/introduction">
+    Guides, SDKs, and the per-route reference in the sidebar under **REST API**,
+    each with real captured examples and a working curl snippet.
+  </Card>
+  <Card
+    title="GET /documentation"
+    icon="flask"
+    href="https://parmana-api-real.vercel.app/documentation/"
+  >
+    Live Swagger UI on the real deployment, with **Try it out** wired to a real
+    bearer key, for hands-on testing, not just reading.
+  </Card>
+  <Card
+    title="GET /reference"
+    icon="scale-balanced"
+    href="https://parmana-api-real.vercel.app/reference"
+  >
+    Live, read-only, single-page ReDoc view of the full spec, no **Try it out**
+    button, built for auditors and integration partners who just need to read
+    it.
+  </Card>
+</CardGroup>
+
+### Postman
+
+[`postman/parmana.postman_collection.json`](https://github.com/pavancharak/parmana/blob/main/postman/parmana.postman_collection.json)
+has one request for every endpoint, in one folder per area, with the example bodies from the
+spec. It is generated from the same OpenAPI file (`npm run generate:postman`), and a test fails
+if it falls behind.
+
+1. In Postman, choose **Import** and select the file.
+2. Create an environment with a secret variable `apiKey` holding your API key, or the sandbox demo key
+   `2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME` to try it. The collection sends it as `Authorization: Bearer {{apiKey}}`; requests the API
+   marks as public send no key. Never put a real key in the collection itself.
+3. `baseUrl` defaults to the public sandbox, `https://parmana-sandbox.vercel.app`. Override it in the environment for
+   production (`https://parmana-api-real.vercel.app`) or your own deployment, for example `http://localhost:3000`.
+
+Most example bodies use sample ids, so replace them before sending. Approving or rejecting a
+policy change needs a fresh step up signature from the approver's own machine; the sample
+signature in those two requests has expired. See
+[Policy lifecycle and approvals](/guides/policy-lifecycle-and-approvals).
+
+Every route's own base URL, including on your own deployment, not just the one linked above,
+is documented on [Deploy patterns](/guides/deploy-patterns#the-openapi-spec-endpoint).
+
+This page and its siblings cover what a spec can't express:
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="key" href="/api-reference/authentication">
+    The bearer key model, and how it differs from Policy evaluation and gateway
+    attestation.
+  </Card>
+  <Card
+    title="Error handling"
+    icon="triangle-exclamation"
+    href="/api-reference/error-handling"
+  >
+    The shared error envelope, which errors carry a code, and the one known gap.
+  </Card>
+  <Card
+    title="Idempotency and nonces"
+    icon="fingerprint"
+    href="/api-reference/idempotency-and-nonces"
+  >
+    Why there's no Idempotency-Key header, what businessTransactionId does
+    instead, and how authorizations and approvals are accepted once.
+  </Card>
+  <Card title="Error catalog" icon="list" href="/api-reference/error-catalog">
+    Every error this API returns, one table, cross-linked from the spec.
+  </Card>
+</CardGroup>
+
+## Errors
+
+Non 2xx responses are `{ "error": string }`, often with a stable `code`. Branch on the status, then on `code`, never
+on the text. Which errors carry a code, and the one known gap, are on [Error handling](/api-reference/error-handling);
+every specific error this API returns is on the [Error catalog](/api-reference/error-catalog).
+
+Both maintained SDKs raise a specific exception per status code. The Python SDK:
+`ValidationError`/`NotFoundError`/`ConflictError`/`ServerError`/etc., see [Python
+SDK](/sdks/python). The TypeScript SDK: `ValidationError`/`AuthenticationError`/
+`AuthorizationError`/`NotFoundError`/`ConflictError`/`ExecutionRejectedError`/etc., see
+[TypeScript SDK](/sdks/typescript).
+
+## Auth
+
+<Info>
+  **Every route requires a caller bearer key, except the liveness/readiness
+  probes and documentation/verification routes** listed on
+  [Authentication](/api-reference/authentication). See that page for how to send
+  a key and what it does and does not prove.
+</Info>
+
+## Rate limiting
+
+`POST /execute` is rate-limited per authenticated caller; `GET /health` and `GET /ready` carry a
+separate, more permissive limit keyed by IP. See [Authentication](/api-reference/authentication#rate-limiting)
+for the mechanism and [Error catalog](/api-reference/error-catalog) for the exact `429` shape.
+
+## Versioning
+
+`GET /version` (with a key) reports `{"name":"Parmana","version":"<build>","api":"v1"}`; `GET /api-manifest.json`
+reports the same two values without one, as `apiVersion` and `buildVersion`. The `api` field
+is the REST API's version, currently `v1`; the `version` field is a separate deployment
+build identifier, not derived from it. `openapi/openapi.yaml`'s own `info.version` tracks the
+spec document, currently `1.0.0`. There's no fixed release cadence: routes and fields have
+been added within `v1` as this API has grown (see [Changelog](/changelog)), and existing
+fields and status codes haven't been removed or had their meaning changed. A breaking change
+to the REST API surface itself would be a new version (`v2`), not a silent change to `v1`.
+
+Both SDKs follow semantic versioning (`MAJOR.MINOR.PATCH`): a major version indicates a
+breaking change to the SDK's public surface (`ParmanaClient`, its domain models, its error
+types), a minor version adds functionality without breaking existing code, and a patch is a
+backward-compatible fix. Check the currently published version with `npm view @parmana/sdk
+version` or `pip index versions parmana`, see [TypeScript SDK](/sdks/typescript) and [Python
+SDK](/sdks/python).

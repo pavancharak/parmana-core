@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/receipt.schema.json",
+  "title": "Receipt",
+  "description": "Cryptographically signed, immutable Execution Trust Receipt proving the outcome of an Execution Trust Record at the time it was issued.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "receiptId",
+    "businessTransactionId",
+    "trustRecordHash",
+    "receiptHash",
+    "signature",
+    "algorithm",
+    "issuedAt"
+  ],
+  "properties": {
+    "receiptId": {
+      "type": "string",
+      "description": "Unique Receipt identifier."
+    },
+    "businessTransactionId": {
+      "type": "string",
+      "description": "Business Transaction represented by this Receipt."
+    },
+    "executionId": {
+      "type": "string",
+      "description": "Execution represented by this Receipt. Absent when the Receipt represents the latest transaction state; every Receipt currently produced by ReceiptService omits this field."
+    },
+    "trustRecordHash": {
+      "type": "string",
+      "description": "Canonical hash of the Execution Trust Record, used for independent verification."
+    },
+    "receiptHash": {
+      "type": "string",
+      "description": "Hash of this Receipt."
+    },
+    "signature": {
+      "type": "string",
+      "description": "Base64-encoded digital signature over the Receipt."
+    },
+    "algorithm": {
+      "type": "string",
+      "description": "Signing algorithm.",
+      "examples": ["ed25519"]
+    },
+    "issuedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when the Receipt was generated."
+    }
+  },
+  "examples": [
+    {
+      "receiptId": "312ce65d-8ec4-4978-ac50-aeb0062ad7be",
+      "businessTransactionId": "eed2a972-1bf5-4166-8472-761f76fbf1b2",
+      "trustRecordHash": "989aef83d595202ec02bb338ac00461abec0541098ea065f965b5cde342d3b25",
+      "receiptHash": "2cc963456dd71e0e85f2d2fe743d4475072997287356ac1b9c6a9314b189ea8b",
+      "issuedAt": "2026-07-07T16:38:59.350Z",
+      "algorithm": "ed25519",
+      "signature": "2Z49nDSXubFNTpy0ovPwguGW3IpgvdJuiusCAadMNPS4cqmjRUthZmrfN3kZUO5m7Ku5v/poeLxtjsFKvXe9DA=="
+    }
+  ]
+}

@@ -1,0 +1,112 @@
+---
+sidebar_label: business_signal_source_api
+title: parmana.api.business_signal_source_api
+---
+
+Parmana Business Signal Source API.
+
+Connect a business system Parmana asks for the facts a policy needs
+(RFC-0023): list the registrations, propose registering a source's HTTPS
+endpoint and signing key or revoking it, and approve or reject a proposal
+with a signed step up authorization. Every call needs an API key that
+belongs to a verified human.
+
+## BusinessSignalSourceApi Objects
+
+```python
+class BusinessSignalSourceApi()
+```
+
+Business Signal Source API.
+
+#### list
+
+```python
+def list() -> list[BusinessSignalSource]
+```
+
+Every registration, active and revoked.
+
+Maps to GET /business-signal-sources.
+
+#### propose_register
+
+```python
+def propose_register(*,
+                     name: str,
+                     endpoint_url: str,
+                     reason: str,
+                     timeout_ms: int | None = None,
+                     public_key_pem: str | None = None,
+                     key_id: str | None = None) -> BusinessSignalSourceChange
+```
+
+Propose registering a business system as a signal source.
+
+Maps to POST /business-signal-sources/changes with action
+"register". `name` is what a policy's signalSources uses in
+`source`: lowercase letters, digits and hyphens. `endpoint_url` is
+https with a public host name. `timeout_ms` is 1000 to 30000; the
+server defaults it to 10000. `public_key_pem` is the Ed25519 key
+the source signs its answers with; recommended, since without it
+Parmana cannot check the source said what it received. `key_id`
+labels the key and needs it. Nothing changes until a different
+person approves it.
+
+#### propose_revoke
+
+```python
+def propose_revoke(*, name: str, reason: str) -> BusinessSignalSourceChange
+```
+
+Propose revoking the active registration for a name.
+
+Maps to POST /business-signal-sources/changes with action
+"revoke". Once approved, policies that name the source are refused
+as SOURCE_UNAVAILABLE.
+
+#### list_changes
+
+```python
+def list_changes(
+        status: str | None = None
+) -> builtins.list[BusinessSignalSourceChange]
+```
+
+List business signal source changes, newest first.
+
+Maps to GET /business-signal-sources/changes.
+
+## Parameters
+
+status:
+"PENDING_APPROVAL", "APPROVED" or "REJECTED". Omit for all.
+
+#### approve_change
+
+```python
+def approve_change(
+        change_id: str,
+        step_up_authorization: dict[str, Any]) -> BusinessSignalSourceChange
+```
+
+Approve and apply a business signal source change.
+
+Maps to POST /business-signal-sources/changes/\{id\}/approve. The
+caller must not be the proposer and must have a registered step up
+key. Make `step_up_authorization` with
+`parmana.crypto.sign_policy_change_step_up()`, `change_id` as
+`pending_policy_change_id`, and action "approve".
+
+#### reject_change
+
+```python
+def reject_change(
+        change_id: str, rejection_reason: str,
+        step_up_authorization: dict[str, Any]) -> BusinessSignalSourceChange
+```
+
+Reject a business signal source change.
+
+Maps to POST /business-signal-sources/changes/\{id\}/reject. Same
+caller rules as `approve_change()`; sign with action "reject".

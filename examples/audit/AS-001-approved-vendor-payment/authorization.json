@@ -1,0 +1,27 @@
+{
+  "authorizationId": "authorization-vendor-payment-001",
+
+  "authorityId": "authority-finance-manager-001",
+
+  "authorizationType": "APPROVAL",
+
+  "purpose": "Vendor Payment Approval",
+
+  "description": "Authorize payment of vendor invoice INV-2026-000123.",
+
+  "scope": {
+    "resourceType": "Vendor Payment",
+    "resourceId": "invoice-INV-2026-000123"
+  },
+
+  "constraints": {
+    "maxAmount": 10000,
+    "currency": "USD"
+  },
+
+  "issuedAt": "2026-01-01T09:05:00Z",
+
+  "expiresAt": "2026-01-02T09:05:00Z",
+
+  "status": "ACTIVE"
+}

@@ -1,0 +1,50 @@
+{
+  "receiptId": "receipt-000001",
+
+  "trustRecordId": "etr-000001",
+
+  "verificationId": "verification-000001",
+
+  "issuedAt": "2026-01-01T09:05:05Z",
+
+  "status": "ISSUED",
+
+  "decision": {
+    "decisionId": "decision-000001",
+    "outcome": "APPROVED",
+    "reason": "Vendor payment satisfies all policy requirements."
+  },
+
+  "policy": {
+    "policyId": "vendor-payment",
+    "policyVersion": "2.0.0",
+    "schemaVersion": "1.0.0"
+  },
+
+  "subject": {
+    "businessTransactionId": "txn-vendor-payment-000001",
+    "intentId": "intent-vendor-payment-001",
+    "authorizationId": "authorization-vendor-payment-001",
+    "authorityId": "authority-finance-manager-001"
+  },
+
+  "integrity": {
+    "hashAlgorithm": "SHA-256",
+    "signatureAlgorithm": "Ed25519",
+
+    "trustRecordHash": "5f76b0c6d79c77f8c0db92b5f3d8b4d9d1d4b6b8a7d0a18cb8d55c2e4d3f9a11",
+
+    "receiptHash": "7f9f13f7f2d4cbecacb9dcb6a2a5a1a77ef4bcefa3b0f0f8a9dc88d57b43e118",
+
+    "signature": "MEYCIQDExampleReceiptSignatureForAuditPackageOnly"
+  },
+
+  "summary": {
+    "policyEvaluated": true,
+    "verificationPassed": true,
+    "replayMatched": true,
+    "receiptIssued": true
+  },
+
+  "message": "This receipt certifies that the referenced Business Transaction was executed under the specified policy, independently verified, and recorded as an immutable Execution Trust Record."
+}

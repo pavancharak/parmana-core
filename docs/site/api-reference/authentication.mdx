@@ -1,0 +1,148 @@
+---
+title: "Authentication"
+description: "Send a bearer key on every request. What a key may do, how to check it, where keys come from, the rate limits, and every authentication error with its exact body."
+---
+
+Every request carries one API key as a bearer token. The key says **who is calling**. It does not authorize an
+action: a policy and a signed human approval do that, after the key is accepted
+([How Parmana thinks](/how-parmana-thinks)).
+
+## Send a bearer key
+
+```bash
+curl https://parmana-sandbox.vercel.app/callers/me \
+  -H "Authorization: Bearer $PARMANA_API_KEY"
+```
+
+Every route needs the header except these:
+
+| Routes                                                                                                                            | Why no key                                                                                                                                                 |
+| --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /health`, `GET /ready`                                                                                                       | Probes: an orchestrator has no key to present.                                                                                                             |
+| `GET /openapi.yaml`, `GET /openapi.json`, `GET /api-manifest.json`, `GET /documentation`, `GET /reference`                        | Discovery: a client reads how to use the API before it has a key.                                                                                          |
+| `POST /refusal/verify`, `POST /execution-intents/verify`, `POST /audit/verify`, `GET /keys/{keyId}`, `GET /.well-known/jwks.json` | Independent verification: anyone holding a signed artifact can check it with no Parmana account. See [Verify independently](/guides/verify-independently). |
+| `GET /parmana-handbook.pdf`, `GET /handbook/download-leads`, `POST /handbook/download-leads`                                      | The handbook download, for visitors.                                                                                                                       |
+
+A missing header, a header that is not `Bearer <key>`, or a key the server does not know returns `401` before anything
+else runs:
+
+```json 401
+{ "error": "authentication required" }
+```
+
+The server holds only a SHA-256 hash of each key and compares in constant time. Responses, records and audit events
+name the key by its `callerId`, never by the key itself.
+
+## Check your key: GET /callers/me
+
+Call this first. It returns who the key is and what it may do, with the defaults below already applied. Real response
+from the sandbox with the demo key:
+
+```json 200
+{
+  "callerId": "sandbox-visitor",
+  "allowedPrincipalIds": ["sandbox-visitor"],
+  "allowedCapabilities": ["sandbox:receipt"],
+  "unrestrictedCapabilities": false
+}
+```
+
+`unrestrictedCapabilities` is `true` only for a key granted every capability (`"*"`).
+
+## What a key may do
+
+Each key is one entry in the server's `PARMANA_API_KEYS` (a JSON array). The entry, not the request, decides what the
+key may do:
+
+| Field                  | Meaning                                                                                    | If left out                                                                  | Refused with                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `callerId`             | Who the key is. Appears in every audit event.                                              | Required                                                                     |                                                                                     |
+| `keyHash`              | SHA-256 of the raw key, 64 hex characters.                                                 | Required                                                                     |                                                                                     |
+| `allowedCapabilities`  | The actions (`intent.action`) the key may ask for. `"*"` allows every action.              | **Nothing.** A key with no list may invoke none.                             | `403 CAPABILITY_NOT_ALLOWED`                                                        |
+| `allowedPrincipalIds`  | The `authority.principalId` values the key may declare.                                    | Only its own `callerId`.                                                     | `403` with no code, `Caller is not permitted to assert this authority.principalId.` |
+| `allowedTenantIds`     | The `metadata.tenantId` values the key may send. The tenant id picks the signing key.      | **None.** A request with a `tenantId` is refused; one without is unaffected. | `403 TENANT_NOT_ALLOWED`                                                            |
+| `credentialHolderType` | `USER` marks a key held by a verified person. Only `USER` keys may use governance routes.  | Not a person.                                                                | `403 NON_HUMAN_CALLER_DENIED`                                                       |
+| `stepUpPublicKey`      | The public half of a checker's step up key, for approving or rejecting governance changes. | The key cannot approve or reject.                                            | See [Policy governance](/guides/policy-governance-maker-checker)                    |
+
+An agent's key is usually `allowedCapabilities` with its few actions and nothing else. A person who approves policy or
+approver changes holds a separate `USER` key with a step up key ([Credentials](/guides/credentials-maker-checker-approver)).
+
+## Where keys come from
+
+The operator of the server issues keys. There is no API to create one. On a machine with the repository:
+
+```bash
+npx tsx scripts/generate-api-key.ts --caller-id refund-agent \
+  --allowed-capabilities paytm:refund
+```
+
+Other options: `--allowed-principal-ids a,b`, `--credential-holder-type USER`, and `--generate-step-up-key` (with
+`USER`). The script prints the raw key once, with its hash and the entry to add, and writes nothing to disk:
+
+```text
+Add this entry to PARMANA_API_KEYS (a JSON array):
+{"callerId":"refund-agent","keyHash":"<64 hex characters>","allowedCapabilities":["paytm:refund"]}
+```
+
+Give the raw key to the caller over a secure channel, add the entry to `PARMANA_API_KEYS`, and restart or redeploy
+the server. To revoke a key, remove its entry and redeploy. To rotate, add the new entry, move the caller, then remove
+the old one. The full procedure is in [API keys](/self-hosted/api-keys) and
+[Deploy patterns](/guides/deploy-patterns#caller-authentication).
+
+The server refuses to start with no keys configured, unless `PARMANA_AUTH_DISABLED=true`. That switch turns
+authentication off entirely, for local development and the tutorials only, and the server prints a warning at every
+start. **Never set it on a real deployment.** A sandbox refuses to start with it.
+
+## The sandbox demo key
+
+The public sandbox, `https://parmana-sandbox.vercel.app`, has one published key: `2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME`. It is caller
+`sandbox-visitor`, may act only as itself, and may invoke only `sandbox:receipt`, an action that acts on nothing. It is
+not a human key, so governance routes refuse it with `403 NON_HUMAN_CALLER_DENIED`. Every visitor shares it, so every
+visitor can read what others sent with it. It works only on the sandbox; production and every other deployment refuse
+it with `401`. See [Playground](/playground).
+
+## Rate limits
+
+| Routes                                                                                                                                                                    | Counted per      | Default per minute | Setting                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ------------------ | ------------------------------------ |
+| `POST /execute`                                                                                                                                                           | Key (`callerId`) | 30                 | `RATE_LIMIT_EXECUTE_PER_MINUTE`      |
+| `GET /health`, `GET /ready`                                                                                                                                               | Client address   | 300                | `RATE_LIMIT_HEALTH_PER_MINUTE`       |
+| `POST /refusal/verify`, `POST /execution-intents/verify`, `POST /audit/verify`, `/handbook`, `POST /sandbox/approvals`, `GET /keys/{keyId}`, `GET /.well-known/jwks.json` | Client address   | 60                 | `RATE_LIMIT_PUBLIC_PER_MINUTE`       |
+| Failed authentication (`401`) on any route that needs a key                                                                                                               | Client address   | 30                 | `RATE_LIMIT_AUTH_FAILURE_PER_MINUTE` |
+
+`POST /execute` is counted per key, not per address, because many agents call from one shared backend address. Over
+the limit, the request is refused before anything is evaluated, signed or recorded:
+
+```json 429
+{ "error": "Rate limit exceeded. Try again later.", "code": "RATE_LIMITED" }
+```
+
+with a `Retry-After` header in seconds, and `RateLimit` headers on every limited response. Wait that long, then send
+again with a **new** `businessTransactionId`.
+
+With `DATABASE_URL` set, as on every hosted deployment, the counts are shared by all server instances, so the limit is
+the limit. Without it, each instance counts on its own.
+
+## Errors
+
+Real bodies, from the sandbox.
+
+| Status | When                                                       | Body                                                                                                                                                  |
+| ------ | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `401`  | No header, not `Bearer <key>`, or an unknown key           | `{"error":"authentication required"}`                                                                                                                 |
+| `403`  | `intent.action` is not in the key's `allowedCapabilities`  | `{"error":"Caller is not permitted to invoke this capability.","code":"CAPABILITY_NOT_ALLOWED"}`                                                      |
+| `403`  | `authority.principalId` is not one the key may declare     | `{"error":"Caller is not permitted to assert this authority.principalId."}`                                                                           |
+| `403`  | `metadata.tenantId` is not in the key's `allowedTenantIds` | `{"error":"Caller is not permitted to act for this tenantId.","code":"TENANT_NOT_ALLOWED"}`                                                           |
+| `403`  | A governance route with a key that is not `USER`           | `{"error":"This action requires a caller credential provisioned as a verified human (credentialHolderType: USER).","code":"NON_HUMAN_CALLER_DENIED"}` |
+| `429`  | Over a rate limit                                          | `{"error":"Rate limit exceeded. Try again later.","code":"RATE_LIMITED"}`                                                                             |
+
+For each of these nothing is evaluated, approved or released. The `401` and `403` refusals are written to the caller
+audit trail; a `429` is refused before that. Fix the key or the request and send again. Every other error is in
+the [Error catalog](/api-reference/error-catalog).
+
+## What a key does not prove
+
+A valid key proves which system is calling. It does not prove who authorized the action: that is the signed
+[Execution Authorization](/concepts/execution-authorization) and the signed human approval, checked after the key. A
+request with a valid key is still refused when the policy says no, and an approved request is released only through
+[the gateway](/concepts/the-gateway), which checks its own signatures.

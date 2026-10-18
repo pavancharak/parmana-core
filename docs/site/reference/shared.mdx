@@ -1,0 +1,84 @@
+---
+title: "@parmana/shared"
+description: "Domain types, config loading, and error classes every other package depends on. No business logic of its own."
+---
+
+<Info>
+  **[AVAILABLE]**. `packages/shared`. The foundation package: every other
+  Parmana package imports from here, this package imports from none of them.
+</Info>
+
+## Purpose
+
+Canonical TypeScript types for every artifact in the [trust chain](/concepts/execution-trust-records)
+(`Authority` through `ExecutionTrustRecord`), the `loadConfig()` environment-variable
+reader, and a shared error class hierarchy so every package throws recognizable,
+`instanceof`-checkable errors rather than plain `Error`.
+
+## Install
+
+Not published to npm. This is an internal package of this repository, used from a clone of it: `npm ci` at the repository root links every workspace package. The packages published to npm are [`@parmana/sdk`](/sdks/typescript), [`@parmana/connector-sdk`](/reference/connector-sdk) and [`@parmana/sign`](/sdks/parmana-sign/overview).
+
+## Key exports
+
+### Domain types, all [AVAILABLE]
+
+| Export                                                          | What it is                                                                                          |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `Authority`                                                     | Who is empowered to authorize execution                                                             |
+| `Authorization`                                                 | A grant, with purpose and optional expiry                                                           |
+| `Intent`                                                        | The specific action, target, and parameters requested                                               |
+| `BusinessTransaction`                                           | The immutable input to policy evaluation                                                            |
+| `Decision`                                                      | A policy's outcome, `APPROVED` or `REJECTED`, plus reason and evaluated signals                     |
+| `Execution`                                                     | What actually happened: status, mode, evidence                                                      |
+| `ExecutionEvidence`                                             | Action, target, parameters, success, and an open `attributes` bag                                   |
+| `ExecutionTrustRecord`                                          | The signed, append-only aggregate, see [Execution trust records](/concepts/execution-trust-records) |
+| `SignedExecutionAuthorization`, `ExecutionAuthorizationPayload` | The signed envelope, see [Execution authorization](/concepts/execution-authorization)               |
+| `Signature`                                                     | `{ algorithm, keyId, value, signedAt }`                                                             |
+| `Verification`, `Receipt`, `Override`                           | Append-only record types on the trust record                                                        |
+| `PolicyReference`                                               | `{ name, version, schemaVersion }`                                                                  |
+
+### Config
+
+```typescript
+export function loadConfig(): Readonly<Config>;
+```
+
+Reads `process.env` fresh on every call, no caching, no memoization. `Config` covers
+storage provider, key directory, `primarySignatureProvider` /
+`secondarySignatureProvider`, hash provider, and policy directory. See [Deploy
+patterns](/guides/deploy-patterns) for the full environment variable checklist.
+
+### Errors, all [AVAILABLE]
+
+`ParmanaError` is the common base class. Notable subclasses: `BusinessTransactionNotFoundError`,
+`PolicyNotFoundError`, `AuthorityRequiredError`, `AuthorizationRequiredError`,
+`IntentRequiredError`, `DecisionNotApprovedError`, `ForbiddenError`, `UnauthorizedError`,
+`ConflictError`, `ValidationError`, `VerificationFailedError`, `TrustChainValidationError`,
+`ReceiptGenerationError`, `OverrideNotAllowedError`. `packages/api/src/middleware/error-handler.ts`
+checks several of these by `instanceof`, see [API error reference](/api-reference/introduction)
+for exactly which ones actually reach a distinct HTTP status today.
+
+## Minimal example
+
+```typescript
+import { loadConfig, type BusinessTransaction } from "@parmana/shared";
+
+const config = loadConfig();
+console.log(config.crypto.primarySignatureProvider); // "ed25519" by default
+```
+
+## Next
+
+<CardGroup cols={2}>
+  <Card
+    title="Execution trust records"
+    icon="file-shield"
+    href="/concepts/execution-trust-records"
+  >
+    The domain type this package's `ExecutionTrustRecord` implements.
+  </Card>
+  <Card title="@parmana/crypto" icon="key" href="/reference/crypto">
+    Where these types get hashed and signed.
+  </Card>
+</CardGroup>

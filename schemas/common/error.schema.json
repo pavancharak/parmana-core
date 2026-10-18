@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/common/error.schema.json",
+  "title": "Error Response",
+  "description": "Shared error envelope produced by packages/api/src/middleware/error-handler.ts and by every route's inline validation checks. error is always a plain human-readable string (never a nested object). code is present only when the failure was a RuntimeError subclass reaching the centralized error handler (VerificationFailedError, ReceiptGenerationError, or an uncategorized RuntimeError); it is absent from every inline route-level check (businessTransactionId format/required checks) and from BusinessTransactionValidationError, PolicyValidationError, SignalValidationError, PolicyNotFoundError, DuplicateBusinessTransactionError, and the generic 500 fallback. POST /policies/validate does NOT use this envelope at all. See its own response schema. For the triggering condition and recommended caller action behind any specific error/code/status combination, see the Error catalog at /api-reference/error-catalog.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["error"],
+  "properties": {
+    "error": {
+      "type": "string",
+      "description": "Human-readable error message."
+    },
+    "code": {
+      "type": "string",
+      "description": "Stable machine-readable error code. Only present for errors that reach the handler as a RuntimeError.",
+      "examples": [
+        "RUNTIME_ERROR",
+        "VERIFICATION_FAILED",
+        "RECEIPT_GENERATION_FAILED",
+        "POLICY_DENIED",
+        "CAPABILITY_NOT_ALLOWED",
+        "RATE_LIMITED",
+        "AUDIT_UNAVAILABLE",
+        "SIGNING_UNAVAILABLE",
+        "CONNECTOR_NOT_REGISTERED",
+        "EXECUTION_RECORD_INCOMPLETE",
+        "EXECUTION_INTENT_UNAVAILABLE",
+        "EXECUTION_INTENT_RESULT_NOT_RECORDED",
+        "EXECUTION_INTENT_NOT_FOUND",
+        "EXECUTION_INTENTS_NOT_ENABLED",
+        "EXECUTION_INTENT_NOT_RESOLVABLE",
+        "EXECUTION_INTENT_RESOLUTION_INVALID",
+        "NON_HUMAN_CALLER_DENIED",
+        "EXECUTION_OUTCOME_UNKNOWN",
+        "AUTHORIZATION_NO_LONGER_VALID"
+      ]
+    },
+    "executionStatus": {
+      "type": "string",
+      "enum": ["EXECUTION_UNKNOWN", "NOT_EXECUTED"],
+      "description": "RFC-0023 phase 4. EXECUTION_UNKNOWN with EXECUTION_OUTCOME_UNKNOWN: the action was released and the call failed, so whether it ran is unknown; never reported as failed, and the Execution Intent stays ERRORED until a person resolves it. NOT_EXECUTED with AUTHORIZATION_NO_LONGER_VALID: the release was refused because a business condition or the authority grant it rested on no longer held, and nothing was sent."
+    }
+  },
+  "examples": [
+    {
+      "error": "businessTransactionId must be a valid UUID."
+    },
+    {
+      "error": "Business Transaction 'eed2a972-1bf5-4166-8472-761f76fbf1b2' already exists."
+    },
+    {
+      "error": "Execution rejected: Vendor payment rejected because the assessed payment risk exceeds the maximum permitted threshold.",
+      "code": "RUNTIME_ERROR"
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+[
+  {
+    "case": "baseline untouched chain",
+    "rowsAfter": 6,
+    "verifierValid": true,
+    "verdict": "PASS"
+  },
+  {
+    "case": "modify content of record 3",
+    "rowsAfter": 6,
+    "verifierValid": false,
+    "brokenAtPosition": 3,
+    "reason": "signature does not match recomputed content.",
+    "detected": true,
+    "verdict": "PASS"
+  },
+  {
+    "case": "delete middle record 3",
+    "rowsAfter": 5,
+    "verifierValid": false,
+    "brokenAtPosition": 3,
+    "reason": "previousChainHash does not reference the prior event's chainHash.",
+    "detected": true,
+    "verdict": "PASS"
+  },
+  {
+    "case": "reorder two records (stored chain_position swapped)",
+    "rowsAfter": 6,
+    "verifierValid": false,
+    "brokenAtPosition": 2,
+    "reason": "signature does not match recomputed content.",
+    "detected": true,
+    "verdict": "PASS"
+  },
+  {
+    "case": "reorder two records (presentation order swapped)",
+    "rowsAfter": 6,
+    "verifierValid": false,
+    "brokenAtPosition": 2,
+    "reason": "previousChainHash does not reference the prior event's chainHash.",
+    "detected": true,
+    "verdict": "PASS"
+  },
+  {
+    "case": "edit + recomputed chain hashes, no re-signing",
+    "rowsAfter": 6,
+    "verifierValid": false,
+    "brokenAtPosition": 3,
+    "reason": "signature does not match recomputed content.",
+    "detected": true,
+    "verdict": "PASS"
+  },
+  {
+    "case": "delete last record (tail truncation)",
+    "rowsAfter": 5,
+    "verifierValid": true,
+    "brokenAtPosition": null,
+    "reason": null,
+    "detected": false,
+    "verdict": "FAIL"
+  },
+  {
+    "case": "delete last record WITH anchored head",
+    "rowsAfter": 5,
+    "verifierValid": false,
+    "reason": "chain does not end at the anchored chain head (records missing or truncated).",
+    "detected": true,
+    "verdict": "PASS",
+    "note": "requires the head to be stored outside the database"
+  },
+  {
+    "case": "untouched chain with anchored head",
+    "verifierValid": true,
+    "verdict": "PASS"
+  },
+  {
+    "case": "delete first record",
+    "rowsAfter": 5,
+    "verifierValid": false,
+    "brokenAtPosition": 1,
+    "reason": "previousChainHash does not reference the prior event's chainHash.",
+    "detected": true,
+    "verdict": "PASS"
+  }
+]

@@ -1,0 +1,118 @@
+# Offline check for the self hosted deployment (G-60). Layered on top of
+# docker-compose.yml. Run it with docker/local/offline-check/run.sh, which
+# builds the images while the internet is still reachable and then starts
+# everything on a network with no internet route.
+#
+# Changes from docker-compose.yml:
+#   - every container is on one network created with `internal: true`, so
+#     none of them can reach the internet or the hosted service;
+#   - the API's port is not published (an internal network cannot publish);
+#   - the Paytm connector is pointed at a local stand-in for the downstream
+#     system, which verifies the gateway's signature with the public key.
+#     The API refuses a connector URL that is not HTTPS in production, and
+#     that rule is kept: the stand-in serves HTTPS with a certificate made
+#     for this run, and the API trusts that one certificate through
+#     NODE_EXTRA_CA_CERTS;
+#   - the API is started with the check's own API keys (check-identities),
+#     never the deployment's;
+#   - offline-check runs policy governance approval for the refund policy,
+#     sends one authorized and one refused request, and verifies the Trust
+#     Record with only the public keys.
+#
+# It runs under its own project name, so it has its own database and never
+# touches the deployment started by docker-compose.yml. It does reuse the
+# keys in ./parmana-local, so the record it saves was signed by the
+# deployment's own key.
+
+networks:
+  default:
+    internal: true
+
+services:
+  stand-in-certificate:
+    image: postgres:16
+    entrypoint:
+      - bash
+      - -c
+      # Keeps an existing certificate: `compose run` starts this service
+      # again, and a new certificate would not match the one the stand-in
+      # already serves.
+      - >-
+        test -f /certs/stand-in.crt ||
+        openssl req -x509 -newkey ed25519 -nodes -days 1
+        -subj /CN=paytm-agent-stand-in
+        -addext subjectAltName=DNS:paytm-agent-stand-in
+        -keyout /certs/stand-in.key -out /certs/stand-in.crt
+        && chmod 644 /certs/stand-in.key /certs/stand-in.crt;
+        test -f /certs/stand-in.crt
+    volumes:
+      - stand-in-certs:/certs
+    restart: "no"
+
+  check-identities:
+    image: parmana-api:local
+    user: "0:0"
+    entrypoint: ["node", "/app/docker/local/offline-check/check-identities.mjs"]
+    volumes:
+      - ./docker/local:/app/docker/local:ro
+      - check-identities:/identities
+    restart: "no"
+
+  api:
+    ports: !reset []
+    depends_on:
+      stand-in-certificate:
+        condition: service_completed_successfully
+      check-identities:
+        condition: service_completed_successfully
+    # The check's own API keys, not the deployment's (check-identities.mjs).
+    entrypoint:
+      - bash
+      - -c
+      - export PARMANA_API_KEYS="$$(cat /identities/api-keys.json)" && exec /app/docker/entrypoint.sh
+    environment:
+      PAYTM_CONNECTOR_URL: https://paytm-agent-stand-in:4399
+      PAYTM_CONNECTOR_SHARED_SECRET: offline-check-shared-secret
+      NODE_EXTRA_CA_CERTS: /certs/stand-in.crt
+    volumes:
+      - stand-in-certs:/certs:ro
+      - check-identities:/identities:ro
+
+  paytm-agent-stand-in:
+    image: parmana-api:local
+    depends_on:
+      stand-in-certificate:
+        condition: service_completed_successfully
+    entrypoint:
+      ["node", "/app/docker/local/offline-check/paytm-agent-stand-in.mjs"]
+    environment:
+      PAYTM_CONNECTOR_SHARED_SECRET: offline-check-shared-secret
+    volumes:
+      - ./docker/local:/app/docker/local:ro
+      - stand-in-certs:/certs:ro
+      - ./parmana-local/keys/default.public.pem:/public-keys/default.public.pem:ro
+      - ./parmana-local/keys/gateway.public.pem:/public-keys/gateway.public.pem:ro
+
+  offline-check:
+    image: parmana-api:local
+    profiles: ["check"]
+    depends_on:
+      api:
+        condition: service_healthy
+      paytm-agent-stand-in:
+        condition: service_started
+    entrypoint: ["node", "/app/docker/local/offline-check/check.mjs"]
+    environment:
+      NODE_EXTRA_CA_CERTS: /certs/stand-in.crt
+    volumes:
+      - ./docker/local:/app/docker/local:ro
+      - check-identities:/identities:ro
+      - ./parmana-local/keys/default.public.pem:/public-keys/default.public.pem:ro
+      - ./parmana-local/keys/gateway.public.pem:/public-keys/gateway.public.pem:ro
+      - ./parmana-local/offline-check:/out
+      - stand-in-certs:/certs:ro
+    restart: "no"
+
+volumes:
+  stand-in-certs:
+  check-identities:

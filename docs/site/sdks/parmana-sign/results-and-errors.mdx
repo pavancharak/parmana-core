@@ -1,0 +1,34 @@
+---
+title: "Results and errors"
+description: "What each verification failure means and what to do about it."
+---
+
+The offline verifiers return a result instead of throwing. Read `valid` for the decision and
+`errors` for the reasons. Each reason is one of the messages below.
+
+| Message                                                              | Meaning                                                                                       | What to do                                                                          |
+| -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `trustRecordHash mismatch: expected …, got ….` (or `intentHash`)     | A signed field changed after signing.                                                         | Treat the record as tampered.                                                       |
+| `signature verification failed for keyId "…" (…)`                    | The signature does not match this content and key.                                            | Check you used the right environment's key. Otherwise treat the record as tampered. |
+| `no public key supplied for keyId "…".`                              | `publicKeys` has no entry for a key the record names.                                         | Fetch that key; see [Public keys](/sdks/parmana-sign/public-keys).                  |
+| `unsupported algorithm: ….`                                          | The record names an algorithm other than `ed25519` or `dilithium3`.                           | Upgrade `@parmana/sign` if a newer version supports it. Never treat it as valid.    |
+| `signatures array has 1 entry, need at least 2 for a hybrid record.` | A hybrid record lost an entry.                                                                | Treat as tampered.                                                                  |
+| `duplicate algorithm in signatures array: ….`                        | Two hybrid entries use the same algorithm.                                                    | Treat as tampered.                                                                  |
+| `signatures is present but is not an array.`                         | The record is malformed.                                                                      | Check how the record was stored or parsed.                                          |
+| `signature is missing or malformed.`                                 | The record has no usable `signature` field.                                                   | Check how the record was stored or parsed.                                          |
+| `error verifying keyId "…" (…): …`                                   | The key could not be used, for example a PEM that does not parse, or a key of the wrong type. | Check the key material for that `keyId`.                                            |
+
+## Deciding what to accept
+
+- `valid: true` means every check that applies passed.
+- `valid: false` with only key or format errors means the record could not be checked. That
+  is not the same as tampered, but it is not verified either.
+- For hybrid records, also require `hybridSignaturesValid === true` if your policy needs the
+  post-quantum signature. See
+  [Requiring hybrid signatures](/sdks/parmana-sign/verify-trust-record#requiring-hybrid-signatures).
+
+## Exceptions
+
+The verifiers do not throw for bad records or keys. Exceptions come only from the
+[signing primitives](/sdks/parmana-sign/signing-primitives), which throw `CryptoError` when a
+key does not match the provider.

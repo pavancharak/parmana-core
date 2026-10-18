@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.parmanasystems.com/responses/business-signal-sources-list-response.schema.json",
+  "title": "Business Signal Sources List Response",
+  "description": "Response of GET /business-signal-sources: every registration, active and revoked.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sources"],
+  "properties": {
+    "sources": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/business-signal-source.schema.json"
+      }
+    }
+  }
+}

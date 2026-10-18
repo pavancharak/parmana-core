@@ -1,0 +1,47 @@
+{
+  "policyId": "slack-post-message",
+  "policyVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes posting a message to a Slack channel after content review and channel authorization.",
+
+  "signalsSchema": {
+    "contentApproved": "boolean",
+    "channelAuthorized": "boolean",
+    "channelId": "string"
+  },
+
+  "boundSignals": {
+    "channelId": "target"
+  },
+
+  "unboundSignalReasons": {
+    "contentApproved": "Result of an independent content-review check; not a value the Intent itself declares.",
+    "channelAuthorized": "Confirms the target channel is one this integration is permitted to post to; independently verified, not caller-declared from the Intent."
+  },
+
+  "rules": [
+    {
+      "id": "approve-post",
+      "condition": {
+        "all": [
+          { "fact": "contentApproved", "operator": "eq", "value": true },
+          { "fact": "channelAuthorized", "operator": "eq", "value": true }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Message post authorized. Content review and channel authorization requirements were satisfied."
+      }
+    },
+    {
+      "id": "reject-default",
+      "condition": {
+        "always": true
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Message post rejected because one or more required policy conditions were not satisfied."
+      }
+    }
+  ]
+}

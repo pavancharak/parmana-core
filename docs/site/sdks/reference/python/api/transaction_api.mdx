@@ -1,0 +1,96 @@
+---
+sidebar_label: transaction_api
+title: parmana.api.transaction_api
+---
+
+Parmana Transaction API.
+
+Retrieve Business Transactions.
+
+## TransactionApi Objects
+
+```python
+class TransactionApi()
+```
+
+Transaction API.
+
+## Responsibilities
+
+- Create (execute) a Business Transaction via POST /transactions
+- Retrieve Business Transactions
+- List Business Transactions
+
+This API does NOT:
+
+- verify trust records
+- replay executions
+- generate receipts
+
+#### create
+
+```python
+def create(transaction: BusinessTransaction) -> ExecutionTrustRecord
+```
+
+Create (execute) a Business Transaction.
+
+Maps to POST /transactions: a second, independent entry point
+into the identical application.execute() pipeline as
+ExecutionApi.execute() (POST /execute). The only behavioral
+difference is the success status code, 201 instead of 200; the
+response body shape is otherwise identical.
+
+## Parameters
+
+transaction:
+Business Transaction submitted to the Parmana Runtime.
+
+## Returns
+
+Execution Trust Record.
+
+#### get
+
+```python
+def get(business_transaction_id: str) -> BusinessTransaction
+```
+
+Retrieve a Business Transaction.
+
+## Parameters
+
+business_transaction_id:
+Business Transaction identifier.
+
+## Returns
+
+Business Transaction.
+
+#### list
+
+```python
+def list(*, page: int = 1, page_size: int = 25) -> list[BusinessTransaction]
+```
+
+List Business Transactions.
+
+## Parameters
+
+page:
+Page number.
+
+page_size:
+Number of transactions per page.
+
+## Returns
+
+List of Business Transactions.
+
+#### \_\_call\_\_
+
+Makes `client.transactions(page=..., page_size=...)` work
+directly, alongside the existing `client.transactions.list(...)`
+(and `.get(...)`, `.create(...)`), without renaming the
+`ParmanaClient.transactions` attribute out from under existing
+callers (examples/08_list_transactions.py, examples/11_end_to_end.py).

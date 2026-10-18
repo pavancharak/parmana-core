@@ -1,0 +1,35 @@
+{
+  "policyId": "hubspot-deal-read",
+  "policyVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes reading a HubSpot deal only with a signed approval from a trusted person for that deal. No agent action is authorized without a signed human approval, reads included.",
+
+  "signalsSchema": {
+    "readApproved": "boolean"
+  },
+
+  "approvalSignals": {
+    "readApproved": {
+      "resourceId": "parameters.dealId"
+    }
+  },
+
+  "rules": [
+    {
+      "id": "approve-read-with-approval",
+      "condition": { "fact": "readApproved", "operator": "is_true" },
+      "outcome": {
+        "action": "approve",
+        "reason": "Deal read authorized with a verified approval for this deal."
+      }
+    },
+    {
+      "id": "reject-approval-required",
+      "condition": { "always": true },
+      "outcome": {
+        "action": "reject",
+        "reason": "Deal read rejected. A read needs a signed approval for this deal in signals.approvalArtifact, with readApproved true."
+      }
+    }
+  ]
+}

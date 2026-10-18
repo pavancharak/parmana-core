@@ -1,0 +1,345 @@
+---
+title: "Connect any external system"
+description: "An exact, ordered procedure to put an action in a system Parmana has no code for under Parmana's control: write and approve its policy, run an endpoint, register it through maker checker, grant it, and send requests. Every step says what to do, what you should see, and what to do if you do not."
+---
+
+This page connects a system Parmana has no built in connector for, such as your ERP, CRM or an internal service, with
+no change to Parmana's code (ADR-0013). You run a small HTTPS endpoint in front of the system. Parmana releases every
+approved request for the action to that endpoint as a **signed release**; the endpoint checks it with an SDK helper,
+acts with its own credentials, and answers. Parmana holds none of the system's credentials.
+
+<Warning>
+  **Status, 2026-10-01.** Registering a connector through maker checker, and
+  releasing approved requests to it, are live in production and were checked end
+  to end against a deployed endpoint (`docs/CLAIMS.md` 2.49 and 2.50). The SDK
+  helpers `verifyParmanaRelease` and `verify_parmana_release` are published in
+  SDK 1.5.0 (2026-10-04) on npm and PyPI; with an older SDK, build the endpoint
+  from the repository's SDK packages, as
+  `examples/live-checks/external-connector/build-endpoint.ts` does. An approved
+  request took 24 to 32 seconds in production (G-84): give the agent a timeout
+  of at least 120 seconds.
+</Warning>
+
+Follow it literally, as `agents/integrate` is followed. If your situation is not covered, **stop and ask the operator**.
+
+## Rules that apply to every step
+
+1. Do the steps in order. Do not skip one.
+2. At each step, compare what you received with **Expect**. If it differs, follow **If not** and stop.
+3. Never invent a value. Every input comes from the table below or from a response.
+4. The endpoint acts only on what a verified release names. It never acts on a request that did not come from Parmana.
+5. Two different people propose and approve every change. One person holding both keys defeats the control.
+
+## Inputs you need before you start
+
+| Input              | What it is                                                                                                                                           | How to check it                                                                                          |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `PARMANA_URL`      | The Parmana server, without a trailing slash.                                                                                                        | Step 1.                                                                                                  |
+| `PROPOSER_KEY`     | The maker's API key, added as a human (`credentialHolderType USER`).                                                                                 | `GET /callers/me` answers `200`.                                                                         |
+| `APPROVER_KEY`     | A second person's API key, added as a human, with a step up public key registered on it, and that person's step up private key on their own machine. | See [Policy lifecycle and approvals](/guides/policy-lifecycle-and-approvals), "Set up the people, once". |
+| `CAPABILITY`       | The action, `namespace:verb`, for example `erp:create-invoice`. Lowercase letters and digits, words joined by `-` or `_`, at most 128 characters.    | Not in a built in namespace: `paytm`, `hubspot`, `github`, `slack`, `test`.                              |
+| `POLICY_NAME`      | The policy that governs `CAPABILITY`, for example `erp-invoice`.                                                                                     | Lowercase letters, digits and `-`.                                                                       |
+| `POLICY_VERSION`   | Its version, for example `1.0.0`.                                                                                                                    |                                                                                                          |
+| `ENDPOINT_URL`     | Where the endpoint will be reached, for example `https://erp.example.com/parmana/release`.                                                           | `https`, a host name with a domain, no IP address, no `localhost`, resolving only to public addresses.   |
+| `PARAMETERS`       | The only parameter names the endpoint needs, for example `amount`, `currency`. Parmana refuses to forward any other.                                 | At most 64 names, each `^[A-Za-z_][A-Za-z0-9_]{0,63}$`.                                                  |
+| `AGENT_CALLER_ID`  | The caller id of the agent's key that will send requests.                                                                                            | Step 9.                                                                                                  |
+| An action approver | The person who signs approvals for `CAPABILITY`, trusted by the server.                                                                              | Step 10.                                                                                                 |
+
+## Step 1: check the server
+
+**Do:** `GET {PARMANA_URL}/health` and `GET {PARMANA_URL}/ready`.
+
+**Expect:** `200 {"status":"UP"}`, and `200` with `"status":"READY"` and `"authDisabled":false`.
+
+**If not:** stop. See [Integrate Parmana](/agents/integrate), step 1.
+
+## Step 2: write the policy
+
+**Do:** write `POLICY_NAME` at `POLICY_VERSION`. Every policy must require a signed approval: declare one approval
+signal in `approvalSignals`, name the resource it approves (`"target"` or a path into `parameters`), and make every
+approve rule require that signal with `is_true`. A fact the caller declares can refuse, never authorize: give each one a
+reason in `unboundSignalReasons`.
+
+```json
+{
+  "policyId": "erp-invoice",
+  "policyVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "description": "Creates an invoice in the ERP only with a signed approval from a trusted person for that customer.",
+  "signalsSchema": {
+    "invoiceApproved": "boolean",
+    "customerActive": "boolean"
+  },
+  "approvalSignals": {
+    "invoiceApproved": { "resourceId": "target", "value": "parameters.amount" }
+  },
+  "unboundSignalReasons": {
+    "customerActive": "Declared by the caller. It can refuse an invoice, never authorize one on its own."
+  },
+  "rules": [
+    {
+      "id": "reject-inactive-customer",
+      "condition": { "fact": "customerActive", "operator": "is_false" },
+      "outcome": { "action": "reject", "reason": "The customer is not active." }
+    },
+    {
+      "id": "approve-with-approval",
+      "condition": {
+        "all": [
+          { "fact": "invoiceApproved", "operator": "is_true" },
+          { "fact": "customerActive", "operator": "is_true" }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Invoice approved by a trusted person for this customer."
+      }
+    },
+    {
+      "id": "reject-approval-required",
+      "condition": { "always": true },
+      "outcome": {
+        "action": "reject",
+        "reason": "An invoice needs a signed approval for this customer in signals.approvalArtifact, with invoiceApproved true."
+      }
+    }
+  ]
+}
+```
+
+With `"value": "parameters.amount"`, an approval also caps the amount. Leave `value` out if the action has no amount.
+
+**Expect:** a JSON file. Step 3 validates it on the server.
+
+## Step 3: propose the policy (maker)
+
+**Do:** with `PROPOSER_KEY`, `POST {PARMANA_URL}/policies/{POLICY_NAME}/{POLICY_VERSION}/pending-changes` with
+`{"reason": "...", "proposedContent": <the policy file, unchanged>}`. The exact commands, in Bash and PowerShell, are in
+[Policy lifecycle and approvals](/guides/policy-lifecycle-and-approvals), step 3.
+
+**Expect:** `201` with a `pendingPolicyChangeId` and `"status":"PENDING_APPROVAL"`.
+
+**If not:**
+
+1. `400`: the policy is refused, and the message says why (for example, an approve rule that does not require the
+   approval signal). Fix the file, then repeat this step.
+2. `403 NON_HUMAN_CALLER_DENIED`: `PROPOSER_KEY` is not a human key. Stop. Ask the operator.
+3. `409 CONFLICT`: a proposal for this version is already open. Approve or reject it first.
+
+## Step 4: approve the policy (checker)
+
+**Do:** the second person reads the proposed content (`GET /policies/pending-changes?status=PENDING_APPROVAL`), signs a
+step up authorization for that change id and action `approve` on their own machine, and posts it to
+`/policies/pending-changes/{pendingPolicyChangeId}/approve` with `APPROVER_KEY`. Commands:
+[Policy lifecycle and approvals](/guides/policy-lifecycle-and-approvals), step 5.
+
+**Expect:** `200` and `"status":"APPROVED"`. This version is now the version in effect for `POLICY_NAME`.
+
+**If not:** `403 SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE` (the proposer's key was used: use the second person's) or
+`403 STEP_UP_AUTHORIZATION_INVALID` (signed for another change or action, expired after 120 seconds, or used before: sign
+again). Then repeat this step.
+
+## Step 5: run the endpoint
+
+**Do:** deploy the example endpoint for your language, with `act` replaced by the call into your system:
+
+- TypeScript: `typescript/examples/07-external-connector-endpoint.ts`, `createReleaseHandler({ publicKeys, audience, act })`.
+- Python: `python/examples/13_external_connector_endpoint.py`, `create_release_handler(public_keys=..., audience=..., act=...)`.
+
+Give it Parmana's public key (`GET {PARMANA_URL}/keys/default`, or `client.publicKey("default")`) and `ENDPOINT_URL`
+exactly as you will register it. Serve it over HTTPS at `ENDPOINT_URL`. Keep its record of answers by
+`businessTransactionId` in durable storage, not in memory: Parmana may send the same release again after a timeout, and
+the endpoint must answer with its first result, not act twice.
+
+Before it acts, the helper checks, in order: the body's shape, the signature over the canonical release with the key
+named in `signature.keyId`, that `release.audience` is this endpoint, and that the release has not expired (60 seconds
+after it was issued, with 30 seconds of clock skew). It acts only on `capability`, `target` and `parameters` from the
+verified release, and answers `200` with:
+
+```json
+{
+  "businessTransactionId": "<from the release>",
+  "capability": "<from the release>",
+  "success": true,
+  "result": { "invoiceId": "INV-991" },
+  "executedAt": "2026-10-01T10:00:02.000Z"
+}
+```
+
+**Expect:** `POST {ENDPOINT_URL}` with body `{}` answers `401` with
+`{"errors":["the body is not { release, signature }"]}`. An endpoint that acts on an unsigned body is wrong.
+
+**If not:** do not register it. Fix the endpoint first.
+
+## Step 6: propose the registration (maker)
+
+**Do:** with `PROPOSER_KEY`:
+
+```bash
+curl -s -X POST $PARMANA_URL/external-connectors/changes \
+  -H "Authorization: Bearer $PROPOSER_KEY" -H "Content-Type: application/json" \
+  -d '{
+    "action": "register",
+    "capability": "erp:create-invoice",
+    "endpointUrl": "https://erp.example.com/parmana/release",
+    "policy": "erp-invoice",
+    "allowedParameters": ["amount", "currency"],
+    "timeoutMs": 10000,
+    "reason": "Finance creates invoices in the ERP through Parmana."
+  }'
+```
+
+`timeoutMs` is optional: 1000 to 30000, default 10000.
+
+From SDK 1.5.0, steps 6 and 7 are also one call each: `proposeExternalConnectorChange()` and
+`approveExternalConnectorChange()` in TypeScript, `external_connectors.propose_register()` and
+`approve_external_connector_change()` in Python. See [SDK coverage of the API](/sdks/api-coverage#external-connectors).
+
+**Expect:** `201` with a `changeId`, `"status":"PENDING_APPROVAL"`, and `endpointUrl` as stored (the host in lowercase).
+Use that stored `endpointUrl` as the endpoint's `audience` in step 5.
+
+**If not:**
+
+1. `400 INVALID_EXTERNAL_CONNECTOR`: a field is malformed, or the namespace belongs to a built in connector. The message
+   names the field.
+2. `400 EXTERNAL_ENDPOINT_ADDRESS_REFUSED`: the endpoint is not `https`, names an IP address or `localhost`, does not
+   resolve, or resolves to an address that is not public. Fix the host.
+3. `409 CONFLICT`: the capability already has an active registration (revoke it first, see below), or a change for it
+   is already pending.
+
+## Step 7: approve the registration (checker)
+
+**Do:** the second person reviews it (`GET /external-connectors/changes?status=PENDING_APPROVAL`), then signs a step up
+authorization for the `changeId` and action `approve`. It is the same script as for a policy change: the change id goes
+in `--pending-policy-change-id`.
+
+```bash
+npx tsx scripts/sign-policy-change-step-up.ts \
+  --private-key-file step-up.private.pem --key-id <approver caller id> \
+  --pending-policy-change-id "$CHANGE_ID" --action approve > signed.txt
+
+curl -s -X POST $PARMANA_URL/external-connectors/changes/$CHANGE_ID/approve \
+  -H "Authorization: Bearer $APPROVER_KEY" -H "Content-Type: application/json" \
+  -d "{\"stepUpAuthorization\":$(grep '^{' signed.txt)}"
+```
+
+**Expect:** `200` and `"status":"APPROVED"`. `GET /external-connectors` lists the capability with `"status":"active"`.
+
+**If not:**
+
+1. `400 EXTERNAL_ENDPOINT_ADDRESS_REFUSED`: the host now resolves to an address that is not public. The address is
+   checked again at approval. Fix the DNS or reject the change.
+2. `403` (`SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE` or `STEP_UP_AUTHORIZATION_INVALID`): as in step 4.
+3. `409 CONFLICT`: the change was already resolved, or another registration became active.
+
+## Step 8: check the policy in effect for the capability
+
+**Do:** `GET {PARMANA_URL}/policies/in-effect?capability={CAPABILITY}` with any human key or the agent's key.
+
+**Expect:** `200` with `"policy": {"name": POLICY_NAME, "version": POLICY_VERSION, "schemaVersion": "1.0.0"}` and
+`signals.approval` naming your approval signal.
+
+**If not:**
+
+1. `409 NO_APPROVED_POLICY_VERSION`: no version of `POLICY_NAME` is approved. Do steps 3 and 4. Every request is refused
+   until then.
+2. `404 CAPABILITY_NOT_BOUND`: the registration is not active. Check step 7.
+3. `503 POLICY_VERSION_UNAVAILABLE`: the server could not read it. Try again; if it persists, tell the operator.
+
+## Step 9: grant the capability to the agent's key (operator)
+
+**Do:** add `CAPABILITY` to `allowedCapabilities` of the agent's entry in the server's API keys, keeping every other
+entry, and deploy. See the warning in [Connect an agent](/guides/connect-an-agent), step 3.
+
+**Expect:** `GET {PARMANA_URL}/callers/me` with the agent's key lists `CAPABILITY` in `allowedCapabilities`.
+
+**If not:** the key was not updated or the deploy has not finished. Do not grant `"*"` instead.
+
+## Step 10: make sure an approver is trusted
+
+**Do:** `GET {PARMANA_URL}/approval-issuers` with a human key.
+
+**Expect:** the action approver's `approverId` and `keyId`, with `"revoked": false`.
+
+**If not:** add the approver's key through maker checker: [Manage approvers](/guides/manage-approvers).
+
+## Step 11: send requests
+
+The agent now follows [Integrate Parmana: specification for AI agents](/agents/integrate) from step 3, with
+`ACTION = CAPABILITY`. Nothing in that procedure differs for an external connector.
+
+The first request for a resource is refused until the approver signs an approval for it:
+
+```bash
+npx tsx scripts/sign-approval.ts \
+  --private-key-file <approver private key> --approver-id <approverId> --key-id <keyId> \
+  --capability erp:create-invoice --resource-id customer-42 --max-amount 1200 --out approval.json
+```
+
+The agent sends a new request with the approval signal `true` and `approval.json` in `signals.approvalArtifact`.
+
+**Expect:** `200` with an Execution Trust Record. The endpoint received one release naming the capability, the target,
+the parameters, the policy at its version, the approver, the authorization id and the endpoint as audience, and acted
+once. The endpoint's answer is recorded in the record as its claim.
+
+**If not:**
+
+1. `503 CONNECTOR_NOT_REGISTERED`: there is no active registration for the capability. Nothing was sent. Check step 7.
+2. `502 EXECUTION_OUTCOME_UNKNOWN`: the release failed. The endpoint may have acted: it answered something other than
+   `200`, timed out, answered without echoing `businessTransactionId` and `capability`, or its `result` was not an object
+   of at most 16 KB. A request naming a parameter outside `PARAMETERS`, or an endpoint whose host now resolves to a non
+   public address, is also reported this way, although nothing was sent. **Do not resend as a new transaction.** Check
+   the endpoint's own record, then close the Execution Intent with
+   `POST /execution-intents/{businessTransactionId}/resolve`.
+3. Any refusal before release (`403`, `400`): as in [Integrate Parmana](/agents/integrate), step 6.
+
+## Execute only if still valid
+
+When the policy sources facts from a business system ([Business validation](/concepts/business-validation)),
+the release carries them as `conditions`, signed with the rest:
+
+```json
+"conditions": [
+  {
+    "signalKey": "invoicePaid",
+    "source": "erp",
+    "claim": "invoice.paid",
+    "subject": "INV-1001",
+    "value": true,
+    "validUntil": "2026-10-11T12:01:00.000Z"
+  }
+]
+```
+
+The release expires no later than the earliest `validUntil`. Check each condition in your own records in
+the same transaction as the action, and act only if every one still holds. If one does not, do not act,
+and answer `200` with `"success": false`, `"conditionsNotMet": true` and a `result`; Parmana records that
+nothing was done. The example endpoints take this check as `conditionsHold` (TypeScript) and
+`conditions_hold` (Python). An endpoint that ignores `conditions` still works, without the guarantee.
+
+## Change or remove a connector
+
+- **Move to a new endpoint:** propose `{"action":"revoke","capability":"...","reason":"..."}`, approve it (step 7), then
+  register the new endpoint (steps 6 and 7). From the approved revoke until the new registration is approved, requests
+  are refused with `503 CONNECTOR_NOT_REGISTERED`.
+- **Change the policy:** propose and approve a new version of `POLICY_NAME` (steps 3 and 4). It takes effect at once;
+  the registration does not change.
+- **Stop it:** revoke it. Nothing is deleted: `GET /external-connectors` keeps listing it as `revoked`, so every release
+  ever made to it stays explainable.
+
+## Rules that are never broken
+
+- Parmana releases only to an `https` host that resolves only to public addresses, checked when the registration is
+  proposed, when it is approved, and at every release. It connects to the address it checked and follows no redirect.
+- A release names one capability, target and parameter set a person approved, is addressed to one endpoint, and expires
+  60 seconds after it is issued. No shared secret is involved: the signature is the authentication.
+- What the endpoint answers is its claim, not proof that it acted (`docs/VERIFICATION-GAPS.md` G-82).
+
+## See it run
+
+- Tutorial 123: `npx tsx examples/tutorials/123-external-connector/run.ts` registers an ERP endpoint through maker
+  checker, releases to the TypeScript example endpoint, answers a retry once, refuses a release for another endpoint,
+  and stops at a revoke.
+- The `/external-connectors` operations in the [API reference](/api-reference/endpoints/propose-external-connector-change),
+  with real responses for every refusal.
+- The design and its security reasoning: `docs/adr/ADR-0013-Generic-External-Connector.md`.

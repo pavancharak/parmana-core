@@ -1,0 +1,148 @@
+---
+title: "7. Verify and audit"
+description: "The signed records Parmana leaves, how anyone checks them offline without trusting the server, and how an operator closes an action whose outcome is unknown."
+---
+
+Every decision Parmana makes leaves signed evidence. An auditor, a customer or your own agent can check it with
+Parmana's public key alone, with no account and no running server.
+
+## The records
+
+| Record                 | Written when                                 | Proves                                                                                     | Read it with                                                                    |
+| ---------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| Execution Trust Record | An approved action was released and answered | The transaction, the decision, the authorization, and the connector's evidence, signed     | `GET /trust-records/{businessTransactionId}`, `trustRecord()`, `trust_record()` |
+| Refusal Record         | A policy refused a request                   | The request and the refusal, with its reason and the policy content hash, signed           | `GET /refusal/{businessTransactionId}`, `refusalRecord()`, `refusal_record()`   |
+| Execution Intent       | Just before an approved action is released   | Exactly what was about to be released                                                      | `GET /execution-intents/{businessTransactionId}`, `executionIntent()`           |
+| Policy approval record | A checker approved a policy version          | Who proposed, who approved, the content hash before and after, chained to the previous one | `policy_change_approval_records` table                                          |
+| Caller audit events    | A request was refused before any policy ran  | Who called, for what, and why it was refused                                               | `caller_audit_events` table                                                     |
+
+The records answer different questions. A Trust Record says "this ran, under this decision". A Refusal Record says
+"this was asked and refused". An Execution Intent says "this was about to run", which matters when the run's outcome
+is unknown.
+
+## Check a Trust Record offline
+
+Get Parmana's public key once (`GET /keys/default`, or `client.publicKey("default")`), keep it, and check any record
+against it.
+
+<CodeGroup>
+
+```typescript TypeScript
+import { readFileSync } from "node:fs";
+import { verifyExecutionTrustRecordOffline } from "@parmana/sdk";
+
+const record = JSON.parse(readFileSync("trust-record.json", "utf8"));
+const publicKeyPem = readFileSync("parmana-default.public.pem", "utf8");
+
+const result = verifyExecutionTrustRecordOffline(record, {
+  default: publicKeyPem,
+});
+// { valid, hashValid, legacySignatureValid, hybridSignaturesValid?, algorithmsChecked, errors }
+```
+
+```python Python
+import json
+from pathlib import Path
+
+from parmana.crypto import verify_execution_trust_record_offline  # pip install "parmana[verify]"
+
+record = json.loads(Path("trust-record.json").read_text())
+public_key_pem = Path("parmana-default.public.pem").read_text()
+
+result = verify_execution_trust_record_offline(record, {"default": public_key_pem})
+```
+
+</CodeGroup>
+
+`valid` is true only when the record's hash equals a fresh SHA-256 of its canonical form **and** the Ed25519
+signature verifies. Change any field, however deep, and both fail. `verifyExecutionIntentOffline` and
+`verify_execution_intent_offline` do the same for an Execution Intent. The Python verifier is a separate
+implementation, not a wrapper; `python/tests/test_offline_verifier.py` checks it against records signed by the
+TypeScript signer.
+
+Three things to know when you build your own verifier:
+
+- **Canonical form.** Keys are sorted; the bytes must be exactly what Parmana signed. Serializing the JSON again through a
+  tool that reorders keys or reformats timestamps breaks verification of an untampered record. Keep the JSON exactly as
+  received.
+- **Large records.** A record over 4096 bytes of canonical content may be signed by AWS KMS over a fixed 97 byte
+  commitment: the bytes of `PARMANA-ED25519-LARGE-MESSAGE-V1`, one NUL byte, then the SHA-512 digest of the canonical
+  bytes. Try the raw signature first, and the commitment only for a record over 4096 bytes. The SDK functions do this.
+- **Hybrid signatures.** A record may also carry ML-DSA-65 signatures in `signatures`. The TypeScript verifier checks
+  them; the Python verifier checks Ed25519 only.
+
+The CLI `scripts/verify-trust-record.ts` does the same from a terminal. [Verify independently](/guides/verify-independently)
+walks through it, with a tampered record failing; [Detect tampering](/guides/detect-tampering) shows parameter
+tampering, a forged signature and a reused nonce, each caught.
+
+## Check with the server
+
+`verify(businessTransactionId)` asks the server to verify a record again and appends the result to the record's
+history; `getLatestVerification()` and `get_latest_verification()` read the last one. These trust the server. The
+offline functions do not: prefer them when the question is whether to trust the server.
+
+## What a record proves, and what it does not
+
+| A valid Trust Record proves                                           | It does not prove                                                                  |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Parmana's key signed exactly this content                             | That the key was not misused by whoever held it                                    |
+| The request, the decision and the policy version, as Parmana saw them | That facts the agent declared were true                                            |
+| The connector's evidence as the connector reported it                 | That the system actually did it: an external endpoint's answer is its claim (G-82) |
+| The approval's issuer, as a key that verified                         | Whose hand held the approver's key                                                 |
+
+[Chapter 10](/build-book/10-security-model-and-limits) lists every limit.
+
+## When the outcome is unknown
+
+If the release fails after it may have reached the system (a timeout, a crash, an error from the connector), the agent
+gets `502 EXECUTION_OUTCOME_UNKNOWN` and the Execution Intent stays open. **The action may have run.** Never send it
+again as a new transaction.
+
+An operator closes it:
+
+1. **List** what needs attention: `GET /execution-intents/unfinalized` (or `unfinalizedExecutionIntents()`). Each
+   entry has the signed intent and its state.
+2. **Decide by state.**
+
+   | State      | Meaning                                                    | Do                                                                                                      |
+   | ---------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+   | `RELEASED` | The connector answered; the Trust Record was not stored    | `POST /execution-intents/{id}/finalize`: rebuilds the record without calling the connector. Idempotent. |
+   | `PREPARED` | Stored, and the release may or may not have happened       | Check the system, then resolve                                                                          |
+   | `ERRORED`  | The release raised an error; the action may still have run | Check the system, then resolve                                                                          |
+
+3. **Resolve** after checking the system with the intent's `businessTransactionId`, `action` and `target`:
+   `POST /execution-intents/{id}/resolve` with `{ "resolution": "NOT_EXECUTED" | "EXECUTED", "note": "what you checked" }`.
+   The note is required. `resolvedBy` comes from your key.
+
+A resolution is a person's attributed statement in the intent's unsigned status. It is a trail, not tamper evident
+evidence. The full procedure, with every answer: [Execution Intents](/concepts/execution-intents).
+
+## Audit queries
+
+Refunds refused, with their reasons:
+
+```sql
+select refusal_record_id, business_transaction_id, submitted_by, created_at,
+       decision_json ->> 'reason' as reason
+from refusal_records
+where decision_json -> 'policy' ->> 'name' = 'customer-refund'
+order by created_at desc
+limit 50;
+```
+
+Requests refused before any policy ran:
+
+```sql
+select occurred_at, caller_id, capability, type, reason
+from caller_audit_events
+where type in ('caller.rejected', 'caller.capability_denied', 'caller.principal_denied',
+               'caller.non_human_denied', 'caller.structural_rejected')
+order by occurred_at desc
+limit 50;
+```
+
+A Refusal Record is written after the refusal, and a failed write does not change the refusal; each miss is logged as
+`refusal_record_write_failed`. So a query can miss a refused request, and the logs are the backstop.
+
+Policy approvals: `npx tsx scripts/verify-policy-changes-approved.ts --full-scan` compares every policy on disk with
+its latest signed approval record.

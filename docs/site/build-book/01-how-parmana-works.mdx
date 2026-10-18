@@ -1,0 +1,53 @@
+---
+title: "1. How Parmana works"
+description: "One request, from an AI agent to a signed record: the policy decision, the human approval, the release through the gateway, and the evidence left behind."
+---
+
+Parmana sits between an AI agent and the systems it acts on. The agent never holds the credentials of those systems.
+It asks Parmana to perform an action, Parmana decides under a policy a person approved, and only an approved action is
+released to the system. Every decision, approved or refused, leaves a signed record anyone can check.
+
+## One request, in order
+
+| #   | What happens                                                                                                                                                                                                          | Where to read more                                               |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| 1   | The agent asks which policy governs the action: `GET /policies/in-effect?capability=...`. The answer names the policy, its version in effect, and the signals a request must carry.                                   | [Chapter 3](/build-book/03-connect-an-agent)                     |
+| 2   | The agent sends a **Business Transaction** to `POST /execute`: who is acting (authority), for what purpose (authorization), what to do (intent: action, target, parameters), the policy it declares, and its signals. | [Chapter 3](/build-book/03-connect-an-agent)                     |
+| 3   | Parmana checks the caller's key may use the action, and that the declared policy is the one bound to the action at the version in effect.                                                                             | [Policies and the decision](/concepts/policies-and-the-decision) |
+| 4   | Signals bound to the request are checked against it, and an approval signal counts as true only with a valid signed approval from a trusted person for that action and resource.                                      | [Human approval](/concepts/human-approval)                       |
+| 5   | The policy's rules run in order; the first that matches decides. The same inputs always give the same decision.                                                                                                       | [Chapter 4](/build-book/04-policies)                             |
+| 6   | Refused: Parmana answers with the reason and stores a signed **Refusal Record**. Nothing is released.                                                                                                                 | [Refusal Records](/concepts/refusal-records)                     |
+| 7   | Approved: Parmana signs an **execution authorization**, single use, time bounded, and bound to the exact content approved.                                                                                            | [Execution authorization](/concepts/execution-authorization)     |
+| 8   | Before release it stores a signed **Execution Intent**: exactly what is about to be released.                                                                                                                         | [Execution Intents](/concepts/execution-intents)                 |
+| 9   | The **gateway** verifies the authorization again (signature, expiry, content, single use, the policy, the signals and the approval) and releases the action to the connector for that action.                         | [The gateway](/concepts/the-gateway)                             |
+| 10  | The connector acts with a credential only it can use, for this one execution.                                                                                                                                         | [Credential isolation](/concepts/credential-isolation)           |
+| 11  | Parmana signs an **Execution Trust Record**: the transaction, the decision, the authorization and the connector's evidence.                                                                                           | [Execution Trust Records](/concepts/execution-trust-records)     |
+| 12  | Anyone with the public key can verify the record offline, without trusting the server.                                                                                                                                | [Chapter 7](/build-book/07-verify-and-audit)                     |
+
+## The ideas that matter
+
+- **No action without a person.** Every policy must require a signed human approval, reads included. A server refuses
+  to load a policy that could approve without one. Plan for the first request on a new resource to be refused until a
+  person signs.
+- **The agent cannot authorize itself.** Facts the agent declares can refuse an action, never authorize one on their
+  own. Only a signed approval, or a fact the server checks for itself, can make an approve rule match.
+- **Parmana releases the action; the agent does not.** An agent that performs the action itself after asking Parmana
+  defeats the control. The agent only reads the answer.
+- **Changes need two people.** A new policy version, a new approver key and a new external connector each need one
+  person to propose and a different person to approve with a step up signature. No deploy is needed.
+- **Everything is evidence.** Approvals, refusals, intents and results are signed and kept. A refusal is as provable
+  as an approval.
+
+## The words used in this book
+
+| Word                 | Meaning                                                                                                                      |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Capability, action   | What the agent wants done, `namespace:verb`, for example `paytm:refund`.                                                     |
+| Business Transaction | One request to act, with its identifiers, intent, policy and signals.                                                        |
+| Signal               | A fact in the request that a policy reads, such as `refundAmount` or `managerApproved`.                                      |
+| Approval signal      | A signal that counts as true only with a signed approval (`signals.approvalArtifact`).                                       |
+| Policy in effect     | The version of the policy bound to an action that was most recently approved.                                                |
+| Maker, checker       | The person who proposes a change, and the different person who approves it.                                                  |
+| Connector            | The part that performs an approved action on a system: built in (HubSpot, GitHub, Paytm, Slack) or external (your endpoint). |
+
+More in the [glossary](/glossary).

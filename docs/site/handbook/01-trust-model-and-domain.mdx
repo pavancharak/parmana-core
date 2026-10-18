@@ -1,0 +1,172 @@
+---
+title: "Chapter 1: The Trust Model and Domain Model"
+description: "Parmana models every request that could result in a real-world action as a chain of six"
+---
+
+## What it is
+
+Parmana models every request that could result in a real-world action as a chain of six
+immutable artifacts: Authority, Authorization, Intent, a Decision produced by evaluating
+that Intent against a Policy, an Execution that records what actually happened, and an
+Execution Trust Record that binds all of it into one signed, append-only document. Nothing
+in this chain is ever mutated after creation. A correction is a new artifact, never an edit
+to an old one.
+
+## Why it was built
+
+`packages/shared/src/domain/business-transaction.ts` states the design directly in its own
+doc comment: a `BusinessTransaction` "captures the complete upstream trust chain prior to
+policy evaluation," and the chain itself is drawn as a diagram right in the source:
+
+```
+Authority
+     ↓
+Authorization
+     ↓
+Intent
+     ↓
+BusinessTransaction
+     ↓
+PolicyReference
+```
+
+The reasoning is that a policy decision is only meaningful if you can also prove who asked
+for it, under what authorization, and exactly what they asked for, all as facts that existed
+before the decision was made and cannot be edited afterward to match whatever the decision
+turned out to be. `intent.ts` restates the same chain with `Decision` and `Execution` added
+on the end, and is explicit that "Intent is evaluated by Policy but is never modified by
+Policy" and that `decision.ts` "does not create authority... does not grant authorization...
+does not modify intent." Each artifact in the chain has exactly one job and cannot reach
+backward to change an earlier one.
+
+## How it works
+
+### The six domain types
+
+All defined in `packages/shared/src/domain/`, one file per type:
+
+**`Authority`** (`authority.ts`), the entity behind a request. Has an `authorityId`, an
+`authorityType` (`AuthorityType.USER | ROLE | SERVICE | ORGANIZATION`), a `principalId`, and
+an `issuedAt` timestamp. Nothing else. There is no field anywhere on this type, or on
+anything downstream of it, that says "this authority is an AI" or "this authority is a
+human" in a way policy evaluation can see.
+
+**`Authorization`** (`authorization.ts`), proof that an `Authority` approved an intended
+execution, with an `authorityId`, a `purpose` string, `issuedAt`, and an optional
+`expiresAt`.
+
+**`Intent`** (`intent.ts`), the actual business action being requested: `action` (e.g.
+`"TransferFunds"`), `target` (e.g. `"account/12345"`), and free-form `parameters`.
+
+**`BusinessTransaction`** (`business-transaction.ts`), the aggregate that wraps
+`Authority`, `Authorization`, `Intent`, a `PolicyReference`, and the runtime `signals` a
+policy will evaluate. It carries its own lifecycle (`BusinessTransactionStatus`: `RECEIVED
+→ POLICY_EVALUATED → APPROVED | REJECTED → (OVERRIDDEN) → EXECUTING → EXECUTED | FAILED →
+VERIFIED`). This is the immutable input `RuntimeEngine.execute()` receives.
+
+**`Decision`** (`decision.ts`), the pure output of evaluating an `Intent`'s signals against
+a `Policy`: an `outcome` (`APPROVED | REJECTED`), the `matchedRuleId`, `evaluatedRules`
+(count), and `matchedPath` (the ordered rule-id trace `PolicyEngine` walked). The last three
+fields are optional only because a `Decision` built before they existed (see
+`docs/VERIFICATION-GAPS.md` G-44) doesn't carry them retroactively; every decision going
+forward does. A `Decision` never carries anything the caller supplied that wasn't
+independently produced by evaluation itself.
+
+**`Execution`** (`execution.ts`), what actually happened while processing the transaction:
+wraps exactly one `Decision`, has its own `ExecutionStatus` (`PROCESSING | COMPLETED |
+FAILED`) and `ExecutionMode` (`SYNC | ASYNC`), and optionally carries a hash-chained
+`previousChainHash`/`chainHash`/`chainSignature` linking it to the prior `Execution` for the
+same transaction (see `ExecutionChainCrypto`, Chapter 3). Verification recomputes each chained
+`Execution`'s hash and checks its signature and its link to the one before. An `Execution` with no
+chain fields is accepted only before the first chained one, as data from before chaining existed;
+one carrying only some of the fields, or an unchained one after a chained one, fails the check
+(`docs/VERIFICATION-GAPS.md` G-89). Every `Execution` is also inside the trust record's own hash
+and signature, so the chain is a second layer, not the only one.
+
+**`ExecutionTrustRecord`** (`execution-trust-record.ts`), the aggregate root: one
+`BusinessTransaction`, arrays of `overrides`/`executions`/`verifications`/`receipts` (arrays,
+not single values, because a long-running or retried transaction can accumulate more than
+one of each), an optional signed `authorization` (the exact `SignedExecutionAuthorization`
+the Execution Gateway accepted, see Chapter 7), a `trustRecordHash`, and a `signature`. This
+is "the authoritative source for replay, verification, audit, and receipt generation," per
+its own doc comment, and is itself signed as a whole so that any single field being altered
+after the fact invalidates the record.
+
+### PolicyReference: the field that proves which policy content, not just which version
+
+`policy-reference.ts` carries `name`, `version`, `schemaVersion`, and two fields worth
+understanding closely: `contentHash` and `governanceAnchor`. Both are marked explicitly as
+"caller-unsettable" in the source comments, a request-supplied `PolicyReference` never
+carries either; `RuntimeEngine` computes both, after loading the real policy document, and
+merges them only into the copy embedded in the trust record's `transaction.policy`, never
+into the transaction as originally submitted. `contentHash` is a sha256 of the canonicalized
+policy content actually loaded (closing the gap where an in-place edit to an existing
+version's `policy.json` would otherwise be undetectable from the trust record alone ,
+`docs/VERIFICATION-GAPS.md` G-24). `governanceAnchor` records whether that content is
+traceable to a completed Policy Governance approval (`VERIFIED | NO_APPROVAL_RECORD |
+SIGNATURE_INVALID | CONTENT_MISMATCH`), resolved unconditionally regardless of whether
+execution-time enforcement of that fact is turned on (see Chapter 14).
+
+### EvidenceAnchor: the explicit "these three things are linked" pointer
+
+`evidence-anchor.ts` is newer and narrower: a single computed `anchorHash` over
+`{policyContentHash, governanceAnchorStatus, connectorEvidenceHash}`. Its own doc comment is
+unusually candid about what it is not: "Not a NEW cryptographic guarantee... What this adds
+is a single, explicitly-named, independently-computed pointer an auditor can check WITHOUT
+already knowing to reach into `transaction.policy` and `executions[].evidence.attributes.connector`
+separately and reconstruct the binding themselves." It exists because an audit
+on 2026-09-15 (GAP-4, `docs/VERIFICATION-GAPS.md` G-45) asked whether policy
+governance provenance and actual connector evidence were provably linked, and the honest
+answer at the time was "implicitly, but nothing says so directly."
+
+### Caller-type agnosticism
+
+Nowhere in `packages/runtime/src`, `packages/policy/src`, or `packages/execution-gateway/src`
+does any evaluation or gateway-release logic branch on `AuthorityType`. A search across all
+three packages for `AuthorityType.` outside test files returns nothing. The only place
+`credentialHolderType`/`AuthorityType` is read for a real decision is at the HTTP caller-auth
+layer, specifically `isHumanCaller()` for Policy Governance approve/reject (Chapter 14), a
+narrow, deliberate exception, not evidence that the core trust chain treats callers
+differently. An AI agent, a human, a service account, and an organization-level credential
+all produce identical `Authority`/`Intent`/`Decision`/`Execution` shapes and go through the
+exact same `RuntimeEngine.execute()` path.
+
+## How it enables things, with a concrete example
+
+`examples/tutorials/100-authorization-caller-type-agnostic` and
+`packages/api/tests/integration/authority-type-agnostic-execution.integration.test.ts` both
+exist specifically to prove this: the integration test's own title is "produces an identical
+APPROVE decision regardless of authority.authorityType, including a value outside the
+AuthorityType enum entirely," and a second case proves an identical REJECT decision (same
+`matchedRuleId`, same reason shape) across authority types too. This is the concrete evidence
+behind the "caller-type-agnostic" claim above, not just an absence-of-special-casing
+argument.
+
+More broadly, the domain model is what every other capability in this book builds on:
+Chapter 2's `RuntimeEngine.execute()` walkthrough operates entirely in terms of these types;
+Chapter 5's runtime pipeline is the process that turns a `BusinessTransaction` into an
+`ExecutionTrustRecord`; Chapter 6's cryptography chapter explains exactly how
+`trustRecordHash`/`signature` get computed over this aggregate.
+
+## How to validate this yourself
+
+- `packages/shared/src/domain/business-transaction.ts`, `authority.ts`, `authorization.ts`,
+  `intent.ts`, `decision.ts`, `execution.ts`, `execution-trust-record.ts`,
+  `policy-reference.ts`, `evidence-anchor.ts`, the type definitions themselves, each with a
+  doc comment explaining its own role in the chain.
+- `packages/api/tests/integration/authority-type-agnostic-execution.integration.test.ts` ,
+  proves caller-type agnosticism at the HTTP boundary.
+- `examples/tutorials/100-authorization-caller-type-agnostic/run.ts`, the same proof, as a
+  runnable narrative.
+- `grep -rn "AuthorityType\." packages/runtime/src packages/policy/src packages/execution-gateway/src`
+  (excluding test files), reproduces the "nowhere is this special-cased" claim directly.
+
+## Integration requirements
+
+None specific to the domain model itself, these are plain TypeScript interfaces with no
+external dependency. What consumes them (the runtime pipeline, storage, crypto) each carries
+its own requirements, covered in later chapters. The one practical requirement worth naming
+here: any caller submitting a `BusinessTransaction` must supply a well-formed `Intent`
+(`action`, `target`, `parameters`) and a `PolicyReference` naming a real, loadable policy ,
+`contentHash` and `governanceAnchor` must never be supplied by the caller, since the server
+computes and overwrites both regardless of what's submitted.

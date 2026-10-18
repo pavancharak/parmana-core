@@ -1,0 +1,73 @@
+---
+title: "Essays"
+description: "Parmana explained end to end in 31 plain-language essays: why it exists, how a decision is made, how an action is released, what evidence is left, how the rules are governed, how systems connect, and what is proven and what is not."
+---
+
+These essays explain all of Parmana, one idea at a time, in plain language. Each starts from a concrete situation,
+explains the idea, shows how Parmana implements it, and says what it does **not** do. Every claim is backed by the
+[claims register](https://github.com/pavancharak/parmana/blob/main/docs/CLAIMS.md); where a feature is built but not
+yet in use, or tested but not seen live, the essay says so.
+
+Read them in order for the whole system, or start with [How Parmana works, end to end](/essays/04-how-parmana-works),
+the map the others fill in. The reference for each topic is in [Concepts](/concepts/policies-and-the-decision) and
+[Guides](/guides/authorize-and-execute).
+
+## Why Parmana exists
+
+1. [Your agent's claim is not a business fact](/essays/01-claim-is-not-a-fact)
+2. [Prompt guardrails are advice. Authorization is a gate.](/essays/02-guardrails-are-advice)
+3. [Agents will rewrite themselves. Their authority should not move when they do.](/essays/03-agents-will-rewrite-themselves)
+
+- [Models as insider risks: what Parmana already does, and what it does not](/essays/models-as-insider-risks)
+
+4. [How Parmana works, end to end](/essays/04-how-parmana-works)
+
+## The decision
+
+5. [Policies as data: same input, same decision](/essays/05-policies-as-data)
+6. [Every action needs a signed human approval, reads included](/essays/06-signed-human-approval)
+7. [Giving an agent authority: grants with limits and an end date](/essays/07-authority-grants)
+8. [Per-request limits are not enough](/essays/08-per-request-limits-are-not-enough)
+
+## The release
+
+9. [The gateway: why your agent should never hold the keys](/essays/09-the-gateway)
+10. [Signed, single-use, short-lived: the execution authorization](/essays/10-execution-authorization)
+11. [Approved what, exactly? Binding approval to content](/essays/11-binding-approval-to-content)
+12. [Write it down before you do it](/essays/12-write-it-down-first)
+13. [Proving the gateway is the gateway](/essays/13-proving-the-gateway)
+
+## The evidence
+
+14. [An approval you can verify without trusting me](/essays/14-verify-without-trusting-me)
+15. [Proving what didn't happen](/essays/15-proving-what-didnt-happen)
+16. [Who asked? The caller audit trail](/essays/16-who-asked)
+17. [Replay: what it can and can't re-check](/essays/17-replay)
+18. [Verify it yourself: offline and in the browser](/essays/18-verify-it-yourself)
+19. [Choosing signatures: Ed25519, post-quantum, and keys in KMS](/essays/19-choosing-signatures)
+
+## Governance and operations
+
+20. [Maker checker for one person](/essays/20-maker-checker-for-one-person)
+21. [Governing the rules](/essays/21-governing-the-rules)
+22. [Rotating every key in production in one day](/essays/22-rotating-every-key)
+23. [Running Parmana yourself, even with no internet](/essays/23-running-parmana-yourself)
+
+## Connecting agents and systems
+
+24. [Connecting an agent](/essays/24-connecting-an-agent)
+25. [Connecting any system](/essays/25-connecting-any-system)
+26. [What a refund agent needs before it touches a payment gateway](/essays/26-before-a-refund-agent-touches-razorpay)
+
+## Proof and honesty
+
+27. [Testing agent controls in production without moving real money](/essays/27-testing-in-production-without-moving-money)
+28. [What "done" means: deployed, but not yet deciding anything](/essays/28-what-done-means)
+29. [What Parmana can't stop](/essays/29-what-parmana-cant-stop)
+30. [Mapping to regulation without overclaiming](/essays/30-mapping-to-regulation)
+31. [Where Parmana fits among agent controls](/essays/31-how-parmana-compares)
+
+The essays are written in the first person by the person building Parmana and dated October 2026. Where a statement
+depends on the state of the project, the essay names the date or the record it comes from; the current state is always
+in [Remaining work](https://github.com/pavancharak/parmana/blob/main/docs/REMAINING-WORK.md) and the
+[Roadmap](/roadmap).

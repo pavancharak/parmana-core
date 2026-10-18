@@ -1,0 +1,80 @@
+---
+title: "Testing agent controls in production without moving real money"
+description: "How authority grants and business signal sources were proven on the live system with endpoints that act on nothing, what passed, and what was not proven."
+---
+
+Parmana shipped two features in October 2026:
+
+- **Authority grants:** an agent may act only under a grant for that action, with limits (for example, at most 100 per
+  request) and an end date.
+- **Business signal sources:** facts like "this invoice is paid" are asked of the system that owns them, which signs its
+  answer, instead of being taken from the agent.
+
+Both had unit, integration and end-to-end tests, all green. But "tested" is not "seen working in production", with the
+real deployment, keys, database and network. And the first proof that limits work should not be a real refund.
+
+## Make the action harmless
+
+Parmana sends a signed release to the endpoint of the system that performs an approved action. So for the checks, two
+small endpoints were deployed, separate from everything else:
+
+- **A release endpoint that acts on nothing.** It verifies Parmana's signed release exactly as a real system would, logs
+  it and returns a receipt. No money moves.
+- **A demo ERP answering from a fixed table** of three invoices: paid, unpaid, and one that does not exist. It signs
+  every answer with its own key.
+
+They were registered in production **through the normal controls**: each capability, policy, source and grant was
+proposed by one identity and approved by another with a step up authorization. No test mode, no bypass.
+
+## Check 1: authority grants
+
+A test policy required a grant. Every request carried a valid signed human approval, so only the grant could change the
+outcome.
+
+1. **Amount 50, before any grant:** refused, `NOT_AUTHORIZED`, the agent holds no grant.
+2. **Amount 50, after a grant of at most 100:** approved, released once, the grant in the signed record.
+3. **Amount 500, same grant:** refused, `NOT_AUTHORIZED`, "500, above the granted maximum 100".
+4. **Amount 50, after the grant was revoked:** refused, no grant.
+
+Four of four. The same request was refused before the grant and again after the revoke, and went through exactly once
+between them.
+
+## Check 2: asking the business system
+
+A second test policy approved only if the invoice was paid, with `invoicePaid` sourced from the demo ERP.
+
+1. **Paid invoice, agent declares nothing:** approved, `VALID`; the ERP's signed answer verified and recorded.
+2. **Unpaid invoice:** refused by the policy; the ERP said "not paid", signed and verified.
+3. **Unpaid invoice, agent claims it is paid:** refused, `INVALID`: the request proposed true, the source reports false.
+4. **Invoice that does not exist:** refused, `MISSING_DATA`.
+
+Four of four. Case 3 is the one that matters: an agent asserting a fact that is not true, caught because Parmana asked
+the owner of the fact. The records of both approved requests were then verified offline.
+
+## Clean-up is part of the test
+
+Afterwards both test capabilities, the demo source and the grant were revoked, again through maker checker, and the
+demo source's private key was deleted. Two things remain on purpose and are listed as remaining work: the two endpoints,
+which act on nothing and accept only releases or queries signed by Parmana, and the test agent's key, which can no longer
+do anything because everything it could call is revoked.
+
+## What this did not prove
+
+- **No real business system is connected.** The demo ERP proves the protocol end to end, not a real order system.
+- **No shipped policy uses these features yet.** Real refunds are decided as before until the refund policy is changed.
+- **One case was not reachable:** a grant revoked between decision and release, refused at release. It is unit-tested,
+  but not reachable in production without a test hook, so it is not claimed.
+
+All three are recorded in [What is left](/concepts/business-validation#what-is-left).
+
+## If you run agents in production
+
+- Build a harmless twin of each action: an endpoint that verifies everything and does nothing.
+- Set up tests through the real controls; a test that needs a bypass tests the bypass.
+- Test refusals, not only approvals: three of four cases in each check were meant to fail.
+- Verify the records, not just the responses.
+- Clean up, and write down what was not proven.
+
+**Read more:** the scripts and policies are in the repository under `examples/live-checks`.
+[Grant an agent authority](/guides/grant-an-agent-authority),
+[Connect a business signal source](/guides/connect-a-business-signal-source).

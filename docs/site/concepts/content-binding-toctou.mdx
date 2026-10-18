@@ -1,0 +1,249 @@
+---
+title: "Content Binding & TOCTOU"
+description: "The real mechanism that closes the check-vs-use gap between authorization and execution, what it covers, and what it doesn't."
+---
+
+<Info>
+  **[AVAILABLE]**, wired into the default server unconditionally.
+  `packages/api/src/bootstrap/createExecutionSystem.ts` builds a real
+  `ExecutionGateway`, so every `POST /execute` against the stock server gets the
+  hash recompute-and-compare described below. See [The
+  gateway](/concepts/the-gateway) for the full, current mechanism.
+</Info>
+
+## The problem: check-vs-use (TOCTOU)
+
+A system that authorizes an action by checking a payload, then executes a _different_
+payload under the same authorization, has a Time-Of-Check-To-Time-Of-Use gap. An
+authorization that only names an ID (`businessTransactionId: "tx-001"`), without binding
+to the actual content, cannot detect this: anything can be substituted under a
+previously-approved ID.
+
+## The real mechanism
+
+Parmana's `SignedExecutionAuthorization` binds a **canonical content hash** into the signed
+payload, not just an ID:
+
+```typescript
+// packages/shared/src/domain/execution-authorization.ts (abridged: submittedBy and
+// grantedCapability left out, see Execution Authorization)
+export interface ExecutionAuthorizationPayload {
+  readonly version: 1;
+  readonly authorizationId: string;
+  readonly nonce: string;
+  readonly decisionId: string;
+  readonly businessTransactionId: string;
+  readonly policyName: string;
+  readonly policyVersion: string;
+  readonly authorizedAt: string;
+  readonly expiresAt: string;
+
+  /**
+   * Canonical content hash of the ExecutableContent (businessTransactionId,
+   * action, target, parameters) approved for execution. Computed identically
+   * by the signing side and the verifying side via the same
+   * ExecutableContentHasher, so a receiving gateway can recompute this hash
+   * from the exact content it is about to forward and reject any mismatch.
+   */
+  readonly businessTransactionHash: string;
+
+  /** Same idea, for the exact policy content the decision rested on. The gateway rejects an authorization that lacks it. */
+  readonly policyContentHash?: string;
+
+  /** Optional. Same idea, for the runtime signals the decision was evaluated against. */
+  readonly signalsHash?: string;
+}
+```
+
+`ExecutionGateway.verify()` is where the check-vs-use gap actually closes: it recomputes
+the hash of the content it is about to forward, and compares it to the signed
+`businessTransactionHash`:
+
+```typescript
+// packages/execution-gateway/src/ExecutionGateway.ts
+if (passed) {
+  const actualHash = await this.contentHasher.hash(executableContent);
+  const expectedHash = request.authorization.payload.businessTransactionHash;
+
+  businessTransactionHashMatches = actualHash === expectedHash;
+
+  if (!businessTransactionHashMatches) {
+    hashMismatch = { expected: expectedHash, actual: actualHash };
+  }
+}
+```
+
+Verification order, side-effect-free checks first (`ExecutionGateway.ts`):
+
+```
+version → signature → expiry → TTL policy → businessTransactionHash recompute-and-compare
+    → policyStillCurrent recompute-and-compare (required, fails closed)
+  → policyGovernanceVerified approval record check (required, fails closed)
+  → signalsStillCurrent recompute-and-verify (when wired)
+  → nonce
+```
+
+The nonce (single-use) check runs **last**, and only if every prior check, including the
+content hash, passed. This matters: a forged or mismatched request must never burn a
+nonce, or an attacker who observes a nonce in transit could poison it and get the
+_legitimate_ request rejected instead (`ExecutionGateway.ts`, `consumeNonce` runs only when every check passed).
+
+`ExecutableContentHasher` delegates to the same `TrustRecordHasher` used elsewhere in the
+system (`packages/crypto/src/ExecutableContentHasher.ts`), the signing side and verifying
+side run identical canonical serialization and hashing, never two parallel
+implementations of the same computation.
+
+## The same gap, one layer out: signal freshness
+
+`businessTransactionHash` closes TOCTOU for _what_ gets executed. It says nothing about
+_why_ it was approved. A decision rests on runtime signals: vendor status, risk exposure,
+market conditions, whatever a policy's `boundSignals`/`SignalStateVerifier` cares about
+(see [Policies and the decision](/concepts/policies-and-the-decision)), and those are
+independently verified against real-world state, but only once, before the authorization
+is signed. Nothing re-checked whether they were _still_ true by the time a receiving system
+got around to executing: an authorization is a portable artifact, valid for
+`authorizationTtlSeconds`/`maxTtlSeconds`, and a system that verifies it a while after
+Parmana signed it had no way to tell "the vendor was verified when this was authorized"
+from "the vendor is verified right now."
+
+`RuntimeEngine.execute()` signs a `signalsHash`, a canonical hash of the runtime
+`PolicySignals` the decision was evaluated against, into the payload, the direct sibling
+of `policyContentHash` above. When a `SignalStateVerifier` is supplied,
+`ExecutionGateway.verify()` recomputes that hash from the signals on the incoming request
+and compares it to the signed value (tamper/mismatch check, same shape as
+`businessTransactionHash`'s own comparison); on a match, it independently re-derives the
+same facts from real-world state and rejects if they've since diverged:
+
+```typescript
+// packages/execution-gateway/src/ExecutionGateway.ts
+if (currentSignalsHash !== signalsHash) {
+  signalsStillCurrent = false;
+  signalsHashMismatch = { expected: signalsHash, actual: currentSignalsHash };
+} else {
+  const violations = await this.signalStateVerifier.findViolations(
+    {
+      action: executableContent.action,
+      businessTransactionId: executableContent.businessTransactionId,
+      intentParameters: executableContent.parameters,
+      intentTarget: executableContent.target,
+      stage: "release",
+      ...(verifiedPolicy !== undefined ? { policy: verifiedPolicy } : {}),
+    },
+    request.signals as PolicySignals,
+  );
+
+  signalsStillCurrent = violations.length === 0;
+}
+```
+
+Two receiving systems can hold the exact same authorization, the exact same declared
+signals, and the exact same `signalsHash`, and still disagree, because what differs is what
+each one's own live check finds _right then_. That is the entire point: this is a freshness
+check, not a tamper check. See `examples/tutorials/98-signal-freshness-enforcement` for both
+outcomes run side by side.
+
+The default server always wires one: a `CompositeSignalStateVerifier`
+(`packages/api/src/application.ts`) with three parts, run before the authorization is signed and
+again at release (`stage: "release"`):
+
+- **The human approval**, for every action (`ApprovalSignalVerifier`): the signed approval must
+  verify for this action, resource and value. It is used (its nonce recorded) at authorization;
+  the release check repeats every other check, such as expiry and whether the approver's key is
+  still trusted. See [Human approval](/concepts/human-approval).
+- **HubSpot deal state**, for `hubspot-deal-update` (`HubSpotSignalStateVerifier`), fetched
+  live from HubSpot.
+- **The Slack channel**, for Slack actions, against the server's allowlist
+  (`SLACK_ALLOWED_CHANNEL_IDS`).
+
+In the default server decision and release happen in the same request, seconds apart, so the
+release check catches what changed in those seconds, such as an approval that just expired or
+an approver key just revoked. It matters most when an authorization is carried to a separate
+system and released later.
+
+## What this proves, precisely scoped
+
+<Note>
+  From CLAIMS.md 3.1 (Conditional Claim, load-bearing scope): *"For any system
+  running the Parmana envelope verifier, execution requests not authorized by
+  Parmana are cryptographically impossible to accept. This claim holds only for
+  a receiving system that (a) runs `@parmana/envelope-verifier` and (b) gates
+  every execution-triggering code path behind its verification result. Parmana
+  enforces nothing at the network level."* It also assumes Parmana's
+  authorization signing key is not compromised; see the [Audit
+  guide](/evaluation/audit-guide).
+</Note>
+
+This is real, tested protection, for a **gateway-integrated system**. It is not a
+network-level guarantee, and it is not automatically true of every Parmana deployment.
+
+## The default local server enforces this
+
+`packages/api/src/bootstrap/createExecutionSystem.ts` unconditionally returns
+`createExecutionGateway()`, and `packages/api/src/server.ts` always passes that gateway into
+`createApplication()`. There is no code path where the server skips gateway verification.
+See [The gateway](/concepts/the-gateway) for the current, wired mechanism and its one real
+caveat: an action with no registered connector fails closed rather than skipping checks.
+
+### Demonstrated, at the library level
+
+The REST API generates and verifies an authorization within the same request today, so a
+black-box HTTP client can't provoke a hash mismatch through the public API alone, both sides
+of the check run inside the same process, on the same content, in the same call. The
+tamper-and-verify demonstration therefore has to happen where an authorization is a
+first-class object a caller can mutate before re-checking it, which is exactly what
+`examples/tutorials/36-parameter-tampering/run.ts` does: build a Business Transaction, get
+its real `businessTransactionHash` back from `RuntimeBuilder`, independently recompute the
+hash of a **tampered** copy of the same content (payment amount changed) using the same
+`ExecutableContentHasher`, and compare:
+
+```typescript
+// examples/tutorials/36-parameter-tampering/run.ts
+const originalHash = context.authorization.payload.businessTransactionHash;
+const tampered = {
+  ...content,
+  parameters: { ...content.parameters, paymentAmount: 500000 },
+};
+const tamperedHash = await hasher.hash(tampered);
+// originalHash !== tamperedHash
+```
+
+This is the same `ExecutableContentHasher` and the same comparison
+`ExecutionGateway.verify()` runs internally, exercised directly rather than through HTTP.
+Tutorials 35 through 46 (`examples/tutorials/`) cover the same negative-path pattern for
+replay, substitution, forgery, and expiry: mutate, re-verify, watch it fail. See [Detect
+tampering](/guides/detect-tampering) for three of these run live with real output.
+
+## Connector SDK: the same content, unmodified, all the way to the connector
+
+`SdkConnectorExecutor` (`packages/execution-gateway/src/connector-execution/`) sits downstream of every check above, it
+only ever runs after `ExecutionGateway.verify()` has already passed and the content is
+already deep frozen (`ExecutionGateway.ts`, `deepFreeze(executableContent)`). From there:
+
+- `SdkConnectorExecutor.execute(content, credential)` builds `ConnectorRequest` by copying
+  `businessTransactionId`, `action`, `target`, and `parameters` straight off the verified,
+  frozen `content`, never re-deriving or re-interpreting any of them.
+- The same `ConnectorRequest` object is what a `Connector` (`HttpConnector`, `MockConnector`,
+  or a future one) receives; nothing in between constructs a second copy.
+- `capability` is `content.action` itself, so "capability" cannot silently diverge from the
+  authorized `action`, there is only one field, not two that could disagree.
+
+Any mismatch between what was authorized and what a connector would execute is still
+caught upstream, in the unchanged `ExecutionGateway.verify()` hash comparison, this is a
+permanent architectural invariant, not something `connector-sdk` re-implements or could
+weaken. The gateway adds capability declaration and version and health checks _in front of_
+a connector call (`SdkConnectorExecutor`, `CapabilityConnectorPolicy` in
+`packages/execution-gateway/src/connector-runtime/`), all of which fail
+closed (throw, never a partial or guessed success) before a connector is ever invoked.
+
+## Related, and also worth knowing
+
+- **Single use holds across instances in the default server.** Its `NonceStore` is in
+  Postgres (`consumed_nonces`), so every instance on the same database accepts an
+  authorization once. A gateway you build yourself needs one shared store for the same
+  guarantee (CLAIMS.md 3.2).
+- **ML-DSA-65 (post-quantum) signatures are randomized, not deterministic.** Signing the
+  same message twice with the same key produces two different, both-valid signatures, only
+  _verification_ is deterministic. Don't build tooling that assumes identical input produces
+  an identical PQ signature (CLAIMS.md §5).
+- Every envelope carries a bounded TTL, so the window in which a carried authorization can be
+  used is bounded, not unlimited.

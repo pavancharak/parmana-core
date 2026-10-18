@@ -1,0 +1,2052 @@
+{
+  "info": {
+    "name": "Parmana API",
+    "description": "Generated from openapi/openapi.yaml (API version 1.0.0) by `npm run generate:postman`. Do not edit by hand.\n\nSet `apiKey` in a Postman environment (never commit a key) and, if needed, change `baseUrl`. Requests that need no key use no auth.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{apiKey}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://parmana-sandbox.vercel.app",
+      "type": "string"
+    },
+    {
+      "key": "apiKey",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Execution",
+      "description": "Executes a Business Transaction through the complete Execution Trust pipeline",
+      "item": [
+        {
+          "name": "Execute a Business Transaction (test-fixture-flow)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"businessTransactionId\": \"e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a\",\n  \"metadata\": {\n    \"businessTransactionId\": \"e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a\",\n    \"correlationId\": \"9c039d73-7fb1-461f-908f-c646c905633c\",\n    \"sourceSystem\": \"docs-api-reference\",\n    \"submittedBy\": \"docs-example\",\n    \"submittedAt\": \"2026-09-14T17:17:50.000Z\"\n  },\n  \"authority\": {\n    \"authorityId\": \"f10f016f-b7c0-443e-8307-d26f5fa98067\",\n    \"authorityType\": \"SERVICE\",\n    \"principalId\": \"docs-example-caller\",\n    \"displayName\": \"Docs Example Caller\",\n    \"issuedAt\": \"2026-09-14T17:17:50.000Z\"\n  },\n  \"authorization\": {\n    \"authorizationId\": \"5f112f4c-a43d-41dd-bfee-66a49efe33de\",\n    \"authorityId\": \"f10f016f-b7c0-443e-8307-d26f5fa98067\",\n    \"purpose\": \"API reference example: refund authorization\",\n    \"issuedAt\": \"2026-09-14T17:17:50.000Z\"\n  },\n  \"intent\": {\n    \"intentId\": \"462c2efd-3b88-4f59-8c47-8ba01a63d37e\",\n    \"authorizationId\": \"5f112f4c-a43d-41dd-bfee-66a49efe33de\",\n    \"action\": \"test:fixture-execute\",\n    \"target\": \"vendor://payments\",\n    \"parameters\": {\n      \"amount\": 1000,\n      \"currency\": \"USD\"\n    },\n    \"createdAt\": \"2026-09-14T17:17:50.000Z\"\n  },\n  \"policy\": {\n    \"name\": \"vendor-payment\",\n    \"version\": \"2.0.0\",\n    \"schemaVersion\": \"1.0.0\"\n  },\n  \"signals\": {\n    \"vendorVerified\": true,\n    \"invoiceVerified\": true,\n    \"paymentApproved\": true,\n    \"sufficientFunds\": true,\n    \"paymentAmount\": 1000,\n    \"riskScore\": 5,\n    \"vendorId\": \"vendor://payments\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/execute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "execute"
+              ]
+            },
+            "description": "A request that runs on a server started with NODE_ENV=test, using the test only capability test:fixture-execute. It was captured live on 2026-09-14 and is approved.\n\noperationId: executeTransaction\n\nSends one action for a decision and, if approved, performs it. This is the call an agent makes. The\nserver stores the Business Transaction, evaluates the policy, checks any signed human approval the\npolicy requires, releases the action to its connector, and returns the signed Execution Trust Record.\nIt runs synchronously: an approved action that calls an external system took 24 to 32 seconds in\nproduction, so set your client timeout to 120 seconds.\n\n**Before you send:** ask `GET /policies/in-effect?capability=<action>` which policy and version to\ndeclare and which facts to carry.\n\n**Idempotency:** `businessTransactionId` is a UUID you choose and the idempotency key. Sending the\nsame id again returns `409`; it never runs twice. After a timeout, read\n`GET /execution-intents/{businessTransactionId}` before sending anything new.\n\n**What the server sets:** `status`, `createdAt` and `metadata.submittedBy` (from your key). Top level\nfields not in the schema are dropped.\n\n**Outcomes:**\n1. `200`: approved and released. The body is the signed Trust Record.\n2. `403` `POLICY_DENIED`: the policy refused. Final; nothing was released. A Refusal Record is kept at\n   `GET /refusal/{businessTransactionId}`.\n3. `403` `CAPABILITY_NOT_ALLOWED`, or no code: your key may not invoke this action, or may not act for\n   this principal.\n4. `503`: refused before release; nothing was executed. See the codes on that response.\n5. `502` `EXECUTION_OUTCOME_UNKNOWN`, `executionStatus: EXECUTION_UNKNOWN`: released, then the\n   connector call failed, so the outcome is unknown. Do not resend under a new id. Check the target\n   system, then close the intent with `POST /execution-intents/{businessTransactionId}/resolve`.\n6. `409` `AUTHORIZATION_NO_LONGER_VALID`, `executionStatus: NOT_EXECUTED`: decided, but at release a\n   business fact it rested on was past its `validUntil`, or the authority grant had expired or been\n   revoked (RFC-0023 phase 4). Nothing was sent. Send a new request.\n7. `500` `EXECUTION_RECORD_INCOMPLETE`: released, but the signed record could not be produced. Do not\n   resend. An operator rebuilds it with `POST /execution-intents/{businessTransactionId}/finalize`.\n\nThe examples named `vendor-payment-flow` show the response shape; their `payments:execute` action no\nlonger exists. See [Integrate Parmana](/agents/integrate) and the\n[Error catalog](/api-reference/error-catalog)."
+          }
+        },
+        {
+          "name": "Execute a Business Transaction (vendor-payment-flow)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"businessTransactionId\": \"44b34a79-e0f2-49d7-a48e-e52fff88182e\",\n  \"metadata\": {\n    \"businessTransactionId\": \"44b34a79-e0f2-49d7-a48e-e52fff88182e\",\n    \"correlationId\": \"cc1ca975-4935-4e9a-a591-8897af6b56fb\",\n    \"sourceSystem\": \"vendor-payment-service\",\n    \"submittedBy\": \"ap-automation\",\n    \"submittedAt\": \"2026-07-13T17:36:00.835Z\"\n  },\n  \"authority\": {\n    \"authorityId\": \"db5c5260-bb4c-40a2-a081-2928b5fe7720\",\n    \"authorityType\": \"SERVICE\",\n    \"principalId\": \"ap-automation-svc\",\n    \"displayName\": \"Accounts Payable Automation\",\n    \"issuedAt\": \"2026-07-13T17:36:00.835Z\"\n  },\n  \"authorization\": {\n    \"authorizationId\": \"63bdc429-14e4-4ef4-8007-f3c0c9564261\",\n    \"authorityId\": \"db5c5260-bb4c-40a2-a081-2928b5fe7720\",\n    \"purpose\": \"Authorize vendor payment disbursement\",\n    \"issuedAt\": \"2026-07-13T17:36:00.835Z\"\n  },\n  \"intent\": {\n    \"intentId\": \"1e77d0b3-2e57-4e31-b780-03abc92f1b69\",\n    \"authorizationId\": \"63bdc429-14e4-4ef4-8007-f3c0c9564261\",\n    \"action\": \"payments:execute\",\n    \"target\": \"vendor/V-500\",\n    \"parameters\": {\n      \"amount\": 5000,\n      \"currency\": \"USD\"\n    },\n    \"createdAt\": \"2026-07-13T17:36:00.835Z\"\n  },\n  \"policy\": {\n    \"name\": \"vendor-payment\",\n    \"version\": \"2.0.0\",\n    \"schemaVersion\": \"1.0.0\"\n  },\n  \"signals\": {\n    \"vendorVerified\": true,\n    \"invoiceVerified\": true,\n    \"paymentApproved\": true,\n    \"sufficientFunds\": true,\n    \"paymentAmount\": 5000,\n    \"riskScore\": 12\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/execute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "execute"
+              ]
+            },
+            "description": "Historical capture (vendor-payment 2.0.0, approved). The payments:execute action no longer exists on a current server. Shown for the response shape only.\n\noperationId: executeTransaction\n\nSends one action for a decision and, if approved, performs it. This is the call an agent makes. The\nserver stores the Business Transaction, evaluates the policy, checks any signed human approval the\npolicy requires, releases the action to its connector, and returns the signed Execution Trust Record.\nIt runs synchronously: an approved action that calls an external system took 24 to 32 seconds in\nproduction, so set your client timeout to 120 seconds.\n\n**Before you send:** ask `GET /policies/in-effect?capability=<action>` which policy and version to\ndeclare and which facts to carry.\n\n**Idempotency:** `businessTransactionId` is a UUID you choose and the idempotency key. Sending the\nsame id again returns `409`; it never runs twice. After a timeout, read\n`GET /execution-intents/{businessTransactionId}` before sending anything new.\n\n**What the server sets:** `status`, `createdAt` and `metadata.submittedBy` (from your key). Top level\nfields not in the schema are dropped.\n\n**Outcomes:**\n1. `200`: approved and released. The body is the signed Trust Record.\n2. `403` `POLICY_DENIED`: the policy refused. Final; nothing was released. A Refusal Record is kept at\n   `GET /refusal/{businessTransactionId}`.\n3. `403` `CAPABILITY_NOT_ALLOWED`, or no code: your key may not invoke this action, or may not act for\n   this principal.\n4. `503`: refused before release; nothing was executed. See the codes on that response.\n5. `502` `EXECUTION_OUTCOME_UNKNOWN`, `executionStatus: EXECUTION_UNKNOWN`: released, then the\n   connector call failed, so the outcome is unknown. Do not resend under a new id. Check the target\n   system, then close the intent with `POST /execution-intents/{businessTransactionId}/resolve`.\n6. `409` `AUTHORIZATION_NO_LONGER_VALID`, `executionStatus: NOT_EXECUTED`: decided, but at release a\n   business fact it rested on was past its `validUntil`, or the authority grant had expired or been\n   revoked (RFC-0023 phase 4). Nothing was sent. Send a new request.\n7. `500` `EXECUTION_RECORD_INCOMPLETE`: released, but the signed record could not be produced. Do not\n   resend. An operator rebuilds it with `POST /execution-intents/{businessTransactionId}/finalize`.\n\nThe examples named `vendor-payment-flow` show the response shape; their `payments:execute` action no\nlonger exists. See [Integrate Parmana](/agents/integrate) and the\n[Error catalog](/api-reference/error-catalog)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transactions",
+      "description": "Business Transaction creation and retrieval",
+      "item": [
+        {
+          "name": "List Business Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number, starting at 1. Default 1.",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "25",
+                  "description": "Items per page before filtering to your own transactions. Default 25. Maximum 100.",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: listTransactions\n\nLists the Business Transactions your key submitted, as a bare array with no paging metadata. Each\nitem is the request as stored; for the signed outcome of each, use `GET /trust-records`. A page can hold fewer than `pageSize` items, or none, when other callers'\ntransactions fall in that window, so keep paging until you have what you need."
+          }
+        },
+        {
+          "name": "Create (execute) a Business Transaction (test-fixture-flow)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"businessTransactionId\": \"4cfe5661-42a6-4db0-8372-2d24dca235f2\",\n  \"metadata\": {\n    \"businessTransactionId\": \"4cfe5661-42a6-4db0-8372-2d24dca235f2\",\n    \"sourceSystem\": \"docs-api-reference\",\n    \"submittedBy\": \"docs-example\"\n  },\n  \"authority\": {\n    \"authorityId\": \"be8afa44-ee3c-44c2-a4a2-ba119e128948\",\n    \"authorityType\": \"SERVICE\",\n    \"principalId\": \"docs-example-caller\",\n    \"issuedAt\": \"2026-09-14T17:18:27.000Z\"\n  },\n  \"authorization\": {\n    \"authorizationId\": \"81a1c120-d296-458b-bbe5-824a8617f23a\",\n    \"authorityId\": \"be8afa44-ee3c-44c2-a4a2-ba119e128948\",\n    \"purpose\": \"API reference example: transactions endpoint\",\n    \"issuedAt\": \"2026-09-14T17:18:27.000Z\"\n  },\n  \"intent\": {\n    \"intentId\": \"ceb89d68-13ac-4ff9-b7b9-dd0e15637baa\",\n    \"authorizationId\": \"81a1c120-d296-458b-bbe5-824a8617f23a\",\n    \"action\": \"test:fixture-execute\",\n    \"target\": \"vendor://payments\",\n    \"parameters\": {\n      \"amount\": 250,\n      \"currency\": \"USD\"\n    },\n    \"createdAt\": \"2026-09-14T17:18:27.000Z\"\n  },\n  \"policy\": {\n    \"name\": \"vendor-payment\",\n    \"version\": \"2.0.0\",\n    \"schemaVersion\": \"1.0.0\"\n  },\n  \"signals\": {\n    \"vendorVerified\": true,\n    \"invoiceVerified\": true,\n    \"paymentApproved\": true,\n    \"sufficientFunds\": true,\n    \"paymentAmount\": 250,\n    \"riskScore\": 5,\n    \"vendorId\": \"vendor://payments\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions"
+              ]
+            },
+            "description": "Real captured request, currently runnable (test:fixture-execute, the generic NODE_ENV=test-only capability, APPROVED). Prefer this over vendor-payment-flow-transactions-endpoint below, which depends on a connector removed from this repository, see the POST /execute description above for the same caveat.\n\noperationId: createTransaction\n\nThe same as `POST /execute` in every way except the success status, `201` instead of `200`. Use\nwhichever fits your client. Read [Execute a Business Transaction](/api-reference/endpoints/execute-transaction)\nfor the full behavior, the outcomes and what to do after each."
+          }
+        },
+        {
+          "name": "Create (execute) a Business Transaction (vendor-payment-flow-transactions-endpoint)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"businessTransactionId\": \"ffe803db-fb24-498a-9826-47ddc7e7167d\",\n  \"metadata\": {\n    \"businessTransactionId\": \"ffe803db-fb24-498a-9826-47ddc7e7167d\",\n    \"correlationId\": \"303003bf-3939-407d-855d-ffb338532d6d\",\n    \"sourceSystem\": \"vendor-payment-service\",\n    \"submittedBy\": \"ap-automation\",\n    \"submittedAt\": \"2026-07-08T03:54:34.783Z\"\n  },\n  \"authority\": {\n    \"authorityId\": \"05ff9e2e-e5dd-40aa-9964-02c2574396c9\",\n    \"authorityType\": \"SERVICE\",\n    \"principalId\": \"ap-automation-svc\",\n    \"displayName\": \"Accounts Payable Automation\",\n    \"issuedAt\": \"2026-07-08T03:54:34.784Z\"\n  },\n  \"authorization\": {\n    \"authorizationId\": \"5fb16a24-6688-4f6f-98ee-53a117f0f2c9\",\n    \"authorityId\": \"05ff9e2e-e5dd-40aa-9964-02c2574396c9\",\n    \"purpose\": \"Authorize vendor payment disbursement\",\n    \"issuedAt\": \"2026-07-08T03:54:34.784Z\"\n  },\n  \"intent\": {\n    \"intentId\": \"023fbdd4-f206-4a42-b7dd-d5f865fd2c74\",\n    \"authorizationId\": \"5fb16a24-6688-4f6f-98ee-53a117f0f2c9\",\n    \"action\": \"payments:execute\",\n    \"target\": \"vendor/V-300\",\n    \"parameters\": {\n      \"amount\": 3300,\n      \"currency\": \"USD\"\n    },\n    \"createdAt\": \"2026-07-08T03:54:34.784Z\"\n  },\n  \"policy\": {\n    \"name\": \"vendor-payment\",\n    \"version\": \"2.0.0\",\n    \"schemaVersion\": \"1.0.0\"\n  },\n  \"signals\": {\n    \"vendorVerified\": true,\n    \"invoiceVerified\": true,\n    \"paymentApproved\": true,\n    \"sufficientFunds\": true,\n    \"paymentAmount\": 3300,\n    \"riskScore\": 9\n  },\n  \"status\": \"APPROVED\",\n  \"unexpectedField\": \"should-not-be-persisted\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions"
+              ]
+            },
+            "description": "Real captured request (vendor-payment 2.0.0, APPROVED), includes a client-supplied status and an unrecognized top-level field to demonstrate both are rejected/dropped, never persisted (see the 201 response below)\n\noperationId: createTransaction\n\nThe same as `POST /execute` in every way except the success status, `201` instead of `200`. Use\nwhichever fits your client. Read [Execute a Business Transaction](/api-reference/endpoints/execute-transaction)\nfor the full behavior, the outcomes and what to do after each."
+          }
+        },
+        {
+          "name": "Get Business Transaction",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/transactions/:businessTransactionId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions",
+                ":businessTransactionId"
+              ],
+              "variable": [
+                {
+                  "key": "businessTransactionId",
+                  "value": "",
+                  "description": "The id you chose when you sent the transaction."
+                }
+              ]
+            },
+            "description": "operationId: getTransaction\n\nReturns one Business Transaction as it was stored. For the signed outcome, what was decided and\nexecuted, use `GET /trust-records/{businessTransactionId}`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Verification",
+      "description": "Deterministic verification of an Execution Trust Record",
+      "item": [
+        {
+          "name": "Verify an Execution Trust Record",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"businessTransactionId\": \"44b34a79-e0f2-49d7-a48e-e52fff88182e\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "verify"
+              ]
+            },
+            "description": "Real captured request\n\noperationId: verifyTransaction\n\nChecks a Trust Record again on the server: recomputes its hash, verifies its signature and checks\nthat every approved execution is bound to its authorization. All checks run and every failure is\nreported. The result is appended to the record as a new Verification. A receipt can only be\ngenerated after a `VERIFIED` result. To verify without trusting this server, use\n[Verify independently](/guides/verify-independently)."
+          }
+        },
+        {
+          "name": "Get latest Verification",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/verification/:businessTransactionId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "verification",
+                ":businessTransactionId"
+              ],
+              "variable": [
+                {
+                  "key": "businessTransactionId",
+                  "value": "",
+                  "description": "The transaction's id."
+                }
+              ]
+            },
+            "description": "operationId: getLatestVerification\n\nReturns the most recent Verification appended to a Trust Record by `POST /verify`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Receipts",
+      "description": "Cryptographically signed Execution Trust Receipts",
+      "item": [
+        {
+          "name": "Generate a Receipt",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"businessTransactionId\": \"44b34a79-e0f2-49d7-a48e-e52fff88182e\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/receipt",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "receipt"
+              ]
+            },
+            "description": "Real captured request\n\noperationId: generateReceipt\n\nGenerates a signed Receipt for a Trust Record: a compact proof of what was decided and executed,\nto hand to a person or another system. The record must have a `VERIFIED` Verification first; run\n`POST /verify`."
+          }
+        },
+        {
+          "name": "Get latest Receipt",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/receipt/latest/:businessTransactionId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "receipt",
+                "latest",
+                ":businessTransactionId"
+              ],
+              "variable": [
+                {
+                  "key": "businessTransactionId",
+                  "value": "",
+                  "description": "The transaction's id."
+                }
+              ]
+            },
+            "description": "operationId: getLatestReceipt\n\nReturns the most recent Receipt for a Trust Record. `POST /execute` generates one for every executed\naction."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trust Records",
+      "description": "Execution Trust Record retrieval",
+      "item": [
+        {
+          "name": "Bulk-export Execution Trust Records (compliance/audit)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/trust-records",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trust-records"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number, starting at 1. Default 1.",
+                  "disabled": true
+                },
+                {
+                  "key": "pageSize",
+                  "value": "25",
+                  "description": "Items per page before filtering. Default 25. Maximum 100.",
+                  "disabled": true
+                },
+                {
+                  "key": "since",
+                  "value": "",
+                  "description": "Only include records whose transaction.createdAt is on or after this ISO 8601 timestamp.",
+                  "disabled": true
+                },
+                {
+                  "key": "until",
+                  "value": "",
+                  "description": "Only include records whose transaction.createdAt is on or before this ISO 8601 timestamp.",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: listTrustRecords\n\nExports your full, signed Trust Records (transaction, decision, executions, verifications, receipts)\na page at a time, for audit and compliance. Filter by date with `since` and `until`. Paging works as\non `GET /transactions`: a bare array, scoped to your key, and a page can hold fewer than `pageSize`\nitems."
+          }
+        },
+        {
+          "name": "Get Execution Trust Record",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/trust-records/:businessTransactionId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "trust-records",
+                ":businessTransactionId"
+              ],
+              "variable": [
+                {
+                  "key": "businessTransactionId",
+                  "value": "",
+                  "description": "The transaction's id, not the record's `trustRecordId`."
+                }
+              ]
+            },
+            "description": "operationId: getTrustRecord\n\nReturns the complete signed Execution Trust Record for a transaction: what was asked, what the\npolicy decided, what was executed and the connector's answer, with signatures. Look it up by the\n`businessTransactionId` you chose, not by `trustRecordId`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Replay",
+      "description": "Deterministic replay of a recorded Execution Trust Record",
+      "item": [
+        {
+          "name": "Replay an Execution Trust Record",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"businessTransactionId\": \"44b34a79-e0f2-49d7-a48e-e52fff88182e\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/replay",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "replay"
+              ]
+            },
+            "description": "Real captured request\n\noperationId: replayTransaction\n\nVerifies the stored signature on a Trust Record and returns its hash with the result. It does not\nevaluate the policy again and does not execute anything. Nothing is appended to the record; for a\nrecorded check use `POST /verify`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Policies",
+      "description": "Policy existence/readability check",
+      "item": [
+        {
+          "name": "Get the policy a capability's requests must declare right now",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/policies/in-effect?capability=paytm:refund",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "policies",
+                "in-effect"
+              ],
+              "query": [
+                {
+                  "key": "capability",
+                  "value": "paytm:refund",
+                  "description": "The action, as in `intent.action`, for example `paytm:refund`."
+                }
+              ]
+            },
+            "description": "operationId: getPolicyInEffect\n\nTells an agent what a request for a capability must declare and carry right now: the policy name and\nversion, the policy's description, and its signals (every fact the rules read with its type, the\nfacts that must equal a value of the intent, and the facts that need a signed human approval with\nwhat that approval must name). Call it before every `POST /execute` instead of hard coding a version:\napproving a new version changes the answer with no deploy. The rule conditions are never returned.\nAllowed for a key that may invoke the capability, and for human keys."
+          }
+        },
+        {
+          "name": "Validate that a Policy exists and is readable (vendor-payment)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"policyId\": \"vendor-payment\",\n  \"policyVersion\": \"2.0.0\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/policies/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "policies",
+                "validate"
+              ]
+            },
+            "description": "Real captured request\n\noperationId: validatePolicy\n\nChecks that this server can load a policy at a name and version, the same lookup a request uses.\nUnlike other routes, every answer, success or failure, has the shape `{ valid, errors }`; only a\n`401` uses the usual error body."
+          }
+        },
+        {
+          "name": "Validate that a Policy exists and is readable (notFound)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"policyId\": \"does-not-exist\",\n  \"policyVersion\": \"9.9.9\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/policies/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "policies",
+                "validate"
+              ]
+            },
+            "description": "Real captured request, unknown policy\n\noperationId: validatePolicy\n\nChecks that this server can load a policy at a name and version, the same lookup a request uses.\nUnlike other routes, every answer, success or failure, has the shape `{ valid, errors }`; only a\n`401` uses the usual error body."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Policy Governance",
+      "description": "Maker-checker proposal, listing, approval, and rejection of policy changes",
+      "item": [
+        {
+          "name": "Propose a policy change (maker)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proposedContent\": {\n    \"policyId\": \"openapi-capture-demo\",\n    \"policyVersion\": \"1.0.0\",\n    \"schemaVersion\": \"1.0.0\",\n    \"rules\": [\n      {\n        \"id\": \"always-approve\",\n        \"condition\": {\n          \"always\": true\n        },\n        \"outcome\": {\n          \"action\": \"approve\",\n          \"reason\": \"OpenAPI spec capture fixture\"\n        }\n      }\n    ]\n  },\n  \"reason\": \"Capture a real Pending Policy Change for the OpenAPI spec\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/policies/:name/:version/pending-changes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "policies",
+                ":name",
+                ":version",
+                "pending-changes"
+              ],
+              "variable": [
+                {
+                  "key": "name",
+                  "value": "",
+                  "description": "The policy name, for example `customer-refund`. Not `.` or `..`."
+                },
+                {
+                  "key": "version",
+                  "value": "",
+                  "description": "The version this proposal changes, for example `1.2.0`. Not `.` or `..`."
+                }
+              ]
+            },
+            "description": "operationId: proposePolicyChange\n\nProposes new content for a policy, the maker's step in maker checker governance. Nothing changes\nuntil a different person approves it. `{version}` is the version this proposal changes;\n`proposedContent.policyVersion` may be the same (a correction) or new (a new version). The content is\nchecked as `POST /policies/validate` would, and `proposedContent.policyId` must equal `{name}`. Needs\na human key. See [Policy lifecycle and approvals](/guides/policy-lifecycle-and-approvals)."
+          }
+        },
+        {
+          "name": "List pending policy changes (maker-checker)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/policies/pending-changes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "policies",
+                "pending-changes"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "`PENDING_APPROVAL`, `APPROVED` or `REJECTED`. Omit for all.",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: listPendingPolicyChanges\n\nLists policy changes with a diff: the content in effect today (`current`, or `null` for a new version)\nnext to the proposed content. A checker uses `status=PENDING_APPROVAL` to find what waits for review.\nNeeds a human key."
+          }
+        },
+        {
+          "name": "Approve a pending policy change (checker)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stepUpAuthorization\": {\n    \"payload\": {\n      \"version\": 1,\n      \"nonce\": \"343ee454-92c6-4ef9-9cfe-e98329e51f53\",\n      \"pendingPolicyChangeId\": \"6f4e4020-adf5-4449-938d-27aab58f66b7\",\n      \"action\": \"approve\",\n      \"authorizedAt\": \"2026-09-15T03:47:51.939Z\",\n      \"expiresAt\": \"2026-09-15T03:49:51.939Z\"\n    },\n    \"signature\": \"keOXnzUk8KcGrQTkpXC4Ki8ps3GTvMANwqq96b+toxba07gjkcmpyL/vaPZ7+pPZ1HAOJOOy3rj5XfhcwOTnAw==\",\n    \"keyId\": \"human-checker-step-up-key\",\n    \"algorithm\": \"ed25519\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/policies/pending-changes/:id/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "policies",
+                "pending-changes",
+                ":id",
+                "approve"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "The `pendingPolicyChangeId` from the proposal."
+                }
+              ]
+            },
+            "description": "operationId: approvePolicyChange\n\nApproves a policy change, the checker's step, and puts it into effect. Checked in order: a human key,\nnot the person who proposed it, and a step up authorization signed with your step up key for this\nchange id and action `approve`, valid once. The policy is written and a signed approval record is\nkept before the change is marked approved, so a failure never leaves a change approved without\neffect. The next request for the bound capability must declare the approved version. See\n[Policy governance](/guides/policy-governance-maker-checker)."
+          }
+        },
+        {
+          "name": "Reject a pending policy change (checker)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejectionReason\": \"Does not meet the bar for this fixture\",\n  \"stepUpAuthorization\": {\n    \"payload\": {\n      \"version\": 1,\n      \"nonce\": \"4807fe45-0379-415b-9455-b8cb84eb5554\",\n      \"pendingPolicyChangeId\": \"5617ba3c-fb07-437d-9131-232b84bbb863\",\n      \"action\": \"reject\",\n      \"authorizedAt\": \"2026-09-15T03:48:16.755Z\",\n      \"expiresAt\": \"2026-09-15T03:50:16.755Z\"\n    },\n    \"signature\": \"Wu5/oibGCjvkTklGQPiDMDemqxCVbSyuoVT7WHW63rGq8Av5KFTW6vMkUCP03pANv8bDu60bZVuVcTDVmLXpDA==\",\n    \"keyId\": \"human-checker-step-up-key\",\n    \"algorithm\": \"ed25519\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/policies/pending-changes/:id/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "policies",
+                "pending-changes",
+                ":id",
+                "reject"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "The `pendingPolicyChangeId` from the proposal."
+                }
+              ]
+            },
+            "description": "operationId: rejectPolicyChange\n\nRejects a policy change. The policy in effect does not change. The same checks as approve, with a\nstep up authorization for action `reject` and a `rejectionReason`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Approvers",
+      "description": "Maker-checker for the keys trusted to sign approvals, without a deploy",
+      "item": [
+        {
+          "name": "List approver keys",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/approval-issuers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "approval-issuers"
+              ]
+            },
+            "description": "operationId: listApprovalIssuers\n\nLists every approver key the server trusts, or once trusted, to sign human approvals for policies\nthat require one. Keys in the server code come first (`source: code`), then keys added through\napprover changes (`source: governed`). Revoked keys stay listed and marked, so every approval ever\naccepted can be explained. Needs a human key. See [Manage approvers](/guides/manage-approvers)."
+          }
+        },
+        {
+          "name": "List approver changes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/approval-issuers/changes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "approval-issuers",
+                "changes"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "`PENDING_APPROVAL`, `APPROVED` or `REJECTED`. Omit for all.",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: listApprovalIssuerChanges\n\nLists approver changes, newest first. A checker uses `status=PENDING_APPROVAL` to find what waits for\nreview. Needs a human key."
+          }
+        },
+        {
+          "name": "Propose adding or revoking an approver key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"add\",\n  \"approverId\": \"manager-priya\",\n  \"keyId\": \"manager-priya-key-1\",\n  \"publicKeyPem\": \"-----BEGIN PUBLIC KEY-----\\nMCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=\\n-----END PUBLIC KEY-----\\n\",\n  \"reason\": \"Priya approves refunds for the West region from October.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/approval-issuers/changes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "approval-issuers",
+                "changes"
+              ]
+            },
+            "description": "operationId: proposeApprovalIssuerChange\n\nProposes trusting a new approver key (`add`, with its Ed25519 public key) or revoking one added this\nway (`revoke`). Nothing changes until a different person approves it. Keys in the server code change\nonly through a pull request. A key id can be added once: to rotate, add a new key id, then revoke the\nold one. Needs a human key."
+          }
+        },
+        {
+          "name": "Approve an approver change",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stepUpAuthorization\": {\n    \"payload\": {\n      \"version\": 1,\n      \"nonce\": \"0b6081da-cd57-4519-ae36-71eb1bb62432\",\n      \"pendingPolicyChangeId\": \"ba7c5827-5844-4069-94fc-9b438ef08f78\",\n      \"action\": \"approve\",\n      \"authorizedAt\": \"2026-09-28T19:05:59.733Z\",\n      \"expiresAt\": \"2026-09-28T19:07:59.733Z\"\n    },\n    \"signature\": \"Nv94Q62/g4IQ0zFxDqF621Stz+JBy/4KOvLJ9+RfJO8xMw6hw06X4gzdDNEh2DxJt9xmL7VTF9TxDd9s9qmkCg==\",\n    \"keyId\": \"human-checker-step-up-key\",\n    \"algorithm\": \"ed25519\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/approval-issuers/changes/:id/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "approval-issuers",
+                "changes",
+                ":id",
+                "approve"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "The `changeId` from the proposal."
+                }
+              ]
+            },
+            "description": "Real captured request\n\noperationId: approveApprovalIssuerChange\n\nApproves an approver change and applies it at once: an added key is trusted from the next approval\nchecked; a revoked key's approvals are refused from the next request on, including ones it already\nsigned. Checked in order: a human key, not the proposer, and a step up authorization for this change\nid and action `approve`, valid once. The step up authorization is the same one policy changes use,\nwith the change id in `payload.pendingPolicyChangeId`."
+          }
+        },
+        {
+          "name": "Reject an approver change",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejectionReason\": \"Does not meet the bar for this fixture\",\n  \"stepUpAuthorization\": {\n    \"payload\": {\n      \"version\": 1,\n      \"nonce\": \"4807fe45-0379-415b-9455-b8cb84eb5554\",\n      \"pendingPolicyChangeId\": \"5617ba3c-fb07-437d-9131-232b84bbb863\",\n      \"action\": \"reject\",\n      \"authorizedAt\": \"2026-09-15T03:48:16.755Z\",\n      \"expiresAt\": \"2026-09-15T03:50:16.755Z\"\n    },\n    \"signature\": \"Wu5/oibGCjvkTklGQPiDMDemqxCVbSyuoVT7WHW63rGq8Av5KFTW6vMkUCP03pANv8bDu60bZVuVcTDVmLXpDA==\",\n    \"keyId\": \"human-checker-step-up-key\",\n    \"algorithm\": \"ed25519\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/approval-issuers/changes/:id/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "approval-issuers",
+                "changes",
+                ":id",
+                "reject"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "The `changeId` from the proposal."
+                }
+              ]
+            },
+            "description": "operationId: rejectApprovalIssuerChange\n\nRejects an approver change. No key changes. The same checks as approve, with a step up authorization\nfor action `reject` and a `rejectionReason`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "External Connectors",
+      "description": "Maker-checker for binding a capability to an operator's HTTPS endpoint and its policy, without a deploy (ADR-0013)",
+      "item": [
+        {
+          "name": "List external connectors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/external-connectors",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "external-connectors"
+              ]
+            },
+            "description": "operationId: listExternalConnectors\n\nLists every external connector registration, active and revoked: the capability, the HTTPS endpoint\nParmana releases it to, the policy that governs it and the parameters forwarded. Revoked\nregistrations stay listed, so every release ever made can be explained. Needs a human key. See\n[Connect any external system](/guides/connect-any-external-system)."
+          }
+        },
+        {
+          "name": "List external connector changes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/external-connectors/changes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "external-connectors",
+                "changes"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "`PENDING_APPROVAL`, `APPROVED` or `REJECTED`. Omit for all.",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: listExternalConnectorChanges\n\nLists external connector changes, newest first. A checker uses `status=PENDING_APPROVAL` to find what\nwaits for review. Needs a human key."
+          }
+        },
+        {
+          "name": "Propose registering or revoking an external connector (register)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"register\",\n  \"capability\": \"erp:create-invoice\",\n  \"endpointUrl\": \"https://erp.example.com/parmana/release\",\n  \"policy\": \"erp-invoice\",\n  \"allowedParameters\": [\n    \"amount\",\n    \"currency\",\n    \"customerId\"\n  ],\n  \"timeoutMs\": 10000,\n  \"reason\": \"Finance creates invoices in the ERP through Parmana from October.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/external-connectors/changes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "external-connectors",
+                "changes"
+              ]
+            },
+            "description": "Real captured request\n\noperationId: proposeExternalConnectorChange\n\nProposes connecting your own system to Parmana with no Parmana code change: `register` names a\ncapability, the HTTPS endpoint to release it to, the policy that governs it, the parameters to\nforward and optionally a timeout; `revoke` ends the active registration for a capability. Nothing\nchanges until a different person approves it. The endpoint must be `https`, name a domain (not an IP\naddress or localhost), carry no user name, password or fragment, and resolve only to public\naddresses; the address is checked again on approval and at every release. Capabilities in a built in\nnamespace (`paytm`, `hubspot`, `github`, `slack`, `test`) are refused. To move a capability, revoke\nit, then register the new endpoint. Needs a human key."
+          }
+        },
+        {
+          "name": "Propose registering or revoking an external connector (revoke)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"revoke\",\n  \"capability\": \"erp:create-invoice\",\n  \"reason\": \"The ERP endpoint moves to a new host.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/external-connectors/changes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "external-connectors",
+                "changes"
+              ]
+            },
+            "description": "Real captured request\n\noperationId: proposeExternalConnectorChange\n\nProposes connecting your own system to Parmana with no Parmana code change: `register` names a\ncapability, the HTTPS endpoint to release it to, the policy that governs it, the parameters to\nforward and optionally a timeout; `revoke` ends the active registration for a capability. Nothing\nchanges until a different person approves it. The endpoint must be `https`, name a domain (not an IP\naddress or localhost), carry no user name, password or fragment, and resolve only to public\naddresses; the address is checked again on approval and at every release. Capabilities in a built in\nnamespace (`paytm`, `hubspot`, `github`, `slack`, `test`) are refused. To move a capability, revoke\nit, then register the new endpoint. Needs a human key."
+          }
+        },
+        {
+          "name": "Approve an external connector change",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stepUpAuthorization\": {\n    \"payload\": {\n      \"version\": 1,\n      \"nonce\": \"a11a41c1-651e-431e-82ef-5199791a6428\",\n      \"pendingPolicyChangeId\": \"1aa68ad8-ab5c-4beb-9ff3-7a6b1fc1ff37\",\n      \"action\": \"approve\",\n      \"authorizedAt\": \"2026-09-30T17:25:46.377Z\",\n      \"expiresAt\": \"2026-09-30T17:27:46.377Z\"\n    },\n    \"signature\": \"f7L+V1mwISUMWPZ85KqGJ2s1TaPfBiPHhwfsWjwhu2/1cSCJjP06MvgJ6eM6F01uR1T6/qT2FcHPpD/ETa+bDA==\",\n    \"keyId\": \"human-checker-step-up-key\",\n    \"algorithm\": \"ed25519\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/external-connectors/changes/:id/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "external-connectors",
+                "changes",
+                ":id",
+                "approve"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "The `changeId` from the proposal."
+                }
+              ]
+            },
+            "description": "Real captured request\n\noperationId: approveExternalConnectorChange\n\nApproves an external connector change and applies it at once: `register` makes the registration\nactive, `revoke` ends it. For a register, the endpoint's address is checked again first, so a DNS\nchange since the proposal cannot point it at a private address. Checked in order: a human key, not\nthe proposer, and a step up authorization for this change id and action `approve`, valid once, with\nthe change id in `payload.pendingPolicyChangeId`. Requests for the capability are refused until a\nversion of its policy is approved."
+          }
+        },
+        {
+          "name": "Reject an external connector change",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejectionReason\": \"Does not meet the bar for this fixture\",\n  \"stepUpAuthorization\": {\n    \"payload\": {\n      \"version\": 1,\n      \"nonce\": \"4807fe45-0379-415b-9455-b8cb84eb5554\",\n      \"pendingPolicyChangeId\": \"5617ba3c-fb07-437d-9131-232b84bbb863\",\n      \"action\": \"reject\",\n      \"authorizedAt\": \"2026-09-15T03:48:16.755Z\",\n      \"expiresAt\": \"2026-09-15T03:50:16.755Z\"\n    },\n    \"signature\": \"Wu5/oibGCjvkTklGQPiDMDemqxCVbSyuoVT7WHW63rGq8Av5KFTW6vMkUCP03pANv8bDu60bZVuVcTDVmLXpDA==\",\n    \"keyId\": \"human-checker-step-up-key\",\n    \"algorithm\": \"ed25519\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/external-connectors/changes/:id/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "external-connectors",
+                "changes",
+                ":id",
+                "reject"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "The `changeId` from the proposal."
+                }
+              ]
+            },
+            "description": "operationId: rejectExternalConnectorChange\n\nRejects an external connector change. No registration changes. The same checks as approve, with a\nstep up authorization for action `reject` and a `rejectionReason`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Business Signal Sources",
+      "description": "Maker-checker for the business systems Parmana asks for the facts a policy needs, without a deploy (RFC-0023)",
+      "item": [
+        {
+          "name": "List business signal sources",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/business-signal-sources",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "business-signal-sources"
+              ]
+            },
+            "description": "operationId: listBusinessSignalSources\n\nLists every business signal source registration, active and revoked: the name a policy's\n`signalSources` uses, the HTTPS endpoint Parmana asks, and the Ed25519 key its answers must be\nsigned with, if one is registered. Revoked registrations stay listed, so every Trusted Signal ever\nrecorded can be traced to the registration that produced it. Needs a human key. See\n[Connect a business system as a signal source](/guides/connect-a-business-signal-source)."
+          }
+        },
+        {
+          "name": "List business signal source changes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/business-signal-sources/changes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "business-signal-sources",
+                "changes"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "`PENDING_APPROVAL`, `APPROVED` or `REJECTED`. Omit for all.",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: listBusinessSignalSourceChanges\n\nLists business signal source changes, newest first. A checker uses `status=PENDING_APPROVAL` to\nfind what waits for review. Needs a human key."
+          }
+        },
+        {
+          "name": "Propose registering or revoking a business signal source (register)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"register\",\n  \"name\": \"erp\",\n  \"endpointUrl\": \"https://orders.example.com/parmana/signals\",\n  \"timeoutMs\": 5000,\n  \"publicKeyPem\": \"-----BEGIN PUBLIC KEY-----\\nMCowBQYDK2VwAyEAsgWd/PtRf9OsENif9bgJegghUpmEOOZN5NROxc3zpPc=\\n-----END PUBLIC KEY-----\\n\",\n  \"keyId\": \"erp-2026-10\",\n  \"reason\": \"Release goods only against invoices the ERP says are paid.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/business-signal-sources/changes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "business-signal-sources",
+                "changes"
+              ]
+            },
+            "description": "Real captured request\n\noperationId: proposeBusinessSignalSourceChange\n\nProposes connecting a business system, any system that owns facts a policy needs (an ERP, an\norder system, a CRM, a ledger), so Parmana can ask it instead of trusting the agent's claim.\n`register` names the source, the HTTPS endpoint Parmana asks, optionally a timeout, and optionally\nthe Ed25519 public key the source signs its answers with; `revoke` ends the active registration\nfor a name. Nothing changes until a different person approves it. The endpoint must be `https`,\nname a domain (not an IP address or localhost), carry no user name, password or fragment, and\nresolve only to public addresses; the address is checked again on approval and at every query.\nTo move a source, revoke it, then register the new endpoint. Needs a human key."
+          }
+        },
+        {
+          "name": "Propose registering or revoking a business signal source (revoke)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"revoke\",\n  \"name\": \"erp\",\n  \"reason\": \"The ERP moves to a new host.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/business-signal-sources/changes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "business-signal-sources",
+                "changes"
+              ]
+            },
+            "description": "Real captured request\n\noperationId: proposeBusinessSignalSourceChange\n\nProposes connecting a business system, any system that owns facts a policy needs (an ERP, an\norder system, a CRM, a ledger), so Parmana can ask it instead of trusting the agent's claim.\n`register` names the source, the HTTPS endpoint Parmana asks, optionally a timeout, and optionally\nthe Ed25519 public key the source signs its answers with; `revoke` ends the active registration\nfor a name. Nothing changes until a different person approves it. The endpoint must be `https`,\nname a domain (not an IP address or localhost), carry no user name, password or fragment, and\nresolve only to public addresses; the address is checked again on approval and at every query.\nTo move a source, revoke it, then register the new endpoint. Needs a human key."
+          }
+        },
+        {
+          "name": "Approve a business signal source change",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stepUpAuthorization\": {\n    \"payload\": {\n      \"version\": 1,\n      \"nonce\": \"7fd4e45b-1bda-4224-83d0-c8676cff2180\",\n      \"pendingPolicyChangeId\": \"5ba7d3a6-d56d-4e90-b588-402d44aeee0c\",\n      \"action\": \"approve\",\n      \"authorizedAt\": \"2026-10-11T02:58:24.742Z\",\n      \"expiresAt\": \"2026-10-11T03:00:24.742Z\"\n    },\n    \"signature\": \"hP3qDu2ZHNasz1zFZBHlkxqTKT6wiP6IHgFishmbTM7P56w7Jwel5DSx8xSvxynFDDO0sART/xxFxVFFBx8hAw==\",\n    \"keyId\": \"checker-step-up-key\",\n    \"algorithm\": \"ed25519\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/business-signal-sources/changes/:id/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "business-signal-sources",
+                "changes",
+                ":id",
+                "approve"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "The `changeId` from the proposal."
+                }
+              ]
+            },
+            "description": "Real captured request\n\noperationId: approveBusinessSignalSourceChange\n\nApproves a business signal source change and applies it at once: `register` makes the\nregistration active, so policies that name it can be evaluated; `revoke` ends it, so they are\nrefused as `SOURCE_UNAVAILABLE`. For a register, the endpoint's address is checked again first.\nChecked in order: a human key, not the proposer, and a step up authorization for this change id\nand action `approve`, valid once, with the change id in `payload.pendingPolicyChangeId`."
+          }
+        },
+        {
+          "name": "Reject a business signal source change",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejectionReason\": \"Does not meet the bar for this fixture\",\n  \"stepUpAuthorization\": {\n    \"payload\": {\n      \"version\": 1,\n      \"nonce\": \"4807fe45-0379-415b-9455-b8cb84eb5554\",\n      \"pendingPolicyChangeId\": \"5617ba3c-fb07-437d-9131-232b84bbb863\",\n      \"action\": \"reject\",\n      \"authorizedAt\": \"2026-09-15T03:48:16.755Z\",\n      \"expiresAt\": \"2026-09-15T03:50:16.755Z\"\n    },\n    \"signature\": \"Wu5/oibGCjvkTklGQPiDMDemqxCVbSyuoVT7WHW63rGq8Av5KFTW6vMkUCP03pANv8bDu60bZVuVcTDVmLXpDA==\",\n    \"keyId\": \"human-checker-step-up-key\",\n    \"algorithm\": \"ed25519\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/business-signal-sources/changes/:id/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "business-signal-sources",
+                "changes",
+                ":id",
+                "reject"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "The `changeId` from the proposal."
+                }
+              ]
+            },
+            "description": "operationId: rejectBusinessSignalSourceChange\n\nRejects a business signal source change. No registration changes. The same checks as approve,\nwith a step up authorization for action `reject` and a `rejectionReason`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authority Grants",
+      "description": "Maker-checker for which agent may have which action decided, within which limits, until when (RFC-0023)",
+      "item": [
+        {
+          "name": "List authority grants",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/authority-grants",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "authority-grants"
+              ]
+            },
+            "description": "operationId: listAuthorityGrants\n\nLists every authority grant, active and revoked: which caller may have which capability decided,\nwithin which limits, from when until when. A grant matters only under a policy with\n`requireAuthorityGrant`. Revoked grants stay listed, so every decision that rested on one can be\nexplained. Needs a human key. See [Grant an agent authority](/guides/grant-an-agent-authority)."
+          }
+        },
+        {
+          "name": "List authority grant changes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/authority-grants/changes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "authority-grants",
+                "changes"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "`PENDING_APPROVAL`, `APPROVED` or `REJECTED`. Omit for all.",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: listAuthorityGrantChanges\n\nLists authority grant changes, newest first. A checker uses `status=PENDING_APPROVAL` to find what\nwaits for review. Needs a human key."
+          }
+        },
+        {
+          "name": "Propose granting or revoking an agent's authority (grant)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"grant\",\n  \"callerId\": \"warehouse-agent\",\n  \"capability\": \"erp:release-goods\",\n  \"limits\": {\n    \"parameters.amount\": {\n      \"max\": 100000\n    },\n    \"parameters.currency\": {\n      \"oneOf\": [\n        \"INR\"\n      ]\n    }\n  },\n  \"validUntil\": \"2026-12-30T00:00:00.000Z\",\n  \"reason\": \"The warehouse agent releases goods for paid invoices up to 100000 INR this quarter.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/authority-grants/changes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "authority-grants",
+                "changes"
+              ]
+            },
+            "description": "Real captured request\n\noperationId: proposeAuthorityGrantChange\n\nProposes per-agent authority (RFC-0023 phase 3): `grant` says the API key with `callerId` may have\nrequests for `capability` decided, within `limits` on the request, until `validUntil` (at most 366\ndays); `revoke` ends the active grant. Nothing changes until a different person approves it. You\nmay not propose authority for your own key. Under a policy with `requireAuthorityGrant`, a request\nfrom a key with no grant in force, or outside its limits, is refused as `NOT_AUTHORIZED`, and one\nafter `validUntil` as `AUTHORITY_EXPIRED`. To change a grant, revoke it, then grant again. Needs a\nhuman key."
+          }
+        },
+        {
+          "name": "Propose granting or revoking an agent's authority (revoke)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"revoke\",\n  \"callerId\": \"warehouse-agent\",\n  \"capability\": \"erp:release-goods\",\n  \"reason\": \"The warehouse agent's key is being rotated.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/authority-grants/changes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "authority-grants",
+                "changes"
+              ]
+            },
+            "description": "Real captured request\n\noperationId: proposeAuthorityGrantChange\n\nProposes per-agent authority (RFC-0023 phase 3): `grant` says the API key with `callerId` may have\nrequests for `capability` decided, within `limits` on the request, until `validUntil` (at most 366\ndays); `revoke` ends the active grant. Nothing changes until a different person approves it. You\nmay not propose authority for your own key. Under a policy with `requireAuthorityGrant`, a request\nfrom a key with no grant in force, or outside its limits, is refused as `NOT_AUTHORIZED`, and one\nafter `validUntil` as `AUTHORITY_EXPIRED`. To change a grant, revoke it, then grant again. Needs a\nhuman key."
+          }
+        },
+        {
+          "name": "Approve an authority grant change",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stepUpAuthorization\": {\n    \"payload\": {\n      \"version\": 1,\n      \"nonce\": \"3cc39c28-9ed5-4e7d-ae2e-3f3c2bbc06ba\",\n      \"pendingPolicyChangeId\": \"9f3cf733-a8ed-487c-bb58-a53950388cdf\",\n      \"action\": \"approve\",\n      \"authorizedAt\": \"2026-10-11T03:29:05.244Z\",\n      \"expiresAt\": \"2026-10-11T03:31:05.244Z\"\n    },\n    \"signature\": \"HCrlwJPXLRR4YNa1RAW7f6mq46l0gNoqPt52vqvIzQv2NWg5EaCuqO0gAkDOgTL6nbUsTy8E0gpyf5PyKVI6Ag==\",\n    \"keyId\": \"checker-step-up-key\",\n    \"algorithm\": \"ed25519\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/authority-grants/changes/:id/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "authority-grants",
+                "changes",
+                ":id",
+                "approve"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "The `changeId` from the proposal."
+                }
+              ]
+            },
+            "description": "Real captured request\n\noperationId: approveAuthorityGrantChange\n\nApproves an authority grant change and applies it at once: `grant` makes the grant active,\nstarting now unless it names a later `validFrom`; `revoke` ends it, so the caller's next request\nunder a policy with `requireAuthorityGrant` is refused. A grant whose `validUntil` has passed is\nrefused. Checked in order: a human key, not the proposer, not the grantee, and a step up\nauthorization for this change id and action `approve`, valid once, with the change id in\n`payload.pendingPolicyChangeId`."
+          }
+        },
+        {
+          "name": "Reject an authority grant change",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejectionReason\": \"Does not meet the bar for this fixture\",\n  \"stepUpAuthorization\": {\n    \"payload\": {\n      \"version\": 1,\n      \"nonce\": \"4807fe45-0379-415b-9455-b8cb84eb5554\",\n      \"pendingPolicyChangeId\": \"5617ba3c-fb07-437d-9131-232b84bbb863\",\n      \"action\": \"reject\",\n      \"authorizedAt\": \"2026-09-15T03:48:16.755Z\",\n      \"expiresAt\": \"2026-09-15T03:50:16.755Z\"\n    },\n    \"signature\": \"Wu5/oibGCjvkTklGQPiDMDemqxCVbSyuoVT7WHW63rGq8Av5KFTW6vMkUCP03pANv8bDu60bZVuVcTDVmLXpDA==\",\n    \"keyId\": \"human-checker-step-up-key\",\n    \"algorithm\": \"ed25519\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/authority-grants/changes/:id/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "authority-grants",
+                "changes",
+                ":id",
+                "reject"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "The `changeId` from the proposal."
+                }
+              ]
+            },
+            "description": "operationId: rejectAuthorityGrantChange\n\nRejects an authority grant change. No grant changes. The same checks as approve, with a step up\nauthorization for action `reject` and a `rejectionReason`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sandbox",
+      "description": "Routes that exist only on the public sandbox (ADR-0014), for trying Parmana from a browser",
+      "item": [
+        {
+          "name": "Get a demo approval (sandbox only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"capability\": \"sandbox:receipt\",\n  \"resourceId\": \"<string>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sandbox/approvals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sandbox",
+                "approvals"
+              ]
+            },
+            "description": "operationId: createSandboxApproval\n\n**Sandbox only.** Returns an approval signed by the sandbox's demo approver, so you can try an approved\nrequest from a browser. In production a person signs every approval with their own key on their own\nmachine; this route does not exist there.\n\nIt signs only for `sandbox:receipt`, for the one `resourceId` you name (the target of the request you will\nsend), valid 5 minutes. Put it in your request's `signals.approvalArtifact`. `POST /execute` checks it like\nany other approval: a trusted approver key, the signature, the capability, the resource and the expiry, and\nit accepts it once. Needs the published demo key.\n\nLive at `https://parmana-sandbox.vercel.app`. The request that uses it carries\n`signals: { \"note\": \"<the same text as parameters.note>\", \"receiptApproved\": true, \"approvalArtifact\": <this response> }`,\nwith `target` equal to the `resourceId` you named here. The [Playground](/playground) walks through every step."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Refusal Records",
+      "description": "Durable, signed evidence that a policy decision rejected a transaction (RFC-0021)",
+      "item": [
+        {
+          "name": "Verify a Refusal Record's signature",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refusalRecordId\": \"eddc5dd1-a791-4470-9534-11b3fc573ab8\",\n  \"businessTransactionId\": \"353c73fb-5e87-4dbe-8bfc-c15c8f18d871\",\n  \"decision\": {\n    \"decisionId\": \"3919f4b6-cbc8-44ec-a6a1-8887ee85f314\",\n    \"intentId\": \"4ba6b14a-c593-4f5c-ab58-dcef38a29364\",\n    \"policy\": {\n      \"name\": \"vendor-payment\",\n      \"version\": \"2.0.0\",\n      \"schemaVersion\": \"1.0.0\"\n    },\n    \"signals\": {\n      \"vendorVerified\": false,\n      \"invoiceVerified\": true,\n      \"paymentApproved\": true,\n      \"sufficientFunds\": true,\n      \"paymentAmount\": 1000,\n      \"riskScore\": 5,\n      \"vendorId\": \"vendor://payments\"\n    },\n    \"outcome\": \"REJECTED\",\n    \"reason\": \"Vendor payment rejected because the vendor has not been verified.\",\n    \"evaluatedAt\": \"2026-09-15T03:27:45.666Z\"\n  },\n  \"evaluatedIntent\": {\n    \"target\": \"vendor://payments\",\n    \"parameters\": {\n      \"amount\": 1000,\n      \"currency\": \"USD\"\n    }\n  },\n  \"createdAt\": \"2026-09-15T03:27:45.666Z\",\n  \"refusalRecordHash\": \"47d8200e839f9b4a1a53dba941e318553c9b024bc64d26c5b613e5ae2aeb65ca\",\n  \"signature\": {\n    \"algorithm\": \"ed25519\",\n    \"keyId\": \"default\",\n    \"value\": \"tT32/iJ0bEDxjc+/KPeAegTBSrzpRFW14f9Vyv3Ykx+H/rLHcgd7SlFH/BAXut8sEH2mpo0smg82tSoXmZkpDQ==\",\n    \"signedAt\": \"2026-09-15T03:27:45.668Z\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/refusal/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "refusal",
+                "verify"
+              ]
+            },
+            "description": "operationId: verifyRefusalRecord\n\nChecks a Refusal Record's signature. Send the record itself; the server reads no storage and needs no\nkey, so anyone holding a refusal can prove Parmana issued it and that it was not changed. Fetch the\nrecord with `GET /refusal/{businessTransactionId}`."
+          }
+        },
+        {
+          "name": "Get a Refusal Record by transaction ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/refusal/:businessTransactionId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "refusal",
+                ":businessTransactionId"
+              ],
+              "variable": [
+                {
+                  "key": "businessTransactionId",
+                  "value": "",
+                  "description": "The id of the refused transaction."
+                }
+              ]
+            },
+            "description": "operationId: getRefusalRecord\n\nReturns the signed Refusal Record kept when a policy refused a transaction: the decision, the rule\nthat refused, the facts it saw and the signature. Use it to show a person why an action was refused,\nor pass it to `POST /refusal/verify`, which anyone can call."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Execution Intents",
+      "description": "A signed statement, stored before an action is released, of exactly what is about to be released, plus the operator tools to find and repair a released action that has no signed Trust Record (ADR-0012)",
+      "item": [
+        {
+          "name": "Verify an Execution Intent's signature",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"intentId\": \"b41fe9b9-5730-4d34-aab0-4ab63ae69d3b\",\n  \"businessTransactionId\": \"4c2eb3b2-3382-4bc2-bf22-2a072e6cf428\",\n  \"decisionId\": \"20b4e030-09cd-4447-86fc-b73279d23121\",\n  \"authorizationId\": \"5977535b-d887-423d-b422-01ece1fc7bf1\",\n  \"policyName\": \"customer-refund\",\n  \"policyVersion\": \"1.0.0\",\n  \"policyContentHash\": \"6a2e92fbde0f4c5dc56b4e202bf45ce24c99e565cf3ddaacaa21a11c71b7e1ea\",\n  \"signalsHash\": \"e22a7b9fd6e0a39e28521f9ffb726d6a57499236055fa6ff2caabd2268f4a395\",\n  \"businessTransactionHash\": \"9df286daf38c6eba272f47153e0fb3efef5ee61d778f6baecd5a53861763763a\",\n  \"action\": \"paytm:refund\",\n  \"target\": \"DRY-ORDER-1789969223742\",\n  \"submittedBy\": \"sandbox-agent\",\n  \"grantedCapability\": \"paytm:refund\",\n  \"createdAt\": \"2026-09-21T05:40:28.434Z\",\n  \"intentHash\": \"13922de380518d582c6bb3e88b1d88908e71565f191119f4cadc7de4e30cf5ed\",\n  \"signature\": {\n    \"keyId\": \"default\",\n    \"value\": \"UhXnkSnm5A3QU4CVrKGbP3FcTWkShnitn86psJprJpqgEBnsXWzDcZ+ktSO0FJek1X+n9DvO3SjR+WvSofS1CA==\",\n    \"signedAt\": \"2026-09-21T05:40:28.555Z\",\n    \"algorithm\": \"ed25519\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/execution-intents/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "execution-intents",
+                "verify"
+              ]
+            },
+            "description": "operationId: verifyExecutionIntent\n\nChecks an Execution Intent's hash and signature. Send the intent itself; the server reads no storage\nand needs no key. A valid intent proves Parmana signed it before release and that it was not changed.\nIt does not prove the action ran: an intent is written before release. For the outcome, read the\nTrust Record for the same transaction."
+          }
+        },
+        {
+          "name": "List Execution Intents that never reached a signed Trust Record",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/execution-intents/unfinalized",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "execution-intents",
+                "unfinalized"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "",
+                  "description": "How many intents to return. Default 50, at most 200.",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: listUnfinalizedExecutionIntents\n\nThe operator's work queue: Execution Intents that never reached a signed Trust Record and were not\nclosed by hand, oldest first. Each one is an action that may have been performed without a record.\nFor an intent in state `RELEASED`, rebuild the record with `POST .../finalize`. For `PREPARED` or\n`ERRORED`, check the target system, then close it with `POST .../resolve`. Needs a human key, because\nthe list spans every caller. See [Execution Intents](/concepts/execution-intents)."
+          }
+        },
+        {
+          "name": "Get an Execution Intent and its status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/execution-intents/:businessTransactionId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "execution-intents",
+                ":businessTransactionId"
+              ],
+              "variable": [
+                {
+                  "key": "businessTransactionId",
+                  "value": "",
+                  "description": "The transaction's id."
+                }
+              ]
+            },
+            "description": "operationId: getExecutionIntent\n\nReturns the signed Execution Intent for a transaction and where it got to. Read it after a timeout or\na `5xx` before sending anything new. The `status.state` is one of:\n\n* `PREPARED`: signed and stored; the action may or may not have been released.\n* `RELEASED`: released and its result saved.\n* `FINALIZED`: a signed Trust Record exists.\n* `ERRORED`: the release failed; the action may still have run.\n* `RESOLVED`: a person checked the target system and closed it (`resolution`, `resolutionNote`,\n  `resolvedBy`, `resolvedAt`; an unsigned statement)."
+          }
+        },
+        {
+          "name": "Rebuild the signed Trust Record for a released action",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/execution-intents/:businessTransactionId/finalize",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "execution-intents",
+                ":businessTransactionId",
+                "finalize"
+              ],
+              "variable": [
+                {
+                  "key": "businessTransactionId",
+                  "value": "",
+                  "description": "The transaction's id."
+                }
+              ]
+            },
+            "description": "operationId: finalizeExecutionIntent\n\nRebuilds the signed Trust Record for an action that was released but whose record was never\nproduced, the repair for a `500` `EXECUTION_RECORD_INCOMPLETE`. It never calls the connector: it uses\nthe result saved right after release, then verifies the record and generates its receipt. Safe to\nrepeat: \"if a record exists it returns it as `ALREADY_FINALIZED` and builds nothing. Needs a human key.\""
+          }
+        },
+        {
+          "name": "Close an intent you reconciled by hand",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resolution\": \"NOT_EXECUTED\",\n  \"note\": \"Checked the Paytm dashboard for this order. No refund exists.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/execution-intents/:businessTransactionId/resolve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "execution-intents",
+                ":businessTransactionId",
+                "resolve"
+              ],
+              "variable": [
+                {
+                  "key": "businessTransactionId",
+                  "value": "",
+                  "description": "The transaction's id."
+                }
+              ]
+            },
+            "description": "operationId: resolveExecutionIntent\n\nCloses an intent in state `PREPARED` or `ERRORED` after a person checked the target system, the\nrepair for a `502` `EXECUTION_OUTCOME_UNKNOWN`. Record what you found, `NOT_EXECUTED` or `EXECUTED`,\nwith a note. The intent becomes `RESOLVED` and leaves the unfinalized list. It never calls the\nconnector. Safe to repeat: a second call returns `ALREADY_RESOLVED` with the first answer.\n**The resolution is an attributed, timestamped statement in the intent's unsigned status. It is not\ntamper evident and it is not a Trust Record.** Needs a human key."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit",
+      "description": "Signed caller-authentication audit events, independently third-party-verifiable",
+      "item": [
+        {
+          "name": "Verify a signed caller-authentication audit event",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": {\n    \"type\": \"caller_authenticated\",\n    \"occurredAt\": \"2026-09-15T03:00:00.000Z\",\n    \"route\": \"/version\"\n  },\n  \"signature\": {\n    \"algorithm\": \"ed25519\",\n    \"keyId\": \"default\",\n    \"value\": \"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/audit/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "audit",
+                "verify"
+              ]
+            },
+            "description": "operationId: verifyAuditEvent\n\nChecks the signature of a caller authentication audit event, the record the server keeps of every\nauthentication, denial and governance action. Send the event and its signature; the server reads no\nstorage and needs no key. Only production audit trails sign events. See\n[Caller audit trail](/concepts/caller-audit-trail)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "System",
+      "description": "Operational endpoints",
+      "item": [
+        {
+          "name": "Root",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": []
+            },
+            "description": "operationId: getRoot\n\nReturns the service name and `UP`. Use it to check that your key is accepted: unlike `GET /health`,\nthis route requires a key."
+          }
+        },
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "operationId: getHealth\n\nLiveness probe. Always returns `UP` while the process is serving requests; it checks no dependency.\nNeeds no key. For a check that includes storage, use `GET /ready`."
+          }
+        },
+        {
+          "name": "Readiness check",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ready",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ready"
+              ]
+            },
+            "description": "operationId: getReady\n\nReadiness probe. When storage is Postgres, it runs `SELECT 1` so an orchestrator can tell a process\nthat is up but cannot reach its database from one that can serve traffic. With in memory storage\nthere is nothing to check and it always returns `READY`. Needs no key."
+          }
+        },
+        {
+          "name": "Get the OpenAPI spec",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/openapi.yaml",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "openapi.yaml"
+              ]
+            },
+            "description": "operationId: getOpenApiSpec\n\nThis API's complete OpenAPI 3.1 document as YAML, self contained with no external references. Needs\nno key, so a client can discover the API before it has one. Load it into a code generator, Postman or\nan agent. `GET /openapi.json` serves the same document as JSON."
+          }
+        },
+        {
+          "name": "Get the OpenAPI spec, as JSON",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/openapi.json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "openapi.json"
+              ]
+            },
+            "description": "operationId: getOpenApiSpecJson\n\nThe same document as `GET /openapi.yaml`, as JSON, for tools and agents that expect a spec at a\n`.json` path. Needs no key."
+          }
+        },
+        {
+          "name": "Machine-readable SDK and discovery manifest",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api-manifest.json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api-manifest.json"
+              ]
+            },
+            "description": "operationId: getApiManifest\n\nOne index for agents and tools: where the OpenAPI document and the rendered references are, how to\nauthenticate, and both official SDKs with their package name, registry and current version. Read it\nfirst when an agent sets itself up. Go and Java are `null` because no SDK exists for them; call the\nREST API directly. Needs no key."
+          }
+        },
+        {
+          "name": "Service version",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/version",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "version"
+              ]
+            },
+            "description": "operationId: getVersion\n\nReturns `name`, `version` and `api`. These are literals in the server code, not a build number, so do\nnot use them to detect a deploy. The SDKs carry their own versions; see\n`GET /api-manifest.json`."
+          }
+        },
+        {
+          "name": "Fetch a public signing key for independent, offline verification",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/keys/:keyId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "keys",
+                ":keyId"
+              ],
+              "variable": [
+                {
+                  "key": "keyId",
+                  "value": "",
+                  "description": "The `keyId` named in the signature you want to verify, for example `default`."
+                }
+              ]
+            },
+            "description": "operationId: getKey\n\nReturns the public half of a signing key, so anyone can verify a Parmana signature without a Parmana\naccount: \"an auditor, a regulator, or an endpoint receiving a release. Every signed artifact names its\"\n`keyId`; pass it here. Keys that were rotated out stay available as long as the server keeps them, so\nold records remain verifiable. Use the `pem` field with the SDK verifiers (`verifyParmanaRelease`,\n`verify_parmana_release`) or the offline verifier. Needs no key."
+          }
+        },
+        {
+          "name": "List every public signing key this deployment can currently produce",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/.well-known/jwks.json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                ".well-known",
+                "jwks.json"
+              ]
+            },
+            "description": "operationId: getJwks\n\nLists every public signing key this deployment can serve, the enumeration form of `GET /keys/{keyId}`.\nWith local key files that is every key in the key directory. Under AWS KMS it is the keys this\ndeployment signs with: `default` and the current `PARMANA_VERIFICATION_KEY_ID`. A record signed\nunder an older key id is still served by `GET /keys/{keyId}`. Fetch and cache it when you verify\nmany artifacts. Not a strict RFC 7517 JWK Set: use the `pem` of each entry; an entry may have no\n`jwk` field. Needs no key."
+          }
+        },
+        {
+          "name": "Get the authenticated caller's identity and resolved scope",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/callers/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "callers",
+                "me"
+              ]
+            },
+            "description": "operationId: getCallerMe\n\nReturns who your key is and exactly what it may do: the caller id, the principals it may act for, the\ncapabilities it may invoke and whether that includes every capability (`*`), after defaults are\napplied. Call it\nfirst when you set up an agent, and show it in a security review. An unset `allowedPrincipalIds`\nmeans the caller's own id; an unset `allowedCapabilities` means none. Never returns key material, and\nnever another caller's record."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Handbook",
+      "item": [
+        {
+          "name": "Download the Parmana Handbook (PDF)",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parmana-handbook.pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parmana-handbook.pdf"
+              ]
+            },
+            "description": "operationId: getHandbookPdf\n\nDownloads the Parmana Handbook as a PDF. Needs no key."
+          }
+        },
+        {
+          "name": "Capture an email address, then redirect straight to the handbook PDF",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/handbook/download-leads?email=<email>",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "handbook",
+                "download-leads"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "<email>",
+                  "description": "The visitor's email address."
+                }
+              ]
+            },
+            "description": "operationId: getHandbookDownloadLead\n\nRecords an email address, then redirects to the handbook PDF. Backs the download form on the docs\nsite, which submits with a plain GET. The address is stored, not verified. Needs no key. For a JSON\nanswer use `POST /handbook/download-leads`."
+          }
+        },
+        {
+          "name": "Capture an email address before unlocking the handbook PDF download",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"<email>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/handbook/download-leads",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "handbook",
+                "download-leads"
+              ]
+            },
+            "description": "operationId: createHandbookDownloadLead\n\nRecords an email address and returns the handbook download link as JSON. The address is stored, not\nverified. Needs no key."
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+---
+title: "@parmana/storage"
+description: "Package reference for @parmana/storage. For the conceptual overview and configuration, see Storage."
+---
+
+<Info>
+  **[AVAILABLE]** for `memory`, `supabase` and `postgres` (`postgres` selects
+  the same implementation as `supabase`, which needs only a Postgres connection
+  string in `DATABASE_URL`). **Declared but unimplemented, throws at startup**
+  for `sqlite`. See [Storage](/storage/overview) for providers, configuration,
+  and what's actually stored.
+</Info>
+
+## Install
+
+Not published to npm. This is an internal package of this repository, used from a clone of it: `npm ci` at the repository root links every workspace package. The packages published to npm are [`@parmana/sdk`](/sdks/typescript), [`@parmana/connector-sdk`](/reference/connector-sdk) and [`@parmana/sign`](/sdks/parmana-sign/overview).
+
+## Key exports
+
+| Export                                                                                                                                                                                                                                                                      | Purpose                                                                                                                                                                                                                                                                                                                                         |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `StorageFactory`                                                                                                                                                                                                                                                            | Constructs a `StorageProvider` from `StorageConfiguration.provider` (`"memory" \| "supabase" \| "postgres" \| "sqlite"`). `postgres` and `supabase` both need `DATABASE_URL`; `sqlite` throws.                                                                                                                                                  |
+| `MemoryStorageProvider`, `MemoryBusinessTransactionRepository`, `MemoryExecutionTrustRecordRepository`, `MemoryPolicyRepository`                                                                                                                                            | [AVAILABLE]. In-process, non-persistent.                                                                                                                                                                                                                                                                                                        |
+| `SupabaseStorageProvider`, `SupabaseBusinessTransactionRepository`, `SupabaseExecutionTrustRecordRepository`                                                                                                                                                                | [AVAILABLE] (source-verified; not independently tested against a live Supabase instance).                                                                                                                                                                                                                                                       |
+| `SupabaseExecutionAuditSink`                                                                                                                                                                                                                                                | [AVAILABLE]. Durable replacement for `@parmana/execution-control`'s `MemoryExecutionAuditSink` in production — signed at write time, chained per `authorizationId`, queryable via `query(filter)` by `authorizationId`/`businessTransactionId`/`connectorId`/`type`/date range. See [@parmana/execution-control](/reference/execution-control). |
+| `StorageProvider`, `StorageConfiguration`                                                                                                                                                                                                                                   | The provider contract and its typed configuration.                                                                                                                                                                                                                                                                                              |
+| `Memory*` and `Supabase*` repositories for Execution Intents, Refusal Records, pending policy changes, policy change approval records, approval issuers and external connectors; `SupabaseNonceStore`, `SupabaseApprovalNonceStore`, `SupabasePolicyChangeStepUpNonceStore` | The repositories and single-use nonce stores the API composes. See `packages/storage/src/index.ts` for the full list.                                                                                                                                                                                                                           |
+| `StorageError`                                                                                                                                                                                                                                                              | Thrown on provider misconfiguration, including the retired `DATABASE_PROVIDER` variable, see [Storage](/storage/overview).                                                                                                                                                                                                                      |
+
+## Minimal example
+
+```typescript
+import { MemoryStorageProvider } from "@parmana/storage";
+
+const storage = new MemoryStorageProvider();
+// or, via the factory:
+// const storage = StorageFactory.create({ provider: "memory" });
+```
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Storage" icon="database" href="/storage/overview">
+    Providers, configuration, and what's actually stored, the conceptual
+    overview.
+  </Card>
+  <Card
+    title="Execution trust records"
+    icon="file-shield"
+    href="/concepts/execution-trust-records"
+  >
+    What actually gets stored, and what's append-only versus signed.
+  </Card>
+</CardGroup>

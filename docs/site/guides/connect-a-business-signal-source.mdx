@@ -1,0 +1,224 @@
+---
+title: "Connect a business signal source"
+description: "Register any business system that owns facts a policy needs, an ERP, an order system, a CRM or a ledger, so Parmana asks it instead of trusting the agent. The procedure, the signed query and answer protocol, and what each failure does."
+---
+
+An agent proposes an action and the facts it rests on: "release the goods, the invoice is paid". That the invoice is
+paid is the agent's claim. This page connects the system that owns the fact, so Parmana asks it and decides on its
+answer ([Business validation](/concepts/business-validation), RFC-0023).
+
+You run a small HTTPS endpoint in front of the system. For each fact a policy declares from your source, Parmana sends
+it a **signed query**: what to establish (`claim`) about which business object (`subject`). The endpoint checks the
+query came from Parmana, reads the fact from its own records, and returns a **signed answer**. Parmana checks the answer
+against the key you registered and records it as a Trusted Signal. Any source works: it only has to answer this
+protocol. Parmana holds none of the system's credentials.
+
+<Warning>
+  **Status, 2026-10-11.** Registering a source through maker checker, the signed
+  protocol and deciding on a verified answer are implemented, tested
+  (`docs/CLAIMS.md` 2.54) and deployed. No real business system has been
+  connected yet (`docs/VERIFICATION-GAPS.md` G-92). The SDK methods for the
+  routes below are in SDK 1.6.0 (2026-10-11); with an older SDK, call the routes
+  directly.
+</Warning>
+
+Follow it literally. If your situation is not covered, **stop and ask the operator**.
+
+## Rules that apply to every step
+
+1. Do the steps in order. Compare each response with **Expect**; if it differs, follow **If not** and stop.
+2. The endpoint answers only from its own records. It never answers from anything in the query except `claim` and
+   `subject`.
+3. The endpoint answers only queries it verified. Anything else gets `401` and no fact.
+4. Two different people propose and approve every change.
+
+## Inputs you need before you start
+
+| Input          | What it is                                                                                    | How to check it                                                                                          |
+| -------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `PARMANA_URL`  | The Parmana server, without a trailing slash.                                                 | `GET /health` answers `200`.                                                                             |
+| `PROPOSER_KEY` | The maker's API key, added as a human (`credentialHolderType USER`).                          | `GET /callers/me` answers `200`.                                                                         |
+| `APPROVER_KEY` | A second person's human API key, with a step up public key registered on it.                  | See [Policy lifecycle and approvals](/guides/policy-lifecycle-and-approvals), "Set up the people, once". |
+| `SOURCE_NAME`  | The name policies will use, for example `erp`.                                                | `^[a-z0-9][a-z0-9-]{0,62}$`.                                                                             |
+| `ENDPOINT_URL` | Where the endpoint will be reached, for example `https://orders.example.com/parmana/signals`. | `https`, a host name with a domain, no IP address, no `localhost`, resolving only to public addresses.   |
+| `CLAIMS`       | What the source answers, for example `invoice.paid`, and for which business objects.          | Agreed with the system's owner.                                                                          |
+
+## Step 1: make the source's signing key
+
+**Do:** on the machine that will run the endpoint, make an Ed25519 key pair. The private key never leaves it.
+
+```bash
+openssl genpkey -algorithm ed25519 -out erp-answers.private.pem
+openssl pkey -in erp-answers.private.pem -pubout -out erp-answers.public.pem
+```
+
+You can register a source without a key. Then Parmana trusts its answers on the strength of the pinned HTTPS connection
+alone, and the Trusted Signal does not prove the source said it. Register the key.
+
+## Step 2: run the endpoint
+
+**Do:** run `typescript/examples/08-business-signal-source.ts` in front of your system, replacing `lookupInvoice` with
+a read from your records. Parmana's public key is the `pem` field of `GET {PARMANA_URL}/keys/default`.
+
+```bash
+PARMANA_PUBLIC_KEY_PEM="$(cat parmana-default.pem)" \
+ENDPOINT_URL=https://orders.example.com/parmana/signals \
+SOURCE_PRIVATE_KEY_PEM="$(cat erp-answers.private.pem)" \
+SOURCE_KEY_ID=erp-2026-10 \
+PORT=8080 npx tsx examples/08-business-signal-source.ts
+```
+
+Serve it over HTTPS behind your TLS terminating proxy. Parmana asks only `https` endpoints.
+
+**Expect:** the endpoint answers a `GET` with `405`.
+
+## Step 3: propose the registration
+
+**Do:** as the maker, `POST {PARMANA_URL}/business-signal-sources/changes`:
+
+```json
+{
+  "action": "register",
+  "name": "erp",
+  "endpointUrl": "https://orders.example.com/parmana/signals",
+  "timeoutMs": 5000,
+  "publicKeyPem": "-----BEGIN PUBLIC KEY-----\n…\n-----END PUBLIC KEY-----\n",
+  "keyId": "erp-2026-10",
+  "reason": "Release goods only against invoices the ERP says are paid."
+}
+```
+
+**Expect:** `201` with `"status": "PENDING_APPROVAL"`, the endpoint as Parmana stored it, and the key in canonical
+SPKI PEM. Keep `changeId`.
+
+**If not:** `INVALID_BUSINESS_SIGNAL_SOURCE` names the field; `EXTERNAL_ENDPOINT_ADDRESS_REFUSED` means the endpoint
+is not `https`, names an address or `localhost`, or resolves to an address that is not public; `409` means the name is
+already registered or has a change pending. See
+[Propose a business signal source change](/api-reference/endpoints/propose-business-signal-source-change).
+
+## Step 4: approve it
+
+**Do:** as the second person, sign a step up authorization for `changeId` and action `approve`, then
+`POST {PARMANA_URL}/business-signal-sources/changes/{changeId}/approve` with `{ "stepUpAuthorization": … }`.
+
+**Expect:** `200` with `"status": "APPROVED"`. `GET /business-signal-sources` lists the source as `active`.
+
+**If not:** `SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE` means the maker tried to approve; `EXTERNAL_ENDPOINT_ADDRESS_REFUSED`
+means the host's address changed since the proposal. The change stays pending.
+
+## Step 5: declare the fact in a policy
+
+**Do:** in the policy that governs the action, name the source for the fact, and take it out of anything the agent
+declares. Approve the policy change through [policy governance](/guides/policy-governance-maker-checker).
+
+```json
+"signalsSchema": { "invoicePaid": "boolean", "warehouseApproved": "boolean" },
+"signalSources": {
+  "invoicePaid": {
+    "source": "erp",
+    "claim": "invoice.paid",
+    "subject": "parameters.invoiceId",
+    "maxAgeSeconds": 60
+  }
+}
+```
+
+**Expect:** `GET /policies/in-effect` lists `invoicePaid` under `signals.sourced`.
+
+## Step 6: send a request
+
+**Do:** have the agent send the request as usual. It need not send `invoicePaid`; if it does, the ERP's answer must
+equal it.
+
+**Expect:** the decision's `assessment.businessValidation.status` is `VALID`, and its `signals` hold a Trusted Signal
+with `source: "erp"`, the invoice as `subject`, the ERP's value as `observedValue`, and
+`integrityProof.sourceProofVerified: true`.
+
+**If not:** the request is refused, with the reason in `assessment.businessValidation`. See the table below.
+
+## The protocol
+
+Parmana `POST`s to the endpoint:
+
+```json
+{
+  "query": {
+    "version": 1,
+    "source": "erp",
+    "audience": "https://orders.example.com/parmana/signals",
+    "signalKey": "invoicePaid",
+    "claim": "invoice.paid",
+    "subject": "INV-1001",
+    "action": "erp:release-goods",
+    "businessTransactionId": "…",
+    "nonce": "…",
+    "issuedAt": "2026-10-11T12:00:00.000Z",
+    "expiresAt": "2026-10-11T12:01:00.000Z"
+  },
+  "signature": { "algorithm": "ed25519", "keyId": "default", "value": "…" }
+}
+```
+
+`signature.value` is Parmana's base64 signature over the canonical JSON of `query` (the SDKs' `canonicalSerialize`),
+with the key at `GET /keys/default`. Check it, check `audience` is your URL as registered, check `expiresAt` has not
+passed, and answer each `nonce` once. `signature.algorithm` is the algorithm of that key: `ed25519` unless the deployment
+chose another ([Choose a signature provider](/guides/choose-a-signature-provider)). The example accepts only `ed25519`.
+
+The endpoint answers `200`:
+
+```json
+{
+  "answer": {
+    "version": 1,
+    "source": "erp",
+    "nonce": "…",
+    "signalKey": "invoicePaid",
+    "claim": "invoice.paid",
+    "subject": "INV-1001",
+    "status": "observed",
+    "value": true,
+    "observedAt": "2026-10-11T11:59:58.000Z",
+    "validUntil": "2026-10-11T12:05:00.000Z"
+  },
+  "signature": { "algorithm": "ed25519", "keyId": "erp-2026-10", "value": "…" }
+}
+```
+
+`answer` echoes `source`, `nonce`, `signalKey`, `claim` and `subject` from the query, so an answer cannot be replayed to
+another question. `status` is `observed` with `value` and `observedAt` (and optionally `validUntil`), or `not_found` or
+`conflicting` with a `reason`. `signature.value` is the base64 Ed25519 signature over the canonical JSON of `answer`.
+
+## What each answer does
+
+| The source                                                                                                                                                                                                                                         | Business validation  |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| Answers `observed`, signed, fresh, and equal to any value the agent proposed                                                                                                                                                                       | `VALID`              |
+| Answers a value different from the agent's                                                                                                                                                                                                         | `INVALID`            |
+| Answers `not_found`, the request names no business object, or the value has the wrong type                                                                                                                                                         | `MISSING_DATA`       |
+| Answers `conflicting`                                                                                                                                                                                                                              | `CONFLICTING_DATA`   |
+| Answers older than `maxAgeSeconds`, or past its own `validUntil`                                                                                                                                                                                   | `VALIDATION_EXPIRED` |
+| Is not registered or was revoked; times out; answers other than `200`; or answers anything Parmana cannot trust: not JSON, not echoing the query, not version 1, unsigned or wrongly signed when a key is registered, signed under another `keyId` | `SOURCE_UNAVAILABLE` |
+
+Every status but `VALID` refuses the request; nothing is executed, and the Refusal Record carries the reason.
+
+## Revoke or move a source
+
+Propose `{ "action": "revoke", "name": "erp", "reason": "…" }` and have a second person approve it. From then on,
+policies that name `erp` are refused as `SOURCE_UNAVAILABLE`. To move the endpoint or rotate the key, revoke, then
+register again. The revoked registration stays listed.
+
+## Prove it in production
+
+Before relying on it, run the live check in the repository,
+[`examples/live-checks/business-signal-source`](https://github.com/pavancharak/parmana/tree/main/examples/live-checks/business-signal-source): a demo source answering from a fixed table, deployed on Vercel and registered through maker checker, a test policy that sources `invoicePaid` from it, and four requests: a paid invoice, an unpaid one, the agent claiming a value the source contradicts, and an unknown invoice. The receiving endpoint logs the `conditions` the release carries. The actions change nothing anywhere. It passed in
+production on 2026-10-11, all four requests as required; the results, the steps, what each prints, and what to do when
+it does not are in its README.
+
+## Limits
+
+- An answer is checked when the request is decided, and its `validUntil` again at release. An external connector also
+  receives it as a signed `condition`, so its endpoint can act only if it still holds
+  ([Connect any external system](/guides/connect-any-external-system)).
+- Parmana checks the source signed the answer. It cannot check the source's records are right: a source answers for its
+  own data.
+- See [Limitations](/security/limitations), G-92.

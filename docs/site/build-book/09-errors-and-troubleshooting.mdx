@@ -1,0 +1,134 @@
+---
+title: "9. Errors and troubleshooting"
+description: "What every answer from Parmana means, which ones are safe to retry, the one that is never retried as a new transaction, and how each maps to an SDK error."
+---
+
+Every error body is `{ "error": "<message>", "code": "<CODE>" }`. A few answers carry no `code`; the message then
+says what is wrong. Every code, with the operations that return it, is in the
+[error reference](/build-book/reference-errors).
+
+## The one rule
+
+**Know whether the action may have run before you retry.** Parmana's answers fall into three groups:
+
+| Group                           | Answers                                                                           | Retry?                                                                                                    |
+| ------------------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Refused, nothing ran            | `400`, `401`, `403`, `404`, `409` (except `NONCE_ALREADY_CONSUMED`), `429`, `503` | Fix the cause, then send a **new** transaction. `429`: wait for `Retry-After`.                            |
+| Released, the record is missing | `500 EXECUTION_RECORD_INCOMPLETE`                                                 | **No.** The action ran. The operator finalizes the record ([Chapter 7](/build-book/07-verify-and-audit)). |
+| Released, the outcome unknown   | `502 EXECUTION_OUTCOME_UNKNOWN`                                                   | **No.** The action may have run. The operator checks the system and resolves the intent.                  |
+
+The SDKs never retry a `POST` on their own; they retry only `GET` requests, and only when you configure a retry policy.
+
+## How the SDKs raise them
+
+| HTTP                              | TypeScript (`@parmana/sdk`)                     | Python (`parmana.errors`)                        |
+| --------------------------------- | ----------------------------------------------- | ------------------------------------------------ |
+| 403 with `POLICY_DENIED`          | `ExecutionRejectedError`                        | `ExecutionRejectedError`                         |
+| 403 with `CAPABILITY_NOT_ALLOWED` | `AuthorizationError` (`serverCode` set)         | `AuthorizationError`                             |
+| 400                               | `ValidationError`                               | `ValidationError`                                |
+| 401                               | `AuthenticationError`                           | `AuthenticationError`                            |
+| 403, any other                    | `AuthorizationError`                            | `AuthorizationError`                             |
+| 404                               | `NotFoundError`                                 | `NotFoundError`                                  |
+| 409                               | `ConflictError`                                 | `ConflictError`                                  |
+| 429                               | `RateLimitError` (`retryAfterSeconds`)          | `RateLimitError` (`retry_after_seconds`)         |
+| 5xx                               | `InternalServerError`, the code in `serverCode` | `InternalServerError`, the code in `server_code` |
+
+Every error from a response carries its status: `statusCode` in TypeScript, `status_code` in Python. Decide on a 5xx by
+its code, never by the status alone.
+
+## By status
+
+### 400: the request is malformed
+
+| Code                                                              | Meaning and fix                                                                              |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `AUTHORITY_REQUIRED`, `AUTHORIZATION_REQUIRED`, `INTENT_REQUIRED` | A section of the Business Transaction is missing. Build it with `createBusinessTransaction`. |
+| No code, `approves without a signed human approval`               | The policy named cannot load ([Chapter 4](/build-book/04-policies)).                         |
+| `INVALID_EXTERNAL_CONNECTOR`, `EXTERNAL_ENDPOINT_ADDRESS_REFUSED` | A registration was refused ([Chapter 6](/build-book/06-connect-your-systems)).               |
+| `EXECUTION_INTENT_RESOLUTION_INVALID`                             | `resolution` must be `NOT_EXECUTED` or `EXECUTED`, with a `note`.                            |
+
+### 401: no valid key
+
+`{"error":"authentication required"}`, with a `WWW-Authenticate` header. The key is missing, wrong, rotated, or not
+sent as `Authorization: Bearer <key>`. Nothing about the request was read.
+
+### 403: not allowed
+
+| Code                                   | Meaning and fix                                                                                                                                                                                                               |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POLICY_DENIED`                        | **The policy refused.** A correct answer, with the policy's reason. If the reason asks for an approval, get one signed and send a new transaction ([Chapter 5](/build-book/05-human-approvals)). A Refusal Record was stored. |
+| `CAPABILITY_NOT_ALLOWED`               | The key may not use this action. The operator adds it to `allowedCapabilities`.                                                                                                                                               |
+| No code, about the principal           | The key may not act for this `principalId`. Act as your own `callerId`.                                                                                                                                                       |
+| `NON_HUMAN_CALLER_DENIED`              | A governance call from a key not registered as a human.                                                                                                                                                                       |
+| `SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE` | The checker is the maker. A different person approves.                                                                                                                                                                        |
+| `STEP_UP_AUTHORIZATION_INVALID`        | The step up signature expired (120 seconds), was used, is for another change or decision, or does not match the checker's registered key. Sign again and send at once.                                                        |
+
+`POLICY_DENIED` covers every refusal by the decision, each with its own message:
+
+| Message starts with                                                                                                                | Cause and fix                                                                                                           |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| The policy's own reason, for example `Refund rejected. Every refund needs ...`                                                     | A rule refused. If it asks for an approval, get one signed and send a new transaction.                                  |
+| `Rejected: capability "x" requires policy "p"@"v", but ... was declared.`                                                          | The request names another policy or an old version. Read `GET /policies/in-effect` and send that.                       |
+| `Rejected: declared signal(s) do not match independently verified state (managerApproved=true != verified managerApproved=false).` | The approval is missing, expired, used, by an untrusted key, for another resource, or below the amount. Sign a new one. |
+| `Rejected: declared signal(s) do not match the executed intent (refundAmount=900 != intent.parameters.amount=750).`                | A bound signal does not equal its request field. Copy the value from the request.                                       |
+| `Rejected: no version of policy "p" ... has been approved through policy governance`                                               | No approved version yet. Approve one ([Chapter 4](/build-book/04-policies)).                                            |
+
+### 404: not found
+
+| Code                                                                                                         | Meaning and fix                                                                                   |
+| ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `CAPABILITY_NOT_BOUND`                                                                                       | No policy is bound to the action: not a built in capability, and no active external registration. |
+| `POLICY_NOT_FOUND`                                                                                           | The policy named does not exist on the server.                                                    |
+| `BUSINESS_TRANSACTION_NOT_FOUND`, `EXECUTION_INTENT_NOT_FOUND`                                               | No record with that `businessTransactionId`.                                                      |
+| `PENDING_POLICY_CHANGE_NOT_FOUND`, `APPROVAL_ISSUER_CHANGE_NOT_FOUND`, `EXTERNAL_CONNECTOR_CHANGE_NOT_FOUND` | No change with that id.                                                                           |
+| `VERIFICATION_FAILED`                                                                                        | The record for that id could not be verified or found; the message says which.                    |
+
+### 409: conflict
+
+| Code                                   | Meaning and fix                                                                                                                        |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `DUPLICATE_BUSINESS_TRANSACTION`       | This `businessTransactionId` was already used. To retry the same attempt, read its record; for a new attempt, build a new transaction. |
+| `NONCE_ALREADY_CONSUMED`               | This exact authorization was already released: the action ran. Read its record; do not send it again as a new transaction.             |
+| `NO_APPROVED_POLICY_VERSION`           | No version of the bound policy is approved. Every request is refused until one is.                                                     |
+| `CONFLICT`                             | A change is already open, or already resolved, or a registration is already active.                                                    |
+| `EXECUTION_INTENT_NOT_RESOLVABLE`      | The intent is `RELEASED` (finalize it) or already final.                                                                               |
+| `EXECUTION_INTENT_RESULT_NOT_RECORDED` | Finalize has nothing to build from: the intent is not `RELEASED`.                                                                      |
+
+### 429: too many requests
+
+`RATE_LIMITED`. Wait for the `Retry-After` header, then retry the same request.
+
+### 500, 502: the action may have run
+
+| Code                          | Meaning                                                                                                         | Do                                                                                                                                                                      |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `EXECUTION_RECORD_INCOMPLETE` | The action was released; the signed record was not stored.                                                      | Do not resend. `POST /execution-intents/{id}/finalize` rebuilds the record without acting again.                                                                        |
+| `EXECUTION_OUTCOME_UNKNOWN`   | The release failed after it may have reached the system: a timeout, an error, an answer that failed the checks. | **Never resend as a new transaction.** Check the system with the `businessTransactionId` and `target`, then `POST /execution-intents/{id}/resolve` with what you found. |
+
+For an external connector, a request naming a parameter the registration does not allow, or an endpoint whose host
+now resolves to a non public address, is also reported as `502 EXECUTION_OUTCOME_UNKNOWN` although nothing was sent.
+Check the endpoint's own record before resolving.
+
+### 503: unavailable, nothing ran
+
+| Code                           | Meaning                                                                                  |
+| ------------------------------ | ---------------------------------------------------------------------------------------- |
+| `CONNECTOR_NOT_REGISTERED`     | No connector for the action: not configured, or the external registration is not active. |
+| `SIGNING_UNAVAILABLE`          | The signing path is unhealthy. Nothing is released until it is fixed.                    |
+| `EXECUTION_INTENT_UNAVAILABLE` | The intent store is unavailable (or its table is missing after an upgrade).              |
+| `POLICY_VERSION_UNAVAILABLE`   | The server could not read the policy in effect.                                          |
+| `AUDIT_UNAVAILABLE`            | The audit store is unavailable.                                                          |
+
+Retry later with a **new** transaction. If it persists, tell the operator; each is an alert in
+[Chapter 8](/build-book/08-deploy-and-operate).
+
+## Common situations
+
+| You see                                                         | Cause                                                                        | Fix                                                                            |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `403 POLICY_DENIED`, `requires policy ... but ... was declared` | The agent sent an old policy version.                                        | Read `GET /policies/in-effect` before each request; never hard code a version. |
+| Every request refused after a policy change was proposed        | The new version is not approved, or the agent names a version not in effect. | Approve it, then read the version in effect.                                   |
+| A server that will not start                                    | A required setting is missing or wrong; the message names the variable.      | [Environment variable reference](/deployment/environment-variables).           |
+| `PGRST205` "Could not find the table"                           | The database's schema cache is stale.                                        | `NOTIFY pgrst, 'reload schema';`                                               |
+
+More, by symptom: [Troubleshooting](/troubleshooting).

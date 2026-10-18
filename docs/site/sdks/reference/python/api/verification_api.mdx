@@ -1,0 +1,68 @@
+---
+sidebar_label: verification_api
+title: parmana.api.verification_api
+---
+
+Parmana Verification API.
+
+Verify Execution Trust Records.
+
+## VerificationApi Objects
+
+```python
+class VerificationApi()
+```
+
+Verification API.
+
+## Responsibilities
+
+- Verify Execution Trust Records (fresh verification)
+- Retrieve the latest cached Verification
+
+This API does NOT:
+
+- execute Business Transactions
+- replay executions
+- generate receipts
+- validate policies
+
+#### verify
+
+```python
+def verify(business_transaction_id: str) -> Verification
+```
+
+Run a fresh verification of an Execution Trust Record.
+
+Maps to POST /verify. Each call re-verifies the record and
+appends a new Verification to its history.
+
+## Parameters
+
+business_transaction_id:
+Business Transaction identifier.
+
+## Returns
+
+Verification.
+
+#### get_latest
+
+```python
+def get_latest(business_transaction_id: str) -> Verification
+```
+
+Retrieve the most recent Verification without re-verifying.
+
+Maps to GET /verification/:id, distinct from `verify()` (POST
+/verify), which performs a fresh verification.
+
+## Parameters
+
+business_transaction_id:
+Business Transaction identifier.
+
+## Returns
+
+Verification.

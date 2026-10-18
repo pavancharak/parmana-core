@@ -1,0 +1,113 @@
+---
+title: "Interface: PendingPolicyChange"
+---
+
+Defined in: [typescript/src/models/policy-change.ts:21](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L21)
+
+A proposed change to a policy. One person proposes it and a different
+person approves or rejects it.
+
+## Extended by
+
+- [`PolicyChangeForReview`](/sdks/reference/typescript/interfaces/PolicyChangeForReview)
+- [`ProposedPolicyChange`](/sdks/reference/typescript/interfaces/ProposedPolicyChange)
+
+## Properties
+
+### pendingPolicyChangeId
+
+> `readonly` **pendingPolicyChangeId**: `string`
+
+Defined in: [typescript/src/models/policy-change.ts:22](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L22)
+
+---
+
+### policyName
+
+> `readonly` **policyName**: `string`
+
+Defined in: [typescript/src/models/policy-change.ts:23](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L23)
+
+---
+
+### policyVersion
+
+> `readonly` **policyVersion**: `string`
+
+Defined in: [typescript/src/models/policy-change.ts:24](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L24)
+
+---
+
+### proposedContent
+
+> `readonly` **proposedContent**: `unknown`
+
+Defined in: [typescript/src/models/policy-change.ts:29](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L29)
+
+The full policy content that takes effect when the change is approved.
+
+---
+
+### proposedBy
+
+> `readonly` **proposedBy**: `string`
+
+Defined in: [typescript/src/models/policy-change.ts:34](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L34)
+
+Caller ID of the proposer.
+
+---
+
+### proposedAt
+
+> `readonly` **proposedAt**: `string`
+
+Defined in: [typescript/src/models/policy-change.ts:39](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L39)
+
+ISO 8601 timestamp.
+
+---
+
+### status
+
+> `readonly` **status**: [`PendingPolicyChangeStatus`](/sdks/reference/typescript/type-aliases/PendingPolicyChangeStatus)
+
+Defined in: [typescript/src/models/policy-change.ts:41](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L41)
+
+---
+
+### reason
+
+> `readonly` **reason**: `string`
+
+Defined in: [typescript/src/models/policy-change.ts:42](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L42)
+
+---
+
+### resolvedBy?
+
+> `readonly` `optional` **resolvedBy?**: `string`
+
+Defined in: [typescript/src/models/policy-change.ts:47](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L47)
+
+Caller ID of whoever approved or rejected it. Absent while pending.
+
+---
+
+### resolvedAt?
+
+> `readonly` `optional` **resolvedAt?**: `string`
+
+Defined in: [typescript/src/models/policy-change.ts:52](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L52)
+
+ISO 8601 timestamp. Absent while pending.
+
+---
+
+### rejectionReason?
+
+> `readonly` `optional` **rejectionReason?**: `string`
+
+Defined in: [typescript/src/models/policy-change.ts:57](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L57)
+
+Present only on a rejected change.
