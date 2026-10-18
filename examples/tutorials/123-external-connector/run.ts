@@ -18,6 +18,8 @@ import {
   type ReleaseTransport,
 } from "@parmana/execution-gateway";
 import { AuthorityType, type ExecutableContent } from "@parmana/shared";
+import { writeFileSync } from "node:fs";
+import path from "node:path";
 
 //
 // Tutorial 123: connect a system Parmana has no code for, an ERP here,
@@ -254,18 +256,30 @@ const toLocalErp: ReleaseTransport = (sent) => {
   });
 };
 
-const executionControl = createExecutionControl({
-  connectors: externalConnectorRepository,
-  adapter: { lookup, transport: toLocalErp },
-});
+const executionControl = createExecutionControl(
+  {
+    connectors: externalConnectorRepository,
+    adapter: { lookup, transport: toLocalErp },
+  },
+  undefined,
+  new MemoryNonceStore(),
+);
 
 async function approvedRelease(content: ExecutableContent) {
   const decisionKeys = generateKeyPairSync("ed25519");
+  // The production release verifier looks the signing key up in PARMANA_KEY_DIR,
+  // so register this example's public key there. The runner sets a throwaway
+  // directory; the key is never written anywhere else.
+  writeFileSync(
+    path.join(process.env.PARMANA_KEY_DIR!, "decision-key.public.pem"),
+    decisionKeys.publicKey.export({ format: "pem", type: "spki" }),
+  );
   const authorization = await new AuthorizationSigner(
     CryptoBootstrap.create(),
   ).sign(
     {
       decisionId: crypto.randomUUID(),
+      decisionOutcome: "APPROVED",
       businessTransactionId: content.businessTransactionId,
       policyName: "erp-invoice",
       policyVersion: "1.0.0",

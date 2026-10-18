@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -190,7 +190,18 @@ try {
       },
     ],
   };
-  await policyRepository.save("tutorial-104-approved", "1.0.0", tampered);
+  // Edit the live file directly, outside the governed API. policyRepository.save
+  // would refuse this (published versions are immutable), which is a different
+  // defence from the one this scenario demonstrates.
+  writeFileSync(
+    path.join(
+      scratchPolicyDir,
+      "tutorial-104-approved",
+      "1.0.0",
+      "policy.json",
+    ),
+    JSON.stringify(tampered, null, 2),
+  );
   let scenario3Reason = "";
   try {
     await runtime.execute(
@@ -218,10 +229,16 @@ try {
     "Scenario 4: The stored approval record itself is tampered with -- refused (signature no longer verifies)",
   );
   console.log("--------------------------------------------------");
-  await policyRepository.save(
-    "tutorial-104-approved",
-    "1.0.0",
-    policy("tutorial-104-approved"),
+  // Restore the approved content on disk (the repository refuses to overwrite a
+  // published version), so the stored record is the only thing left to tamper with.
+  writeFileSync(
+    path.join(
+      scratchPolicyDir,
+      "tutorial-104-approved",
+      "1.0.0",
+      "policy.json",
+    ),
+    JSON.stringify(policy("tutorial-104-approved"), null, 2),
   );
   const realRecord =
     await policyChangeApprovalRecordRepository.findMostRecentFor(

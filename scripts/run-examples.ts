@@ -152,6 +152,11 @@ const LOCAL_DEFAULTS: Record<string, string> = {
   PARMANA_STORAGE: "memory",
   KEY_PROVIDER: "local",
   PRIMARY_SIGNATURE_PROVIDER: "ed25519",
+  // Examples run hermetically and their policies have no maker-checker
+  // approval records in this tree. The opt-in is honoured only when NODE_ENV is
+  // "test" or "development" (examples set NODE_ENV=test), and never in a
+  // deployment. See policyGovernanceRelaxed.
+  PARMANA_ALLOW_UNGOVERNED_POLICY: "true",
 };
 
 const appliedDefaults: string[] = [];
@@ -172,7 +177,9 @@ let throwawayKeyDir: string | undefined;
 if (!process.env.PARMANA_KEY_DIR) {
   throwawayKeyDir = mkdtempSync(path.join(tmpdir(), "parmana-example-keys-"));
 
-  for (const keyId of ["default", "gateway"]) {
+  // Every key id an example may sign with by default: "signal-verifier" signs
+  // the read-only HubSpot fetches (see .env.example).
+  for (const keyId of ["default", "gateway", "signal-verifier"]) {
     const { privateKey, publicKey } = generateKeyPairSync("ed25519");
 
     writeFileSync(

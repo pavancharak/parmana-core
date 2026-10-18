@@ -18,6 +18,10 @@ import {
 // HubSpot's live API.
 //
 process.env.NODE_ENV = "test";
+// Hermetic example: this policy has no approval record in the example tree.
+// The opt-in is honoured only under NODE_ENV=test or development, and never in
+// a deployment (see policyGovernanceRelaxed).
+process.env.PARMANA_ALLOW_UNGOVERNED_POLICY = "true";
 
 const TOKEN = HUBSPOT_TEST_MODE_PLACEHOLDER_TOKEN;
 

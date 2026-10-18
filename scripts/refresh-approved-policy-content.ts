@@ -5,6 +5,7 @@ import { createPrivateKey } from "node:crypto";
 
 import { PolicyChangeStepUpAuthorizationSigner } from "@parmana/crypto";
 import { FilePolicyRepository } from "@parmana/policy";
+import { pathToFileURL } from "node:url";
 
 const DEFAULT_TTL_SECONDS = 120;
 const DEFAULT_API_BASE = "https://parmana-api-real.vercel.app";
@@ -148,7 +149,13 @@ async function main(args = process.argv.slice(2)): Promise<void> {
   if (!approveResponse.ok) process.exitCode = 1;
 }
 
-if (process.env.VITEST === undefined) {
+// Run only when executed directly. Importing this module (tutorials and tests
+// do) must not run main() or change the process exit code.
+const isEntryPoint =
+  process.argv[1] !== undefined &&
+  import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isEntryPoint && process.env.VITEST === undefined) {
   main().catch((error) => {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;

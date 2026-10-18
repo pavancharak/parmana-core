@@ -3,7 +3,9 @@ import { generateKeyPairSync } from "node:crypto";
 import {
   ArtifactSigner,
   AuthorizationSigner,
+  AuthorizationVerifier,
   CryptoBootstrap,
+  ExecutableContentHasher,
   TrustRecordHasher,
 } from "@parmana/crypto";
 
@@ -153,6 +155,7 @@ async function main(): Promise<void> {
   const authorization = await new AuthorizationSigner(crypto).sign(
     {
       decisionId: "decision-1",
+      decisionOutcome: "APPROVED",
       businessTransactionId: content.businessTransactionId,
       policyName: policy.policyId,
       policyVersion: policy.policyVersion,
@@ -168,6 +171,38 @@ async function main(): Promise<void> {
   console.log(`Expires At       : ${authorization.payload.expiresAt}`);
 
   console.log();
+
+  //
+  // Independent release check, as in production (createReleaseVerifier in
+  // packages/api). Execution Control re-verifies the signed authorization, that
+  // it is APPROVED, and that the executable content still matches its hash.
+  const authorizationVerifier = new AuthorizationVerifier(crypto);
+  const contentHasher = new ExecutableContentHasher(crypto);
+  const releaseVerifier = async (release: {
+    authorization: typeof authorization;
+    executableContent: typeof content;
+  }): Promise<void> => {
+    const { valid, checks } = await authorizationVerifier.verify(
+      release.authorization,
+      runtimePublicKey,
+    );
+    if (!valid || !checks.signatureVerified || !checks.notExpired) {
+      throw new Error(
+        "Execution Control refused release: authorization did not verify.",
+      );
+    }
+    if (release.authorization.payload.decisionOutcome !== "APPROVED") {
+      throw new Error(
+        "Execution Control refused release: decision is not APPROVED.",
+      );
+    }
+    const actualHash = await contentHasher.hash(release.executableContent);
+    if (actualHash !== release.authorization.payload.businessTransactionHash) {
+      throw new Error(
+        "Execution Control refused release: executable content does not match the signed hash.",
+      );
+    }
+  };
 
   //
   // Gateway / Connector / Session infrastructure.
@@ -255,6 +290,7 @@ async function main(): Promise<void> {
       sessions,
       sessionIssuanceAuthentication,
       audit,
+      verifyRelease: releaseVerifier,
     }),
   });
 
