@@ -2,7 +2,7 @@ import "dotenv/config";
 
 import { spawn } from "node:child_process";
 import { generateKeyPairSync } from "node:crypto";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -169,12 +169,19 @@ for (const [name, value] of Object.entries(LOCAL_DEFAULTS)) {
 }
 
 //
-// Without PARMANA_KEY_DIR, sign with throwaway Ed25519 keys in a temp
-// directory that is deleted afterwards. Never writes into ./keys.
+// Sign with throwaway Ed25519 keys in a temp directory that is deleted
+// afterwards, unless PARMANA_KEY_DIR already holds the default key. A key
+// directory named by .env but empty (or missing) is replaced, never written
+// into. Never writes into ./keys.
 //
 let throwawayKeyDir: string | undefined;
 
-if (!process.env.PARMANA_KEY_DIR) {
+const configuredKeyDir = process.env.PARMANA_KEY_DIR;
+const hasDefaultKey =
+  configuredKeyDir !== undefined &&
+  existsSync(path.join(configuredKeyDir, "default.private.pem"));
+
+if (!hasDefaultKey) {
   throwawayKeyDir = mkdtempSync(path.join(tmpdir(), "parmana-example-keys-"));
 
   // Every key id an example may sign with by default: "signal-verifier" signs
@@ -194,7 +201,9 @@ if (!process.env.PARMANA_KEY_DIR) {
 
   process.env.PARMANA_KEY_DIR = throwawayKeyDir;
   appliedDefaults.push(
-    `PARMANA_KEY_DIR=<throwaway keys in ${throwawayKeyDir}>`,
+    configuredKeyDir === undefined
+      ? `PARMANA_KEY_DIR=<throwaway keys in ${throwawayKeyDir}>`
+      : `PARMANA_KEY_DIR=<throwaway keys in ${throwawayKeyDir}; ${configuredKeyDir} has no default key>`,
   );
 }
 
