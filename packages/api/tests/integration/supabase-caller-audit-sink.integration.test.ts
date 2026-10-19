@@ -74,8 +74,21 @@ describe.skipIf(!databaseConfigured)("SupabaseCallerAuditSink (live)", () => {
     expect(rows[0].caller_id).toBe("integration-test-caller");
     expect(rows[0].reason).toBeNull();
     expect(rows[0].chain_hash).not.toBeNull();
-    expect(rows[0].previous_chain_hash).toBeNull();
-    expect(Number(rows[0].chain_position)).toBeGreaterThanOrEqual(1);
+    // The chain is per caller, and every test here shares one caller, so
+    // this event is only the first link on a fresh database. Check the
+    // link against the caller's previous event, whatever the table holds.
+    const position = Number(rows[0].chain_position);
+    expect(position).toBeGreaterThanOrEqual(1);
+    if (position === 1) {
+      expect(rows[0].previous_chain_hash).toBeNull();
+    } else {
+      const { rows: prior } = await readingPool.query(
+        "SELECT chain_hash FROM caller_audit_events WHERE caller_id = $1 AND chain_position = $2",
+        ["integration-test-caller", position - 1],
+      );
+      expect(prior).toHaveLength(1);
+      expect(rows[0].previous_chain_hash).toBe(prior[0].chain_hash);
+    }
   });
 
   it("chains a second event from the same caller against a real Postgres advisory lock", async () => {
