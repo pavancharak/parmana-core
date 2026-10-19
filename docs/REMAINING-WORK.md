@@ -2,6 +2,12 @@
 
 Snapshot: 2026-09-21, with section F added and updated on 2026-09-25, section G added on 2026-09-27, and section L added and updated on 2026-10-11. This is the current list of what is left. It replaces `02-REMAINING.md` (a July 5 snapshot) for current status.
 
+## Update 2026-10-19
+
+- **Database password rotated.** The production Supabase database password was replaced after it was pasted into a chat. Vercel `DATABASE_URL` and the operator's local `.env` backup were updated. Afterwards `/health` returned `UP`, `/ready` returned `READY` with `authDisabled` false, and an unauthenticated `POST /execute` returned `401`.
+- **Migration `20261015120000_enable_rls_rate_limit_counters.sql` applied to production.** Status now shows 38 applied, 0 pending. `/ready` still returns `READY`.
+- **Separation of duties is not in place.** The maker and checker roles are both held by one operator, and the step-up keys for both don't change that. Items that depend on a maker and checker being different people stay open until a second person holds the checker credential.
+
 Every item says how it was verified. Items marked **not re audited** are copied from `docs/VERIFICATION-GAPS.md` as written there, and were not checked again on this date. The full record of what was found and closed stays in `docs/VERIFICATION-GAPS.md` and `docs/CLAIMS.md`.
 
 ## What was finished on 2026-09-20
