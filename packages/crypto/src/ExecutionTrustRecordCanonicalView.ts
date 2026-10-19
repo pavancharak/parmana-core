@@ -56,3 +56,40 @@ export function hybridCanonicalExecutionTrustRecord(
     schemaVersion,
   };
 }
+
+/**
+ * Top-level fields that a schema version 3 (whole-record) signature does
+ * not cover. The signature fields hold the signatures themselves.
+ * `verifications` and `receipts` are attached to the stored record after
+ * it is signed (ADR-0016); receipts carry their own signature.
+ */
+export const WHOLE_RECORD_EXCLUDED_FIELDS = [
+  "signature",
+  "signatures",
+  "schemaVersion",
+  "verifications",
+  "receipts",
+] as const;
+
+/**
+ * The canonical view signed by a schema version 3 hybrid envelope: every
+ * top-level field of the record except WHOLE_RECORD_EXCLUDED_FIELDS, plus
+ * the schema version itself. `trustRecordHash` is covered, because it is
+ * set before the v3 signature is made. Built with Object.fromEntries, so a
+ * field named "__proto__" stays an ordinary covered field.
+ */
+export function wholeRecordCanonicalView(
+  trustRecord: ExecutionTrustRecord,
+  schemaVersion: number,
+) {
+  const excluded: readonly string[] = WHOLE_RECORD_EXCLUDED_FIELDS;
+
+  const covered = Object.entries(trustRecord).filter(
+    ([key]) => !excluded.includes(key),
+  );
+
+  return {
+    ...Object.fromEntries(covered),
+    schemaVersion,
+  };
+}

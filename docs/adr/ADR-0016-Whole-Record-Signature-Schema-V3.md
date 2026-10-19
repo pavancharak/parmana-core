@@ -44,7 +44,7 @@ Done 2026-10-19 by reading the code. Results:
 
 ## Decisions recorded (2026-10-19)
 
-1. **Excluded from the v3 signed content:** `signature`, `signatures`, `verifications`, `receipts`. Everything else at the top level is covered. The verifier's format document must state that `verifications` are not covered by any signature, and that `receipts` are covered only by their own receipt signature.
+1. **Excluded from the v3 signed content:** `signature`, `signatures`, `verifications`, `receipts`. Everything else at the top level is covered, including `trustRecordHash`, which is set before the v3 signature is made. The verifier's format document must state that `verifications` are not covered by any signature, and that `receipts` are covered only by their own receipt signature.
 2. **Absent and `null` are different.** Keep the current canonicalization: absent keys are dropped, `null` is kept. Document this and add a test.
 3. **Coverage is visible.** The verifier reports `coverage: "legacy"` or `coverage: "full"`. A caller that needs full coverage rejects `legacy`.
 4. **No silent downgrade.** A record that claims `schemaVersion` 3 but has no valid v3 signature is invalid. v2 records are issued until the verifier release that supports v3 is published and deployed.
