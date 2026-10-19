@@ -326,11 +326,13 @@ describe.skipIf(!isMlDsa65Supported())(
         businessTransactionId: string,
       ): Promise<ExecutionTrustRecord> {
         process.env.HYBRID_SCHEMA_VERSION = "3";
+        process.env.HYBRID_SCHEMA_V3_ACKNOWLEDGED = "true";
 
         try {
           return await buildTrustRecord(businessTransactionId);
         } finally {
           delete process.env.HYBRID_SCHEMA_VERSION;
+          delete process.env.HYBRID_SCHEMA_V3_ACKNOWLEDGED;
         }
       }
 

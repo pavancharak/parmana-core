@@ -348,7 +348,10 @@ export interface LoggingConfig {
  * 2 or 3, and anything else throws, so a typo cannot pick a schema
  * version silently.
  */
-function parseHybridSchemaVersion(value: string | undefined): 2 | 3 {
+function parseHybridSchemaVersion(
+  value: string | undefined,
+  acknowledged: string | undefined,
+): 2 | 3 {
   if (value === undefined || value.trim() === "") {
     return 2;
   }
@@ -358,6 +361,18 @@ function parseHybridSchemaVersion(value: string | undefined): 2 | 3 {
   }
 
   if (value === "3") {
+    //
+    // Schema version 3 records are not readable by the SDKs and by
+    // @parmana/sign until those are updated (ADR-0016 issuance gate).
+    // Refuse to start unless the operator also sets the acknowledgement,
+    // so a stray value cannot switch v3 on.
+    //
+    if (acknowledged !== "true") {
+      throw new Error(
+        "HYBRID_SCHEMA_VERSION=3 is refused unless HYBRID_SCHEMA_V3_ACKNOWLEDGED=true is also set (ADR-0016 issuance gate).",
+      );
+    }
+
     return 3;
   }
 
@@ -398,6 +413,7 @@ export function loadConfig(): Readonly<Config> {
 
       hybridSchemaVersion: parseHybridSchemaVersion(
         process.env.HYBRID_SCHEMA_VERSION,
+        process.env.HYBRID_SCHEMA_V3_ACKNOWLEDGED,
       ),
     }),
 
