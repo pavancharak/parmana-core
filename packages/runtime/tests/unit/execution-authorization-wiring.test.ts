@@ -2,11 +2,13 @@ import { generateKeyPairSync } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   AuthorityType,
   BusinessTransactionStatus,
+  ExecutionStatus,
+  VerificationStatus,
   type BusinessTransaction,
   type BusinessTransactionRepository,
   type Execution,
@@ -39,6 +41,8 @@ import {
 } from "@parmana/crypto";
 
 import { RuntimeBuilder } from "../../src/RuntimeBuilder.js";
+import { BusinessTrustRecordBuilder } from "../../src/BusinessTrustRecordBuilder.js";
+import { VerificationService } from "../../src/services/verification-service.js";
 
 import {
   testApprovalSignalVerifier,
@@ -518,5 +522,62 @@ describe("Execution Authorization Wiring", () => {
     const { authorization } = executionSystem.lastRequest!;
 
     expect(authorization.keyId).toBe("default");
+  });
+
+  it("signs the execution in its final state: every write to the execution happens before the record is signed (ADR-0016 step 3)", async () => {
+    const { runtime, transactions, trustRecords } =
+      createRuntime(APPROVE_POLICY);
+
+    //
+    // Record the order of the execution writes and of the signing step. The
+    // post-signing fields (verifications, receipts) are excluded from the
+    // signed view, so the only way a later write could change a signed field
+    // is an execution write after the build. This test rules that out.
+    //
+    const events: string[] = [];
+
+    const replaceExecution = trustRecords.replaceExecution.bind(trustRecords);
+
+    vi.spyOn(trustRecords, "replaceExecution").mockImplementation(
+      async (execution: Execution) => {
+        events.push(`replace:${execution.status}`);
+
+        await replaceExecution(execution);
+      },
+    );
+
+    const build = BusinessTrustRecordBuilder.prototype.build;
+
+    vi.spyOn(BusinessTrustRecordBuilder.prototype, "build").mockImplementation(
+      async function (
+        this: BusinessTrustRecordBuilder,
+        context: Parameters<BusinessTrustRecordBuilder["build"]>[0],
+      ) {
+        events.push("sign");
+
+        return build.call(this, context);
+      },
+    );
+
+    try {
+      const transaction = await createTransaction("txn-signed-final-state");
+      await transactions.create(transaction);
+
+      const { trustRecord } = await runtime.execute(transaction);
+
+      expect(events).toContain(`replace:${ExecutionStatus.COMPLETED}`);
+      expect(events.filter((event) => event === "sign")).toHaveLength(1);
+      expect(events.at(-1)).toBe("sign");
+
+      expect(trustRecord.executions[0]!.status).toBe(ExecutionStatus.COMPLETED);
+
+      const verification = await new VerificationService(trustRecords).verify(
+        transaction.businessTransactionId,
+      );
+
+      expect(verification.status).toBe(VerificationStatus.VERIFIED);
+    } finally {
+      vi.restoreAllMocks();
+    }
   });
 });
