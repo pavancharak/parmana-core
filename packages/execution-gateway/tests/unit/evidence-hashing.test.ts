@@ -26,7 +26,10 @@ function fixtureRequest(): ConnectorRequest {
 }
 
 function fixtureResponse(): ConnectorResponse {
-  return { success: true, metadata: { status: 200, apiKey: "fake_key_leaked" } };
+  return {
+    success: true,
+    metadata: { status: 200, apiKey: "fake_key_leaked" },
+  };
 }
 
 describe("ConnectorEvidence", () => {
