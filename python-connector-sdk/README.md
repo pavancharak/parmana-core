@@ -131,3 +131,22 @@ See the [Connector SDK reference](https://docs.parmanasystems.com/reference/conn
 the [Connector Development Guide](https://docs.parmanasystems.com/integrations/connector-development-guide)
 — written against the TypeScript package, but the contract this package implements is
 identical.
+
+## Running the tests
+
+The tests import the package directly from this folder, so put it on the import path first. Run these from the repository root.
+
+Windows (PowerShell):
+
+```powershell
+$env:PYTHONPATH = "python-connector-sdk"
+python -m pytest python-connector-sdk/tests
+```
+
+macOS or Linux:
+
+```bash
+PYTHONPATH=python-connector-sdk python -m pytest python-connector-sdk/tests
+```
+
+Install pytest first if needed: `pip install pytest`. Without `PYTHONPATH`, collection fails with `ModuleNotFoundError: No module named 'parmana_connector_sdk'`.
