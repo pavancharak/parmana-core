@@ -75,7 +75,8 @@ function findEnvFile(): string | undefined {
 let dotEnvLoaded = false;
 
 function loadDotEnvOnce(): void {
-  if (dotEnvLoaded) {
+  // Test runs set PARMANA_SKIP_DOTENV so a local .env cannot leak into them.
+  if (dotEnvLoaded || process.env.PARMANA_SKIP_DOTENV === "1") {
     return;
   }
 

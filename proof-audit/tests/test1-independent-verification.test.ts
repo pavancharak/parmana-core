@@ -189,7 +189,23 @@ describe("TEST 1: independent verification", () => {
     expect(run.status).toBe(0);
     expect(JSON.parse(run.stdout).valid).toBe(true);
     expect(JSON.parse(run.stdout).citedPolicy).toBe("customer-refund@1.2.0");
-    expect(JSON.parse(run.stdout).envKeys).toBeLessThanOrEqual(2);
+    // The verifier must add no environment variables of its own. The count is
+    // compared with a bare node process under the same env, because the number of
+    // variables a platform adds (for example SystemRoot on Windows) varies.
+    const baseline = spawnSync(
+      process.execPath,
+      ["-p", "Object.keys(process.env).length"],
+      {
+        env: {
+          PATH: process.env.PATH ?? "",
+          NODE_OPTIONS: `--import=${denyHook}`,
+        },
+        encoding: "utf8",
+      },
+    );
+    expect(JSON.parse(run.stdout).envKeys).toBeLessThanOrEqual(
+      Number(baseline.stdout.trim()),
+    );
     // The verifier no longer loads a .env file from the working tree on import.
     expect(run.stderr).not.toMatch(/injected env/);
   });

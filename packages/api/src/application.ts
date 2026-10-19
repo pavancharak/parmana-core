@@ -1,9 +1,11 @@
 import path from "node:path";
 import dotenv from "dotenv";
 
-dotenv.config({
-  path: path.resolve(process.cwd(), "../../.env"),
-});
+if (process.env.PARMANA_SKIP_DOTENV !== "1") {
+  dotenv.config({
+    path: path.resolve(process.cwd(), "../../.env"),
+  });
+}
 
 import { loadConfig } from "@parmana/shared";
 

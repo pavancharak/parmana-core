@@ -1,3 +1,7 @@
+// Tests must not read a developer's local .env: it would leak values into tests
+// that expect them unset. Loaders check this flag before reading any file.
+process.env.PARMANA_SKIP_DOTENV = "1";
+
 import { generateKeyPairSync } from "node:crypto";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
