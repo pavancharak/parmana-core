@@ -17,16 +17,16 @@ from parmana_connector_sdk.credentials import CredentialHandle
 
 class TestStaticCredentialProvider:
     def test_resolves_a_configured_credential_as_a_branded_handle(self) -> None:
-        provider = StaticCredentialProvider({"stripe": {"api_key": "sk_live_secret"}})
+        provider = StaticCredentialProvider({"stripe": {"api_key": "fake_key_secret"}})
         handle = provider.resolve("stripe")
         assert is_credential_handle(handle)
         assert handle.provider_id == "static"
-        assert handle.value == {"api_key": "sk_live_secret"}
+        assert handle.value == {"api_key": "fake_key_secret"}
 
     def test_rejects_unknown_connectors_without_ever_mentioning_credential_material(
         self,
     ) -> None:
-        provider = StaticCredentialProvider({"stripe": {"api_key": "sk_live_secret"}})
+        provider = StaticCredentialProvider({"stripe": {"api_key": "fake_key_secret"}})
         with pytest.raises(
             ValueError, match="No static credential configured for connector: sap."
         ):
@@ -34,19 +34,19 @@ class TestStaticCredentialProvider:
 
     def test_supports_late_registration_via_set(self) -> None:
         provider = StaticCredentialProvider()
-        provider.set("stripe", {"api_key": "sk_live_secret"})
+        provider.set("stripe", {"api_key": "fake_key_secret"})
         handle = provider.resolve("stripe")
-        assert handle.value == {"api_key": "sk_live_secret"}
+        assert handle.value == {"api_key": "fake_key_secret"}
 
 
 class TestEnvironmentCredentialProvider:
     def test_resolves_from_the_supplied_environment_map(self) -> None:
         provider = EnvironmentCredentialProvider(
-            {"stripe": "STRIPE_API_KEY"}, {"STRIPE_API_KEY": "sk_live_from_env"}
+            {"stripe": "STRIPE_API_KEY"}, {"STRIPE_API_KEY": "fake_key_from_env"}
         )
         handle = provider.resolve("stripe")
         assert is_credential_handle(handle)
-        assert handle.value == {"token": "sk_live_from_env"}
+        assert handle.value == {"token": "fake_key_from_env"}
 
     def test_rejects_a_connector_with_no_configured_mapping(self) -> None:
         provider = EnvironmentCredentialProvider({}, {})
@@ -75,7 +75,7 @@ class TestEnvironmentCredentialProvider:
         provider = EnvironmentCredentialProvider(
             {"stripe": "STRIPE_API_KEY"},
             {
-                "STRIPE_API_KEY": "sk_live_super_secret",
+                "STRIPE_API_KEY": "fake_key_super_secret",
                 "SAP_API_KEY": "sap_super_secret",
             },
         )
@@ -85,7 +85,7 @@ class TestEnvironmentCredentialProvider:
         with pytest.raises(ValueError) as exc_info:
             provider.resolve("sap")
         message = str(exc_info.value)
-        assert "sk_live_super_secret" not in message
+        assert "fake_key_super_secret" not in message
         assert "sap_super_secret" not in message
 
 
@@ -94,9 +94,9 @@ class TestCredentialHandleBranding:
         self,
     ) -> None:
         raw = CredentialHandle(
-            provider_id="static", credential_id="stripe", value="sk_live_secret"
+            provider_id="static", credential_id="stripe", value="fake_key_secret"
         )
         assert is_credential_handle(raw) is False
         assert is_credential_handle(brand_credential_handle(raw)) is True
-        assert is_credential_handle("sk_live_secret") is False
+        assert is_credential_handle("fake_key_secret") is False
         assert is_credential_handle(None) is False

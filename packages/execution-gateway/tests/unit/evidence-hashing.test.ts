@@ -20,20 +20,20 @@ function fixtureRequest(): ConnectorRequest {
     businessTransactionId: "txn-1",
     action: "http:post",
     target:
-      "https://user:sk_live_secret@api.stripe.com/v1/charges?api_key=sk_live_secret",
+      "https://user:fake_key_secret@api.stripe.com/v1/charges?api_key=fake_key_secret",
     parameters: { amount: 1000, currency: "usd" },
   };
 }
 
 function fixtureResponse(): ConnectorResponse {
-  return { success: true, metadata: { status: 200, apiKey: "sk_live_leaked" } };
+  return { success: true, metadata: { status: 200, apiKey: "fake_key_leaked" } };
 }
 
 describe("ConnectorEvidence", () => {
   it("sanitizes credentials and query parameters out of URL-shaped endpoints", () => {
     expect(
       sanitizeEndpoint(
-        "https://user:sk_live_secret@api.stripe.com/v1/charges?api_key=sk_live_secret",
+        "https://user:fake_key_secret@api.stripe.com/v1/charges?api_key=fake_key_secret",
       ),
     ).toBe("https://api.stripe.com/v1/charges");
   });
@@ -46,7 +46,7 @@ describe("ConnectorEvidence", () => {
   it("redacts credential-shaped response metadata keys", () => {
     const redacted = redactSensitiveKeys({
       status: 200,
-      apiKey: "sk_live_leaked",
+      apiKey: "fake_key_leaked",
       recordId: "abc",
     });
     expect(redacted).toEqual({
@@ -109,8 +109,8 @@ describe("ConnectorEvidence", () => {
       crypto,
     });
 
-    expect(JSON.stringify(evidence)).not.toContain("sk_live_secret");
-    expect(JSON.stringify(evidence)).not.toContain("sk_live_leaked");
+    expect(JSON.stringify(evidence)).not.toContain("fake_key_secret");
+    expect(JSON.stringify(evidence)).not.toContain("fake_key_leaked");
   });
 
   // docs/VERIFICATION-GAPS.md G-45 (Record 3): every connector in this

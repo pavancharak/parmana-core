@@ -71,7 +71,7 @@ describe("parseStorageProvider", () => {
   });
 
   it("does not echo an invalid PARMANA_SECRETS_PROVIDER value, which may be a real secret", () => {
-    const pasted = "sk_live_not_a_provider_name";
+    const pasted = "fake_key_not_a_provider_name";
 
     expect(() => parseSecretsProvider(pasted)).toThrow(
       /^Invalid PARMANA_SECRETS_PROVIDER: expected one of /,

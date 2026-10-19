@@ -10,7 +10,7 @@ import { CredentialVaultAdapter } from "../../src/connector-execution/index.js";
 describe("CredentialVaultAdapter", () => {
   it("adapts a CredentialProvider into execution-control's CredentialVault contract", async () => {
     const provider = new StaticCredentialProvider({
-      stripe: { apiKey: "sk_live_secret" },
+      stripe: { apiKey: "fake_key_secret" },
     });
     const vault = new CredentialVaultAdapter(provider);
     const credential = await vault.getCredential("stripe");

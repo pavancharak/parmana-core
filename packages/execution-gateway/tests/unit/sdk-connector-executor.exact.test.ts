@@ -136,7 +136,7 @@ describe("SdkConnectorExecutor refusals", () => {
     const { executor, calls } = executorWith();
     await expect(
       executor.execute(CONTENT, {
-        value: { providerId: "p", credentialId: "c", value: "sk_live" },
+        value: { providerId: "p", credentialId: "c", value: "fake_key" },
       } as never),
     ).rejects.toThrow(/rejected a raw credential/);
     expect(calls).toHaveLength(0);
