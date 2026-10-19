@@ -1,6 +1,6 @@
 # ADR-0016: Sign the whole Execution Trust Record under schema version 3
 
-**Status:** Proposed. Not decided. No code has changed.
+**Status:** Accepted on 2026-10-19 (design). Implementation not started.
 
 **Date:** Proposed 2026-10-19.
 
@@ -41,6 +41,14 @@ Done 2026-10-19 by reading the code. Results:
 - **Overrides are not appended at runtime.** `appendOverride` has no caller in the runtime or API code, so no path changes overrides after signing.
 
 **Recommended exclusion list for v3:** `signature`, `signatures`, `verifications`, `receipts`. Document the two excluded output fields as not covered by any signature in the verifier's format document. Receipts keep their own signature.
+
+## Decisions recorded (2026-10-19)
+
+1. **Excluded from the v3 signed content:** `signature`, `signatures`, `verifications`, `receipts`. Everything else at the top level is covered. The verifier's format document must state that `verifications` are not covered by any signature, and that `receipts` are covered only by their own receipt signature.
+2. **Absent and `null` are different.** Keep the current canonicalization: absent keys are dropped, `null` is kept. Document this and add a test.
+3. **Coverage is visible.** The verifier reports `coverage: "legacy"` or `coverage: "full"`. A caller that needs full coverage rejects `legacy`.
+4. **No silent downgrade.** A record that claims `schemaVersion` 3 but has no valid v3 signature is invalid. v2 records are issued until the verifier release that supports v3 is published and deployed.
+5. **One commitment rule.** The 4,096-byte Ed25519 commitment rule applies to v3 messages, and ML-DSA-65 signatures remain raw only.
 
 ## Implementation outline (after the decision)
 
