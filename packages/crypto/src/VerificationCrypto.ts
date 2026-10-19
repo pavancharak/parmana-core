@@ -8,7 +8,9 @@ import type {
 import { CryptoBootstrap } from "./CryptoBootstrap.js";
 import {
   canonicalExecutionTrustRecord,
-  hybridCanonicalExecutionTrustRecord,
+  hybridSignedCanonicalView,
+  SUPPORTED_HYBRID_SCHEMA_VERSIONS,
+  WHOLE_RECORD_SCHEMA_VERSION,
 } from "./ExecutionTrustRecordCanonicalView.js";
 import { HybridSignatureProvider } from "./HybridSignatureProvider.js";
 import { TrustRecordHasher } from "./TrustRecordHasher.js";
@@ -22,11 +24,12 @@ import {
 } from "./KeyProvider.js";
 
 /**
- * Schema version stamped on `signatures`-bearing records produced by
- * this class. Bumped from the implicit v1 (no `schemaVersion` field
+ * Schema version assumed for a `signatures`-bearing record that does not
+ * declare one. Bumped from the implicit v1 (no `schemaVersion` field
  * at all -- today's shape) the moment a second, independent signature
  * is added alongside the legacy one (Hybrid Signature Support
- * milestone, Phase A).
+ * milestone, Phase A). The version new records are signed with is
+ * `crypto.hybridSchemaVersion`, which defaults to this value.
  */
 const HYBRID_SCHEMA_VERSION = 2;
 
@@ -86,14 +89,14 @@ export class VerificationCrypto {
 
   /**
    * Canonical view signed/verified by the hybrid `signatures` array.
-   * Delegates to hybridCanonicalExecutionTrustRecord() for the same
+   * Delegates to hybridSignedCanonicalView() for the same
    * single-source-of-truth reason as canonicalRecord() above.
    */
   private hybridCanonicalRecord(
     trustRecord: ExecutionTrustRecord,
     schemaVersion: number,
   ) {
-    return hybridCanonicalExecutionTrustRecord(trustRecord, schemaVersion);
+    return hybridSignedCanonicalView(trustRecord, schemaVersion);
   }
 
   private hybridSignatureProvider(): HybridSignatureProvider {
@@ -200,7 +203,10 @@ export class VerificationCrypto {
     }
 
     return this.hybridSignatureProvider().sign(
-      this.hybridCanonicalRecord(trustRecord, HYBRID_SCHEMA_VERSION),
+      this.hybridCanonicalRecord(
+        trustRecord,
+        this.config.crypto.hybridSchemaVersion,
+      ),
       currentVerificationKeyId(),
       currentVerificationSecondaryKeyId(),
     );
@@ -248,11 +254,29 @@ export class VerificationCrypto {
       publicKey,
     );
 
+    const declaredVersion = trustRecord.schemaVersion ?? HYBRID_SCHEMA_VERSION;
+
+    if (
+      !(SUPPORTED_HYBRID_SCHEMA_VERSIONS as readonly number[]).includes(
+        declaredVersion,
+      )
+    ) {
+      return false;
+    }
+
     if (
       trustRecord.signatures === undefined ||
       trustRecord.signatures.length === 0
     ) {
-      if (this.config.crypto.requireHybridSignature) {
+      //
+      // A schema version 3 record declares that it is whole-record
+      // signed, so a missing hybrid envelope is a rejection even when
+      // requireHybridSignature is off (ADR-0016, decision 4).
+      //
+      if (
+        this.config.crypto.requireHybridSignature ||
+        declaredVersion === WHOLE_RECORD_SCHEMA_VERSION
+      ) {
         return false;
       }
 
@@ -260,10 +284,7 @@ export class VerificationCrypto {
     }
 
     const hybridVerified = await this.hybridSignatureProvider().verify(
-      this.hybridCanonicalRecord(
-        trustRecord,
-        trustRecord.schemaVersion ?? HYBRID_SCHEMA_VERSION,
-      ),
+      this.hybridCanonicalRecord(trustRecord, declaredVersion),
       trustRecord.signatures,
     );
 

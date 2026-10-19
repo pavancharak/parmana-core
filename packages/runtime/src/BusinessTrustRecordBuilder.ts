@@ -188,7 +188,7 @@ export class BusinessTrustRecordBuilder {
 
       signature,
 
-      schemaVersion: 2,
+      schemaVersion: this.config.crypto.hybridSchemaVersion,
 
       signatures,
     };

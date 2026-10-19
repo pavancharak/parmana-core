@@ -58,6 +58,34 @@ export function hybridCanonicalExecutionTrustRecord(
 }
 
 /**
+ * Schema version of a hybrid envelope that signs the whole record
+ * (ADR-0016). Version 2 signs only the canonical fields plus schemaVersion.
+ */
+export const WHOLE_RECORD_SCHEMA_VERSION = 3;
+
+/**
+ * Hybrid schema versions this codebase can sign and verify. Anything else
+ * is rejected rather than canonicalized under a guessed view.
+ */
+export const SUPPORTED_HYBRID_SCHEMA_VERSIONS = [2, 3] as const;
+
+/**
+ * Selects the canonical view that a hybrid `signatures` array covers for
+ * a given schema version. Version 3 covers the whole record; every other
+ * version keeps the version 2 view, so existing records verify unchanged.
+ */
+export function hybridSignedCanonicalView(
+  trustRecord: ExecutionTrustRecord,
+  schemaVersion: number,
+) {
+  if (schemaVersion === WHOLE_RECORD_SCHEMA_VERSION) {
+    return wholeRecordCanonicalView(trustRecord, schemaVersion);
+  }
+
+  return hybridCanonicalExecutionTrustRecord(trustRecord, schemaVersion);
+}
+
+/**
  * Top-level fields that a schema version 3 (whole-record) signature does
  * not cover. The signature fields hold the signatures themselves.
  * `verifications` and `receipts` are attached to the stored record after

@@ -9,7 +9,9 @@ import type {
 import { canonicalExecutionIntent } from "./ExecutionIntentCanonicalView.js";
 import {
   canonicalExecutionTrustRecord,
-  hybridCanonicalExecutionTrustRecord,
+  hybridSignedCanonicalView,
+  SUPPORTED_HYBRID_SCHEMA_VERSIONS,
+  WHOLE_RECORD_SCHEMA_VERSION,
 } from "./ExecutionTrustRecordCanonicalView.js";
 import { SHA256HashProvider } from "./providers/hash/SHA256HashProvider.js";
 import { Ed25519SignatureProvider } from "./providers/signature/Ed25519SignatureProvider.js";
@@ -183,20 +185,41 @@ export async function verifyExecutionTrustRecordOffline(
     (!Array.isArray(trustRecord.signatures) ||
       !trustRecord.signatures.every(isSignatureEntry));
 
+  const declaredVersion = trustRecord.schemaVersion ?? 2;
+
   if (signaturesMalformed) {
     errors.push(
       "malformed signatures: expected an array of entries with string algorithm, keyId and signature.",
     );
     hybridSignaturesValid = false;
   } else if (
-    trustRecord.signatures !== undefined &&
-    trustRecord.signatures !== null &&
-    trustRecord.signatures.length > 0
+    !(SUPPORTED_HYBRID_SCHEMA_VERSIONS as readonly number[]).includes(
+      declaredVersion,
+    )
   ) {
-    const schemaVersion = trustRecord.schemaVersion ?? 2;
-    const hybridArtifact = hybridCanonicalExecutionTrustRecord(
+    errors.push(
+      `unsupported schemaVersion ${String(declaredVersion)}: expected 2 or 3.`,
+    );
+    hybridSignaturesValid = false;
+  } else if (
+    trustRecord.signatures === undefined ||
+    trustRecord.signatures === null ||
+    trustRecord.signatures.length === 0
+  ) {
+    //
+    // A schema version 3 record declares that it is whole-record signed,
+    // so a missing signatures array is a failure, not a legacy-only pass.
+    //
+    if (declaredVersion === WHOLE_RECORD_SCHEMA_VERSION) {
+      errors.push(
+        "schemaVersion 3 record has no signatures array: a whole-record signature is required.",
+      );
+      hybridSignaturesValid = false;
+    }
+  } else {
+    const hybridArtifact = hybridSignedCanonicalView(
       trustRecord,
-      schemaVersion,
+      declaredVersion,
     );
 
     const seenAlgorithms = new Set<string>();

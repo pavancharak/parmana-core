@@ -320,5 +320,72 @@ describe.skipIf(!isMlDsa65Supported())(
         }
       });
     });
+
+    describe("HYBRID_SCHEMA_VERSION=3 (ADR-0016 whole-record signature)", () => {
+      async function buildVersion3TrustRecord(
+        businessTransactionId: string,
+      ): Promise<ExecutionTrustRecord> {
+        process.env.HYBRID_SCHEMA_VERSION = "3";
+
+        try {
+          return await buildTrustRecord(businessTransactionId);
+        } finally {
+          delete process.env.HYBRID_SCHEMA_VERSION;
+        }
+      }
+
+      it("builds and verifies a whole-record signed record end to end", async () => {
+        const trustRecord = await buildVersion3TrustRecord("txn-v3-valid");
+
+        expect(trustRecord.schemaVersion).toBe(3);
+        expect(trustRecord.signatures).toHaveLength(2);
+
+        const repository = new InMemoryExecutionTrustRecordRepository();
+        await repository.create(trustRecord);
+
+        const verification = await new VerificationService(repository).verify(
+          "txn-v3-valid",
+        );
+
+        expect(verification.status).toBe(VerificationStatus.VERIFIED);
+      });
+
+      it("rejects a whole-record record with updatedAt changed, a field the version 2 signature never covered", async () => {
+        const trustRecord = await buildVersion3TrustRecord("txn-v3-updated-at");
+
+        const tampered: ExecutionTrustRecord = {
+          ...trustRecord,
+          updatedAt: new Date("2026-02-01T00:00:00Z"),
+        };
+
+        const repository = new InMemoryExecutionTrustRecordRepository();
+        await repository.create(tampered);
+
+        const verification = await new VerificationService(repository).verify(
+          "txn-v3-updated-at",
+        );
+
+        expect(verification.status).toBe(VerificationStatus.FAILED);
+        expect(verification.message).toContain("Signature check failed");
+      });
+
+      it("rejects a whole-record record with its signatures stripped, even without HYBRID_SIGNATURE_REQUIRED", async () => {
+        const trustRecord = await buildVersion3TrustRecord("txn-v3-stripped");
+
+        const stripped: ExecutionTrustRecord = {
+          ...trustRecord,
+          signatures: undefined,
+        };
+
+        const repository = new InMemoryExecutionTrustRecordRepository();
+        await repository.create(stripped);
+
+        const verification = await new VerificationService(repository).verify(
+          "txn-v3-stripped",
+        );
+
+        expect(verification.status).toBe(VerificationStatus.FAILED);
+      });
+    });
   },
 );

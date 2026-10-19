@@ -211,6 +211,17 @@ export interface CryptoConfig {
    * comment for the exact downgrade this closes.
    */
   readonly requireHybridSignature: boolean;
+
+  /**
+   * Schema version that hybrid signatures are made under (ADR-0016).
+   *
+   * 2 (default) signs the canonical fields plus schemaVersion. 3 signs
+   * every top-level field except the signature envelope and the
+   * post-signing fields (verifications, receipts). Records made under 3
+   * are not readable by verifiers that implement only version 2, so
+   * switch to 3 only once those consumers are updated.
+   */
+  readonly hybridSchemaVersion: 2 | 3;
 }
 /**
  * Key management.
@@ -332,6 +343,27 @@ export interface LoggingConfig {
  * This is the only location where process.env
  * should be accessed.
  */
+/**
+ * HYBRID_SCHEMA_VERSION: unset means 2. Any other value must be exactly
+ * 2 or 3, and anything else throws, so a typo cannot pick a schema
+ * version silently.
+ */
+function parseHybridSchemaVersion(value: string | undefined): 2 | 3 {
+  if (value === undefined || value.trim() === "") {
+    return 2;
+  }
+
+  if (value === "2") {
+    return 2;
+  }
+
+  if (value === "3") {
+    return 3;
+  }
+
+  throw new Error(`HYBRID_SCHEMA_VERSION must be 2 or 3, got "${value}".`);
+}
+
 export function loadConfig(): Readonly<Config> {
   loadDotEnvOnce();
 
@@ -363,6 +395,10 @@ export function loadConfig(): Readonly<Config> {
       ),
 
       requireHybridSignature: process.env.HYBRID_SIGNATURE_REQUIRED === "true",
+
+      hybridSchemaVersion: parseHybridSchemaVersion(
+        process.env.HYBRID_SCHEMA_VERSION,
+      ),
     }),
 
     keys: Object.freeze({
