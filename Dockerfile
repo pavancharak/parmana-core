@@ -16,7 +16,7 @@
 # Stage 1: deps -- full (dev+prod) install, needed to run `tsc -b` across
 # the whole TypeScript project-reference graph.
 ################################################################################
-FROM node:24@sha256:3d27e5c11e5786e309ec3e03f93ae536eb36e6e5eb3714d5eb3300a36157add0 AS deps
+FROM node:24@sha256:14078204b6bb268c107ceff6d3c43f45a888105e5c2b18b14c32b3409d93a1b0 AS deps
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -69,7 +69,7 @@ RUN node node_modules/typescript7/bin/tsc --build packages/api
 # hoisting; a second install from the same lockfile is simpler and more
 # reliable, at the cost of a slower build (acceptable trade-off here).
 ################################################################################
-FROM node:24@sha256:3d27e5c11e5786e309ec3e03f93ae536eb36e6e5eb3714d5eb3300a36157add0 AS prod-deps
+FROM node:24@sha256:14078204b6bb268c107ceff6d3c43f45a888105e5c2b18b14c32b3409d93a1b0 AS prod-deps
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -108,7 +108,7 @@ RUN npm ci --omit=dev
 # Runs as the non-root `node` user node:24-slim already provides (uid
 # 1000) -- never root.
 ################################################################################
-FROM node:24-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20 AS runtime
+FROM node:24-slim@sha256:a5f4366e834695d5f363b920c104953a535d3a9864d1bdf74566a0ebe01daee5 AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 # Fixed paths within this image (policies/ is baked in; keys/ starts
