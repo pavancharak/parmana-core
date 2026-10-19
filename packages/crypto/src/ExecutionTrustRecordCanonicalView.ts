@@ -64,6 +64,24 @@ export function hybridCanonicalExecutionTrustRecord(
 export const WHOLE_RECORD_SCHEMA_VERSION = 3;
 
 /**
+ * True when a record created at createdAt is at or after the cutover (ADR-0016,
+ * option 2). The instant itself is included. A record whose createdAt does not
+ * parse is not treated as after the cutover; its signatures fail on their own.
+ */
+export function isAtOrAfterCutover(
+  createdAt: Date | string,
+  hybridRequiredFrom: string | undefined,
+): boolean {
+  if (hybridRequiredFrom === undefined) {
+    return false;
+  }
+
+  const created = new Date(createdAt).getTime();
+
+  return !Number.isNaN(created) && created >= Date.parse(hybridRequiredFrom);
+}
+
+/**
  * Hybrid schema versions this codebase can sign and verify. Anything else
  * is rejected rather than canonicalized under a guessed view.
  */

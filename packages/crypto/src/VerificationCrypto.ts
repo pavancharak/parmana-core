@@ -10,6 +10,7 @@ import {
   canonicalExecutionTrustRecord,
   hybridSignedCanonicalView,
   SUPPORTED_HYBRID_SCHEMA_VERSIONS,
+  isAtOrAfterCutover,
   WHOLE_RECORD_SCHEMA_VERSION,
 } from "./ExecutionTrustRecordCanonicalView.js";
 import { HybridSignatureProvider } from "./HybridSignatureProvider.js";
@@ -273,9 +274,18 @@ export class VerificationCrypto {
       // signed, so a missing hybrid envelope is a rejection even when
       // requireHybridSignature is off (ADR-0016, decision 4).
       //
+      //
+      // ADR-0016 option 2: a record created at or after the configured
+      // cutover must carry a hybrid envelope, so stripping the envelope
+      // makes it fail here.
+      //
       if (
         this.config.crypto.requireHybridSignature ||
-        declaredVersion === WHOLE_RECORD_SCHEMA_VERSION
+        declaredVersion === WHOLE_RECORD_SCHEMA_VERSION ||
+        isAtOrAfterCutover(
+          trustRecord.createdAt,
+          this.config.crypto.hybridRequiredFrom,
+        )
       ) {
         return false;
       }

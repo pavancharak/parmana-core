@@ -101,3 +101,47 @@ describe("loadConfig hybridSchemaVersion (ADR-0016)", () => {
     );
   });
 });
+
+describe("loadConfig hybridRequiredFrom (ADR-0016 cutover)", () => {
+  const originalPolicyDir = process.env.PARMANA_POLICY_DIR;
+  const originalCutover = process.env.HYBRID_REQUIRED_FROM;
+
+  afterEach(() => {
+    if (originalPolicyDir === undefined) {
+      delete process.env.PARMANA_POLICY_DIR;
+    } else {
+      process.env.PARMANA_POLICY_DIR = originalPolicyDir;
+    }
+
+    if (originalCutover === undefined) {
+      delete process.env.HYBRID_REQUIRED_FROM;
+    } else {
+      process.env.HYBRID_REQUIRED_FROM = originalCutover;
+    }
+  });
+
+  it("has no cutover when HYBRID_REQUIRED_FROM is unset", () => {
+    process.env.PARMANA_POLICY_DIR = "./policies";
+    delete process.env.HYBRID_REQUIRED_FROM;
+
+    expect(loadConfig().crypto.hybridRequiredFrom).toBeUndefined();
+  });
+
+  it("reads a UTC cutover", () => {
+    process.env.PARMANA_POLICY_DIR = "./policies";
+    process.env.HYBRID_REQUIRED_FROM = "2026-01-01T00:00:00.000Z";
+
+    expect(loadConfig().crypto.hybridRequiredFrom).toBe(
+      "2026-01-01T00:00:00.000Z",
+    );
+  });
+
+  it("refuses a cutover without a UTC designator", () => {
+    process.env.PARMANA_POLICY_DIR = "./policies";
+    process.env.HYBRID_REQUIRED_FROM = "2026-01-01T00:00:00.000";
+
+    expect(() => loadConfig()).toThrow(
+      'HYBRID_REQUIRED_FROM must be an ISO-8601 UTC timestamp ending in "Z"',
+    );
+  });
+});

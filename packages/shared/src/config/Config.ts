@@ -213,6 +213,13 @@ export interface CryptoConfig {
   readonly requireHybridSignature: boolean;
 
   /**
+   * Cutover (ADR-0016, option 2): a record created at or after this ISO-8601
+   * UTC instant must carry a valid hybrid envelope. Unset means no cutover.
+   * The same instant belongs in the offline verifier's trust file.
+   */
+  readonly hybridRequiredFrom?: string;
+
+  /**
    * Schema version that hybrid signatures are made under (ADR-0016).
    *
    * 2 (default) signs the canonical fields plus schemaVersion. 3 signs
@@ -379,6 +386,26 @@ function parseHybridSchemaVersion(
   throw new Error(`HYBRID_SCHEMA_VERSION must be 2 or 3, got "${value}".`);
 }
 
+/**
+ * HYBRID_REQUIRED_FROM: unset or blank means no cutover. Otherwise it must be
+ * an ISO-8601 UTC timestamp ending in "Z", so it means the same time everywhere.
+ */
+function parseHybridRequiredFrom(
+  value: string | undefined,
+): string | undefined {
+  if (value === undefined || value.trim() === "") {
+    return undefined;
+  }
+
+  if (!value.endsWith("Z") || Number.isNaN(Date.parse(value))) {
+    throw new Error(
+      `HYBRID_REQUIRED_FROM must be an ISO-8601 UTC timestamp ending in "Z", got "${value}".`,
+    );
+  }
+
+  return value;
+}
+
 export function loadConfig(): Readonly<Config> {
   loadDotEnvOnce();
 
@@ -410,6 +437,11 @@ export function loadConfig(): Readonly<Config> {
       ),
 
       requireHybridSignature: process.env.HYBRID_SIGNATURE_REQUIRED === "true",
+
+      ...optionalProperty(
+        "hybridRequiredFrom",
+        parseHybridRequiredFrom(process.env.HYBRID_REQUIRED_FROM),
+      ),
 
       hybridSchemaVersion: parseHybridSchemaVersion(
         process.env.HYBRID_SCHEMA_VERSION,

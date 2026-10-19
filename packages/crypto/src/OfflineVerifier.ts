@@ -10,6 +10,7 @@ import { canonicalExecutionIntent } from "./ExecutionIntentCanonicalView.js";
 import {
   canonicalExecutionTrustRecord,
   hybridSignedCanonicalView,
+  isAtOrAfterCutover,
   SUPPORTED_HYBRID_SCHEMA_VERSIONS,
   WHOLE_RECORD_SCHEMA_VERSION,
 } from "./ExecutionTrustRecordCanonicalView.js";
@@ -133,6 +134,7 @@ export interface OfflineVerificationResult {
 export async function verifyExecutionTrustRecordOffline(
   trustRecord: ExecutionTrustRecord,
   publicKeys: Readonly<Record<string, string>>,
+  options: { readonly hybridRequiredFrom?: string } = {},
 ): Promise<OfflineVerificationResult> {
   const malformed = malformedArtifact(trustRecord, "trustRecordHash");
 
@@ -256,8 +258,26 @@ export async function verifyExecutionTrustRecordOffline(
     hybridSignaturesValid = allValid;
   }
 
+  //
+  // ADR-0016 option 2: at or after the cutover, a record with no hybrid
+  // envelope is invalid. An envelope that is present has already been
+  // judged above.
+  //
+  const missingAtCutover =
+    hybridSignaturesValid === undefined &&
+    isAtOrAfterCutover(trustRecord.createdAt, options.hybridRequiredFrom);
+
+  if (missingAtCutover) {
+    errors.push(
+      `record created at or after hybridRequiredFrom (${options.hybridRequiredFrom}) has no valid hybrid envelope.`,
+    );
+  }
+
   const valid =
-    hashValid && legacySignatureValid && (hybridSignaturesValid ?? true);
+    hashValid &&
+    legacySignatureValid &&
+    (hybridSignaturesValid ?? true) &&
+    !missingAtCutover;
 
   return {
     valid,

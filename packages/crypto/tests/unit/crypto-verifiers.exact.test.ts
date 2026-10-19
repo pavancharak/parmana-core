@@ -672,5 +672,38 @@ describe.skipIf(!isMlDsa65Supported())(
         delete process.env.HYBRID_SIGNATURE_REQUIRED;
       }
     });
+
+    it("with HYBRID_REQUIRED_FROM, refuses a record created after the cutover that is stripped of its hybrid envelope", async () => {
+      const signing = new VerificationCrypto();
+      const record = await hybridRecord(signing);
+      const { signatures: _s, schemaVersion: _v, ...stripped } = record;
+
+      process.env.HYBRID_REQUIRED_FROM = "2025-12-31T00:00:00.000Z";
+      try {
+        await expect(
+          new VerificationCrypto().verify(stripped as ExecutionTrustRecord),
+        ).resolves.toBe(false);
+        await expect(new VerificationCrypto().verify(record)).resolves.toBe(
+          true,
+        );
+      } finally {
+        delete process.env.HYBRID_REQUIRED_FROM;
+      }
+    });
+
+    it("with HYBRID_REQUIRED_FROM after a record's createdAt, still accepts the stripped record (legacy rules)", async () => {
+      const signing = new VerificationCrypto();
+      const record = await hybridRecord(signing);
+      const { signatures: _s, schemaVersion: _v, ...stripped } = record;
+
+      process.env.HYBRID_REQUIRED_FROM = "2026-01-02T00:00:00.000Z";
+      try {
+        await expect(
+          new VerificationCrypto().verify(stripped as ExecutionTrustRecord),
+        ).resolves.toBe(true);
+      } finally {
+        delete process.env.HYBRID_REQUIRED_FROM;
+      }
+    });
   },
 );
