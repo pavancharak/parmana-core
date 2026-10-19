@@ -31,6 +31,17 @@ Introduce schema version 3. A v3 record carries a hybrid `signatures` array whos
 4. **Rollout.** Decide when v2 records stop being issued, and whether the verifier must refuse a record that claims v3 but carries no v3 signature.
 5. **Large messages.** Confirm whether the 4,096-byte commitment rule applies to v3 messages, which may be larger than v2 messages.
 
+## Audit of writes after signing (question 1)
+
+Done 2026-10-19 by reading the code. Results:
+
+- **Signed in one step.** `BusinessTrustRecordBuilder` builds a draft with placeholder `trustRecordHash` and `signature` values, hashes it, then signs it. Any v3 canonical view must exclude both placeholder fields explicitly.
+- **Attached after signing: `verifications` and `receipts`.** `appendVerification` (called by `verification-service.ts`) and `appendReceipt` (called by `receipt-service.ts`) add these arrays to the stored record after the trust record is signed. Receipts are signed separately by `ReceiptCrypto`. Verifications are outputs derived from the record. Under whole-record coverage both must be excluded, or every record that has been verified or receipted would stop verifying.
+- **Executions are replaced before signing.** `replaceExecution` is called from `execution-service.ts` during the execution pipeline (`RuntimeEngine.ts`, before the trust pipeline builds and signs the record). It does not change a signed record. A test should lock this order so a later change cannot break it.
+- **Overrides are not appended at runtime.** `appendOverride` has no caller in the runtime or API code, so no path changes overrides after signing.
+
+**Recommended exclusion list for v3:** `signature`, `signatures`, `verifications`, `receipts`. Document the two excluded output fields as not covered by any signature in the verifier's format document. Receipts keep their own signature.
+
 ## Implementation outline (after the decision)
 
 1. Audit post-signing writes to records. Resolve question 1.
