@@ -156,7 +156,7 @@ export interface CreateAppOptions {
    * neither endpoint is reachable without a caller identity there.
    */
   readonly stepUpVerifier?: PolicyChangeStepUpVerifier;
-  /** Operator kill switch (ADR-0017). Defaults to an in-memory switch, which is not durable. */
+  /** Operator kill switch (ADR-0017). Mounted only when supplied; the server supplies a durable one when KILL_SWITCH_ENABLED=true. */
   readonly killSwitch?: KillSwitchService;
   /** Which callers may approve each policy's changes (G-50). Unset lists no one. */
   readonly policyChangeCheckers?: PolicyChangeCheckerScope;

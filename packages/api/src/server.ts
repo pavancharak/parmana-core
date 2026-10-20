@@ -21,6 +21,7 @@ import { policyChangeApprovalRecordRepository } from "./repositories.js";
 import { schedulePolicyGovernanceIntegrityCheck } from "./bootstrap/schedulePolicyGovernanceIntegrityCheck.js";
 import { createRateLimitStore } from "./bootstrap/createRateLimitStore.js";
 import { createSandboxOptions } from "./bootstrap/createSandboxOptions.js";
+import { createKillSwitch } from "./bootstrap/createKillSwitch.js";
 import { createApp } from "./app.js";
 
 /**
@@ -68,7 +69,11 @@ const healthRateLimitStore = createRateLimitStore("health:");
 const publicRateLimitStore = createRateLimitStore("public:");
 const authFailureRateLimitStore = createRateLimitStore("auth-failure:");
 
+// ADR-0017: the kill switch is off unless KILL_SWITCH_ENABLED=true.
+const killSwitch = createKillSwitch();
+
 const app = createApp(application, {
+  ...(killSwitch ? { killSwitch } : {}),
   callerAuth: callerAuth.disabled
     ? "disabled"
     : {
