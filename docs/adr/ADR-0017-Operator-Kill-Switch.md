@@ -1,6 +1,6 @@
 # ADR-0017: Operator kill switch with a fresh, repeatable shutdown check
 
-**Status:** Decisions accepted on 2026-10-20 for the first build. Build not started; the design below is a draft for review.
+**Status:** Decisions accepted on 2026-10-20 for the first build, including the three open items. Design ready for a build; build not started.
 
 **Relates to:** `docs/site/security/regulation-mapping.mdx` (row "Draft MRM guidance, kill switch"); `docs/VERIFICATION-GAPS.md` G-122; `docs/REMAINING-WORK.md` section B.
 
@@ -102,13 +102,13 @@ These are firm requirements for the first build. They change the draft below.
 
 **Tests.** Trip refuses the next request. A restart does not clear the trip. An agent credential cannot trip or reset. Reset with one person is refused in production. The nonce is echoed. A deliberately broken build that forgets the stored state fails the restart test.
 
-**Open before build starts:** the reset policy for non-production, and where the probe history is stored.
+**Decided (2026-10-20):** outside production, reset needs one operator. The probe history is stored in the database, in the same table as the switch state. The probe runs from an external scheduler, not from Vercel. The design is ready for a build.
 
 ## Probe scheduling (checked 2026-10-20)
 
 Vercel's Hobby plan runs cron jobs once a day at most, with imprecise timing (Vercel's documentation, cron jobs usage and pricing). Production is on Hobby. A probe that runs every few minutes therefore cannot run inside Vercel on this plan.
 
-Options: run the probe from an external scheduler (for example a scheduled GitHub Actions workflow, which needs no new hosting), or upgrade the plan. Recommended: the external scheduler, with the results recorded in the probe history. This is a decision for the operator and is not yet made.
+Options: run the probe from an external scheduler (for example a scheduled GitHub Actions workflow, which needs no new hosting), or upgrade the plan. Decided (2026-10-20): the external scheduler, with the results recorded in the probe history.
 
 ## Open decisions
 

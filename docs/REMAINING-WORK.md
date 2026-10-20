@@ -68,7 +68,7 @@ Closed by decision on 2026-09-29:
 
 1. **The container image is not deployed anywhere, on purpose.** Production runs on Vercel, and Fly.io is not used. CI proves the image builds and boots in production mode. `fly.toml` and the Fly section of the runbook are kept for anyone who wants a container host, and have not been exercised since the Dockerfile was fixed. Closed by decision 2026-09-29: production is Vercel only.
 
-- **Operator kill switch: decisions recorded, build not started (G-122, ADR-0017).** Five decisions and seven review requirements are recorded in `docs/adr/ADR-0017-Operator-Kill-Switch.md`. The probe cannot run inside Vercel on the Hobby plan, so an external scheduler is recommended. Still open before the build: the reset policy outside production, where the probe history is stored, and the decision to use an external scheduler or upgrade the plan.
+- **Operator kill switch: design ready, build not started (G-122, ADR-0017).** All open decisions are recorded. Outside production, reset needs one operator. The probe history is stored in the database. The probe runs from an external scheduler. The build can start when you ask for it.
 
 ## C. Open items in the verification record (not re audited)
 
