@@ -23,6 +23,9 @@ import type { EndpointAddressLookup } from "@parmana/shared";
 import type { ExecutionTrustApplication } from "@parmana/runtime";
 
 import { createExecuteRouter } from "./routes/execute.js";
+import { createKillSwitchRouter } from "./routes/kill-switch.js";
+import { killSwitchGuard } from "./killSwitch/killSwitchGuard.js";
+import type { KillSwitchService } from "./killSwitch/KillSwitchService.js";
 import healthRoutes from "./routes/health.js";
 import openapiRoutes from "./routes/openapi.js";
 import handbookPdfRoutes from "./routes/handbook-pdf.js";
@@ -153,6 +156,8 @@ export interface CreateAppOptions {
    * neither endpoint is reachable without a caller identity there.
    */
   readonly stepUpVerifier?: PolicyChangeStepUpVerifier;
+  /** Operator kill switch (ADR-0017). Defaults to an in-memory switch, which is not durable. */
+  readonly killSwitch?: KillSwitchService;
   /** Which callers may approve each policy's changes (G-50). Unset lists no one. */
   readonly policyChangeCheckers?: PolicyChangeCheckerScope;
 
@@ -367,8 +372,31 @@ export function createApp(
    * silently falling back to an IP-keyed limit that would defeat the
    * whole point of keying by caller in the first place.
    */
+  //
+  // Operator kill switch (ADR-0017). The trip, reset and status routes are
+  // mounted without the guard, so the switch can always be cleared. The guard
+  // runs before execute, transactions and the two approval routes.
+  //
+  // Mounted only when a kill switch is supplied. The server does not supply one
+  // yet: the store is in memory, so a trip would not survive a restart (see
+  // ADR-0017). Until a durable store exists, production runs without it.
+  //
+  const killSwitch = options.killSwitch;
+  const killSwitchGuards =
+    killSwitch === undefined ? [] : [killSwitchGuard(killSwitch)];
+
+  if (killSwitch !== undefined) {
+    app.use("/kill-switch", createKillSwitchRouter(killSwitch));
+    app.post(
+      "/policies/pending-changes/:id/approve",
+      killSwitchGuard(killSwitch),
+    );
+    app.post("/sandbox/approvals", killSwitchGuard(killSwitch));
+  }
+
   app.use(
     "/execute",
+    ...killSwitchGuards,
     ...(options.callerAuth !== "disabled"
       ? [
           createExecuteRateLimiter(
@@ -415,6 +443,7 @@ export function createApp(
    */
   app.use(
     "/transactions",
+    ...killSwitchGuards,
     createTransactionsRouter(
       application,
       options.callerAuth !== "disabled"

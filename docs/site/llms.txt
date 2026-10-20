@@ -264,6 +264,11 @@ This file is generated from the documentation navigation. Do not edit it by hand
 ## REST API: Sandbox
 
 * [Get a demo approval (sandbox only)](https://docs.parmanasystems.com/api-reference/endpoints/create-sandbox-approval): **Sandbox only.** Returns an approval signed by the sandbox's demo approver, so you can try an approved request from a browser.
+## REST API: Kill Switch
+
+* [Trip the operator kill switch](https://docs.parmanasystems.com/api-reference/endpoints/trip-kill-switch): Stops new authorization and approval requests until an operator resets it.
+* [Reset the operator kill switch](https://docs.parmanasystems.com/api-reference/endpoints/reset-kill-switch): Lets authorization and approval requests through again.
+* [Read the kill switch state](https://docs.parmanasystems.com/api-reference/endpoints/get-kill-switch-status): Returns the current state with the nonce you sent echoed back.
 ## REST API: Refusal Records
 
 * [Verify a Refusal Record's signature](https://docs.parmanasystems.com/api-reference/endpoints/verify-refusal-record): Checks a Refusal Record's signature.

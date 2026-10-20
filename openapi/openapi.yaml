@@ -96,6 +96,9 @@ tags:
   - name: Sandbox
     description: Routes that exist only on the public sandbox (ADR-0014), for trying Parmana from a browser
 
+  - name: Kill Switch
+    description: Operator kill switch (ADR-0017). Trip and reset need the operator capabilities; status is open to any authenticated caller
+
   - name: Refusal Records
     description: Durable, signed evidence that a policy decision rejected a transaction (RFC-0021)
 
@@ -4436,6 +4439,148 @@ paths:
                       "code": "NON_HUMAN_CALLER_DENIED",
                     }
 
+  /kill-switch/trip:
+    post:
+      tags:
+        - Kill Switch
+      summary: Trip the operator kill switch
+      operationId: tripKillSwitch
+      description: |
+        Stops new authorization and approval requests until an operator resets it. Needs the
+        `kill-switch:trip` capability on the key. Trip, reset and status stay reachable while the switch is on.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  minLength: 1
+            example:
+              reason: suspicious refunds
+      responses:
+        "200":
+          description: Tripped. Returns the state.
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                active: true
+                version: 1
+                trippedBy: operator-a
+                trippedAt: "2026-10-20T10:00:00.000Z"
+                tripReason: suspicious refunds
+        "400":
+          description: The reason is missing.
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: reason is required.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: The key lacks the kill-switch:trip capability.
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: CAPABILITY_NOT_ALLOWED
+                message: This key does not hold the kill-switch:trip capability.
+  /kill-switch/reset:
+    post:
+      tags:
+        - Kill Switch
+      summary: Reset the operator kill switch
+      operationId: resetKillSwitch
+      description: |
+        Lets authorization and approval requests through again. Needs the `kill-switch:reset` capability on the key.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  minLength: 1
+            example:
+              reason: reviewed, safe
+      responses:
+        "200":
+          description: Reset. Returns the state.
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                active: false
+                version: 2
+                trippedBy: operator-a
+                trippedAt: "2026-10-20T10:00:00.000Z"
+                tripReason: suspicious refunds
+                resetBy: operator-b
+                resetAt: "2026-10-20T11:00:00.000Z"
+                resetReason: reviewed, safe
+        "400":
+          description: The reason is missing.
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: reason is required.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: The key lacks the kill-switch:reset capability.
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: CAPABILITY_NOT_ALLOWED
+                message: This key does not hold the kill-switch:reset capability.
+  /kill-switch/status:
+    get:
+      tags:
+        - Kill Switch
+      summary: Read the kill switch state
+      operationId: getKillSwitchStatus
+      description: |
+        Returns the current state with the nonce you sent echoed back. The response is not signed in this release (see ADR-0017).
+      parameters:
+        - name: nonce
+          description: A value you choose. It is echoed back, so an old response cannot pass as a current one.
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The state, with the nonce echoed.
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                active: true
+                version: 1
+                trippedBy: operator-a
+                trippedAt: "2026-10-20T10:00:00.000Z"
+                tripReason: suspicious refunds
+                nonce: check-1
+                signed: false
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /policies/pending-changes/{id}/approve:
     post:
       tags:

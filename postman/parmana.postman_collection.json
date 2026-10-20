@@ -1497,6 +1497,102 @@
       ]
     },
     {
+      "name": "Kill Switch",
+      "description": "Operator kill switch (ADR-0017). Trip and reset need the operator capabilities; status is open to any authenticated caller",
+      "item": [
+        {
+          "name": "Trip the operator kill switch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"suspicious refunds\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/kill-switch/trip",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "kill-switch",
+                "trip"
+              ]
+            },
+            "description": "operationId: tripKillSwitch\n\nStops new authorization and approval requests until an operator resets it. Needs the\n`kill-switch:trip` capability on the key. Trip, reset and status stay reachable while the switch is on."
+          }
+        },
+        {
+          "name": "Reset the operator kill switch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"reviewed, safe\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/kill-switch/reset",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "kill-switch",
+                "reset"
+              ]
+            },
+            "description": "operationId: resetKillSwitch\n\nLets authorization and approval requests through again. Needs the `kill-switch:reset` capability on the key."
+          }
+        },
+        {
+          "name": "Read the kill switch state",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/kill-switch/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "kill-switch",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "nonce",
+                  "value": "",
+                  "description": "A value you choose. It is echoed back, so an old response cannot pass as a current one.",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "operationId: getKillSwitchStatus\n\nReturns the current state with the nonce you sent echoed back. The response is not signed in this release (see ADR-0017)."
+          }
+        }
+      ]
+    },
+    {
       "name": "Refusal Records",
       "description": "Durable, signed evidence that a policy decision rejected a transaction (RFC-0021)",
       "item": [

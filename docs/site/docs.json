@@ -31,7 +31,7 @@
             "group": "Start here",
             "pages": [
               "index",
-                            "choose-your-path",
+              "choose-your-path",
               "quickstart",
               "how-parmana-thinks",
               "how-parmana-compares"
@@ -636,6 +636,14 @@
           {
             "group": "Sandbox",
             "pages": ["api-reference/endpoints/create-sandbox-approval"]
+          },
+          {
+            "group": "Kill Switch",
+            "pages": [
+              "api-reference/endpoints/trip-kill-switch",
+              "api-reference/endpoints/reset-kill-switch",
+              "api-reference/endpoints/get-kill-switch-status"
+            ]
           },
           {
             "group": "Refusal Records",

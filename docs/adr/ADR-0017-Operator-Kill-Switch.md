@@ -1,6 +1,6 @@
 # ADR-0017: Operator kill switch with a fresh, repeatable shutdown check
 
-**Status:** Decisions accepted on 2026-10-20 for the first build, including the three open items. Design ready for a build; build not started.
+**Status:** Decisions accepted on 2026-10-20. First slice built on branch `feat/kill-switch` (not merged): in-memory state, guard, trip, reset and status. Not durable, not signed, not deployed.
 
 **Relates to:** `docs/site/security/regulation-mapping.mdx` (row "Draft MRM guidance, kill switch"); `docs/VERIFICATION-GAPS.md` G-122; `docs/REMAINING-WORK.md` section B.
 
@@ -61,6 +61,23 @@ The switch is only useful if its state can be verified later. Proposed:
 - A tool reached directly, bypassing Parmana, is not stopped.
 - Signatures identify the key, not the build. Tying the signing key to the measured code is a separate open item.
 - The check proves the switch at the moment it runs. A schedule of checks is needed for ongoing assurance.
+
+## First slice: what is built (2026-10-20)
+
+Built on branch `feat/kill-switch`:
+
+- the switch state and service, with compare-and-write retries and fail-closed reads (`packages/api/src/killSwitch/`)
+- the guard on execute, transactions, the policy-change approve route and the sandbox approvals route
+- trip, reset and status routes, with `kill-switch:trip` and `kill-switch:reset` capabilities
+- the OpenAPI entries, the three code samples in each language, and the generated pages
+- unit and HTTP tests, including a trip, a refused execute, a reset, and a status that echoes the nonce
+
+Not built yet, and not safe to deploy until they are:
+
+- **Durable store.** The state is in memory. A trip is lost on restart. The app mounts the switch only when one is supplied, and the server does not supply one, so production is unchanged.
+- **Signed status and signed audit events** (ADR-0017, Audit; G-118 limits the signing key).
+- **Two-person reset in production** (decision 1). Reset is one-person in every environment for now.
+- **The probe** and the **third-party check**.
 
 ## Decisions (2026-10-20)
 
