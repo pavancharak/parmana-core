@@ -195,6 +195,8 @@ Also enabled on the repository:
 
 ### Verifying an SDK package from a GitHub release
 
+The `--source-uri` value names the repository the release was built from. It identifies the source that the provenance was signed for; checking the provenance does not require access to that repository.
+
 Each GitHub release of the SDKs carries the
 four packages built by GitHub Actions from the release's tag, and a `multiple.intoto.jsonl` file:
 [SLSA](https://slsa.dev) build provenance, signed with GitHub's identity for the release

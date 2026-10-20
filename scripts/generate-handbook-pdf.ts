@@ -22,6 +22,7 @@ const CHROME_CANDIDATES = [
   "C:/Program Files/Microsoft/Edge/Application/msedge.exe",
   "/usr/bin/google-chrome",
   "/usr/bin/chromium-browser",
+  "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
 ];
 
@@ -118,7 +119,9 @@ async function main(): Promise<void> {
   const executablePath = findBrowser();
   console.log(`Using browser: ${executablePath}`);
 
-  const browser = await puppeteer.launch({ executablePath, headless: true });
+  // Chromium refuses to start as root without --no-sandbox. Only root (a container or CI runner) gets that flag.
+  const args = process.getuid?.() === 0 ? ["--no-sandbox"] : [];
+  const browser = await puppeteer.launch({ executablePath, headless: true, args });
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: "networkidle0" });
 

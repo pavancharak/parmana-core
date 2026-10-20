@@ -79,12 +79,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/pavancharak/parmana"
+Homepage = "https://docs.parmanasystems.com"
 Website = "https://parmanasystems.com/"
 Documentation = "https://docs.parmanasystems.com"
-Repository = "https://github.com/pavancharak/parmana"
-Issues = "https://github.com/pavancharak/parmana/issues"
-Releases = "https://github.com/pavancharak/parmana/releases"
 
 [tool.setuptools]
 include-package-data = true
