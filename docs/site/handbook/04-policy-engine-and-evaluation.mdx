@@ -133,12 +133,7 @@ close that gap completely; this is a deliberate, bounded improvement over no che
   filesystem. Used in local development and in tests.
 - `SupabasePolicyRepository` (`packages/policy/src/SupabasePolicyRepository.ts`), reads/writes
   a `policies` table via a direct Postgres connection.
-  handbook: Vercel's serverless Functions run on a read-only filesystem, so the very first real
-  production policy approval (`PolicyChangeApprovalService.approve()`'s live-policy write,
-  covered fully in the policy governance chapter) failed with `EROFS` against
-  `FilePolicyRepository`. `packages/api/src/application.ts` now selects between the two based
-  on whether a real database is configured, constructing whichever one lazily rather than at
-  module import time (see that file's own doc comment for why eager construction was tried
+  Serverless functions run on a read-only filesystem, so a live policy write to local files cannot succeed. Deployments therefore store policies in Postgres.
 
 `PolicyRegistry` (`packages/policy/src/PolicyRegistry.ts`) is a separate, much smaller piece,
 an in-memory `Map` from `"name:version"` to registration metadata (`{ name, version, path }`).

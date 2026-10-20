@@ -43,7 +43,7 @@ explicitly from the store's own `resetTime` rather than trusting a package defau
 
 ### One shared store, two limiters
 
-version constructed a single `PostgresRateLimitStore` and passed it to both limiters.
+An earlier version constructed a single `PostgresRateLimitStore` and passed it to both limiters.
 `express-rate-limit` v8's own documented contract disallows this, a `Store` instance must
 not back more than one limiter, and the library throws `ERR_ERL_STORE_REUSE` the moment a
 second limiter's `init()` runs against an already-initialized store. Passing one shared

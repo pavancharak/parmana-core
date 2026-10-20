@@ -178,15 +178,9 @@ leaves behind, since there is no live effect to sign evidence about.
 - **`SupabasePolicyRepository`** (`packages/policy/src/SupabasePolicyRepository.ts`) :
   It stores
   `(policy_name, policy_version) -> content_json` rows in a `policies` table
-  (migration `20260916060000_add_policies_table.sql`) via a direct Postgres connection.
+  (the policies table migration) via a direct Postgres connection.
 
-serverless Functions run on a **read-only filesystem**. The very first time
-`PolicyChangeApprovalService.approve()` ran against a live, deployed instance (all ten of
-this system's original real policies had sat `PENDING_APPROVAL` for a month before that
-first real approval), the file write failed immediately with `EROFS`. `application.ts`
-now chooses between the two implementations based on `config.storage.provider`: memory or
-test conditions get `FilePolicyRepository`, any real database configuration gets
-`SupabasePolicyRepository`.
+Serverless functions run on a **read-only filesystem**, so policy content cannot be written to local files in a deployment. `application.ts` chooses the policy repository from `config.storage.provider`: memory or test configurations get `FilePolicyRepository`, and any real database configuration gets `SupabasePolicyRepository`.
 
 ### Deploy-time and periodic integrity checking
 
@@ -214,9 +208,9 @@ to `policies/{name}/{version}/policy.json` that skips the pending-change API ent
   file's live content and checks it against `policy_change_approval_records` via a
   read-only Supabase `anon` credential, scoped by RLS to that one table. A missing
   approval record, a content-hash mismatch, and any failure to complete the check at all
-  (Supabase unreachable, a malformed response) are all treated identically as a failure :
+  (Supabase unreachable, a malformed response) are all treated identically as a failure:
   there is no "couldn't check, let it through" path. `.github/workflows/ci.yml`'s
-  `verify-policy-approvals` job runs it with `--full-scan` on every push and pull request, and it is a
+  `verify-policy-approvals` job runs it with `--full-scan` on every push and pull request.
 
 ## How it enables things, with concrete examples
 

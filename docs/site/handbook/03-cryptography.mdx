@@ -135,10 +135,7 @@ reserved `alias/aws/` prefix. It refuses a full key ARN: a keyId often comes fro
 the record being verified, and an ARN can name a key in another AWS account whose public key
 anyone may read (audit, 2026-10-03). A UUID shaped keyId is treated as an alias name, never as a
 raw key ID.
-found by code review before any production traffic hit it: the very first version of this
-class passed the logical keyId straight through, which meant `KmsSigner.sign("default", data)`
-would have called AWS with `{ KeyId: "default" }` and failed immediately on every real
-signing attempt. Because of this function, `alias/default` has to actually exist in AWS, it
+A class that passes the logical keyId straight through would call AWS with `{ KeyId: "default" }` and fail on every signing attempt. Because of this function, `alias/default` has to actually exist in AWS, it
 is not a naming convenience, it is the literal resolution target for the logical id every call
 site already uses.
 
