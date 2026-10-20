@@ -88,11 +88,16 @@ Verify a change with `vercel env ls production` (both names should appear as Con
 
 Two keys were pasted into chat during setup. Treat both as exposed, and rotate them.
 
+## Decisions made on 2026-10-20
+
+- **Probe retention:** every probe row is kept. Nothing is deleted, so the one-year minimum always holds.
+- **Probe host:** a GitHub Actions workflow, `.github/workflows/kill-switch-probe.yml`, runs every 15 minutes. It sends one request to `/execute` with a probe key, and records the result with `POST /kill-switch/probes`. The run fails when a probe does not match the switch state. The workflow needs the repository secret `PARMANA_PROBE_KEY`.
+- **Signing (G-118):** status and audit events stay unsigned until a signing key tied to the build exists. Signing with the gateway key now was rejected, because the review requirement in ADR-0017 asks for a build-bound key.
+
 ## Still open
 
-- **Signed status and audit events (G-118).** Blocked on the signing key decision. Status responses are unsigned until then.
-- **Probe scheduler.** Nothing sends probe requests yet. It needs an owner, a host, and a key with `kill-switch:probe`.
-- **Probe retention.** Nothing deletes probe rows. The one-year minimum holds by default; a deletion job would need its own decision.
+- **Probe scheduler goes live.** The workflow is on branch `ci/kill-switch-probe`, not merged. To finish: create a key in production with only `kill-switch:probe`, add it to GitHub as the repository secret `PARMANA_PROBE_KEY`, run the workflow once by hand, then merge the branch.
+- **Signed status and audit events (G-118).** Waits for the build-bound signing key.
 - **Third-party check.** Needs a non-production deployment and an outside party.
 - **Two-person reset in production.** Enabled, but not yet exercised with two real operator keys.
 - **Key rotation.** Rotate the keys pasted during setup, and remove the old ones from `PARMANA_API_KEYS`.

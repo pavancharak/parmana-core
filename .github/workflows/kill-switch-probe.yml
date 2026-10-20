@@ -1,0 +1,75 @@
+name: Kill switch probe
+
+# ADR-0017, decision 3: an external scheduler sends one harmless request to
+# /execute with a probe key and reports what came back. Parmana records whether
+# the refusal matched the switch state (POST /kill-switch/probes).
+#
+# The probe key holds only kill-switch:probe. It needs the repository secret
+# PARMANA_PROBE_KEY. Until that secret exists, this workflow fails on every run.
+# Do not merge it to main before the secret and the production key are in place.
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kill-switch-probe
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    env:
+      PARMANA_URL: https://parmana-api-real.vercel.app
+      PARMANA_PROBE_KEY: ${{ secrets.PARMANA_PROBE_KEY }}
+
+    steps:
+      - name: Check the probe secret is set
+        run: |
+          if [ -z "$PARMANA_PROBE_KEY" ]; then
+            echo "PARMANA_PROBE_KEY is not set. Add it as a repository secret." >&2
+            exit 1
+          fi
+
+      - name: Send the probe request to /execute
+        run: |
+          set -uo pipefail
+          body="$RUNNER_TEMP/execute-body.json"
+          status=$(curl -s -o "$body" -w "%{http_code}" \
+            -X POST "$PARMANA_URL/execute" \
+            -H "Authorization: Bearer $PARMANA_PROBE_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{}')
+          error_code=$(jq -r '.error // empty' "$body" 2>/dev/null)
+          echo "PROBE_STATUS=$status" >> "$GITHUB_ENV"
+          echo "PROBE_ERROR_CODE=$error_code" >> "$GITHUB_ENV"
+
+      - name: Record the result with Parmana
+        run: |
+          set -uo pipefail
+          payload=$(jq -n \
+            --argjson status "$PROBE_STATUS" \
+            --arg errorCode "$PROBE_ERROR_CODE" \
+            '{status: $status} + (if $errorCode == "" then {} else {errorCode: $errorCode} end)')
+          response=$(curl -s -w "\n%{http_code}" \
+            -X POST "$PARMANA_URL/kill-switch/probes" \
+            -H "Authorization: Bearer $PARMANA_PROBE_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$payload")
+          code=$(echo "$response" | tail -n 1)
+          json=$(echo "$response" | sed '$d')
+          echo "Recorded probe (HTTP $code): $json"
+          if [ "$code" != "201" ]; then
+            echo "Parmana did not record the probe." >&2
+            exit 1
+          fi
+          if [ "$(echo "$json" | jq -r '.passed')" != "true" ]; then
+            echo "Probe FAILED: the switch state and the refusal do not match. See the recorded result." >&2
+            exit 1
+          fi

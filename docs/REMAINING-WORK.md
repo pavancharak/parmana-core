@@ -51,6 +51,23 @@ On 2026-09-21 Execution Intents (ADR-0012) were built and verified live, closing
 
 Closed on 2026-09-21 and removed from this table: `PARMANA_KEY_MATERIAL_JSON_B64` was removed from Vercel. Local Docker Desktop had no internet from containers, and the cause was a dead upstream link on the phone hotspot, not Docker. Once the link was back, container ping, DNS, HTTPS and image pulls all worked, and no Windows or Docker reset was needed.
 
+## A2. Kill switch: open items (added 2026-10-20)
+
+The kill switch is live in production with the switch not tripped. Runbook: `docs/runbooks/KILL-SWITCH-OPERATIONS.md`. Claim: CLAIMS 2.58. Gap: G-122 in `docs/VERIFICATION-GAPS.md`.
+
+| Item                                                                                               | Owner                         | Blocked by                                     | Done when                                                         |
+| -------------------------------------------------------------------------------------------------- | ----------------------------- | ---------------------------------------------- | ----------------------------------------------------------------- |
+| Create a production key holding only `kill-switch:probe`, and add it to `PARMANA_API_KEYS`         | Operator                      | Your go (it changes the production key list)   | The key is in production and nobody else has it                   |
+| Add the repository secret `PARMANA_PROBE_KEY` on GitHub                                            | Operator                      | The key above                                  | The secret is listed under Actions secrets                        |
+| Run "Kill switch probe" once by hand, from the Actions tab                                         | Operator                      | The secret above                               | The run passes and the probe is recorded (`passed: true`)         |
+| Merge `ci/kill-switch-probe` to `main`                                                             | Operator                      | The run above passing                          | The workflow runs every 15 minutes on `main`                      |
+| Exercise the two-person reset in production with two different operator keys                       | Two operators                 | A second operator key with `kill-switch:reset` | One reset returns `202` pending, then a second key returns `200`  |
+| Rotate the API keys pasted into chat during setup, and remove the old ones from `PARMANA_API_KEYS` | Operator                      | Nothing                                        | The old keys are refused with `401`                               |
+| Sign status and audit events (G-118)                                                               | Engineering                   | A build-bound signing key                      | Status returns a signature a verifier can check against the build |
+| Third-party check on a non-production deployment                                                   | Operator and an outside party | A non-production deployment                    | A written result is filed in this document                        |
+
+Decided on 2026-10-20: every probe row is kept, so the one-year minimum always holds; the probe runs from a scheduled GitHub Actions workflow; status stays unsigned until a build-bound key exists.
+
 ## B. Engineering follow up
 
 Done on 2026-09-20 after the first version of this page:
@@ -68,7 +85,7 @@ Closed by decision on 2026-09-29:
 
 1. **The container image is not deployed anywhere, on purpose.** Production runs on Vercel, and Fly.io is not used. CI proves the image builds and boots in production mode. `fly.toml` and the Fly section of the runbook are kept for anyone who wants a container host, and have not been exercised since the Dockerfile was fixed. Closed by decision 2026-09-29: production is Vercel only.
 
-- **Operator kill switch: live in production since 2026-10-20 (G-122, ADR-0017).** Switch not tripped. Runbook: `docs/runbooks/KILL-SWITCH-OPERATIONS.md`. Still to do: sign status and audit events (G-118); set up the probe scheduler with a `kill-switch:probe` key and an owner; enforce probe retention for one year; the third-party check on a non-production deployment; exercise the two-person reset with two real operator keys; rotate the keys that were pasted during setup.
+- **Operator kill switch:** open items are listed in section A2 above, with their owners.
 
 ## C. Open items in the verification record (not re audited)
 
