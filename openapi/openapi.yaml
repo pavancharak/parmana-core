@@ -4899,8 +4899,8 @@ paths:
                       "issuers":
                         [
                           {
-                            "approverId": "manager-charak1987",
-                            "keyId": "manager-charak1987-key-1",
+                            "approverId": "refund-manager",
+                            "keyId": "refund-manager-key-1",
                             "revoked": false,
                             "source": "code",
                             "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAVMs/E6N2XEQfEEWlwMg0wRS0L4svbZ0W785aAxUP78M=\n-----END PUBLIC KEY-----\n",

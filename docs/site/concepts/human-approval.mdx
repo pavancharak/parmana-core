@@ -224,10 +224,8 @@ Approvers can also be listed in the server code, `TRUSTED_APPROVAL_ISSUERS` in
 deploy. The code list is checked first.
 
 <Info>
-  The hosted deployment's code list holds one key, `manager-charak1987-key-1`,
-  revoked on 2026-09-30; its current approver key was added through maker
-  checker. Approver keys are always Ed25519, whatever signing algorithm the
-  server itself uses.
+  Approver keys are added through maker checker, not written into code. Approver
+  keys are always Ed25519, whatever signing algorithm the server itself uses.
 </Info>
 
 ## Add an approval to any action
