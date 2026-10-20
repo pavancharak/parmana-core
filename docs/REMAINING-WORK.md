@@ -14,6 +14,16 @@ Snapshot: 2026-09-21, with section F added and updated on 2026-09-25, section G 
 
 - **Approval email is not yet verified end to end (2026-10-20).** The sending domain `notify.parmanasystems.com` is verified in Resend, its DNS records are added at Hostinger, a test email from `approvals@notify.parmanasystems.com` arrived, and `APPROVAL_EMAIL_TO` is set on production. The approval email itself has not been sent: a local test is blocked by policy governance, which needs a second person to approve the policy. It will be verified the first time a real approval request runs.
 
+How to verify it, on the production or staging server, with a second person who is not the maker:
+
+1. The checker creates their own credentials on their own machine with `scripts/generate-api-key.ts`, using `--generate-step-up-key`. They send only the public `entry` block to the operator.
+2. The operator creates a maker key with `--credential-holder-type USER` and adds the checker's `entry` and the maker's `entry` to `PARMANA_API_KEYS`, then restarts the server.
+3. The operator proposes the policy change with `POST /policies/vendor-payment/2.1.0/pending-changes`.
+4. The checker approves it on their own machine with `scripts/local-review-action.ts`, pointing `--api-base` at the server.
+5. The operator reruns the refusal test. The request should now reach the approval step, and the approval email should arrive at `APPROVAL_EMAIL_TO`.
+
+Not done: a same-computer run. One person acting as both maker and checker would produce an approval record that names a second person who did not decide. The policy guide allows that shortcut only in a test environment, so it is not used to close this item.
+
 Every item says how it was verified. Items marked **not re audited** are copied from `docs/VERIFICATION-GAPS.md` as written there, and were not checked again on this date. The full record of what was found and closed stays in `docs/VERIFICATION-GAPS.md` and `docs/CLAIMS.md`.
 
 ## What was finished on 2026-09-20
