@@ -70,6 +70,18 @@ The switch is only useful if its state can be verified later. Proposed:
 4. **No per-agent halt in the first build.** The global halt comes first. Per-agent halts are added when a customer needs one.
 5. **The halt also blocks the approval endpoints.** An agent cannot approve its own requests while the switch is on.
 
+## Review requirements (2026-10-20)
+
+These are firm requirements for the first build. They change the draft below.
+
+1. **Trip, reset and status stay reachable while the switch is on.** Only the authorization and approval endpoints refuse. Without this, the switch cannot be cleared.
+2. **Fail closed on a read error.** If the switch state cannot be read, the request is refused.
+3. **Operators hold separate capabilities.** `kill-switch:trip` and `kill-switch:reset` are granted to named operator keys. An operator who can trip the switch cannot approve policy changes, so the same person cannot both trip and approve their own reset.
+4. **The third-party check runs on a non-production deployment only.** Tripping production to test it would stop real traffic.
+5. **Status is signed by the running build's key only once G-118 is fixed.** Until then, the signature proves which key signed the response, not which build answered. The status endpoint must say this in its documentation.
+6. **The probe's schedule must fit the hosting plan.** This is checked before the probe is designed. See Open decisions.
+7. **Trip and reset run in a database transaction**, so two operators acting at once cannot race.
+
 ## First build (draft, for review)
 
 **State.** One row in a `kill_switch_state` table: `active` (boolean), `tripped_by`, `tripped_at`, `trip_reason`, `reset_by`, `reset_at`, `reset_reason`. The row is read from the database on every authorization, so a restart does not clear it.
