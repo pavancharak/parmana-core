@@ -23,6 +23,7 @@ import { createPolicyChangeApprovalService } from "../packages/api/dist/bootstra
 import { assertPolicyGovernanceIntegrityAtStartup } from "../packages/api/dist/governance/verifyPolicyGovernanceIntegrityAtStartup.js";
 import { createRateLimitStore } from "../packages/api/dist/bootstrap/createRateLimitStore.js";
 import { createSandboxOptions } from "../packages/api/dist/bootstrap/createSandboxOptions.js";
+import { createKillSwitch } from "../packages/api/dist/bootstrap/createKillSwitch.js";
 import { createApp } from "../packages/api/dist/app.js";
 
 /**
@@ -88,7 +89,11 @@ async function buildApp() {
   const publicRateLimitStore = createRateLimitStore("public:");
   const authFailureRateLimitStore = createRateLimitStore("auth-failure:");
 
+  // ADR-0017: the kill switch is off unless KILL_SWITCH_ENABLED=true.
+  const killSwitch = createKillSwitch();
+
   const app = createApp(application, {
+    ...(killSwitch ? { killSwitch } : {}),
     callerAuth: callerAuth.disabled
       ? "disabled"
       : {
