@@ -145,6 +145,8 @@ const app = createApp(application, {
     nonceStore: new MemoryNonceStore(),
   }),
   policyChangeApprovalService,
+  // The checker is named for every policy this tutorial approves.
+  policyChangeCheckers: new Proxy({}, { get: () => ["checker"] }),
 });
 
 const server = await new Promise<import("node:http").Server>((resolve) => {

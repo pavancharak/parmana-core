@@ -125,6 +125,8 @@ const app = createApp(application, {
     nonceStore: new MemoryNonceStore(),
   }),
   policyChangeApprovalService,
+  // Only the named checker may approve this tutorial's policy (POLICY_CHANGE_CHECKERS).
+  policyChangeCheckers: { "tutorial-103-governed-policy": ["checker"] },
 });
 
 const server = await new Promise<import("node:http").Server>((resolve) => {
