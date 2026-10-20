@@ -3,36 +3,6 @@ title: "Quickstart"
 description: "Your first authorized execution: in one minute against the live sandbox with nothing installed, then in under 10 minutes on your own local server."
 ---
 
-## Step 0: try it live, with nothing installed
-
-Before you install anything, call the public sandbox. It is a live Parmana server with a published demo key, and its
-one action, `sandbox:receipt`, acts on nothing. These two requests show the core of Parmana in one minute: the first
-is refused because it has no signed human approval, and the [Playground](/playground) then walks you through getting
-one, sending again, and verifying the signed record.
-
-<CodeGroup>
-
-```bash cURL
-export PARMANA_API_KEY=<your-api-key>   # the published sandbox demo key
-
-curl -s https://parmana-sandbox.vercel.app/callers/me   -H "Authorization: Bearer $PARMANA_API_KEY"
-
-curl -s "https://parmana-sandbox.vercel.app/policies/in-effect?capability=sandbox:receipt"   -H "Authorization: Bearer $PARMANA_API_KEY"
-```
-
-```powershell PowerShell
-$env:PARMANA_API_KEY = "<your-api-key>"   # the published sandbox demo key
-$Headers = @{ Authorization = "Bearer $env:PARMANA_API_KEY" }
-Invoke-RestMethod https://parmana-sandbox.vercel.app/callers/me -Headers $Headers
-Invoke-RestMethod "https://parmana-sandbox.vercel.app/policies/in-effect?capability=sandbox:receipt" -Headers $Headers
-```
-
-</CodeGroup>
-
-The first answers `"callerId": "sandbox-visitor"`, allowed only `sandbox:receipt`. The second names the policy in
-effect, `sandbox-receipt` 1.0.0, and the facts a request must carry. Continue on the [Playground](/playground), or go
-on below to run the same thing on your own machine, where you play the approver too.
-
 ## Run it on your own machine
 
 <Note>
@@ -362,9 +332,8 @@ Running Parmana locally to evaluate it is permitted; any other use needs a writt
 ## Next
 
 <CardGroup cols={2}>
-  <Card title="Playground" icon="play" href="/playground">
-    The full flow against the live sandbox: refusal, signed approval, approved
-    release, offline verification.
+  <Card title="Integrate an agent" icon="plug" href="/agents/integrate">
+    Connect an agent to a Parmana server you run, with the approval flow.
   </Card>
   <Card title="How Parmana thinks" icon="brain" href="/how-parmana-thinks">
     The concepts behind what just happened: policy, authorization, the gateway,

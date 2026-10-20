@@ -122,13 +122,13 @@ With an SDK older than 1.6.0, call these routes directly; see [Grant an agent au
 
 ## Operations with no SDK method, and why
 
-| Operation                                                                                    | Why there is no method                                                                                                                                       |
-| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `GET /ready`                                                                                 | A readiness probe for load balancers and orchestrators. It answers `503` by design, which is not an error for a client to handle.                            |
-| `GET /.well-known/jwks.json`                                                                 | The same keys as `GET /keys/{keyId}`, in the form JWT libraries read. Use `publicKey()` / `public_key()`.                                                    |
-| `GET /`, `GET /openapi.yaml`, `GET /openapi.json`, `GET /api-manifest.json`                  | Descriptions of the API itself, for tools and people, not for application code.                                                                              |
-| `GET /parmana-handbook.pdf`, `GET /handbook/download-leads`, `POST /handbook/download-leads` | Serve the handbook download on the website. Not part of the product API.                                                                                     |
-| `POST /sandbox/approvals`                                                                    | Exists only on the public sandbox, for trying Parmana from a browser. In production a person signs every approval with `signApproval()` / `sign_approval()`. |
+| Operation                                                                                    | Why there is no method                                                                                                                                              |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /ready`                                                                                 | A readiness probe for load balancers and orchestrators. It answers `503` by design, which is not an error for a client to handle.                                   |
+| `GET /.well-known/jwks.json`                                                                 | The same keys as `GET /keys/{keyId}`, in the form JWT libraries read. Use `publicKey()` / `public_key()`.                                                           |
+| `GET /`, `GET /openapi.yaml`, `GET /openapi.json`, `GET /api-manifest.json`                  | Descriptions of the API itself, for tools and people, not for application code.                                                                                     |
+| `GET /parmana-handbook.pdf`, `GET /handbook/download-leads`, `POST /handbook/download-leads` | Serve the handbook download on the website. Not part of the product API.                                                                                            |
+| `POST /sandbox/approvals`                                                                    | Exists only on local development servers, for trying Parmana from a browser. In production a person signs every approval with `signApproval()` / `sign_approval()`. |
 
 ## Errors
 

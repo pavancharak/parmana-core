@@ -9,7 +9,7 @@ half of each named key. Parmana serves them without authentication.
 ## Fetch a key
 
 ```bash
-curl -s https://parmana-sandbox.vercel.app/keys/default
+curl -s https://your-parmana-server/keys/default
 ```
 
 ```json Response
@@ -28,8 +28,8 @@ curl -s https://parmana-sandbox.vercel.app/keys/default
 Pass the `pem` field to the verifiers, keyed by `keyId`:
 
 ```ts
-const key = await fetch("https://parmana-sandbox.vercel.app/keys/default").then(
-  (r) => r.json(),
+const key = await fetch("https://your-parmana-server/keys/default").then((r) =>
+  r.json(),
 );
 
 const publicKeys = { [key.keyId]: key.pem };
@@ -50,9 +50,9 @@ function keyIdsOf(record) {
 
 const publicKeys = {};
 for (const keyId of keyIdsOf(record)) {
-  const key = await fetch(
-    `https://parmana-sandbox.vercel.app/keys/${keyId}`,
-  ).then((r) => r.json());
+  const key = await fetch(`https://your-parmana-server/keys/${keyId}`).then(
+    (r) => r.json(),
+  );
   publicKeys[keyId] = key.pem;
 }
 ```

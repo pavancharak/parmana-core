@@ -9,12 +9,9 @@ description: "Call the real, deployed Parmana API directly: authentication, the 
 </Info>
 
 <Tip>
-  **No key for production? Use the public sandbox.** This page is about the
-  production deployment, which needs a key issued by its operator. To call a
-  live Parmana with no key of your own, use the sandbox at
-  `https://parmana-sandbox.vercel.app` with the published demo key: the same
-  code, its own database and keys, one action that acts on nothing. See
-  [Playground](/playground).
+  **No key for production?** This page is about the production deployment, which
+  needs a key issued by its operator. To try Parmana with no key, run a local
+  server with the [Quickstart](/quickstart).
 </Tip>
 
 ## Goal
@@ -63,7 +60,7 @@ credentials.
 Bearer token in the `Authorization` header. Production has **no public or demo key**: every
 key was rebuilt from scratch on 2026-09-27 and again on 2026-09-30, and the operator issues one
 per caller, scoped to the capabilities it needs (for example `paytm-refund-agent`, allowed only
-`paytm:refund`). To try requests without a key of your own, use the [sandbox](/playground).
+`paytm:refund`). To try requests without a key of your own, run a local server with the [Quickstart](/quickstart).
 
 Raw key values are shown once in a terminal and never committed to the repo; only their
 hashes live in the deployment's environment configuration. To mint a key for an agent, scoped to

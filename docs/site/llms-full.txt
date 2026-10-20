@@ -26,23 +26,17 @@ by step.
 </Info>
 
 <Tip>
-  **Try it now, with nothing to install.** The [Playground](/playground) is a
-  live Parmana sandbox with a published demo key: send a request, watch the
-  policy refuse it, get a signed approval, send it again, and verify the signed
-  record yourself. Every **Try it** panel in the [REST
-  API](/api-reference/introduction) tab calls the sandbox with the demo key
-  filled in.
+  **Try it on your own machine.** The [Quickstart](/quickstart) runs a local
+  Parmana server: a policy refuses a request, you give a signed approval, the
+  request goes through, and you verify the signed record yourself.
 </Tip>
 
 <Note>
   **AI agent reading this?** `GET /api-manifest.json` on any deployment is a
   single machine-readable index of the OpenAPI spec, auth scheme, and both real
   SDKs with their actual current package versions, no page-scraping required. To
-  call a live server right away, use the public sandbox at
-  `https://parmana-sandbox.vercel.app` with the demo key on the
-  [Playground](/playground). The [Quickstart](/quickstart) then gets you a
-  working local server and a real, committed test credential (not a production
-  secret) to call it with in under 10 minutes.
+  start, the [Quickstart](/quickstart) gets you a working local server and a
+  test credential (not a production secret) in under 10 minutes.
 </Note>
 
 ## What Parmana is
@@ -160,7 +154,7 @@ command or request. If two rows seem to apply, do the earlier one first.
 
 | Your goal                                                                                        | Start here                                                                                                                   | You need                                                                                       | First step                                                                  |
 | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| **See Parmana work right now**, with nothing installed and no account                            | [Playground](/playground)                                                                                                    | A browser, or cURL or PowerShell                                                               | `GET https://parmana-sandbox.vercel.app/callers/me` with the demo key       |
+| **See Parmana work right now** on your own machine                                               | [Quickstart](/quickstart)                                                                                                    | A browser, or cURL or PowerShell                                                               | `GET https://parmana-sandbox.vercel.app/callers/me` with the demo key       |
 | Put Parmana in front of an AI agent's actions, from **TypeScript**                               | [TypeScript SDK quickstart](/guides/typescript-sdk-quickstart)                                                               | Node 20 or later, a Parmana API URL, an API key                                                | `npm install @parmana/sdk`                                                  |
 | Put Parmana in front of an AI agent's actions, from **Python**                                   | [Python SDK quickstart](/guides/python-sdk-quickstart)                                                                       | Python 3.10 or later, a Parmana API URL, an API key                                            | `pip install parmana`                                                       |
 | Integrate from **any other language**, or with a plain HTTP client                               | [REST API introduction](/api-reference/introduction) and [Authentication](/api-reference/authentication)                     | Any HTTP client, a Parmana API URL, an API key                                                 | `POST /execute` with a Bearer key                                           |
@@ -226,7 +220,7 @@ If you are an AI agent, do not use this page to decide what to do. Follow [Integ
 
 ## Not sure yet
 
-Try the [Playground](/playground) first: real requests to a live sandbox, nothing to install. Then read [How Parmana
+Start with the [Quickstart](/quickstart): a local server, real requests and a signed record. Then read [How Parmana
 thinks](/how-parmana-thinks) and the [Quickstart](/quickstart). None of them needs an account.
 
 ---
@@ -256,12 +250,7 @@ background to interpret. If your situation is not covered, **stop and ask the op
 | `APPROVAL_SIGNALS` | Step 3: the keys of `signals.approval` in the server's answer. The table in [Every action needs a signed approval](#every-action-needs-a-signed-approval) shows them for the connector actions. | It is never empty. Every action needs one, reads included. If the operator says none, stop: that is not possible on a current server. |
 | `ACTION`           | The operator. The capability name, for example `paytm:refund`.                                                                                                                                  | Step 2 checks your key may use it.                                                                                                    |
 
-**No deployment yet? Practise on the public sandbox.** Use `PARMANA_URL` `https://parmana-sandbox.vercel.app`,
-`PARMANA_API_KEY` `<your-api-key>` (the published demo key: it is public, so the rule about never printing a key does
-not protect anything for it, but keep the habit), and `ACTION` `sandbox:receipt`; step 3 gives `APPROVAL_SIGNALS`
-`receiptApproved`. Every step below is the same, except that in the sandbox you get the approval yourself from
-`POST /sandbox/approvals` (see [If the action needs a person's approval](#if-the-action-needs-a-persons-approval)). The
-sandbox acts on nothing and everything sent to it is visible to every visitor. See [Playground](/playground).
+**No server yet? Run one on your own machine.** Follow the [Quickstart](/quickstart). Every step below works the same way against it.
 
 Do not ask for a policy version. Step 3 reads the version in effect from the server, because an approved new version
 replaces the old one at once and a request naming an old version is refused.
@@ -560,11 +549,7 @@ person has approved.
 5. If it is refused again, do not retry with the same approval: it may be expired, used, for a different resource or
    amount, or from an approver the server does not trust. Report the message to the operator.
 
-**In the sandbox only** (`https://parmana-sandbox.vercel.app`, `ACTION` `sandbox:receipt`), steps 1 and 2 are
-replaced by one request you make yourself: `POST /sandbox/approvals` with
-`{ "capability": "sandbox:receipt", "resourceId": "<intent.target>" }`. Expect `201` and an approval valid 5 minutes,
-accepted once. Then do steps 3 and 4. This route exists only in the sandbox; on any other server, never try to make an
-approval yourself. See [Playground](/playground).
+**On a local development server only**, you may need to make the approval yourself, from a key you control. On any other server, never try to make an approval yourself.
 
 For people: [Human approval](/concepts/human-approval) and [Approval notifications](/guides/approval-notifications).
 
@@ -829,36 +814,6 @@ Stop and ask the operator when:
 ## Quickstart
 
 Source: https://docs.parmanasystems.com/quickstart
-
-## Step 0: try it live, with nothing installed
-
-Before you install anything, call the public sandbox. It is a live Parmana server with a published demo key, and its
-one action, `sandbox:receipt`, acts on nothing. These two requests show the core of Parmana in one minute: the first
-is refused because it has no signed human approval, and the [Playground](/playground) then walks you through getting
-one, sending again, and verifying the signed record.
-
-<CodeGroup>
-
-```bash cURL
-export PARMANA_API_KEY=<your-api-key>   # the published sandbox demo key
-
-curl -s https://parmana-sandbox.vercel.app/callers/me   -H "Authorization: Bearer $PARMANA_API_KEY"
-
-curl -s "https://parmana-sandbox.vercel.app/policies/in-effect?capability=sandbox:receipt"   -H "Authorization: Bearer $PARMANA_API_KEY"
-```
-
-```powershell PowerShell
-$env:PARMANA_API_KEY = "<your-api-key>"   # the published sandbox demo key
-$Headers = @{ Authorization = "Bearer $env:PARMANA_API_KEY" }
-Invoke-RestMethod https://parmana-sandbox.vercel.app/callers/me -Headers $Headers
-Invoke-RestMethod "https://parmana-sandbox.vercel.app/policies/in-effect?capability=sandbox:receipt" -Headers $Headers
-```
-
-</CodeGroup>
-
-The first answers `"callerId": "sandbox-visitor"`, allowed only `sandbox:receipt`. The second names the policy in
-effect, `sandbox-receipt` 1.0.0, and the facts a request must carry. Continue on the [Playground](/playground), or go
-on below to run the same thing on your own machine, where you play the approver too.
 
 ## Run it on your own machine
 
@@ -1189,9 +1144,8 @@ Running Parmana locally to evaluate it is permitted; any other use needs a writt
 ## Next
 
 <CardGroup cols={2}>
-  <Card title="Playground" icon="play" href="/playground">
-    The full flow against the live sandbox: refusal, signed approval, approved
-    release, offline verification.
+  <Card title="Integrate an agent" icon="plug" href="/agents/integrate">
+    Connect an agent to a Parmana server you run, with the approval flow.
   </Card>
   <Card title="How Parmana thinks" icon="brain" href="/how-parmana-thinks">
     The concepts behind what just happened: policy, authorization, the gateway,
@@ -1686,9 +1640,9 @@ The full walkthrough, with rotation, revocation and errors, is
 [Manage approvers](/guides/manage-approvers).
 
 <Tip>
-  To try the flow without a key pair, use the public sandbox: `POST
-  /sandbox/approvals` signs a demo approval for `sandbox:receipt`, valid 300
-  seconds. See [Playground](/playground). It exists only in the sandbox.
+  To try the flow without a key pair of your own, run a local server with the
+  [Quickstart](/quickstart). The demo approval route it describes exists only on
+  local development servers.
 </Tip>
 
 Approvers can also be listed in the server code, `TRUSTED_APPROVAL_ISSUERS` in
@@ -2061,8 +2015,8 @@ POLICY_DENIED`, whatever your agent declares about eligibility and fraud.
 
 **8. Confirm a connector is registered** for your capability on this deployment. A `200` means
 the action was released and executed and its Trust Record signed; with no connector the answer is
-`503 CONNECTOR_NOT_REGISTERED` and nothing ran. To practise end to end with nothing installed, use
-the public sandbox's `sandbox:receipt` ([Playground](/playground)). To connect your own system
+`503 CONNECTOR_NOT_REGISTERED` and nothing ran. To practise end to end, run a local server with the
+[Quickstart](/quickstart). To connect your own system
 without code, see [Connect any external system](/guides/connect-any-external-system).
 
 **9. Verify independently**: `GET /refusal/:id` + `POST /refusal/verify` for a rejection,
@@ -4276,15 +4230,12 @@ Source: https://docs.parmanasystems.com/api-reference/introduction
 
 ## Base URL
 
-| Server         | Base URL                              | Key                                                                                                   | Use it for                                                                                  |
-| -------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Public sandbox | `https://parmana-sandbox.vercel.app`  | The published demo key, `<your-api-key>`, allowed only `sandbox:receipt` | Trying every request for real with nothing installed. **Try it** panels call it by default. |
-| Production     | `https://parmana-api-real.vercel.app` | A key issued by the operator                                                                          | Real actions. Not open to the public.                                                       |
-| Local          | `http://localhost:3000`               | The committed demo key or your own, see [Quickstart](/quickstart)                                     | Development on your own machine                                                             |
+| Server     | Base URL                              | Key                                                               | Use it for                            |
+| ---------- | ------------------------------------- | ----------------------------------------------------------------- | ------------------------------------- |
+| Production | `https://parmana-api-real.vercel.app` | A key issued by the operator                                      | Real actions. Not open to the public. |
+| Local      | `http://localhost:3000`               | The committed demo key or your own, see [Quickstart](/quickstart) | Development on your own machine       |
 
-The sandbox runs the same code as production, with its own database, keys and demo approver; its one action acts on
-nothing, and everything sent to it is visible to every visitor. See [Playground](/playground). The
-raw spec is also served at `GET /openapi.yaml` and, identically, JSON-serialized, at
+The raw spec is also served at `GET /openapi.yaml` and, identically, JSON-serialized, at
 `GET /openapi.json` (some tooling and most AI coding agents expect a `.json` path by
 convention; both describe the same spec), see [Deploy
 patterns](/guides/deploy-patterns#the-openapi-spec-endpoint).
@@ -4344,11 +4295,9 @@ spec. It is generated from the same OpenAPI file (`npm run generate:postman`), a
 if it falls behind.
 
 1. In Postman, choose **Import** and select the file.
-2. Create an environment with a secret variable `apiKey` holding your API key, or the sandbox demo key
-   `<your-api-key>` to try it. The collection sends it as `Authorization: Bearer {{apiKey}}`; requests the API
+2. Create an environment with a secret variable `apiKey` holding your API key. The collection sends it as `Authorization: Bearer {{apiKey}}`; requests the API
    marks as public send no key. Never put a real key in the collection itself.
-3. `baseUrl` defaults to the public sandbox, `https://parmana-sandbox.vercel.app`. Override it in the environment for
-   production (`https://parmana-api-real.vercel.app`) or your own deployment, for example `http://localhost:3000`.
+3. `baseUrl` defaults to `http://localhost:3000`. Set it in the environment to your own deployment.
 
 Most example bodies use sample ids, so replace them before sending. Approving or rejecting a
 policy change needs a fresh step up signature from the approver's own machine; the sample
@@ -4443,7 +4392,7 @@ action: a policy and a signed human approval do that, after the key is accepted
 ## Send a bearer key
 
 ```bash
-curl https://parmana-sandbox.vercel.app/callers/me \
+curl http://localhost:3000/callers/me \
   -H "Authorization: Bearer $PARMANA_API_KEY"
 ```
 
@@ -4525,14 +4474,6 @@ the old one. The full procedure is in [API keys](/self-hosted/api-keys) and
 The server refuses to start with no keys configured, unless `PARMANA_AUTH_DISABLED=true`. That switch turns
 authentication off entirely, for local development and the tutorials only, and the server prints a warning at every
 start. **Never set it on a real deployment.** A sandbox refuses to start with it.
-
-## The sandbox demo key
-
-The public sandbox, `https://parmana-sandbox.vercel.app`, has one published key: `<your-api-key>`. It is caller
-`sandbox-visitor`, may act only as itself, and may invoke only `sandbox:receipt`, an action that acts on nothing. It is
-not a human key, so governance routes refuse it with `403 NON_HUMAN_CALLER_DENIED`. Every visitor shares it, so every
-visitor can read what others sent with it. It works only on the sandbox; production and every other deployment refuse
-it with `401`. See [Playground](/playground).
 
 ## Rate limits
 
@@ -5941,10 +5882,8 @@ Source: https://docs.parmanasystems.com/guides/typescript-sdk-quickstart
 </Note>
 
 <Tip>
-  **Want to see it work before you clone anything?** Point the SDK at the public sandbox:
-  `new ParmanaClient({ endpoint: "https://parmana-sandbox.vercel.app", apiKey: "<your-api-key>", timeout: 120_000 })`.
-  The [Playground](/playground) has a complete script for the published `@parmana/sdk`, run against the sandbox
-  before it was published.
+  **Want a server to call first?** Run one locally with the [Quickstart](/quickstart), then point the SDK at it:
+  `new ParmanaClient({ endpoint: "http://localhost:3000", apiKey: "<your-api-key>" })`.
 </Tip>
 
 ## Prerequisites
@@ -6730,8 +6669,8 @@ From 1.3.0 the verifiers accept the SDK's own models, as above, as well as the r
   `ExecutionTrustRecord` drops a `null` `previousChainHash`, so
   `verify_execution_trust_record_offline` reports a hash mismatch for a record
   that carries one, although the record is intact. Records from a Postgres
-  backed server, such as the [public sandbox](/playground), carry it. With
-  1.4.0, verify the record as the server sent it, for example `requests.get(f"
+  backed server, such as a local development server, carry it. With 1.4.0,
+  verify the record as the server sent it, for example `requests.get(f"
   {url}/trust-records/
   {business_transaction_id}", headers=headers).json()`, or a saved JSON file.
   The TypeScript SDK is not affected.
@@ -7043,11 +6982,8 @@ Source: https://docs.parmanasystems.com/guides/python-sdk-quickstart
 </Note>
 
 <Tip>
-  **Want to see it work before you clone anything?** Point the SDK at the public
-  sandbox: `ParmanaClient(endpoint="https://parmana-sandbox.vercel.app",
-  api_key="<your-api-key>", timeout=120)`. The
-  [Playground](/playground) has a complete script for the published `parmana`
-  package, run against the sandbox before it was published.
+  **Want a server to call first?** Run one locally with the [Quickstart](/quickstart), then point the SDK at it:
+  `ParmanaClient(endpoint="http://localhost:3000", api_key="<your-api-key>")`.
 </Tip>
 
 ## Prerequisites
@@ -8275,7 +8211,7 @@ is the value multiplied by the number of instances, and the server logs `rate_li
 | `RESEND_EMAIL_DOMAIN`     | With `APPROVAL_EMAIL_TO`, unless `APPROVAL_EMAIL_FROM` is set | None                                                | Set by the Resend integration                       | The verified sending domain.                                                                                                                                                    |
 | `APPROVAL_WEBHOOK_SECRET` | With `APPROVAL_WEBHOOK_URL`                                   | None                                                | A random string, or a secret reference              | Signs each event (HMAC SHA256). See `PARMANA_SECRETS_PROVIDER`. Setting only one of the two stops the server at startup.                                                        |
 
-## Browser access and the public sandbox
+## Browser access
 
 [ADR-0014](https://github.com/pavancharak/parmana/blob/main/docs/adr/ADR-0014-Public-Sandbox-And-Docs-Playground.md).
 Production sets none of these except, if it wants a browser console, `PARMANA_CORS_ORIGINS`.
@@ -8626,7 +8562,7 @@ slsa-verifier verify-image ghcr.io/pavancharak/parmana-api@sha256:<digest> \
 ```
 
 Verify by digest, not by tag: a tag can be moved, a digest cannot. Then run that digest. The
-provenance covers this image only. The hosted API and the public sandbox are built by Vercel from
+provenance covers this image only. The hosted API is built by Vercel from
 the same repository, not from this image, and carry no SLSA provenance.
 
 These are hygiene checks on the code and its supply chain. They do not replace a review of the

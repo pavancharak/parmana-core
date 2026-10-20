@@ -167,7 +167,7 @@ is the value multiplied by the number of instances, and the server logs `rate_li
 | `RESEND_EMAIL_DOMAIN`     | With `APPROVAL_EMAIL_TO`, unless `APPROVAL_EMAIL_FROM` is set | None                                                | Set by the Resend integration                       | The verified sending domain.                                                                                                                                                    |
 | `APPROVAL_WEBHOOK_SECRET` | With `APPROVAL_WEBHOOK_URL`                                   | None                                                | A random string, or a secret reference              | Signs each event (HMAC SHA256). See `PARMANA_SECRETS_PROVIDER`. Setting only one of the two stops the server at startup.                                                        |
 
-## Browser access and the public sandbox
+## Browser access
 
 [ADR-0014](https://github.com/pavancharak/parmana/blob/main/docs/adr/ADR-0014-Public-Sandbox-And-Docs-Playground.md).
 Production sets none of these except, if it wants a browser console, `PARMANA_CORS_ORIGINS`.

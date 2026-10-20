@@ -1,6 +1,6 @@
 ---
 title: "Talk and demo videos"
-description: "The outline of a 20 minute talk on Parmana, and scripts for four short demo videos you can follow step by step against the public sandbox."
+description: "The outline of a 20 minute talk on Parmana, and scripts for four short demo videos you can follow step by step against a local server."
 ---
 
 ## The talk
@@ -39,7 +39,7 @@ The background for each slide is in the [technical paper](/evaluation/paper),
 ## Demo videos
 
 Four short videos. Each script below is the exact sequence to follow, so you can also run it yourself. Every step
-uses the [public sandbox](/playground) and its published demo key, so nothing real is acted on. Send only demo text:
+runs against a local server, so nothing real is acted on. Send only demo text:
 everything sent to the sandbox is visible to every visitor.
 
 ### 1. Parmana in 90 seconds
@@ -48,14 +48,14 @@ everything sent to the sandbox is visible to every visitor.
 | ---- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | 0:00 | The docs home page                                                            | AI agents now take real actions: refunds, merges, posts. Parmana decides whether each one may run, and records what happened.  |
 | 0:15 | The pipeline diagram on [How Parmana thinks](/how-parmana-thinks)             | Every action goes through a policy, a person's signed approval, and a gateway that holds the credentials the agent never gets. |
-| 0:35 | The [Playground](/playground) cURL script, step 3: a request with no approval | Here an agent asks for an action with no approval. Refused, and the refusal is signed.                                         |
+| 0:35 | The [Quickstart](/quickstart) cURL script, step 3: a request with no approval | Here an agent asks for an action with no approval. Refused, and the refusal is signed.                                         |
 | 0:50 | Steps 4 and 5: get a demo approval, send again                                | With a signed approval for this exact target, it is released, and a signed record comes back.                                  |
 | 1:05 | Step 7: the same approval again                                               | The approval was single use. Sending it twice is refused.                                                                      |
 | 1:15 | [Verify in browser](/verification/verify-in-browser)                          | Anyone can check the record offline with only the public key. Links are below.                                                 |
 
 ### 2. The whole flow against the sandbox, about 3 minutes
 
-1. Open a terminal. Show the two `export` lines from the [Playground](/playground) cURL tab. Say: this is a published
+1. Open a terminal. Show the two `export` lines from the [Quickstart](/quickstart) cURL tab. Say: this is a published
    demo key; it can only call `sandbox:receipt`.
 2. Run step 1, `GET /callers/me`. Point at `sandbox-visitor` and its one capability.
 3. Run step 2, the policy in effect. Point at the approval signal: this policy approves only with a signed approval

@@ -24,12 +24,7 @@ background to interpret. If your situation is not covered, **stop and ask the op
 | `APPROVAL_SIGNALS` | Step 3: the keys of `signals.approval` in the server's answer. The table in [Every action needs a signed approval](#every-action-needs-a-signed-approval) shows them for the connector actions. | It is never empty. Every action needs one, reads included. If the operator says none, stop: that is not possible on a current server. |
 | `ACTION`           | The operator. The capability name, for example `paytm:refund`.                                                                                                                                  | Step 2 checks your key may use it.                                                                                                    |
 
-**No deployment yet? Practise on the public sandbox.** Use `PARMANA_URL` `https://parmana-sandbox.vercel.app`,
-`PARMANA_API_KEY` `<your-api-key>` (the published demo key: it is public, so the rule about never printing a key does
-not protect anything for it, but keep the habit), and `ACTION` `sandbox:receipt`; step 3 gives `APPROVAL_SIGNALS`
-`receiptApproved`. Every step below is the same, except that in the sandbox you get the approval yourself from
-`POST /sandbox/approvals` (see [If the action needs a person's approval](#if-the-action-needs-a-persons-approval)). The
-sandbox acts on nothing and everything sent to it is visible to every visitor. See [Playground](/playground).
+**No server yet? Run one on your own machine.** Follow the [Quickstart](/quickstart). Every step below works the same way against it.
 
 Do not ask for a policy version. Step 3 reads the version in effect from the server, because an approved new version
 replaces the old one at once and a request naming an old version is refused.
@@ -328,11 +323,7 @@ person has approved.
 5. If it is refused again, do not retry with the same approval: it may be expired, used, for a different resource or
    amount, or from an approver the server does not trust. Report the message to the operator.
 
-**In the sandbox only** (`https://parmana-sandbox.vercel.app`, `ACTION` `sandbox:receipt`), steps 1 and 2 are
-replaced by one request you make yourself: `POST /sandbox/approvals` with
-`{ "capability": "sandbox:receipt", "resourceId": "<intent.target>" }`. Expect `201` and an approval valid 5 minutes,
-accepted once. Then do steps 3 and 4. This route exists only in the sandbox; on any other server, never try to make an
-approval yourself. See [Playground](/playground).
+**On a local development server only**, you may need to make the approval yourself, from a key you control. On any other server, never try to make an approval yourself.
 
 For people: [Human approval](/concepts/human-approval) and [Approval notifications](/guides/approval-notifications).
 

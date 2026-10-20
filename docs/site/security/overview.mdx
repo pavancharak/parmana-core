@@ -242,7 +242,7 @@ slsa-verifier verify-image ghcr.io/pavancharak/parmana-api@sha256:<digest> \
 ```
 
 Verify by digest, not by tag: a tag can be moved, a digest cannot. Then run that digest. The
-provenance covers this image only. The hosted API and the public sandbox are built by Vercel from
+provenance covers this image only. The hosted API is built by Vercel from
 the same repository, not from this image, and carry no SLSA provenance.
 
 These are hygiene checks on the code and its supply chain. They do not replace a review of the

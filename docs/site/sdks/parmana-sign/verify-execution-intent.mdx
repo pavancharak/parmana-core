@@ -38,12 +38,12 @@ The same `OfflineVerificationResult` as
 
 ```ts
 const response = await fetch(
-  `https://parmana-sandbox.vercel.app/execution-intents/${businessTransactionId}`,
+  `https://your-parmana-server/execution-intents/${businessTransactionId}`,
   { headers: { Authorization: `Bearer ${process.env.PARMANA_API_KEY}` } },
 ).then((r) => r.json());
 
-const key = await fetch("https://parmana-sandbox.vercel.app/keys/default").then(
-  (r) => r.json(),
+const key = await fetch("https://your-parmana-server/keys/default").then((r) =>
+  r.json(),
 );
 
 const result = await verifyExecutionIntentOffline(response.intent, {

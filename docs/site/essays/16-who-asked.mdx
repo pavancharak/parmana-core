@@ -54,7 +54,7 @@ On Monday, I pull the leaked key's events, verify the chain, and list every atte
 - **Authentication can be switched off.** For local development and tutorials, a setting turns caller authentication off. Policy and approval checks still run, but nobody knows who asked. The server warns at every start and reports it on its readiness check, and the public sandbox refuses to start with it.
 - **Key management is manual.** There is no API to create or rotate keys. The operator issues them and redeploys.
 - **It does not stop someone with database access and the signing key.** The chain makes tampering detectable. It does not make it impossible for someone who holds both.
-- **In the public sandbox, chains start partway.** The sandbox deletes visitor data on a schedule, so the oldest surviving event points at a deleted one. In production nothing deletes these rows.
+- **A chain can start partway.** A server that deletes audit rows on a schedule leaves the oldest surviving event pointing at a deleted one. In production nothing deletes these rows.
 
 ## The takeaway
 

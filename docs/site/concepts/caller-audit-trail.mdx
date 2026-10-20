@@ -108,12 +108,10 @@ that head being stored somewhere the database cannot rewrite. See `docs/CLAIMS.m
 </Warning>
 
 <Note>
-  **In the public sandbox, chains start partway.** The sandbox deletes visitor
-  data on a schedule (see [Playground](/playground)), including caller audit
-  events, and on 2026-10-02 all of it was deleted at once. A sandbox caller's
-  oldest surviving event therefore still names the hash of a deleted one, and
-  `verifyChain` reports a break at position 1. That is expected there; in
-  production nothing deletes these rows.
+  **A chain can start partway.** A server that deletes its audit rows on a
+  schedule leaves the oldest surviving event naming the hash of a deleted one,
+  and `verifyChain` then reports a break at position 1. That is expected on such
+  a server. In production nothing deletes these rows.
 </Note>
 
 ## Verifying a chain, standalone

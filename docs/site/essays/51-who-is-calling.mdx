@@ -27,7 +27,7 @@ The caller layer has one rule: if Parmana cannot establish and record who is cal
 
 **No silent default.** In the code, the option that mounts caller authentication is required. Every place that builds the API must say either "here is the authenticator and the audit sink" or, literally, "disabled". There is no third choice where forgetting means open.
 
-**Refuse to start.** A production server with no keys configured does not start, unless an operator sets the switch that turns authentication off, explicitly. When that switch is on, the readiness check reports it in its own response, with a warning, so monitoring that already polls readiness can alert on a field rather than hope someone reads a log. The public sandbox refuses to start with it at all.
+**Refuse to start.** A production server with no keys configured does not start, unless an operator sets the switch that turns authentication off, explicitly. When that switch is on, the readiness check reports it in its own response, with a warning, so monitoring that already polls readiness can alert on a field rather than hope someone reads a log.
 
 **Refuse to run unrecorded.** Every authentication outcome, accepted or rejected, is written to the caller audit trail before the request goes further. If that write fails, the request fails with `503 AUDIT_UNAVAILABLE`. No retry, no buffer, no queue. A valid key whose "accepted" event cannot be stored gets the 503, not the 200 it would otherwise get. I accepted that availability cost on purpose: an action that runs with no record of who asked contradicts the point of the product.
 

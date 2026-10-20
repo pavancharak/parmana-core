@@ -502,8 +502,8 @@ From 1.3.0 the verifiers accept the SDK's own models, as above, as well as the r
   `ExecutionTrustRecord` drops a `null` `previousChainHash`, so
   `verify_execution_trust_record_offline` reports a hash mismatch for a record
   that carries one, although the record is intact. Records from a Postgres
-  backed server, such as the [public sandbox](/playground), carry it. With
-  1.4.0, verify the record as the server sent it, for example `requests.get(f"
+  backed server, such as a local development server, carry it. With 1.4.0,
+  verify the record as the server sent it, for example `requests.get(f"
   {url}/trust-records/
   {business_transaction_id}", headers=headers).json()`, or a saved JSON file.
   The TypeScript SDK is not affected.

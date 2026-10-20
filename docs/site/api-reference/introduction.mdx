@@ -18,15 +18,12 @@ description: "45 paths and 48 operations, generated from openapi/openapi.yaml in
 
 ## Base URL
 
-| Server         | Base URL                              | Key                                                                                                   | Use it for                                                                                  |
-| -------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Public sandbox | `https://parmana-sandbox.vercel.app`  | The published demo key, `<your-api-key>`, allowed only `sandbox:receipt` | Trying every request for real with nothing installed. **Try it** panels call it by default. |
-| Production     | `https://parmana-api-real.vercel.app` | A key issued by the operator                                                                          | Real actions. Not open to the public.                                                       |
-| Local          | `http://localhost:3000`               | The committed demo key or your own, see [Quickstart](/quickstart)                                     | Development on your own machine                                                             |
+| Server     | Base URL                              | Key                                                               | Use it for                            |
+| ---------- | ------------------------------------- | ----------------------------------------------------------------- | ------------------------------------- |
+| Production | `https://parmana-api-real.vercel.app` | A key issued by the operator                                      | Real actions. Not open to the public. |
+| Local      | `http://localhost:3000`               | The committed demo key or your own, see [Quickstart](/quickstart) | Development on your own machine       |
 
-The sandbox runs the same code as production, with its own database, keys and demo approver; its one action acts on
-nothing, and everything sent to it is visible to every visitor. See [Playground](/playground). The
-raw spec is also served at `GET /openapi.yaml` and, identically, JSON-serialized, at
+The raw spec is also served at `GET /openapi.yaml` and, identically, JSON-serialized, at
 `GET /openapi.json` (some tooling and most AI coding agents expect a `.json` path by
 convention; both describe the same spec), see [Deploy
 patterns](/guides/deploy-patterns#the-openapi-spec-endpoint).
@@ -86,11 +83,9 @@ spec. It is generated from the same OpenAPI file (`npm run generate:postman`), a
 if it falls behind.
 
 1. In Postman, choose **Import** and select the file.
-2. Create an environment with a secret variable `apiKey` holding your API key, or the sandbox demo key
-   `<your-api-key>` to try it. The collection sends it as `Authorization: Bearer {{apiKey}}`; requests the API
+2. Create an environment with a secret variable `apiKey` holding your API key. The collection sends it as `Authorization: Bearer {{apiKey}}`; requests the API
    marks as public send no key. Never put a real key in the collection itself.
-3. `baseUrl` defaults to the public sandbox, `https://parmana-sandbox.vercel.app`. Override it in the environment for
-   production (`https://parmana-api-real.vercel.app`) or your own deployment, for example `http://localhost:3000`.
+3. `baseUrl` defaults to `http://localhost:3000`. Set it in the environment to your own deployment.
 
 Most example bodies use sample ids, so replace them before sending. Approving or rejecting a
 policy change needs a fresh step up signature from the approver's own machine; the sample

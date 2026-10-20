@@ -40,7 +40,7 @@ Requires Node.js 24.6.0 or later. ML-DSA-65 support in `node:crypto` starts at 2
 
     ```bash
     curl -s -H "Authorization: Bearer $PARMANA_API_KEY" \
-      https://parmana-sandbox.vercel.app/trust-records/$BUSINESS_TRANSACTION_ID > record.json
+      https://your-parmana-server/trust-records/$BUSINESS_TRANSACTION_ID > record.json
     ```
 
   </Step>
@@ -48,7 +48,7 @@ Requires Node.js 24.6.0 or later. ML-DSA-65 support in `node:crypto` starts at 2
     The record names its key in `signature.keyId`. Public keys need no API key.
 
     ```bash
-    curl -s https://parmana-sandbox.vercel.app/keys/default > key.json
+    curl -s https://your-parmana-server/keys/default > key.json
     ```
 
     See [Public keys](/sdks/parmana-sign/public-keys) for hybrid records and caching.

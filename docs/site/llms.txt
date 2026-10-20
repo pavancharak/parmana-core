@@ -30,7 +30,7 @@ This file is generated from the documentation navigation. Do not edit it by hand
 * [Proof audit](https://docs.parmanasystems.com/evaluation/proof-audit): An independent audit of the five authorization claims: what passed, what failed, what was fixed, and what is still open.
 * [Case studies: public incidents](https://docs.parmanasystems.com/evaluation/case-studies): Three publicly reported AI agent incidents, what happened, and what Parmana would and would not have changed, under stated conditions.
 * [Technical paper](https://docs.parmanasystems.com/evaluation/paper): Parmana: policy-checked execution with signed human approval and offline-verifiable records for AI agent actions. Design, threat model, evaluation and limitations.
-* [Talk and demo videos](https://docs.parmanasystems.com/evaluation/talk-and-videos): The outline of a 20 minute talk on Parmana, and scripts for four short demo videos you can follow step by step against the public sandbox.
+* [Talk and demo videos](https://docs.parmanasystems.com/evaluation/talk-and-videos): The outline of a 20 minute talk on Parmana, and scripts for four short demo videos you can follow step by step against a local server.
 * [License and evaluation](https://docs.parmanasystems.com/license): The Parmana server is proprietary software, source-available for evaluation only. The client and connector SDKs are Apache 2.0.
 ## Get started: For AI agents
 

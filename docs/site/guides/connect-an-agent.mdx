@@ -155,8 +155,8 @@ POLICY_DENIED`, whatever your agent declares about eligibility and fraud.
 
 **8. Confirm a connector is registered** for your capability on this deployment. A `200` means
 the action was released and executed and its Trust Record signed; with no connector the answer is
-`503 CONNECTOR_NOT_REGISTERED` and nothing ran. To practise end to end with nothing installed, use
-the public sandbox's `sandbox:receipt` ([Playground](/playground)). To connect your own system
+`503 CONNECTOR_NOT_REGISTERED` and nothing ran. To practise end to end, run a local server with the
+[Quickstart](/quickstart). To connect your own system
 without code, see [Connect any external system](/guides/connect-any-external-system).
 
 **9. Verify independently**: `GET /refusal/:id` + `POST /refusal/verify` for a rejection,
