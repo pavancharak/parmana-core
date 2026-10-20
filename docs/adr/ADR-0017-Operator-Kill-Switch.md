@@ -104,6 +104,12 @@ These are firm requirements for the first build. They change the draft below.
 
 **Open before build starts:** the reset policy for non-production, and where the probe history is stored.
 
+## Probe scheduling (checked 2026-10-20)
+
+Vercel's Hobby plan runs cron jobs once a day at most, with imprecise timing (Vercel's documentation, cron jobs usage and pricing). Production is on Hobby. A probe that runs every few minutes therefore cannot run inside Vercel on this plan.
+
+Options: run the probe from an external scheduler (for example a scheduled GitHub Actions workflow, which needs no new hosting), or upgrade the plan. Recommended: the external scheduler, with the results recorded in the probe history. This is a decision for the operator and is not yet made.
+
 ## Open decisions
 
 1. Does reset need two people, as policy changes do? Recommended: yes, for production.
