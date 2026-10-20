@@ -68,6 +68,8 @@ Closed by decision on 2026-09-29:
 
 1. **The container image is not deployed anywhere, on purpose.** Production runs on Vercel, and Fly.io is not used. CI proves the image builds and boots in production mode. `fly.toml` and the Fly section of the runbook are kept for anyone who wants a container host, and have not been exercised since the Dockerfile was fixed. Closed by decision 2026-09-29: production is Vercel only.
 
+- **Operator kill switch: design proposed, not decided (G-122, ADR-0017).** Parmana has only partial stop controls, and no fresh check that a stop is in force. The design is written up in `docs/adr/ADR-0017-Operator-Kill-Switch.md`. The open decisions are listed there: whether reset needs two people, who holds the operator credential, how long probe history is kept, and whether a per-agent halt is needed.
+
 ## C. Open items in the verification record (not re audited)
 
 Read the entry in `docs/VERIFICATION-GAPS.md` before relying on any of these.
@@ -274,6 +276,7 @@ Do not edit it by hand: run `npx tsx scripts/gap-status.ts`. `npm test` fails wh
 | G-119 | Hybrid signing is configured on a test project, not on production.                                  | open, operator decision                                                                        |
 | G-120 | A schema version 2 record can be downgraded by anyone who can write to storage.                     | open, accepted for records created before a cutover, closed for records after one              |
 | G-121 | Verifiers outside this repository read only schema version 2.                                       | open, gates schema version 3 issuance                                                          |
+| G-122 | Parmana has no operator kill switch, and no fresh check that a stop is in force.                    | open, design proposed in ADR-0017, not decided                                                 |
 
 <!-- gap-status:end -->
 
