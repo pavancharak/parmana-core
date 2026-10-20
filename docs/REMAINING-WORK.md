@@ -68,7 +68,7 @@ Closed by decision on 2026-09-29:
 
 1. **The container image is not deployed anywhere, on purpose.** Production runs on Vercel, and Fly.io is not used. CI proves the image builds and boots in production mode. `fly.toml` and the Fly section of the runbook are kept for anyone who wants a container host, and have not been exercised since the Dockerfile was fixed. Closed by decision 2026-09-29: production is Vercel only.
 
-- **Operator kill switch: live in production since 2026-10-20 (G-122, ADR-0017).** Switch not tripped. Runbook: `docs/runbooks/KILL-SWITCH-OPERATIONS.md`. Still to do: sign status and audit events (G-118); set up the probe scheduler with a `kill-switch:probe` key and an owner; enforce probe retention for one year; the third-party check on a non-production deployment; exercise the two-person reset with two real operator keys; rotate the keys that were pasted during setup.
+- **Operator kill switch: live in production since 2026-10-20 (G-122, ADR-0017).** Switch not tripped. Runbook: `docs/runbooks/KILL-SWITCH-OPERATIONS.md`. Decided: keep every probe row; probe runs from a scheduled GitHub Actions workflow; status stays unsigned until a build-bound key exists (G-118). Still to do: merge the probe workflow (`ci/kill-switch-probe`) once the `PARMANA_PROBE_KEY` secret and a `kill-switch:probe` production key exist; the third-party check on a non-production deployment; exercise the two-person reset with two real operator keys; rotate the keys that were pasted during setup.
 
 ## C. Open items in the verification record (not re audited)
 

@@ -89,7 +89,7 @@ Not built yet, and not safe to deploy until they are:
 
 Live in production, with the switch not tripped. `KILL_SWITCH_ENABLED=true` and `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR=true` are set as Vercel Config values. Both migrations are applied. A check with a valid key returned `{"active":false,"version":0,"nonce":"verify-1","signed":false}`. Operations are in [docs/runbooks/KILL-SWITCH-OPERATIONS.md](../runbooks/KILL-SWITCH-OPERATIONS.md).
 
-Still open: signed status and audit events (G-118), the probe scheduler, probe retention, the third-party check, and an exercised two-person reset.
+Decided 2026-10-20: every probe row is kept; the probe runs from a scheduled GitHub Actions workflow (branch `ci/kill-switch-probe`, merged once the probe secret and key exist); status stays unsigned until a build-bound signing key exists (G-118). Still open: merging the probe workflow, the third-party check, and an exercised two-person reset.
 
 ## How the durable store was tested
 
