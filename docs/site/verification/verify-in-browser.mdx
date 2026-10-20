@@ -63,10 +63,10 @@ Python SDK's offline verifier is tested against.
 
 ## What is checked
 
-| Check         | How                                                                                                                                                                                                                                                                                     |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The hash      | The signed fields (`trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `overrides`, `executions`, `createdAt`) are serialized as canonical JSON, with object keys sorted, and hashed with SHA-256. The result must equal `trustRecordHash`.                       |
-| The signature | The `signature` field must be an Ed25519 signature over the same canonical bytes, by the key you paste. A record over 4096 bytes may be signed as a commitment (a fixed prefix and the SHA-512 of the content), which AWS KMS requires; both forms are accepted, as in `@parmana/sign`. |
+| Check         | How                                                                                                                                                                                                                                                                                                                            |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| The hash      | The signed fields (`trustRecordId`, `businessTransactionId`, `transaction`, `authorization`, `overrides`, `executions`, `createdAt`) are serialized as canonical JSON, with object keys sorted, and hashed with SHA-256. The result must equal `trustRecordHash`.                                                              |
+| The signature | The `signature` field must be an Ed25519 signature over the same canonical bytes, by the key you paste. A record over 4096 bytes may be signed as a commitment (a fixed prefix and the SHA-512 of the content), which AWS KMS requires; both forms are accepted, as in the [offline verifier](/verification/offline-verifier). |
 
 The code is
 [docs/site/snippets/record-verifier.jsx](https://github.com/pavancharak/parmana/blob/main/docs/site/snippets/record-verifier.jsx).
@@ -82,12 +82,12 @@ offline verifier and rejects changed records.
 - **Hybrid signatures.** A record can also carry an ML-DSA-65 signature in a `signatures`
   array. Browsers have no ML-DSA support yet, so this page checks only the Ed25519 signature
   and says so.
-- **Other record types.** Execution Intents are signed too; verify them with
-  [`@parmana/sign`](/sdks/parmana-sign/overview). Refusal Records are checked with
+- **Other record types.** Execution Intents are signed too; verify them with the offline
+  check in the [Python SDK](/sdks/python) or [TypeScript SDK](/sdks/typescript). Refusal Records are checked with
   `POST /refusal/verify` ([Refusal Records](/concepts/refusal-records)).
 - **That the action was authorized.** A signature shows what Parmana recorded and that it was
   not altered. It does not show that nothing bypassed Parmana. See the
   Audit guide.
 
-For scripted or bulk checks, use [`@parmana/sign`](/sdks/parmana-sign/overview) or
+For scripted or bulk checks, use the [offline verifier](/verification/offline-verifier) or
 [Verify independently](/guides/verify-independently).

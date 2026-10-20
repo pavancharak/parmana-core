@@ -81,6 +81,7 @@
             "pages": [
               "verification/overview",
               "verification/verify-in-browser",
+              "verification/offline-verifier",
               "replay/overview",
               "cryptography/overview",
               "storage/overview"
@@ -373,27 +374,6 @@
               "sdks/reference/python/serialization/decoder",
               "sdks/reference/python/serialization/encoder",
               "sdks/reference/python/transport/http_transport"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Verification SDK",
-        "groups": [
-          {
-            "group": "Get started",
-            "pages": [
-              "sdks/parmana-sign/overview",
-              "sdks/parmana-sign/public-keys"
-            ]
-          },
-          {
-            "group": "API reference",
-            "pages": [
-              "sdks/parmana-sign/verify-trust-record",
-              "sdks/parmana-sign/verify-execution-intent",
-              "sdks/parmana-sign/signing-primitives",
-              "sdks/parmana-sign/results-and-errors"
             ]
           }
         ]

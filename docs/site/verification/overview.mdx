@@ -73,16 +73,12 @@ unit level.
 
 ## Verify without Parmana's server
 
-The checks above run on Parmana's server. To check a record yourself, with no network
-access and no trust in Parmana's servers or database, use the
-[Verification SDK](/sdks/parmana-sign/overview), `@parmana/sign` on npm:
+The checks above run on Parmana's server. To check a record yourself, with no network access and
+no trust in Parmana's servers or database, use the [offline verifier](/verification/offline-verifier),
+which is a separate repository:
 
-```ts
-import { verifyExecutionTrustRecordOffline } from "@parmana/sign";
-
-const result = await verifyExecutionTrustRecordOffline(record, {
-  [key.keyId]: key.pem,
-});
+```sh
+node bin/parmana-verify.mjs proof.json trust.json
 ```
 
 It checks the record hash and every signature, including the ML-DSA-65 signature on hybrid

@@ -44,14 +44,8 @@ like `sha3-512`/`blake3` have no real provider), a record hashed under a genuine
 algorithm could not be distinguished from a tampered one by this check alone, since the
 algorithm used isn't itself recorded on the artifact separately from the hash value.
 
-The comment also names a real relationship worth knowing: this module is the reference a
-separately published, independently maintained package,
-`@parmana/sign` (`github.com/pavancharak/parmana-sign`, see §3.12), is built
-on. Since version 0.2.0 that package also ships this module's Execution Trust Record and
-Execution Intent field mappings, the hybrid envelope, and the Ed25519 large-message
-commitment, as `verifyExecutionTrustRecordOffline` and `verifyExecutionIntentOffline`. Its
-compatibility tests run against records signed by this repository's own code, so a third
-party can verify Parmana records with `npm install @parmana/sign` alone.
+The offline verifier is a separate, public repository, `pavancharak/parmana-verifier`. It recomputes a
+record's hash and checks its signatures against keys the verifier operator pins. It makes no network calls.
 
 ### Large records signed under AWS KMS
 

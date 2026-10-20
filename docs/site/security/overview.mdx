@@ -4,8 +4,8 @@ description: "What Parmana actually guarantees, precisely scoped, and, as import
 ---
 
 <Info>
-  This page is a direct mirror of sections 3 and 5, read that
-  file for the authoritative version.
+  This page is a direct mirror of sections 3 and 5, read that file for the
+  authoritative version.
 </Info>
 
 ## Claims that hold, with their scope
@@ -46,8 +46,8 @@ algorithm at once, with verification requiring both signatures independently, fa
 This is a built, tested capability (`CRYPTO_MODE=hybrid` is real, validated
 configuration), but it is opt-in and not running anywhere today: every deployed
 environment signs Ed25519 alone.
-**Third-party verification:** `@parmana/sign` 0.2.0 and later, the public verification
-SDK on npm, recognizes the hybrid envelope: `verifyExecutionTrustRecordOffline` checks
+**Third-party verification:** the public [offline verifier](/verification/offline-verifier)
+recognizes the hybrid envelope and checks
 the record hash, the legacy Ed25519 signature, and every entry in `signatures`, offline,
 with only the record and the public keys. This repository's own
 `packages/crypto/src/OfflineVerifier.ts` (TypeScript) does the same, and

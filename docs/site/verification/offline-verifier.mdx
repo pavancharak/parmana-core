@@ -1,0 +1,73 @@
+---
+title: "Offline verifier"
+description: "Check an Execution Trust Record yourself: no network calls, no trust in Parmana's servers, only the keys you pin."
+---
+
+<Info>
+  **[AVAILABLE]**. The offline verifier is a separate, public repository:
+  [`pavancharak/parmana-verifier`](https://github.com/pavancharak/parmana-verifier),
+  Apache License 2.0. It requires Node.js 24 or later and has no dependencies.
+  It is not published to npm; run it from a clone of that repository.
+</Info>
+
+It recomputes an Execution Trust Record's hash and checks its signatures against the keys you
+pin in a trust file. It makes no network calls, so a result does not depend on Parmana's servers
+or database.
+
+## Run it
+
+```sh
+node bin/parmana-verify.mjs <proof.json> <trust.json>
+node bin/parmana-verify.mjs key-fingerprint <public-key.pem>
+```
+
+- `proof.json` is the Execution Trust Record.
+- `trust.json` lists each key you accept:
+
+```json
+{
+  "keys": [
+    {
+      "keyId": "default",
+      "algorithm": "ed25519",
+      "publicKeyPem": "-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----\n",
+      "fingerprint": "sha256:<64 hex digits>",
+      "validFrom": "2026-01-01T00:00:00.000Z",
+      "validUntil": null,
+      "compromised": false
+    }
+  ]
+}
+```
+
+The command prints one line of JSON and exits with `0` when the record is valid, `1` when it is
+invalid (with the reasons), and `2` for a usage error, a missing file or invalid JSON.
+
+## Pin a key
+
+1. Get the operator's public key and the `sha256:` fingerprint they published. Get the fingerprint
+   from a source other than the one that gave you the key, such as a signed message.
+2. Run `node bin/parmana-verify.mjs key-fingerprint public-key.pem` on the PEM you received.
+3. Compare the two fingerprints character by character. If they differ, do not use the key.
+4. Only then add the key to your trust file with that fingerprint.
+
+## Trust rules
+
+A key is used only when all of these hold:
+
+- its PEM hashes to the pinned fingerprint (SHA-256 of the SPKI DER encoding);
+- the algorithm named by the signature matches the algorithm in the trust file;
+- it is not marked `compromised`;
+- the record's `createdAt` is at or after `validFrom` and before `validUntil`, if set.
+
+A compromised key is rejected whatever the timestamp, so signatures it made stay void.
+
+## What it does not show
+
+- It shows that a record was signed by the key you pinned. It cannot show that the key belongs to
+  Parmana; that depends on how you obtained and compared the fingerprint.
+- For schema version 2 records, only the fields listed in the repository's format document are
+  protected. For schema version 3, every field except the signature envelope, `verifications` and
+  `receipts` is protected. Check that `coverage` is `full` when that matters.
+- It does not check the policy a record cites, the decision logic, or whether the action reached
+  the external system.
