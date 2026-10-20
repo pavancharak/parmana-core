@@ -325,6 +325,7 @@ This file is generated from the documentation navigation. Do not edit it by hand
 * [Limitations](https://docs.parmanasystems.com/security/limitations): What Parmana does not claim, the specific threats its tests actually cover, and what you're responsible for.
 * [OWASP mapping](https://docs.parmanasystems.com/security/owasp-mapping): Each risk in the OWASP Top 10 for LLM Applications (2026) and the OWASP Top 10 for Agentic Applications (2026): what Parmana does about it, the evidence, and what it leaves to you.
 * [Regulation mapping](https://docs.parmanasystems.com/security/regulation-mapping): How Parmana supports human oversight and record keeping under the EU AI Act (Articles 12, 14 and 26), the NIST AI RMF, ISO/IEC 42001 and RBI guidance for Indian banks and NBFCs: what it provides, the evidence, and what stays with your organization.
+* [Operator kill switch](https://docs.parmanasystems.com/security/operator-kill-switch): How an operator stops every new execution and approval in a Parmana deployment, how two people reset it, how to check it, and what it does not stop.
 ## Deploy and operate: Operate
 
 * [Troubleshooting](https://docs.parmanasystems.com/troubleshooting): Real problems encountered while building and using this repo, with real causes.

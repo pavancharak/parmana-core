@@ -1,0 +1,81 @@
+---
+title: "Operator kill switch"
+description: "How an operator stops every new execution and approval in a Parmana deployment, how two people reset it, how to check it, and what it does not stop."
+---
+
+An operator kill switch stops a Parmana deployment from releasing anything new. Once it is tripped, every new
+request to act, and every approval, is refused before it runs. It is the stop an operator uses when an agent or a
+connector misbehaves and the system must halt at once. The design is recorded in ADR-0017 in the repository.
+
+## What a trip stops
+
+A tripped switch refuses these with `503` and the error code `KILL_SWITCH_ACTIVE`:
+
+- new execution requests (`POST /execute`)
+- new transactions (`/transactions`)
+- policy change approvals (`POST /policies/pending-changes/{id}/approve`)
+- sandbox approvals (`POST /sandbox/approvals`)
+
+The trip, reset, status and probe routes stay reachable while the switch is tripped, so the switch can always be
+cleared and checked.
+
+The stop is stored in the database, not in memory, so a restart does not clear it. If the stored state cannot be
+read, the switch counts as tripped. A database fault therefore refuses requests rather than letting them through.
+
+## Routes
+
+| Route                             | Capability needed   | Result                                              |
+| --------------------------------- | ------------------- | --------------------------------------------------- |
+| `POST /kill-switch/trip`          | `kill-switch:trip`  | `200` with the state. Requires a `reason`.          |
+| `POST /kill-switch/reset`         | `kill-switch:reset` | `202` pending, or `200` when the reset is complete. |
+| `GET /kill-switch/status?nonce=…` | any valid key       | The state, with your nonce echoed.                  |
+| `POST /kill-switch/probes`        | `kill-switch:probe` | `201` with the recorded probe result.               |
+
+A key without the capability is refused with `403 CAPABILITY_NOT_ALLOWED`. A request with no key gets `401`.
+The endpoint pages in the API reference show the full request and response for each route.
+
+## Two-person reset
+
+In production, reset takes two different operators. Each uses their own named key:
+
+1. The first operator calls `POST /kill-switch/reset` with a reason. The answer is `202` and `outcome: "pending"`.
+2. A second operator, with their own key, calls the same route with a reason. The answer is `200` and
+   `outcome: "reset"`, and new requests are accepted again.
+
+The same operator cannot complete their own reset (`409 SAME_OPERATOR_CANNOT_CONFIRM_RESET`). A new trip cancels
+a pending reset.
+
+## Checking the switch
+
+`GET /kill-switch/status` returns the current state with the nonce you send echoed back, so an old response cannot
+pass as a current one. The response is not signed yet, so a verifier cannot yet confirm it came from the server.
+
+```bash
+curl -s -H "Authorization: Bearer $PARMANA_API_KEY" \
+  "https://your-parmana-server/kill-switch/status?nonce=check-1"
+```
+
+A response with `"active": false` means the switch is not tripped.
+
+## What it does not stop
+
+- **Actions already released.** A call admitted before the trip can still complete. The switch does not recall it.
+- **Tools reached directly.** A tool or system that an agent reaches without going through Parmana is not stopped.
+- **One agent alone.** The switch stops every caller at once. It cannot halt a single agent.
+- **Unsigned status.** The status response and the audit events are not signed yet. A signed proof of the
+  switch state is not available until a signing key tied to the build exists.
+
+## Checking it from outside
+
+A probe sends a request to `/execute` while the switch is in some state and reports what came back. Parmana records
+whether the refusal matched the switch state, and every probe result is kept. The probe is planned as a scheduled job
+outside Parmana, and it is not running in production yet.
+
+## Open items
+
+- Signing of status and audit events, which waits on a build-bound signing key.
+- The scheduled probe, which needs a production probe key before it can run.
+- A third-party check on a non-production deployment.
+- An exercise of two-person reset with two real operator keys.
+
+The repository has the operating runbook and the full list of open items, with owners.

@@ -725,7 +725,8 @@
               "security/overview",
               "security/limitations",
               "security/owasp-mapping",
-              "security/regulation-mapping"
+              "security/regulation-mapping",
+              "security/operator-kill-switch"
             ]
           },
           {
