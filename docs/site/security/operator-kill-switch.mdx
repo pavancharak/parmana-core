@@ -68,8 +68,8 @@ A response with `"active": false` means the switch is not tripped.
 ## Checking it from outside
 
 A probe sends a request to `/execute` while the switch is in some state and reports what came back. Parmana records
-whether the refusal matched the switch state, and every probe result is kept. The probe is planned as a scheduled job
-outside Parmana. It runs every 15 minutes from a scheduled GitHub Actions workflow.
+whether the refusal matched the switch state, and every probe result is kept. The probe runs every 15 minutes from
+a scheduled GitHub Actions workflow, outside Parmana.
 
 ## Open items
 
@@ -77,4 +77,4 @@ outside Parmana. It runs every 15 minutes from a scheduled GitHub Actions workfl
 - A third-party check on a non-production deployment.
 - An exercise of two-person reset with two real operator keys.
 
-The repository has the operating runbook and the full list of open items, with owners.
+The operating runbook is in the repository under `docs/runbooks/KILL-SWITCH-OPERATIONS.md`.
