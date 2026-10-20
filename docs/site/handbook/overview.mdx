@@ -97,41 +97,6 @@ Every chapter answers the same six questions, in the same order:
     href="/handbook/22-testing-philosophy"
   />
   <Card
-    title="Chapter 23: History and Open Questions"
-    href="/handbook/23-history-and-open-questions"
-  />
-</CardGroup>
-
-## Corrections found while writing this book
-
-Every chapter above was written by reading the actual current source, not by trusting
-existing documentation, tutorial comments, or `.env.example`. That process surfaced real
-places where something written down elsewhere in this repository no longer matches the
-code:
-
-- `.env.example` claims `KEY_PROVIDER=aws-kms` "does nothing." False, see Chapters 2 and 3.
-- A live `.env` sets `KMS_REGION`/`KMS_KEY_ALIAS`, neither of which is read anywhere in
-  `packages/*/src`. The real variables are `AWS_REGION` and `AWS_ROLE_ARN`. See Chapters 2
-  and 21.
-- `KeyBootstrap` is effectively legacy, per its own sibling `SignerBootstrap.ts`'s comment.
-  See Chapter 2.
-- A prior architecture assumption placed `ExecutionGateway` at a path that does not exist.
-  The real location is `packages/execution-gateway/src/ExecutionGateway.ts`. See Chapter 10.
-- An older claim that both `@parmana/replay` and `@parmana/receipt` are unwired is only half
-  true, receipt functionality is real and production-wired inside `@parmana/crypto`. See
-  Chapter 18.
-
-## Other formats
-
-<CardGroup cols={2}>
-  <Card
-    title="Read it in the repository"
-    icon="folder"
-    href="https://github.com/pavancharak/parmana/tree/main/docs/site/handbook"
-  >
-    The MDX source, chapter by chapter, alongside the code it documents.
-  </Card>
-  <Card
     title="Download the PDF"
     icon="file-arrow-down"
     href="/handbook/download"

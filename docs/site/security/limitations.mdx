@@ -88,24 +88,23 @@ not claim them:
 
 ## Open issues
 
-Every gap still open, as of 2026-10-10. Each has an entry inrefundEligible`, Slack `contentApproved`) are not checked against another system. They can only make a rule refuse.                                                                                                                                                                                                                                                                                                                                                     | Rely on the signed approval, which is what authorizes.                                           |
-| G-92       | [Business validation](/concepts/business-validation): business systems can be [registered as sources](/guides/connect-a-business-signal-source) and their signed answers are verified, but no real system is connected yet; a source without a key is trusted on TLS alone; Parmana proves the source said it, not that it is right. Verified in production with a demo source by a [live check](https://github.com/pavancharak/parmana/tree/main/examples/live-checks/business-signal-source) on 2026-10-11. | Register sources with a key, keep amount limits in policy rules and rely on the signed approval. |
-| G-93       | [Authority grants](/guides/grant-an-agent-authority) are opt in per policy and no shipped policy requires one; limits are per request, not per day. Verified in production with a test policy by a [live check](https://github.com/pavancharak/parmana/tree/main/examples/live-checks/authority-grant) on 2026-10-11.                                                                                                                                                                                         | Require grants in the policies that matter, keep cumulative caps in the business system.         |
-| G-94       | At release the gateway re-checks the facts and the grant a decision rests on, but an [external endpoint](/guides/connect-any-external-system) must check the release's `conditions` itself to execute only if they still hold; built in connectors get only the gateway re-check.                                                                                                                                                                                                                             | Check `conditions` in your endpoint, in the same transaction as the action.                      |
-| G-65       | A refused request is not held for review: the agent sends it again with the signed approval, as a new transaction.                                                                                                                                                                                                                                                                                                                                                                                            | Set `APPROVAL_WEBHOOK_URL` so approvers hear of requests that wait on them.                      |
-| G-66       | Binding a built in action to a different policy name, or adding a built in action, needs a deploy.                                                                                                                                                                                                                                                                                                                                                                                                            | New policy versions, approvers and external connectors need none.                                |
-| G-82       | An external endpoint's answer is its claim, not proof that it acted.                                                                                                                                                                                                                                                                                                                                                                                                                                          | Keep the endpoint's own records and reconcile them against Trust Records.                        |
-| G-84       | An approved request took 24 to 32 seconds in production on 2026-10-01.                                                                                                                                                                                                                                                                                                                                                                                                                                        | Use a 120 second timeout; after a timeout, read the record before sending anything new.          |
-| G-53       | If an action ran and neither its record nor its result could be saved, the outcome is established from the connector by hand.                                                                                                                                                                                                                                                                                                                                                                                 | Watch for intents left `PREPARED` (`409 EXECUTION_INTENT_RESULT_NOT_RECORDED`).                  |
-| G-4        | Hybrid (Ed25519 and ML-DSA-65) signing covers Trust Records and receipts; refusal records, audit events and authorizations have one signature.                                                                                                                                                                                                                                                                                                                                                                | Treat post-quantum protection as covering records and receipts only.                             |
-| G-86       | Visitor data in the public sandbox was deleted around its retention job's first run; the cause is not established. Production was not affected.                                                                                                                                                                                                                                                                                                                                                               | Do not keep anything in the sandbox you need later.                                              |
-| G-9        | Two audit records are written for each execution.                                                                                                                                                                                                                                                                                                                                                                                                                                                             | None needed; the connector's record is the one with the credential id.                           |
+Each has an entry inrefundEligible`, Slack `contentApproved`) are not checked against another system. They can only make a rule refuse. | Rely on the signed approval, which is what authorizes. |
+| Register sources with a key, keep amount limits in policy rules and rely on the signed approval. |
+| Require grants in the policies that matter, keep cumulative caps in the business system. |
+| Check `conditions` in your endpoint, in the same transaction as the action. |
+| Set `APPROVAL_WEBHOOK_URL` so approvers hear of requests that wait on them. |
+| New policy versions, approvers and external connectors need none. |
+| Keep the endpoint's own records and reconcile them against Trust Records. |
+| Use a 120 second timeout; after a timeout, read the record before sending anything new. |
+| Watch for intents left `PREPARED` (`409 EXECUTION_INTENT_RESULT_NOT_RECORDED`). |
+| Treat post-quantum protection as covering records and receipts only. |
+Production was not affected. | Do not keep anything in the sandbox you need later. |
+| None needed; the connector's record is the one with the credential id. |
 
 ## Threat model
 
 For each threat below: what's actually tested, and what the honest gap is. The full threat
 model, with assets, trust boundaries, attackers and an attack scenario per threat, is
-THREAT-MODEL.md.
 
 ### Policy bypass
 
@@ -147,7 +146,6 @@ Every caller-authentication event is signed (`AuditEventCrypto`) and chained to 
 own immediately-preceding event, a deleted row breaks the chain, provable standalone with no
 server or database required. Every execution outcome has a record path (trust record, refusal record, or audit event). One
 path fails open by design: if a Refusal Record write fails, the refusal still happens and the
-failure is logged (`refusal_record_write_failed`), but that record can be missing (CLAIMS.md 3.11,
 [Refusal Records](/concepts/refusal-records)).
 
 **Honest gap:** deleting an entire caller's history at once, or reordering audit rows across
@@ -168,7 +166,7 @@ adapter fails closed on a non-2xx response or a timeout, never a partial success
 authorization and execution round trip takes a few milliseconds (roughly 0.1 ms to sign); in
 production on Vercel an approved request took 24 to 32 seconds end to end, most of it in
 sequential database and KMS round trips, not yet broken down
-G-84). Connector calls have timeouts (Paytm 10 s by default, an external connector its
+Connector calls have timeouts (Paytm 10 s by default, an external connector its
 registered `timeoutMs`); the pipeline as a whole has none of its own, so a client should wait
 120 seconds and, after a timeout, read the record before sending again.
 

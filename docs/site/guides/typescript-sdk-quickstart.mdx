@@ -29,7 +29,7 @@ description: "Install to your first authorized execution with the TypeScript SDK
     From a clone of this repository:
 
     ```bash
-    cp .env.example .env
+    cp.env.example.env
     npm ci
     npm run build
     ```
@@ -186,7 +186,6 @@ description: "Install to your first authorized execution with the TypeScript SDK
 
   <Step title="Real output">
 
-Captured on 2026-10-02 from a run against a local server (trimmed), using the same
 `createBusinessTransaction()` call this page documents (see
 `typescript/examples/06-create-business-transaction.ts` in this repository for the exact
 source, and `typescript/test/integration/examples.integration.test.ts` for the test that
@@ -246,7 +245,7 @@ doesn't have `PARMANA_AUTH_DISABLED=true` set, or the key is wrong. The demo key
 `my-secret-api-key`, only works against a server started exactly as shown in step 1, with its
 `PARMANA_API_KEYS` entry.
 
-**`ExecutionRejectedError: Execution rejected: ...`**: the policy evaluated your signals
+**`ExecutionRejectedError: Execution rejected:...`**: the policy evaluated your signals
 and declined. The message names which rule failed; check
 [Write your first policy](/guides/write-your-first-policy) for how `vendor-payment@2.1.0`
 reads its signals. A message naming `humanApproved` means the approval is missing, expired,

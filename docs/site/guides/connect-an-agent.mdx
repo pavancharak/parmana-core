@@ -27,7 +27,7 @@ AI Agent  --------------------------------------------------->  Parmana
 ```
 
 The agent proposes an intent. Parmana decides whether it's authorized. Only Parmana's decision can
-unlock execution. If your integration ever lets the agent set a value that determines the outcome ,
+unlock execution. If your integration ever lets the agent set a value that determines the outcome,
 an approval flag, a fraud-check result, a policy name, the model is broken, even if it "works."
 
 ## What you need, and why
@@ -74,7 +74,7 @@ single-purpose agent; `/callers/me`'s `unrestrictedCapabilities` is literally
   fails closed on malformed JSON), and losing existing entries by replacing
   rather than appending. Always paste the complete array, every existing entry
   plus the new one. Full account: the 2026-09-15 KMS migration troubleshooting
-  guide (in git history).
+  guide.
 </Warning>
 
 **4. Verify the key before writing agent code:**
@@ -210,11 +210,9 @@ same integration hit a sequence of purely Parmana-operator issues onboarding as 
 freshly KMS-migrated deployment: no `PARMANA_API_KEYS` entry at all (401) → a malformed hand-edited
 entry (500 for every caller) → no `allowedPrincipalIds` grant for the asserted principal (403) → a
 genuine Parmana-side bug where the gateway's signing and verification paths silently used different
-keys after a KMS migration (500, unrelated to the request itself ,
+keys after a KMS migration (500, unrelated to the request itself,
 `examples/tutorials/114-signing-verification-key-agreement/` reproduces it). None of these were agent
-bugs. Full account: the 2026-09-15 KMS migration troubleshooting guide (in git history).
-
-## Next
+bugs.## Next
 
 <CardGroup cols={2}>
   <Card title="Add a connector" icon="plug" href="/guides/add-a-connector">

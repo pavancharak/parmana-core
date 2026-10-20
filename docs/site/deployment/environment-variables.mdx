@@ -172,7 +172,6 @@ is the value multiplied by the number of instances, and the server logs `rate_li
 
 ## Browser access
 
-ADR-0014.
 Production sets none of these except, if it wants a browser console, `PARMANA_CORS_ORIGINS`.
 
 | Variable                               | Required                    | Default              | Values or format                                                                  | What it does                                                                                                                                                                                                                                                                                                                                             |
@@ -206,7 +205,7 @@ event such as `slack_connector_unavailable` and requests for that connector's ac
 
 | Variable                        | Required                             | Default | Values or format                  | What it does                                                                                                                                                          |
 | ------------------------------- | ------------------------------------ | ------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PAYTM_CONNECTOR_URL`           | Both this and the secret, or neither | None    | A URL that starts with `https://` | The URL of the separate `parmana-paytm-agent` service that performs the refund. Outside tests, a URL that does not start with `https://` stops the server at startup. |
+| `PAYTM_CONNECTOR_URL`           | Both this and the secret, or neither | None    | A URL that starts with `https://` | The URL of the separate `example-agent` service that performs the refund. Outside tests, a URL that does not start with `https://` stops the server at startup. |
 | `PAYTM_CONNECTOR_SHARED_SECRET` | Both this and the URL, or neither    | None    | A string                          | The shared secret Parmana sends to that service. Setting only one of the two stops the server at startup.                                                             |
 | `PAYTM_CONNECTOR_TIMEOUT_MS`    | No                                   | `10000` | Positive number of milliseconds   | How long Parmana waits for that service before failing the call. A value that is not a positive number stops the server.                                              |
 

@@ -5,7 +5,6 @@ description: "Register any business system that owns facts a policy needs, an ER
 
 An agent proposes an action and the facts it rests on: "release the goods, the invoice is paid". That the invoice is
 paid is the agent's claim. This page connects the system that owns the fact, so Parmana asks it and decides on its
-answer ([Business validation](/concepts/business-validation), RFC-0023).
 
 You run a small HTTPS endpoint in front of the system. For each fact a policy declares from your source, Parmana sends
 it a **signed query**: what to establish (`claim`) about which business object (`subject`). The endpoint checks the
@@ -16,7 +15,7 @@ protocol. Parmana holds none of the system's credentials.
 <Warning>
   **Status, 2026-10-11.** Registering a source through maker checker, the signed
   protocol and deciding on a verified answer are implemented, tested 2.54) and deployed. No real business system has been
-  connected yet G-92). The SDK methods for the
+  connected yet). The SDK methods for the
   routes below are in SDK 1.6.0 (2026-10-11); with an older SDK, call the routes
   directly.
 </Warning>
@@ -210,7 +209,6 @@ register again. The revoked registration stays listed.
 
 Before relying on it, run the live check in the repository,
 [`examples/live-checks/business-signal-source`](https://github.com/pavancharak/parmana/tree/main/examples/live-checks/business-signal-source): a demo source answering from a fixed table, deployed on Vercel and registered through maker checker, a test policy that sources `invoicePaid` from it, and four requests: a paid invoice, an unpaid one, the agent claiming a value the source contradicts, and an unknown invoice. The receiving endpoint logs the `conditions` the release carries. The actions change nothing anywhere. It passed in
-production on 2026-10-11, all four requests as required; the results, the steps, what each prints, and what to do when
 it does not are in its README.
 
 ## Limits
@@ -220,4 +218,3 @@ it does not are in its README.
   ([Connect any external system](/guides/connect-any-external-system)).
 - Parmana checks the source signed the answer. It cannot check the source's records are right: a source answers for its
   own data.
-- See [Limitations](/security/limitations), G-92.

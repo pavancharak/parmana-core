@@ -26,18 +26,17 @@ binding is about _which policy gets selected in the first place_.
 
 `CapabilityPolicyBinding.ts`'s own doc comment (lines 74-96) states the gap directly: a
 capability's `boundSignals`/`SignalStateVerifier` protections are scoped to one specific policy.
-Nothing upstream enforces that the request is actually evaluated against _that_ policy ,
+Nothing upstream enforces that the request is actually evaluated against _that_ policy,
 `PolicyRouter`/`FilePolicyRepository` load whatever `policy.name`/`policy.version` the caller
 declares, `PolicyEngine.evaluate` takes no `action` parameter at all, and the connector-level
 capability check only confirms the resolved connector declares the capability, never which
 policy authorized it. A caller could therefore pair a real capability (`hubspot:deal-update`)
 with an unrelated, unprotected policy (say, `vendor-payment/2.0.0` at the time, which declares no
 `boundSignals` for that capability at all), have that unrelated policy's looser rules evaluated
-against self-declared signals, and get the real `hubspot:deal-update` intent executed anyway ,
+against self-declared signals, and get the real `hubspot:deal-update` intent executed anyway,
 bypassing the capability's intended protections entirely, not merely weakening them.
 
 Found by an independent repository verification (Phase 2K, TD-22) and closed as its own
-package extraction (G-30 architecture follow-up, see G-30 for the full history of why this specific
 package boundary was chosen).
 
 ## How it works
@@ -62,7 +61,6 @@ governance:
 | `slack:post-message`  | `slack-post-message` @ 1.1.0  |
 
 Every policy in this table needs a signed human approval for the action and its resource,
-reads included (since 2026-09-30, [Human approval](/concepts/human-approval)).
 
 Every entry corresponds to a capability actually registered in production bootstrap
 (`packages/api/src/bootstrap/createConnectorRegistry.ts`) and the one policy file purpose-built
@@ -98,8 +96,7 @@ actually registers has _either_ a canonical binding _or_ an explicit, reasoned e
 `createConnectorRegistry.ts`, after every connector registration is built and before the
 registry is handed back to the rest of bootstrap. For each registered capability, it checks
 `CANONICAL_CAPABILITY_POLICY_BINDINGS` first, then falls back to
-`INTENTIONALLY_UNBOUND_CAPABILITIES` (`packages/api/src/bootstrap/intentionallyUnboundCapabilities.ts`)
-, a second allowlist for capabilities deliberately left unbound, each entry carrying a reason.
+`INTENTIONALLY_UNBOUND_CAPABILITIES` (`packages/api/src/bootstrap/intentionallyUnboundCapabilities.ts`), a second allowlist for capabilities deliberately left unbound, each entry carrying a reason.
 A capability found in neither map fails the process at startup, before it can bind a port. The
 file's own comment notes this assertion currently never fires outside a test-fixture exemption,
 since every real production capability already has a binding, its purpose is making sure the

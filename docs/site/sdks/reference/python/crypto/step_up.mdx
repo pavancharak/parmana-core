@@ -6,8 +6,7 @@ title: parmana.crypto.step_up
 Signs a policy governance step up authorization on the approver's own
 machine.
 
-The result is accepted by POST /policies/pending-changes/\{id\}/approve and
-.../reject exactly as one made by the server's
+The result is accepted by POST /policies/pending-changes/\{id\}/approve and.../reject exactly as one made by the server's
 PolicyChangeStepUpAuthorizationSigner (packages/crypto/src/
 PolicyChangeStepUpAuthorizationCrypto.ts) or by the TypeScript SDK's
 signPolicyChangeStepUp(): the same payload, the same canonical JSON, the same

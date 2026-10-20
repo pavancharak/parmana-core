@@ -30,7 +30,7 @@ independently verifiable REJECT-path counterpart to `ExecutionTrustRecord`. Its 
 is explicit about scope: it covers `PolicyEngine.evaluate` REJECTs and `SignalIntentBinder`
 binding-violation REJECTs only, not every kind of rejection this system can produce. Caller-auth
 failures and webhook signature failures are a separate, unsigned audit-sink milestone (see
-"Caller Audit Events" below), RFC-0021's own Non-Goals section draws this line. Unlike
+Unlike
 `ExecutionTrustRecord`, a `RefusalRecord` is not an append-only aggregate with sub-histories: a
 refusal is a single terminal event, so there is at most one per `businessTransactionId`.
 
@@ -51,11 +51,10 @@ artifact in this codebase follows.
 
 `SupabaseCallerAuditSink` (`packages/api/src/auth/SupabaseCallerAuditSink.ts`) durably records
 every caller-authentication decision: success, failure, capability checks, principal checks.
-Its own doc comment traces its own history precisely: it closes G-13 (a prior in-memory-only
 sink lost every event on restart), and four of its columns were each added in a separate,
 dated migration as a distinct milestone landed, `capability` (2026-08-12, capability-scoping),
 `principalId` (2026-08-16, principal-scoping), `severity` (2026-08-18, policy-governance),
-`businessTransactionId` (2026-08-24, G-29 structural-validation audit). Every event is signed at
+Every event is signed at
 write time (`AuditEventCrypto`), before any storage-only field like an insert timestamp is
 added, a plain durable row could otherwise be altered by anyone with direct database access
 with no way to detect it.
@@ -80,7 +79,7 @@ covers the execution-control lifecycle separately from caller authentication. Pe
 [Database Schema Reference](/storage/schema-reference) (verify this claim yourself if you
 touch this table, it is a real operational fact worth confirming against current deployment
 config, not just trusting a comment), the underlying `execution_audit_events` table is shared
-cross-repository with a separate `parmana-paytm-agent` repository, meaning this table's schema
+cross-repository with a separate `example-agent` repository, meaning this table's schema
 is a contract between two codebases, not something to change unilaterally from this one.
 
 ### Evidence Anchor
@@ -112,7 +111,6 @@ deliberate opposite of `PolicyGovernanceExecutionVerifier` (the execution-time e
 covered in Chapter 8/10's territory, not here), which has the same three checks but is
 enforced (on everywhere except `NODE_ENV` `test` and `development`) precisely because a
 violation there must refuse a real execution. The class's own comment names this distinction explicitly and traces it to
-RFC-0022's precedent (`SignalStateVerifier`/`PolicyExecutionVerifier`): keep enforcement and
 evidentiary concerns in separate types even when their logic overlaps, rather than
 deduplicating into one shared helper with two different blast radii.
 

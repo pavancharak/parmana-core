@@ -5,7 +5,7 @@ description: "The canonical, immutable, cryptographically signed record of every
 
 <Info>
   **[AVAILABLE]**. `packages/shared/src/domain/execution-trust-record.ts`,
-  `BusinessTrustRecordBuilder` (`@parmana/runtime`). CLAIMS.md 2.5.
+  `BusinessTrustRecordBuilder` (`@parmana/runtime`).
 </Info>
 
 <Note>
@@ -107,7 +107,7 @@ before, because the canonical serializer leaves out undefined keys.
 
 <Warning>
   `verifications` and `receipts` are **not** part of the hashed content, even
-  though they are append-only fields on the same record (CLAIMS.md 2.5). This is
+  though they are append-only fields on the same record. This is
   intentional, not an oversight: a `Verification`
   (`packages/shared/src/domain/verification.ts:44`) carries the
   `trustRecordHash` it checked as one of its own fields. If verifications were
@@ -121,7 +121,6 @@ before, because the canonical serializer leaves out undefined keys.
 
 `execution.metadata.authorizationId` **is** inside the canonically-hashed content, because
 it lives under `executions`. Tampering with it changes the recomputed `trustRecordHash` and
-fails verification (CLAIMS.md 2.11, `execution-authorization-wiring.test.ts`, "trust record
 references the authorization").
 
 ## Minimal example: getting one back
@@ -142,7 +141,7 @@ Captured from a live local run, 2026-09-14, trimmed:
       "execution_id": "1d637081-aaba-476f-9d6c-8170a2088359",
       "decision": {
         "outcome": "APPROVED",
-        "reason": "Vendor payment authorized. ..."
+        "reason": "Vendor payment authorized...."
       },
       "status": "COMPLETED",
       "evidence": {

@@ -19,7 +19,7 @@ Your service
   → @parmana/sdk (ParmanaClient)
     → Parmana Runtime (Execution Gateway, Policy Engine)
       → registered Connector
-        → downstream system (Paytm, HubSpot, your own API, ...)
+        → downstream system (Paytm, HubSpot, your own API,...)
 ```
 
 The SDK never talks to a downstream system directly — it talks only to your Parmana
@@ -64,8 +64,7 @@ function createParmanaClient(): ParmanaClient {
 
   // Build the transport from the SAME configuration. HttpTransport reads timeout and
   // retryPolicy from the configuration it is constructed with, not from the client's.
-  return new ParmanaClient({
-    ...configuration,
+  return new ParmanaClient({...configuration,
     transport: new HttpTransport(configuration),
   });
 }

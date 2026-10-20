@@ -37,7 +37,7 @@ await verifier.verify(
   signature,
   publicKey,
 ); // true
-await verifier.verify({ ...order, amount: 42000 }, signature, publicKey); // false
+await verifier.verify({...order, amount: 42000 }, signature, publicKey); // false
 ```
 
 Key order does not matter: equal objects serialize to the same bytes.

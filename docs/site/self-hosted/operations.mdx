@@ -87,8 +87,6 @@ docker compose up -d --build --wait
 
 **Check:** `docker compose logs migrate` ends with `0 applied`, `docker compose logs seed` reports `0 added`, and a record you know, for example `GET /refusal/<businessTransactionId>`, returns `200`.
 
-This procedure was tested on 2026-09-25: a Refusal Record and a policy approval made before the backup were both present after a full wipe and restore.
-
 ## Change the database password
 
 Postgres stores the password when the database is first created. Changing `PARMANA_DB_PASSWORD` alone makes `migrate` fail with `password authentication failed for user "parmana"` and the server does not start. Change it in the database first:
@@ -101,7 +99,7 @@ docker compose exec -T postgres psql -U parmana -d parmana \
 Then set the new value and restart:
 
 ```bash
-export PARMANA_DB_PASSWORD='the-new-password'   # or set it in .env
+export PARMANA_DB_PASSWORD='the-new-password'   # or set it in.env
 docker compose up -d --wait
 ```
 

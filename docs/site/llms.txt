@@ -24,13 +24,6 @@ This file is generated from the documentation navigation. Do not edit it by hand
 * [How Parmana compares](https://docs.parmanasystems.com/how-parmana-compares): Parmana next to IAM, API gateways, LLM guardrails, policy engines and agent framework confirmations: what each answers, what Parmana adds, where Parmana is weaker, and how to use them together.
 ## Get started: Evaluate and audit
 
-* [Evaluate Parmana](https://docs.parmanasystems.com/evaluation/overview): The shortest path from a fresh clone to a working local system, and what to read next.
-* [Audit guide](https://docs.parmanasystems.com/evaluation/audit-guide): The system under evaluation, where it blocks execution, what an attacker controls in each case, and how to record which attacks are blocked and which succeed.
-* [Claims and evidence](https://docs.parmanasystems.com/evaluation/claims-and-evidence): Each core claim, where it is stated in full, and the tests and commands that check it.
-* [Proof audit](https://docs.parmanasystems.com/evaluation/proof-audit): An independent audit of the five authorization claims: what passed, what failed, what was fixed, and what is still open.
-* [Case studies: public incidents](https://docs.parmanasystems.com/evaluation/case-studies): Three publicly reported AI agent incidents, what happened, and what Parmana would and would not have changed, under stated conditions.
-* [Technical paper](https://docs.parmanasystems.com/evaluation/paper): Parmana: policy-checked execution with signed human approval and offline-verifiable records for AI agent actions. Design, threat model, evaluation and limitations.
-* [Talk and demo videos](https://docs.parmanasystems.com/evaluation/talk-and-videos): The outline of a 20 minute talk on Parmana, and scripts for four short demo videos you can follow step by step against a local server.
 * [License and evaluation](https://docs.parmanasystems.com/license): The Parmana server is proprietary software, source-available for evaluation only. The client and connector SDKs are Apache 2.0.
 ## Get started: For AI agents
 
@@ -115,7 +108,7 @@ This file is generated from the documentation navigation. Do not edit it by hand
 ## Connector SDKs: Overview
 
 * [Integrations](https://docs.parmanasystems.com/integrations/overview): The Connector SDK foundation is real. Four enterprise-named connectors exist as explicit, self-documented mocks; no real enterprise integration is built on it yet.
-* [Other Languages](https://docs.parmanasystems.com/sdks/other-languages): [ROADMAP], no Go, Java, or .NET SDK exists in this repository today.
+* [Other Languages](https://docs.parmanasystems.com/sdks/other-languages): [ROADMAP], no Go, Java, or.NET SDK exists in this repository today.
 ## Connector SDKs: Build a connector
 
 * [Add a Connector with the Connector SDK](https://docs.parmanasystems.com/guides/add-a-connector): This guide moved. The full walkthrough now lives on the Connector Development Guide.

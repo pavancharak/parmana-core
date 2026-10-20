@@ -59,7 +59,7 @@ isolated network. The image itself trusts no approver.
 
 ## The stand in for your downstream system
 
-The downstream system in the check is `docker/local/offline-check/paytm-agent-stand-in.mjs`. It takes the place of `parmana-paytm-agent`. It:
+The downstream system in the check is `docker/local/offline-check/paytm-agent-stand-in.mjs`. It takes the place of `example-agent`. It:
 
 - answers `POST /connector/paytm-refund` the way the real agent does;
 - refuses any request whose Execution Gateway signature does not verify with the gateway's public key;
@@ -100,4 +100,3 @@ The script makes no network call and needs no database. More on independent veri
 
 ## Where it has passed
 
-On Docker Desktop 29.8.0 on Windows 11, on 2026-09-25, and on Linux in CI on every change to the deployment files (`.github/workflows/docker-image.yml`, job `self-hosted`), first on the commit that added it.

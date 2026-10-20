@@ -8,7 +8,7 @@ endpoint.
 
 When an operator registers an external connector, Parmana releases every
 approved request for that capability to the endpoint as
-`\{"release": ..., "signature": ...\}`. Before acting, the endpoint calls
+`\{"release":..., "signature":...\}`. Before acting, the endpoint calls
 `verify_parmana_release` with the body, Parmana's public key (get it
 once with `client.public_key("default")`), its own URL as registered,
 and a callback that says whether it already executed a

@@ -6,7 +6,6 @@ description: "Say which agent may have which action decided, within which limits
 An API key that may call `POST /execute` for a capability is not yet authority over every request for it. A grant says
 exactly what one agent may do: "the warehouse agent may release goods, up to 100000 INR per request, until 30
 December". A policy with `requireAuthorityGrant` decides a request only when its caller holds a grant in force and the
-request is within the grant's limits ([Business validation](/concepts/business-validation), RFC-0023 phase 3).
 
 <Warning>
   **Status, 2026-10-11.** Grants, their maker checker and their check at
@@ -121,7 +120,6 @@ have a second person approve it. The agent's next request is refused. The revoke
 
 Before relying on it, run the live check in the repository,
 [`examples/live-checks/authority-grant`](https://github.com/pavancharak/parmana/tree/main/examples/live-checks/authority-grant): a test policy with `requireAuthorityGrant`, a grant up to 100 for a test agent, and four requests: before the grant, within its limit, over it, and after its revoke. Each carries a valid signed approval, so every refusal shows the grant decides it. The actions change nothing anywhere. It passed in
-production on 2026-10-11, all four requests as required; the results, the steps, what each prints, and what to do when it
 does not are in its README.
 
 ## Limits
@@ -130,4 +128,3 @@ does not are in its README.
 - A grant names a caller id that the server does not check exists; a grant to a key that does not exist has no effect.
 - The grant is checked when the request is decided and again at release: a grant that expires or is revoked in
   between stops the release (`409 AUTHORIZATION_NO_LONGER_VALID`).
-- See [Limitations](/security/limitations), G-93.

@@ -107,8 +107,8 @@ The flow for a refund of 75000 on order `ORD-1042`:
 
     ```bash Script
     npx tsx scripts/sign-approval.ts \
-      --private-key-file ~/.parmana/manager-priya__manager-priya-key-1.private.pem \
-      --approver-id manager-priya --key-id manager-priya-key-1 \
+      --private-key-file ~/.parmana/approver-example__approver-example-key-1.private.pem \
+      --approver-id approver-example --key-id approver-example-key-1 \
       --capability paytm:refund --resource-id ORD-1042 --max-amount 75000 \
       --out approval.json
     ```
@@ -118,9 +118,9 @@ The flow for a refund of 75000 on order `ORD-1042`:
     import { signApproval } from "@parmana/sdk";
 
     const approval = signApproval({
-      privateKeyPem: readFileSync("manager-priya__manager-priya-key-1.private.pem", "utf8"),
-      approverId: "manager-priya",
-      keyId: "manager-priya-key-1",
+      privateKeyPem: readFileSync("approver-example__approver-example-key-1.private.pem", "utf8"),
+      approverId: "approver-example",
+      keyId: "approver-example-key-1",
       capability: "paytm:refund",
       resourceId: "ORD-1042",
       maxAmount: 75000,
@@ -134,9 +134,9 @@ The flow for a refund of 75000 on order `ORD-1042`:
     from parmana.crypto import sign_approval
 
     approval = sign_approval(
-        private_key_pem=Path("manager-priya__manager-priya-key-1.private.pem").read_text(),
-        approver_id="manager-priya",
-        key_id="manager-priya-key-1",
+        private_key_pem=Path("approver-example__approver-example-key-1.private.pem").read_text(),
+        approver_id="approver-example",
+        key_id="approver-example-key-1",
         capability="paytm:refund",
         resource_id="ORD-1042",
         max_amount=75000,
@@ -194,10 +194,10 @@ server trusts the public key. Add one through maker checker, with no deploy:
   <Step title="The approver creates a key pair on their own machine">
 
     ```bash
-    npx tsx scripts/generate-approver-key.ts --approver-id manager-priya --key-id manager-priya-key-1 --out-dir ~/.parmana
+    npx tsx scripts/generate-approver-key.ts --approver-id approver-example --key-id approver-example-key-1 --out-dir ~/.parmana
     ```
 
-    They send the public key file, `manager-priya__manager-priya-key-1.public.pem`, to a proposer.
+    They send the public key file, `approver-example__approver-example-key-1.public.pem`, to a proposer.
 
   </Step>
   <Step title="One person proposes trusting it">

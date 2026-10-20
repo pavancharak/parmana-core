@@ -150,8 +150,7 @@ try:
     record = client.execution.execute(transaction)
 except ServerError as exc:
     if exc.server_code in NOTHING_RAN:
-        # Nothing was executed. Retry later with a NEW business_transaction_id.
-        ...
+        # Nothing was executed. Retry later with a NEW business_transaction_id....
     else:
         # EXECUTION_RECORD_INCOMPLETE (500) or EXECUTION_OUTCOME_UNKNOWN (502): the action
         # was released. Never resend; the operator finalizes or resolves the Execution Intent.
@@ -164,7 +163,7 @@ record with the same id before anything else.
 ## Audit logging
 
 Parmana already produces a signed [Execution Trust Record](/concepts/execution-trust-records) for
-every approved execution, and a [Refusal Record](/concepts/refusal-records) for a rejected one ,
+every approved execution, and a [Refusal Record](/concepts/refusal-records) for a rejected one,
 both independently verifiable. What you typically still want on your own side is a queryable local
 log tying those records back to your application's own request context:
 

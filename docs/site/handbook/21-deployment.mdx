@@ -100,10 +100,9 @@ AWS_ROLE_ARN     # the IAM role Vercel's OIDC token assumes
 the only two `process.env` reads in that file, `KmsSigner requires AWS_REGION to be set` is a
 real thrown error if `AWS_REGION` is missing.) [AWS KMS signing](/deployment/aws-kms-signing)
 documents the Vercel side of the setup (`vercel env add AWS_REGION production`, and the trust
-policy connecting Vercel's OIDC issuer to the IAM role). The 2026-09-15 KMS migration troubleshooting guide (in git history)
+policy connecting Vercel's OIDC issuer to the IAM role). The 2026-09-15 KMS migration troubleshooting guide
 records the real incidents hit while migrating to this from static keys, cross-check its
 specific claims against current source rather than assuming they still describe live bugs; the
-migration referenced there is complete as of this session.
 
 `KEY_PROVIDER=local` remains the only fully implemented local-key path; setting `KEY_PROVIDER`
 to anything else (`aws-kms`, `azure-key-vault`, `gcp-kms`, `hsm` were once silently ignored, a
@@ -131,7 +130,7 @@ walk through the real, current deployment steps for each target.
 - `packages/policy/src/SupabasePolicyRepository.ts`'s own doc comment for the EROFS incident
   account.
 - `supabase/migrations/20260916060000_add_policies_table.sql` for the schema the fix depends on.
-- the 2026-09-15 KMS migration troubleshooting guide (in git history) and
+- the 2026-09-15 KMS migration troubleshooting guide and
   [AWS KMS signing](/deployment/aws-kms-signing) for the full operational history.
 
 ## Requirements

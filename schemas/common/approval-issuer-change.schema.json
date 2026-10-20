@@ -74,8 +74,8 @@
     {
       "changeId": "ba7c5827-5844-4069-94fc-9b438ef08f78",
       "action": "add",
-      "approverId": "manager-priya",
-      "keyId": "manager-priya-key-1",
+      "approverId": "approver-example",
+      "keyId": "approver-example-key-1",
       "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=\n-----END PUBLIC KEY-----\n",
       "reason": "Priya approves refunds for the West region from October.",
       "proposedBy": "human-maker",

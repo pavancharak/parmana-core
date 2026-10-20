@@ -47,7 +47,7 @@ export interface RefusalRecord {
 the rejected transaction, its `Decision`, any binding violations, and the hash of the policy content
 that decided it (`policyContentHash`), the same value an Execution Trust Record carries in
 `transaction.policy.contentHash`, so a refusal and an approval under the same policy name the same
-policy content. Refusal Records written before 2026-10-06 have no `policyContentHash` and still verify. `RefusalCrypto`
+policy content. `RefusalCrypto`
 (`packages/crypto/src/RefusalCrypto.ts`) hashes and signs it with the same
 signer and key every Execution Trust Record uses (`SignerBootstrap`: a local key, or AWS KMS in
 production), one root of trust, not a separate one for refusals. Verify it with the key from

@@ -158,8 +158,7 @@ try:
     record = client.execute(transaction)
 except ExecutionRejectedError as error:
     # 403 POLICY_DENIED: the policy refused, with its reason. Ask a person to
-    # sign, then build a NEW transaction with the approval.
-    ...
+    # sign, then build a NEW transaction with the approval....
 ```
 
 </CodeGroup>
@@ -169,7 +168,7 @@ amount ([Chapter 5](/build-book/05-human-approvals)). The agent sends a **new** 
 `true` and the signed approval in `signals.approvalArtifact`:
 
 ```typescript
-signals: { ...signals, managerApproved: true, approvalArtifact: approval }
+signals: {...signals, managerApproved: true, approvalArtifact: approval }
 ```
 
 The server verifies the approval before it decides and again just before release, and accepts it once.

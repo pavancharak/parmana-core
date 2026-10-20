@@ -67,7 +67,6 @@ VERIFIED`). This is the immutable input `RuntimeEngine.execute()` receives.
 **`Decision`** (`decision.ts`), the pure output of evaluating an `Intent`'s signals against
 a `Policy`: an `outcome` (`APPROVED | REJECTED`), the `matchedRuleId`, `evaluatedRules`
 (count), and `matchedPath` (the ordered rule-id trace `PolicyEngine` walked). The last three
-fields are optional only because a `Decision` built before they existed (see G-44) doesn't carry them retroactively; every decision going
 forward does. A `Decision` never carries anything the caller supplied that wasn't
 independently produced by evaluation itself.
 
@@ -78,7 +77,7 @@ FAILED`) and `ExecutionMode` (`SYNC | ASYNC`), and optionally carries a hash-cha
 same transaction (see `ExecutionChainCrypto`, Chapter 3). Verification recomputes each chained
 `Execution`'s hash and checks its signature and its link to the one before. An `Execution` with no
 chain fields is accepted only before the first chained one, as data from before chaining existed;
-one carrying only some of the fields, or an unchained one after a chained one, fails the check G-89). Every `Execution` is also inside the trust record's own hash
+Every `Execution` is also inside the trust record's own hash
 and signature, so the chain is a second layer, not the only one.
 
 **`ExecutionTrustRecord`** (`execution-trust-record.ts`), the aggregate root: one
@@ -99,7 +98,7 @@ carries either; `RuntimeEngine` computes both, after loading the real policy doc
 merges them only into the copy embedded in the trust record's `transaction.policy`, never
 into the transaction as originally submitted. `contentHash` is a sha256 of the canonicalized
 policy content actually loaded (closing the gap where an in-place edit to an existing
-version's `policy.json` would otherwise be undetectable from the trust record alone , G-24). `governanceAnchor` records whether that content is
+`governanceAnchor` records whether that content is
 traceable to a completed Policy Governance approval (`VERIFIED | NO_APPROVAL_RECORD |
 SIGNATURE_INVALID | CONTENT_MISMATCH`), resolved unconditionally regardless of whether
 execution-time enforcement of that fact is turned on (see Chapter 14).
@@ -112,7 +111,6 @@ unusually candid about what it is not: "Not a NEW cryptographic guarantee... Wha
 is a single, explicitly-named, independently-computed pointer an auditor can check WITHOUT
 already knowing to reach into `transaction.policy` and `executions[].evidence.attributes.connector`
 separately and reconstruct the binding themselves." It exists because an audit
-on 2026-09-15 (GAP-4, G-45) asked whether policy
 governance provenance and actual connector evidence were provably linked, and the honest
 answer at the time was "implicitly, but nothing says so directly."
 
@@ -151,7 +149,7 @@ Chapter 5's runtime pipeline is the process that turns a `BusinessTransaction` i
   `intent.ts`, `decision.ts`, `execution.ts`, `execution-trust-record.ts`,
   `policy-reference.ts`, `evidence-anchor.ts`, the type definitions themselves, each with a
   doc comment explaining its own role in the chain.
-- `packages/api/tests/integration/authority-type-agnostic-execution.integration.test.ts` ,
+- `packages/api/tests/integration/authority-type-agnostic-execution.integration.test.ts`,
   proves caller-type agnosticism at the HTTP boundary.
 - `examples/tutorials/100-authorization-caller-type-agnostic/run.ts`, the same proof, as a
   runnable narrative.
@@ -164,6 +162,6 @@ None specific to the domain model itself, these are plain TypeScript interfaces 
 external dependency. What consumes them (the runtime pipeline, storage, crypto) each carries
 its own requirements, covered in later chapters. The one practical requirement worth naming
 here: any caller submitting a `BusinessTransaction` must supply a well-formed `Intent`
-(`action`, `target`, `parameters`) and a `PolicyReference` naming a real, loadable policy ,
+(`action`, `target`, `parameters`) and a `PolicyReference` naming a real, loadable policy,
 `contentHash` and `governanceAnchor` must never be supplied by the caller, since the server
 computes and overwrites both regardless of what's submitted.

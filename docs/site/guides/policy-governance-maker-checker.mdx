@@ -33,7 +33,7 @@ make it reliable, and every failure mode this flow actually produces.
 Policy content decides real outcomes: who gets paid, what gets deployed, what an AI agent is
 allowed to do. A single person silently changing that content, with no second party and no
 durable record, was an unacceptable gap. Now, a policy change only takes effect after one person
-_proposes_ it and a genuinely different person _reviews and cryptographically approves_ it ,
+_proposes_ it and a genuinely different person _reviews and cryptographically approves_ it,
 enforced by the API itself (`SameActorCannotApproveOwnChangeError`), not by convention.
 
 ## Steps
@@ -86,13 +86,13 @@ This is a judgment call, nothing in this system makes it for you.
 
 ```bash
 npx tsx scripts/sign-policy-change-step-up.ts \
-  --private-key-file ./checker.step-up.private.pem \
+  --private-key-file./checker.step-up.private.pem \
   --key-id <checker-name> \
   --pending-policy-change-id <id> \
   --action approve
 ```
 
-Prints a `stepUpAuthorization` envelope, valid for **120 seconds**. This never contacts the API ,
+Prints a `stepUpAuthorization` envelope, valid for **120 seconds**. This never contacts the API,
 signing is entirely local.
 
 ### 4. Submit
@@ -105,7 +105,7 @@ curl -X POST "<api-base>/policies/pending-changes/<id>/approve" \
 ```
 
 Must land within 120 seconds of signing. For a rejection: `.../reject` with
-`{"rejectionReason": "...", "stepUpAuthorization": ...}`.
+`{"rejectionReason": "...", "stepUpAuthorization":...}`.
 
 ### 5. The one-shot alternative (recommended)
 

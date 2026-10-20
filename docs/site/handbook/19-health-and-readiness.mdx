@@ -39,39 +39,6 @@ because `PARMANA_AUTH_DISABLED=true` is exactly the kind of misconfiguration ("c
 boot but easy for an operator's own monitoring or synthetic checks to catch and alert on
 directly when it's a field on an endpoint already polled every 30 seconds.
 
-### The incident this route was caught in, the night of 2026-09-16
-
-`/ready`'s own test coverage, `examples/tutorials/89-readiness-probe/run.ts`, runs three
-scenarios: `NODE_ENV=test` reports `READY` with zero database calls; explicit
-`PARMANA_STORAGE=memory` outside test mode also reports `READY` with zero database calls; and a
-`DATABASE_URL` pointed at a genuinely unreachable address (`postgresql://unreachable:unreachable@127.0.0.1:1/postgres`)
-reports `NOT_READY`, `503`, with a specific reason.
-
-That third scenario broke twice, from two different, real bugs found and fixed the same night.
-First: `PostgresPoolFactory.create()` (`packages/storage/src/postgres/PostgresPoolFactory.ts`)
-had no `connectionTimeoutMillis` set, so a connection attempt against a genuinely unreachable
-address could hang indefinitely instead of failing fast, fixed by adding a 5-second timeout,
-generous for any real, reachable Postgres instance and short enough that a real outage or this
-readiness check surfaces promptly. Second, and more subtly: a first version of the same night's
-`SupabasePolicyRepository` fix (Chapter 7) constructed it, and therefore called
-`PostgresPoolFactory.create()`, **eagerly at module import time** inside
-`packages/api/src/application.ts`. Because `PostgresPoolFactory` is a process-wide singleton
-(`if (this.pool) return this.pool;`), that eager call created and cached a pool connected to
-whatever `DATABASE_URL` was actually configured at import time, before the tutorial's Scenario 3
-ever got a chance to override it to the deliberately-unreachable address. The result: Scenario 3
-kept reporting `READY`, using the real, working pool, no matter what `DATABASE_URL` the tutorial
-set afterward. The fix was to make that construction lazy, the same discipline
-`packages/api/src/repositories.ts`'s existing `lazyRepository()` helper already establishes for
-every other repository in this codebase, and for the identical reason: importing a module
-must never itself open a live database connection as a side effect; only an actual repository
-call should. After both fixes, the tutorial's Scenario 3 correctly reports `NOT_READY`, `503`,
-with `reason: "connect ECONNREFUSED 127.0.0.1:1"`.
-
-This is a genuinely instructive incident, not just a bug fixed in passing: it shows how a
-singleton connection pool and an eager module-scope side effect can combine to make a test that
-looks correct on paper silently test nothing at all, and it's exactly the kind of thing a
-readiness-probe tutorial exists to catch before it reaches production.
-
 ## How it enables things, with a concrete example
 
 `examples/tutorials/89-readiness-probe/run.ts` is the concrete example, read it directly, it is

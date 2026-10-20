@@ -27,8 +27,7 @@ from parmana import ExecutionRejectedError
 
 try:
     trust_record = client.execution.execute(transaction)  # a named policy decides, not the agent
-except ExecutionRejectedError:
-    ...  # denied; the agent's downstream code never runs
+except ExecutionRejectedError:...  # denied; the agent's downstream code never runs
 ```
 
 The agent never holds the connector's credentials, those live server-side, resolved per-connector;
@@ -96,7 +95,7 @@ def refund_payment(payment_id: str, amount: int, reason: str) -> str:
 
 
 # tools = [refund_payment]
-# agent, executor = ...  # standard LangChain agent wiring around `tools`
+# agent, executor =...  # standard LangChain agent wiring around `tools`
 ```
 
 The LLM decides _to call_ the tool; it never decides whether the refund is _allowed_, that's the
@@ -276,7 +275,7 @@ async def refund_payment_async(payment_id: str, amount: int, reason: str) -> dic
 # asyncio.run(refund_payment_async("pay_LiZx3eWa", 50000, "customer requested"))
 ```
 
-If your workflow needs to react to what the connector does _after_ Parmana's own response ,
+If your workflow needs to react to what the connector does _after_ Parmana's own response,
 settlement confirmation arriving later, for instance, that's a property of the specific
 connector, not the SDK; see [Session credentials](/guides/session-credentials) and the connector's
 own docs (e.g. [HubSpot](/integrations/hubspot)) for what each one actually confirms and when.

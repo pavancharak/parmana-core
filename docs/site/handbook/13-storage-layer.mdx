@@ -7,7 +7,6 @@ description: "The storage layer is the set of repositories that give every durab
 
 The storage layer is the set of repositories that give every durable Parmana concept (a
 business transaction, an execution trust record, a refusal record, a pending policy change,
-a policy approval record, and, as of 2026-09-16, live policy content itself) a place to live
 beyond a single process's memory. It is accessed through one interface,
 `StorageProvider` (`packages/storage/src/StorageProvider.ts`), with two real
 implementations selected at startup: an in-memory one for tests and local development, and a
@@ -66,7 +65,7 @@ was unset, regardless of what any individual test actually needed.
 transitively does) never itself constructs a live Supabase client. Only the first actual
 method call on a repository triggers `StorageFactory.createFromEnvironment()`.
 
-This exact discipline was violated, then fixed, in this codebase on 2026-09-16. The first
+The first
 version of `packages/api/src/application.ts`'s new `policyRepository` export constructed
 `SupabasePolicyRepository(PostgresPoolFactory.create())` directly at module scope:
 
@@ -93,7 +92,6 @@ already uses, deferring construction to the first real `load()`/`save()`/`listAl
 `PostgresPoolFactory` (`packages/storage/src/postgres/PostgresPoolFactory.ts`) is a lazy,
 process-wide singleton `pg.Pool`. Every Supabase-backed repository in this codebase connects
 through it directly, not through `supabase-js`'s REST-based client (PostgREST). The class
-that used to provide that client, `SupabaseClientFactory`, was deleted 2026-09-09 G-34) after `PostgresPoolFactory`'s own pattern had already
 replaced it everywhere it was still used. This removes an entire layer (PostgREST) from the
 failure modes of every table these repositories touch, an incident class this codebase's
 own history names explicitly (see `SupabaseCallerAuditSink`'s own comments for the
@@ -174,8 +172,7 @@ fix (Chapter 16 covers this fully).
 
 - `packages/storage/src/StorageProvider.ts`, `StorageFactory.ts`, the interface and the
   selection logic.
-- `packages/storage/src/memory/MemoryStorageProvider.ts`, `packages/storage/src/supabase/SupabaseStorageProvider.ts`
-  , the two real implementations.
+- `packages/storage/src/memory/MemoryStorageProvider.ts`, `packages/storage/src/supabase/SupabaseStorageProvider.ts`, the two real implementations.
 - `packages/storage/src/postgres/PostgresPoolFactory.ts`, the shared connection pool, its
   own comments name the real incidents that shaped it.
 - `packages/api/src/repositories.ts` and `packages/api/src/application.ts`, the lazy

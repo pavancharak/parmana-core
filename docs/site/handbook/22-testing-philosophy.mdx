@@ -39,7 +39,6 @@ own default behavior, and `packages/storage/src/StorageFactory.createFromEnviron
 that explicitly, returning `MemoryStorageProvider` unconditionally under `NODE_ENV=test`,
 regardless of what `PARMANA_STORAGE` happens to be set to in the ambient environment. This exists
 specifically so importing application code during test collection never accidentally constructs
-a live Supabase client (see the `G-15` reference in that factory's own doc comment).
 
 ### The tutorial suite as documentation
 
@@ -100,7 +99,7 @@ what rule operators do with a value of the wrong type, gateway options that coul
 the way to the envelope verifier, session binding fields never tested alone, and the offline
 verifier's hybrid path. Two led to behavior changes: a request whose signals do not have the
 policy's declared types is now refused before any rule runs, and an Execution with only some of
-its chain fields now fails the execution chain check G-89). Each
+Each
 gap that matters for security now has a test, checked by putting the targeted change back by
 hand.
 

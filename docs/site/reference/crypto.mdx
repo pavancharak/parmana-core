@@ -54,7 +54,7 @@ See [Choose a signature provider](/guides/choose-a-signature-provider) for both,
 | `Dilithium3SignatureProvider`          | ML-DSA-65 (FIPS 204) provider, requires Node ≥ 24, produces randomized (non-deterministic) signatures                                                                                                                                                                                                                                                                                                                                          |
 | `SHA256HashProvider`                   | Default hash provider                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `FileKeyProvider`                      | `.getPrivateKey(keyId)`, `.getPublicKey(keyId)`, `.getMetadata(keyId)`, `.hasKey(keyId)`, `.listKeys()` (enumerates every `*.public.pem` in the key directory), reads `<PARMANA_KEY_DIR>/<keyId>.{private,public}.pem`. `getPublicKey` never checks for the private key file. `getMetadata()`'s `algorithm` is derived from the key material's own `asymmetricKeyType`, per keyId, not from global config. The only implemented `KeyProvider`. |
-| `assertKeyType`                        | Fails closed, naming both expected and actual key type, if a key doesn't match the configured provider (CLAIMS.md 2.13)                                                                                                                                                                                                                                                                                                                        |
+| `assertKeyType`                        | Fails closed, naming both expected and actual key type, if a key doesn't match the configured provider                                                                                                                                                                                                                                                                                                                        |
 
 ### Hybrid signing, [AVAILABLE]
 
@@ -100,7 +100,7 @@ const result = await verifyExecutionTrustRecordOffline(trustRecord, {
   message. `verifyExecutionTrustRecordOffline` accepts a raw signature for any
   record and additionally accepts the commitment form for a record over that
   size. A commitment signature over a smaller record is rejected. The rule is
-  specified in ADR-0010,.
+  specified in the design notes.
 </Note>
 
 Full runnable version: [Verify a trust record independently](/guides/verify-independently).

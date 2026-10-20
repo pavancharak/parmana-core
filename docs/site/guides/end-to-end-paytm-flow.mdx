@@ -7,7 +7,7 @@ description: "Every command, every real error, and every fix required to run a r
   **[VERIFIED LIVE]**. Every command, error message, and fix below is verbatim
   from a real session that ran this exact flow against real, live, production
   infrastructure (`parmana-api-real.vercel.app` →
-  `parmana-paytm-agent.vercel.app` → Paytm's staging API) on 2026-09-14. Nothing
+  the agent's deployment → Paytm's staging API) on 2026-09-14. Nothing
   here is theoretical.
 </Info>
 
@@ -41,7 +41,7 @@ sequenceDiagram
     participant Agent as Caller / Agent
     participant Parmana as parmana-api-real.vercel.app<br/>(this repository)
     participant Gateway as GatewayPaytmAdapter<br/>(inside parmana-api-real)
-    participant Connector as parmana-paytm-agent.vercel.app<br/>(separate repository)
+    participant Connector as example-agent.vercel.app<br/>(separate repository)
     participant Paytm as Paytm API<br/>(staging or production)
 
     Agent->>Parmana: POST /execute (Bearer caller key)
@@ -54,7 +54,7 @@ sequenceDiagram
     Gateway->>Connector: POST /connector/paytm-refund<br/>(Bearer shared secret)
     Note over Connector: Checks shared secret (transport auth only)
     Connector->>Parmana: GET /keys/:keyId (fetch public key fresh)
-    Note over Connector: Verifies Ed25519 signature , <br/>THIS proves policy actually approved it
+    Note over Connector: Verifies Ed25519 signature, <br/>THIS proves policy actually approved it
     Note over Connector: Records "authorization.verified"<br/>(execution_audit_events, unsigned)
     Connector->>Paytm: Real API call
     Paytm-->>Connector: success/failure result
@@ -68,7 +68,7 @@ sequenceDiagram
 
 <Warning>
   **The one thing to internalize before anything else:** `parmana-api-real` and
-  `parmana-paytm-agent` are two separate Vercel projects with two separate,
+  `example-agent` are two separate Vercel projects with two separate,
   independently-managed sets of environment variables. Nothing is shared between
   them automatically. Every piece of configuration below must be set on
   **both**, separately, even when the value happens to be identical (e.g.
@@ -79,7 +79,7 @@ sequenceDiagram
 
 <Note>
   **Calling through the agent's own `/agent/refunds` (added 2026-09-28).** An
-  agent can also call `parmana-paytm-agent`'s `POST /agent/refunds`, which calls
+  agent can also call `example-agent`'s `POST /agent/refunds`, which calls
   `POST /execute` above on its behalf. The flow is the same: Parmana alone sends
   the refund to Paytm, once, through `/connector/paytm-refund`, and
   `/agent/refunds` returns Paytm's result from the Trust Record. Until
@@ -91,7 +91,7 @@ sequenceDiagram
 
 ## Prerequisites
 
-- Write access to both Vercel projects (`parmana-api-real` and `parmana-paytm-agent` in the
+- Write access to both Vercel projects (`parmana-api-real` and `example-agent` in the
   real run this guide is based on, yours will be named differently).
 - Write access to the Supabase project both deployments share.
 - A local clone of this repository with its own `.env` configured (see `.env.example`), used
@@ -146,7 +146,7 @@ error output, so don't chase it as a separate bug.
 including a credential accidentally exposed and rotated, see
 [Security](#security-notes)) breaks **every** deployment holding the old password
 simultaneously. In the real run this meant updating and redeploying `parmana-api-real`,
-separately updating and redeploying `parmana-paytm-agent`, and separately updating this
+separately updating and redeploying `example-agent`, and separately updating this
 repo's own local `.env`, three distinct places, each producing the identical error message
 if missed, so each must be checked individually rather than inferred from one working.
 
@@ -242,7 +242,6 @@ every real attempt.**
   [Human approval](/concepts/human-approval).
 - 0 or less, or above 100000, refused.
 - Production runs the version most recently approved; ask `GET /policies/in-effect?capability=paytm:refund`.
-  1.2.0 has been in effect in production since 2026-09-28: there is no amount that runs without
   a signed manager approval. `managerApproved: false` is always refused.
 - `boundSignals` binds `signals.refundAmount` to `intent.parameters.amount`, they must
   match, or `SignalIntentBinder` rejects it as a binding-tamper attempt before policy
@@ -301,8 +300,6 @@ The full request shape, for `customer-refund` 1.2.0:
 
 Use `"authorityType": "SERVICE"`, `"AGENT"` doesn't exist in `AuthorityType`.
 
-**Optional parameters (added 2026-09-28, G-71).** `intent.parameters` may also carry:
-
 | Parameter         | Limit          | Effect                                                                                                                                                                                                                                                                                                           |
 | ----------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `refundReference` | 128 characters | Your own id for this one refund. The Paytm refId is derived from the order, the transaction and this reference, so separate partial refunds of one transaction get separate refIds. Send the same value when you retry the same refund. Without it, every refund of one transaction shares one refId, as before. |
@@ -313,7 +310,7 @@ Anything else in `intent.parameters` is refused before any call to the connector
 Synthetic order/transaction IDs (not a real prior Paytm charge) are fine for a
 connectivity and wiring test: with a valid signed approval the request is approved,
 correctly signed, correctly verified, and correctly forwarded; Paytm's staging API simply returns a non-success result because
-there's nothing real to refund. That proves the wiring, not that a real refund occurred ,
+there's nothing real to refund. That proves the wiring, not that a real refund occurred,
 don't conflate the two.
 
 ## Running the test
@@ -378,17 +375,14 @@ require("dotenv").config();
 const { Pool } = require("pg");
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
-pool
-  .query(
+pool.query(
     `SELECT type, occurred_at, connector_id, authorization_id, session_id, action, reason,
             business_transaction_id, chain_hash IS NOT NULL as signed
      FROM execution_audit_events
      WHERE business_transaction_id = $1
      ORDER BY id ASC`,
     ["<your businessTransactionId>"],
-  )
-  .then((r) => console.log(JSON.stringify(r.rows, null, 2)))
-  .catch((e) => console.error("QUERY FAILED:", e.message));
+  ).then((r) => console.log(JSON.stringify(r.rows, null, 2))).catch((e) => console.error("QUERY FAILED:", e.message));
 ```
 
 A complete, correct run produces four rows: `session.created` and `execution.completed`
@@ -421,7 +415,7 @@ Every one of these was actually hit, in this order, in the real run this guide i
   response body, silent crash) than what direct testing had just shown (a
   specific, informative error message). Executing a prescriptive procedure
   against a premise that doesn't match the evidence in hand wastes time and can
-  add unneeded code changes. Before following any troubleshooting procedure ,
+  add unneeded code changes. Before following any troubleshooting procedure,
   including this one, check its stated symptoms against what you're actually
   observing.
 </Note>

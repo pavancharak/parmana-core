@@ -34,10 +34,10 @@ uniform rule.
 | `GET /openapi.yaml`, `/openapi.json`                                       | No                               | A caller cannot discover how to get a key from a spec it is not allowed to read.                                                                                                         |
 | `GET /api-manifest.json`                                                   | No                               | Self-description of SDK versions, same public-discovery reasoning.                                                                                                                       |
 | `/documentation`, `/reference`                                             | No                               | API documentation consumers.                                                                                                                                                             |
-| `POST /refusal/verify`                                                     | No                               | RFC-0021: unauthenticated, third-party signature verification, not a data-access route.                                                                                                  |
+| `POST /refusal/verify`                                                     | No                               | : unauthenticated, third-party signature verification, not a data-access route.                                                                                                  |
 | `POST /audit/verify`                                                       | No                               | Same category as above, over `caller_audit_events` instead of Refusal Records, pure signature-over-bytes, no database lookup.                                                            |
 | `/keys/:keyId`, `/.well-known/jwks.json`                                   | No                               | Public-key discovery (PQC audit RED-2); a third party verifying a signature cannot be required to already hold a credential.                                                             |
-| **, caller-auth middleware mounted here if `callerAuth !== "disabled"` ,** |                                  |                                                                                                                                                                                          |
+| **, caller-auth middleware mounted here if `callerAuth !== "disabled"`,** |                                  |                                                                                                                                                                                          |
 | `GET /`                                                                    | No (mounted before, but trivial) | Returns `{ name: "Parmana", status: "UP" }`.                                                                                                                                             |
 | `/version`                                                                 | Yes (if auth enabled)            |                                                                                                                                                                                          |
 | `/callers/me`                                                              | Yes                              | Caller self-lookup: identity and exactly what it's authorized to do.                                                                                                                     |
@@ -49,7 +49,7 @@ uniform rule.
 | `/policies`                                                                | Yes                              | Mounted twice: once for the policy-content routes (`policies.ts`), once for the Policy Governance pending-changes routes (`pending-policy-changes.ts`), their path shapes don't collide. |
 | `/trust-records`                                                           | Yes                              |                                                                                                                                                                                          |
 | `/replay`                                                                  | Yes                              |                                                                                                                                                                                          |
-| **, error handler mounted last ,**                                         |                                  |                                                                                                                                                                                          |
+| **, error handler mounted last,**                                         |                                  |                                                                                                                                                                                          |
 
 (`packages/api/src/app.ts`)
 
@@ -99,7 +99,7 @@ Every route module lives in `packages/api/src/routes/`:
 
 ### `trust proxy`
 
-`app.set("trust proxy", 1)` (`packages/api/src/app.ts:147`) trusts exactly one proxy hop ,
+`app.set("trust proxy", 1)` (`packages/api/src/app.ts:147`) trusts exactly one proxy hop,
 this codebase's actual deployment fronting (Fly.io's edge, per `fly.toml`'s
 `force_https`). Without this, `req.ip` and `req.protocol`/`req.secure` reflect the proxy's
 own connection to the process, not the original client's.

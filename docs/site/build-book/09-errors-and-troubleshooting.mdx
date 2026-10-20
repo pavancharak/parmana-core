@@ -67,11 +67,11 @@ sent as `Authorization: Bearer <key>`. Nothing about the request was read.
 
 | Message starts with                                                                                                                | Cause and fix                                                                                                           |
 | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| The policy's own reason, for example `Refund rejected. Every refund needs ...`                                                     | A rule refused. If it asks for an approval, get one signed and send a new transaction.                                  |
-| `Rejected: capability "x" requires policy "p"@"v", but ... was declared.`                                                          | The request names another policy or an old version. Read `GET /policies/in-effect` and send that.                       |
+| The policy's own reason, for example `Refund rejected. Every refund needs...`                                                     | A rule refused. If it asks for an approval, get one signed and send a new transaction.                                  |
+| `Rejected: capability "x" requires policy "p"@"v", but... was declared.`                                                          | The request names another policy or an old version. Read `GET /policies/in-effect` and send that.                       |
 | `Rejected: declared signal(s) do not match independently verified state (managerApproved=true != verified managerApproved=false).` | The approval is missing, expired, used, by an untrusted key, for another resource, or below the amount. Sign a new one. |
 | `Rejected: declared signal(s) do not match the executed intent (refundAmount=900 != intent.parameters.amount=750).`                | A bound signal does not equal its request field. Copy the value from the request.                                       |
-| `Rejected: no version of policy "p" ... has been approved through policy governance`                                               | No approved version yet. Approve one ([Chapter 4](/build-book/04-policies)).                                            |
+| `Rejected: no version of policy "p"... has been approved through policy governance`                                               | No approved version yet. Approve one ([Chapter 4](/build-book/04-policies)).                                            |
 
 ### 404: not found
 
@@ -126,7 +126,7 @@ Retry later with a **new** transaction. If it persists, tell the operator; each 
 
 | You see                                                         | Cause                                                                        | Fix                                                                            |
 | --------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `403 POLICY_DENIED`, `requires policy ... but ... was declared` | The agent sent an old policy version.                                        | Read `GET /policies/in-effect` before each request; never hard code a version. |
+| `403 POLICY_DENIED`, `requires policy... but... was declared` | The agent sent an old policy version.                                        | Read `GET /policies/in-effect` before each request; never hard code a version. |
 | Every request refused after a policy change was proposed        | The new version is not approved, or the agent names a version not in effect. | Approve it, then read the version in effect.                                   |
 | A server that will not start                                    | A required setting is missing or wrong; the message names the variable.      | [Environment variable reference](/deployment/environment-variables).           |
 | `PGRST205` "Could not find the table"                           | The database's schema cache is stale.                                        | `NOTIFY pgrst, 'reload schema';`                                               |

@@ -8,10 +8,10 @@ const client = new ParmanaClient({
 
 const change = await client.proposeApproverChange({
   action: "add",
-  approverId: "manager-priya",
-  keyId: "manager-priya-key-1",
+  approverId: "approver-example",
+  keyId: "approver-example-key-1",
   publicKeyPem: readFileSync(
-    "manager-priya__manager-priya-key-1.public.pem",
+    "approver-example__approver-example-key-1.public.pem",
     "utf8",
   ),
   reason: "Priya approves refunds for the West region from October.",

@@ -89,10 +89,10 @@ existence, actual usage inside `packages/api/src`):
 - **`@parmana/replay`** is a real package (`packages/replay/`), with a real `ReplayEngine`,
   `ReplayExecutor`, `ReplayBuilder`, `ReplayVerifier`, and a real test suite including an
   integration test and a determinism test. It has **zero imports anywhere inside
-  `packages/api/src`**. It is real, tested, tutorial-capable code with no production wiring ,
+  `packages/api/src`**. It is real, tested, tutorial-capable code with no production wiring,
   say this plainly rather than implying it's load-bearing because its name suggests it should
   be.
-- **`@parmana/receipt`, as a standalone package, does not exist in this repository at all** ,
+- **`@parmana/receipt`, as a standalone package, does not exist in this repository at all**,
   there is no `packages/receipt/` directory and no `package.json` anywhere named
   `@parmana/receipt`. Receipt functionality is real and genuinely wired into production, but it
   lives inside `@parmana/crypto` (`ReceiptCrypto.ts`, `ReceiptHasher.ts`) and the `Receipt` type

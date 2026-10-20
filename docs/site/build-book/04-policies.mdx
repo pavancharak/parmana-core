@@ -16,7 +16,7 @@ The real `customer-refund` 1.2.0, shortened:
   "policyId": "customer-refund",
   "policyVersion": "1.2.0",
   "schemaVersion": "1.0.0",
-  "description": "Authorizes customer refunds. Every refund above 0 and up to 100000 needs a signed manager approval ...",
+  "description": "Authorizes customer refunds. Every refund above 0 and up to 100000 needs a signed manager approval...",
 
   "signalsSchema": {
     "refundEligible": "boolean",
@@ -35,8 +35,8 @@ The real `customer-refund` 1.2.0, shortened:
   },
 
   "unboundSignalReasons": {
-    "refundEligible": "Declared by the caller; nothing checks it against the order. It can refuse a refund, never authorize one on its own ...",
-    "fraudCheckPassed": "Declared by the caller; nothing checks it against a fraud system. ..."
+    "refundEligible": "Declared by the caller; nothing checks it against the order. It can refuse a refund, never authorize one on its own...",
+    "fraudCheckPassed": "Declared by the caller; nothing checks it against a fraud system...."
   },
 
   "rules": [
@@ -81,7 +81,7 @@ The real `customer-refund` 1.2.0, shortened:
       "condition": { "always": true },
       "outcome": {
         "action": "reject",
-        "reason": "Refund rejected. Every refund needs a signed manager approval ..."
+        "reason": "Refund rejected. Every refund needs a signed manager approval..."
       }
     }
   ]
@@ -115,9 +115,9 @@ A `condition` is one of:
 
 | Condition                                          | Matches when                      |
 | -------------------------------------------------- | --------------------------------- |
-| `{ "fact": "x", "operator": "...", "value": ... }` | The operator holds for signal `x` |
-| `{ "all": [ ... ] }`                               | Every child matches               |
-| `{ "any": [ ... ] }`                               | At least one child matches        |
+| `{ "fact": "x", "operator": "...", "value":... }` | The operator holds for signal `x` |
+| `{ "all": [... ] }`                               | Every child matches               |
+| `{ "any": [... ] }`                               | At least one child matches        |
 | `{ "always": true }`                               | Always                            |
 
 The operators (`packages/policy/src/OperatorEvaluator.ts`):

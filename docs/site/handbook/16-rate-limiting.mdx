@@ -7,7 +7,6 @@ description: "Two independent express-rate-limit limiters, one for POST /execute
 
 Three independent `express-rate-limit` limiters, one for `POST /execute` (keyed by
 authenticated caller identity), one for `GET /health`/`GET /ready` (keyed by IP, far more
-permissive) and, since 2026-09-28, one shared by the unauthenticated routes that check
 signatures or write data (`POST /refusal/verify`, `POST /execution-intents/verify`,
 `POST /audit/verify`, `/handbook`; keyed by IP, 60 per minute by default). Each is backed by either
 an in process store or a durable, fleet wide Postgres store depending on deployment
@@ -17,7 +16,6 @@ configuration.
 
 Two separate problems. First, ordinary abuse/overload protection on the one endpoint that
 actually does real work (signing, storage writes). Second, a real production-readiness gap
-found 2026-09-10: `express-rate-limit`'s default `MemoryStore` counts per-process, so on a
 horizontally-scaled deployment the effective ceiling for a caller becomes
 `limitPerMinute * machineCount` rather than the configured, intended limit. `PostgresRateLimitStore`
 exists to close that gap for any deployment where it matters.

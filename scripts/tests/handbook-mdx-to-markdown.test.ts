@@ -39,7 +39,7 @@ describe("mdxToMarkdown (handbook PDF source)", () => {
     const dir = path.resolve("docs/site/handbook");
     const chapters = readdirSync(dir).filter((f) => /^\d{2}-.*\.mdx$/.test(f));
 
-    expect(chapters).toHaveLength(23);
+    expect(chapters).toHaveLength(22);
     for (const file of chapters) {
       const out = mdxToMarkdown(readFileSync(path.join(dir, file), "utf8"));
       expect(out.startsWith("# Chapter ")).toBe(true);

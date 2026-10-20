@@ -32,15 +32,15 @@
   "examples": [
     {
       "action": "add",
-      "approverId": "manager-priya",
-      "keyId": "manager-priya-key-1",
+      "approverId": "approver-example",
+      "keyId": "approver-example-key-1",
       "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=\n-----END PUBLIC KEY-----\n",
       "reason": "Priya approves refunds for the West region from October."
     },
     {
       "action": "revoke",
-      "approverId": "manager-priya",
-      "keyId": "manager-priya-key-1",
+      "approverId": "approver-example",
+      "keyId": "approver-example-key-1",
       "reason": "Priya moved to another team."
     }
   ]

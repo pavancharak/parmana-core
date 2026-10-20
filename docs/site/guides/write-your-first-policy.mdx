@@ -190,8 +190,6 @@ and doesn't catch.
 
 ## Verify
 
-Real output, from a run on 2026-10-02 (the hash differs on every run, because it covers timestamps and ids):
-
 ```json
 "decision": {
   "outcome": "APPROVED",
@@ -209,7 +207,6 @@ Now confirm the reject path. The tutorial always attaches the Finance Director's
 approval (`withDemoApproval` sets `financeDirectorApproved` to true with a matching approval), so
 change a fact the approval does not cover. In a scratch copy of the tutorial folder, set
 `"vendorVerified": false` in `transaction.json`, and rerun. This is what actually happens
-(verified against a real run on 2026-10-02):
 
 ```
 RuntimeError: Execution rejected: Vendor payment rejected because the vendor has not been verified.

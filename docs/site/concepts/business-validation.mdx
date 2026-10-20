@@ -22,8 +22,7 @@ fact. Parmana answers two questions separately, and an action runs only when bot
 | Re-checked at release, and execute only if still valid at the system     | **[AVAILABLE]**                |
 
 The design and its phases are in
-RFC-0023;
-the claims are CLAIMS.md 2.53 to 2.56. To
+To
 connect a system, see [Connect a business signal source](/guides/connect-a-business-signal-source); to give an agent
 authority, see [Grant an agent authority](/guides/grant-an-agent-authority).
 
@@ -178,7 +177,7 @@ verification. Records made before this change have no `assessment` and still ver
 ## Limits today
 
 - **No real business system connected yet.** Registering sources and asking them is deployed and
-  tested, but no business system has been connected. No shipped policy declares a source. Both live checks passed in production on 2026-10-11, grants with a test policy and sources
+  tested, but no business system has been connected. No shipped policy declares a source.
   with a demo source: [`examples/live-checks`](https://github.com/pavancharak/parmana/tree/main/examples/live-checks).
 - **Conditions at the system are opt in.** The gateway always re-checks `validUntil` and the grant at
   release. An external endpoint must check the release's `conditions` itself to execute only if they
@@ -194,7 +193,6 @@ verification. Records made before this change have no `assessment` and still ver
 
 Business validation is built, deployed and in SDK 1.6.0, but it does not yet decide any real action. The full
 list, with owners and evidence, is section L of
-REMAINING-WORK.md.
 
 **To make it decide real refunds** (operator steps, in order):
 
@@ -211,7 +209,7 @@ release in production (it needs a test hook to time).
 
 | Item                                                               | Today                                                                                 |
 | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| Daily or cumulative grant limits ("₹50,000 or 20 refunds per day") | Limits are per request; the design is in RFC-0023, "Cumulative grant limits"          |
+| Daily or cumulative grant limits ("₹50,000 or 20 refunds per day") | Limits are per request; cumulative grant limits are not built yet          |
 | Built in connectors asking the business system again at release    | External endpoints check `conditions` themselves; built in ones get the gateway check |
 | A "not released" state for an action refused at release            | It is left `ERRORED` until a person closes it                                         |
 | An end to end test of a refusal at release through `POST /execute` | Each part is tested separately                                                        |

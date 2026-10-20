@@ -24,7 +24,7 @@ Not published to npm. This is an internal package of this repository, used from 
 | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ExecutionGateway`          | [AVAILABLE]. `new ExecutionGateway(options: ExecutionGatewayOptions)`, `.execute(request)`, `.verify(request)`.                                                                                          |
 | `Connector` (interface)     | [AVAILABLE]. `{ connectorId, execute(request, context) }`                                                                                                                                                |
-| `HttpConnector`             | [AVAILABLE]. Forwards `{ ...transaction, authorization }` to `${baseUrl}/execute` via POST. A different, older class from `@parmana/connector-sdk`'s `HttpConnector`, see that package's reference page. |
+| `HttpConnector`             | [AVAILABLE]. Forwards `{...transaction, authorization }` to `${baseUrl}/execute` via POST. A different, older class from `@parmana/connector-sdk`'s `HttpConnector`, see that package's reference page. |
 | `GatewayVerificationResult` | [AVAILABLE]. Per-check breakdown: `versionSupported`, `signatureVerified`, `notExpired`, `ttlWithinPolicy`, `businessTransactionHashMatches`, `nonceUnseen`.                                             |
 | `deepFreeze`                | [AVAILABLE]. Freezes executable content before it reaches a connector, so nothing downstream can mutate what was verified.                                                                               |
 

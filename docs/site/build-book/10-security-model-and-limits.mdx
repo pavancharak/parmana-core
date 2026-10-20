@@ -50,10 +50,6 @@ The open items that matter most when you build with Parmana. The full list, with
 
 | Gap  | What                                                                                                            | What it means for you                                                                                                                          |
 | ---- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| G-51 | Facts the agent declares (such as `refundEligible`, `fraudCheckPassed`) are not checked against another system. | Use them only to refuse. The signed approval authorizes.                                                                                       |
-| G-82 | An external endpoint's answer is its claim, not proof that it acted.                                            | Keep the endpoint's own records; reconcile them against Trust Records.                                                                         |
-| G-50 | Any trusted approver can approve any policy change, and sign an approval for any action.                        | Give approver keys only to people who may approve everything this deployment can do, until approvers can be limited per policy and per action. |
-| G-84 | An approved request takes 24 to 32 seconds in production, past the SDKs' default 30 second timeout.             | Set a 120 second timeout; after a timeout, read the record before sending anything new.                                                        |
 
 Also scoped, not absent:
 
@@ -64,7 +60,6 @@ Also scoped, not absent:
   read.
 - **Approval notifications are best effort.** One attempt, no retry; the Refusal Records are the complete list.
 - **Python verifies Ed25519 only.** A record's ML-DSA-65 signatures are checked by the TypeScript verifier.
-- **Releasing to an external endpoint was checked live once**, on 2026-10-01, with an endpoint that acts on nothing 2.50).
 
 ## Reporting a vulnerability
 

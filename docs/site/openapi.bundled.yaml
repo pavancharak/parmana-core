@@ -6920,8 +6920,8 @@ paths:
                           -----BEGIN PUBLIC KEY-----
                           MCowBQYDK2VwAyEAVMs/E6N2XEQfEEWlwMg0wRS0L4svbZ0W785aAxUP78M=
                           -----END PUBLIC KEY-----
-                      - approverId: manager-priya
-                        keyId: manager-priya-key-1
+                      - approverId: approver-example
+                        keyId: approver-example-key-1
                         publicKeyPem: |
                           -----BEGIN PUBLIC KEY-----
                           MCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=
@@ -7015,8 +7015,8 @@ paths:
                   value:
                     changeId: ba7c5827-5844-4069-94fc-9b438ef08f78
                     action: add
-                    approverId: manager-priya
-                    keyId: manager-priya-key-1
+                    approverId: approver-example
+                    keyId: approver-example-key-1
                     publicKeyPem: |
                       -----BEGIN PUBLIC KEY-----
                       MCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=
@@ -7030,8 +7030,8 @@ paths:
                   value:
                     changeId: 348e9b4c-61dc-4bef-8815-6d4488750111
                     action: revoke
-                    approverId: manager-priya
-                    keyId: manager-priya-key-1
+                    approverId: approver-example
+                    keyId: approver-example-key-1
                     reason: Priya moved to another team.
                     proposedBy: human-maker
                     proposedAt: 2026-09-28T19:05:59.750Z
@@ -7078,8 +7078,8 @@ paths:
                 alreadyExists:
                   summary: Real captured response
                   value:
-                    error: Approver 'manager-priya' key 'manager-priya-key-1' already exists. Use a
-                      new key id to add a new key.
+                    error: Approver 'approver-example' key 'approver-example-key-1' already exists.
+                      Use a new key id to add a new key.
                     code: CONFLICT
       x-codeSamples:
         - lang: bash
@@ -7091,7 +7091,7 @@ paths:
             https://parmana-api-real.vercel.app/approval-issuers/changes \
               -H "Authorization: Bearer $PARMANA_API_KEY" \
               -H "Content-Type: application/json" \
-              --data "$(jq -n --rawfile pem manager-priya__manager-priya-key-1.public.pem '{action: "add", approverId: "manager-priya", keyId: "manager-priya-key-1", publicKeyPem: $pem, reason: "Priya approves refunds for the West region from October."}')"
+              --data "$(jq -n --rawfile pem approver-example__approver-example-key-1.public.pem '{action: "add", approverId: "approver-example", keyId: "approver-example-key-1", publicKeyPem: $pem, reason: "Priya approves refunds for the West region from October."}')"
         - lang: typescript
           label: TypeScript
           source: >-
@@ -7108,10 +7108,10 @@ paths:
 
             const change = await client.proposeApproverChange({
               action: "add",
-              approverId: "manager-priya",
-              keyId: "manager-priya-key-1",
+              approverId: "approver-example",
+              keyId: "approver-example-key-1",
               publicKeyPem: readFileSync(
-                "manager-priya__manager-priya-key-1.public.pem",
+                "approver-example__approver-example-key-1.public.pem",
                 "utf8",
               ),
               reason: "Priya approves refunds for the West region from October.",
@@ -7137,9 +7137,9 @@ paths:
 
 
             change = client.approvers.propose_add(
-                approver_id="manager-priya",
-                key_id="manager-priya-key-1",
-                public_key_pem=Path("manager-priya__manager-priya-key-1.public.pem").read_text(),
+                approver_id="approver-example",
+                key_id="approver-example-key-1",
+                public_key_pem=Path("approver-example__approver-example-key-1.public.pem").read_text(),
                 reason="Priya approves refunds for the West region from October.",
             )
 
@@ -7180,8 +7180,8 @@ paths:
                     changes:
                       - changeId: ba7c5827-5844-4069-94fc-9b438ef08f78
                         action: add
-                        approverId: manager-priya
-                        keyId: manager-priya-key-1
+                        approverId: approver-example
+                        keyId: approver-example-key-1
                         publicKeyPem: |
                           -----BEGIN PUBLIC KEY-----
                           MCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=
@@ -7311,8 +7311,8 @@ paths:
                   value:
                     changeId: ba7c5827-5844-4069-94fc-9b438ef08f78
                     action: add
-                    approverId: manager-priya
-                    keyId: manager-priya-key-1
+                    approverId: approver-example
+                    keyId: approver-example-key-1
                     publicKeyPem: |
                       -----BEGIN PUBLIC KEY-----
                       MCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=
@@ -7476,8 +7476,8 @@ paths:
                   value:
                     changeId: 348e9b4c-61dc-4bef-8815-6d4488750111
                     action: revoke
-                    approverId: manager-priya
-                    keyId: manager-priya-key-1
+                    approverId: approver-example
+                    keyId: approver-example-key-1
                     reason: Priya moved to another team.
                     proposedBy: human-maker
                     proposedAt: 2026-09-28T19:05:59.750Z
@@ -13061,8 +13061,8 @@ components:
       examples:
         - changeId: ba7c5827-5844-4069-94fc-9b438ef08f78
           action: add
-          approverId: manager-priya
-          keyId: manager-priya-key-1
+          approverId: approver-example
+          keyId: approver-example-key-1
           publicKeyPem: |
             -----BEGIN PUBLIC KEY-----
             MCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=
@@ -13117,16 +13117,16 @@ components:
           maxLength: 2000
       examples:
         - action: add
-          approverId: manager-priya
-          keyId: manager-priya-key-1
+          approverId: approver-example
+          keyId: approver-example-key-1
           publicKeyPem: |
             -----BEGIN PUBLIC KEY-----
             MCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=
             -----END PUBLIC KEY-----
           reason: Priya approves refunds for the West region from October.
         - action: revoke
-          approverId: manager-priya
-          keyId: manager-priya-key-1
+          approverId: approver-example
+          keyId: approver-example-key-1
           reason: Priya moved to another team.
     approval-issuer-change-response.schema:
       title: Approver Change Response

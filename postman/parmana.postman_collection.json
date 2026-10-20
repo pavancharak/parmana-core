@@ -769,7 +769,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"action\": \"add\",\n  \"approverId\": \"manager-priya\",\n  \"keyId\": \"manager-priya-key-1\",\n  \"publicKeyPem\": \"-----BEGIN PUBLIC KEY-----\\nMCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=\\n-----END PUBLIC KEY-----\\n\",\n  \"reason\": \"Priya approves refunds for the West region from October.\"\n}",
+              "raw": "{\n  \"action\": \"add\",\n  \"approverId\": \"approver-example\",\n  \"keyId\": \"approver-example-key-1\",\n  \"publicKeyPem\": \"-----BEGIN PUBLIC KEY-----\\nMCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=\\n-----END PUBLIC KEY-----\\n\",\n  \"reason\": \"Priya approves refunds for the West region from October.\"\n}",
               "options": {
                 "raw": {
                   "language": "json"

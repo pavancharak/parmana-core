@@ -73,13 +73,13 @@ On the approver's own machine:
 
 ```bash
 npx tsx scripts/generate-approver-key.ts \
-  --approver-id manager-priya \
-  --key-id manager-priya-key-1 \
+  --approver-id approver-example \
+  --key-id approver-example-key-1 \
   --out-dir ~/.parmana
 ```
 
-This writes `manager-priya__manager-priya-key-1.private.pem`, which stays on that machine, and
-`manager-priya__manager-priya-key-1.public.pem`, which they send to the proposer. Any Ed25519
+This writes `approver-example__approver-example-key-1.private.pem`, which stays on that machine, and
+`approver-example__approver-example-key-1.public.pem`, which they send to the proposer. Any Ed25519
 key works; `openssl genpkey -algorithm ed25519` makes one too.
 
 `approverId` and `keyId` are the names the approver will put in every approval they sign. Use
@@ -94,10 +94,10 @@ later key can have the next one.
 curl -X POST "$PARMANA_URL/approval-issuers/changes" \
   -H "Authorization: Bearer $PROPOSER_KEY" \
   -H "Content-Type: application/json" \
-  --data "$(jq -n --rawfile pem manager-priya__manager-priya-key-1.public.pem '{
+  --data "$(jq -n --rawfile pem approver-example__approver-example-key-1.public.pem '{
     action: "add",
-    approverId: "manager-priya",
-    keyId: "manager-priya-key-1",
+    approverId: "approver-example",
+    keyId: "approver-example-key-1",
     publicKeyPem: $pem,
     reason: "Priya approves refunds for the West region from October."
   }')"
@@ -114,10 +114,10 @@ const proposer = new ParmanaClient({
 
 const change = await proposer.proposeApproverChange({
   action: "add",
-  approverId: "manager-priya",
-  keyId: "manager-priya-key-1",
+  approverId: "approver-example",
+  keyId: "approver-example-key-1",
   publicKeyPem: readFileSync(
-    "manager-priya__manager-priya-key-1.public.pem",
+    "approver-example__approver-example-key-1.public.pem",
     "utf8",
   ),
   reason: "Priya approves refunds for the West region from October.",
@@ -134,9 +134,9 @@ from parmana import ParmanaClient
 proposer = ParmanaClient(endpoint=os.environ["PARMANA_URL"], api_key=os.environ["PROPOSER_KEY"])
 
 change = proposer.approvers.propose_add(
-    approver_id="manager-priya",
-    key_id="manager-priya-key-1",
-    public_key_pem=Path("manager-priya__manager-priya-key-1.public.pem").read_text(),
+    approver_id="approver-example",
+    key_id="approver-example-key-1",
+    public_key_pem=Path("approver-example__approver-example-key-1.public.pem").read_text(),
     reason="Priya approves refunds for the West region from October.",
 )
 
@@ -151,8 +151,8 @@ The response is the change, waiting for a checker:
 {
   "changeId": "ba7c5827-5844-4069-94fc-9b438ef08f78",
   "action": "add",
-  "approverId": "manager-priya",
-  "keyId": "manager-priya-key-1",
+  "approverId": "approver-example",
+  "keyId": "approver-example-key-1",
   "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=\n-----END PUBLIC KEY-----\n",
   "reason": "Priya approves refunds for the West region from October.",
   "proposedBy": "human-maker",
@@ -247,8 +247,8 @@ approved = checker.approve_approver_change(
 {
   "changeId": "ba7c5827-5844-4069-94fc-9b438ef08f78",
   "action": "add",
-  "approverId": "manager-priya",
-  "keyId": "manager-priya-key-1",
+  "approverId": "approver-example",
+  "keyId": "approver-example-key-1",
   "status": "APPROVED",
   "proposedBy": "human-maker",
   "resolvedBy": "human-checker",
@@ -257,7 +257,7 @@ approved = checker.approve_approver_change(
 }
 ```
 
-From the next request on, approvals signed with `manager-priya-key-1` verify.
+From the next request on, approvals signed with `approver-example-key-1` verify.
 
 ## Step 5: Confirm the key is trusted
 
@@ -288,8 +288,8 @@ approvers = checker.list_approvers()
       "publicKeyPem": "-----BEGIN PUBLIC KEY-----\n..."
     },
     {
-      "approverId": "manager-priya",
-      "keyId": "manager-priya-key-1",
+      "approverId": "approver-example",
+      "keyId": "approver-example-key-1",
       "revoked": false,
       "source": "governed",
       "addedByChangeId": "ba7c5827-5844-4069-94fc-9b438ef08f78",
@@ -307,7 +307,7 @@ The approver can now sign approvals, with `scripts/sign-approval.ts`, `signAppro
 
 Key ids are used once, so a rotation is two changes:
 
-1. The approver makes a new key pair with the next key id, such as `manager-priya-key-2`.
+1. The approver makes a new key pair with the next key id, such as `approver-example-key-2`.
 2. Propose and approve adding it (Steps 2 to 4).
 3. The approver signs new approvals with the new key.
 4. Propose and approve revoking the old key (below).
@@ -326,22 +326,22 @@ approved, every approval the key ever signed is refused, including ones not used
 curl -X POST "$PARMANA_URL/approval-issuers/changes" \
   -H "Authorization: Bearer $PROPOSER_KEY" \
   -H "Content-Type: application/json" \
-  --data '{"action":"revoke","approverId":"manager-priya","keyId":"manager-priya-key-1","reason":"Priya moved to another team."}'
+  --data '{"action":"revoke","approverId":"approver-example","keyId":"approver-example-key-1","reason":"Priya moved to another team."}'
 ```
 
 ```typescript TypeScript
 const revoke = await proposer.proposeApproverChange({
   action: "revoke",
-  approverId: "manager-priya",
-  keyId: "manager-priya-key-1",
+  approverId: "approver-example",
+  keyId: "approver-example-key-1",
   reason: "Priya moved to another team.",
 });
 ```
 
 ```python Python
 revoke = proposer.approvers.propose_revoke(
-    approver_id="manager-priya",
-    key_id="manager-priya-key-1",
+    approver_id="approver-example",
+    key_id="approver-example-key-1",
     reason="Priya moved to another team.",
 )
 ```
@@ -363,12 +363,12 @@ insert into approval_issuer_changes
   (change_id, action, approver_id, key_id, reason, proposed_by, proposed_at,
    status, resolved_by, resolved_at)
 values
-  ('emergency-2026-10-01-1', 'revoke', 'manager-priya', 'manager-priya-key-1',
+  ('emergency-change-example', 'revoke', 'approver-example', 'approver-example-key-1',
    'Emergency: private key exposed. Done at the database by the operator.',
    'operator-a', now(), 'APPROVED', 'operator-b', now());
 update approval_issuers
-set revoked = true, revoked_by_change_id = 'emergency-2026-10-01-1', revoked_at = now()
-where approver_id = 'manager-priya' and key_id = 'manager-priya-key-1' and revoked = false;
+set revoked = true, revoked_by_change_id = 'emergency-change-example', revoked_at = now()
+where approver_id = 'approver-example' and key_id = 'approver-example-key-1' and revoked = false;
 commit;
 ```
 

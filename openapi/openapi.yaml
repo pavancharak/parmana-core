@@ -4906,8 +4906,8 @@ paths:
                             "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAVMs/E6N2XEQfEEWlwMg0wRS0L4svbZ0W785aAxUP78M=\n-----END PUBLIC KEY-----\n",
                           },
                           {
-                            "approverId": "manager-priya",
-                            "keyId": "manager-priya-key-1",
+                            "approverId": "approver-example",
+                            "keyId": "approver-example-key-1",
                             "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=\n-----END PUBLIC KEY-----\n",
                             "revoked": false,
                             "addedByChangeId": "ba7c5827-5844-4069-94fc-9b438ef08f78",
@@ -4964,8 +4964,8 @@ paths:
                     {
                       "changeId": "ba7c5827-5844-4069-94fc-9b438ef08f78",
                       "action": "add",
-                      "approverId": "manager-priya",
-                      "keyId": "manager-priya-key-1",
+                      "approverId": "approver-example",
+                      "keyId": "approver-example-key-1",
                       "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=\n-----END PUBLIC KEY-----\n",
                       "reason": "Priya approves refunds for the West region from October.",
                       "proposedBy": "human-maker",
@@ -4978,8 +4978,8 @@ paths:
                     {
                       "changeId": "348e9b4c-61dc-4bef-8815-6d4488750111",
                       "action": "revoke",
-                      "approverId": "manager-priya",
-                      "keyId": "manager-priya-key-1",
+                      "approverId": "approver-example",
+                      "keyId": "approver-example-key-1",
                       "reason": "Priya moved to another team.",
                       "proposedBy": "human-maker",
                       "proposedAt": "2026-09-28T19:05:59.750Z",
@@ -5025,7 +5025,7 @@ paths:
                   summary: Real captured response
                   value:
                     {
-                      "error": "Approver 'manager-priya' key 'manager-priya-key-1' already exists. Use a new key id to add a new key.",
+                      "error": "Approver 'approver-example' key 'approver-example-key-1' already exists. Use a new key id to add a new key.",
                       "code": "CONFLICT",
                     }
 
@@ -5062,8 +5062,8 @@ paths:
                           {
                             "changeId": "ba7c5827-5844-4069-94fc-9b438ef08f78",
                             "action": "add",
-                            "approverId": "manager-priya",
-                            "keyId": "manager-priya-key-1",
+                            "approverId": "approver-example",
+                            "keyId": "approver-example-key-1",
                             "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=\n-----END PUBLIC KEY-----\n",
                             "reason": "Priya approves refunds for the West region from October.",
                             "proposedBy": "human-maker",
@@ -5162,8 +5162,8 @@ paths:
                     {
                       "changeId": "ba7c5827-5844-4069-94fc-9b438ef08f78",
                       "action": "add",
-                      "approverId": "manager-priya",
-                      "keyId": "manager-priya-key-1",
+                      "approverId": "approver-example",
+                      "keyId": "approver-example-key-1",
                       "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=\n-----END PUBLIC KEY-----\n",
                       "reason": "Priya approves refunds for the West region from October.",
                       "proposedBy": "human-maker",
@@ -5260,8 +5260,8 @@ paths:
                     {
                       "changeId": "348e9b4c-61dc-4bef-8815-6d4488750111",
                       "action": "revoke",
-                      "approverId": "manager-priya",
-                      "keyId": "manager-priya-key-1",
+                      "approverId": "approver-example",
+                      "keyId": "approver-example-key-1",
                       "reason": "Priya moved to another team.",
                       "proposedBy": "human-maker",
                       "proposedAt": "2026-09-28T19:05:59.750Z",

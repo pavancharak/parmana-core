@@ -39,7 +39,7 @@ Both SDKs cover the same operations. TypeScript exposes each as a method on `Par
 | `GET /keys/{keyId}`                               | `publicKey(keyId)` **1.3.0**                                | `public_key(key_id)` **1.3.0**, `callers.public_key(key_id)`         |
 | Trust Record checked with only public keys        | `verifyExecutionTrustRecordOffline(record, keys)` **1.3.0** | `parmana.crypto.verify_execution_trust_record_offline(record, keys)` |
 | Execution Intent checked with only public keys    | `verifyExecutionIntentOffline(intent, keys)` **1.3.0**      | `parmana.crypto.verify_execution_intent_offline(intent, keys)`       |
-| Release checked at an external connector endpoint | `verifyParmanaRelease(body, options)` **1.5.0**             | `parmana.crypto.verify_parmana_release(body, ...)` **1.5.0**         |
+| Release checked at an external connector endpoint | `verifyParmanaRelease(body, options)` **1.5.0**             | `parmana.crypto.verify_parmana_release(body,...)` **1.5.0**         |
 
 The offline verifiers make no network call. Get the public key once with `publicKey()` or `public_key()` and keep it. In Python they need `pip install "parmana[verify]"`, and from 1.3.0 they accept either the raw JSON or the SDK's own model.
 
@@ -71,7 +71,7 @@ The offline verifiers make no network call. Get the public key once with `public
 | Operation                                     | TypeScript                                           | Python                                                                  |
 | --------------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------- |
 | `GET /approval-issuers`                       | `approvers()` **1.4.0**                              | `list_approvers()`, `approvers.list()` **1.4.0**                        |
-| `POST /approval-issuers/changes`              | `proposeApproverChange({ action, ... })` **1.4.0**   | `approvers.propose_add(...)`, `approvers.propose_revoke(...)` **1.4.0** |
+| `POST /approval-issuers/changes`              | `proposeApproverChange({ action,... })` **1.4.0**   | `approvers.propose_add(...)`, `approvers.propose_revoke(...)` **1.4.0** |
 | `GET /approval-issuers/changes`               | `approverChanges(status?)` **1.4.0**                 | `approver_changes(status=None)` **1.4.0**                               |
 | `POST /approval-issuers/changes/{id}/approve` | `approveApproverChange(id, stepUp)` **1.4.0**        | `approve_approver_change(id, step_up)` **1.4.0**                        |
 | `POST /approval-issuers/changes/{id}/reject`  | `rejectApproverChange(id, reason, stepUp)` **1.4.0** | `reject_approver_change(id, reason, step_up)` **1.4.0**                 |
@@ -81,7 +81,7 @@ The offline verifiers make no network call. Get the public key once with `public
 | Operation                                        | TypeScript                                                    | Python                                                                                           |
 | ------------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | `GET /external-connectors`                       | `externalConnectors()` **1.5.0**                              | `list_external_connectors()`, `external_connectors.list()` **1.5.0**                             |
-| `POST /external-connectors/changes`              | `proposeExternalConnectorChange({ action, ... })` **1.5.0**   | `external_connectors.propose_register(...)`, `external_connectors.propose_revoke(...)` **1.5.0** |
+| `POST /external-connectors/changes`              | `proposeExternalConnectorChange({ action,... })` **1.5.0**   | `external_connectors.propose_register(...)`, `external_connectors.propose_revoke(...)` **1.5.0** |
 | `GET /external-connectors/changes`               | `externalConnectorChanges(status?)` **1.5.0**                 | `external_connector_changes(status=None)` **1.5.0**                                              |
 | `POST /external-connectors/changes/{id}/approve` | `approveExternalConnectorChange(id, stepUp)` **1.5.0**        | `approve_external_connector_change(id, step_up)` **1.5.0**                                       |
 | `POST /external-connectors/changes/{id}/reject`  | `rejectExternalConnectorChange(id, reason, stepUp)` **1.5.0** | `reject_external_connector_change(id, reason, step_up)` **1.5.0**                                |
@@ -93,7 +93,7 @@ Sign the step up authorization for approve or reject with `signPolicyChangeStepU
 | Operation                                            | TypeScript                                                       | Python                                                                                                   |
 | ---------------------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `GET /business-signal-sources`                       | `businessSignalSources()` **1.6.0**                              | `list_business_signal_sources()`, `business_signal_sources.list()` **1.6.0**                             |
-| `POST /business-signal-sources/changes`              | `proposeBusinessSignalSourceChange({ action, ... })` **1.6.0**   | `business_signal_sources.propose_register(...)`, `business_signal_sources.propose_revoke(...)` **1.6.0** |
+| `POST /business-signal-sources/changes`              | `proposeBusinessSignalSourceChange({ action,... })` **1.6.0**   | `business_signal_sources.propose_register(...)`, `business_signal_sources.propose_revoke(...)` **1.6.0** |
 | `GET /business-signal-sources/changes`               | `businessSignalSourceChanges(status?)` **1.6.0**                 | `business_signal_source_changes(status=None)` **1.6.0**                                                  |
 | `POST /business-signal-sources/changes/{id}/approve` | `approveBusinessSignalSourceChange(id, stepUp)` **1.6.0**        | `approve_business_signal_source_change(id, step_up)` **1.6.0**                                           |
 | `POST /business-signal-sources/changes/{id}/reject`  | `rejectBusinessSignalSourceChange(id, reason, stepUp)` **1.6.0** | `reject_business_signal_source_change(id, reason, step_up)` **1.6.0**                                    |
@@ -105,7 +105,7 @@ With an SDK older than 1.6.0, call these routes directly; see [Connect a busines
 | Operation                                     | TypeScript                                                 | Python                                                                                  |
 | --------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | `GET /authority-grants`                       | `authorityGrants()` **1.6.0**                              | `list_authority_grants()`, `authority_grants.list()` **1.6.0**                          |
-| `POST /authority-grants/changes`              | `proposeAuthorityGrantChange({ action, ... })` **1.6.0**   | `authority_grants.propose_grant(...)`, `authority_grants.propose_revoke(...)` **1.6.0** |
+| `POST /authority-grants/changes`              | `proposeAuthorityGrantChange({ action,... })` **1.6.0**   | `authority_grants.propose_grant(...)`, `authority_grants.propose_revoke(...)` **1.6.0** |
 | `GET /authority-grants/changes`               | `authorityGrantChanges(status?)` **1.6.0**                 | `authority_grant_changes(status=None)` **1.6.0**                                        |
 | `POST /authority-grants/changes/{id}/approve` | `approveAuthorityGrantChange(id, stepUp)` **1.6.0**        | `approve_authority_grant_change(id, step_up)` **1.6.0**                                 |
 | `POST /authority-grants/changes/{id}/reject`  | `rejectAuthorityGrantChange(id, reason, stepUp)` **1.6.0** | `reject_authority_grant_change(id, reason, step_up)` **1.6.0**                          |

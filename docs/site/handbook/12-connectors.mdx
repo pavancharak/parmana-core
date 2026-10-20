@@ -86,7 +86,7 @@ wildcard and no additional Paytm capability... declared here; adding one is a de
 separate milestone" (`PaytmCapabilities.ts:6-11`). Structurally different from the other three
 connectors in one respect: it never talks to Paytm's own API directly. `baseUrl` is required,
 not optional, because every request goes to a separate, trusted, out-of-process service
-(`parmana-paytm-agent`, a different repository, the "Pfinite" integration referenced
+(`example-agent`, a different repository, the "Pfinite" integration referenced
 elsewhere in this codebase's operational history), which is the only thing that ever holds a
 real Paytm merchant key (`PaytmCapabilities.ts:60-66`). The wire-level action string this
 remote service expects, `"paytm-refund"` (`PAYTM_AGENT_WIRE_ACTION`), is a pure
@@ -103,7 +103,6 @@ A Razorpay connector (`RazorpayConnector`, `RazorpayRefundService`,
 `RazorpaySignalStateVerifier`, `RazorpayDailyRefundLedger`, `RazorpayCumulativeRefundLedger`,
 `RazorpaySettlementProcessor`, and supporting files under
 `packages/connector-sdk/src/connectors/razorpay/`) was built, ran in production, and was
-**deliberately removed from this codebase in its entirety on 2026-08-12**, commit `d8a6ded`
 ("Add HubSpot integration evidence and update TRL assessment"). `git log --all` for any of
 those paths shows no file at current `HEAD`, confirmed directly, not inferred.
 
@@ -114,7 +113,6 @@ capability pairs are what's actually reachable in production today in its place.
 state an explicit business reason for the removal beyond the coincidence with the HubSpot
 integration landing in the same commit. Three residual database tables
 (`razorpay_webhook_events`, `razorpay_webhook_audit_events`, `razorpay_daily_refund_reservations`)
-survived the code removal until this session, 2026-09-16, when they were finally dropped
 (`supabase/migrations/20260916120000_drop_razorpay_tables.sql`) as pure schema cleanup, over a
 month after the connector code itself was gone.
 
@@ -128,8 +126,7 @@ silently going stale.
 - `packages/connector-sdk/src/ConnectorTypes.ts`, the `Connector` contract itself.
 - `packages/connector-hubspot/src/`, `connector-github/src/`, `connector-paytm/src/`,
   `connector-slack/src/`, each connector's capability metadata and DTOs.
-- `packages/execution-gateway/src/connector-execution/Gateway{HubSpot,GitHub,Paytm,Slack}Adapter.ts`
-  , the actual executable adapters.
+- `packages/execution-gateway/src/connector-execution/Gateway{HubSpot,GitHub,Paytm,Slack}Adapter.ts`, the actual executable adapters.
 - `packages/capability-registry/src/CapabilityPolicyBinding.ts`, the canonical
   capability-to-policy table.
 - `packages/api/src/bootstrap/create{HubSpot,GitHub,Paytm,Slack}Connector.ts` and
@@ -148,7 +145,7 @@ Each connector needs its own credentials configured, only when actually used:
 - HubSpot: `HUBSPOT_PRIVATE_APP_TOKEN` (defaults to HubSpot's real API; tests point `baseUrl`
   at a local mock instead).
 - GitHub: `GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY`.
-- Paytm: a `baseUrl` pointing at a deployed `parmana-paytm-agent` instance, required, with no
+- Paytm: a `baseUrl` pointing at a deployed `example-agent` instance, required, with no
   default, since there is no direct-to-Paytm path at all.
 - Slack: (see `createSlackConnector.ts` for the exact env var; defaults to Slack's real Web
   API base URL otherwise).

@@ -45,7 +45,7 @@ signals, using a real `PolicyEngine`, not just a signature or hash recheck:
 ```typescript
 // packages/replay/src/ReplayEngine.ts:38-62 (abridged, real source)
 const policyDecision = this.policyEngine.evaluate(policy, signals);
-const replayedDecision = { ...recordedDecision, outcome: policyDecision.outcome, ... };
+const replayedDecision = {...recordedDecision, outcome: policyDecision.outcome,... };
 const matches = recordedDecision.outcome === replayedDecision.outcome;
 ```
 

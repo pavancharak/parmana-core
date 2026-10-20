@@ -21,8 +21,8 @@ by step.
   to assess it; any other use needs a written agreement. The client and
   connector SDKs are the exception: they are open source under the Apache
   License 2.0. See [License and evaluation](/license). Evaluators and auditors
-  start at [Evaluate Parmana](/evaluation/overview) and the [Audit
-  guide](/evaluation/audit-guide).
+  start at Evaluate Parmana and the Audit
+  guide.
 </Info>
 
 <Tip>
@@ -338,7 +338,7 @@ Keep `callerId`. Your `authority.principalId` in step 4 must be one of `allowedP
     "version": "1.2.0",
     "schemaVersion": "1.0.0"
   },
-  "description": "Authorizes customer refunds. Every refund above 0 and up to 100000 needs a signed manager approval for that order, covering that amount. ...",
+  "description": "Authorizes customer refunds. Every refund above 0 and up to 100000 needs a signed manager approval for that order, covering that amount....",
   "signals": {
     "facts": [
       "fraudCheckPassed",
@@ -505,7 +505,7 @@ With a signed approval, send the signal as `true` and put the approval, exactly 
 **Do:** send `POST {PARMANA_URL}/execute` with the header, `Content-Type: application/json`, and the object from step 4.
 
 **Set a client timeout of at least 120 seconds.** The request runs the whole pipeline before it answers, including the
-call to the connector. In production an approved request took 24 to 32 seconds on 2026-10-01, longer than the
+call to the connector.
 SDKs' default of 30 seconds: pass `timeout: 120_000` (TypeScript) or `timeout=120` (Python) to the client.
 
 **Never retry this request automatically.** A retry could repeat a real action. The rules for a timeout are in step 7.
@@ -616,7 +616,7 @@ The human readable version, with more explanation, is the [Production deployment
 2. After each step compare what you saw with **Expect**. If it differs, follow **If not** and stop.
 3. Never print, log, commit or paste a secret. Secrets are: raw API keys, bearer keys, private key files, `DATABASE_URL`, `PARMANA_KEY_MATERIAL_JSON`, connector secrets and tokens.
 4. Never set `PARMANA_AUTH_DISABLED`, and never set `NODE_ENV` to `test` or `development` on a production server.
-5. Never deploy to production, write production environment variables or publish anything unless the operator has told you to in this session. Preparing the values and the commands is always allowed.
+5. Preparing the values and the commands is always allowed.
 6. The maker and the checker in step 8 must be two different human identities, and both keys must have `credentialHolderType` `USER`. You act as the maker only if the operator gave you the maker's key and said so. You must never approve your own proposal. The checker is a human.
 
 ## Inputs you need before you start
@@ -704,7 +704,7 @@ Rule 5 applies. If the operator has not told you to write to the host, print the
 | ----------- | ---------------------------------------------------------------------------------------------- |
 | `fly`       | `fly deploy`                                                                                   |
 | `vercel`    | `vercel deploy --prod`                                                                         |
-| `docker`    | `docker build -t parmana-api .` then run the image with the variables from step 4, port `3000` |
+| `docker`    | `docker build -t parmana-api.` then run the image with the variables from step 4, port `3000` |
 
 Environment variables are read once at startup, so a change to any of them needs a new deploy.
 
@@ -844,7 +844,7 @@ Running Parmana locally to evaluate it is permitted; any other use needs a writt
 <Steps>
   <Step title="Install and build">
     ```bash
-    cp .env.example .env
+    cp.env.example.env
     npm ci
     npm run build
     ```
@@ -1119,7 +1119,6 @@ Running Parmana locally to evaluate it is permitted; any other use needs a writt
     `typescript/test/integration/examples.integration.test.ts` run them against a real,
     freshly-spawned server on every test run, so both examples are verified to work, not just
     syntax-checked. The two samples above were run as shown, with the demo key, against a server
-    started as in this page, on a fresh clone on 2026-10-01.
 
   </Step>
 
@@ -1220,7 +1219,7 @@ Reference: [every endpoint](/build-book/reference-endpoints), [every SDK method]
 
 ## Versions
 
-This edition describes the code on `main` as of 2026-10-01. The published SDKs are 1.6.0 (`@parmana/sdk` on npm,
+The published SDKs are 1.6.0 (`@parmana/sdk` on npm,
 `parmana` on PyPI), published 2026-10-11. Methods marked **1.5.0** need that version or later:
 `policyInEffect` and `policy_in_effect`, `verifyParmanaRelease` and `verify_parmana_release`.
 
@@ -1349,8 +1348,6 @@ step by step, use the Runtime library directly, which is what
 ```bash
 node_modules/.bin/tsx examples/tutorials/11-execution-authorization/run.ts
 ```
-
-Real output (run again on 2026-10-02):
 
 ```
 Authorization Summary
@@ -1533,8 +1530,8 @@ The flow for a refund of 75000 on order `ORD-1042`:
 
     ```bash Script
     npx tsx scripts/sign-approval.ts \
-      --private-key-file ~/.parmana/manager-priya__manager-priya-key-1.private.pem \
-      --approver-id manager-priya --key-id manager-priya-key-1 \
+      --private-key-file ~/.parmana/approver-example__approver-example-key-1.private.pem \
+      --approver-id approver-example --key-id approver-example-key-1 \
       --capability paytm:refund --resource-id ORD-1042 --max-amount 75000 \
       --out approval.json
     ```
@@ -1544,9 +1541,9 @@ The flow for a refund of 75000 on order `ORD-1042`:
     import { signApproval } from "@parmana/sdk";
 
     const approval = signApproval({
-      privateKeyPem: readFileSync("manager-priya__manager-priya-key-1.private.pem", "utf8"),
-      approverId: "manager-priya",
-      keyId: "manager-priya-key-1",
+      privateKeyPem: readFileSync("approver-example__approver-example-key-1.private.pem", "utf8"),
+      approverId: "approver-example",
+      keyId: "approver-example-key-1",
       capability: "paytm:refund",
       resourceId: "ORD-1042",
       maxAmount: 75000,
@@ -1560,9 +1557,9 @@ The flow for a refund of 75000 on order `ORD-1042`:
     from parmana.crypto import sign_approval
 
     approval = sign_approval(
-        private_key_pem=Path("manager-priya__manager-priya-key-1.private.pem").read_text(),
-        approver_id="manager-priya",
-        key_id="manager-priya-key-1",
+        private_key_pem=Path("approver-example__approver-example-key-1.private.pem").read_text(),
+        approver_id="approver-example",
+        key_id="approver-example-key-1",
         capability="paytm:refund",
         resource_id="ORD-1042",
         max_amount=75000,
@@ -1620,10 +1617,10 @@ server trusts the public key. Add one through maker checker, with no deploy:
   <Step title="The approver creates a key pair on their own machine">
 
     ```bash
-    npx tsx scripts/generate-approver-key.ts --approver-id manager-priya --key-id manager-priya-key-1 --out-dir ~/.parmana
+    npx tsx scripts/generate-approver-key.ts --approver-id approver-example --key-id approver-example-key-1 --out-dir ~/.parmana
     ```
 
-    They send the public key file, `manager-priya__manager-priya-key-1.public.pem`, to a proposer.
+    They send the public key file, `approver-example__approver-example-key-1.public.pem`, to a proposer.
 
   </Step>
   <Step title="One person proposes trusting it">
@@ -1883,7 +1880,7 @@ AI Agent  --------------------------------------------------->  Parmana
 ```
 
 The agent proposes an intent. Parmana decides whether it's authorized. Only Parmana's decision can
-unlock execution. If your integration ever lets the agent set a value that determines the outcome ,
+unlock execution. If your integration ever lets the agent set a value that determines the outcome,
 an approval flag, a fraud-check result, a policy name, the model is broken, even if it "works."
 
 ## What you need, and why
@@ -1930,7 +1927,7 @@ single-purpose agent; `/callers/me`'s `unrestrictedCapabilities` is literally
   fails closed on malformed JSON), and losing existing entries by replacing
   rather than appending. Always paste the complete array, every existing entry
   plus the new one. Full account: the 2026-09-15 KMS migration troubleshooting
-  guide (in git history).
+  guide.
 </Warning>
 
 **4. Verify the key before writing agent code:**
@@ -2066,11 +2063,9 @@ same integration hit a sequence of purely Parmana-operator issues onboarding as 
 freshly KMS-migrated deployment: no `PARMANA_API_KEYS` entry at all (401) → a malformed hand-edited
 entry (500 for every caller) → no `allowedPrincipalIds` grant for the asserted principal (403) → a
 genuine Parmana-side bug where the gateway's signing and verification paths silently used different
-keys after a KMS migration (500, unrelated to the request itself ,
+keys after a KMS migration (500, unrelated to the request itself,
 `examples/tutorials/114-signing-verification-key-agreement/` reproduces it). None of these were agent
-bugs. Full account: the 2026-09-15 KMS migration troubleshooting guide (in git history).
-
-## Next
+bugs.## Next
 
 <CardGroup cols={2}>
   <Card title="Add a connector" icon="plug" href="/guides/add-a-connector">
@@ -2423,7 +2418,6 @@ nothing was done. The example endpoints take this check as `conditionsHold` (Typ
   proposed, when it is approved, and at every release. It connects to the address it checked and follows no redirect.
 - A release names one capability, target and parameter set a person approved, is addressed to one endpoint, and expires
   60 seconds after it is issued. No shared secret is involved: the signature is the authentication.
-- What the endpoint answers is its claim, not proof that it acted G-82).
 
 ## See it run
 
@@ -2636,7 +2630,6 @@ if (hubspotCredentialProvider === undefined) {
 ```
 
 Adding a built in connector to the running server is more than one file. Slack, the most recent,
-touches these (checked against the source on 2026-10-02), and a new connector needs the same:
 
 | Where                                                                                                                            | What                                                                                                                                            |
 | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -2968,8 +2961,6 @@ and doesn't catch.
 
 ## Verify
 
-Real output, from a run on 2026-10-02 (the hash differs on every run, because it covers timestamps and ids):
-
 ```json
 "decision": {
   "outcome": "APPROVED",
@@ -2987,7 +2978,6 @@ Now confirm the reject path. The tutorial always attaches the Finance Director's
 approval (`withDemoApproval` sets `financeDirectorApproved` to true with a matching approval), so
 change a fact the approval does not cover. In a scratch copy of the tutorial folder, set
 `"vendorVerified": false` in `transaction.json`, and rerun. This is what actually happens
-(verified against a real run on 2026-10-02):
 
 ```
 RuntimeError: Execution rejected: Vendor payment rejected because the vendor has not been verified.
@@ -3299,7 +3289,7 @@ sequenceDiagram
 
 ```bash
 npx tsx scripts/generate-approver-key.ts \
-  --approver-id manager-priya --key-id manager-priya-key-1 --out-dir ~/.parmana
+  --approver-id approver-example --key-id approver-example-key-1 --out-dir ~/.parmana
 ```
 
 The private key stays on the manager's machine. The public key is trusted through maker checker, with no deploy: one person proposes adding it and a different person approves it ([Manage approvers](/guides/manage-approvers)). Revoking it is the same flow.
@@ -3308,8 +3298,8 @@ The private key stays on the manager's machine. The public key is trusted throug
 
 ```bash
 npx tsx scripts/sign-approval.ts \
-  --private-key-file ~/.parmana/manager-priya__manager-priya-key-1.private.pem \
-  --approver-id manager-priya --key-id manager-priya-key-1 \
+  --private-key-file ~/.parmana/approver-example__approver-example-key-1.private.pem \
+  --approver-id approver-example --key-id approver-example-key-1 \
   --capability paytm:refund --resource-id ORD-1042 --max-amount 75000 --out approval.json
 ```
 
@@ -3342,7 +3332,7 @@ To see the whole flow run, without a server or AWS, run tutorial 119: `npx tsx e
 | `403 STEP_UP_AUTHORIZATION_INVALID`        | The signature expired (over 120 seconds), was already used, or was made with a private key that does not match the `stepUpPublicKey` registered for this caller | Sign again and send at once, or use `local-review-action.ts`. If it persists, check your private key matches the registered public key (after a rotation, replace the `.pem` too). |
 | `403 SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE` | The approving API key belongs to the proposer                                                                                                                   | A different person approves with their own key. There is no override.                                                                                                              |
 | `403 NON_HUMAN_CALLER_DENIED`              | The API key is not registered as a human (`credentialHolderType USER`)                                                                                          | The operator registers it as a human.                                                                                                                                              |
-| `400` naming a field on propose            | The body is malformed, `policyId` does not match the name in the URL, or the version has characters outside `A-Z a-z 0-9 . _ -`                                 | Read the `error` message; it names the field.                                                                                                                                      |
+| `400` naming a field on propose            | The body is malformed, `policyId` does not match the name in the URL, or the version has characters outside `A-Z a-z 0-9. _ -`                                 | Read the `error` message; it names the field.                                                                                                                                      |
 | `400 Malformed JSON body`                  | The shell changed the quotes in an inline JSON body                                                                                                             | Build the body in a variable or a file as shown above, not inline in the command.                                                                                                  |
 | `409 CONFLICT` on propose                  | A proposal for this policy version is already open                                                                                                              | Approve or reject the open one first.                                                                                                                                              |
 | Approved content lacks fields the file has | Proposals are frozen snapshots. An old proposal approved later carries the old content                                                                          | Reject stale proposals and propose again from the current file, then run the full scan above.                                                                                      |
@@ -3437,13 +3427,13 @@ On the approver's own machine:
 
 ```bash
 npx tsx scripts/generate-approver-key.ts \
-  --approver-id manager-priya \
-  --key-id manager-priya-key-1 \
+  --approver-id approver-example \
+  --key-id approver-example-key-1 \
   --out-dir ~/.parmana
 ```
 
-This writes `manager-priya__manager-priya-key-1.private.pem`, which stays on that machine, and
-`manager-priya__manager-priya-key-1.public.pem`, which they send to the proposer. Any Ed25519
+This writes `approver-example__approver-example-key-1.private.pem`, which stays on that machine, and
+`approver-example__approver-example-key-1.public.pem`, which they send to the proposer. Any Ed25519
 key works; `openssl genpkey -algorithm ed25519` makes one too.
 
 `approverId` and `keyId` are the names the approver will put in every approval they sign. Use
@@ -3458,10 +3448,10 @@ later key can have the next one.
 curl -X POST "$PARMANA_URL/approval-issuers/changes" \
   -H "Authorization: Bearer $PROPOSER_KEY" \
   -H "Content-Type: application/json" \
-  --data "$(jq -n --rawfile pem manager-priya__manager-priya-key-1.public.pem '{
+  --data "$(jq -n --rawfile pem approver-example__approver-example-key-1.public.pem '{
     action: "add",
-    approverId: "manager-priya",
-    keyId: "manager-priya-key-1",
+    approverId: "approver-example",
+    keyId: "approver-example-key-1",
     publicKeyPem: $pem,
     reason: "Priya approves refunds for the West region from October."
   }')"
@@ -3478,10 +3468,10 @@ const proposer = new ParmanaClient({
 
 const change = await proposer.proposeApproverChange({
   action: "add",
-  approverId: "manager-priya",
-  keyId: "manager-priya-key-1",
+  approverId: "approver-example",
+  keyId: "approver-example-key-1",
   publicKeyPem: readFileSync(
-    "manager-priya__manager-priya-key-1.public.pem",
+    "approver-example__approver-example-key-1.public.pem",
     "utf8",
   ),
   reason: "Priya approves refunds for the West region from October.",
@@ -3498,9 +3488,9 @@ from parmana import ParmanaClient
 proposer = ParmanaClient(endpoint=os.environ["PARMANA_URL"], api_key=os.environ["PROPOSER_KEY"])
 
 change = proposer.approvers.propose_add(
-    approver_id="manager-priya",
-    key_id="manager-priya-key-1",
-    public_key_pem=Path("manager-priya__manager-priya-key-1.public.pem").read_text(),
+    approver_id="approver-example",
+    key_id="approver-example-key-1",
+    public_key_pem=Path("approver-example__approver-example-key-1.public.pem").read_text(),
     reason="Priya approves refunds for the West region from October.",
 )
 
@@ -3515,8 +3505,8 @@ The response is the change, waiting for a checker:
 {
   "changeId": "ba7c5827-5844-4069-94fc-9b438ef08f78",
   "action": "add",
-  "approverId": "manager-priya",
-  "keyId": "manager-priya-key-1",
+  "approverId": "approver-example",
+  "keyId": "approver-example-key-1",
   "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=\n-----END PUBLIC KEY-----\n",
   "reason": "Priya approves refunds for the West region from October.",
   "proposedBy": "human-maker",
@@ -3611,8 +3601,8 @@ approved = checker.approve_approver_change(
 {
   "changeId": "ba7c5827-5844-4069-94fc-9b438ef08f78",
   "action": "add",
-  "approverId": "manager-priya",
-  "keyId": "manager-priya-key-1",
+  "approverId": "approver-example",
+  "keyId": "approver-example-key-1",
   "status": "APPROVED",
   "proposedBy": "human-maker",
   "resolvedBy": "human-checker",
@@ -3621,7 +3611,7 @@ approved = checker.approve_approver_change(
 }
 ```
 
-From the next request on, approvals signed with `manager-priya-key-1` verify.
+From the next request on, approvals signed with `approver-example-key-1` verify.
 
 ## Step 5: Confirm the key is trusted
 
@@ -3652,8 +3642,8 @@ approvers = checker.list_approvers()
       "publicKeyPem": "-----BEGIN PUBLIC KEY-----\n..."
     },
     {
-      "approverId": "manager-priya",
-      "keyId": "manager-priya-key-1",
+      "approverId": "approver-example",
+      "keyId": "approver-example-key-1",
       "revoked": false,
       "source": "governed",
       "addedByChangeId": "ba7c5827-5844-4069-94fc-9b438ef08f78",
@@ -3671,7 +3661,7 @@ The approver can now sign approvals, with `scripts/sign-approval.ts`, `signAppro
 
 Key ids are used once, so a rotation is two changes:
 
-1. The approver makes a new key pair with the next key id, such as `manager-priya-key-2`.
+1. The approver makes a new key pair with the next key id, such as `approver-example-key-2`.
 2. Propose and approve adding it (Steps 2 to 4).
 3. The approver signs new approvals with the new key.
 4. Propose and approve revoking the old key (below).
@@ -3690,22 +3680,22 @@ approved, every approval the key ever signed is refused, including ones not used
 curl -X POST "$PARMANA_URL/approval-issuers/changes" \
   -H "Authorization: Bearer $PROPOSER_KEY" \
   -H "Content-Type: application/json" \
-  --data '{"action":"revoke","approverId":"manager-priya","keyId":"manager-priya-key-1","reason":"Priya moved to another team."}'
+  --data '{"action":"revoke","approverId":"approver-example","keyId":"approver-example-key-1","reason":"Priya moved to another team."}'
 ```
 
 ```typescript TypeScript
 const revoke = await proposer.proposeApproverChange({
   action: "revoke",
-  approverId: "manager-priya",
-  keyId: "manager-priya-key-1",
+  approverId: "approver-example",
+  keyId: "approver-example-key-1",
   reason: "Priya moved to another team.",
 });
 ```
 
 ```python Python
 revoke = proposer.approvers.propose_revoke(
-    approver_id="manager-priya",
-    key_id="manager-priya-key-1",
+    approver_id="approver-example",
+    key_id="approver-example-key-1",
     reason="Priya moved to another team.",
 )
 ```
@@ -3727,12 +3717,12 @@ insert into approval_issuer_changes
   (change_id, action, approver_id, key_id, reason, proposed_by, proposed_at,
    status, resolved_by, resolved_at)
 values
-  ('emergency-2026-10-01-1', 'revoke', 'manager-priya', 'manager-priya-key-1',
+  ('emergency-change-example', 'revoke', 'approver-example', 'approver-example-key-1',
    'Emergency: private key exposed. Done at the database by the operator.',
    'operator-a', now(), 'APPROVED', 'operator-b', now());
 update approval_issuers
-set revoked = true, revoked_by_change_id = 'emergency-2026-10-01-1', revoked_at = now()
-where approver_id = 'manager-priya' and key_id = 'manager-priya-key-1' and revoked = false;
+set revoked = true, revoked_by_change_id = 'emergency-change-example', revoked_at = now()
+where approver_id = 'approver-example' and key_id = 'approver-example-key-1' and revoked = false;
 commit;
 ```
 
@@ -4060,9 +4050,7 @@ app.post(
 
     const expected =
       "v1=" +
-      createHmac("sha256", process.env.APPROVAL_WEBHOOK_SECRET!)
-        .update(`${timestamp}.${body}`)
-        .digest("hex");
+      createHmac("sha256", process.env.APPROVAL_WEBHOOK_SECRET!).update(`${timestamp}.${body}`).digest("hex");
 
     const fresh = Math.abs(Date.now() / 1000 - Number(timestamp)) < 300;
     const valid =
@@ -4123,8 +4111,8 @@ The approver signs exactly what the event names:
 
 ```bash Script
 npx tsx scripts/sign-approval.ts \
-  --private-key-file ~/.parmana/manager-priya__manager-priya-key-1.private.pem \
-  --approver-id manager-priya --key-id manager-priya-key-1 \
+  --private-key-file ~/.parmana/approver-example__approver-example-key-1.private.pem \
+  --approver-id approver-example --key-id approver-example-key-1 \
   --capability "$ACTION" --resource-id "$RESOURCE_ID" --max-amount "$VALUE" \
   --out approval.json
 ```
@@ -4135,11 +4123,10 @@ import { signApproval } from "@parmana/sdk";
 const [needed] = event.approvals;
 const approval = signApproval({
   privateKeyPem,
-  approverId: "manager-priya",
-  keyId: "manager-priya-key-1",
+  approverId: "approver-example",
+  keyId: "approver-example-key-1",
   capability: event.action,
-  resourceId: needed.resourceId,
-  ...(needed.value !== undefined ? { maxAmount: needed.value } : {}),
+  resourceId: needed.resourceId,...(needed.value !== undefined ? { maxAmount: needed.value } : {}),
 });
 ```
 
@@ -4149,8 +4136,8 @@ from parmana.crypto import sign_approval
 needed = event["approvals"][0]
 approval = sign_approval(
     private_key_pem=private_key_pem,
-    approver_id="manager-priya",
-    key_id="manager-priya-key-1",
+    approver_id="approver-example",
+    key_id="approver-example-key-1",
     capability=event["action"],
     resource_id=needed["resourceId"],
     max_amount=needed.get("value"),
@@ -4651,7 +4638,7 @@ not as a failure.
 
 <Warning>
   **After a timeout, read before you send again.** An approved request can take
-  tens of seconds (see G-84), longer than a client's
+  tens of seconds, longer than a client's
   default timeout. The request keeps running on the server, and the action may
   be performed. If your client times out, read `GET /trust-records/
   {businessTransactionId}` (and `GET /refusal/{id}`) with the same id first.
@@ -4777,7 +4764,7 @@ external system](/guides/connect-any-external-system).
 | 403    | `STEP_UP_AUTHORIZATION_INVALID`        | `The step-up authorization envelope is missing, invalid, expired, replayed, or does not match this request.`                                                                                                                              | The step up signature is missing, not from the checker's registered key, expired, already used, or for another change or action                                                     | Every approve and reject route                                 |
 | 404    | `PENDING_POLICY_CHANGE_NOT_FOUND`      | `Pending Policy Change '<id>' not found.`                                                                                                                                                                                                 | No policy change has this id                                                                                                                                                        | `POST /policies/pending-changes/{id}/approve`, `.../reject`    |
 | 404    | `EXTERNAL_CONNECTOR_CHANGE_NOT_FOUND`  | `External connector change '<id>' not found.`                                                                                                                                                                                             | No external connector change has this id                                                                                                                                            | `POST /external-connectors/changes/{id}/approve`, `.../reject` |
-| 409    | `CONFLICT`                             | For example `A PENDING_APPROVAL change already exists for policy '<name>' version '<version>' ...`, `Approver change '<id>' is already APPROVED.`, `Capability '<capability>' already has an active external connector. Revoke it first.` | The change contradicts the current state: another change is already open for the same thing, the change was already resolved, or the key or registration already exists or does not | Every propose, approve and reject route                        |
+| 409    | `CONFLICT`                             | For example `A PENDING_APPROVAL change already exists for policy '<name>' version '<version>'...`, `Approver change '<id>' is already APPROVED.`, `Capability '<capability>' already has an active external connector. Revoke it first.` | The change contradicts the current state: another change is already open for the same thing, the change was already resolved, or the key or registration already exists or does not | Every propose, approve and reject route                        |
 
 `APPROVAL_ISSUER_CHANGE_NOT_FOUND` (404) is in [Not found](#not-found) above.
 
@@ -4811,12 +4798,12 @@ external system](/guides/connect-any-external-system).
 
 | Status | Code                            | Message                                                                                                                                                                    | Condition                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | ------ | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 503    | `SIGNING_UNAVAILABLE`           | `Evidence signing is unavailable; refusing to release the action ... Nothing was executed.`                                                                                | Before release, the signing readiness probe failed (a missing, disabled or denied key, a KMS or network outage, a key mismatch). Nothing was executed. Retry once signing is healthy, with a new `businessTransactionId`, because the original was already accepted.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| 503    | `EXECUTION_INTENT_UNAVAILABLE`  | `The signed Execution Intent for business transaction '<id>' could not be created and stored; refusing to release the action. Nothing was executed. ...`                   | Before release, the signed [Execution Intent](/concepts/execution-intents) could not be signed and stored (a database or signing failure, or the `execution_intents` table is missing). **Nothing was released.** Retry once healthy, with a new `businessTransactionId`, because the original was already accepted.                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| 503    | `CONNECTOR_NOT_REGISTERED`      | `No connector is registered for capability '<action>' on this deployment. Nothing was executed. ...`                                                                       | The action was approved, but no connector is registered for it, usually because the connector's credentials are not configured. The operator must configure it, then retry with a new `businessTransactionId`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| 500    | `EXECUTION_RECORD_INCOMPLETE`   | `The action for business transaction '<id>' was released ... reconcile ... authorizationId: <id>.`                                                                         | The action was released to the connector, then the signed Execution Trust Record could not be produced or persisted. **Do not retry as a new transaction.** A signed [Execution Intent](/concepts/execution-intents) exists for it. Read `GET /execution-intents/<businessTransactionId>`: in state `RELEASED`, an operator can rebuild the record with `POST /execution-intents/<businessTransactionId>/finalize`, which never calls the connector. In state `PREPARED`, finalize refuses with `409`, and the outcome must be reconciled against the connector by hand.                                                                                                                                                                            |
-| 409    | `AUTHORIZATION_NO_LONGER_VALID` | `Not released: what the authorization for business transaction '<id>' rests on no longer holds (...). Nothing was executed. ...`                                           | RFC-0023 phase 4. The request was decided, but at release a business fact it rested on was past its `validUntil`, or the agent's authority grant had expired or been revoked. Nothing was sent to the connector, and the body says `executionStatus: NOT_EXECUTED`. Send a new request, which is decided again on current facts and authority. The [Execution Intent](/concepts/execution-intents) is `ERRORED`; close it as `NOT_EXECUTED`.                                                                                                                                                                                                                                                                                                        |
-| 502    | `EXECUTION_OUTCOME_UNKNOWN`     | `The action for business transaction '<id>' was released to the execution system, but the call failed, so whether it was performed is unknown. ... authorizationId: <id>.` | The action was released and the call to the connector failed: unreachable, timed out, or an error response. Whether it was performed is unknown, and the [Execution Intent](/concepts/execution-intents) is `ERRORED`. **Do not retry as a new transaction.** Check the target system, then close the intent with `POST /execution-intents/<businessTransactionId>/resolve`, recording `EXECUTED` or `NOT_EXECUTED`. The connector's own error is never in the response; it is in the server log (`execution_outcome_unknown`) and in the intent's `failureReason`. Before 2026-09-25 this was a bare `500 Internal Server Error`. Since RFC-0023 phase 4 the body also says `executionStatus: EXECUTION_UNKNOWN`: never reported as failed. |
+| 503    | `SIGNING_UNAVAILABLE`           | `Evidence signing is unavailable; refusing to release the action... Nothing was executed.`                                                                                | Before release, the signing readiness probe failed (a missing, disabled or denied key, a KMS or network outage, a key mismatch). Nothing was executed. Retry once signing is healthy, with a new `businessTransactionId`, because the original was already accepted.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 503    | `EXECUTION_INTENT_UNAVAILABLE`  | `The signed Execution Intent for business transaction '<id>' could not be created and stored; refusing to release the action. Nothing was executed....`                   | Before release, the signed [Execution Intent](/concepts/execution-intents) could not be signed and stored (a database or signing failure, or the `execution_intents` table is missing). **Nothing was released.** Retry once healthy, with a new `businessTransactionId`, because the original was already accepted.                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 503    | `CONNECTOR_NOT_REGISTERED`      | `No connector is registered for capability '<action>' on this deployment. Nothing was executed....`                                                                       | The action was approved, but no connector is registered for it, usually because the connector's credentials are not configured. The operator must configure it, then retry with a new `businessTransactionId`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 500    | `EXECUTION_RECORD_INCOMPLETE`   | `The action for business transaction '<id>' was released... reconcile... authorizationId: <id>.`                                                                         | The action was released to the connector, then the signed Execution Trust Record could not be produced or persisted. **Do not retry as a new transaction.** A signed [Execution Intent](/concepts/execution-intents) exists for it. Read `GET /execution-intents/<businessTransactionId>`: in state `RELEASED`, an operator can rebuild the record with `POST /execution-intents/<businessTransactionId>/finalize`, which never calls the connector. In state `PREPARED`, finalize refuses with `409`, and the outcome must be reconciled against the connector by hand.                                                                                                                                                                            |
+| 409    | `AUTHORIZATION_NO_LONGER_VALID` | `Not released: what the authorization for business transaction '<id>' rests on no longer holds (...). Nothing was executed....`                                           |  phase 4. The request was decided, but at release a business fact it rested on was past its `validUntil`, or the agent's authority grant had expired or been revoked. Nothing was sent to the connector, and the body says `executionStatus: NOT_EXECUTED`. Send a new request, which is decided again on current facts and authority. The [Execution Intent](/concepts/execution-intents) is `ERRORED`; close it as `NOT_EXECUTED`.                                                                                                                                                                                                                                                                                                        |
+| 502    | `EXECUTION_OUTCOME_UNKNOWN`     | `The action for business transaction '<id>' was released to the execution system, but the call failed, so whether it was performed is unknown.... authorizationId: <id>.` | The action was released and the call to the connector failed: unreachable, timed out, or an error response. Whether it was performed is unknown, and the [Execution Intent](/concepts/execution-intents) is `ERRORED`. **Do not retry as a new transaction.** Check the target system, then close the intent with `POST /execution-intents/<businessTransactionId>/resolve`, recording `EXECUTED` or `NOT_EXECUTED`. The connector's own error is never in the response; it is in the server log (`execution_outcome_unknown`) and in the intent's `failureReason`. Before 2026-09-25 this was a bare `500 Internal Server Error`. Since  phase 4 the body also says `executionStatus: EXECUTION_UNKNOWN`: never reported as failed. |
 
 ## Execution Intents (operator routes)
 
@@ -4827,11 +4814,11 @@ These come from the routes under `/execution-intents`, see [Execution Intents](/
 | 400    | none                                   | `Request body must be an Execution Intent (intentId, businessTransactionId, authorizationId, intentHash, signature required).` | The body of the verify route is not a structurally plausible intent.                                                                                                                                                                                | `POST /execution-intents/verify`                                              |
 | 403    | `NON_HUMAN_CALLER_DENIED`              | `This action requires a caller credential provisioned as a verified human (credentialHolderType: USER).`                       | The list and finalize routes need a credential provisioned as a verified human. Any other credential is refused.                                                                                                                                    | `GET /execution-intents/unfinalized`, `POST /execution-intents/<id>/finalize` |
 | 404    | none                                   | `Execution Intent not found.`                                                                                                  | No intent exists for the id, or it belongs to a different caller (ownership scoped).                                                                                                                                                                | `GET /execution-intents/<id>`                                                 |
-| 404    | `EXECUTION_INTENT_NOT_FOUND`           | `No Execution Intent exists for business transaction '<id>'. ...`                                                              | Finalize was called for a transaction with no intent. Transactions created before Execution Intents have none.                                                                                                                                      | `POST /execution-intents/<id>/finalize`                                       |
-| 409    | `EXECUTION_INTENT_RESULT_NOT_RECORDED` | `The Execution Intent for business transaction '<id>' is in state <state> and has no saved execution result ...`               | The intent exists but no execution result was saved, so the Trust Record cannot be rebuilt. The action may or may not have been released. Establish the outcome at the connector and reconcile by hand. Nothing was called or changed.              | `POST /execution-intents/<id>/finalize`                                       |
+| 404    | `EXECUTION_INTENT_NOT_FOUND`           | `No Execution Intent exists for business transaction '<id>'....`                                                              | Finalize was called for a transaction with no intent. Transactions created before Execution Intents have none.                                                                                                                                      | `POST /execution-intents/<id>/finalize`                                       |
+| 409    | `EXECUTION_INTENT_RESULT_NOT_RECORDED` | `The Execution Intent for business transaction '<id>' is in state <state> and has no saved execution result...`               | The intent exists but no execution result was saved, so the Trust Record cannot be rebuilt. The action may or may not have been released. Establish the outcome at the connector and reconcile by hand. Nothing was called or changed.              | `POST /execution-intents/<id>/finalize`                                       |
 | 501    | `EXECUTION_INTENTS_NOT_ENABLED`        | `Execution Intents are not enabled on this deployment.`                                                                        | Finalize was called on a deployment where Execution Intents are off. Only possible in `test` or `development` without `EXECUTION_INTENTS_CHECK=true`.                                                                                               | `POST /execution-intents/<id>/finalize`                                       |
 | 400    | `EXECUTION_INTENT_RESOLUTION_INVALID`  | `The resolution is invalid: <reason>`                                                                                          | The body of the resolve route is invalid: `resolution` is not `NOT_EXECUTED` or `EXECUTED`, or `note` is missing, blank or over 2000 characters. Nothing was changed.                                                                               | `POST /execution-intents/<id>/resolve`                                        |
-| 409    | `EXECUTION_INTENT_NOT_RESOLVABLE`      | `The Execution Intent for business transaction '<id>' is in state <state> and cannot be resolved by hand. ...`                 | The intent is `RELEASED` (rebuild the record with finalize instead), `FINALIZED` (already complete), or a signed Trust Record already exists for the transaction. Only `PREPARED` and `ERRORED` intents can be closed by hand. Nothing was changed. | `POST /execution-intents/<id>/resolve`                                        |
+| 409    | `EXECUTION_INTENT_NOT_RESOLVABLE`      | `The Execution Intent for business transaction '<id>' is in state <state> and cannot be resolved by hand....`                 | The intent is `RELEASED` (rebuild the record with finalize instead), `FINALIZED` (already complete), or a signed Trust Record already exists for the transaction. Only `PREPARED` and `ERRORED` intents can be closed by hand. Nothing was changed. | `POST /execution-intents/<id>/resolve`                                        |
 
 ## Server-side (500)
 
@@ -4917,11 +4904,11 @@ sent as `Authorization: Bearer <key>`. Nothing about the request was read.
 
 | Message starts with                                                                                                                | Cause and fix                                                                                                           |
 | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| The policy's own reason, for example `Refund rejected. Every refund needs ...`                                                     | A rule refused. If it asks for an approval, get one signed and send a new transaction.                                  |
-| `Rejected: capability "x" requires policy "p"@"v", but ... was declared.`                                                          | The request names another policy or an old version. Read `GET /policies/in-effect` and send that.                       |
+| The policy's own reason, for example `Refund rejected. Every refund needs...`                                                     | A rule refused. If it asks for an approval, get one signed and send a new transaction.                                  |
+| `Rejected: capability "x" requires policy "p"@"v", but... was declared.`                                                          | The request names another policy or an old version. Read `GET /policies/in-effect` and send that.                       |
 | `Rejected: declared signal(s) do not match independently verified state (managerApproved=true != verified managerApproved=false).` | The approval is missing, expired, used, by an untrusted key, for another resource, or below the amount. Sign a new one. |
 | `Rejected: declared signal(s) do not match the executed intent (refundAmount=900 != intent.parameters.amount=750).`                | A bound signal does not equal its request field. Copy the value from the request.                                       |
-| `Rejected: no version of policy "p" ... has been approved through policy governance`                                               | No approved version yet. Approve one ([Chapter 4](/build-book/04-policies)).                                            |
+| `Rejected: no version of policy "p"... has been approved through policy governance`                                               | No approved version yet. Approve one ([Chapter 4](/build-book/04-policies)).                                            |
 
 ### 404: not found
 
@@ -4976,7 +4963,7 @@ Retry later with a **new** transaction. If it persists, tell the operator; each 
 
 | You see                                                         | Cause                                                                        | Fix                                                                            |
 | --------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `403 POLICY_DENIED`, `requires policy ... but ... was declared` | The agent sent an old policy version.                                        | Read `GET /policies/in-effect` before each request; never hard code a version. |
+| `403 POLICY_DENIED`, `requires policy... but... was declared` | The agent sent an old policy version.                                        | Read `GET /policies/in-effect` before each request; never hard code a version. |
 | Every request refused after a policy change was proposed        | The new version is not approved, or the agent names a version not in effect. | Approve it, then read the version in effect.                                   |
 | A server that will not start                                    | A required setting is missing or wrong; the message names the variable.      | [Environment variable reference](/deployment/environment-variables).           |
 | `PGRST205` "Could not find the table"                           | The database's schema cache is stale.                                        | `NOTIFY pgrst, 'reload schema';`                                               |
@@ -5123,7 +5110,6 @@ you should do next:
   and the operator can rebuild the record without repeating the action. The method is `finalizeExecutionIntent`. It is available from
   version 1.2.0. On 1.1.6 and earlier the operator uses
   `POST /execution-intents/<businessTransactionId>/finalize` over HTTP.
-- `EXECUTION_OUTCOME_UNKNOWN` (502, since 2026-09-25): the action was released and the connector call failed, so it
   **may** have been performed. **Do not retry as a new transaction.** Tell the operator, who checks the target system
   and closes the intent with `resolveExecutionIntent`.
 
@@ -5292,7 +5278,7 @@ await checker.approveBusinessSignalSourceChange(
   }),
 );
 
-await checker.businessSignalSources(); // [{ name: "erp", status: "active", ... }]
+await checker.businessSignalSources(); // [{ name: "erp", status: "active",... }]
 ```
 
 `businessSignalSourceChanges(status?)` lists proposals and `rejectBusinessSignalSourceChange(changeId, reason, stepUp)`
@@ -5320,7 +5306,7 @@ const change = await maker.proposeAuthorityGrantChange({
 
 await checker.approveAuthorityGrantChange(change.changeId, stepUp); // signed as above
 
-await checker.authorityGrants(); // [{ callerId: "warehouse-agent", status: "active", ... }]
+await checker.authorityGrants(); // [{ callerId: "warehouse-agent", status: "active",... }]
 ```
 
 `authorityGrantChanges(status?)` and `rejectAuthorityGrantChange(changeId, reason, stepUp)` work as for sources. To
@@ -5381,7 +5367,7 @@ await checker.approveExternalConnectorChange(
   }),
 );
 
-await checker.externalConnectors(); // [{ capability: "erp:create-invoice", status: "active", ... }]
+await checker.externalConnectors(); // [{ capability: "erp:create-invoice", status: "active",... }]
 ```
 
 `externalConnectorChanges(status?)` lists proposals and `rejectExternalConnectorChange(changeId, reason, stepUp)`
@@ -5406,11 +5392,11 @@ import { signApproval } from "@parmana/sdk";
 
 const approval = signApproval({
   privateKeyPem: readFileSync(
-    "manager-priya__manager-priya-key-1.private.pem",
+    "approver-example__approver-example-key-1.private.pem",
     "utf8",
   ),
-  approverId: "manager-priya",
-  keyId: "manager-priya-key-1",
+  approverId: "approver-example",
+  keyId: "approver-example-key-1",
   capability: "paytm:refund",
   resourceId: "ORD-1042",
   maxAmount: 75000, // leave out when the policy declares no amount
@@ -5433,9 +5419,9 @@ import { ParmanaClient, signPolicyChangeStepUp } from "@parmana/sdk";
 // The proposer
 const change = await proposer.proposeApproverChange({
   action: "add",
-  approverId: "manager-priya",
-  keyId: "manager-priya-key-1",
-  publicKeyPem, // the approver's .public.pem file
+  approverId: "approver-example",
+  keyId: "approver-example-key-1",
+  publicKeyPem, // the approver's.public.pem file
   reason: "Priya approves refunds for the West region from October.",
 });
 
@@ -5893,7 +5879,7 @@ Source: https://docs.parmanasystems.com/guides/typescript-sdk-quickstart
     From a clone of this repository:
 
     ```bash
-    cp .env.example .env
+    cp.env.example.env
     npm ci
     npm run build
     ```
@@ -6050,7 +6036,6 @@ Source: https://docs.parmanasystems.com/guides/typescript-sdk-quickstart
 
   <Step title="Real output">
 
-Captured on 2026-10-02 from a run against a local server (trimmed), using the same
 `createBusinessTransaction()` call this page documents (see
 `typescript/examples/06-create-business-transaction.ts` in this repository for the exact
 source, and `typescript/test/integration/examples.integration.test.ts` for the test that
@@ -6110,7 +6095,7 @@ doesn't have `PARMANA_AUTH_DISABLED=true` set, or the key is wrong. The demo key
 `my-secret-api-key`, only works against a server started exactly as shown in step 1, with its
 `PARMANA_API_KEYS` entry.
 
-**`ExecutionRejectedError: Execution rejected: ...`**: the policy evaluated your signals
+**`ExecutionRejectedError: Execution rejected:...`**: the policy evaluated your signals
 and declined. The message names which rule failed; check
 [Write your first policy](/guides/write-your-first-policy) for how `vendor-payment@2.1.0`
 reads its signals. A message naming `humanApproved` means the approval is missing, expired,
@@ -6218,7 +6203,7 @@ Real registry install, confirmed live against PyPI while fixing this page's own 
 claim otherwise. To build from source inside this monorepo instead:
 
 ```bash
-pip install -e ./python
+pip install -e./python
 ```
 
 `py.typed` is shipped, this is a PEP 561 typed distribution, confirmed by installing into
@@ -6341,8 +6326,8 @@ client.execution_intents.resolve(id, resolution=..., note=...)  # POST /executio
 client.policy.validate(policy_id, policy_version) # POST /policies/validate
 client.policy.propose_change(name, version, proposed_content=..., reason=...)  # (1.3.0)
 client.policy.list_changes(status)                # GET /policies/pending-changes (1.3.0)
-client.policy.approve_change(id, step_up)         # POST .../approve             (1.3.0)
-client.policy.reject_change(id, reason, step_up)  # POST .../reject              (1.3.0)
+client.policy.approve_change(id, step_up)         # POST.../approve             (1.3.0)
+client.policy.reject_change(id, reason, step_up)  # POST.../reject              (1.3.0)
 client.callers.me()                               # GET /callers/me              (1.3.0)
 client.callers.public_key(key_id)                 # GET /keys/:keyId             (1.3.0)
 ```
@@ -6443,7 +6428,7 @@ checker.approve_business_signal_source_change(
     ),
 )
 
-checker.list_business_signal_sources()  # [BusinessSignalSource(name="erp", status="active", ...)]
+checker.list_business_signal_sources()  # [BusinessSignalSource(name="erp", status="active",...)]
 ```
 
 `business_signal_source_changes(status=None)` lists proposals and `reject_business_signal_source_change(change_id,
@@ -6467,7 +6452,7 @@ change = maker.authority_grants.propose_grant(
 
 checker.approve_authority_grant_change(change.change_id, step_up)  # signed as above
 
-checker.list_authority_grants()  # [AuthorityGrant(caller_id="warehouse-agent", status="active", ...)]
+checker.list_authority_grants()  # [AuthorityGrant(caller_id="warehouse-agent", status="active",...)]
 ```
 
 `authority_grant_changes(status=None)` and `reject_authority_grant_change(change_id, reason, step_up)` work as for
@@ -6539,7 +6524,7 @@ checker.approve_external_connector_change(
     ),
 )
 
-checker.list_external_connectors()  # [ExternalConnector(capability="erp:create-invoice", status="active", ...)]
+checker.list_external_connectors()  # [ExternalConnector(capability="erp:create-invoice", status="active",...)]
 ```
 
 `external_connector_changes(status=None)` lists proposals and `reject_external_connector_change(change_id, reason,
@@ -6565,9 +6550,9 @@ from pathlib import Path
 from parmana.crypto import sign_approval
 
 approval = sign_approval(
-    private_key_pem=Path("manager-priya__manager-priya-key-1.private.pem").read_text(),
-    approver_id="manager-priya",
-    key_id="manager-priya-key-1",
+    private_key_pem=Path("approver-example__approver-example-key-1.private.pem").read_text(),
+    approver_id="approver-example",
+    key_id="approver-example-key-1",
     capability="paytm:refund",
     resource_id="ORD-1042",
     max_amount=75000,  # leave out when the policy declares no amount
@@ -6589,9 +6574,9 @@ from parmana.crypto import sign_policy_change_step_up
 
 # The proposer
 change = proposer.approvers.propose_add(
-    approver_id="manager-priya",
-    key_id="manager-priya-key-1",
-    public_key_pem=public_key_pem,  # the approver's .public.pem file
+    approver_id="approver-example",
+    key_id="approver-example-key-1",
+    public_key_pem=public_key_pem,  # the approver's.public.pem file
     reason="Priya approves refunds for the West region from October.",
 )
 
@@ -6652,7 +6637,7 @@ pem = client.public_key("default").pem
 
 record = client.trust_record("5015499d-b7ba-48fe-a9ad-821862d70ad0")
 result = verify_execution_trust_record_offline(record, {"default": pem})
-# OfflineVerificationResult(valid=True, hash_valid=True, legacy_signature_valid=True, ...)
+# OfflineVerificationResult(valid=True, hash_valid=True, legacy_signature_valid=True,...)
 
 view = client.execution_intent("5015499d-b7ba-48fe-a9ad-821862d70ad0")
 verify_execution_intent_offline(view.intent, {"default": pem})
@@ -6687,12 +6672,9 @@ result = verify_parmana_release(
     is_already_executed=lambda business_transaction_id: business_transaction_id in answers,
 )
 
-if not result.valid:
-    ...  # Act on nothing. result.errors says why.
-elif result.already_executed:
-    ...  # Answer with the first result again; do not act twice.
-else:
-    ...  # Act on result.release["capability"], ["target"] and ["parameters"] only.
+if not result.valid:...  # Act on nothing. result.errors says why.
+elif result.already_executed:...  # Answer with the first result again; do not act twice.
+else:...  # Act on result.release["capability"], ["target"] and ["parameters"] only.
 ```
 
 The same checks, in the same order and with the same error texts, as the TypeScript SDK's
@@ -6752,7 +6734,6 @@ receipt = client.latest_receipt("5015499d-b7ba-48fe-a9ad-821862d70ad0")
 
 ## Test suite
 
-119 tests, `pytest`, confirmed against a real run on 2026-09-25 (1.3.0): unit tests for every error-mapping case
 including the two classification cases above, bearer-key header
 attachment tests, `create_business_transaction()` (9 cases, `tests/test_builders.py`), and three
 real-server integration suites. `test_live_server_integration.py` spawns the actual
@@ -6769,7 +6750,7 @@ a step up authorization signed in Python and accepted by the server's own TypeSc
 
 <Note>
   `ruff`/`black`/`mypy --strict` are clean across the whole package: `python -m
-  ruff check .`, `python -m black --check .`, and `python -m mypy` all pass with
+  ruff check.`, `python -m black --check.`, and `python -m mypy` all pass with
   zero findings.
 </Note>
 
@@ -7452,7 +7433,7 @@ This records every migration up to and including that file as applied, without r
 <Warning>
   Do not run `scripts/apply-all-migrations.sql` on a database that holds data.
   It applies every migration again, several migrations drop and add back the
-  same CHECK constraint, and a second run fails on rows written since G-61). It is only for a new, empty database,
+  same CHECK constraint, and a second run fails on rows written since). It is only for a new, empty database,
   pasted into the Supabase SQL Editor.
 </Warning>
 
@@ -7497,7 +7478,7 @@ A connector registers only when its settings are present. If you do not set a co
 
 | Variable                        | Value                                                    |
 | ------------------------------- | -------------------------------------------------------- |
-| `PAYTM_CONNECTOR_URL`           | The `https://` URL of your `parmana-paytm-agent` service |
+| `PAYTM_CONNECTOR_URL`           | The `https://` URL of your `example-agent` service |
 | `PAYTM_CONNECTOR_SHARED_SECRET` | The shared secret that service expects                   |
 
 The other connectors (HubSpot, Slack, GitHub) are in the [connector section of the environment reference](/deployment/environment-variables#connectors). To keep connector credentials in AWS Secrets Manager set `PARMANA_SECRETS_PROVIDER=aws-secrets-manager`.
@@ -7528,7 +7509,7 @@ Optional: to notify approvers when a request waits for their approval, set `APPR
 Build and run the image:
 
 ```bash
-docker build -t parmana-api .
+docker build -t parmana-api.
 ```
 
 Or use the image published with each GitHub release, `ghcr.io/pavancharak/parmana-api:<release tag>`. Check it with
@@ -7572,7 +7553,7 @@ It creates the `policies` table if needed and copies every policy found under `P
 **7b. Give every policy a signed approval.** In production the gateway refuses to release an action for a policy that has no signed approval record whose hash matches the live policy. This gate is always on and cannot be switched off by a variable. Approve each policy you will use with the maker checker flow: the maker proposes it with their own key, and a different person, the checker, reviews it and approves it on their own machine with their step up key:
 
 1. The maker: `POST $URL/policies/<name>/<version>/pending-changes` with the policy file, unchanged, as `proposedContent`.
-2. The checker: `npx tsx scripts/local-review-action.ts --pending-policy-change-id <id> --action approve --private-key-file ./my-checker.step-up.private.pem --key-id my-checker --api-base "$URL"`, with their own key in `REVIEWER_KEY`.
+2. The checker: `npx tsx scripts/local-review-action.ts --pending-policy-change-id <id> --action approve --private-key-file./my-checker.step-up.private.pem --key-id my-checker --api-base "$URL"`, with their own key in `REVIEWER_KEY`.
 
 Pass `--api-base` every time. Its default is a fixed address that is not your server. `--key-id` is the checker's caller id from step 3, and the private key file is the one that step printed. Do not use `scripts/refresh-approved-policy-content.ts` here: it proposes and approves in one process, so one person holds both keys and the approval record names a second person who did not decide.
 
@@ -7634,7 +7615,7 @@ Set up these before you send real traffic:
 `fly.toml` sets the app name, the primary region and a health check on `GET /ready` every 30 seconds.
 
 1. Generate the secrets file without printing it: `node scripts/generate-fly-secrets.mjs`. It writes `.flysecrets/secrets.env` with `PARMANA_KEY_MATERIAL_JSON` and `PARMANA_API_KEYS`, and leaves the database values for you to fill in. Add `DATABASE_URL`, `NODE_ENV` and `PARMANA_STORAGE` to it.
-2. Apply them: `fly secrets import < .flysecrets/secrets.env`.
+2. Apply them: `fly secrets import <.flysecrets/secrets.env`.
 3. Deploy: `fly deploy`.
 4. Confirm with `fly status`. Every machine should show a recent update and a passing check. Machine placement is Fly's choice, so confirm the region there and do not assume the configured one.
 
@@ -7890,7 +7871,7 @@ PASS  Signs 4096 bytes as they are (the limit)  (commitment false, 4096 bytes si
 PASS  Signs 5000 bytes as a 97 byte commitment  (commitment true, 97 bytes signed, verifies true)
 PASS  Signs 60000 bytes as a 97 byte commitment  (commitment true, 97 bytes signed, verifies true)
 PASS  A signature does not verify over different data  (verifies false)
-PASS  KMS refuses 5000 raw bytes (control)  (ValidationException: ... length less than or equal to 4096)
+PASS  KMS refuses 5000 raw bytes (control)  (ValidationException:... length less than or equal to 4096)
 
 All 7 checks passed.
 ```
@@ -7919,7 +7900,7 @@ npx tsx scripts/verify-trust-record.ts record.json default=default.public.pem
 
 ## How messages over 4096 bytes are signed
 
-KMS refuses a raw Ed25519 message longer than 4096 bytes. A full Execution Trust Record is larger than that. Parmana signs a message over the limit as a fixed 97 byte commitment instead: the bytes `PARMANA-ED25519-LARGE-MESSAGE-V1`, one NUL byte, then the SHA-512 digest of the message. The result is still an ordinary Ed25519 signature. Messages of 4096 bytes or fewer are signed unchanged. No marker is stored on the record, because the choice depends only on the message length. The decision is recorded in ADR-0010 in `docs/adr`.
+KMS refuses a raw Ed25519 message longer than 4096 bytes. A full Execution Trust Record is larger than that. Parmana signs a message over the limit as a fixed 97 byte commitment instead: the bytes `PARMANA-ED25519-LARGE-MESSAGE-V1`, one NUL byte, then the SHA-512 digest of the message. The result is still an ordinary Ed25519 signature. Messages of 4096 bytes or fewer are signed unchanged. No marker is stored on the record, because the choice depends only on the message length.
 
 ## Sign in with a limited user
 
@@ -7968,15 +7949,15 @@ The gateway key is still read from `PARMANA_KEY_DIR`. A connector that verifies 
 | `KmsSigner only supports ECC_NIST_EDWARDS25519 keys`                               | The key has a different key spec                                                                                                                                                                                   | Create the key as in step 1. A key's spec cannot be changed.                                                                                                                                                                            |
 | `503` with code `SIGNING_UNAVAILABLE` and `AccessDeniedException` in the message   | The role lacks `kms:Sign` or `kms:GetPublicKey`, or the key is disabled                                                                                                                                            | Fix the permission or enable the key, then retry with a new `businessTransactionId`. Nothing was executed. See [Troubleshooting](/troubleshooting).                                                                                     |
 | `VercelOidcTokenError: The 'x-vercel-oidc-token' header is missing`                | Something called AWS while the module loaded, before any request                                                                                                                                                   | Use the current `api/index.ts`, which builds the app on the first request.                                                                                                                                                              |
-| `ValidationException ... length less than or equal to 4096`                        | A build without the large message rule signed a message over the limit                                                                                                                                             | Deploy a build that includes ADR-0010, then run `npm run verify:kms`.                                                                                                                                                                   |
+| `ValidationException... length less than or equal to 4096`                        | A build without the large message rule signed a message over the limit                                                                                                                                             | Deploy a build that includes  then run `npm run verify:kms`.                                                                                                                                                                   |
 | `503` with code `EXECUTION_INTENT_UNAVAILABLE`                                     | The signed [Execution Intent](/concepts/execution-intents) could not be signed and stored before release. Under KMS the usual causes are the same as `SIGNING_UNAVAILABLE`, or a missing `execution_intents` table | Fix the permission or apply `supabase/migrations/20260921120000_add_execution_intents.sql`, then retry with a new `businessTransactionId`. Nothing was executed.                                                                        |
 | `500` with code `EXECUTION_RECORD_INCOMPLETE`                                      | The action was released and the signed record could not be produced afterwards                                                                                                                                     | Do not retry as a new transaction. A signed Execution Intent exists, and an operator can rebuild the record without repeating the action. See [Execution Intents](/concepts/execution-intents) and [Troubleshooting](/troubleshooting). |
 | `npm run verify:kms` says the session expired                                      | The local AWS login has expired                                                                                                                                                                                    | Run `aws login --profile <your profile>` again.                                                                                                                                                                                         |
 | A record fails offline verification against your local key                         | It was signed by KMS, and your local `default.public.pem` is a different key                                                                                                                                       | Verify against the public key from `GET /keys/default`.                                                                                                                                                                                 |
 | `AccessDenied` for `iam:` actions when you use the limited user                    | This is correct. The limited user has no such permission                                                                                                                                                           | Nothing to fix.                                                                                                                                                                                                                         |
 | `Gateway private key not found` or `Gateway public key not found`                  | The gateway attestation key is still a file, and KMS does not supply it                                                                                                                                            | Provide `gateway.private.pem` and `gateway.public.pem` in `PARMANA_KEY_DIR` or through `PARMANA_KEY_MATERIAL_JSON`.                                                                                                                     |
-| The gateway rejects a real execution with `failed checks [signatureVerified, ...]` | Signing and verification are using different keys                                                                                                                                                                  | Check that the build includes the 2026-09-16 fix in `packages/api/src/bootstrap/createExecutionGateway.ts`, where the gateway verifies with the same KMS backed key provider the runtime signs with.                                    |
-| A connector service reports only a generic HTTP 500                                | The real reason is recorded on the other side                                                                                                                                                                      | Query `execution_audit_events` by `business_transaction_id`. Both Parmana and `parmana-paytm-agent` write a `reason` there, see the [Database Schema Reference](/storage/schema-reference).                                             |
+| The gateway rejects a real execution with `failed checks [signatureVerified,...]` | Signing and verification are using different keys                                                                                                                                                                  | Check that the build includes the 2026-09-16 fix in `packages/api/src/bootstrap/createExecutionGateway.ts`, where the gateway verifies with the same KMS backed key provider the runtime signs with.                                    |
+| A connector service reports only a generic HTTP 500                                | The real reason is recorded on the other side                                                                                                                                                                      | Query `execution_audit_events` by `business_transaction_id`. Both Parmana and `example-agent` write a `reason` there, see the [Database Schema Reference](/storage/schema-reference).                                             |
 
 ## Keep in mind
 
@@ -7991,16 +7972,12 @@ The gateway key is still read from `PARMANA_KEY_DIR`. A connector that verifies 
 
 ## What has been verified
 
-Verified on 2026-09-20, against a real KMS key (`alias/default`, `ap-south-1`, `ECC_NIST_EDWARDS25519`, enabled), using a limited IAM user with only the three actions above:
-
 | Check                                                                                                                                                                                                          | Result               |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
 | `npm run verify:kms`: messages of 300, 4096, 5000 and 60000 bytes signed and verified, a signature over other data rejected, and 5000 raw bytes refused by KMS                                                 | 7 of 7 pass          |
 | The full server with `KEY_PROVIDER=aws-kms` signed an Execution Trust Record of about 5.6 KB (over the limit that failed in production on 2026-09-20), and it verified offline against the KMS public key only | Pass                 |
 | The same record verified against a different key                                                                                                                                                               | Failed, as it should |
 | Signing errors in the server log during the full run                                                                                                                                                           | None                 |
-
-Verified again on 2026-09-21 for [Execution Intents](/concepts/execution-intents), with the same key and the same limited IAM user, through the production Docker image, a real Postgres and the real `parmana-paytm-agent` using fake Paytm staging credentials:
 
 | Check                                                                                                                                                       | Result                                                                                                              |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
@@ -8012,7 +7989,7 @@ Each released action now costs **two** `kms:Sign` calls in the request, one for 
 
 Not covered by those runs:
 
-1. **The Vercel OIDC role.** The runs used the local AWS credential chain. ADR-0010 records the live production verification of the OIDC role for the Trust Record, and no run has exercised the OIDC role for the intent signature, although it uses the same signer and the same permissions.
+1. **The Vercel OIDC role.** The runs used the local AWS credential chain.
 2. **A real Paytm refund.** The agent chain ran with fake Paytm staging credentials, on purpose, so Paytm rejected the call. No refund was sent.
 3. **Key rotation and other regions.** Neither was tested.
 
@@ -8211,7 +8188,6 @@ is the value multiplied by the number of instances, and the server logs `rate_li
 
 ## Browser access
 
-ADR-0014.
 Production sets none of these except, if it wants a browser console, `PARMANA_CORS_ORIGINS`.
 
 | Variable                               | Required                    | Default              | Values or format                                                                  | What it does                                                                                                                                                                                                                                                                                                                                             |
@@ -8245,7 +8221,7 @@ event such as `slack_connector_unavailable` and requests for that connector's ac
 
 | Variable                        | Required                             | Default | Values or format                  | What it does                                                                                                                                                          |
 | ------------------------------- | ------------------------------------ | ------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PAYTM_CONNECTOR_URL`           | Both this and the secret, or neither | None    | A URL that starts with `https://` | The URL of the separate `parmana-paytm-agent` service that performs the refund. Outside tests, a URL that does not start with `https://` stops the server at startup. |
+| `PAYTM_CONNECTOR_URL`           | Both this and the secret, or neither | None    | A URL that starts with `https://` | The URL of the separate `example-agent` service that performs the refund. Outside tests, a URL that does not start with `https://` stops the server at startup. |
 | `PAYTM_CONNECTOR_SHARED_SECRET` | Both this and the URL, or neither    | None    | A string                          | The shared secret Parmana sends to that service. Setting only one of the two stops the server at startup.                                                             |
 | `PAYTM_CONNECTOR_TIMEOUT_MS`    | No                                   | `10000` | Positive number of milliseconds   | How long Parmana waits for that service before failing the call. A value that is not a positive number stops the server.                                              |
 
@@ -8334,7 +8310,7 @@ cryptographically impossible to accept, **only** for a receiving system that (a)
 verifier and (b) gates every execution-triggering code path behind its result, and only
 while Parmana's authorization signing key is not compromised: whoever holds that key, or can
 make the signing service sign, can produce authorizations the verifier accepts. Parmana
-enforces nothing at the network level. See the [Audit guide](/evaluation/audit-guide) for
+enforces nothing at the network level. See the Audit guide for
 what an attacker controls in each case. The default local server does both (a) and (b) for
 each connector it registers, see [The gateway](/concepts/the-gateway) for the mechanism. A new
 built in connector is a code change; an [external connector](/guides/connect-any-external-system)
@@ -8562,7 +8538,7 @@ provenance covers this image only. The hosted API is built by Vercel from
 the same repository, not from this image, and carry no SLSA provenance.
 
 These are hygiene checks on the code and its supply chain. They do not replace a review of the
-enforcement design; see the [Audit guide](/evaluation/audit-guide) for that.
+enforcement design; see the Audit guide for that.
 
 ## Where hardening work is tracked
 
@@ -8584,9 +8560,7 @@ resolves paths relative to an arbitrary workspace directory instead of the repo 
 
 **Workaround:** invoke the local binary directly:
 
-```bash
-./node_modules/.bin/tsx packages/api/src/server.ts
-./node_modules/.bin/vitest run   # from the repository root, or with a path: vitest run packages/runtime
+```bash./node_modules/.bin/tsx packages/api/src/server.ts./node_modules/.bin/vitest run   # from the repository root, or with a path: vitest run packages/runtime
 ```
 
 ## `POST /execute` (or `runtime.execute()`) rejects with "declared signal(s) do not match the executed intent"
@@ -8629,7 +8603,7 @@ consumed.
 Trust Record is larger. This is fixed by signing a message over that size as a fixed 97 byte commitment, so first check that your deployment includes that change. The stack is
 `KmsSigner.sign` called from `VerificationCrypto.sign`.
 
-**Important:** on a build without ADR-0011 the connector may already have run by the time this error is returned. Do not assume the action did not happen. A current build returns `503 SIGNING_UNAVAILABLE` before release when signing is unhealthy, and `500 EXECUTION_RECORD_INCOMPLETE` when the action was released and the record then failed, so check which code you received. Query `execution_audit_events` for the `business_transaction_id` to see what the
+Do not assume the action did not happen. A current build returns `503 SIGNING_UNAVAILABLE` before release when signing is unhealthy, and `500 EXECUTION_RECORD_INCOMPLETE` when the action was released and the record then failed, so check which code you received. Query `execution_audit_events` for the `business_transaction_id` to see what the
 connector did, and generate a fresh `businessTransactionId` for any retry, since the original was
 already recorded.
 
@@ -8701,8 +8675,6 @@ Nothing was sent to the connector, so a retry with a new `businessTransactionId`
    ```
 
 4. Fix the connector before sending new requests. If the action was not executed and is still wanted, send it again with a **new** `businessTransactionId`.
-
-Before 2026-09-25 this failure returned a bare `500 Internal Server Error` with no identifiers G-63).
 
 ## `POST /execute` returns 500 `EXECUTION_RECORD_INCOMPLETE`
 

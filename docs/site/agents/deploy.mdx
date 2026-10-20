@@ -13,7 +13,7 @@ The human readable version, with more explanation, is the [Production deployment
 2. After each step compare what you saw with **Expect**. If it differs, follow **If not** and stop.
 3. Never print, log, commit or paste a secret. Secrets are: raw API keys, bearer keys, private key files, `DATABASE_URL`, `PARMANA_KEY_MATERIAL_JSON`, connector secrets and tokens.
 4. Never set `PARMANA_AUTH_DISABLED`, and never set `NODE_ENV` to `test` or `development` on a production server.
-5. Never deploy to production, write production environment variables or publish anything unless the operator has told you to in this session. Preparing the values and the commands is always allowed.
+5. Preparing the values and the commands is always allowed.
 6. The maker and the checker in step 8 must be two different human identities, and both keys must have `credentialHolderType` `USER`. You act as the maker only if the operator gave you the maker's key and said so. You must never approve your own proposal. The checker is a human.
 
 ## Inputs you need before you start
@@ -101,7 +101,7 @@ Rule 5 applies. If the operator has not told you to write to the host, print the
 | ----------- | ---------------------------------------------------------------------------------------------- |
 | `fly`       | `fly deploy`                                                                                   |
 | `vercel`    | `vercel deploy --prod`                                                                         |
-| `docker`    | `docker build -t parmana-api .` then run the image with the variables from step 4, port `3000` |
+| `docker`    | `docker build -t parmana-api.` then run the image with the variables from step 4, port `3000` |
 
 Environment variables are read once at startup, so a change to any of them needs a new deploy.
 

@@ -222,7 +222,7 @@ sequenceDiagram
 
 ```bash
 npx tsx scripts/generate-approver-key.ts \
-  --approver-id manager-priya --key-id manager-priya-key-1 --out-dir ~/.parmana
+  --approver-id approver-example --key-id approver-example-key-1 --out-dir ~/.parmana
 ```
 
 The private key stays on the manager's machine. The public key is trusted through maker checker, with no deploy: one person proposes adding it and a different person approves it ([Manage approvers](/guides/manage-approvers)). Revoking it is the same flow.
@@ -231,8 +231,8 @@ The private key stays on the manager's machine. The public key is trusted throug
 
 ```bash
 npx tsx scripts/sign-approval.ts \
-  --private-key-file ~/.parmana/manager-priya__manager-priya-key-1.private.pem \
-  --approver-id manager-priya --key-id manager-priya-key-1 \
+  --private-key-file ~/.parmana/approver-example__approver-example-key-1.private.pem \
+  --approver-id approver-example --key-id approver-example-key-1 \
   --capability paytm:refund --resource-id ORD-1042 --max-amount 75000 --out approval.json
 ```
 
@@ -265,7 +265,7 @@ To see the whole flow run, without a server or AWS, run tutorial 119: `npx tsx e
 | `403 STEP_UP_AUTHORIZATION_INVALID`        | The signature expired (over 120 seconds), was already used, or was made with a private key that does not match the `stepUpPublicKey` registered for this caller | Sign again and send at once, or use `local-review-action.ts`. If it persists, check your private key matches the registered public key (after a rotation, replace the `.pem` too). |
 | `403 SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE` | The approving API key belongs to the proposer                                                                                                                   | A different person approves with their own key. There is no override.                                                                                                              |
 | `403 NON_HUMAN_CALLER_DENIED`              | The API key is not registered as a human (`credentialHolderType USER`)                                                                                          | The operator registers it as a human.                                                                                                                                              |
-| `400` naming a field on propose            | The body is malformed, `policyId` does not match the name in the URL, or the version has characters outside `A-Z a-z 0-9 . _ -`                                 | Read the `error` message; it names the field.                                                                                                                                      |
+| `400` naming a field on propose            | The body is malformed, `policyId` does not match the name in the URL, or the version has characters outside `A-Z a-z 0-9. _ -`                                 | Read the `error` message; it names the field.                                                                                                                                      |
 | `400 Malformed JSON body`                  | The shell changed the quotes in an inline JSON body                                                                                                             | Build the body in a variable or a file as shown above, not inline in the command.                                                                                                  |
 | `409 CONFLICT` on propose                  | A proposal for this policy version is already open                                                                                                              | Approve or reject the open one first.                                                                                                                                              |
 | Approved content lacks fields the file has | Proposals are frozen snapshots. An old proposal approved later carries the old content                                                                          | Reject stale proposals and propose again from the current file, then run the full scan above.                                                                                      |

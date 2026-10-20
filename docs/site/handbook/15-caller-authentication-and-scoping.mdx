@@ -62,7 +62,7 @@ bearer token, authenticates it, and on success attaches `callerId`,
 `callerStepUpPublicKey` onto the Express `Request` object (a local type augmentation, same
 pattern `@parmana/envelope-verifier`'s own Express typing uses). On failure it returns 401
 with a `WWW-Authenticate: Bearer` header, and either way it records a `caller.rejected` or
-`caller.authenticated` audit event through `recordCallerAuditEvent` before proceeding ,
+`caller.authenticated` audit event through `recordCallerAuditEvent` before proceeding,
 **fail-closed**: if the audit write itself fails, the request is rejected with
 `AuditUnavailableError` (503) rather than proceeding unaudited. This applies to both outcomes,
 not just denials, a perfectly valid credential whose `caller.authenticated` write fails also

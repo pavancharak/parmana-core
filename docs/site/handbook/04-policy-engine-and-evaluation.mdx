@@ -80,7 +80,7 @@ safety net, not the intended way to reject.
 
 The returned `PolicyDecision` (`packages/policy/src/types/PolicyDecision.ts`) carries
 `policyId`, `policyVersion`, `outcome`, `reason`, `matchedRuleId`, `evaluatedRules` (how many
-rules were checked before a match), and `matchedPath` (the full trace of rule IDs visited) ,
+rules were checked before a match), and `matchedPath` (the full trace of rule IDs visited),
 enough for an auditor to reconstruct exactly why a decision came out the way it did, without
 re-running the engine.
 
@@ -142,7 +142,7 @@ close that gap completely; this is a deliberate, bounded improvement over no che
   module import time (see that file's own doc comment for why eager construction was tried
   first and caused a different bug).
 
-`PolicyRegistry` (`packages/policy/src/PolicyRegistry.ts`) is a separate, much smaller piece ,
+`PolicyRegistry` (`packages/policy/src/PolicyRegistry.ts`) is a separate, much smaller piece,
 an in-memory `Map` from `"name:version"` to registration metadata (`{ name, version, path }`).
 Its own doc comment is explicit that it does not load, evaluate, or choose policies; it only
 tracks what's available.

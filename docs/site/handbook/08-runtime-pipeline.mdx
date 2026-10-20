@@ -43,7 +43,7 @@ exactly which protections are active for a given deployment.
 
 1. **Policy load.** `policyRouter.load(transaction.policy.name, transaction.policy.version)`.
    `beforePolicyLoad`/`afterPolicyLoad` hooks fire around this.
-2. **Policy content hash.** `policyContentHash = policyContentHasher.hash(policy)` ,
+2. **Policy content hash.** `policyContentHash = policyContentHasher.hash(policy)`,
    computed from the _actually loaded_ policy document, never from what the caller declared,
    using the same `TrustRecordHasher` (canonicalize, then SHA-256) every other content hash
    in this codebase uses.
@@ -105,11 +105,11 @@ failure there, in the trust record pipeline, the `afterExecution` and `beforeTru
 persisting the record in `Runtime.execute()`, is thrown as `ExecutionRecordIncompleteError`
 (`500 EXECUTION_RECORD_INCOMPLETE`), which names the `businessTransactionId` and `authorizationId`, and a
 critical `execution_released_record_failed` or `execution_released_record_persist_failed` event is
-logged. A failure before release, such as a policy rejection, keeps its own error. See ADR-0011.
+logged. A failure before release, such as a policy rejection, keeps its own error.
 
 ### Execution Intents: signed evidence before release, and a repair path
 
-The Execution Trust Record contains the execution result, so it can only be built after release. ADR-0012
+The Execution Trust Record contains the execution result, so it can only be built after release.
 adds a separate record that does not: the Execution Intent. `ExecutionIntentService.prepare()`
 (`packages/runtime/src/ExecutionIntentService.ts`) builds it with `ExecutionIntentBuilder`, signs it with
 `ExecutionIntentCrypto` (the same signing key as the Trust Record, so KMS in production), and stores it,
@@ -159,7 +159,6 @@ when supplied (`if (signalStateVerifier) { builder.withSignalStateVerifier(...) 
   a direct comment in this file.
 - `packages/runtime/src/RuntimeFactory.ts`, `RuntimeBuilder.ts`, how a `RuntimeEngine`
   actually gets constructed for a real deployment.
-- `packages/runtime/tests/e2e/runtime.e2e.test.ts`, end-to-end proof, including the G-24
   content-hash-at-decision-time assertion against real on-disk policy content.
 - `packages/runtime/tests/unit/optional-protections-logging.test.ts`, proves the
   construction-time log line accurately reflects what's wired.

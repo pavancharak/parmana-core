@@ -39,16 +39,7 @@
           },
           {
             "group": "Evaluate and audit",
-            "pages": [
-              "evaluation/overview",
-              "evaluation/audit-guide",
-              "evaluation/claims-and-evidence",
-              "evaluation/proof-audit",
-              "evaluation/case-studies",
-              "evaluation/paper",
-              "evaluation/talk-and-videos",
-              "license"
-            ]
+            "pages": ["license"]
           },
           {
             "group": "For AI agents",
@@ -726,7 +717,6 @@
               "handbook/20-integrating-parmana",
               "handbook/21-deployment",
               "handbook/22-testing-philosophy",
-              "handbook/23-history-and-open-questions",
               "handbook/download"
             ]
           }

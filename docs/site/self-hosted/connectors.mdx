@@ -9,7 +9,7 @@ A self hosted deployment starts with no connector configured. You add one by giv
 
 ## Add the variables
 
-Create a file named `docker-compose.override.yml` in the repository root. Docker Compose reads it together with `docker-compose.yml` on every command, so nothing else changes. Example for the Paytm connector, which forwards authorized refunds to your `parmana-paytm-agent` service:
+Create a file named `docker-compose.override.yml` in the repository root. Docker Compose reads it together with `docker-compose.yml` on every command, so nothing else changes. Example for the Paytm connector, which forwards authorized refunds to your `example-agent` service:
 
 ```yaml
 services:
@@ -40,7 +40,7 @@ Keep `PAYTM_CONNECTOR_SHARED_SECRET` set, or in `.env`, for every later `docker 
 
 | Connector | Variables                                                                                               | Calls                         |
 | --------- | ------------------------------------------------------------------------------------------------------- | ----------------------------- |
-| Paytm     | `PAYTM_CONNECTOR_URL`, `PAYTM_CONNECTOR_SHARED_SECRET`, optional `PAYTM_CONNECTOR_TIMEOUT_MS`           | Your `parmana-paytm-agent`    |
+| Paytm     | `PAYTM_CONNECTOR_URL`, `PAYTM_CONNECTOR_SHARED_SECRET`, optional `PAYTM_CONNECTOR_TIMEOUT_MS`           | Your `example-agent`    |
 | HubSpot   | `HUBSPOT_PRIVATE_APP_TOKEN`, optional `HUBSPOT_BASE_URL`                                                | HubSpot's API on the internet |
 | Slack     | `SLACK_BOT_TOKEN`, `SLACK_ALLOWED_CHANNEL_IDS` (no post succeeds without it), optional `SLACK_BASE_URL` | Slack's API on the internet   |
 | GitHub    | `GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY`, optional `GITHUB_BASE_URL`         | GitHub's API on the internet  |
@@ -67,7 +67,7 @@ services:
       PAYTM_CONNECTOR_SHARED_SECRET: ${PAYTM_CONNECTOR_SHARED_SECRET:?set PAYTM_CONNECTOR_SHARED_SECRET}
       NODE_EXTRA_CA_CERTS: /certs/internal-ca.crt
     volumes:
-      - ./internal-ca.crt:/certs/internal-ca.crt:ro
+      -./internal-ca.crt:/certs/internal-ca.crt:ro
 ```
 
 Compose adds this mount to the ones in `docker-compose.yml`; it does not replace them. The certificate is added to the ones Node.js already trusts; it replaces none. The offline check uses exactly this mechanism for its stand in connector.

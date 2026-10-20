@@ -16,7 +16,7 @@ cryptographically impossible to accept, **only** for a receiving system that (a)
 verifier and (b) gates every execution-triggering code path behind its result, and only
 while Parmana's authorization signing key is not compromised: whoever holds that key, or can
 make the signing service sign, can produce authorizations the verifier accepts. Parmana
-enforces nothing at the network level. See the [Audit guide](/evaluation/audit-guide) for
+enforces nothing at the network level. See the Audit guide for
 what an attacker controls in each case. The default local server does both (a) and (b) for
 each connector it registers, see [The gateway](/concepts/the-gateway) for the mechanism. A new
 built in connector is a code change; an [external connector](/guides/connect-any-external-system)
@@ -244,7 +244,7 @@ provenance covers this image only. The hosted API is built by Vercel from
 the same repository, not from this image, and carry no SLSA provenance.
 
 These are hygiene checks on the code and its supply chain. They do not replace a review of the
-enforcement design; see the [Audit guide](/evaluation/audit-guide) for that.
+enforcement design; see the Audit guide for that.
 
 ## Where hardening work is tracked
 

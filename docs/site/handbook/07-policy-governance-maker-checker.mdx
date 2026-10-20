@@ -16,7 +16,7 @@ layer itself, not as a process convention someone could forget to follow.
 ## Why it was built
 
 Before this feature existed, policy authoring sat entirely outside Parmana's own trust
-model. The early design documents (removed from the repository on 2026-09-28) all named policy authoring as
+model.
 external to the system's scope. In practice this meant any caller with write access to the
 `policies/` directory could change what a policy allows or refuses, with no second party
 involved and no durable, signed record of who made the change or why. Given that policy
@@ -176,7 +176,7 @@ leaves behind, since there is no live effect to sign evidence about.
   temp-file-then-atomic-rename pattern. Used for local development and tests, where the
   filesystem is always writable.
 - **`SupabasePolicyRepository`** (`packages/policy/src/SupabasePolicyRepository.ts`) :
-  added on **2026-09-16**, the same night this book chapter was written. It stores
+It stores
   `(policy_name, policy_version) -> content_json` rows in a `policies` table
   (migration `20260916060000_add_policies_table.sql`) via a direct Postgres connection.
 
@@ -219,7 +219,6 @@ to `policies/{name}/{version}/policy.json` that skips the pending-change API ent
   (Supabase unreachable, a malformed response) are all treated identically as a failure :
   there is no "couldn't check, let it through" path. `.github/workflows/ci.yml`'s
   `verify-policy-approvals` job runs it with `--full-scan` on every push and pull request, and it is a
-  required status check on `main` (since 2026-09-28).
 
 ## How it enables things, with concrete examples
 
@@ -296,57 +295,7 @@ to `policies/{name}/{version}/policy.json` that skips the pending-change API ent
   would defeat the one property this whole mechanism exists to guarantee: that the key
   never leaves the checker's own machine.
 
-## What was found and fixed the night of 2026-09-16
-
-This system's ten original real production policies (`access-control`,
-`connector-capability`, `customer-refund`, `database-change`, `github-pr-approval`,
-`hubspot-deal-update`, `llm-tool-call`, `production-deployment`, `rag-document-access`,
-`vendor-payment`) had sat `PENDING_APPROVAL`, proposed on 2026-08-19, untouched for
-almost a month, because closing that backfill required a genuinely distinct second human
-checker to become available. The night that checker finally acted, closing it surfaced a
-real chain of issues, none of them hypothetical:
-
-1. **`EROFS` on the very first live approve.** `PolicyChangeApprovalService.approve()`
-   had never actually executed against a real, deployed instance before that moment. It
-   failed immediately, because `FilePolicyRepository` needs a writable filesystem and
-   Vercel's Functions don't provide one. Fixed by adding `SupabasePolicyRepository`
-   (above).
-2. **The first version of that fix introduced a second, real bug.** It constructed
-   `SupabasePolicyRepository(PostgresPoolFactory.create())` eagerly, at
-   `application.ts`'s module scope, rather than lazily. This violated a discipline
-   `packages/api/src/repositories.ts` had already established for every other
-   Supabase-backed repository in this codebase (a `lazyRepository()` Proxy wrapper,
-   closing gap G-15: "importing this module must never itself construct a live Supabase
-   client; only an actual repository call should"). The practical consequence: importing
-   `application.js` at all now opened a real Postgres connection immediately, using
-   whatever `DATABASE_URL` happened to be set at that moment: which broke
-   `examples/tutorials/89-readiness-probe`'s "genuinely unreachable database" test
-   scenario, since the pool singleton (`PostgresPoolFactory` caches one pool
-   process-wide) got created against the _real, working_ database before the tutorial
-   ever got a chance to point it at a deliberately unreachable one. Fixed by making
-   `policyRepository` construction lazy, via the same Proxy pattern `repositories.ts`
-   already uses.
-3. **`PostgresPoolFactory.create()` had no `connectionTimeoutMillis`.** Found via the same
-   tutorial: connecting to a genuinely unreachable address hung indefinitely instead of
-   failing fast. Fixed with a 5-second timeout.
-4. **The original 2026-08-19 proposals had gone stale.** By 2026-09-16, all ten live
-   policy files had gained an `unboundSignalReasons` documentation field the original
-   proposals never had (harmless, non-functional), and two of them
-   (`connector-capability`, `customer-refund`) had gained a `boundSignals` mapping the
-   original proposals were also missing entirely: a real, functional gap, since
-   `boundSignals` is what lets the runtime derive a signal like `paymentAmount` directly
-   from the request's own parameters rather than requiring independent verification. Approving
-   the stale content as-is would have silently persisted that gap into the newly-created
-   `policies` table. Instead, all ten (plus four more pre-existing policies that had
-   never been proposed at all) were re-proposed with their current, correct file content
-   and re-approved, confirmed clean via `scripts/verify-policy-changes-approved.ts --full-scan`.
-
-The full, first-hand account of this incident chain, including exact timestamps and every
-resulting `policyChangeApprovalRecordId`, is recorded in §2.26's
-"Legacy-policy backfill" entry.
-
 ## What remains genuinely open
 
 Execution time policy governance verification is enforced. `RuntimeEngine` refuses execution against any policy with no approval record, an invalid approval-record signature, or content that no longer matches its approval record, and `ExecutionGateway` runs the same check again at release, requiring the approved hash, the hash signed into the authorization, and the live hash to agree §2.35 and §2.36). Since 2026-09-20 this is on everywhere except when `NODE_ENV` is exactly `test` or `development`. `POLICY_EXECUTION_VERIFICATION_ENFORCED` is now only an opt in for those two environments and cannot switch enforcement off in production. The consequence for operators is that every policy a deployment executes against must have a genuine signed approval record before that deployment is promoted, or executions under it are refused.
 
-What remains genuinely open is the scope of the checker's authority: any provisioned human checker with a step up key can approve any policy, and there is no per policy approver list or quorum G-50).

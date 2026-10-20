@@ -55,7 +55,7 @@ Real registry install, confirmed live against PyPI while fixing this page's own 
 claim otherwise. To build from source inside this monorepo instead:
 
 ```bash
-pip install -e ./python
+pip install -e./python
 ```
 
 `py.typed` is shipped, this is a PEP 561 typed distribution, confirmed by installing into
@@ -178,8 +178,8 @@ client.execution_intents.resolve(id, resolution=..., note=...)  # POST /executio
 client.policy.validate(policy_id, policy_version) # POST /policies/validate
 client.policy.propose_change(name, version, proposed_content=..., reason=...)  # (1.3.0)
 client.policy.list_changes(status)                # GET /policies/pending-changes (1.3.0)
-client.policy.approve_change(id, step_up)         # POST .../approve             (1.3.0)
-client.policy.reject_change(id, reason, step_up)  # POST .../reject              (1.3.0)
+client.policy.approve_change(id, step_up)         # POST.../approve             (1.3.0)
+client.policy.reject_change(id, reason, step_up)  # POST.../reject              (1.3.0)
 client.callers.me()                               # GET /callers/me              (1.3.0)
 client.callers.public_key(key_id)                 # GET /keys/:keyId             (1.3.0)
 ```
@@ -280,7 +280,7 @@ checker.approve_business_signal_source_change(
     ),
 )
 
-checker.list_business_signal_sources()  # [BusinessSignalSource(name="erp", status="active", ...)]
+checker.list_business_signal_sources()  # [BusinessSignalSource(name="erp", status="active",...)]
 ```
 
 `business_signal_source_changes(status=None)` lists proposals and `reject_business_signal_source_change(change_id,
@@ -304,7 +304,7 @@ change = maker.authority_grants.propose_grant(
 
 checker.approve_authority_grant_change(change.change_id, step_up)  # signed as above
 
-checker.list_authority_grants()  # [AuthorityGrant(caller_id="warehouse-agent", status="active", ...)]
+checker.list_authority_grants()  # [AuthorityGrant(caller_id="warehouse-agent", status="active",...)]
 ```
 
 `authority_grant_changes(status=None)` and `reject_authority_grant_change(change_id, reason, step_up)` work as for
@@ -376,7 +376,7 @@ checker.approve_external_connector_change(
     ),
 )
 
-checker.list_external_connectors()  # [ExternalConnector(capability="erp:create-invoice", status="active", ...)]
+checker.list_external_connectors()  # [ExternalConnector(capability="erp:create-invoice", status="active",...)]
 ```
 
 `external_connector_changes(status=None)` lists proposals and `reject_external_connector_change(change_id, reason,
@@ -402,9 +402,9 @@ from pathlib import Path
 from parmana.crypto import sign_approval
 
 approval = sign_approval(
-    private_key_pem=Path("manager-priya__manager-priya-key-1.private.pem").read_text(),
-    approver_id="manager-priya",
-    key_id="manager-priya-key-1",
+    private_key_pem=Path("approver-example__approver-example-key-1.private.pem").read_text(),
+    approver_id="approver-example",
+    key_id="approver-example-key-1",
     capability="paytm:refund",
     resource_id="ORD-1042",
     max_amount=75000,  # leave out when the policy declares no amount
@@ -426,9 +426,9 @@ from parmana.crypto import sign_policy_change_step_up
 
 # The proposer
 change = proposer.approvers.propose_add(
-    approver_id="manager-priya",
-    key_id="manager-priya-key-1",
-    public_key_pem=public_key_pem,  # the approver's .public.pem file
+    approver_id="approver-example",
+    key_id="approver-example-key-1",
+    public_key_pem=public_key_pem,  # the approver's.public.pem file
     reason="Priya approves refunds for the West region from October.",
 )
 
@@ -489,7 +489,7 @@ pem = client.public_key("default").pem
 
 record = client.trust_record("5015499d-b7ba-48fe-a9ad-821862d70ad0")
 result = verify_execution_trust_record_offline(record, {"default": pem})
-# OfflineVerificationResult(valid=True, hash_valid=True, legacy_signature_valid=True, ...)
+# OfflineVerificationResult(valid=True, hash_valid=True, legacy_signature_valid=True,...)
 
 view = client.execution_intent("5015499d-b7ba-48fe-a9ad-821862d70ad0")
 verify_execution_intent_offline(view.intent, {"default": pem})
@@ -524,12 +524,9 @@ result = verify_parmana_release(
     is_already_executed=lambda business_transaction_id: business_transaction_id in answers,
 )
 
-if not result.valid:
-    ...  # Act on nothing. result.errors says why.
-elif result.already_executed:
-    ...  # Answer with the first result again; do not act twice.
-else:
-    ...  # Act on result.release["capability"], ["target"] and ["parameters"] only.
+if not result.valid:...  # Act on nothing. result.errors says why.
+elif result.already_executed:...  # Answer with the first result again; do not act twice.
+else:...  # Act on result.release["capability"], ["target"] and ["parameters"] only.
 ```
 
 The same checks, in the same order and with the same error texts, as the TypeScript SDK's
@@ -589,7 +586,6 @@ receipt = client.latest_receipt("5015499d-b7ba-48fe-a9ad-821862d70ad0")
 
 ## Test suite
 
-119 tests, `pytest`, confirmed against a real run on 2026-09-25 (1.3.0): unit tests for every error-mapping case
 including the two classification cases above, bearer-key header
 attachment tests, `create_business_transaction()` (9 cases, `tests/test_builders.py`), and three
 real-server integration suites. `test_live_server_integration.py` spawns the actual
@@ -606,7 +602,7 @@ a step up authorization signed in Python and accepted by the server's own TypeSc
 
 <Note>
   `ruff`/`black`/`mypy --strict` are clean across the whole package: `python -m
-  ruff check .`, `python -m black --check .`, and `python -m mypy` all pass with
+  ruff check.`, `python -m black --check.`, and `python -m mypy` all pass with
   zero findings.
 </Note>
 

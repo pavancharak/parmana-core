@@ -33,7 +33,7 @@ psql "$DATABASE_URL"
 | `refusal_records`                       | Signed record of a refused decision                                     | `SupabaseRefusalRecordRepository`              |
 | `execution_intents`                     | Signed intent stored before an action is released            | `SupabaseExecutionIntentRepository`            |
 | `caller_audit_events`                   | Every caller authentication decision, the highest write volume          | `SupabaseCallerAuditSink`                      |
-| `execution_audit_events`                | Execution lifecycle events, **shared with `parmana-paytm-agent`**       | `SupabaseExecutionAuditSink`                   |
+| `execution_audit_events`                | Execution lifecycle events, **shared with `example-agent`**       | `SupabaseExecutionAuditSink`                   |
 | `policies`                              | Policy content written on approval (Vercel has a read only filesystem)  | `SupabasePolicyRepository`                     |
 | `approval_issuers`                      | Approver keys added through maker checker                               | `SupabaseApprovalIssuerRepository`             |
 | `approval_issuer_changes`               | Proposals to add or revoke an approver key                              | `SupabaseApprovalIssuerRepository`             |
@@ -201,7 +201,7 @@ RLS enabled.
 ### `execution_audit_events`
 
 Execution control lifecycle events. It is the only table written by code outside this
-repository: `parmana-paytm-agent` writes to it directly, correlated by
+repository: `example-agent` writes to it directly, correlated by
 `business_transaction_id` (`authorization_id` is internal to Parmana and never crosses to the
 agent). Created by `20260914120000_add_execution_audit_events.sql`, then:
 
@@ -356,7 +356,7 @@ key), `count INTEGER NOT NULL`, `reset_time TIMESTAMPTZ NOT NULL` (indexed). An 
 resets on its next hit, so no cleanup job is needed.
 
 The only table without RLS, deliberately: it holds no business or trust data and has no
-dashboard access path. See G-49 for why the keys are prefixed.
+dashboard access path.
 
 ### `handbook_download_leads`
 
@@ -398,7 +398,7 @@ SELECT 'caller_audit_events', occurred_at, type
 ORDER BY at;
 ```
 
-This pattern found a case where `parmana-paytm-agent` had recorded `authorization.verified`
+This pattern found a case where `example-agent` had recorded `authorization.verified`
 for a transaction that Parmana's own logs only showed as a generic `500`.
 
 ### Find released actions without a finished record
@@ -503,8 +503,7 @@ require("dotenv").config();
 const fs = require("fs");
 const { Pool } = require("pg");
 const pool = new Pool({ connectionString: process.env.DATABASE_URL, min: 1 });
-const fileVersions = fs.readdirSync("supabase/migrations")
-  .filter(f => f.endsWith(".sql")).map(f => f.split("_")[0]).sort();
+const fileVersions = fs.readdirSync("supabase/migrations").filter(f => f.endsWith(".sql")).map(f => f.split("_")[0]).sort();
 (async () => {
   const { rows } = await pool.query("SELECT version FROM supabase_migrations.schema_migrations ORDER BY version");
   const dbVersions = rows.map(r => r.version).sort();

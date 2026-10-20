@@ -177,7 +177,7 @@ const result = await generateText({
 });
 ```
 
-Returning a structured `{ approved, ... }` object instead of a string works well here since
+Returning a structured `{ approved,... }` object instead of a string works well here since
 the model can reason over the fields directly in a follow-up turn.
 
 ## Pattern 3: Express / Fastify endpoint
@@ -247,7 +247,7 @@ app.post("/agent/refund", async (req, res) => {
 ```
 
 A Fastify route handler follows the same shape, swap `app.post(path, handler)` for
-`fastify.post(path, async (request, reply) => { ... })` and the body is identical.
+`fastify.post(path, async (request, reply) => {... })` and the body is identical.
 
 ## Pattern 4: Async workflow with a webhook callback
 

@@ -4,7 +4,6 @@ description: "Run Parmana on your machine from a fresh clone: set it up, watch a
 ---
 
 This chapter runs everything on your machine, with no database and no cloud account. Every command and every line of
-output below was run on a fresh clone of the repository on 2026-10-01.
 
 <Tip>
   To see the same governance work on your own machine, follow the
@@ -25,7 +24,7 @@ output below was run on a fresh clone of the repository on 2026-10-01.
 ```bash bash
 git clone https://github.com/pavancharak/parmana.git
 cd parmana
-cp .env.example .env
+cp.env.example.env
 npm ci
 npm run build
 npx tsx scripts/generate-keypair.ts --algorithm ed25519 --key-id default
@@ -35,7 +34,7 @@ npm run generate:gateway-keys
 ```powershell PowerShell
 git clone https://github.com/pavancharak/parmana.git
 cd parmana
-Copy-Item .env.example .env
+Copy-Item.env.example.env
 npm ci
 npm run build
 npx tsx scripts/generate-keypair.ts --algorithm ed25519 --key-id default
@@ -70,7 +69,7 @@ It ends with:
   REFUSED   reject-manager-approval-required: Refund rejected. Every refund needs a signed manager approval for this order, covering this amount, in signals.approvalArtifact, with managerApproved true, and every other policy condition satisfied.
 
 2. A refund of 75000 with no manager: refused (the server also writes a signed Refusal Record a manager can review)
-  REFUSED   reject-manager-approval-required: Refund rejected. ...
+  REFUSED   reject-manager-approval-required: Refund rejected....
 
 3. The agent sends managerApproved: true with no approval: refused
   REFUSED   approval check: managerApproved=true != verified false
@@ -155,7 +154,7 @@ The tutorials run Parmana in one process. Now run the server and talk to it over
 npx tsx scripts/generate-api-key.ts --caller-id local-agent --allowed-capabilities test:fixture-execute
 ```
 
-It prints the raw key once (`Key       : ...`) and the entry to configure (`{"callerId":"local-agent","keyHash":...}`).
+It prints the raw key once (`Key       :...`) and the entry to configure (`{"callerId":"local-agent","keyHash":...}`).
 Only the hash is ever stored. Keep the raw key for the agent; put the entry in `PARMANA_API_KEYS`.
 
 ### Make an approver key and sign an approval
@@ -164,8 +163,8 @@ You play the approver here. On a real deployment the approver is a different per
 ([Chapter 5](/build-book/05-human-approvals)).
 
 ```bash
-npx tsx scripts/generate-approver-key.ts --approver-id local-test-approver --key-id local-test-approver-key-1 --out-dir ./local-approver
-npx tsx scripts/sign-approval.ts --private-key-file ./local-approver/local-test-approver__local-test-approver-key-1.private.pem --approver-id local-test-approver --key-id local-test-approver-key-1 --capability test:fixture-execute --resource-id vendor/vendor-123 --max-amount 100 --out ./local-approver/approval.json
+npx tsx scripts/generate-approver-key.ts --approver-id local-test-approver --key-id local-test-approver-key-1 --out-dir./local-approver
+npx tsx scripts/sign-approval.ts --private-key-file./local-approver/local-test-approver__local-test-approver-key-1.private.pem --approver-id local-test-approver --key-id local-test-approver-key-1 --capability test:fixture-execute --resource-id vendor/vendor-123 --max-amount 100 --out./local-approver/approval.json
 ```
 
 The approval expires after 15 minutes unless you pass `--ttl-seconds`, and it can be used once.
@@ -254,9 +253,8 @@ const signals = {
 
 try {
   await client.execute(
-    createBusinessTransaction({
-      ...request,
-      signals: { ...signals, humanApproved: false },
+    createBusinessTransaction({...request,
+      signals: {...signals, humanApproved: false },
     }),
   );
 } catch (error) {
@@ -269,9 +267,8 @@ const approval = JSON.parse(
 );
 
 const record = await client.execute(
-  createBusinessTransaction({
-    ...request,
-    signals: { ...signals, humanApproved: true, approvalArtifact: approval },
+  createBusinessTransaction({...request,
+    signals: {...signals, humanApproved: true, approvalArtifact: approval },
   }),
 );
 
@@ -305,7 +302,7 @@ Approved: APPROVED c1ee106cb303c57723128efd46e4dba53fc6ec37f238aa410d9cfe5454812
 | `401 {"error":"authentication required"}`             | No key, a wrong key, or a hash in `PARMANA_API_KEYS` that is not the hash of that key.                            |
 | The server refuses to start, naming `DATABASE_URL`    | `NODE_ENV` is not `test`. Outside `test`, storage for replay protection and audit needs Postgres.                 |
 | The server refuses to start, naming the approver file | `PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE` is set while `NODE_ENV` is not `test`.                                    |
-| `Refused: ... approval ...` on the second request     | The approval expired (15 minutes), was used already, or names another resource or a lower amount. Sign a new one. |
+| `Refused:... approval...` on the second request     | The approval expired (15 minutes), was used already, or names another resource or a lower amount. Sign a new one. |
 | `Cannot find module '@parmana/sdk'`                   | Run the script from `typescript/examples/`, after `npm run build`.                                                |
 
 ## Next

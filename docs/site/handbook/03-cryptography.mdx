@@ -48,7 +48,7 @@ turned out to be a red herring, since `CanonicalSerializer` normalizes object ke
 away. The real, separate finding underneath it was that the stored content was missing an
 entire field (`unboundSignalReasons`, and for two policies, `boundSignals`) relative to the
 current file, a genuine content difference no amount of key-order normalization could paper
-over. See §2.26's "Legacy-policy backfill" entry for the full account ,
+over. See §2.26's "Legacy-policy backfill" entry for the full account,
 worth reading as a caution against assuming a hash mismatch has an obvious cause before
 actually diffing the two objects field by field.
 
@@ -67,7 +67,7 @@ with no options object, i.e. pure Ed25519, not Ed25519ph) and `Dilithium3Signatu
 (53 lines, near-identical shape, using Node's native `"ml-dsa-65"` key type, this is the
 ML-DSA-65/FIPS 204 standard, and `ConfigValidation.ts` accepts the string `"ml-dsa-65"` as a
 config-time alias that resolves to the same internal `"dilithium3"` identifier, so an operator
-can write either name in `PRIMARY_SIGNATURE_PROVIDER`). ML-DSA-65 signatures are randomized ,
+can write either name in `PRIMARY_SIGNATURE_PROVIDER`). ML-DSA-65 signatures are randomized,
 signing the same message twice with the same key produces two different, both valid,
 signatures, noted directly in that provider's own doc comment, worth knowing before assuming
 a signature mismatch across two runs means something is broken. `MlDsaSupport.ts` detects at
@@ -106,7 +106,7 @@ implementation, resolved only through `SignerBootstrap`, never through `KeyBoots
 
 ### `KmsSigner`: sign-without-release, against real AWS KMS
 
-`KmsSigner` supports exactly one key spec/algorithm pair ,
+`KmsSigner` supports exactly one key spec/algorithm pair,
 `ECC_NIST_EDWARDS25519`/`ED25519_SHA_512`, matching this codebase's `ed25519` default, noted
 in-source as deliberate: AWS KMS added Ed25519 support in November 2025, so adopting it needed
 no signature-algorithm migration. `sign()`/`getPublicKey()`/`getMetadata()`/`hasKey()` each
@@ -148,7 +148,7 @@ site already uses.
 AWS KMS refuses a raw Ed25519 message longer than 4096 bytes. `KmsSigner.sign()` originally passed the
 full canonical bytes of whatever it was signing, so signing a full `ExecutionTrustRecord` (with its
 bound authorization, connector evidence and governance anchor) failed with `ValidationException:
-Member must have length less than or equal to 4096`. It was found in production on 2026-09-20,
+Member must have length less than or equal to 4096`.
 because earlier KMS tests only used the small `test:fixture-execute` record.
 
 The fix is `packages/crypto/src/SignatureCommitment.ts`. A message of 4096 bytes or fewer is signed
@@ -166,15 +166,14 @@ starts with, so the two forms cannot be confused.
 Two consequences worth knowing. A verifier written elsewhere has to implement the same rule to verify a
 large record signed under KMS, and the Python SDK's offline verifier already does. This also does not
 change the order of operations in a request: the connector is still called before the Execution Trust
-Record is signed. Since ADR-0012 a signed Execution Intent is stored before the connector is called, so a
+Record is signed.
 released action always has signed evidence behind it (Chapter 8).
 
 ### `SignerKeyProviderAdapter`: closing a real signing/verification divergence
 
 `providers/SignerKeyProviderAdapter.ts` is the fix for the most serious of the real incidents
-this migration produced, found against live production traffic on 2026-09-16 (see G-48/G-49 and the KMS migration troubleshooting guide's item 7).
 The bug: `EnvelopeVerifier.resolveKey()` uses a `KeyProvider` to look up the public key for
-_every_ authorization it verifies, including ones signed under the plain `"default"` keyId ,
+_every_ authorization it verifies, including ones signed under the plain `"default"` keyId,
 not only tenant-scoped ones, contrary to an earlier assessment in this same codebase's own
 comments that this path was "currently inert." `createExecutionGateway.ts` unconditionally
 constructed a fresh `new FileKeyProvider()` for that lookup, regardless of `KEY_PROVIDER`. Once
@@ -238,14 +237,13 @@ those two, not `KMS_REGION`/`KMS_KEY_ALIAS`, the latter pair currently does noth
   three composition roots (Chapter 2 also covers these from the config-and-startup angle).
 - `packages/crypto/src/Signer.ts`, `KeyProvider.ts`, the two interfaces, both with doc
   comments explaining exactly why they're separate.
-- `packages/crypto/src/providers/signer/KmsSigner.ts`, `providers/SignerKeyProviderAdapter.ts` ,
+- `packages/crypto/src/providers/signer/KmsSigner.ts`, `providers/SignerKeyProviderAdapter.ts`,
   the real AWS KMS implementation and the incident it closes.
-- the 2026-09-15 KMS migration troubleshooting guide (in git history), the real incident
+- the 2026-09-15 KMS migration troubleshooting guide, the real incident
   timeline this chapter draws from; each entry names its symptom, root cause, and fix
   separately, and is worth reading end to end for the migration's own stated lesson: "a
   migration that changes _where_ a system's trust boundary sits needs to be verified against
   the real target platform's actual runtime behavior, not just a mocked test double of it."
-- G-48/G-49, the ledger entries for the `SignerKeyProviderAdapter`
   fix specifically.
 
 ## Integration requirements

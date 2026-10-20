@@ -137,7 +137,6 @@ you should do next:
   and the operator can rebuild the record without repeating the action. The method is `finalizeExecutionIntent`. It is available from
   version 1.2.0. On 1.1.6 and earlier the operator uses
   `POST /execution-intents/<businessTransactionId>/finalize` over HTTP.
-- `EXECUTION_OUTCOME_UNKNOWN` (502, since 2026-09-25): the action was released and the connector call failed, so it
   **may** have been performed. **Do not retry as a new transaction.** Tell the operator, who checks the target system
   and closes the intent with `resolveExecutionIntent`.
 
@@ -306,7 +305,7 @@ await checker.approveBusinessSignalSourceChange(
   }),
 );
 
-await checker.businessSignalSources(); // [{ name: "erp", status: "active", ... }]
+await checker.businessSignalSources(); // [{ name: "erp", status: "active",... }]
 ```
 
 `businessSignalSourceChanges(status?)` lists proposals and `rejectBusinessSignalSourceChange(changeId, reason, stepUp)`
@@ -334,7 +333,7 @@ const change = await maker.proposeAuthorityGrantChange({
 
 await checker.approveAuthorityGrantChange(change.changeId, stepUp); // signed as above
 
-await checker.authorityGrants(); // [{ callerId: "warehouse-agent", status: "active", ... }]
+await checker.authorityGrants(); // [{ callerId: "warehouse-agent", status: "active",... }]
 ```
 
 `authorityGrantChanges(status?)` and `rejectAuthorityGrantChange(changeId, reason, stepUp)` work as for sources. To
@@ -395,7 +394,7 @@ await checker.approveExternalConnectorChange(
   }),
 );
 
-await checker.externalConnectors(); // [{ capability: "erp:create-invoice", status: "active", ... }]
+await checker.externalConnectors(); // [{ capability: "erp:create-invoice", status: "active",... }]
 ```
 
 `externalConnectorChanges(status?)` lists proposals and `rejectExternalConnectorChange(changeId, reason, stepUp)`
@@ -420,11 +419,11 @@ import { signApproval } from "@parmana/sdk";
 
 const approval = signApproval({
   privateKeyPem: readFileSync(
-    "manager-priya__manager-priya-key-1.private.pem",
+    "approver-example__approver-example-key-1.private.pem",
     "utf8",
   ),
-  approverId: "manager-priya",
-  keyId: "manager-priya-key-1",
+  approverId: "approver-example",
+  keyId: "approver-example-key-1",
   capability: "paytm:refund",
   resourceId: "ORD-1042",
   maxAmount: 75000, // leave out when the policy declares no amount
@@ -447,9 +446,9 @@ import { ParmanaClient, signPolicyChangeStepUp } from "@parmana/sdk";
 // The proposer
 const change = await proposer.proposeApproverChange({
   action: "add",
-  approverId: "manager-priya",
-  keyId: "manager-priya-key-1",
-  publicKeyPem, // the approver's .public.pem file
+  approverId: "approver-example",
+  keyId: "approver-example-key-1",
+  publicKeyPem, // the approver's.public.pem file
   reason: "Priya approves refunds for the West region from October.",
 });
 

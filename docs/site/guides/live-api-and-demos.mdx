@@ -31,12 +31,11 @@ independent offline verification, and audit trails.
 
 `paytm:refund` is a real, wired connector on this deployment:
 `PAYTM_CONNECTOR_URL`/`PAYTM_CONNECTOR_SHARED_SECRET` point at a real, separately deployed
-`parmana-paytm-agent` service, which itself calls Paytm's staging API. An approved
+`example-agent` service, which itself calls Paytm's staging API. An approved
 `paytm:refund` request reaches Paytm's real staging API and returns a real result, with a
 full cross-service audit trail correlated by `businessTransactionId`. Full runbook:
 [End to end: agent to Parmana to Paytm](/guides/end-to-end-paytm-flow).
 
-**Isn't (HubSpot, GitHub, Slack, as last checked by the operator on 2026-09-30):** no HubSpot
 token, GitHub App credentials or Slack bot token is configured, and it isn't running in test
 mode either. An approved request for one of these answers `503 CONNECTOR_NOT_REGISTERED`, which
 is how to check it today. This mirrors a real, documented
@@ -58,7 +57,6 @@ credentials.
 ## Authentication
 
 Bearer token in the `Authorization` header. Production has **no public or demo key**: every
-key was rebuilt from scratch on 2026-09-27 and again on 2026-09-30, and the operator issues one
 per caller, scoped to the capabilities it needs (for example `paytm-refund-agent`, allowed only
 `paytm:refund`). To try requests without a key of your own, run a local server with the [Quickstart](/quickstart).
 

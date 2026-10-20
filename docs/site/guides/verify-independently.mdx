@@ -42,7 +42,7 @@ verify it with nothing but Parmana's public key, while Parmana itself is not run
 ```bash
 curl -s -X POST http://localhost:3000/execute \
   -H "Authorization: Bearer $PARMANA_API_KEY" \
-  -H "Content-Type: application/json" -d '{ ... }' \
+  -H "Content-Type: application/json" -d '{... }' \
   > trust-record.json
 ```
 

@@ -25,10 +25,10 @@ change, no deploy.
 1. The approver makes a key pair on their own machine:
 
    ```bash
-   npx tsx scripts/generate-approver-key.ts --approver-id manager-priya --key-id manager-priya-key-1 --out-dir ~/.parmana
+   npx tsx scripts/generate-approver-key.ts --approver-id approver-example --key-id approver-example-key-1 --out-dir ~/.parmana
    ```
 
-   They keep `manager-priya__manager-priya-key-1.private.pem` and send the `.public.pem` file.
+   They keep `approver-example__approver-example-key-1.private.pem` and send the `.public.pem` file.
 
 2. A maker proposes adding it: `POST /approval-issuers/changes` with `action: "add"`, the ids, the public key and a
    reason; or `proposeApproverChange()` in TypeScript, `approvers.propose_add()` in Python.
@@ -49,8 +49,8 @@ The approver signs on their own machine, for one action, one resource and, where
 
 ```bash Script
 npx tsx scripts/sign-approval.ts \
-  --private-key-file ~/.parmana/manager-priya__manager-priya-key-1.private.pem \
-  --approver-id manager-priya --key-id manager-priya-key-1 \
+  --private-key-file ~/.parmana/approver-example__approver-example-key-1.private.pem \
+  --approver-id approver-example --key-id approver-example-key-1 \
   --capability paytm:refund --resource-id ORD-1042 --max-amount 75000 --out approval.json
 ```
 
@@ -60,11 +60,11 @@ import { signApproval } from "@parmana/sdk";
 
 const approval = signApproval({
   privateKeyPem: readFileSync(
-    "manager-priya__manager-priya-key-1.private.pem",
+    "approver-example__approver-example-key-1.private.pem",
     "utf8",
   ),
-  approverId: "manager-priya",
-  keyId: "manager-priya-key-1",
+  approverId: "approver-example",
+  keyId: "approver-example-key-1",
   capability: "paytm:refund",
   resourceId: "ORD-1042",
   maxAmount: 75000,
@@ -77,9 +77,9 @@ from pathlib import Path
 from parmana.crypto import sign_approval
 
 approval = sign_approval(
-    private_key_pem=Path("manager-priya__manager-priya-key-1.private.pem").read_text(),
-    approver_id="manager-priya",
-    key_id="manager-priya-key-1",
+    private_key_pem=Path("approver-example__approver-example-key-1.private.pem").read_text(),
+    approver_id="approver-example",
+    key_id="approver-example-key-1",
     capability="paytm:refund",
     resource_id="ORD-1042",
     max_amount=75000,
