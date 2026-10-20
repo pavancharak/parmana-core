@@ -12,6 +12,8 @@ Snapshot: 2026-09-21, with section F added and updated on 2026-09-25, section G 
 - **Downgrade of schema version 2 records is open (G-120).** A cutover (`HYBRID_REQUIRED_FROM`) closes it for new records. It is unset, and should be set only once every new record is hybrid-signed.
 - **Third-party consumers do not read schema version 3 (G-121).** The public verifier 0.3.0 does. `@parmana/sign` and both SDKs do not, so schema version 3 stays off.
 
+- **Approval email is not yet verified end to end (2026-10-20).** The sending domain `notify.parmanasystems.com` is verified in Resend, its DNS records are added at Hostinger, a test email from `approvals@notify.parmanasystems.com` arrived, and `APPROVAL_EMAIL_TO` is set on production. The approval email itself has not been sent: a local test is blocked by policy governance, which needs a second person to approve the policy. It will be verified the first time a real approval request runs.
+
 Every item says how it was verified. Items marked **not re audited** are copied from `docs/VERIFICATION-GAPS.md` as written there, and were not checked again on this date. The full record of what was found and closed stays in `docs/VERIFICATION-GAPS.md` and `docs/CLAIMS.md`.
 
 ## What was finished on 2026-09-20
