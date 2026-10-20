@@ -18,16 +18,16 @@ this exact interface, interchangeable without touching `RuntimeEngine` or
 
 ## Install
 
-Not published to npm. This is an internal package of this repository, used from a clone of it: `npm ci` at the repository root links every workspace package. The packages published to npm are [`@parmana/sdk`](/sdks/typescript), [`@parmana/connector-sdk`](/reference/connector-sdk) and [`@parmana/sign`](/sdks/parmana-sign/overview).
+Not published to npm. This is an internal package of this repository, used from a clone of it: `npm ci` at the repository root links every workspace package. The packages published to npm are [`@parmana/sdk`](/sdks/typescript), [`@parmana/connector-sdk`](/reference/connector-sdk).
 
 ## Key exports
 
-| Export                        | Signature / Stability                                                                                                                                                                                                                                                                                      |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ExecutionSystem` (interface) | `{ execute(request: ExecutionRequest): Promise<ExecutionResult> }`. [AVAILABLE]                                                                                                                                                                                                                            |
+| Export                        | Signature / Stability                                                                                                                                                                                                                                                                                     |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ExecutionSystem` (interface) | `{ execute(request: ExecutionRequest): Promise<ExecutionResult> }`. [AVAILABLE]                                                                                                                                                                                                                           |
 | `DefaultExecutionSystem`      | [AVAILABLE], but a **placeholder**: `execute()` unconditionally returns `{ success: true,... }`, echoing the request back. No policy re-check, no content-binding, no connector. Many tutorials (1-13) use this for simplicity to demonstrate the Runtime in isolation, it performs no real verification. |
-| `HttpExecutionSystem`         | [AVAILABLE]. `new HttpExecutionSystem({ baseUrl })`, `execute()` POSTs to `${baseUrl}/execute` and returns the parsed response.                                                                                                                                                                            |
-| `ExecutionRequest`            | `{ businessTransactionId, action, target, parameters }`                                                                                                                                                                                                                                                    |
+| `HttpExecutionSystem`         | [AVAILABLE]. `new HttpExecutionSystem({ baseUrl })`, `execute()` POSTs to `${baseUrl}/execute` and returns the parsed response.                                                                                                                                                                           |
+| `ExecutionRequest`            | `{ businessTransactionId, action, target, parameters }`                                                                                                                                                                                                                                                   |
 
 <Warning>
   **`DefaultExecutionSystem` is not a smaller version of the gateway, it is a

@@ -17,7 +17,7 @@ so the signing side and verifying side always compute byte-identical input.
 
 ## Install
 
-Not published to npm. This is an internal package of this repository, used from a clone of it: `npm ci` at the repository root links every workspace package. The packages published to npm are [`@parmana/sdk`](/sdks/typescript), [`@parmana/connector-sdk`](/reference/connector-sdk) and [`@parmana/sign`](/sdks/parmana-sign/overview).
+Not published to npm. This is an internal package of this repository, used from a clone of it: `npm ci` at the repository root links every workspace package. The packages published to npm are [`@parmana/sdk`](/sdks/typescript), [`@parmana/connector-sdk`](/reference/connector-sdk).
 
 ## Key exports
 
@@ -54,7 +54,7 @@ See [Choose a signature provider](/guides/choose-a-signature-provider) for both,
 | `Dilithium3SignatureProvider`          | ML-DSA-65 (FIPS 204) provider, requires Node ≥ 24, produces randomized (non-deterministic) signatures                                                                                                                                                                                                                                                                                                                                          |
 | `SHA256HashProvider`                   | Default hash provider                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `FileKeyProvider`                      | `.getPrivateKey(keyId)`, `.getPublicKey(keyId)`, `.getMetadata(keyId)`, `.hasKey(keyId)`, `.listKeys()` (enumerates every `*.public.pem` in the key directory), reads `<PARMANA_KEY_DIR>/<keyId>.{private,public}.pem`. `getPublicKey` never checks for the private key file. `getMetadata()`'s `algorithm` is derived from the key material's own `asymmetricKeyType`, per keyId, not from global config. The only implemented `KeyProvider`. |
-| `assertKeyType`                        | Fails closed, naming both expected and actual key type, if a key doesn't match the configured provider                                                                                                                                                                                                                                                                                                                        |
+| `assertKeyType`                        | Fails closed, naming both expected and actual key type, if a key doesn't match the configured provider                                                                                                                                                                                                                                                                                                                                         |
 
 ### Hybrid signing, [AVAILABLE]
 

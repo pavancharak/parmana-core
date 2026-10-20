@@ -2,8 +2,8 @@
 // docs/site/verification/verify-in-browser.mdx. It runs entirely in the
 // reader's browser with Web Crypto: nothing is uploaded.
 //
-// verifyParmanaTrustRecord, defined inside RecordVerifier, must match @parmana/sign's
-// verifyExecutionTrustRecordOffline for the hash and the ed25519
+// verifyParmanaTrustRecord, defined inside RecordVerifier, must match the canonical form used by Parmana's signer, which the offline verifier implements, and
+// the offline verifier for the hash and the ed25519
 // `signature` field. tests/architecture/browser-record-verifier.test.ts
 // runs the code between the BEGIN and END markers against records signed
 // by Parmana's own signer, and compares the result with @parmana/crypto.
@@ -18,7 +18,7 @@ export const RecordVerifier = ({ exampleRecord, examplePublicKey }) => {
     const errors = [];
     const notes = [];
 
-    // Same rules as @parmana/sign's CanonicalSerializer: object keys sorted,
+    // Same rules as Parmana's canonical serializer: object keys sorted,
     // array order kept, then JSON.stringify.
     const normalize = (value) => {
       if (value === null || typeof value !== "object") return value;
@@ -89,7 +89,7 @@ export const RecordVerifier = ({ exampleRecord, examplePublicKey }) => {
       errors.push("The record has no signature.");
     } else if (signature.algorithm !== "ed25519") {
       errors.push(
-        `The signature algorithm is ${String(signature.algorithm)}; this page checks ed25519 only. Use @parmana/sign.`,
+        `The signature algorithm is ${String(signature.algorithm)}; this page checks ed25519 only. Use the offline verifier (see Offline verifier).`,
       );
     } else {
       try {
@@ -140,7 +140,7 @@ export const RecordVerifier = ({ exampleRecord, examplePublicKey }) => {
         const name = error && error.name;
         errors.push(
           name === "NotSupportedError"
-            ? "This browser does not support Ed25519 in Web Crypto. Use a current Chrome, Edge, Firefox or Safari, or @parmana/sign."
+            ? "This browser does not support Ed25519 in Web Crypto. Use a current Chrome, Edge, Firefox or Safari, or the offline verifier."
             : `The public key or signature could not be read: ${error && error.message ? error.message : String(error)}`,
         );
       }
@@ -148,7 +148,7 @@ export const RecordVerifier = ({ exampleRecord, examplePublicKey }) => {
 
     if (Array.isArray(record.signatures) && record.signatures.length > 0) {
       notes.push(
-        "The record also carries a hybrid signatures array (for example ML-DSA-65). This page does not check it; @parmana/sign does.",
+        "The record also carries a hybrid signatures array (for example ML-DSA-65). This page does not check it; the offline verifier does.",
       );
     }
 
