@@ -94,13 +94,12 @@ sends, an action that needs approval is not authorized without a signed approval
 person. These are tests of the code in this repository, run locally. They do not test a
 deployment's configuration, its key custody or its network.
 
-## 4. Try the hosted sandbox (optional)
+## 4. Run it yourself
 
-A public sandbox runs the same API with demo policies. The scripts in
-[examples/sandbox-playground/](examples/sandbox-playground/) call it from cURL, PowerShell,
-TypeScript or Python. See
-[Live API and demos](https://docs.parmanasystems.com/guides/live-api-and-demos) for
-authentication and the request shape.
+The public sandbox and its Playground are retired. Run Parmana on your own machine with the
+[Quickstart](https://docs.parmanasystems.com/quickstart), then see
+[Live API and demos](https://docs.parmanasystems.com/guides/live-api-and-demos) for requests
+against a server you run.
 
 ## 5. Verify a record offline
 

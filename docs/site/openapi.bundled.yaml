@@ -13621,7 +13621,7 @@ components:
     bearerAuth:
       type: http
       scheme: bearer
-      x-default: 2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME
+      x-default: <your-api-key>
       description: >
         Caller API key issued by scripts/generate-api-key.ts. Sent as
         Authorization: Bearer <key>. Verified against a stored SHA-256 hash in

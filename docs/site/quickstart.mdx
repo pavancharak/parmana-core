@@ -13,7 +13,7 @@ one, sending again, and verifying the signed record.
 <CodeGroup>
 
 ```bash cURL
-export PARMANA_API_KEY=2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME   # the published sandbox demo key
+export PARMANA_API_KEY=<your-api-key>   # the published sandbox demo key
 
 curl -s https://parmana-sandbox.vercel.app/callers/me   -H "Authorization: Bearer $PARMANA_API_KEY"
 
@@ -21,7 +21,7 @@ curl -s "https://parmana-sandbox.vercel.app/policies/in-effect?capability=sandbo
 ```
 
 ```powershell PowerShell
-$env:PARMANA_API_KEY = "2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME"   # the published sandbox demo key
+$env:PARMANA_API_KEY = "<your-api-key>"   # the published sandbox demo key
 $Headers = @{ Authorization = "Bearer $env:PARMANA_API_KEY" }
 Invoke-RestMethod https://parmana-sandbox.vercel.app/callers/me -Headers $Headers
 Invoke-RestMethod "https://parmana-sandbox.vercel.app/policies/in-effect?capability=sandbox:receipt" -Headers $Headers

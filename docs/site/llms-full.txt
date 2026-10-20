@@ -257,7 +257,7 @@ background to interpret. If your situation is not covered, **stop and ask the op
 | `ACTION`           | The operator. The capability name, for example `paytm:refund`.                                                                                                                                  | Step 2 checks your key may use it.                                                                                                    |
 
 **No deployment yet? Practise on the public sandbox.** Use `PARMANA_URL` `https://parmana-sandbox.vercel.app`,
-`PARMANA_API_KEY` `2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME` (the published demo key: it is public, so the rule about never printing a key does
+`PARMANA_API_KEY` `<your-api-key>` (the published demo key: it is public, so the rule about never printing a key does
 not protect anything for it, but keep the habit), and `ACTION` `sandbox:receipt`; step 3 gives `APPROVAL_SIGNALS`
 `receiptApproved`. Every step below is the same, except that in the sandbox you get the approval yourself from
 `POST /sandbox/approvals` (see [If the action needs a person's approval](#if-the-action-needs-a-persons-approval)). The
@@ -840,7 +840,7 @@ one, sending again, and verifying the signed record.
 <CodeGroup>
 
 ```bash cURL
-export PARMANA_API_KEY=2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME   # the published sandbox demo key
+export PARMANA_API_KEY=<your-api-key>   # the published sandbox demo key
 
 curl -s https://parmana-sandbox.vercel.app/callers/me   -H "Authorization: Bearer $PARMANA_API_KEY"
 
@@ -848,7 +848,7 @@ curl -s "https://parmana-sandbox.vercel.app/policies/in-effect?capability=sandbo
 ```
 
 ```powershell PowerShell
-$env:PARMANA_API_KEY = "2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME"   # the published sandbox demo key
+$env:PARMANA_API_KEY = "<your-api-key>"   # the published sandbox demo key
 $Headers = @{ Authorization = "Bearer $env:PARMANA_API_KEY" }
 Invoke-RestMethod https://parmana-sandbox.vercel.app/callers/me -Headers $Headers
 Invoke-RestMethod "https://parmana-sandbox.vercel.app/policies/in-effect?capability=sandbox:receipt" -Headers $Headers
@@ -4278,7 +4278,7 @@ Source: https://docs.parmanasystems.com/api-reference/introduction
 
 | Server         | Base URL                              | Key                                                                                                   | Use it for                                                                                  |
 | -------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Public sandbox | `https://parmana-sandbox.vercel.app`  | The published demo key, `2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME`, allowed only `sandbox:receipt` | Trying every request for real with nothing installed. **Try it** panels call it by default. |
+| Public sandbox | `https://parmana-sandbox.vercel.app`  | The published demo key, `<your-api-key>`, allowed only `sandbox:receipt` | Trying every request for real with nothing installed. **Try it** panels call it by default. |
 | Production     | `https://parmana-api-real.vercel.app` | A key issued by the operator                                                                          | Real actions. Not open to the public.                                                       |
 | Local          | `http://localhost:3000`               | The committed demo key or your own, see [Quickstart](/quickstart)                                     | Development on your own machine                                                             |
 
@@ -4345,7 +4345,7 @@ if it falls behind.
 
 1. In Postman, choose **Import** and select the file.
 2. Create an environment with a secret variable `apiKey` holding your API key, or the sandbox demo key
-   `2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME` to try it. The collection sends it as `Authorization: Bearer {{apiKey}}`; requests the API
+   `<your-api-key>` to try it. The collection sends it as `Authorization: Bearer {{apiKey}}`; requests the API
    marks as public send no key. Never put a real key in the collection itself.
 3. `baseUrl` defaults to the public sandbox, `https://parmana-sandbox.vercel.app`. Override it in the environment for
    production (`https://parmana-api-real.vercel.app`) or your own deployment, for example `http://localhost:3000`.
@@ -4528,7 +4528,7 @@ start. **Never set it on a real deployment.** A sandbox refuses to start with it
 
 ## The sandbox demo key
 
-The public sandbox, `https://parmana-sandbox.vercel.app`, has one published key: `2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME`. It is caller
+The public sandbox, `https://parmana-sandbox.vercel.app`, has one published key: `<your-api-key>`. It is caller
 `sandbox-visitor`, may act only as itself, and may invoke only `sandbox:receipt`, an action that acts on nothing. It is
 not a human key, so governance routes refuse it with `403 NON_HUMAN_CALLER_DENIED`. Every visitor shares it, so every
 visitor can read what others sent with it. It works only on the sandbox; production and every other deployment refuse
@@ -5942,7 +5942,7 @@ Source: https://docs.parmanasystems.com/guides/typescript-sdk-quickstart
 
 <Tip>
   **Want to see it work before you clone anything?** Point the SDK at the public sandbox:
-  `new ParmanaClient({ endpoint: "https://parmana-sandbox.vercel.app", apiKey: "2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME", timeout: 120_000 })`.
+  `new ParmanaClient({ endpoint: "https://parmana-sandbox.vercel.app", apiKey: "<your-api-key>", timeout: 120_000 })`.
   The [Playground](/playground) has a complete script for the published `@parmana/sdk`, run against the sandbox
   before it was published.
 </Tip>
@@ -7045,7 +7045,7 @@ Source: https://docs.parmanasystems.com/guides/python-sdk-quickstart
 <Tip>
   **Want to see it work before you clone anything?** Point the SDK at the public
   sandbox: `ParmanaClient(endpoint="https://parmana-sandbox.vercel.app",
-  api_key="2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME", timeout=120)`. The
+  api_key="<your-api-key>", timeout=120)`. The
   [Playground](/playground) has a complete script for the published `parmana`
   package, run against the sandbox before it was published.
 </Tip>
