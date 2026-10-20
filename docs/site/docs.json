@@ -795,7 +795,7 @@
     ]
   },
   "banner": {
-    "content": "Proprietary software, source-available for evaluation only. No license is granted to use, copy, modify, or distribute it without a written agreement with Parmana Systems. [License](/license)",
+    "content": "The Parmana server is proprietary software, source-available for evaluation only. The SDKs and the offline verifier are Apache 2.0. [License](/license)",
     "dismissible": false
   }
 }
