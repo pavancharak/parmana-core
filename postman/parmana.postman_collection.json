@@ -1498,7 +1498,7 @@
     },
     {
       "name": "Kill Switch",
-      "description": "Operator kill switch (ADR-0017). Trip and reset need the operator capabilities; status is open to any authenticated caller",
+      "description": "Operator kill switch (ADR-0017). Trip and reset need the operator capabilities, and probe results need the probe capability; status is open to any authenticated caller",
       "item": [
         {
           "name": "Trip the operator kill switch",
@@ -1561,7 +1561,7 @@
                 "reset"
               ]
             },
-            "description": "operationId: resetKillSwitch\n\nLets authorization and approval requests through again. Needs the `kill-switch:reset` capability on the key."
+            "description": "operationId: resetKillSwitch\n\nLets authorization and approval requests through again. Needs the `kill-switch:reset` capability on the key.\nIn production a reset takes two different operators (ADR-0017 decision 1). The first request answers 202 and\nholds the reset as pending. A second operator's request completes it and answers 200. The same operator\ncannot confirm their own request (409). A trip cancels a pending reset."
           }
         },
         {
@@ -1588,6 +1588,38 @@
               ]
             },
             "description": "operationId: getKillSwitchStatus\n\nReturns the current state with the nonce you sent echoed back. The response is not signed in this release (see ADR-0017)."
+          }
+        },
+        {
+          "name": "Record a kill switch probe result",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": 503,\n  \"errorCode\": \"KILL_SWITCH_ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/kill-switch/probes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "kill-switch",
+                "probes"
+              ]
+            },
+            "description": "operationId: recordKillSwitchProbe\n\nRecords what a scheduler saw from a harmless authorization request. The scheduler sends the request to\n`/execute` and passes the response status and error code here. The result is `refused` when the response is\n503 with `KILL_SWITCH_ACTIVE`. It `passed` when the refusal matches the switch state at the time of recording.\nNeeds the `kill-switch:probe` capability on the key. Results are kept in the database. The one-year retention\njob is not built yet (ADR-0017 decision 3)."
           }
         }
       ]

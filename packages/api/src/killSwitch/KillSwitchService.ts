@@ -1,25 +1,29 @@
 /**
- * Operator kill switch, first slice (ADR-0017).
+ * Operator kill switch (ADR-0017).
  *
  * While active, the guard refuses authorization and approval requests with
- * KILL_SWITCH_ACTIVE. Trip, reset and status stay reachable so the switch can
- * always be cleared. If the state cannot be read, the switch reports active
- * (fail closed).
+ * KILL_SWITCH_ACTIVE. Trip, reset, status and probe stay reachable so the switch
+ * can always be cleared and checked. If the state cannot be read, the switch
+ * reports active (fail closed).
  *
- * This slice keeps state in memory. It is NOT durable: a restart clears a
- * trip. Do not deploy the switch to production until the durable store
- * (ADR-0017, "First build") replaces MemoryKillSwitchStore.
+ * Reset takes two different operators when resetNeedsSecondOperator is set
+ * (production, ADR-0017 decision 1). The first reset request is held as pending;
+ * a second, different operator completes it.
  */
 
 export interface KillSwitchState {
   readonly active: boolean;
   readonly version: number;
-  readonly trippedBy?: string;
-  readonly trippedAt?: string;
-  readonly tripReason?: string;
-  readonly resetBy?: string;
-  readonly resetAt?: string;
-  readonly resetReason?: string;
+  readonly trippedBy?: string | undefined;
+  readonly trippedAt?: string | undefined;
+  readonly tripReason?: string | undefined;
+  readonly pendingResetBy?: string | undefined;
+  readonly pendingResetAt?: string | undefined;
+  readonly pendingResetReason?: string | undefined;
+  readonly resetRequestedBy?: string | undefined;
+  readonly resetBy?: string | undefined;
+  readonly resetAt?: string | undefined;
+  readonly resetReason?: string | undefined;
 }
 
 export interface KillSwitchStore {
@@ -29,6 +33,43 @@ export interface KillSwitchStore {
     expectedVersion: number,
     next: KillSwitchState,
   ): Promise<boolean>;
+}
+
+/** One probe result: what the scheduler saw from a request sent while the switch was in some state. */
+export interface KillSwitchProbe {
+  readonly probedAt: string;
+  readonly recordedBy: string;
+  readonly switchActive: boolean;
+  readonly switchVersion: number;
+  readonly observedStatus: number;
+  readonly observedErrorCode?: string;
+  readonly refused: boolean;
+  readonly passed: boolean;
+}
+
+export interface KillSwitchProbeLog {
+  record(probe: KillSwitchProbe): Promise<void>;
+}
+
+export interface KillSwitchOptions {
+  /** Production: a reset takes two different operators (ADR-0017 decision 1). */
+  readonly resetNeedsSecondOperator: boolean;
+  readonly probes: KillSwitchProbeLog;
+}
+
+export type KillSwitchResetOutcome = "pending" | "reset";
+
+export interface KillSwitchResetResult {
+  readonly outcome: KillSwitchResetOutcome;
+  readonly state: KillSwitchState;
+}
+
+/** The same operator asked for a reset twice; a second operator must confirm. */
+export class SameOperatorResetError extends Error {
+  constructor() {
+    super("A second operator must confirm this reset.");
+    this.name = "SameOperatorResetError";
+  }
 }
 
 export class MemoryKillSwitchStore implements KillSwitchStore {
@@ -51,8 +92,19 @@ export class MemoryKillSwitchStore implements KillSwitchStore {
   }
 }
 
+export class MemoryKillSwitchProbeLog implements KillSwitchProbeLog {
+  readonly probes: KillSwitchProbe[] = [];
+
+  async record(probe: KillSwitchProbe): Promise<void> {
+    this.probes.push(probe);
+  }
+}
+
 export class KillSwitchService {
-  constructor(private readonly store: KillSwitchStore) {}
+  constructor(
+    private readonly store: KillSwitchStore,
+    private readonly options: KillSwitchOptions,
+  ) {}
 
   /** True when requests must be refused. A read failure also reports true. */
   async isActive(): Promise<boolean> {
@@ -78,6 +130,7 @@ export class KillSwitchService {
       trippedBy: callerId,
       trippedAt: at.toISOString(),
       tripReason: reason,
+      resetRequestedBy: current.resetRequestedBy,
       resetBy: current.resetBy,
       resetAt: current.resetAt,
       resetReason: current.resetReason,
@@ -88,17 +141,70 @@ export class KillSwitchService {
     callerId: string,
     reason: string,
     at: Date = new Date(),
-  ): Promise<KillSwitchState> {
-    return this.write((current) => ({
-      active: false,
-      version: current.version + 1,
-      trippedBy: current.trippedBy,
-      trippedAt: current.trippedAt,
-      tripReason: current.tripReason,
-      resetBy: callerId,
-      resetAt: at.toISOString(),
-      resetReason: reason,
-    }));
+  ): Promise<KillSwitchResetResult> {
+    const state = await this.write((current) =>
+      this.resetStep(current, callerId, reason, at),
+    );
+
+    return { outcome: state.active ? "pending" : "reset", state };
+  }
+
+  /** Records what the scheduler observed for one probe request. The probe passes when the refusal matches the switch state. */
+  async recordProbe(
+    callerId: string,
+    observed: { readonly status: number; readonly errorCode?: string },
+    at: Date = new Date(),
+  ): Promise<KillSwitchProbe> {
+    const state = await this.store.read();
+    const refused =
+      observed.status === 503 && observed.errorCode === "KILL_SWITCH_ACTIVE";
+
+    const probe: KillSwitchProbe = {
+      probedAt: at.toISOString(),
+      recordedBy: callerId,
+      switchActive: state.active,
+      switchVersion: state.version,
+      observedStatus: observed.status,
+      ...(observed.errorCode !== undefined
+        ? { observedErrorCode: observed.errorCode }
+        : {}),
+      refused,
+      passed: refused === state.active,
+    };
+
+    await this.options.probes.record(probe);
+    return probe;
+  }
+
+  private resetStep(
+    current: KillSwitchState,
+    callerId: string,
+    reason: string,
+    at: Date,
+  ): KillSwitchState {
+    if (!current.active) {
+      return current;
+    }
+
+    if (!this.options.resetNeedsSecondOperator) {
+      return completeReset(current, callerId, reason, at, callerId);
+    }
+
+    if (current.pendingResetBy === undefined) {
+      return {
+        ...current,
+        version: current.version + 1,
+        pendingResetBy: callerId,
+        pendingResetAt: at.toISOString(),
+        pendingResetReason: reason,
+      };
+    }
+
+    if (current.pendingResetBy === callerId) {
+      throw new SameOperatorResetError();
+    }
+
+    return completeReset(current, callerId, reason, at, current.pendingResetBy);
   }
 
   /** Retries on a concurrent write, so two operators acting at once cannot lose an update. */
@@ -118,4 +224,24 @@ export class KillSwitchService {
       "Kill switch state changed concurrently; retry the request.",
     );
   }
+}
+
+function completeReset(
+  current: KillSwitchState,
+  callerId: string,
+  reason: string,
+  at: Date,
+  requestedBy: string,
+): KillSwitchState {
+  return {
+    active: false,
+    version: current.version + 1,
+    trippedBy: current.trippedBy,
+    trippedAt: current.trippedAt,
+    tripReason: current.tripReason,
+    resetRequestedBy: requestedBy,
+    resetBy: callerId,
+    resetAt: at.toISOString(),
+    resetReason: reason,
+  };
 }

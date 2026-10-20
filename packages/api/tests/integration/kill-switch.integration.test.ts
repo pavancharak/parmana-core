@@ -10,6 +10,7 @@ import { hashApiKey } from "../../src/auth/hashApiKey.js";
 import { StaticKeyAuthenticator } from "../../src/auth/StaticKeyAuthenticator.js";
 import {
   KillSwitchService,
+  MemoryKillSwitchProbeLog,
   MemoryKillSwitchStore,
 } from "../../src/killSwitch/KillSwitchService.js";
 
@@ -21,12 +22,17 @@ import { createInspectableExecutionSystem } from "../bootstrap/createInspectable
  */
 
 const OPERATOR_KEY = "kill-switch-operator-raw-key-for-tests-only";
+const SECOND_OPERATOR_KEY = "kill-switch-operator-b-raw-key-for-tests-only";
 const AGENT_KEY = "kill-switch-agent-raw-key-for-tests-only";
+const PROBE_KEY = "kill-switch-probe-raw-key-for-tests-only";
 
 function buildApp() {
   const { executionSystem } = createInspectableExecutionSystem();
   const application = createApplication(executionSystem);
-  const killSwitch = new KillSwitchService(new MemoryKillSwitchStore());
+  const killSwitch = new KillSwitchService(new MemoryKillSwitchStore(), {
+    resetNeedsSecondOperator: true,
+    probes: new MemoryKillSwitchProbeLog(),
+  });
 
   const authenticator = new StaticKeyAuthenticator([
     {
@@ -34,6 +40,18 @@ function buildApp() {
       keyHash: hashApiKey(OPERATOR_KEY),
       credentialHolderType: AuthorityType.USER,
       allowedCapabilities: ["kill-switch:trip", "kill-switch:reset"],
+    },
+    {
+      callerId: "operator-b",
+      keyHash: hashApiKey(SECOND_OPERATOR_KEY),
+      credentialHolderType: AuthorityType.USER,
+      allowedCapabilities: ["kill-switch:reset"],
+    },
+    {
+      callerId: "scheduler",
+      keyHash: hashApiKey(PROBE_KEY),
+      credentialHolderType: AuthorityType.SERVICE,
+      allowedCapabilities: ["kill-switch:probe"],
     },
     {
       callerId: "agent-1",
@@ -92,12 +110,22 @@ describe("kill switch over HTTP (ADR-0017, first slice)", () => {
     expect(refused.status).toBe(503);
     expect(refused.body.error).toBe("KILL_SWITCH_ACTIVE");
 
-    const reset = await request(app)
+    const pending = await request(app)
       .post("/kill-switch/reset")
       .set("Authorization", `Bearer ${OPERATOR_KEY}`)
       .send({ reason: "reviewed, safe" });
+    expect(pending.status).toBe(202);
+    expect(pending.body.outcome).toBe("pending");
+    expect(pending.body.state.active).toBe(true);
+
+    const reset = await request(app)
+      .post("/kill-switch/reset")
+      .set("Authorization", `Bearer ${SECOND_OPERATOR_KEY}`)
+      .send({ reason: "confirmed by a second operator" });
     expect(reset.status).toBe(200);
-    expect(reset.body.active).toBe(false);
+    expect(reset.body.outcome).toBe("reset");
+    expect(reset.body.state.active).toBe(false);
+    expect(reset.body.state.resetRequestedBy).toBe("operator-a");
 
     const allowed = await request(app)
       .post("/execute")
@@ -139,5 +167,68 @@ describe("kill switch over HTTP (ADR-0017, first slice)", () => {
 
     expect(second.status).toBe(200);
     expect(second.body.tripReason).toBe("second");
+  });
+
+  it("refuses a second reset from the operator who asked first", async () => {
+    const { app } = buildApp();
+
+    await request(app)
+      .post("/kill-switch/trip")
+      .set("Authorization", `Bearer ${OPERATOR_KEY}`)
+      .send({ reason: "trip" });
+    await request(app)
+      .post("/kill-switch/reset")
+      .set("Authorization", `Bearer ${OPERATOR_KEY}`)
+      .send({ reason: "first" });
+
+    const again = await request(app)
+      .post("/kill-switch/reset")
+      .set("Authorization", `Bearer ${OPERATOR_KEY}`)
+      .send({ reason: "again" });
+
+    expect(again.status).toBe(409);
+    expect(again.body.error).toBe("SAME_OPERATOR_CANNOT_CONFIRM_RESET");
+  });
+
+  it("refuses a probe from a key without the probe capability", async () => {
+    const { app } = buildApp();
+
+    const response = await request(app)
+      .post("/kill-switch/probes")
+      .set("Authorization", `Bearer ${AGENT_KEY}`)
+      .send({ status: 503, errorCode: "KILL_SWITCH_ACTIVE" });
+
+    expect(response.status).toBe(403);
+    expect(response.body.error).toBe("CAPABILITY_NOT_ALLOWED");
+  });
+
+  it("records a probe that the scheduler sends while tripped", async () => {
+    const { app } = buildApp();
+
+    await request(app)
+      .post("/kill-switch/trip")
+      .set("Authorization", `Bearer ${OPERATOR_KEY}`)
+      .send({ reason: "probe" });
+
+    const probe = await request(app)
+      .post("/kill-switch/probes")
+      .set("Authorization", `Bearer ${PROBE_KEY}`)
+      .send({ status: 503, errorCode: "KILL_SWITCH_ACTIVE" });
+
+    expect(probe.status).toBe(201);
+    expect(probe.body.refused).toBe(true);
+    expect(probe.body.passed).toBe(true);
+    expect(probe.body.recordedBy).toBe("scheduler");
+  });
+
+  it("refuses a probe with no integer status", async () => {
+    const { app } = buildApp();
+
+    const response = await request(app)
+      .post("/kill-switch/probes")
+      .set("Authorization", `Bearer ${PROBE_KEY}`)
+      .send({ status: "503" });
+
+    expect(response.status).toBe(400);
   });
 });

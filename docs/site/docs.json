@@ -642,7 +642,8 @@
             "pages": [
               "api-reference/endpoints/trip-kill-switch",
               "api-reference/endpoints/reset-kill-switch",
-              "api-reference/endpoints/get-kill-switch-status"
+              "api-reference/endpoints/get-kill-switch-status",
+              "api-reference/endpoints/record-kill-switch-probe"
             ]
           },
           {

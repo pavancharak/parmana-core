@@ -64,21 +64,26 @@ The switch is only useful if its state can be verified later. Proposed:
 
 ## First slice: what is built (2026-10-20)
 
-Built on branch `feat/kill-switch`:
+Built on branch `feat/kill-switch`, not merged:
 
 - the switch state and service, with compare-and-write retries and fail-closed reads (`packages/api/src/killSwitch/`)
 - the durable Postgres store and its migration `supabase/migrations/20261020120000_add_kill_switch_state.sql`. The migration seeds one inactive row and enables row level security. The store writes only when the version it read is still current.
+- two-person reset (decision 1). The service takes `resetNeedsSecondOperator` as a required option, so the production setting has to be chosen when the switch is wired. With it set, the first reset request is held as pending (HTTP 202). A second, different operator completes it (HTTP 200). The same operator cannot confirm their own request (HTTP 409 `SAME_OPERATOR_CANNOT_CONFIRM_RESET`). A trip cancels a pending reset. The migration `supabase/migrations/20261020130000_kill_switch_reset_and_probes.sql` adds the pending and requester columns.
+- the probe route `POST /kill-switch/probes` (capability `kill-switch:probe`). The external scheduler sends a request to `/execute` while the switch is tripped and reports the response status and error code. The probe passes when the refusal matches the switch state at the time of recording. Results are stored in `kill_switch_probe` (decision 3).
 - the guard on execute, transactions, the policy-change approve route and the sandbox approvals route
 - trip, reset and status routes, with `kill-switch:trip` and `kill-switch:reset` capabilities
 - the OpenAPI entries, the three code samples in each language, and the generated pages
-- unit and HTTP tests, including a trip, a refused execute, a reset, and a status that echoes the nonce
+- unit and HTTP tests, including two-person reset, a same-operator refusal, a probe that passes, a probe without the capability, and a status that echoes the nonce. The live Postgres test covers the two-person reset across a restart and a recorded probe.
+
+**The OpenAPI response examples for the kill switch are hand-written from the response shapes. They are not captured from a live run.** The architecture test only checks that each example fits its schema. The generated reference pages still say "real captured responses" for every operation, which is not true for these.
 
 Not built yet, and not safe to deploy until they are:
 
-- **Wiring the durable store into the server.** The store exists (`PostgresKillSwitchStore`) and is tested against a real Postgres, including a restart and two operators tripping at once. The server does not supply it yet, so production has no kill switch mounted. Before wiring it, apply migration `20261020120000_add_kill_switch_state.sql` to the production database.
+- **Wiring the durable store into the server.** The store exists (`PostgresKillSwitchStore`, `PostgresKillSwitchProbeLog`) and is tested against a real Postgres. The server does not supply it yet, so production has no kill switch mounted. Before wiring it, apply migrations `20261020120000` and `20261020130000` to the production database, and set `resetNeedsSecondOperator` to true there.
 - **Signed status and signed audit events** (ADR-0017, Audit; G-118 limits the signing key).
-- **Two-person reset in production** (decision 1). Reset is one-person in every environment for now.
-- **The probe** and the **third-party check**.
+- **The third-party check**, which runs on a non-production deployment only.
+- **The scheduler itself.** The probe endpoint exists. The job that sends the probe request is not set up anywhere, and no scheduler has been given a probe key.
+- **Probe retention.** Decision 3 requires at least one year. Nothing deletes old rows yet, and a retention job that keeps them for a year is not built.
 
 ## How the durable store was tested
 

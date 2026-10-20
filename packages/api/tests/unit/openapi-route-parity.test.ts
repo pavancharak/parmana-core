@@ -12,6 +12,7 @@ import { createApplication } from "../../src/application.js";
 import { createApp } from "../../src/app.js";
 import {
   KillSwitchService,
+  MemoryKillSwitchProbeLog,
   MemoryKillSwitchStore,
 } from "../../src/killSwitch/KillSwitchService.js";
 import { createExecutionSystem } from "../../src/bootstrap/createExecutionSystem.js";
@@ -52,7 +53,10 @@ routerPrototype.use = function use(
 const app = createApp(createApplication(await createExecutionSystem()), {
   callerAuth: "disabled",
   // The kill switch routes are mounted only when a switch is supplied (ADR-0017).
-  killSwitch: new KillSwitchService(new MemoryKillSwitchStore()),
+  killSwitch: new KillSwitchService(new MemoryKillSwitchStore(), {
+    resetNeedsSecondOperator: true,
+    probes: new MemoryKillSwitchProbeLog(),
+  }),
   sandboxApprover: {
     approverId: "parity-sandbox-approver",
     keyId: "parity-sandbox-approver-key",

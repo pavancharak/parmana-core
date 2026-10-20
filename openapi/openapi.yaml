@@ -97,7 +97,7 @@ tags:
     description: Routes that exist only on the public sandbox (ADR-0014), for trying Parmana from a browser
 
   - name: Kill Switch
-    description: Operator kill switch (ADR-0017). Trip and reset need the operator capabilities; status is open to any authenticated caller
+    description: Operator kill switch (ADR-0017). Trip and reset need the operator capabilities, and probe results need the probe capability; status is open to any authenticated caller
 
   - name: Refusal Records
     description: Durable, signed evidence that a policy decision rejected a transaction (RFC-0021)
@@ -4501,6 +4501,9 @@ paths:
       operationId: resetKillSwitch
       description: |
         Lets authorization and approval requests through again. Needs the `kill-switch:reset` capability on the key.
+        In production a reset takes two different operators (ADR-0017 decision 1). The first request answers 202 and
+        holds the reset as pending. A second operator's request completes it and answers 200. The same operator
+        cannot confirm their own request (409). A trip cancels a pending reset.
       requestBody:
         required: true
         content:
@@ -4516,20 +4519,49 @@ paths:
               reason: reviewed, safe
       responses:
         "200":
-          description: Reset. Returns the state.
+          description: Reset complete. Returns the outcome and the state.
           content:
             application/json:
               schema:
                 type: object
               example:
-                active: false
-                version: 2
-                trippedBy: operator-a
-                trippedAt: "2026-10-20T10:00:00.000Z"
-                tripReason: suspicious refunds
-                resetBy: operator-b
-                resetAt: "2026-10-20T11:00:00.000Z"
-                resetReason: reviewed, safe
+                outcome: reset
+                state:
+                  active: false
+                  version: 3
+                  trippedBy: operator-a
+                  trippedAt: "2026-10-20T10:00:00.000Z"
+                  tripReason: suspicious refunds
+                  resetRequestedBy: operator-a
+                  resetBy: operator-b
+                  resetAt: "2026-10-20T11:00:00.000Z"
+                  resetReason: reviewed, safe
+        "202":
+          description: The reset is pending. A second, different operator must confirm it.
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                outcome: pending
+                state:
+                  active: true
+                  version: 2
+                  trippedBy: operator-a
+                  trippedAt: "2026-10-20T10:00:00.000Z"
+                  tripReason: suspicious refunds
+                  pendingResetBy: operator-a
+                  pendingResetAt: "2026-10-20T10:30:00.000Z"
+                  pendingResetReason: reviewed, safe
+        "409":
+          description: The same operator asked for this reset before. A second operator must confirm it.
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: SAME_OPERATOR_CANNOT_CONFIRM_RESET
+                message: A second operator must confirm this reset.
         "400":
           description: The reason is missing.
           content:
@@ -4581,6 +4613,70 @@ paths:
                 signed: false
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /kill-switch/probes:
+    post:
+      tags:
+        - Kill Switch
+      summary: Record a kill switch probe result
+      operationId: recordKillSwitchProbe
+      description: |
+        Records what a scheduler saw from a harmless authorization request. The scheduler sends the request to
+        `/execute` and passes the response status and error code here. The result is `refused` when the response is
+        503 with `KILL_SWITCH_ACTIVE`. It `passed` when the refusal matches the switch state at the time of recording.
+        Needs the `kill-switch:probe` capability on the key. Results are kept in the database. The one-year retention
+        job is not built yet (ADR-0017 decision 3).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: integer
+                  description: The HTTP status the probe request received.
+                errorCode:
+                  type: string
+                  description: The error code in the response body, when there is one.
+            example:
+              status: 503
+              errorCode: KILL_SWITCH_ACTIVE
+      responses:
+        "201":
+          description: The probe result, as recorded.
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                probedAt: "2026-10-20T10:05:00.000Z"
+                recordedBy: scheduler
+                switchActive: true
+                switchVersion: 1
+                observedStatus: 503
+                observedErrorCode: KILL_SWITCH_ACTIVE
+                refused: true
+                passed: true
+        "400":
+          description: The status is missing or not an integer.
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: status is required and must be an integer.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: The key lacks the kill-switch:probe capability.
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                error: CAPABILITY_NOT_ALLOWED
+                message: This key does not hold the kill-switch:probe capability.
   /policies/pending-changes/{id}/approve:
     post:
       tags:
