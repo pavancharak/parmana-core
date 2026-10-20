@@ -22,6 +22,8 @@ How to verify it, on the production or staging server, with a second person who 
 4. The checker approves it on their own machine with `scripts/local-review-action.ts`, pointing `--api-base` at the server.
 5. The operator reruns the refusal test. The request should now reach the approval step, and the approval email should arrive at `APPROVAL_EMAIL_TO`.
 
+Status on 2026-10-20: deferred by decision. No second checker is available. A same-computer checker is not accepted, because the checker must be a different person. What was proven: the sender domain, the DNS records, the production variable and a test email delivery. What was not proven: the approval email itself. Two test credentials were pasted into a chat and a local file during the attempt; the bearer keys must be rotated, and the local test files were deleted.
+
 Not done: a same-computer run. One person acting as both maker and checker would produce an approval record that names a second person who did not decide. The policy guide allows that shortcut only in a test environment, so it is not used to close this item.
 
 Every item says how it was verified. Items marked **not re audited** are copied from `docs/VERIFICATION-GAPS.md` as written there, and were not checked again on this date. The full record of what was found and closed stays in `docs/VERIFICATION-GAPS.md` and `docs/CLAIMS.md`.
