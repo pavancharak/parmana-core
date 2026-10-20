@@ -872,14 +872,14 @@ These are listed as open in `docs/REMAINING-WORK.md` section M.
 
 **Verified by tests.** A trip refuses `/execute` with `503 KILL_SWITCH_ACTIVE` and the reset lets the next request through (`packages/api/tests/integration/kill-switch.integration.test.ts`). The trip, status and probe routes stay reachable while tripped. A key without the trip, reset or probe capability is refused with `403`. A reset by one operator is held as pending (`202`), a second, different operator completes it (`200`), and the same operator is refused (`409`). A read failure reports tripped (`packages/api/tests/unit/KillSwitchService.test.ts`). Against a real Postgres 16, the stop survives a new connection pool, and two concurrent trips end at version 2 (`packages/api/tests/integration/postgres-kill-switch.integration.test.ts`).
 
-**Checked in production, once.** On 2026-10-20, with the switch enabled and not tripped, `GET /kill-switch/status` returned `active: false` and echoed the nonce. The switch has not been tripped in production.
+**Checked in production, once.** On 2026-10-20, with the switch enabled and not tripped, `GET /kill-switch/status` returned `active: false` and echoed the nonce. The switch has not been tripped in production. The probe workflow's first manual run passed on 2026-10-20.
 
 **Not claimed.**
 
 1. A stop does not recall an action already released. Calls admitted before the trip can still complete.
 2. A tool reached directly, bypassing Parmana, is not stopped.
 3. The status response and the audit events are not signed (G-118). A status response shows the switch state, not a signed proof of it.
-4. The probe that checks the switch from outside is not running yet. It is ready on branch `ci/kill-switch-probe` and needs a production probe key and a repository secret.
+4. The probe that checks the switch from outside runs every 15 minutes from a GitHub Actions workflow on `main`, with a production key that holds only `kill-switch:probe`. A run that does not match the switch state fails. Results are recorded in `kill_switch_probe`, but are not signed.
 5. Two-person reset has not been exercised in production with two real operator keys.
 6. The switch does not halt one agent. It stops every caller at once.
 7. A third-party check on a non-production deployment has not been done.

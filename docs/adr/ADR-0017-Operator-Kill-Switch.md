@@ -77,19 +77,19 @@ Built on branch `feat/kill-switch`, not merged:
 
 The OpenAPI response examples for the kill switch were captured from the routes in a test run (2026-10-20), so the generated pages' "real captured responses" wording is true for them. The architecture test checks that each example fits its schema; it does not check capture, so a future hand edit would not be caught.
 
-Not built yet, and not safe to deploy until they are:
+Still open after the first slice (wiring and the scheduler are done, see Production status above):
 
-- **Wiring the durable store into the server.** The store exists (`PostgresKillSwitchStore`, `PostgresKillSwitchProbeLog`) and is tested against a real Postgres. The server does not supply it yet, so production has no kill switch mounted. Before wiring it, apply migrations `20261020120000` and `20261020130000` to the production database, and set `resetNeedsSecondOperator` to true there.
+- **Wiring the durable store into the server:** done 2026-10-20 (see Production status). Both migrations are applied to production, and `resetNeedsSecondOperator` is true there.
 - **Signed status and signed audit events** (ADR-0017, Audit; G-118 limits the signing key).
 - **The third-party check**, which runs on a non-production deployment only.
-- **The scheduler itself.** The probe endpoint exists. The job that sends the probe request is not set up anywhere, and no scheduler has been given a probe key.
+- **The scheduler:** a GitHub Actions workflow on `main`, running every 15 minutes since 2026-10-20.
 - **Probe retention.** Decision 3 requires at least one year. Nothing deletes old rows yet, and a retention job that keeps them for a year is not built.
 
 ## Production status (2026-10-20)
 
 Live in production, with the switch not tripped. `KILL_SWITCH_ENABLED=true` and `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR=true` are set as Vercel Config values. Both migrations are applied. A check with a valid key returned `{"active":false,"version":0,"nonce":"verify-1","signed":false}`. Operations are in [docs/runbooks/KILL-SWITCH-OPERATIONS.md](../runbooks/KILL-SWITCH-OPERATIONS.md).
 
-Decided 2026-10-20: every probe row is kept; the probe runs from a scheduled GitHub Actions workflow (branch `ci/kill-switch-probe`, merged once the probe secret and key exist); status stays unsigned until a build-bound signing key exists (G-118). Still open: merging the probe workflow, the third-party check, and an exercised two-person reset.
+Decided 2026-10-20: every probe row is kept; the probe runs from a scheduled GitHub Actions workflow on `main`; status stays unsigned until a build-bound signing key exists (G-118). Still open: the third-party check, an exercised two-person reset, and rotating the keys pasted into chat during setup.
 
 ## How the durable store was tested
 

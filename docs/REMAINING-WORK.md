@@ -57,16 +57,16 @@ The kill switch is live in production with the switch not tripped. Runbook: `doc
 
 | Item                                                                                               | Owner                         | Blocked by                                     | Done when                                                         |
 | -------------------------------------------------------------------------------------------------- | ----------------------------- | ---------------------------------------------- | ----------------------------------------------------------------- |
-| Create a production key holding only `kill-switch:probe`, and add it to `PARMANA_API_KEYS`         | Operator                      | Your go (it changes the production key list)   | The key is in production and nobody else has it                   |
-| Add the repository secret `PARMANA_PROBE_KEY` on GitHub                                            | Operator                      | The key above                                  | The secret is listed under Actions secrets                        |
-| Run "Kill switch probe" once by hand, from the Actions tab                                         | Operator                      | The secret above                               | The run passes and the probe is recorded (`passed: true`)         |
-| Merge `ci/kill-switch-probe` to `main`                                                             | Operator                      | The run above passing                          | The workflow runs every 15 minutes on `main`                      |
+| Probe key created and held in `PARMANA_API_KEYS`, with `kill-switch:probe` only                    | Operator                      | Done                                           | **Done 2026-10-20**                                               |
+| Repository secret `PARMANA_PROBE_KEY` added on GitHub                                              | Operator                      | Done                                           | **Done 2026-10-20**                                               |
+| Run "Kill switch probe" once by hand from the Actions tab                                          | Operator                      | Done                                           | **Done 2026-10-20**: the run passed                               |
+| Workflow merged to `main`, running every 15 minutes                                                | Operator                      | Done                                           | **Done 2026-10-20**                                               |
 | Exercise the two-person reset in production with two different operator keys                       | Two operators                 | A second operator key with `kill-switch:reset` | One reset returns `202` pending, then a second key returns `200`  |
 | Rotate the API keys pasted into chat during setup, and remove the old ones from `PARMANA_API_KEYS` | Operator                      | Nothing                                        | The old keys are refused with `401`                               |
 | Sign status and audit events (G-118)                                                               | Engineering                   | A build-bound signing key                      | Status returns a signature a verifier can check against the build |
 | Third-party check on a non-production deployment                                                   | Operator and an outside party | A non-production deployment                    | A written result is filed in this document                        |
 
-Decided on 2026-10-20: every probe row is kept, so the one-year minimum always holds; the probe runs from a scheduled GitHub Actions workflow; status stays unsigned until a build-bound key exists.
+Decided on 2026-10-20: every probe row is kept, so the one-year minimum always holds; the probe runs from a scheduled GitHub Actions workflow on `main`; status stays unsigned until a build-bound key exists.
 
 ## B. Engineering follow up
 

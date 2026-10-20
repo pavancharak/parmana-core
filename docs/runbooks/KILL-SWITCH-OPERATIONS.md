@@ -96,7 +96,7 @@ Two keys were pasted into chat during setup. Treat both as exposed, and rotate t
 
 ## Still open
 
-- **Probe scheduler goes live.** The workflow is on branch `ci/kill-switch-probe`, not merged. To finish: create a key in production with only `kill-switch:probe`, add it to GitHub as the repository secret `PARMANA_PROBE_KEY`, run the workflow once by hand, then merge the branch.
+- **Probe scheduler:** live on `main` since 2026-10-20, running every 15 minutes. Its key is the repository secret `PARMANA_PROBE_KEY`. Rotate it by generating a new probe key, replacing its entry in `PARMANA_API_KEYS`, then updating the secret. Do not reuse a key that has been pasted into chat.
 - **Signed status and audit events (G-118).** Waits for the build-bound signing key.
 - **Third-party check.** Needs a non-production deployment and an outside party.
 - **Two-person reset in production.** Enabled, but not yet exercised with two real operator keys.

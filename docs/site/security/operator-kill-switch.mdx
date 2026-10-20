@@ -69,12 +69,11 @@ A response with `"active": false` means the switch is not tripped.
 
 A probe sends a request to `/execute` while the switch is in some state and reports what came back. Parmana records
 whether the refusal matched the switch state, and every probe result is kept. The probe is planned as a scheduled job
-outside Parmana, and it is not running in production yet.
+outside Parmana. It runs every 15 minutes from a scheduled GitHub Actions workflow.
 
 ## Open items
 
 - Signing of status and audit events, which waits on a build-bound signing key.
-- The scheduled probe, which needs a production probe key before it can run.
 - A third-party check on a non-production deployment.
 - An exercise of two-person reset with two real operator keys.
 
