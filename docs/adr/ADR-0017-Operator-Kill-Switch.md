@@ -1,6 +1,6 @@
 # ADR-0017: Operator kill switch with a fresh, repeatable shutdown check
 
-**Status:** Proposed on 2026-10-20. Not decided. No code has been written for it.
+**Status:** Decisions accepted on 2026-10-20 for the first build. Build not started; the design below is a draft for review.
 
 **Relates to:** `docs/site/security/regulation-mapping.mdx` (row "Draft MRM guidance, kill switch"); `docs/VERIFICATION-GAPS.md` G-122; `docs/REMAINING-WORK.md` section B.
 
@@ -61,6 +61,36 @@ The switch is only useful if its state can be verified later. Proposed:
 - A tool reached directly, bypassing Parmana, is not stopped.
 - Signatures identify the key, not the build. Tying the signing key to the measured code is a separate open item.
 - The check proves the switch at the moment it runs. A schedule of checks is needed for ongoing assurance.
+
+## Decisions (2026-10-20)
+
+1. **Reset needs two people in production.** A stop one person can clear with no review is weak. The test setup may use one person.
+2. **Operator credentials are named, individual and issued under the same process as policy checkers.** Each credential is tied to one person. Rotation follows that process.
+3. **Probe history is kept for at least one year,** so a question about a past period can be answered.
+4. **No per-agent halt in the first build.** The global halt comes first. Per-agent halts are added when a customer needs one.
+5. **The halt also blocks the approval endpoints.** An agent cannot approve its own requests while the switch is on.
+
+## First build (draft, for review)
+
+**State.** One row in a `kill_switch_state` table: `active` (boolean), `tripped_by`, `tripped_at`, `trip_reason`, `reset_by`, `reset_at`, `reset_reason`. The row is read from the database on every authorization, so a restart does not clear it.
+
+**Endpoints.**
+
+- `POST /kill-switch/trip` takes a reason, and needs an operator credential.
+- `POST /kill-switch/reset` takes a reason. In production it needs a second, different operator credential (decision 1).
+- `GET /kill-switch/status` takes a caller nonce and returns the state, signed, with the nonce echoed back.
+
+**Enforcement.** While active, `POST /execute`, `POST /transactions`, and the approval endpoints refuse with `KILL_SWITCH_ACTIVE`, before policy evaluation. The refusal is signed and recorded.
+
+**Audit.** Every trip, reset, and refused request writes a signed audit event naming the credential, the time, and the reason.
+
+**Probe.** A scheduled job sends a harmless request while the switch is active and records the refusal. Results are kept for a year (decision 3).
+
+**Third-party check.** A script that trips the switch, confirms a refusal using a fresh nonce, resets it, and confirms the request is accepted again. It writes a signed evidence file.
+
+**Tests.** Trip refuses the next request. A restart does not clear the trip. An agent credential cannot trip or reset. Reset with one person is refused in production. The nonce is echoed. A deliberately broken build that forgets the stored state fails the restart test.
+
+**Open before build starts:** the reset policy for non-production, and where the probe history is stored.
 
 ## Open decisions
 
