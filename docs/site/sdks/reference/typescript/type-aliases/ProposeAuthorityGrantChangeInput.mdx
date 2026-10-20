@@ -4,8 +4,6 @@ title: "Type Alias: ProposeAuthorityGrantChangeInput"
 
 > **ProposeAuthorityGrantChangeInput** = \{ `action`: `"grant"`; `callerId`: `string`; `capability`: `string`; `limits?`: [`AuthorityGrantLimits`](/sdks/reference/typescript/type-aliases/AuthorityGrantLimits); `validFrom?`: `string`; `validUntil`: `string`; `reason`: `string`; \} \| \{ `action`: `"revoke"`; `callerId`: `string`; `capability`: `string`; `reason`: `string`; \}
 
-Defined in: typescript/src/models/authority-grant.ts:85
-
 What proposeAuthorityGrantChange() sends.
 
 ## Union Members
@@ -50,7 +48,7 @@ ISO 8601, in the future, at most 366 days after validFrom.
 
 > `readonly` **reason**: `string`
 
----
+***
 
 ### Type Literal
 

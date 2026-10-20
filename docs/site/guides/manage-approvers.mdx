@@ -99,7 +99,7 @@ curl -X POST "$PARMANA_URL/approval-issuers/changes" \
     approverId: "approver-example",
     keyId: "approver-example-key-1",
     publicKeyPem: $pem,
-    reason: "Priya approves refunds for the West region from October."
+    reason: "The approver approves refunds for the West region from October."
   }')"
 ```
 
@@ -120,7 +120,7 @@ const change = await proposer.proposeApproverChange({
     "approver-example__approver-example-key-1.public.pem",
     "utf8",
   ),
-  reason: "Priya approves refunds for the West region from October.",
+  reason: "The approver approves refunds for the West region from October.",
 });
 
 console.log(change.changeId); // send this to the checker
@@ -137,7 +137,7 @@ change = proposer.approvers.propose_add(
     approver_id="approver-example",
     key_id="approver-example-key-1",
     public_key_pem=Path("approver-example__approver-example-key-1.public.pem").read_text(),
-    reason="Priya approves refunds for the West region from October.",
+    reason="The approver approves refunds for the West region from October.",
 )
 
 print(change.change_id)  # send this to the checker
@@ -154,7 +154,7 @@ The response is the change, waiting for a checker:
   "approverId": "approver-example",
   "keyId": "approver-example-key-1",
   "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=\n-----END PUBLIC KEY-----\n",
-  "reason": "Priya approves refunds for the West region from October.",
+  "reason": "The approver approves refunds for the West region from October.",
   "proposedBy": "human-maker",
   "proposedAt": "2026-09-28T19:05:59.726Z",
   "status": "PENDING_APPROVAL"
@@ -326,7 +326,7 @@ approved, every approval the key ever signed is refused, including ones not used
 curl -X POST "$PARMANA_URL/approval-issuers/changes" \
   -H "Authorization: Bearer $PROPOSER_KEY" \
   -H "Content-Type: application/json" \
-  --data '{"action":"revoke","approverId":"approver-example","keyId":"approver-example-key-1","reason":"Priya moved to another team."}'
+  --data '{"action":"revoke","approverId":"approver-example","keyId":"approver-example-key-1","reason":"The approver moved to another team."}'
 ```
 
 ```typescript TypeScript
@@ -334,7 +334,7 @@ const revoke = await proposer.proposeApproverChange({
   action: "revoke",
   approverId: "approver-example",
   keyId: "approver-example-key-1",
-  reason: "Priya moved to another team.",
+  reason: "The approver moved to another team.",
 });
 ```
 
@@ -342,7 +342,7 @@ const revoke = await proposer.proposeApproverChange({
 revoke = proposer.approvers.propose_revoke(
     approver_id="approver-example",
     key_id="approver-example-key-1",
-    reason="Priya moved to another team.",
+    reason="The approver moved to another team.",
 )
 ```
 
@@ -382,13 +382,13 @@ commit;
 curl -X POST "$PARMANA_URL/approval-issuers/changes/$CHANGE_ID/reject" \
   -H "Authorization: Bearer $CHECKER_KEY" \
   -H "Content-Type: application/json" \
-  --data "{\"rejectionReason\": \"Priya stays on refunds until 31 October.\", \"stepUpAuthorization\": $(cat step-up-reject.json)}"
+  --data "{\"rejectionReason\": \"The approver stays on refunds until 31 October.\", \"stepUpAuthorization\": $(cat step-up-reject.json)}"
 ```
 
 ```typescript TypeScript
 await checker.rejectApproverChange(
   changeId,
-  "Priya stays on refunds until 31 October.",
+  "The approver stays on refunds until 31 October.",
   signPolicyChangeStepUp({
     pendingPolicyChangeId: changeId,
     action: "reject",
@@ -401,7 +401,7 @@ await checker.rejectApproverChange(
 ```python Python
 checker.reject_approver_change(
     change_id,
-    "Priya stays on refunds until 31 October.",
+    "The approver stays on refunds until 31 October.",
     sign_policy_change_step_up(
         pending_policy_change_id=change_id, action="reject", private_key_pem=pem, key_id=key_id
     ),

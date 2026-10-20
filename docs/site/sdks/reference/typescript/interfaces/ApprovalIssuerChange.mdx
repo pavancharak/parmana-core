@@ -2,8 +2,6 @@
 title: "Interface: ApprovalIssuerChange"
 ---
 
-Defined in: [typescript/src/models/approval-issuer.ts:40](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L40)
-
 A proposal to add or revoke an approver key, and its resolution.
 
 ## Properties
@@ -12,95 +10,71 @@ A proposal to add or revoke an approver key, and its resolution.
 
 > `readonly` **changeId**: `string`
 
-Defined in: [typescript/src/models/approval-issuer.ts:45](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L45)
-
 Sign the step up authorization for approve or reject with this id as
 `pendingPolicyChangeId`.
 
----
+***
 
 ### action
 
 > `readonly` **action**: `"add"` \| `"revoke"`
 
-Defined in: [typescript/src/models/approval-issuer.ts:46](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L46)
-
----
+***
 
 ### approverId
 
 > `readonly` **approverId**: `string`
 
-Defined in: [typescript/src/models/approval-issuer.ts:47](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L47)
-
----
+***
 
 ### keyId
 
 > `readonly` **keyId**: `string`
 
-Defined in: [typescript/src/models/approval-issuer.ts:48](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L48)
-
----
+***
 
 ### publicKeyPem?
 
 > `readonly` `optional` **publicKeyPem?**: `string`
 
-Defined in: [typescript/src/models/approval-issuer.ts:49](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L49)
-
----
+***
 
 ### reason
 
 > `readonly` **reason**: `string`
 
-Defined in: [typescript/src/models/approval-issuer.ts:50](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L50)
-
----
+***
 
 ### proposedBy
 
 > `readonly` **proposedBy**: `string`
 
-Defined in: [typescript/src/models/approval-issuer.ts:51](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L51)
-
----
+***
 
 ### proposedAt
 
 > `readonly` **proposedAt**: `string`
 
-Defined in: [typescript/src/models/approval-issuer.ts:52](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L52)
-
----
+***
 
 ### status
 
 > `readonly` **status**: [`PendingPolicyChangeStatus`](/sdks/reference/typescript/type-aliases/PendingPolicyChangeStatus)
 
-Defined in: [typescript/src/models/approval-issuer.ts:53](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L53)
-
----
+***
 
 ### resolvedBy?
 
 > `readonly` `optional` **resolvedBy?**: `string`
 
-Defined in: [typescript/src/models/approval-issuer.ts:54](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L54)
-
----
+***
 
 ### resolvedAt?
 
 > `readonly` `optional` **resolvedAt?**: `string`
 
-Defined in: [typescript/src/models/approval-issuer.ts:55](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L55)
-
----
+***
 
 ### rejectionReason?
 
 > `readonly` `optional` **rejectionReason?**: `string`
-
-Defined in: [typescript/src/models/approval-issuer.ts:56](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L56)

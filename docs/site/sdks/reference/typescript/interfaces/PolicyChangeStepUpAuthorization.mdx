@@ -2,8 +2,6 @@
 title: "Interface: PolicyChangeStepUpAuthorization"
 ---
 
-Defined in: [typescript/src/models/policy-change.ts:127](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L127)
-
 Proof that the approver, holding their step up private key, authorized
 this one action on this one change. Valid once, until `expiresAt`.
 Make one with `signPolicyChangeStepUp()`.
@@ -14,30 +12,22 @@ Make one with `signPolicyChangeStepUp()`.
 
 > `readonly` **payload**: [`PolicyChangeStepUpAuthorizationPayload`](/sdks/reference/typescript/interfaces/PolicyChangeStepUpAuthorizationPayload)
 
-Defined in: [typescript/src/models/policy-change.ts:128](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L128)
-
----
+***
 
 ### signature
 
 > `readonly` **signature**: `string`
 
-Defined in: [typescript/src/models/policy-change.ts:133](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L133)
-
 Base64 Ed25519 signature over the canonical JSON of `payload`.
 
----
+***
 
 ### keyId
 
 > `readonly` **keyId**: `string`
 
-Defined in: [typescript/src/models/policy-change.ts:135](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L135)
-
----
+***
 
 ### algorithm
 
 > `readonly` **algorithm**: `"ed25519"`
-
-Defined in: [typescript/src/models/policy-change.ts:136](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L136)

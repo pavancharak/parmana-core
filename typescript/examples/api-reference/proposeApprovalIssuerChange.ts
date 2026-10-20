@@ -14,7 +14,7 @@ const change = await client.proposeApproverChange({
     "approver-example__approver-example-key-1.public.pem",
     "utf8",
   ),
-  reason: "Priya approves refunds for the West region from October.",
+  reason: "The approver approves refunds for the West region from October.",
 });
 
 console.log(change.changeId);

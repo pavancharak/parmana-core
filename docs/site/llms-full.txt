@@ -2078,13 +2078,13 @@ acts with its own credentials, and answers. Parmana holds none of the system's c
 <Warning>
   **Status, 2026-10-01.** Registering a connector through maker checker, and
   releasing approved requests to it, are live in production and were checked end
-  to end against a deployed endpoint 2.49 and 2.50). The SDK
-  helpers `verifyParmanaRelease` and `verify_parmana_release` are published in
-  SDK 1.5.0 (2026-10-04) on npm and PyPI; with an older SDK, build the endpoint
-  from the repository's SDK packages, as
+  to end against a deployed endpoint 2.49 and 2.50). The SDK helpers
+  `verifyParmanaRelease` and `verify_parmana_release` are published in SDK 1.5.0
+  (2026-10-04) on npm and PyPI; with an older SDK, build the endpoint from the
+  repository's SDK packages, as
   `examples/live-checks/external-connector/build-endpoint.ts` does. An approved
-  request took 24 to 32 seconds in production: give the agent a timeout
-  of at least 120 seconds.
+  request took 24 to 32 seconds in production: give the agent a timeout of at
+  least 120 seconds.
 </Warning>
 
 Follow it literally, as `agents/integrate` is followed. If your situation is not covered, **stop and ask the operator**.
@@ -3314,7 +3314,7 @@ To see the whole flow run, without a server or AWS, run tutorial 119: `npx tsx e
 | `403 STEP_UP_AUTHORIZATION_INVALID`        | The signature expired (over 120 seconds), was already used, or was made with a private key that does not match the `stepUpPublicKey` registered for this caller | Sign again and send at once, or use `local-review-action.ts`. If it persists, check your private key matches the registered public key (after a rotation, replace the `.pem` too). |
 | `403 SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE` | The approving API key belongs to the proposer                                                                                                                   | A different person approves with their own key. There is no override.                                                                                                              |
 | `403 NON_HUMAN_CALLER_DENIED`              | The API key is not registered as a human (`credentialHolderType USER`)                                                                                          | The operator registers it as a human.                                                                                                                                              |
-| `400` naming a field on propose            | The body is malformed, `policyId` does not match the name in the URL, or the version has characters outside `A-Z a-z 0-9. _ -`                                 | Read the `error` message; it names the field.                                                                                                                                      |
+| `400` naming a field on propose            | The body is malformed, `policyId` does not match the name in the URL, or the version has characters outside `A-Z a-z 0-9. _ -`                                  | Read the `error` message; it names the field.                                                                                                                                      |
 | `400 Malformed JSON body`                  | The shell changed the quotes in an inline JSON body                                                                                                             | Build the body in a variable or a file as shown above, not inline in the command.                                                                                                  |
 | `409 CONFLICT` on propose                  | A proposal for this policy version is already open                                                                                                              | Approve or reject the open one first.                                                                                                                                              |
 | Approved content lacks fields the file has | Proposals are frozen snapshots. An old proposal approved later carries the old content                                                                          | Reject stale proposals and propose again from the current file, then run the full scan above.                                                                                      |
@@ -3435,7 +3435,7 @@ curl -X POST "$PARMANA_URL/approval-issuers/changes" \
     approverId: "approver-example",
     keyId: "approver-example-key-1",
     publicKeyPem: $pem,
-    reason: "Priya approves refunds for the West region from October."
+    reason: "The approver approves refunds for the West region from October."
   }')"
 ```
 
@@ -3456,7 +3456,7 @@ const change = await proposer.proposeApproverChange({
     "approver-example__approver-example-key-1.public.pem",
     "utf8",
   ),
-  reason: "Priya approves refunds for the West region from October.",
+  reason: "The approver approves refunds for the West region from October.",
 });
 
 console.log(change.changeId); // send this to the checker
@@ -3473,7 +3473,7 @@ change = proposer.approvers.propose_add(
     approver_id="approver-example",
     key_id="approver-example-key-1",
     public_key_pem=Path("approver-example__approver-example-key-1.public.pem").read_text(),
-    reason="Priya approves refunds for the West region from October.",
+    reason="The approver approves refunds for the West region from October.",
 )
 
 print(change.change_id)  # send this to the checker
@@ -3490,7 +3490,7 @@ The response is the change, waiting for a checker:
   "approverId": "approver-example",
   "keyId": "approver-example-key-1",
   "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=\n-----END PUBLIC KEY-----\n",
-  "reason": "Priya approves refunds for the West region from October.",
+  "reason": "The approver approves refunds for the West region from October.",
   "proposedBy": "human-maker",
   "proposedAt": "2026-09-28T19:05:59.726Z",
   "status": "PENDING_APPROVAL"
@@ -3662,7 +3662,7 @@ approved, every approval the key ever signed is refused, including ones not used
 curl -X POST "$PARMANA_URL/approval-issuers/changes" \
   -H "Authorization: Bearer $PROPOSER_KEY" \
   -H "Content-Type: application/json" \
-  --data '{"action":"revoke","approverId":"approver-example","keyId":"approver-example-key-1","reason":"Priya moved to another team."}'
+  --data '{"action":"revoke","approverId":"approver-example","keyId":"approver-example-key-1","reason":"The approver moved to another team."}'
 ```
 
 ```typescript TypeScript
@@ -3670,7 +3670,7 @@ const revoke = await proposer.proposeApproverChange({
   action: "revoke",
   approverId: "approver-example",
   keyId: "approver-example-key-1",
-  reason: "Priya moved to another team.",
+  reason: "The approver moved to another team.",
 });
 ```
 
@@ -3678,7 +3678,7 @@ const revoke = await proposer.proposeApproverChange({
 revoke = proposer.approvers.propose_revoke(
     approver_id="approver-example",
     key_id="approver-example-key-1",
-    reason="Priya moved to another team.",
+    reason="The approver moved to another team.",
 )
 ```
 
@@ -3718,13 +3718,13 @@ commit;
 curl -X POST "$PARMANA_URL/approval-issuers/changes/$CHANGE_ID/reject" \
   -H "Authorization: Bearer $CHECKER_KEY" \
   -H "Content-Type: application/json" \
-  --data "{\"rejectionReason\": \"Priya stays on refunds until 31 October.\", \"stepUpAuthorization\": $(cat step-up-reject.json)}"
+  --data "{\"rejectionReason\": \"The approver stays on refunds until 31 October.\", \"stepUpAuthorization\": $(cat step-up-reject.json)}"
 ```
 
 ```typescript TypeScript
 await checker.rejectApproverChange(
   changeId,
-  "Priya stays on refunds until 31 October.",
+  "The approver stays on refunds until 31 October.",
   signPolicyChangeStepUp({
     pendingPolicyChangeId: changeId,
     action: "reject",
@@ -3737,7 +3737,7 @@ await checker.rejectApproverChange(
 ```python Python
 checker.reject_approver_change(
     change_id,
-    "Priya stays on refunds until 31 October.",
+    "The approver stays on refunds until 31 October.",
     sign_policy_change_step_up(
         pending_policy_change_id=change_id, action="reject", private_key_pem=pem, key_id=key_id
     ),
@@ -4032,7 +4032,9 @@ app.post(
 
     const expected =
       "v1=" +
-      createHmac("sha256", process.env.APPROVAL_WEBHOOK_SECRET!).update(`${timestamp}.${body}`).digest("hex");
+      createHmac("sha256", process.env.APPROVAL_WEBHOOK_SECRET!)
+        .update(`${timestamp}.${body}`)
+        .digest("hex");
 
     const fresh = Math.abs(Date.now() / 1000 - Number(timestamp)) < 300;
     const valid =
@@ -4108,7 +4110,8 @@ const approval = signApproval({
   approverId: "approver-example",
   keyId: "approver-example-key-1",
   capability: event.action,
-  resourceId: needed.resourceId,...(needed.value !== undefined ? { maxAmount: needed.value } : {}),
+  resourceId: needed.resourceId,
+  ...(needed.value !== undefined ? { maxAmount: needed.value } : {}),
 });
 ```
 
@@ -4224,7 +4227,7 @@ If you are an AI agent, follow [Integrate Parmana: specification for AI agents](
 ## Views of the same spec
 
 Every route, request/response shape, and status code ultimately comes from one file,
-[`openapi/openapi.yaml`](https://github.com/pavancharak/parmana/blob/main/openapi/openapi.yaml),
+`openapi/openapi.yaml`,
 version-controlled alongside the code that implements it. That one spec drives three
 surfaces, so none of them can drift from what the server actually does:
 
@@ -4254,7 +4257,7 @@ surfaces, so none of them can drift from what the server actually does:
 
 ### Postman
 
-[`postman/parmana.postman_collection.json`](https://github.com/pavancharak/parmana/blob/main/postman/parmana.postman_collection.json)
+`postman/parmana.postman_collection.json`
 has one request for every endpoint, in one folder per area, with the example bodies from the
 spec. It is generated from the same OpenAPI file (`npm run generate:postman`), and a test fails
 if it falls behind.
@@ -5404,7 +5407,7 @@ const change = await proposer.proposeApproverChange({
   approverId: "approver-example",
   keyId: "approver-example-key-1",
   publicKeyPem, // the approver's.public.pem file
-  reason: "Priya approves refunds for the West region from October.",
+  reason: "The approver approves refunds for the West region from October.",
 });
 
 // A different person, the checker
@@ -6559,7 +6562,7 @@ change = proposer.approvers.propose_add(
     approver_id="approver-example",
     key_id="approver-example-key-1",
     public_key_pem=public_key_pem,  # the approver's.public.pem file
-    reason="Priya approves refunds for the West region from October.",
+    reason="The approver approves refunds for the West region from October.",
 )
 
 # A different person, the checker
@@ -6936,7 +6939,7 @@ Source: https://docs.parmanasystems.com/guides/python-sdk-quickstart
   with more explanation at each step and a focus on the SDK's own ergonomics. If
   you just want the fastest path to a working local server, use
   [Quickstart](/quickstart) instead. This page assumes you're already inside a
-  local clone of [the Parmana repo](https://github.com/pavancharak/parmana) with
+  local clone of the Parmana repo with
   a server you can point at.
 </Note>
 
@@ -8432,7 +8435,7 @@ attestation](/concepts/gateway-attestation).
 ## Automated checks on the repository
 
 Every pull request to `main` in
-[github.com/pavancharak/parmana](https://github.com/pavancharak/parmana) must pass these before it can
+The Parmana repository must pass these before it can
 merge. `main` is protected: no direct pushes, no force pushes, no deletion.
 
 | Check                                                          | What it does                                                                                             |
@@ -8444,7 +8447,7 @@ merge. `main` is protected: no direct pushes, no force pushes, no deletion.
 
 Also enabled on the repository:
 
-- [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/pavancharak/parmana): a public
+- OpenSSF Scorecard: a public
   supply chain security score, recomputed weekly and on every push to `main`.
 - [OpenSSF Best Practices](https://www.bestpractices.dev/projects/15230): the project's answers to
   the OpenSSF Best Practices criteria. The badge is "in progress", not "passing": the passing level
@@ -8454,7 +8457,7 @@ Also enabled on the repository:
 - GitHub secret scanning with push protection, which blocks a commit that contains a known
   secret format.
 - Private vulnerability reporting, alongside the email route in
-  [SECURITY.md](https://github.com/pavancharak/parmana/blob/main/SECURITY.md).
+  SECURITY.md.
 - GitHub Actions and Docker base images pinned to exact commits and digests, and workflow tokens
   limited to read access.
 - Signed build provenance and a CycloneDX SBOM for every SDK release, and signed build provenance for the server
@@ -8471,7 +8474,7 @@ Also enabled on the repository:
 
 ### Verifying an SDK package from a GitHub release
 
-Each [GitHub release](https://github.com/pavancharak/parmana/releases) of the SDKs carries the
+Each GitHub release of the SDKs carries the
 four packages built by GitHub Actions from the release's tag, and a `multiple.intoto.jsonl` file:
 [SLSA](https://slsa.dev) build provenance, signed with GitHub's identity for the release
 workflow, recording the commit, the workflow and each file's SHA-256. To check a downloaded

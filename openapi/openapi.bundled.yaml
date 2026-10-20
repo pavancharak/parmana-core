@@ -91,7 +91,7 @@ info:
     email: founder@parmanasystems.com
   license:
     name: Proprietary, source-available for evaluation only, see LICENSE
-    url: https://github.com/pavancharak/parmana/blob/main/LICENSE
+    url: https://docs.parmanasystems.com/license
 servers:
   - url: https://parmana-sandbox.vercel.app
     description: Public sandbox (the docs playground). Same code as production, demo
@@ -7021,7 +7021,7 @@ paths:
                       -----BEGIN PUBLIC KEY-----
                       MCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=
                       -----END PUBLIC KEY-----
-                    reason: Priya approves refunds for the West region from October.
+                    reason: The approver approves refunds for the West region from October.
                     proposedBy: human-maker
                     proposedAt: 2026-09-28T19:05:59.726Z
                     status: PENDING_APPROVAL
@@ -7032,7 +7032,7 @@ paths:
                     action: revoke
                     approverId: approver-example
                     keyId: approver-example-key-1
-                    reason: Priya moved to another team.
+                    reason: The approver moved to another team.
                     proposedBy: human-maker
                     proposedAt: 2026-09-28T19:05:59.750Z
                     status: PENDING_APPROVAL
@@ -7091,7 +7091,7 @@ paths:
             https://parmana-api-real.vercel.app/approval-issuers/changes \
               -H "Authorization: Bearer $PARMANA_API_KEY" \
               -H "Content-Type: application/json" \
-              --data "$(jq -n --rawfile pem approver-example__approver-example-key-1.public.pem '{action: "add", approverId: "approver-example", keyId: "approver-example-key-1", publicKeyPem: $pem, reason: "Priya approves refunds for the West region from October."}')"
+              --data "$(jq -n --rawfile pem approver-example__approver-example-key-1.public.pem '{action: "add", approverId: "approver-example", keyId: "approver-example-key-1", publicKeyPem: $pem, reason: "The approver approves refunds for the West region from October."}')"
         - lang: typescript
           label: TypeScript
           source: >-
@@ -7114,7 +7114,7 @@ paths:
                 "approver-example__approver-example-key-1.public.pem",
                 "utf8",
               ),
-              reason: "Priya approves refunds for the West region from October.",
+              reason: "The approver approves refunds for the West region from October.",
             });
 
 
@@ -7139,8 +7139,10 @@ paths:
             change = client.approvers.propose_add(
                 approver_id="approver-example",
                 key_id="approver-example-key-1",
-                public_key_pem=Path("approver-example__approver-example-key-1.public.pem").read_text(),
-                reason="Priya approves refunds for the West region from October.",
+                public_key_pem=Path(
+                    "approver-example__approver-example-key-1.public.pem"
+                ).read_text(),
+                reason="The example approver approves refunds for the West region from October.",
             )
 
 
@@ -7186,7 +7188,7 @@ paths:
                           -----BEGIN PUBLIC KEY-----
                           MCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=
                           -----END PUBLIC KEY-----
-                        reason: Priya approves refunds for the West region from October.
+                        reason: The approver approves refunds for the West region from October.
                         proposedBy: human-maker
                         proposedAt: 2026-09-28T19:05:59.726Z
                         status: PENDING_APPROVAL
@@ -7317,7 +7319,7 @@ paths:
                       -----BEGIN PUBLIC KEY-----
                       MCowBQYDK2VwAyEAEDuWHf+bbRY7J/Mr0RVmAKYHH5CDijTWhdnISXWLD6Y=
                       -----END PUBLIC KEY-----
-                    reason: Priya approves refunds for the West region from October.
+                    reason: The approver approves refunds for the West region from October.
                     proposedBy: human-maker
                     proposedAt: 2026-09-28T19:05:59.726Z
                     status: APPROVED
@@ -7478,13 +7480,13 @@ paths:
                     action: revoke
                     approverId: approver-example
                     keyId: approver-example-key-1
-                    reason: Priya moved to another team.
+                    reason: The approver moved to another team.
                     proposedBy: human-maker
                     proposedAt: 2026-09-28T19:05:59.750Z
                     status: REJECTED
                     resolvedBy: human-checker
                     resolvedAt: 2026-09-28T19:05:59.753Z
-                    rejectionReason: Priya stays on refunds until 31 October.
+                    rejectionReason: The approver stays on refunds until 31 October.
         "400":
           description: "`rejectionReason` is missing, empty or over 2000 characters."
           content:
@@ -7548,7 +7550,7 @@ paths:
             curl -X POST https://parmana-api-real.vercel.app/approval-issuers/changes/ba7c5827-5844-4069-94fc-9b438ef08f78/reject \
               -H "Authorization: Bearer $PARMANA_API_KEY" \
               -H "Content-Type: application/json" \
-              --data "{\"rejectionReason\": \"Priya stays on refunds until 31 October.\", \"stepUpAuthorization\": $(cat step-up.json)}"
+              --data "{\"rejectionReason\": \"The approver stays on refunds until 31 October.\", \"stepUpAuthorization\": $(cat step-up.json)}"
         - lang: typescript
           label: TypeScript
           source: >-
@@ -7574,7 +7576,7 @@ paths:
 
             const change = await client.rejectApproverChange(
               "ba7c5827-5844-4069-94fc-9b438ef08f78",
-              "Priya stays on refunds until 31 October.",
+              "The approver stays on refunds until 31 October.",
               stepUp,
             );
 
@@ -7603,7 +7605,7 @@ paths:
 
             change = client.reject_approver_change(
                 "ba7c5827-5844-4069-94fc-9b438ef08f78",
-                "Priya stays on refunds until 31 October.",
+                "The approver stays on refunds until 31 October.",
                 step_up,
             )
 

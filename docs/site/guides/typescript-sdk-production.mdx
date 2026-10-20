@@ -32,7 +32,7 @@ itself in production (Fly.io/Docker, or any Node-compatible platform).
 | ----------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `PARMANA_ENDPOINT`      | Yes                    | Your Runtime's base URL.                                                                                                                                                                      |
 | `PARMANA_API_KEY`       | Yes, outside local dev | Bearer key minted by `scripts/generate-api-key.ts`. Omitting it only works against a Runtime started with `PARMANA_AUTH_DISABLED=true` — see [Authentication](/api-reference/authentication). |
-| `PARMANA_TIMEOUT_MS`    | No                     | Request timeout. The SDK default is 30000 ms; use 120000.                                                                                                                              |
+| `PARMANA_TIMEOUT_MS`    | No                     | Request timeout. The SDK default is 30000 ms; use 120000.                                                                                                                                     |
 | `PARMANA_RETRY_ENABLED` | No                     | Whether your wrapper enables the SDK's retry policy (see below).                                                                                                                              |
 
 ## A production-safe client wrapper
@@ -64,7 +64,8 @@ function createParmanaClient(): ParmanaClient {
 
   // Build the transport from the SAME configuration. HttpTransport reads timeout and
   // retryPolicy from the configuration it is constructed with, not from the client's.
-  return new ParmanaClient({...configuration,
+  return new ParmanaClient({
+    ...configuration,
     transport: new HttpTransport(configuration),
   });
 }

@@ -2,8 +2,6 @@
 title: "Interface: PublicKeyInfo"
 ---
 
-Defined in: [typescript/src/models/caller.ts:30](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/caller.ts#L30)
-
 A signing public key of the deployment. The response of
 GET /keys/{keyId}.
 
@@ -13,40 +11,30 @@ GET /keys/{keyId}.
 
 > `readonly` **keyId**: `string`
 
-Defined in: [typescript/src/models/caller.ts:31](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/caller.ts#L31)
-
----
+***
 
 ### algorithm
 
 > `readonly` **algorithm**: `string`
 
-Defined in: [typescript/src/models/caller.ts:32](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/caller.ts#L32)
-
----
+***
 
 ### use
 
 > `readonly` **use**: `"sig"`
 
-Defined in: [typescript/src/models/caller.ts:33](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/caller.ts#L33)
-
----
+***
 
 ### pem
 
 > `readonly` **pem**: `string`
 
-Defined in: [typescript/src/models/caller.ts:38](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/caller.ts#L38)
-
 SPKI PEM. Pass it to the offline verifiers.
 
----
+***
 
 ### jwk?
 
 > `readonly` `optional` **jwk?**: `Record`\<`string`, `unknown`\>
-
-Defined in: [typescript/src/models/caller.ts:43](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/caller.ts#L43)
 
 The same key as a JSON Web Key, when the algorithm has a JWK form.

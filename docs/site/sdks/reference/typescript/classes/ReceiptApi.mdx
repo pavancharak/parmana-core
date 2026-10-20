@@ -2,17 +2,14 @@
 title: "Class: ReceiptApi"
 ---
 
-Defined in: [typescript/src/client/ReceiptApi.ts:25](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ReceiptApi.ts#L25)
-
 Receipt API.
 
-## Responsibilities
-
+Responsibilities
+----------------
 - Generate execution receipts
 - Retrieve the most recent receipt
 
 This API does NOT:
-
 - execute Business Transactions
 - replay executions
 - verify trust records
@@ -23,8 +20,6 @@ This API does NOT:
 ### Constructor
 
 > **new ReceiptApi**(`transport`): `ReceiptApi`
-
-Defined in: [typescript/src/client/ReceiptApi.ts:26](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ReceiptApi.ts#L26)
 
 #### Parameters
 
@@ -42,8 +37,6 @@ Defined in: [typescript/src/client/ReceiptApi.ts:26](https://github.com/pavancha
 
 > **generate**(`businessTransactionId`): `Promise`\<[`Receipt`](/sdks/reference/typescript/interfaces/Receipt)\>
 
-Defined in: [typescript/src/client/ReceiptApi.ts:31](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ReceiptApi.ts#L31)
-
 Generate an execution receipt.
 
 #### Parameters
@@ -56,13 +49,11 @@ Generate an execution receipt.
 
 `Promise`\<[`Receipt`](/sdks/reference/typescript/interfaces/Receipt)\>
 
----
+***
 
 ### getLatest()
 
 > **getLatest**(`businessTransactionId`): `Promise`\<[`Receipt`](/sdks/reference/typescript/interfaces/Receipt)\>
-
-Defined in: [typescript/src/client/ReceiptApi.ts:48](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ReceiptApi.ts#L48)
 
 Retrieve the most recent receipt without generating a new one. Maps to
 GET /receipt/latest/:businessTransactionId, distinct from generate(),

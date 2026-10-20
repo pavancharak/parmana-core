@@ -2,8 +2,6 @@
 title: "Interface: ProposedPolicyChange"
 ---
 
-Defined in: [typescript/src/models/policy-change.ts:97](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L97)
-
 A proposal as returned when it is created, with any validator warnings.
 
 ## Extends
@@ -16,43 +14,35 @@ A proposal as returned when it is created, with any validator warnings.
 
 > `readonly` **pendingPolicyChangeId**: `string`
 
-Defined in: [typescript/src/models/policy-change.ts:22](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L22)
-
 #### Inherited from
 
 [`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange).[`pendingPolicyChangeId`](/sdks/reference/typescript/interfaces/PendingPolicyChange#pendingpolicychangeid)
 
----
+***
 
 ### policyName
 
 > `readonly` **policyName**: `string`
 
-Defined in: [typescript/src/models/policy-change.ts:23](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L23)
-
 #### Inherited from
 
 [`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange).[`policyName`](/sdks/reference/typescript/interfaces/PendingPolicyChange#policyname)
 
----
+***
 
 ### policyVersion
 
 > `readonly` **policyVersion**: `string`
 
-Defined in: [typescript/src/models/policy-change.ts:24](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L24)
-
 #### Inherited from
 
 [`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange).[`policyVersion`](/sdks/reference/typescript/interfaces/PendingPolicyChange#policyversion)
 
----
+***
 
 ### proposedContent
 
 > `readonly` **proposedContent**: `unknown`
-
-Defined in: [typescript/src/models/policy-change.ts:29](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L29)
 
 The full policy content that takes effect when the change is approved.
 
@@ -60,13 +50,11 @@ The full policy content that takes effect when the change is approved.
 
 [`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange).[`proposedContent`](/sdks/reference/typescript/interfaces/PendingPolicyChange#proposedcontent)
 
----
+***
 
 ### proposedBy
 
 > `readonly` **proposedBy**: `string`
-
-Defined in: [typescript/src/models/policy-change.ts:34](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L34)
 
 Caller ID of the proposer.
 
@@ -74,13 +62,11 @@ Caller ID of the proposer.
 
 [`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange).[`proposedBy`](/sdks/reference/typescript/interfaces/PendingPolicyChange#proposedby)
 
----
+***
 
 ### proposedAt
 
 > `readonly` **proposedAt**: `string`
-
-Defined in: [typescript/src/models/policy-change.ts:39](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L39)
 
 ISO 8601 timestamp.
 
@@ -88,37 +74,31 @@ ISO 8601 timestamp.
 
 [`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange).[`proposedAt`](/sdks/reference/typescript/interfaces/PendingPolicyChange#proposedat)
 
----
+***
 
 ### status
 
 > `readonly` **status**: [`PendingPolicyChangeStatus`](/sdks/reference/typescript/type-aliases/PendingPolicyChangeStatus)
 
-Defined in: [typescript/src/models/policy-change.ts:41](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L41)
-
 #### Inherited from
 
 [`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange).[`status`](/sdks/reference/typescript/interfaces/PendingPolicyChange#status)
 
----
+***
 
 ### reason
 
 > `readonly` **reason**: `string`
 
-Defined in: [typescript/src/models/policy-change.ts:42](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L42)
-
 #### Inherited from
 
 [`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange).[`reason`](/sdks/reference/typescript/interfaces/PendingPolicyChange#reason)
 
----
+***
 
 ### resolvedBy?
 
 > `readonly` `optional` **resolvedBy?**: `string`
-
-Defined in: [typescript/src/models/policy-change.ts:47](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L47)
 
 Caller ID of whoever approved or rejected it. Absent while pending.
 
@@ -126,13 +106,11 @@ Caller ID of whoever approved or rejected it. Absent while pending.
 
 [`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange).[`resolvedBy`](/sdks/reference/typescript/interfaces/PendingPolicyChange#resolvedby)
 
----
+***
 
 ### resolvedAt?
 
 > `readonly` `optional` **resolvedAt?**: `string`
-
-Defined in: [typescript/src/models/policy-change.ts:52](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L52)
 
 ISO 8601 timestamp. Absent while pending.
 
@@ -140,13 +118,11 @@ ISO 8601 timestamp. Absent while pending.
 
 [`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange).[`resolvedAt`](/sdks/reference/typescript/interfaces/PendingPolicyChange#resolvedat)
 
----
+***
 
 ### rejectionReason?
 
 > `readonly` `optional` **rejectionReason?**: `string`
-
-Defined in: [typescript/src/models/policy-change.ts:57](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L57)
 
 Present only on a rejected change.
 
@@ -154,18 +130,14 @@ Present only on a rejected change.
 
 [`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange).[`rejectionReason`](/sdks/reference/typescript/interfaces/PendingPolicyChange#rejectionreason)
 
----
+***
 
 ### coverageWarnings?
 
 > `readonly` `optional` **coverageWarnings?**: readonly `unknown`[]
 
-Defined in: [typescript/src/models/policy-change.ts:98](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L98)
-
----
+***
 
 ### ruleConflicts?
 
 > `readonly` `optional` **ruleConflicts?**: readonly `unknown`[]
-
-Defined in: [typescript/src/models/policy-change.ts:99](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-change.ts#L99)

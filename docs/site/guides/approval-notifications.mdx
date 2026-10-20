@@ -258,7 +258,9 @@ app.post(
 
     const expected =
       "v1=" +
-      createHmac("sha256", process.env.APPROVAL_WEBHOOK_SECRET!).update(`${timestamp}.${body}`).digest("hex");
+      createHmac("sha256", process.env.APPROVAL_WEBHOOK_SECRET!)
+        .update(`${timestamp}.${body}`)
+        .digest("hex");
 
     const fresh = Math.abs(Date.now() / 1000 - Number(timestamp)) < 300;
     const valid =
@@ -334,7 +336,8 @@ const approval = signApproval({
   approverId: "approver-example",
   keyId: "approver-example-key-1",
   capability: event.action,
-  resourceId: needed.resourceId,...(needed.value !== undefined ? { maxAmount: needed.value } : {}),
+  resourceId: needed.resourceId,
+  ...(needed.value !== undefined ? { maxAmount: needed.value } : {}),
 });
 ```
 

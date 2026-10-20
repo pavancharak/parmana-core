@@ -2,8 +2,6 @@
 title: "Class: ParmanaClient"
 ---
 
-Defined in: typescript/src/client/ParmanaClient.ts:108
-
 Canonical Parmana SDK client.
 
 ## Constructors
@@ -11,10 +9,6 @@ Canonical Parmana SDK client.
 ### Constructor
 
 > **new ParmanaClient**(`configuration`): `ParmanaClient`
-
-Defined in: typescript/src/client/ParmanaClient.ts:187
-
-Creates a Parmana SDK client.
 
 #### Parameters
 
@@ -32,17 +26,27 @@ Creates a Parmana SDK client.
 
 > `readonly` **configuration**: [`Configuration`](/sdks/reference/typescript/interfaces/Configuration)
 
-Defined in: typescript/src/client/ParmanaClient.ts:112
-
 Immutable SDK configuration.
 
 ## Methods
 
+### toJSON()
+
+> **toJSON**(): `object`
+
+#### Returns
+
+`object`
+
+##### endpoint
+
+> **endpoint**: `string`
+
+***
+
 ### endpoint()
 
 > **endpoint**(): `string`
-
-Defined in: typescript/src/client/ParmanaClient.ts:233
 
 Returns the configured Runtime endpoint.
 
@@ -50,13 +54,11 @@ Returns the configured Runtime endpoint.
 
 `string`
 
----
+***
 
 ### health()
 
 > **health**(): `Promise`\<`HealthStatus`\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:240
 
 Performs a Runtime health check.
 
@@ -64,13 +66,11 @@ Performs a Runtime health check.
 
 `Promise`\<`HealthStatus`\>
 
----
+***
 
 ### version()
 
 > **version**(): `Promise`\<`unknown`\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:247
 
 Returns the Runtime name, version, and API version.
 
@@ -78,13 +78,11 @@ Returns the Runtime name, version, and API version.
 
 `Promise`\<`unknown`\>
 
----
+***
 
 ### execute()
 
 > **execute**(`transaction`): `Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:254
 
 Executes a Business Transaction.
 
@@ -98,13 +96,11 @@ Executes a Business Transaction.
 
 `Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)\>
 
----
+***
 
 ### verify()
 
 > **verify**(`businessTransactionId`): `Promise`\<[`Verification`](/sdks/reference/typescript/interfaces/Verification)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:266
 
 Runs a fresh verification of an Execution Trust Record, appending a
 new Verification to its history. Distinct from
@@ -121,13 +117,11 @@ re-verifying.
 
 `Promise`\<[`Verification`](/sdks/reference/typescript/interfaces/Verification)\>
 
----
+***
 
 ### getLatestVerification()
 
 > **getLatestVerification**(`businessTransactionId`): `Promise`\<[`Verification`](/sdks/reference/typescript/interfaces/Verification)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:273
 
 Returns the latest Verification.
 
@@ -141,13 +135,11 @@ Returns the latest Verification.
 
 `Promise`\<[`Verification`](/sdks/reference/typescript/interfaces/Verification)\>
 
----
+***
 
 ### replay()
 
 > **replay**(`businessTransactionId`): `Promise`\<[`ReplayResult`](/sdks/reference/typescript/interfaces/ReplayResult)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:282
 
 Performs deterministic replay.
 
@@ -161,13 +153,11 @@ Performs deterministic replay.
 
 `Promise`\<[`ReplayResult`](/sdks/reference/typescript/interfaces/ReplayResult)\>
 
----
+***
 
 ### receipt()
 
 > **receipt**(`businessTransactionId`): `Promise`\<[`Receipt`](/sdks/reference/typescript/interfaces/Receipt)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:289
 
 Generates an execution receipt.
 
@@ -181,13 +171,11 @@ Generates an execution receipt.
 
 `Promise`\<[`Receipt`](/sdks/reference/typescript/interfaces/Receipt)\>
 
----
+***
 
 ### createTransaction()
 
 > **createTransaction**(`transaction`): `Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:298
 
 Creates (executes) a Business Transaction via POST /transactions,
 a second, independent entry point into the identical execution
@@ -203,13 +191,11 @@ pipeline as execute() (POST /execute). See TransactionApi.create.
 
 `Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)\>
 
----
+***
 
 ### transaction()
 
 > **transaction**(`businessTransactionId`): `Promise`\<[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:307
 
 Retrieves a Business Transaction.
 
@@ -223,13 +209,11 @@ Retrieves a Business Transaction.
 
 `Promise`\<[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)\>
 
----
+***
 
 ### transactions()
 
 > **transactions**(`page?`, `pageSize?`): `Promise`\<[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)[]\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:316
 
 Lists Business Transactions.
 
@@ -247,13 +231,11 @@ Lists Business Transactions.
 
 `Promise`\<[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)[]\>
 
----
+***
 
 ### latestReceipt()
 
 > **latestReceipt**(`businessTransactionId`): `Promise`\<[`Receipt`](/sdks/reference/typescript/interfaces/Receipt)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:323
 
 Retrieves the most recent receipt without generating a new one.
 
@@ -267,13 +249,11 @@ Retrieves the most recent receipt without generating a new one.
 
 `Promise`\<[`Receipt`](/sdks/reference/typescript/interfaces/Receipt)\>
 
----
+***
 
 ### trustRecord()
 
 > **trustRecord**(`businessTransactionId`): `Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:330
 
 Retrieves an Execution Trust Record.
 
@@ -287,13 +267,11 @@ Retrieves an Execution Trust Record.
 
 `Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)\>
 
----
+***
 
 ### trustRecords()
 
 > **trustRecords**(`page?`, `pageSize?`, `options?`): `Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)[]\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:340
 
 Lists Execution Trust Records of this caller's transactions, newest
 first. See TrustRecordApi.list.
@@ -322,13 +300,11 @@ first. See TrustRecordApi.list.
 
 `Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)[]\>
 
----
+***
 
 ### caller()
 
 > **caller**(): `Promise`\<[`CallerIdentity`](/sdks/reference/typescript/interfaces/CallerIdentity)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:351
 
 Who this API key belongs to and what it may do (GET /callers/me).
 
@@ -336,13 +312,11 @@ Who this API key belongs to and what it may do (GET /callers/me).
 
 `Promise`\<[`CallerIdentity`](/sdks/reference/typescript/interfaces/CallerIdentity)\>
 
----
+***
 
 ### publicKey()
 
 > **publicKey**(`keyId?`): `Promise`\<[`PublicKeyInfo`](/sdks/reference/typescript/interfaces/PublicKeyInfo)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:359
 
 A signing public key of the deployment (GET /keys/{keyId}), for the
 offline verifiers. Records are signed with `default`.
@@ -357,13 +331,11 @@ offline verifiers. Records are signed with `default`.
 
 `Promise`\<[`PublicKeyInfo`](/sdks/reference/typescript/interfaces/PublicKeyInfo)\>
 
----
+***
 
 ### policyInEffect()
 
 > **policyInEffect**(`capability`): `Promise`\<[`PolicyInEffect`](/sdks/reference/typescript/interfaces/PolicyInEffect)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:368
 
 The policy a request for `capability` must declare right now, and what
 the request must carry (GET /policies/in-effect). Call it before every
@@ -379,13 +351,11 @@ request and declare `policy` exactly as returned.
 
 `Promise`\<[`PolicyInEffect`](/sdks/reference/typescript/interfaces/PolicyInEffect)\>
 
----
+***
 
 ### validatePolicy()
 
 > **validatePolicy**(`policyId`, `policyVersion`): `Promise`\<[`PolicyValidationResult`](/sdks/reference/typescript/interfaces/PolicyValidationResult)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:375
 
 Confirms that a policy (name + version) is loadable by the Runtime.
 
@@ -403,13 +373,11 @@ Confirms that a policy (name + version) is loadable by the Runtime.
 
 `Promise`\<[`PolicyValidationResult`](/sdks/reference/typescript/interfaces/PolicyValidationResult)\>
 
----
+***
 
 ### refusalRecord()
 
 > **refusalRecord**(`businessTransactionId`): `Promise`\<[`RefusalRecord`](/sdks/reference/typescript/interfaces/RefusalRecord)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:385
 
 Retrieves a Refusal Record by Business Transaction ID.
 
@@ -423,13 +391,11 @@ Retrieves a Refusal Record by Business Transaction ID.
 
 `Promise`\<[`RefusalRecord`](/sdks/reference/typescript/interfaces/RefusalRecord)\>
 
----
+***
 
 ### verifyRefusalRecord()
 
 > **verifyRefusalRecord**(`record`): `Promise`\<`boolean`\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:392
 
 Verifies a Refusal Record's signature.
 
@@ -443,15 +409,14 @@ Verifies a Refusal Record's signature.
 
 `Promise`\<`boolean`\>
 
----
+***
 
 ### executionIntent()
 
 > **executionIntent**(`businessTransactionId`): `Promise`\<[`ExecutionIntentView`](/sdks/reference/typescript/interfaces/ExecutionIntentView)\>
 
-Defined in: typescript/src/client/ParmanaClient.ts:401
-
-Retrieves an Execution Intent and its status by Business Transaction ID. The intent is the signed statement, stored before an action is
+Retrieves an Execution Intent and its status by Business Transaction ID
+(ADR-0012). The intent is the signed statement, stored before an action is
 released, of what was about to be released.
 
 #### Parameters
@@ -464,13 +429,11 @@ released, of what was about to be released.
 
 `Promise`\<[`ExecutionIntentView`](/sdks/reference/typescript/interfaces/ExecutionIntentView)\>
 
----
+***
 
 ### verifyExecutionIntent()
 
 > **verifyExecutionIntent**(`intent`): `Promise`\<`boolean`\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:412
 
 Verifies an Execution Intent's hash and signature. Needs no credential.
 `true` proves the intent is genuine and unaltered. It does not prove the
@@ -486,13 +449,11 @@ action was released, or what its result was.
 
 `Promise`\<`boolean`\>
 
----
+***
 
 ### unfinalizedExecutionIntents()
 
 > **unfinalizedExecutionIntents**(`limit?`): `Promise`\<[`UnfinalizedExecutionIntents`](/sdks/reference/typescript/interfaces/UnfinalizedExecutionIntents)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:421
 
 Lists Execution Intents that never reached a signed Trust Record and were
 not closed by hand, oldest first. Needs a credential provisioned as a
@@ -508,13 +469,11 @@ verified human.
 
 `Promise`\<[`UnfinalizedExecutionIntents`](/sdks/reference/typescript/interfaces/UnfinalizedExecutionIntents)\>
 
----
+***
 
 ### finalizeExecutionIntent()
 
 > **finalizeExecutionIntent**(`businessTransactionId`): `Promise`\<[`FinalizeExecutionIntentResult`](/sdks/reference/typescript/interfaces/FinalizeExecutionIntentResult)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:432
 
 Rebuilds the signed Trust Record for a released action whose record was
 never produced. Never calls a connector. Safe to run twice. Needs a
@@ -530,13 +489,11 @@ credential provisioned as a verified human.
 
 `Promise`\<[`FinalizeExecutionIntentResult`](/sdks/reference/typescript/interfaces/FinalizeExecutionIntentResult)\>
 
----
+***
 
 ### resolveExecutionIntent()
 
 > **resolveExecutionIntent**(`businessTransactionId`, `input`): `Promise`\<[`ResolveExecutionIntentResult`](/sdks/reference/typescript/interfaces/ResolveExecutionIntentResult)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:443
 
 Closes a PREPARED or ERRORED intent that a verified human reconciled at the
 connector. The note is required. The resolution is an attributed operator
@@ -556,13 +513,11 @@ statement in unsigned status, not a Trust Record.
 
 `Promise`\<[`ResolveExecutionIntentResult`](/sdks/reference/typescript/interfaces/ResolveExecutionIntentResult)\>
 
----
+***
 
 ### verifyAuditEvent()
 
 > **verifyAuditEvent**(`event`, `signature`): `Promise`\<`boolean`\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:453
 
 Verifies a signed caller-authentication audit event's signature.
 
@@ -580,13 +535,11 @@ Verifies a signed caller-authentication audit event's signature.
 
 `Promise`\<`boolean`\>
 
----
+***
 
 ### proposePolicyChange()
 
 > **proposePolicyChange**(`name`, `version`, `input`): `Promise`\<[`ProposedPolicyChange`](/sdks/reference/typescript/interfaces/ProposedPolicyChange)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:463
 
 Proposes a policy change. See PolicyApi.proposeChange.
 
@@ -608,13 +561,11 @@ Proposes a policy change. See PolicyApi.proposeChange.
 
 `Promise`\<[`ProposedPolicyChange`](/sdks/reference/typescript/interfaces/ProposedPolicyChange)\>
 
----
+***
 
 ### policyChanges()
 
 > **policyChanges**(`status?`): `Promise`\<[`PolicyChangeForReview`](/sdks/reference/typescript/interfaces/PolicyChangeForReview)[]\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:474
 
 Lists policy changes for review. See PolicyApi.listChanges.
 
@@ -628,13 +579,11 @@ Lists policy changes for review. See PolicyApi.listChanges.
 
 `Promise`\<[`PolicyChangeForReview`](/sdks/reference/typescript/interfaces/PolicyChangeForReview)[]\>
 
----
+***
 
 ### approvePolicyChange()
 
 > **approvePolicyChange**(`pendingPolicyChangeId`, `stepUpAuthorization`): `Promise`\<[`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:484
 
 Approves a policy change with a signed step up authorization. See
 PolicyApi.approveChange and signPolicyChangeStepUp().
@@ -653,13 +602,11 @@ PolicyApi.approveChange and signPolicyChangeStepUp().
 
 `Promise`\<[`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange)\>
 
----
+***
 
 ### rejectPolicyChange()
 
 > **rejectPolicyChange**(`pendingPolicyChangeId`, `rejectionReason`, `stepUpAuthorization`): `Promise`\<[`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:498
 
 Rejects a policy change with a reason and a signed step up
 authorization. See PolicyApi.rejectChange.
@@ -682,13 +629,11 @@ authorization. See PolicyApi.rejectChange.
 
 `Promise`\<[`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange)\>
 
----
+***
 
 ### approvers()
 
 > **approvers**(): `Promise`\<[`ApprovalIssuer`](/sdks/reference/typescript/interfaces/ApprovalIssuer)[]\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:513
 
 Every approver key the server trusts or trusted. See ApproverApi.list.
 
@@ -696,13 +641,11 @@ Every approver key the server trusts or trusted. See ApproverApi.list.
 
 `Promise`\<[`ApprovalIssuer`](/sdks/reference/typescript/interfaces/ApprovalIssuer)[]\>
 
----
+***
 
 ### proposeApproverChange()
 
 > **proposeApproverChange**(`input`): `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:521
 
 Proposes adding or revoking an approver key. See
 ApproverApi.proposeChange.
@@ -717,13 +660,11 @@ ApproverApi.proposeChange.
 
 `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)\>
 
----
+***
 
 ### approverChanges()
 
 > **approverChanges**(`status?`): `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)[]\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:530
 
 Lists approver changes. See ApproverApi.listChanges.
 
@@ -737,13 +678,11 @@ Lists approver changes. See ApproverApi.listChanges.
 
 `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)[]\>
 
----
+***
 
 ### approveApproverChange()
 
 > **approveApproverChange**(`changeId`, `stepUpAuthorization`): `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:539
 
 Approves and applies an approver change. See ApproverApi.approveChange.
 
@@ -761,13 +700,11 @@ Approves and applies an approver change. See ApproverApi.approveChange.
 
 `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)\>
 
----
+***
 
 ### rejectApproverChange()
 
 > **rejectApproverChange**(`changeId`, `rejectionReason`, `stepUpAuthorization`): `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:549
 
 Rejects an approver change. See ApproverApi.rejectChange.
 
@@ -789,13 +726,11 @@ Rejects an approver change. See ApproverApi.rejectChange.
 
 `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)\>
 
----
+***
 
 ### externalConnectors()
 
 > **externalConnectors**(): `Promise`\<[`ExternalConnector`](/sdks/reference/typescript/interfaces/ExternalConnector)[]\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:564
 
 Every external connector registration, active and revoked. See
 ExternalConnectorApi.list.
@@ -804,13 +739,11 @@ ExternalConnectorApi.list.
 
 `Promise`\<[`ExternalConnector`](/sdks/reference/typescript/interfaces/ExternalConnector)[]\>
 
----
+***
 
 ### proposeExternalConnectorChange()
 
 > **proposeExternalConnectorChange**(`input`): `Promise`\<[`ExternalConnectorChange`](/sdks/reference/typescript/interfaces/ExternalConnectorChange)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:572
 
 Proposes registering or revoking an external connector. See
 ExternalConnectorApi.proposeChange.
@@ -825,13 +758,11 @@ ExternalConnectorApi.proposeChange.
 
 `Promise`\<[`ExternalConnectorChange`](/sdks/reference/typescript/interfaces/ExternalConnectorChange)\>
 
----
+***
 
 ### externalConnectorChanges()
 
 > **externalConnectorChanges**(`status?`): `Promise`\<[`ExternalConnectorChange`](/sdks/reference/typescript/interfaces/ExternalConnectorChange)[]\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:581
 
 Lists external connector changes. See ExternalConnectorApi.listChanges.
 
@@ -845,13 +776,11 @@ Lists external connector changes. See ExternalConnectorApi.listChanges.
 
 `Promise`\<[`ExternalConnectorChange`](/sdks/reference/typescript/interfaces/ExternalConnectorChange)[]\>
 
----
+***
 
 ### approveExternalConnectorChange()
 
 > **approveExternalConnectorChange**(`changeId`, `stepUpAuthorization`): `Promise`\<[`ExternalConnectorChange`](/sdks/reference/typescript/interfaces/ExternalConnectorChange)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:591
 
 Approves and applies an external connector change. See
 ExternalConnectorApi.approveChange.
@@ -870,13 +799,11 @@ ExternalConnectorApi.approveChange.
 
 `Promise`\<[`ExternalConnectorChange`](/sdks/reference/typescript/interfaces/ExternalConnectorChange)\>
 
----
+***
 
 ### rejectExternalConnectorChange()
 
 > **rejectExternalConnectorChange**(`changeId`, `rejectionReason`, `stepUpAuthorization`): `Promise`\<[`ExternalConnectorChange`](/sdks/reference/typescript/interfaces/ExternalConnectorChange)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:605
 
 Rejects an external connector change. See
 ExternalConnectorApi.rejectChange.
@@ -899,13 +826,11 @@ ExternalConnectorApi.rejectChange.
 
 `Promise`\<[`ExternalConnectorChange`](/sdks/reference/typescript/interfaces/ExternalConnectorChange)\>
 
----
+***
 
 ### businessSignalSources()
 
 > **businessSignalSources**(): `Promise`\<[`BusinessSignalSource`](/sdks/reference/typescript/interfaces/BusinessSignalSource)[]\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:621
 
 Every business signal source registration, active and revoked. See
 BusinessSignalSourceApi.list.
@@ -914,13 +839,11 @@ BusinessSignalSourceApi.list.
 
 `Promise`\<[`BusinessSignalSource`](/sdks/reference/typescript/interfaces/BusinessSignalSource)[]\>
 
----
+***
 
 ### proposeBusinessSignalSourceChange()
 
 > **proposeBusinessSignalSourceChange**(`input`): `Promise`\<[`BusinessSignalSourceChange`](/sdks/reference/typescript/interfaces/BusinessSignalSourceChange)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:629
 
 Proposes registering or revoking a business signal source. See
 BusinessSignalSourceApi.proposeChange.
@@ -935,13 +858,11 @@ BusinessSignalSourceApi.proposeChange.
 
 `Promise`\<[`BusinessSignalSourceChange`](/sdks/reference/typescript/interfaces/BusinessSignalSourceChange)\>
 
----
+***
 
 ### businessSignalSourceChanges()
 
 > **businessSignalSourceChanges**(`status?`): `Promise`\<[`BusinessSignalSourceChange`](/sdks/reference/typescript/interfaces/BusinessSignalSourceChange)[]\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:639
 
 Lists business signal source changes. See
 BusinessSignalSourceApi.listChanges.
@@ -956,13 +877,11 @@ BusinessSignalSourceApi.listChanges.
 
 `Promise`\<[`BusinessSignalSourceChange`](/sdks/reference/typescript/interfaces/BusinessSignalSourceChange)[]\>
 
----
+***
 
 ### approveBusinessSignalSourceChange()
 
 > **approveBusinessSignalSourceChange**(`changeId`, `stepUpAuthorization`): `Promise`\<[`BusinessSignalSourceChange`](/sdks/reference/typescript/interfaces/BusinessSignalSourceChange)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:649
 
 Approves and applies a business signal source change. See
 BusinessSignalSourceApi.approveChange.
@@ -981,13 +900,11 @@ BusinessSignalSourceApi.approveChange.
 
 `Promise`\<[`BusinessSignalSourceChange`](/sdks/reference/typescript/interfaces/BusinessSignalSourceChange)\>
 
----
+***
 
 ### rejectBusinessSignalSourceChange()
 
 > **rejectBusinessSignalSourceChange**(`changeId`, `rejectionReason`, `stepUpAuthorization`): `Promise`\<[`BusinessSignalSourceChange`](/sdks/reference/typescript/interfaces/BusinessSignalSourceChange)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:663
 
 Rejects a business signal source change. See
 BusinessSignalSourceApi.rejectChange.
@@ -1010,13 +927,11 @@ BusinessSignalSourceApi.rejectChange.
 
 `Promise`\<[`BusinessSignalSourceChange`](/sdks/reference/typescript/interfaces/BusinessSignalSourceChange)\>
 
----
+***
 
 ### authorityGrants()
 
 > **authorityGrants**(): `Promise`\<[`AuthorityGrant`](/sdks/reference/typescript/interfaces/AuthorityGrant)[]\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:678
 
 Every authority grant, active and revoked. See AuthorityGrantApi.list.
 
@@ -1024,13 +939,11 @@ Every authority grant, active and revoked. See AuthorityGrantApi.list.
 
 `Promise`\<[`AuthorityGrant`](/sdks/reference/typescript/interfaces/AuthorityGrant)[]\>
 
----
+***
 
 ### proposeAuthorityGrantChange()
 
 > **proposeAuthorityGrantChange**(`input`): `Promise`\<[`AuthorityGrantChange`](/sdks/reference/typescript/interfaces/AuthorityGrantChange)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:686
 
 Proposes granting or revoking an agent's authority. See
 AuthorityGrantApi.proposeChange.
@@ -1045,13 +958,11 @@ AuthorityGrantApi.proposeChange.
 
 `Promise`\<[`AuthorityGrantChange`](/sdks/reference/typescript/interfaces/AuthorityGrantChange)\>
 
----
+***
 
 ### authorityGrantChanges()
 
 > **authorityGrantChanges**(`status?`): `Promise`\<[`AuthorityGrantChange`](/sdks/reference/typescript/interfaces/AuthorityGrantChange)[]\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:695
 
 Lists authority grant changes. See AuthorityGrantApi.listChanges.
 
@@ -1065,13 +976,11 @@ Lists authority grant changes. See AuthorityGrantApi.listChanges.
 
 `Promise`\<[`AuthorityGrantChange`](/sdks/reference/typescript/interfaces/AuthorityGrantChange)[]\>
 
----
+***
 
 ### approveAuthorityGrantChange()
 
 > **approveAuthorityGrantChange**(`changeId`, `stepUpAuthorization`): `Promise`\<[`AuthorityGrantChange`](/sdks/reference/typescript/interfaces/AuthorityGrantChange)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:705
 
 Approves and applies an authority grant change. See
 AuthorityGrantApi.approveChange.
@@ -1090,13 +999,11 @@ AuthorityGrantApi.approveChange.
 
 `Promise`\<[`AuthorityGrantChange`](/sdks/reference/typescript/interfaces/AuthorityGrantChange)\>
 
----
+***
 
 ### rejectAuthorityGrantChange()
 
 > **rejectAuthorityGrantChange**(`changeId`, `rejectionReason`, `stepUpAuthorization`): `Promise`\<[`AuthorityGrantChange`](/sdks/reference/typescript/interfaces/AuthorityGrantChange)\>
-
-Defined in: typescript/src/client/ParmanaClient.ts:715
 
 Rejects an authority grant change. See AuthorityGrantApi.rejectChange.
 

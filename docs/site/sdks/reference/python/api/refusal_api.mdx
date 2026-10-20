@@ -3,7 +3,7 @@ sidebar_label: refusal_api
 title: parmana.api.refusal_api
 ---
 
-Parmana Refusal Record API.
+Parmana Refusal Record API (RFC-0021).
 
 ## RefusalApi Objects
 
@@ -11,7 +11,7 @@ Parmana Refusal Record API.
 class RefusalApi()
 ```
 
-Refusal Record API.
+Refusal Record API (RFC-0021).
 
 ## Responsibilities
 
@@ -35,7 +35,7 @@ Verify a Refusal Record's signature.
 Maps to POST /refusal/verify -- takes the record itself, not a
 lookup by id. No caller authentication is required by this
 route: it is the capability that makes a refusal independently
-third-party verifiable.
+third-party verifiable (RFC-0021).
 
 ## Parameters
 

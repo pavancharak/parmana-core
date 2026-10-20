@@ -2,55 +2,43 @@
 title: "Interface: SignPolicyChangeStepUpInput"
 ---
 
-Defined in: [typescript/src/crypto/step-up.ts:21](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/step-up.ts#L21)
-
 ## Properties
 
 ### pendingPolicyChangeId
 
 > `readonly` **pendingPolicyChangeId**: `string`
 
-Defined in: [typescript/src/crypto/step-up.ts:25](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/step-up.ts#L25)
-
 The change to approve or reject.
 
----
+***
 
 ### action
 
 > `readonly` **action**: `"approve"` \| `"reject"`
 
-Defined in: [typescript/src/crypto/step-up.ts:27](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/step-up.ts#L27)
-
----
+***
 
 ### privateKeyPem
 
 > `readonly` **privateKeyPem**: `string`
 
-Defined in: [typescript/src/crypto/step-up.ts:33](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/step-up.ts#L33)
-
 The approver's Ed25519 step up private key, PEM (PKCS #8), as made by
 `openssl genpkey -algorithm ed25519`.
 
----
+***
 
 ### keyId
 
 > `readonly` **keyId**: `string`
 
-Defined in: [typescript/src/crypto/step-up.ts:40](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/step-up.ts#L40)
-
 A label for the key. It is recorded with the authorization; the server
 verifies with the public key registered on the approver's API key, not
 by this label.
 
----
+***
 
 ### ttlSeconds?
 
 > `readonly` `optional` **ttlSeconds?**: `number`
-
-Defined in: [typescript/src/crypto/step-up.ts:45](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/step-up.ts#L45)
 
 How long the authorization stays valid. Default 120.

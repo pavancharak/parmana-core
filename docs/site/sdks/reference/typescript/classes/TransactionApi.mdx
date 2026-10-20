@@ -2,18 +2,15 @@
 title: "Class: TransactionApi"
 ---
 
-Defined in: [typescript/src/client/TransactionApi.ts:28](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/TransactionApi.ts#L28)
-
 Transaction API.
 
-## Responsibilities
-
+Responsibilities
+----------------
 - Create (execute) a Business Transaction via POST /transactions
 - Retrieve Business Transactions
 - List Business Transactions
 
 This API does NOT:
-
 - verify trust records
 - replay executions
 - generate receipts
@@ -23,8 +20,6 @@ This API does NOT:
 ### Constructor
 
 > **new TransactionApi**(`transport`): `TransactionApi`
-
-Defined in: [typescript/src/client/TransactionApi.ts:29](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/TransactionApi.ts#L29)
 
 #### Parameters
 
@@ -41,8 +36,6 @@ Defined in: [typescript/src/client/TransactionApi.ts:29](https://github.com/pava
 ### create()
 
 > **create**(`transaction`): `Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)\>
-
-Defined in: [typescript/src/client/TransactionApi.ts:39](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/TransactionApi.ts#L39)
 
 Create (execute) a Business Transaction. Maps to POST
 /transactions: a second, independent entry point into the
@@ -61,13 +54,11 @@ otherwise identical.
 
 `Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)\>
 
----
+***
 
 ### get()
 
 > **get**(`businessTransactionId`): `Promise`\<[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)\>
-
-Defined in: [typescript/src/client/TransactionApi.ts:54](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/TransactionApi.ts#L54)
 
 Retrieve a Business Transaction.
 
@@ -81,13 +72,11 @@ Retrieve a Business Transaction.
 
 `Promise`\<[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)\>
 
----
+***
 
 ### list()
 
 > **list**(`page?`, `pageSize?`): `Promise`\<[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)[]\>
-
-Defined in: [typescript/src/client/TransactionApi.ts:68](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/TransactionApi.ts#L68)
 
 List Business Transactions.
 

@@ -2,8 +2,6 @@
 title: "Interface: ApprovalIssuer"
 ---
 
-Defined in: [typescript/src/models/approval-issuer.ts:11](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L11)
-
 A key the server trusts, or trusted, to sign approvals.
 
 ## Properties
@@ -12,75 +10,57 @@ A key the server trusts, or trusted, to sign approvals.
 
 > `readonly` **approverId**: `string`
 
-Defined in: [typescript/src/models/approval-issuer.ts:12](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L12)
-
----
+***
 
 ### keyId
 
 > `readonly` **keyId**: `string`
 
-Defined in: [typescript/src/models/approval-issuer.ts:13](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L13)
-
----
+***
 
 ### publicKeyPem
 
 > `readonly` **publicKeyPem**: `string`
 
-Defined in: [typescript/src/models/approval-issuer.ts:18](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L18)
-
 Ed25519 public key, PEM (SPKI).
 
----
+***
 
 ### revoked
 
 > `readonly` **revoked**: `boolean`
 
-Defined in: [typescript/src/models/approval-issuer.ts:23](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L23)
-
 true: every approval signed with this key is refused.
 
----
+***
 
 ### source
 
 > `readonly` **source**: `"code"` \| `"governed"`
 
-Defined in: [typescript/src/models/approval-issuer.ts:29](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L29)
-
 "code": listed in the server code, changed only by a deploy.
 "governed": added through an approver change.
 
----
+***
 
 ### addedByChangeId?
 
 > `readonly` `optional` **addedByChangeId?**: `string`
 
-Defined in: [typescript/src/models/approval-issuer.ts:31](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L31)
-
----
+***
 
 ### addedAt?
 
 > `readonly` `optional` **addedAt?**: `string`
 
-Defined in: [typescript/src/models/approval-issuer.ts:32](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L32)
-
----
+***
 
 ### revokedByChangeId?
 
 > `readonly` `optional` **revokedByChangeId?**: `string`
 
-Defined in: [typescript/src/models/approval-issuer.ts:33](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L33)
-
----
+***
 
 ### revokedAt?
 
 > `readonly` `optional` **revokedAt?**: `string`
-
-Defined in: [typescript/src/models/approval-issuer.ts:34](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/approval-issuer.ts#L34)

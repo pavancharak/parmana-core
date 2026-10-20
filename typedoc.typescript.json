@@ -5,10 +5,10 @@
   "out": ".typedoc-staging/typescript",
   "plugin": ["typedoc-plugin-markdown"],
   "readme": "none",
-  "gitRevision": "main",
   "excludeInternal": true,
   "excludePrivate": true,
   "excludeProtected": true,
   "hideGenerator": true,
-  "sort": ["source-order"]
+  "sort": ["source-order"],
+  "disableSources": true
 }

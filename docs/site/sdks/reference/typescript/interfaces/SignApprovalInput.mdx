@@ -2,76 +2,60 @@
 title: "Interface: SignApprovalInput"
 ---
 
-Defined in: [typescript/src/crypto/approval.ts:52](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/approval.ts#L52)
-
 ## Properties
 
 ### privateKeyPem
 
 > `readonly` **privateKeyPem**: `string`
 
-Defined in: [typescript/src/crypto/approval.ts:57](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/approval.ts#L57)
-
 The approver's Ed25519 private key, PEM (PKCS #8), as made by
 scripts/generate-approver-key.ts.
 
----
+***
 
 ### approverId
 
 > `readonly` **approverId**: `string`
 
-Defined in: [typescript/src/crypto/approval.ts:62](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/approval.ts#L62)
-
 The approver and key as registered on the server.
 
----
+***
 
 ### keyId
 
 > `readonly` **keyId**: `string`
 
-Defined in: [typescript/src/crypto/approval.ts:63](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/approval.ts#L63)
-
----
+***
 
 ### capability
 
 > `readonly` **capability**: `string`
 
-Defined in: [typescript/src/crypto/approval.ts:68](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/approval.ts#L68)
-
 The action approved, such as paytm:refund or github:pr-merge.
 
----
+***
 
 ### resourceId
 
 > `readonly` **resourceId**: `string`
 
-Defined in: [typescript/src/crypto/approval.ts:74](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/approval.ts#L74)
-
 The value at the policy's approvalSignals resourceId path: an order
 id, or for "target" the Intent's target, such as acme/api#42.
 
----
+***
 
 ### maxAmount?
 
 > `readonly` `optional` **maxAmount?**: `number`
 
-Defined in: [typescript/src/crypto/approval.ts:81](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/approval.ts#L81)
-
 The largest amount approved. Give it when the policy declares a value
 path (an amount), and leave it out when it does not: the approval then
 names exactly this resource.
 
----
+***
 
 ### ttlSeconds?
 
 > `readonly` `optional` **ttlSeconds?**: `number`
-
-Defined in: [typescript/src/crypto/approval.ts:86](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/approval.ts#L86)
 
 How long the approval stays valid. Default 900, at most 86400.

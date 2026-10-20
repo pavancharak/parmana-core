@@ -762,17 +762,17 @@
     "links": [
       {
         "label": "GitHub",
-        "href": "https://github.com/pavancharak/parmana"
+        "href": "https://github.com/pavancharak/parmana-verifier"
       },
       {
         "label": "Discussions",
-        "href": "https://github.com/pavancharak/parmana/discussions"
+        "href": "https://github.com/pavancharak/parmana-verifier/discussions"
       }
     ]
   },
   "footer": {
     "socials": {
-      "github": "https://github.com/pavancharak/parmana"
+      "github": "https://github.com/pavancharak/parmana-verifier"
     },
     "links": [
       {
@@ -788,7 +788,7 @@
           },
           {
             "label": "Security",
-            "href": "https://github.com/pavancharak/parmana/blob/main/SECURITY.md"
+            "href": "https://docs.parmanasystems.com/license"
           }
         ]
       }

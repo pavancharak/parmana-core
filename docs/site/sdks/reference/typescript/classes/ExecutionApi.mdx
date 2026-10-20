@@ -2,17 +2,14 @@
 title: "Class: ExecutionApi"
 ---
 
-Defined in: [typescript/src/client/ExecutionApi.ts:28](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ExecutionApi.ts#L28)
-
 Execution API.
 
-## Responsibilities
-
+Responsibilities
+----------------
 - Runtime health check
 - Execute Business Transactions
 
 This API does NOT:
-
 - verify trust records
 - replay executions
 - generate receipts
@@ -23,8 +20,6 @@ This API does NOT:
 ### Constructor
 
 > **new ExecutionApi**(`transport`): `ExecutionApi`
-
-Defined in: [typescript/src/client/ExecutionApi.ts:29](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ExecutionApi.ts#L29)
 
 #### Parameters
 
@@ -42,21 +37,17 @@ Defined in: [typescript/src/client/ExecutionApi.ts:29](https://github.com/pavanc
 
 > **health**(): `Promise`\<`unknown`\>
 
-Defined in: [typescript/src/client/ExecutionApi.ts:34](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ExecutionApi.ts#L34)
-
 Returns the Runtime health status.
 
 #### Returns
 
 `Promise`\<`unknown`\>
 
----
+***
 
 ### version()
 
 > **version**(): `Promise`\<`unknown`\>
-
-Defined in: [typescript/src/client/ExecutionApi.ts:47](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ExecutionApi.ts#L47)
 
 Returns the Runtime name, version, and API version. Requires caller
 authentication, unlike GET /health.
@@ -65,13 +56,11 @@ authentication, unlike GET /health.
 
 `Promise`\<`unknown`\>
 
----
+***
 
 ### execute()
 
 > **execute**(`transaction`): `Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)\>
-
-Defined in: [typescript/src/client/ExecutionApi.ts:59](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ExecutionApi.ts#L59)
 
 Execute a Business Transaction.
 

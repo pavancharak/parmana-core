@@ -11,13 +11,13 @@ acts with its own credentials, and answers. Parmana holds none of the system's c
 <Warning>
   **Status, 2026-10-01.** Registering a connector through maker checker, and
   releasing approved requests to it, are live in production and were checked end
-  to end against a deployed endpoint 2.49 and 2.50). The SDK
-  helpers `verifyParmanaRelease` and `verify_parmana_release` are published in
-  SDK 1.5.0 (2026-10-04) on npm and PyPI; with an older SDK, build the endpoint
-  from the repository's SDK packages, as
+  to end against a deployed endpoint 2.49 and 2.50). The SDK helpers
+  `verifyParmanaRelease` and `verify_parmana_release` are published in SDK 1.5.0
+  (2026-10-04) on npm and PyPI; with an older SDK, build the endpoint from the
+  repository's SDK packages, as
   `examples/live-checks/external-connector/build-endpoint.ts` does. An approved
-  request took 24 to 32 seconds in production: give the agent a timeout
-  of at least 120 seconds.
+  request took 24 to 32 seconds in production: give the agent a timeout of at
+  least 120 seconds.
 </Warning>
 
 Follow it literally, as `agents/integrate` is followed. If your situation is not covered, **stop and ask the operator**.

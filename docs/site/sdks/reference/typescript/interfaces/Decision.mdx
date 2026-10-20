@@ -2,90 +2,68 @@
 title: "Interface: Decision"
 ---
 
-Defined in: [typescript/src/models/execution.ts:5](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution.ts#L5)
-
 ## Properties
 
 ### decisionId
 
 > `readonly` **decisionId**: `string`
 
-Defined in: [typescript/src/models/execution.ts:6](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution.ts#L6)
-
----
+***
 
 ### intentId
 
 > `readonly` **intentId**: `string`
 
-Defined in: [typescript/src/models/execution.ts:7](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution.ts#L7)
-
----
+***
 
 ### policy
 
 > `readonly` **policy**: [`PolicyReference`](/sdks/reference/typescript/interfaces/PolicyReference)
 
-Defined in: [typescript/src/models/execution.ts:8](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution.ts#L8)
-
----
+***
 
 ### signals
 
 > `readonly` **signals**: `Record`\<`string`, `unknown`\>
 
-Defined in: [typescript/src/models/execution.ts:9](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution.ts#L9)
-
----
+***
 
 ### outcome
 
 > `readonly` **outcome**: [`DecisionOutcome`](/sdks/reference/typescript/type-aliases/DecisionOutcome)
 
-Defined in: [typescript/src/models/execution.ts:10](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution.ts#L10)
-
----
+***
 
 ### reason?
 
 > `readonly` `optional` **reason?**: `string`
 
-Defined in: [typescript/src/models/execution.ts:11](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution.ts#L11)
-
----
+***
 
 ### matchedRuleId?
 
 > `readonly` `optional` **matchedRuleId?**: `string`
 
-Defined in: [typescript/src/models/execution.ts:13](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution.ts#L13)
-
 Identifier of the Policy rule that matched, or "none". Absent on a Decision built before this field existed.
 
----
+***
 
 ### evaluatedRules?
 
 > `readonly` `optional` **evaluatedRules?**: `number`
 
-Defined in: [typescript/src/models/execution.ts:15](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution.ts#L15)
-
 Number of rules evaluated before reaching a match (or exhausting the rule list).
 
----
+***
 
 ### matchedPath?
 
 > `readonly` `optional` **matchedPath?**: readonly `string`[]
 
-Defined in: [typescript/src/models/execution.ts:17](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution.ts#L17)
-
 Ordered rule-id trace evaluation walked to reach matchedRuleId.
 
----
+***
 
 ### evaluatedAt
 
 > `readonly` **evaluatedAt**: `Date`
-
-Defined in: [typescript/src/models/execution.ts:18](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution.ts#L18)

@@ -2,15 +2,11 @@
 title: "Class: AuthorityGrantApi"
 ---
 
-Defined in: typescript/src/client/AuthorityGrantApi.ts:25
-
 ## Constructors
 
 ### Constructor
 
 > **new AuthorityGrantApi**(`transport`): `AuthorityGrantApi`
-
-Defined in: typescript/src/client/AuthorityGrantApi.ts:26
 
 #### Parameters
 
@@ -28,8 +24,6 @@ Defined in: typescript/src/client/AuthorityGrantApi.ts:26
 
 > **list**(): `Promise`\<[`AuthorityGrant`](/sdks/reference/typescript/interfaces/AuthorityGrant)[]\>
 
-Defined in: typescript/src/client/AuthorityGrantApi.ts:32
-
 Every grant, active and revoked. Maps to GET
 /authority-grants.
 
@@ -37,13 +31,11 @@ Every grant, active and revoked. Maps to GET
 
 `Promise`\<[`AuthorityGrant`](/sdks/reference/typescript/interfaces/AuthorityGrant)[]\>
 
----
+***
 
 ### proposeChange()
 
 > **proposeChange**(`input`): `Promise`\<[`AuthorityGrantChange`](/sdks/reference/typescript/interfaces/AuthorityGrantChange)\>
-
-Defined in: typescript/src/client/AuthorityGrantApi.ts:48
 
 Proposes granting or revoking an agent's authority. Nothing
 changes until a different person approves it. Maps to POST
@@ -59,13 +51,11 @@ changes until a different person approves it. Maps to POST
 
 `Promise`\<[`AuthorityGrantChange`](/sdks/reference/typescript/interfaces/AuthorityGrantChange)\>
 
----
+***
 
 ### listChanges()
 
 > **listChanges**(`status?`): `Promise`\<[`AuthorityGrantChange`](/sdks/reference/typescript/interfaces/AuthorityGrantChange)[]\>
-
-Defined in: typescript/src/client/AuthorityGrantApi.ts:66
 
 Lists authority grant changes, newest first. Maps to GET
 /authority-grants/changes.
@@ -82,13 +72,11 @@ Only changes in this state. Omit for all.
 
 `Promise`\<[`AuthorityGrantChange`](/sdks/reference/typescript/interfaces/AuthorityGrantChange)[]\>
 
----
+***
 
 ### approveChange()
 
 > **approveChange**(`changeId`, `stepUpAuthorization`): `Promise`\<[`AuthorityGrantChange`](/sdks/reference/typescript/interfaces/AuthorityGrantChange)\>
-
-Defined in: typescript/src/client/AuthorityGrantApi.ts:89
 
 Approves and applies an authority grant change. Maps to POST
 /authority-grants/changes/{id}/approve. The caller must not be the
@@ -110,13 +98,11 @@ as `pendingPolicyChangeId`, and action "approve".
 
 `Promise`\<[`AuthorityGrantChange`](/sdks/reference/typescript/interfaces/AuthorityGrantChange)\>
 
----
+***
 
 ### rejectChange()
 
 > **rejectChange**(`changeId`, `rejectionReason`, `stepUpAuthorization`): `Promise`\<[`AuthorityGrantChange`](/sdks/reference/typescript/interfaces/AuthorityGrantChange)\>
-
-Defined in: typescript/src/client/AuthorityGrantApi.ts:106
 
 Rejects an authority grant change. Same caller rules as
 approveChange(); sign with action "reject". A reason is required.

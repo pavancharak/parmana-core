@@ -4,4 +4,4 @@
 curl -X POST https://parmana-api-real.vercel.app/approval-issuers/changes/ba7c5827-5844-4069-94fc-9b438ef08f78/reject \
   -H "Authorization: Bearer $PARMANA_API_KEY" \
   -H "Content-Type: application/json" \
-  --data "{\"rejectionReason\": \"Priya stays on refunds until 31 October.\", \"stepUpAuthorization\": $(cat step-up.json)}"
+  --data "{\"rejectionReason\": \"The approver stays on refunds until 31 October.\", \"stepUpAuthorization\": $(cat step-up.json)}"

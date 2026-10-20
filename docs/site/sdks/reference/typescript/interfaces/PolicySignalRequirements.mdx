@@ -2,8 +2,6 @@
 title: "Interface: PolicySignalRequirements"
 ---
 
-Defined in: [typescript/src/models/policy-in-effect.ts:37](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-in-effect.ts#L37)
-
 What a request under a policy must carry. Rule conditions are not
 included.
 
@@ -13,51 +11,41 @@ included.
 
 > `readonly` **facts**: readonly `string`[]
 
-Defined in: [typescript/src/models/policy-in-effect.ts:42](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-in-effect.ts#L42)
-
 Every fact the policy's rules read, sorted. Send each one in the
 request's `signals`.
 
----
+***
 
 ### schema
 
 > `readonly` **schema**: `Readonly`\<`Record`\<`string`, `string`\>\>
 
-Defined in: [typescript/src/models/policy-in-effect.ts:47](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-in-effect.ts#L47)
-
 The declared type of each signal: `boolean`, `number` or `string`.
 
----
+***
 
 ### bound
 
 > `readonly` **bound**: `Readonly`\<`Record`\<`string`, `string`\>\>
 
-Defined in: [typescript/src/models/policy-in-effect.ts:53](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-in-effect.ts#L53)
-
 Signals that must equal a value of the Intent, as signal name to path,
 for example `refundAmount` to `parameters.amount`.
 
----
+***
 
 ### approval
 
 > `readonly` **approval**: `Readonly`\<`Record`\<`string`, \{ `resourceId`: `string`; `value?`: `string`; \}\>\>
 
-Defined in: [typescript/src/models/policy-in-effect.ts:60](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-in-effect.ts#L60)
-
 Signals that count as true only with a signed approval in
 `signals.approvalArtifact`, and where the resource (and the amount, if
 any) the approval must name are in the request.
 
----
+***
 
 ### sourced?
 
 > `readonly` `optional` **sourced?**: `Readonly`\<`Record`\<`string`, \{ `source`: `string`; `claim`: `string`; `subject`: `string`; `maxAgeSeconds?`: `number`; \}\>\>
-
-Defined in: [typescript/src/models/policy-in-effect.ts:70](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy-in-effect.ts#L70)
 
 Facts the server asks a business system for itself, as signal name to
 source, claim and subject path. Present only when the policy has any.

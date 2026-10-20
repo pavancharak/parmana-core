@@ -14,10 +14,10 @@ protocol. Parmana holds none of the system's credentials.
 
 <Warning>
   **Status, 2026-10-11.** Registering a source through maker checker, the signed
-  protocol and deciding on a verified answer are implemented, tested 2.54) and deployed. No real business system has been
-  connected yet). The SDK methods for the
-  routes below are in SDK 1.6.0 (2026-10-11); with an older SDK, call the routes
-  directly.
+  protocol and deciding on a verified answer are implemented, tested 2.54) and
+  deployed. No real business system has been connected yet). The SDK methods for
+  the routes below are in SDK 1.6.0 (2026-10-11); with an older SDK, call the
+  routes directly.
 </Warning>
 
 Follow it literally. If your situation is not covered, **stop and ask the operator**.
@@ -208,7 +208,7 @@ register again. The revoked registration stays listed.
 ## Prove it in production
 
 Before relying on it, run the live check in the repository,
-[`examples/live-checks/business-signal-source`](https://github.com/pavancharak/parmana/tree/main/examples/live-checks/business-signal-source): a demo source answering from a fixed table, deployed on Vercel and registered through maker checker, a test policy that sources `invoicePaid` from it, and four requests: a paid invoice, an unpaid one, the agent claiming a value the source contradicts, and an unknown invoice. The receiving endpoint logs the `conditions` the release carries. The actions change nothing anywhere. It passed in
+`examples/live-checks/business-signal-source`: a demo source answering from a fixed table, deployed on Vercel and registered through maker checker, a test policy that sources `invoicePaid` from it, and four requests: a paid invoice, an unpaid one, the agent claiming a value the source contradicts, and an unknown invoice. The receiving endpoint logs the `conditions` the release carries. The actions change nothing anywhere. It passed in
 it does not are in its README.
 
 ## Limits

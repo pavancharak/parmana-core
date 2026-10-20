@@ -156,7 +156,7 @@ attestation](/concepts/gateway-attestation).
 ## Automated checks on the repository
 
 Every pull request to `main` in
-[github.com/pavancharak/parmana](https://github.com/pavancharak/parmana) must pass these before it can
+The Parmana repository must pass these before it can
 merge. `main` is protected: no direct pushes, no force pushes, no deletion.
 
 | Check                                                          | What it does                                                                                             |
@@ -168,7 +168,7 @@ merge. `main` is protected: no direct pushes, no force pushes, no deletion.
 
 Also enabled on the repository:
 
-- [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/pavancharak/parmana): a public
+- OpenSSF Scorecard: a public
   supply chain security score, recomputed weekly and on every push to `main`.
 - [OpenSSF Best Practices](https://www.bestpractices.dev/projects/15230): the project's answers to
   the OpenSSF Best Practices criteria. The badge is "in progress", not "passing": the passing level
@@ -178,7 +178,7 @@ Also enabled on the repository:
 - GitHub secret scanning with push protection, which blocks a commit that contains a known
   secret format.
 - Private vulnerability reporting, alongside the email route in
-  [SECURITY.md](https://github.com/pavancharak/parmana/blob/main/SECURITY.md).
+  SECURITY.md.
 - GitHub Actions and Docker base images pinned to exact commits and digests, and workflow tokens
   limited to read access.
 - Signed build provenance and a CycloneDX SBOM for every SDK release, and signed build provenance for the server
@@ -195,7 +195,7 @@ Also enabled on the repository:
 
 ### Verifying an SDK package from a GitHub release
 
-Each [GitHub release](https://github.com/pavancharak/parmana/releases) of the SDKs carries the
+Each GitHub release of the SDKs carries the
 four packages built by GitHub Actions from the release's tag, and a `multiple.intoto.jsonl` file:
 [SLSA](https://slsa.dev) build provenance, signed with GitHub's identity for the release
 workflow, recording the commit, the workflow and each file's SHA-256. To check a downloaded

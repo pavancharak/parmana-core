@@ -7,6 +7,17 @@ Parmana HTTP Transport.
 
 Canonical HTTP transport implementation for the Parmana Python SDK.
 
+#### redact
+
+```python
+def redact(value: Any) -> Any
+```
+
+The structure of a request or response body, with every leaf value
+replaced by REDACTED. Keys and nesting stay, so a debug log shows which
+fields were sent without showing business data (amounts, names, emails,
+account numbers) or anything secret.
+
 ## HttpTransport Objects
 
 ```python

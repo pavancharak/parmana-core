@@ -63,11 +63,11 @@ class ExecutionRejectedError(ParmanaHttpError)
 
 Raised when Policy evaluation rejects a Business Transaction.
 
-Reached over HTTP 403, code POLICY*DENIED, with a message starting
+Reached over HTTP 403, code POLICY_DENIED, with a message starting
 "Execution rejected:" (packages/runtime/src/ExecutionGate.ts,
 packages/api/src/middleware/error-handler.ts; see
 docs/site/api-reference/error-catalog.mdx). Distinct from the two
-\_other* 403 shapes this API returns (both AuthorizationError: a
+_other_ 403 shapes this API returns (both AuthorizationError: a
 caller-identity/principal mismatch, no `code` field at all; and a
 capability-scoping denial, `code: "CAPABILITY_NOT_ALLOWED"`) -- see
 build_http_error's POLICY_DENIED check, which runs ahead of the

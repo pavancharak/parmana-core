@@ -69,7 +69,7 @@ Python SDK's offline verifier is tested against.
 | The signature | The `signature` field must be an Ed25519 signature over the same canonical bytes, by the key you paste. A record over 4096 bytes may be signed as a commitment (a fixed prefix and the SHA-512 of the content), which AWS KMS requires; both forms are accepted, as in the [offline verifier](/verification/offline-verifier). |
 
 The code is
-[docs/site/snippets/record-verifier.jsx](https://github.com/pavancharak/parmana/blob/main/docs/site/snippets/record-verifier.jsx).
+docs/site/snippets/record-verifier.jsx.
 A test in the repository runs that exact code against records signed by Parmana's signer,
 including a large record signed as a commitment, and checks that it agrees with Parmana's
 offline verifier and rejects changed records.

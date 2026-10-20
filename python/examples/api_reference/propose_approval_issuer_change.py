@@ -11,8 +11,10 @@ client = ParmanaClient(
 change = client.approvers.propose_add(
     approver_id="approver-example",
     key_id="approver-example-key-1",
-    public_key_pem=Path("approver-example__approver-example-key-1.public.pem").read_text(),
-    reason="Priya approves refunds for the West region from October.",
+    public_key_pem=Path(
+        "approver-example__approver-example-key-1.public.pem"
+    ).read_text(),
+    reason="The example approver approves refunds for the West region from October.",
 )
 
 print(change.change_id)

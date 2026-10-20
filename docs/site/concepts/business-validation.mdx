@@ -178,7 +178,7 @@ verification. Records made before this change have no `assessment` and still ver
 
 - **No real business system connected yet.** Registering sources and asking them is deployed and
   tested, but no business system has been connected. No shipped policy declares a source.
-  with a demo source: [`examples/live-checks`](https://github.com/pavancharak/parmana/tree/main/examples/live-checks).
+  with a demo source: `examples/live-checks`.
 - **Conditions at the system are opt in.** The gateway always re-checks `validUntil` and the grant at
   release. An external endpoint must check the release's `conditions` itself to execute only if they
   still hold; built in connectors get only the gateway re-check.

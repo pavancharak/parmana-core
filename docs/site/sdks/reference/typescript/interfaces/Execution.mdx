@@ -2,86 +2,66 @@
 title: "Interface: Execution"
 ---
 
-Defined in: [typescript/src/models/execution.ts:25](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution.ts#L25)
-
 ## Properties
 
 ### executionId
 
 > `readonly` **executionId**: `string`
 
-Defined in: [typescript/src/models/execution.ts:26](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution.ts#L26)
-
----
+***
 
 ### businessTransactionId
 
 > `readonly` **businessTransactionId**: `string`
 
-Defined in: [typescript/src/models/execution.ts:27](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution.ts#L27)
-
----
+***
 
 ### decision
 
 > `readonly` **decision**: [`Decision`](/sdks/reference/typescript/interfaces/Decision)
 
-Defined in: [typescript/src/models/execution.ts:28](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution.ts#L28)
-
----
+***
 
 ### status
 
 > `readonly` **status**: [`ExecutionStatus`](/sdks/reference/typescript/type-aliases/ExecutionStatus)
 
-Defined in: [typescript/src/models/execution.ts:29](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution.ts#L29)
-
----
+***
 
 ### mode
 
 > `readonly` **mode**: [`ExecutionMode`](/sdks/reference/typescript/type-aliases/ExecutionMode)
 
-Defined in: [typescript/src/models/execution.ts:30](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution.ts#L30)
-
----
+***
 
 ### startedAt
 
 > `readonly` **startedAt**: `Date`
 
-Defined in: [typescript/src/models/execution.ts:31](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution.ts#L31)
-
----
+***
 
 ### completedAt?
 
 > `readonly` `optional` **completedAt?**: `Date`
 
-Defined in: [typescript/src/models/execution.ts:33](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution.ts#L33)
-
 Present only for terminal executions.
 
----
+***
 
 ### evidence?
 
 > `readonly` `optional` **evidence?**: `Record`\<`string`, `unknown`\>
-
-Defined in: [typescript/src/models/execution.ts:40](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution.ts#L40)
 
 businessTransactionId, action, target, parameters, success,
 executedAt, and an optional attributes bag (e.g. Connector SDK
 evidence). Left as a generic bag here, same as the real schema
 (schemas/common/execution.schema.json), not a nested model.
 
----
+***
 
 ### metadata?
 
 > `readonly` `optional` **metadata?**: `Record`\<`string`, `unknown`\>
-
-Defined in: [typescript/src/models/execution.ts:45](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/execution.ts#L45)
 
 Execution-specific metadata. Currently populated with
 authorizationId when the Execution is APPROVED.

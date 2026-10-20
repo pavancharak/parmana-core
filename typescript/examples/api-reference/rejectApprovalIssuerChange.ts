@@ -15,7 +15,7 @@ const stepUp = signPolicyChangeStepUp({
 
 const change = await client.rejectApproverChange(
   "ba7c5827-5844-4069-94fc-9b438ef08f78",
-  "Priya stays on refunds until 31 October.",
+  "The approver stays on refunds until 31 October.",
   stepUp,
 );
 

@@ -2,8 +2,6 @@
 title: "Interface: OfflineVerificationResult"
 ---
 
-Defined in: [typescript/src/crypto/offline-verifier.ts:33](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/offline-verifier.ts#L33)
-
 The result of an offline verification.
 
 ## Properties
@@ -12,44 +10,34 @@ The result of an offline verification.
 
 > `readonly` **valid**: `boolean`
 
-Defined in: [typescript/src/crypto/offline-verifier.ts:37](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/offline-verifier.ts#L37)
-
 True only when the hash matches and the signature verifies.
 
----
+***
 
 ### hashValid
 
 > `readonly` **hashValid**: `boolean`
 
-Defined in: [typescript/src/crypto/offline-verifier.ts:42](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/offline-verifier.ts#L42)
-
 The record's own hash matches a fresh SHA-256 of its canonical form.
 
----
+***
 
 ### legacySignatureValid
 
 > `readonly` **legacySignatureValid**: `boolean`
 
-Defined in: [typescript/src/crypto/offline-verifier.ts:47](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/offline-verifier.ts#L47)
-
 The Ed25519 signature verifies with the supplied public key.
 
----
+***
 
 ### algorithmsChecked
 
 > `readonly` **algorithmsChecked**: readonly `string`[]
 
-Defined in: [typescript/src/crypto/offline-verifier.ts:49](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/offline-verifier.ts#L49)
-
----
+***
 
 ### errors
 
 > `readonly` **errors**: readonly `string`[]
-
-Defined in: [typescript/src/crypto/offline-verifier.ts:54](https://github.com/pavancharak/parmana/blob/main/typescript/src/crypto/offline-verifier.ts#L54)
 
 Why verification failed, in plain words. Empty when valid.

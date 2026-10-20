@@ -47,7 +47,7 @@ If you are an AI agent, follow [Integrate Parmana: specification for AI agents](
 ## Views of the same spec
 
 Every route, request/response shape, and status code ultimately comes from one file,
-[`openapi/openapi.yaml`](https://github.com/pavancharak/parmana/blob/main/openapi/openapi.yaml),
+`openapi/openapi.yaml`,
 version-controlled alongside the code that implements it. That one spec drives three
 surfaces, so none of them can drift from what the server actually does:
 
@@ -77,7 +77,7 @@ surfaces, so none of them can drift from what the server actually does:
 
 ### Postman
 
-[`postman/parmana.postman_collection.json`](https://github.com/pavancharak/parmana/blob/main/postman/parmana.postman_collection.json)
+`postman/parmana.postman_collection.json`
 has one request for every endpoint, in one folder per area, with the example bodies from the
 spec. It is generated from the same OpenAPI file (`npm run generate:postman`), and a test fails
 if it falls behind.

@@ -2,54 +2,42 @@
 title: "Interface: PolicyReference"
 ---
 
-Defined in: [typescript/src/models/policy.ts:16](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy.ts#L16)
-
 ## Properties
 
 ### name
 
 > `readonly` **name**: `string`
 
-Defined in: [typescript/src/models/policy.ts:17](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy.ts#L17)
-
----
+***
 
 ### version
 
 > `readonly` **version**: `string`
 
-Defined in: [typescript/src/models/policy.ts:19](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy.ts#L19)
-
----
+***
 
 ### schemaVersion
 
 > `readonly` **schemaVersion**: `string`
 
-Defined in: [typescript/src/models/policy.ts:21](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy.ts#L21)
-
----
+***
 
 ### contentHash?
 
 > `readonly` `optional` **contentHash?**: `string`
 
-Defined in: [typescript/src/models/policy.ts:28](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy.ts#L28)
-
 sha256 of the canonicalized policy.json content actually loaded for
-this decision. Server-computed, never caller-settable; absent
+this decision (G-24). Server-computed, never caller-settable; absent
 on a PolicyReference built before this field existed.
 
----
+***
 
 ### governanceAnchor?
 
 > `readonly` `optional` **governanceAnchor?**: [`PolicyGovernanceAnchor`](/sdks/reference/typescript/interfaces/PolicyGovernanceAnchor)
 
-Defined in: [typescript/src/models/policy.ts:38](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy.ts#L38)
-
 Whether the policy content above is traceable to a completed Policy
-Governance approval, resolved at decision time. Absent on a
+Governance approval, resolved at decision time (G-45). Absent on a
 PolicyReference built before this field existed. Its presence does
 not imply enforcement was on -- only that the lookup ran and
 recorded what it found, which may honestly be "no approval record

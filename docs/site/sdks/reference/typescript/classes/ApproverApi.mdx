@@ -2,15 +2,11 @@
 title: "Class: ApproverApi"
 ---
 
-Defined in: [typescript/src/client/ApproverApi.ts:24](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ApproverApi.ts#L24)
-
 ## Constructors
 
 ### Constructor
 
 > **new ApproverApi**(`transport`): `ApproverApi`
-
-Defined in: [typescript/src/client/ApproverApi.ts:25](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ApproverApi.ts#L25)
 
 #### Parameters
 
@@ -28,8 +24,6 @@ Defined in: [typescript/src/client/ApproverApi.ts:25](https://github.com/pavanch
 
 > **list**(): `Promise`\<[`ApprovalIssuer`](/sdks/reference/typescript/interfaces/ApprovalIssuer)[]\>
 
-Defined in: [typescript/src/client/ApproverApi.ts:31](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ApproverApi.ts#L31)
-
 Every approver key the server trusts or trusted, revoked ones marked.
 Maps to GET /approval-issuers.
 
@@ -37,13 +31,11 @@ Maps to GET /approval-issuers.
 
 `Promise`\<[`ApprovalIssuer`](/sdks/reference/typescript/interfaces/ApprovalIssuer)[]\>
 
----
+***
 
 ### proposeChange()
 
 > **proposeChange**(`input`): `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)\>
-
-Defined in: [typescript/src/client/ApproverApi.ts:44](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ApproverApi.ts#L44)
 
 Proposes adding or revoking an approver key. Nothing changes until a
 different person approves it. Maps to POST /approval-issuers/changes.
@@ -58,13 +50,11 @@ different person approves it. Maps to POST /approval-issuers/changes.
 
 `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)\>
 
----
+***
 
 ### listChanges()
 
 > **listChanges**(`status?`): `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)[]\>
-
-Defined in: [typescript/src/client/ApproverApi.ts:62](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ApproverApi.ts#L62)
 
 Lists approver changes, newest first. Maps to GET
 /approval-issuers/changes.
@@ -81,13 +71,11 @@ Only changes in this state. Omit for all.
 
 `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)[]\>
 
----
+***
 
 ### approveChange()
 
 > **approveChange**(`changeId`, `stepUpAuthorization`): `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)\>
-
-Defined in: [typescript/src/client/ApproverApi.ts:85](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ApproverApi.ts#L85)
 
 Approves and applies an approver change. Maps to POST
 /approval-issuers/changes/{id}/approve. The caller must not be the
@@ -109,13 +97,11 @@ as `pendingPolicyChangeId`, and action "approve".
 
 `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)\>
 
----
+***
 
 ### rejectChange()
 
 > **rejectChange**(`changeId`, `rejectionReason`, `stepUpAuthorization`): `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)\>
-
-Defined in: [typescript/src/client/ApproverApi.ts:102](https://github.com/pavancharak/parmana/blob/main/typescript/src/client/ApproverApi.ts#L102)
 
 Rejects an approver change. Same caller rules as approveChange(); sign
 with action "reject". A reason is required.

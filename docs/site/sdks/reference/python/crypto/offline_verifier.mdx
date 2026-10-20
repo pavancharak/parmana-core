@@ -6,7 +6,7 @@ title: parmana.crypto.offline_verifier
 Standalone, offline verification of an Execution Trust Record.
 
 Python counterpart to packages/crypto/src/OfflineVerifier.ts (PQC
-audit RED-1, -- proves the canonical
+audit RED-1, docs/VERIFICATION-GAPS.md) -- proves the canonical
 serialization algorithm and Ed25519 verification are independently
 reproducible in a second language, not just documented as "should be
 portable." Zero network calls, zero disk reads (beyond files the
@@ -16,7 +16,7 @@ Large records (over 4096 bytes of canonical content) may have been
 signed by AWS KMS as a fixed size commitment, because KMS caps a raw
 Ed25519 message at 4096 bytes. This module accepts a raw signature for
 any record, and additionally accepts the commitment form for a record
-over that limit (see. A commitment signature over a
+over that limit (see docs/adr/ADR-0010). A commitment signature over a
 record at or below the limit is rejected.
 
 ML-DSA-65 (Dilithium3) verification is intentionally out of scope
@@ -48,7 +48,7 @@ def verify_execution_intent_offline(
 ```
 
 Python counterpart to verifyExecutionIntentOffline() in
-packages/crypto/src/OfflineVerifier.ts. No network call, no
+packages/crypto/src/OfflineVerifier.ts (ADR-0012). No network call, no
 database, no environment variable: only the intent and the public key(s).
 
 `intent` is a plain dict, exactly as `json.load()` would produce from the
