@@ -68,7 +68,7 @@ Closed by decision on 2026-09-29:
 
 1. **The container image is not deployed anywhere, on purpose.** Production runs on Vercel, and Fly.io is not used. CI proves the image builds and boots in production mode. `fly.toml` and the Fly section of the runbook are kept for anyone who wants a container host, and have not been exercised since the Dockerfile was fixed. Closed by decision 2026-09-29: production is Vercel only.
 
-- **Operator kill switch: design proposed, not decided (G-122, ADR-0017).** Parmana has only partial stop controls, and no fresh check that a stop is in force. The design is written up in `docs/adr/ADR-0017-Operator-Kill-Switch.md`. The open decisions are listed there: whether reset needs two people, who holds the operator credential, how long probe history is kept, and whether a per-agent halt is needed.
+- **Operator kill switch: decisions recorded, build not started (G-122, ADR-0017).** Five decisions and seven review requirements are recorded in `docs/adr/ADR-0017-Operator-Kill-Switch.md`. The probe cannot run inside Vercel on the Hobby plan, so an external scheduler is recommended. Still open before the build: the reset policy outside production, where the probe history is stored, and the decision to use an external scheduler or upgrade the plan.
 
 ## C. Open items in the verification record (not re audited)
 
