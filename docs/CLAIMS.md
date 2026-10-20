@@ -328,6 +328,8 @@ Evidence
 
 ---
 
+**Update (2026-10-20): not live in production.** Production runs `CRYPTO_MODE=single`, so its records carry only the Ed25519 signature. Hybrid signing is configured on the test project `parmana-hybrid-test`, which passes `/ready`, but no live hybrid record has been verified through its API. Enabling it in production is an operator decision with a key-material prerequisite. See G-119 in `docs/VERIFICATION-GAPS.md`. Until then, the statements in this section describe what is built and tested, not what runs in production.
+
 ## 2.15 Authorization-Binding Verification
 
 Every APPROVED execution in a verified Execution Trust Record must carry a non-empty authorizationId in its metadata; absence fails verification and names the execution. REJECTED-decision executions are not required to carry one. All checks (integrity, signature, authorization binding) run unconditionally and independently: a single failure never suppresses reporting of the others.
