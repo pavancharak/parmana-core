@@ -276,7 +276,7 @@ Do not edit it by hand: run `npx tsx scripts/gap-status.ts`. `npm test` fails wh
 | G-119 | Hybrid signing is configured on a test project, not on production.                                  | open, operator decision                                                                        |
 | G-120 | A schema version 2 record can be downgraded by anyone who can write to storage.                     | open, accepted for records created before a cutover, closed for records after one              |
 | G-121 | Verifiers outside this repository read only schema version 2.                                       | open, gates schema version 3 issuance                                                          |
-| G-122 | Parmana has no operator kill switch, and no fresh check that a stop is in force.                    | open, design proposed in ADR-0017, not decided                                                 |
+| G-122 | Parmana has no operator kill switch, and no fresh check that a stop is in force.                    | open, decisions recorded in ADR-0017 (2026-10-20), build not started                           |
 
 <!-- gap-status:end -->
 
