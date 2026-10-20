@@ -194,7 +194,7 @@ This file is generated from the documentation navigation. Do not edit it by hand
 * [HubSpot](https://docs.parmanasystems.com/integrations/hubspot): Policy-gated updates to a HubSpot Deal's dealstage and amount. Hermetic by default, proven live against a real HubSpot developer/test account.
 ## REST API: REST API guide
 
-* [REST API Introduction](https://docs.parmanasystems.com/api-reference/introduction): 45 paths and 48 operations, generated from openapi/openapi.yaml into the sidebar under REST API. This page covers what that spec can't express.
+* [REST API Introduction](https://docs.parmanasystems.com/api-reference/introduction): 57 paths and 63 operations, generated from openapi/openapi.yaml into the sidebar under REST API. This page covers what that spec can't express.
 * [Authentication](https://docs.parmanasystems.com/api-reference/authentication): Send a bearer key on every request. What a key may do, how to check it, where keys come from, the rate limits, and every authentication error with its exact body.
 * [Error Handling](https://docs.parmanasystems.com/api-reference/error-handling): The shared error envelope, and which errors carry a stable code and which do not.
 * [Idempotency and Nonces](https://docs.parmanasystems.com/api-reference/idempotency-and-nonces): There is no Idempotency-Key header. businessTransactionId is the idempotency key: a duplicate is a 409, not a replayed response. Authorizations and human approvals are each accepted once, checked in the database.
