@@ -1,5 +1,6 @@
 import "dotenv/config";
 
+import { parsePolicyChangeCheckers } from "./governance/policyChangeCheckers.js";
 import { PolicyChangeCrypto } from "@parmana/crypto";
 import { loadConfig } from "@parmana/shared";
 
@@ -83,6 +84,9 @@ const app = createApp(application, {
       ? { authFailureStore: authFailureRateLimitStore }
       : {}),
   },
+  policyChangeCheckers: parsePolicyChangeCheckers(
+    process.env.POLICY_CHANGE_CHECKERS,
+  ),
   ...(callerAuth.disabled
     ? {}
     : {

@@ -1,5 +1,9 @@
 import crypto from "node:crypto";
 
+import {
+  isCheckerInScope,
+  type PolicyChangeCheckerScope,
+} from "../governance/policyChangeCheckers.js";
 import { Router } from "express";
 import type { NextFunction, Request, Response } from "express";
 
@@ -107,6 +111,7 @@ export function createPendingPolicyChangesRouter(
   auditSink?: CallerAuditSink,
   stepUpVerifier?: PolicyChangeStepUpVerifier,
   policyChangeApprovalService?: PolicyChangeApprovalService,
+  checkerScope: PolicyChangeCheckerScope = {},
 ): Router {
   const router = Router();
 
@@ -391,6 +396,22 @@ export function createPendingPolicyChangesRouter(
 
         if (existing.proposedBy === req.callerId) {
           throw new SameActorCannotApproveOwnChangeError(id);
+        }
+
+        //
+        // G-50: only a caller listed for this policy may approve it. Checked
+        // before the step-up signature, so an out-of-scope caller is refused
+        // without any signature work.
+        //
+        if (
+          !isCheckerInScope(checkerScope, existing.policyName, req.callerId)
+        ) {
+          res.status(403).json({
+            error: "CHECKER_NOT_IN_SCOPE",
+            message:
+              "This caller is not listed to approve changes to this policy (POLICY_CHANGE_CHECKERS).",
+          });
+          return;
         }
 
         await requireStepUpAuthorization(req, stepUpVerifier, {

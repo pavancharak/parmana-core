@@ -59,6 +59,7 @@ import type { CallerAuthenticator } from "./auth/CallerAuthenticator.js";
 import type { CallerAuditSink } from "./auth/CallerAuditSink.js";
 import type { PolicyChangeStepUpVerifier } from "./auth/PolicyChangeStepUpVerifier.js";
 import type { PolicyChangeApprovalService } from "./governance/PolicyChangeApprovalService.js";
+import type { PolicyChangeCheckerScope } from "./governance/policyChangeCheckers.js";
 
 /**
  * Every call site must state its caller-auth choice explicitly:
@@ -152,6 +153,8 @@ export interface CreateAppOptions {
    * neither endpoint is reachable without a caller identity there.
    */
   readonly stepUpVerifier?: PolicyChangeStepUpVerifier;
+  /** Which callers may approve each policy's changes (G-50). Unset lists no one. */
+  readonly policyChangeCheckers?: PolicyChangeCheckerScope;
 
   /**
    * Resolves an approved pending policy change into its live
@@ -451,6 +454,7 @@ export function createApp(
         : undefined,
       options.stepUpVerifier,
       options.policyChangeApprovalService,
+      options.policyChangeCheckers,
     ),
   );
 

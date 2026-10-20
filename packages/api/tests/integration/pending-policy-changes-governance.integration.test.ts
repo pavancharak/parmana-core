@@ -27,6 +27,7 @@ import { StaticKeyAuthenticator } from "../../src/auth/StaticKeyAuthenticator.js
 import { InMemoryCallerAuditSink } from "../../src/auth/InMemoryCallerAuditSink.js";
 import { PolicyChangeStepUpVerifier } from "../../src/auth/PolicyChangeStepUpVerifier.js";
 import { PolicyChangeApprovalService } from "../../src/governance/PolicyChangeApprovalService.js";
+import type { PolicyChangeCheckerScope } from "../../src/governance/policyChangeCheckers.js";
 
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
 
@@ -93,6 +94,15 @@ async function rawPost(
 describe("Policy Governance: isHumanCaller, maker != checker, step-up (HTTP boundary)", () => {
   const HUMAN_MAKER_KEY = "governance-human-maker-raw-key-for-tests-only";
   const HUMAN_CHECKER_KEY = "governance-human-checker-raw-key-for-tests-only";
+
+  // G-50: every test policy is approvable by the human checker, except one
+  // name, which is scoped to someone else so the out-of-scope refusal can be
+  // tested.
+  const OUT_OF_SCOPE_POLICY = "governance-approve-out-of-scope";
+  const TEST_CHECKER_SCOPE = new Proxy({} as PolicyChangeCheckerScope, {
+    get: (_target, policyName) =>
+      policyName === OUT_OF_SCOPE_POLICY ? ["someone-else"] : ["human-checker"],
+  });
   const SERVICE_KEY = "governance-service-caller-raw-key-for-tests-only";
   const UNVERIFIED_KEY = "governance-unverified-caller-raw-key-for-tests-only";
 
@@ -212,6 +222,7 @@ describe("Policy Governance: isHumanCaller, maker != checker, step-up (HTTP boun
       callerAuth: { authenticator, auditSink: callerAuditSink },
       stepUpVerifier,
       policyChangeApprovalService,
+      policyChangeCheckers: TEST_CHECKER_SCOPE,
     });
 
     return {
@@ -370,6 +381,20 @@ describe("Policy Governance: isHumanCaller, maker != checker, step-up (HTTP boun
 
       return response.body.pendingPolicyChangeId as string;
     }
+
+    it("refuses an approval from a checker not listed for this policy, with 403 CHECKER_NOT_IN_SCOPE (G-50)", async () => {
+      const { app } = buildApp();
+      const id = await proposeChange(app, OUT_OF_SCOPE_POLICY);
+
+      // No step-up signature is sent: the scope check runs first, so the
+      // refusal is due to scope and not to a missing signature.
+      const response = await request(app)
+        .post(`/policies/pending-changes/${id}/approve`)
+        .set("Authorization", `Bearer ${HUMAN_CHECKER_KEY}`);
+
+      expect(response.status).toBe(403);
+      expect(response.body.error).toBe("CHECKER_NOT_IN_SCOPE");
+    });
 
     it("denies a non-human caller attempting to approve, with 403 NON_HUMAN_CALLER_DENIED", async () => {
       const { app } = buildApp();
@@ -780,6 +805,7 @@ describe("Policy Governance: isHumanCaller, maker != checker, step-up (HTTP boun
           authenticator,
           auditSink: new InMemoryCallerAuditSink(),
         },
+        policyChangeCheckers: TEST_CHECKER_SCOPE,
         stepUpVerifier: new PolicyChangeStepUpVerifier({
           nonceStore: new MemoryNonceStore(),
         }),
