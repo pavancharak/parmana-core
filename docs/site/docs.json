@@ -795,7 +795,7 @@
     ]
   },
   "banner": {
-    "content": "Proprietary software, source-available for evaluation only. No license is granted to use, copy, modify, or distribute it without a written agreement with Parmana Systems. [License](/license) · [Evaluation and audit guide](/evaluation/overview)",
+    "content": "Proprietary software, source-available for evaluation only. No license is granted to use, copy, modify, or distribute it without a written agreement with Parmana Systems. [License](/license)",
     "dismissible": false
   }
 }
