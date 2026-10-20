@@ -58,7 +58,7 @@ every commit, run `git log` in the repository for the complete record.
 
 **Added: live checks for authority grants, business signal sources and a real refund**
 
-- [`examples/live-checks`](https://github.com/pavancharak/parmana/tree/main/examples/live-checks) gains three procedures for production. The `authority-grant` and `business-signal-source` checks passed in production the same day, all four requests each as required; the refund check is ready, not yet run:
+- `examples/live-checks` gains three procedures for production. The `authority-grant` and `business-signal-source` checks passed in production the same day, all four requests each as required; the refund check is ready, not yet run:
   `authority-grant` (a grant decides: refused before it, approved within its limit, refused over it and after its
   revoke), `business-signal-source` (a deployed demo source answers, signed; the release carries its answer as a
   condition) and `paytm-refund` (one real 1 INR refund through the rotated credentials, its record verified offline).
@@ -71,7 +71,7 @@ every commit, run `git log` in the repository for the complete record.
   on `ParmanaRelease`. `@parmana/connector-sdk` 0.3.0 adds `ReleaseCondition`. `parmana-connector-sdk` is unchanged
   at 0.2.0.
 - Published on npm and PyPI from the files of release
-  [sdk-v1.6.0](https://github.com/pavancharak/parmana/releases/tag/sdk-v1.6.0), byte for byte: see
+  sdk-v1.6.0, byte for byte: see
   [New in 1.6.0](/sdks/typescript#new-in-160).
 
 **Added: re-check at release, and execute only if still valid**
@@ -154,12 +154,12 @@ every commit, run `git log` in the repository for the complete record.
 
 - Case studies applies Parmana to three publicly reported incidents (Replit, Amazon Q,
   Air Canada): what happened, with sources, and what Parmana would and would not have changed.
-- Questions and ideas now go to [GitHub Discussions](https://github.com/pavancharak/parmana/discussions), with forms
+- Questions and ideas now go to GitHub Discussions, with forms
   for questions, ideas and show and tell; the new issue page links there and to private security reporting.
 
 **Security: advisory for G-88**
 
-- Published [GHSA-hp43-9p54-wqp9](https://github.com/pavancharak/parmana/security/advisories/GHSA-hp43-9p54-wqp9)
+- Published GHSA-hp43-9p54-wqp9
   (low): a policy name or version of `.` or `..` let the file based policy store read and write a `policy.json` one
   directory outside the policy directory. Fixed on 2026-10-05; only deployments with `PARMANA_STORAGE` set to
   `memory` or unset were affected.
@@ -255,7 +255,7 @@ every commit, run `git log` in the repository for the complete record.
 
 **Added: a security challenge**
 
-- [SECURITY-CHALLENGE.md](https://github.com/pavancharak/parmana/blob/main/SECURITY-CHALLENGE.md) lists what counts as
+- `SECURITY-CHALLENGE.md` lists what counts as
   breaking Parmana on a copy you run yourself, what does not, and how a confirmed break is
   reported and credited. Local copies only; the hosted API and the sandbox are out of scope.
 
@@ -270,11 +270,11 @@ every commit, run `git log` in the repository for the complete record.
 
 **Added: signed build provenance for SDK releases**
 
-- Each SDK release on [GitHub](https://github.com/pavancharak/parmana/releases) carries the four
+- Each SDK release carries the four
   packages built by GitHub Actions from the release's tag, and signed
   [SLSA](https://slsa.dev) provenance recording the commit and workflow that built each one. See
   [Verifying an SDK package](/security/overview#verifying-an-sdk-package-from-a-github-release).
-  The first is [sdk-v1.5.0-r1](https://github.com/pavancharak/parmana/releases/tag/sdk-v1.5.0-r1),
+  The first is sdk-v1.5.0-r1,
   with the current SDK versions.
 
 **Fixed: build book prerequisites**
@@ -306,9 +306,9 @@ every commit, run `git log` in the repository for the complete record.
 **Fixed: security and correctness issues from an internal review**
 
 These change behavior a caller or operator can see
-([pavancharak/parmana#6](https://github.com/pavancharak/parmana/pull/6),
-[pavancharak/parmana#7](https://github.com/pavancharak/parmana/pull/7),
-[pavancharak/parmana#8](https://github.com/pavancharak/parmana/pull/8)):
+(pavancharak/parmana#6,
+pavancharak/parmana#7,
+pavancharak/parmana#8):
 
 - A rejected or already approved policy change can no longer be approved and applied
   (`409`). Two approvals of the same change at once apply it only once; a retry by the same
@@ -338,12 +338,10 @@ These change behavior a caller or operator can see
   Versions already published keep the license they were published under. `@parmana/sign`
   stays under the Apache License 2.0.
 
-**Moved: the repository is now github.com/pavancharak/parmana**
+**Moved: the source is now in a private repository**
 
-- The source moved from `pavancharak/AgentLabsBuildathon` to
-  [`pavancharak/parmana`](https://github.com/pavancharak/parmana), with its full history. Every
-  link in these docs now points to the new repository. Links to older pull requests and issues
-  still open in the old repository.
+- The source moved from `pavancharak/AgentLabsBuildathon` to a private repository, with its full
+  history. Public links point to the documentation site and to the offline verifier repository.
 
 **Added: the Verification SDK (`@parmana/sign` 0.2.0)**
 

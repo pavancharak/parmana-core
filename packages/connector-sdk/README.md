@@ -1,6 +1,6 @@
 # @parmana/connector-sdk
 
-Contracts and reference implementations for building a Connector for [Parmana](https://github.com/pavancharak/parmana), the authorization layer for AI execution.
+Contracts and reference implementations for building a Connector for [Parmana](https://docs.parmanasystems.com), the authorization layer for AI execution.
 
 A Connector is the last hop in Parmana's pipeline: it receives an already-authorized, already-verified request and carries it out against a real system (an API, a database, anything). A Connector never evaluates policy, never authorizes execution, and never resolves its own credentials — it only executes, using a credential Parmana has already resolved for it.
 
