@@ -4471,9 +4471,9 @@ paths:
               example:
                 active: true
                 version: 1
-                trippedBy: operator-a
-                trippedAt: "2026-10-20T10:00:00.000Z"
-                tripReason: suspicious refunds
+                trippedBy: "operator-a"
+                trippedAt: "2026-10-20T14:00:41.256Z"
+                tripReason: "suspicious refunds"
         "400":
           description: The reason is missing.
           content:
@@ -4481,7 +4481,7 @@ paths:
               schema:
                 type: object
               example:
-                error: reason is required.
+                error: "reason is required."
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -4491,8 +4491,8 @@ paths:
               schema:
                 type: object
               example:
-                error: CAPABILITY_NOT_ALLOWED
-                message: This key does not hold the kill-switch:trip capability.
+                error: "CAPABILITY_NOT_ALLOWED"
+                message: "This key does not hold the kill-switch:trip capability."
   /kill-switch/reset:
     post:
       tags:
@@ -4525,17 +4525,17 @@ paths:
               schema:
                 type: object
               example:
-                outcome: reset
+                outcome: "reset"
                 state:
                   active: false
                   version: 3
-                  trippedBy: operator-a
-                  trippedAt: "2026-10-20T10:00:00.000Z"
-                  tripReason: suspicious refunds
-                  resetRequestedBy: operator-a
-                  resetBy: operator-b
-                  resetAt: "2026-10-20T11:00:00.000Z"
-                  resetReason: reviewed, safe
+                  trippedBy: "operator-a"
+                  trippedAt: "2026-10-20T14:00:41.256Z"
+                  tripReason: "suspicious refunds"
+                  resetRequestedBy: "operator-a"
+                  resetBy: "operator-b"
+                  resetAt: "2026-10-20T14:00:41.276Z"
+                  resetReason: "confirmed"
         "202":
           description: The reset is pending. A second, different operator must confirm it.
           content:
@@ -4543,16 +4543,16 @@ paths:
               schema:
                 type: object
               example:
-                outcome: pending
+                outcome: "pending"
                 state:
                   active: true
                   version: 2
-                  trippedBy: operator-a
-                  trippedAt: "2026-10-20T10:00:00.000Z"
-                  tripReason: suspicious refunds
-                  pendingResetBy: operator-a
-                  pendingResetAt: "2026-10-20T10:30:00.000Z"
-                  pendingResetReason: reviewed, safe
+                  trippedBy: "operator-a"
+                  trippedAt: "2026-10-20T14:00:41.256Z"
+                  tripReason: "suspicious refunds"
+                  pendingResetBy: "operator-a"
+                  pendingResetAt: "2026-10-20T14:00:41.271Z"
+                  pendingResetReason: "reviewed, safe"
         "409":
           description: The same operator asked for this reset before. A second operator must confirm it.
           content:
@@ -4560,8 +4560,8 @@ paths:
               schema:
                 type: object
               example:
-                error: SAME_OPERATOR_CANNOT_CONFIRM_RESET
-                message: A second operator must confirm this reset.
+                error: "SAME_OPERATOR_CANNOT_CONFIRM_RESET"
+                message: "A second operator must confirm this reset."
         "400":
           description: The reason is missing.
           content:
@@ -4569,7 +4569,7 @@ paths:
               schema:
                 type: object
               example:
-                error: reason is required.
+                error: "reason is required."
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -4579,8 +4579,8 @@ paths:
               schema:
                 type: object
               example:
-                error: CAPABILITY_NOT_ALLOWED
-                message: This key does not hold the kill-switch:reset capability.
+                error: "CAPABILITY_NOT_ALLOWED"
+                message: "This key does not hold the kill-switch:reset capability."
   /kill-switch/status:
     get:
       tags:
@@ -4606,10 +4606,10 @@ paths:
               example:
                 active: true
                 version: 1
-                trippedBy: operator-a
-                trippedAt: "2026-10-20T10:00:00.000Z"
-                tripReason: suspicious refunds
-                nonce: check-1
+                trippedBy: "operator-a"
+                trippedAt: "2026-10-20T14:00:41.256Z"
+                tripReason: "suspicious refunds"
+                nonce: "check-1"
                 signed: false
         "401":
           $ref: "#/components/responses/Unauthorized"
@@ -4650,12 +4650,12 @@ paths:
               schema:
                 type: object
               example:
-                probedAt: "2026-10-20T10:05:00.000Z"
-                recordedBy: scheduler
+                probedAt: "2026-10-20T14:00:41.264Z"
+                recordedBy: "scheduler"
                 switchActive: true
                 switchVersion: 1
                 observedStatus: 503
-                observedErrorCode: KILL_SWITCH_ACTIVE
+                observedErrorCode: "KILL_SWITCH_ACTIVE"
                 refused: true
                 passed: true
         "400":
@@ -4665,7 +4665,7 @@ paths:
               schema:
                 type: object
               example:
-                error: status is required and must be an integer.
+                error: "status is required and must be an integer."
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -4675,8 +4675,8 @@ paths:
               schema:
                 type: object
               example:
-                error: CAPABILITY_NOT_ALLOWED
-                message: This key does not hold the kill-switch:probe capability.
+                error: "CAPABILITY_NOT_ALLOWED"
+                message: "This key does not hold the kill-switch:probe capability."
   /policies/pending-changes/{id}/approve:
     post:
       tags:

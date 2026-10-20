@@ -75,7 +75,7 @@ Built on branch `feat/kill-switch`, not merged:
 - the OpenAPI entries, the three code samples in each language, and the generated pages
 - unit and HTTP tests, including two-person reset, a same-operator refusal, a probe that passes, a probe without the capability, and a status that echoes the nonce. The live Postgres test covers the two-person reset across a restart and a recorded probe.
 
-**The OpenAPI response examples for the kill switch are hand-written from the response shapes. They are not captured from a live run.** The architecture test only checks that each example fits its schema. The generated reference pages still say "real captured responses" for every operation, which is not true for these.
+The OpenAPI response examples for the kill switch were captured from the routes in a test run (2026-10-20), so the generated pages' "real captured responses" wording is true for them. The architecture test checks that each example fits its schema; it does not check capture, so a future hand edit would not be caught.
 
 Not built yet, and not safe to deploy until they are:
 

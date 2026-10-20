@@ -6125,7 +6125,7 @@ paths:
                 active: true
                 version: 1
                 trippedBy: operator-a
-                trippedAt: 2026-10-20T10:00:00.000Z
+                trippedAt: 2026-10-20T14:00:41.256Z
                 tripReason: suspicious refunds
         "400":
           description: The reason is missing.
@@ -6236,12 +6236,12 @@ paths:
                   active: false
                   version: 3
                   trippedBy: operator-a
-                  trippedAt: 2026-10-20T10:00:00.000Z
+                  trippedAt: 2026-10-20T14:00:41.256Z
                   tripReason: suspicious refunds
                   resetRequestedBy: operator-a
                   resetBy: operator-b
-                  resetAt: 2026-10-20T11:00:00.000Z
-                  resetReason: reviewed, safe
+                  resetAt: 2026-10-20T14:00:41.276Z
+                  resetReason: confirmed
         "202":
           description: The reset is pending. A second, different operator must confirm it.
           content:
@@ -6254,10 +6254,10 @@ paths:
                   active: true
                   version: 2
                   trippedBy: operator-a
-                  trippedAt: 2026-10-20T10:00:00.000Z
+                  trippedAt: 2026-10-20T14:00:41.256Z
                   tripReason: suspicious refunds
                   pendingResetBy: operator-a
-                  pendingResetAt: 2026-10-20T10:30:00.000Z
+                  pendingResetAt: 2026-10-20T14:00:41.271Z
                   pendingResetReason: reviewed, safe
         "400":
           description: The reason is missing.
@@ -6362,7 +6362,7 @@ paths:
                 active: true
                 version: 1
                 trippedBy: operator-a
-                trippedAt: 2026-10-20T10:00:00.000Z
+                trippedAt: 2026-10-20T14:00:41.256Z
                 tripReason: suspicious refunds
                 nonce: check-1
                 signed: false
@@ -6451,7 +6451,7 @@ paths:
               schema:
                 type: object
               example:
-                probedAt: 2026-10-20T10:05:00.000Z
+                probedAt: 2026-10-20T14:00:41.264Z
                 recordedBy: scheduler
                 switchActive: true
                 switchVersion: 1
