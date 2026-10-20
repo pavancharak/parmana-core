@@ -5,7 +5,6 @@ description: "Parmana keeps several distinct, signed, durable trails of what hap
 
 ## What it is
 
-Parmana keeps several distinct, signed, durable trails of what happened: refusal records for
 rejected policy decisions, caller audit events for every authentication and authorization
 decision, execution audit events for the execution control lifecycle, and an explicit evidence
 anchor that ties a trust record's policy content, governance status, and connector evidence
@@ -19,7 +18,6 @@ prove it correctly rejected everything it should have rejected, cannot prove a c
 authentication decisions were consistent over time, and cannot prove that a trust record's
 policy content, its governance status, and the connector evidence backing it are genuinely
 linked rather than merely sitting next to each other in the same object. Each trail here closes
-one of those specific gaps, added incrementally as each gap was found.
 
 ## How it works
 
@@ -61,7 +59,6 @@ with no way to detect it.
 
 One real, named operational detail worth knowing if you ever touch this class: it writes via a
 direct Postgres connection (`PostgresPoolFactory`), not `supabase-js`, because of a confirmed
-Supabase-side bug (ticket SU-437429) where PostgREST's schema cache refused to see the
 `signature_json` column. This is documented in the class's own comment as a temporary
 workaround at the PostgREST layer specifically, not a problem with the database or this
 codebase's own schema.

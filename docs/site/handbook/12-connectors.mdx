@@ -97,30 +97,6 @@ convention (`PaytmCapabilities.ts:30-40`).
 **Slack** (`packages/connector-slack/src/`): exactly one capability, `slack:post-message`,
 same "no wildcard, deliberate scope" discipline as Paytm (`SlackCapabilities.ts:6-11`).
 
-## Razorpay: a historical case study
-
-A Razorpay connector (`RazorpayConnector`, `RazorpayRefundService`,
-`RazorpaySignalStateVerifier`, `RazorpayDailyRefundLedger`, `RazorpayCumulativeRefundLedger`,
-`RazorpaySettlementProcessor`, and supporting files under
-`packages/connector-sdk/src/connectors/razorpay/`) was built, ran in production, and was
-("Add HubSpot integration evidence and update TRL assessment"). `git log --all` for any of
-those paths shows no file at current `HEAD`, confirmed directly, not inferred.
-
-Being honest about what the record does and doesn't say:'s own
-"stale-narrative notice" (added 2026-08-24, search for "blocks-pilot") documents the removal
-happened and exactly when, and confirms `HubSpotSignalStateVerifier` and the HubSpot/GitHub
-capability pairs are what's actually reachable in production today in its place. It does not
-state an explicit business reason for the removal beyond the coincidence with the HubSpot
-integration landing in the same commit. Three residual database tables
-(`razorpay_webhook_events`, `razorpay_webhook_audit_events`, `razorpay_daily_refund_reservations`)
-(`supabase/migrations/20260916120000_drop_razorpay_tables.sql`) as pure schema cleanup, over a
-month after the connector code itself was gone.
-
-The practical lesson this case study leaves: entries that predate
-2026-08-12 and describe Razorpay-specific mechanisms as "wired into production" are accurate
-history, not current fact, and the document itself now flags this explicitly rather than
-silently going stale.
-
 ## How to validate this yourself
 
 - `packages/connector-sdk/src/ConnectorTypes.ts`, the `Connector` contract itself.

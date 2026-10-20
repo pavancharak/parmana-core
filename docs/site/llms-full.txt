@@ -1852,7 +1852,7 @@ names the version in effect. Agents must then send that version.
 
 ---
 
-## Connect an External Agent
+## guides/connect-an-agent
 
 Source: https://docs.parmanasystems.com/guides/connect-an-agent
 
@@ -1926,8 +1926,7 @@ single-purpose agent; `/callers/me`'s `unrestrictedCapabilities` is literally
   appending it to the array (every caller gets a 500 until fixed, the server
   fails closed on malformed JSON), and losing existing entries by replacing
   rather than appending. Always paste the complete array, every existing entry
-  plus the new one. Full account: the 2026-09-15 KMS migration troubleshooting
-  guide.
+  plus the new one.
 </Warning>
 
 **4. Verify the key before writing agent code:**
@@ -1944,11 +1943,9 @@ placeholder to fix later, from day one.
 **6. Build the request:**
 
 <Warning>
-  **This example was missing `metadata` until 2026-09-14**, found while running
-  [End-to-end: agent → Parmana → Paytm](/guides/end-to-end-paytm-flow) against a real
-  deployment. Omitting it fails with
+  **`metadata` is required.** Omitting it fails with
   `{"error":"metadata.businessTransactionId must match businessTransactionId."}` (400),
-  before policy is ever evaluated. It's now included below.
+  before policy is ever evaluated. It is included in the example below.
 </Warning>
 
 ```json
@@ -2027,7 +2024,7 @@ catalog](/api-reference/error-catalog) has every code.
 | `400`  | none                                                  | Invalid `businessTransactionId`, malformed JSON, or a field that breaks the transaction's own rules.                                                                                    | Fix the request: the message names the field.                                                                                                  |
 | `401`  | none                                                  | No key, or a key the server does not know.                                                                                                                                              | Check the key with `GET /callers/me`.                                                                                                          |
 | `403`  | none                                                  | Your key may not assert this `authority.principalId`.                                                                                                                                   | Use your own `callerId`, or ask the operator for `allowedPrincipalIds`.                                                                        |
-| `403`  | `CAPABILITY_NOT_ALLOWED`                              | `intent.action` is not in your key's `allowedCapabilities`. **The most common real bug.**                                                                                               | Compare `/callers/me`'s `allowedCapabilities` with your `intent.action`, character for character.                                              |
+| `403`  | `CAPABILITY_NOT_ALLOWED`                              | `intent.action` is not in your key's `allowedCapabilities`. **The most common mistake.**                                                                                                | Compare `/callers/me`'s `allowedCapabilities` with your `intent.action`, character for character.                                              |
 | `403`  | `POLICY_DENIED`                                       | The policy refused: a rule matched, the approval is missing, expired, for something else or already used, or the policy version is not the one in effect. The message names the reason. | Respect it. For a missing approval, get a signed approval and send a **new** request. Never retry with altered parameters.                     |
 | `404`  | none                                                  | `policy.name` or `version` does not exist on this deployment.                                                                                                                           | Ask `GET /policies/in-effect?capability=...`.                                                                                                  |
 | `409`  | none                                                  | `businessTransactionId` already used.                                                                                                                                                   | Read what happened to it, see [Idempotency](/api-reference/idempotency-and-nonces).                                                            |
@@ -2037,7 +2034,7 @@ catalog](/api-reference/error-catalog) has every code.
 | `503`  | `SIGNING_UNAVAILABLE`, `EXECUTION_INTENT_UNAVAILABLE` | The server could not sign or store evidence before release. Nothing ran.                                                                                                                | Retry later with a new `businessTransactionId`.                                                                                                |
 | `500`  | `EXECUTION_RECORD_INCOMPLETE`                         | Released, then the Trust Record could not be stored. The action ran.                                                                                                                    | **Do not send it again.** The operator finalizes the intent.                                                                                   |
 | `500`  | none                                                  | Anything unexpected, including a gateway rejection of a tampered envelope.                                                                                                              | Ask the operator to read the server log before assuming your request was wrong.                                                                |
-| (none) | none                                                  | Timeout or network error. Unknown whether Parmana received it; an approved request can take tens of seconds.                                                                     | Set the timeout to 120 seconds. After a timeout, read `GET /trust-records/{id}` and `GET /refusal/{id}` with the same id before anything else. |
+| (none) | none                                                  | Timeout or network error. Unknown whether Parmana received it; an approved request can take tens of seconds.                                                                            | Set the timeout to 120 seconds. After a timeout, read `GET /trust-records/{id}` and `GET /refusal/{id}` with the same id before anything else. |
 
 ## Common mistakes
 
@@ -2051,21 +2048,6 @@ catalog](/api-reference/error-catalog) has every code.
 - Assuming a bare `500` means your request was wrong: ask for the server log first.
 
 ## Reference implementation
-
-`pavancharak/parmana-phinite-agent` is a real, working implementation of every step above. Two bugs
-were found and fixed in it: the exact `CAPABILITY_NOT_ALLOWED` mistake from the table above
-(`"refund"` instead of `"paytm:refund"`), and error handling that crashed instead of resolving
-unrecognized failures to an unresolved client-side state. See that repository's README for the full
-writeup.
-
-**Second round, entirely on Parmana's own side (2026-09-15/16):** after those agent-side fixes, this
-same integration hit a sequence of purely Parmana-operator issues onboarding as a new caller on a
-freshly KMS-migrated deployment: no `PARMANA_API_KEYS` entry at all (401) → a malformed hand-edited
-entry (500 for every caller) → no `allowedPrincipalIds` grant for the asserted principal (403) → a
-genuine Parmana-side bug where the gateway's signing and verification paths silently used different
-keys after a KMS migration (500, unrelated to the request itself,
-`examples/tutorials/114-signing-verification-key-agreement/` reproduces it). None of these were agent
-bugs.## Next
 
 <CardGroup cols={2}>
   <Card title="Add a connector" icon="plug" href="/guides/add-a-connector">

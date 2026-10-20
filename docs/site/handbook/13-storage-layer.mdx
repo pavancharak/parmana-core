@@ -53,7 +53,6 @@ the configured provider:
 `StorageFactory.createFromEnvironment()` is the real entry point every caller actually uses.
 It has one hardcoded override: under `NODE_ENV=test`, it always returns
 `MemoryStorageProvider`, regardless of what `PARMANA_STORAGE` is set to. This exists because
-of a real incident: this method used to construct
 whatever `PARMANA_STORAGE` named as a pure import-time side effect, which crashed test
 collection with supabase-js's generic `"supabaseUrl is required."` the moment `SUPABASE_*`
 was unset, regardless of what any individual test actually needed.
@@ -77,7 +76,6 @@ export const policyRepository: PolicyRepository =
 ```
 
 Because `PostgresPoolFactory.create()` is a process-wide singleton (see below), this opened
-a real connection against whatever `DATABASE_URL` happened to be set at the moment
 `application.ts` was first imported, before any caller had a chance to configure it
 differently. This broke `examples/tutorials/89-readiness-probe/run.ts`'s own "genuinely
 unreachable database" scenario: the tutorial tries to swap in a bad `DATABASE_URL` for one
@@ -93,7 +91,6 @@ already uses, deferring construction to the first real `load()`/`save()`/`listAl
 process-wide singleton `pg.Pool`. Every Supabase-backed repository in this codebase connects
 through it directly, not through `supabase-js`'s REST-based client (PostgREST). The class
 replaced it everywhere it was still used. This removes an entire layer (PostgREST) from the
-failure modes of every table these repositories touch, an incident class this codebase's
 own history names explicitly (see `SupabaseCallerAuditSink`'s own comments for the
 originating case).
 
@@ -112,7 +109,6 @@ directly (structurally, via a locally-defined `RateLimitStoreLike` interface, so
 close a fleet-wide gap: `express-rate-limit`'s default `MemoryStore` counts per-process, so
 on a horizontally-scaled deployment the effective ceiling for a caller becomes
 `limitPerMinute * machineCount` rather than the configured limit. See Chapter 16 for the
-full rate-limiting story, including a real `ERR_ERL_STORE_REUSE` bug this class's `prefix`
 field exists to resolve.
 
 ### An orphaned repository, honestly
@@ -174,7 +170,6 @@ fix (Chapter 16 covers this fully).
   selection logic.
 - `packages/storage/src/memory/MemoryStorageProvider.ts`, `packages/storage/src/supabase/SupabaseStorageProvider.ts`, the two real implementations.
 - `packages/storage/src/postgres/PostgresPoolFactory.ts`, the shared connection pool, its
-  own comments name the real incidents that shaped it.
 - `packages/api/src/repositories.ts` and `packages/api/src/application.ts`, the lazy
   construction pattern, and the place it was once violated.
 - `supabase/migrations/*.sql`, the real, current schema. Read the actual files; a reference

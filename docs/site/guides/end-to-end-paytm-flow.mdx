@@ -1,459 +1,52 @@
 ---
-title: "End-to-End: Agent → Parmana → Paytm"
-description: "Every command, every real error, and every fix required to run a real agent → Parmana → Paytm refund against live infrastructure, start to finish, with no ambiguity."
+title: "Walkthrough: an agent, Parmana and an external system"
+description: "How an agent's request passes through Parmana to an external system, step by step, and where to find the exact request and response formats."
 ---
 
-<Info>
-  **[VERIFIED LIVE]**. Every command, error message, and fix below is verbatim
-  from a real session that ran this exact flow against real, live, production
-  infrastructure (`parmana-api-real.vercel.app` →
-  the agent's deployment → Paytm's staging API) on 2026-09-14. Nothing
-  here is theoretical.
-</Info>
+This walkthrough follows one action, a refund, from an agent's request to the signed record of what happened. It uses a generic external system. For the exact request and response formats, follow the links to the reference pages, which are generated from the API specification.
 
-<Warning>
-  **Since then every refund needs a signed manager approval.** The 2026-09-14
-  run used `customer-refund` 1.0.0, where a small refund ran on the agent's
-  claims alone. `customer-refund` 1.2.0 has been in effect since 2026-09-28: the
-  request below now carries `managerApproved: true` and the manager's signed
-  approval in `signals.approvalArtifact` (see [Human
-  approval](/concepts/human-approval)). The full flow with an approval has not
-  been rerun live against Paytm staging since; the wiring, errors and fixes
-  below are unchanged.
-</Warning>
+## The path of one action
 
-## Who this is for
+1. **The agent proposes an action.** It sends a Business Transaction to `POST /execute` with its own API key. The key limits what the agent may ask for.
+2. **Parmana evaluates the policy.** The policy is an ordered list of rules. The first matching rule decides. If no rule matches, the action is denied. See [Policies and the decision](/concepts/policies-and-the-decision).
+3. **A person approves when the policy requires it.** The approver signs one approval for one action on one resource. See [Human approval](/concepts/human-approval).
+4. **Parmana issues a signed authorization.** It is single-use and valid for a short window, and it is bound to the exact request content.
+5. **The gateway releases the action.** The gateway verifies the authorization again before it calls the external system. It is the only path to that system.
+6. **The result becomes a signed record.** The Execution Trust Record holds the decision, the approval and the outcome. Anyone can verify it offline. See [Verify independently](/guides/verify-independently).
 
-Anyone who needs to run this flow again from zero, a new environment, a new operator, or
-future-you after forgetting the details. No step below assumes you remember anything from
-the session that produced it. Where something failed before it worked, the failure is
-documented too (see [the error catalog](#error-catalog)), because the failure and its fix
-are exactly what a fresh attempt is most likely to repeat.
+## Before you start
 
-## Architecture: what actually happens, hop by hop
+- A running Parmana server. The [Quickstart](/quickstart) runs one on your own machine.
+- An API key for the agent, with only the capability it needs. See [Credentials](/guides/credentials-maker-checker-approver), step 4.
+- A policy that names the action. See [Policy lifecycle and approvals](/guides/policy-lifecycle-and-approvals).
+- A connector for the external system. See [Connect any external system](/guides/connect-any-external-system).
 
-Three separate systems, three separate deployments, three separate configurations.
-Confusing any two of them costs real time, most of [the error catalog](#error-catalog)
-below is exactly that.
+## Send the request
 
-```mermaid
-sequenceDiagram
-    participant Agent as Caller / Agent
-    participant Parmana as parmana-api-real.vercel.app<br/>(this repository)
-    participant Gateway as GatewayPaytmAdapter<br/>(inside parmana-api-real)
-    participant Connector as example-agent.vercel.app<br/>(separate repository)
-    participant Paytm as Paytm API<br/>(staging or production)
+Send the Business Transaction to `POST /execute`. The request body, every field, and every response code are on the reference page, which the API specification generates: [Execute a Business Transaction](/api-reference/endpoints/execute-transaction).
 
-    Agent->>Parmana: POST /execute (Bearer caller key)
-    Note over Parmana: Caller-auth validates key,<br/>writes signed caller-audit event
-    Note over Parmana: Policy engine evaluates<br/>signals against named policy
-    Note over Parmana: If APPROVED: mint + Ed25519-sign<br/>ExecutionAuthorizationPayload
-    Note over Parmana: ExecutionGateway re-verifies<br/>signature/expiry/TTL/nonce
-    Parmana->>Gateway: release to connector
-    Note over Gateway: Re-signs a SEPARATE, narrower<br/>authorization
-    Gateway->>Connector: POST /connector/paytm-refund<br/>(Bearer shared secret)
-    Note over Connector: Checks shared secret (transport auth only)
-    Connector->>Parmana: GET /keys/:keyId (fetch public key fresh)
-    Note over Connector: Verifies Ed25519 signature, <br/>THIS proves policy actually approved it
-    Note over Connector: Records "authorization.verified"<br/>(execution_audit_events, unsigned)
-    Connector->>Paytm: Real API call
-    Paytm-->>Connector: success/failure result
-    Note over Connector: Records "execution.completed"<br/>or "execution.rejected"
-    Connector-->>Gateway: ConnectorResponse
-    Gateway-->>Parmana: result
-    Note over Parmana: Records session.created/execution.completed<br/>(execution_audit_events, signed + chained)
-    Note over Parmana: Builds, signs, chains ExecutionTrustRecord;<br/>independently verifies it; issues signed Receipt
-    Parmana-->>Agent: full ExecutionTrustRecord (HTTP 200)
-```
+Two rules apply to every request:
 
-<Warning>
-  **The one thing to internalize before anything else:** `parmana-api-real` and
-  `example-agent` are two separate Vercel projects with two separate,
-  independently-managed sets of environment variables. Nothing is shared between
-  them automatically. Every piece of configuration below must be set on
-  **both**, separately, even when the value happens to be identical (e.g.
-  `PAYTM_CONNECTOR_SHARED_SECRET`) or even when the underlying resource is the
-  same (e.g. `DATABASE_URL`, same Supabase project, but each service holds its
-  own copy of the connection string).
-</Warning>
+- The `metadata.businessTransactionId` must match the top-level `businessTransactionId`. Otherwise the request is refused before the policy is evaluated.
+- Every signal the policy reads must come from a real source. A placeholder value is not a signal.
 
-<Note>
-  **Calling through the agent's own `/agent/refunds` (added 2026-09-28).** An
-  agent can also call `example-agent`'s `POST /agent/refunds`, which calls
-  `POST /execute` above on its behalf. The flow is the same: Parmana alone sends
-  the refund to Paytm, once, through `/connector/paytm-refund`, and
-  `/agent/refunds` returns Paytm's result from the Trust Record. Until
-  2026-09-28 that endpoint also called Paytm itself after an approval, so an
-  approved refund could be paid twice.
-  It now also reads the policy version from `GET /policies/in-effect` before
-  every refund.
-</Note>
+## Read the response
 
-## Prerequisites
+The response says whether the action was approved, denied or refused. It also says which rule decided it. A denial is a correct decision, not an error. Branch on the status code first, then on the `code`. The full list of codes is in the [Error catalog](/api-reference/error-catalog).
 
-- Write access to both Vercel projects (`parmana-api-real` and `example-agent` in the
-  real run this guide is based on, yours will be named differently).
-- Write access to the Supabase project both deployments share.
-- A local clone of this repository with its own `.env` configured (see `.env.example`), used
-  to generate API keys and, optionally, to query the audit trail afterward.
-- PowerShell (Windows) or `curl`/bash (any OS).
-- `npm install` at the repo root, to run `scripts/generate-api-key.ts`.
+## Verify the record
 
-**Migrations required on the Supabase project first** (idempotent, safe to re run). Apply
-every pending migration with `npm run db:migrate -- apply` and check with
-`npm run db:migrate -- status`; these three are the ones this flow added:
-
-- `supabase/migrations/20260914120000_add_execution_audit_events.sql`
-- `supabase/migrations/20260914130000_add_business_transaction_correlation_to_execution_audit_events.sql`
-- `supabase/migrations/20260914140000_add_authorization_verified_to_execution_audit_events.sql`
-
-## The Supabase connection string trap
-
-<Warning>
-  This single issue cost more real time than every other issue in this whole
-  flow combined. Read this fully before setting `DATABASE_URL` anywhere.
-</Warning>
-
-**Use the Transaction pooler connection string, always, for any Vercel/serverless
-deployment**, never the Direct connection string. Supabase's Connect dialog offers both:
-
-- Direct: `postgresql://postgres:<password>@db.<project-ref>.supabase.co:5432/postgres`
-- **Transaction pooler (use this one)**: `postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres`
-
-The Direct hostname is IPv6-only for most Supabase projects; Vercel's serverless functions
-only have IPv4 egress. The result isn't a slow connection, it's an immediate DNS failure:
-`getaddrinfo ENOTFOUND db.<ref>.supabase.co`. It works perfectly from your own laptop and
-fails 100% of the time from Vercel, that mismatch is the signature of this exact issue.
-Notice the username also changes, from plain `postgres` to `postgres.<project-ref>`, the
-pooler (Supavisor) needs that suffix to route the connection.
-
-**The `[YOUR-PASSWORD]` placeholder**: Supabase's Connect dialog shows the connection string
-as a template with a literal `[YOUR-PASSWORD]` token in it, not your real password. You
-must replace the entire token, **brackets included**, with your actual password (only ever
-shown once, at project creation or at reset time, Project Settings → Database → Reset
-database password). Leaving the placeholder in, or leaving the brackets around a
-correctly-substituted password, produces:
-
-```
-{"error":"password authentication failed for user \"postgres\""}
-```
-
-(Postgres error `28P01`.) This error reports the bare role name `postgres` even when your
-username format is correct (`postgres.<project-ref>`), Supavisor normalizes that in its own
-error output, so don't chase it as a separate bug.
-
-**The password-rotation cascade**: resetting the database password (for any reason,
-including a credential accidentally exposed and rotated, see
-[Security](#security-notes)) breaks **every** deployment holding the old password
-simultaneously. In the real run this meant updating and redeploying `parmana-api-real`,
-separately updating and redeploying `example-agent`, and separately updating this
-repo's own local `.env`, three distinct places, each producing the identical error message
-if missed, so each must be checked individually rather than inferred from one working.
-
-**Propagation lag vs. a real problem**: right after a genuine, correct redeploy, a request
-can fail for a few seconds to about a minute while Vercel finishes routing to the new
-deployment. Retry 2-3 times, a few seconds apart, before concluding a fix didn't work. If
-retries return the _identical_ error every time with no change, it's not lag, it's real.
-
-**Getting the real error behind a generic 500**: `parmana-api-real`'s error handler
-deliberately returns `{"error":"Internal Server Error"}` for anything unrecognized (never
-leak internals to a caller), the real error, with a full stack trace, is only in **Vercel
-Dashboard → that project → Deployments → the relevant deployment → Runtime Logs**. This is
-how the real `28P01` password error was actually found in the session this guide is based on.
-
-## Generating a caller API key
-
-Check whether caller-auth is enabled first (`GET /ready` → `authDisabled: false` means yes,
-you need a real key):
-
-```bash
-npx tsx scripts/generate-api-key.ts --caller-id <your-caller-id> --allowed-capabilities paytm:refund
-```
-
-Scope `--allowed-capabilities` narrowly, never `"*"` for a single-purpose test. The raw key
-is shown exactly once and cannot be recovered afterward; save it immediately somewhere
-durable (a password manager, never a chat log, see [Security](#security-notes)).
-
-Add the printed JSON entry to `PARMANA_API_KEYS` on the target deployment (Vercel dashboard
-→ that project → Environment Variables). It's a JSON **array**, append to an existing one,
-or wrap a first entry in `[` `]`. Save, then trigger an actual new deployment (saving an env
-var alone does not restart the running one).
-
-Verify before attempting `/execute`:
-
-```bash
-curl -i "https://<your-deployment>/callers/me" -H "Authorization: Bearer <key>"
-```
-
-Note the returned `allowedPrincipalIds`, your test request's `authority.principalId` must
-be one of these values, or it's rejected before policy ever runs.
-
-## Wiring the Paytm connector's shared secret
-
-`GatewayPaytmAdapter` authenticates itself to the remote connector service with a bearer
-shared secret, transport authentication only, never a substitute for the real Ed25519
-policy-approval signature. Generate one:
-
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
-```
-
-Set the **identical value** on both projects:
-
-- On the Parmana deployment: `PAYTM_CONNECTOR_URL=https://<your-connector-deployment>` and
-  `PAYTM_CONNECTOR_SHARED_SECRET=<the value>`
-- On the connector deployment: `PAYTM_CONNECTOR_SHARED_SECRET=<the exact same value>`
-
-Missing either variable on the Parmana side means `paytm:refund` simply isn't registered as
-a capability at all (connectors are optional by default, deliberately): an approved refund is
-then refused with `503 CONNECTOR_NOT_REGISTERED` and nothing is sent. A mismatch between the two returns `{"error":"unauthorized"}` (401)
-instantly. Redeploy both after setting these.
-
-## Building the request body
-
-<Warning>
-  The `metadata` block is easy to forget. Without it the request is refused with
-  `400` before policy runs. (The example on [Connect an
-  agent](/guides/connect-an-agent) has included it since this guide found the
-  gap.)
-</Warning>
-
-Structural rules, checked before policy ever runs (`BusinessTransactionValidator`):
-
-| Rule                                                                  | Error if violated                                                    |
-| --------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `metadata.businessTransactionId` == top-level `businessTransactionId` | `"metadata.businessTransactionId must match businessTransactionId."` |
-| `authorization.authorityId` == `authority.authorityId`                | `"authorization.authorityId must match authority.authorityId."`      |
-| `intent.authorizationId` == `authorization.authorizationId`           | `"intent.authorizationId must match authorization.authorizationId."` |
-| `policy.name`/`policy.version`/`intent.action` non-empty              | field-specific `"... is required."`                                  |
-
-**`businessTransactionId` is an idempotency key.** Reusing one across attempts, including
-while debugging with the same test payload, eventually returns `409`:
-`"Business Transaction '<id>' already exists."`, because the record persisted on a prior
-attempt even if that attempt's overall response was never seen. **Generate a fresh UUID on
-every real attempt.**
-
-**Policy thresholds** (`customer-refund@1.2.0`, exact values):
-
-- Every refund above 0 and up to 100000 is approved only with `refundEligible` and
-  `fraudCheckPassed` `true`, `managerApproved: true` **and** a signed manager approval in
-  `signals.approvalArtifact`. Parmana verifies the signature, the order and the amount;
-  `managerApproved: true` without a valid approval is refused. See
-  [Human approval](/concepts/human-approval).
-- 0 or less, or above 100000, refused.
-- Production runs the version most recently approved; ask `GET /policies/in-effect?capability=paytm:refund`.
-  a signed manager approval. `managerApproved: false` is always refused.
-- `boundSignals` binds `signals.refundAmount` to `intent.parameters.amount`, they must
-  match, or `SignalIntentBinder` rejects it as a binding-tamper attempt before policy
-  evaluation runs at all. Always set both to the same value.
-
-The full request shape, for `customer-refund` 1.2.0:
-
-```json
-{
-  "businessTransactionId": "<uuid-v4, fresh every attempt>",
-  "metadata": { "businessTransactionId": "<same uuid>" },
-  "authority": {
-    "authorityId": "<uuid-v4>",
-    "authorityType": "SERVICE",
-    "principalId": "<must match your key's allowedPrincipalIds>",
-    "issuedAt": "<ISO 8601>"
-  },
-  "authorization": {
-    "authorizationId": "<uuid-v4>",
-    "authorityId": "<same authorityId>",
-    "purpose": "<free text>",
-    "issuedAt": "<ISO 8601>"
-  },
-  "intent": {
-    "intentId": "<uuid-v4>",
-    "authorizationId": "<same authorizationId>",
-    "action": "paytm:refund",
-    "target": "<orderId>",
-    "parameters": {
-      "orderId": "<orderId>",
-      "transactionId": "<txnId>",
-      "amount": 5
-    },
-    "createdAt": "<ISO 8601>"
-  },
-  "policy": {
-    "name": "customer-refund",
-    "version": "1.2.0",
-    "schemaVersion": "1.0.0"
-  },
-  "signals": {
-    "refundEligible": true,
-    "managerApproved": true,
-    "fraudCheckPassed": true,
-    "refundAmount": 5,
-    "approvalArtifact": {
-      "payload": {
-        "...": "the manager's signed approval for this order, up to 5"
-      },
-      "signature": { "...": "..." }
-    }
-  },
-  "status": "RECEIVED"
-}
-```
-
-Use `"authorityType": "SERVICE"`, `"AGENT"` doesn't exist in `AuthorityType`.
-
-| Parameter         | Limit          | Effect                                                                                                                                                                                                                                                                                                           |
-| ----------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `refundReference` | 128 characters | Your own id for this one refund. The Paytm refId is derived from the order, the transaction and this reference, so separate partial refunds of one transaction get separate refIds. Send the same value when you retry the same refund. Without it, every refund of one transaction shares one refId, as before. |
-| `refundReason`    | 256 characters | Sent to Paytm as the refund comment.                                                                                                                                                                                                                                                                             |
-
-Anything else in `intent.parameters` is refused before any call to the connector.
-
-Synthetic order/transaction IDs (not a real prior Paytm charge) are fine for a
-connectivity and wiring test: with a valid signed approval the request is approved,
-correctly signed, correctly verified, and correctly forwarded; Paytm's staging API simply returns a non-success result because
-there's nothing real to refund. That proves the wiring, not that a real refund occurred,
-don't conflate the two.
-
-## Running the test
-
-```powershell
-$headers = @{
-    "Authorization" = "Bearer <your raw API key>"
-    "Content-Type"  = "application/json"
-}
-$body = Get-Content -Raw -Path ".\e2e-test-body.json"
-
-try {
-    $response = Invoke-WebRequest -Uri "https://<your-deployment>/execute" -Method Post -Headers $headers -Body $body
-    Write-Host "STATUS:" $response.StatusCode
-    $response.Content
-} catch {
-    Write-Host "STATUS:" $_.Exception.Response.StatusCode.value__
-    $_.ErrorDetails.Message
-}
-```
-
-The `try`/`catch` is not optional, `Invoke-WebRequest` throws on any non-2xx response
-instead of returning it; without catching `$_.ErrorDetails.Message` you lose the actual JSON
-error body, which is where every diagnostic in this guide came from. Run each statement
-separately in an interactive session, and double-check your working directory before
-re running (`Get-Content` is relative to it). Add `-TimeoutSec 120`: an approved request can take
-tens of seconds, and after a timeout read `GET /trust-records/<businessTransactionId>`
-before sending anything again.
-
-Equivalent with `curl`:
-
-```bash
-curl -s -i -X POST "https://<your-deployment>/execute" \
-  -H "Authorization: Bearer <your raw API key>" \
-  -H "Content-Type: application/json" \
-  --data @e2e-test-body.json --max-time 120
-```
-
-## Reading the response
-
-A successful `200` returns the complete `ExecutionTrustRecord`. Check, in order of "how far
-did this get":
-
-1. `executions[0].decision.outcome`, `APPROVED`/`REJECTED`, with `.reason`.
-2. `executions[0].evidence.attributes.connector.responseSummary.success`, whether Paytm
-   itself confirmed the refund (`false` with synthetic IDs is expected, not a failure of the
-   flow itself).
-3. `executions[0].chainHash`/`.chainSignature`, the execution was signed and chained.
-4. `verifications[0].status`, `VERIFIED`, proof the record was independently re-verified.
-5. `receipts[0]`, a separately signed receipt.
-6. `authorization.payload`, the full signed authorization (`policyContentHash`,
-   `signalsHash`, `businessTransactionHash`, `nonce`, `authorizationId`).
-
-## Verifying the cross-service audit trail
-
-Both deployments write to the **same** `execution_audit_events` table, correlated by
-`businessTransactionId` (not `authorizationId`, Parmana's own authorization identity never
-crosses the wire boundary to the connector service):
-
-```javascript
-require("dotenv").config();
-const { Pool } = require("pg");
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-
-pool.query(
-    `SELECT type, occurred_at, connector_id, authorization_id, session_id, action, reason,
-            business_transaction_id, chain_hash IS NOT NULL as signed
-     FROM execution_audit_events
-     WHERE business_transaction_id = $1
-     ORDER BY id ASC`,
-    ["<your businessTransactionId>"],
-  ).then((r) => console.log(JSON.stringify(r.rows, null, 2))).catch((e) => console.error("QUERY FAILED:", e.message));
-```
-
-A complete, correct run produces four rows: `session.created` and `execution.completed`
-(Parmana's own, signed and chained), and `authorization.verified` and `execution.rejected`
-or `execution.completed` (the connector service's own, unsigned, it never holds a private
-key). The connector-side `execution.rejected` reflecting Paytm's non-success outcome and
-Parmana's own `execution.completed` are **not contradictory**, the connector _call_ itself
-completed cleanly (no exception); Paytm's own non-success business outcome lives in the
-Execution Trust Record's evidence, by design (see `docs/connectors/PAYTM_CONNECTOR.md`'s
-"Paytm execution outcome" section).
-
-## Error catalog
-
-Every one of these was actually hit, in this order, in the real run this guide is based on.
-
-| Error (verbatim)                                                                          | Status | Real cause                                                                                | Fix                                                           |
-| ----------------------------------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `metadata.businessTransactionId must match businessTransactionId.`                        | 400    | Missing `metadata` block                                                                  | Add it, matching the top-level ID                             |
-| `Internal Server Error`                                                                   | 500    | Hidden by design                                                                          | Check Vercel Runtime Logs                                     |
-| `getaddrinfo ENOTFOUND db.<ref>.supabase.co`                                              | 500    | Direct connection hostname, unreachable from Vercel (IPv4-only egress)                    | Switch to Transaction pooler                                  |
-| `password authentication failed for user "postgres"`                                      | 500    | Wrong password, often the `[YOUR-PASSWORD]` placeholder left in                           | Fresh string from Supabase's Connect dialog, substitute fully |
-| `Caller authentication audit trail is unavailable...` (`AUDIT_UNAVAILABLE`)               | 503    | Same DB issue, surfacing at the caller-audit-write step                                   | Same fix, applied to the Parmana deployment specifically      |
-| `Business Transaction '<id>' already exists.`                                             | 409    | Reused `businessTransactionId`                                                            | Generate a fresh UUID                                         |
-| `authorization signature is invalid` (when deliberately testing with a garbage signature) | 500    | **Expected**, confirms the connector's DB connection and signature verification both work | None needed                                                   |
-| `unauthorized` (from the connector service)                                               | 401    | `PAYTM_CONNECTOR_SHARED_SECRET` mismatch between the two deployments                      | Set the identical value on both, redeploy both                |
-| `authentication required`                                                                 | 401    | Empty/missing Bearer token, often a reset PowerShell session variable                     | Re-set `$headers`                                             |
-
-<Note>
-  A meta-lesson: at one point, a fix-list assumed a *different* symptom (empty
-  response body, silent crash) than what direct testing had just shown (a
-  specific, informative error message). Executing a prescriptive procedure
-  against a premise that doesn't match the evidence in hand wastes time and can
-  add unneeded code changes. Before following any troubleshooting procedure,
-  including this one, check its stated symptoms against what you're actually
-  observing.
-</Note>
+Each action that reaches the external system produces an Execution Trust Record. Verify it without calling Parmana, using the offline verifier. The steps are in [Verify independently](/guides/verify-independently). Pin the signing key you trust, and check that the record's coverage is full.
 
 ## Security notes
 
-<Warning>
-  Never paste a `DATABASE_URL` value containing a real password into a chat
-  conversation, issue tracker, or any shared document. If one is ever exposed
-  this way, rotate the database password immediately (Supabase Dashboard →
-  Project Settings → Database → Reset database password), then update every
-  deployment and local file that held the old value, see the password-rotation
-  cascade above.
-</Warning>
-
-- The raw caller API key is shown exactly once and never recoverable from its stored hash.
-- `PAYTM_CONNECTOR_SHARED_SECRET` is transport authentication only, never treat its presence
-  as a substitute for the real Ed25519 authorization signature check.
-- Scope every generated key's `allowedCapabilities` to exactly what's needed, never `"*"`
-  for a single-purpose test or agent.
+- The agent holds only its own key. It never holds a connector credential.
+- The external system accepts a request only with a valid authorization. Build the connector to check it.
+- A key that appears in a log, a ticket or a chat must be rotated at once.
+- The record shows what was decided and released. It does not show that the external system did what it was asked. Verify the outcome in the external system too.
 
 ## Next
 
-<CardGroup cols={2}>
-  <Card
-    title="Live API and Demos"
-    icon="satellite-dish"
-    href="/guides/live-api-and-demos"
-  >
-    The full live-deployment reference this guide builds on, authentication,
-    every endpoint, every available policy.
-  </Card>
-  <Card
-    title="Connect an external agent"
-    icon="robot"
-    href="/guides/connect-an-agent"
-  >
-    The general agent integration guide, with every response the server can
-    return.
-  </Card>
-</CardGroup>
+- [Connect an agent](/guides/connect-an-agent): the full agent-side integration.
+- [Human approval](/concepts/human-approval): how approvals are signed and checked.
+- [Manage approvers](/guides/manage-approvers): registering the people who approve.

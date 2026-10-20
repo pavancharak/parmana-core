@@ -41,9 +41,8 @@ that.
 Both share one 429 response shape via `rateLimitHandler()`, which sets `Retry-After`
 explicitly from the store's own `resetTime` rather than trusting a package default header.
 
-### The real bug: one shared Store, two limiters
+### One shared store, two limiters
 
-Found 2026-09-15, during the same session as the AWS KMS migration: `createApp()`'s first
 version constructed a single `PostgresRateLimitStore` and passed it to both limiters.
 `express-rate-limit` v8's own documented contract disallows this, a `Store` instance must
 not back more than one limiter, and the library throws `ERR_ERL_STORE_REUSE` the moment a
@@ -52,12 +51,9 @@ instance to both `createExecuteRateLimiter` and `createHealthReadyRateLimiter` c
 request on a fresh cold start.
 
 **A documented correction, not silently fixed:** it was first assumed this crashed the whole
-request, and item 5 of the 2026-09-15 KMS migration troubleshooting
-guide, in git history), inferred from seeing the `ERR_ERL_STORE_REUSE` log line next to a real HTTP 500.
 Reading `express-rate-limit`'s actual installed source shows every validation is wrapped in a
 try/catch that only logs the violation and never re-throws, the reuse warning is real, but
 harmless on its own. The 500 that request actually returned was caused by a completely
-different, unrelated bug (see `examples/tutorials/114-signing-verification-key-agreement`).
 The fix (two separate `Store` instances, each with a distinct `prefix`) is still correct and
 worth having, independent of the corrected causal story, it is the library's own documented
 usage contract, and a stricter `validate` config in a future version could make this fatal for
@@ -119,8 +115,6 @@ confirms the limiter is entirely skipped when caller-auth is disabled.
   public.
 - `packages/api/src/app.ts, 149-171, 248-264`, where both limiters are actually
   constructed and mounted.
-- `examples/tutorials/115-per-limiter-rate-limit-stores/README.md`, the full incident
-  account, including the corrected diagnosis.
 
 ## Integration Requirements
 

@@ -108,7 +108,6 @@ handing it back. Two validator calls happen on every load:
    earlier rule silently shadows the later one. Logged via `console.warn` with event
    `policy_rule_conflict_detected`, never thrown. `PolicyValidator.ts:442-466`'s own doc
    comment explains why: unlike an uncovered fact (unambiguous fix, bind it or acknowledge
-   it), a flagged overlap might be a real bug or the deliberately intended shape (a specific
    rule followed by a broader fallback). The analysis is also incomplete by design, it only
    reasons about pairs of single, non-nested-fact conditions; anything involving `all`/`any`
    is reported as `NEEDS_REVIEW` (level `INFO`) without further analysis.
@@ -133,14 +132,13 @@ close that gap completely; this is a deliberate, bounded improvement over no che
 - `FilePolicyRepository`, reads/writes `policies/{name}/{version}/policy.json` on the local
   filesystem. Used in local development and in tests.
 - `SupabasePolicyRepository` (`packages/policy/src/SupabasePolicyRepository.ts`), reads/writes
-  a `policies` table via a direct Postgres connection. Added 2026-09-16, the same night as this
+  a `policies` table via a direct Postgres connection.
   handbook: Vercel's serverless Functions run on a read-only filesystem, so the very first real
   production policy approval (`PolicyChangeApprovalService.approve()`'s live-policy write,
   covered fully in the policy governance chapter) failed with `EROFS` against
   `FilePolicyRepository`. `packages/api/src/application.ts` now selects between the two based
   on whether a real database is configured, constructing whichever one lazily rather than at
   module import time (see that file's own doc comment for why eager construction was tried
-  first and caused a different bug).
 
 `PolicyRegistry` (`packages/policy/src/PolicyRegistry.ts`) is a separate, much smaller piece,
 an in-memory `Map` from `"name:version"` to registration metadata (`{ name, version, path }`).

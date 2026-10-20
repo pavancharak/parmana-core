@@ -176,19 +176,17 @@ leaves behind, since there is no live effect to sign evidence about.
   temp-file-then-atomic-rename pattern. Used for local development and tests, where the
   filesystem is always writable.
 - **`SupabasePolicyRepository`** (`packages/policy/src/SupabasePolicyRepository.ts`) :
-It stores
+  It stores
   `(policy_name, policy_version) -> content_json` rows in a `policies` table
   (migration `20260916060000_add_policies_table.sql`) via a direct Postgres connection.
 
-The reason a second implementation exists at all is a real production incident: Vercel's
 serverless Functions run on a **read-only filesystem**. The very first time
 `PolicyChangeApprovalService.approve()` ran against a live, deployed instance (all ten of
 this system's original real policies had sat `PENDING_APPROVAL` for a month before that
 first real approval), the file write failed immediately with `EROFS`. `application.ts`
 now chooses between the two implementations based on `config.storage.provider`: memory or
 test conditions get `FilePolicyRepository`, any real database configuration gets
-`SupabasePolicyRepository`. See the "What was found and fixed" section below for the full
-incident chain, including a second bug this same fix introduced and then closed.
+`SupabasePolicyRepository`.
 
 ### Deploy-time and periodic integrity checking
 
@@ -240,7 +238,6 @@ to `policies/{name}/{version}/policy.json` that skips the pending-change API ent
   (propose, sign, and submit in one process, always from the current on-disk file), and
   proves both produce the identical durable effects as the fully manual flow. These
   scripts exist because chaining a hand-signed, 120-second-lived envelope across separate
-  `sign` and `submit` shell commands is genuinely fragile in practice: see the incident
   notes below.
 
 ## How to validate this yourself
@@ -298,4 +295,3 @@ to `policies/{name}/{version}/policy.json` that skips the pending-change API ent
 ## What remains genuinely open
 
 Execution time policy governance verification is enforced. `RuntimeEngine` refuses execution against any policy with no approval record, an invalid approval-record signature, or content that no longer matches its approval record, and `ExecutionGateway` runs the same check again at release, requiring the approved hash, the hash signed into the authorization, and the live hash to agree §2.35 and §2.36). Since 2026-09-20 this is on everywhere except when `NODE_ENV` is exactly `test` or `development`. `POLICY_EXECUTION_VERIFICATION_ENFORCED` is now only an opt in for those two environments and cannot switch enforcement off in production. The consequence for operators is that every policy a deployment executes against must have a genuine signed approval record before that deployment is promoted, or executions under it are refused.
-

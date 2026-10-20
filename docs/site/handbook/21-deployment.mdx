@@ -8,7 +8,6 @@ description: "This codebase ships with real configuration for two deployment tar
 This codebase ships with real configuration for two deployment targets: Vercel
 (`vercel.json`, serverless Functions) and Fly.io (`fly.toml`, `Dockerfile`, a long-running
 process). Both run the identical application code; what differs is the execution model, and
-that difference has produced at least one real production incident worth understanding in
 detail.
 
 ## Why it was built this way
@@ -46,7 +45,6 @@ Every route is rewritten to a single serverless Function, `api/index.ts`. `inclu
 notable: it explicitly bundles `policies/**` into the deployed Function, since the Function's
 filesystem is otherwise whatever the build produced, nothing more. This is also the exact
 filesystem that turned out to be **read only** at runtime, which is the deployment-specific
-incident below.
 
 ### Fly.io
 
@@ -72,7 +70,7 @@ machine, with Fly's own health check hitting `GET /ready` every 30 seconds, the 
 probe covered in Chapter 19. Unlike Vercel, this filesystem is genuinely persistent and
 writable for the life of the machine.
 
-### The read-only filesystem incident, a concrete illustration
+### A read-only filesystem
 
 `PolicyChangeApprovalService.approve()` (Chapter 7) writes the newly approved policy content via
 `PolicyRepository.save()`. The original implementation, `FilePolicyRepository`, writes to the
@@ -100,9 +98,7 @@ AWS_ROLE_ARN     # the IAM role Vercel's OIDC token assumes
 the only two `process.env` reads in that file, `KmsSigner requires AWS_REGION to be set` is a
 real thrown error if `AWS_REGION` is missing.) [AWS KMS signing](/deployment/aws-kms-signing)
 documents the Vercel side of the setup (`vercel env add AWS_REGION production`, and the trust
-policy connecting Vercel's OIDC issuer to the IAM role). The 2026-09-15 KMS migration troubleshooting guide
-records the real incidents hit while migrating to this from static keys, cross-check its
-specific claims against current source rather than assuming they still describe live bugs; the
+policy connecting Vercel's OIDC issuer to the IAM role).
 
 `KEY_PROVIDER=local` remains the only fully implemented local-key path; setting `KEY_PROVIDER`
 to anything else (`aws-kms`, `azure-key-vault`, `gcp-kms`, `hsm` were once silently ignored, a
@@ -127,11 +123,8 @@ walk through the real, current deployment steps for each target.
 
 - `vercel.json`, `fly.toml`, `Dockerfile` (repo root) for the two real platform configs.
 - `packages/crypto/src/providers/signer/KmsSigner.ts` for the exact AWS env vars actually read.
-- `packages/policy/src/SupabasePolicyRepository.ts`'s own doc comment for the EROFS incident
-  account.
-- `supabase/migrations/20260916060000_add_policies_table.sql` for the schema the fix depends on.
-- the 2026-09-15 KMS migration troubleshooting guide and
-  [AWS KMS signing](/deployment/aws-kms-signing) for the full operational history.
+- `the policies table migration` for the schema the fix depends on.
+- [AWS KMS signing](/deployment/aws-kms-signing) for the setup steps.
 
 ## Requirements
 

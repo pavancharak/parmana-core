@@ -41,7 +41,6 @@ Every cryptographic operation in this codebase is required to go through it, `Ar
 `VerificationCrypto`, `AuditEventCrypto`) all construct their own `CanonicalSerializer`
 instance rather than hashing raw `JSON.stringify` output directly.
 
-A real, recent incident makes the "array order still matters" half of that rule concrete: on
 2026-09-16, a batch of policy approvals initially appeared to fail a content-hash check purely
 because a database round-trip had reordered object keys in the stored `proposedContent`, that
 turned out to be a red herring, since `CanonicalSerializer` normalizes object key order
@@ -135,7 +134,7 @@ replaced by `/` because KMS alias names cannot contain a dot, so `"tenant.acme"`
 reserved `alias/aws/` prefix. It refuses a full key ARN: a keyId often comes from
 the record being verified, and an ARN can name a key in another AWS account whose public key
 anyone may read (audit, 2026-10-03). A UUID shaped keyId is treated as an alias name, never as a
-raw key ID. This was a real bug,
+raw key ID.
 found by code review before any production traffic hit it: the very first version of this
 class passed the logical keyId straight through, which meant `KmsSigner.sign("default", data)`
 would have called AWS with `{ KeyId: "default" }` and failed immediately on every real
@@ -171,14 +170,11 @@ released action always has signed evidence behind it (Chapter 8).
 
 ### `SignerKeyProviderAdapter`: closing a real signing/verification divergence
 
-`providers/SignerKeyProviderAdapter.ts` is the fix for the most serious of the real incidents
-The bug: `EnvelopeVerifier.resolveKey()` uses a `KeyProvider` to look up the public key for
 _every_ authorization it verifies, including ones signed under the plain `"default"` keyId,
 not only tenant-scoped ones, contrary to an earlier assessment in this same codebase's own
 comments that this path was "currently inert." `createExecutionGateway.ts` unconditionally
 constructed a fresh `new FileKeyProvider()` for that lookup, regardless of `KEY_PROVIDER`. Once
 `KEY_PROVIDER=aws-kms` was set, every authorization was _signed_ by the real KMS key (via
-`SignerBootstrap`) but _verified_ against whatever stale local `default.public.pem` happened
 to still be materialized from a pre-migration `PARMANA_KEY_MATERIAL_JSON` entry. Signing and
 verification silently used two different keys, every real request's `signatureVerified`
 check (and everything that cascades from it: `businessTransactionHashMatches`, `nonceUnseen`)
@@ -225,7 +221,6 @@ those two, not `KMS_REGION`/`KMS_KEY_ALIAS`, the latter pair currently does noth
 - `examples/tutorials/47-canonical-json` demonstrates `CanonicalSerializer`'s normalization
   behavior directly.
 - `packages/crypto/tests/unit/kms-signer.test.ts` and `signer-key-provider-adapter.test.ts`
-  are the permanent, mocked-AWS-SDK regression coverage for both fixes above; the KMS
   migration's own troubleshooting guide notes a real, one-time end-to-end test was also run
   against actual AWS KMS before this coverage was trusted, then deleted once confirmed.
 
@@ -238,13 +233,6 @@ those two, not `KMS_REGION`/`KMS_KEY_ALIAS`, the latter pair currently does noth
 - `packages/crypto/src/Signer.ts`, `KeyProvider.ts`, the two interfaces, both with doc
   comments explaining exactly why they're separate.
 - `packages/crypto/src/providers/signer/KmsSigner.ts`, `providers/SignerKeyProviderAdapter.ts`,
-  the real AWS KMS implementation and the incident it closes.
-- the 2026-09-15 KMS migration troubleshooting guide, the real incident
-  timeline this chapter draws from; each entry names its symptom, root cause, and fix
-  separately, and is worth reading end to end for the migration's own stated lesson: "a
-  migration that changes _where_ a system's trust boundary sits needs to be verified against
-  the real target platform's actual runtime behavior, not just a mocked test double of it."
-  fix specifically.
 
 ## Integration requirements
 

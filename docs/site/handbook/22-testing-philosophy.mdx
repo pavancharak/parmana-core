@@ -78,7 +78,6 @@ where the server reads what others wrote: request bodies (`POST /execute` and
 arbitrary JSON), policy files (validation must accept or refuse with `PolicyValidationError`, and
 a policy that validates must evaluate any signals to `APPROVE` or `REJECT`), the offline verifier
 (any input is `valid: false` with a reason) and approval parsing. They run with every `npm test`.
-On their first run they found three crashes on malformed input: a missing `policy` or
 `authorization` gave a bare `500`, the policy validator threw `TypeError` on fields of the
 wrong type, and the offline verifier threw on malformed hybrid signatures. All three
 are fixed, each with an exact test.
@@ -92,7 +91,6 @@ forcing a condition to `true`, one at a time, and runs the package's own tests a
 The share of changes the tests catch is the mutation score. It is slow, because every change
 runs the package's whole test suite, so it is run by hand rather than in CI.
 
-The first run on the five security-critical packages scored 89.7% for `envelope-verifier`,
 77.7% for `approval`, 50.3% for `policy`, 67.6% for `execution-gateway` and 65.4% for `crypto`.
 The surviving changes pointed at real gaps: approval scope comparators other than `eq` and `lte`,
 what rule operators do with a value of the wrong type, gateway options that could be dropped on
@@ -149,7 +147,7 @@ final `✓`/`✗` verdict, entirely hermetically, no network access, no real cre
 - `scripts/run-examples.ts` for the full registered tutorial list and the two documented
   exclusions.
 - `.github/workflows/ci.yml` for the exact CI gates.
--'s own header/preface section for the citation-integrity discipline stated in
+  -'s own header/preface section for the citation-integrity discipline stated in
   its own words.
 - Any individual `examples/tutorials/*/README.md`, each states what it proves and why it
   matters, in the same structure this book uses.
