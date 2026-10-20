@@ -85,6 +85,12 @@ Not built yet, and not safe to deploy until they are:
 - **The scheduler itself.** The probe endpoint exists. The job that sends the probe request is not set up anywhere, and no scheduler has been given a probe key.
 - **Probe retention.** Decision 3 requires at least one year. Nothing deletes old rows yet, and a retention job that keeps them for a year is not built.
 
+## Production status (2026-10-20)
+
+Live in production, with the switch not tripped. `KILL_SWITCH_ENABLED=true` and `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR=true` are set as Vercel Config values. Both migrations are applied. A check with a valid key returned `{"active":false,"version":0,"nonce":"verify-1","signed":false}`. Operations are in [docs/runbooks/KILL-SWITCH-OPERATIONS.md](../runbooks/KILL-SWITCH-OPERATIONS.md).
+
+Still open: signed status and audit events (G-118), the probe scheduler, probe retention, the third-party check, and an exercised two-person reset.
+
 ## How the durable store was tested
 
 Against a local PostgreSQL 16 cluster, not the production or the test project. The live test (`packages/api/tests/integration/postgres-kill-switch.integration.test.ts`) runs only with `DATABASE_URL` and `ALLOW_LIVE_SUPABASE=1` set, and it resets the single row before each case, so run it against a test database only. It covers: the seeded state, a stale write being refused, a trip surviving a new pool, and two concurrent trips ending at version 2.
