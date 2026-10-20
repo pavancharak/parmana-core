@@ -283,7 +283,7 @@ tests passed); #313 merged as `1aac6c8`; the tier change follows in a separate m
 - **Live in production, not tripped.** `KILL_SWITCH_ENABLED=true` and `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR=true` are set in Vercel. Migrations `20261020120000` and `20261020130000` are applied.
 - **What it does.** A trip refuses new execution, transactions, policy-change approvals and sandbox approvals with `503 KILL_SWITCH_ACTIVE`. The state is stored in Postgres, so it survives restarts. Reset needs two different operators.
 - **Routes.** `POST /kill-switch/trip`, `POST /kill-switch/reset`, `GET /kill-switch/status`, `POST /kill-switch/probes`.
-- **Not yet.** The status and audit events are not signed (G-118). The probe runs every 15 minutes from GitHub Actions on `main`; its first manual run passed on 2026-10-20. Keys pasted into chat during setup must be rotated. The two-person reset has not been exercised with two real keys. A third-party check has not been done.
+- **Not yet.** The status and audit events are not signed (G-118). The probe runs every 15 minutes from GitHub Actions on `main`; its first manual run passed on 2026-10-20. Keys pasted into chat during setup were rotated on 2026-10-20: the replaced keys are refused, and unknown keys get `401`. The two-person reset has not been exercised with two real keys. A third-party check has not been done.
 - **Where to read more.** Claim 2.58 in `docs/CLAIMS.md`, the runbook at `docs/runbooks/KILL-SWITCH-OPERATIONS.md`, and the open items in `docs/REMAINING-WORK.md` section A2.
 
 ## On disk, but not reachable
