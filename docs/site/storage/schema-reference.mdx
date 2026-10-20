@@ -31,13 +31,13 @@ psql "$DATABASE_URL"
 | `settlement_confirmations`              | Signed settlement confirmations                                         | `SupabaseExecutionTrustRecordRepository`       |
 | `overrides`                             | `OverrideService` backing table, deliberately unreachable, expect empty | `SupabaseExecutionTrustRecordRepository`       |
 | `refusal_records`                       | Signed record of a refused decision                                     | `SupabaseRefusalRecordRepository`              |
-| `execution_intents`                     | Signed intent stored before an action is released (ADR-0012)            | `SupabaseExecutionIntentRepository`            |
+| `execution_intents`                     | Signed intent stored before an action is released            | `SupabaseExecutionIntentRepository`            |
 | `caller_audit_events`                   | Every caller authentication decision, the highest write volume          | `SupabaseCallerAuditSink`                      |
 | `execution_audit_events`                | Execution lifecycle events, **shared with `parmana-paytm-agent`**       | `SupabaseExecutionAuditSink`                   |
 | `policies`                              | Policy content written on approval (Vercel has a read only filesystem)  | `SupabasePolicyRepository`                     |
 | `approval_issuers`                      | Approver keys added through maker checker                               | `SupabaseApprovalIssuerRepository`             |
 | `approval_issuer_changes`               | Proposals to add or revoke an approver key                              | `SupabaseApprovalIssuerRepository`             |
-| `external_connectors`                   | External connectors registered through maker checker (ADR-0013)         | `SupabaseExternalConnectorRepository`          |
+| `external_connectors`                   | External connectors registered through maker checker         | `SupabaseExternalConnectorRepository`          |
 | `external_connector_changes`            | Proposals to register or revoke an external connector                   | `SupabaseExternalConnectorRepository`          |
 | `pending_policy_changes`                | Maker and checker: a proposed change awaiting approval                  | `SupabasePendingPolicyChangeRepository`        |
 | `policy_change_approval_records`        | Maker and checker: signed approval or rejection                         | `SupabasePolicyChangeApprovalRecordRepository` |
@@ -129,7 +129,7 @@ Unlike the tables in the initial schema, this one has **no foreign key** back to
 
 ### `refusal_records`
 
-The signed record of a refused decision (RFC-0021). `RuntimeEngine` writes one for every
+The signed record of a refused decision. `RuntimeEngine` writes one for every
 decision that is not `APPROVED`: a policy rule rejection, a policy approval check failure, a
 capability binding violation, a signal to intent binding violation, or a signal state or
 approval signal mismatch. Caller authentication failures go to `caller_audit_events`
@@ -143,8 +143,7 @@ Created by `20260802120000_add_refusal_records.sql`: `refusal_record_id` primary
 
 ### `execution_intents`
 
-The signed Execution Intent written before an action is released to a connector
-(ADR-0012). If it cannot be stored, nothing is released and the caller gets `503
+The signed Execution Intent written before an action is released to a connector. If it cannot be stored, nothing is released and the caller gets `503
 EXECUTION_INTENT_UNAVAILABLE`. Created by `20260921120000_add_execution_intents.sql`.
 
 - Identity and binding: `intent_id` primary key, `business_transaction_id TEXT NOT NULL
@@ -270,7 +269,7 @@ order by added_at;
 
 ### `external_connectors` and `external_connector_changes`
 
-External connectors registered without a deploy (ADR-0013): a capability bound to an operator's
+External connectors registered without a deploy: a capability bound to an operator's
 HTTPS endpoint and to the policy that governs it, through `/external-connectors`. Created by
 `20260930120000_add_external_connectors.sql`.
 
@@ -333,7 +332,7 @@ Created by `20260718090000_add_nonce_and_caller_audit_tables.sql`,
 
 ### `challenge_records`
 
-Investigation records for a disputed claim (RFC-0022), and the only mutable table: `status`,
+Investigation records for a disputed claim, and the only mutable table: `status`,
 `investigation_steps_json`, `finding_json`, `outcome_json` and `disclosure_json` are updated
 as an investigation proceeds. Created by `20260803150000_add_challenge_records.sql`:
 `challenge_record_id` primary key, `status` (`open`, `investigating`, `resolved`),
@@ -357,7 +356,7 @@ key), `count INTEGER NOT NULL`, `reset_time TIMESTAMPTZ NOT NULL` (indexed). An 
 resets on its next hit, so no cleanup job is needed.
 
 The only table without RLS, deliberately: it holds no business or trust data and has no
-dashboard access path. See `docs/VERIFICATION-GAPS.md` G-49 for why the keys are prefixed.
+dashboard access path. See G-49 for why the keys are prefixed.
 
 ### `handbook_download_leads`
 

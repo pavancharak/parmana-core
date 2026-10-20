@@ -342,11 +342,11 @@ real chain of issues, none of them hypothetical:
    and re-approved, confirmed clean via `scripts/verify-policy-changes-approved.ts --full-scan`.
 
 The full, first-hand account of this incident chain, including exact timestamps and every
-resulting `policyChangeApprovalRecordId`, is recorded in `docs/CLAIMS.md` §2.26's
+resulting `policyChangeApprovalRecordId`, is recorded in §2.26's
 "Legacy-policy backfill" entry.
 
 ## What remains genuinely open
 
-Execution time policy governance verification is enforced. `RuntimeEngine` refuses execution against any policy with no approval record, an invalid approval-record signature, or content that no longer matches its approval record, and `ExecutionGateway` runs the same check again at release, requiring the approved hash, the hash signed into the authorization, and the live hash to agree (`docs/CLAIMS.md` §2.35 and §2.36). Since 2026-09-20 this is on everywhere except when `NODE_ENV` is exactly `test` or `development`. `POLICY_EXECUTION_VERIFICATION_ENFORCED` is now only an opt in for those two environments and cannot switch enforcement off in production. The consequence for operators is that every policy a deployment executes against must have a genuine signed approval record before that deployment is promoted, or executions under it are refused.
+Execution time policy governance verification is enforced. `RuntimeEngine` refuses execution against any policy with no approval record, an invalid approval-record signature, or content that no longer matches its approval record, and `ExecutionGateway` runs the same check again at release, requiring the approved hash, the hash signed into the authorization, and the live hash to agree §2.35 and §2.36). Since 2026-09-20 this is on everywhere except when `NODE_ENV` is exactly `test` or `development`. `POLICY_EXECUTION_VERIFICATION_ENFORCED` is now only an opt in for those two environments and cannot switch enforcement off in production. The consequence for operators is that every policy a deployment executes against must have a genuine signed approval record before that deployment is promoted, or executions under it are refused.
 
-What remains genuinely open is the scope of the checker's authority: any provisioned human checker with a step up key can approve any policy, and there is no per policy approver list or quorum (`docs/VERIFICATION-GAPS.md` G-50).
+What remains genuinely open is the scope of the checker's authority: any provisioned human checker with a step up key can approve any policy, and there is no per policy approver list or quorum G-50).

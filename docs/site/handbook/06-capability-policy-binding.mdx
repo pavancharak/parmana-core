@@ -37,7 +37,7 @@ against self-declared signals, and get the real `hubspot:deal-update` intent exe
 bypassing the capability's intended protections entirely, not merely weakening them.
 
 Found by an independent repository verification (Phase 2K, TD-22) and closed as its own
-package extraction (G-30 architecture follow-up, see `docs/VERIFICATION-GAPS.md` G-30 for the full history of why this specific
+package extraction (G-30 architecture follow-up, see G-30 for the full history of why this specific
 package boundary was chosen).
 
 ## How it works
@@ -48,7 +48,7 @@ package boundary was chosen).
 from capability string to `PolicyReference` (`{ name, version, schemaVersion }`). The **name** is
 fixed in code. The **version** in the table applies only where policy governance is not
 enforced (`NODE_ENV` `test` and `development`). Where it is, production included, the version in
-effect is the one most recently approved through policy governance (G-66), so a new version goes
+effect is the one most recently approved through policy governance, so a new version goes
 live when it is approved, with no deploy. Current bindings, with the version used without
 governance:
 
@@ -72,7 +72,7 @@ any future capability not yet given a canonical policy, is entirely unaffected b
 `PolicyEngine`; it doesn't change how a selected policy is loaded or evaluated, only whether
 the caller was allowed to select a different one.
 
-Since 2026-09-28 (G-73) a read and a merge on GitHub have separate policies, so a merge can
+Since 2026-09-28 a read and a merge on GitHub have separate policies, so a merge can
 need a signed approval for its pull request without every read needing one. In production each
 new version applies once it is approved through policy governance.
 

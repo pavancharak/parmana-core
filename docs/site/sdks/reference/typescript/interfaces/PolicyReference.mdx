@@ -37,7 +37,7 @@ Defined in: [typescript/src/models/policy.ts:21](https://github.com/pavancharak/
 Defined in: [typescript/src/models/policy.ts:28](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy.ts#L28)
 
 sha256 of the canonicalized policy.json content actually loaded for
-this decision (G-24). Server-computed, never caller-settable; absent
+this decision. Server-computed, never caller-settable; absent
 on a PolicyReference built before this field existed.
 
 ---
@@ -49,7 +49,7 @@ on a PolicyReference built before this field existed.
 Defined in: [typescript/src/models/policy.ts:38](https://github.com/pavancharak/parmana/blob/main/typescript/src/models/policy.ts#L38)
 
 Whether the policy content above is traceable to a completed Policy
-Governance approval, resolved at decision time (G-45). Absent on a
+Governance approval, resolved at decision time. Absent on a
 PolicyReference built before this field existed. Its presence does
 not imply enforcement was on -- only that the lookup ran and
 recorded what it found, which may honestly be "no approval record

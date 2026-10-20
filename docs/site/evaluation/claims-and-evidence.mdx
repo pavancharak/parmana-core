@@ -3,15 +3,7 @@ title: "Claims and evidence"
 description: "Each core claim, where it is stated in full, and the tests and commands that check it."
 ---
 
-Parmana states what it claims in
-[docs/CLAIMS.md](https://github.com/pavancharak/parmana/blob/main/docs/CLAIMS.md). Every
-claim there is scoped to its evidence: the code that implements it, the tests that check it,
-and what it explicitly does not cover. This site mirrors that file and never overrides it.
-When the two disagree, CLAIMS.md is authoritative and the site is wrong.
-
-## How to read a claim
-
-- **The heading states the claim.** A heading marked `(Scoped)` holds only within the
+Parmana states what it claims in(Scoped)` holds only within the
   boundary its text states.
 - **Evidence lists the code and tests.** A claim is written in the present tense only when
   code and tests back it.
@@ -21,14 +13,7 @@ When the two disagree, CLAIMS.md is authoritative and the site is wrong.
 - **What is not claimed is stated too.** See [Limitations](/security/limitations), and
   section 5 of CLAIMS.md.
 
-Gaps that were found, and how each was closed or narrowed, are in
-[docs/VERIFICATION-GAPS.md](https://github.com/pavancharak/parmana/blob/main/docs/VERIFICATION-GAPS.md).
-Open work is in
-[docs/REMAINING-WORK.md](https://github.com/pavancharak/parmana/blob/main/docs/REMAINING-WORK.md).
-
-## Core claims
-
-Each row has a command that reproduces its evidence. Run it after `npm ci` and
+Gaps that were found, and how each was closed or narrowed, are innpm ci` and
 `npm run build`. `npm run evaluate -- EV-04` runs one attack scenario and reports whether it
 was blocked; each scenario's test files are listed in
 [evaluations/scenarios.json](https://github.com/pavancharak/parmana/blob/main/evaluations/scenarios.json)

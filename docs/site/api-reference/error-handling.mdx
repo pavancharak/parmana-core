@@ -81,7 +81,7 @@ A `POST /execute` or `POST /transactions` body without `metadata`, `authority`, 
 ```
 
 Nothing is executed. Until 2026-10-06 a missing `policy` or `authorization` reached the validator and was answered
-with a bare `500` (G-87 in `docs/VERIFICATION-GAPS.md`). A fuzz test now sends damaged and arbitrary bodies to both
+with a bare `500`. A fuzz test now sends damaged and arbitrary bodies to both
 routes and requires that neither ever answers `500`.
 
 Fixed earlier too: "no connector registered for this capability" used to be a bare `500` too. It is now

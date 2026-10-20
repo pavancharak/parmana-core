@@ -7,7 +7,7 @@ description: "Two independent express-rate-limit limiters, one for POST /execute
 
 Three independent `express-rate-limit` limiters, one for `POST /execute` (keyed by
 authenticated caller identity), one for `GET /health`/`GET /ready` (keyed by IP, far more
-permissive) and, since 2026-09-28 (G-78), one shared by the unauthenticated routes that check
+permissive) and, since 2026-09-28, one shared by the unauthenticated routes that check
 signatures or write data (`POST /refusal/verify`, `POST /execution-intents/verify`,
 `POST /audit/verify`, `/handbook`; keyed by IP, 60 per minute by default). Each is backed by either
 an in process store or a durable, fleet wide Postgres store depending on deployment
@@ -54,7 +54,7 @@ instance to both `createExecuteRateLimiter` and `createHealthReadyRateLimiter` c
 request on a fresh cold start.
 
 **A documented correction, not silently fixed:** it was first assumed this crashed the whole
-request (`docs/VERIFICATION-GAPS.md`, and item 5 of the 2026-09-15 KMS migration troubleshooting
+request, and item 5 of the 2026-09-15 KMS migration troubleshooting
 guide, in git history), inferred from seeing the `ERR_ERL_STORE_REUSE` log line next to a real HTTP 500.
 Reading `express-rate-limit`'s actual installed source shows every validation is wrapped in a
 try/catch that only logs the violation and never re-throws, the reuse warning is real, but

@@ -4,8 +4,7 @@ description: "A signed statement, stored before an action is released, of exactl
 ---
 
 <Info>
-  **[AVAILABLE]** since 2026-09-21. Design:
-  `docs/adr/ADR-0012-Signed-Execution-Intent-Before-Release.md`. Code:
+  **[AVAILABLE]** since 2026-09-21. Design:. Code:
   `packages/runtime/src/ExecutionIntentService.ts`,
   `ExecutionIntentFinalizer.ts`, `packages/crypto/src/ExecutionIntentCrypto.ts`.
   Verified live on 2026-09-21, see [What was verified](#what-was-verified).
@@ -431,7 +430,7 @@ One more signing operation and one more database write happen before every relea
 | Extra signing operation under AWS KMS | About 35 ms median (34 to 40 ms, 10 samples), measured on 2026-09-21 from a Windows machine to a KMS key in `ap-south-1`. **Not measured from Vercel**, so expect a different figure there.                                                       |
 | Extra KMS calls                       | One `kms:Sign` per released action.                                                                                                                                                                                                               |
 | Extra database writes                 | One insert before release, one update after release, one update after the record is stored.                                                                                                                                                       |
-| In production on Vercel               | In one approved request on 2026-10-01 the record's own timestamps put about 4.7 s between the authorization and the stored intent (`docs/VERIFICATION-GAPS.md` G-84). Not broken down further; most of it is likely database and KMS round trips. |
+| In production on Vercel               | In one approved request on 2026-10-01 the record's own timestamps put about 4.7 s between the authorization and the stored intent G-84). Not broken down further; most of it is likely database and KMS round trips. |
 
 ## Limits, stated plainly
 
@@ -456,4 +455,4 @@ A separate repeat run produced an intent in state `ERRORED` with the reason `Pay
 
 **Closing an intent by hand (resolve) was verified later the same day, first with local signing keys and then under real AWS KMS.** With the same production image and a real Postgres, the connector was made unreachable, so the release raised a real error (`fetch failed`) and left the intent in `ERRORED`. Finalize refused it with `409`. A resolve with no note was refused with `400`, and a non human credential with `403`. A verified human then closed it: `RESOLVED`, `NOT_EXECUTED`, the note and the author recorded, and the intent left the unfinalized list. A second resolve changed nothing (`ALREADY_RESOLVED`), and resolving a `FINALIZED` intent was refused with `409`. 35 of 35 checks passed with local keys, and the final run under KMS, which has one more check, passed 37 of 37. An earlier attempt under KMS had one scenario fail because the agent's own call to Paytm staging failed on the network (`fetch failed`): the intent correctly ended `ERRORED` and the scenario never reached the state it tests. The check no longer depends on the internet: the rig now answers the agent's one call to Paytm staging with a local stand in (the response shape real staging returned for a bad merchant id), and it passed 37 of 37 three times in a row under KMS. The 23 of 23 run above called real Paytm staging with fake credentials. A later run also failed once because the temporary AWS credentials handed to the container had expired after about 15 minutes, so the rig now records their expiry and stops early with an instruction. The resolve SQL was also run against a real Postgres (12 checks, including both database constraints).
 
-Since then the normal path has run in production on Vercel, with the OIDC role and AWS KMS: the approved requests of the external connector live check on 2026-10-01 (`docs/CLAIMS.md` 2.50) stored a signed intent before release, as production enforces. Not verified: the failure paths (finalize, resolve) on Vercel, or a real Paytm refund. The automated tests cover the lifecycle at unit, storage and HTTP level, and the storage queries were also run against a real Postgres.
+Since then the normal path has run in production on Vercel, with the OIDC role and AWS KMS: the approved requests of the external connector live check on 2026-10-01 2.50) stored a signed intent before release, as production enforces. Not verified: the failure paths (finalize, resolve) on Vercel, or a real Paytm refund. The automated tests cover the lifecycle at unit, storage and HTTP level, and the storage queries were also run against a real Postgres.

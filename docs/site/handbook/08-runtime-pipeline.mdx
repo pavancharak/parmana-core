@@ -43,11 +43,11 @@ exactly which protections are active for a given deployment.
 
 1. **Policy load.** `policyRouter.load(transaction.policy.name, transaction.policy.version)`.
    `beforePolicyLoad`/`afterPolicyLoad` hooks fire around this.
-2. **Policy content hash (G-24).** `policyContentHash = policyContentHasher.hash(policy)` ,
+2. **Policy content hash.** `policyContentHash = policyContentHasher.hash(policy)` ,
    computed from the _actually loaded_ policy document, never from what the caller declared,
    using the same `TrustRecordHasher` (canonicalize, then SHA-256) every other content hash
    in this codebase uses.
-3. **Policy Governance evidence anchor (G-45).** If `policyGovernanceAnchorResolver` is
+3. **Policy Governance evidence anchor.** If `policyGovernanceAnchorResolver` is
    configured, it resolves whether this policy has a valid, matching approval record.
    Purely evidentiary, a resolver error is caught and logged, never allowed to affect the
    real outcome.
@@ -68,13 +68,13 @@ exactly which protections are active for a given deployment.
 signals)` runs the real rules. Any rejection from steps 4 through 6 becomes a synthetic
    `PolicyDecision` with `outcome: REJECT`, `evaluatedRules: 0`, no rule is ever evaluated for
    a request that fails an earlier check.
-8. **Signal-state verification (G-24 residual closure, RFC-0022).** Only runs if the
+8. **Signal-state verification.** Only runs if the
    provisional decision is `APPROVE`, "a request already rejected... needs no independent
    re-fetch of real state." If `signalStateVerifier` is configured, it independently
    re-derives the declared facts from a real external source; a mismatch overrides the
    decision to `REJECT`.
 9. **Decision.** `decisionBuilder.build(transaction, policyDecision)`.
-10. **Refusal Record (RFC-0021).** If the decision is not `APPROVED`, a `RefusalRecord` is
+10. **Refusal Record.** If the decision is not `APPROVED`, a `RefusalRecord` is
     built and persisted, but this write is explicitly never allowed to affect or block
     anything downstream; a failure here is only logged (`refusal_record_write_failed`), the
     method quote: "The refusal itself must never depend on its own evidence being writable."
@@ -87,12 +87,12 @@ signals)` runs the real rules. Any rejection from steps 4 through 6 becomes a sy
     are assembled, the context carries a _copy_ of `transaction.policy` augmented with
     `contentHash` and, if resolved, `governanceAnchor`; the original caller-submitted
     transaction (already persisted before this method ever ran) is never mutated.
-14. **Signing readiness (G-52), then the Execution Intent (ADR-0012), then the Runtime Pipeline, then the Business Trust Pipeline.** If `signingReadiness` is configured, `assertReady()` runs first and throws `SigningUnavailableError` (`503 SIGNING_UNAVAILABLE`) when the evidence signing path cannot produce a signature that verifies, so nothing is released. Then, if `executionIntents` is configured, `executionIntents.prepare(context)` signs the Execution Intent and stores it, and throws `ExecutionIntentUnavailableError` (`503 EXECUTION_INTENT_UNAVAILABLE`) when it cannot, so nothing is released. Then `pipeline.execute(context)` runs the
+14. **Signing readiness, then the Execution Intent, then the Runtime Pipeline, then the Business Trust Pipeline.** If `signingReadiness` is configured, `assertReady()` runs first and throws `SigningUnavailableError` (`503 SIGNING_UNAVAILABLE`) when the evidence signing path cannot produce a signature that verifies, so nothing is released. Then, if `executionIntents` is configured, `executionIntents.prepare(context)` signs the Execution Intent and stores it, and throws `ExecutionIntentUnavailableError` (`503 EXECUTION_INTENT_UNAVAILABLE`) when it cannot, so nothing is released. Then `pipeline.execute(context)` runs the
     actual execution stages (Chapter 10 covers `ExecutionGateway`, one implementation of the
     `ExecutionSystem` interface this pipeline calls into). If that raises an error, the intent is marked `ERRORED`. When it returns, `markReleased(...)` saves the execution context on the intent. Then `trustPipeline.execute(...)`
     produces the final, signed `ExecutionTrustRecord`, and after `Runtime.execute()` stores it the intent is marked `FINALIZED`.
 
-### Signing readiness and failure after release (G-52)
+### Signing readiness and failure after release
 
 `signingReadiness` is `CachedSigningReadiness` in production. Its probe is `VerificationCrypto.probeSigning()`,
 which signs a synthetic artifact padded past 4096 bytes through the same `Signer` and key id used for
@@ -107,7 +107,7 @@ persisting the record in `Runtime.execute()`, is thrown as `ExecutionRecordIncom
 critical `execution_released_record_failed` or `execution_released_record_persist_failed` event is
 logged. A failure before release, such as a policy rejection, keeps its own error. See ADR-0011.
 
-### Execution Intents: signed evidence before release, and a repair path (G-52, G-53)
+### Execution Intents: signed evidence before release, and a repair path
 
 The Execution Trust Record contains the execution result, so it can only be built after release. ADR-0012
 adds a separate record that does not: the Execution Intent. `ExecutionIntentService.prepare()`

@@ -97,12 +97,12 @@ on this table follows.
   matches what's now immediately before it. It does **not** catch deleting an
   entire caller's history at once (nothing remains to show a gap), and it does
   not detect reordering or deletion across *different* callers' independent
-  chains. Both are stated limits, not oversights, see `docs/CLAIMS.md` §2.32.
+  chains. Both are stated limits, not oversights, see §2.32.
 
 **Deleting the newest row for a caller is not detected by the chain alone.** Nothing
 remains after it to break. The verifier accepts a chain head recorded outside the
 database; a chain that no longer ends at that head then fails. Detection depends on
-that head being stored somewhere the database cannot rewrite. See `docs/CLAIMS.md`
+that head being stored somewhere the database cannot rewrite. See
 §2.57 and §2.32.
 
 </Warning>

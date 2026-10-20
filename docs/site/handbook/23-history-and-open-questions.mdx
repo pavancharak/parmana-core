@@ -9,8 +9,8 @@ Every other chapter in this handbook describes what Parmana does today. This one
 how it got there: the real incidents, the corrections, the things that were tried and
 reversed, and the questions that remain genuinely open rather than quietly resolved. The
 two files this chapter draws from most, and which a reader should treat as the primary
-sources rather than this summary, are `docs/VERIFICATION-GAPS.md` (a dated incident and gap
-log going back to the original external audit) and `docs/CLAIMS.md` (the audit ledger, one
+sources rather than this summary, are (a dated incident and gap
+log going back to the original external audit) and (the audit ledger, one
 entry per claim with cited evidence). This chapter is the narrative connecting them, written
 by reading both directly rather than trusting either blindly, and by direct, firsthand
 knowledge of the two most recent sessions, both from 2026-09-15/16.
@@ -20,7 +20,7 @@ knowledge of the two most recent sessions, both from 2026-09-15/16.
 A codebase that has been audited, found wanting, fixed, and re-audited multiple times has a
 choice about how to present that history: quietly rewrite the record so it looks like
 everything was always correct, or keep the record honest, including the mistakes. This
-codebase has consistently chosen the second option. `docs/VERIFICATION-GAPS.md`'s own
+codebase has consistently chosen the second option.'s own
 structure, gaps organized by the session that found and closed them, with a dedicated
 "Decision required" section for things nobody has decided yet, exists specifically so a
 reader can tell the difference between "this was always solid" and "this broke once, here
@@ -29,7 +29,7 @@ file and line citation is not trusted, in this document or in the ones it draws 
 
 ## The broad shape of the project's history
 
-Rather than repeating every entry in `docs/VERIFICATION-GAPS.md` (over 2,900 lines as of
+Rather than repeating every entry in (over 2,900 lines as of
 this writing, covering audits from an original external review through at least seven
 distinct closure sessions), this section names the eras and points at where to read more:
 
@@ -38,14 +38,13 @@ distinct closure sessions), this section names the eras and points at where to r
   `SPECIFICATION.md`, `TRUST_MODEL.md`, `GUARANTEES.md`, and `PROOFS.md` dated from this
   period. They were removed from the repository on 2026-09-28 (they remain in git history).
 - **2026-07-17 audit closeout session.** Nine tasks closing findings from a July 16 external
-  audit. See `docs/VERIFICATION-GAPS.md`'s "Gaps closed in the 2026-07-17 audit closeout
+  audit. See's "Gaps closed in the 2026-07-17 audit closeout
   session" section.
 - **Phase 3D certification session.** A further, larger closure pass; see that session's own
-  heading in `docs/VERIFICATION-GAPS.md`.
+  heading in.
 - **2026-09-07 through 2026-09-14: a run of focused sessions** covering production
   readiness, real-deployment verification, PQC production-readiness remediation, and
-  execution-audit-trail hardening, each with its own dated section in
-  `docs/VERIFICATION-GAPS.md`.
+  execution-audit-trail hardening, each with its own dated section in.
 - **Gaps 35 through 40 (audit-artifact-driven, same day as the gaps-24-34 pass).** These
   closed detection-then-prevention gaps in Policy Governance specifically: a five-minute
   periodic integrity re-check (gap 36), a legacy-policy backfill script (gap 39), and
@@ -66,7 +65,7 @@ is the detailed account. The one worth naming specifically here, because of how 
 found: `SignerKeyProviderAdapter` (packages/crypto) had a divergence between the key used to
 _sign_ and the key used to _verify_, a signing/verification key mismatch that would have
 silently produced signatures nothing could verify, had it reached production unnoticed. It
-is documented as G-48/G-49 in `docs/VERIFICATION-GAPS.md`, and Chapter 3 of this handbook
+is documented as G-48/G-49 in, and Chapter 3 of this handbook
 covers the cryptography layer this fix lives in.
 
 Two other findings from the same session are directly relevant to chapters elsewhere in
@@ -135,7 +134,7 @@ session, caught the first time it actually ran.
 ## Genuinely open questions
 
 These are unresolved by design, not oversights. Each is documented in full, with real
-options weighed, in `docs/VERIFICATION-GAPS.md`'s "Decision required" section; this is a
+options weighed, in's "Decision required" section; this is a
 short index, not a replacement for reading the original entries.
 
 - **D-2 (partially resolved).** Hybrid/post-quantum signatures are wired for Trust Records
@@ -165,7 +164,7 @@ short index, not a replacement for reading the original entries.
   _required_ GitHub branch-protection check. Attempting to enable it during a real session
   failed with `403 Upgrade to GitHub Pro or make this repository public`, an externally
   imposed constraint (private-repository plan limits), not a gap in this codebase's own
-  logic. See `docs/CLAIMS.md` §2.26's "Preventive Git-layer enforcement" entry for the full
+  logic. See §2.26's "Preventive Git-layer enforcement" entry for the full
   account.
 - **The internal-vs-external policy authoring question.** Should Parmana be the system of
   record for policy approval at all, or should policies be authored and approved in an
@@ -173,24 +172,24 @@ short index, not a replacement for reading the original entries.
   codebase picks a side; the maker-checker system described in Chapter 7 exists because
   policy authoring was previously outside any governance surface at all, not because
   building it internally was compared against and preferred over the external alternative.
-- **The connector can be called before the Execution Trust Record can be signed (G-52).** Found on
+- **The connector can be called before the Execution Trust Record can be signed.** Found on
   2026-09-20, when AWS KMS refused a message over 4096 bytes (fixed by ADR-0010). The Paytm connector
   had already been called when `/execute` returned `500`. The runtime pipeline releases the action and
   then builds, signs and persists the record, so any failure after the connector call leaves an
   executed action with no signed trust record. Gateway and connector audit events still exist, but the
-  durable signed record does not. Mitigated the same day (ADR-0011): before release the engine now proves the signing path works and refuses with `503 SIGNING_UNAVAILABLE`, and a failure after release is reported as `500 EXECUTION_RECORD_INCOMPLETE` with the identifiers. Closed on 2026-09-21 (ADR-0012): a signed Execution Intent is now stored before release, and release is refused with `503 EXECUTION_INTENT_UNAVAILABLE` when it cannot be, so a released action always has signed evidence behind it. A missing Trust Record (G-53) can now be rebuilt with `POST /execution-intents/{businessTransactionId}/finalize`, which never calls the connector. The limits that remain: finalize cannot rebuild a record when the execution context was not saved (it refuses with `409`), and the SDK methods for intents shipped in SDK 1.2.0 on 2026-09-21 (G-55). An intent left `PREPARED` or `ERRORED` is closed after it is reconciled by hand with `POST /execution-intents/{businessTransactionId}/resolve` (G-54), which records an attributed operator statement in unsigned status and not a signed record. Verified live on 2026-09-21 against a real KMS key and a real Postgres.
+  durable signed record does not. Mitigated the same day: before release the engine now proves the signing path works and refuses with `503 SIGNING_UNAVAILABLE`, and a failure after release is reported as `500 EXECUTION_RECORD_INCOMPLETE` with the identifiers. Closed on 2026-09-21: a signed Execution Intent is now stored before release, and release is refused with `503 EXECUTION_INTENT_UNAVAILABLE` when it cannot be, so a released action always has signed evidence behind it. A missing Trust Record can now be rebuilt with `POST /execution-intents/{businessTransactionId}/finalize`, which never calls the connector. The limits that remain: finalize cannot rebuild a record when the execution context was not saved (it refuses with `409`), and the SDK methods for intents shipped in SDK 1.2.0 on 2026-09-21. An intent left `PREPARED` or `ERRORED` is closed after it is reconciled by hand with `POST /execution-intents/{businessTransactionId}/resolve`, which records an attributed operator statement in unsigned status and not a signed record. Verified live on 2026-09-21 against a real KMS key and a real Postgres.
 - **Execution time policy verification is now enforced (2026-09-20).** The flag
   `POLICY_EXECUTION_VERIFICATION_ENFORCED` had stayed `false`, and the live startup log showed
   `policyExecutionVerifierConfigured: false`, so an unapproved policy could still authorize. It
   is now on everywhere except `NODE_ENV` `test` and `development`, and the Execution Gateway
-  fails closed on policy binding as well (`docs/CLAIMS.md` §2.36, `docs/VERIFICATION-GAPS.md`
-  gaps 57 and 58). Still open: approver authority is not scoped per policy (G-50), and only the
-  HubSpot capability has an independent signal state verifier (G-51).
+  fails closed on policy binding as well §2.36,
+  gaps 57 and 58). Still open: approver authority is not scoped per policy, and only the
+  HubSpot capability has an independent signal state verifier.
 
 ## How to keep this chapter honest going forward
 
 The same rule that produced this chapter applies to updating it: a new incident gets added
-here (or to `docs/VERIFICATION-GAPS.md`, whichever is the more precise home for it) with a
+here (or to, whichever is the more precise home for it) with a
 real file citation and an honest account of what broke and why, not a summary that makes the
 codebase look more finished than it is. If a claim in this chapter is ever found to be wrong
 against the actual current source, the correction belongs here, visible, the same way the

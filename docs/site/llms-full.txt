@@ -505,7 +505,7 @@ With a signed approval, send the signal as `true` and put the approval, exactly 
 **Do:** send `POST {PARMANA_URL}/execute` with the header, `Content-Type: application/json`, and the object from step 4.
 
 **Set a client timeout of at least 120 seconds.** The request runs the whole pipeline before it answers, including the
-call to the connector. In production an approved request took 24 to 32 seconds on 2026-10-01 (G-84), longer than the
+call to the connector. In production an approved request took 24 to 32 seconds on 2026-10-01, longer than the
 SDKs' default of 30 seconds: pass `timeout: 120_000` (TypeScript) or `timeout=120` (Python) to the client.
 
 **Never retry this request automatically.** A retry could repeat a real action. The rules for a timeout are in step 7.
@@ -1507,7 +1507,7 @@ manager:
 
 Why every refund: the agent declares `refundEligible` and `fraudCheckPassed` itself, and
 nothing checks them. In 1.1.0 a refund up to 10000 was authorized on those two claims alone, so
-an agent manipulated by prompt injection could approve its own refunds (G-75). In 1.2.0 they can
+an agent manipulated by prompt injection could approve its own refunds. In 1.2.0 they can
 only refuse a refund.
 
 <Note>
@@ -1820,8 +1820,7 @@ requests query above stays the complete list.
 Nothing waits for a person. After a manager signs an approval, the agent sends a new request.
 
 **Eligibility and fraud signals are still the caller's word.** `refundEligible` and
-`fraudCheckPassed` are not checked against another system (G-51 in
-`docs/VERIFICATION-GAPS.md`). They can only refuse; the signed approval authorizes.
+`fraudCheckPassed` are not checked against another system. They can only refuse; the signed approval authorizes.
 
 **An approval covers the action and the resource, not every parameter.** An approval for a
 Slack channel does not fix the message text, and an approval for a HubSpot deal does not fix the
@@ -1829,8 +1828,7 @@ new amount or stage. The approver trusts the agent with those details for that o
 approval for a payment, an expense or a refund does cover the amount.
 
 **There is no automatic path.** No action is authorized without a person, by design. Adding one
-would need a server side check that reads the facts itself, and a change to this rule
-(G-80 in `docs/VERIFICATION-GAPS.md`).
+would need a server side check that reads the facts itself, and a change to this rule.
 
 ## Why each action is bound to one policy
 
@@ -2006,7 +2004,7 @@ placeholder to fix later, from day one.
 
 `policy.name`/`policy.version` is never inferred from `intent.action`: name it explicitly, or a
 caller could pair a real capability with an unrelated policy. Under `customer-refund` 1.2.0 every
-refund needs a signed manager approval (G-75); without one the request is refused with `403
+refund needs a signed manager approval; without one the request is refused with `403
 POLICY_DENIED`, whatever your agent declares about eligibility and fraud.
 
 **7. Send it, handle the response**, see the complete reference table below.
@@ -2042,7 +2040,7 @@ catalog](/api-reference/error-catalog) has every code.
 | `503`  | `SIGNING_UNAVAILABLE`, `EXECUTION_INTENT_UNAVAILABLE` | The server could not sign or store evidence before release. Nothing ran.                                                                                                                | Retry later with a new `businessTransactionId`.                                                                                                |
 | `500`  | `EXECUTION_RECORD_INCOMPLETE`                         | Released, then the Trust Record could not be stored. The action ran.                                                                                                                    | **Do not send it again.** The operator finalizes the intent.                                                                                   |
 | `500`  | none                                                  | Anything unexpected, including a gateway rejection of a tampered envelope.                                                                                                              | Ask the operator to read the server log before assuming your request was wrong.                                                                |
-| (none) | none                                                  | Timeout or network error. Unknown whether Parmana received it; an approved request can take tens of seconds (G-84).                                                                     | Set the timeout to 120 seconds. After a timeout, read `GET /trust-records/{id}` and `GET /refusal/{id}` with the same id before anything else. |
+| (none) | none                                                  | Timeout or network error. Unknown whether Parmana received it; an approved request can take tens of seconds.                                                                     | Set the timeout to 120 seconds. After a timeout, read `GET /trust-records/{id}` and `GET /refusal/{id}` with the same id before anything else. |
 
 ## Common mistakes
 
@@ -2096,19 +2094,19 @@ bugs. Full account: the 2026-09-15 KMS migration troubleshooting guide (in git h
 Source: https://docs.parmanasystems.com/guides/connect-any-external-system
 
 This page connects a system Parmana has no built in connector for, such as your ERP, CRM or an internal service, with
-no change to Parmana's code (ADR-0013). You run a small HTTPS endpoint in front of the system. Parmana releases every
+no change to Parmana's code. You run a small HTTPS endpoint in front of the system. Parmana releases every
 approved request for the action to that endpoint as a **signed release**; the endpoint checks it with an SDK helper,
 acts with its own credentials, and answers. Parmana holds none of the system's credentials.
 
 <Warning>
   **Status, 2026-10-01.** Registering a connector through maker checker, and
   releasing approved requests to it, are live in production and were checked end
-  to end against a deployed endpoint (`docs/CLAIMS.md` 2.49 and 2.50). The SDK
+  to end against a deployed endpoint 2.49 and 2.50). The SDK
   helpers `verifyParmanaRelease` and `verify_parmana_release` are published in
   SDK 1.5.0 (2026-10-04) on npm and PyPI; with an older SDK, build the endpoint
   from the repository's SDK packages, as
   `examples/live-checks/external-connector/build-endpoint.ts` does. An approved
-  request took 24 to 32 seconds in production (G-84): give the agent a timeout
+  request took 24 to 32 seconds in production: give the agent a timeout
   of at least 120 seconds.
 </Warning>
 
@@ -2425,7 +2423,7 @@ nothing was done. The example endpoints take this check as `conditionsHold` (Typ
   proposed, when it is approved, and at every release. It connects to the address it checked and follows no redirect.
 - A release names one capability, target and parameter set a person approved, is addressed to one endpoint, and expires
   60 seconds after it is issued. No shared secret is involved: the signature is the authentication.
-- What the endpoint answers is its claim, not proof that it acted (`docs/VERIFICATION-GAPS.md` G-82).
+- What the endpoint answers is its claim, not proof that it acted G-82).
 
 ## See it run
 
@@ -2434,7 +2432,7 @@ nothing was done. The example endpoints take this check as `conditionsHold` (Typ
   and stops at a revoke.
 - The `/external-connectors` operations in the [API reference](/api-reference/endpoints/propose-external-connector-change),
   with real responses for every refusal.
-- The design and its security reasoning: `docs/adr/ADR-0013-Generic-External-Connector.md`.
+- The design and its security reasoning:.
 
 ---
 
@@ -4603,7 +4601,7 @@ A `POST /execute` or `POST /transactions` body without `metadata`, `authority`, 
 ```
 
 Nothing is executed. Until 2026-10-06 a missing `policy` or `authorization` reached the validator and was answered
-with a bare `500` (G-87 in `docs/VERIFICATION-GAPS.md`). A fuzz test now sends damaged and arbitrary bodies to both
+with a bare `500`. A fuzz test now sends damaged and arbitrary bodies to both
 routes and requires that neither ever answers `500`.
 
 Fixed earlier too: "no connector registered for this capability" used to be a bare `500` too. It is now
@@ -4653,7 +4651,7 @@ not as a failure.
 
 <Warning>
   **After a timeout, read before you send again.** An approved request can take
-  tens of seconds (see `docs/VERIFICATION-GAPS.md` G-84), longer than a client's
+  tens of seconds (see G-84), longer than a client's
   default timeout. The request keeps running on the server, and the action may
   be performed. If your client times out, read `GET /trust-records/
   {businessTransactionId}` (and `GET /refusal/{id}`) with the same id first.
@@ -4818,7 +4816,7 @@ external system](/guides/connect-any-external-system).
 | 503    | `CONNECTOR_NOT_REGISTERED`      | `No connector is registered for capability '<action>' on this deployment. Nothing was executed. ...`                                                                       | The action was approved, but no connector is registered for it, usually because the connector's credentials are not configured. The operator must configure it, then retry with a new `businessTransactionId`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | 500    | `EXECUTION_RECORD_INCOMPLETE`   | `The action for business transaction '<id>' was released ... reconcile ... authorizationId: <id>.`                                                                         | The action was released to the connector, then the signed Execution Trust Record could not be produced or persisted. **Do not retry as a new transaction.** A signed [Execution Intent](/concepts/execution-intents) exists for it. Read `GET /execution-intents/<businessTransactionId>`: in state `RELEASED`, an operator can rebuild the record with `POST /execution-intents/<businessTransactionId>/finalize`, which never calls the connector. In state `PREPARED`, finalize refuses with `409`, and the outcome must be reconciled against the connector by hand.                                                                                                                                                                            |
 | 409    | `AUTHORIZATION_NO_LONGER_VALID` | `Not released: what the authorization for business transaction '<id>' rests on no longer holds (...). Nothing was executed. ...`                                           | RFC-0023 phase 4. The request was decided, but at release a business fact it rested on was past its `validUntil`, or the agent's authority grant had expired or been revoked. Nothing was sent to the connector, and the body says `executionStatus: NOT_EXECUTED`. Send a new request, which is decided again on current facts and authority. The [Execution Intent](/concepts/execution-intents) is `ERRORED`; close it as `NOT_EXECUTED`.                                                                                                                                                                                                                                                                                                        |
-| 502    | `EXECUTION_OUTCOME_UNKNOWN`     | `The action for business transaction '<id>' was released to the execution system, but the call failed, so whether it was performed is unknown. ... authorizationId: <id>.` | The action was released and the call to the connector failed: unreachable, timed out, or an error response. Whether it was performed is unknown, and the [Execution Intent](/concepts/execution-intents) is `ERRORED`. **Do not retry as a new transaction.** Check the target system, then close the intent with `POST /execution-intents/<businessTransactionId>/resolve`, recording `EXECUTED` or `NOT_EXECUTED`. The connector's own error is never in the response; it is in the server log (`execution_outcome_unknown`) and in the intent's `failureReason`. Before 2026-09-25 this was a bare `500 Internal Server Error` (G-63). Since RFC-0023 phase 4 the body also says `executionStatus: EXECUTION_UNKNOWN`: never reported as failed. |
+| 502    | `EXECUTION_OUTCOME_UNKNOWN`     | `The action for business transaction '<id>' was released to the execution system, but the call failed, so whether it was performed is unknown. ... authorizationId: <id>.` | The action was released and the call to the connector failed: unreachable, timed out, or an error response. Whether it was performed is unknown, and the [Execution Intent](/concepts/execution-intents) is `ERRORED`. **Do not retry as a new transaction.** Check the target system, then close the intent with `POST /execution-intents/<businessTransactionId>/resolve`, recording `EXECUTED` or `NOT_EXECUTED`. The connector's own error is never in the response; it is in the server log (`execution_outcome_unknown`) and in the intent's `failureReason`. Before 2026-09-25 this was a bare `500 Internal Server Error`. Since RFC-0023 phase 4 the body also says `executionStatus: EXECUTION_UNKNOWN`: never reported as failed. |
 
 ## Execution Intents (operator routes)
 
@@ -7454,8 +7452,7 @@ This records every migration up to and including that file as applied, without r
 <Warning>
   Do not run `scripts/apply-all-migrations.sql` on a database that holds data.
   It applies every migration again, several migrations drop and add back the
-  same CHECK constraint, and a second run fails on rows written since
-  (`docs/VERIFICATION-GAPS.md` G-61). It is only for a new, empty database,
+  same CHECK constraint, and a second run fails on rows written since G-61). It is only for a new, empty database,
   pasted into the Supabase SQL Editor.
 </Warning>
 
@@ -7671,7 +7668,7 @@ curl --max-time 5 https://api.github.com/      # must fail
 curl --max-time 5 https://<your-parmana-endpoint>/health   # must return 200
 ```
 
-Denied connection attempts are not recorded as Parmana evidence today. Your network layer's logs are the only record of them. See `docs/REMAINING-WORK.md` section P for the open decision on reporting denied egress to Parmana.
+Denied connection attempts are not recorded as Parmana evidence today. Your network layer's logs are the only record of them. See section P for the open decision on reporting denied egress to Parmana.
 
 ## Shutdown and restarts
 
@@ -8174,12 +8171,12 @@ Both write into `PARMANA_KEY_DIR`, or `./keys` if it is unset, and refuse to ove
 | `CRYPTO_MODE`                             | No                                   | `single`                   | `single`, `hybrid`, `pq`                                                                               | `hybrid` adds a second signature from `SECONDARY_SIGNATURE_PROVIDER`. `single` and `pq` behave the same today, because only `hybrid` changes behavior. `hybrid` needs `KEY_PROVIDER=local` and both key pairs (`default` and `default-secondary`) in `PARMANA_KEY_DIR`; the server refuses to start otherwise, and refuses `hybrid` with `KEY_PROVIDER=aws-kms`.                                                                                                                                  |
 | `HASH_PROVIDER`                           | No                                   | `sha256`                   | `sha256`                                                                                               | The hash algorithm. The values `sha3-512` and `blake3` pass validation, but no implementation is registered, so the server fails with "Unknown hash provider" the first time it hashes.                                                                                                                                                                                                                                                                                                           |
 | `HYBRID_SIGNATURE_REQUIRED`               | No                                   | Off                        | Only the exact string `true` turns it on                                                               | When on, a record without a valid hybrid signature is rejected instead of passing on its classical signature alone.                                                                                                                                                                                                                                                                                                                                                                               |
-| `HYBRID_SCHEMA_VERSION`                   | No                                   | `2`                        | `2`, `3`                                                                                               | The schema version that hybrid signatures are made under (ADR-0016). `2` signs the canonical fields plus `schemaVersion`. `3` signs every top-level field except the signature envelope, `verifications` and `receipts`. Records made under `3` are not readable by a verifier that implements only version 2, so switch only after the verifiers you rely on support it. `3` is refused unless `HYBRID_SCHEMA_V3_ACKNOWLEDGED=true` is also set. Any other value stops the server from starting. |
-| `POLICY_CHANGE_CHECKERS`                  | No                                   | Unset (no one may approve) | A JSON object of policy name to an array of caller ids, for example `{"vendor-payment":["checker-1"]}` | Which callers may approve a change to each policy (G-50). A caller not listed for a policy gets `403 CHECKER_NOT_IN_SCOPE`. Unset lists no one, so policy changes cannot be approved until this is set.                                                                                                                                                                                                                                                                                           |
-| `KILL_SWITCH_ENABLED`                     | No                                   | Unset (switch off)         | `true` or `false`                                                                                      | Turns on the operator kill switch (ADR-0017). Off means no kill switch routes or guards are mounted. On needs a database (`DATABASE_URL`) and `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR`. Any other value stops startup.                                                                                                                                                                                                                                                                           |
-| `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` | Yes, when `KILL_SWITCH_ENABLED=true` | None                       | `true` or `false`                                                                                      | `true` in production: a reset takes two different operators (ADR-0017 decision 1). `false` only for test or non-production use. Nothing defaults it.                                                                                                                                                                                                                                                                                                                                              |
-| `HYBRID_REQUIRED_FROM`                    | No                                   | Unset (no cutover)         | An ISO-8601 UTC timestamp ending in `Z`                                                                | The cutover (ADR-0016). A record created at or after this instant must carry a valid hybrid envelope, or it fails verification. Set it only once every record created from that instant on is hybrid-signed (`CRYPTO_MODE=hybrid`). Otherwise the server rejects its own new records. Use the same instant in the offline verifier's trust file.                                                                                                                                                  |
-| `HYBRID_SCHEMA_V3_ACKNOWLEDGED`           | No                                   | Unset                      | Only the exact string `true` counts                                                                    | Required with `HYBRID_SCHEMA_VERSION=3`. Set it only after the verifiers and SDKs you rely on read version 3 (ADR-0016 issuance gate).                                                                                                                                                                                                                                                                                                                                                            |
+| `HYBRID_SCHEMA_VERSION`                   | No                                   | `2`                        | `2`, `3`                                                                                               | The schema version that hybrid signatures are made under. `2` signs the canonical fields plus `schemaVersion`. `3` signs every top-level field except the signature envelope, `verifications` and `receipts`. Records made under `3` are not readable by a verifier that implements only version 2, so switch only after the verifiers you rely on support it. `3` is refused unless `HYBRID_SCHEMA_V3_ACKNOWLEDGED=true` is also set. Any other value stops the server from starting. |
+| `POLICY_CHANGE_CHECKERS`                  | No                                   | Unset (no one may approve) | A JSON object of policy name to an array of caller ids, for example `{"vendor-payment":["checker-1"]}` | Which callers may approve a change to each policy. A caller not listed for a policy gets `403 CHECKER_NOT_IN_SCOPE`. Unset lists no one, so policy changes cannot be approved until this is set.                                                                                                                                                                                                                                                                                           |
+| `KILL_SWITCH_ENABLED`                     | No                                   | Unset (switch off)         | `true` or `false`                                                                                      | Turns on the operator kill switch. Off means no kill switch routes or guards are mounted. On needs a database (`DATABASE_URL`) and `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR`. Any other value stops startup.                                                                                                                                                                                                                                                                           |
+| `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` | Yes, when `KILL_SWITCH_ENABLED=true` | None                       | `true` or `false`                                                                                      | `true` in production: a reset takes two different operators. `false` only for test or non-production use. Nothing defaults it.                                                                                                                                                                                                                                                                                                                                              |
+| `HYBRID_REQUIRED_FROM`                    | No                                   | Unset (no cutover)         | An ISO-8601 UTC timestamp ending in `Z`                                                                | The cutover. A record created at or after this instant must carry a valid hybrid envelope, or it fails verification. Set it only once every record created from that instant on is hybrid-signed (`CRYPTO_MODE=hybrid`). Otherwise the server rejects its own new records. Use the same instant in the offline verifier's trust file.                                                                                                                                                  |
+| `HYBRID_SCHEMA_V3_ACKNOWLEDGED`           | No                                   | Unset                      | Only the exact string `true` counts                                                                    | Required with `HYBRID_SCHEMA_VERSION=3`. Set it only after the verifiers and SDKs you rely on read version 3.                                                                                                                                                                                                                                                                                                                                                            |
 
 ## Authorization and receipts
 
@@ -8195,7 +8192,7 @@ Both write into `PARMANA_KEY_DIR`, or `./keys` if it is unset, and refuse to ove
 | ------------------------------------ | -------- | ------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `RATE_LIMIT_EXECUTE_PER_MINUTE`      | No       | `30`    | Integer          | Requests per minute per authenticated caller on `POST /execute`. Over the limit the API returns `429` with a `Retry-After` header.                                                                                                                                                                                                  |
 | `RATE_LIMIT_HEALTH_PER_MINUTE`       | No       | `300`   | Integer          | Requests per minute per IP address on `GET /health` and `GET /ready`.                                                                                                                                                                                                                                                               |
-| `RATE_LIMIT_PUBLIC_PER_MINUTE`       | No       | `60`    | Integer          | Requests per minute per IP address, shared across `POST /refusal/verify`, `POST /execution-intents/verify`, `POST /audit/verify` and `/handbook`, the unauthenticated routes that check signatures or write data (G-78), and key discovery (`GET /keys/:keyId`, `GET /.well-known/jwks.json`).                                      |
+| `RATE_LIMIT_PUBLIC_PER_MINUTE`       | No       | `60`    | Integer          | Requests per minute per IP address, shared across `POST /refusal/verify`, `POST /execution-intents/verify`, `POST /audit/verify` and `/handbook`, the unauthenticated routes that check signatures or write data, and key discovery (`GET /keys/:keyId`, `GET /.well-known/jwks.json`).                                      |
 | `RATE_LIMIT_AUTH_FAILURE_PER_MINUTE` | No       | `30`    | Integer          | Failed caller authentications (`401`) per minute per IP address, on every authenticated route. Each one writes a signed audit event, so this stops a stream of bad keys from using up signing capacity. Requests with a valid key do not count. Over the limit, every request from that address gets `429` until the minute resets. |
 
 With `DATABASE_URL` set, the counters are shared across instances. Without it they are per process, so the effective limit
@@ -8214,7 +8211,7 @@ is the value multiplied by the number of instances, and the server logs `rate_li
 
 ## Browser access
 
-[ADR-0014](https://github.com/pavancharak/parmana/blob/main/docs/adr/ADR-0014-Public-Sandbox-And-Docs-Playground.md).
+ADR-0014.
 Production sets none of these except, if it wants a browser console, `PARMANA_CORS_ORIGINS`.
 
 | Variable                               | Required                    | Default              | Values or format                                                                  | What it does                                                                                                                                                                                                                                                                                                                                             |
@@ -8266,7 +8263,7 @@ event such as `slack_connector_unavailable` and requests for that connector's ac
 | --------------------------- | ----------------------------- | --------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | `SLACK_BOT_TOKEN`           | For the connector to register | None                        | A Slack bot token, or a secret reference                       | The credential. See `PARMANA_SECRETS_PROVIDER`.                                                |
 | `SLACK_BASE_URL`            | No                            | The Slack API               | A URL                                                          | Overrides the API base URL, for testing.                                                       |
-| `SLACK_ALLOWED_CHANNEL_IDS` | For any post to succeed       | None: every post is refused | Comma separated channel ids, such as `C0123456789,C0987654321` | The only channels a message may go to. The caller's `channelAuthorized` is not trusted (G-76). |
+| `SLACK_ALLOWED_CHANNEL_IDS` | For any post to succeed       | None: every post is refused | Comma separated channel ids, such as `C0123456789,C0987654321` | The only channels a message may go to. The caller's `channelAuthorized` is not trusted. |
 
 ### GitHub connector
 
@@ -8325,7 +8322,7 @@ Continue with [Production deployment](/deployment/production) or [Local deployme
 Source: https://docs.parmanasystems.com/security/overview
 
 <Info>
-  This page is a direct mirror of `docs/CLAIMS.md` sections 3 and 5, read that
+  This page is a direct mirror of sections 3 and 5, read that
   file for the authoritative version.
 </Info>
 
@@ -8505,11 +8502,9 @@ Also enabled on the repository:
 - Signed build provenance and a CycloneDX SBOM for every SDK release, and signed build provenance for the server
   image published with each release (below).
 - Mutation testing of the security-critical packages, run by hand (`npm run mutation`). The
-  scores, the gaps found and what was fixed are in
-  [docs/MUTATION-TESTING.md](https://github.com/pavancharak/parmana/blob/main/docs/MUTATION-TESTING.md).
-- Fuzz tests (property based, with fast-check) of the API request boundary, policy loading and
+  scores, the gaps found and what was fixed are in of the API request boundary, policy loading and
   evaluation, the offline verifier and approval parsing, run with every `npm test`. They found
-  three crashes on malformed input, all fixed (G-87, G-90, G-91 in `docs/VERIFICATION-GAPS.md`).
+  three crashes on malformed input, all fixed.
 - Every open issue, with what to do meanwhile: [Limitations](/security/limitations#open-issues).
 - Each risk in the OWASP Top 10 for LLM Applications and the OWASP Top 10 for Agentic
   Applications (2026), with what Parmana does and the evidence: [OWASP mapping](/security/owasp-mapping).
@@ -8631,8 +8626,7 @@ consumed.
 ## `POST /execute` returns 500 and the log shows "Member must have length less than or equal to 4096"
 
 **Cause:** AWS KMS refuses to sign a raw Ed25519 message longer than 4096 bytes, and a full Execution
-Trust Record is larger. This is fixed by signing a message over that size as a fixed 97 byte commitment
-(ADR-0010), so first check that your deployment includes that change. The stack is
+Trust Record is larger. This is fixed by signing a message over that size as a fixed 97 byte commitment, so first check that your deployment includes that change. The stack is
 `KmsSigner.sign` called from `VerificationCrypto.sign`.
 
 **Important:** on a build without ADR-0011 the connector may already have run by the time this error is returned. Do not assume the action did not happen. A current build returns `503 SIGNING_UNAVAILABLE` before release when signing is unhealthy, and `500 EXECUTION_RECORD_INCOMPLETE` when the action was released and the record then failed, so check which code you received. Query `execution_audit_events` for the `business_transaction_id` to see what the
@@ -8708,7 +8702,7 @@ Nothing was sent to the connector, so a retry with a new `businessTransactionId`
 
 4. Fix the connector before sending new requests. If the action was not executed and is still wanted, send it again with a **new** `businessTransactionId`.
 
-Before 2026-09-25 this failure returned a bare `500 Internal Server Error` with no identifiers (`docs/VERIFICATION-GAPS.md` G-63).
+Before 2026-09-25 this failure returned a bare `500 Internal Server Error` with no identifiers G-63).
 
 ## `POST /execute` returns 500 `EXECUTION_RECORD_INCOMPLETE`
 

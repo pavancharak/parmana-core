@@ -56,13 +56,11 @@ The same pipeline, traced through the classes that run it for one `POST /execute
    `SignalStateVerifier` runs. In production it is a `CompositeSignalStateVerifier` of the
    HubSpot verifier and the `ApprovalSignalVerifier` (the policy's `approvalSignals`). A
    mismatch overrides the decision to `REJECT` (`"signal-state-verification-violation"`).
-5. **Refuse or authorize.** Any decision that is not `APPROVED` gets a signed Refusal Record
-   (RFC-0021), then `ExecutionGate.enforce()` throws. An approved decision is signed by
+5. **Refuse or authorize.** Any decision that is not `APPROVED` gets a signed Refusal Record, then `ExecutionGate.enforce()` throws. An approved decision is signed by
    `RuntimeAuthorizationSigner`: the frozen `ExecutableContent`, the policy content hash, the
    signals hash and a TTL.
-6. **Before release.** The signing readiness check (G-52) proves the evidence signing path
-   works, and `ExecutionIntentService.prepare()` signs and stores an Execution Intent
-   (ADR-0012). If either fails, the caller gets 503 and nothing is released.
+6. **Before release.** The signing readiness check proves the evidence signing path
+   works, and `ExecutionIntentService.prepare()` signs and stores an Execution Intent. If either fails, the caller gets 503 and nothing is released.
 7. **Runtime pipeline.** `RuntimePipeline` runs `TrustChainValidationComponent`, then
    `ExecutionComponent`, which builds the `ExecutionRequest` and calls the injected
    `ExecutionSystem`. In production that is always `ExecutionGateway`, bound in

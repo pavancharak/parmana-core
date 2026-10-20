@@ -67,8 +67,7 @@ This records every migration up to and including that file as applied, without r
 <Warning>
   Do not run `scripts/apply-all-migrations.sql` on a database that holds data.
   It applies every migration again, several migrations drop and add back the
-  same CHECK constraint, and a second run fails on rows written since
-  (`docs/VERIFICATION-GAPS.md` G-61). It is only for a new, empty database,
+  same CHECK constraint, and a second run fails on rows written since G-61). It is only for a new, empty database,
   pasted into the Supabase SQL Editor.
 </Warning>
 
@@ -284,7 +283,7 @@ curl --max-time 5 https://api.github.com/      # must fail
 curl --max-time 5 https://<your-parmana-endpoint>/health   # must return 200
 ```
 
-Denied connection attempts are not recorded as Parmana evidence today. Your network layer's logs are the only record of them. See `docs/REMAINING-WORK.md` section P for the open decision on reporting denied egress to Parmana.
+Denied connection attempts are not recorded as Parmana evidence today. Your network layer's logs are the only record of them. See section P for the open decision on reporting denied egress to Parmana.
 
 ## Shutdown and restarts
 

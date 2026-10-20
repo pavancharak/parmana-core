@@ -67,8 +67,7 @@ VERIFIED`). This is the immutable input `RuntimeEngine.execute()` receives.
 **`Decision`** (`decision.ts`), the pure output of evaluating an `Intent`'s signals against
 a `Policy`: an `outcome` (`APPROVED | REJECTED`), the `matchedRuleId`, `evaluatedRules`
 (count), and `matchedPath` (the ordered rule-id trace `PolicyEngine` walked). The last three
-fields are optional only because a `Decision` built before they existed (see
-`docs/VERIFICATION-GAPS.md` G-44) doesn't carry them retroactively; every decision going
+fields are optional only because a `Decision` built before they existed (see G-44) doesn't carry them retroactively; every decision going
 forward does. A `Decision` never carries anything the caller supplied that wasn't
 independently produced by evaluation itself.
 
@@ -79,8 +78,7 @@ FAILED`) and `ExecutionMode` (`SYNC | ASYNC`), and optionally carries a hash-cha
 same transaction (see `ExecutionChainCrypto`, Chapter 3). Verification recomputes each chained
 `Execution`'s hash and checks its signature and its link to the one before. An `Execution` with no
 chain fields is accepted only before the first chained one, as data from before chaining existed;
-one carrying only some of the fields, or an unchained one after a chained one, fails the check
-(`docs/VERIFICATION-GAPS.md` G-89). Every `Execution` is also inside the trust record's own hash
+one carrying only some of the fields, or an unchained one after a chained one, fails the check G-89). Every `Execution` is also inside the trust record's own hash
 and signature, so the chain is a second layer, not the only one.
 
 **`ExecutionTrustRecord`** (`execution-trust-record.ts`), the aggregate root: one
@@ -101,8 +99,7 @@ carries either; `RuntimeEngine` computes both, after loading the real policy doc
 merges them only into the copy embedded in the trust record's `transaction.policy`, never
 into the transaction as originally submitted. `contentHash` is a sha256 of the canonicalized
 policy content actually loaded (closing the gap where an in-place edit to an existing
-version's `policy.json` would otherwise be undetectable from the trust record alone ,
-`docs/VERIFICATION-GAPS.md` G-24). `governanceAnchor` records whether that content is
+version's `policy.json` would otherwise be undetectable from the trust record alone , G-24). `governanceAnchor` records whether that content is
 traceable to a completed Policy Governance approval (`VERIFIED | NO_APPROVAL_RECORD |
 SIGNATURE_INVALID | CONTENT_MISMATCH`), resolved unconditionally regardless of whether
 execution-time enforcement of that fact is turned on (see Chapter 14).
@@ -115,7 +112,7 @@ unusually candid about what it is not: "Not a NEW cryptographic guarantee... Wha
 is a single, explicitly-named, independently-computed pointer an auditor can check WITHOUT
 already knowing to reach into `transaction.policy` and `executions[].evidence.attributes.connector`
 separately and reconstruct the binding themselves." It exists because an audit
-on 2026-09-15 (GAP-4, `docs/VERIFICATION-GAPS.md` G-45) asked whether policy
+on 2026-09-15 (GAP-4, G-45) asked whether policy
 governance provenance and actual connector evidence were provably linked, and the honest
 answer at the time was "implicitly, but nothing says so directly."
 

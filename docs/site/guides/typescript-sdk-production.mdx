@@ -32,7 +32,7 @@ itself in production (Fly.io/Docker, or any Node-compatible platform).
 | ----------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `PARMANA_ENDPOINT`      | Yes                    | Your Runtime's base URL.                                                                                                                                                                      |
 | `PARMANA_API_KEY`       | Yes, outside local dev | Bearer key minted by `scripts/generate-api-key.ts`. Omitting it only works against a Runtime started with `PARMANA_AUTH_DISABLED=true` — see [Authentication](/api-reference/authentication). |
-| `PARMANA_TIMEOUT_MS`    | No                     | Request timeout. The SDK default is 30000 ms; use 120000 (G-84).                                                                                                                              |
+| `PARMANA_TIMEOUT_MS`    | No                     | Request timeout. The SDK default is 30000 ms; use 120000.                                                                                                                              |
 | `PARMANA_RETRY_ENABLED` | No                     | Whether your wrapper enables the SDK's retry policy (see below).                                                                                                                              |
 
 ## A production-safe client wrapper
@@ -52,7 +52,7 @@ function createParmanaClient(): ParmanaClient {
   const configuration: Configuration = {
     endpoint,
     apiKey,
-    timeout: Number(process.env.PARMANA_TIMEOUT_MS ?? 120_000), // approved requests can take tens of seconds (G-84)
+    timeout: Number(process.env.PARMANA_TIMEOUT_MS ?? 120_000), // approved requests can take tens of seconds
     retryPolicy: {
       enabled: true,
       maxAttempts: 3,
@@ -157,7 +157,7 @@ failed, so never resubmit it under a new id: tell the operator, who can rebuild 
 [TypeScript SDK](/sdks/typescript#errors-they-actually-throw-now) for exactly which
 operations are retry eligible. **Do not wrap `execute()` in a retry.** After a
 `TimeoutError` or `NetworkError` the request may still have run: an approved request can take
-tens of seconds (G-84). Read what happened first, with the same `businessTransactionId`:
+tens of seconds. Read what happened first, with the same `businessTransactionId`:
 `trustRecord(id)` answers if it executed, `GET /refusal/{id}` if it was refused. Sending it
 again with the **same** id returns `409 ConflictError`, never the original result; sending it
 with a **new** id asks for the action a second time. See [Idempotency and

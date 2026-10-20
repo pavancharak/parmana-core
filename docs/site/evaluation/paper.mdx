@@ -15,8 +15,8 @@ Pavan Dev Singh Charak, Parmana Systems, 6 October 2026.
   [docs/paper/parmana-paper.md](https://github.com/pavancharak/parmana/blob/main/docs/paper/parmana-paper.md).
 </Card>
 
-Every number and claim is taken from [CLAIMS.md](https://github.com/pavancharak/parmana/blob/main/docs/CLAIMS.md), [THREAT-MODEL.md](https://github.com/pavancharak/parmana/blob/main/THREAT-MODEL.md),
-[VERIFICATION-GAPS.md](https://github.com/pavancharak/parmana/blob/main/docs/VERIFICATION-GAPS.md) and [MUTATION-TESTING.md](https://github.com/pavancharak/parmana/blob/main/docs/MUTATION-TESTING.md) as
+Every number and claim is taken from CLAIMS.md, THREAT-MODEL.md,
+VERIFICATION-GAPS.md and MUTATION-TESTING.md as
 of that date; those files are the current record.
 
 ## Abstract
@@ -242,7 +242,7 @@ writing tests for the surviving mutants:
 | execution-gateway | 67.6%     | 83.6% |
 | crypto            | 65.4%     | 85.0% |
 
-Surviving mutants led to real fixes, not only tests. One example (G-89): an edited execution
+Surviving mutants led to real fixes, not only tests. One example: an edited execution
 with its chain signature removed passed the chain check, because a partially chained execution
 was treated as legacy data. It still failed the record's own signature, so it was not
 exploitable alone, but the second layer was weaker than described; it now fails.
@@ -251,14 +251,14 @@ exploitable alone, but the second layer was weaker than described; it now fails.
 
 Property-based fuzz tests hand the API, the policy validator, the approval verifier and the
 offline verifier arbitrary inputs and require a clear refusal, never a crash. They found a
-request shape that crashed validation instead of returning a 400 (G-87), a malformed policy
-that threw instead of being refused (G-90), and a malformed signatures field that made the
-offline verifier throw (G-91). Each is fixed with a test that failed before.
+request shape that crashed validation instead of returning a 400, a malformed policy
+that threw instead of being refused, and a malformed signatures field that made the
+offline verifier throw. Each is fixed with a test that failed before.
 
 ### 6.4 Static analysis and disclosure
 
 CodeQL on every change found a path traversal: a policy name or version of `..` let the file
-based policy store read and write outside its directory (G-88). It required an authenticated
+based policy store read and write outside its directory. It required an authenticated
 proposer and a second approver; it was fixed, refused earlier at proposal time, and published as
 a low severity advisory (GHSA-hp43-9p54-wqp9).
 
@@ -266,8 +266,8 @@ a low severity advisory (GHSA-hp43-9p54-wqp9).
 
 Every claim in CLAIMS.md names its code and tests and states its scope. Gaps are recorded in
 VERIFICATION-GAPS.md with an "open issues at a glance" table, including the two that matter most
-here: approvers are not yet limited to particular actions or policies (G-50), and facts an agent
-declares are not checked against another system (G-51).
+here: approvers are not yet limited to particular actions or policies, and facts an agent
+declares are not checked against another system.
 
 ## 7. Limitations
 

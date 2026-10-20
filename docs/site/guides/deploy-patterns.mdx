@@ -40,7 +40,7 @@ switch (configuration.provider) {
 
 `memory` keeps everything in the process and loses it on restart. `supabase` and `postgres`
 are the same implementation: despite its name, `SupabaseStorageProvider` needs only a Postgres
-connection string, so a self hosted Postgres works under either name (G-57). Both refuse to
+connection string, so a self hosted Postgres works under either name. Both refuse to
 start without `DATABASE_URL`. `sqlite` is declared and throws at startup, by design: it fails
 closed rather than silently falling back to something else.
 

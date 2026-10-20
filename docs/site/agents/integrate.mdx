@@ -279,7 +279,7 @@ With a signed approval, send the signal as `true` and put the approval, exactly 
 **Do:** send `POST {PARMANA_URL}/execute` with the header, `Content-Type: application/json`, and the object from step 4.
 
 **Set a client timeout of at least 120 seconds.** The request runs the whole pipeline before it answers, including the
-call to the connector. In production an approved request took 24 to 32 seconds on 2026-10-01 (G-84), longer than the
+call to the connector. In production an approved request took 24 to 32 seconds on 2026-10-01, longer than the
 SDKs' default of 30 seconds: pass `timeout: 120_000` (TypeScript) or `timeout=120` (Python) to the client.
 
 **Never retry this request automatically.** A retry could repeat a real action. The rules for a timeout are in step 7.

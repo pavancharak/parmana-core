@@ -4,19 +4,19 @@ description: "An exact, ordered procedure to put an action in a system Parmana h
 ---
 
 This page connects a system Parmana has no built in connector for, such as your ERP, CRM or an internal service, with
-no change to Parmana's code (ADR-0013). You run a small HTTPS endpoint in front of the system. Parmana releases every
+no change to Parmana's code. You run a small HTTPS endpoint in front of the system. Parmana releases every
 approved request for the action to that endpoint as a **signed release**; the endpoint checks it with an SDK helper,
 acts with its own credentials, and answers. Parmana holds none of the system's credentials.
 
 <Warning>
   **Status, 2026-10-01.** Registering a connector through maker checker, and
   releasing approved requests to it, are live in production and were checked end
-  to end against a deployed endpoint (`docs/CLAIMS.md` 2.49 and 2.50). The SDK
+  to end against a deployed endpoint 2.49 and 2.50). The SDK
   helpers `verifyParmanaRelease` and `verify_parmana_release` are published in
   SDK 1.5.0 (2026-10-04) on npm and PyPI; with an older SDK, build the endpoint
   from the repository's SDK packages, as
   `examples/live-checks/external-connector/build-endpoint.ts` does. An approved
-  request took 24 to 32 seconds in production (G-84): give the agent a timeout
+  request took 24 to 32 seconds in production: give the agent a timeout
   of at least 120 seconds.
 </Warning>
 
@@ -333,7 +333,7 @@ nothing was done. The example endpoints take this check as `conditionsHold` (Typ
   proposed, when it is approved, and at every release. It connects to the address it checked and follows no redirect.
 - A release names one capability, target and parameter set a person approved, is addressed to one endpoint, and expires
   60 seconds after it is issued. No shared secret is involved: the signature is the authentication.
-- What the endpoint answers is its claim, not proof that it acted (`docs/VERIFICATION-GAPS.md` G-82).
+- What the endpoint answers is its claim, not proof that it acted G-82).
 
 ## See it run
 
@@ -342,4 +342,4 @@ nothing was done. The example endpoints take this check as `conditionsHold` (Typ
   and stops at a revoke.
 - The `/external-connectors` operations in the [API reference](/api-reference/endpoints/propose-external-connector-change),
   with real responses for every refusal.
-- The design and its security reasoning: `docs/adr/ADR-0013-Generic-External-Connector.md`.
+- The design and its security reasoning:.

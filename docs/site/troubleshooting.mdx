@@ -54,8 +54,7 @@ consumed.
 ## `POST /execute` returns 500 and the log shows "Member must have length less than or equal to 4096"
 
 **Cause:** AWS KMS refuses to sign a raw Ed25519 message longer than 4096 bytes, and a full Execution
-Trust Record is larger. This is fixed by signing a message over that size as a fixed 97 byte commitment
-(ADR-0010), so first check that your deployment includes that change. The stack is
+Trust Record is larger. This is fixed by signing a message over that size as a fixed 97 byte commitment, so first check that your deployment includes that change. The stack is
 `KmsSigner.sign` called from `VerificationCrypto.sign`.
 
 **Important:** on a build without ADR-0011 the connector may already have run by the time this error is returned. Do not assume the action did not happen. A current build returns `503 SIGNING_UNAVAILABLE` before release when signing is unhealthy, and `500 EXECUTION_RECORD_INCOMPLETE` when the action was released and the record then failed, so check which code you received. Query `execution_audit_events` for the `business_transaction_id` to see what the
@@ -131,7 +130,7 @@ Nothing was sent to the connector, so a retry with a new `businessTransactionId`
 
 4. Fix the connector before sending new requests. If the action was not executed and is still wanted, send it again with a **new** `businessTransactionId`.
 
-Before 2026-09-25 this failure returned a bare `500 Internal Server Error` with no identifiers (`docs/VERIFICATION-GAPS.md` G-63).
+Before 2026-09-25 this failure returned a bare `500 Internal Server Error` with no identifiers G-63).
 
 ## `POST /execute` returns 500 `EXECUTION_RECORD_INCOMPLETE`
 

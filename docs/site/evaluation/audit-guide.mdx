@@ -42,7 +42,7 @@ cannot stop a downstream system from accepting a request that never came through
 
 ## What an attacker controls
 
-[THREAT-MODEL.md](https://github.com/pavancharak/parmana/blob/main/THREAT-MODEL.md) puts these attackers next to the
+THREAT-MODEL.md puts these attackers next to the
 assets, trust boundaries and threats, with the control, evidence and residual risk for each.
 
 "Credential compromise" is not one thing. Each credential below is listed separately,
@@ -153,11 +153,8 @@ where the boundary actually is.
 
 ## Evidence documents
 
-- [docs/CLAIMS.md](https://github.com/pavancharak/parmana/blob/main/docs/CLAIMS.md): every
-  claim, scoped to its evidence. Summarised in [Claims and evidence](/evaluation/claims-and-evidence).
-- [docs/VERIFICATION-GAPS.md](https://github.com/pavancharak/parmana/blob/main/docs/VERIFICATION-GAPS.md):
-  every gap found, and how it was closed or narrowed.
-- [docs/adr/](https://github.com/pavancharak/parmana/tree/main/docs/adr): architectural
+-.
+-: architectural
   decisions.
 - [Limitations](/security/limitations) and [Security](/security/overview), including the
   [automated checks](/security/overview#automated-checks-on-the-repository) every change to `main`
@@ -180,13 +177,7 @@ These are internal reviews by the developer, not independent audits.
   [pavancharak/parmana#8](https://github.com/pavancharak/parmana/pull/8), and the
   [changelog](/changelog).
 
-- Earlier reviews are recorded in docs/VERIFICATION-GAPS.md and in dated updates in
-  docs/CLAIMS.md.
-
-## Reporting
-
-To try to break Parmana outside a formal review, see the
-[security challenge](https://github.com/pavancharak/parmana/blob/main/SECURITY-CHALLENGE.md): what counts as a break on a copy you run
+- Earlier reviews are recorded in: what counts as a break on a copy you run
 yourself, what does not, and how a confirmed break is credited. It covers local copies only,
 never the hosted API or the sandbox.
 

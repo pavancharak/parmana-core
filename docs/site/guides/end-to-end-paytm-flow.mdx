@@ -50,7 +50,7 @@ sequenceDiagram
     Note over Parmana: If APPROVED: mint + Ed25519-sign<br/>ExecutionAuthorizationPayload
     Note over Parmana: ExecutionGateway re-verifies<br/>signature/expiry/TTL/nonce
     Parmana->>Gateway: release to connector
-    Note over Gateway: Re-signs a SEPARATE, narrower<br/>authorization (ADR-0009 Phase 2B)
+    Note over Gateway: Re-signs a SEPARATE, narrower<br/>authorization
     Gateway->>Connector: POST /connector/paytm-refund<br/>(Bearer shared secret)
     Note over Connector: Checks shared secret (transport auth only)
     Connector->>Parmana: GET /keys/:keyId (fetch public key fresh)
@@ -84,7 +84,7 @@ sequenceDiagram
   the refund to Paytm, once, through `/connector/paytm-refund`, and
   `/agent/refunds` returns Paytm's result from the Trust Record. Until
   2026-09-28 that endpoint also called Paytm itself after an approval, so an
-  approved refund could be paid twice (G-70, fixed in that repository's PR #6).
+  approved refund could be paid twice.
   It now also reads the policy version from `GET /policies/in-effect` before
   every refund.
 </Note>
@@ -340,7 +340,7 @@ instead of returning it; without catching `$_.ErrorDetails.Message` you lose the
 error body, which is where every diagnostic in this guide came from. Run each statement
 separately in an interactive session, and double-check your working directory before
 re running (`Get-Content` is relative to it). Add `-TimeoutSec 120`: an approved request can take
-tens of seconds (G-84), and after a timeout read `GET /trust-records/<businessTransactionId>`
+tens of seconds, and after a timeout read `GET /trust-records/<businessTransactionId>`
 before sending anything again.
 
 Equivalent with `curl`:

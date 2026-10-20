@@ -69,8 +69,7 @@ attacker controls, the invariant and the test files that check it. The runner ru
 once and reports each scenario `BLOCKED`, `FAILED` or `NOT RUN`, with an
 `evaluation-report.json` tied to the commit. It adds no new tests: it gives an evaluator one
 result per attack instead of 3,000 test names. `tests/architecture/evaluation-scenarios.test.ts`
-fails if a scenario points at a test file that no longer exists or a claim number missing from
-`docs/CLAIMS.md`.
+fails if a scenario points at a test file that no longer exists or a claim number missing from.
 
 ### Fuzzing
 
@@ -81,8 +80,8 @@ arbitrary JSON), policy files (validation must accept or refuse with `PolicyVali
 a policy that validates must evaluate any signals to `APPROVE` or `REJECT`), the offline verifier
 (any input is `valid: false` with a reason) and approval parsing. They run with every `npm test`.
 On their first run they found three crashes on malformed input: a missing `policy` or
-`authorization` gave a bare `500` (G-87), the policy validator threw `TypeError` on fields of the
-wrong type (G-90), and the offline verifier threw on malformed hybrid signatures (G-91). All three
+`authorization` gave a bare `500`, the policy validator threw `TypeError` on fields of the
+wrong type, and the offline verifier threw on malformed hybrid signatures. All three
 are fixed, each with an exact test.
 
 ### Mutation testing
@@ -101,7 +100,7 @@ what rule operators do with a value of the wrong type, gateway options that coul
 the way to the envelope verifier, session binding fields never tested alone, and the offline
 verifier's hybrid path. Two led to behavior changes: a request whose signals do not have the
 policy's declared types is now refused before any rule runs, and an Execution with only some of
-its chain fields now fails the execution chain check (`docs/VERIFICATION-GAPS.md` G-89). Each
+its chain fields now fails the execution chain check G-89). Each
 gap that matters for security now has a test, checked by putting the targeted change back by
 hand.
 
@@ -109,15 +108,10 @@ The crypto score was measured on Node 22, where the ML-DSA-65 tests skip themsel
 undercounted. `npm run mutation` now refuses an older Node than 24, the version CI uses. Re-run
 on Node 24 after the fixes: `envelope-verifier` 94.0%, `approval` 93.9%, `policy` 96.0%,
 `crypto` 85.0%, `execution-gateway` 83.6%. What survives is almost all equivalent (a guard a later
-check repeats), advisory (the rule overlap warnings) or message wording. [docs/MUTATION-TESTING.md](https://github.com/pavancharak/parmana/blob/main/docs/MUTATION-TESTING.md) has every score, each
-gap, and what was and was not changed.
-
-### Citation integrity
-
-`docs/CLAIMS.md` and the tutorial `README.md` files cite real file paths as evidence for their
+check repeats), advisory (the rule overlap warnings) or message wording. and the tutorial `README.md` files cite real file paths as evidence for their
 claims. This codebase treats a stale citation as a real defect worth finding and fixing, not a
 cosmetic nit, a citation nobody automatically checks will eventually go stale, and a claim whose
-evidence has silently rotted is functionally the same as an unverified claim. `docs/CLAIMS.md`
+evidence has silently rotted is functionally the same as an unverified claim.
 is explicit that a citation should be understood in the context it was written (a citation may be
 correct as of the date it was added even if later superseded, in which case the surrounding
 prose says so rather than the citation being silently rewritten to point somewhere else, doing
@@ -131,8 +125,7 @@ retired terminology (a grep-based check, not a type or lint rule), the full test
 (`npm test`), and, in a separate job, `scripts/verify-policy-changes-approved.ts` against
 whichever `policies/**/policy.json` files changed in that push or PR, this is the fail-closed
 governance gate described in Chapter 7, real and enforced in CI today, not yet wired as a GitHub
-required status check due to a plan/visibility limitation external to this codebase (see
-`docs/CLAIMS.md` §2.26's "Preventive Git-layer enforcement" entry for the exact constraint).
+required status check due to a plan/visibility limitation external to this codebase (see §2.26's "Preventive Git-layer enforcement" entry for the exact constraint).
 
 The local pre-commit hook (this repo's own `.git` hooks, not GitHub's CI) additionally runs the
 full example suite (`npm run examples`) before allowing a commit, meaning every commit landed on
@@ -157,7 +150,7 @@ final `✓`/`✗` verdict, entirely hermetically, no network access, no real cre
 - `scripts/run-examples.ts` for the full registered tutorial list and the two documented
   exclusions.
 - `.github/workflows/ci.yml` for the exact CI gates.
-- `docs/CLAIMS.md`'s own header/preface section for the citation-integrity discipline stated in
+-'s own header/preface section for the citation-integrity discipline stated in
   its own words.
 - Any individual `examples/tutorials/*/README.md`, each states what it proves and why it
   matters, in the same structure this book uses.

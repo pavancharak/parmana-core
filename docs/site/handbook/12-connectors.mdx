@@ -107,7 +107,7 @@ A Razorpay connector (`RazorpayConnector`, `RazorpayRefundService`,
 ("Add HubSpot integration evidence and update TRL assessment"). `git log --all` for any of
 those paths shows no file at current `HEAD`, confirmed directly, not inferred.
 
-Being honest about what the record does and doesn't say: `docs/VERIFICATION-GAPS.md`'s own
+Being honest about what the record does and doesn't say:'s own
 "stale-narrative notice" (added 2026-08-24, search for "blocks-pilot") documents the removal
 happened and exactly when, and confirms `HubSpotSignalStateVerifier` and the HubSpot/GitHub
 capability pairs are what's actually reachable in production today in its place. It does not
@@ -118,7 +118,7 @@ survived the code removal until this session, 2026-09-16, when they were finally
 (`supabase/migrations/20260916120000_drop_razorpay_tables.sql`) as pure schema cleanup, over a
 month after the connector code itself was gone.
 
-The practical lesson this case study leaves: `docs/VERIFICATION-GAPS.md` entries that predate
+The practical lesson this case study leaves: entries that predate
 2026-08-12 and describe Razorpay-specific mechanisms as "wired into production" are accurate
 history, not current fact, and the document itself now flags this explicitly rather than
 silently going stale.

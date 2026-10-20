@@ -48,7 +48,7 @@ turned out to be a red herring, since `CanonicalSerializer` normalizes object ke
 away. The real, separate finding underneath it was that the stored content was missing an
 entire field (`unboundSignalReasons`, and for two policies, `boundSignals`) relative to the
 current file, a genuine content difference no amount of key-order normalization could paper
-over. See `docs/CLAIMS.md` §2.26's "Legacy-policy backfill" entry for the full account ,
+over. See §2.26's "Legacy-policy backfill" entry for the full account ,
 worth reading as a caution against assuming a hash mismatch has an obvious cause before
 actually diffing the two objects field by field.
 
@@ -149,8 +149,7 @@ AWS KMS refuses a raw Ed25519 message longer than 4096 bytes. `KmsSigner.sign()`
 full canonical bytes of whatever it was signing, so signing a full `ExecutionTrustRecord` (with its
 bound authorization, connector evidence and governance anchor) failed with `ValidationException:
 Member must have length less than or equal to 4096`. It was found in production on 2026-09-20,
-because earlier KMS tests only used the small `test:fixture-execute` record (ADR-0010,
-`docs/VERIFICATION-GAPS.md` gap 59).
+because earlier KMS tests only used the small `test:fixture-execute` record.
 
 The fix is `packages/crypto/src/SignatureCommitment.ts`. A message of 4096 bytes or fewer is signed
 raw, exactly as before. A longer message is signed as a fixed 97 byte commitment: the prefix
@@ -173,8 +172,7 @@ released action always has signed evidence behind it (Chapter 8).
 ### `SignerKeyProviderAdapter`: closing a real signing/verification divergence
 
 `providers/SignerKeyProviderAdapter.ts` is the fix for the most serious of the real incidents
-this migration produced, found against live production traffic on 2026-09-16 (see
-`docs/VERIFICATION-GAPS.md` G-48/G-49 and the KMS migration troubleshooting guide's item 7).
+this migration produced, found against live production traffic on 2026-09-16 (see G-48/G-49 and the KMS migration troubleshooting guide's item 7).
 The bug: `EnvelopeVerifier.resolveKey()` uses a `KeyProvider` to look up the public key for
 _every_ authorization it verifies, including ones signed under the plain `"default"` keyId ,
 not only tenant-scoped ones, contrary to an earlier assessment in this same codebase's own
@@ -247,7 +245,7 @@ those two, not `KMS_REGION`/`KMS_KEY_ALIAS`, the latter pair currently does noth
   separately, and is worth reading end to end for the migration's own stated lesson: "a
   migration that changes _where_ a system's trust boundary sits needs to be verified against
   the real target platform's actual runtime behavior, not just a mocked test double of it."
-- `docs/VERIFICATION-GAPS.md` G-48/G-49, the ledger entries for the `SignerKeyProviderAdapter`
+- G-48/G-49, the ledger entries for the `SignerKeyProviderAdapter`
   fix specifically.
 
 ## Integration requirements

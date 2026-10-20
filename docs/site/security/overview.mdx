@@ -4,7 +4,7 @@ description: "What Parmana actually guarantees, precisely scoped, and, as import
 ---
 
 <Info>
-  This page is a direct mirror of `docs/CLAIMS.md` sections 3 and 5, read that
+  This page is a direct mirror of sections 3 and 5, read that
   file for the authoritative version.
 </Info>
 
@@ -184,11 +184,9 @@ Also enabled on the repository:
 - Signed build provenance and a CycloneDX SBOM for every SDK release, and signed build provenance for the server
   image published with each release (below).
 - Mutation testing of the security-critical packages, run by hand (`npm run mutation`). The
-  scores, the gaps found and what was fixed are in
-  [docs/MUTATION-TESTING.md](https://github.com/pavancharak/parmana/blob/main/docs/MUTATION-TESTING.md).
-- Fuzz tests (property based, with fast-check) of the API request boundary, policy loading and
+  scores, the gaps found and what was fixed are in of the API request boundary, policy loading and
   evaluation, the offline verifier and approval parsing, run with every `npm test`. They found
-  three crashes on malformed input, all fixed (G-87, G-90, G-91 in `docs/VERIFICATION-GAPS.md`).
+  three crashes on malformed input, all fixed.
 - Every open issue, with what to do meanwhile: [Limitations](/security/limitations#open-issues).
 - Each risk in the OWASP Top 10 for LLM Applications and the OWASP Top 10 for Agentic
   Applications (2026), with what Parmana does and the evidence: [OWASP mapping](/security/owasp-mapping).

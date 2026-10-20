@@ -23,7 +23,7 @@ one of those specific gaps, added incrementally as each gap was found.
 
 ## How it works
 
-### Refusal Records (RFC-0021)
+### Refusal Records
 
 `RefusalRecord` (`packages/shared/src/domain/refusal-record.ts`) is the durable, signed,
 independently verifiable REJECT-path counterpart to `ExecutionTrustRecord`. Its own doc comment
@@ -43,7 +43,7 @@ records omit it and still verify. `RefusalRecordBuilder`
 (`packages/runtime/src/RefusalRecordBuilder.ts`) constructs and hashes the draft, then
 `RefusalCrypto` (`packages/crypto/src/RefusalCrypto.ts`) signs it, deliberately reusing the same
 signing stack and `DEFAULT_KEY_ID` as `VerificationCrypto`, so approvals and refusals share one
-root of trust (RFC-0021 §2), not two keys to manage. `RefusalCrypto.canonicalRecord()` excludes
+root of trust, not two keys to manage. `RefusalCrypto.canonicalRecord()` excludes
 the signature itself from what gets hashed and signed, the same discipline every other signed
 artifact in this codebase follows.
 

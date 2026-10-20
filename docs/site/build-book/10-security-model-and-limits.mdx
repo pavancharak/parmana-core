@@ -4,8 +4,8 @@ description: "What Parmana guarantees, under which assumptions, what it does not
 ---
 
 Parmana's guarantees are specific and tested, and each holds within a stated boundary. This chapter states both. The
-detailed threat model is [Limitations](/security/limitations); every claim and its evidence is in `docs/CLAIMS.md`;
-every known gap is in `docs/VERIFICATION-GAPS.md`, by number.
+detailed threat model is [Limitations](/security/limitations); every claim and its evidence is in;
+every known gap is in, by number.
 
 ## What Parmana guarantees
 
@@ -46,7 +46,7 @@ For a system whose actions go through Parmana:
 ## Known gaps
 
 The open items that matter most when you build with Parmana. The full list, with the status of each, is under
-"Open issues at a glance" in `docs/VERIFICATION-GAPS.md`.
+"Open issues at a glance" in.
 
 | Gap  | What                                                                                                            | What it means for you                                                                                                                          |
 | ---- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -57,16 +57,14 @@ The open items that matter most when you build with Parmana. The full list, with
 
 Also scoped, not absent:
 
-- **There is no automatic path.** No action is authorized without a person, by design (G-80 closed the last policies
-  that approved without one). Plan for the first request on every resource to wait for a person.
+- **There is no automatic path.** No action is authorized without a person, by design. Plan for the first request on every resource to wait for a person.
 - **An approval covers the action and the resource**, and the amount where the policy names one, not every parameter.
 - **Single use is per nonce store.** Instances that share the database share it; separate in memory stores do not.
 - **Route access is not scoped per key.** What is scoped is the action, the principal, and which records a caller can
   read.
 - **Approval notifications are best effort.** One attempt, no retry; the Refusal Records are the complete list.
 - **Python verifies Ed25519 only.** A record's ML-DSA-65 signatures are checked by the TypeScript verifier.
-- **Releasing to an external endpoint was checked live once**, on 2026-10-01, with an endpoint that acts on nothing
-  (`docs/CLAIMS.md` 2.50).
+- **Releasing to an external endpoint was checked live once**, on 2026-10-01, with an endpoint that acts on nothing 2.50).
 
 ## Reporting a vulnerability
 

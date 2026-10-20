@@ -54,7 +54,7 @@ the configured provider:
 `StorageFactory.createFromEnvironment()` is the real entry point every caller actually uses.
 It has one hardcoded override: under `NODE_ENV=test`, it always returns
 `MemoryStorageProvider`, regardless of what `PARMANA_STORAGE` is set to. This exists because
-of a real incident (G-15, `docs/VERIFICATION-GAPS.md`): this method used to construct
+of a real incident: this method used to construct
 whatever `PARMANA_STORAGE` named as a pure import-time side effect, which crashed test
 collection with supabase-js's generic `"supabaseUrl is required."` the moment `SUPABASE_*`
 was unset, regardless of what any individual test actually needed.
@@ -93,8 +93,7 @@ already uses, deferring construction to the first real `load()`/`save()`/`listAl
 `PostgresPoolFactory` (`packages/storage/src/postgres/PostgresPoolFactory.ts`) is a lazy,
 process-wide singleton `pg.Pool`. Every Supabase-backed repository in this codebase connects
 through it directly, not through `supabase-js`'s REST-based client (PostgREST). The class
-that used to provide that client, `SupabaseClientFactory`, was deleted 2026-09-09
-(`docs/VERIFICATION-GAPS.md` G-34) after `PostgresPoolFactory`'s own pattern had already
+that used to provide that client, `SupabaseClientFactory`, was deleted 2026-09-09 G-34) after `PostgresPoolFactory`'s own pattern had already
 replaced it everywhere it was still used. This removes an entire layer (PostgREST) from the
 failure modes of every table these repositories touch, an incident class this codebase's
 own history names explicitly (see `SupabaseCallerAuditSink`'s own comments for the

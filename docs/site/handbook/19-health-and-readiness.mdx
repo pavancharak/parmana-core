@@ -62,7 +62,7 @@ ever got a chance to override it to the deliberately-unreachable address. The re
 kept reporting `READY`, using the real, working pool, no matter what `DATABASE_URL` the tutorial
 set afterward. The fix was to make that construction lazy, the same discipline
 `packages/api/src/repositories.ts`'s existing `lazyRepository()` helper already establishes for
-every other repository in this codebase (G-15), and for the identical reason: importing a module
+every other repository in this codebase, and for the identical reason: importing a module
 must never itself open a live database connection as a side effect; only an actual repository
 call should. After both fixes, the tutorial's Scenario 3 correctly reports `NOT_READY`, `503`,
 with `reason: "connect ECONNREFUSED 127.0.0.1:1"`.

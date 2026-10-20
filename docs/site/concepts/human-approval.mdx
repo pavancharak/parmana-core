@@ -81,7 +81,7 @@ manager:
 
 Why every refund: the agent declares `refundEligible` and `fraudCheckPassed` itself, and
 nothing checks them. In 1.1.0 a refund up to 10000 was authorized on those two claims alone, so
-an agent manipulated by prompt injection could approve its own refunds (G-75). In 1.2.0 they can
+an agent manipulated by prompt injection could approve its own refunds. In 1.2.0 they can
 only refuse a refund.
 
 <Note>
@@ -394,8 +394,7 @@ requests query above stays the complete list.
 Nothing waits for a person. After a manager signs an approval, the agent sends a new request.
 
 **Eligibility and fraud signals are still the caller's word.** `refundEligible` and
-`fraudCheckPassed` are not checked against another system (G-51 in
-`docs/VERIFICATION-GAPS.md`). They can only refuse; the signed approval authorizes.
+`fraudCheckPassed` are not checked against another system. They can only refuse; the signed approval authorizes.
 
 **An approval covers the action and the resource, not every parameter.** An approval for a
 Slack channel does not fix the message text, and an approval for a HubSpot deal does not fix the
@@ -403,8 +402,7 @@ new amount or stage. The approver trusts the agent with those details for that o
 approval for a payment, an expense or a refund does cover the amount.
 
 **There is no automatic path.** No action is authorized without a person, by design. Adding one
-would need a server side check that reads the facts itself, and a change to this rule
-(G-80 in `docs/VERIFICATION-GAPS.md`).
+would need a server side check that reads the facts itself, and a change to this rule.
 
 ## Why each action is bound to one policy
 

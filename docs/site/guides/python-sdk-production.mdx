@@ -76,7 +76,7 @@ validation; just unpack it into the two real constructor kwargs.
 A denial should be a denial, not an exception a caller has to remember to interpret correctly.
 Wrap the client so each failure resolves to an explicit outcome. A policy rejection means "did
 not execute". A timeout or network error does **not**: an approved request can take tens of
-seconds (G-84) and may have run, so it means "unknown, read the record before anything else":
+seconds and may have run, so it means "unknown, read the record before anything else":
 
 ```python
 import logging
@@ -159,7 +159,7 @@ except ServerError as exc:
 ```
 
 Set `timeout=120` on the client (the default is 30 seconds), and after a timeout read the
-record with the same id before anything else (G-84).
+record with the same id before anything else.
 
 ## Audit logging
 

@@ -148,7 +148,7 @@ placeholder to fix later, from day one.
 
 `policy.name`/`policy.version` is never inferred from `intent.action`: name it explicitly, or a
 caller could pair a real capability with an unrelated policy. Under `customer-refund` 1.2.0 every
-refund needs a signed manager approval (G-75); without one the request is refused with `403
+refund needs a signed manager approval; without one the request is refused with `403
 POLICY_DENIED`, whatever your agent declares about eligibility and fraud.
 
 **7. Send it, handle the response**, see the complete reference table below.
@@ -184,7 +184,7 @@ catalog](/api-reference/error-catalog) has every code.
 | `503`  | `SIGNING_UNAVAILABLE`, `EXECUTION_INTENT_UNAVAILABLE` | The server could not sign or store evidence before release. Nothing ran.                                                                                                                | Retry later with a new `businessTransactionId`.                                                                                                |
 | `500`  | `EXECUTION_RECORD_INCOMPLETE`                         | Released, then the Trust Record could not be stored. The action ran.                                                                                                                    | **Do not send it again.** The operator finalizes the intent.                                                                                   |
 | `500`  | none                                                  | Anything unexpected, including a gateway rejection of a tampered envelope.                                                                                                              | Ask the operator to read the server log before assuming your request was wrong.                                                                |
-| (none) | none                                                  | Timeout or network error. Unknown whether Parmana received it; an approved request can take tens of seconds (G-84).                                                                     | Set the timeout to 120 seconds. After a timeout, read `GET /trust-records/{id}` and `GET /refusal/{id}` with the same id before anything else. |
+| (none) | none                                                  | Timeout or network error. Unknown whether Parmana received it; an approved request can take tens of seconds.                                                                     | Set the timeout to 120 seconds. After a timeout, read `GET /trust-records/{id}` and `GET /refusal/{id}` with the same id before anything else. |
 
 ## Common mistakes
 

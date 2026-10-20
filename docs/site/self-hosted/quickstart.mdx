@@ -257,7 +257,7 @@ Expected output:
 - A policy approved by two people, recorded and signed.
 - A refused request with a signed Refusal Record.
 
-A refund of 500 without an approval is refused the same way: the agent's own claims that the order is eligible and passed the fraud check are not enough (G-75). A request the policy **authorizes**, here a refund with a signed manager approval, is released to a connector, the service that performs the action. Until one is configured, an authorized request returns `503 CONNECTOR_NOT_REGISTERED` and nothing is executed. To see the full authorized path, including a Trust Record verified with only the public keys, run the [offline check](/self-hosted/offline-verification). To connect your own system, see [Connectors](/self-hosted/connectors).
+A refund of 500 without an approval is refused the same way: the agent's own claims that the order is eligible and passed the fraud check are not enough. A request the policy **authorizes**, here a refund with a signed manager approval, is released to a connector, the service that performs the action. Until one is configured, an authorized request returns `503 CONNECTOR_NOT_REGISTERED` and nothing is executed. To see the full authorized path, including a Trust Record verified with only the public keys, run the [offline check](/self-hosted/offline-verification). To connect your own system, see [Connectors](/self-hosted/connectors).
 
 ## Clean up
 

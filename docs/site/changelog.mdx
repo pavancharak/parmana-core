@@ -190,26 +190,26 @@ every commit, run `git log` in the repository for the complete record.
 
 - A `POST /execute` or `POST /transactions` body without `metadata`, `authority`, `authorization`, `intent` or
   `policy`, or with one of them `null` or of the wrong type, or a required field that is not a string, is refused
-  with `400` naming it (G-87). Before, a missing `policy` or `authorization` was a bare `500`. Nothing was executed
+  with `400` naming it. Before, a missing `policy` or `authorization` was a bare `500`. Nothing was executed
   either way. See [Error handling](/api-reference/error-handling).
 
 **Changed: a release tries the next checked address**
 
 - A release to an external connector whose first resolved address refuses the connection now tries the endpoint's
-  other checked addresses, under one timeout (G-83). Once a connection is made nothing is retried, so the endpoint
+  other checked addresses, under one timeout. Once a connection is made nothing is retried, so the endpoint
   never receives a release twice.
 
 **Added: fuzz tests**
 
 - Property based tests of the request boundary, policy loading and evaluation, the offline verifier and approval
   parsing run with every `npm test`. Besides G-87 they found that the policy validator threw a `TypeError` on fields
-  of the wrong type (G-90) and that the offline verifier threw on malformed hybrid signatures (G-91). Both now refuse
+  of the wrong type and that the offline verifier threw on malformed hybrid signatures. Both now refuse
   with a clear error.
 
 **Added: every open issue in one place**
 
 - [Limitations](/security/limitations#open-issues) lists every gap still open and what to do meanwhile; the same
-  list, with evidence, is under "Open issues at a glance" in `docs/VERIFICATION-GAPS.md`.
+  list, with evidence, is under "Open issues at a glance" in.
 
 ## 2026-10-05
 
@@ -227,8 +227,7 @@ every commit, run `git log` in the repository for the complete record.
   chain fields (`chainHash`, `chainSignature`, `previousChainHash`), or has none after a chained
   one. Before, such an `Execution` was skipped as data from before chaining, so an edited one with
   its `chainSignature` removed passed the chain check; the record's own signature still caught
-  the edit. Records the runtime writes are unaffected: it always writes both fields together.
-  `docs/VERIFICATION-GAPS.md` G-89.
+  the edit. Records the runtime writes are unaffected: it always writes both fields together. G-89.
 
 **Added: mutation testing of the security packages**
 
@@ -237,13 +236,7 @@ every commit, run `git log` in the repository for the complete record.
   `execution-gateway` 67.6%, `crypto` 65.4% (on Node 22, which skips the ML-DSA-65 tests; the
   command now needs Node 24). Re-run on Node 24 after the fixes: `envelope-verifier` 94.0%,
   `approval` 93.9%, `policy` 96.0%, `crypto` 85.0%, `execution-gateway` 83.6%. The gaps that
-  matter for security now have tests; see
-  [docs/MUTATION-TESTING.md](https://github.com/pavancharak/parmana/blob/main/docs/MUTATION-TESTING.md).
-
-**Added: an SBOM with every SDK release**
-
-- From the next release on, each SDK package on a
-  [GitHub release](https://github.com/pavancharak/parmana/releases) has a CycloneDX SBOM beside it
+  matter for security now have tests; see has a CycloneDX SBOM beside it
   (`<package file>.cdx.json`), covered by the signed provenance. See
   [Verifying an SDK package](/security/overview#verifying-an-sdk-package-from-a-github-release).
 
@@ -256,7 +249,7 @@ every commit, run `git log` in the repository for the complete record.
 
 **Added: a threat model**
 
-- [THREAT-MODEL.md](https://github.com/pavancharak/parmana/blob/main/THREAT-MODEL.md) lists the assets, trust boundaries and
+- THREAT-MODEL.md lists the assets, trust boundaries and
   attackers, and for each of 17 threats the control, the evidence (an attack scenario or a
   claim) and the residual risk, plus the assumptions a review should state.
 
@@ -383,7 +376,7 @@ These change behavior a caller or operator can see
   the sandbox's policy, approver and registration. Sandbox only: it is not a migration, and it refuses any database
   without the sandbox's registration.
 
-**Added: the public sandbox and the Playground (ADR-0014 steps 2 to 4)**
+**Added: the public sandbox and the Playground**
 
 - The sandbox is live at `https://parmana-sandbox.vercel.app`: the same code as production, its own database, signing
   keys and demo approver, one action (`sandbox:receipt`) released to an endpoint that acts on nothing. Its live check
@@ -403,7 +396,7 @@ These change behavior a caller or operator can see
 
 ## 2026-10-01
 
-**Added: browser access and sandbox mode, for the public playground (ADR-0014 step 1)**
+**Added: browser access and sandbox mode, for the public playground**
 
 - `PARMANA_CORS_ORIGINS`: lets a browser on the listed origins call the API. Unset, as in production today, no CORS
   header is sent.
@@ -439,7 +432,7 @@ These change behavior a caller or operator can see
   `POST /execution-intents/verify` and the handbook routes were missing. Fixed in the reference
   and on [Authentication](/api-reference/authentication).
 
-**Added: a registered external connector receives releases (ADR-0013 step 4)**
+**Added: a registered external connector receives releases**
 
 - An approved request for a capability registered as an external connector is released to the
   registered endpoint as a signed release: audience the endpoint URL, a 60 second expiry, the
@@ -449,10 +442,10 @@ These change behavior a caller or operator can see
   through policy governance, and `GET /policies/in-effect?capability=` answers for the capability.
   Every request is refused while no version of that policy is approved.
 - Checked live in production on 2026-10-01 against a deployed endpoint: refused with no approval,
-  released and recorded with one, refused when the approval was reused (`docs/CLAIMS.md` 2.50). The
+  released and recorded with one, refused when the approval was reused 2.50). The
   SDK helpers `verifyParmanaRelease` and `verify_parmana_release` are not published yet.
 - Found in the live check: an approved request took 24 to 32 seconds in production, longer than the
-  SDKs' default 30 second timeout (`docs/VERIFICATION-GAPS.md` G-84). After a timeout, read the
+  SDKs' default 30 second timeout G-84). After a timeout, read the
   record before sending anything new.
 - **Examples:** an endpoint in TypeScript (`typescript/examples/07-external-connector-endpoint.ts`)
   and in Python (`python/examples/13_external_connector_endpoint.py`), each checking releases with
@@ -462,7 +455,7 @@ These change behavior a caller or operator can see
 
 ## 2026-09-30
 
-**Added: external connectors, first step (ADR-0013)**
+**Added: external connectors, first step**
 
 The goal: connect a new external system to Parmana with no change to Parmana's code. An operator
 registers a capability to an HTTPS endpoint they run, and Parmana releases each approved request
@@ -495,8 +488,7 @@ there as a signed release. Built in steps; only the first is live.
 **Security: no AI agent action without a signed human approval, reads included**
 
 Merged (PR #87) and deployed to production on 2026-09-30. All 13 new policy versions below were
-approved in production through maker checker the same day, so they are in effect. See
-`docs/VERIFICATION-GAPS.md` G-80 and [Human approval](/concepts/human-approval).
+approved in production through maker checker the same day, so they are in effect. See G-80 and [Human approval](/concepts/human-approval).
 
 - **Every policy must require a signed approval.** A policy with an approve rule that does not
   require an `approvalSignals` fact with `is_true` (as its whole condition or directly inside its
@@ -550,15 +542,15 @@ approved in production through maker checker the same day, so they are in effect
 
 **Approved in production the same day:** `customer-refund` 1.2.0, `github-pr-approval` 1.1.0, `github-pr-read` 1.0.0 and `llm-tool-call` 1.1.0. Every refund now needs a signed manager approval.
 
-An AI attack review (an agent manipulated by prompt injection calling the API) found facts that an agent declares, and nothing checks, could authorize real actions. See `docs/VERIFICATION-GAPS.md` G-73 to G-78.
+An AI attack review (an agent manipulated by prompt injection calling the API) found facts that an agent declares, and nothing checks, could authorize real actions. See G-73 to G-78.
 
 - **A pull request merge needs a signed approval** for that pull request (`github-pr-approval` 1.1.0, G-73). The review, check, branch and risk signals come from the caller and can only refuse a merge now. Reading a pull request (`github:pr-fetch`) has its own policy, `github-pr-read` 1.0.0 (superseded on 2026-09-30 by 1.1.0, which needs an approval). Both were approved in production the same day.
-- **An older approved policy version is refused once a newer one is approved** (G-74), for every policy, not only connector actions. Send the version in effect; approving an older version again rolls back.
+- **An older approved policy version is refused once a newer one is approved**, for every policy, not only connector actions. Send the version in effect; approving an older version again rolls back.
 - **Self hosted quickstart uses `customer-refund` 1.2.0**: its demo refund is refused without a manager approval. The offline check keeps 1.1.0 to prove the authorized path end to end.
 - **Every refund needs a signed manager approval** (`customer-refund` 1.2.0, G-75). Under 1.1.0 a refund up to 10000 was authorized on the agent's own claim that the order was eligible and passed the fraud check. 1.2.0 also refuses a refund of 0 or less. Approved in production the same day, so it is in effect. Read the version with `GET /policies/in-effect?capability=paytm:refund`.
-- **Slack posts go only to channels on the server's allowlist** (G-76). Set `SLACK_ALLOWED_CHANNEL_IDS` (comma separated channel ids); unset refuses every post. The caller's `channelAuthorized` is no longer trusted, and `parameters.channel` must equal the Intent's `target`. Applies on deploy.
-- **A connector policy cannot let caller facts alone authorize a write** (G-77). A test requires every approve rule of a bound write capability to need a signed approval or a fact the server checks. If you add a connector, classify its capabilities in `connector-policies-not-self-authorizing.test.ts`.
-- **Rate limit on the public routes that do work** (G-78): `POST /refusal/verify`, `POST /execution-intents/verify`, `POST /audit/verify` and `/handbook` share a per IP limit, `RATE_LIMIT_PUBLIC_PER_MINUTE` (default 60). Over it they return `429` with `Retry-After`.
+- **Slack posts go only to channels on the server's allowlist**. Set `SLACK_ALLOWED_CHANNEL_IDS` (comma separated channel ids); unset refuses every post. The caller's `channelAuthorized` is no longer trusted, and `parameters.channel` must equal the Intent's `target`. Applies on deploy.
+- **A connector policy cannot let caller facts alone authorize a write**. A test requires every approve rule of a bound write capability to need a signed approval or a fact the server checks. If you add a connector, classify its capabilities in `connector-policies-not-self-authorizing.test.ts`.
+- **Rate limit on the public routes that do work**: `POST /refusal/verify`, `POST /execution-intents/verify`, `POST /audit/verify` and `/handbook` share a per IP limit, `RATE_LIMIT_PUBLIC_PER_MINUTE` (default 60). Over it they return `429` with `Retry-After`.
 - **An LLM tool call needs a signed human approval** for that tool (`llm-tool-call` 1.1.0, G-74), instead of the caller declaring `humanApproval: true`.
 
 **Added**
@@ -567,10 +559,10 @@ An AI attack review (an agent manipulated by prompt injection calling the API) f
 
 **Fixed**
 
-- On the hosted API, a malformed JSON body returned `500`; it now returns `400 Malformed JSON body.` (G-69).
-- **Paytm refund agent (`parmana-paytm-agent`, a separate service): an approved refund could be paid twice** (G-70). Its `/agent/refunds` endpoint asked Parmana to execute the refund and then called Paytm itself as well, while Parmana had already sent the refund to Paytm through its connector. The agent no longer calls Paytm; it returns Paytm's result from the Trust Record. It also reads the policy version from `GET /policies/in-effect` instead of sending 1.0.0, and can forward a signed manager approval (`approvalArtifact`). Deployed 2026-09-28; a refused refund was verified in production, and an approved one has not been observed live yet.
+- On the hosted API, a malformed JSON body returned `500`; it now returns `400 Malformed JSON body.`.
+- **Paytm refund agent (`parmana-paytm-agent`, a separate service): an approved refund could be paid twice**. Its `/agent/refunds` endpoint asked Parmana to execute the refund and then called Paytm itself as well, while Parmana had already sent the refund to Paytm through its connector. The agent no longer calls Paytm; it returns Paytm's result from the Trust Record. It also reads the policy version from `GET /policies/in-effect` instead of sending 1.0.0, and can forward a signed manager approval (`approvalArtifact`). Deployed 2026-09-28; a refused refund was verified in production, and an approved one has not been observed live yet.
 
-- **Paytm refunds: more than one refund per transaction, and the reason reaches Paytm** (G-71). A `paytm:refund` Intent may carry `refundReference`, the caller's own id for one refund: the Paytm refId is then derived from the order, the transaction and that reference, so separate partial refunds of one transaction get separate refIds while retries of one refund keep the same one. Without it, the refId is exactly what it was. `refundReason` is now passed to the connector service, which sends it to Paytm as the refund comment. Both are optional (at most 128 and 256 characters). The refund agent (`parmana-paytm-agent`) sends both since its release of the same day: its `refId` as `refundReference`, its `reason` as `refundReason`.
+- **Paytm refunds: more than one refund per transaction, and the reason reaches Paytm**. A `paytm:refund` Intent may carry `refundReference`, the caller's own id for one refund: the Paytm refId is then derived from the order, the transaction and that reference, so separate partial refunds of one transaction get separate refIds while retries of one refund keep the same one. Without it, the refId is exactly what it was. `refundReason` is now passed to the connector service, which sends it to Paytm as the refund comment. Both are optional (at most 128 and 256 characters). The refund agent (`parmana-paytm-agent`) sends both since its release of the same day: its `refId` as `refundReference`, its `reason` as `refundReason`.
 
 ## 2026-09-27
 
@@ -587,13 +579,13 @@ An AI attack review (an agent manipulated by prompt injection calling the API) f
 
 **Fixed**
 
-- An approver could not be added on Vercel, because approver public keys were read only from files the platform cannot provide. A trusted approver entry can now carry its public key as `publicKeyPem` (G-68).
-- A valid signed approval (HubSpot amount changes) was always refused at the gateway, because the approval was used up by the first of the two checks. It is now used once, at authorization (G-67).
+- An approver could not be added on Vercel, because approver public keys were read only from files the platform cannot provide. A trusted approver entry can now carry its public key as `publicKeyPem`.
+- A valid signed approval (HubSpot amount changes) was always refused at the gateway, because the approval was used up by the first of the two checks. It is now used once, at authorization.
 
 **Documentation**
 
 - **Policy lifecycle and approvals.** One guide, end to end: write a policy, propose it, a second person approves it, how it takes effect, and how a person signs off on a single action. Commands for Bash and PowerShell. See [Policy lifecycle and approvals](/guides/policy-lifecycle-and-approvals).
-- **Human approval.** A new page, [Human approval](/concepts/human-approval), states where people approve what agents do today, how to query refused requests, and what is not available yet: a refused request cannot be approved afterwards, and refunds have no checked manager approval. Recorded as G-65 and G-66 in `docs/VERIFICATION-GAPS.md`.
+- **Human approval.** A new page, [Human approval](/concepts/human-approval), states where people approve what agents do today, how to query refused requests, and what is not available yet: a refused request cannot be approved afterwards, and refunds have no checked manager approval. Recorded as G-65 and G-66 in.
 
 ## 2026-09-25
 

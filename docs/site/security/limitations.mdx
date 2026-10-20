@@ -61,8 +61,7 @@ not claim them:
   loudly rather than silently doing nothing. Key rotation exists
   (`scripts/rotate-verification-key.ts`) but is a manual operator procedure, not automated.
 - **Verifiers must implement the large message rule.** AWS KMS refuses a raw Ed25519 message over
-  4096 bytes, so a record or authorization larger than that is signed by KMS as a fixed commitment
-  (ADR-0010). The Parmana TypeScript packages and the Python SDK verify it. A verifier you write
+  4096 bytes, so a record or authorization larger than that is signed by KMS as a fixed commitment. The Parmana TypeScript packages and the Python SDK verify it. A verifier you write
   yourself must accept the commitment form for messages over 4096 bytes, or it will reject large
   KMS signed records.
 - **Route access is scoped by kind of caller, not per route.** There is no per key allowlist
@@ -89,14 +88,7 @@ not claim them:
 
 ## Open issues
 
-Every gap still open, as of 2026-10-10. Each has an entry in
-[docs/VERIFICATION-GAPS.md](https://github.com/pavancharak/parmana/blob/main/docs/VERIFICATION-GAPS.md), where the
-evidence and the proposed fix are.
-
-| Entry      | What is open                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | What to do meanwhile                                                                             |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| G-50       | Any trusted approver can approve any policy change, and sign an approval for any action.                                                                                                                                                                                                                                                                                                                                                                                                                      | Give approver keys only to people who may approve everything the deployment can do.              |
-| G-51, G-76 | Facts an agent declares (for example `refundEligible`, Slack `contentApproved`) are not checked against another system. They can only make a rule refuse.                                                                                                                                                                                                                                                                                                                                                     | Rely on the signed approval, which is what authorizes.                                           |
+Every gap still open, as of 2026-10-10. Each has an entry inrefundEligible`, Slack `contentApproved`) are not checked against another system. They can only make a rule refuse.                                                                                                                                                                                                                                                                                                                                                     | Rely on the signed approval, which is what authorizes.                                           |
 | G-92       | [Business validation](/concepts/business-validation): business systems can be [registered as sources](/guides/connect-a-business-signal-source) and their signed answers are verified, but no real system is connected yet; a source without a key is trusted on TLS alone; Parmana proves the source said it, not that it is right. Verified in production with a demo source by a [live check](https://github.com/pavancharak/parmana/tree/main/examples/live-checks/business-signal-source) on 2026-10-11. | Register sources with a key, keep amount limits in policy rules and rely on the signed approval. |
 | G-93       | [Authority grants](/guides/grant-an-agent-authority) are opt in per policy and no shipped policy requires one; limits are per request, not per day. Verified in production with a test policy by a [live check](https://github.com/pavancharak/parmana/tree/main/examples/live-checks/authority-grant) on 2026-10-11.                                                                                                                                                                                         | Require grants in the policies that matter, keep cumulative caps in the business system.         |
 | G-94       | At release the gateway re-checks the facts and the grant a decision rests on, but an [external endpoint](/guides/connect-any-external-system) must check the release's `conditions` itself to execute only if they still hold; built in connectors get only the gateway re-check.                                                                                                                                                                                                                             | Check `conditions` in your endpoint, in the same transaction as the action.                      |
@@ -113,7 +105,7 @@ evidence and the proposed fix are.
 
 For each threat below: what's actually tested, and what the honest gap is. The full threat
 model, with assets, trust boundaries, attackers and an attack scenario per threat, is
-[THREAT-MODEL.md](https://github.com/pavancharak/parmana/blob/main/THREAT-MODEL.md).
+THREAT-MODEL.md.
 
 ### Policy bypass
 
@@ -175,7 +167,7 @@ adapter fails closed on a non-2xx response or a timeout, never a partial success
 **Honest gap:** there's no throughput or load test in this codebase. In memory, one
 authorization and execution round trip takes a few milliseconds (roughly 0.1 ms to sign); in
 production on Vercel an approved request took 24 to 32 seconds end to end, most of it in
-sequential database and KMS round trips, not yet broken down (`docs/VERIFICATION-GAPS.md`
+sequential database and KMS round trips, not yet broken down
 G-84). Connector calls have timeouts (Paytm 10 s by default, an external connector its
 registered `timeoutMs`); the pipeline as a whole has none of its own, so a client should wait
 120 seconds and, after a timeout, read the record before sending again.
@@ -210,7 +202,7 @@ Every claim on this site cites a real source file or test, not a description wri
 memory. You can check any of it yourself: clone the repository, run `npm test`, read the
 cited file at the cited path, or verify a trust record independently with the server turned
 off entirely, see [Verify a trust record independently](/guides/verify-independently). The
-full evidentiary detail behind every claim lives in `docs/CLAIMS.md` in the repository.
+full evidentiary detail behind every claim lives in in the repository.
 
 ## Next
 

@@ -40,7 +40,7 @@ both.
 ```
 
 The build compiles with TypeScript 7, installed as the `typescript7` alias next to TypeScript 6,
-which lint and documentation tools still need (ADR-0015 in the repository).
+which lint and documentation tools still need.
 
 Every route is rewritten to a single serverless Function, `api/index.ts`. `includeFiles` is
 notable: it explicitly bundles `policies/**` into the deployed Function, since the Function's
@@ -108,7 +108,7 @@ migration referenced there is complete as of this session.
 `KEY_PROVIDER=local` remains the only fully implemented local-key path; setting `KEY_PROVIDER`
 to anything else (`aws-kms`, `azure-key-vault`, `gcp-kms`, `hsm` were once silently ignored, a
 real gap closed by making `KeyBootstrap.create()` throw explicitly naming the unimplemented
-value, see `docs/VERIFICATION-GAPS.md` gap 40 in the July session's table). The actual KMS
+value, see gap 40 in the July session's table). The actual KMS
 signing path used in production goes through `KmsSigner`/`SignerKeyProviderAdapter`
 independently of that specific `KEY_PROVIDER` flag, verify the current wiring in
 `packages/crypto/src/SignerBootstrap.ts` if you need the precise selection logic.
