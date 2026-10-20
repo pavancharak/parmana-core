@@ -1,6 +1,6 @@
 # ADR-0017: Operator kill switch with a fresh, repeatable shutdown check
 
-**Status:** Decisions accepted on 2026-10-20. First slice built on branch `feat/kill-switch` (not merged): in-memory state, guard, trip, reset and status. Not durable, not signed, not deployed.
+**Status:** Decisions accepted on 2026-10-20. First slice built on branch `feat/kill-switch` (not merged): guard, trip, reset and status, with a durable Postgres store (step 1). Not signed, not deployed.
 
 **Relates to:** `docs/site/security/regulation-mapping.mdx` (row "Draft MRM guidance, kill switch"); `docs/VERIFICATION-GAPS.md` G-122; `docs/REMAINING-WORK.md` section B.
 
@@ -67,6 +67,7 @@ The switch is only useful if its state can be verified later. Proposed:
 Built on branch `feat/kill-switch`:
 
 - the switch state and service, with compare-and-write retries and fail-closed reads (`packages/api/src/killSwitch/`)
+- the durable Postgres store and its migration `supabase/migrations/20261020120000_add_kill_switch_state.sql`. The migration seeds one inactive row and enables row level security. The store writes only when the version it read is still current.
 - the guard on execute, transactions, the policy-change approve route and the sandbox approvals route
 - trip, reset and status routes, with `kill-switch:trip` and `kill-switch:reset` capabilities
 - the OpenAPI entries, the three code samples in each language, and the generated pages
@@ -74,10 +75,14 @@ Built on branch `feat/kill-switch`:
 
 Not built yet, and not safe to deploy until they are:
 
-- **Durable store.** The state is in memory. A trip is lost on restart. The app mounts the switch only when one is supplied, and the server does not supply one, so production is unchanged.
+- **Wiring the durable store into the server.** The store exists (`PostgresKillSwitchStore`) and is tested against a real Postgres, including a restart and two operators tripping at once. The server does not supply it yet, so production has no kill switch mounted. Before wiring it, apply migration `20261020120000_add_kill_switch_state.sql` to the production database.
 - **Signed status and signed audit events** (ADR-0017, Audit; G-118 limits the signing key).
 - **Two-person reset in production** (decision 1). Reset is one-person in every environment for now.
 - **The probe** and the **third-party check**.
+
+## How the durable store was tested
+
+Against a local PostgreSQL 16 cluster, not the production or the test project. The live test (`packages/api/tests/integration/postgres-kill-switch.integration.test.ts`) runs only with `DATABASE_URL` and `ALLOW_LIVE_SUPABASE=1` set, and it resets the single row before each case, so run it against a test database only. It covers: the seeded state, a stale write being refused, a trip surviving a new pool, and two concurrent trips ending at version 2.
 
 ## Decisions (2026-10-20)
 
