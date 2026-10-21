@@ -20,6 +20,7 @@ import { assertPaytmConnectorConfigured } from "../packages/api/dist/bootstrap/a
 import { createCallerAuthenticator } from "../packages/api/dist/bootstrap/createCallerAuthenticator.js";
 import { createPolicyChangeStepUpVerifier } from "../packages/api/dist/bootstrap/createPolicyChangeStepUpVerifier.js";
 import { createPolicyChangeApprovalService } from "../packages/api/dist/bootstrap/createPolicyChangeApprovalService.js";
+import { parsePolicyChangeCheckers } from "../packages/api/dist/governance/policyChangeCheckers.js";
 import { assertPolicyGovernanceIntegrityAtStartup } from "../packages/api/dist/governance/verifyPolicyGovernanceIntegrityAtStartup.js";
 import { createRateLimitStore } from "../packages/api/dist/bootstrap/createRateLimitStore.js";
 import { createSandboxOptions } from "../packages/api/dist/bootstrap/createSandboxOptions.js";
@@ -115,6 +116,9 @@ async function buildApp() {
           stepUpVerifier: createPolicyChangeStepUpVerifier(),
           policyChangeApprovalService: createPolicyChangeApprovalService(),
         }),
+    policyChangeCheckers: parsePolicyChangeCheckers(
+      process.env.POLICY_CHANGE_CHECKERS,
+    ),
     ...(sandbox.sandboxApprover
       ? { sandboxApprover: sandbox.sandboxApprover }
       : {}),
