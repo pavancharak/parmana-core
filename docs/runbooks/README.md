@@ -12,6 +12,7 @@ Operator guides for running Parmana in production and for working on it locally.
 | A change is not live after you saved it, or you need to roll back | [PRODUCTION-DEPLOY-AND-ROLLBACK.md](PRODUCTION-DEPLOY-AND-ROLLBACK.md) |
 | A key is lost, shared, or may be exposed, or you need to rotate one | [KEY-ROTATION.md](KEY-ROTATION.md) |
 | The local build, typecheck or tests fail, or the local tools cannot import a package | [LOCAL-DEVELOPMENT.md](LOCAL-DEVELOPMENT.md) |
+| A Razorpay refund demo, the draft refund policy, or the live-money gate | [RAZORPAY-REFUND.md](RAZORPAY-REFUND.md) |
 | The kill switch is on, or the probe reports it | [KILL-SWITCH-OPERATIONS.md](KILL-SWITCH-OPERATIONS.md) |
 | The server refuses to start over Paytm settings, or a Paytm refund fails to authenticate | [PAYTM-CONNECTOR.md](PAYTM-CONNECTOR.md) |
 | An approval signed by an approver is refused, or you need to add or revoke an approval issuer | [APPROVAL-ISSUERS.md](APPROVAL-ISSUERS.md) |
