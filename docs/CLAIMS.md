@@ -872,7 +872,7 @@ These are listed as open in `docs/REMAINING-WORK.md` section M.
 
 **Verified by tests.** A trip refuses `/execute` with `503 KILL_SWITCH_ACTIVE` and the reset lets the next request through (`packages/api/tests/integration/kill-switch.integration.test.ts`). The trip, status and probe routes stay reachable while tripped. A key without the trip, reset or probe capability is refused with `403`. A reset by one operator is held as pending (`202`), a second, different operator completes it (`200`), and the same operator is refused (`409`). A read failure reports tripped (`packages/api/tests/unit/KillSwitchService.test.ts`). Against a real Postgres 16, the stop survives a new connection pool, and two concurrent trips end at version 2 (`packages/api/tests/integration/postgres-kill-switch.integration.test.ts`).
 
-**Checked in production, once.** On 2026-10-20, with the switch enabled and not tripped, `GET /kill-switch/status` returned `active: false` and echoed the nonce. The switch has not been tripped in production. The probe workflow's first manual run passed on 2026-10-20.
+**Checked in production, once.** On 2026-10-20, with the switch enabled and not tripped, `GET /kill-switch/status` returned `active: false` and echoed the nonce. The switch has not been tripped in production. The probe workflow's first manual run passed on 2026-10-20. It passed again on 2026-10-21, after the probe key was regenerated and the GitHub secret updated.
 
 **Not claimed.**
 
@@ -885,6 +885,24 @@ These are listed as open in `docs/REMAINING-WORK.md` section M.
 7. A third-party check on a non-production deployment has not been done.
 
 Operations: `docs/runbooks/KILL-SWITCH-OPERATIONS.md`. Gap: G-122 in `docs/VERIFICATION-GAPS.md`.
+
+## 2.59 A Policy Change Is Approved in Production Only by a Listed Checker, and the Approved Version Is Stored Durably (Scoped, 2026-10-21)
+
+**Claim.** A policy change takes effect only when a human caller who is listed for that policy approves it, with a single-use step-up signature, and the approved version is saved to the policy store. A caller who is not listed is refused with `403 CHECKER_NOT_IN_SCOPE`. An unset scope lists no one, so nothing is approved.
+
+**Verified by tests.** The approve route checks the caller against `POLICY_CHANGE_CHECKERS` (`packages/api/src/governance/policyChangeCheckers.ts`, tested in `packages/api/tests/unit/policyChangeCheckers.test.ts`). `tests/architecture/vercel-entry-policy-checkers.test.ts` checks that both `server.ts` and `api/index.ts` pass the scope. The test was confirmed to fail on the unfixed `api/index.ts`.
+
+**Checked in production, once.** On 2026-10-21 a maker key for `maker-wiring-check` proposed version `1.0.0` of the unused policy `checker-wiring-check`, and the checker `pavancharak` approved it with a signed step-up. The response showed `status: APPROVED`, `resolvedBy: pavancharak`, `resolvedAt: 2026-10-21T04:29:57.273Z`. The approved version is stored in the `policies` table.
+
+**Not claimed.**
+
+1. That a caller who is not listed is refused on production. That is tested in unit tests only, and was not tried on production.
+2. That approved versions survive a restart of production. Storage is the database path, and no restart was tested.
+3. That approval issuers, which sign approvals for agent actions, are scoped per policy. They are not (G-50, still open).
+4. That a second person is required beyond the rule that the maker cannot approve their own change. There is no quorum.
+5. That the checker is a separate person. Both keys were created by one operator on one machine. This check shows the wiring works, not that duties are separated (REMAINING-WORK, section A).
+
+Gaps: G-50 (partly fixed) and G-123 (fixed).
 
 ## 2.23 Independently Certified Authorization (Phase 3D)
 

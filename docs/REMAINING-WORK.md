@@ -2,6 +2,14 @@
 
 Snapshot: 2026-09-21, with section F added and updated on 2026-09-25, section G added on 2026-09-27, and section L added and updated on 2026-10-11. This is the current list of what is left. It replaces `02-REMAINING.md` (a July 5 snapshot) for current status.
 
+## Update 2026-10-21
+
+- **Policy approvals work on production.** The Vercel entry did not pass the checker scope, so every approval was refused. Fixed in `4e79d57` (G-123). A live approval of the unused policy `checker-wiring-check` 1.0.0 succeeded (CLAIMS 2.59).
+- **Production keys were replaced.** `PARMANA_API_KEYS` and `POLICY_CHANGE_CHECKERS` were set again, and the probe key was regenerated (`kill-switch-probe`, `kill-switch:probe` only). The GitHub secret `PARMANA_PROBE_KEY` was updated, and the probe passes.
+- **Open:** `RESEND_API_KEY` is stored in Vercel as a Config value, which anyone with dashboard access can reveal. Owner: operator. Done when `npx vercel env ls production` lists it as Secret.
+- **Open:** approval issuers are still not scoped per policy, and there is no quorum (G-50).
+- **Not built:** the CAGE integration. Its design (ADR-0018) was never merged, and the branches holding it have been deleted, so it is not part of production.
+
 ## Update 2026-10-19
 
 - **Database password rotated.** The production Supabase database password was replaced after it was pasted into a chat. Vercel `DATABASE_URL` and the operator's local `.env` backup were updated. Afterwards `/health` returned `UP`, `/ready` returned `READY` with `authDisabled` false, and an unauthenticated `POST /execute` returned `401`.
@@ -67,6 +75,8 @@ The kill switch is live in production with the switch not tripped. Runbook: `doc
 | Third-party check on a non-production deployment                                                   | Operator and an outside party | A non-production deployment                    | A written result is filed in this document                         |
 
 Decided on 2026-10-20: every probe row is kept, so the one-year minimum always holds; the probe runs from a scheduled GitHub Actions workflow on `main`; status stays unsigned until a build-bound key exists.
+
+Updated 2026-10-21: the probe key was regenerated as `kill-switch-probe`, with `kill-switch:probe` only, and held in `PARMANA_API_KEYS`. The GitHub secret `PARMANA_PROBE_KEY` was updated, and the probe workflow passes.
 
 ## B. Engineering follow up
 
@@ -294,6 +304,7 @@ Do not edit it by hand: run `npx tsx scripts/gap-status.ts`. `npm test` fails wh
 | G-120 | A schema version 2 record can be downgraded by anyone who can write to storage.                     | open, accepted for records created before a cutover, closed for records after one              |
 | G-121 | Verifiers outside this repository read only schema version 2.                                       | open, gates schema version 3 issuance                                                          |
 | G-122 | Parmana has no operator kill switch, and no fresh check that a stop is in force.                    | open, partly closed                                                                            |
+| G-123 | Production policy approvals were refused: the Vercel entry did not pass the checker scope.          | fixed 2026-10-21                                                                               |
 
 <!-- gap-status:end -->
 
