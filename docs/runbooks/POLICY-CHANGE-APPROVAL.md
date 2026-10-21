@@ -74,9 +74,9 @@ $rb = '{"stepUpAuthorization":' + $envelope + ',"rejectionReason":"why"}'
 Invoke-RestMethod -Method Post -Uri "$env:PARMANA_URL/policies/pending-changes/<ID>/reject" -Headers @{ Authorization = "Bearer $checker" } -ContentType "application/json" -Body $rb
 ```
 
-Sign the envelope with `--action reject`. The checks run in this order: caller authentication, human caller, `rejectionReason` required (`400`), change exists, maker is not the checker, then step-up.
+Sign the envelope with `--action reject`. The checks run in this order: caller authentication, human caller, `rejectionReason` required (`400`), change exists, maker is not the checker, `POLICY_CHANGE_CHECKERS` scope (`403 CHECKER_NOT_IN_SCOPE`), then step-up.
 
-**Reject does not check `POLICY_CHANGE_CHECKERS`.** Any human caller who isn't the maker can reject with a valid envelope. Only approve enforces the list. Treat that as a known gap, not as a feature.
+Reject and approve use the same checker list, so a caller who may not approve a policy may not reject its changes either.
 
 Rejecting never touches the live policy file. It is safe to use for testing a new key: the rotation test in section 6 rejects a proposal, so nothing goes live.
 
