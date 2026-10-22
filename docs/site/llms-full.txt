@@ -6142,10 +6142,10 @@ Source: https://docs.parmanasystems.com/sdks/python
   PyPI](https://pypi.org/project/parmana/). Real, public, installable with a
   plain `pip install parmana`. This page said `v1.0.5` and described only an
   editable local install until 2026-09-14; both were stale, confirmed against
-  the live PyPI registry while fixing this page. 119 passing tests (1.3.0), 0
-  placeholders, `black`/`ruff`/`mypy --strict` all clean across the whole
-  package. Bearer-key authentication, the error taxonomy below, and
-  `PolicyApi.validate()` are all closed and verified against a real running
+  the live PyPI registry while fixing this page. 190 passing tests (1.6.1,
+  counted 2026-10-22), 0 placeholders, `black`/`ruff`/`mypy --strict` all clean
+  across the whole package. Bearer-key authentication, the error taxonomy below,
+  and `PolicyApi.validate()` are all closed and verified against a real running
   local server. `test_quickstart_example.py` proves the documented quickstart
   script itself runs. v1.1.2 added `create_business_transaction()` (see below)
   and the `offline_verifier.py` fix. Two quick follow-up releases, v1.1.3 and
