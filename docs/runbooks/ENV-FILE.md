@@ -93,7 +93,7 @@ Each entry gives the allowed values, the default when unset, and what the settin
 
 **`PARMANA_POLICY_DIR`**: a folder containing `policies/<name>/<version>/policy.json`. Required (see section 2).
 - Local: `./policies`, which is in the repository.
-- Production: the folder must be part of the deployment. I have not confirmed that on Vercel.
+- Production: `vercel.json` includes `policies/**` in the API function, so the folder is deployed. The runtime path has not been tested live.
 
 **`POLICY_CHANGE_CHECKERS`**: a JSON object keyed by policy name. Each value is a list of checker caller IDs.
 
@@ -108,7 +108,7 @@ POLICY_CHANGE_CHECKERS={"checker-wiring-check":["pavancharak"]}
 
 This flag matters only in one case. Governance is relaxed only when all of these hold: `NODE_ENV` is `test` or `development`, `PARMANA_ALLOW_UNGOVERNED_POLICY=true`, and this flag is not `true` (`policyGovernanceRelaxed.ts`). In every other case, governance is enforced.
 - In production, leave this unset. Governance is enforced regardless.
-- The template comments describe `false` as "detection" and `true` as "prevention". I have not confirmed those meanings in code, so do not rely on them.
+- The detection and prevention descriptions in older template comments are not in the code. Remove them from any template you keep.
 
 ### Callers
 
@@ -148,7 +148,7 @@ The command prints the raw key once. Save it in your password manager, then put 
 - On serverless hosts, use the transaction pooler string.
 - The password is a secret. Store it in the password manager.
 
-**`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`**: used by local scripts. The docs state the server does not read them and that production must not set them. I have not checked which local scripts read them.
+**`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`**: the server's runtime code does not read them. The runtime uses `DATABASE_URL` (`createNonceStore.ts`, `StorageFactory.ts`). Scripts name them: `scripts/generate-fly-secrets.mjs`, `scripts/policy-approval-log.ts`, `scripts/verify-policy-changes-approved.ts`. Don't set them on a production server.
 
 ### Keys and signing
 
@@ -156,7 +156,7 @@ The command prints the raw key once. Save it in your password manager, then put 
 - Default: `local`.
 - `local`: keys are files in `PARMANA_KEY_DIR`.
 - `aws-kms`: the default signing key is in AWS KMS. Production uses this.
-- I have not confirmed that `azure-key-vault`, `gcp-kms` and `hsm` are implemented. Use only `local` and `aws-kms`.
+- `azure-key-vault`, `gcp-kms` and `hsm` are refused at startup. The code says "is not implemented" (`SignerBootstrap.ts`).
 
 **`PARMANA_KEY_DIR`**: a writable folder. Required (section 2).
 - Local: `./keys`.
@@ -176,20 +176,23 @@ PARMANA_KEY_MATERIAL_JSON={"gateway":{"privateKeyPem":"-----BEGIN PRIVATE KEY---
 
 **`PARMANA_GATEWAY_KEY_ID`**: the ID of the gateway key. Production uses `gateway`.
 
-**`AWS_REGION`**: an AWS region, for example `ap-south-1`. Used by the KMS and secret-manager code. Production sets it.
+**`AWS_REGION`**: an AWS region, for example `ap-south-1`. Read by the secrets provider and the KMS code (`AwsSecretsManagerProvider.ts`, `assertSigningKeyMaterialConfigured.ts`). Production sets it.
 
-**`AWS_ROLE_ARN`**: `arn:aws:iam::<account-id>:role/<role-name>`. The role used for KMS access. Production sets it. I have not checked the code path that requires it.
+**`AWS_ROLE_ARN`**: `arn:aws:iam::<account-id>:role/<role-name>`. Optional in the code. When it is set, `AwsSecretsManagerProvider.ts` exchanges credentials for that role through Vercel's OIDC provider. When it is unset, no role is assumed. Production sets it.
 
 **`CRYPTO_MODE`**: `single`, `hybrid`, `pq`. Default `single`.
 - `hybrid` is refused with `KEY_PROVIDER=aws-kms` (`assertSigningKeyMaterialConfigured.ts`).
 - `pq` is reserved, and no production code reads it today.
 - Production uses `single`. Use `hybrid` only with a specific requirement; see the crypto notes in section 3 of this file.
 
-**`PRIMARY_SIGNATURE_PROVIDER`**: `ed25519`, `ecdsa-p256`, `dilithium3`, `dilithium5`, `sphincs-plus`. Production uses `ed25519`. The others are in the enum; confirm they are implemented before using one.
+**`PRIMARY_SIGNATURE_PROVIDER`**: the values the code accepts are `ed25519` and `dilithium3`. Production uses `ed25519`.
+- `ecdsa-p256`, `dilithium5` and `sphincs-plus` are in the enum, but no provider is registered for them. Choosing one fails at startup with "Unknown signature provider" (`CryptoBootstrap.ts`, `SignatureRegistry.get`).
 
-**`SECONDARY_SIGNATURE_PROVIDER`**: the same list. Set only with `CRYPTO_MODE=hybrid`. Leave empty otherwise.
+**`SECONDARY_SIGNATURE_PROVIDER`**: the same two values. Set only with `CRYPTO_MODE=hybrid`. Leave empty otherwise.
 
-**`HASH_PROVIDER`**: `sha256`, `sha3-512`, `blake3`. Default `sha256`. Changing it changes every new record's hash.
+**`HASH_PROVIDER`**: the only value the code accepts is `sha256`. Default `sha256`.
+- `sha3-512` and `blake3` are in the enum, but no provider is registered. Choosing one fails at startup with "Unknown hash provider" (`HashRegistry.get`).
+- Changing the hash changes every new record's hash. Only `sha256` is available today.
 
 ### Trust and receipts
 
@@ -220,7 +223,7 @@ Each connector is registered only when its settings are present. Otherwise nothi
 - **Paytm**: `PAYTM_CONNECTOR_URL` and `PAYTM_CONNECTOR_SHARED_SECRET`. Set both or neither. The URL must start with `https://` in production. Details: `docs/runbooks/PAYTM-CONNECTOR.md`.
 - **HubSpot**: `HUBSPOT_PRIVATE_APP_TOKEN`. `HUBSPOT_PRIVATE_APP_TOKEN_ROTATED_AT` is an ISO 8601 date. The server logs a warning when the token is stale (`warnIfHubSpotTokenStale.ts`).
 - **Razorpay**: `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`. The demo endpoint refuses a live key. Details: `docs/runbooks/RAZORPAY-REFUND.md`.
-- **GitHub App**: `GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY`. I have not checked how the private key is decoded. Confirm the format in `createGitHubCredentialProvider.ts` before setting it.
+- **GitHub App**: `GITHUB_APP_ID` and `GITHUB_INSTALLATION_ID` are numbers. `GITHUB_APP_PRIVATE_KEY` is the app's PEM private key as text, not base64. The value is passed unchanged to `crypto.sign` in `GitHubAppJwt.ts`, which needs a PEM key. Base64 text fails there. Use the PEM with `\n` for line breaks, in double quotes.
 
 ---
 
@@ -286,7 +289,8 @@ Production values go in Vercel's environment settings, not in a `.env` file. Ver
 | `RATE_LIMIT_EXECUTE_PER_MINUTE` | `30` | Calls per minute to execute |
 | `RATE_LIMIT_HEALTH_PER_MINUTE` | `300` | Calls per minute to health |
 
-Never set in production: `PARMANA_AUTH_DISABLED`, `NODE_ENV=test`, `NODE_ENV=development`, `PARMANA_ALLOW_UNGOVERNED_POLICY`, `DATABASE_PROVIDER` (retired; setting it fails startup, per the template's comment, which I have not checked in code), `SUPABASE_*` (not read by the server, per docs).
+Never set in production: `PARMANA_AUTH_DISABLED`, `NODE_ENV=test`, `NODE_ENV=development`, `PARMANA_ALLOW_UNGOVERNED_POLICY`, `DATABASE_PROVIDER`, `SUPABASE_*`.
+- `DATABASE_PROVIDER` is refused at startup: "DATABASE_PROVIDER is no longer read; set PARMANA_STORAGE instead." (`ConfigValidation.ts`).
 
 ---
 
@@ -317,14 +321,18 @@ Never set in production: `PARMANA_AUTH_DISABLED`, `NODE_ENV=test`, `NODE_ENV=dev
 
 ---
 
-## 8. Not verified
+## 8. What was verified, and what was not
 
-These claims were not checked against the code, and the document says so where they occur:
+**Verified against the code:**
+- The loaders and dotenv parsing (tested with the installed dotenv 18.0.8).
+- Every startup refusal named in section 2.
+- Defaults: `NODE_ENV`, `PARMANA_STORAGE`, `LOG_LEVEL`, `HOST`, `SHUTDOWN_TIMEOUT_MS`, the rate limits, `EXECUTION_AUTHORIZATION_TTL_SECONDS`, `RECEIPT_VERSION`.
+- The allowed values of `KEY_PROVIDER`, `CRYPTO_MODE`, `PRIMARY_SIGNATURE_PROVIDER`, `HASH_PROVIDER`, `TRUST_PROFILE`, `credentialHolderType`.
+- The registered algorithms, and the refusals for the others.
+- The policy-enforcement rule.
+- The GitHub key format.
+- The `vercel.json` inclusion of `policies/**`.
 
-- The policy directory on Vercel is included in the deployment.
-- The meaning of `POLICY_EXECUTION_VERIFICATION_ENFORCED` beyond the relaxation rule above.
-- Which local scripts read the `SUPABASE_*` variables.
-- Whether `azure-key-vault`, `gcp-kms`, `hsm`, `ecdsa-p256`, `dilithium3`, `dilithium5`, `sphincs-plus`, `sha3-512` and `blake3` are fully implemented.
-- How `GITHUB_APP_PRIVATE_KEY` is decoded.
-- Whether `AWS_ROLE_ARN` is required by the code path, or only by our deployment.
-- The meaning of the `DATABASE_PROVIDER` error that the template comments describe.
+**Not verified:**
+- Startup on Vercel with these exact values. The code is verified; a live deployment is not.
+- The `LOG_LEVEL` values beyond `info`. The docs list `debug`, `info`, `warn`, `error`; the Logger's accepted set was not traced line by line.
