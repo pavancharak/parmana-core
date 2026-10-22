@@ -3749,15 +3749,15 @@ A rejection changes no key. The change keeps its `rejectionReason`.
 
 ## Errors
 
-| Status | Code                                   | When                                                                                                                          | What to do                                                                  |
-| ------ | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| 400    | none                                   | `action` is not `add` or `revoke`, an id has other characters, `reason` is missing, or `publicKeyPem` is not an Ed25519 key   | Fix the request. The message names the field.                               |
-| 401    | `UNAUTHORIZED`                         | No API key, or an unknown one                                                                                                 | Send `Authorization: Bearer <key>`.                                         |
-| 403    | `NON_HUMAN_CALLER_DENIED`              | The API key is not added as a human                                                                                           | Use a person's key, not an agent's.                                         |
-| 403    | `SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE` | The checker is the proposer                                                                                                   | A different person approves.                                                |
-| 403    | `STEP_UP_AUTHORIZATION_INVALID`        | No step up, or one that is expired, reused, for another change or action, or signed with a key not registered to this checker | Sign a new one for this change id and action, and send it within 2 minutes. |
-| 404    | `APPROVAL_ISSUER_CHANGE_NOT_FOUND`     | No change has this id                                                                                                         | Check the id from the proposal.                                             |
-| 409    | `CONFLICT`                             | The key is in code, already exists, is not active (revoke), another change for it is pending, or the change is resolved       | Read the message. Use a new key id to add a key again.                      |
+| Status | Code                                      | When                                                                                                                          | What to do                                                                  |
+| ------ | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 400    | none                                      | `action` is not `add` or `revoke`, an id has other characters, `reason` is missing, or `publicKeyPem` is not an Ed25519 key   | Fix the request. The message names the field.                               |
+| 401    | none (`error`: `authentication required`) | No API key, or an unknown one                                                                                                 | Send `Authorization: Bearer <key>`.                                         |
+| 403    | `NON_HUMAN_CALLER_DENIED`                 | The API key is not added as a human                                                                                           | Use a person's key, not an agent's.                                         |
+| 403    | `SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE`    | The checker is the proposer                                                                                                   | A different person approves.                                                |
+| 403    | `STEP_UP_AUTHORIZATION_INVALID`           | No step up, or one that is expired, reused, for another change or action, or signed with a key not registered to this checker | Sign a new one for this change id and action, and send it within 2 minutes. |
+| 404    | `APPROVAL_ISSUER_CHANGE_NOT_FOUND`        | No change has this id                                                                                                         | Check the id from the proposal.                                             |
+| 409    | `CONFLICT`                                | The key is in code, already exists, is not active (revoke), another change for it is pending, or the change is resolved       | Read the message. Use a new key id to add a key again.                      |
 
 ## Reference
 
