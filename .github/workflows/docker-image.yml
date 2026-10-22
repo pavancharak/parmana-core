@@ -42,22 +42,6 @@ on:
       - policies/**
       - .github/workflows/docker-image.yml
   pull_request:
-    paths:
-      - Dockerfile
-      - .dockerignore
-      - docker/**
-      - package.json
-      - package-lock.json
-      - packages/**
-      - docs/site/parmana-handbook.pdf
-      - supabase/migrations/**
-      - scripts/apply-all-migrations.sql
-      - docker-compose.yml
-      - docker-compose.offline-check.yml
-      - docs/site/self-hosted/**
-      - scripts/sign-policy-change-step-up.ts
-      - policies/**
-      - .github/workflows/docker-image.yml
   workflow_dispatch:
 
 permissions:

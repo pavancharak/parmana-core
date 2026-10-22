@@ -17,14 +17,6 @@ on:
       - master
       - develop
   pull_request:
-    paths:
-      - "python/**"
-      - "python-connector-sdk/**"
-      # tests/test_docs_code_samples.py checks the Python samples in the docs.
-      - "docs/site/**"
-      - "packages/shared/**"
-      - "package.json"
-      - "package-lock.json"
 
 permissions:
   contents: read
