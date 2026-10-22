@@ -204,18 +204,15 @@ workflow, recording the commit, the workflow and each file's SHA-256. To check a
 package with [slsa-verifier](https://github.com/slsa-framework/slsa-verifier):
 
 ```bash
-slsa-verifier verify-artifact parmana-sdk-1.6.0.tgz \
+slsa-verifier verify-artifact parmana-sdk-1.6.1.tgz \
   --provenance-path multiple.intoto.jsonl \
-  --source-uri github.com/pavancharak/parmana \
-  --source-tag sdk-v1.6.0
+  --source-uri github.com/pavancharak/parmana-core \
+  --source-tag sdk-v1.6.1
 ```
 
 The provenance covers the files attached to the release. From 1.6.0 on, the files published to npm
 and PyPI are the release's own files, so a registry download has the same hash as the release file
-and the provenance covers it too: `@parmana/sdk` 1.6.0, `@parmana/connector-sdk` 0.3.0 and `parmana`
-1.6.0 are the files of release `sdk-v1.6.0`. Earlier versions (`@parmana/sdk` and `parmana` 1.5.0
-and before, and `parmana-connector-sdk` 0.2.0, still the current version) were built before this
-workflow existed, so they are not byte for byte the files in a release, although they come from the
+and the provenance covers it too: `@parmana/sdk` 1.6.1, `@parmana/connector-sdk` 0.3.1, `parmana` 1.6.1 and `parmana-connector-sdk` 0.2.1 are the files of release `sdk-v1.6.1`, and `@parmana/sdk` 1.6.0, `@parmana/connector-sdk` 0.3.0 and `parmana` 1.6.0 are the files of release `sdk-v1.6.0`. Earlier versions (`@parmana/sdk` and `parmana` 1.5.0 and before, and `parmana-connector-sdk` 0.2.0) were built before this workflow existed, so they are not byte for byte the files in a release, although they come from the
 same source.
 
 Each npm package and each wheel also has a [CycloneDX](https://cyclonedx.org) 1.5 SBOM beside it,
