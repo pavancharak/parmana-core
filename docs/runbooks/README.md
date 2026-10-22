@@ -19,6 +19,7 @@ Operator guides for running Parmana in production and for working on it locally.
 | The server refuses to start over Paytm settings, or a Paytm refund fails to authenticate               | [PAYTM-CONNECTOR.md](PAYTM-CONNECTOR.md)                                     |
 | An approval signed by an approver is refused, or you need to add or revoke an approval issuer          | [APPROVAL-ISSUERS.md](APPROVAL-ISSUERS.md)                                   |
 | A file was deleted by mistake                                                                          | [PRODUCTION-TROUBLESHOOTING.md](PRODUCTION-TROUBLESHOOTING.md), section 12   |
+| A Dependabot alert is open, or you need to check that a dependency fix is on `main`                    | [DEPENDABOT-ALERTS.md](DEPENDABOT-ALERTS.md)                                 |
 
 ## Rules that apply to every runbook
 
