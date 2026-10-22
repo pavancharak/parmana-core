@@ -93,7 +93,7 @@ Verification happens twice, in two different places, checking different things:
 
 - A configured signer (`KEY_PROVIDER=local` with `PARMANA_KEY_DIR`, or `KEY_PROVIDER=aws-kms`
   with the relevant AWS configuration, see Chapter 3).
-- `EXECUTION_AUTHORIZATION_TTL_SECONDS` (defaults to 120 per this repo's own `.env`) controls
+- `EXECUTION_AUTHORIZATION_TTL_SECONDS` (defaults to 120; see `.env.example`) controls
   how long a signed authorization remains valid before a receiving system must reject it.
 - A receiving system that wants to verify authorizations itself needs Parmana's public key,
   see Chapter 18 for the discovery mechanism (`GET /keys/:keyId`, `/.well-known/jwks.json`).

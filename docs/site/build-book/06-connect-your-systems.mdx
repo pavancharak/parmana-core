@@ -15,14 +15,14 @@ Parmana never gives the agent a system's credentials. An approved action is rele
 
 Each is registered only when its configuration is present (`packages/api/src/bootstrap/createConnectorRegistry.ts`).
 
-| Capability            | Bound policy          | Configuration                                                       |
-| --------------------- | --------------------- | ------------------------------------------------------------------- |
-| `hubspot:deal-fetch`  | `hubspot-deal-read`   | `HUBSPOT_PRIVATE_APP_TOKEN`                                         |
-| `hubspot:deal-update` | `hubspot-deal-update` | `HUBSPOT_PRIVATE_APP_TOKEN`                                         |
-| `github:pr-fetch`     | `github-pr-read`      | `GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY` |
-| `github:pr-merge`     | `github-pr-approval`  | The same                                                            |
-| `paytm:refund`        | `customer-refund`     | `PAYTM_CONNECTOR_URL`, `PAYTM_CONNECTOR_SHARED_SECRET`              |
-| `slack:post-message`  | `slack-post-message`  | `SLACK_BOT_TOKEN`, `SLACK_ALLOWED_CHANNEL_IDS`                      |
+| Capability            | Bound policy          | Configuration                                                                     |
+| --------------------- | --------------------- | --------------------------------------------------------------------------------- |
+| `hubspot:deal-fetch`  | `hubspot-deal-read`   | `HUBSPOT_PRIVATE_APP_TOKEN`                                                       |
+| `hubspot:deal-update` | `hubspot-deal-update` | `HUBSPOT_PRIVATE_APP_TOKEN`                                                       |
+| `github:pr-fetch`     | `github-pr-read`      | `GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY`               |
+| `github:pr-merge`     | `github-pr-approval`  | The same                                                                          |
+| `paytm:refund`        | `customer-refund`     | `PAYTM_CONNECTOR_URL`, `PAYTM_CONNECTOR_SHARED_SECRET`                            |
+| `slack:post-message`  | `slack-post-message`  | `SLACK_BOT_TOKEN` (registration); `SLACK_ALLOWED_CHANNEL_IDS` (posting allowlist) |
 
 A capability whose connector is not configured is refused with `503 CONNECTOR_NOT_REGISTERED`, before anything is
 sent. Ask the server which policy and version govern a capability with `GET /policies/in-effect?capability=...`.
@@ -65,7 +65,7 @@ answers. No shared secret is involved: the signature is the authentication.
 }
 ```
 
-`parameters` holds only the names the registration allows. The release expires 60 seconds after it is issued.
+`parameters` holds only the names the registration allows. The release expires 60 seconds after it is issued, or sooner if a condition it rests on expires first.
 
 ### What the endpoint does
 

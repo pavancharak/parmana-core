@@ -37,7 +37,7 @@ const publicKeyPem = readFileSync("parmana-default.public.pem", "utf8");
 const result = verifyExecutionTrustRecordOffline(record, {
   default: publicKeyPem,
 });
-// { valid, hashValid, legacySignatureValid, hybridSignaturesValid?, algorithmsChecked, errors }
+// { valid, hashValid, legacySignatureValid, algorithmsChecked, errors }
 ```
 
 ```python Python
@@ -68,8 +68,7 @@ Three things to know when you build your own verifier:
 - **Large records.** A record over 4096 bytes of canonical content may be signed by AWS KMS over a fixed 97 byte
   commitment: the bytes of `PARMANA-ED25519-LARGE-MESSAGE-V1`, one NUL byte, then the SHA-512 digest of the canonical
   bytes. Try the raw signature first, and the commitment only for a record over 4096 bytes. The SDK functions do this.
-- **Hybrid signatures.** A record may also carry ML-DSA-65 signatures in `signatures`. The TypeScript verifier checks
-  them; the Python verifier checks Ed25519 only.
+- **Hybrid signatures.** A record may also carry ML-DSA-65 signatures in `signatures`. Neither SDK verifies them, so both report such a record as not valid. Verify it with `scripts/verify-trust-record.ts`.
 
 The CLI `scripts/verify-trust-record.ts` does the same from a terminal. [Verify independently](/guides/verify-independently)
 walks through it, with a tampered record failing; [Detect tampering](/guides/detect-tampering) shows parameter

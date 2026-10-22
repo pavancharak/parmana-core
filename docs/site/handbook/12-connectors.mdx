@@ -18,11 +18,11 @@ anything, and never resolve credentials themselves.
 Every governed action this system can take needs an actual integration with the outside
 world, and that integration needs to be swappable, testable in isolation, and structurally
 incapable of bypassing the governance layers above it. The `Connector` contract
-(`packages/connector-sdk/src/ConnectorTypes.ts:104-111`) exists to enforce that boundary in
+(`packages/connector-sdk/src/ConnectorTypes.ts:157`) exists to enforce that boundary in
 code, not just in documentation: its own doc comment states plainly that "a Connector never
 receives a request directly from the Runtime or AI, only from `SdkConnectorExecutor`, itself
 only reachable through execution-control's `SecureConnector`, itself only reachable through
-the Execution Gateway" (`ConnectorTypes.ts:99-102`).
+the Execution Gateway" (`ConnectorTypes.ts:152`).
 
 ## How it works
 
@@ -127,6 +127,6 @@ Each connector needs its own credentials configured, only when actually used:
   API base URL otherwise).
 
 A connector with no credentials configured is simply not registered at startup rather than
-registered in a broken state, each `create*Connector.ts` bootstrap file logs an
+registered in a broken state, `createConnectorRegistry.ts` logs an
 `*_connector_unavailable` event naming the missing configuration, visible in this codebase's
 own startup logs.

@@ -69,11 +69,11 @@ against the supplied `signals`. This is deterministic by construction: the same 
 same signals always produce the same matched rule, because iteration order is fixed array
 order, not a scored or prioritized search.
 
-A missing fact never satisfies a leaf condition (`PolicyEngine.ts:93-95`: `if (signal ===
+A missing fact never satisfies a leaf condition (`PolicyEngine.ts:121-123`: `if (signal ===
 undefined) return false`), an absent signal is not treated as a wildcard or a pass.
 
 If no rule matches, `PolicyDecision.outcome` defaults to `REJECT` via `toOutcome`'s `default`
-branch (`PolicyEngine.ts:140-142`) with `reason: "no_rule_matched"` and `matchedRuleId:
+branch (`PolicyEngine.ts:163-169`) with `reason: "no_rule_matched"` and `matchedRuleId:
 "none"`. Every real policy in this codebase ends with an explicit `always: true` catch-all
 rule specifically so this default path is never actually reached in practice, it exists as a
 safety net, not the intended way to reject.
@@ -95,7 +95,7 @@ handing it back. Two validator calls happen on every load:
    malformed `boundSignals`/`unboundSignalReasons`, an oversized or dangerous `matches`
    regex, see below) and, critically, on any rule-referenced fact that is neither in
    `boundSignals` nor `unboundSignalReasons` (`findUncoveredFacts`, called internally at
-   `PolicyValidator.ts:229`). An uncovered fact is a hard failure, not a warning: every signal a
+   `PolicyValidator.ts:298`). An uncovered fact is a hard failure, not a warning: every signal a
    rule can reference must be either bound to the Intent or explicitly acknowledged as
    independently verified. **Since 2026-09-30** it also refuses any policy with an approve rule
    that does not require a fact from `approvalSignals` with `is_true`, as its whole condition or
@@ -106,7 +106,7 @@ handing it back. Two validator calls happen on every load:
 2. `validator.findRuleConflicts(policy)` (`PolicyRouter.ts:30`), **advisory only**. Detects
    rule pairs whose conditions can both be true, which (under first-match-wins) means the
    earlier rule silently shadows the later one. Logged via `console.warn` with event
-   `policy_rule_conflict_detected`, never thrown. `PolicyValidator.ts:442-466`'s own doc
+   `policy_rule_conflict_detected`, never thrown. `PolicyValidator.ts:763-781`'s own doc
    comment explains why: unlike an uncovered fact (unambiguous fix, bind it or acknowledge
    rule followed by a broader fallback). The analysis is also incomplete by design, it only
    reasons about pairs of single, non-nested-fact conditions; anything involving `all`/`any`
@@ -115,9 +115,9 @@ handing it back. Two validator calls happen on every load:
 ### The `matches` regex guard
 
 Because a `matches` condition is evaluated against live, potentially attacker-influenced
-signal values, `PolicyValidator.validateRegex` (`PolicyValidator.ts:361-391`) rejects two
+signal values, `PolicyValidator.validateRegex` (`PolicyValidator.ts:438`) rejects two
 things before a policy is ever accepted: a pattern longer than 200 characters
-(`MAX_PATTERN_LENGTH`, `PolicyValidator.ts:331`), and a pattern containing a quantified group
+(`MAX_PATTERN_LENGTH`, `PolicyValidator.ts:408`), and a pattern containing a quantified group
 whose own contents are themselves quantified (e.g. `(a+)+`), the textbook shape of
 catastrophic regex backtracking (ReDoS). The doc comment is explicit that this is a heuristic,
 not a proof: it catches the single-level nested-quantifier case, not every pattern capable of
@@ -153,7 +153,7 @@ tracks what's available.
 
 ## How to validate this yourself
 
-- Read the engine itself: `packages/policy/src/PolicyEngine.ts` (145 lines, worth reading in
+- Read the engine itself: `packages/policy/src/PolicyEngine.ts` (173 lines, worth reading in
   full).
 - Read `packages/policy/src/types/Policy.ts` for the exact shape of every field a policy
   document can have.
@@ -168,6 +168,6 @@ tracks what's available.
 ## Integration requirements
 
 None beyond what's already required to run the API at all: `PARMANA_POLICY_DIR` (for
-`FilePolicyRepository`, local/test default `./policies`) or `PARMANA_STORAGE=supabase` plus
+`FilePolicyRepository`, required, with no default) or `PARMANA_STORAGE=supabase` plus
 `DATABASE_URL` (for `SupabasePolicyRepository` in a real deployment). No policy-engine-specific
 configuration exists, a policy's own content is the only per-policy configuration surface.

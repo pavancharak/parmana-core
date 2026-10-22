@@ -41,6 +41,7 @@ export interface ApiKeyEntry {
   readonly keyHash: string;
   readonly credentialHolderType?: AuthorityType;
   readonly allowedPrincipalIds?: readonly string[];
+  readonly allowedTenantIds?: readonly string[];
   readonly allowedCapabilities?: readonly string[];
   readonly stepUpPublicKey?: string;
 }

@@ -47,7 +47,7 @@ me = client.caller()
 Your action must be in `allowedCapabilities`. The principal you act as must be in `allowedPrincipalIds`; the safe
 choice is your `callerId`. Never log or print the key.
 
-## 2. Read the policy in effect (1.5.0)
+## 2. Read the policy in effect (SDK 1.5.0 or later)
 
 Ask the server which policy governs the action, at which version, and what a request must carry. Never write a policy
 version into the agent: an approved new version replaces the old one at once, and a request naming an old one is

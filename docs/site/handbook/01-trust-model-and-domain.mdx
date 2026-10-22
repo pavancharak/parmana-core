@@ -46,7 +46,7 @@ All defined in `packages/shared/src/domain/`, one file per type:
 
 **`Authority`** (`authority.ts`), the entity behind a request. Has an `authorityId`, an
 `authorityType` (`AuthorityType.USER | ROLE | SERVICE | ORGANIZATION`), a `principalId`, and
-an `issuedAt` timestamp. Nothing else. There is no field anywhere on this type, or on
+an `issuedAt` timestamp and an optional `displayName`. Nothing else. There is no field anywhere on this type, or on
 anything downstream of it, that says "this authority is an AI" or "this authority is a
 human" in a way policy evaluation can see.
 

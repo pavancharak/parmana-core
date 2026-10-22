@@ -68,8 +68,8 @@ credential was provisioned with `credentialHolderType: AuthorityType.USER`. An u
 value, or `ROLE`/`SERVICE`/`ORGANIZATION`, is denied the same as an unset one; the default
 is fail closed, never "assume human." A denial is recorded as a signed
 `caller.non_human_denied` audit event before the request is rejected with
-`NonHumanCallerDeniedError`. Notably, `isHumanCaller` is called only from these four
-handlers. It is not wired into the caller-auth middleware globally, so the core execution
+`NonHumanCallerDeniedError`. Notably, `isHumanCaller` is called from these four
+handlers and also from `governanceGuards.ts`, `policy-in-effect.ts` and `execution-intents.ts`. It is not wired into the caller-auth middleware globally, so the core execution
 pipeline (an AI agent submitting a transaction, for example) stays fully actor-agnostic;
 only policy authorship itself is restricted to verified humans.
 
@@ -77,7 +77,7 @@ only policy authorship itself is restricted to verified humans.
 
 Both the approve and reject handlers load the existing `PendingPolicyChange` by id and
 compare `existing.proposedBy === req.callerId`
-(`packages/api/src/routes/pending-policy-changes.ts` and `:605`). A match throws
+(`packages/api/src/routes/pending-policy-changes.ts` at lines 397 and 528). A match throws
 `SameActorCannotApproveOwnChangeError` immediately, before any step-up verification is
 even attempted. There is no override, no admin bypass, and no configuration flag for this
 check. It is the literal enforcement of "maker never equals checker."
@@ -94,7 +94,7 @@ checker's ordinary bearer token.
 
 The envelope is produced entirely offline, on the checker's own machine, by
 `PolicyChangeStepUpAuthorizationSigner`
-(`packages/crypto/src/PolicyChangeStepUpAuthorizationCrypto.ts:40`). Signing takes the
+(`packages/crypto/src/PolicyChangeStepUpAuthorizationCrypto.ts:43`). Signing takes the
 `pendingPolicyChangeId` and the intended `action` ("approve" or "reject"), stamps a fresh
 `nonce`, `authorizedAt`, and an `expiresAt` (120 seconds later by default), and signs the
 whole payload with the checker's Ed25519 step-up private key: a key that is always a
@@ -210,7 +210,7 @@ to `policies/{name}/{version}/policy.json` that skips the pending-change API ent
   approval record, a content-hash mismatch, and any failure to complete the check at all
   (Supabase unreachable, a malformed response) are all treated identically as a failure:
   there is no "couldn't check, let it through" path. `.github/workflows/ci.yml`'s
-  `verify-policy-approvals` job runs it with `--full-scan` on every push and pull request.
+  `verify-policy-approvals` job runs it with `--full-scan` on every push to `main` and on every pull request.
 
 ## How it enables things, with concrete examples
 
@@ -238,7 +238,7 @@ to `policies/{name}/{version}/policy.json` that skips the pending-change API ent
 
 - The four route handlers and their tests: `packages/api/src/routes/pending-policy-changes.ts`,
   and `packages/api/tests/integration/pending-policy-changes-governance.integration.test.ts`
-  (23 cases: human-only enforcement on all four endpoints, maker-checker distinctness on
+  (28 cases: human-only enforcement on all four endpoints, maker-checker distinctness on
   approve/reject, every step-up failure mode, file-write-plus-signed-record content, and
   path-traversal rejection on a malicious `proposedContent.policyVersion`).
 - `packages/api/src/governance/PolicyChangeApprovalService.ts` and its unit test
@@ -247,7 +247,7 @@ to `policies/{name}/{version}/policy.json` that skips the pending-change API ent
 - `packages/api/src/auth/isHumanCaller.ts` and `packages/api/tests/unit/isHumanCaller.test.ts`.
 - `packages/api/src/auth/PolicyChangeStepUpVerifier.ts` and
   `packages/crypto/src/PolicyChangeStepUpAuthorizationCrypto.ts`, plus
-  `packages/api/tests/unit/verifyPolicyGovernanceIntegrityAtStartup.test.ts` (7 cases) for
+  `packages/api/tests/unit/verifyPolicyGovernanceIntegrityAtStartup.test.ts` (12 cases) for
   the integrity checker specifically.
 - To actually run the real flow against a real deployment, use
   [Policy lifecycle and approvals](/guides/policy-lifecycle-and-approvals) (the full
@@ -279,7 +279,7 @@ to `policies/{name}/{version}/policy.json` that skips the pending-change API ent
   anything other than `memory` (and `NODE_ENV !== "test"`) selects
   `SupabasePolicyRepository`, which additionally requires `DATABASE_URL`.
 - **`packages/governance-ui`** is an optional, small, server-rendered Express app covering
-  propose, list, and diff-review only. It deliberately has **no** approve or reject
+  list and diff-review only. It deliberately has **no** approve or reject
   routes: its diff page instructs a checker to run `scripts/sign-policy-change-step-up.ts`
   (or one of the one-shot scripts) locally and submit the result themselves, with their
   own bearer token, entirely outside the UI. Collecting a step-up private key in a web UI
@@ -288,4 +288,4 @@ to `policies/{name}/{version}/policy.json` that skips the pending-change API ent
 
 ## What remains genuinely open
 
-Execution time policy governance verification is enforced. `RuntimeEngine` refuses execution against any policy with no approval record, an invalid approval-record signature, or content that no longer matches its approval record, and `ExecutionGateway` runs the same check again at release, requiring the approved hash, the hash signed into the authorization, and the live hash to agree §2.35 and §2.36). Since 2026-09-20 this is on everywhere except when `NODE_ENV` is exactly `test` or `development`. `POLICY_EXECUTION_VERIFICATION_ENFORCED` is now only an opt in for those two environments and cannot switch enforcement off in production. The consequence for operators is that every policy a deployment executes against must have a genuine signed approval record before that deployment is promoted, or executions under it are refused.
+Execution time policy governance verification is enforced. `RuntimeEngine` refuses execution against any policy with no approval record, an invalid approval-record signature, or content that no longer matches its approval record, and `ExecutionGateway` runs the same check again at release, requiring the approved hash, the hash signed into the authorization, and the live hash to agree §2.35 and §2.36). Since 2026-09-20 this is on everywhere except when `NODE_ENV` is `test` or `development` and `PARMANA_ALLOW_UNGOVERNED_POLICY=true`. Setting `POLICY_EXECUTION_VERIFICATION_ENFORCED=true` forces enforcement in those environments too; it cannot switch enforcement off in production. The consequence for operators is that every policy a deployment executes against must have a genuine signed approval record before that deployment is promoted, or executions under it are refused.

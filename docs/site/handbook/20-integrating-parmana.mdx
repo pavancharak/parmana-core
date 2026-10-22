@@ -49,9 +49,9 @@ interface Configuration {
 local development only, every other deployment rejects an unauthenticated request with a 401
 before a Business Transaction is even constructed.
 
-`ParmanaClient` composes ten sub APIs (`HealthApi`, `ExecutionApi`, `VerificationApi`,
+`ParmanaClient` composes sixteen sub APIs (`HealthApi`, `ExecutionApi`, `VerificationApi`,
 `ReplayApi`, `ReceiptApi`, `TransactionApi`, `TrustRecordApi`, `PolicyApi`, `RefusalApi`,
-`AuditApi`), each a thin wrapper over one or more HTTP calls through the shared `Transport`. The
+`AuditApi`, `ApproverApi`, `ExternalConnectorApi`, `BusinessSignalSourceApi`, `AuthorityGrantApi`, `ExecutionIntentApi`, `CallerApi`), each a thin wrapper over one or more HTTP calls through the shared `Transport`. The
 public surface includes `execute()`, `createTransaction()` (a second, independent entry point
 into the identical pipeline via `POST /transactions`), `verify()`, `getLatestVerification()`,
 `replay()`, `receipt()`, `transaction()`/`transactions()`, `trustRecord()`, `validatePolicy()`,

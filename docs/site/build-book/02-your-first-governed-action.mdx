@@ -24,7 +24,7 @@ This chapter runs everything on your machine, with no database and no cloud acco
 ```bash bash
 # Repository access is granted by agreement with Parmana Systems.
 cd parmana
-cp.env.example.env
+cp .env.example .env
 npm ci
 npm run build
 npx tsx scripts/generate-keypair.ts --algorithm ed25519 --key-id default
@@ -34,7 +34,7 @@ npm run generate:gateway-keys
 ```powershell PowerShell
 # Repository access is granted by agreement with Parmana Systems.
 cd parmana
-Copy-Item.env.example.env
+Copy-Item .env.example .env
 npm ci
 npm run build
 npx tsx scripts/generate-keypair.ts --algorithm ed25519 --key-id default
@@ -117,7 +117,7 @@ The parts that matter (the server's own log lines are left out):
 
 ```text
 Step 1: register erp:create-invoice, maker then checker
-Approved by checker  : 200 APPROVED
+Approved by checker  : APPROVED
 Registration         : active -> https://erp.example.com/parmana/release
 
 Step 3: an approved request is released to the ERP
@@ -135,7 +135,7 @@ Step 5: a release made for another endpoint
 Another endpoint     : 401 release.audience "https://erp.example.com/parmana/release" is not this endpoint (https://payroll.example.com/parmana/release)
 
 Step 6: revoke the registration
-Revoke approved      : 200 APPROVED
+Revoke approved      : APPROVED
 Next request         : CONNECTOR_NOT_REGISTERED
 Invoices created     : INV-1
 
@@ -163,8 +163,8 @@ You play the approver here. On a real deployment the approver is a different per
 ([Chapter 5](/build-book/05-human-approvals)).
 
 ```bash
-npx tsx scripts/generate-approver-key.ts --approver-id local-test-approver --key-id local-test-approver-key-1 --out-dir./local-approver
-npx tsx scripts/sign-approval.ts --private-key-file./local-approver/local-test-approver__local-test-approver-key-1.private.pem --approver-id local-test-approver --key-id local-test-approver-key-1 --capability test:fixture-execute --resource-id vendor/vendor-123 --max-amount 100 --out./local-approver/approval.json
+npx tsx scripts/generate-approver-key.ts --approver-id local-test-approver --key-id local-test-approver-key-1 --out-dir ./local-approver
+npx tsx scripts/sign-approval.ts --private-key-file ./local-approver/local-test-approver__local-test-approver-key-1.private.pem --approver-id local-test-approver --key-id local-test-approver-key-1 --capability test:fixture-execute --resource-id vendor/vendor-123 --max-amount 100 --out ./local-approver/approval.json
 ```
 
 The approval expires after 15 minutes unless you pass `--ttl-seconds`, and it can be used once.
@@ -180,6 +180,7 @@ refuses to start if that variable is set with any other `NODE_ENV`.
 ```bash bash
 NODE_ENV=test \
 PARMANA_STORAGE=memory \
+PARMANA_ALLOW_UNGOVERNED_POLICY=true \
 PARMANA_API_KEYS='[{"callerId":"local-agent","keyHash":"<the hash printed above>","allowedCapabilities":["test:fixture-execute"]}]' \
 PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE=./local-approver/local-test-approver__local-test-approver-key-1.public.pem \
 npm run dev
@@ -188,6 +189,7 @@ npm run dev
 ```powershell PowerShell
 $env:NODE_ENV = "test"
 $env:PARMANA_STORAGE = "memory"
+$env:PARMANA_ALLOW_UNGOVERNED_POLICY = "true"
 $env:PARMANA_API_KEYS = '[{"callerId":"local-agent","keyHash":"<the hash printed above>","allowedCapabilities":["test:fixture-execute"]}]'
 $env:PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE = ".\local-approver\local-test-approver__local-test-approver-key-1.public.pem"
 npm run dev

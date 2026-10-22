@@ -33,7 +33,7 @@ pattern in this codebase, not an accident of growth.
 `RuntimeEngine`'s constructor takes ten required dependencies (`RuntimePipeline`,
 `PolicyRouter`, `PolicyEngine`, `SignalIntentBinder`, `DecisionBuilder`, `ExecutionGate`,
 `ExecutionBuilder`, `BusinessTrustPipeline`, `RuntimeAuthorizationSigner`,
-`authorizationTtlSeconds`) and eight optional trailing ones (`hooks`, `refusalRecordBuilder`, `refusalRecordRepository`, `signalStateVerifier`, `capabilityPolicyBinder`, `policyExecutionVerifier`, `policyGovernanceAnchorResolver`, `signingReadiness`).
+`authorizationTtlSeconds`) and ten optional trailing ones (`hooks`, `refusalRecordBuilder`, `refusalRecordRepository`, `signalStateVerifier`, `capabilityPolicyBinder`, `policyExecutionVerifier`, `policyGovernanceAnchorResolver`, `signingReadiness`, `executionIntents`, `approvalNeededNotifier`).
 At construction, it logs which optional protections are actually configured
 (`runtime_engine_constructed`), which is how an operator can confirm, from log output alone,
 exactly which protections are active for a given deployment.
@@ -98,7 +98,7 @@ signals)` runs the real rules. Any rejection from steps 4 through 6 becomes a sy
 which signs a synthetic artifact padded past 4096 bytes through the same `Signer` and key id used for
 trust records, then verifies it against the public key that `Signer` publishes. A success is trusted for
 60 seconds, a failure is never cached, and concurrent requests share one probe. It is enforced by
-`createSigningReadiness()` everywhere except when `NODE_ENV` is exactly `test` or `development`.
+`createSigningReadiness()` everywhere except when `NODE_ENV` is `test` or `development` and `SIGNING_READINESS_CHECK` is not `true`.
 
 Everything after `pipeline.execute()` returns happens after the action was released to the connector. A
 failure there, in the trust record pipeline, the `afterExecution` and `beforeTrustRecord` hooks, or

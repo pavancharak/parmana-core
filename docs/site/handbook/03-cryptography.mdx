@@ -28,7 +28,7 @@ under it, as long as a second algorithm was also applied).
 
 ### `CanonicalSerializer`: the thing every signature is actually computed over
 
-`packages/crypto/src/CanonicalSerializer.ts` is nineteen lines of `normalize()` plus a
+`packages/crypto/src/CanonicalSerializer.ts` is about 57 lines of `normalize()` plus a
 `serialize()` that runs `JSON.stringify` over the result. The normalization rule: objects
 have their keys recursively sorted lexicographically before serialization; arrays keep their
 original order (element order is meaningful, key order in an object is not); `Date` becomes
@@ -61,7 +61,7 @@ either at the config layer would fail when `HashRegistry.get()` tries to resolve
 is the only one with a real implementation.
 
 Signature providers implement `SignatureProvider` (`sign`/`verify`, plus a readonly
-`algorithm` field): `Ed25519SignatureProvider.ts` (46 lines, wraps `node:crypto`'s `sign`/`verify`
+`algorithm` field): `Ed25519SignatureProvider.ts` (65 lines, wraps `node:crypto`'s `sign`/`verify`
 with no options object, i.e. pure Ed25519, not Ed25519ph) and `Dilithium3SignatureProvider.ts`
 (53 lines, near-identical shape, using Node's native `"ml-dsa-65"` key type, this is the
 ML-DSA-65/FIPS 204 standard, and `ConfigValidation.ts` accepts the string `"ml-dsa-65"` as a
@@ -96,11 +96,11 @@ operations (`getPublicKey`, `getMetadata`, `hasKey`, `listKeys`) are identical o
 interfaces, since verification never needed private key material regardless of custody model.
 
 Two implementations exist for each side today. `FileKeyProvider` (`providers/key/FileKeyProvider.ts`,
-192 lines) reads `<keyId>.private.pem`/`<keyId>.public.pem` from `PARMANA_KEY_DIR`, this is
+207 lines) reads `<keyId>.private.pem`/`<keyId>.public.pem` from `PARMANA_KEY_DIR`, this is
 the only real `KeyProvider`, and `KeyBootstrap.create()` (Chapter 2) throws for any other
 `KEY_PROVIDER` value rather than silently falling back to it. `LocalFileSigner` wraps that
 same file-reading logic behind the `Signer` interface (so `local` custody works through either
-abstraction), and `KmsSigner` (`providers/signer/KmsSigner.ts`, 217 lines) is the real AWS KMS
+abstraction), and `KmsSigner` (`providers/signer/KmsSigner.ts`, 366 lines) is the real AWS KMS
 implementation, resolved only through `SignerBootstrap`, never through `KeyBootstrap`.
 
 ### `KmsSigner`: sign-without-release, against real AWS KMS

@@ -42,7 +42,7 @@ specifically so importing application code during test collection never accident
 
 ### The tutorial suite as documentation
 
-`examples/tutorials/` currently runs to 117 numbered tutorials plus `examples/scenarios/`,
+`examples/tutorials/` currently runs to 119 numbered tutorials plus `examples/scenarios/`,
 invoked together via `npm run examples` (`scripts/run-examples.ts`). Each tutorial is a
 standalone, runnable script that exercises real production code (not a simplified
 re-implementation) against a hermetic environment, either an in-process Express server on an
@@ -67,8 +67,7 @@ policy substitution, gateway bypass, record tampering and more. Each scenario na
 attacker controls, the invariant and the test files that check it. The runner runs those files
 once and reports each scenario `BLOCKED`, `FAILED` or `NOT RUN`, with an
 `evaluation-report.json` tied to the commit. It adds no new tests: it gives an evaluator one
-result per attack instead of 3,000 test names. `tests/architecture/evaluation-scenarios.test.ts`
-fails if a scenario points at a test file that no longer exists or a claim number missing from.
+result per attack instead of 3,000 test names.
 
 ### Fuzzing
 
@@ -116,11 +115,10 @@ so would falsify the historical record rather than fix a real problem).
 
 ### CI
 
-`.github/workflows/ci.yml` runs, on every push and pull request: install (`npm ci`), build
+`.github/workflows/ci.yml` runs, on every push to `main` and on every pull request: install (`npm ci`), build
 (`npm run build`), lint (`npm run lint`), typecheck (`npm run typecheck`), a guard against
 retired terminology (a grep-based check, not a type or lint rule), the full test suite
-(`npm test`), and, in a separate job, `scripts/verify-policy-changes-approved.ts` against
-whichever `policies/**/policy.json` files changed in that push or PR, this is the fail-closed
+(`npm test`), and, in a separate job, `scripts/verify-policy-changes-approved.ts` against all policies (`--full-scan`); this is the fail-closed
 governance gate described in Chapter 7, real and enforced in CI today, not yet wired as a GitHub
 required status check due to a plan/visibility limitation external to this codebase (see §2.26's "Preventive Git-layer enforcement" entry for the exact constraint).
 

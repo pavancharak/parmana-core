@@ -45,11 +45,7 @@ For a system whose actions go through Parmana:
 
 ## Known gaps
 
-The open items that matter most when you build with Parmana. The full list, with the status of each, is under
-"Open issues at a glance" in.
-
-| Gap | What | What it means for you |
-| --- | ---- | --------------------- |
+The open items that matter most when you build with Parmana are listed in the repository's `docs/REMAINING-WORK.md`, with the status of each.
 
 Also scoped, not absent:
 
@@ -59,7 +55,7 @@ Also scoped, not absent:
 - **Route access is not scoped per key.** What is scoped is the action, the principal, and which records a caller can
   read.
 - **Approval notifications are best effort.** One attempt, no retry; the Refusal Records are the complete list.
-- **Python verifies Ed25519 only.** A record's ML-DSA-65 signatures are checked by the TypeScript verifier.
+- **Neither SDK verifies ML-DSA-65.** A record with hybrid signatures is reported invalid by both. Use `scripts/verify-trust-record.ts`.
 
 ## Reporting a vulnerability
 

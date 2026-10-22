@@ -23,7 +23,7 @@ specifically to catch that case and let the orchestrator act on it.
 probe, if the process can answer HTTP at all, it answers this.
 
 `GET /ready` (`packages/api/src/routes/ready.ts`) is genuinely different: when storage is not
-Supabase-backed (`NODE_ENV=test`, or `PARMANA_STORAGE` set to anything other than `"supabase"`),
+Supabase-backed (`NODE_ENV=test`, or `PARMANA_STORAGE` set to anything other than `"supabase"` or `"postgres"`),
 there is no external dependency to probe, so it reports `READY` unconditionally, the same
 distinction `assertStorageConfigured.ts` already draws at boot. Otherwise, it actually queries
 Postgres with `SELECT 1` (cheap, transfers no table rows, just confirms the connection and
@@ -31,7 +31,7 @@ credentials work) via `PostgresPoolFactory`, not `supabase-js`/PostgREST, the ro
 comment notes this probe previously depended on PostgREST for a `consumed_nonces` HEAD request,
 meaning a PostgREST-layer outage could make the readiness probe itself unreliable; querying
 directly removes that failure mode. A failed query returns `503` with `status: "NOT_READY"` and
-the real error message as `reason`.
+`reason: "storage unavailable"`. The error detail goes to the server log only.
 
 Both responses also carry an `authDisabled` field, and a `warning` string when true. This exists
 because `PARMANA_AUTH_DISABLED=true` is exactly the kind of misconfiguration ("copied

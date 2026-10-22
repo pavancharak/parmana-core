@@ -218,8 +218,7 @@ needs neither: register it as an external connector, with its policy, through ma
   policy edited in the database outside this flow authorizes nothing.
 - The gateway checks the approval record again just before release.
 
-These checks are always on in production. In `NODE_ENV` `test` or `development` they are off unless
-`POLICY_EXECUTION_VERIFICATION_ENFORCED=true`, which is why the local server in
+These checks are always on in production. In `NODE_ENV` `test` or `development` they are off only when `PARMANA_ALLOW_UNGOVERNED_POLICY=true` is also set and `POLICY_EXECUTION_VERIFICATION_ENFORCED` is not `true`. The local server in
 [Chapter 2](/build-book/02-your-first-governed-action) accepts unapproved example policies.
 
 ## See it run
