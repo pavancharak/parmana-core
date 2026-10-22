@@ -51,7 +51,7 @@ This file is generated from the documentation navigation. Do not edit it by hand
 * [The Execution Pipeline](https://docs.parmanasystems.com/architecture/execution-pipeline): Stage by stage: what runs on every request through the default server today.
 ## Concepts: Verification and evidence
 
-* [Verification](https://docs.parmanasystems.com/verification/overview): Exactly 3 checks, always run, always reported independently.
+* [Verification](https://docs.parmanasystems.com/verification/overview): Exactly 4 checks, always run, always reported independently.
 * [Verify a record in your browser](https://docs.parmanasystems.com/verification/verify-in-browser): Paste a signed Execution Trust Record and a public key, and check the hash and the Ed25519 signature in your browser. Nothing is uploaded.
 * [Offline verifier](https://docs.parmanasystems.com/verification/offline-verifier): Check an Execution Trust Record yourself: no network calls, no trust in Parmana's servers, only the keys you pin.
 * [Replay](https://docs.parmanasystems.com/replay/overview): Two separate things share this name today, what each actually does.
