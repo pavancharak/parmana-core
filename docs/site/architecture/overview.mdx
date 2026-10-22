@@ -62,8 +62,9 @@ connectors currently registered; not yet the finished cross-system claim for arb
 connectors, see [Roadmap](/roadmap)).
 
 **SDKs**: `python/` (`[AVAILABLE]`), `typescript/` (`[PARTIAL]`, real client code, but its
-entire test suite is currently empty and its HTTP transport does not raise on 4xx/5xx
-responses, see [TypeScript SDK](/sdks/typescript)).
+test suite (25 test files) covers the client, transport and error mapping, and its HTTP
+transport raises a typed error for 4xx and 5xx responses unless a call lists that status as
+non-throwing, see [TypeScript SDK](/sdks/typescript)).
 
 ## Why this split exists
 
