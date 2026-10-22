@@ -48,27 +48,43 @@ Save the file as UTF-8. If your editor offers a choice, pick UTF-8 without a byt
 
 ---
 
-## 2. What must be set at startup
+## 2. What must be set, and when a missing or wrong value is refused
 
-Checks run before the port opens. A failed check stops the server, and the message names the variable. These are the checks for `NODE_ENV` other than `test`, which is every real environment.
+On Vercel the API is `api/index.ts`. Its checks run in two places, and the difference decides what you see:
 
-| Setting | Required when | If missing or wrong |
-|---|---|---|
-| `PARMANA_POLICY_DIR` | Always | Refuses to start: "PARMANA_POLICY_DIR is not set" (`Config.ts`) |
-| `PARMANA_API_KEYS` | Unless `PARMANA_AUTH_DISABLED=true` | Refuses to start if empty or unset (`createCallerAuthenticator.ts`) |
-| `PARMANA_KEY_DIR` | Always | Refuses to start: "PARMANA_KEY_DIR is not set" (`assertSigningKeyMaterialConfigured.ts`) |
-| Gateway key pair | Always | Startup creates the execution gateway, which reads the gateway key. Missing files throw (`createGatewayKeyPair.ts`, called from `createExecutionGateway.ts`) |
-| Default signing key pair | `KEY_PROVIDER=local` only | Refuses to start if `default.private.pem` or `default.public.pem` is missing from `PARMANA_KEY_DIR` |
-| `DATABASE_URL` | When `NODE_ENV` is not `test` | The nonce store refuses to start without it (`createNonceStore.ts`, `assertDatabaseUrlConfigured`) |
-| `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` | When `KILL_SWITCH_ENABLED=true` | Refuses to start unless set to exactly `true` or `false` (`createKillSwitch.ts`) |
+- **At module load**, when the function starts (cold start). A failure here makes every request return `500 FUNCTION_INVOCATION_FAILED`.
+- **On the first request**, when the app is built (`buildApp`, memoized). A failure here returns `500` on that request, and the message is in the Runtime Logs.
 
-**Gateway key files and `PARMANA_KEY_MATERIAL_JSON`.** `assertSigningKeyMaterialConfigured` first runs `materializeFromEnvIfConfigured`. That writes each key in `PARMANA_KEY_MATERIAL_JSON` to `PARMANA_KEY_DIR`, but only for files that do not already exist. An existing file wins over the variable.
+The tests in section 8 show which is which. A `500` alone does not tell you which one happened. Check the Runtime Logs.
 
-**Under `KEY_PROVIDER=aws-kms`,** the default signing key lives in KMS, so the check for its local files is skipped. The gateway key is still local, so its files (or the variable) are still required.
+### Refused at module load
 
-**Under `KEY_PROVIDER=local`,** both the default key and the gateway key are read from `PARMANA_KEY_DIR`.
+| Setting | Refusal |
+|---|---|
+| `PARMANA_KEY_DIR` unset | "PARMANA_KEY_DIR is not set. Refusing to start without a configured key directory" |
+| `PARMANA_POLICY_DIR` unset | "PARMANA_POLICY_DIR is not set. Refusing to start without a configured policy directory" |
+| `PARMANA_STORAGE=supabase` or `postgres`, `DATABASE_URL` unset | "Durable Storage ... requires DATABASE_URL" |
+| `DATABASE_PROVIDER` set (any value) | "DATABASE_PROVIDER is no longer read; set PARMANA_STORAGE instead." |
+| `KEY_PROVIDER=local`, and the default key files missing from `PARMANA_KEY_DIR` | Refused, from the local-file key check (code reading; not tested) |
 
----
+### Refused on the first request
+
+| Setting | Refusal |
+|---|---|
+| `DATABASE_URL` unset with `PARMANA_STORAGE=memory` (outside `test`) | "Durable NonceStore requires DATABASE_URL" |
+| `PARMANA_API_KEYS` unset or empty | "No caller authentication keys are configured" |
+| `KILL_SWITCH_ENABLED=true`, `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` not `true` or `false` | "KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR must be ..." |
+| `POLICY_CHANGE_CHECKERS` not a JSON object | "POLICY_CHANGE_CHECKERS is not valid JSON ..." |
+| `KEY_PROVIDER` not `local` or `aws-kms` | "KEY_PROVIDER=... is not implemented" (from `SignerBootstrap.ts`) |
+| `PRIMARY_SIGNATURE_PROVIDER` not `ed25519` or `dilithium3` | "Unknown signature provider: ..." |
+| `HASH_PROVIDER` not `sha256` | "Unknown hash provider: ..." |
+| Gateway key files missing (no `PARMANA_KEY_MATERIAL_JSON`, no files) | The gateway is created during the first request. The missing files throw (code reading; not tested) |
+
+### Keys: which files are needed
+
+- `PARMANA_KEY_MATERIAL_JSON` is written to `PARMANA_KEY_DIR` only for files that do not already exist. An existing file wins over the variable.
+- Under `KEY_PROVIDER=aws-kms`, the default signing key is in KMS, so its local files are not checked. The gateway key is always local, so its files, or the variable, are still needed.
+- Under `KEY_PROVIDER=local`, both the default and the gateway key files are needed.
 
 ## 3. Settings by group
 
@@ -156,7 +172,7 @@ The command prints the raw key once. Save it in your password manager, then put 
 - Default: `local`.
 - `local`: keys are files in `PARMANA_KEY_DIR`.
 - `aws-kms`: the default signing key is in AWS KMS. Production uses this.
-- `azure-key-vault`, `gcp-kms` and `hsm` are refused at startup. The code says "is not implemented" (`SignerBootstrap.ts`).
+- `azure-key-vault`, `gcp-kms` and `hsm` are refused on the first request, with "is not implemented" (`SignerBootstrap.ts`, tested).
 
 **`PARMANA_KEY_DIR`**: a writable folder. Required (section 2).
 - Local: `./keys`.
@@ -186,12 +202,12 @@ PARMANA_KEY_MATERIAL_JSON={"gateway":{"privateKeyPem":"-----BEGIN PRIVATE KEY---
 - Production uses `single`. Use `hybrid` only with a specific requirement; see the crypto notes in section 3 of this file.
 
 **`PRIMARY_SIGNATURE_PROVIDER`**: the values the code accepts are `ed25519` and `dilithium3`. Production uses `ed25519`.
-- `ecdsa-p256`, `dilithium5` and `sphincs-plus` are in the enum, but no provider is registered for them. Choosing one fails at startup with "Unknown signature provider" (`CryptoBootstrap.ts`, `SignatureRegistry.get`).
+- `ecdsa-p256`, `dilithium5` and `sphincs-plus` are in the enum, but no provider is registered for them. Choosing one fails on the first request with "Unknown signature provider" (`CryptoBootstrap.ts`, tested with `ecdsa-p256`).
 
 **`SECONDARY_SIGNATURE_PROVIDER`**: the same two values. Set only with `CRYPTO_MODE=hybrid`. Leave empty otherwise.
 
 **`HASH_PROVIDER`**: the only value the code accepts is `sha256`. Default `sha256`.
-- `sha3-512` and `blake3` are in the enum, but no provider is registered. Choosing one fails at startup with "Unknown hash provider" (`HashRegistry.get`).
+- `sha3-512` and `blake3` are in the enum, but no provider is registered. Choosing one fails on the first request with "Unknown hash provider" (`HashRegistry.get`, tested with `blake3`).
 - Changing the hash changes every new record's hash. Only `sha256` is available today.
 
 ### Trust and receipts
@@ -290,7 +306,7 @@ Production values go in Vercel's environment settings, not in a `.env` file. Ver
 | `RATE_LIMIT_HEALTH_PER_MINUTE` | `300` | Calls per minute to health |
 
 Never set in production: `PARMANA_AUTH_DISABLED`, `NODE_ENV=test`, `NODE_ENV=development`, `PARMANA_ALLOW_UNGOVERNED_POLICY`, `DATABASE_PROVIDER`, `SUPABASE_*`.
-- `DATABASE_PROVIDER` is refused at startup: "DATABASE_PROVIDER is no longer read; set PARMANA_STORAGE instead." (`ConfigValidation.ts`).
+- `DATABASE_PROVIDER` is refused when the module loads: "DATABASE_PROVIDER is no longer read; set PARMANA_STORAGE instead." (`ConfigValidation.ts`, tested).
 
 ---
 
@@ -323,16 +339,23 @@ Never set in production: `PARMANA_AUTH_DISABLED`, `NODE_ENV=test`, `NODE_ENV=dev
 
 ## 8. What was verified, and what was not
 
+**Verified by running the Vercel entry (`api/index.ts`) with fake values:**
+
+- The module-load refusals and first-request refusals in section 2, one setting changed at a time, against a valid baseline. The harness is kept outside the repository.
+- A valid set with local keys loads the module without refusal.
+
 **Verified against the code:**
+
 - The loaders and dotenv parsing (tested with the installed dotenv 18.0.8).
-- Every startup refusal named in section 2.
 - Defaults: `NODE_ENV`, `PARMANA_STORAGE`, `LOG_LEVEL`, `HOST`, `SHUTDOWN_TIMEOUT_MS`, the rate limits, `EXECUTION_AUTHORIZATION_TTL_SECONDS`, `RECEIPT_VERSION`.
-- The allowed values of `KEY_PROVIDER`, `CRYPTO_MODE`, `PRIMARY_SIGNATURE_PROVIDER`, `HASH_PROVIDER`, `TRUST_PROFILE`, `credentialHolderType`.
+- The allowed values of `KEY_PROVIDER`, `CRYPTO_MODE`, `PRIMARY_SIGNATURE_PROVIDER`, `HASH_PROVIDER`, `TRUST_PROFILE`, `credentialHolderType`, and `LOG_LEVEL` (`debug`, `info`, `warn`, `error`; any other value falls back to `info` without an error, `Logger.ts`).
 - The registered algorithms, and the refusals for the others.
 - The policy-enforcement rule.
 - The GitHub key format.
 - The `vercel.json` inclusion of `policies/**`.
 
 **Not verified:**
-- Startup on Vercel with these exact values. The code is verified; a live deployment is not.
-- The `LOG_LEVEL` values beyond `info`. The docs list `debug`, `info`, `warn`, `error`; the Logger's accepted set was not traced line by line.
+
+- A deployed Vercel startup with your real secrets. The sandbox has no database, so a valid set reaches the database step and fails there. That is the expected result of the test, not a fault in the settings.
+- The KMS reachability check under `KEY_PROVIDER=aws-kms`. It needs AWS credentials, which the sandbox does not have.
+- The Node entry (`server.ts`) startup. Only the Vercel entry was tested.
