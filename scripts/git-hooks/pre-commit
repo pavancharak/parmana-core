@@ -37,7 +37,7 @@ run_gitleaks() {
     return $?
   fi
 
-  if command -v docker >/dev/null 2>&1; then
+  if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
     docker run --rm -v "$REPO_ROOT:/repo" -w /repo \
       zricethezav/gitleaks:latest \
       protect --staged --config .gitleaks.toml --redact
@@ -54,6 +54,16 @@ else
 fi
 
 if [ "$status" -ne 0 ]; then
+  # gitleaks exits 1 only when it finds a leak. Any other failure means the
+  # scanner itself did not run, so the commit is blocked without claiming a leak.
+  if [ "$status" -ne 1 ] && [ "$status" -ne 127 ]; then
+    echo ""
+    echo "pre-commit: the secret scanner failed (exit $status). It did not report a leak."
+    echo "Check gitleaks runs ('gitleaks version'), then retry. Commit blocked."
+    echo ""
+    exit "$status"
+  fi
+
   if [ "$status" -eq 127 ]; then
     echo ""
     echo "pre-commit: gitleaks is not installed and Docker is not available, cannot scan staged changes for secrets."
