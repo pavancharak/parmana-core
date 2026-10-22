@@ -7,9 +7,7 @@ Snapshot: 2026-09-21, with section F added and updated on 2026-09-25, section G 
 - **SDK 1.6.1 published.** `@parmana/sdk` and `parmana` 1.6.1, `@parmana/connector-sdk` 0.3.1 and `parmana-connector-sdk`
   0.2.1. The release `sdk-v1.6.1` is on GitHub with the packages, SBOMs and provenance attached. The private repository
   links are gone from the metadata of all four packages.
-- **Open: release tags for earlier SDK versions.** The remote has one tag, `sdk-v1.6.1`. No tag exists for 1.2.0 to 1.6.0,
-  so the "tag the release" rows in the table below are still open. Creating them is a public action: decide whether to
-  tag the earlier releases, then do it on the matching commit.
+- **Open: release tags for earlier SDK versions.** The remote has one tag, `sdk-v1.6.1`. The earlier versions (1.2.0 to 1.6.0) were published from the previous repository. This repository's history starts with the import on 2026-10-18 and does not contain their commits, so tagging them here would point at the wrong commits. Their tags need that repository.
 
 ## Update 2026-10-21
 
