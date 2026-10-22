@@ -62,7 +62,9 @@ and only on success":
    the request and authorization carry signals/`signalsHash`), first a hash comparison
    (catching a request whose signals were altered after authorization), then an independent
    re-verification of those signals against real-world state via the verifier.
-6. **Nonce consumption, last, only if every prior check passed.** This is the only
+6. `businessConditionsCurrent`, when present (RFC-0023 phase 4): each signed business condition must still be within its `validUntil`.
+7. `authorityGrantInForce`, when present (RFC-0023 phase 4): the signed authority grant must be unexpired and still the active one. Fails closed.
+8. **Nonce consumption, last, only if every prior check passed.** This is the only
    side-effecting check in the sequence, "a mismatched or forged request must not burn a
    nonce."
 
