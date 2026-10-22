@@ -2,6 +2,15 @@
 
 Snapshot: 2026-09-21, with section F added and updated on 2026-09-25, section G added on 2026-09-27, and section L added and updated on 2026-10-11. This is the current list of what is left. It replaces `02-REMAINING.md` (a July 5 snapshot) for current status.
 
+## Update 2026-10-22
+
+- **SDK 1.6.1 published.** `@parmana/sdk` and `parmana` 1.6.1, `@parmana/connector-sdk` 0.3.1 and `parmana-connector-sdk`
+  0.2.1. The release `sdk-v1.6.1` is on GitHub with the packages, SBOMs and provenance attached. The private repository
+  links are gone from the metadata of all four packages.
+- **Open: release tags for earlier SDK versions.** The remote has one tag, `sdk-v1.6.1`. No tag exists for 1.2.0 to 1.6.0,
+  so the "tag the release" rows in the table below are still open. Creating them is a public action: decide whether to
+  tag the earlier releases, then do it on the matching commit.
+
 ## Update 2026-10-21
 
 - **Policy approvals work on production.** The Vercel entry did not pass the checker scope, so every approval was refused. Fixed in `4e79d57` (G-123). A live approval of the unused policy `checker-wiring-check` 1.0.0 succeeded (CLAIMS 2.59).

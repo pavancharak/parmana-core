@@ -115,16 +115,17 @@ quickstart's commands against its documented output.
 **Not yet verified:** a real downstream system instead of the stand in, and
 any customer running it.
 
-## SDKs (aligned 2026-09-25)
+## SDKs (updated 2026-10-22)
 
-Both SDKs are at 1.3.0 in this repository and cover the same product
-operations, including policy governance with step up signing, offline
-verification in both languages, caller identity, public keys and Trust
-Record listing (`docs/CLAIMS.md` 2.41, G-64). Both are published: the TypeScript SDK 1.3.0 on npm and the Python
-SDK 1.3.0 on PyPI, on 2026-09-25, each checked by installing it from its
-registry and rerunning the live checks. Tests: TypeScript SDK 191, Python SDK
-119, all passing; each SDK passed 11 of 11 live checks against a self hosted
-deployment. The route by route mapping is `docs/site/sdks/api-coverage.mdx`.
+Current versions, all published on 2026-10-22 from release `sdk-v1.6.1`: `@parmana/sdk` 1.6.1 on npm and `parmana` 1.6.1 on
+PyPI. `@parmana/connector-sdk` 0.3.1 on npm and `parmana-connector-sdk` 0.2.1 on PyPI. 1.6.1 changes no SDK code; it
+removes the links to the private repository from the package metadata.
+
+Tests on this commit: TypeScript SDK 227 and Python SDK 190, all passing. The Python linters and `mypy --strict` pass.
+The route by route mapping is `docs/site/sdks/api-coverage.mdx`.
+
+History: SDK 1.3.0 (2026-09-25) was the first release where both SDKs covered the same operations. Each then passed 11
+of 11 live checks against a self hosted deployment.
 
 ## Human approval (built 2026-09-27, on `main`, deployed)
 

@@ -52,6 +52,16 @@ npm install @parmana/connector-sdk
 | `ConnectorFactory` (interface)                             | Construction contract a connector factory can implement. No concrete factory ships.                                                 |
 | `ConnectorMetadata`, `ConnectorVersion`, `ConnectorHealth` | Registration-time descriptive metadata shapes                                                                                       |
 
+### Release context and conditions
+
+From `@parmana/connector-sdk` 0.3.0. `ConnectorExecutionContext.release` is optional. When present, it is a `ConnectorReleaseContext`:
+
+- `authorizationId`, and `policy` with `name`, `version` and an optional `contentHash`.
+- `approvals`: the signed human approvals behind the release, each with `approverId`, `keyId` and `approvalId`. It is empty unless the Gateway checked the request's signals against the authorization's signed `signalsHash`.
+- `conditions`: the business facts the authorization rests on, each a `ReleaseCondition` with `signalKey`, `source`, `claim`, `subject`, `value` and `validUntil` (ISO-8601 UTC). It is absent when the decision sourced no facts.
+
+A connector that forwards the action outside Parmana passes the conditions on, so the system can execute only while each fact still holds.
+
 ### Reference implementations
 
 | Export                                                                                                                        | Purpose                                                                                                                                                                                                                                                                                                                              |
