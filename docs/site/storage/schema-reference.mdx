@@ -141,6 +141,8 @@ Created by `20260802120000_add_refusal_records.sql`: `refusal_record_id` primary
 (nullable), `submitted_by` (nullable), `refusal_record_hash TEXT NOT NULL`,
 `signature_json JSONB NOT NULL`. Signed from creation. Indexed on `created_at`, RLS enabled.
 
+`policy_content_hash TEXT` (nullable) was added by `20261006120000_add_refusal_policy_content_hash.sql`. It holds the hash of the policy content that made the decision, the same value an Execution Trust Record carries. Refusal Records written before that migration have no hash and still verify.
+
 ### `execution_intents`
 
 The signed Execution Intent written before an action is released to a connector. If it cannot be stored, nothing is released and the caller gets `503
