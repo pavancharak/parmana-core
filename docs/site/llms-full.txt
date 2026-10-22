@@ -2726,8 +2726,8 @@ against a test's own mistake this time instead of a caller's.
 - **`SdkConnectorExecutor` rejects with a version mismatch.** An `expectedVersion` was
   configured at registration and your connector's `metadata.version` doesn't match, this
   guards a rolling deployment that swapped connector builds underneath a pinned expectation.
-- **Registered your connector but `POST /execute` still answers `503 CONNECTOR_NOT_REGISTERED`.** Registration in a `ConnectorSdkRegistry` you constructed yourself doesn't reach
-  the running default server, that server builds its own registry in
+- **Registered your connector but `POST /execute` still answers `503 CONNECTOR_NOT_REGISTERED`.** Registration in a `ConnectorRegistry` you constructed yourself, such as an
+  `InMemoryConnectorRegistry` in your own code, doesn't reach the running default server, that server builds its own registry in
   `createConnectorRegistry.ts`, see the Warning above.
 
 ## Next
