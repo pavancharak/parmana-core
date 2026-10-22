@@ -8,16 +8,16 @@ Status, branches and the steps to run the Razorpay refund demo, and what is stil
 
 ## 1. Status
 
-| Item | State | Where |
-|---|---|---|
-| Demo: agent asks for a refund, Parmana decides, a signed release goes to a small Razorpay endpoint | Built. Test mode only | `examples/razorpay-refund/` |
-| Endpoint refuses any live key | Built. It refuses unless `RAZORPAY_KEY_ID` starts with `rzp_test_` | `examples/razorpay-refund/razorpay.ts` |
-| Demo tests against a fake Razorpay | Built | `examples/razorpay-refund/tests/` |
-| Draft production policy: manager approval, refunds up to Rs 5,000 | Drafted, **not approved** | Branch `feat/razorpay-refund-manager-approved`, commit `e4c265e` |
-| Second branch, `within-limits` | Exists. Its latest commit is `4e79d57`. This page has not checked what it adds beyond `main`, so treat it as unverified | Branch `feat/razorpay-refund-within-limits` |
-| Runbook for the demo and the policy | This page | `docs/runbooks/RAZORPAY-REFUND.md` |
-| The agent live with real payments | **Not live** | Nothing deployed to take real refunds |
-| A live Rs 1 test on the operator's own payment | **Not done** | Pending, after the policy is approved |
+| Item                                                                                               | State                                                                                                                   | Where                                                            |
+| -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Demo: agent asks for a refund, Parmana decides, a signed release goes to a small Razorpay endpoint | Built. Test mode only                                                                                                   | `examples/razorpay-refund/`                                      |
+| Endpoint refuses any live key                                                                      | Built. It refuses unless `RAZORPAY_KEY_ID` starts with `rzp_test_`                                                      | `examples/razorpay-refund/razorpay.ts`                           |
+| Demo tests against a fake Razorpay                                                                 | Built                                                                                                                   | `examples/razorpay-refund/tests/`                                |
+| Draft production policy: manager approval, refunds up to Rs 5,000                                  | Drafted, **not approved**                                                                                               | Branch `feat/razorpay-refund-manager-approved`, commit `e4c265e` |
+| Second branch, `within-limits`                                                                     | Exists. Its latest commit is `4e79d57`. This page has not checked what it adds beyond `main`, so treat it as unverified | Branch `feat/razorpay-refund-within-limits`                      |
+| Runbook for the demo and the policy                                                                | This page                                                                                                               | `docs/runbooks/RAZORPAY-REFUND.md`                               |
+| The agent live with real payments                                                                  | **Not live**                                                                                                            | Nothing deployed to take real refunds                            |
+| A live Rs 1 test on the operator's own payment                                                     | **Not done**                                                                                                            | Pending, after the policy is approved                            |
 
 Nothing in the repository shows that the demo was run end to end in Razorpay test mode, or that the Vercel endpoint was deployed. Confirm both before you rely on them.
 

@@ -134,7 +134,11 @@ async function main(): Promise<void> {
   const html = bookHtml();
   // Chromium refuses to start as root without --no-sandbox. Only root (a container or CI runner) gets that flag.
   const args = process.getuid?.() === 0 ? ["--no-sandbox"] : [];
-  const browser = await puppeteer.launch({ executablePath, headless: true, args });
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args,
+  });
 
   try {
     const page = await browser.newPage();

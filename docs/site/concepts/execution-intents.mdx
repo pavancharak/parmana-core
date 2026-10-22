@@ -425,11 +425,11 @@ The migration changes no existing table. Rolling the code back leaves the new ta
 
 One more signing operation and one more database write happen before every release, and two more writes after it.
 
-| Item                                  | Measured or stated                                                                                                                                                                                                                                |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Extra signing operation under AWS KMS | About 35 ms median (34 to 40 ms, 10 samples), measured on 2026-09-21 from a Windows machine to a KMS key in `ap-south-1`. **Not measured from Vercel**, so expect a different figure there.                                                       |
-| Extra KMS calls                       | One `kms:Sign` per released action.                                                                                                                                                                                                               |
-| Extra database writes                 | One insert before release, one update after release, one update after the record is stored.                                                                                                                                                       |
+| Item                                  | Measured or stated                                                                                                                                                                          |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Extra signing operation under AWS KMS | About 35 ms median (34 to 40 ms, 10 samples), measured on 2026-09-21 from a Windows machine to a KMS key in `ap-south-1`. **Not measured from Vercel**, so expect a different figure there. |
+| Extra KMS calls                       | One `kms:Sign` per released action.                                                                                                                                                         |
+| Extra database writes                 | One insert before release, one update after release, one update after the record is stored.                                                                                                 |
 
 ## Limits, stated plainly
 

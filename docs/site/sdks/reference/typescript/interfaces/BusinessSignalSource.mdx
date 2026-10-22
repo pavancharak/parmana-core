@@ -12,7 +12,7 @@ A business system registered under a name, active or revoked.
 
 The changeId of the approved register change that created it.
 
-***
+---
 
 ### name
 
@@ -20,7 +20,7 @@ The changeId of the approved register change that created it.
 
 The name a policy's signalSources uses in `source`.
 
-***
+---
 
 ### endpointUrl
 
@@ -28,13 +28,13 @@ The name a policy's signalSources uses in `source`.
 
 The HTTPS endpoint Parmana posts each signed query to.
 
-***
+---
 
 ### timeoutMs
 
 > `readonly` **timeoutMs**: `number`
 
-***
+---
 
 ### publicKeyPem?
 
@@ -43,13 +43,13 @@ The HTTPS endpoint Parmana posts each signed query to.
 The Ed25519 public key (SPKI PEM) the source signs its answers with.
 When present, an answer without a valid signature is refused.
 
-***
+---
 
 ### keyId?
 
 > `readonly` `optional` **keyId?**: `string`
 
-***
+---
 
 ### status
 
@@ -57,19 +57,19 @@ When present, an answer without a valid signature is refused.
 
 At most one active registration per name.
 
-***
+---
 
 ### registeredAt
 
 > `readonly` **registeredAt**: `string`
 
-***
+---
 
 ### revokedByChangeId?
 
 > `readonly` `optional` **revokedByChangeId?**: `string`
 
-***
+---
 
 ### revokedAt?
 

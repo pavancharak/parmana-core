@@ -54,7 +54,7 @@ Creates a ParmanaError.
 
 Stable machine-readable error code.
 
-***
+---
 
 ### requestId?
 
@@ -62,7 +62,7 @@ Stable machine-readable error code.
 
 Optional request identifier.
 
-***
+---
 
 ### cause?
 
@@ -74,7 +74,7 @@ Optional underlying cause.
 
 `Error.cause`
 
-***
+---
 
 ### statusCode?
 
@@ -85,7 +85,7 @@ The HTTP status of the response this error was made from, for example
 a timeout) and for errors raised by the SDK itself. The Python SDK's
 equivalent is `status_code`.
 
-***
+---
 
 ### stackTraceLimit
 
@@ -105,7 +105,7 @@ not capture any frames.
 
 `Error.stackTraceLimit`
 
-***
+---
 
 ### name
 
@@ -115,7 +115,7 @@ not capture any frames.
 
 `Error.name`
 
-***
+---
 
 ### message
 
@@ -125,7 +125,7 @@ not capture any frames.
 
 `Error.message`
 
-***
+---
 
 ### stack?
 
@@ -148,7 +148,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -203,7 +203,7 @@ a();
 
 `Error.captureStackTrace`
 
-***
+---
 
 ### prepareStackTrace()
 

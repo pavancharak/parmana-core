@@ -10,25 +10,25 @@ How to replace an API key, a step-up key, or the whole caller list in production
 
 Each key is one entry in the production caller list, `PARMANA_API_KEYS`. The entry stores only a hash of the key:
 
-| Field | Required | What it holds |
-|---|---|---|
-| `callerId` | Yes | A name for the caller. Must be unique in the list. |
-| `keyHash` | Yes | SHA-256 of the raw key, as 64 lowercase hex characters. |
-| `allowedCapabilities` | No | Actions the key may invoke. Unset means none. `"*"` means all. |
-| `allowedPrincipalIds` | No | Principals the key may assert. Unset means only its own `callerId`. |
-| `allowedTenantIds` | No | Tenants the key may use. Unset means none. |
-| `credentialHolderType` | No | `USER`, `ROLE`, `SERVICE` or `ORGANIZATION`. Only `USER` keys may approve or reject policy changes. |
-| `stepUpPublicKey` | For a checker | The Ed25519 public key (PEM) that verifies the checker's step-up envelopes. |
+| Field                  | Required      | What it holds                                                                                       |
+| ---------------------- | ------------- | --------------------------------------------------------------------------------------------------- |
+| `callerId`             | Yes           | A name for the caller. Must be unique in the list.                                                  |
+| `keyHash`              | Yes           | SHA-256 of the raw key, as 64 lowercase hex characters.                                             |
+| `allowedCapabilities`  | No            | Actions the key may invoke. Unset means none. `"*"` means all.                                      |
+| `allowedPrincipalIds`  | No            | Principals the key may assert. Unset means only its own `callerId`.                                 |
+| `allowedTenantIds`     | No            | Tenants the key may use. Unset means none.                                                          |
+| `credentialHolderType` | No            | `USER`, `ROLE`, `SERVICE` or `ORGANIZATION`. Only `USER` keys may approve or reject policy changes. |
+| `stepUpPublicKey`      | For a checker | The Ed25519 public key (PEM) that verifies the checker's step-up envelopes.                         |
 
 The raw key is shown once, at generation. The server never stores it, so if it is lost, the only fix is a new key.
 
 Current roles in production (confirm with `vercel env` names, then with the hash check in section 5):
 
-| Role | `callerId` | Type | Used for |
-|---|---|---|---|
-| Checker | `pavancharak` | `USER` plus `stepUpPublicKey` | Approves and rejects policy changes |
-| Maker | `maker-wiring-check` | `USER` | Proposes policy changes |
-| Probe | `kill-switch-probe` | `SERVICE`, capability `kill-switch:probe` | The scheduled kill-switch probe in GitHub Actions |
+| Role    | `callerId`           | Type                                      | Used for                                          |
+| ------- | -------------------- | ----------------------------------------- | ------------------------------------------------- |
+| Checker | `pavancharak`        | `USER` plus `stepUpPublicKey`             | Approves and rejects policy changes               |
+| Maker   | `maker-wiring-check` | `USER`                                    | Proposes policy changes                           |
+| Probe   | `kill-switch-probe`  | `SERVICE`, capability `kill-switch:probe` | The scheduled kill-switch probe in GitHub Actions |
 
 ---
 
@@ -51,6 +51,7 @@ Flags that matter:
 - `--allowed-capabilities` takes a comma-separated list. Leave it out for a human key.
 
 **Save the raw key without showing it:**
+
 ```powershell
 $k = (($out | Where-Object { $_ -match '^Key\s+:' }) -replace '^Key\s+:\s*', '').Trim()
 Set-Clipboard -Value $k
@@ -58,15 +59,18 @@ Read-Host "Save this key in the password manager, then press Enter"
 Set-Clipboard -Value " "
 Remove-Variable k
 ```
+
 Expect a 43-character key. Check the length before saving it, and do not print it.
 
 **Save the entry** (the JSON line, which starts with `{"callerId"`):
+
 ```powershell
 $entry = $out | Where-Object { $_.StartsWith('{"callerId"') }
 [System.IO.File]::WriteAllText('<folder>\<name>-entry.json', $entry)
 ```
 
 **Save the step-up private key** (checkers only). Extract the PEM block and write it with `WriteAllText`, not `Set-Content`:
+
 ```powershell
 $pem = ($out | Out-String) -replace '(?s).*(-----BEGIN PRIVATE KEY-----.*?-----END PRIVATE KEY-----).*', '$1'
 [System.IO.File]::WriteAllText('<folder>\checker.step-up.private.pem', $pem)
@@ -91,6 +95,7 @@ $all = @(
 ```
 
 Validate it with the same parser production uses. It must print `OK` with every caller:
+
 ```powershell
 $env:KEYS = [System.IO.File]::ReadAllText('<folder>\PARMANA_API_KEYS.json')
 npx tsx -e "import { parseApiKeys } from './packages/shared/src/config/ConfigValidation.ts'; console.log('OK', parseApiKeys(process.env.KEYS).map(e => e.callerId))"
@@ -111,6 +116,7 @@ vercel redeploy <current-production-url> --target production --cwd $link
 ```
 
 Then check (expect `401`):
+
 ```powershell
 try { Invoke-RestMethod "$env:PARMANA_URL/policies" } catch { "$($_.Exception.Response.StatusCode.value__) $($_.ErrorDetails.Message)" }
 ```

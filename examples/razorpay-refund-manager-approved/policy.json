@@ -28,7 +28,11 @@
     },
     {
       "id": "reject-above-per-refund-limit",
-      "condition": { "fact": "refundAmount", "operator": "gt", "value": 500000 },
+      "condition": {
+        "fact": "refundAmount",
+        "operator": "gt",
+        "value": 500000
+      },
       "outcome": {
         "action": "reject",
         "reason": "Refund rejected because it is above the per-refund limit of Rs 5,000."

@@ -13,6 +13,7 @@ resolves paths relative to an arbitrary workspace directory instead of the repo 
 **Workaround:** invoke the local binary directly:
 
 ```bash./node_modules/.bin/tsx packages/api/src/server.ts./node_modules/.bin/vitest run   # from the repository root, or with a path: vitest run packages/runtime
+
 ```
 
 ## `POST /execute` (or `runtime.execute()`) rejects with "declared signal(s) do not match the executed intent"

@@ -126,7 +126,8 @@ if (currentSignalsHash !== signalsHash) {
       businessTransactionId: executableContent.businessTransactionId,
       intentParameters: executableContent.parameters,
       intentTarget: executableContent.target,
-      stage: "release",...(verifiedPolicy !== undefined ? { policy: verifiedPolicy } : {}),
+      stage: "release",
+      ...(verifiedPolicy !== undefined ? { policy: verifiedPolicy } : {}),
     },
     request.signals as PolicySignals,
   );
@@ -191,8 +192,9 @@ hash of a **tampered** copy of the same content (payment amount changed) using t
 ```typescript
 // examples/tutorials/36-parameter-tampering/run.ts
 const originalHash = context.authorization.payload.businessTransactionHash;
-const tampered = {...content,
-  parameters: {...content.parameters, paymentAmount: 500000 },
+const tampered = {
+  ...content,
+  parameters: { ...content.parameters, paymentAmount: 500000 },
 };
 const tamperedHash = await hasher.hash(tampered);
 // originalHash !== tamperedHash

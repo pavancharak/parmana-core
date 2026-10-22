@@ -3,6 +3,7 @@
 How production is deployed on Vercel (`parmana-api-real`), how to confirm a deployment is healthy, and how to roll back. The general deployment guide is `docs/site/deployment/production.mdx`. This page covers the Vercel specifics we hit.
 
 Set these in each new PowerShell window:
+
 ```powershell
 $env:PARMANA_URL = "https://parmana-api-real.vercel.app"
 $link = "$env:USERPROFILE\parmana-vercel-link"
@@ -12,14 +13,15 @@ $link = "$env:USERPROFILE\parmana-vercel-link"
 
 ## 1. Two entry points, one rule
 
-| File | Runs on | Builds the app with |
-|---|---|---|
-| `api/index.ts` | Vercel | `createApp` from `packages/api/dist/...` |
-| `packages/api/src/server.ts` | Node (self-hosted, Docker) | `createApp` from source |
+| File                         | Runs on                    | Builds the app with                      |
+| ---------------------------- | -------------------------- | ---------------------------------------- |
+| `api/index.ts`               | Vercel                     | `createApp` from `packages/api/dist/...` |
+| `packages/api/src/server.ts` | Node (self-hosted, Docker) | `createApp` from source                  |
 
 Both must pass the same startup options. We have been bitten by this twice: the kill switch was wired only into `server.ts`, and `POLICY_CHANGE_CHECKERS` was missing from `api/index.ts`, so every approval was refused with `CHECKER_NOT_IN_SCOPE`.
 
 **Rule:** after changing either file, run the architecture test:
+
 ```powershell
 npx vitest run tests/architecture/vercel-entry-policy-checkers.test.ts
 ```
@@ -46,9 +48,11 @@ Wait for `✓ Ready`. The alias `https://parmana-api-real.vercel.app` moves to t
 Run in this order. Stop at the first failure.
 
 **3a. The process starts and rejects unauthenticated requests:**
+
 ```powershell
 try { Invoke-RestMethod "$env:PARMANA_URL/policies" } catch { "$($_.Exception.Response.StatusCode.value__) $($_.ErrorDetails.Message)" }
 ```
+
 Expect `401 {"error":"authentication required"}`.
 
 - `500 FUNCTION_INVOCATION_FAILED` = startup failed. Go to section 5.
@@ -66,9 +70,11 @@ Expect `401 {"error":"authentication required"}`.
 Two options. Prefer the second on Hobby.
 
 **Promote an earlier deployment** (works on every plan, and is what we used):
+
 ```powershell
 vercel promote <older-deployment-url> --cwd $link --yes
 ```
+
 The Hobby plan allows only one rollback through the dashboard. Attempts beyond that return `402`.
 
 **Redeploy the known-good source** after fixing the problem: use section 2.
@@ -85,13 +91,13 @@ The app throws while starting, so every request returns 500.
 2. **Restore service first.** Promote the last deployment that returned 401 (section 4).
 3. **Match the message to a fix:**
 
-| Message contains | Fix |
-|---|---|
-| `No caller authentication keys are configured` | `PARMANA_API_KEYS` is missing or empty. Upload it (see the troubleshooting guide, section 3). |
-| `PARMANA_API_KEYS ... not valid JSON` or `must be a JSON array` | The value is malformed. Re-upload the one-line version. |
-| `POLICY_CHANGE_CHECKERS ... not valid JSON` | The value must be an object (see the approval runbook, section 8). |
-| `ENOENT` or `read-only` on the key directory | `PARMANA_KEY_DIR` must be `/tmp/parmana-keys` on Vercel. |
-| Key material error | `PARMANA_KEY_MATERIAL_JSON` has the wrong shape. |
+| Message contains                                                | Fix                                                                                           |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `No caller authentication keys are configured`                  | `PARMANA_API_KEYS` is missing or empty. Upload it (see the troubleshooting guide, section 3). |
+| `PARMANA_API_KEYS ... not valid JSON` or `must be a JSON array` | The value is malformed. Re-upload the one-line version.                                       |
+| `POLICY_CHANGE_CHECKERS ... not valid JSON`                     | The value must be an object (see the approval runbook, section 8).                            |
+| `ENOENT` or `read-only` on the key directory                    | `PARMANA_KEY_DIR` must be `/tmp/parmana-keys` on Vercel.                                      |
+| Key material error                                              | `PARMANA_KEY_MATERIAL_JSON` has the wrong shape.                                              |
 
 ---
 
@@ -109,12 +115,12 @@ The app throws while starting, so every request returns 500.
 
 ## 7. Things that look like outages but aren't
 
-| What you see | What it is |
-|---|---|
-| Browser works, `curl` to a preview URL asks for login | Deployment Protection covers previews. Use the production alias. |
-| `vercel logs` shows `No logs found` | Use the dashboard Runtime Logs. |
-| `GET /api/diag` returns `401` | The route is behind the auth gate. It is not reachable without a key. |
-| `GET /api/does-not-exist` returns `401` | The auth gate answers every path. A `401` does not prove a route exists. |
+| What you see                                          | What it is                                                               |
+| ----------------------------------------------------- | ------------------------------------------------------------------------ |
+| Browser works, `curl` to a preview URL asks for login | Deployment Protection covers previews. Use the production alias.         |
+| `vercel logs` shows `No logs found`                   | Use the dashboard Runtime Logs.                                          |
+| `GET /api/diag` returns `401`                         | The route is behind the auth gate. It is not reachable without a key.    |
+| `GET /api/does-not-exist` returns `401`               | The auth gate answers every path. A `401` does not prove a route exists. |
 
 ---
 

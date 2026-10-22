@@ -91,12 +91,12 @@ not claim them:
 Each has an entry inrefundEligible`, Slack `contentApproved`) are not checked against another system. They can only make a rule refuse. | Rely on the signed approval, which is what authorizes. |
 | Register sources with a key, keep amount limits in policy rules and rely on the signed approval. |
 | Require grants in the policies that matter, keep cumulative caps in the business system. |
-| Check `conditions` in your endpoint, in the same transaction as the action. |
-| Set `APPROVAL_WEBHOOK_URL` so approvers hear of requests that wait on them. |
+| Check `conditions`in your endpoint, in the same transaction as the action. |
+| Set`APPROVAL_WEBHOOK_URL`so approvers hear of requests that wait on them. |
 | New policy versions, approvers and external connectors need none. |
 | Keep the endpoint's own records and reconcile them against Trust Records. |
 | Use a 120 second timeout; after a timeout, read the record before sending anything new. |
-| Watch for intents left `PREPARED` (`409 EXECUTION_INTENT_RESULT_NOT_RECORDED`). |
+| Watch for intents left`PREPARED` (`409 EXECUTION_INTENT_RESULT_NOT_RECORDED`). |
 | Treat post-quantum protection as covering records and receipts only. |
 Production was not affected. | Do not keep anything in the sandbox you need later. |
 | None needed; the connector's record is the one with the credential id. |
