@@ -37,7 +37,7 @@ Not published to npm. This is an internal package of this repository, used from 
 
 | Export                    | Purpose                                                                                            |
 | ------------------------- | -------------------------------------------------------------------------------------------------- |
-| `PolicyRouter`            | Resolves a `PolicyReference { name, version, schemaVersion }` to a loaded `Policy`                 |
+| `PolicyRouter`            | Loads a `Policy` by `name` and `version`                                                           |
 | `PolicyRegistry`          | In-memory policy lookup by name/version                                                            |
 | `PolicyRepository` (type) | The interface `FilePolicyRepository` and any custom repository implement                           |
 | `FilePolicyRepository`    | `new FilePolicyRepository(directory: string)`, resolves `<directory>/<name>/<version>/policy.json` |

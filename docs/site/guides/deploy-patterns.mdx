@@ -54,7 +54,7 @@ DATABASE_URL=postgresql://user:password@host:5432/parmana
 Apply the migrations before the first start: `npm run db:migrate -- apply` (status with
 `npm run db:migrate -- status`). See [Production deployment](/deployment/production).
 
-`PARMANA_STORAGE` is the only variable read for this. An older `DATABASE_PROVIDER` variable
+`PARMANA_STORAGE` selects the provider; `postgres` and `supabase` also need `DATABASE_URL`. An older `DATABASE_PROVIDER` variable
 existed briefly as a second, disconnected path to the same setting and is now retired: if
 it's present in the environment, config loading fails at startup naming `PARMANA_STORAGE` as
 the replacement, rather than silently ignoring it.
@@ -238,7 +238,7 @@ environment-variable toggle for this today, it's a code change.
   exactly the exposure that produced the incident noted on [Security](/security/overview).
   `aws-kms` is implemented, see [AWS KMS signing](/deployment/aws-kms-signing).
   `azure-key-vault`, `gcp-kms` and `hsm` are declared config values with no implementation.
-  Setting `KEY_PROVIDER` to one of those fails startup loudly rather than silently running
+  Setting `KEY_PROVIDER` to `azure-key-vault`, `gcp-kms` or `hsm` fails startup loudly rather than silently running
   as if it were `local`.
 - **No high availability setup.** Several instances on one database are safe for replay: authorization and approval nonces are kept in Postgres
   (`consumed_nonces`, `consumed_approval_nonces`), so several instances on the same database still

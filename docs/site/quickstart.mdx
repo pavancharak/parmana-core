@@ -32,7 +32,7 @@ Running Parmana locally to evaluate it is permitted; any other use needs a writt
 <Steps>
   <Step title="Install and build">
     ```bash
-    cp.env.example.env
+    cp .env.example .env
     npm ci
     npm run build
     ```
@@ -100,17 +100,14 @@ Running Parmana locally to evaluate it is permitted; any other use needs a writt
     <Note>
       The Execution Gateway is wired into this server unconditionally. Every `POST
       /execute` is independently re-verified and routed through a real Connector. An
-      action with no registered connector fails closed with `"No connector
-      registered for action"`, it does not silently skip enforcement. See [The
+      action with no registered connector returns `503 CONNECTOR_NOT_REGISTERED`, with the message "No connector is registered for capability", it does not silently skip enforcement. See [The
       gateway](/concepts/the-gateway).
     </Note>
 
   </Step>
 
   <Step title="Authenticate: every other route requires a bearer key">
-    `/health` is the one route exempt from caller authentication (along with `/ready`,
-    `/openapi.yaml`, `/openapi.json`, `/api-manifest.json`, `/documentation`, and
-    `/reference`). Everything else, including `/version`, fails closed with a `401` before a
+    `/health`, `/ready`, `/openapi.yaml`, `/openapi.json`, `/api-manifest.json`, `/documentation`, and `/reference` are exempt from caller authentication, as are the other public routes such as `/keys` and `/.well-known/jwks.json`. Every other route, including `/version`, needs the bearer key and returns `401` without one before a
     Business Transaction is even constructed:
 
     ```bash
@@ -303,10 +300,10 @@ Running Parmana locally to evaluate it is permitted; any other use needs a writt
     Full runnable versions: `python/examples/quickstart/run.py` and
     `typescript/examples/06-create-business-transaction.ts`, the same transactions run against a
     test server with authentication off, so they act as other principals; each takes the signed approval as an argument, or from the file
-    `PARMANA_APPROVAL_FILE` names when run as a script. `python/tests/test_quickstart_example.py` and
+    `PARMANA_APPROVAL_FILE` (Python) or `PARMANA_APPROVAL_ARTIFACT` (TypeScript) names when run as a script. `python/tests/test_quickstart_example.py` and
     `typescript/test/integration/examples.integration.test.ts` run them against a real,
     freshly-spawned server on every test run, so both examples are verified to work, not just
-    syntax-checked. The two samples above were run as shown, with the demo key, against a server
+    syntax-checked. The two samples above run as shown against a local server.
 
   </Step>
 

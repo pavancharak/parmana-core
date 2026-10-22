@@ -26,14 +26,14 @@ Both SDKs cover the same operations. TypeScript exposes each as a method on `Par
 
 | Operation                                         | TypeScript                                                  | Python                                                               |
 | ------------------------------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------- |
-| `GET /trust-records/{id}`                         | `trustRecord(id)`                                           | `trust_record(id)`, `trust_records.get(id)`                          |
+| `GET /trust-records/{businessTransactionId}`      | `trustRecord(id)`                                           | `trust_record(id)`, `trust_records.get(id)`                          |
 | `GET /trust-records`                              | `trustRecords(page, pageSize, { since, until })` **1.3.0**  | `trust_records.list(page=, page_size=, since=, until=)` **1.3.0**    |
 | `POST /verify`                                    | `verify(id)`                                                | `verify(id)`, `verification.verify(id)`                              |
 | `GET /verification/{id}`                          | `getLatestVerification(id)`                                 | `get_latest_verification(id)`, `verification.get_latest(id)`         |
 | `POST /receipt`                                   | `receipt(id)`                                               | `receipt(id)`, `receipt.generate(id)`                                |
 | `GET /receipt/latest/{id}`                        | `latestReceipt(id)` **1.3.0**                               | `latest_receipt(id)` **1.3.0**, `receipt.get_latest(id)`             |
 | `POST /replay`                                    | `replay(id)`                                                | `replay(id)`, `replay.replay(id)`                                    |
-| `GET /refusal/{id}`                               | `refusalRecord(id)`                                         | `refusal_record(id)`, `refusal.get(id)`                              |
+| `GET /refusal/{businessTransactionId}`            | `refusalRecord(id)`                                         | `refusal_record(id)`, `refusal.get(id)`                              |
 | `POST /refusal/verify`                            | `verifyRefusalRecord(record)`                               | `verify_refusal_record(record)`, `refusal.verify(record)`            |
 | `POST /audit/verify`                              | `verifyAuditEvent(event, signature)`                        | `verify_audit_event(event, signature)`, `audit.verify(...)`          |
 | `GET /keys/{keyId}`                               | `publicKey(keyId)` **1.3.0**                                | `public_key(key_id)` **1.3.0**, `callers.public_key(key_id)`         |
@@ -45,13 +45,13 @@ The offline verifiers make no network call. Get the public key once with `public
 
 ## Execution Intents
 
-| Operation                               | TypeScript                          | Python                                                                    |
-| --------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------- |
-| `GET /execution-intents/{id}`           | `executionIntent(id)`               | `execution_intent(id)`, `execution_intents.get(id)`                       |
-| `POST /execution-intents/verify`        | `verifyExecutionIntent(intent)`     | `verify_execution_intent(intent)`, `execution_intents.verify(intent)`     |
-| `GET /execution-intents/unfinalized`    | `unfinalizedExecutionIntents()`     | `unfinalized_execution_intents()`, `execution_intents.list_unfinalized()` |
-| `POST /execution-intents/{id}/finalize` | `finalizeExecutionIntent(id)`       | `finalize_execution_intent(id)`, `execution_intents.finalize(id)`         |
-| `POST /execution-intents/{id}/resolve`  | `resolveExecutionIntent(id, input)` | `resolve_execution_intent(...)`, `execution_intents.resolve(...)`         |
+| Operation                                                 | TypeScript                          | Python                                                                    |
+| --------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------- |
+| `GET /execution-intents/{id}`                             | `executionIntent(id)`               | `execution_intent(id)`, `execution_intents.get(id)`                       |
+| `POST /execution-intents/verify`                          | `verifyExecutionIntent(intent)`     | `verify_execution_intent(intent)`, `execution_intents.verify(intent)`     |
+| `GET /execution-intents/unfinalized`                      | `unfinalizedExecutionIntents()`     | `unfinalized_execution_intents()`, `execution_intents.list_unfinalized()` |
+| `POST /execution-intents/{id}/finalize`                   | `finalizeExecutionIntent(id)`       | `finalize_execution_intent(id)`, `execution_intents.finalize(id)`         |
+| `POST /execution-intents/{businessTransactionId}/resolve` | `resolveExecutionIntent(id, input)` | `resolve_execution_intent(...)`, `execution_intents.resolve(...)`         |
 
 ## Policies and governance
 

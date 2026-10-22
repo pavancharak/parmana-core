@@ -5,14 +5,14 @@ description: "The Express server and its bootstrap composition root. For the RES
 
 <Info>
   **[AVAILABLE]**. `packages/api`. Not a library other packages import, it's the
-  running server. No public exports (`src/index.ts` is empty).
+  running server. No public exports (the package has no `src/index.ts`).
 </Info>
 
 ## Purpose
 
 Composes every other package into one running Express process: policy loading, the
 [gateway](/concepts/the-gateway), [credential isolation](/concepts/credential-isolation),
-caller authentication, and 14 HTTP routes. For the routes themselves, request/response
+caller authentication, and the HTTP routes. For the routes themselves, request/response
 shapes, and verified error codes, see [REST API Introduction](/api-reference/introduction),
 this page covers the server's internal structure.
 

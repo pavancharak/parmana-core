@@ -99,7 +99,7 @@ rules this walkthrough exercises:
       "condition": { "always": true },
       "outcome": {
         "action": "reject",
-        "reason": "One or more required policy conditions were not satisfied."
+        "reason": "Vendor payment rejected because one or more required policy conditions were not satisfied."
       }
     }
   ]
@@ -210,7 +210,7 @@ change a fact the approval does not cover. In a scratch copy of the tutorial fol
 
 ```
 RuntimeError: Execution rejected: Vendor payment rejected because the vendor has not been verified.
-    at ExecutionGate.enforce (packages/runtime/src/ExecutionGate.ts:11)
+    at ExecutionGate.enforce (packages/runtime/src/ExecutionGate.ts:28)
 ```
 
 A `REJECTED` decision does not come back as a normal object with `outcome: "REJECTED"`,
@@ -268,7 +268,7 @@ wins, with nothing surfacing that the second rule is partly or wholly shadowed.
 
 ## Troubleshoot
 
-- **Decision comes back `REJECTED` with `"reason": "One or more required policy conditions were not satisfied."`, not the reason you expected.** Your transaction's signals matched no earlier rule, only the trailing default. Check `signalsSchema` against what you actually sent, a typo'd signal name is silently `undefined`, which fails every `eq`/`gt`/`lte` condition.
+- **Decision comes back `REJECTED` with `"reason": "Vendor payment rejected because one or more required policy conditions were not satisfied."`, not the reason you expected.** Your transaction's signals matched no earlier rule, only the trailing default. Check `signalsSchema` against what you actually sent, a typo'd signal name is silently `undefined`, which fails every `eq`/`gt`/`lte` condition.
 - **Decision comes back `REJECTED` with `"matchedRuleId": "signal-type-violation"`.** A signal was sent with a type other than the one `signalsSchema` declares, for example an amount as `"500"` instead of `500`. The reason names each signal and the type it must have.
 - **`PolicyValidator` throws about policy identity.** Your Business Transaction's `policy.name`/`policy.version` doesn't match the loaded file's `policyId`/`policyVersion` exactly, these are checked, not inferred from the file path.
 - **Wrong policy loaded, or "policy not found."** `FilePolicyRepository` resolves `<policyDir>/<name>/<version>/policy.json` literally, confirm the directory structure matches, including the version folder.

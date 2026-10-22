@@ -79,6 +79,6 @@ The action has already been authorized, and an Execution Intent signed and store
 - the Execution Intent is stored in state `ERRORED`, with the cause as its `failureReason`;
 - the API log has a critical `execution_outcome_unknown` event with the cause, for example `getaddrinfo ENOTFOUND paytm-agent.internal.example.com`.
 
-Whether the action happened is unknown. Do not resend it under a new `businessTransactionId`. Check your system, then close the intent with what you found: [`POST /execution-intents/{id}/resolve`](/concepts/execution-intents). The full procedure is in [Troubleshooting](/troubleshooting#post-execute-returns-502-execution_outcome_unknown).
+Whether the action happened is unknown. Do not resend it under a new `businessTransactionId`. Check your system, then close the intent with what you found: [`POST /execution-intents/{businessTransactionId}/resolve`](/concepts/execution-intents). The full procedure is in [Troubleshooting](/troubleshooting#post-execute-returns-502-execution_outcome_unknown).
 
 Before 2026-09-25 the caller got a bare `500 Internal Server Error` here instead.

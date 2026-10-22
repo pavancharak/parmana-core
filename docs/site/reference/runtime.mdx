@@ -73,7 +73,7 @@ catalog](/api-reference/error-catalog).
   decision is `REJECTED`, it does not return an object with `outcome:
   "REJECTED"`. Verified live in [Write your first
   policy](/guides/write-your-first-policy): the thrown message is the matched
-  rule's rejection reason, `status: 500`, `code: "RUNTIME_ERROR"`. A caller that
+  rule's rejection reason, `status: 403`, `code: "POLICY_DENIED"`. A caller that
   wants to handle rejection gracefully needs a `try`/`catch`.
 </Warning>
 

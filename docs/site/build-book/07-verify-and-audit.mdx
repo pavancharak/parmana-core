@@ -110,7 +110,7 @@ An operator closes it:
    | `ERRORED`  | The release raised an error; the action may still have run | Check the system, then resolve                                                                          |
 
 3. **Resolve** after checking the system with the intent's `businessTransactionId`, `action` and `target`:
-   `POST /execution-intents/{id}/resolve` with `{ "resolution": "NOT_EXECUTED" | "EXECUTED", "note": "what you checked" }`.
+   `POST /execution-intents/{businessTransactionId}/resolve` with `{ "resolution": "NOT_EXECUTED" | "EXECUTED", "note": "what you checked" }`.
    The note is required. `resolvedBy` comes from your key.
 
 A resolution is a person's attributed statement in the intent's unsigned status. It is a trail, not tamper evident

@@ -13,7 +13,7 @@ description: "Two separate things share this name today, what each actually does
 
 This is what `client.replay.replay(transaction_id)` actually calls. Its real
 implementation, `ExecutionTrustApplication.replay()`
-(`packages/runtime/src/ExecutionTrustApplication.ts:142-171`):
+(`packages/runtime/src/ExecutionTrustApplication.ts:143-166`):
 
 ```typescript
 async replay(businessTransactionId: string): Promise<{
@@ -22,7 +22,7 @@ async replay(businessTransactionId: string): Promise<{
   verified: boolean;
 }> {
   const trustRecord = await this.trustRecords.findByTransactionId(businessTransactionId);
-  if (!trustRecord) throw new Error("Execution Trust Record not found.");
+  if (!trustRecord) throw new VerificationFailedError("Execution Trust Record not found.");
   const verified = await this.crypto.verify(trustRecord);
   return { businessTransactionId, trustRecordHash: trustRecord.trustRecordHash, verified };
 }
@@ -36,14 +36,14 @@ recheck with a `replay`-shaped response, not deterministic execution reconstruct
 
 A separate, real package: `ReplayEngine`, `ReplayPipeline`, `ReplayExecutor`,
 `ReplayBuilder`, proven deterministic regardless of input order
-(`ReplayDeterminism.test.ts`, "should produce identical output regardless of input order";
-`ReplayEngine.test.ts`; 9 tests total).
+(`replay-determinism.test.ts`, "should produce identical output regardless of input order";
+`replay-engine.test.ts`; 9 tests total).
 
 `ReplayEngine.replay()` genuinely re-evaluates the original policy against the recorded
 signals, using a real `PolicyEngine`, not just a signature or hash recheck:
 
 ```typescript
-// packages/replay/src/ReplayEngine.ts:38-62 (abridged, real source)
+// packages/replay/src/ReplayEngine.ts:36-64 (abridged, real source)
 const policyDecision = this.policyEngine.evaluate(policy, signals);
 const replayedDecision = {...recordedDecision, outcome: policyDecision.outcome,... };
 const matches = recordedDecision.outcome === replayedDecision.outcome;

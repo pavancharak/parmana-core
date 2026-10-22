@@ -5,8 +5,7 @@ description: "Real problems encountered while building and using this repo, with
 
 ## `npm run <script>` or `npx <bin>` does something unexpected at the repo root
 
-**Cause, confirmed:** `package.json` and `typescript/package.json` both declare `"name":
-"parmana"`. This duplicate workspace name breaks npm's resolution: `npm run <script>`
+**Cause, unverified:** an earlier duplicate workspace name was suspected. The current `typescript/package.json` is named `@parmana/sdk`, so re-check with `npm ls` before relying on this explanation. The symptom it described: `npm run <script>`
 cascades across every workspace instead of running only the root script, and `npx <bin>`
 resolves paths relative to an arbitrary workspace directory instead of the repo root.
 
@@ -32,8 +31,7 @@ real `intent` field the policy binds it to, exactly.
 
 **Cause:** the referenced `policy.version` doesn't match a real
 `policies/<name>/<version>/policy.json` on disk. Check `PARMANA_POLICY_DIR` and the exact
-version folder, for example `policies/vendor-payment/` currently only has a `2.0.0/`
-folder, not `1.0.0/`.
+version folder, for example `policies/vendor-payment/` currently has `2.0.0/` and `2.1.0/` folders, not `1.0.0/`.
 
 ## Execution is rejected with "Execution Gateway rejected request: failed checks [policyStillCurrent]" or "policy approval check failed"
 
@@ -45,8 +43,7 @@ the authorization was signed. "absent: authorization carries no policyContentHas
 authorization predates that field. `policyBindingNotVerified` means a required policy check did
 not run.
 
-**Fix:** approve the policy version through `POST /policies/:name/:version/pending-changes` and
-`.../approve` (see [Policy governance](/guides/policy-governance-maker-checker)), then submit a
+**Fix:** approve the policy version through `POST /policies/pending-changes/:id/approve` (see [Policy governance](/guides/policy-governance-maker-checker)), then submit a
 new transaction so a fresh authorization is signed. Nothing was executed and the nonce was not
 consumed.
 
@@ -209,7 +206,7 @@ explicitly (for example `./policies`), as shown in [Quickstart](/quickstart).
 
 ## A resubmitted, modified transaction under the same ID isn't rejected the way I expected
 
-As of commit `651497a`, content-binding protection **is** wired in by default for
+Content-binding protection **is** wired in by default for
 `POST /execute` against the default server, see [Content Binding &
 TOCTOU](/concepts/content-binding-toctou) and [The gateway](/concepts/the-gateway) before
 debugging further. If you're seeing a resubmitted, modified transaction succeed anyway, check
@@ -217,8 +214,6 @@ that you're actually hitting the Execution Gateway path (the default server alwa
 not a lower-level API call that bypasses it, this is more likely a setup mismatch than a
 regression.
 
-## The TypeScript SDK isn't throwing on a 4xx/5xx response
+## The TypeScript SDK throws on a 4xx/5xx response
 
-Confirmed, not a misunderstanding on your part, see [TypeScript SDK](/sdks/typescript).
-Check `response.status` on the returned object yourself, or use the
-[Python SDK](/sdks/python), which raises structured exceptions.
+The TypeScript SDK raises a typed error for each status of 400 or above, except the statuses a call lists as non-throwing. See [TypeScript SDK](/sdks/typescript). Catch the error and read its `status`.

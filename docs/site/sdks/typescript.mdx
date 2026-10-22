@@ -191,7 +191,7 @@ kept in sync field-for-field against the real JSON schemas (`schemas/common/*.sc
   (`tenantId`, `correlationId`, `sourceSystem`, `submittedBy`, `submittedAt`) is optional,
   matching the real API.
 - `ExecutionTrustRecord` includes the required `signature` field and the optional
-  `settlementConfirmations` field, with their own `SettlementConfirmation`/`Signature` models.
+  `evidenceAnchor` field.
 - `Override.approvedBy` is the real field name (the real schema has no `authorityId` on
   `Override`), plus the optional `justification` field. Currently unreachable in practice, no
   route in this repository creates an `Override`.

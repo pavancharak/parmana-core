@@ -167,9 +167,9 @@ client.replay.replay(id)                          # POST /replay
 client.transactions.create(transaction)           # POST /transactions
 client.transactions.get(id)                       # GET /transactions/:id
 client.transactions.list()                        # GET /transactions
-client.trust_records.get(id)                      # GET /trust-records/:id
+client.trust_records.get(id)                      # GET /trust-records/:businessTransactionId
 client.trust_records.list()                       # GET /trust-records           (1.3.0)
-client.refusal.get(id)                            # GET /refusal/:id
+client.refusal.get(id)                            # GET /refusal/:businessTransactionId
 client.refusal.verify(record)                     # POST /refusal/verify
 client.audit.verify(event, signature)             # POST /audit/verify
 client.execution_intents.get(id)                  # GET /execution-intents/:id

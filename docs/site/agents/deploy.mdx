@@ -97,11 +97,11 @@ Rule 5 applies. If the operator has not told you to write to the host, print the
 
 ## Step 5: Deploy
 
-| `HOST_KIND` | Command                                                                                       |
-| ----------- | --------------------------------------------------------------------------------------------- |
-| `fly`       | `fly deploy`                                                                                  |
-| `vercel`    | `vercel deploy --prod`                                                                        |
-| `docker`    | `docker build -t parmana-api.` then run the image with the variables from step 4, port `3000` |
+| `HOST_KIND` | Command                                                                                        |
+| ----------- | ---------------------------------------------------------------------------------------------- |
+| `fly`       | `fly deploy`                                                                                   |
+| `vercel`    | `vercel deploy --prod`                                                                         |
+| `docker`    | `docker build -t parmana-api .` then run the image with the variables from step 4, port `3000` |
 
 Environment variables are read once at startup, so a change to any of them needs a new deploy.
 

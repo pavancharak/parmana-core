@@ -4,7 +4,7 @@ description: "Every live table: what it is for, its columns, which migration bui
 ---
 
 <Info>
-  Checked against all 31 `supabase/migrations/*.sql` files, read in order.
+  Checked against all 40 `supabase/migrations/*.sql` files, read in order.
   Several tables were altered by later migrations, so the shapes below are the
   final, cumulative schema, not only what the first `CREATE TABLE` said. See
   [Storage](/storage/overview) first for the conceptual model.
@@ -44,8 +44,8 @@ psql "$DATABASE_URL"
 | `consumed_nonces`                       | Replay protection: gateway authorization envelopes                      | `SupabaseNonceStore`                           |
 | `consumed_approval_nonces`              | Replay protection: approval artifacts (separate namespace)              | `SupabaseApprovalNonceStore`                   |
 | `consumed_policy_change_step_up_nonces` | Replay protection: the checker's step up key (separate namespace)       | `SupabasePolicyChangeStepUpNonceStore`         |
-| `challenge_records`                     | Investigation records, the only mutable table                           | `PostgresChallengeRecordRepository`            |
-| `rate_limit_counters`                   | Fleet wide rate limits, the only table without RLS                      | `PostgresRateLimitStore`                       |
+| `challenge_records`                     | Investigation records, one of the mutable tables                        | `PostgresChallengeRecordRepository`            |
+| `rate_limit_counters`                   | Fleet wide rate limits, RLS on with no policy                           | `PostgresRateLimitStore`                       |
 | `handbook_download_leads`               | Email captured before a handbook PDF download                           | `SupabaseHandbookDownloadLeadRepository`       |
 
 <Warning>
@@ -332,7 +332,7 @@ Created by `20260718090000_add_nonce_and_caller_audit_tables.sql`,
 
 ### `challenge_records`
 
-Investigation records for a disputed claim, and the only mutable table: `status`,
+Investigation records for a disputed claim, and one of the mutable tables: `status`,
 `investigation_steps_json`, `finding_json`, `outcome_json` and `disclosure_json` are updated
 as an investigation proceeds. Created by `20260803150000_add_challenge_records.sql`:
 `challenge_record_id` primary key, `status` (`open`, `investigating`, `resolved`),
@@ -355,7 +355,7 @@ counterpart to the in process store of `express-rate-limit`. Created by
 key), `count INTEGER NOT NULL`, `reset_time TIMESTAMPTZ NOT NULL` (indexed). An expired row
 resets on its next hit, so no cleanup job is needed.
 
-The only table without RLS, deliberately: it holds no business or trust data and has no
+RLS on with no policy, deliberately: it holds no business or trust data and has no
 dashboard access path.
 
 ### `handbook_download_leads`

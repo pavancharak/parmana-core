@@ -23,11 +23,11 @@ with `409` and no `code`:
 The 409 is the same whether the first request was approved, refused or is still running, so it tells you only that
 the id was used. To find out what happened to it, read it back with the same id:
 
-| The first request was                    | Read                                         | Answer                                                                                                        |
-| ---------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Approved and executed                    | `GET /trust-records/{businessTransactionId}` | `200` with the Execution Trust Record                                                                         |
-| Refused (`403 POLICY_DENIED` and others) | `GET /refusal/{businessTransactionId}`       | `200` with the signed Refusal Record. `GET /trust-records/{id}` answers `404`: a refusal has no Trust Record. |
-| Either                                   | `GET /transactions/{businessTransactionId}`  | `200` with the Business Transaction as it was stored                                                          |
+| The first request was                    | Read                                         | Answer                                                                                                                           |
+| ---------------------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Approved and executed                    | `GET /trust-records/{businessTransactionId}` | `200` with the Execution Trust Record                                                                                            |
+| Refused (`403 POLICY_DENIED` and others) | `GET /refusal/{businessTransactionId}`       | `200` with the signed Refusal Record. `GET /trust-records/{businessTransactionId}` answers `404`: a refusal has no Trust Record. |
+| Either                                   | `GET /transactions/{businessTransactionId}`  | `200` with the Business Transaction as it was stored                                                                             |
 
 **Practical guidance for callers:** derive `businessTransactionId` from your own idempotency key (a UUIDv5 of your
 order id, for example) so a retry uses the same id. Treat a `409` on that id as "already submitted, go and read it",
@@ -38,9 +38,9 @@ not as a failure.
   tens of seconds, longer than a client's default timeout. The request keeps
   running on the server, and the action may be performed. If your client times
   out, read `GET /trust-records/
-  {businessTransactionId}` (and `GET /refusal/{id}`) with the same id first.
-  Sending the action again under a **new** id would ask for it a second time.
-  Set your client timeout to 120 seconds.
+  {businessTransactionId}` (and `GET /refusal/{businessTransactionId}`) with the
+  same id first. Sending the action again under a **new** id would ask for it a
+  second time. Set your client timeout to 120 seconds.
 </Warning>
 
 ## Nonces: each authorization and each approval is accepted once

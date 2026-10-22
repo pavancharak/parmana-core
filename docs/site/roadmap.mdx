@@ -28,7 +28,7 @@ inside its own boundary. Move 2 below covers what's still missing for the broade
 implemented provider). `KeyProviders` declares `aws-kms`/`azure-key-vault`/`gcp-kms`/`hsm`
 as config values with **zero implementing classes** behind any of them. This is the exact
 exposure class that produced the committed-key incident on [Security](/security/overview).
-Setting `KEY_PROVIDER` to one of these four fails startup loudly (`KeyBootstrap.create()`
+Setting `KEY_PROVIDER` to `azure-key-vault`, `gcp-kms` or `hsm` fails startup loudly (`KeyBootstrap.create()`
 throws, naming the configured value) rather than silently falling back to `FileKeyProvider`;
 the underlying absence of a real KMS/HSM provider remains.
 
@@ -81,7 +81,7 @@ rather than discovering mid-implementation.
 
 ### Move 2: Credential brokering, [PARTIAL], wired for the registered connector, full claim is [ROADMAP]
 
-**Today, precisely:** `packages/execution-control` is real and tested (11 tests) and wired
+**Today, precisely:** `packages/execution-control` is real and tested (47 tests) and wired
 into the default server: `ExecutionControlService` authenticates a calling gateway, issues a
 short-lived `InMemoryGatewaySessionStore` session, and only then invokes a connector,
 auditing every step. `InMemorySessionCredentialVault` isolates the credential from the caller

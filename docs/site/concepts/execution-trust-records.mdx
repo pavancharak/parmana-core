@@ -127,7 +127,7 @@ references the authorization").
 
 ```python
 trust_record = client.execution.execute(transaction)     # POST /execute
-trust_record = client.trust_records.get(transaction_id)  # GET /trust-records/:id
+trust_record = client.trust_records.get(transaction_id)  # GET /trust-records/:businessTransactionId
 ```
 
 Captured from a live local run, 2026-09-14, trimmed:

@@ -79,10 +79,11 @@ needs to exist — no verifier-side configuration change.
   values**. Only `local` (`FileKeyProvider`) and `aws-kms` (`KmsSigner`) are
   implemented. `azure-key-vault`, `gcp-kms` and `hsm` are a declared config
   surface for planned work, not a working integration. Setting `KEY_PROVIDER` to
-  one of those **fails startup loudly** (the server refuses to start, naming the
-  value) rather than silently falling back to `FileKeyProvider`. To use AWS KMS,
-  follow [AWS KMS signing](/deployment/aws-kms-signing). See [Roadmap](/roadmap)
-  for the other custody options.
+  `azure-key-vault`, `gcp-kms` or `hsm` **fails startup loudly** (the server
+  refuses to start, naming the value) rather than silently falling back to
+  `FileKeyProvider`. To use AWS KMS, follow [AWS KMS
+  signing](/deployment/aws-kms-signing). See [Roadmap](/roadmap) for the other
+  custody options.
 </Warning>
 
 <Note>

@@ -51,7 +51,7 @@ tests and a `Supabase*` (Postgres) implementation; see `packages/storage/src/ind
 PARMANA_STORAGE=memory     # or supabase, or postgres (both need DATABASE_URL)
 ```
 
-`PARMANA_STORAGE` is the only variable read. An older `DATABASE_PROVIDER` variable existed
+`PARMANA_STORAGE` selects the provider. `postgres` and `supabase` also need `DATABASE_URL`. An older `DATABASE_PROVIDER` variable existed
 briefly as a second, disconnected path to the same setting and is now retired: if it's
 present in the environment, config loading fails at startup naming `PARMANA_STORAGE` as the
 replacement, rather than silently ignoring it. Tests: `packages/storage/tests/`.

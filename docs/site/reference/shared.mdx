@@ -44,7 +44,7 @@ Not published to npm. This is an internal package of this repository, used from 
 export function loadConfig(): Readonly<Config>;
 ```
 
-Reads `process.env` fresh on every call, no caching, no memoization. `Config` covers
+Reads `process.env` fresh on every call. The `.env` file is loaded once and memoized. `Config` covers
 storage provider, key directory, `primarySignatureProvider` /
 `secondarySignatureProvider`, hash provider, and policy directory. See [Deploy
 patterns](/guides/deploy-patterns) for the full environment variable checklist.
