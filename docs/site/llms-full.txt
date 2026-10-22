@@ -3191,9 +3191,11 @@ On approve, the server does this, in order, and stops at the first failure:
 1. The caller is a verified human, or `403 NON_HUMAN_CALLER_DENIED`.
 2. The change exists, or `404 PENDING_POLICY_CHANGE_NOT_FOUND`.
 3. The caller is not the proposer, or `403 SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE`.
-4. The step up authorization is valid for this change and action, signed by the key registered for this caller, not expired, not used before, or `403 STEP_UP_AUTHORIZATION_INVALID`.
-5. It writes a signed approval record: who proposed, who approved, when, the content hash before and after, and the hash of the previous record for this policy version, so records form a chain.
-6. It saves the policy content and marks the change `APPROVED`.
+4. The caller is listed for this policy in `POLICY_CHANGE_CHECKERS`, or `403 CHECKER_NOT_IN_SCOPE`. A caller who is not listed is refused before any signature is checked.
+5. The step up authorization is valid for this change and action, signed by the key registered for this caller, not expired, not used before, or `403 STEP_UP_AUTHORIZATION_INVALID`.
+6. The change is still `PENDING_APPROVAL`, or `409 CONFLICT`. A rejected or already approved change is not applied.
+7. It writes a signed approval record: who proposed, who approved, when, the content hash before and after, and the hash of the previous record for this policy version, so records form a chain.
+8. It saves the policy content and marks the change `APPROVED`.
 
 ### 6. It takes effect
 
