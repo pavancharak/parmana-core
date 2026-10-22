@@ -141,6 +141,8 @@ Pass values through an environment variable, not as command-line arguments. Powe
 
 ## 10. Before you open a PR
 
+A pre-push hook (`scripts/git-hooks/pre-push`) refuses any push that would change `main`. Push a branch, then open a pull request. The hook is wired in by `npm install` through `core.hooksPath`.
+
 Run in this order, and record the result in the PR checklist:
 ```powershell
 npm run typecheck
