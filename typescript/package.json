@@ -1,6 +1,6 @@
 {
   "name": "@parmana/sdk",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "private": false,
   "description": "Official Parmana TypeScript SDK",
   "license": "Apache-2.0",

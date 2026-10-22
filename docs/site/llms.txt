@@ -10,8 +10,8 @@ This file is generated from the documentation navigation. Do not edit it by hand
 * There is no fixed public API base URL. Every deployment has its own, so ask the operator for it.
 * Authentication: every request carries `Authorization: Bearer <key>`. The operator issues the key.
 * On any running server, the machine readable API description is at `/openapi.json`, `/openapi.yaml` and `/api-manifest.json`.
-* TypeScript SDK: `@parmana/sdk` 1.6.0 on npm.
-* Python SDK: `parmana` 1.6.0 on PyPI.
+* TypeScript SDK: `@parmana/sdk` 1.6.1 on npm.
+* Python SDK: `parmana` 1.6.1 on PyPI.
 * If you are an AI agent, start with https://docs.parmanasystems.com/agents/integrate and follow it exactly.
 * For the integration pages concatenated into one document, read https://docs.parmanasystems.com/llms-full.txt.
 
