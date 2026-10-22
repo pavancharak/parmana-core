@@ -64,6 +64,15 @@ vi.mock(
  */
 const repoRoot = dirname(fileURLToPath(import.meta.url));
 
+// Test-only settings (gitignored, copied from .env.test.example). Loaded
+// first, so a value here wins over the same name in .env. Pointing the tests
+// at a local test database is done here, never by .env, which holds the
+// production settings.
+dotenv.config({
+  path: join(repoRoot, ".env.test"),
+  override: false,
+});
+
 dotenv.config({
   path: join(repoRoot, ".env"),
   override: false,
