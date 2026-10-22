@@ -16,11 +16,11 @@ The connector is optional. When neither variable is set, the connector is not re
 
 ## 2. Variables
 
-| Variable | Required | Rules |
-|---|---|---|
-| `PAYTM_CONNECTOR_URL` | With the secret | Must start with `https://` in production. Refused otherwise. |
-| `PAYTM_CONNECTOR_SHARED_SECRET` | With the URL | Non-empty. Read from the environment. Its value never appears in an error message; only the variable name does. |
-| `PAYTM_CONNECTOR_TIMEOUT_MS` | No | A positive number of milliseconds. Refused if not a positive finite number. Set it only if the default is too short for your connector. |
+| Variable                        | Required        | Rules                                                                                                                                   |
+| ------------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `PAYTM_CONNECTOR_URL`           | With the secret | Must start with `https://` in production. Refused otherwise.                                                                            |
+| `PAYTM_CONNECTOR_SHARED_SECRET` | With the URL    | Non-empty. Read from the environment. Its value never appears in an error message; only the variable name does.                         |
+| `PAYTM_CONNECTOR_TIMEOUT_MS`    | No              | A positive number of milliseconds. Refused if not a positive finite number. Set it only if the default is too short for your connector. |
 
 **Both or neither.** Set exactly one, and the server refuses to start, with a message that says which of the two is set.
 
@@ -30,13 +30,13 @@ The connector is optional. When neither variable is set, the connector is not re
 
 Each check runs before the port is opened. Read the message; it names the variable.
 
-| Message contains | Cause | Fix |
-|---|---|---|
-| `Partial Paytm connector configuration detected` | One of the two variables is set, the other is not | Set both, or remove both |
-| `PAYTM_CONNECTOR_URL must use HTTPS in production` | The URL starts with `http://` | Use the `https://` URL of the connector service |
-| `PAYTM_CONNECTOR_TIMEOUT_MS must be a positive number` | The timeout is zero, negative or not a number | Set a positive number of milliseconds, or remove it |
-| `Environment variable PAYTM_CONNECTOR_SHARED_SECRET ... is not set` | The provider was asked for the secret but it is empty | Set the secret, then redeploy |
-| `createPaytmConnector() was called with PAYTM_CONNECTOR_URL unset` | The secret is set, the URL is not | Set the URL, or remove the secret |
+| Message contains                                                    | Cause                                                 | Fix                                                 |
+| ------------------------------------------------------------------- | ----------------------------------------------------- | --------------------------------------------------- |
+| `Partial Paytm connector configuration detected`                    | One of the two variables is set, the other is not     | Set both, or remove both                            |
+| `PAYTM_CONNECTOR_URL must use HTTPS in production`                  | The URL starts with `http://`                         | Use the `https://` URL of the connector service     |
+| `PAYTM_CONNECTOR_TIMEOUT_MS must be a positive number`              | The timeout is zero, negative or not a number         | Set a positive number of milliseconds, or remove it |
+| `Environment variable PAYTM_CONNECTOR_SHARED_SECRET ... is not set` | The provider was asked for the secret but it is empty | Set the secret, then redeploy                       |
+| `createPaytmConnector() was called with PAYTM_CONNECTOR_URL unset`  | The secret is set, the URL is not                     | Set the URL, or remove the secret                   |
 
 For a message that comes from the Vercel deployment, read it in the Runtime Logs (see [PRODUCTION-DEPLOY-AND-ROLLBACK.md](PRODUCTION-DEPLOY-AND-ROLLBACK.md), section 5). Changing a value needs a redeploy ([PRODUCTION-ENVIRONMENT.md](PRODUCTION-ENVIRONMENT.md), section 9).
 

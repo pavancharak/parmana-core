@@ -8,37 +8,37 @@ title: "Interface: Decision"
 
 > `readonly` **decisionId**: `string`
 
-***
+---
 
 ### intentId
 
 > `readonly` **intentId**: `string`
 
-***
+---
 
 ### policy
 
 > `readonly` **policy**: [`PolicyReference`](/sdks/reference/typescript/interfaces/PolicyReference)
 
-***
+---
 
 ### signals
 
 > `readonly` **signals**: `Record`\<`string`, `unknown`\>
 
-***
+---
 
 ### outcome
 
 > `readonly` **outcome**: [`DecisionOutcome`](/sdks/reference/typescript/type-aliases/DecisionOutcome)
 
-***
+---
 
 ### reason?
 
 > `readonly` `optional` **reason?**: `string`
 
-***
+---
 
 ### matchedRuleId?
 
@@ -46,7 +46,7 @@ title: "Interface: Decision"
 
 Identifier of the Policy rule that matched, or "none". Absent on a Decision built before this field existed.
 
-***
+---
 
 ### evaluatedRules?
 
@@ -54,7 +54,7 @@ Identifier of the Policy rule that matched, or "none". Absent on a Decision buil
 
 Number of rules evaluated before reaching a match (or exhausting the rule list).
 
-***
+---
 
 ### matchedPath?
 
@@ -62,7 +62,7 @@ Number of rules evaluated before reaching a match (or exhausting the rule list).
 
 Ordered rule-id trace evaluation walked to reach matchedRuleId.
 
-***
+---
 
 ### evaluatedAt
 

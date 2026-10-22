@@ -113,12 +113,12 @@ in the record, so write it for the person who reads it.
 
 A `condition` is one of:
 
-| Condition                                          | Matches when                      |
-| -------------------------------------------------- | --------------------------------- |
+| Condition                                         | Matches when                      |
+| ------------------------------------------------- | --------------------------------- |
 | `{ "fact": "x", "operator": "...", "value":... }` | The operator holds for signal `x` |
 | `{ "all": [... ] }`                               | Every child matches               |
 | `{ "any": [... ] }`                               | At least one child matches        |
-| `{ "always": true }`                               | Always                            |
+| `{ "always": true }`                              | Always                            |
 
 The operators (`packages/policy/src/OperatorEvaluator.ts`):
 

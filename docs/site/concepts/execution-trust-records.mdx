@@ -107,8 +107,8 @@ before, because the canonical serializer leaves out undefined keys.
 
 <Warning>
   `verifications` and `receipts` are **not** part of the hashed content, even
-  though they are append-only fields on the same record. This is
-  intentional, not an oversight: a `Verification`
+  though they are append-only fields on the same record. This is intentional,
+  not an oversight: a `Verification`
   (`packages/shared/src/domain/verification.ts:44`) carries the
   `trustRecordHash` it checked as one of its own fields. If verifications were
   inside the hash they verify, appending a new verification would change the

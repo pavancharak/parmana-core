@@ -67,8 +67,8 @@ This records every migration up to and including that file as applied, without r
 <Warning>
   Do not run `scripts/apply-all-migrations.sql` on a database that holds data.
   It applies every migration again, several migrations drop and add back the
-  same CHECK constraint, and a second run fails on rows written since). It is only for a new, empty database,
-  pasted into the Supabase SQL Editor.
+  same CHECK constraint, and a second run fails on rows written since). It is
+  only for a new, empty database, pasted into the Supabase SQL Editor.
 </Warning>
 
 **Check:** `npm run db:migrate -- status` ends with `0 pending`, and in the SQL Editor `select to_regclass('consumed_nonces'), to_regclass('execution_audit_events'), to_regclass('policies'), to_regclass('execution_intents'), to_regclass('approval_issuers'), to_regclass('external_connectors');` returns six names and no empty value.
@@ -110,10 +110,10 @@ The second command prints a bearer key, a step up private key, and a JSON entry.
 
 A connector registers only when its settings are present. If you do not set a connector, the server still starts and every request for that connector's actions fails. For the refund connector set both of these, or neither:
 
-| Variable                        | Value                                                    |
-| ------------------------------- | -------------------------------------------------------- |
+| Variable                        | Value                                              |
+| ------------------------------- | -------------------------------------------------- |
 | `PAYTM_CONNECTOR_URL`           | The `https://` URL of your `example-agent` service |
-| `PAYTM_CONNECTOR_SHARED_SECRET` | The shared secret that service expects                   |
+| `PAYTM_CONNECTOR_SHARED_SECRET` | The shared secret that service expects             |
 
 The other connectors (HubSpot, Slack, GitHub) are in the [connector section of the environment reference](/deployment/environment-variables#connectors). To keep connector credentials in AWS Secrets Manager set `PARMANA_SECRETS_PROVIDER=aws-secrets-manager`.
 

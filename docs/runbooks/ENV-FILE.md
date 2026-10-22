@@ -10,25 +10,25 @@ How to create `.env` for local development, which settings are required, the val
 
 **Where it is read.** Three places load it, and they differ:
 
-| Loader | Reads | Turned off by `PARMANA_SKIP_DOTENV=1`? |
-|---|---|---|
-| `packages/api/src/server.ts` (`import "dotenv/config"`) | `.env` in the working directory | **No.** It always reads it |
-| `packages/api/src/application.ts` | `../../.env`, relative to the working directory | Yes |
-| `packages/shared/src/config/Config.ts` | The first `.env` found, searching upward from the working directory. Loaded once, on the first config read | Yes |
+| Loader                                                  | Reads                                                                                                      | Turned off by `PARMANA_SKIP_DOTENV=1`? |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| `packages/api/src/server.ts` (`import "dotenv/config"`) | `.env` in the working directory                                                                            | **No.** It always reads it             |
+| `packages/api/src/application.ts`                       | `../../.env`, relative to the working directory                                                            | Yes                                    |
+| `packages/shared/src/config/Config.ts`                  | The first `.env` found, searching upward from the working directory. Loaded once, on the first config read | Yes                                    |
 
 So for a local server started from the repository root, `server.ts` reads `./.env`. The test suite sets `PARMANA_SKIP_DOTENV=1` so a local `.env` cannot change test results. Because `server.ts` ignores that variable, the server still reads `.env` even when it is set.
 
 **Format.** Each line is `NAME=value`, with no spaces around `=`. The loader is `dotenv` 18.0.8. We tested it on these cases:
 
-| Line | Value the server reads |
-|---|---|
-| `A=foo # comment` | `foo`. A space then `#` starts a comment |
-| `D=abc#def` | `abc`. A `#` with no space before it starts a comment |
-| `B='{"x":"y#z"}'` | `{"x":"y#z"}`. Single quotes keep everything |
-| `C={"x":"y"}` | `{"x":"y"}`. Works unquoted, but quote it anyway |
-| `E=  spaced value  ` | `spaced value`. Surrounding spaces are trimmed |
-| `F="multi\nline"` | A real newline. Double quotes expand `\n` |
-| `G=` | An empty string |
+| Line                 | Value the server reads                                |
+| -------------------- | ----------------------------------------------------- |
+| `A=foo # comment`    | `foo`. A space then `#` starts a comment              |
+| `D=abc#def`          | `abc`. A `#` with no space before it starts a comment |
+| `B='{"x":"y#z"}'`    | `{"x":"y#z"}`. Single quotes keep everything          |
+| `C={"x":"y"}`        | `{"x":"y"}`. Works unquoted, but quote it anyway      |
+| `E=  spaced value  ` | `spaced value`. Surrounding spaces are trimmed        |
+| `F="multi\nline"`    | A real newline. Double quotes expand `\n`             |
+| `G=`                 | An empty string                                       |
 
 **Rules that follow from the test:**
 
@@ -59,26 +59,26 @@ The tests in section 8 show which is which. A `500` alone does not tell you whic
 
 ### Refused at module load
 
-| Setting | Refusal |
-|---|---|
-| `PARMANA_KEY_DIR` unset | "PARMANA_KEY_DIR is not set. Refusing to start without a configured key directory" |
-| `PARMANA_POLICY_DIR` unset | "PARMANA_POLICY_DIR is not set. Refusing to start without a configured policy directory" |
-| `PARMANA_STORAGE=supabase` or `postgres`, `DATABASE_URL` unset | "Durable Storage ... requires DATABASE_URL" |
-| `DATABASE_PROVIDER` set (any value) | "DATABASE_PROVIDER is no longer read; set PARMANA_STORAGE instead." |
-| `KEY_PROVIDER=local`, and the default key files missing from `PARMANA_KEY_DIR` | Refused, from the local-file key check (code reading; not tested) |
+| Setting                                                                        | Refusal                                                                                  |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| `PARMANA_KEY_DIR` unset                                                        | "PARMANA_KEY_DIR is not set. Refusing to start without a configured key directory"       |
+| `PARMANA_POLICY_DIR` unset                                                     | "PARMANA_POLICY_DIR is not set. Refusing to start without a configured policy directory" |
+| `PARMANA_STORAGE=supabase` or `postgres`, `DATABASE_URL` unset                 | "Durable Storage ... requires DATABASE_URL"                                              |
+| `DATABASE_PROVIDER` set (any value)                                            | "DATABASE_PROVIDER is no longer read; set PARMANA_STORAGE instead."                      |
+| `KEY_PROVIDER=local`, and the default key files missing from `PARMANA_KEY_DIR` | Refused, from the local-file key check (code reading; not tested)                        |
 
 ### Refused on the first request
 
-| Setting | Refusal |
-|---|---|
-| `DATABASE_URL` unset with `PARMANA_STORAGE=memory` (outside `test`) | "Durable NonceStore requires DATABASE_URL" |
-| `PARMANA_API_KEYS` unset or empty | "No caller authentication keys are configured" |
-| `KILL_SWITCH_ENABLED=true`, `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` not `true` or `false` | "KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR must be ..." |
-| `POLICY_CHANGE_CHECKERS` not a JSON object | "POLICY_CHANGE_CHECKERS is not valid JSON ..." |
-| `KEY_PROVIDER` not `local` or `aws-kms` | "KEY_PROVIDER=... is not implemented" (from `SignerBootstrap.ts`) |
-| `PRIMARY_SIGNATURE_PROVIDER` not `ed25519` or `dilithium3` | "Unknown signature provider: ..." |
-| `HASH_PROVIDER` not `sha256` | "Unknown hash provider: ..." |
-| Gateway key files missing (no `PARMANA_KEY_MATERIAL_JSON`, no files) | The gateway is created during the first request. The missing files throw (code reading; not tested) |
+| Setting                                                                                     | Refusal                                                                                             |
+| ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL` unset with `PARMANA_STORAGE=memory` (outside `test`)                         | "Durable NonceStore requires DATABASE_URL"                                                          |
+| `PARMANA_API_KEYS` unset or empty                                                           | "No caller authentication keys are configured"                                                      |
+| `KILL_SWITCH_ENABLED=true`, `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` not `true` or `false` | "KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR must be ..."                                               |
+| `POLICY_CHANGE_CHECKERS` not a JSON object                                                  | "POLICY_CHANGE_CHECKERS is not valid JSON ..."                                                      |
+| `KEY_PROVIDER` not `local` or `aws-kms`                                                     | "KEY_PROVIDER=... is not implemented" (from `SignerBootstrap.ts`)                                   |
+| `PRIMARY_SIGNATURE_PROVIDER` not `ed25519` or `dilithium3`                                  | "Unknown signature provider: ..."                                                                   |
+| `HASH_PROVIDER` not `sha256`                                                                | "Unknown hash provider: ..."                                                                        |
+| Gateway key files missing (no `PARMANA_KEY_MATERIAL_JSON`, no files)                        | The gateway is created during the first request. The missing files throw (code reading; not tested) |
 
 ### Keys: which files are needed
 
@@ -93,6 +93,7 @@ Each entry gives the allowed values, the default when unset, and what the settin
 ### Runtime
 
 **`NODE_ENV`**: `production`, `development`, `test`, or any other string.
+
 - Default: `development` (`Config.ts`).
 - `production` turns on the safety gates.
 - `development` and `test` relax some gates. `test` also switches the stores to memory.
@@ -108,6 +109,7 @@ Each entry gives the allowed values, the default when unset, and what the settin
 ### Policies
 
 **`PARMANA_POLICY_DIR`**: a folder containing `policies/<name>/<version>/policy.json`. Required (see section 2).
+
 - Local: `./policies`, which is in the repository.
 - Production: `vercel.json` includes `policies/**` in the API function, so the folder is deployed. The runtime path has not been tested live.
 
@@ -123,6 +125,7 @@ POLICY_CHANGE_CHECKERS={"checker-wiring-check":["pavancharak"]}
 **`POLICY_EXECUTION_VERIFICATION_ENFORCED`**: `true` or `false`.
 
 This flag matters only in one case. Governance is relaxed only when all of these hold: `NODE_ENV` is `test` or `development`, `PARMANA_ALLOW_UNGOVERNED_POLICY=true`, and this flag is not `true` (`policyGovernanceRelaxed.ts`). In every other case, governance is enforced.
+
 - In production, leave this unset. Governance is enforced regardless.
 - The detection and prevention descriptions in older template comments are not in the code. Remove them from any template you keep.
 
@@ -130,15 +133,15 @@ This flag matters only in one case. Governance is relaxed only when all of these
 
 **`PARMANA_API_KEYS`**: a one-line JSON array. Each element is one caller. The parser is `parseApiKeys` in `ConfigValidation.ts`.
 
-| Field | Required | Allowed values |
-|---|---|---|
-| `callerId` | Yes | A non-empty string |
-| `keyHash` | Yes | 64 lowercase hex characters: the SHA-256 of the raw key |
-| `allowedCapabilities` | No | An array of action names. `"*"` allows every action. Unset means none |
-| `allowedPrincipalIds` | No | An array of names. Unset means the caller may only act as itself |
-| `allowedTenantIds` | No | An array of names. Unset means none |
-| `credentialHolderType` | No | `USER`, `ROLE`, `SERVICE`, `ORGANIZATION` (the `AuthorityType` enum). Only `USER` may approve policy changes |
-| `stepUpPublicKey` | Required for a `USER` checker | A PEM Ed25519 public key |
+| Field                  | Required                      | Allowed values                                                                                               |
+| ---------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `callerId`             | Yes                           | A non-empty string                                                                                           |
+| `keyHash`              | Yes                           | 64 lowercase hex characters: the SHA-256 of the raw key                                                      |
+| `allowedCapabilities`  | No                            | An array of action names. `"*"` allows every action. Unset means none                                        |
+| `allowedPrincipalIds`  | No                            | An array of names. Unset means the caller may only act as itself                                             |
+| `allowedTenantIds`     | No                            | An array of names. Unset means none                                                                          |
+| `credentialHolderType` | No                            | `USER`, `ROLE`, `SERVICE`, `ORGANIZATION` (the `AuthorityType` enum). Only `USER` may approve policy changes |
+| `stepUpPublicKey`      | Required for a `USER` checker | A PEM Ed25519 public key                                                                                     |
 
 A caller with `"allowedCapabilities": ["*"]` may use every action. A caller with no `allowedCapabilities` can use none.
 
@@ -155,11 +158,13 @@ The command prints the raw key once. Save it in your password manager, then put 
 ### Storage
 
 **`PARMANA_STORAGE`**: `memory`, `postgres`, `supabase`.
+
 - Default: `memory` (`ConfigValidation.ts`). If you leave it unset, business and trust records are kept in memory and lost on restart.
 - `postgres` and `supabase` both use `DATABASE_URL` (`isPostgresStorage`).
 - Production uses `supabase`.
 
 **`DATABASE_URL`**: `postgresql://user:password@host:port/database`.
+
 - Required when `NODE_ENV` is not `test`, even with `memory` storage, because the nonce store uses it.
 - On serverless hosts, use the transaction pooler string.
 - The password is a secret. Store it in the password manager.
@@ -169,12 +174,14 @@ The command prints the raw key once. Save it in your password manager, then put 
 ### Keys and signing
 
 **`KEY_PROVIDER`**: `local`, `aws-kms`, `azure-key-vault`, `gcp-kms`, `hsm` (the `KeyProviders` enum).
+
 - Default: `local`.
 - `local`: keys are files in `PARMANA_KEY_DIR`.
 - `aws-kms`: the default signing key is in AWS KMS. Production uses this.
 - `azure-key-vault`, `gcp-kms` and `hsm` are refused on the first request, with "is not implemented" (`SignerBootstrap.ts`, tested).
 
 **`PARMANA_KEY_DIR`**: a writable folder. Required (section 2).
+
 - Local: `./keys`.
 - Vercel: `/tmp/parmana-keys`. Only `/tmp` is writable there.
 
@@ -197,16 +204,19 @@ PARMANA_KEY_MATERIAL_JSON={"gateway":{"privateKeyPem":"-----BEGIN PRIVATE KEY---
 **`AWS_ROLE_ARN`**: `arn:aws:iam::<account-id>:role/<role-name>`. Optional in the code. When it is set, `AwsSecretsManagerProvider.ts` exchanges credentials for that role through Vercel's OIDC provider. When it is unset, no role is assumed. Production sets it.
 
 **`CRYPTO_MODE`**: `single`, `hybrid`, `pq`. Default `single`.
+
 - `hybrid` is refused with `KEY_PROVIDER=aws-kms` (`assertSigningKeyMaterialConfigured.ts`).
 - `pq` is reserved, and no production code reads it today.
 - Production uses `single`. Use `hybrid` only with a specific requirement; see the crypto notes in section 3 of this file.
 
 **`PRIMARY_SIGNATURE_PROVIDER`**: the values the code accepts are `ed25519` and `dilithium3`. Production uses `ed25519`.
+
 - `ecdsa-p256`, `dilithium5` and `sphincs-plus` are in the enum, but no provider is registered for them. Choosing one fails on the first request with "Unknown signature provider" (`CryptoBootstrap.ts`, tested with `ecdsa-p256`).
 
 **`SECONDARY_SIGNATURE_PROVIDER`**: the same two values. Set only with `CRYPTO_MODE=hybrid`. Leave empty otherwise.
 
 **`HASH_PROVIDER`**: the only value the code accepts is `sha256`. Default `sha256`.
+
 - `sha3-512` and `blake3` are in the enum, but no provider is registered. Choosing one fails on the first request with "Unknown hash provider" (`HashRegistry.get`, tested with `blake3`).
 - Changing the hash changes every new record's hash. Only `sha256` is available today.
 
@@ -282,30 +292,31 @@ Local rules:
 
 Production values go in Vercel's environment settings, not in a `.env` file. Vercel applies a change only to new deployments, so redeploy after each change ([PRODUCTION-DEPLOY-AND-ROLLBACK.md](PRODUCTION-DEPLOY-AND-ROLLBACK.md)).
 
-| Variable | Value | Meaning |
-|---|---|---|
-| `NODE_ENV` | `production` | Safety gates on |
-| `PARMANA_STORAGE` | `supabase` | Records kept in the database |
-| `DATABASE_URL` | transaction pooler string | Connects to the database |
-| `PARMANA_API_KEYS` | one-line JSON array | Who may call the API |
-| `POLICY_CHANGE_CHECKERS` | JSON object by policy | Who may approve each policy |
-| `PARMANA_POLICY_DIR` | `./policies` (confirm on Vercel) | Where policies are read |
-| `PARMANA_KEY_DIR` | `/tmp/parmana-keys` | The writable folder on Vercel |
-| `PARMANA_KEY_MATERIAL_JSON` | gateway key pair JSON | The gateway key |
-| `PARMANA_GATEWAY_KEY_ID` | `gateway` | Which key is the gateway |
-| `KEY_PROVIDER` | `aws-kms` | The default signing key is in KMS |
-| `AWS_REGION` | `ap-south-1` | KMS region |
-| `AWS_ROLE_ARN` | the signer role ARN | Role used for KMS |
-| `KILL_SWITCH_ENABLED` | `true` | Kill switch on |
-| `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` | `true` | A reset needs a second operator |
-| `CRYPTO_MODE` | `single` | One signature per record |
-| `PRIMARY_SIGNATURE_PROVIDER` | `ed25519` | Signature algorithm |
-| `HASH_PROVIDER` | `sha256` | Hash algorithm |
-| `LOG_LEVEL` | `info` | Normal logging |
-| `RATE_LIMIT_EXECUTE_PER_MINUTE` | `30` | Calls per minute to execute |
-| `RATE_LIMIT_HEALTH_PER_MINUTE` | `300` | Calls per minute to health |
+| Variable                                  | Value                            | Meaning                           |
+| ----------------------------------------- | -------------------------------- | --------------------------------- |
+| `NODE_ENV`                                | `production`                     | Safety gates on                   |
+| `PARMANA_STORAGE`                         | `supabase`                       | Records kept in the database      |
+| `DATABASE_URL`                            | transaction pooler string        | Connects to the database          |
+| `PARMANA_API_KEYS`                        | one-line JSON array              | Who may call the API              |
+| `POLICY_CHANGE_CHECKERS`                  | JSON object by policy            | Who may approve each policy       |
+| `PARMANA_POLICY_DIR`                      | `./policies` (confirm on Vercel) | Where policies are read           |
+| `PARMANA_KEY_DIR`                         | `/tmp/parmana-keys`              | The writable folder on Vercel     |
+| `PARMANA_KEY_MATERIAL_JSON`               | gateway key pair JSON            | The gateway key                   |
+| `PARMANA_GATEWAY_KEY_ID`                  | `gateway`                        | Which key is the gateway          |
+| `KEY_PROVIDER`                            | `aws-kms`                        | The default signing key is in KMS |
+| `AWS_REGION`                              | `ap-south-1`                     | KMS region                        |
+| `AWS_ROLE_ARN`                            | the signer role ARN              | Role used for KMS                 |
+| `KILL_SWITCH_ENABLED`                     | `true`                           | Kill switch on                    |
+| `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` | `true`                           | A reset needs a second operator   |
+| `CRYPTO_MODE`                             | `single`                         | One signature per record          |
+| `PRIMARY_SIGNATURE_PROVIDER`              | `ed25519`                        | Signature algorithm               |
+| `HASH_PROVIDER`                           | `sha256`                         | Hash algorithm                    |
+| `LOG_LEVEL`                               | `info`                           | Normal logging                    |
+| `RATE_LIMIT_EXECUTE_PER_MINUTE`           | `30`                             | Calls per minute to execute       |
+| `RATE_LIMIT_HEALTH_PER_MINUTE`            | `300`                            | Calls per minute to health        |
 
 Never set in production: `PARMANA_AUTH_DISABLED`, `NODE_ENV=test`, `NODE_ENV=development`, `PARMANA_ALLOW_UNGOVERNED_POLICY`, `DATABASE_PROVIDER`, `SUPABASE_*`.
+
 - `DATABASE_PROVIDER` is refused when the module loads: "DATABASE_PROVIDER is no longer read; set PARMANA_STORAGE instead." (`ConfigValidation.ts`, tested).
 
 ---
@@ -323,17 +334,17 @@ Never set in production: `PARMANA_AUTH_DISABLED`, `NODE_ENV=test`, `NODE_ENV=dev
 
 ## 7. Common mistakes
 
-| Symptom | Cause | Fix |
-|---|---|---|
-| "PARMANA_POLICY_DIR is not set" | Not set | Set it to the folder containing `policies/` |
-| "No caller authentication keys are configured" | `PARMANA_API_KEYS` empty or unset | Set it to a valid one-line array |
-| "PARMANA_KEY_DIR is not set" | Not set | Set it to a writable folder |
-| Startup names the gateway key files | No gateway key from a file or `PARMANA_KEY_MATERIAL_JSON` | Provide the gateway key pair |
-| "KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR must be..." | Kill switch on, value not `true` or `false` | Set it to `true` or `false` |
-| Data gone after restart | `PARMANA_STORAGE` unset or `memory` | Set `PARMANA_STORAGE=supabase` |
-| Approvals refused with `CHECKER_NOT_IN_SCOPE` | `POLICY_CHANGE_CHECKERS` unset, or the checker is not listed for that policy | Add the checker under the policy name |
-| A value is cut short | A `#` in an unquoted value | Quote the value in single quotes |
-| The server reads `.env` even with `PARMANA_SKIP_DOTENV=1` | `server.ts` ignores that variable | Remove `.env` from the folder, or rename it |
+| Symptom                                                   | Cause                                                                        | Fix                                         |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------- |
+| "PARMANA_POLICY_DIR is not set"                           | Not set                                                                      | Set it to the folder containing `policies/` |
+| "No caller authentication keys are configured"            | `PARMANA_API_KEYS` empty or unset                                            | Set it to a valid one-line array            |
+| "PARMANA_KEY_DIR is not set"                              | Not set                                                                      | Set it to a writable folder                 |
+| Startup names the gateway key files                       | No gateway key from a file or `PARMANA_KEY_MATERIAL_JSON`                    | Provide the gateway key pair                |
+| "KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR must be..."      | Kill switch on, value not `true` or `false`                                  | Set it to `true` or `false`                 |
+| Data gone after restart                                   | `PARMANA_STORAGE` unset or `memory`                                          | Set `PARMANA_STORAGE=supabase`              |
+| Approvals refused with `CHECKER_NOT_IN_SCOPE`             | `POLICY_CHANGE_CHECKERS` unset, or the checker is not listed for that policy | Add the checker under the policy name       |
+| A value is cut short                                      | A `#` in an unquoted value                                                   | Quote the value in single quotes            |
+| The server reads `.env` even with `PARMANA_SKIP_DOTENV=1` | `server.ts` ignores that variable                                            | Remove `.env` from the folder, or rename it |
 
 ---
 

@@ -10,13 +10,13 @@ title: "Interface: SignPolicyChangeStepUpInput"
 
 The change to approve or reject.
 
-***
+---
 
 ### action
 
 > `readonly` **action**: `"approve"` \| `"reject"`
 
-***
+---
 
 ### privateKeyPem
 
@@ -25,7 +25,7 @@ The change to approve or reject.
 The approver's Ed25519 step up private key, PEM (PKCS #8), as made by
 `openssl genpkey -algorithm ed25519`.
 
-***
+---
 
 ### keyId
 
@@ -35,7 +35,7 @@ A label for the key. It is recorded with the authorization; the server
 verifies with the public key registered on the approver's API key, not
 by this label.
 
-***
+---
 
 ### ttlSeconds?
 

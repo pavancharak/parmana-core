@@ -7,6 +7,7 @@ Raised when the Runtime encounters an internal error.
 `serverCode` carries the Runtime's own `code` field when the response had
 one, so callers can tell apart failures that share this class. Two matter
 for what to do next:
+
 - `SIGNING_UNAVAILABLE` (503): the Runtime refused BEFORE releasing the
   action because it could not sign an Execution Trust Record. Nothing was
   executed. Retry once signing is healthy, with a NEW businessTransactionId.
@@ -14,7 +15,7 @@ for what to do next:
   execution system but its signed Execution Trust Record could not be
   produced. Do NOT retry as a new transaction, reconcile against the
   connector and the execution audit events for the businessTransactionId.
-Undefined when the response carried no `code`.
+  Undefined when the response carried no `code`.
 
 ## Extends
 
@@ -60,7 +61,7 @@ Undefined when the response carried no `code`.
 
 > `readonly` `optional` **serverCode?**: `string`
 
-***
+---
 
 ### code
 
@@ -72,7 +73,7 @@ Stable machine-readable error code.
 
 [`ParmanaError`](/sdks/reference/typescript/classes/ParmanaError).[`code`](/sdks/reference/typescript/classes/ParmanaError#code)
 
-***
+---
 
 ### requestId?
 
@@ -84,7 +85,7 @@ Optional request identifier.
 
 [`ParmanaError`](/sdks/reference/typescript/classes/ParmanaError).[`requestId`](/sdks/reference/typescript/classes/ParmanaError#requestid)
 
-***
+---
 
 ### cause?
 
@@ -96,7 +97,7 @@ Optional underlying cause.
 
 [`ParmanaError`](/sdks/reference/typescript/classes/ParmanaError).[`cause`](/sdks/reference/typescript/classes/ParmanaError#cause)
 
-***
+---
 
 ### statusCode?
 
@@ -111,7 +112,7 @@ equivalent is `status_code`.
 
 [`ParmanaError`](/sdks/reference/typescript/classes/ParmanaError).[`statusCode`](/sdks/reference/typescript/classes/ParmanaError#statuscode)
 
-***
+---
 
 ### stackTraceLimit
 
@@ -131,7 +132,7 @@ not capture any frames.
 
 [`ParmanaError`](/sdks/reference/typescript/classes/ParmanaError).[`stackTraceLimit`](/sdks/reference/typescript/classes/ParmanaError#stacktracelimit)
 
-***
+---
 
 ### name
 
@@ -141,7 +142,7 @@ not capture any frames.
 
 [`ParmanaError`](/sdks/reference/typescript/classes/ParmanaError).[`name`](/sdks/reference/typescript/classes/ParmanaError#name)
 
-***
+---
 
 ### message
 
@@ -151,7 +152,7 @@ not capture any frames.
 
 [`ParmanaError`](/sdks/reference/typescript/classes/ParmanaError).[`message`](/sdks/reference/typescript/classes/ParmanaError#message)
 
-***
+---
 
 ### stack?
 
@@ -174,7 +175,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -229,7 +230,7 @@ a();
 
 [`ParmanaError`](/sdks/reference/typescript/classes/ParmanaError).[`captureStackTrace`](/sdks/reference/typescript/classes/ParmanaError#capturestacktrace)
 
-***
+---
 
 ### prepareStackTrace()
 

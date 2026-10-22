@@ -342,24 +342,24 @@ A connector is registered only when its settings are present. An unset connector
 
 These names may appear in a development file. The API server does not read them.
 
-| Name | Where it is read |
-|---|---|
-| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_TEST_KEY_ID`, `RAZORPAY_TEST_KEY_SECRET`, `RAZORPAY_BASE_URL` | The Razorpay demo in `examples/razorpay-refund/` |
-| `KMS_REGION`, `KMS_KEY_ALIAS` | Nothing in the repository. Use `AWS_REGION` and the key settings in the KMS code |
-| `ALLOW_LIVE_SUPABASE`, `ALLOW_LIVE_RAZORPAY`, `ALLOW_LIVE_HUBSPOT` | Scripts, to stop a test script from touching a live system |
-| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY` | Scripts only (`scripts/generate-fly-secrets.mjs`, `scripts/policy-approval-log.ts`, `scripts/verify-policy-changes-approved.ts`) |
-| `TEST_*` | Tests only |
+| Name                                                                                                              | Where it is read                                                                                                                 |
+| ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_TEST_KEY_ID`, `RAZORPAY_TEST_KEY_SECRET`, `RAZORPAY_BASE_URL` | The Razorpay demo in `examples/razorpay-refund/`                                                                                 |
+| `KMS_REGION`, `KMS_KEY_ALIAS`                                                                                     | Nothing in the repository. Use `AWS_REGION` and the key settings in the KMS code                                                 |
+| `ALLOW_LIVE_SUPABASE`, `ALLOW_LIVE_RAZORPAY`, `ALLOW_LIVE_HUBSPOT`                                                | Scripts, to stop a test script from touching a live system                                                                       |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`                                                  | Scripts only (`scripts/generate-fly-secrets.mjs`, `scripts/policy-approval-log.ts`, `scripts/verify-policy-changes-approved.ts`) |
+| `TEST_*`                                                                                                          | Tests only                                                                                                                       |
 
 ---
 
 ## Never set in production
 
-| Name | Why |
-|---|---|
-| `PARMANA_AUTH_DISABLED=true` | Turns off caller authentication |
-| `NODE_ENV=test` or `development` | Turns off safety gates |
-| `PARMANA_ALLOW_UNGOVERNED_POLICY=true` | Lets unapproved policies run (only honored in `test` or `development`) |
-| `DATABASE_PROVIDER` (any value) | Retired. Refused at module load: "DATABASE_PROVIDER is no longer read; set PARMANA_STORAGE instead" (tested) |
+| Name                                   | Why                                                                                                          |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `PARMANA_AUTH_DISABLED=true`           | Turns off caller authentication                                                                              |
+| `NODE_ENV=test` or `development`       | Turns off safety gates                                                                                       |
+| `PARMANA_ALLOW_UNGOVERNED_POLICY=true` | Lets unapproved policies run (only honored in `test` or `development`)                                       |
+| `DATABASE_PROVIDER` (any value)        | Retired. Refused at module load: "DATABASE_PROVIDER is no longer read; set PARMANA_STORAGE instead" (tested) |
 
 ---
 

@@ -35,9 +35,9 @@ not as a failure.
 
 <Warning>
   **After a timeout, read before you send again.** An approved request can take
-  tens of seconds, longer than a client's
-  default timeout. The request keeps running on the server, and the action may
-  be performed. If your client times out, read `GET /trust-records/
+  tens of seconds, longer than a client's default timeout. The request keeps
+  running on the server, and the action may be performed. If your client times
+  out, read `GET /trust-records/
   {businessTransactionId}` (and `GET /refusal/{id}`) with the same id first.
   Sending the action again under a **new** id would ask for it a second time.
   Set your client timeout to 120 seconds.

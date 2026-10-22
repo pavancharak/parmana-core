@@ -42,7 +42,7 @@ Immutable SDK configuration.
 
 > **endpoint**: `string`
 
-***
+---
 
 ### endpoint()
 
@@ -54,7 +54,7 @@ Returns the configured Runtime endpoint.
 
 `string`
 
-***
+---
 
 ### health()
 
@@ -66,7 +66,7 @@ Performs a Runtime health check.
 
 `Promise`\<`HealthStatus`\>
 
-***
+---
 
 ### version()
 
@@ -78,7 +78,7 @@ Returns the Runtime name, version, and API version.
 
 `Promise`\<`unknown`\>
 
-***
+---
 
 ### execute()
 
@@ -96,7 +96,7 @@ Executes a Business Transaction.
 
 `Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)\>
 
-***
+---
 
 ### verify()
 
@@ -117,7 +117,7 @@ re-verifying.
 
 `Promise`\<[`Verification`](/sdks/reference/typescript/interfaces/Verification)\>
 
-***
+---
 
 ### getLatestVerification()
 
@@ -135,7 +135,7 @@ Returns the latest Verification.
 
 `Promise`\<[`Verification`](/sdks/reference/typescript/interfaces/Verification)\>
 
-***
+---
 
 ### replay()
 
@@ -153,7 +153,7 @@ Performs deterministic replay.
 
 `Promise`\<[`ReplayResult`](/sdks/reference/typescript/interfaces/ReplayResult)\>
 
-***
+---
 
 ### receipt()
 
@@ -171,7 +171,7 @@ Generates an execution receipt.
 
 `Promise`\<[`Receipt`](/sdks/reference/typescript/interfaces/Receipt)\>
 
-***
+---
 
 ### createTransaction()
 
@@ -191,7 +191,7 @@ pipeline as execute() (POST /execute). See TransactionApi.create.
 
 `Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)\>
 
-***
+---
 
 ### transaction()
 
@@ -209,7 +209,7 @@ Retrieves a Business Transaction.
 
 `Promise`\<[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)\>
 
-***
+---
 
 ### transactions()
 
@@ -231,7 +231,7 @@ Lists Business Transactions.
 
 `Promise`\<[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)[]\>
 
-***
+---
 
 ### latestReceipt()
 
@@ -249,7 +249,7 @@ Retrieves the most recent receipt without generating a new one.
 
 `Promise`\<[`Receipt`](/sdks/reference/typescript/interfaces/Receipt)\>
 
-***
+---
 
 ### trustRecord()
 
@@ -267,7 +267,7 @@ Retrieves an Execution Trust Record.
 
 `Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)\>
 
-***
+---
 
 ### trustRecords()
 
@@ -300,7 +300,7 @@ first. See TrustRecordApi.list.
 
 `Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)[]\>
 
-***
+---
 
 ### caller()
 
@@ -312,7 +312,7 @@ Who this API key belongs to and what it may do (GET /callers/me).
 
 `Promise`\<[`CallerIdentity`](/sdks/reference/typescript/interfaces/CallerIdentity)\>
 
-***
+---
 
 ### publicKey()
 
@@ -331,7 +331,7 @@ offline verifiers. Records are signed with `default`.
 
 `Promise`\<[`PublicKeyInfo`](/sdks/reference/typescript/interfaces/PublicKeyInfo)\>
 
-***
+---
 
 ### policyInEffect()
 
@@ -351,7 +351,7 @@ request and declare `policy` exactly as returned.
 
 `Promise`\<[`PolicyInEffect`](/sdks/reference/typescript/interfaces/PolicyInEffect)\>
 
-***
+---
 
 ### validatePolicy()
 
@@ -373,7 +373,7 @@ Confirms that a policy (name + version) is loadable by the Runtime.
 
 `Promise`\<[`PolicyValidationResult`](/sdks/reference/typescript/interfaces/PolicyValidationResult)\>
 
-***
+---
 
 ### refusalRecord()
 
@@ -391,7 +391,7 @@ Retrieves a Refusal Record by Business Transaction ID.
 
 `Promise`\<[`RefusalRecord`](/sdks/reference/typescript/interfaces/RefusalRecord)\>
 
-***
+---
 
 ### verifyRefusalRecord()
 
@@ -409,7 +409,7 @@ Verifies a Refusal Record's signature.
 
 `Promise`\<`boolean`\>
 
-***
+---
 
 ### executionIntent()
 
@@ -429,7 +429,7 @@ released, of what was about to be released.
 
 `Promise`\<[`ExecutionIntentView`](/sdks/reference/typescript/interfaces/ExecutionIntentView)\>
 
-***
+---
 
 ### verifyExecutionIntent()
 
@@ -449,7 +449,7 @@ action was released, or what its result was.
 
 `Promise`\<`boolean`\>
 
-***
+---
 
 ### unfinalizedExecutionIntents()
 
@@ -469,7 +469,7 @@ verified human.
 
 `Promise`\<[`UnfinalizedExecutionIntents`](/sdks/reference/typescript/interfaces/UnfinalizedExecutionIntents)\>
 
-***
+---
 
 ### finalizeExecutionIntent()
 
@@ -489,7 +489,7 @@ credential provisioned as a verified human.
 
 `Promise`\<[`FinalizeExecutionIntentResult`](/sdks/reference/typescript/interfaces/FinalizeExecutionIntentResult)\>
 
-***
+---
 
 ### resolveExecutionIntent()
 
@@ -513,7 +513,7 @@ statement in unsigned status, not a Trust Record.
 
 `Promise`\<[`ResolveExecutionIntentResult`](/sdks/reference/typescript/interfaces/ResolveExecutionIntentResult)\>
 
-***
+---
 
 ### verifyAuditEvent()
 
@@ -535,7 +535,7 @@ Verifies a signed caller-authentication audit event's signature.
 
 `Promise`\<`boolean`\>
 
-***
+---
 
 ### proposePolicyChange()
 
@@ -561,7 +561,7 @@ Proposes a policy change. See PolicyApi.proposeChange.
 
 `Promise`\<[`ProposedPolicyChange`](/sdks/reference/typescript/interfaces/ProposedPolicyChange)\>
 
-***
+---
 
 ### policyChanges()
 
@@ -579,7 +579,7 @@ Lists policy changes for review. See PolicyApi.listChanges.
 
 `Promise`\<[`PolicyChangeForReview`](/sdks/reference/typescript/interfaces/PolicyChangeForReview)[]\>
 
-***
+---
 
 ### approvePolicyChange()
 
@@ -602,7 +602,7 @@ PolicyApi.approveChange and signPolicyChangeStepUp().
 
 `Promise`\<[`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange)\>
 
-***
+---
 
 ### rejectPolicyChange()
 
@@ -629,7 +629,7 @@ authorization. See PolicyApi.rejectChange.
 
 `Promise`\<[`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange)\>
 
-***
+---
 
 ### approvers()
 
@@ -641,7 +641,7 @@ Every approver key the server trusts or trusted. See ApproverApi.list.
 
 `Promise`\<[`ApprovalIssuer`](/sdks/reference/typescript/interfaces/ApprovalIssuer)[]\>
 
-***
+---
 
 ### proposeApproverChange()
 
@@ -660,7 +660,7 @@ ApproverApi.proposeChange.
 
 `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)\>
 
-***
+---
 
 ### approverChanges()
 
@@ -678,7 +678,7 @@ Lists approver changes. See ApproverApi.listChanges.
 
 `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)[]\>
 
-***
+---
 
 ### approveApproverChange()
 
@@ -700,7 +700,7 @@ Approves and applies an approver change. See ApproverApi.approveChange.
 
 `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)\>
 
-***
+---
 
 ### rejectApproverChange()
 
@@ -726,7 +726,7 @@ Rejects an approver change. See ApproverApi.rejectChange.
 
 `Promise`\<[`ApprovalIssuerChange`](/sdks/reference/typescript/interfaces/ApprovalIssuerChange)\>
 
-***
+---
 
 ### externalConnectors()
 
@@ -739,7 +739,7 @@ ExternalConnectorApi.list.
 
 `Promise`\<[`ExternalConnector`](/sdks/reference/typescript/interfaces/ExternalConnector)[]\>
 
-***
+---
 
 ### proposeExternalConnectorChange()
 
@@ -758,7 +758,7 @@ ExternalConnectorApi.proposeChange.
 
 `Promise`\<[`ExternalConnectorChange`](/sdks/reference/typescript/interfaces/ExternalConnectorChange)\>
 
-***
+---
 
 ### externalConnectorChanges()
 
@@ -776,7 +776,7 @@ Lists external connector changes. See ExternalConnectorApi.listChanges.
 
 `Promise`\<[`ExternalConnectorChange`](/sdks/reference/typescript/interfaces/ExternalConnectorChange)[]\>
 
-***
+---
 
 ### approveExternalConnectorChange()
 
@@ -799,7 +799,7 @@ ExternalConnectorApi.approveChange.
 
 `Promise`\<[`ExternalConnectorChange`](/sdks/reference/typescript/interfaces/ExternalConnectorChange)\>
 
-***
+---
 
 ### rejectExternalConnectorChange()
 
@@ -826,7 +826,7 @@ ExternalConnectorApi.rejectChange.
 
 `Promise`\<[`ExternalConnectorChange`](/sdks/reference/typescript/interfaces/ExternalConnectorChange)\>
 
-***
+---
 
 ### businessSignalSources()
 
@@ -839,7 +839,7 @@ BusinessSignalSourceApi.list.
 
 `Promise`\<[`BusinessSignalSource`](/sdks/reference/typescript/interfaces/BusinessSignalSource)[]\>
 
-***
+---
 
 ### proposeBusinessSignalSourceChange()
 
@@ -858,7 +858,7 @@ BusinessSignalSourceApi.proposeChange.
 
 `Promise`\<[`BusinessSignalSourceChange`](/sdks/reference/typescript/interfaces/BusinessSignalSourceChange)\>
 
-***
+---
 
 ### businessSignalSourceChanges()
 
@@ -877,7 +877,7 @@ BusinessSignalSourceApi.listChanges.
 
 `Promise`\<[`BusinessSignalSourceChange`](/sdks/reference/typescript/interfaces/BusinessSignalSourceChange)[]\>
 
-***
+---
 
 ### approveBusinessSignalSourceChange()
 
@@ -900,7 +900,7 @@ BusinessSignalSourceApi.approveChange.
 
 `Promise`\<[`BusinessSignalSourceChange`](/sdks/reference/typescript/interfaces/BusinessSignalSourceChange)\>
 
-***
+---
 
 ### rejectBusinessSignalSourceChange()
 
@@ -927,7 +927,7 @@ BusinessSignalSourceApi.rejectChange.
 
 `Promise`\<[`BusinessSignalSourceChange`](/sdks/reference/typescript/interfaces/BusinessSignalSourceChange)\>
 
-***
+---
 
 ### authorityGrants()
 
@@ -939,7 +939,7 @@ Every authority grant, active and revoked. See AuthorityGrantApi.list.
 
 `Promise`\<[`AuthorityGrant`](/sdks/reference/typescript/interfaces/AuthorityGrant)[]\>
 
-***
+---
 
 ### proposeAuthorityGrantChange()
 
@@ -958,7 +958,7 @@ AuthorityGrantApi.proposeChange.
 
 `Promise`\<[`AuthorityGrantChange`](/sdks/reference/typescript/interfaces/AuthorityGrantChange)\>
 
-***
+---
 
 ### authorityGrantChanges()
 
@@ -976,7 +976,7 @@ Lists authority grant changes. See AuthorityGrantApi.listChanges.
 
 `Promise`\<[`AuthorityGrantChange`](/sdks/reference/typescript/interfaces/AuthorityGrantChange)[]\>
 
-***
+---
 
 ### approveAuthorityGrantChange()
 
@@ -999,7 +999,7 @@ AuthorityGrantApi.approveChange.
 
 `Promise`\<[`AuthorityGrantChange`](/sdks/reference/typescript/interfaces/AuthorityGrantChange)\>
 
-***
+---
 
 ### rejectAuthorityGrantChange()
 

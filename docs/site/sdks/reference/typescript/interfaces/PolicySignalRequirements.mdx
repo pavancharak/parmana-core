@@ -14,7 +14,7 @@ included.
 Every fact the policy's rules read, sorted. Send each one in the
 request's `signals`.
 
-***
+---
 
 ### schema
 
@@ -22,7 +22,7 @@ request's `signals`.
 
 The declared type of each signal: `boolean`, `number` or `string`.
 
-***
+---
 
 ### bound
 
@@ -31,7 +31,7 @@ The declared type of each signal: `boolean`, `number` or `string`.
 Signals that must equal a value of the Intent, as signal name to path,
 for example `refundAmount` to `parameters.amount`.
 
-***
+---
 
 ### approval
 
@@ -41,7 +41,7 @@ Signals that count as true only with a signed approval in
 `signals.approvalArtifact`, and where the resource (and the amount, if
 any) the approval must name are in the request.
 
-***
+---
 
 ### sourced?
 

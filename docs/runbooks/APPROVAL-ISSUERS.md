@@ -4,7 +4,7 @@ Who may sign an approval artifact that Parmana trusts, how an issuer is added or
 
 **Read first:** [README.md](README.md) for the rules that apply to every runbook.
 
-**Not the same as policy-change checkers.** A policy-change checker is listed in `POLICY_CHANGE_CHECKERS` and signs a step-up envelope ([POLICY-CHANGE-APPROVAL.md](POLICY-CHANGE-APPROVAL.md)). An approval issuer signs an *approval artifact*, which Parmana checks before it releases an action. Different keys, different checks.
+**Not the same as policy-change checkers.** A policy-change checker is listed in `POLICY_CHANGE_CHECKERS` and signs a step-up envelope ([POLICY-CHANGE-APPROVAL.md](POLICY-CHANGE-APPROVAL.md)). An approval issuer signs an _approval artifact_, which Parmana checks before it releases an action. Different keys, different checks.
 
 ---
 
@@ -31,13 +31,13 @@ Two sources, in this order:
 
 Both actions are proposed, then approved by a different human checker with a step-up envelope. The routes are under `/approval-issuers`.
 
-| Step | Request |
-|---|---|
-| Propose | `POST /approval-issuers/changes` with `{"action":"add","approverId","keyId","publicKeyPem","reason"}` or `{"action":"revoke","approverId","keyId","reason"}` |
-| List changes | `GET /approval-issuers/changes` |
-| Approve | `POST /approval-issuers/changes/<id>/approve` with `{"stepUpAuthorization": ...}`, signed with action `approve` |
-| Reject | `POST /approval-issuers/changes/<id>/reject`, signed with action `reject` |
-| List issuers | `GET /approval-issuers/` |
+| Step         | Request                                                                                                                                                      |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Propose      | `POST /approval-issuers/changes` with `{"action":"add","approverId","keyId","publicKeyPem","reason"}` or `{"action":"revoke","approverId","keyId","reason"}` |
+| List changes | `GET /approval-issuers/changes`                                                                                                                              |
+| Approve      | `POST /approval-issuers/changes/<id>/approve` with `{"stepUpAuthorization": ...}`, signed with action `approve`                                              |
+| Reject       | `POST /approval-issuers/changes/<id>/reject`, signed with action `reject`                                                                                    |
+| List issuers | `GET /approval-issuers/`                                                                                                                                     |
 
 Rules the server enforces:
 

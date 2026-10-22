@@ -8,11 +8,11 @@ Set `$env:PARMANA_URL` to the production base URL first.
 
 ## 1. The three roles
 
-| Role | Who | What they can do | Where it is configured |
-|---|---|---|---|
-| Maker | A human `USER` key, any caller except the checker for that change | Propose a change | `PARMANA_API_KEYS` entry, `credentialHolderType: USER` |
-| Checker | A human `USER` key listed for that policy | Approve or reject | `POLICY_CHANGE_CHECKERS` (for approve), plus a `stepUpPublicKey` on the key entry |
-| Step-up key | The checker's Ed25519 key pair | Signs a single-use envelope for each approve or reject | Public half in `stepUpPublicKey`; private half kept by the checker |
+| Role        | Who                                                               | What they can do                                       | Where it is configured                                                            |
+| ----------- | ----------------------------------------------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| Maker       | A human `USER` key, any caller except the checker for that change | Propose a change                                       | `PARMANA_API_KEYS` entry, `credentialHolderType: USER`                            |
+| Checker     | A human `USER` key listed for that policy                         | Approve or reject                                      | `POLICY_CHANGE_CHECKERS` (for approve), plus a `stepUpPublicKey` on the key entry |
+| Step-up key | The checker's Ed25519 key pair                                    | Signs a single-use envelope for each approve or reject | Public half in `stepUpPublicKey`; private half kept by the checker                |
 
 A maker cannot approve their own proposal. The server refuses it with `SameActorCannotApproveOwnChangeError`.
 
@@ -52,16 +52,16 @@ Send `$body` exactly as built. Do not run the envelope through `ConvertFrom-Json
 
 The order matters. The first failing check decides the response.
 
-| # | Check | Refusal |
-|---|---|---|
-| 1 | A caller is authenticated | `401` |
-| 2 | The caller is a human (`USER`) | refused by `requireHumanCaller` |
-| 3 | The change exists | not found |
-| 4 | The checker is not the maker | `SameActorCannotApproveOwnChangeError` |
-| 5 | The checker is listed for this policy in `POLICY_CHANGE_CHECKERS` | `403 CHECKER_NOT_IN_SCOPE` |
-| 6 | The step-up envelope is valid | `STEP_UP_AUTHORIZATION_INVALID` (we saw both `400` and `403`; read the body and status) |
-| 7 | The change is still `PENDING_APPROVAL` | conflict, refused without applying anything |
-| 8 | The live policy and approval record are written | the change is marked `APPROVED` only after this succeeds |
+| #   | Check                                                             | Refusal                                                                                 |
+| --- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| 1   | A caller is authenticated                                         | `401`                                                                                   |
+| 2   | The caller is a human (`USER`)                                    | refused by `requireHumanCaller`                                                         |
+| 3   | The change exists                                                 | not found                                                                               |
+| 4   | The checker is not the maker                                      | `SameActorCannotApproveOwnChangeError`                                                  |
+| 5   | The checker is listed for this policy in `POLICY_CHANGE_CHECKERS` | `403 CHECKER_NOT_IN_SCOPE`                                                              |
+| 6   | The step-up envelope is valid                                     | `STEP_UP_AUTHORIZATION_INVALID` (we saw both `400` and `403`; read the body and status) |
+| 7   | The change is still `PENDING_APPROVAL`                            | conflict, refused without applying anything                                             |
+| 8   | The live policy and approval record are written                   | the change is marked `APPROVED` only after this succeeds                                |
 
 Check 5 is checked before the signature, so an out-of-scope checker is refused without any signature work.
 
@@ -123,13 +123,13 @@ Run both parts close together, because the envelope expires in 120 seconds.
 
 ## 7. Quick reference
 
-| What you see | Most likely cause | Go to |
-|---|---|---|
-| `401` on propose or approve | Key not in `PARMANA_API_KEYS`, or wrong key | Troubleshooting guide, section 11 |
-| `CHECKER_NOT_IN_SCOPE` | `POLICY_CHANGE_CHECKERS` does not list this checker for this policy | Section 8 below |
-| `STEP_UP_AUTHORIZATION_INVALID` | Clock, expired envelope, wrong pending ID or action, or wrong key | Section 5 |
-| `reason is required.` | `reason` missing from the proposal body | Section 2 |
-| `rejectionReason is required.` | Missing from the reject body | Section 4 |
+| What you see                    | Most likely cause                                                   | Go to                             |
+| ------------------------------- | ------------------------------------------------------------------- | --------------------------------- |
+| `401` on propose or approve     | Key not in `PARMANA_API_KEYS`, or wrong key                         | Troubleshooting guide, section 11 |
+| `CHECKER_NOT_IN_SCOPE`          | `POLICY_CHANGE_CHECKERS` does not list this checker for this policy | Section 8 below                   |
+| `STEP_UP_AUTHORIZATION_INVALID` | Clock, expired envelope, wrong pending ID or action, or wrong key   | Section 5                         |
+| `reason is required.`           | `reason` missing from the proposal body                             | Section 2                         |
+| `rejectionReason is required.`  | Missing from the reject body                                        | Section 4                         |
 
 ---
 
@@ -138,7 +138,7 @@ Run both parts close together, because the envelope expires in 120 seconds.
 It is a JSON **object** keyed by policy name. Each value is an array of checker `callerId`s:
 
 ```json
-{"checker-wiring-check":["pavancharak"],"razorpay-refund":["pavancharak"]}
+{ "checker-wiring-check": ["pavancharak"], "razorpay-refund": ["pavancharak"] }
 ```
 
 A plain string such as `pavancharak` is **not** valid and the server refuses to start. An unset or empty value lists nobody, so approve is refused for every policy. Each `callerId` must be non-empty.

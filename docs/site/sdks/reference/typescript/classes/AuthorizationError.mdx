@@ -8,13 +8,14 @@ for. Covers two distinct denials, both intentionally collapsed to
 this one SDK error class since both share the same "who you are is
 known; you can't do this" shape — distinguish them via `serverCode`/
 `message` if needed, not via `instanceof`:
+
 - a caller asserting an authority.principalId it isn't permitted to
   assert (isPrincipalAllowed, packages/api/src/routes/execute.ts and
   transactions.ts) — carries no `code` field of its own.
 - a caller invoking a capability (intent.action) it isn't permitted
   to invoke (isCapabilityAllowed.ts) — carries
   `code: "CAPABILITY_NOT_ALLOWED"`, preserved on `serverCode` below.
-Distinct from AuthenticationError (401, no valid credential at all).
+  Distinct from AuthenticationError (401, no valid credential at all).
 
 ## Extends
 
@@ -65,7 +66,7 @@ only the capability-denied case: "CAPABILITY_NOT_ALLOWED"). Undefined
 for the principal-mismatch case, which the Runtime sends with no
 `code` at all — see mapHttpErrorResponse.ts for the exact check.
 
-***
+---
 
 ### code
 
@@ -77,7 +78,7 @@ Stable machine-readable error code.
 
 [`ParmanaError`](/sdks/reference/typescript/classes/ParmanaError).[`code`](/sdks/reference/typescript/classes/ParmanaError#code)
 
-***
+---
 
 ### requestId?
 
@@ -89,7 +90,7 @@ Optional request identifier.
 
 [`ParmanaError`](/sdks/reference/typescript/classes/ParmanaError).[`requestId`](/sdks/reference/typescript/classes/ParmanaError#requestid)
 
-***
+---
 
 ### cause?
 
@@ -101,7 +102,7 @@ Optional underlying cause.
 
 [`ParmanaError`](/sdks/reference/typescript/classes/ParmanaError).[`cause`](/sdks/reference/typescript/classes/ParmanaError#cause)
 
-***
+---
 
 ### statusCode?
 
@@ -116,7 +117,7 @@ equivalent is `status_code`.
 
 [`ParmanaError`](/sdks/reference/typescript/classes/ParmanaError).[`statusCode`](/sdks/reference/typescript/classes/ParmanaError#statuscode)
 
-***
+---
 
 ### stackTraceLimit
 
@@ -136,7 +137,7 @@ not capture any frames.
 
 [`ParmanaError`](/sdks/reference/typescript/classes/ParmanaError).[`stackTraceLimit`](/sdks/reference/typescript/classes/ParmanaError#stacktracelimit)
 
-***
+---
 
 ### name
 
@@ -146,7 +147,7 @@ not capture any frames.
 
 [`ParmanaError`](/sdks/reference/typescript/classes/ParmanaError).[`name`](/sdks/reference/typescript/classes/ParmanaError#name)
 
-***
+---
 
 ### message
 
@@ -156,7 +157,7 @@ not capture any frames.
 
 [`ParmanaError`](/sdks/reference/typescript/classes/ParmanaError).[`message`](/sdks/reference/typescript/classes/ParmanaError#message)
 
-***
+---
 
 ### stack?
 
@@ -179,7 +180,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack;  // Similar to `new Error().stack`
+myObject.stack; // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -234,7 +235,7 @@ a();
 
 [`ParmanaError`](/sdks/reference/typescript/classes/ParmanaError).[`captureStackTrace`](/sdks/reference/typescript/classes/ParmanaError#capturestacktrace)
 
-***
+---
 
 ### prepareStackTrace()
 

@@ -12,7 +12,7 @@ A grant, active or revoked.
 
 The changeId of the approved grant change that created it.
 
-***
+---
 
 ### callerId
 
@@ -20,25 +20,25 @@ The changeId of the approved grant change that created it.
 
 The callerId of the API key the grant is for.
 
-***
+---
 
 ### capability
 
 > `readonly` **capability**: `string`
 
-***
+---
 
 ### limits?
 
 > `readonly` `optional` **limits?**: `Readonly`\<`Record`\<`string`, [`AuthorityGrantLimit`](/sdks/reference/typescript/interfaces/AuthorityGrantLimit)\>\>
 
-***
+---
 
 ### validFrom
 
 > `readonly` **validFrom**: `string`
 
-***
+---
 
 ### validUntil
 
@@ -46,7 +46,7 @@ The callerId of the API key the grant is for.
 
 After this, requests are refused as AUTHORITY_EXPIRED.
 
-***
+---
 
 ### status
 
@@ -54,19 +54,19 @@ After this, requests are refused as AUTHORITY_EXPIRED.
 
 At most one active grant per caller and capability.
 
-***
+---
 
 ### grantedAt
 
 > `readonly` **grantedAt**: `string`
 
-***
+---
 
 ### revokedByChangeId?
 
 > `readonly` `optional` **revokedByChangeId?**: `string`
 
-***
+---
 
 ### revokedAt?
 

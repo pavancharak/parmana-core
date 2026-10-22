@@ -8,37 +8,37 @@ title: "Interface: Execution"
 
 > `readonly` **executionId**: `string`
 
-***
+---
 
 ### businessTransactionId
 
 > `readonly` **businessTransactionId**: `string`
 
-***
+---
 
 ### decision
 
 > `readonly` **decision**: [`Decision`](/sdks/reference/typescript/interfaces/Decision)
 
-***
+---
 
 ### status
 
 > `readonly` **status**: [`ExecutionStatus`](/sdks/reference/typescript/type-aliases/ExecutionStatus)
 
-***
+---
 
 ### mode
 
 > `readonly` **mode**: [`ExecutionMode`](/sdks/reference/typescript/type-aliases/ExecutionMode)
 
-***
+---
 
 ### startedAt
 
 > `readonly` **startedAt**: `Date`
 
-***
+---
 
 ### completedAt?
 
@@ -46,7 +46,7 @@ title: "Interface: Execution"
 
 Present only for terminal executions.
 
-***
+---
 
 ### evidence?
 
@@ -57,7 +57,7 @@ executedAt, and an optional attributes bag (e.g. Connector SDK
 evidence). Left as a generic bag here, same as the real schema
 (schemas/common/execution.schema.json), not a nested model.
 
-***
+---
 
 ### metadata?
 

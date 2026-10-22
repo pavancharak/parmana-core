@@ -31,13 +31,13 @@ psql "$DATABASE_URL"
 | `settlement_confirmations`              | Signed settlement confirmations                                         | `SupabaseExecutionTrustRecordRepository`       |
 | `overrides`                             | `OverrideService` backing table, deliberately unreachable, expect empty | `SupabaseExecutionTrustRecordRepository`       |
 | `refusal_records`                       | Signed record of a refused decision                                     | `SupabaseRefusalRecordRepository`              |
-| `execution_intents`                     | Signed intent stored before an action is released            | `SupabaseExecutionIntentRepository`            |
+| `execution_intents`                     | Signed intent stored before an action is released                       | `SupabaseExecutionIntentRepository`            |
 | `caller_audit_events`                   | Every caller authentication decision, the highest write volume          | `SupabaseCallerAuditSink`                      |
-| `execution_audit_events`                | Execution lifecycle events, **shared with `example-agent`**       | `SupabaseExecutionAuditSink`                   |
+| `execution_audit_events`                | Execution lifecycle events, **shared with `example-agent`**             | `SupabaseExecutionAuditSink`                   |
 | `policies`                              | Policy content written on approval (Vercel has a read only filesystem)  | `SupabasePolicyRepository`                     |
 | `approval_issuers`                      | Approver keys added through maker checker                               | `SupabaseApprovalIssuerRepository`             |
 | `approval_issuer_changes`               | Proposals to add or revoke an approver key                              | `SupabaseApprovalIssuerRepository`             |
-| `external_connectors`                   | External connectors registered through maker checker         | `SupabaseExternalConnectorRepository`          |
+| `external_connectors`                   | External connectors registered through maker checker                    | `SupabaseExternalConnectorRepository`          |
 | `external_connector_changes`            | Proposals to register or revoke an external connector                   | `SupabaseExternalConnectorRepository`          |
 | `pending_policy_changes`                | Maker and checker: a proposed change awaiting approval                  | `SupabasePendingPolicyChangeRepository`        |
 | `policy_change_approval_records`        | Maker and checker: signed approval or rejection                         | `SupabasePolicyChangeApprovalRecordRepository` |

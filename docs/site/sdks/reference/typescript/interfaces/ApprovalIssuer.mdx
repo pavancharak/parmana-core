@@ -10,13 +10,13 @@ A key the server trusts, or trusted, to sign approvals.
 
 > `readonly` **approverId**: `string`
 
-***
+---
 
 ### keyId
 
 > `readonly` **keyId**: `string`
 
-***
+---
 
 ### publicKeyPem
 
@@ -24,7 +24,7 @@ A key the server trusts, or trusted, to sign approvals.
 
 Ed25519 public key, PEM (SPKI).
 
-***
+---
 
 ### revoked
 
@@ -32,7 +32,7 @@ Ed25519 public key, PEM (SPKI).
 
 true: every approval signed with this key is refused.
 
-***
+---
 
 ### source
 
@@ -41,25 +41,25 @@ true: every approval signed with this key is refused.
 "code": listed in the server code, changed only by a deploy.
 "governed": added through an approver change.
 
-***
+---
 
 ### addedByChangeId?
 
 > `readonly` `optional` **addedByChangeId?**: `string`
 
-***
+---
 
 ### addedAt?
 
 > `readonly` `optional` **addedAt?**: `string`
 
-***
+---
 
 ### revokedByChangeId?
 
 > `readonly` `optional` **revokedByChangeId?**: `string`
 
-***
+---
 
 ### revokedAt?
 

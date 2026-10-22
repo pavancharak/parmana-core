@@ -209,7 +209,7 @@ release in production (it needs a test hook to time).
 
 | Item                                                               | Today                                                                                 |
 | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| Daily or cumulative grant limits ("₹50,000 or 20 refunds per day") | Limits are per request; cumulative grant limits are not built yet          |
+| Daily or cumulative grant limits ("₹50,000 or 20 refunds per day") | Limits are per request; cumulative grant limits are not built yet                     |
 | Built in connectors asking the business system again at release    | External endpoints check `conditions` themselves; built in ones get the gateway check |
 | A "not released" state for an action refused at release            | It is left `ERRORED` until a person closes it                                         |
 | An end to end test of a refusal at release through `POST /execute` | Each part is tested separately                                                        |

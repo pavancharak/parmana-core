@@ -11,7 +11,7 @@ title: "Interface: SignApprovalInput"
 The approver's Ed25519 private key, PEM (PKCS #8), as made by
 scripts/generate-approver-key.ts.
 
-***
+---
 
 ### approverId
 
@@ -19,13 +19,13 @@ scripts/generate-approver-key.ts.
 
 The approver and key as registered on the server.
 
-***
+---
 
 ### keyId
 
 > `readonly` **keyId**: `string`
 
-***
+---
 
 ### capability
 
@@ -33,7 +33,7 @@ The approver and key as registered on the server.
 
 The action approved, such as paytm:refund or github:pr-merge.
 
-***
+---
 
 ### resourceId
 
@@ -42,7 +42,7 @@ The action approved, such as paytm:refund or github:pr-merge.
 The value at the policy's approvalSignals resourceId path: an order
 id, or for "target" the Intent's target, such as acme/api#42.
 
-***
+---
 
 ### maxAmount?
 
@@ -52,7 +52,7 @@ The largest amount approved. Give it when the policy declares a value
 path (an amount), and leave it out when it does not: the approval then
 names exactly this resource.
 
-***
+---
 
 ### ttlSeconds?
 

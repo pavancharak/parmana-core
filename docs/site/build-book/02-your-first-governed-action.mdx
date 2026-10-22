@@ -253,8 +253,9 @@ const signals = {
 
 try {
   await client.execute(
-    createBusinessTransaction({...request,
-      signals: {...signals, humanApproved: false },
+    createBusinessTransaction({
+      ...request,
+      signals: { ...signals, humanApproved: false },
     }),
   );
 } catch (error) {
@@ -267,8 +268,9 @@ const approval = JSON.parse(
 );
 
 const record = await client.execute(
-  createBusinessTransaction({...request,
-    signals: {...signals, humanApproved: true, approvalArtifact: approval },
+  createBusinessTransaction({
+    ...request,
+    signals: { ...signals, humanApproved: true, approvalArtifact: approval },
   }),
 );
 
@@ -302,7 +304,7 @@ Approved: APPROVED c1ee106cb303c57723128efd46e4dba53fc6ec37f238aa410d9cfe5454812
 | `401 {"error":"authentication required"}`             | No key, a wrong key, or a hash in `PARMANA_API_KEYS` that is not the hash of that key.                            |
 | The server refuses to start, naming `DATABASE_URL`    | `NODE_ENV` is not `test`. Outside `test`, storage for replay protection and audit needs Postgres.                 |
 | The server refuses to start, naming the approver file | `PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE` is set while `NODE_ENV` is not `test`.                                    |
-| `Refused:... approval...` on the second request     | The approval expired (15 minutes), was used already, or names another resource or a lower amount. Sign a new one. |
+| `Refused:... approval...` on the second request       | The approval expired (15 minutes), was used already, or names another resource or a lower amount. Sign a new one. |
 | `Cannot find module '@parmana/sdk'`                   | Run the script from `typescript/examples/`, after `npm run build`.                                                |
 
 ## Next

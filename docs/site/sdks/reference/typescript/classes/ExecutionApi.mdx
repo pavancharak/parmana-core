@@ -4,12 +4,13 @@ title: "Class: ExecutionApi"
 
 Execution API.
 
-Responsibilities
-----------------
+## Responsibilities
+
 - Runtime health check
 - Execute Business Transactions
 
 This API does NOT:
+
 - verify trust records
 - replay executions
 - generate receipts
@@ -43,7 +44,7 @@ Returns the Runtime health status.
 
 `Promise`\<`unknown`\>
 
-***
+---
 
 ### version()
 
@@ -56,7 +57,7 @@ authentication, unlike GET /health.
 
 `Promise`\<`unknown`\>
 
-***
+---
 
 ### execute()
 

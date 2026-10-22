@@ -12,7 +12,7 @@ GET /policies/in-effect?capability=...
 
 > `readonly` **capability**: `string`
 
-***
+---
 
 ### policy
 
@@ -32,7 +32,7 @@ Declare this, exactly, as the request's `policy`.
 
 > `readonly` **schemaVersion**: `string`
 
-***
+---
 
 ### description
 
@@ -40,7 +40,7 @@ Declare this, exactly, as the request's `policy`.
 
 The policy author's description for people, or null.
 
-***
+---
 
 ### authorityGrantRequired?
 
@@ -50,7 +50,7 @@ Present only when the policy requires it: your key needs a current
 authority grant for this capability, and each request must be within
 the grant's limits (RFC-0023 phase 3).
 
-***
+---
 
 ### signals
 

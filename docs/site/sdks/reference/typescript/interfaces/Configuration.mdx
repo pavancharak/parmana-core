@@ -20,7 +20,7 @@ Parmana Runtime endpoint.
 Example:
 https://runtime.example.com
 
-***
+---
 
 ### apiKey?
 
@@ -34,7 +34,7 @@ development only); every other deployment rejects an unauthenticated
 request with a 401 before a Business Transaction is even
 constructed.
 
-***
+---
 
 ### timeout?
 
@@ -45,7 +45,7 @@ Request timeout (milliseconds).
 Default:
 30000
 
-***
+---
 
 ### retryPolicy?
 
@@ -53,7 +53,7 @@ Default:
 
 Retry configuration.
 
-***
+---
 
 ### transport?
 
@@ -63,7 +63,7 @@ Transport implementation.
 
 If omitted, the client builds an HttpTransport from this same configuration, so timeout, retryPolicy, apiKey and userAgent apply.
 
-***
+---
 
 ### userAgent?
 
