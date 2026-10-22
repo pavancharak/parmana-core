@@ -3242,7 +3242,7 @@ Always pass `--private-key-file`, `--key-id` and `--api-base`: the defaults name
 
 ## Part 2: a person signs off on one action
 
-Some actions need a person each time, such as a refund above 10000. The policy declares which signal needs a signed approval, and where the request says what the approval is for:
+Some actions need a person each time. Under `customer-refund` 1.2.0, every refund needs one. The policy declares which signal needs a signed approval, and where the request says what the approval is for:
 
 ```json
 "approvalSignals": {
@@ -3258,7 +3258,7 @@ sequenceDiagram
     participant S as Parmana
     participant M as Manager
     G->>S: Refund 75000, managerApproved false
-    S-->>G: 403, amounts above 10000 need a signed manager approval
+    S-->>G: 403, every refund needs a signed manager approval for this order and amount
     M->>S: Finds the refusal (Refusal Records)
     M->>M: sign-approval.ts: this order, up to 75000, 15 min, once
     M-->>G: approval.json
