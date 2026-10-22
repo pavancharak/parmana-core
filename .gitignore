@@ -114,3 +114,16 @@ proof-audit/REPORT.md
 
 .vercel
 .env*
+
+# Operator secret material from the rotation and environment runbooks: key
+# lists, key-material files, caller entries and value files. Anchored to the
+# repository root so source folders such as packages/api/src/bootstrap/secrets/
+# stay tracked. Private keys are already covered by *.pem and *.key above.
+/secrets/
+/secrets2/
+/secrets3/
+/parmana-*-keys/
+/*-values.txt
+/key-material*.txt
+PARMANA_API_KEYS*.json
+*-entry.json
