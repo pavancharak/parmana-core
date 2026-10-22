@@ -480,7 +480,8 @@ export function createPendingPolicyChangesRouter(
    * Reject (checker). Requires rejectionReason. Never touches the
    * live policy file -- rejection is purely a repository state
    * transition. Enforces isHumanCaller, maker != checker
-   * (SameActorCannotApproveOwnChangeError), and step-up authorization
+   * (SameActorCannotApproveOwnChangeError), POLICY_CHANGE_CHECKERS scope
+   * (CHECKER_NOT_IN_SCOPE), and step-up authorization
    * (StepUpAuthorizationInvalidError), in that order.
    */
   router.post(
@@ -526,6 +527,22 @@ export function createPendingPolicyChangesRouter(
 
         if (existing.proposedBy === req.callerId) {
           throw new SameActorCannotApproveOwnChangeError(id);
+        }
+
+        //
+        // G-50: a rejection is a review decision, so only a caller listed
+        // for this policy may reject it, the same as approve. Checked before
+        // the step-up signature, for the same reason.
+        //
+        if (
+          !isCheckerInScope(checkerScope, existing.policyName, req.callerId)
+        ) {
+          res.status(403).json({
+            error: "CHECKER_NOT_IN_SCOPE",
+            message:
+              "This caller is not listed to review changes to this policy (POLICY_CHANGE_CHECKERS).",
+          });
+          return;
         }
 
         await requireStepUpAuthorization(req, stepUpVerifier, {

@@ -74,6 +74,9 @@ services:
       PAYTM_CONNECTOR_URL: https://paytm-agent-stand-in:4399
       PAYTM_CONNECTOR_SHARED_SECRET: offline-check-shared-secret
       NODE_EXTRA_CA_CERTS: /certs/stand-in.crt
+      # The check's approver (check-identities.mjs, callerId offline-check-approver) may
+      # approve changes to customer-refund. Without this the API refuses every approval (G-50).
+      POLICY_CHANGE_CHECKERS: '{"customer-refund":["offline-check-approver"]}'
     volumes:
       - stand-in-certs:/certs:ro
       - check-identities:/identities:ro

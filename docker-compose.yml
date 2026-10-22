@@ -111,6 +111,9 @@ services:
       PARMANA_STORAGE: postgres
       DATABASE_URL: *database-url
       PARMANA_KEY_DIR: /app/parmana-local/keys
+      # Who may approve a change to each policy (G-50). Empty lists nobody,
+      # so approval is refused until the quickstart or an operator sets it.
+      POLICY_CHANGE_CHECKERS: ${POLICY_CHANGE_CHECKERS:-}
     volumes:
       - ./parmana-local:/app/parmana-local:ro
     ports:

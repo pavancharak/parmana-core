@@ -85,6 +85,10 @@ BOB_KEY=$(docker compose run --rm -T --no-deps --entrypoint node setup \
 [ -n "$ALICE_KEY" ] && [ -n "$BOB_KEY" ] || fail "step 3: keys added"
 pass "step 3: keys added"
 
+# The approver is named per run, so the checker list is set here, not in
+# the compose file. Without it every approval is refused (fail closed, G-50).
+export POLICY_CHANGE_CHECKERS="{\"customer-refund\":[\"$approver\"]}"
+
 docker compose restart api >/dev/null 2>&1
 docker compose up -d --wait api >/dev/null 2>&1
 

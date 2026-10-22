@@ -99,9 +99,13 @@ describe("Policy Governance: isHumanCaller, maker != checker, step-up (HTTP boun
   // name, which is scoped to someone else so the out-of-scope refusal can be
   // tested.
   const OUT_OF_SCOPE_POLICY = "governance-approve-out-of-scope";
+  const OUT_OF_SCOPE_REJECT_POLICY = "governance-reject-out-of-scope";
   const TEST_CHECKER_SCOPE = new Proxy({} as PolicyChangeCheckerScope, {
     get: (_target, policyName) =>
-      policyName === OUT_OF_SCOPE_POLICY ? ["someone-else"] : ["human-checker"],
+      policyName === OUT_OF_SCOPE_POLICY ||
+      policyName === OUT_OF_SCOPE_REJECT_POLICY
+        ? ["someone-else"]
+        : ["human-checker"],
   });
   const SERVICE_KEY = "governance-service-caller-raw-key-for-tests-only";
   const UNVERIFIED_KEY = "governance-unverified-caller-raw-key-for-tests-only";
@@ -856,6 +860,21 @@ describe("Policy Governance: isHumanCaller, maker != checker, step-up (HTTP boun
       expect(response.status).toBe(200);
       expect(response.body.status).toBe("REJECTED");
       expect(response.body.resolvedBy).toBe("human-checker");
+    });
+
+    it("refuses a rejection from a checker not listed for this policy, with 403 CHECKER_NOT_IN_SCOPE (G-50)", async () => {
+      const { app } = buildApp();
+      const id = await proposeChange(app, OUT_OF_SCOPE_REJECT_POLICY);
+
+      // No step-up signature is sent: the scope check runs first, so the
+      // refusal is due to scope and not to a missing signature.
+      const response = await request(app)
+        .post(`/policies/pending-changes/${id}/reject`)
+        .set("Authorization", `Bearer ${HUMAN_CHECKER_KEY}`)
+        .send({ rejectionReason: "not listed to review this policy" });
+
+      expect(response.status).toBe(403);
+      expect(response.body.error).toBe("CHECKER_NOT_IN_SCOPE");
     });
 
     it("refuses to approve a change that was already rejected, and applies nothing", async () => {
