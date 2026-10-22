@@ -1,6 +1,6 @@
 ---
 title: "Verification"
-description: "Exactly 3 checks, always run, always reported independently."
+description: "Exactly 4 checks, always run, always reported independently."
 ---
 
 <Info>
@@ -21,10 +21,10 @@ description: "Exactly 3 checks, always run, always reported independently."
   record in your browser](/verification/verify-in-browser).
 </Tip>
 
-## The 3 checks, exactly
+## The 4 checks, exactly
 
 ```typescript
-// packages/runtime/src/services/verification-service.ts:90-153
+// packages/runtime/src/services/verification-service.ts:80-158
 ```
 
 1. **Integrity**, recompute the Trust Record's canonical hash; must match the stored
@@ -33,8 +33,12 @@ description: "Exactly 3 checks, always run, always reported independently."
    public key.
 3. **Authorization binding**, every `APPROVED` execution must carry a non-empty
    `authorizationId` in its metadata. `REJECTED`-decision executions are exempt.
+4. **Chain integrity**, every chain-protected Execution's own `chainHash` and `chainSignature`
+   must verify, and its `previousChainHash` must reference its predecessor's `chainHash`. An
+   Execution with no chain fields, before the first chained one, is unprotected legacy data and
+   does not fail this check. One with only some chain fields, or one after a chained one, does.
 
-**All three checks always run**, independently, regardless of whether an earlier one
+**All four checks always run**, independently, regardless of whether an earlier one
 failed, so a single verification report can name every check that failed, not just the
 first (`runChecks()` accumulates failures into an array rather than short-circuiting).
 
