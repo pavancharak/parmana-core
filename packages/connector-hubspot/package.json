@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@parmana/approval": "0.1.0",
-    "@parmana/connector-sdk": "0.3.0",
+    "@parmana/connector-sdk": "0.3.1",
     "@parmana/crypto": "0.1.0",
     "@parmana/envelope-verifier": "0.1.0",
     "@parmana/execution-system": "0.1.0",
