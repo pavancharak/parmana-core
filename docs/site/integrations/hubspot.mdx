@@ -149,7 +149,7 @@ Response status: 200
     {
       "decision": {
         "outcome": "APPROVED",
-        "reason": "Deal update authorized. The dealstage transition (if any) is on an allowed path, and the amount change (if any) is within threshold or has been pre-authorized."
+        "reason": "Deal update authorized with a verified approval for this deal, and the dealstage transition (if any) is on an allowed path."
       },
       "evidence": {
         "attributes": {
@@ -240,7 +240,7 @@ Tutorial 69 - HubSpot Deal Update Connector
 Decision
 --------------------------------------------------
 Outcome : APPROVED
-Reason  : Deal update authorized. The dealstage transition (if any) is on an allowed path, and the amount change (if any) is within threshold or has been pre-authorized.
+Reason  : Deal update authorized with a verified approval for this deal, and the dealstage transition (if any) is on an allowed path.
 
 HubSpot Mock Server State
 --------------------------------------------------
@@ -285,7 +285,7 @@ Razorpay's Basic-auth credential has two parts.
 This is the part worth reading in full before deciding how much to trust this connector.
 
 - **43 unit tests across two packages** hit `MockHubSpotServer`, not the real network, and run
-  on every `npm test`, no gate required: `packages/connector-hubspot/tests/unit/` (31 tests,
+  on every `npm test`, no gate required: `packages/connector-hubspot/tests/unit/` (34 tests,
   including `HubSpotSignalStateVerifier.test.ts`'s Approval Artifact verification suite — a
   matching artifact, an unknown issuer, a scope-escalated amount, a deal-id mismatch, and a
   replayed nonce, each independently rejected or approved) and
@@ -294,7 +294,7 @@ This is the part worth reading in full before deciding how much to trust this co
   confirm chain, every policy rule branch, replay with zero second calls,
   `businessTransactionHash` tamper rejection, and the placeholder-credential guard against a
   real-shaped endpoint.
-- **`packages/api/tests/integration/hubspot-deal-update.integration.test.ts`** (6 tests)
+- **`packages/api/tests/integration/hubspot-deal-update.integration.test.ts`** (7 tests)
   drives the same real, production-wired `POST /execute` route this page's examples above
   are captured from, against `MockHubSpotServer`. A policy denial here is proven to make zero
   HubSpot calls two ways: the mock server's own state is confirmed unchanged, and a `fetch`
