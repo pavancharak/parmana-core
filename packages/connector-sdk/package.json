@@ -1,6 +1,6 @@
 {
   "name": "@parmana/connector-sdk",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": false,
   "description": "Connector authoring contracts and reference implementations for Parmana, the authorization layer for AI execution",
   "type": "module",
