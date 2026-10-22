@@ -43,6 +43,20 @@ docker compose run --rm -T --no-deps --entrypoint node setup \
 docker compose restart api
 ```
 
+Then tell the server which approver may approve which policy. Set `POLICY_CHANGE_CHECKERS` in the environment the API runs with, mapping each policy name to the approver's caller id:
+
+```bash
+POLICY_CHANGE_CHECKERS='{"customer-refund":["bob"]}'
+```
+
+Without this, nobody may approve a policy change. Every approval is refused with `403 CHECKER_NOT_IN_SCOPE`, and the proposal waits. A caller not listed for a policy is refused the same way, so list each approver for each policy they should approve. See [environment variables](/deployment/environment-variables).
+
+Then restart the API so it reads the variable:
+
+```bash
+docker compose restart api
+```
+
 Each `add` prints the new key once. Give each person their own. Details: [Manage API keys](/self-hosted/api-keys).
 
 ## 3. The proposer proposes the policy
