@@ -15,6 +15,7 @@ PARMANA-*.md
 .env
 .env.*
 !.env.example
+!.env.test.example
 
 # Private keys
 *.pem
@@ -127,3 +128,6 @@ proof-audit/REPORT.md
 /key-material*.txt
 PARMANA_API_KEYS*.json
 *-entry.json
+
+# Committed template for the test settings file (see .env.test.example).
+!.env.test.example

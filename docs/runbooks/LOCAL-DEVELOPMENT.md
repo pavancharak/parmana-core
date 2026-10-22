@@ -90,6 +90,22 @@ Watch mode while you edit: `npm run test:watch`.
 
 ---
 
+## 5a. Run the database-backed tests
+
+About 20 test files skip unless a test database is configured. Skipped means they did not run, so the suite is green without them. To run them every time:
+
+```powershell
+Copy-Item .env.test.example .env.test
+docker compose up -d postgres
+docker compose run --rm migrate
+npx vitest run
+```
+
+- `.env.test` (gitignored) is loaded by `vitest.setup.ts` before `.env`. It points `DATABASE_URL` at the local `postgres` service on `127.0.0.1:55432`. The tests never read `.env` for these values, so production settings cannot reach them.
+- `docker compose run --rm migrate` applies the same migrations as the stack, so the schema matches.
+- The Supabase suites (they call the Supabase REST API) still skip. They need a live Supabase project and its own credentials, which a local Postgres does not provide.
+- Do not point `DATABASE_URL` at production. These suites write to the database.
+
 ## 6. Lint
 
 ```powershell

@@ -57,6 +57,10 @@ services:
       POSTGRES_USER: parmana
       POSTGRES_PASSWORD: ${PARMANA_DB_PASSWORD:-parmana-local}
       POSTGRES_DB: parmana
+    # Loopback only. Lets the test suites reach this database from the host
+    # (see .env.test.example). Not reachable from other machines.
+    ports:
+      - "127.0.0.1:55432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
