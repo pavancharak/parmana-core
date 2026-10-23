@@ -5,7 +5,7 @@ description: "Two independent express-rate-limit limiters, one for POST /execute
 
 ## What It Is
 
-Three independent `express-rate-limit` limiters, one for `POST /execute` (keyed by
+Four independent `express-rate-limit` limiters, one for `POST /execute` (keyed by
 authenticated caller identity), one for `GET /health`/`GET /ready` (keyed by IP, far more
 signatures or write data (`POST /refusal/verify`, `POST /execution-intents/verify`,
 `POST /audit/verify`, `/handbook`; keyed by IP, 60 per minute by default). Each is backed by either
@@ -113,7 +113,7 @@ confirms the limiter is entirely skipped when caller-auth is disabled.
 - `packages/storage/src/postgres/PostgresRateLimitStore.ts`, the durable store, including
   the `prefix` field's own doc comment explaining exactly why it must be named that and be
   public.
-- `packages/api/src/app.ts, 149-171, 248-264`, where both limiters are actually
+- `packages/api/src/app.ts, 223-254, 270-331, 397-410`, where both limiters are actually
   constructed and mounted.
 
 ## Integration Requirements
