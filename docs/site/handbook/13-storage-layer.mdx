@@ -24,7 +24,7 @@ needs to persist something to independently decide how.
 
 ### The interface
 
-`StorageProvider` exposes five repositories:
+`StorageProvider` exposes eleven repositories:
 
 ```ts
 export interface StorageProvider {
@@ -43,12 +43,12 @@ export interface StorageProvider {
 `StorageFactory.create({ provider })` (`packages/storage/src/StorageFactory.ts`) switches on
 the configured provider:
 
-| Provider value | Class returned                                        | Notes                                                                                                                      |
-| -------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `"memory"`     | `MemoryStorageProvider`                               | Five in-memory repository classes, nothing external touched.                                                               |
-| `"supabase"`   | `SupabaseStorageProvider`                             | Requires `DATABASE_URL`; throws immediately if missing, rather than constructing a pool that would only fail on first use. |
-| `"postgres"`   | throws `"Postgres storage provider not implemented."` | Reserved name, not built.                                                                                                  |
-| `"sqlite"`     | throws `"SQLite storage provider not implemented."`   | Reserved name, not built.                                                                                                  |
+| Provider value | Class returned                                                                           | Notes                                                                                                                      |
+| -------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `"memory"`     | `MemoryStorageProvider`                                                                  | Five in-memory repository classes, nothing external touched.                                                               |
+| `"supabase"`   | `SupabaseStorageProvider`                                                                | Requires `DATABASE_URL`; throws immediately if missing, rather than constructing a pool that would only fail on first use. |
+| `"postgres"`   | returns `SupabaseStorageProvider` and requires `DATABASE_URL`, the same as `"supabase"`. | Works.                                                                                                                     |
+| `"sqlite"`     | throws `"SQLite storage provider not implemented."`                                      | Reserved name, not built.                                                                                                  |
 
 `StorageFactory.createFromEnvironment()` is the real entry point every caller actually uses.
 It has one hardcoded override: under `NODE_ENV=test`, it always returns

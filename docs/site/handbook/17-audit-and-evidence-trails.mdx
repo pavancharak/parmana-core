@@ -64,10 +64,7 @@ workaround at the PostgREST layer specifically, not a problem with the database 
 codebase's own schema.
 
 Failure semantics are explicit and deliberately unchanged from the sink this replaced:
-`record()` is an unguarded `await` in the caller-auth middleware with no try/catch around it. A
-write failure here rejects the promise exactly like any other failed Supabase insert elsewhere
-in this codebase; it is the caller's existing (unmodified) behavior that decides what happens
-next, documented rather than silently changed.
+`record()` is awaited in the caller-auth middleware. `recordCallerAuditEvent` wraps the write in try/catch, and a write failure becomes `AuditUnavailableError`, which the request receives as `503`.
 
 ### Execution Audit Events
 
