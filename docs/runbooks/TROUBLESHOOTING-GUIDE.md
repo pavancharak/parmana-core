@@ -347,7 +347,7 @@ For a grant, confirm `validUntil` is in the future and the limits are right. For
 
 **Fix:** only add an approval when a manager has signed one for this payment and amount.
 
-### 7.2 `Refused by : authority-not-authorized` / `Authority : NOT_AUTHORIZED`
+### 7.2 `Authority : NOT_AUTHORIZED` in the refusal
 
 **Meaning:** the amount is above the grant's limit. Correct refusal.
 
@@ -591,7 +591,7 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
 1. Read the refusal line. The runner prints `Refused by` with the rule and the reason. Why: the rule name tells you which requirement failed.
 2. Match the rule to a cause:
    - `reject-manager-approval-required`: the request had no approval. Add a signed approval for this payment and amount.
-   - `authority-not-authorized` (`NOT_AUTHORIZED`): the amount is above the grant's limit. Do not raise the request; check the grant.
+   - `Authority : NOT_AUTHORIZED`: the amount is above the grant's limit, or the grant is not yet in force or has expired. Do not raise the request; check the grant.
    - `signal-state-verification-violation`: the approval was used already, or does not match. Create a new approval.
 3. Check the grant if the amount is the problem:
    ```powershell
@@ -744,7 +744,7 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
 **Goal.** Find the refund, or prove it was not created.
 
 **Steps.**
-1. Read the record file the runner wrote (`--out`). Note the `refundId` (`rfnd_...`) and the business transaction id.
+1. Read the record file the runner wrote (`--out`). Note the Razorpay refund id (`rfnd_...`, if the record has one) and the business transaction id.
 2. Check the dashboard in Test Mode, for the payment, under refunds. Filter by the period. Why: the list can be filtered by date and status.
 3. Search by refund id, then by the payment id.
 4. If it is missing, check the endpoint's answer in the record. A `success: false` answer with a stage names the step that failed.
