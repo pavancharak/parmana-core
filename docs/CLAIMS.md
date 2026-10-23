@@ -665,7 +665,7 @@ Scope, stated plainly:
 - **The demo key is not published yet.** ADR-0014 step 4 puts it in the docs playground. Until then only the live check has used it.
 - **No retention yet.** ADR-0014 accepted deleting sandbox records older than 7 days, daily; that job is not built.
 - **Distinct credentials, not proven distinct people**, as in 2.49 and 2.50: the sandbox maker and checker keys are held by one person.
-- **Checked live once.** The approved request took 14.1 s (G-84 applies here too).
+- **Checked live twice**, on 2026-10-02 and, after the sandbox was rebuilt, on 2026-10-23. The approved request took 14.1 s both times (G-84 applies here too).
 
 Verification
 
@@ -679,6 +679,14 @@ Evidence: the live check, 2026-10-02 (`deploy/sandbox/README.md`, stage `Check`)
 - Receipt endpoint `https://parmana-sandbox-receipt.vercel.app/api/release` (Vercel project `parmana-sandbox-receipt`): `401` to an unsigned body, answered by the endpoint itself.
 - Through maker checker in the sandbox, each proposed by `sandbox-maker` and approved by the sandbox checker: the demo approver `sandbox-demo-approver` (`sandbox-demo-approver-key-1`, change `0143b0a5-ba0f-437a-945d-abeb73d9cdb4`, the public key identical to the key folder's); policy `sandbox-receipt` 1.0.0 (change `4ac16068-0f1b-46ee-b298-c3c0c9ce63e4`, identical to `deploy/sandbox/policy.json`); the registration of `sandbox:receipt` (change `752bea44-40c8-4c88-ba40-b5035c8420c7`, parameter `note` only, 10 s timeout).
 - The nine checks, with `sandbox-visitor` only: the key's scope; `sandbox-receipt` 1.0.0 in effect; no approval, refused with the policy's reason; a demo approval, `201`; with it, transaction `18ce9222-ca2e-434c-a47e-0a6f72fdd387` `APPROVED` in 14.1 s, receipt `RC-18ce9222`, the record verifying offline; the same approval again, refused (`receiptApproved=true != verified receiptApproved=false`); a note over 200 characters, refused; a demo approval for another capability, `400 INVALID_SANDBOX_APPROVAL_REQUEST`; a browser preflight from `https://docs.parmanasystems.com` `204`, from another site `403` with no allow origin header. Record: `deploy/sandbox/evidence/check-record.json` (trust record `4df9cdac-6e4a-4c19-b8cd-7b8f79724c8c`, policy governance anchor `VERIFIED`).
+
+**Update (2026-10-23): rebuilt and checked again.** The 2026-10-02 database and the Vercel project were removed, and the sandbox was rebuilt from `pavancharak/parmana-core` with `deploy/sandbox/setup-sandbox.ps1`. The evidence above is for the first build; the rebuild's is:
+
+- Supabase project `bemukyaqfszmkoztugtv` (ap-northeast-2, not production's `ltjadvsjlpcygborxzet`): 40 migrations applied to an empty database. Vercel project `parmana-sandbox`, imported from `parmana-core`: `GET /ready` `READY` with authentication on. The startup log shows `"distrustedRootsRemoved":4` (3.27).
+- Two settings the first build did not need: `NODE_ENV=staging`, because the server now refuses `PARMANA_SANDBOX=true` with `NODE_ENV=production`; and `POLICY_CHANGE_CHECKERS={"sandbox-receipt":["sandbox-checker"]}`, without which the policy approval was refused with `403 CHECKER_NOT_IN_SCOPE` (G-50, G-123). The setup script now sets both.
+- Receipt endpoint redeployed: `401` to an unsigned body.
+- Through maker checker, proposed by `sandbox-maker` and approved by `sandbox-checker`: the demo approver (change `a267d1f3-b66d-4fbe-9711-467475acaa8b`), policy `sandbox-receipt` 1.0.0 (change `a158db5c-08bd-4fc5-87af-5659807ae075`) and the registration of `sandbox:receipt` (change `84160a13-33cf-4b21-bf93-456f5cdfb822`). The first attempt to approve the policy got no HTTP response and changed nothing (the change stayed `PENDING_APPROVAL`); the second was approved. The cause of the first was not found.
+- The nine checks behaved as on 2026-10-02: with the demo approval, transaction `0f406356-0e17-4b54-adba-8d06aad5c491` `APPROVED` in 14.1 s, receipt `RC-0f406356`, the record verifying offline; the same approval reused, refused; the other seven as listed above. The check wrote its record to `deploy/sandbox/evidence/check-record.json` on the operator's machine; the copy in the repository is still the 2026-10-02 record.
 
 ## 2.52 A Request Whose Signals Do Not Have the Declared Types Is Refused (Scoped, 2026-10-05)
 

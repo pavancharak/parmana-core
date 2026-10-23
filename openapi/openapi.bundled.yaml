@@ -94,8 +94,8 @@ info:
     url: https://docs.parmanasystems.com/license
 servers:
   - url: https://parmana-sandbox.vercel.app
-    description: Public sandbox (the docs playground). Same code as production, demo
-      data only, acts on nothing. Demo key prefilled.
+    description: Public sandbox. Same code as production, demo data only, acts on
+      nothing. Its demo key is not published yet, so requests are refused.
   - url: https://parmana-api-real.vercel.app
     description: Production. Needs a key issued by the operator.
   - url: http://localhost:3000

@@ -1,8 +1,53 @@
 ---
-title: "Playground (retired)"
-description: "The public Playground and its sandbox were retired on 2026-10-20. Run Parmana on your own machine with the Quickstart."
+title: "Playground"
+description: "The public sandbox was rebuilt on 2026-10-23 and passes its live check. Its demo key is not published yet, so the Playground is not open to visitors. Run Parmana on your own machine with the Quickstart."
 ---
 
-The public Playground and the public sandbox have been retired. Their demo key has been withdrawn, so no request to a public Parmana server will succeed.
+<Note>
+  The Playground is not open yet. The sandbox behind it is running, but its demo
+  key has not been published, so a request from a visitor is refused. To see
+  Parmana work today, use the [Quickstart](/quickstart) on your own machine.
+</Note>
 
-To see Parmana work, run it on your own machine with the [Quickstart](/quickstart). To connect your own system, see [Production deployment](/deployment/production).
+## Status
+
+| Date       | What happened                                                                                                                                         |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-02 | The public sandbox first passed its live check.                                                                                                       |
+| 2026-10-20 | The sandbox and the Playground were retired, and the old demo key was withdrawn.                                                                      |
+| 2026-10-23 | The sandbox was rebuilt on a new database, with new keys and a new demo approver, and passed the same nine checks. The new demo key is not published. |
+
+## What the sandbox is
+
+The sandbox at `https://parmana-sandbox.vercel.app` runs the same server code as production, with
+`PARMANA_SANDBOX=true`, its own database, its own signing keys and its own approver. It has one capability,
+`sandbox:receipt`, released to an endpoint that acts on nothing and answers with a receipt. The server refuses to start
+in sandbox mode if any connector to a real system is configured.
+
+In the sandbox anyone can get a signed approval, from `POST /sandbox/approvals`. That shows how an approval is used,
+not who may give one. In production only registered approvers sign.
+
+## What the live check showed
+
+The check uses only the demo key, which may ask for `sandbox:receipt` alone. On 2026-10-23:
+
+1. The key's scope is `sandbox:receipt` only.
+2. Policy `sandbox-receipt` 1.0.0 is in effect, approved through maker checker.
+3. A request with no approval is refused with the policy's reason.
+4. A demo approval is issued (`201`).
+5. With it, the request is approved and released to the receipt endpoint, and the signed record verifies offline. It
+   took 14.1 seconds.
+6. The same approval used again is refused.
+7. A note over 200 characters is refused by the policy.
+8. A demo approval for another capability is refused (`400 INVALID_SANDBOX_APPROVAL_REQUEST`).
+9. A browser request is allowed from the docs site and refused from any other site.
+
+## Limits
+
+- **Records are not deleted yet.** Deleting sandbox records older than 7 days, daily, is planned but not running. Do
+  not send anything to the sandbox you would not want kept.
+- **The sandbox maker and checker keys are held by one person.** They are distinct credentials, not proven distinct
+  people.
+- **An approved request is slow**, about 14 seconds.
+
+The claim and its evidence are in `docs/CLAIMS.md`, section 2.51.

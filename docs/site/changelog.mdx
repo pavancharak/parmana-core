@@ -29,6 +29,13 @@ every commit, run `git log` in the repository for the complete record.
   including the startup distrust above, with SLSA build provenance. See
   [Verifying the server image](/security/overview#verifying-the-server-image).
 
+**Sandbox: rebuilt, not yet public**
+
+- The public sandbox was rebuilt on a new database, with new keys and a new demo approver, and passed its nine live
+  checks. Its demo key is not published, so the [Playground](/playground) is not open to visitors yet.
+- Sandbox mode now needs `NODE_ENV` other than `production` (the server refuses `PARMANA_SANDBOX=true` with
+  `NODE_ENV=production`), and a policy change needs its checker listed in `POLICY_CHANGE_CHECKERS`.
+
 ## 2026-10-22
 
 **Released: SDK 1.6.1, connector SDK 0.3.1 and parmana-connector-sdk 0.2.1**

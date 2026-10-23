@@ -19,7 +19,7 @@ This file is generated from the documentation navigation. Do not edit it by hand
 
 * [Welcome](https://docs.parmanasystems.com): Parmana authorizes every action your AI agents propose, and gives you a signed proof you can verify independently.
 * [Choose your path](https://docs.parmanasystems.com/choose-your-path): One table that tells you exactly where to start, whether you are a developer, an operator, an auditor or an AI agent.
-* [Quickstart](https://docs.parmanasystems.com/quickstart): Your first authorized execution: in one minute against the live sandbox with nothing installed, then in under 10 minutes on your own local server.
+* [Quickstart](https://docs.parmanasystems.com/quickstart): Your first authorized execution, in under 10 minutes on your own local server.
 * [How Parmana thinks](https://docs.parmanasystems.com/how-parmana-thinks): The six ideas behind every request Parmana handles: deterministic policy, fail-closed defaults, signed authorization, gateway verification, credential isolation, and trust records.
 * [How Parmana compares](https://docs.parmanasystems.com/how-parmana-compares): Parmana next to IAM, API gateways, LLM guardrails, policy engines and agent framework confirmations: what each answers, what Parmana adds, where Parmana is weaker, and how to use them together.
 ## Get started: Evaluate and audit
