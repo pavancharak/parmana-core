@@ -57,6 +57,17 @@ import { createApp } from "../packages/api/dist/app.js";
  * assertSigningKeyMaterialConfigured's local-file branch) still runs
  * eagerly below, unchanged.
  */
+// One line per cold start naming the runtime, so the deployed Node version
+// can be checked in the platform's logs (for example after a Node security
+// release such as the eMudhra intermediate distrust in 24.22.1).
+console.log(
+  JSON.stringify({
+    event: "runtime",
+    node: process.version,
+    openssl: process.versions.openssl,
+  }),
+);
+
 assertStorageConfigured();
 assertSigningKeyMaterialConfigured();
 assertPaytmConnectorConfigured();
