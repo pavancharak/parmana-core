@@ -26,6 +26,7 @@ import { createRateLimitStore } from "../packages/api/dist/bootstrap/createRateL
 import { createSandboxOptions } from "../packages/api/dist/bootstrap/createSandboxOptions.js";
 import { createKillSwitch } from "../packages/api/dist/bootstrap/createKillSwitch.js";
 import { createApp } from "../packages/api/dist/app.js";
+import { distrustCompromisedRoots } from "../packages/api/dist/bootstrap/distrustCompromisedRoots.js";
 
 /**
  * Vercel serverless entry for the real Parmana API.
@@ -60,11 +61,15 @@ import { createApp } from "../packages/api/dist/app.js";
 // One line per cold start naming the runtime, so the deployed Node version
 // can be checked in the platform's logs (for example after a Node security
 // release such as the eMudhra intermediate distrust in 24.22.1).
+// Before any outbound TLS connection: see distrustCompromisedRoots.ts.
+const distrusted = distrustCompromisedRoots();
+
 console.log(
   JSON.stringify({
     event: "runtime",
     node: process.version,
     openssl: process.versions.openssl,
+    distrustedRootsRemoved: distrusted.removed,
   }),
 );
 

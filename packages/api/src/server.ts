@@ -23,6 +23,7 @@ import { createRateLimitStore } from "./bootstrap/createRateLimitStore.js";
 import { createSandboxOptions } from "./bootstrap/createSandboxOptions.js";
 import { createKillSwitch } from "./bootstrap/createKillSwitch.js";
 import { createApp } from "./app.js";
+import { distrustCompromisedRoots } from "./bootstrap/distrustCompromisedRoots.js";
 
 /**
  * Fail-closed startup validation, before any other bootstrap runs and
@@ -47,6 +48,16 @@ import { createApp } from "./app.js";
  * Without these, a misconfigured process could bind the port, pass
  * /health, and only fail on its first real request.
  */
+// Before any outbound TLS connection: see distrustCompromisedRoots.ts.
+const distrusted = distrustCompromisedRoots();
+console.log(
+  JSON.stringify({
+    event: "runtime",
+    node: process.version,
+    distrustedRootsRemoved: distrusted.removed,
+  }),
+);
+
 assertStorageConfigured();
 assertSigningKeyMaterialConfigured();
 await assertKmsSigningKeyReachable();
