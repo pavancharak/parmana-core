@@ -1,53 +1,610 @@
 ---
 title: "Playground"
-description: "The public sandbox was rebuilt on 2026-10-23 and passes its live check. Its demo key is not published yet, so the Playground is not open to visitors. Run Parmana on your own machine with the Quickstart."
+description: "Send real requests to a live Parmana sandbox with a published demo key: a refusal, a signed approval, an approved and signed release, and an offline check. No install, no account."
 ---
 
+The sandbox is a live Parmana server you can call right now. It runs the same code as production, with its own
+database, its own signing keys and its own approver, and every check production runs is on. Its one action,
+`sandbox:receipt`, is released to an endpoint that acts on nothing and answers with a receipt. So you see the whole
+path for real: the policy, the human approval, the signed authorization, the release to an external endpoint, and a
+signed record you can verify yourself.
+
+<Warning>
+  Everything you send to the sandbox is visible to every other visitor, because
+  everyone shares one demo key. Send only demo text. Never send personal data,
+  real order numbers or secrets.
+</Warning>
+
+## The sandbox at a glance
+
+| What                 | Value                                                                                                                                                                                           |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Address              | `https://parmana-sandbox.vercel.app`                                                                                                                                                            |
+| Demo key             | `SANDBOX_DEMO_KEY`, sent as `Authorization: Bearer SANDBOX_DEMO_KEY`. Public on purpose.                                                                                                        |
+| Who the key is       | Caller `sandbox-visitor`, acting only as itself, allowed only `sandbox:receipt`                                                                                                                 |
+| The one action       | `sandbox:receipt`: one parameter, `note`, at most 200 characters                                                                                                                                |
+| Policy in effect     | `sandbox-receipt` 1.0.0: approves only with a signed approval for the request's `target`                                                                                                        |
+| Approvals            | `POST /sandbox/approvals` signs one for you, valid 5 minutes, accepted once. In production a person signs it.                                                                                   |
+| Where it is released | `https://parmana-sandbox-receipt.vercel.app/api/release`, which verifies the signed release and answers a receipt                                                                               |
+| Signing key          | `GET /keys/default` (no key needed). Sandbox records never verify against production's key, and the reverse.                                                                                    |
+| Rate limit           | `POST /execute`: 30 requests a minute for the demo key, shared by every visitor. Over it: `429 RATE_LIMITED`.                                                                                   |
+| Governance routes    | Refused for the demo key: `403 NON_HUMAN_CALLER_DENIED`. Their pages show real captured responses instead.                                                                                      |
+| Typical time         | 10 to 15 seconds for an approved request, a few seconds for a refusal. Set your client timeout to 120 seconds.                                                                                  |
+| Kept for             | Not guaranteed. A daily job will delete every request and record visitors sent more than 7 days ago; it is paused for now. Keep any record you need. Policies and approvals of governance stay. |
+
+## Try it in your browser
+
+Every page in the [REST API](/api-reference/introduction) tab has a **Try it** panel. It calls the sandbox first, with
+the demo key already filled in. Start with these, in order:
+
+1. [Get the caller](/api-reference/endpoints/get-caller-me): who the demo key is.
+2. [Get the policy in effect](/api-reference/endpoints/get-policy-in-effect) with `capability` `sandbox:receipt`: what
+   a request must carry.
+3. [Get a demo approval](/api-reference/endpoints/create-sandbox-approval): a signed approval for a target you choose.
+4. [Execute a transaction](/api-reference/endpoints/execute-transaction): your request, with that approval in
+   `signals.approvalArtifact`.
+
+The scripts below do the same in one run, so you can see every step together.
+
+## Run the whole flow
+
+Each script does seven steps: who am I, what must a request carry, send with no approval (refused), get a demo
+approval, send with it (approved, released and signed), verify the signed record, send the same approval again
+(refused). TypeScript and Python use the published SDKs (`npm install @parmana/sdk`,
+`pip install "parmana[verify]" requests`). The cURL and PowerShell versions need nothing installed. Each script was
+run against the live sandbox before it was published here; the files are in
+[`examples/sandbox-playground`](https://github.com/pavancharak/parmana-core/tree/main/examples/sandbox-playground).
+
+For TypeScript and Python, set the key first: `export PARMANA_API_KEY=SANDBOX_DEMO_KEY` (macOS, Linux) or
+`$env:PARMANA_API_KEY = "SANDBOX_DEMO_KEY"` (PowerShell). Then run `npx tsx playground.ts` or `python playground.py`.
+
+<CodeGroup>
+
+```bash cURL (macOS, Linux)
+export PARMANA_URL=https://parmana-sandbox.vercel.app
+export PARMANA_API_KEY=SANDBOX_DEMO_KEY   # the published sandbox demo key
+
+# 1. Who am I?
+curl -s $PARMANA_URL/callers/me -H "Authorization: Bearer $PARMANA_API_KEY"
+echo
+
+# 2. What must a request carry?
+curl -s "$PARMANA_URL/policies/in-effect?capability=sandbox:receipt" -H "Authorization: Bearer $PARMANA_API_KEY"
+echo
+
+# 3. Send a request with no approval: refused.
+TARGET="order-$(date +%s)"
+send() {  # $1 = note, $2 = the rest of the signals
+  ID=$(uuidgen | tr 'A-Z' 'a-z')
+  curl -s -X POST $PARMANA_URL/execute \
+    -H "Authorization: Bearer $PARMANA_API_KEY" -H "Content-Type: application/json" \
+    -d '{
+      "businessTransactionId": "'$ID'",
+      "metadata": { "businessTransactionId": "'$ID'" },
+      "authority": { "authorityId": "authority-1", "authorityType": "SERVICE",
+                     "principalId": "sandbox-visitor", "issuedAt": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'" },
+      "authorization": { "authorizationId": "authorization-1", "authorityId": "authority-1",
+                         "purpose": "Trying the Parmana sandbox", "issuedAt": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'" },
+      "intent": { "intentId": "intent-1", "authorizationId": "authorization-1", "action": "sandbox:receipt",
+                  "target": "'$TARGET'", "parameters": { "note": "'"$1"'" },
+                  "createdAt": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'" },
+      "policy": { "name": "sandbox-receipt", "version": "1.0.0", "schemaVersion": "1.0.0" },
+      "signals": { "note": "'"$1"'", '"$2"' }
+    }'
+  echo
+}
+send "hello" '"receiptApproved": false'
+
+# 4. Get a demo approval for this target.
+APPROVAL=$(curl -s -X POST $PARMANA_URL/sandbox/approvals \
+  -H "Authorization: Bearer $PARMANA_API_KEY" -H "Content-Type: application/json" \
+  -d '{ "capability": "sandbox:receipt", "resourceId": "'$TARGET'" }')
+echo "$APPROVAL"
+
+# 5. Send it again with the approval: approved, released, signed.
+send "hello" '"receiptApproved": true, "approvalArtifact": '"$APPROVAL"
+
+# 6. The same approval again: refused.
+send "again" '"receiptApproved": true, "approvalArtifact": '"$APPROVAL"
+```
+
+```powershell PowerShell (Windows)
+$Url = "https://parmana-sandbox.vercel.app"
+$env:PARMANA_API_KEY = "SANDBOX_DEMO_KEY"   # the published sandbox demo key
+$Headers = @{ Authorization = "Bearer $env:PARMANA_API_KEY" }
+
+# 1. Who am I?
+Invoke-RestMethod "$Url/callers/me" -Headers $Headers | ConvertTo-Json -Compress
+
+# 2. What must a request carry?
+Invoke-RestMethod "$Url/policies/in-effect?capability=sandbox:receipt" -Headers $Headers | ConvertTo-Json -Depth 5 -Compress
+
+# 3. Send a request with no approval: refused.
+$Target = "order-$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())"
+function Send-Receipt([string]$Note, [hashtable]$Signals) {
+  $id = [guid]::NewGuid().ToString()
+  $now = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+  $body = @{
+    businessTransactionId = $id
+    metadata      = @{ businessTransactionId = $id }
+    authority     = @{ authorityId = "authority-1"; authorityType = "SERVICE"; principalId = "sandbox-visitor"; issuedAt = $now }
+    authorization = @{ authorizationId = "authorization-1"; authorityId = "authority-1"; purpose = "Trying the Parmana sandbox"; issuedAt = $now }
+    intent        = @{ intentId = "intent-1"; authorizationId = "authorization-1"; action = "sandbox:receipt"; target = $Target; parameters = @{ note = $Note }; createdAt = $now }
+    policy        = @{ name = "sandbox-receipt"; version = "1.0.0"; schemaVersion = "1.0.0" }
+    signals       = @{ note = $Note } + $Signals
+  } | ConvertTo-Json -Depth 10
+  try {
+    Invoke-RestMethod -Method Post "$Url/execute" -Headers $Headers -ContentType "application/json" -Body $body -TimeoutSec 120
+  } catch {
+    $_.ErrorDetails.Message
+  }
+}
+Send-Receipt "hello" @{ receiptApproved = $false }
+
+# 4. Get a demo approval for this target.
+$Approval = Invoke-RestMethod -Method Post "$Url/sandbox/approvals" -Headers $Headers -ContentType "application/json" `
+  -Body (@{ capability = "sandbox:receipt"; resourceId = $Target } | ConvertTo-Json)
+$Approval | ConvertTo-Json -Depth 5 -Compress
+
+# 5. Send it again with the approval: approved, released, signed.
+$Record = Send-Receipt "hello" @{ receiptApproved = $true; approvalArtifact = $Approval }
+$Record.executions[0].decision.outcome
+$Record.executions[0].evidence.attributes.connector.responseSummary.metadata.result.receiptId
+
+# 6. The same approval again: refused.
+Send-Receipt "again" @{ receiptApproved = $true; approvalArtifact = $Approval }
+```
+
+```typescript TypeScript
+import {
+  ParmanaClient,
+  createBusinessTransaction,
+  ExecutionRejectedError,
+  verifyExecutionTrustRecordOffline,
+} from "@parmana/sdk";
+
+const PARMANA_URL = "https://parmana-sandbox.vercel.app";
+const PARMANA_API_KEY = process.env.PARMANA_API_KEY; // the sandbox demo key
+if (!PARMANA_API_KEY)
+  throw new Error("Set PARMANA_API_KEY to the sandbox demo key.");
+
+const client = new ParmanaClient({
+  endpoint: PARMANA_URL,
+  apiKey: PARMANA_API_KEY,
+  timeout: 120_000,
+});
+
+// 1. Who am I? The demo key may ask for sandbox:receipt only.
+const me = await client.caller();
+console.log("1.", me.callerId, me.allowedCapabilities);
+
+// 2. What must a request carry? Ask the server for the policy in effect.
+const inEffect = await (
+  await fetch(`${PARMANA_URL}/policies/in-effect?capability=sandbox:receipt`, {
+    headers: { Authorization: `Bearer ${PARMANA_API_KEY}` },
+  })
+).json();
+console.log("2.", inEffect.policy, inEffect.signals);
+
+const target = `my-first-receipt-${Date.now()}`;
+const request = (note: string, signals: Record<string, unknown>) =>
+  createBusinessTransaction({
+    principalId: me.callerId,
+    purpose: "Trying the Parmana sandbox",
+    action: "sandbox:receipt",
+    target,
+    parameters: { note },
+    policy: inEffect.policy,
+    signals: { note, ...signals } as never,
+  });
+
+// 3. Without an approval, the policy refuses.
+try {
+  await client.execute(request("hello", { receiptApproved: false }));
+} catch (error) {
+  if (!(error instanceof ExecutionRejectedError)) throw error;
+  console.log("3. refused:", error.message);
+}
+
+// 4. Get a signed approval for this target from the sandbox's demo approver.
+const approval = await (
+  await fetch(`${PARMANA_URL}/sandbox/approvals`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${PARMANA_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ capability: "sandbox:receipt", resourceId: target }),
+  })
+).json();
+console.log("4. approval expires", approval.payload.expiresAt);
+
+// 5. With the approval, the request is approved and released.
+const record = await client.execute(
+  request("hello", { receiptApproved: true, approvalArtifact: approval }),
+);
+console.log(
+  "5.",
+  record.executions[0]?.decision.outcome,
+  record.businessTransactionId,
+);
+
+// 6. Verify the signed record offline, with the sandbox's public key only.
+const { pem } = await client.publicKey("default");
+console.log(
+  "6. verifies offline:",
+  verifyExecutionTrustRecordOffline(record, { default: pem }).valid,
+);
+
+// 7. The same approval again is refused: an approval is used once.
+try {
+  await client.execute(
+    request("again", { receiptApproved: true, approvalArtifact: approval }),
+  );
+} catch (error) {
+  if (!(error instanceof ExecutionRejectedError)) throw error;
+  console.log("7. refused:", error.message);
+}
+```
+
+```python Python
+import os
+import time
+
+import requests
+from parmana import ParmanaClient, ExecutionRejectedError, PolicyReference, create_business_transaction
+from parmana.crypto.offline_verifier import verify_execution_trust_record_offline
+
+PARMANA_URL = "https://parmana-sandbox.vercel.app"
+PARMANA_API_KEY = os.environ["PARMANA_API_KEY"]  # the sandbox demo key
+HEADERS = {"Authorization": f"Bearer {PARMANA_API_KEY}"}
+
+client = ParmanaClient(endpoint=PARMANA_URL, api_key=PARMANA_API_KEY, timeout=120)
+
+# 1. Who am I? The demo key may ask for sandbox:receipt only.
+me = client.caller()
+print("1.", me.caller_id, me.allowed_capabilities)
+
+# 2. What must a request carry? Ask the server for the policy in effect.
+in_effect = requests.get(
+    f"{PARMANA_URL}/policies/in-effect",
+    params={"capability": "sandbox:receipt"},
+    headers=HEADERS,
+    timeout=30,
+).json()
+print("2.", in_effect["policy"], in_effect["signals"])
+policy = PolicyReference(
+    name=in_effect["policy"]["name"],
+    version=in_effect["policy"]["version"],
+    schema_version=in_effect["policy"]["schemaVersion"],
+)
+
+target = f"my-first-receipt-{int(time.time() * 1000)}"
+
+
+def request(note, signals):
+    return create_business_transaction(
+        principal_id=me.caller_id,
+        purpose="Trying the Parmana sandbox",
+        action="sandbox:receipt",
+        target=target,
+        parameters={"note": note},
+        policy=policy,
+        signals={"note": note, **signals},
+    )
+
+
+# 3. Without an approval, the policy refuses.
+try:
+    client.execute(request("hello", {"receiptApproved": False}))
+except ExecutionRejectedError as error:
+    print("3. refused:", error)
+
+# 4. Get a signed approval for this target from the sandbox's demo approver.
+approval = requests.post(
+    f"{PARMANA_URL}/sandbox/approvals",
+    json={"capability": "sandbox:receipt", "resourceId": target},
+    headers=HEADERS,
+    timeout=30,
+).json()
+print("4. approval expires", approval["payload"]["expiresAt"])
+
+# 5. With the approval, the request is approved and released.
+record = client.execute(request("hello", {"receiptApproved": True, "approvalArtifact": approval}))
+print("5.", record.executions[0].decision.outcome, record.business_transaction_id)
+
+# 6. Verify the signed record offline, with the sandbox's public key only.
+#    Pass the record as the server sent it (plain JSON): in parmana 1.4.0 and earlier the
+#    decoded model drops a null previousChainHash, so it fails to verify.
+pem = client.public_key("default").pem
+raw_record = requests.get(
+    f"{PARMANA_URL}/trust-records/{record.business_transaction_id}",
+    headers=HEADERS,
+    timeout=30,
+).json()
+print("6. verifies offline:", verify_execution_trust_record_offline(raw_record, {"default": pem}).valid)
+
+# 7. The same approval again is refused: an approval is used once.
+try:
+    client.execute(request("again", {"receiptApproved": True, "approvalArtifact": approval}))
+except ExecutionRejectedError as error:
+    print("7. refused:", error)
+```
+
+</CodeGroup>
+
+## What each step returns
+
+Every response below is real, captured from the sandbox's first build on 2026-10-02. The sandbox was rebuilt on
+2026-10-23 with new keys, so today it answers the same shapes with its own ids, times and signing key.
+
+<Steps>
+  <Step title="1. Who am I: GET /callers/me">
+    ```json 200
+    {
+      "callerId": "sandbox-visitor",
+      "allowedPrincipalIds": [
+        "sandbox-visitor"
+      ],
+      "allowedCapabilities": [
+        "sandbox:receipt"
+      ],
+      "unrestrictedCapabilities": false
+    }
+    ```
+
+    The demo key may ask for `sandbox:receipt` and nothing else, and only as `sandbox-visitor`.
+
+  </Step>
+
+  <Step title="2. What must a request carry: GET /policies/in-effect">
+    Query: `capability=sandbox:receipt`.
+
+    ```json 200
+    {
+      "capability": "sandbox:receipt",
+      "policy": {
+        "name": "sandbox-receipt",
+        "version": "1.0.0",
+        "schemaVersion": "1.0.0"
+      },
+      "description": "The public sandbox's one action (ADR-0014). Releases sandbox:receipt to the sandbox receipt endpoint, which acts on nothing and answers with a receipt, only with a signed approval for the target. In the sandbox anyone can get that approval from POST /sandbox/approvals. A note longer than 200 characters is refused.",
+      "signals": {
+        "facts": [
+          "note",
+          "receiptApproved"
+        ],
+        "schema": {
+          "note": "string",
+          "receiptApproved": "boolean"
+        },
+        "bound": {
+          "note": "parameters.note"
+        },
+        "approval": {
+          "receiptApproved": {
+            "resourceId": "target"
+          }
+        }
+      }
+    }
+    ```
+
+    Read it like this. `policy` is the name and version your request must name. `signals.facts` are the facts the
+    policy reads, and `signals.schema` gives their types. `signals.bound` says `note` must equal `parameters.note`,
+    so you cannot declare one note and release another. `signals.approval` says `receiptApproved` is true only with
+    a signed approval whose `resourceId` is the request's `target`. The server checks that itself, so declaring
+    `true` without one is refused.
+
+  </Step>
+
+  <Step title="3. Send with no approval: refused">
+    ```json 403
+    {
+      "error": "Execution rejected: A receipt needs a signed approval for this target in signals.approvalArtifact, with receiptApproved true. In the sandbox, get one from POST /sandbox/approvals.",
+      "code": "POLICY_DENIED"
+    }
+    ```
+
+    Nothing was released.
+
+  </Step>
+
+  <Step title="4. Get a demo approval: POST /sandbox/approvals">
+    Body: `{ "capability": "sandbox:receipt", "resourceId": "your target" }`
+
+    ```json 201
+    {
+      "payload": {
+        "version": 1,
+        "approvalId": "7134b0bf-fb95-4e84-8bde-9a55e0da0d85",
+        "issuer": {
+          "approverId": "sandbox-demo-approver",
+          "keyId": "sandbox-demo-approver-key-1"
+        },
+        "issuedAt": "2026-10-02T02:09:22.593Z",
+        "expiresAt": "2026-10-02T02:14:22.593Z",
+        "capability": "sandbox:receipt",
+        "resourceId": "order-1001-1790906957476",
+        "scope": {
+          "field": "resourceId",
+          "comparator": "eq",
+          "value": "order-1001-1790906957476"
+        },
+        "nonce": "8057bae9-c5c8-4d6f-a22f-c7024c183a1c"
+      },
+      "signature": {
+        "algorithm": "ed25519",
+        "keyId": "sandbox-demo-approver-key-1",
+        "value": "nAVQUqjNfbOb1XMsAOVkVC9iyXdwsZRiE9P37b4Nz4kInnbH+WiMeu7P354ExAlApP100Fke2X3Q723EoZORBA==",
+        "signedAt": "2026-10-02T02:09:22.593Z"
+      }
+    }
+    ```
+
+    In production this object is made by a person on their own machine with their own private key
+    ([Human approval](/concepts/human-approval)). Here the sandbox's demo approver signs it for anyone. The server
+    checks it exactly as it checks a real one: a trusted approver key, the signature, the capability, the
+    `resourceId` against your `target`, the expiry, and that it was never used before.
+
+  </Step>
+
+  <Step title="5. Send with the approval: approved, released, signed">
+    Put the whole approval object in `signals.approvalArtifact` and set `signals.receiptApproved` to `true`. The
+    response is the signed Execution Trust Record. Abridged here; the full record also carries the request, the
+    signed authorization and the chain hashes:
+
+    ```json 200 (abridged)
+    {
+      "trustRecordId": "e09136b7-e665-4aee-a4f8-efa874c0901f",
+      "businessTransactionId": "a4b0ff35-b090-433c-8b4b-90baa82184d5",
+      "executions": [
+        {
+          "executionId": "c597dfa5-8f74-4bda-aa19-7c9ac4989d36",
+          "status": "COMPLETED",
+          "decision": {
+            "outcome": "APPROVED",
+            "reason": "Receipt approved for this target.",
+            "policy": {
+              "name": "sandbox-receipt",
+              "version": "1.0.0",
+              "schemaVersion": "1.0.0"
+            }
+          },
+          "evidence": {
+            "success": true,
+            "attributes": {
+              "connector": {
+                "connectorId": "ext-sandbox:receipt",
+                "responseSummary": {
+                  "success": true,
+                  "metadata": {
+                    "result": {
+                      "target": "order-1001-1790906957476",
+                      "receiptId": "RC-a4b0ff35",
+                      "parameters": {
+                        "note": "hello from the playground"
+                      }
+                    },
+                    "executedAt": "2026-10-02T02:09:30.280Z",
+                    "endpointUrl": "https://parmana-sandbox-receipt.vercel.app/api/release",
+                    "releaseIssuedAt": "2026-10-02T02:09:30.233Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "trustRecordHash": "79d10d4fa0669a423fada0a666eb7d1a4afabd948a30a4960f88c2ef49749fe5",
+      "signature": {
+        "keyId": "default",
+        "value": "YEuNpFcU0IVBEchdlGXeIcGzFzTsioF3VGk37zeriTkcLaPEBnqy/0MQwtoYLQFhLov0VgvcbPoXJsjRQwAsAw==",
+        "signedAt": "2026-10-02T02:09:33.273Z",
+        "algorithm": "ed25519"
+      }
+    }
+    ```
+
+    `responseSummary` is what the receipt endpoint answered after it verified Parmana's signed release.
+
+  </Step>
+
+  <Step title="6. Verify the record yourself">
+    Fetch the sandbox's public key from `GET /keys/default` (no key needed) and check the record offline, with no
+    further call to the server:
+
+    ```json Offline verification result
+    {
+      "valid": true,
+      "hashValid": true,
+      "legacySignatureValid": true,
+      "algorithmsChecked": [
+        "ed25519"
+      ],
+      "errors": []
+    }
+    ```
+
+    TypeScript: `verifyExecutionTrustRecordOffline(record, { default: pem })`. Python:
+    `verify_execution_trust_record_offline(raw_record, {"default": pem})`, with the record as plain JSON (see the
+    note below). Change one character of the record and `valid` becomes `false`. See
+    [Verify independently](/guides/verify-independently).
+
+  </Step>
+
+  <Step title="7. Send the same approval again: refused">
+    ```json 403
+    {
+      "error": "Execution rejected: Rejected: declared signal(s) do not match independently verified state (receiptApproved=true != verified receiptApproved=false).",
+      "code": "POLICY_DENIED"
+    }
+    ```
+
+    An approval is accepted once. A second request with it is refused, even for the same target.
+
+  </Step>
+</Steps>
+
 <Note>
-  The Playground is not open yet. The sandbox behind it is running, but its demo
-  key has not been published, so a request from a visitor is refused. To see
-  Parmana work today, use the [Quickstart](/quickstart) on your own machine.
+  Python SDK 1.4.0 and earlier: pass the record to
+  `verify_execution_trust_record_offline` as the plain JSON the server sent, for
+  example from `GET /trust-records/
+  {businessTransactionId}`. The decoded model that `client.execute()` and
+  `client.trust_record()` return drops a `null` `previousChainHash`, so
+  verifying the model reports a hash mismatch although the record is intact. The
+  TypeScript SDK is not affected, and Python SDK 1.5.0 fixes it.
 </Note>
 
-## Status
+## Every refusal you can meet
 
-| Date       | What happened                                                                                                                                         |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-10-02 | The public sandbox first passed its live check.                                                                                                       |
-| 2026-10-20 | The sandbox and the Playground were retired, and the old demo key was withdrawn.                                                                      |
-| 2026-10-23 | The sandbox was rebuilt on a new database, with new keys and a new demo approver, and passed the same nine checks. The new demo key is not published. |
+All real, from the sandbox.
 
-## What the sandbox is
+| You send                                                    | Status | Response                                                                                                |
+| ----------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------- |
+| No `Authorization` header                                   | `401`  | `{"error":"authentication required"}`                                                                   |
+| No approval, or `receiptApproved: false`                    | `403`  | `POLICY_DENIED` with the policy's reason (step 3)                                                       |
+| An approval already used                                    | `403`  | `POLICY_DENIED`, `receiptApproved=true != verified receiptApproved=false` (step 7)                      |
+| A `note` over 200 characters, even with an approval         | `403`  | `POLICY_DENIED`, `The note is longer than 200 characters.`                                              |
+| A demo approval for any capability but `sandbox:receipt`    | `400`  | `INVALID_SANDBOX_APPROVAL_REQUEST`, `The sandbox approver signs only for capability "sandbox:receipt".` |
+| A governance route, such as `GET /policies/pending-changes` | `403`  | `NON_HUMAN_CALLER_DENIED`                                                                               |
+| A `businessTransactionId` already used                      | `409`  | `Business Transaction 'the id' already exists.`                                                         |
+| A `businessTransactionId` that is not a UUID                | `400`  | `businessTransactionId must be a valid UUID.`                                                           |
+| `metadata.businessTransactionId` missing or different       | `400`  | `metadata.businessTransactionId must match businessTransactionId.`                                      |
+| More than 30 executions a minute on the demo key            | `429`  | `RATE_LIMITED`. Wait a minute and send again.                                                           |
 
-The sandbox at `https://parmana-sandbox.vercel.app` runs the same server code as production, with
-`PARMANA_SANDBOX=true`, its own database, its own signing keys and its own approver. It has one capability,
-`sandbox:receipt`, released to an endpoint that acts on nothing and answers with a receipt. The server refuses to start
-in sandbox mode if any connector to a real system is configured.
+Every code is explained in the [Error catalog](/api-reference/error-catalog).
 
-In the sandbox anyone can get a signed approval, from `POST /sandbox/approvals`. That shows how an approval is used,
-not who may give one. In production only registered approvers sign.
+## Rules for a raw HTTP request
 
-## What the live check showed
+The SDK builders (`createBusinessTransaction`, `create_business_transaction`) follow these for you. Without an SDK:
 
-The check uses only the demo key, which may ask for `sandbox:receipt` alone. On 2026-10-23:
+- `businessTransactionId` is a new UUID for every request, and `metadata.businessTransactionId` is the same UUID.
+- `intent.action` is `sandbox:receipt`. `intent.target` is any text you choose, and the approval's `resourceId` must
+  equal it.
+- `intent.parameters.note` and `signals.note` are the same text.
+- `policy` is `{ "name": "sandbox-receipt", "version": "1.0.0", "schemaVersion": "1.0.0" }`, as
+  `GET /policies/in-effect` says.
+- `authority.principalId` is `sandbox-visitor`. `authorityId`, `authorizationId` and `intentId` are any text, linked
+  as in the scripts.
+- `signals.approvalArtifact` is the approval object exactly as `POST /sandbox/approvals` returned it, within 5 minutes.
 
-1. The key's scope is `sandbox:receipt` only.
-2. Policy `sandbox-receipt` 1.0.0 is in effect, approved through maker checker.
-3. A request with no approval is refused with the policy's reason.
-4. A demo approval is issued (`201`).
-5. With it, the request is approved and released to the receipt endpoint, and the signed record verifies offline. It
-   took 14.1 seconds.
-6. The same approval used again is refused.
-7. A note over 200 characters is refused by the policy.
-8. A demo approval for another capability is refused (`400 INVALID_SANDBOX_APPROVAL_REQUEST`).
-9. A browser request is allowed from the docs site and refused from any other site.
+## From the sandbox to your own system
 
-## Limits
+| In the sandbox                             | In your deployment                                                                                                                  |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `https://parmana-sandbox.vercel.app`       | Your own server, local first: [Quickstart](/quickstart), then [Production deployment](/deployment/production)                       |
+| The shared demo key                        | A key for each agent, allowed only its capabilities: [API keys](/self-hosted/api-keys)                                              |
+| `POST /sandbox/approvals` signs for anyone | A named person signs on their own machine: [Manage approvers](/guides/manage-approvers), [Human approval](/concepts/human-approval) |
+| Policy `sandbox-receipt`                   | Your policy, approved through maker checker: [Write your first policy](/guides/write-your-first-policy)                             |
+| The receipt endpoint                       | Your own HTTPS endpoint, registered through maker checker: [Connect any external system](/guides/connect-any-external-system)       |
+| Records visible to every visitor           | Each record visible only to the key that sent it                                                                                    |
 
-- **Records are not deleted yet.** Deleting sandbox records older than 7 days, daily, is planned but not running. Do
-  not send anything to the sandbox you would not want kept.
-- **The sandbox maker and checker keys are held by one person.** They are distinct credentials, not proven distinct
-  people.
-- **An approved request is slow**, about 14 seconds.
+## For AI agents
 
-The claim and its evidence are in `docs/CLAIMS.md`, section 2.51.
+To test an integration before you have your own deployment: base URL `https://parmana-sandbox.vercel.app`, bearer key
+`SANDBOX_DEMO_KEY`, capability `sandbox:receipt`. Read `GET /policies/in-effect?capability=sandbox:receipt` first and
+build the request from its answer. Get the approval from `POST /sandbox/approvals` with `resourceId` equal to your
+`target`. Send `POST /execute` with a client timeout of 120 seconds. Treat `403 POLICY_DENIED` as a final refusal, not
+something to retry. The full guide is [Integrate Parmana](/agents/integrate), and the machine readable spec is
+[`openapi.yaml`](https://parmana-sandbox.vercel.app/openapi.yaml).

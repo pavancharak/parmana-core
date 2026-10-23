@@ -19,6 +19,7 @@ examples/
 │   └── AS-001-approved-vendor-payment   an example audit package (all evidence from one run)
 ├── shared/                 helper functions, reference policies, common transactions
 ├── 04-verified-execution/  runs its own receiving-side HTTP server on a free port
+├── sandbox-playground/     the Playground scripts (cURL, PowerShell, TypeScript, Python) for the public sandbox
 └── archive/                superseded examples, kept for history only
 ```
 

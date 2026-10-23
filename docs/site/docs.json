@@ -31,6 +31,7 @@
             "group": "Start here",
             "pages": [
               "index",
+              "playground",
               "choose-your-path",
               "quickstart",
               "how-parmana-thinks",

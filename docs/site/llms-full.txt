@@ -153,7 +153,7 @@ command or request. If two rows seem to apply, do the earlier one first.
 
 | Your goal                                                                                        | Start here                                                                                                                   | You need                                                                                       | First step                                                                  |
 | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| **See Parmana work right now** on your own machine                                               | [Quickstart](/quickstart)                                                                                                    | A browser, or cURL or PowerShell                                                               | `npm ci`, then follow the page                                              |
+| **See Parmana work right now**, with nothing installed                                           | [Playground](/playground)                                                                                                    | A browser, or cURL or PowerShell                                                               | `GET https://parmana-sandbox.vercel.app/callers/me` with the demo key       |
 | Put Parmana in front of an AI agent's actions, from **TypeScript**                               | [TypeScript SDK quickstart](/guides/typescript-sdk-quickstart)                                                               | Node 20 or later, a Parmana API URL, an API key                                                | `npm install @parmana/sdk`                                                  |
 | Put Parmana in front of an AI agent's actions, from **Python**                                   | [Python SDK quickstart](/guides/python-sdk-quickstart)                                                                       | Python 3.10 or later, a Parmana API URL, an API key                                            | `pip install parmana`                                                       |
 | Integrate from **any other language**, or with a plain HTTP client                               | [REST API introduction](/api-reference/introduction) and [Authentication](/api-reference/authentication)                     | Any HTTP client, a Parmana API URL, an API key                                                 | `POST /execute` with a Bearer key                                           |
@@ -4199,10 +4199,11 @@ Source: https://docs.parmanasystems.com/api-reference/introduction
 
 ## Base URL
 
-| Server     | Base URL                              | Key                                                               | Use it for                            |
-| ---------- | ------------------------------------- | ----------------------------------------------------------------- | ------------------------------------- |
-| Production | `https://parmana-api-real.vercel.app` | A key issued by the operator                                      | Real actions. Not open to the public. |
-| Local      | `http://localhost:3000`               | The committed demo key or your own, see [Quickstart](/quickstart) | Development on your own machine       |
+| Server         | Base URL                              | Key                                                                        | Use it for                                                                                                            |
+| -------------- | ------------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Public sandbox | `https://parmana-sandbox.vercel.app`  | The published demo key, `SANDBOX_DEMO_KEY`, allowed only `sandbox:receipt` | Trying requests for real with nothing installed. **Try it** panels call it by default. See [Playground](/playground). |
+| Production     | `https://parmana-api-real.vercel.app` | A key issued by the operator                                               | Real actions. Not open to the public.                                                                                 |
+| Local          | `http://localhost:3000`               | The committed demo key or your own, see [Quickstart](/quickstart)          | Development on your own machine                                                                                       |
 
 The raw spec is also served at `GET /openapi.yaml` and, identically, JSON-serialized, at
 `GET /openapi.json` (some tooling and most AI coding agents expect a `.json` path by
@@ -4221,7 +4222,7 @@ patterns](/guides/deploy-patterns#the-openapi-spec-endpoint).
 
 ## Every endpoint has its own page
 
-The **REST API** tab lists every endpoint on its own page, grouped by area: Execution, Transactions, Verification, Receipts, Trust Records, Replay, Policies, Policy Governance, Approvers, External Connectors, Sandbox, Refusal Records, Execution Intents, Audit, System and Handbook. Each page is generated from the bundled OpenAPI file, so it shows the exact parameters, request body, every response with a real example, and a **Try it** panel that sends a real request. Switch its server to your own: the public sandbox's demo key is not published yet (see [Playground](/playground)), and production needs a key issued by the operator. A test fails if an endpoint is added to the spec without a page. Start with [Execute a Business Transaction](/api-reference/endpoints/execute-transaction), the endpoint every integration uses.
+The **REST API** tab lists every endpoint on its own page, grouped by area: Execution, Transactions, Verification, Receipts, Trust Records, Replay, Policies, Policy Governance, Approvers, External Connectors, Sandbox, Refusal Records, Execution Intents, Audit, System and Handbook. Each page is generated from the bundled OpenAPI file, so it shows the exact parameters, request body, every response with a real example, and a **Try it** panel that sends a real request to the public sandbox with the demo key filled in (switch the server to call your own). With the demo key, only `sandbox:receipt` and the read routes work; other capabilities return `403`, and governance routes return `403 NON_HUMAN_CALLER_DENIED`, so use their captured examples. See [Playground](/playground). A test fails if an endpoint is added to the spec without a page. Start with [Execute a Business Transaction](/api-reference/endpoints/execute-transaction), the endpoint every integration uses.
 
 If you are an AI agent, follow [Integrate Parmana: specification for AI agents](/agents/integrate) instead of reading the pages one by one.
 
@@ -4387,7 +4388,7 @@ name the key by its `callerId`, never by the key itself.
 ## Check your key: GET /callers/me
 
 Call this first. It returns who the key is and what it may do, with the defaults below already applied. Real response
-from the sandbox with its demo key (captured on 2026-10-02; that key was later withdrawn):
+from the sandbox with the demo key:
 
 ```json 200
 {
