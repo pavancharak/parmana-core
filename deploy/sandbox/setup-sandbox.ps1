@@ -292,7 +292,11 @@ switch ($Stage) {
     Say "Sandbox database: project $ref" Green
 
     Confirm-Word "SET" "set 12 variables on $Project"
-    Set-VercelEnv "NODE_ENV" "production"
+    # Not "production": since 2026-10-19 the server refuses PARMANA_SANDBOX=true
+    # under NODE_ENV=production. Not "test" or "development" either: those relax
+    # execution intents, the signing check and governance. Any other value keeps
+    # every safeguard on.
+    Set-VercelEnv "NODE_ENV" "staging"
     Set-VercelEnv "PARMANA_POLICY_DIR" "./policies"
     Set-VercelEnv "PARMANA_STORAGE" "supabase"
     Set-VercelEnv "DATABASE_URL" $databaseUrl
