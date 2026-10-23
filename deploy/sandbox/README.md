@@ -45,8 +45,9 @@ Expect: `Wrote 8 files to D:\key\parmana-sandbox`, listing them, and `No key was
 
 In the Supabase dashboard: **New project**, a name such as `parmana-playground`, region **South Asia (Mumbai)**, a new
 database password. **Do not use the existing Supabase project named `parmana-sandbox`: despite its name, it is
-production's database** (project `ltjadvsjlpcygborxzet`); never pause or delete it. The sandbox set up on 2026-10-02 uses
-project `zkrfrfyokkpfwghoohne`. When it is ready, open **Connect** and keep the page open: stage 4 needs the **Session pooler** string
+production's database** (project `ltjadvsjlpcygborxzet`); never pause or delete it. The project made on 2026-10-02
+(`zkrfrfyokkpfwghoohne`) and the `parmana-sandbox` Vercel project were removed; the sandbox is being set up again from
+`parmana-core` on 2026-10-23. Supabase's free plan allows two active projects, production's and the sandbox's. When it is ready, open **Connect** and keep the page open: stage 4 needs the **Session pooler** string
 (port 5432) and stage 7 the **Transaction pooler** string (port 6543), each with the password filled in. These are the
 sandbox's, not production's.
 
@@ -58,7 +59,7 @@ connects.
 ### 3. Create the Vercel project (in the browser)
 
 In the Vercel dashboard, team `pavan-dev-singh-charaks-projects`: **Add New**, **Project**, import
-`pavancharak/parmana`, name it **`parmana-sandbox`**. Vercel offers **Services** and a suggested
+`pavancharak/parmana-core`, name it **`parmana-sandbox`**. Vercel offers **Services** and a suggested
 `vercel.json` because it sees several folders: do not use them. Set **Application Preset** to **Other** (the repository's
 own `vercel.json` defines the build, as for production), accept the "Possible configuration mismatch" warning, keep
 every other setting, **Deploy**. Check that the project's **Domains** shows `parmana-sandbox.vercel.app`.
