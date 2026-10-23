@@ -35,6 +35,9 @@ every commit, run `git log` in the repository for the complete record.
   back in the navigation with the same demo key that was withdrawn on 2026-10-20, its four scripts are in
   `examples/sandbox-playground`, and the REST API **Try it** panels call the
   sandbox with the key filled in again.
+- Sandbox retention is running again: every day at 03:30 UTC the sandbox deletes what visitors sent more than 7 days
+  ago. It had been paused since the 2026-10-02 deletion. Every run is logged, and a shorter period is refused without
+  an explicit confirmation.
 - Sandbox mode now needs `NODE_ENV` other than `production` (the server refuses `PARMANA_SANDBOX=true` with
   `NODE_ENV=production`), and a policy change needs its checker listed in `POLICY_CHANGE_CHECKERS`.
 

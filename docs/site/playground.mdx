@@ -17,20 +17,20 @@ signed record you can verify yourself.
 
 ## The sandbox at a glance
 
-| What                 | Value                                                                                                                                                                                           |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Address              | `https://parmana-sandbox.vercel.app`                                                                                                                                                            |
-| Demo key             | `2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME`, sent as `Authorization: Bearer 2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME`. Public on purpose.                                                  |
-| Who the key is       | Caller `sandbox-visitor`, acting only as itself, allowed only `sandbox:receipt`                                                                                                                 |
-| The one action       | `sandbox:receipt`: one parameter, `note`, at most 200 characters                                                                                                                                |
-| Policy in effect     | `sandbox-receipt` 1.0.0: approves only with a signed approval for the request's `target`                                                                                                        |
-| Approvals            | `POST /sandbox/approvals` signs one for you, valid 5 minutes, accepted once. In production a person signs it.                                                                                   |
-| Where it is released | `https://parmana-sandbox-receipt.vercel.app/api/release`, which verifies the signed release and answers a receipt                                                                               |
-| Signing key          | `GET /keys/default` (no key needed). Sandbox records never verify against production's key, and the reverse.                                                                                    |
-| Rate limit           | `POST /execute`: 30 requests a minute for the demo key, shared by every visitor. Over it: `429 RATE_LIMITED`.                                                                                   |
-| Governance routes    | Refused for the demo key: `403 NON_HUMAN_CALLER_DENIED`. Their pages show real captured responses instead.                                                                                      |
-| Typical time         | 10 to 15 seconds for an approved request, a few seconds for a refusal. Set your client timeout to 120 seconds.                                                                                  |
-| Kept for             | Not guaranteed. A daily job will delete every request and record visitors sent more than 7 days ago; it is paused for now. Keep any record you need. Policies and approvals of governance stay. |
+| What                 | Value                                                                                                                                                                                |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Address              | `https://parmana-sandbox.vercel.app`                                                                                                                                                 |
+| Demo key             | `2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME`, sent as `Authorization: Bearer 2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME`. Public on purpose.                                       |
+| Who the key is       | Caller `sandbox-visitor`, acting only as itself, allowed only `sandbox:receipt`                                                                                                      |
+| The one action       | `sandbox:receipt`: one parameter, `note`, at most 200 characters                                                                                                                     |
+| Policy in effect     | `sandbox-receipt` 1.0.0: approves only with a signed approval for the request's `target`                                                                                             |
+| Approvals            | `POST /sandbox/approvals` signs one for you, valid 5 minutes, accepted once. In production a person signs it.                                                                        |
+| Where it is released | `https://parmana-sandbox-receipt.vercel.app/api/release`, which verifies the signed release and answers a receipt                                                                    |
+| Signing key          | `GET /keys/default` (no key needed). Sandbox records never verify against production's key, and the reverse.                                                                         |
+| Rate limit           | `POST /execute`: 30 requests a minute for the demo key, shared by every visitor. Over it: `429 RATE_LIMITED`.                                                                        |
+| Governance routes    | Refused for the demo key: `403 NON_HUMAN_CALLER_DENIED`. Their pages show real captured responses instead.                                                                           |
+| Typical time         | 10 to 15 seconds for an approved request, a few seconds for a refusal. Set your client timeout to 120 seconds.                                                                       |
+| Kept for             | Not guaranteed. A daily job, at 03:30 UTC, deletes every request and record visitors sent more than 7 days ago. Keep any record you need. Policies and approvals of governance stay. |
 
 ## Try it in your browser
 
