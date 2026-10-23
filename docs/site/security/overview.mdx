@@ -224,20 +224,19 @@ check the dependencies for known vulnerabilities.
 
 ### Verifying the server image
 
-From the first release published after 2026-10-06, each release also builds the API server from
-the repository's `Dockerfile` and pushes it to the GitHub Container Registry as
-`ghcr.io/pavancharak/parmana-api:<release tag>`, with SLSA build provenance attached to the image
-in the registry. To check an image before you run it:
+Each server release builds the API server from the repository's `Dockerfile` and pushes it to the GitHub Container
+Registry as `ghcr.io/pavancharak/parmana-api:<release tag>`, with SLSA build provenance attached to the image in the
+registry. The first is `server-v1.0.1` (23 October 2026), built on Node 24.22.1. To check it before you run it:
 
 ```bash
-slsa-verifier verify-image ghcr.io/pavancharak/parmana-api@sha256:<digest> \
-  --source-uri github.com/pavancharak/parmana \
-  --source-tag <release tag>
+slsa-verifier verify-image ghcr.io/pavancharak/parmana-api@sha256:7e17dfb8e1e5e391cc0acd0a2a19801d1b1b888b529ee75a977846c219dce97c \
+  --source-uri github.com/pavancharak/parmana-core \
+  --source-tag server-v1.0.1
 ```
 
-Verify by digest, not by tag: a tag can be moved, a digest cannot. Then run that digest. The
-provenance covers this image only. The hosted API is built by Vercel from
-the same repository, not from this image, and carry no SLSA provenance.
+For a later release, use its tag and the digest shown on the package page. Verify by digest, not by tag: a tag can be
+moved, a digest cannot. Then run that digest. The provenance covers this image only. The hosted API is built by Vercel
+from the same repository, not from this image, and carries no SLSA provenance.
 
 These are hygiene checks on the code and its supply chain. They do not replace a review of the
 enforcement design; see the Audit guide for that.

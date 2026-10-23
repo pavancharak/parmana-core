@@ -312,6 +312,7 @@ Do not edit it by hand: run `npx tsx scripts/gap-status.ts`. `npm test` fails wh
 | G-121 | Verifiers outside this repository read only schema version 2.                                       | open, gates schema version 3 issuance                                                          |
 | G-122 | Parmana has no operator kill switch, and no fresh check that a stop is in force.                    | open, partly closed                                                                            |
 | G-123 | Production policy approvals were refused: the Vercel entry did not pass the checker scope.          | fixed 2026-10-21                                                                               |
+| G-124 | The server trusted certificates from eMudhra's compromised intermediate CA keys.                    | fixed 2026-10-23                                                                               |
 
 <!-- gap-status:end -->
 

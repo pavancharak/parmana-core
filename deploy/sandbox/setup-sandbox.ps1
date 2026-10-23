@@ -271,7 +271,7 @@ switch ($Stage) {
     Say ""
     Say "SetEnv sets: NODE_ENV PARMANA_POLICY_DIR PARMANA_STORAGE DATABASE_URL PARMANA_KEY_DIR"
     Say "  PARMANA_KEY_MATERIAL_JSON PARMANA_API_KEYS PARMANA_SANDBOX PARMANA_SANDBOX_APPROVER_ID"
-    Say "  PARMANA_SANDBOX_APPROVER_KEY_ID PARMANA_SANDBOX_APPROVER_PRIVATE_KEY PARMANA_CORS_ORIGINS"
+    Say "  PARMANA_SANDBOX_APPROVER_KEY_ID PARMANA_SANDBOX_APPROVER_PRIVATE_KEY PARMANA_CORS_ORIGINS POLICY_CHANGE_CHECKERS"
     Say "If production has a name not listed here that is not a connector (PAYTM_, HUBSPOT_, GITHUB_, SLACK_," Yellow
     Say "PARMANA_GITHUB_VERCEL_CONNECT_CONNECTOR_ID), KMS (KEY_PROVIDER, AWS_) or email/webhook setting, stop and ask." Yellow
   }
@@ -291,7 +291,7 @@ switch ($Stage) {
     $ref = Assert-SandboxDatabase $databaseUrl "6543"
     Say "Sandbox database: project $ref" Green
 
-    Confirm-Word "SET" "set 12 variables on $Project"
+    Confirm-Word "SET" "set 13 variables on $Project"
     # Not "production": since 2026-10-19 the server refuses PARMANA_SANDBOX=true
     # under NODE_ENV=production. Not "test" or "development" either: those relax
     # execution intents, the signing check and governance. Any other value keeps
@@ -308,8 +308,11 @@ switch ($Stage) {
     Set-VercelEnv "PARMANA_SANDBOX_APPROVER_KEY_ID" $ApproverKeyId
     Set-VercelEnv "PARMANA_SANDBOX_APPROVER_PRIVATE_KEY" $approverPem
     Set-VercelEnv "PARMANA_CORS_ORIGINS" $CorsOrigins
+    # Since G-50/G-123 an approval needs the checker listed for the policy;
+    # unset lists no one, and ApprovePolicy is refused with CHECKER_NOT_IN_SCOPE.
+    Set-VercelEnv "POLICY_CHANGE_CHECKERS" ('{"' + $PolicyName + '":["' + $CheckerId + '"]}')
     Remove-Variable databaseUrl, keys, material, approverPem
-    Say "All 12 set. Next: -Stage Deploy." Green
+    Say "All 13 set. Next: -Stage Deploy." Green
   }
 
   "Deploy" {
