@@ -39,10 +39,11 @@ own default behavior, and `packages/storage/src/StorageFactory.createFromEnviron
 that explicitly, returning `MemoryStorageProvider` unconditionally under `NODE_ENV=test`,
 regardless of what `PARMANA_STORAGE` happens to be set to in the ambient environment. This exists
 specifically so importing application code during test collection never accidentally constructs
+a Postgres or Supabase connection.
 
 ### The tutorial suite as documentation
 
-`examples/tutorials/` currently runs to 117 numbered tutorials plus `examples/scenarios/`,
+`examples/tutorials/` currently runs to 119 numbered tutorials plus `examples/scenarios/`,
 invoked together via `npm run examples` (`scripts/run-examples.ts`). Each tutorial is a
 standalone, runnable script that exercises real production code (not a simplified
 re-implementation) against a hermetic environment, either an in-process Express server on an
@@ -67,8 +68,7 @@ policy substitution, gateway bypass, record tampering and more. Each scenario na
 attacker controls, the invariant and the test files that check it. The runner runs those files
 once and reports each scenario `BLOCKED`, `FAILED` or `NOT RUN`, with an
 `evaluation-report.json` tied to the commit. It adds no new tests: it gives an evaluator one
-result per attack instead of 3,000 test names. `tests/architecture/evaluation-scenarios.test.ts`
-fails if a scenario points at a test file that no longer exists or a claim number missing from.
+result per attack, instead of the test-by-test output of the full suite.
 
 ### Fuzzing
 
@@ -91,38 +91,31 @@ forcing a condition to `true`, one at a time, and runs the package's own tests a
 The share of changes the tests catch is the mutation score. It is slow, because every change
 runs the package's whole test suite, so it is run by hand rather than in CI.
 
-77.7% for `approval`, 50.3% for `policy`, 67.6% for `execution-gateway` and 65.4% for `crypto`.
+Scores are not recorded in this handbook. Run `npm run mutation` to measure them.
 The surviving changes pointed at real gaps: approval scope comparators other than `eq` and `lte`,
 what rule operators do with a value of the wrong type, gateway options that could be dropped on
 the way to the envelope verifier, session binding fields never tested alone, and the offline
 verifier's hybrid path. Two led to behavior changes: a request whose signals do not have the
-policy's declared types is now refused before any rule runs, and an Execution with only some of
-Each
-gap that matters for security now has a test, checked by putting the targeted change back by
-hand.
+policy's declared types is now refused before any rule runs.
 
-The crypto score was measured on Node 22, where the ML-DSA-65 tests skip themselves, so it
-undercounted. `npm run mutation` now refuses an older Node than 24, the version CI uses. Re-run
-on Node 24 after the fixes: `envelope-verifier` 94.0%, `approval` 93.9%, `policy` 96.0%,
-`crypto` 85.0%, `execution-gateway` 83.6%. What survives is almost all equivalent (a guard a later
-check repeats), advisory (the rule overlap warnings) or message wording. and the tutorial `README.md` files cite real file paths as evidence for their
-claims. This codebase treats a stale citation as a real defect worth finding and fixing, not a
-cosmetic nit, a citation nobody automatically checks will eventually go stale, and a claim whose
-evidence has silently rotted is functionally the same as an unverified claim.
-is explicit that a citation should be understood in the context it was written (a citation may be
-correct as of the date it was added even if later superseded, in which case the surrounding
-prose says so rather than the citation being silently rewritten to point somewhere else, doing
-so would falsify the historical record rather than fix a real problem).
+Each gap that matters for security now has a test, checked by putting the targeted change back by hand.
+
+The crypto score must be measured on Node 24: on Node 22 the ML-DSA-65 tests skip themselves, so
+the score undercounts. `npm run mutation` refuses an older Node than 24, the version CI uses.
+
+The tutorial `README.md` files cite file paths as evidence for their claims. Only the architecture
+documents listed in `tests/architecture/documentation-references.test.ts` are checked automatically
+to confirm that every cited path exists. The tutorial READMEs are not in that list, so no test
+catches a stale citation in them.
 
 ### CI
 
-`.github/workflows/ci.yml` runs, on every push and pull request: install (`npm ci`), build
+`.github/workflows/ci.yml` runs, on every push to `main` and on every pull request: install (`npm ci`), build
 (`npm run build`), lint (`npm run lint`), typecheck (`npm run typecheck`), a guard against
 retired terminology (a grep-based check, not a type or lint rule), the full test suite
-(`npm test`), and, in a separate job, `scripts/verify-policy-changes-approved.ts` against
-whichever `policies/**/policy.json` files changed in that push or PR, this is the fail-closed
+(`npm test`), and, in a separate job, `scripts/verify-policy-changes-approved.ts` against all policies (`--full-scan`); this is the fail-closed
 governance gate described in Chapter 7, real and enforced in CI today, not yet wired as a GitHub
-required status check due to a plan/visibility limitation external to this codebase (see §2.26's "Preventive Git-layer enforcement" entry for the exact constraint).
+required status check due to a plan or visibility limitation outside this codebase.
 
 The local pre-commit hook (this repo's own `.git` hooks, not GitHub's CI) additionally runs the
 full example suite (`npm run examples`) before allowing a commit, meaning every commit landed on
@@ -147,8 +140,7 @@ final `✓`/`✗` verdict, entirely hermetically, no network access, no real cre
 - `scripts/run-examples.ts` for the full registered tutorial list and the two documented
   exclusions.
 - `.github/workflows/ci.yml` for the exact CI gates.
-  -'s own header/preface section for the citation-integrity discipline stated in
-  its own words.
+- `tests/architecture/documentation-references.test.ts` for the file-path check on the architecture documents.
 - Any individual `examples/tutorials/*/README.md`, each states what it proves and why it
   matters, in the same structure this book uses.
 
