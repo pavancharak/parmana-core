@@ -22,53 +22,59 @@ and why.
 
 ### Mounting order, and why it matters
 
-Routes are mounted in this order, and the order is load-bearing: caller-auth middleware
-(`createCallerAuthMiddleware`) is only added to the pipeline partway through, so everything
-mounted before it is unauthenticated by construction, not by an exception carved out of a
-uniform rule.
+Routes are mounted in this order, and the order is load-bearing. The caller-auth middleware
+(`createCallerAuthMiddleware`) is added to the pipeline partway through, after the public
+routes and before the protected ones. Everything mounted before it is unauthenticated by
+construction, not by an exception carved out of a uniform rule.
 
-| Path                                                                      | Auth required                    | Why                                                                                                                                                                                      |
-| ------------------------------------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /health`                                                             | No                               | Liveness probe; a PaaS orchestrator has no API key to present.                                                                                                                           |
-| `GET /ready`                                                              | No                               | Readiness probe (see Chapter 19); same reasoning as `/health`.                                                                                                                           |
-| `GET /openapi.yaml`, `/openapi.json`                                      | No                               | A caller cannot discover how to get a key from a spec it is not allowed to read.                                                                                                         |
-| `GET /api-manifest.json`                                                  | No                               | Self-description of SDK versions, same public-discovery reasoning.                                                                                                                       |
-| `/documentation`, `/reference`                                            | No                               | API documentation consumers.                                                                                                                                                             |
-| `POST /refusal/verify`                                                    | No                               | : unauthenticated, third-party signature verification, not a data-access route.                                                                                                          |
-| `POST /audit/verify`                                                      | No                               | Same category as above, over `caller_audit_events` instead of Refusal Records, pure signature-over-bytes, no database lookup.                                                            |
-| `/keys/:keyId`, `/.well-known/jwks.json`                                  | No                               | Public-key discovery (PQC audit RED-2); a third party verifying a signature cannot be required to already hold a credential.                                                             |
-| **, caller-auth middleware mounted here if `callerAuth !== "disabled"`,** |                                  |                                                                                                                                                                                          |
-| `GET /`                                                                   | No (mounted before, but trivial) | Returns `{ name: "Parmana", status: "UP" }`.                                                                                                                                             |
-| `/version`                                                                | Yes (if auth enabled)            |                                                                                                                                                                                          |
-| `/callers/me`                                                             | Yes                              | Caller self-lookup: identity and exactly what it's authorized to do.                                                                                                                     |
-| `/execute`                                                                | Yes                              | Rate-limited by `callerId` (Chapter 16); the limiter itself is only mounted when caller-auth is enabled, since there is no caller identity to key off otherwise.                         |
-| `/verify`, `/verification`                                                | Yes                              |                                                                                                                                                                                          |
-| `/refusal`                                                                | Yes                              | Ownership-scoped lookup by ID (the unauthenticated verify route above is separate).                                                                                                      |
-| `/receipt`, `/receipt/latest`                                             | Yes                              |                                                                                                                                                                                          |
-| `/transactions`                                                           | Yes                              |                                                                                                                                                                                          |
-| `/policies`                                                               | Yes                              | Mounted twice: once for the policy-content routes (`policies.ts`), once for the Policy Governance pending-changes routes (`pending-policy-changes.ts`), their path shapes don't collide. |
-| `/trust-records`                                                          | Yes                              |                                                                                                                                                                                          |
-| `/replay`                                                                 | Yes                              |                                                                                                                                                                                          |
-| **, error handler mounted last,**                                         |                                  |                                                                                                                                                                                          |
+| Path                                                                    | Auth required                 | Why                                                                                                                                                                                 |
+| ----------------------------------------------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /health`                                                           | No                            | Liveness probe; a PaaS orchestrator has no API key to present.                                                                                                                      |
+| `GET /ready`                                                            | No                            | Readiness probe (see Chapter 19); same reasoning as `/health`.                                                                                                                      |
+| `GET /openapi.yaml`, `/openapi.json`                                    | No                            | A caller cannot discover how to get a key from a spec it is not allowed to read.                                                                                                    |
+| `GET /api-manifest.json`                                                | No                            | Self-description of SDK versions, same public-discovery reasoning.                                                                                                                  |
+| `/documentation`, `/reference`                                          | No                            | API documentation consumers.                                                                                                                                                        |
+| `GET /parmana-handbook.pdf`                                             | No                            | The published handbook, served from the built PDF (`handbook-pdf.ts`).                                                                                                              |
+| `POST /refusal/verify`                                                  | No                            | Unauthenticated, third-party signature verification of a Refusal Record, not a data-access route.                                                                                   |
+| `POST /execution-intents/verify`                                        | No                            | The same category as `/refusal/verify`, for Execution Intents (Chapter 8): verifies a signature over bytes the caller supplies.                                                     |
+| `POST /audit/verify`                                                    | No                            | The same category, over `caller_audit_events`. Pure signature-over-bytes, no database lookup.                                                                                       |
+| `/keys/:keyId`, `/.well-known/jwks.json`                                | No                            | Public-key discovery. A third party verifying a signature cannot be required to already hold a credential.                                                                         |
+| `/handbook`                                                             | No                            | The handbook pages, behind the public rate limiter.                                                                                                                                 |
+| **, caller-auth middleware mounted here if `callerAuth !== "disabled"` ,** |                            |                                                                                                                                                                                     |
+| `GET /`                                                                 | Yes (if auth enabled)         | Returns `{ name: "Parmana", status: "UP" }`. It is mounted after the caller-auth middleware, so it is protected like every route below it.                                          |
+| `/version`                                                              | Yes (if auth enabled)         |                                                                                                                                                                                     |
+| `/callers/me`                                                           | Yes                           | Caller self-lookup: identity and exactly what it's authorized to do.                                                                                                                |
+| `/sandbox/approvals`                                                    | Yes                           | Mounted only in sandbox mode (`sandboxApprover` configured, ADR-0014), behind the published demo key. When a kill switch is supplied, its guard runs before this route. |
+| `/kill-switch`                                                          | Yes                           | Mounted only when a kill switch is supplied (ADR-0017). Its trip, reset and status routes are mounted without the guard, so the switch can always be cleared. |
+| `/execute`                                                              | Yes                           | Rate-limited by `callerId` (Chapter 16). The limiter is mounted only when caller-auth is enabled, since there is no caller identity to key off otherwise. When a kill switch is supplied, its guard runs before this route. |
+| `/verify`, `/verification`                                              | Yes                           |                                                                                                                                                                                     |
+| `/refusal`                                                              | Yes                           | Ownership-scoped lookup by ID. The unauthenticated verify route above is separate.                                                                                                  |
+| `/execution-intents`                                                    | Yes                           | Finalize and resolve operations for Execution Intents (Chapter 8).                                                                                                                  |
+| `/receipt`, `/receipt/latest`                                           | Yes                           |                                                                                                                                                                                     |
+| `/transactions`                                                            | Yes                              | When a kill switch is supplied, its guard runs before this route. |
+| `/policies`                                                             | Yes                           | Mounted three times, on three routers whose path shapes don't collide: the policy-content routes (`policies.ts`), the policy-in-effect routes (`policy-in-effect.ts`), and the Policy Governance pending-changes routes (`pending-policy-changes.ts`, Chapter 7). |
+| `/approval-issuers`, `/external-connectors`, `/business-signal-sources`, `/authority-grants` | Yes      | Registries and grants for the approval and business-signal machinery (see Chapter 5 and Chapter 8).                                                                                 |
+| `/trust-records`                                                        | Yes                           |                                                                                                                                                                                     |
+| `/replay`                                                               | Yes                           |                                                                                                                                                                                     |
+| **, error handler mounted last ,**                                      |                               |                                                                                                                                                                                     |
 
 (`packages/api/src/app.ts`)
 
 ### Error mapping
 
 `createErrorHandler()` (`packages/api/src/middleware/error-handler.ts`) is the single place
-a thrown domain error becomes an HTTP response:
+a thrown domain error becomes an HTTP response. The mapping is in the handler's last section,
+roughly lines 54 to 243:
 
-| Thrown                                                                                 | Status                        | Notes                                                                                                                                                                                                           |
-| -------------------------------------------------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Malformed/oversized JSON body (`express.json()`, before any route handler)             | 400 / 413                     | Best-effort audited even though no caller identity exists yet, deliberately fail-**open** here, unlike every other caller-audit write, since the correct rejection has already happened by the time this fires. |
-| `BusinessTransactionValidationError`, `PolicyValidationError`, `SignalValidationError` | 400                           |                                                                                                                                                                                                                 |
-| `PolicyNotFoundError`                                                                  | 404                           |                                                                                                                                                                                                                 |
-| `DuplicateBusinessTransactionError`                                                    | 409                           |                                                                                                                                                                                                                 |
-| `NonceAlreadyConsumedError`                                                            | `error.status` (its own code) | Distinguished from a generic `RuntimeError` so a caller can tell "this already ran" apart from "something broke" without string-matching a 500 body.                                                            |
-| Any `RuntimeError`                                                                     | `error.status`                |                                                                                                                                                                                                                 |
-| Anything else                                                                          | 500                           | Logged via `console.error`, response body is the generic `"Internal Server Error"`, no internal detail leaked.                                                                                                  |
-
-(`packages/api/src/middleware/error-handler.ts:95-201`)
+| Thrown                                                                                 | Status                        | Notes                                                                                                                                                                                                                  |
+| -------------------------------------------------------------------------------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Malformed or oversized JSON body (`express.json()`, before any route handler)          | 400 / 413                     | Audited on a best-effort basis even though no caller identity exists yet. This write is deliberately fail-**open**, unlike every other caller-audit write, since the correct rejection has already happened by the time this fires. A write failure is logged as `structural_rejection_audit_write_failed`. |
+| `BusinessTransactionValidationError`, `PolicyValidationError`, `SignalValidationError` | 400                           |                                                                                                                                                                                                                        |
+| `PolicyNotFoundError`                                                                  | 404                           |                                                                                                                                                                                                                        |
+| `DuplicateBusinessTransactionError`, `PolicyVersionImmutableError`                     | 409                           |                                                                                                                                                                                                                        |
+| `NonceAlreadyConsumedError`, `ConnectorNotRegisteredError`, `AuthorizationNoLongerValidError` | `error.status` (its own code) | Each carries its own status, so a caller can tell "this already ran" apart from "something broke" without matching on a 500 body.                                                                                   |
+| Any `RuntimeError`                                                                     | `error.status`                | An error that knows the execution status (Chapter 8) includes it in the response body.                                                                                                                                 |
+| Anything else                                                                          | 500                           | Logged via `console.error`. The response body is the generic `"Internal Server Error"`, with no internal detail leaked.                                                                                                |
 
 ### The full route inventory
 
@@ -81,51 +87,61 @@ Every route module lives in `packages/api/src/routes/`:
 | `openapi.ts` / `openapi-json.ts`    | `/openapi.yaml` / `/openapi.json`        | Machine-readable API spec.                                        |
 | `api-manifest.ts`                   | `/api-manifest.json`                     | SDK version self-description.                                     |
 | `documentation.ts` / `reference.ts` | `/documentation` / `/reference`          | Human-readable docs.                                              |
+| `handbook.ts` / `handbook-pdf.ts`   | `/handbook` / `/parmana-handbook.pdf`    | The published handbook pages and PDF.                             |
 | `refusal-verify.ts`                 | `/refusal/verify`                        | Public signature verification of a Refusal Record.                |
 | `audit-verify.ts`                   | `/audit/verify`                          | Public signature verification of an audit event.                  |
 | `keys.ts`                           | `/keys/:keyId`, `/.well-known/jwks.json` | Public key discovery.                                             |
 | `callers-me.ts`                     | `/callers/me`                            | Caller self-lookup.                                               |
+| `sandbox-approvals.ts`              | `/sandbox/approvals`                     | The sandbox's demo approver, sandbox mode only.                   |
 | `execute.ts`                        | `/execute`                               | Submit and execute a Business Transaction.                        |
 | `verify.ts` / `verify-get.ts`       | `/verify` / `/verification`              | Verification of an executed transaction.                          |
 | `refusal-get.ts`                    | `/refusal`                               | Ownership-scoped Refusal Record lookup.                           |
+| `execution-intents.ts`              | `/execution-intents`, `/execution-intents/verify` | Execution Intent finalize, resolve, and public verification (Chapter 8). |
 | `receipt.ts` / `receipt-get.ts`     | `/receipt` / `/receipt/latest`           | Receipt issuance and lookup.                                      |
 | `transactions.ts`                   | `/transactions`                          | Business Transaction create-and-execute (parity with `/execute`). |
-| `policies.ts`                       | `/policies`                              | Policy content read/validate routes.                              |
-| `pending-policy-changes.ts`         | `/policies`                              | Maker-checker propose/list/approve/reject (Chapter 7).            |
+| `policies.ts`                       | `/policies`                              | Policy content read and validate routes.                          |
+| `policy-in-effect.ts`               | `/policies`                              | The policy version currently in effect.                           |
+| `pending-policy-changes.ts`         | `/policies`                              | Maker-checker propose, list, approve and reject (Chapter 7).      |
+| `approval-issuers.ts`               | `/approval-issuers`                      | Registry of approval issuers.                                     |
+| `external-connectors.ts`            | `/external-connectors`                   | Registry of external connectors.                                  |
+| `business-signal-sources.ts`        | `/business-signal-sources`               | Registry of business signal sources.                              |
+| `authority-grants.ts`               | `/authority-grants`                      | Per-agent authority grants.                                       |
 | `trust-records.ts`                  | `/trust-records`                         | Bulk export.                                                      |
 | `replay.ts`                         | `/replay`                                | Replay a prior execution.                                         |
+| `kill-switch.ts`                    | `/kill-switch`                           | Trip, reset and status of the operator kill switch (ADR-0017), mounted only when supplied. |
 | `version.ts`                        | `/version`                               |                                                                   |
 | `findOpenApiSpecFile.ts`            | (helper, not a route)                    | Locates the built OpenAPI spec file on disk.                      |
+| `pagination.ts`                     | (helper, not a route)                    | Shared pagination for list routes.                                |
 
 ### `trust proxy`
 
-`app.set("trust proxy", 1)` (`packages/api/src/app.ts:147`) trusts exactly one proxy hop,
-this codebase's actual deployment fronting (Fly.io's edge, per `fly.toml`'s
+`app.set("trust proxy", 1)` (`packages/api/src/app.ts:216`) trusts exactly one proxy hop, which
+matches this codebase's actual deployment fronting (Fly.io's edge, per `fly.toml`'s
 `force_https`). Without this, `req.ip` and `req.protocol`/`req.secure` reflect the proxy's
 own connection to the process, not the original client's.
 
 ## How It Enables Things, With a Concrete Example
 
 `examples/tutorials/102-distinguishable-http-status` demonstrates the `NonceAlreadyConsumedError`
-vs. generic-`RuntimeError` distinction in the error handler directly, a policy denial and a
+vs. generic-`RuntimeError` distinction in the error handler directly. A policy denial and a
 replay attempt against the same endpoint return genuinely different, distinguishable status
 codes rather than both collapsing into an opaque failure.
 
 ## How to Validate This Yourself
 
-- `packages/api/src/app.ts`, the actual mounting order; read it top to bottom rather than
+- `packages/api/src/app.ts`, the actual mounting order. Read it top to bottom rather than
   trusting the table above once this file changes.
 - `packages/api/src/middleware/error-handler.ts`, the full error-to-status mapping.
 - `packages/api/src/routes/*.ts`, one file per route group.
-- `packages/api/tests/integration/*.integration.test.ts`, most route groups have a
+- `packages/api/tests/integration/*.integration.test.ts`. Most route groups have a
   corresponding integration test that exercises the real HTTP path, not just the handler
   function in isolation.
 
 ## Integration Requirements
 
 `createApp()` requires a `CallerAuthOption`, either a real `{ authenticator, auditSink }`
-pair or the literal string `"disabled"` (used only for local development and the tutorial
-suite; there is deliberately no default, so omitting this choice is not possible). Optional:
-`RateLimitOption` (Chapter 16), `stepUpVerifier` and `policyChangeApprovalService` (both
-required in effect, though optional at the type level, once caller-auth is enabled and the
-Policy Governance approve/reject endpoints are actually reachable, see Chapter 7).
+pair or the literal string `"disabled"`. `"disabled"` is used only for local development and the
+tutorial suite. There is deliberately no default, so omitting this choice is not possible.
+Optional: `RateLimitOption` (Chapter 16), `killSwitch` (ADR-0017, mounted only when supplied), and `policyChangeCheckers` (which callers may approve each policy's changes). `stepUpVerifier` and `policyChangeApprovalService`
+are optional at the type level, but in effect they are required once caller-auth is enabled and
+the Policy Governance approve and reject endpoints are reachable (see Chapter 7).
