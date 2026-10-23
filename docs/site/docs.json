@@ -802,5 +802,8 @@
   },
   "search": {
     "prompt": "Search Parmana"
+  },
+  "styling": {
+    "codeblocks": "dark"
   }
 }
