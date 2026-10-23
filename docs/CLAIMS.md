@@ -663,7 +663,7 @@ Scope, stated plainly:
 - **The sandbox acts on nothing.** Its one capability is released to an endpoint that answers with a receipt; no connector to a real system can be configured while `PARMANA_SANDBOX=true` (the server refuses to start).
 - **Anyone can approve in the sandbox.** That is its purpose: the demo approval shows how a signed approval is used, not who may give one. In production only registered approvers sign.
 - **The demo key is not published yet.** ADR-0014 step 4 puts it in the docs playground. Until then only the live check has used it. **Update (2026-10-23):** the rebuilt sandbox's demo key is published in the [Playground](https://docs.parmanasystems.com/playground), written in by `deploy/sandbox/publish-demo-key.ps1` after the sandbox confirmed it is `sandbox-visitor`, allowed only `sandbox:receipt`. It is the same key as before 2026-10-20: the rebuild reused the sandbox key folder, so the key withdrawn from the docs that day is published again.
-- **No retention yet.** ADR-0014 accepted deleting sandbox records older than 7 days, daily; that job is not built.
+- **No retention yet.** ADR-0014 accepted deleting sandbox records older than 7 days, daily; that job is not built. **Update (2026-10-23):** built (`deploy/sandbox/retention.sql`, hardened after G-86) and installed in the rebuilt sandbox: `parmana-sandbox-retention`, daily at 03:30 UTC, 7 days. Its first run's log row has not been read yet (G-86).
 - **Distinct credentials, not proven distinct people**, as in 2.49 and 2.50: the sandbox maker and checker keys are held by one person.
 - **Checked live twice**, on 2026-10-02 and, after the sandbox was rebuilt, on 2026-10-23. The approved request took 14.1 s both times (G-84 applies here too).
 

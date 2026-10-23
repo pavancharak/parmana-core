@@ -134,5 +134,6 @@ approver, and browser access for the docs site only. Its record is saved to `dep
   It refuses any database without the active `sandbox:receipt` registration, and it is not a migration, so it never
   reaches production. A period under 7 days is refused unless a second argument confirms it, and every run that
   deletes writes a row to `sandbox_retention_runs`. After the 2026-10-02 deletion (`docs/VERIFICATION-GAPS.md` G-86),
-  the job is paused: before reinstalling, read G-86, and after the next 03:30 UTC run read
-  `select * from sandbox_retention_runs order by ran_at desc limit 1;` in the sandbox project.
+  the job was paused; it was reinstalled in the rebuilt sandbox on 2026-10-23. Before any reinstall, read G-86, and
+  after the next 03:30 UTC run read `select * from sandbox_retention_runs order by ran_at desc limit 1;` in the
+  sandbox project.

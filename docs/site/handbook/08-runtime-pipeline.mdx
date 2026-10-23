@@ -139,6 +139,7 @@ deployment.
     response could repeat an action that already happened, so the error is never a bare 500.
     On success, `executionIntents.markReleased(...)` saves the execution context, so the trust
     record can be rebuilt later without calling the connector again.
+
 18. **Trust record.** `afterExecution` and `beforeTrustRecord` hooks run, then
     `trustPipeline.execute(processedContext)` produces the signed `ExecutionTrustRecord`, then
     `afterTrustRecord` runs. Any failure here, after the action was released, is thrown as
