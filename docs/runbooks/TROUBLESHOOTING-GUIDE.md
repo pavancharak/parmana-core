@@ -10,6 +10,8 @@ Never paste a key, token or database URL into chat, email, a ticket or a commit 
 
 ## Index
 
+Scenario walkthroughs (complete, step by step) are at the end of this guide, after section 13.
+
 1. Local checkout and git
 2. The stop hook reports unpushed commits
 3. PowerShell: keys, variables and quoting
@@ -559,6 +561,267 @@ Give the founder: the time, the exact output (no keys), the commands run, and th
 
 ---
 
+## Scenarios: complete walkthroughs
+
+Each scenario gives the situation, the goal, the steps in order with the reason for each step, what success looks like, and when to stop and escalate. Work through them in order. Do not skip the checks; each one tells you whether the next step is safe.
+
+### Scenario 1. A command fails on a new machine
+
+**Situation.** You cloned the repository and a script fails with a missing module or a missing workspace package.
+
+**Goal.** A working build and the Razorpay examples running.
+
+**Steps.**
+1. Confirm the folder and branch: `cd D:\last\parmana-core`, then `git status -sb`. Why: most failures come from the wrong branch or an old checkout.
+2. Install from the lockfile without lifecycle scripts: `npm ci --ignore-scripts`. Why: `--ignore-scripts` avoids changing git hooks on your machine.
+3. Build the workspace packages: `npm run build`. Why: the examples import built packages, and a missing build gives `Failed to resolve entry for package`.
+4. Run the Razorpay tests: `npx vitest run examples/razorpay-agent-studio examples/razorpay-refund-agent examples/razorpay-refund`. Why: this checks the examples without touching production.
+
+**Success.** The tests pass. Node 24 is expected; on Node 22 the three `distrustCompromisedRoots` tests in the full suite fail, and that is not caused by these examples.
+
+**Escalate** if `npm run build` fails after a clean `npm ci --ignore-scripts`. Send the first error line.
+
+### Scenario 2. An approved refund is refused
+
+**Situation.** You expected `APPROVED`, and the runner printed `REFUSED`.
+
+**Goal.** Find which rule refused it, and whether the refusal is correct.
+
+**Steps.**
+1. Read the refusal line. The runner prints `Refused by` with the rule and the reason. Why: the rule name tells you which requirement failed.
+2. Match the rule to a cause:
+   - `reject-manager-approval-required`: the request had no approval. Add a signed approval for this payment and amount.
+   - `authority-not-authorized` (`NOT_AUTHORIZED`): the amount is above the grant's limit. Do not raise the request; check the grant.
+   - `signal-state-verification-violation`: the approval was used already, or does not match. Create a new approval.
+3. Check the grant if the amount is the problem:
+   ```powershell
+   curl.exe -s "$env:PARMANA_URL/authority-grants" -H "Authorization: Bearer $k"
+   ```
+   Why: the grant shows `limits` and `validUntil`. An expired grant that still says `active` blocks new grants and gives no approval.
+4. Check the policy in force, if the rule looks wrong:
+   ```powershell
+   curl.exe -s "$env:PARMANA_URL/policies/in-effect?capability=razorpay:refund" -H "Authorization: Bearer $k"
+   ```
+   Why: the answer shows which policy version decided the request.
+5. Read the refusal record for the transaction (`GET /refusal/<businessTransactionId>`) if you need the signed detail.
+
+**Success.** You can name the rule, the cause, and the fix. A correct refusal is a success of the system: do not work around it.
+
+**Escalate** if the rule is wrong for the policy you approved, or if a refusal names a rule that does not exist in the policy file.
+
+### Scenario 3. The key list update locked callers out
+
+**Situation.** After you replaced `PARMANA_API_KEYS`, a caller returns `401 authentication required`.
+
+**Goal.** Every caller back to `200` on `/callers/me`.
+
+**Steps.**
+1. Restore the list at once. Why: a list replacement drops any caller that is missing, and every minute out is an outage for that caller.
+   ```powershell
+   $value | vercel env add PARMANA_API_KEYS production --sensitive --cwd $link
+   ```
+   Use the same `$value` as before. If it is gone, rebuild it from `parmana-entries` (ceremony runbook, section 8).
+2. Redeploy from current `main`: `git switch main`, `git pull origin main`, then `npx vercel deploy --prod --yes`. Why: list changes are read at startup.
+3. Check each caller on its own machine: `curl.exe -s -o NUL -w "%{http_code}\n" "$env:PARMANA_URL/callers/me" -H "Authorization: Bearer $k"`. Expect `200`.
+4. For a caller that is still `401`, check its key against its entry (section 8.1 of this guide).
+
+**Success.** All callers return `200`. Record the time, the cause and the fix in the incident log.
+
+**Escalate** if a caller that was in the previous list is not in the entries folder any more. Find out how it went missing before you change anything else.
+
+### Scenario 4. A governed change is stuck
+
+**Situation.** A proposal shows `PENDING_APPROVAL` and nothing happens.
+
+**Goal.** The change is approved, or deliberately left, with a note.
+
+**Steps.**
+1. List the pending changes so you have the id and the content:
+   ```powershell
+   curl.exe -s "$env:PARMANA_URL/policies/pending-changes" -H "Authorization: Bearer $k"
+   ```
+   Why: the list shows the proposer, the time, and the reason, which the checker needs.
+2. Tell the checker the id and what it does. Why: changes wait for a checker; there is no timeout.
+3. The checker runs the approve with `--step-up-key-file` and types `APPROVE` only when the change shown is the one intended.
+4. Confirm the result with the read that matches the change: `policies/in-effect` for a policy, `authority-grants` for a grant, `external-connectors` for a connector.
+
+**Success.** The read shows the new state. `Status: APPROVED` alone is not enough: confirm the effect.
+
+**Escalate** if the checker cannot approve (`CHECKER_NOT_IN_SCOPE`, section 6.4). A checker-scope decision is the founder's.
+
+### Scenario 5. Trip the kill switch and recover
+
+**Situation.** An incident needs execution stopped now.
+
+**Goal.** Execution and approvals stopped at once; then a reset, by two operators, after the cause is known.
+
+**Steps.**
+1. Operator 1 trips with a reason: `kill-switch/trip` with `{"reason": "..."}`. Why: a reason is required and is recorded.
+2. Confirm: `kill-switch/status` shows `active: true`. Why: confirms the stop took effect.
+3. Confirm the refusal is in force: the runner's no-approval case returns `KILL_SWITCH_ACTIVE`. Why: this proves the stop, without moving money.
+4. Investigate. Read the trust records for the suspect transactions with the affected caller's key.
+5. Operator 1 starts the reset (`202`). Operator 2 completes it with their own key (`200`). Why: two different keys make sure no one person restarts the system alone.
+6. Confirm `active: false`, and re-run the no-approval case: it must return the policy refusal.
+
+**Success.** The switch is off, the cause is in the log, and the policy refusal is back.
+
+**Escalate** if the reset is refused, or if the stop does not take effect (`KILL_SWITCH_ACTIVE` does not appear). Do not reset to test; tell the founder.
+
+### Scenario 6. Production is serving old code
+
+**Situation.** A route you expect is missing (`Cannot GET`), or a fix is not live.
+
+**Goal.** Production runs the current `main`.
+
+**Steps.**
+1. Check the local checkout: `git switch main`, `git pull origin main`, `git log -1 --oneline`. Why: a deploy uploads the working folder, so an old checkout deploys old code.
+2. Check the kill-switch routes are in the code: `Select-String -Path api\index.ts -Pattern "createKillSwitch"`. Why: two lines means the routes are present.
+3. Deploy: `npx vercel deploy --prod --yes`.
+4. Check the newest production row: `npx vercel ls parmana-api-real`. Why: it should be Ready and newer than the deploy.
+5. Re-run the route that was missing.
+
+**Success.** The route answers. Keep the deploy output in the log.
+
+**Escalate** if `api\index.ts` does not contain the expected line on `main`. The layout may differ from the runbook.
+
+### Scenario 7. A key may have been exposed
+
+**Situation.** A key was printed in a terminal someone else saw, pasted into chat or email, or saved in a file that was shared.
+
+**Goal.** The exposed key stops working, and a new key is in use.
+
+**Steps.**
+1. Treat the key as exposed from that moment. Why: you cannot know who copied it.
+2. Note the caller id and the time in the incident log. Never write the key in the log.
+3. Generate a new key for the same caller, on the holder's machine (ceremony runbook, the matching step).
+4. Replace the entry and the live key list, then redeploy (scenario 3).
+5. Check the old key now fails: `callers/me` with the old key must return `401`. Why: this proves the old key is no longer accepted.
+6. Check the new key returns `200`.
+7. Remove the old entry from `parmana-entries`, so a later list update cannot bring it back.
+8. Update any system that holds the key: the bridge's variable, the runner's store, or the platform.
+
+**Success.** The old key returns `401`, the new key returns `200`, and every holder has the new key.
+
+**Escalate** at once to the founder. Check the trust records for the caller since the time of exposure, in case the key was used.
+
+### Scenario 8. A checker's step-up key is lost
+
+**Situation.** The checker cannot approve, and the step-up PEM file is missing or cannot be read.
+
+**Goal.** A working step-up key for the checker, and no unapproved change.
+
+**Steps.**
+1. Check the file: `Test-Path "$env:USERPROFILE\parmana-checker\step-up.private.pem"`. Why: a missing file is the most common cause.
+2. If it is there, check it contains the key: `Select-String -Path ... -Pattern "BEGIN PRIVATE KEY"`. Why: an empty or partial file fails the approve.
+3. If the file is lost and the password manager has the PEM, restore it to the same path.
+4. If neither has it, the checker cannot approve. Generate a new checker credential with a new step-up key (ceremony runbook, the checker step), and replace the entry and the key list. Why: the old public key in the entry must match the private key the checker holds.
+
+**Success.** A test approve of a harmless pending change works, or the replacement is in the list and the checker can approve.
+
+**Escalate** if the entry's public key does not match the file. Do not approve anything until this is explained.
+
+### Scenario 9. Vercel deploy fails
+
+**Situation.** `npx vercel deploy --prod --yes` stops with a build error.
+
+**Goal.** A successful deploy of the right code.
+
+**Steps.**
+1. Read the first error line, not the last. Why: the first line names the real cause.
+2. Match it to section 4 of this guide (for example `Missing script: "openapi"` or `No Output Directory named "public"`).
+3. Apply the fix in the deployed folder, not in the repository, unless the fix belongs in the code.
+4. Deploy again and read the new first error line.
+5. When it is `Ready`, check `npx vercel ls <project>` and the route you deployed for.
+
+**Success.** The newest Production row is Ready, and the route answers.
+
+**Escalate** if the error is inside the code (a TypeScript or test error). Send the error and stop; do not change the code to get past a build.
+
+### Scenario 10. A refund does not appear in Razorpay
+
+**Situation.** The runner printed `APPROVED`, but the Razorpay dashboard shows no refund.
+
+**Goal.** Find the refund, or prove it was not created.
+
+**Steps.**
+1. Read the record file the runner wrote (`--out`). Note the `refundId` (`rfnd_...`) and the business transaction id.
+2. Check the dashboard in Test Mode, for the payment, under refunds. Filter by the period. Why: the list can be filtered by date and status.
+3. Search by refund id, then by the payment id.
+4. If it is missing, check the endpoint's answer in the record. A `success: false` answer with a stage names the step that failed.
+5. Check the receipt: the refund's receipt should equal the business transaction id.
+
+**Success.** The refund is found with its receipt, or the endpoint's answer shows why it was not created.
+
+**Escalate** if the record says `success: true` and no refund exists. Do not send the request again: tell the founder with the record.
+
+### Scenario 11. A record does not verify
+
+**Situation.** The runner prints `Verifies offline : false`, or a customer's check fails.
+
+**Goal.** Know whether the record is genuine.
+
+**Steps.**
+1. Keep the record file. Do not delete it. Why: it is the evidence.
+2. Re-run the verification with the current public key, to rule out a stale key: fetch `GET /keys/default` and verify again.
+3. If it still fails, compare the record's `errors` list with the rule for each error.
+4. Check the record was not edited: the file must be the one the runner wrote.
+
+**Success.** The record verifies, or the failure is explained and the founder knows.
+
+**Escalate** at once. A record that does not verify is not to be trusted until explained.
+
+### Scenario 12. The stop hook keeps reporting unpushed commits
+
+**Situation.** The hook reports a branch with unpushed commits, but the remote already has them.
+
+**Goal.** The hook stops reporting, without pushing again.
+
+**Steps.**
+1. Confirm the remote: `git ls-remote --heads origin <branch>` and `git log -1 --oneline` on the branch. Why: if the remote commit equals the local commit, nothing is unpushed.
+2. Fetch the branch into the checkout the hook reads: `git fetch origin <branch>:<branch>`.
+3. Check: `git status -sb` shows the branch with no ahead or behind.
+4. If the commits are on `main` already, the hook counts them against `main`; merge the branch through a PR.
+
+**Success.** The hook is quiet, or the PR is merged.
+
+**Escalate** if the remote does not have the branch. Push it once: `git push -u origin <branch>`.
+
+### Scenario 13. The MCP bridge answers 401 with the token
+
+**Situation.** A call with the bearer token returns `401`.
+
+**Goal.** The token the caller sends matches the one on the server.
+
+**Steps.**
+1. Check the length: `$t.Length` should be 43 for a token made by the standard command. Why: a short or long value means a bad copy.
+2. Send the request from a file, with `--data-binary` (section 3.6). Why: inline JSON can be mangled.
+3. If the length is right and it still fails, the server holds a different value. Replace `AGENT_STUDIO_TOKEN` in Vercel and redeploy the bridge.
+4. Save the new token in the password manager before copying anything else.
+
+**Success.** The request returns `200`, and `tools/list` shows `propose_refund`.
+
+**Escalate** if the token was pasted into chat at any time: rotate it (scenario 7).
+
+---
+
+## Scenario checklist
+
+- [ ] Scenario 1: build and tests pass.
+- [ ] Scenario 2: every refusal has a named rule and a correct cause.
+- [ ] Scenario 3: all callers return `200` after a list change.
+- [ ] Scenario 4: no change stays pending without a note.
+- [ ] Scenario 5: a trip was confirmed; a reset used two keys.
+- [ ] Scenario 6: production serves current `main`.
+- [ ] Scenario 7: an exposed key was replaced and the old one returns `401`.
+- [ ] Scenario 8: the checker can approve.
+- [ ] Scenario 9: the deploy reads Ready.
+- [ ] Scenario 10: every refund is traced to Razorpay.
+- [ ] Scenario 11: every record verifies, or is escalated.
+- [ ] Scenario 12: the hook is quiet, or the PR is merged.
+- [ ] Scenario 13: the bridge answers `200` with the token.
+
+
 ## Change log
 
 - 23 October 2026: first version, from the work on the refund agent, the MCP bridge, the key list and the kill switch.
+- 23 October 2026: added the complete scenario walkthroughs (scenarios 1 to 13) and a checklist.
