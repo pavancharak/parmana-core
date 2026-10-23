@@ -20,7 +20,7 @@ signed record you can verify yourself.
 | What                 | Value                                                                                                                                                                                           |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Address              | `https://parmana-sandbox.vercel.app`                                                                                                                                                            |
-| Demo key             | `SANDBOX_DEMO_KEY`, sent as `Authorization: Bearer SANDBOX_DEMO_KEY`. Public on purpose.                                                                                                        |
+| Demo key             | `2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME`, sent as `Authorization: Bearer 2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME`. Public on purpose.                                                  |
 | Who the key is       | Caller `sandbox-visitor`, acting only as itself, allowed only `sandbox:receipt`                                                                                                                 |
 | The one action       | `sandbox:receipt`: one parameter, `note`, at most 200 characters                                                                                                                                |
 | Policy in effect     | `sandbox-receipt` 1.0.0: approves only with a signed approval for the request's `target`                                                                                                        |
@@ -55,14 +55,14 @@ approval, send with it (approved, released and signed), verify the signed record
 run against the live sandbox before it was published here; the files are in
 [`examples/sandbox-playground`](https://github.com/pavancharak/parmana-core/tree/main/examples/sandbox-playground).
 
-For TypeScript and Python, set the key first: `export PARMANA_API_KEY=SANDBOX_DEMO_KEY` (macOS, Linux) or
-`$env:PARMANA_API_KEY = "SANDBOX_DEMO_KEY"` (PowerShell). Then run `npx tsx playground.ts` or `python playground.py`.
+For TypeScript and Python, set the key first: `export PARMANA_API_KEY=2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME` (macOS, Linux) or
+`$env:PARMANA_API_KEY = "2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME"` (PowerShell). Then run `npx tsx playground.ts` or `python playground.py`.
 
 <CodeGroup>
 
 ```bash cURL (macOS, Linux)
 export PARMANA_URL=https://parmana-sandbox.vercel.app
-export PARMANA_API_KEY=SANDBOX_DEMO_KEY   # the published sandbox demo key
+export PARMANA_API_KEY=2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME   # the published sandbox demo key
 
 # 1. Who am I?
 curl -s $PARMANA_URL/callers/me -H "Authorization: Bearer $PARMANA_API_KEY"
@@ -110,7 +110,7 @@ send "again" '"receiptApproved": true, "approvalArtifact": '"$APPROVAL"
 
 ```powershell PowerShell (Windows)
 $Url = "https://parmana-sandbox.vercel.app"
-$env:PARMANA_API_KEY = "SANDBOX_DEMO_KEY"   # the published sandbox demo key
+$env:PARMANA_API_KEY = "2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME"   # the published sandbox demo key
 $Headers = @{ Authorization = "Bearer $env:PARMANA_API_KEY" }
 
 # 1. Who am I?
@@ -336,7 +336,7 @@ except ExecutionRejectedError as error:
 ## What each step returns
 
 Every response below is real, captured from the sandbox's first build on 2026-10-02. The sandbox was rebuilt on
-2026-10-23 with new keys, so today it answers the same shapes with its own ids, times and signing key.
+2026-10-23 on a new database, so today it answers the same shapes with its own ids and times.
 
 <Steps>
   <Step title="1. Who am I: GET /callers/me">
@@ -603,7 +603,7 @@ The SDK builders (`createBusinessTransaction`, `create_business_transaction`) fo
 ## For AI agents
 
 To test an integration before you have your own deployment: base URL `https://parmana-sandbox.vercel.app`, bearer key
-`SANDBOX_DEMO_KEY`, capability `sandbox:receipt`. Read `GET /policies/in-effect?capability=sandbox:receipt` first and
+`2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME`, capability `sandbox:receipt`. Read `GET /policies/in-effect?capability=sandbox:receipt` first and
 build the request from its answer. Get the approval from `POST /sandbox/approvals` with `resourceId` equal to your
 `target`. Send `POST /execute` with a client timeout of 120 seconds. Treat `403 POLICY_DENIED` as a final refusal, not
 something to retry. The full guide is [Integrate Parmana](/agents/integrate), and the machine readable spec is

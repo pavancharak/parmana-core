@@ -1,5 +1,5 @@
 export PARMANA_URL=https://parmana-sandbox.vercel.app
-export PARMANA_API_KEY=SANDBOX_DEMO_KEY   # the published sandbox demo key
+export PARMANA_API_KEY=2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME   # the published sandbox demo key
 
 # 1. Who am I?
 curl -s $PARMANA_URL/callers/me -H "Authorization: Bearer $PARMANA_API_KEY"
