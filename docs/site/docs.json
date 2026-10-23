@@ -2,7 +2,7 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "maple",
   "name": "Parmana",
-  "description": "Execution Trust Infrastructure: verifiable trust between business authorization, policy evaluation, runtime execution, and execution evidence.",
+  "description": "Parmana lets businesses set clear limits on what AI can do, checks every action against those limits, and keeps a record of each decision.",
   "colors": {
     "primary": "#6366F1",
     "light": "#6366F1",
