@@ -799,5 +799,8 @@
   "banner": {
     "content": "The Parmana server is proprietary software, source-available for evaluation only. The SDKs and the offline verifier are Apache 2.0. [License](/license)",
     "dismissible": false
+  },
+  "search": {
+    "prompt": "Search Parmana"
   }
 }
