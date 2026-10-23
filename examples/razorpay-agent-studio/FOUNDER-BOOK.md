@@ -942,7 +942,7 @@ Then check the external system for a refund with that receipt. A resend would re
 1. Stop further requests: revoke the grant for the caller (6.1). A revoke is a governed change, so ask a checker to approve it. If the checker is unavailable, rotate the caller's key (5.7) and replace the list (Part 7).
 2. Find the decision: the trust record for its `businessTransactionId` (scenario J).
 3. Check the external system: the refund, its amount, its receipt.
-4. Record the incident in Part 18.
+4. Record the incident in Part 41.
 
 **Status.** ⚠️ The steps are the ones this book already relies on. Not rehearsed.
 
