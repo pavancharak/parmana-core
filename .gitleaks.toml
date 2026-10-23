@@ -46,6 +46,12 @@ regexes = [
   # "Authorization: Bearer" in example curl commands.
   '''my-secret-api-key''',
 
+  # The public sandbox's demo key (ADR-0014 section 4), published on purpose in the
+  # docs and the OpenAPI x-default. Caller sandbox-visitor, allowed only sandbox:receipt,
+  # an action that acts on nothing, on https://parmana-sandbox.vercel.app only.
+  # Production refuses it with 401. Written by deploy/sandbox/publish-demo-key.ps1.
+  '''2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME''',
+
   # Fake mock-connector credential in tutorial 57, self-evidently a fixture.
   '''sap-secret-1234''',
 
