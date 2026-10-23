@@ -6,10 +6,9 @@ description: "Parmana models every request that could result in a real-world act
 ## What it is
 
 Parmana models every request that could result in a real-world action as a chain of six
-immutable artifacts: Authority, Authorization, Intent, a Decision produced by evaluating
-Execution Trust Record that binds all of it into one signed, append-only document. Nothing
-in this chain is ever mutated after creation.
-to an old one.
+immutable artifacts: Authority, Authorization, Intent, a Decision produced by evaluating a
+policy, an Execution, and the Execution Trust Record that binds all of it into one signed,
+append-only document. Nothing in this chain is ever mutated after creation.
 
 ## Why it was built
 
@@ -46,7 +45,7 @@ All defined in `packages/shared/src/domain/`, one file per type:
 
 **`Authority`** (`authority.ts`), the entity behind a request. Has an `authorityId`, an
 `authorityType` (`AuthorityType.USER | ROLE | SERVICE | ORGANIZATION`), a `principalId`, and
-an `issuedAt` timestamp. Nothing else. There is no field anywhere on this type, or on
+an `issuedAt` timestamp and an optional `displayName`. Nothing else. There is no field anywhere on this type, or on
 anything downstream of it, that says "this authority is an AI" or "this authority is a
 human" in a way policy evaluation can see.
 
@@ -65,9 +64,8 @@ VERIFIED`). This is the immutable input `RuntimeEngine.execute()` receives.
 
 **`Decision`** (`decision.ts`), the pure output of evaluating an `Intent`'s signals against
 a `Policy`: an `outcome` (`APPROVED | REJECTED`), the `matchedRuleId`, `evaluatedRules`
-(count), and `matchedPath` (the ordered rule-id trace `PolicyEngine` walked). The last three
-forward does. A `Decision` never carries anything the caller supplied that wasn't
-independently produced by evaluation itself.
+(count), and `matchedPath` (the ordered rule-id trace `PolicyEngine` walked). A `Decision`
+never carries anything the caller supplied that wasn't independently produced by evaluation itself.
 
 **`Execution`** (`execution.ts`), what actually happened while processing the transaction:
 wraps exactly one `Decision`, has its own `ExecutionStatus` (`PROCESSING | COMPLETED |
@@ -75,15 +73,14 @@ FAILED`) and `ExecutionMode` (`SYNC | ASYNC`), and optionally carries a hash-cha
 `previousChainHash`/`chainHash`/`chainSignature` linking it to the prior `Execution` for the
 same transaction (see `ExecutionChainCrypto`, Chapter 3). Verification recomputes each chained
 `Execution`'s hash and checks its signature and its link to the one before. An `Execution` with no
-chain fields is accepted only before the first chained one, as data from before chaining existed;
-Every `Execution` is also inside the trust record's own hash
-and signature, so the chain is a second layer, not the only one.
+chain fields is accepted only before the first chained one, as data from before chaining existed. Every `Execution` is also inside the trust record's own
+hash and signature, so the chain is a second layer, not the only one.
 
 **`ExecutionTrustRecord`** (`execution-trust-record.ts`), the aggregate root: one
 `BusinessTransaction`, arrays of `overrides`/`executions`/`verifications`/`receipts` (arrays,
 not single values, because a long-running or retried transaction can accumulate more than
 one of each), an optional signed `authorization` (the exact `SignedExecutionAuthorization`
-the Execution Gateway accepted, see Chapter 7), a `trustRecordHash`, and a `signature`. This
+the Execution Gateway accepted, see Chapter 10), a `trustRecordHash`, and a `signature`. This
 is "the authoritative source for replay, verification, audit, and receipt generation," per
 its own doc comment, and is itself signed as a whole so that any single field being altered
 after the fact invalidates the record.
@@ -96,11 +93,11 @@ understanding closely: `contentHash` and `governanceAnchor`. Both are marked exp
 carries either; `RuntimeEngine` computes both, after loading the real policy document, and
 merges them only into the copy embedded in the trust record's `transaction.policy`, never
 into the transaction as originally submitted. `contentHash` is a sha256 of the canonicalized
-policy content actually loaded (closing the gap where an in-place edit to an existing
-`governanceAnchor` records whether that content is
-traceable to a completed Policy Governance approval (`VERIFIED | NO_APPROVAL_RECORD |
-SIGNATURE_INVALID | CONTENT_MISMATCH`), resolved unconditionally regardless of whether
-execution-time enforcement of that fact is turned on (see Chapter 14).
+policy content actually loaded, so the hash covers the content that was really evaluated.
+`governanceAnchor` records whether that content is traceable to a completed Policy Governance
+approval (`VERIFIED | NO_APPROVAL_RECORD | SIGNATURE_INVALID | CONTENT_MISMATCH`). It is resolved
+unconditionally, regardless of whether execution-time enforcement of that fact is turned on (see
+Chapter 7).
 
 ### EvidenceAnchor: the explicit "these three things are linked" pointer
 
@@ -109,9 +106,8 @@ execution-time enforcement of that fact is turned on (see Chapter 14).
 unusually candid about what it is not: "Not a NEW cryptographic guarantee... What this adds
 is a single, explicitly-named, independently-computed pointer an auditor can check WITHOUT
 already knowing to reach into `transaction.policy` and `executions[].evidence.attributes.connector`
-separately and reconstruct the binding themselves." It exists because an audit
-governance provenance and actual connector evidence were provably linked, and the honest
-answer at the time was "implicitly, but nothing says so directly."
+separately and reconstruct the binding themselves." It exists because the link between
+governance provenance and actual connector evidence was implicit, and nothing said so directly.
 
 ### Caller-type agnosticism
 
@@ -119,7 +115,7 @@ Nowhere in `packages/runtime/src`, `packages/policy/src`, or `packages/execution
 does any evaluation or gateway-release logic branch on `AuthorityType`. A search across all
 three packages for `AuthorityType.` outside test files returns nothing. The only place
 `credentialHolderType`/`AuthorityType` is read for a real decision is at the HTTP caller-auth
-layer, specifically `isHumanCaller()` for Policy Governance approve/reject (Chapter 14), a
+layer, specifically `isHumanCaller()` for Policy Governance approve/reject (Chapter 7), a
 narrow, deliberate exception, not evidence that the core trust chain treats callers
 differently. An AI agent, a human, a service account, and an organization-level credential
 all produce identical `Authority`/`Intent`/`Decision`/`Execution` shapes and go through the
@@ -137,9 +133,9 @@ behind the "caller-type-agnostic" claim above, not just an absence-of-special-ca
 argument.
 
 More broadly, the domain model is what every other capability in this book builds on:
-Chapter 2's `RuntimeEngine.execute()` walkthrough operates entirely in terms of these types;
-Chapter 5's runtime pipeline is the process that turns a `BusinessTransaction` into an
-`ExecutionTrustRecord`; Chapter 6's cryptography chapter explains exactly how
+Chapter 8's `RuntimeEngine.execute()` walkthrough operates entirely in terms of these types;
+the runtime pipeline is the process that turns a `BusinessTransaction` into an
+`ExecutionTrustRecord`; Chapter 3's cryptography chapter explains exactly how
 `trustRecordHash`/`signature` get computed over this aggregate.
 
 ## How to validate this yourself
