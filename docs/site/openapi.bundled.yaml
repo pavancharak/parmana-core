@@ -14063,7 +14063,7 @@ components:
     bearerAuth:
       type: http
       scheme: bearer
-      x-default: <your-api-key>
+      x-default: SANDBOX_DEMO_KEY
       description: >
         Caller API key issued by scripts/generate-api-key.ts. Sent as
         Authorization: Bearer <key>. Verified against a stored SHA-256 hash in

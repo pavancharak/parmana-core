@@ -1,7 +1,7 @@
 # Writes the sandbox demo key into the docs, in place of the placeholder
 # SANDBOX_DEMO_KEY (ADR-0014 section 4: the demo key is published on purpose).
 #
-#   powershell -ExecutionPolicy Bypass -File D:\last\parmana\deploy\sandbox\publish-demo-key.ps1
+#   powershell -ExecutionPolicy Bypass -File D:\last\parmana-core\deploy\sandbox\publish-demo-key.ps1
 #
 # Before it writes anything it asks the live sandbox who the key is, and stops
 # unless the answer is caller sandbox-visitor, allowed only sandbox:receipt, so
@@ -12,7 +12,7 @@
 param(
   [string]$KeyFile = "D:\key\parmana-sandbox\sandbox-visitor.key",
   [string]$ApiUrl = "https://parmana-sandbox.vercel.app",
-  [string]$Repo = "D:\last\parmana"
+  [string]$Repo = "D:\last\parmana-core"
 )
 
 $ErrorActionPreference = "Stop"
