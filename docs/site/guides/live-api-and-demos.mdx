@@ -191,25 +191,25 @@ goes live (proposed and approved through policy governance, no deploy) are in
 
 ## Endpoints
 
-| Method & path                | Auth     | What it does                                                                                           |
-| ---------------------------- | -------- | ------------------------------------------------------------------------------------------------------ |
-| `GET /health` / `GET /ready` | none     | Liveness / readiness                                                                                   |
-| `POST /execute`              | required | Submit a Business Transaction; `200` returns the signed Trust Record of the executed action            |
-| `GET /transactions`          | required | List your own submitted transactions                                                                   |
-| `GET /refusal/:id`           | required | The signed Refusal Record for a rejected transaction                                                   |
-| `POST /refusal/verify`       | none     | Independently verify a Refusal Record's signature                                                      |
-| `POST /audit/verify`         | none     | Verify a signed caller-audit event                                                                     |
-| `GET /keys/:keyId`           | none     | Fetch a public signing key (PEM + JWK where supported)                                                 |
-| `GET /.well-known/jwks.json` | none     | The public keys this deployment signs with (under AWS KMS: `default` and the current verification key) |
-| `GET /trust-records/:id`     | required | The full signed Execution Trust Record of an executed action                                           |
+| Method & path                               | Auth     | What it does                                                                                           |
+| ------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------ |
+| `GET /health` / `GET /ready`                | none     | Liveness / readiness                                                                                   |
+| `POST /execute`                             | required | Submit a Business Transaction; `200` returns the signed Trust Record of the executed action            |
+| `GET /transactions`                         | required | List your own submitted transactions                                                                   |
+| `GET /refusal/:businessTransactionId`       | required | The signed Refusal Record for a rejected transaction                                                   |
+| `POST /refusal/verify`                      | none     | Independently verify a Refusal Record's signature                                                      |
+| `POST /audit/verify`                        | none     | Verify a signed caller-audit event                                                                     |
+| `GET /keys/:keyId`                          | none     | Fetch a public signing key (PEM + JWK where supported)                                                 |
+| `GET /.well-known/jwks.json`                | none     | The public keys this deployment signs with (under AWS KMS: `default` and the current verification key) |
+| `GET /trust-records/:businessTransactionId` | required | The full signed Execution Trust Record of an executed action                                           |
 
 Machine-readable spec: `GET /openapi.yaml` or [the REST API
 reference](/api-reference/introduction).
 
 ## Verifying a result independently
 
-An executed action has a Trust Record (`GET /trust-records/:id`); a refused one has a
-**Refusal Record** (`GET /refusal/:id`). Verify a Trust Record with zero further server calls
+An executed action has a Trust Record (`GET /trust-records/:businessTransactionId`); a refused one has a
+**Refusal Record** (`GET /refusal/:businessTransactionId`). Verify a Trust Record with zero further server calls
 using `verifyExecutionTrustRecordOffline` (TypeScript) or `verify_execution_trust_record_offline`
 (Python) and the key from `GET /keys/default`, and a Refusal Record with `POST /refusal/verify`
 (server side, but cryptographic and unauthenticated). See [Verify a trust record

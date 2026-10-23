@@ -102,7 +102,7 @@ trust_record = client.execution.execute(transaction)
 
 print(trust_record.trust_record_id)
 print(trust_record.trust_record_hash)
-print(trust_record.signature.algorithm)                 # e.g. "ED25519"
+print(trust_record.signature.algorithm)                 # e.g. "ed25519"
 print(trust_record.executions[0].decision.outcome)       # "APPROVED"
 print(trust_record.executions[0].evidence)               # what the connector actually did
 ```
@@ -135,7 +135,7 @@ pip install parmana
 ```
 
 Real PyPI package, confirmed against the live registry (see [Python SDK](/sdks/python) for the
-current published version). Requires Python 3.8+.
+current published version). Requires Python 3.10+.
 
 ## Quick example
 

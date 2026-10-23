@@ -158,7 +158,7 @@ failed, so never resubmit it under a new id: tell the operator, who can rebuild 
 operations are retry eligible. **Do not wrap `execute()` in a retry.** After a
 `TimeoutError` or `NetworkError` the request may still have run: an approved request can take
 tens of seconds. Read what happened first, with the same `businessTransactionId`:
-`trustRecord(id)` answers if it executed, `GET /refusal/{id}` if it was refused. Sending it
+`trustRecord(id)` answers if it executed, `GET /refusal/{businessTransactionId}` if it was refused. Sending it
 again with the **same** id returns `409 ConflictError`, never the original result; sending it
 with a **new** id asks for the action a second time. See [Idempotency and
 nonces](/api-reference/idempotency-and-nonces).
