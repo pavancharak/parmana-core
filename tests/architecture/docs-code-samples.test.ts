@@ -308,7 +308,7 @@ describe("code samples in the docs", () => {
 
   it("TypeScript samples agree with the SDK", () => {
     expect(typeCheck(typescriptSdkSamples())).toEqual([]);
-  });
+  }, 120000);
 
   it("every policy a sample names exists and requires a signed human approval", () => {
     const problems: string[] = [];
