@@ -2127,6 +2127,8 @@ Evidence
 
 **Update 2026-10-06, server image provenance:** `.github/workflows/server-image.yml` builds this `Dockerfile` when a GitHub release is published, pushes it to `ghcr.io/pavancharak/parmana-api:<release tag>`, and attaches SLSA build provenance (`slsa-github-generator` `generator_container_slsa3.yml`) to the image digest in the registry. Claimed only once a release has run it; until then no published image exists. The provenance covers that image only: the hosted API and the sandbox are built by Vercel, not from this image, and carry no SLSA provenance. It shows which commit and workflow built the image, not that the image is free of defects.
 
+**Update 2026-10-23, first published image:** release `server-v1.0.1` published `ghcr.io/pavancharak/parmana-api:server-v1.0.1` from commit `72a71f2`, digest `sha256:7e17dfb8e1e5e391cc0acd0a2a19801d1b1b888b529ee75a977846c219dce97c`, built on Node 24.22.1, with its SLSA provenance created, signed and attached (workflow run 39885625781, attempt 2). The first attempt and the `sdk-v1.6.1` run failed with `denied: permission_denied: write_package`: the package was linked to the old `parmana` repository. `parmana-core` now has write access to the package and the old repository's access was removed.
+
 Evidence
 
 - `docs/site/deployment/production.mdx` (the authoritative deployment runbook this claim is drawn from, which replaced the root `DEPLOYMENT.md` on 2026-09-28: required configuration, storage, schema application, caller authentication, health checks, graceful shutdown)
@@ -2530,3 +2532,21 @@ This discipline ensures that Parmana's public positioning remains aligned with i
 - Test results: `packages/api` 698 passed; `packages/crypto`, `packages/execution-gateway`, `packages/runtime`, `packages/shared`, `packages/storage`, `packages/policy`, `packages/approval`, connector packages and root `tests` all passed, except the two generated-file checks, which were regenerated; the Python SDK 190 passed; the Python connector SDK 34 passed; the TypeScript SDK's new endpoint test passed. Eight TypeScript SDK test files fail to load with "No test suite found" both with and without these changes; that is a pre-existing problem with the SDK's test setup, not this change.
 
 **Limits.** Items that change the signed evidence format, add a policy flag, or need an outside check are not in this claim. They are listed in `docs/REMAINING-WORK.md` section N.
+
+## 3.27 The Server Distrusts eMudhra's emSign Roots at Startup (Scoped, 2026-10-23)
+
+**Claim.** Every server process removes eMudhra's four emSign root certificates (Root CA G1, ECC Root CA G3, Root CA C1, ECC Root CA C3), matched by SHA-256 fingerprint, from its default CA list before any outbound TLS connection. A certificate issued from the compromised eMudhra intermediate keys (G-124) is therefore refused by `fetch`, `https`, the Postgres driver and the AWS SDK, whatever Node version runs the server. A Node version that cannot set the default CA list stops the server from starting.
+
+**Evidence.**
+
+- `packages/api/src/bootstrap/distrustCompromisedRoots.ts`, called first in `api/index.ts` (Vercel) and `packages/api/src/server.ts` (Docker and self hosted).
+- `packages/api/tests/unit/distrustCompromisedRoots.test.ts`: only emSign roots are named, exactly those are removed and every other root kept, and the result is idempotent. Forcing the filter to keep everything fails two of its three tests.
+- Checked on Node 24.21.0 against a local HTTPS server signed by a throwaway root: with the root in the default list, `fetch` and `https` both connected; with it removed, both refused with `UNABLE_TO_VERIFY_LEAF_SIGNATURE`, each in a fresh process.
+- Production, 2026-10-23: `{"event":"runtime","node":"v24.21.0","openssl":"3.5.7","distrustedRootsRemoved":4}`, followed by normal startup.
+- The published image `server-v1.0.1` (3.18) includes it.
+
+**Limits.**
+
+- It removes trust in four roots, not in the eight intermediates alone: a legitimate server whose certificate chains to an emSign root cannot be reached. None of the systems the server calls uses one.
+- It covers the server's own outbound connections. The SDKs and connector endpoints run in their users' processes and rely on those runtimes; Python SDK users should update certifi to 2026.10.19 or later.
+- It does not check certificate revocation in general; it answers this one compromise.
