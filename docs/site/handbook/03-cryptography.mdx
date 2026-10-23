@@ -28,7 +28,7 @@ under it, as long as a second algorithm was also applied).
 
 ### `CanonicalSerializer`: the thing every signature is actually computed over
 
-`packages/crypto/src/CanonicalSerializer.ts` is nineteen lines of `normalize()` plus a
+`packages/crypto/src/CanonicalSerializer.ts` is about 57 lines of `normalize()` plus a
 `serialize()` that runs `JSON.stringify` over the result. The normalization rule: objects
 have their keys recursively sorted lexicographically before serialization; arrays keep their
 original order (element order is meaningful, key order in an object is not); `Date` becomes
@@ -47,9 +47,8 @@ turned out to be a red herring, since `CanonicalSerializer` normalizes object ke
 away. The real, separate finding underneath it was that the stored content was missing an
 entire field (`unboundSignalReasons`, and for two policies, `boundSignals`) relative to the
 current file, a genuine content difference no amount of key-order normalization could paper
-over. See §2.26's "Legacy-policy backfill" entry for the full account,
-worth reading as a caution against assuming a hash mismatch has an obvious cause before
-actually diffing the two objects field by field.
+over. The lesson is a caution: do not assume a hash mismatch has an obvious cause. Diff the two
+objects field by field before concluding anything.
 
 ### Hash and signature providers: pluggable, registered, resolved through `CryptoBootstrap`
 
@@ -61,7 +60,7 @@ either at the config layer would fail when `HashRegistry.get()` tries to resolve
 is the only one with a real implementation.
 
 Signature providers implement `SignatureProvider` (`sign`/`verify`, plus a readonly
-`algorithm` field): `Ed25519SignatureProvider.ts` (46 lines, wraps `node:crypto`'s `sign`/`verify`
+`algorithm` field): `Ed25519SignatureProvider.ts` (65 lines, wraps `node:crypto`'s `sign`/`verify`
 with no options object, i.e. pure Ed25519, not Ed25519ph) and `Dilithium3SignatureProvider.ts`
 (53 lines, near-identical shape, using Node's native `"ml-dsa-65"` key type, this is the
 ML-DSA-65/FIPS 204 standard, and `ConfigValidation.ts` accepts the string `"ml-dsa-65"` as a
@@ -96,11 +95,11 @@ operations (`getPublicKey`, `getMetadata`, `hasKey`, `listKeys`) are identical o
 interfaces, since verification never needed private key material regardless of custody model.
 
 Two implementations exist for each side today. `FileKeyProvider` (`providers/key/FileKeyProvider.ts`,
-192 lines) reads `<keyId>.private.pem`/`<keyId>.public.pem` from `PARMANA_KEY_DIR`, this is
+207 lines) reads `<keyId>.private.pem`/`<keyId>.public.pem` from `PARMANA_KEY_DIR`, this is
 the only real `KeyProvider`, and `KeyBootstrap.create()` (Chapter 2) throws for any other
 `KEY_PROVIDER` value rather than silently falling back to it. `LocalFileSigner` wraps that
 same file-reading logic behind the `Signer` interface (so `local` custody works through either
-abstraction), and `KmsSigner` (`providers/signer/KmsSigner.ts`, 217 lines) is the real AWS KMS
+abstraction), and `KmsSigner` (`providers/signer/KmsSigner.ts`, 366 lines) is the real AWS KMS
 implementation, resolved only through `SignerBootstrap`, never through `KeyBootstrap`.
 
 ### `KmsSigner`: sign-without-release, against real AWS KMS
@@ -133,7 +132,7 @@ replaced by `/` because KMS alias names cannot contain a dot, so `"tenant.acme"`
 `alias/tenant/acme`. It passes an explicit `alias/` name through unchanged, and refuses AWS's
 reserved `alias/aws/` prefix. It refuses a full key ARN: a keyId often comes from
 the record being verified, and an ARN can name a key in another AWS account whose public key
-anyone may read (audit, 2026-10-03). A UUID shaped keyId is treated as an alias name, never as a
+anyone may read (2026-10-03 audit). A UUID shaped keyId is treated as an alias name, never as a
 raw key ID.
 A class that passes the logical keyId straight through would call AWS with `{ KeyId: "default" }` and fail on every signing attempt. Because of this function, `alias/default` has to actually exist in AWS, it
 is not a naming convenience, it is the literal resolution target for the logical id every call
@@ -144,8 +143,8 @@ site already uses.
 AWS KMS refuses a raw Ed25519 message longer than 4096 bytes. `KmsSigner.sign()` originally passed the
 full canonical bytes of whatever it was signing, so signing a full `ExecutionTrustRecord` (with its
 bound authorization, connector evidence and governance anchor) failed with `ValidationException:
-Member must have length less than or equal to 4096`.
-because earlier KMS tests only used the small `test:fixture-execute` record.
+Member must have length less than or equal to 4096`. Earlier KMS tests did not catch this, because
+they only used the small `test:fixture-execute` record.
 
 The fix is `packages/crypto/src/SignatureCommitment.ts`. A message of 4096 bytes or fewer is signed
 raw, exactly as before. A longer message is signed as a fixed 97 byte commitment: the prefix
@@ -162,18 +161,17 @@ starts with, so the two forms cannot be confused.
 Two consequences worth knowing. A verifier written elsewhere has to implement the same rule to verify a
 large record signed under KMS, and the Python SDK's offline verifier already does. This also does not
 change the order of operations in a request: the connector is still called before the Execution Trust
-Record is signed.
-released action always has signed evidence behind it (Chapter 8).
+Record is signed. That every released action has signed evidence behind it is covered in Chapter 8.
 
 ### `SignerKeyProviderAdapter`: closing a real signing/verification divergence
 
-_every_ authorization it verifies, including ones signed under the plain `"default"` keyId,
-not only tenant-scoped ones, contrary to an earlier assessment in this same codebase's own
-comments that this path was "currently inert." `createExecutionGateway.ts` unconditionally
-constructed a fresh `new FileKeyProvider()` for that lookup, regardless of `KEY_PROVIDER`. Once
-`KEY_PROVIDER=aws-kms` was set, every authorization was _signed_ by the real KMS key (via
-to still be materialized from a pre-migration `PARMANA_KEY_MATERIAL_JSON` entry. Signing and
-verification silently used two different keys, every real request's `signatureVerified`
+Before this fix, the gateway verified every authorization, including ones signed under the plain
+`"default"` keyId, not only tenant-scoped ones. Earlier comments in this codebase called that path
+"currently inert." It was not inert. `createExecutionGateway.ts` unconditionally constructed a fresh
+`new FileKeyProvider()` for that lookup, regardless of `KEY_PROVIDER`. Once `KEY_PROVIDER=aws-kms` was
+set, every authorization was _signed_ by the real KMS key, but verified against a key read from the
+local file path, which might still be materialized from a pre-migration `PARMANA_KEY_MATERIAL_JSON`
+entry. Signing and verification silently used two different keys, every real request's `signatureVerified`
 check (and everything that cascades from it: `businessTransactionHashMatches`, `nonceUnseen`)
 failed. `SignerKeyProviderAdapter` closes this by wrapping the _same_ `Signer` instance
 `createGatewayPublicKey()` already uses, so signing and per-authorization verification now
@@ -200,10 +198,8 @@ invalidates records signed before that flag was set.
 
 `.env.example`'s comment on `KEY_PROVIDER` states that only `local` has an implementing class
 and that setting it to anything else "does nothing." That was true when written and is no
-longer true: `SignerBootstrap.ts` implements `aws-kms` for real. Separately, a live `.env` in
-this repository was observed carrying `KMS_REGION` and `KMS_KEY_ALIAS` variables, neither
-name is read anywhere in `packages/*/src` (confirmed by a repo-wide grep returning zero
-matches). The variables `KmsSigner`/`assertKmsSigningKeyReachable` actually read are
+longer true: `SignerBootstrap.ts` implements `aws-kms` for real. Separately, `KMS_REGION` and `KMS_KEY_ALIAS` are not read
+anywhere in `packages/*/src`. The variables `KmsSigner`/`assertKmsSigningKeyReachable` actually read are
 `AWS_REGION` and `AWS_ROLE_ARN`. If you are configuring KMS custody for a real deployment, set
 those two, not `KMS_REGION`/`KMS_KEY_ALIAS`, the latter pair currently does nothing at all.
 
@@ -217,9 +213,9 @@ those two, not `KMS_REGION`/`KMS_KEY_ALIAS`, the latter pair currently does noth
   same key source.
 - `examples/tutorials/47-canonical-json` demonstrates `CanonicalSerializer`'s normalization
   behavior directly.
-- `packages/crypto/tests/unit/kms-signer.test.ts` and `signer-key-provider-adapter.test.ts`
-  migration's own troubleshooting guide notes a real, one-time end-to-end test was also run
-  against actual AWS KMS before this coverage was trusted, then deleted once confirmed.
+- `packages/crypto/tests/unit/kms-signer.test.ts` and `signer-key-provider-adapter.test.ts` cover
+  these paths. A real, one-time end-to-end test was also run against AWS KMS before this coverage was
+  trusted, then deleted once confirmed.
 
 ## How to validate this yourself
 
@@ -229,7 +225,7 @@ those two, not `KMS_REGION`/`KMS_KEY_ALIAS`, the latter pair currently does noth
   three composition roots (Chapter 2 also covers these from the config-and-startup angle).
 - `packages/crypto/src/Signer.ts`, `KeyProvider.ts`, the two interfaces, both with doc
   comments explaining exactly why they're separate.
-- `packages/crypto/src/providers/signer/KmsSigner.ts`, `providers/SignerKeyProviderAdapter.ts`,
+- `packages/crypto/src/providers/signer/KmsSigner.ts`, the KMS signing path.
 
 ## Integration requirements
 
