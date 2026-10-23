@@ -1851,7 +1851,7 @@ names the version in effect. Agents must then send that version.
 
 ---
 
-## guides/connect-an-agent
+## Connect an agent you already run
 
 Source: https://docs.parmanasystems.com/guides/connect-an-agent
 
