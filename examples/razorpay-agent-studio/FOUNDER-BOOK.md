@@ -2,7 +2,7 @@
 
 How to connect any external system to Parmana: the commands, the sequence of events, how credentials are generated and stored, every scenario we have met, and what each result means.
 
-Version 1.0, 23 October 2026. This is a living document. When a new scenario, command or failure is found, add it to the right part and add a line to the changelog in Part 18.
+Version 1.1, 23 October 2026. This is a living document. When a new scenario, command or failure is found, add it to the right part and add a line to the changelog in Part 41.
 
 ---
 
@@ -13,20 +13,44 @@ Version 1.0, 23 October 2026. This is a living document. When a new scenario, co
 - Part 2. Concepts and roles
 - Part 3. How the system is built (architecture and trust boundaries)
 - Part 4. Workstation setup
-- Part 5. Credentials: what exists, how to generate each, how to store and rotate
-- Part 6. Governed changes: propose, approve, revoke
-- Part 7. The live key list (PARMANA_API_KEYS)
+- Part 5. Credentials
+- Part 6. Governed changes
+- Part 7. The live key list
 - Part 8. Building the external endpoint
 - Part 9. Putting an agent behind an MCP tool
-- Part 10. The connection sequence, step by step
+- Part 10. The connection sequence
 - Part 11. Scenarios
-- Part 12. Troubleshooting: exact messages and what they mean
+- Part 12. Troubleshooting
 - Part 13. Command reference
-- Part 14. Evidence: what was tested on 23 October 2026
+- Part 14. Evidence from 23 October 2026
 - Part 15. Gaps and decisions
-- Part 16. Mapping to the Razorpay Agent Studio spec
+- Part 16. Mapping to the Razorpay spec
 - Part 17. Glossary and FAQ
-- Part 18. Changelog
+- Part 18. (Merged into Part 41: changelog)
+- Part 19. What Parmana is
+- Part 20. Who it is for, and the problem
+- Part 21. Architecture of the whole system
+- Part 22. Policies
+- Part 23. Approvals and approvers
+- Part 24. Records and evidence
+- Part 25. Cryptography
+- Part 26. Storage and data
+- Part 27. Deployment and configuration
+- Part 28. Security model and how it is tested
+- Part 29. Operations
+- Part 30. Incident response
+- Part 31. Open risks and decisions for the founder
+- Part 32. Compliance and regulation
+- Part 33. Roadmap: designed, not built
+- Part 34. SDKs, connectors and developers
+- Part 35. Licensing, IP and what can be shared
+- Part 36. Go-to-market material
+- Part 37. Team, roles and succession
+- Part 38. Decision records
+- Part 39. Founder checklists
+- Part 40. Glossary additions
+- Part 41. Changelog
+
 
 ---
 
@@ -1126,9 +1150,536 @@ What this table does not prove:
 
 ---
 
-## Part 18. Changelog
+---
 
-- **1.0 (23 October 2026).** First version. Built from the Razorpay refund agent work: workstation setup; credential generation and storage; governed changes; the live key list; the connection sequence; scenarios A to U; troubleshooting; command reference; test evidence; gaps; mapping to the Razorpay spec; glossary and FAQ.
-- Status markers were checked on 23 October. The sandbox could not reach the live API. Live reads must be run on an operator's machine before their markers change to ✅.
+## Part 19. What Parmana is
 
-**To add an entry:** write the situation, the commands, the expected result, and the status, with the date verified. Add a line here.
+Parmana is execution trust infrastructure. In the repository's own words (README): "Let AI agents act on real systems: every action needs policy approval and a person's signed approval before it runs, and leaves a signed record anyone can verify afterwards."
+
+The product answers two questions that stop agents reaching production:
+
+- **What is this agent allowed to do?** A rule written in a prompt is not a control. The agent, or whoever injects text into it, can ignore it. Parmana enforces the rule outside the agent.
+- **Can we prove what it did?** Logs written by the system that acted are a claim, not evidence. Parmana writes a signed record that anyone can verify offline, with the public key only.
+
+What Parmana does, in three moments:
+
+1. **Before an action.** The request is checked against a versioned policy. It needs a signed approval from a trusted person. No approval, no action, reads included.
+2. **When it runs.** The agent never holds the real credential. The gateway releases one approved action, once, through a connector.
+3. **After it runs.** A signed record of what was authorized and what happened.
+
+**What Parmana is not.** It does not decide what the agent should do. It decides, and proves, whether the agent was allowed to do it. It is not an AI model, not a guardrail on model output, and not a compliance certificate.
+
+---
+
+## Part 20. Who it is for, and the problem
+
+Who it is for (README):
+- Teams putting agents near money: refunds, payouts, vendor payments.
+- Teams letting agents change systems of record: CRM, code repositories, internal tools.
+- Security, risk and compliance teams who sign off on what an agent may do, and auditors who need evidence rather than assurances.
+
+Where it fits: between the agent (or the platform running it) and the system it acts on. Parmana is not a replacement for identity providers, API gateways or model guardrails. The repository's "How Parmana compares" page sets out where it is weaker than those (docs/site/how-parmana-compares.mdx). Read it before a customer conversation.
+
+What a founder should be able to say in one breath: an agent can propose; a named person approves that exact action; Parmana releases it once through a connector that holds the credential; both the approval and the outcome are signed and checkable by the customer without trusting Parmana's servers.
+
+---
+
+## Part 21. Architecture of the whole system
+
+### 21.1 Packages (repository `packages/`)
+
+| Package | Role (from its name and the current-state notes) |
+| --- | --- |
+| `api` | HTTP service: routes for execute, policies, grants, connectors, approval issuers, records; bootstrap of connectors and auth |
+| `runtime` | The core pipeline: policy load, binding checks, rule evaluation, authorization signing |
+| `policy` | Policy model, validator, the reference policies, the policy decision (pure function, no I/O) |
+| `approval` | Approval verification and the approval signal checks |
+| `capability-registry` | Which capability is bound to which policy; the canonical bindings |
+| `execution-control` | Caller identity, external connector identity, authenticators |
+| `execution-gateway` | Re-verifies the signed authorization before any connector runs; holds connector adapters; the single-use credential session |
+| `execution-system` | Execution orchestration |
+| `connector-sdk` | The SDK connector authors implement |
+| `connector-hubspot`, `connector-github`, `connector-paytm`, `connector-slack` | Built-in connectors |
+| `crypto` | Ed25519 and ML-DSA-65 signing, key providers, canonical serialization |
+| `envelope-verifier` | Verifies records and authorizations, including offline |
+| `replay` | Replay of a recorded decision to check it again |
+| `storage` | Memory and Postgres storage; the Supabase audit sink |
+| `shared` | Domain types, errors, repositories, the business validation |
+| `governance-ui` | The governance interface |
+
+Only the names above are taken from the repository. Read each package's source before describing it to a customer in detail.
+
+### 21.2 The core pipeline (CURRENT-STATE, verified on 2026-09-08)
+
+`RuntimeEngine.execute()`:
+
+1. Load the policy.
+2. Check it against the capability-to-policy binding map.
+3. Check its `boundSignals` against the actual execution intent. A mismatch is rejected as a tamper attempt.
+4. Evaluate the deterministic rules (`PolicyEngine.evaluate()`, a pure function with no I/O).
+5. On approval, sign an authorization: Ed25519 by default, ML-DSA-65 under `CRYPTO_MODE=hybrid`.
+6. The gateway independently re-verifies that authorization before any connector runs.
+7. The connector runs with a single-use, credential-isolated session, destroyed after use.
+8. A signed Execution Trust Record is produced.
+
+### 21.3 External connectors (ADR-0013)
+
+A customer's own endpoint can be registered without a code deploy. Parmana sends it signed releases; the endpoint verifies them (`verifyParmanaRelease`) and acts. The Razorpay refund endpoint is the worked example. Registration is governed (maker and checker, step-up signature) and cannot take a built-in namespace.
+
+### 21.4 Built-in connectors
+
+Registered only when their configuration is present (createConnectorRegistry.ts, read on 2026-09-27):
+
+| Connector | Configuration needed | Capabilities |
+| --- | --- | --- |
+| HubSpot | `HUBSPOT_PRIVATE_APP_TOKEN` | `hubspot:deal-fetch`, `hubspot:deal-update` |
+| GitHub | `GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY` | `github:pr-fetch`, `github:pr-merge` |
+| Paytm (refunds) | `PAYTM_CONNECTOR_URL`, `PAYTM_CONNECTOR_SHARED_SECRET` (a separate connector service) | `paytm:refund` |
+| Slack | `SLACK_BOT_TOKEN`; a post also needs its channel in `SLACK_ALLOWED_CHANNEL_IDS` (since 2026-09-28, G-76) | `slack:post-message` |
+| Test fixture | Only with `NODE_ENV=test` | Tests only |
+
+Six capabilities are reachable on the built-in path. A new built-in connector is a code change, and it must be wired into credential isolation deliberately. The architecture does not do this for you (the limitations page, `docs/site/security/limitations.mdx`).
+
+### 21.5 Where the trust boundaries sit
+
+See Part 3.3 for the request path. At the system level: Parmana holds its own signing keys and its callers' key hashes; each external system holds its own credential; humans hold maker, checker and approver keys; the customer holds the verification side.
+
+---
+
+## Part 22. Policies
+
+### 22.1 Anatomy of a policy
+
+A policy is a JSON file with:
+- `policyId`, `policyVersion`, `schemaVersion`, `description`;
+- `signalsSchema`: the facts the rules may read, with their types;
+- `boundSignals`: facts taken from the request and checked against the intent (for example `refundAmount` bound to `parameters.amount`);
+- `approvalSignals`: which approval must be present for which resource and value;
+- `rules`: ordered; each has an `id`, a `condition` and an `outcome` of `approve` or `reject` with a reason;
+- `requireAuthorityGrant` (boolean): whether the caller must hold a grant in force;
+- optional `signalSources` (facts asked from an external source) and `unboundSignalReasons` (why a signal is not bound to the request).
+
+The last rule must match everything and reject. Rules are evaluated in order; the first match decides.
+
+### 22.2 Versions and changes
+
+- A policy version is immutable once in force. A change is a new version.
+- A change is proposed by a maker and approved by a checker (Part 6).
+- Only one pending change per policy version (Part 6.3).
+- Records carry the policy name and version they were decided under, so a past decision can be checked against the rules that applied then.
+
+### 22.3 The reference policies (repository `policies/`)
+
+access-control, agent-vendor-payment, api-key-issuance, connector-capability, customer-refund, database-change, expense-reimbursement, github-pr-approval, github-pr-read, hubspot-deal-read, hubspot-deal-update, llm-tool-call, production-deployment, rag-document-access, slack-post-message, vendor-payment.
+
+The Razorpay refund policy lives in `examples/razorpay-refund/policy.json`, not in `policies/` (Part 22.3 explains why).
+
+### 22.4 Policy tooling
+
+- Validation is performed when a policy is proposed. The validator's tests pass (16 tests, 23 October).
+- `POST /policies/validate` exists in the API specification. It was not exercised in this book.
+- `GET /policies/in-effect?capability=<cap>` shows what applies now.
+
+---
+
+## Part 23. Approvals and approvers
+
+### 23.1 What an approval is
+
+A signed statement by a registered approver, for one target and one resource, covering a specific amount where the policy names one. It is single-use. It expires within its lifetime. A request without one, where the policy requires one, is refused.
+
+### 23.2 What it covers, and what it does not (limitations, verbatim summary)
+
+- It names the action and the resource, not every parameter. A Slack approval does not fix the message text; a HubSpot approval does not fix the new stage or amount. Payment, expense and refund approvals do cover the amount.
+- It trusts the approver. Parmana checks that a trusted, unrevoked key signed it. It cannot check that the person read the request.
+- No request waits for an approval. A refused request stays refused; a new request needs a new approval.
+
+### 23.3 Approver registration
+
+- Registered as approval issuers (`GET /approval-issuers` lists them with `revoked` status).
+- Adding or revoking an issuer is a governed change on the API (`POST /approval-issuers/changes`, then approve). The operator command for it is not in `governance.ts` (Part 15, gap 2).
+- Approver scope is not per policy yet, and there is no quorum (G-50, Part 35).
+
+### 23.4 Approval delivery by email
+
+The repository has an approval-email path (Resend). On 20 October the sending domain was verified and a test email arrived. The approval email itself was not yet sent end to end, because policy governance needed a second person to approve a change. It will be verified the first time a real approval request runs. Until then, treat the email path as unverified.
+
+---
+
+## Part 24. Records and evidence
+
+### 24.1 The three kinds of record
+
+| Record | Written when | Content | Route |
+| --- | --- | --- | --- |
+| Execution Trust Record | An approved action runs | The decision, the policy and version, the approval, the authorization, the connector's result | `GET /trust-records/<businessTransactionId>` |
+| Refusal Record | A request is refused | The rule, the reason, the authority status | `GET /refusal/<businessTransactionId>` |
+| Caller audit event | Every caller request, in a hash chain | Caller, route, outcome | Audit chain; `POST /audit/verify` (route exists in the API) |
+
+### 24.2 Verifying offline
+
+A customer can check a record with only Parmana's public key (`GET /keys/default` or the key published with the release). The runner does this automatically for approved cases: `Verifies offline : true`. The verifier is in `envelope-verifier` and in the SDKs (`verifyExecutionTrustRecordOffline`).
+
+Record verification in the API: `/verify`, `/verification/<id>`, `/refusal/verify`, `/execution-intents/verify`, `/audit/verify`, `/receipt`. Route names come from the OpenAPI specification; each was not exercised in this book.
+
+### 24.3 What a record proves and does not prove
+
+- It proves what Parmana decided, under which policy version, with which approval, and what the connector returned.
+- It does not prove the connector's answer is true. The endpoint's answer is recorded as its claim. The external system's own records (for example the Razorpay dashboard) are the evidence of the external action.
+
+### 24.4 Retention
+
+Records live in the deployer's own database. Parmana's repositories have no delete method, and a deleted row breaks the hash chain. Retention periods and backups are the deployer's responsibility (regulation mapping, Art. 26(6)).
+
+---
+
+## Part 25. Cryptography
+
+### 25.1 Algorithms
+
+| Use | Algorithm | Notes |
+| --- | --- | --- |
+| Default signing | Ed25519 | `CRYPTO_MODE` default; the release, authorization and record signatures |
+| Hybrid signing | Ed25519 plus ML-DSA-65 (Node's `ml-dsa-65`, named "Dilithium3" in code) | Under `CRYPTO_MODE=hybrid`. Not live in production (G-119) |
+| Record hashing | SHA-256 | Record hashes and key hashes |
+
+ML-DSA-65 signatures are randomized by design; only verification is deterministic.
+
+### 25.2 Key custody
+
+| Provider | Status |
+| --- | --- |
+| `KEY_PROVIDER=local` (`FileKeyProvider`) | Implemented. Reads PEM files from disk |
+| `KEY_PROVIDER=aws-kms` (`KmsSigner`) | Implemented. The signing key is never released from KMS |
+| `azure-key-vault`, `gcp-kms`, `hsm` | Declared configuration values with no implementation. Startup fails loudly rather than silently falling back |
+
+The roadmap's first move is a real KMS/HSM provider (Part 33). The local-file path is the exposure class behind the committed-key incident (Part 31).
+
+### 25.3 The large-message rule
+
+AWS KMS refuses a raw Ed25519 message over 4096 bytes. A record or authorization larger than that is signed as a fixed commitment. The Parmana TypeScript and Python verifiers accept the commitment form. A verifier you write yourself must accept it, or it will reject large KMS-signed records (limitations).
+
+### 25.4 Key rotation
+
+`scripts/rotate-verification-key.ts` exists. Rotation is a manual operator procedure, not automated (limitations).
+
+---
+
+## Part 26. Storage and data
+
+- `PARMANA_STORAGE` selects `memory` or Postgres. `postgres` and `supabase` both select the Postgres storage, which uses a raw `pg` connection pool (G-57). `sqlite` is not a valid value; the factory throws "not implemented".
+- Tests always force memory storage.
+- Migrations: 40 files in `supabase/migrations/` (count on 23 October). Row-level security was enabled on the rate-limit counters on 15 October, and the migration was applied to production (status 38 applied, 0 pending at that time).
+- Caller audit events are hash-chained; a deleted row breaks the chain.
+- Customer data: Parmana stores the decisions, the approvals and the records. It does not store the external system's credentials in the database; they live in environment secrets (Part 27).
+
+---
+
+## Part 27. Deployment and configuration
+
+### 27.1 Targets
+
+| Target | Documentation | Status |
+| --- | --- | --- |
+| Production (Vercel) | `docs/site/deployment/production.mdx` | In use: `parmana-api-real` |
+| Self-hosted | `docs/site/self-hosted/` | Built and merged 25 September 2026 (G-56 to G-63) |
+| Local | `docs/site/deployment/local.mdx` | Available |
+| AWS KMS signing | `docs/site/deployment/aws-kms-signing.mdx` | Implemented |
+
+### 27.2 Environment variables seen in production (names only)
+
+Names from the production variable list on 23 October, and their use:
+
+| Name | Use |
+| --- | --- |
+| `PARMANA_API_KEYS` | Caller key entries (hashes); replaced as a whole (Part 7) |
+| `POLICY_CHANGE_CHECKERS` | Checkers allowed to approve policy changes (Part 11, scenario I) |
+| `DATABASE_URL` | Postgres connection (rotated 19 October) |
+| `KILL_SWITCH_ENABLED`, `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` | Kill switch and its reset rule (Part 29) |
+| `RATE_LIMIT_EXECUTE_PER_MINUTE`, `RATE_LIMIT_HEALTH_PER_MINUTE` | Rate limits |
+| `POLICY_EXECUTION_VERIFICATION_ENFORCED`, `EXECUTION_AUTHORIZATION_TTL_SECONDS`, `TRUST_PROFILE` | Execution checks and lifetimes |
+| `PRIMARY_SIGNATURE_PROVIDER`, `KEY_PROVIDER`, `CRYPTO_MODE`, `HASH_PROVIDER` | Cryptography and key custody (Part 25) |
+| `PARMANA_STORAGE`, `PARMANA_KEY_DIR`, `PARMANA_POLICY_DIR`, `PARMANA_GATEWAY_KEY_ID` | Storage and file locations |
+| `PAYTM_CONNECTOR_URL`, `PAYTM_CONNECTOR_TIMEOUT_MS`, `PAYTM_CONNECTOR_SHARED_SECRET` | Paytm connector |
+| `APPROVAL_EMAIL_TO`, `RESEND_EMAIL_DOMAIN`, `RESEND_API_KEY` | Approval email (Part 23.4) |
+| `SLACK_ALLOWED_CHANNEL_IDS` | Slack channel allowlist |
+| `AWS_REGION`, `AWS_ROLE_ARN` | AWS access for KMS |
+| `NODE_ENV`, `LOG_LEVEL` | Runtime |
+
+Values are secrets or configuration; do not print them. The CLI shows them as Hidden; a Config value is readable from the dashboard (Part 31, item 4).
+
+### 27.3 The environment file
+
+`.env.example` in the repository lists the variables with their meaning. Read it before configuring a new environment. Use `.env` only locally.
+
+---
+
+## Part 28. Security model and how it is tested
+
+### 28.1 The threat model
+
+`THREAT-MODEL.md` gives each threat its control, the attack that tests it and the residual risk. Read it before any security claim to a customer.
+
+### 28.2 Runnable evidence
+
+- `npm run evaluate` runs 16 attacks (replay, forgery, acting without a signed approval, policy substitution, gateway bypass, record tampering and more) and reports each as blocked or not, tied to the commit.
+- Mutation testing deliberately breaks the security code and checks the tests notice (`docs/MUTATION-TESTING.md`).
+- Fuzz tests send damaged and arbitrary requests, policies and records, and require a clear refusal, never a crash.
+- A standing public challenge (`SECURITY-CHALLENGE.md`) lists what counts as breaking Parmana on a copy you run yourself, and credits every confirmed break.
+
+### 28.3 Vulnerability reports
+
+`SECURITY.md`: report privately to founder@parmanasystems.com. Acknowledgement within 3 business days; a fix timeline or a clarifying question within 10. Ask for a reasonable window before any public disclosure.
+
+### 28.4 Test counts (as recorded)
+
+2,069 passing, 42 skipped, 0 failing across 246 test files (run on 25 September 2026, `CURRENT-STATE.md`). Skips are suites gated on live credentials. Counts change with every change; re-run before quoting.
+
+---
+
+## Part 29. Operations
+
+### 29.1 Health
+
+- `GET /health`: liveness. Expected `{"status":"UP"}`.
+- `GET /ready`: readiness. Expected `READY` with `authDisabled` false. On 19 October, after rotation, `/ready` returned `READY` and an unauthenticated `POST /execute` returned 401.
+
+### 29.2 Kill switch
+
+Environment variables `KILL_SWITCH_ENABLED` and `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` control it. The reset is set to require a second operator. Use it before any incident response that stops all actions, then follow the runbook in `docs/runbooks/`.
+
+### 29.3 Runbooks
+
+`docs/runbooks/` holds the operator procedures. Read the index before an incident. Keep the runbook list in your own calendar; it changes with the code.
+
+### 29.4 Rate limits
+
+Set per minute for execute and health. Tune them per deployment (Part 27.2).
+
+### 29.5 Logs
+
+Structured logs are written by the service. Monitor the production logs after each deployment. Do not log keys: the connector secret redaction helpers exist for this reason.
+
+---
+
+## Part 30. Incident response
+
+### 30.1 Steps
+
+1. **Contain.** Stop the affected caller: remove its key from the live list (Part 7), or revoke its grant or connector through a governed change. Use the kill switch for a system-wide stop (Part 29.2).
+2. **Preserve.** Keep the records (trust and refusal records, audit events). Do not delete anything.
+3. **Find the decision.** Read the record for each suspect `businessTransactionId`.
+4. **Rotate.** Every credential that was seen by anyone who should not have seen it (Part 5.7). Assume exposure from the moment a secret appeared in chat, email, a commit or a screenshot.
+5. **Check the external system.** The refund, the message, the merge, the deal. Reverse only through the external system's own process.
+6. **Report.** Record the incident in the book's changelog, with the date, the cause and the fix. Report vulnerabilities to affected customers as your contracts require.
+
+### 30.2 Incidents already on record
+
+From the repository's own notes:
+- A committed key (the "committed-key incident"), which is the exposure class behind the local-key roadmap item (Part 33).
+- The production Supabase database password was pasted into a chat and was rotated on 19 October. Vercel `DATABASE_URL` and the operator's local backup were updated; `/health`, `/ready` and an unauthenticated execute check were run afterwards.
+- Two test credentials were pasted into a chat and a local file during an approval-email test on 20 October. The bearer keys must be rotated; the local test files were deleted.
+- A policy approval was refused in production until the checker scope was fixed (G-123, 21 October).
+
+### 30.3 Lessons, which are now rules
+
+- No secret in chat, email, a commit or a document (Book Part 0).
+- Rotate on any doubt. Rotation is cheap compared with an unexplained refund.
+- A checker scope or a list update can silently block every approval. Test a governed approval after each change to those lists.
+
+---
+
+## Part 31. Open risks and decisions for the founder
+
+Each item below is recorded in the repository's own notes. Owner and status are as recorded on the dates given.
+
+| # | Risk or decision | Status (as recorded) | Owner |
+| --- | --- | --- | --- |
+| 1 | `RESEND_API_KEY` is stored as a Config value, which anyone with dashboard access can reveal | Open (21 October). Done when `vercel env ls production` lists it as Secret | Operator |
+| 2 | Separation of duties: one operator holds both maker and checker roles | Open (19 October). Items that need two people stay open until a second person holds the checker credential | Founder |
+| 3 | Approval issuers are not scoped per policy; no quorum | Open (G-50) | Engineering |
+| 4 | Hybrid signing is not live in production | Open (G-119). Steps are in the repository notes; none has run in production | Engineering |
+| 5 | Downgrade of schema version 2 records | Open (G-120). A cutover setting closes it for new records once every record is hybrid-signed | Engineering |
+| 6 | Third-party verifiers do not read schema version 3 | Open (G-121). Schema version 3 stays off | Engineering |
+| 7 | Approval email not verified end to end | Deferred by decision (20 October); needs a second checker | Founder |
+| 8 | Release tags for SDK versions 1.2.0 to 1.6.0 do not exist in this repository | Open (22 October). Their tags need the earlier repository | Engineering |
+| 9 | CAGE integration design (ADR-0018) was never merged and its branches were deleted | Not built | Founder decides whether to revive |
+| 10 | Two test credentials pasted in chat (20 October) | Rotation required; check it is done | Operator |
+| 11 | No KMS/HSM for Azure, GCP or on-premise HSM | Designed, not built (Part 33) | Engineering |
+| 12 | The customer's approver is not limited to particular actions | Limitation (regulation mapping, Art. 26) | Product |
+
+---
+
+## Part 32. Compliance and regulation
+
+Parmana is not legal advice, and it does not make a system compliant. It is a technical measure for oversight and record keeping for the actions that go through it. The full mapping is `docs/site/security/regulation-mapping.mdx`. The founder should read it before any regulated customer conversation.
+
+### 32.1 EU AI Act
+
+| Provision | Rating | What Parmana provides |
+| --- | --- | --- |
+| Art. 14(1) human oversight | Supports | A person is placed before every action: a signed approval for the action and resource, and the amount where the policy names one |
+| Art. 14(4)(a) monitoring | Partly | Signed records of every action and refusal; approvers can be told when a request waits |
+| Art. 14(4)(d) disregard or override | Supports | An action not signed is refused, and the refusal is recorded |
+| Art. 14(4)(e) intervene or stop | Partly | Remove an agent's key, revoke an approver or connector, approve a refusing policy. An action already released is not recalled |
+| Art. 12 record keeping | Supports | Signed execution and refusal records, and chained audit events, verifiable offline |
+| Art. 26(1), (2) competence and authority | Partly | Approvers are registered and recorded; choosing and training them is yours |
+| Art. 26(6) six-month logs | Partly | Records are kept in your database; retention is yours |
+
+The high-risk obligations apply from 2 December 2027 for Annex III systems and 2 August 2028 for Annex I systems, as stated in the mapping. Check the current text with counsel.
+
+### 32.2 NIST AI RMF, ISO/IEC 42001 and RBI
+
+The mapping covers NIST AI RMF subcategories (GOVERN 3.2, MAP 3.5, MANAGE 2.4, MEASURE 2.7), ISO/IEC 42001, and RBI IT and AI guidance for Indian banks and NBFCs. Read the mapping for the exact ratings and evidence references.
+
+### 32.3 What Parmana does not claim
+
+Guaranteed compliance (SOC 2, GDPR, ISO 27001, a regulator's approval); absolute prevention of unauthorized execution; tamper-proof operation in every environment; "non-bypassable" as a system-wide claim. The gateway enforces nothing at the network level.
+
+### 32.4 OWASP
+
+The OWASP Top 10 for LLM Applications and the OWASP Top 10 for Agentic Applications (2026) are mapped to Parmana's controls: `docs/site/security/owasp-mapping` on the public documentation.
+
+---
+
+## Part 33. Roadmap: designed, not built
+
+The roadmap (`docs/site/roadmap.mdx`) is explicit that every item is not shipped by default.
+
+- **Move 1: KMS/HSM key custody (roughly one to two weeks once started).** Implement a real `KeyProvider` for at least one of AWS KMS, Azure Key Vault, GCP KMS or HSM. Needs a real cloud account to prove it works. Requires resolving the algorithm question first (what the provider signs).
+- **Move 2: making authorization unavoidable, not just verifiable.** Partly designed. The gateway is wired unconditionally in the default server and registered connectors use credential isolation; the calling AI does not hold the execution credential for a registered connector. The broader claim is not yet made.
+- Hybrid signing live in production (G-119); schema version cutover (G-120); third-party verifier support for version 3 (G-121).
+- Per-policy approver scope and quorum (G-50).
+
+The founder should treat the roadmap as a list of decisions, not promises. Each item names its evidence bar.
+
+---
+
+## Part 34. SDKs, connectors and developers
+
+### 34.1 Packages published
+
+| Package | Language | Version (as recorded) |
+| --- | --- | --- |
+| `@parmana/sdk` | TypeScript | 1.6.1 |
+| `parmana` | Python | 1.6.1 |
+| `@parmana/connector-sdk` | TypeScript | 0.3.1 |
+| `parmana-connector-sdk` | Python | 0.2.1 |
+
+The release `sdk-v1.6.1` is on GitHub with the packages, SBOMs and provenance attached (22 October). Private repository links were removed from the package metadata of all four packages.
+
+### 34.2 Using the SDK
+
+The TypeScript SDK exposes `ParmanaClient` (`execute`, `policyInEffect`, `caller`, `refusalRecord`, `publicKey`), `createBusinessTransaction`, `signApproval`, `verifyExecutionTrustRecordOffline`, `verifyParmanaRelease`. See `docs/site/sdks/typescript.mdx` and `docs/site/sdks/python.mdx`. The API coverage page (`docs/site/sdks/api-coverage.mdx`) lists which endpoints the SDKs cover. Read it before promising a customer an endpoint in an SDK.
+
+### 34.3 Writing a connector
+
+Two paths:
+- **External (no deploy):** build an endpoint, register it through governance (Part 6). Preferred for customers' own systems.
+- **Built-in (code):** implement the connector SDK, wire it into credential isolation, and add tests. `docs/connectors/BUILDING_A_CONNECTOR.md` is the guide.
+
+### 34.4 Release process
+
+`RELEASING.md` in the Python SDK and the repository release notes describe the procedure. Releases carry SBOMs and provenance. Do not tag a release from a repository that does not contain its commits (open item 8).
+
+---
+
+## Part 35. Licensing, IP and what can be shared
+
+- The repository is **proprietary**, copyright Parmana Systems Private Limited. It is source-available for evaluation only; no licence is granted to use, copy, modify or distribute it without a separate written agreement.
+- The **client SDKs and connector SDKs are Apache 2.0** (the exception stated in the README).
+- The `NOTICE` file lists third-party attributions.
+
+What this means for the founder: the SDKs can be given to customers and partners under Apache 2.0; the platform cannot be shared without an agreement; the security evidence (the evaluation suite, the threat model) is public and may be shared.
+
+---
+
+## Part 36. Go-to-market material
+
+Documents in the repository and public docs that support sales and diligence:
+- The technical paper (`docs/paper/parmana-paper.pdf`): design, threat model, evaluation and limitations.
+- The talk slides (`docs/paper/parmana-talk-slides.pdf`) and the demo video scripts.
+- "How Parmana compares" (honest comparison with IAM, API gateways and guardrails, including where Parmana is weaker).
+- The regulation mapping and the OWASP mapping.
+- The handbook (`docs/handbook`, `parmana-handbook.pdf`) and the build-with-Parmana book (`build-with-parmana.pdf`).
+
+Commercial terms are not in this repository. The Razorpay spec says "commercials follow in a separate note". Keep pricing out of technical documents.
+
+---
+
+## Part 37. Team, roles and succession
+
+- **Operator:** runs deployments and governance commands. Today one person holds this role.
+- **Maker and checker:** must be two different people with different credentials (Part 2.2). Today one operator holds both, which is open risk 2.
+- **Approver:** a manager who signs approvals for specific payments and amounts.
+- **Security reports:** founder@parmanasystems.com (`SECURITY.md`).
+
+Succession: before anyone leaves, rotate the credentials they held (Part 5.7), revoke their grants and approvals, and update the key list (Part 7). Record the handover in this book's changelog.
+
+---
+
+## Part 38. Decision records
+
+- `docs/adr/`: architecture decision records (for example ADR-0013, external connectors; ADR-0018, the CAGE design that was not merged).
+- `docs/rfcs/`: proposals.
+- `docs/CLAIMS.md`: each claim, its scope and evidence.
+- `docs/VERIFICATION-GAPS.md`: each known gap (G-numbers used throughout this book).
+- `docs/REMAINING-WORK.md`: the dated list of what is left.
+
+Read these before committing to a customer on any capability.
+
+---
+
+## Part 39. Founder checklists
+
+### 39.1 Before a customer demo
+
+- [ ] Run the four demo cases against your own test environment; keep the records.
+- [ ] Check `GET /health` and `/ready`.
+- [ ] Check the policy in force for the capability you will show.
+- [ ] Read the limitations (`docs/site/security/limitations.mdx`) so you do not overclaim.
+- [ ] Remove any approval files and test records from the demo folder.
+
+### 39.2 Before going live with a customer
+
+- [ ] Agree the trigger, the approval model, the limit and the refusal status code in writing.
+- [ ] Two people hold the maker and checker roles (open risk 2).
+- [ ] Approval email verified end to end (open risk 7).
+- [ ] Every secret is a Secret, not a Config value (open risk 1).
+- [ ] Records are kept in the customer's agreed retention.
+- [ ] Incident contacts and the kill switch procedure are written down.
+
+### 39.3 Monthly
+
+- [ ] Re-run the test suite and the evaluation (`npm run evaluate`); update the test counts you quote.
+- [ ] Review `parmana-entries` for callers that should no longer exist.
+- [ ] Review grants: `validUntil`, limits, and any grant that is still `active` past its end.
+- [ ] Review the pending changes list; approve, or leave with a note.
+- [ ] Review `docs/REMAINING-WORK.md` for changes.
+
+### 39.4 After any credential exposure
+
+- [ ] Section 30.1, steps 1 to 6.
+- [ ] Record the incident in the changelog.
+
+---
+
+## Part 40. Glossary additions
+
+| Term | Meaning |
+| --- | --- |
+| Checker scope | The list of checkers allowed to approve policy changes (`POLICY_CHANGE_CHECKERS`) |
+| Commitment (KMS) | The fixed form KMS signs for messages over 4096 bytes (Part 25.3) |
+| Credential isolation | The gateway holds the connector credential only inside its own boundary; the caller never holds it |
+| Kill switch | A system-wide stop of actions, with a reset rule that can require a second operator |
+| Refusal record | The signed record of a refused request |
+| Trust profile | A configured set of execution rules (`TRUST_PROFILE`) |
+
+---
+
+## Part 41. Changelog
+
+- **1.0 (23 October 2026).** First version: workstation setup, credentials, governed changes, the key list, the connection sequence, scenarios A to U, troubleshooting, command reference, test evidence, gaps, the Razorpay spec mapping, glossary and FAQ.
+- **1.1 (23 October 2026).** Added Parts 19 to 41: what Parmana is; who it is for; architecture; policies; approvals; records; cryptography; storage; deployment and configuration; security model; operations; incident response; open risks and decisions; compliance and regulation; roadmap; SDKs and developers; licensing; go-to-market material; team and succession; decision records; founder checklists; additional glossary entries. Statements are taken from the repository's own notes and code, dated as recorded there.
+
+**To add an entry:** write the topic, what it means for a founder, the source (file or command), and the date. Add a line here.
