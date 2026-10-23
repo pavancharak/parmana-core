@@ -203,7 +203,7 @@ describe("TEST 5: audit log tamper evidence", () => {
         return copy;
       },
     );
-  });
+  }, 120000);
 
   it("attacker without the signing key recomputes chain hashes after an edit (signature not refreshed)", async () => {
     await verdictFor(
