@@ -4612,17 +4612,19 @@ paths:
         Verification first; run
 
         `POST /verify`.
+
+
+        In the sandbox, the ID must come from a playground run that was approved
+        and released: each run's responses
+
+        include its `businessTransactionId`. Sandbox data is deleted hourly, so
+        an older ID returns `404`.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/receipt-request.schema"
-            examples:
-              vendor-payment-flow:
-                summary: Real captured request
-                value:
-                  businessTransactionId: 44b34a79-e0f2-49d7-a48e-e52fff88182e
       responses:
         "200":
           description: The signed Receipt.
@@ -12675,8 +12677,6 @@ components:
           description: Business Transaction to generate a Receipt for. Its Execution Trust
             Record must already have a successful (VERIFIED) Verification, or
             the request fails with a 409.
-      examples:
-        - businessTransactionId: eed2a972-1bf5-4166-8472-761f76fbf1b2
     receipt-response.schema:
       title: Receipt Response
       description: Response returned by POST /receipt and GET
