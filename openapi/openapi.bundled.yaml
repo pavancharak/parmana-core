@@ -889,7 +889,7 @@ paths:
         - lang: bash
           label: cURL
           source: |-
-            curl https://parmana-api-real.vercel.app/callers/me \
+            curl https://parmana-sandbox.vercel.app/callers/me \
               -H "Authorization: Bearer $PARMANA_API_KEY"
         - lang: typescript
           label: TypeScript
@@ -5650,7 +5650,7 @@ paths:
         - lang: bash
           label: cURL
           source: |-
-            curl "https://parmana-api-real.vercel.app/policies/in-effect?capability=paytm%3Arefund" \
+            curl "https://parmana-sandbox.vercel.app/policies/in-effect?capability=sandbox%3Areceipt" \
               -H "Authorization: Bearer $PARMANA_API_KEY"
         - lang: typescript
           label: TypeScript
