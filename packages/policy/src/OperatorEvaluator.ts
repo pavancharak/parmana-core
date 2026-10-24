@@ -1,3 +1,4 @@
+import RE2 from "re2";
 import type { JsonValue } from "@parmana/shared";
 
 import type { PolicyOperator } from "./types/Policy.js";
@@ -202,10 +203,11 @@ export class OperatorEvaluator {
    *
    * NOTE:
    * Regex syntax should already have been validated
-   * by PolicyValidator.
+   * by PolicyValidator. RE2 matches in time linear in the input,
+   * so no pattern can cause catastrophic backtracking.
    */
   private matches(actual: string, pattern: string): boolean {
-    return new RegExp(pattern).test(actual);
+    return new RE2(pattern).test(actual);
   }
 
   /**
