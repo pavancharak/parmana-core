@@ -41,33 +41,33 @@ for what is built.
 Answers were chosen from evidence in the repository. The justification text
 for each is in the registration form.
 
-| Area                    | Criterion                                                     | Answer              | Evidence                                                                           |
-| ----------------------- | ------------------------------------------------------------- | ------------------- | ---------------------------------------------------------------------------------- |
-| Basics                  | description_good, interact                                    | Met                 | `README.md`, `CONTRIBUTING.md`, Issues                                             |
-| Basics                  | contribution, contribution_requirements                       | Met                 | `CONTRIBUTING.md` (tests, full check)                                              |
-| Basics                  | floss_license, floss_license_osi                              | Met                 | `LICENSE` (Apache 2.0)                                                             |
-| Basics                  | english                                                       | Met                 | Documentation and Issues in English                                                |
-| Basics                  | maintained                                                    | Owner's judgement   | Recent commits; Scorecard Maintained is 0                                          |
-| Basics                  | repo_interim                                                  | Met                 | Merged pull requests between releases                                              |
-| Change control          | version_unique, version_semver, version_tags                  | Met                 | Tags `server-v1.0.1`, `sdk-v1.6.1`                                                 |
-| Change control          | release_notes                                                 | Met                 | Release notes on GitHub Releases                                                   |
-| Change control          | release_notes_vulns                                           | Open                | Depends on whether a CVE exists for the certificate issue fixed in `server-v1.0.1` |
-| Reporting               | report_tracker, report_archive                                | Met                 | Public Issues                                                                      |
-| Reporting               | report_responses, enhancement_responses                       | Open                | No issues or enhancement requests yet                                              |
-| Vulnerability reporting | vulnerability_report_process, vulnerability_report_private    | Met                 | `SECURITY.md`; private vulnerability reporting enabled                             |
-| Vulnerability reporting | vulnerability_report_response                                 | N/A                 | No reports in the last 6 months                                                    |
-| Quality                 | build, build_common_tools, build_floss_tools                  | Met                 | `package.json`, `Dockerfile`                                                       |
-| Quality                 | test, test_invocation, test_most, test_continuous_integration | Met                 | `npm test`; coverage 82.6% branches, 87.4% statements; `ci.yml`                    |
-| Quality                 | test_policy, tests_are_added, tests_documented_added          | Met                 | `CONTRIBUTING.md`; PR #59 added tests                                              |
-| Quality                 | warnings, warnings_fixed, warnings_strict                     | Met                 | ESLint (0 warnings); TypeScript `strict`                                           |
-| Security                | crypto_published, crypto_call, crypto_floss                   | Met                 | Node `node:crypto` provider; Ed25519, ML-DSA-65                                    |
-| Security                | crypto_keylength, crypto_weaknesses, crypto_working           | Met                 | `CryptoAlgorithms.ts`; no broken algorithms found in source                        |
-| Security                | crypto_pfs                                                    | N/A                 | No key agreement in the project's own code                                         |
-| Security                | crypto_password_storage                                       | N/A                 | Callers use API keys, stored as SHA-256 hashes                                     |
-| Security                | crypto_random                                                 | Met                 | `node:crypto` random sources                                                       |
-| Security                | delivery_unsigned                                             | Met                 | Downloads over HTTPS only                                                          |
-| Security                | vulnerabilities_fixed_60_days                                 | Open                | See section 4                                                                      |
-| Security                | know_secure_design, know_common_errors                        | Owner's attestation | `THREAT-MODEL.md`                                                                  |
+| Area                    | Criterion                                                     | Answer              | Evidence                                                                                                                                        |
+| ----------------------- | ------------------------------------------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Basics                  | description_good, interact                                    | Met                 | `README.md`, `CONTRIBUTING.md`, Issues                                                                                                          |
+| Basics                  | contribution, contribution_requirements                       | Met                 | `CONTRIBUTING.md` (tests, full check)                                                                                                           |
+| Basics                  | floss_license, floss_license_osi                              | Met                 | `LICENSE` (Apache 2.0)                                                                                                                          |
+| Basics                  | english                                                       | Met                 | Documentation and Issues in English                                                                                                             |
+| Basics                  | maintained                                                    | Owner's judgement   | Recent commits; Scorecard Maintained is 0                                                                                                       |
+| Basics                  | repo_interim                                                  | Met                 | Merged pull requests between releases                                                                                                           |
+| Change control          | version_unique, version_semver, version_tags                  | Met                 | Tags `server-v1.0.1`, `sdk-v1.6.1`                                                                                                              |
+| Change control          | release_notes                                                 | Met                 | Release notes on GitHub Releases                                                                                                                |
+| Change control          | release_notes_vulns                                           | N/A                 | Web search on 2026-10-24 found no CVE for the eMudhra certificate issue fixed in `server-v1.0.1`. The search does not prove that no CVE exists. |
+| Reporting               | report_tracker, report_archive                                | Met                 | Public Issues                                                                                                                                   |
+| Reporting               | report_responses, enhancement_responses                       | Open                | No issues or enhancement requests yet                                                                                                           |
+| Vulnerability reporting | vulnerability_report_process, vulnerability_report_private    | Met                 | `SECURITY.md`; private vulnerability reporting enabled                                                                                          |
+| Vulnerability reporting | vulnerability_report_response                                 | N/A                 | No reports in the last 6 months                                                                                                                 |
+| Quality                 | build, build_common_tools, build_floss_tools                  | Met                 | `package.json`, `Dockerfile`                                                                                                                    |
+| Quality                 | test, test_invocation, test_most, test_continuous_integration | Met                 | `npm test`; coverage 82.6% branches, 87.4% statements; `ci.yml`                                                                                 |
+| Quality                 | test_policy, tests_are_added, tests_documented_added          | Met                 | `CONTRIBUTING.md`; PR #59 added tests                                                                                                           |
+| Quality                 | warnings, warnings_fixed, warnings_strict                     | Met                 | ESLint (0 warnings); TypeScript `strict`                                                                                                        |
+| Security                | crypto_published, crypto_call, crypto_floss                   | Met                 | Node `node:crypto` provider; Ed25519, ML-DSA-65                                                                                                 |
+| Security                | crypto_keylength, crypto_weaknesses, crypto_working           | Met                 | `CryptoAlgorithms.ts`; no broken algorithms found in source                                                                                     |
+| Security                | crypto_pfs                                                    | N/A                 | No key agreement in the project's own code                                                                                                      |
+| Security                | crypto_password_storage                                       | N/A                 | Callers use API keys, stored as SHA-256 hashes                                                                                                  |
+| Security                | crypto_random                                                 | Met                 | `node:crypto` random sources                                                                                                                    |
+| Security                | delivery_unsigned                                             | Met                 | Downloads over HTTPS only                                                                                                                       |
+| Security                | vulnerabilities_fixed_60_days                                 | Open                | See section 4                                                                                                                                   |
+| Security                | know_secure_design, know_common_errors                        | Owner's attestation | `THREAT-MODEL.md`                                                                                                                               |
 
 ## 4. Dependency advisories
 
@@ -88,6 +88,8 @@ Source: `npm audit` on the lockfile, 2026-10-24.
 - `@vercel/connect` and `@vercel/oidc-aws-credentials-provider` are runtime
   dependencies of `packages/api`; `@vercel/oidc-aws-credentials-provider` is
   also a runtime dependency of `packages/crypto`.
+- A web search on 2026-10-24 did not find GHSA-mrhx-c7xc-m3w5, so its
+  publication date is still unknown.
 - Publication dates of these advisories could not be read from the
   environment used for this record, so the 60-day criterion cannot be
   answered from here. To settle it, check each advisory's published date on
@@ -110,9 +112,9 @@ Source: `npm audit` on the lockfile, 2026-10-24.
 ## 6. Open items
 
 1. Advisory dates for section 4, then the answer to `vulnerabilities_fixed_60_days`.
-2. `release_notes_vulns`: check for a CVE for the certificate issue in `server-v1.0.1`.
+2. `release_notes_vulns`: closed as N/A on the web search above. The owner should confirm on the eMudhra disclosure or a CVE database before relying on it.
 3. `report_responses` and `enhancement_responses`: answer after the first reports and requests have been handled.
-4. Best Practices badge: point at project 15846 once the owner confirms it.
+4. Best Practices badge: the URL `bestpractices.dev/projects/15846` redirects (HTTP 302), so the project exists. The owner should confirm it is `parmana-core` before the badge is changed.
 5. Contributor-agreement and collaborator-agreement rules.
 6. History rewrite for the deleted notes (section 5).
 7. Branch protection on `main` (Scorecard Branch-Protection).
