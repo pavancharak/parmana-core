@@ -8,7 +8,7 @@ verify afterwards.**
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](./LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D24.6-brightgreen)](package.json)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/pavancharak/parmana/badge)](https://scorecard.dev/viewer/?uri=github.com/pavancharak/parmana)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15230/badge)](https://www.bestpractices.dev/projects/15230)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15846/badge)](https://www.bestpractices.dev/projects/15846)
 
 > Licensed under the [Apache License 2.0](./LICENSE). See [NOTICE](./NOTICE).
 
