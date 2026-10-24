@@ -1,1 +1,1 @@
-curl https://parmana-api-real.vercel.app/api-manifest.json
+curl https://parmana-sandbox.vercel.app/api-manifest.json
