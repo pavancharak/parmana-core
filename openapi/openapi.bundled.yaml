@@ -599,8 +599,8 @@ paths:
       operationId: getKey
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key,
-            so use a key issued by the operator.
+          description: Production. This deployment's own public signing keys; the public
+            sandbox has separate keys.
       description: >
         Returns the public half of a signing key, so anyone can verify a Parmana
         signature without a Parmana
@@ -623,6 +623,7 @@ paths:
           required: true
           schema:
             type: string
+            x-default: default
       responses:
         "200":
           description: The public key.
