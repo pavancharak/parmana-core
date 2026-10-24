@@ -1,1 +1,24 @@
+# Code owners review changes to the paths below. GitHub applies the last
+# matching rule, so the catch-all comes first and specific paths after it.
+#
+# Every rule names the repository owner for now. When a second reviewer
+# joins, name them on the security-sensitive paths (crypto, policy, auth,
+# workflows) and require their review through the main-protection ruleset.
+
 * @pavancharak
+
+# Signing, verification and key handling.
+/packages/crypto/ @pavancharak
+
+# Policy evaluation, validation and regular expressions.
+/packages/policy/ @pavancharak
+
+# Authentication, sessions and the API's trust boundaries.
+/packages/api/src/auth/ @pavancharak
+/packages/governance-ui/src/ @pavancharak
+/packages/execution-gateway/ @pavancharak
+
+# CI, release and supply-chain configuration.
+/.github/ @pavancharak
+/package.json @pavancharak
+/package-lock.json @pavancharak
