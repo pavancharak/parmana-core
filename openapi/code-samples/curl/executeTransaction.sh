@@ -1,50 +1,48 @@
-curl -X POST https://parmana-api-real.vercel.app/execute \
+# Sandbox: a receipt for a note, released only with a signed approval.
+# Each businessTransactionId can be used once: use a new UUID for every run
+# (for example, the output of uuidgen) in both places marked below.
+# Without the approval (receiptApproved false) the request is refused.
+# To release it, first get an approval from POST /sandbox/approvals for the
+# same target and add it as signals.approvalArtifact with receiptApproved true.
+curl -X POST https://parmana-sandbox.vercel.app/execute \
   -H "Authorization: Bearer $PARMANA_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "businessTransactionId": "44b34a79-e0f2-49d7-a48e-e52fff88182e",
+    "businessTransactionId": "REPLACE-WITH-A-NEW-UUID",
     "metadata": {
-      "businessTransactionId": "44b34a79-e0f2-49d7-a48e-e52fff88182e",
+      "businessTransactionId": "REPLACE-WITH-A-NEW-UUID",
       "correlationId": "cc1ca975-4935-4e9a-a591-8897af6b56fb",
-      "sourceSystem": "vendor-payment-service",
-      "submittedBy": "ap-automation",
+      "sourceSystem": "docs-example",
+      "submittedBy": "docs-reader",
       "submittedAt": "2026-07-13T17:36:00.835Z"
     },
     "authority": {
-      "authorityId": "db5c5260-bb4c-40a2-a081-2928b5fe7720",
+      "authorityId": "authority-1",
       "authorityType": "SERVICE",
-      "principalId": "ap-automation-svc",
-      "displayName": "Accounts Payable Automation",
+      "principalId": "sandbox-visitor",
       "issuedAt": "2026-07-13T17:36:00.835Z"
     },
     "authorization": {
-      "authorizationId": "63bdc429-14e4-4ef4-8007-f3c0c9564261",
-      "authorityId": "db5c5260-bb4c-40a2-a081-2928b5fe7720",
-      "purpose": "Authorize vendor payment disbursement",
+      "authorizationId": "authorization-1",
+      "authorityId": "authority-1",
+      "purpose": "Trying the Parmana sandbox",
       "issuedAt": "2026-07-13T17:36:00.835Z"
     },
     "intent": {
-      "intentId": "1e77d0b3-2e57-4e31-b780-03abc92f1b69",
-      "authorizationId": "63bdc429-14e4-4ef4-8007-f3c0c9564261",
-      "action": "payments:execute",
-      "target": "vendor/V-500",
-      "parameters": {
-        "amount": 5000,
-        "currency": "USD"
-      },
+      "intentId": "intent-1",
+      "authorizationId": "authorization-1",
+      "action": "sandbox:receipt",
+      "target": "order-docs-example",
+      "parameters": { "note": "hello" },
       "createdAt": "2026-07-13T17:36:00.835Z"
     },
     "policy": {
-      "name": "vendor-payment",
-      "version": "2.0.0",
+      "name": "sandbox-receipt",
+      "version": "1.0.0",
       "schemaVersion": "1.0.0"
     },
     "signals": {
-      "vendorVerified": true,
-      "invoiceVerified": true,
-      "paymentApproved": true,
-      "sufficientFunds": true,
-      "paymentAmount": 5000,
-      "riskScore": 12
+      "note": "hello",
+      "receiptApproved": false
     }
   }'

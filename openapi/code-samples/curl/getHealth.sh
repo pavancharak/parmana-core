@@ -1,1 +1,1 @@
-curl https://parmana-api-real.vercel.app/health
+curl https://parmana-sandbox.vercel.app/health

@@ -1,4 +1,4 @@
-curl -X POST https://parmana-api-real.vercel.app/verify \
+curl -X POST https://parmana-sandbox.vercel.app/verify \
   -H "Authorization: Bearer $PARMANA_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
