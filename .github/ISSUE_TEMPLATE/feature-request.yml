@@ -1,0 +1,26 @@
+name: Feature request
+description: A change to Parmana that would help you or others.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For a question or an open-ended idea, use Discussions instead. A feature that changes a
+        contract or a security property needs an RFC: see docs/REMAINING-WORK.md.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What you are trying to do, and what gets in the way.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: The change you would like
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
