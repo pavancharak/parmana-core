@@ -58,6 +58,8 @@ run against the live sandbox before it was published here; the files are in
 For TypeScript and Python, set the key first: `export PARMANA_API_KEY=2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME` (macOS, Linux) or
 `$env:PARMANA_API_KEY = "2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME"` (PowerShell). Then run `npx tsx playground.ts` or `python playground.py`.
 
+Each run's responses include the `businessTransactionId` it used. To read that transaction's execution intent with `GET /execution-intents/{businessTransactionId}`, paste that id into the path field. The sandbox deletes its data hourly, so an id from an earlier run returns `404 Execution Intent not found.`; run the flow again to get a new one.
+
 <CodeGroup>
 
 ```bash cURL (macOS, Linux)
