@@ -86,4 +86,5 @@ npx @parmana/verifier proof.json trust.json
 ```
 
 It checks the record hash and every signature, including the ML-DSA-65 signature on hybrid
-records, using only the record and the public keys from `GET /keys/{keyId}`.
+records, using only the record and the public keys from `GET /keys/{keyId}`. The Python version
+checks the same records except ML-DSA-65 signatures; see the offline verifier page.
