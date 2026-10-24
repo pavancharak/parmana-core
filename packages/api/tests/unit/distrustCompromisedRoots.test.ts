@@ -19,8 +19,10 @@ describe("distrustCompromisedRoots", () => {
       DISTRUSTED_ROOT_FINGERPRINTS.includes(fingerprint(pem)),
     );
 
-    // Node 24.22.1 and later bundle three of the four (Mozilla removed G3).
-    expect(matched.length).toBeGreaterThanOrEqual(3);
+    // Which of the four roots a Node build bundles varies by release (the
+    // Node 24.22.1 binary bundles only emSign Root CA - G1), so this checks
+    // that the match finds at least one, not a fixed count.
+    expect(matched.length).toBeGreaterThanOrEqual(1);
     for (const pem of matched) {
       expect(subject(pem)).toContain("OU=emSign PKI");
     }
@@ -31,7 +33,7 @@ describe("distrustCompromisedRoots", () => {
     const kept = withoutDistrustedRoots(bundled);
     const removed = bundled.filter((pem) => !kept.includes(pem));
 
-    expect(removed.length).toBeGreaterThanOrEqual(3);
+    expect(removed.length).toBeGreaterThanOrEqual(1);
     for (const pem of removed) {
       expect(DISTRUSTED_ROOT_FINGERPRINTS).toContain(fingerprint(pem));
     }
@@ -45,10 +47,17 @@ describe("distrustCompromisedRoots", () => {
     // whose default list comes from elsewhere would make this vary.
     tls.setDefaultCACertificates(tls.getCACertificates("bundled"));
 
+    const expected = tls
+      .getCACertificates("bundled")
+      .filter((pem) =>
+        DISTRUSTED_ROOT_FINGERPRINTS.includes(fingerprint(pem)),
+      ).length;
+
     const first = distrustCompromisedRoots();
     const second = distrustCompromisedRoots();
 
-    expect(first.removed).toBeGreaterThanOrEqual(3);
+    expect(expected).toBeGreaterThanOrEqual(1);
+    expect(first.removed).toBe(expected);
     expect(second.removed).toBe(0);
     for (const pem of tls.getCACertificates("default")) {
       expect(DISTRUSTED_ROOT_FINGERPRINTS).not.toContain(fingerprint(pem));
