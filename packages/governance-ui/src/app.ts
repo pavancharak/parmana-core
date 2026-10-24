@@ -1,10 +1,11 @@
 import express from "express";
+import cookieParser from "cookie-parser";
 import session from "express-session";
 
 import { createLoginRouter } from "./routes/login.js";
 import { createPendingChangesRouter } from "./routes/pendingChanges.js";
 import { errorHandler } from "./middleware/errorHandler.js";
-import { requireSameOrigin } from "./middleware/sameOrigin.js";
+import { createCsrf } from "./middleware/csrf.js";
 
 const EIGHT_HOURS_MS = 8 * 60 * 60 * 1000;
 
@@ -32,7 +33,7 @@ export function createGovernanceUiApp(options: CreateGovernanceUiAppOptions) {
   const app = express();
 
   app.use(express.urlencoded({ extended: false }));
-  app.use(requireSameOrigin);
+  app.use(cookieParser());
 
   app.use(
     session({
@@ -47,6 +48,22 @@ export function createGovernanceUiApp(options: CreateGovernanceUiAppOptions) {
       },
     }),
   );
+
+  const csrf = createCsrf({
+    secret: options.sessionSecret,
+    isProduction: options.isProduction,
+  });
+
+  app.use((req, res, next) => {
+    // Mark the session as modified so it is saved on every request. A visitor
+    // who has not signed in yet then keeps one session id, which the CSRF
+    // token is bound to. Without this, the id would change between the page
+    // that shows the form and the request that submits it.
+    req.session.csrfBound = true;
+    res.locals.csrfToken = csrf.issueToken(req, res);
+    next();
+  });
+  app.use(csrf.protect);
 
   app.use(createLoginRouter(options.apiBaseUrl));
   app.use(createPendingChangesRouter(options.apiBaseUrl));

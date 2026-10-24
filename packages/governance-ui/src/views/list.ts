@@ -17,6 +17,7 @@ function statusBadge(status: string): string {
 export function renderPendingChangesList(
   changes: readonly PendingPolicyChangeWithDiff[],
   callerId: string,
+  csrfToken?: string,
 ): string {
   const rows =
     changes.length === 0
@@ -55,5 +56,5 @@ export function renderPendingChangesList(
   </tbody>
 </table>`;
 
-  return renderLayout({ title: "Pending changes", callerId, body });
+  return renderLayout({ title: "Pending changes", callerId, body, csrfToken });
 }

@@ -1,7 +1,10 @@
-import { renderLayout } from "./layout.js";
+import { csrfField, renderLayout } from "./layout.js";
 import { escapeHtml } from "./escapeHtml.js";
 
-export function renderLoginPage(errorMessage?: string): string {
+export function renderLoginPage(
+  errorMessage?: string,
+  csrfToken?: string,
+): string {
   const errorBanner =
     errorMessage !== undefined
       ? `<div class="error-banner">${escapeHtml(errorMessage)}</div>`
@@ -10,6 +13,7 @@ export function renderLoginPage(errorMessage?: string): string {
   const body = `
 ${errorBanner}
 <form class="login-form" method="post" action="/login">
+${csrfField(csrfToken)}
   <label for="apiKey">Parmana API key</label>
   <input type="password" id="apiKey" name="apiKey" autocomplete="off" required autofocus>
   <button type="submit">Sign in</button>
