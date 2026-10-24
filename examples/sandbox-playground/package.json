@@ -1,0 +1,15 @@
+{
+  "name": "parmana-sandbox-playground",
+  "private": true,
+  "type": "module",
+  "description": "Runs the public Parmana sandbox playground: a refusal, a signed approval, a release, and an offline check.",
+  "scripts": {
+    "playground": "tsx playground.ts"
+  },
+  "dependencies": {
+    "@parmana/sdk": "^1.6.1"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.0"
+  }
+}
