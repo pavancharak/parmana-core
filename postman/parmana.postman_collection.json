@@ -131,7 +131,7 @@
           }
         },
         {
-          "name": "Create (execute) a Business Transaction (test-fixture-flow)",
+          "name": "Create (execute) a Business Transaction (sandbox-receipt)",
           "request": {
             "method": "POST",
             "header": [
@@ -142,7 +142,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"businessTransactionId\": \"4cfe5661-42a6-4db0-8372-2d24dca235f2\",\n  \"metadata\": {\n    \"businessTransactionId\": \"4cfe5661-42a6-4db0-8372-2d24dca235f2\",\n    \"sourceSystem\": \"docs-api-reference\",\n    \"submittedBy\": \"docs-example\"\n  },\n  \"authority\": {\n    \"authorityId\": \"be8afa44-ee3c-44c2-a4a2-ba119e128948\",\n    \"authorityType\": \"SERVICE\",\n    \"principalId\": \"docs-example-caller\",\n    \"issuedAt\": \"2026-09-14T17:18:27.000Z\"\n  },\n  \"authorization\": {\n    \"authorizationId\": \"81a1c120-d296-458b-bbe5-824a8617f23a\",\n    \"authorityId\": \"be8afa44-ee3c-44c2-a4a2-ba119e128948\",\n    \"purpose\": \"API reference example: transactions endpoint\",\n    \"issuedAt\": \"2026-09-14T17:18:27.000Z\"\n  },\n  \"intent\": {\n    \"intentId\": \"ceb89d68-13ac-4ff9-b7b9-dd0e15637baa\",\n    \"authorizationId\": \"81a1c120-d296-458b-bbe5-824a8617f23a\",\n    \"action\": \"test:fixture-execute\",\n    \"target\": \"vendor://payments\",\n    \"parameters\": {\n      \"amount\": 250,\n      \"currency\": \"USD\"\n    },\n    \"createdAt\": \"2026-09-14T17:18:27.000Z\"\n  },\n  \"policy\": {\n    \"name\": \"vendor-payment\",\n    \"version\": \"2.0.0\",\n    \"schemaVersion\": \"1.0.0\"\n  },\n  \"signals\": {\n    \"vendorVerified\": true,\n    \"invoiceVerified\": true,\n    \"paymentApproved\": true,\n    \"sufficientFunds\": true,\n    \"paymentAmount\": 250,\n    \"riskScore\": 5,\n    \"vendorId\": \"vendor://payments\"\n  }\n}",
+              "raw": "{\n  \"businessTransactionId\": \"ae94f2aa-6120-4c83-bf5d-7108e380d5a8\",\n  \"metadata\": {\n    \"businessTransactionId\": \"ae94f2aa-6120-4c83-bf5d-7108e380d5a8\",\n    \"correlationId\": \"cc1ca975-4935-4e9a-a591-8897af6b56fb\",\n    \"sourceSystem\": \"docs-example\",\n    \"submittedBy\": \"docs-reader\",\n    \"submittedAt\": \"2026-07-13T17:36:00.835Z\"\n  },\n  \"authority\": {\n    \"authorityId\": \"authority-1\",\n    \"authorityType\": \"SERVICE\",\n    \"principalId\": \"sandbox-visitor\",\n    \"issuedAt\": \"2026-07-13T17:36:00.835Z\"\n  },\n  \"authorization\": {\n    \"authorizationId\": \"authorization-1\",\n    \"authorityId\": \"authority-1\",\n    \"purpose\": \"Trying the Parmana sandbox\",\n    \"issuedAt\": \"2026-07-13T17:36:00.835Z\"\n  },\n  \"intent\": {\n    \"intentId\": \"intent-1\",\n    \"authorizationId\": \"authorization-1\",\n    \"action\": \"sandbox:receipt\",\n    \"target\": \"order-docs-example\",\n    \"parameters\": {\n      \"note\": \"hello\"\n    },\n    \"createdAt\": \"2026-07-13T17:36:00.835Z\"\n  },\n  \"policy\": {\n    \"name\": \"sandbox-receipt\",\n    \"version\": \"1.0.0\",\n    \"schemaVersion\": \"1.0.0\"\n  },\n  \"signals\": {\n    \"note\": \"hello\",\n    \"receiptApproved\": false\n  }\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -158,7 +158,7 @@
                 "transactions"
               ]
             },
-            "description": "Real captured request, currently runnable (test:fixture-execute, the generic NODE_ENV=test-only capability, APPROVED). Prefer this over vendor-payment-flow-transactions-endpoint below, which depends on a connector removed from this repository, see the POST /execute description above for the same caveat.\n\noperationId: createTransaction\n\nThe same as `POST /execute` in every way except the success status, `201` instead of `200`. Use\nwhichever fits your client. Read [Execute a Business Transaction](/api-reference/endpoints/execute-transaction)\nfor the full behavior, the outcomes and what to do after each."
+            "description": "The public sandbox's receipt action, sent without an approval. The sandbox refuses it (403 POLICY_DENIED), as the playground shows. Get a demo approval from POST /sandbox/approvals for the same target and add it to signals to release it.\n\noperationId: createTransaction\n\nThe same as `POST /execute` in every way except the success status, `201` instead of `200`. Use\nwhichever fits your client. Read [Execute a Business Transaction](/api-reference/endpoints/execute-transaction)\nfor the full behavior, the outcomes and what to do after each."
           }
         },
         {
