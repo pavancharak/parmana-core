@@ -465,7 +465,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/policies/in-effect?capability=paytm:refund",
+              "raw": "{{baseUrl}}/policies/in-effect?capability=sandbox:receipt",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -476,8 +476,8 @@
               "query": [
                 {
                   "key": "capability",
-                  "value": "paytm:refund",
-                  "description": "The action, as in `intent.action`, for example `paytm:refund`."
+                  "value": "sandbox:receipt",
+                  "description": "The action, as in `intent.action`. The sandbox's only action is `sandbox:receipt`; production answers for its own capabilities, such as `paytm:refund`."
                 }
               ]
             },
