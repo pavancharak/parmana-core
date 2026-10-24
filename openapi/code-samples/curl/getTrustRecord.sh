@@ -1,2 +1,5 @@
-curl https://parmana-sandbox.vercel.app/trust-records/5f0c2a7e-3d7b-4d0e-9a55-2f6d8b1c4e90 \
+# TXN_ID: the businessTransactionId of the transaction. In the sandbox, use one from a playground run;
+# sandbox data is deleted hourly, so an older id returns 404.
+TXN_ID="${TXN_ID:?set TXN_ID to a businessTransactionId}"
+curl https://parmana-sandbox.vercel.app/trust-records/$TXN_ID \
   -H "Authorization: Bearer $PARMANA_API_KEY"
