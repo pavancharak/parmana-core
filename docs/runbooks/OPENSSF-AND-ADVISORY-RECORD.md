@@ -133,3 +133,56 @@ Source: `npm audit` on the lockfile, 2026-10-24.
 5. Contributor-agreement and collaborator-agreement rules.
 6. History rewrite for the deleted notes (section 5).
 7. Branch protection on `main` (Scorecard Branch-Protection).
+
+## 7. Code-scanning alert disposition
+
+Status as of 2026-10-24, after PRs #75, #76, #78 and #79. The alert numbers
+are those shown on the repository's Code scanning page for `main`.
+
+### Closed by code changes
+
+| Alert    | Finding                                                          | Closed by                                                                                                                             |
+| -------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| #11, #12 | Incomplete string escaping in the Python SDK reference generator | [#76](https://github.com/pavancharak/parmana-core/pull/76) (escaper moved to `scripts/python-sdk-reference/escapeMdx.ts`, with tests) |
+| #13      | Regular expression injection in policy patterns                  | [#79](https://github.com/pavancharak/parmana-core/pull/79) (policy patterns evaluated with RE2, which runs in linear time)            |
+| #15      | Missing CSRF middleware in the governance UI                     | [#78](https://github.com/pavancharak/parmana-core/pull/78) (csrf-csrf token on every state-changing form; CodeQL recognises it)       |
+
+### Dismissed on GitHub (owner action, reasons below)
+
+| Alert  | Finding                                                                 | Dismissal reason to paste                                                                                                                          |
+| ------ | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #10    | Weak hash in `python/tests/test_live_server_integration.py`             | False positive. The test fixture hashes a random 256-bit API key, not a password. It must match the production hash.                               |
+| #16    | Password hash in `packages/api/src/auth/hashApiKey.ts`                  | False positive. Hashes a random 256-bit API key, not a password. A fast hash is appropriate for high-entropy keys.                                 |
+| #17    | Password hash in `scripts/generate-fly-secrets.mjs`                     | False positive. Hashes a random 256-bit API key, not a password. The same hash as production.                                                      |
+| #14    | Missing rate limiting in `examples/04-verified-execution/run.ts`        | Won't fix. Example code only (`examples/`), not production.                                                                                        |
+| #2, #3 | Pinned dependencies: SLSA generator reusable workflows at `v2.1.0`      | Won't fix. The SLSA generator must be referenced by version tag; provenance is verified by tag. Pinning to a commit hash would break verification. |
+| #4     | Pinned dependencies: `npm install --package-lock-only` in `release.yml` | Won't fix for now. The SBOM step resolves dependencies at release time. Pinning needs a release dry run, tracked as an open item below.            |
+
+### Repository settings
+
+| Alert | Finding           | Status                                                                                                                                                                                                                                   |
+| ----- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #1    | Branch-Protection | Ruleset `main-protection` created and active on `main`: pull request required, status checks `build-and-test` and `verify-policy-approvals`, force pushes and deletions blocked, 0 required approvals. Closes on the next Scorecard run. |
+
+### Needs work that is not a setting
+
+| Alert | Finding            | What is needed                                                                                                                                                                                                    |
+| ----- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #5    | SAST               | CodeQL already runs on pull requests and pushes. Scorecard should update on its next run.                                                                                                                         |
+| #6    | Vulnerabilities    | Open advisories in `@vercel/connect`, `@vercel/oidc-aws-credentials-provider`, `@vercel/cli-config`, `@vercel/oidc` and `zod`. The `zod` fix needs a Vercel release that depends on a fixed `zod`. See section 4. |
+| #7    | Code-Review        | A second person who reviews pull requests. Require one approval on `main-protection` once there is one.                                                                                                           |
+| #8    | Maintained         | Commits in the last 90 days exist. Should update on the next Scorecard run.                                                                                                                                       |
+| #9    | CII-Best-Practices | Register `parmana-core` at bestpractices.dev (project 15846 is shown on its registration page) and complete the criteria. Section 3 lists the answers.                                                            |
+
+## 8. Open items, with owners
+
+1. **Dismiss the alerts in section 7** using the reasons above. Owner: repository admin.
+2. **Verify the ruleset** `main-protection` shows as enforced on the rules page. Owner: repository admin.
+3. **Advisory dates** for section 4. Owner: security reviewer.
+4. **Upstream Vercel release** that fixes `zod` and the `@vercel/*` packages. Owner: whoever maintains the deployment tooling.
+5. **Docker build** with `re2` in the slim runtime stage (PR #79). Owner: whoever builds the release image.
+6. **Release dry run** to pin the `npm install` in `release.yml` (alert #4). Owner: release maintainer.
+7. **Second reviewer** for pull requests, then require one approval on `main-protection` (alert #7).
+8. **Best Practices registration** for `parmana-core` (alert #9). Owner: project owner.
+9. **Git history rewrite** to remove the deleted working notes (section 5). Owner: project owner, with a decision on rewriting `main`.
+10. **Agreement rules** in `CONTRIBUTING.md` and `docs/REVIEWING.md`. Owner: project owner.
