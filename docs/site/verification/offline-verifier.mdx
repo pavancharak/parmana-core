@@ -7,7 +7,7 @@ description: "Check an Execution Trust Record yourself: no network calls, no tru
   **[AVAILABLE]**. The offline verifier is a separate, public repository:
   [`pavancharak/parmana-verifier`](https://github.com/pavancharak/parmana-verifier),
   Apache License 2.0. It requires Node.js 24 or later and has no dependencies.
-  It is not published to npm; run it from a clone of that repository.
+  It is published on npm as [`@parmana/verifier`](https://www.npmjs.com/package/@parmana/verifier).
 </Info>
 
 It recomputes an Execution Trust Record's hash and checks its signatures against the keys you
@@ -16,10 +16,19 @@ or database.
 
 ## Run it
 
+Install it, or run it without installing:
+
 ```sh
-node bin/parmana-verify.mjs <proof.json> <trust.json>
-node bin/parmana-verify.mjs key-fingerprint <public-key.pem>
+npm install -g @parmana/verifier
+parmana-verify <proof.json> <trust.json>
+parmana-verify key-fingerprint <public-key.pem>
 ```
+
+```sh
+npx @parmana/verifier <proof.json> <trust.json>
+```
+
+From a clone of `parmana-verifier`, use `node bin/parmana-verify.mjs` in place of `parmana-verify`.
 
 - `proof.json` is the Execution Trust Record.
 - `trust.json` lists each key you accept:
@@ -47,7 +56,7 @@ invalid (with the reasons), and `2` for a usage error, a missing file or invalid
 
 1. Get the operator's public key and the `sha256:` fingerprint they published. Get the fingerprint
    from a source other than the one that gave you the key, such as a signed message.
-2. Run `node bin/parmana-verify.mjs key-fingerprint public-key.pem` on the PEM you received.
+2. Run `parmana-verify key-fingerprint public-key.pem` on the PEM you received.
 3. Compare the two fingerprints character by character. If they differ, do not use the key.
 4. Only then add the key to your trust file with that fingerprint.
 
