@@ -4288,7 +4288,9 @@ paths:
         until a different person approves it. `{version}` is the version this proposal changes;
         `proposedContent.policyVersion` may be the same (a correction) or new (a new version). The content is
         checked as `POST /policies/validate` would, and `proposedContent.policyId` must equal `{name}`. Needs
-        a human key. See [Policy lifecycle and approvals](/guides/policy-lifecycle-and-approvals).
+        a human key. The public sandbox's demo key is not one, so this route cannot be tried there as a reader: it
+        answers `401` with no key and needs an operator-issued human key (`credentialHolderType: USER`). See
+        [Policy lifecycle and approvals](/guides/policy-lifecycle-and-approvals).
       parameters:
         - name: name
           description: "The policy name, for example `customer-refund`. Not `.` or `..`. Prefilled with the sandbox's policy."
