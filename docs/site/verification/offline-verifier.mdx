@@ -8,7 +8,8 @@ description: "Check an Execution Trust Record yourself: no network calls, no tru
   [`pavancharak/parmana-verifier`](https://github.com/pavancharak/parmana-verifier),
   Apache License 2.0. The Node version requires Node.js 24 or later and has no dependencies.
   It is published on npm as [`@parmana/verifier`](https://www.npmjs.com/package/@parmana/verifier).
-  A Python version, for Python 3.11 or later, is in the repository's `python/` folder.
+  A Python version, for Python 3.11 or later, is published on PyPI as
+  [`parmana-verifier`](https://pypi.org/project/parmana-verifier/).
 </Info>
 
 It recomputes an Execution Trust Record's hash and checks its signatures against the keys you
@@ -34,13 +35,19 @@ From a clone of `parmana-verifier`, use `node bin/parmana-verify.mjs` in place o
 ### Python
 
 The Python version has the same checks, output and exit codes. It needs the `cryptography`
-package. It is not yet on PyPI, so install it from a clone:
+package. Install it from PyPI:
+
+```sh
+pip install parmana-verifier
+parmana-verify <proof.json> <trust.json>
+```
+
+Or install from a clone of the repository:
 
 ```sh
 git clone https://github.com/pavancharak/parmana-verifier
 cd parmana-verifier/python
 pip install -e .
-parmana-verify <proof.json> <trust.json>
 ```
 
 It does not check ML-DSA-65 (hybrid) signatures, because `cryptography` does not provide them.
