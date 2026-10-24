@@ -12,7 +12,7 @@ echo
 # 3. Send a request with no approval: refused.
 TARGET="order-$(date +%s)"
 send() {  # $1 = note, $2 = the rest of the signals
-  ID=$(uuidgen | tr 'A-Z' 'a-z')
+  ID=$( (uuidgen 2>/dev/null || python3 -c 'import uuid; print(uuid.uuid4())') | tr 'A-Z' 'a-z')
   curl -s -X POST $PARMANA_URL/execute \
     -H "Authorization: Bearer $PARMANA_API_KEY" -H "Content-Type: application/json" \
     -d '{
