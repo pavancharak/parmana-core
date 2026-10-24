@@ -282,8 +282,7 @@ Interested in running Parmana against a real integration? See
 - Email: [founder@parmanasystems.com](mailto:founder@parmanasystems.com)
 - Website: [parmanasystems.com](https://parmanasystems.com/)
 - Documentation: [docs.parmanasystems.com](https://docs.parmanasystems.com)
-- Questions and ideas: [GitHub Discussions](https://github.com/pavancharak/parmana/discussions)
-- Issues: [github.com/pavancharak/parmana/issues](https://github.com/pavancharak/parmana/issues)
+- Questions, ideas and issues: [github.com/pavancharak/parmana-core/issues](https://github.com/pavancharak/parmana-core/issues)
 - Conduct: everyone in issues, pull requests and other project spaces follows the
   [Code of Conduct](CODE_OF_CONDUCT.md).
 - Citing Parmana: [CITATION.cff](CITATION.cff), or **Cite this repository** on GitHub.

@@ -1,13 +1,13 @@
 blank_issues_enabled: true
 contact_links:
   - name: Ask a question
-    url: https://github.com/pavancharak/parmana/discussions/categories/q-a
-    about: Questions about how Parmana works or how to evaluate it go to Discussions.
+    url: https://github.com/pavancharak/parmana-core/issues
+    about: Questions about how Parmana works or how to evaluate it.
   - name: Suggest an idea
-    url: https://github.com/pavancharak/parmana/discussions/categories/ideas
-    about: Feature and connector ideas go to Discussions.
+    url: https://github.com/pavancharak/parmana-core/issues
+    about: Feature and connector ideas.
   - name: Report a security issue privately
-    url: https://github.com/pavancharak/parmana/security/advisories/new
+    url: https://github.com/pavancharak/parmana-core/security/advisories/new
     about: Do not open a public issue for a vulnerability; see SECURITY.md.
   - name: Documentation
     url: https://docs.parmanasystems.com
