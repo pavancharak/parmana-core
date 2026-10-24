@@ -210,7 +210,7 @@
                 {
                   "key": "businessTransactionId",
                   "value": "",
-                  "description": "The id you chose when you sent the transaction. In the sandbox, use an id from a playground run: its responses include it. Sandbox data is deleted hourly, so an older id returns `404`; run the playground again for a new one."
+                  "description": "The id you chose when you sent the transaction. In the sandbox, the value shown is a seeded transaction kept for these docs. To try your own, run the playground and use the `businessTransactionId` it prints."
                 }
               ]
             },
@@ -272,7 +272,7 @@
                 {
                   "key": "businessTransactionId",
                   "value": "",
-                  "description": "The transaction's id. In the sandbox, use an id from a playground run: its responses include it. Sandbox data is deleted hourly, so an older id returns `404`; run the playground again for a new one."
+                  "description": "The transaction's id. In the sandbox, the value shown is a seeded transaction kept for these docs. To try your own, run the playground and use the `businessTransactionId` it prints."
                 }
               ]
             },
@@ -335,7 +335,7 @@
                 {
                   "key": "businessTransactionId",
                   "value": "",
-                  "description": "The transaction's id. In the sandbox, use an id from a playground run: its responses include it. Sandbox data is deleted hourly, so an older id returns `404`; run the playground again for a new one."
+                  "description": "The transaction's id. In the sandbox, the value shown is a seeded transaction kept for these docs. To try your own, run the playground and use the `businessTransactionId` it prints."
                 }
               ]
             },
@@ -409,7 +409,7 @@
                 {
                   "key": "businessTransactionId",
                   "value": "",
-                  "description": "The transaction's id, not the record's `trustRecordId`. In the sandbox, use an id from a playground run: its responses include it. Sandbox data is deleted hourly, so an older id returns `404`; run the playground again for a new one."
+                  "description": "The transaction's id, not the record's `trustRecordId`. In the sandbox, the value shown is a seeded transaction kept for these docs. To try your own, run the playground and use the `businessTransactionId` it prints."
                 }
               ]
             },
@@ -1681,7 +1681,7 @@
                 {
                   "key": "businessTransactionId",
                   "value": "",
-                  "description": "The id of the refused transaction. In the sandbox, use an id from a playground run: its responses include it. Sandbox data is deleted hourly, so an older id returns `404`; run the playground again for a new one."
+                  "description": "The id of the refused transaction. In the sandbox, the value shown is a seeded transaction kept for these docs. To try your own, run the playground and use the `businessTransactionId` it prints."
                 }
               ]
             },
@@ -1773,7 +1773,7 @@
                 {
                   "key": "businessTransactionId",
                   "value": "",
-                  "description": "The transaction's id: the `businessTransactionId` of a request you sent. In the sandbox, each playground run's responses include it. Sandbox data is deleted hourly, so an id from earlier returns `404`; run the playground again for a new one."
+                  "description": "The transaction's id: the `businessTransactionId` of a request you sent. In the sandbox, the value shown is a seeded transaction kept for these docs. To try your own, run the playground and use the `businessTransactionId` it prints."
                 }
               ]
             },

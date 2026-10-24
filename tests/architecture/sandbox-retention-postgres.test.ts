@@ -298,6 +298,25 @@ describe("the hourly sandbox retention job against real Postgres", () => {
     expect(await count("caller_audit_events")).toBe(1);
   });
 
+  it("keeps the seeded sandbox transactions even when they are older than the period", async () => {
+    await seedRegistration();
+    const seeded = "6f6582a1-4e1a-4800-a73b-cb4c3aa32110";
+    await db.query(
+      `INSERT INTO business_transactions
+         (business_transaction_id, status, authority_json, authorization_json,
+          intent_json, metadata_json, policy_json, signals_json, created_at)
+       VALUES ($1, 'COMPLETED', '{}', '{}', '{}', '{}', '{}', '{}', now() - interval '2 hours')`,
+      [seeded],
+    );
+
+    await db.exec(hourlyCommand);
+
+    const left = await db.query<{ business_transaction_id: string }>(
+      "SELECT business_transaction_id FROM business_transactions",
+    );
+    expect(left.rows.map((row) => row.business_transaction_id)).toEqual([seeded]);
+  });
+
   it("writes a run log row for the hour period, with no day period", async () => {
     await seedRegistration();
     await seedAges();

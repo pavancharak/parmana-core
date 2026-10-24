@@ -70,6 +70,13 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     old_transactions TEXT[];
+    -- Seeded fixtures that the sandbox's docs read by id on click. They are
+    -- never deleted, so the Try-it prefills keep working. Created by a
+    -- playground run and listed here; see the docs.
+    seeded_transactions TEXT[] := ARRAY[
+        '6f6582a1-4e1a-4800-a73b-cb4c3aa32110',
+        '702d0c3d-24fc-4d41-801f-b19b2a5b6118'
+    ];
     n BIGINT;
     summary JSONB := '{}'::jsonb;
 BEGIN
@@ -83,7 +90,8 @@ BEGIN
     SELECT coalesce(array_agg(business_transaction_id), '{}')
     INTO old_transactions
     FROM business_transactions
-    WHERE created_at < run_cutoff;
+    WHERE created_at < run_cutoff
+      AND NOT (business_transaction_id = ANY (seeded_transactions));
 
     DELETE FROM verifications WHERE business_transaction_id = ANY (old_transactions);
     GET DIAGNOSTICS n = ROW_COUNT; table_name := 'verifications'; deleted := n; summary := summary || jsonb_build_object(table_name, n); RETURN NEXT;

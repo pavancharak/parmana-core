@@ -58,7 +58,7 @@ run against the live sandbox before it was published here; the files are in
 For TypeScript and Python, set the key first: `export PARMANA_API_KEY=2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME` (macOS, Linux) or
 `$env:PARMANA_API_KEY = "2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME"` (PowerShell). Then run `npx tsx playground.ts` or `python playground.py`.
 
-Each run's responses include the `businessTransactionId` it used. To read that transaction's execution intent with `GET /execution-intents/{businessTransactionId}`, paste that id into the path field. The sandbox deletes its data hourly, so an id from an earlier run returns `404 Execution Intent not found.`; run the flow again to get a new one.
+The GET endpoints that take a `businessTransactionId` open with a seeded sandbox transaction already in the path, so you can click Send. The sandbox keeps that seeded transaction when it deletes old data. A POST endpoint such as `POST /execute` needs a new id each time, so run this flow for one; each run's responses include the `businessTransactionId` it used.
 
 <CodeGroup>
 
