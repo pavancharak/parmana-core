@@ -1,5 +1,5 @@
 ---
 title: "Create (execute) a Business Transaction"
-description: "The same as `POST /execute` in every way except the success status, `201` instead of `200`."
+description: "In the sandbox, each `businessTransactionId` works once: a prefilled id returns `409` after its first use."
 openapi: "/openapi.bundled.yaml POST /transactions"
 ---

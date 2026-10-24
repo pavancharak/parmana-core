@@ -935,6 +935,12 @@ paths:
       summary: Execute a Business Transaction
       operationId: executeTransaction
       description: >
+        In the sandbox, each `businessTransactionId` works once: a prefilled id
+        returns `409` after its first use.
+
+        For a new id each run, use the [playground](/playground) or the cURL
+        sample, which generate one.
+
         Sends one action for a decision and, if approved, performs it. This is
         the call an agent makes. The
 
@@ -1708,6 +1714,12 @@ paths:
       summary: Create (execute) a Business Transaction
       operationId: createTransaction
       description: >
+        In the sandbox, each `businessTransactionId` works once: a prefilled id
+        returns `409` after its first use.
+
+        For a new id each run, use the [playground](/playground) or the cURL
+        sample, which generate one.
+
         The same as `POST /execute` in every way except the success status,
         `201` instead of `200`. Use
 

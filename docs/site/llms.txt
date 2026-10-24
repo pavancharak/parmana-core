@@ -128,11 +128,11 @@ This file is generated from the documentation navigation. Do not edit it by hand
 * [SDK coverage of the API](https://docs.parmanasystems.com/sdks/api-coverage): Every API operation, the TypeScript and Python method that calls it, and the reason when there is none.
 ## REST API: Execution
 
-* [Execute a Business Transaction](https://docs.parmanasystems.com/api-reference/endpoints/execute-transaction): Sends one action for a decision and, if approved, performs it.
+* [Execute a Business Transaction](https://docs.parmanasystems.com/api-reference/endpoints/execute-transaction): In the sandbox, each `businessTransactionId` works once: a prefilled id returns `409` after its first use.
 ## REST API: Transactions
 
 * [List Business Transactions](https://docs.parmanasystems.com/api-reference/endpoints/list-transactions): Lists the Business Transactions your key submitted, as a bare array with no paging metadata.
-* [Create (execute) a Business Transaction](https://docs.parmanasystems.com/api-reference/endpoints/create-transaction): The same as `POST /execute` in every way except the success status, `201` instead of `200`.
+* [Create (execute) a Business Transaction](https://docs.parmanasystems.com/api-reference/endpoints/create-transaction): In the sandbox, each `businessTransactionId` works once: a prefilled id returns `409` after its first use.
 * [Get Business Transaction](https://docs.parmanasystems.com/api-reference/endpoints/get-transaction): Returns one Business Transaction as it was stored.
 ## REST API: Verification
 
