@@ -32,7 +32,11 @@ const spec = parse(read("openapi", "openapi.yaml")) as {
     securitySchemes: { bearerAuth: Record<string, unknown> };
   };
 };
-const demoKey = spec.components.securitySchemes.bearerAuth["x-default"];
+// The spec prefills the whole Authorization header ("Bearer <key>"), so the key
+// the page and the scripts show is the part after the scheme.
+const demoKey = String(
+  spec.components.securitySchemes.bearerAuth["x-default"],
+).replace(/^Bearer /, "");
 
 describe("the sandbox playground", () => {
   it.each(samples)(
