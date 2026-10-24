@@ -186,3 +186,22 @@ are those shown on the repository's Code scanning page for `main`.
 8. **Best Practices registration** for `parmana-core` (alert #9). Owner: project owner.
 9. **Git history rewrite** to remove the deleted working notes (section 5). Owner: project owner, with a decision on rewriting `main`.
 10. **Agreement rules** in `CONTRIBUTING.md` and `docs/REVIEWING.md`. Owner: project owner.
+
+## 9. Alert status after the Scorecard run of 2026-10-24 06:30 UTC
+
+Scorecard score: 7.7 (from 7.6 before PR #81 merged).
+
+| Check              | Score     | Alert | Decision                                                                                                                     |
+| ------------------ | --------- | ----- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Branch-Protection  | 5 (was 3) | #1    | Keep open to reach 10 with a second reviewer. Or dismiss as "Won't fix": single maintainer; releases are tags, not branches. |
+| SAST               | 9         | #5    | Expected to close on the next run. Nothing to do.                                                                            |
+| Vulnerabilities    | 9         | #6    | Keep open. Open advisories in `@vercel/*` and `zod` need upstream fixes (section 4).                                         |
+| Code-Review        | 0         | #7    | Keep open. Needs a second reviewer on pull requests.                                                                         |
+| Maintained         | 0         | #8    | Keep open. Cause not confirmed; check before relying on it.                                                                  |
+| CII-Best-Practices | 2         | #9    | Keep open. Finish the criteria for project 15846.                                                                            |
+
+Rules we follow:
+
+- Dismiss only what the project has decided to accept, with the reason written in the alert.
+- Keep open anything that describes a real gap until it is closed. Dismissing hides the gap but does not change the score.
+- Review this table after each Scorecard run.
