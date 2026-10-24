@@ -1094,50 +1094,44 @@ paths:
             schema:
               $ref: "../schemas/requests/transaction-create-request.schema.json"
             examples:
-              test-fixture-flow:
-                summary:
-                  Real captured request, currently runnable (test:fixture-execute,
-                  the generic NODE_ENV=test-only capability, APPROVED). Prefer this over
-                  vendor-payment-flow-transactions-endpoint below, which depends on a
-                  connector removed from this repository, see the POST /execute
-                  description above for the same caveat.
+              sandbox-receipt:
+                summary: >-
+                  The public sandbox's receipt action, sent without an approval. The sandbox
+                  refuses it (403 POLICY_DENIED), as the playground shows. Get a demo approval
+                  from POST /sandbox/approvals for the same target and add it to signals to release it.
                 value:
-                  businessTransactionId: 4cfe5661-42a6-4db0-8372-2d24dca235f2
+                  businessTransactionId: ae94f2aa-6120-4c83-bf5d-7108e380d5a8
                   metadata:
-                    businessTransactionId: 4cfe5661-42a6-4db0-8372-2d24dca235f2
-                    sourceSystem: docs-api-reference
-                    submittedBy: docs-example
+                    businessTransactionId: ae94f2aa-6120-4c83-bf5d-7108e380d5a8
+                    correlationId: cc1ca975-4935-4e9a-a591-8897af6b56fb
+                    sourceSystem: docs-example
+                    submittedBy: docs-reader
+                    submittedAt: "2026-07-13T17:36:00.835Z"
                   authority:
-                    authorityId: be8afa44-ee3c-44c2-a4a2-ba119e128948
+                    authorityId: authority-1
                     authorityType: SERVICE
-                    principalId: docs-example-caller
-                    issuedAt: "2026-09-14T17:18:27.000Z"
+                    principalId: sandbox-visitor
+                    issuedAt: "2026-07-13T17:36:00.835Z"
                   authorization:
-                    authorizationId: 81a1c120-d296-458b-bbe5-824a8617f23a
-                    authorityId: be8afa44-ee3c-44c2-a4a2-ba119e128948
-                    purpose: "API reference example: transactions endpoint"
-                    issuedAt: "2026-09-14T17:18:27.000Z"
+                    authorizationId: authorization-1
+                    authorityId: authority-1
+                    purpose: Trying the Parmana sandbox
+                    issuedAt: "2026-07-13T17:36:00.835Z"
                   intent:
-                    intentId: ceb89d68-13ac-4ff9-b7b9-dd0e15637baa
-                    authorizationId: 81a1c120-d296-458b-bbe5-824a8617f23a
-                    action: test:fixture-execute
-                    target: vendor://payments
+                    intentId: intent-1
+                    authorizationId: authorization-1
+                    action: sandbox:receipt
+                    target: order-docs-example
                     parameters:
-                      amount: 250
-                      currency: USD
-                    createdAt: "2026-09-14T17:18:27.000Z"
+                      note: hello
+                    createdAt: "2026-07-13T17:36:00.835Z"
                   policy:
-                    name: vendor-payment
-                    version: 2.0.0
+                    name: sandbox-receipt
+                    version: 1.0.0
                     schemaVersion: 1.0.0
                   signals:
-                    vendorVerified: true
-                    invoiceVerified: true
-                    paymentApproved: true
-                    sufficientFunds: true
-                    paymentAmount: 250
-                    riskScore: 5
-                    vendorId: vendor://payments
+                    note: hello
+                    receiptApproved: false
               vendor-payment-flow-transactions-endpoint:
                 summary: >-
                   Real captured request (vendor-payment 2.0.0, APPROVED),
