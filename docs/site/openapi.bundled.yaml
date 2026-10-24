@@ -597,6 +597,10 @@ paths:
         - System
       summary: Fetch a public signing key for independent, offline verification
       operationId: getKey
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Returns the public half of a signing key, so anyone can verify a Parmana
         signature without a Parmana
@@ -721,6 +725,10 @@ paths:
         - System
       summary: List every public signing key this deployment can currently produce
       operationId: getJwks
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Lists every public signing key this deployment can serve, the
         enumeration form of `GET /keys/{keyId}`.
@@ -3450,6 +3458,10 @@ paths:
         - Execution Intents
       summary: List Execution Intents that never reached a signed Trust Record
       operationId: listUnfinalizedExecutionIntents
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         The operator's work queue: Execution Intents that never reached a signed
         Trust Record and were not
@@ -3690,6 +3702,10 @@ paths:
         - Execution Intents
       summary: Rebuild the signed Trust Record for a released action
       operationId: finalizeExecutionIntent
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Rebuilds the signed Trust Record for an action that was released but
         whose record was never
@@ -4209,6 +4225,10 @@ paths:
         - Execution Intents
       summary: Close an intent you reconciled by hand
       operationId: resolveExecutionIntent
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Closes an intent in state `PREPARED` or `ERRORED` after a person checked
         the target system, the
@@ -5977,6 +5997,10 @@ paths:
         - Policy Governance
       summary: List pending policy changes (maker-checker)
       operationId: listPendingPolicyChanges
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Lists policy changes with a diff: the content in effect today
         (`current`, or `null` for a new version)
@@ -6541,6 +6565,10 @@ paths:
         - Policy Governance
       summary: Approve a pending policy change (checker)
       operationId: approvePolicyChange
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Approves a policy change, the checker's step, and puts it into effect.
         Checked in order: a human key,
@@ -6733,6 +6761,10 @@ paths:
         - Policy Governance
       summary: Reject a pending policy change (checker)
       operationId: rejectPolicyChange
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Rejects a policy change. The policy in effect does not change. The same
         checks as approve, with a
@@ -6899,6 +6931,10 @@ paths:
         - Approvers
       summary: List approver keys
       operationId: listApprovalIssuers
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Lists every approver key the server trusts, or once trusted, to sign
         human approvals for policies
@@ -6996,6 +7032,10 @@ paths:
         - Approvers
       summary: Propose adding or revoking an approver key
       operationId: proposeApprovalIssuerChange
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Proposes trusting a new approver key (`add`, with its Ed25519 public
         key) or revoking one added this
@@ -7163,6 +7203,10 @@ paths:
         - Approvers
       summary: List approver changes
       operationId: listApprovalIssuerChanges
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Lists approver changes, newest first. A checker uses
         `status=PENDING_APPROVAL` to find what waits for
@@ -7269,6 +7313,10 @@ paths:
         - Approvers
       summary: Approve an approver change
       operationId: approveApprovalIssuerChange
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Approves an approver change and applies it at once: an added key is
         trusted from the next approval
@@ -7458,6 +7506,10 @@ paths:
         - Approvers
       summary: Reject an approver change
       operationId: rejectApprovalIssuerChange
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Rejects an approver change. No key changes. The same checks as approve,
         with a step up authorization
@@ -7627,6 +7679,10 @@ paths:
         - External Connectors
       summary: List external connectors
       operationId: listExternalConnectors
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Lists every external connector registration, active and revoked: the
         capability, the HTTPS endpoint
@@ -7737,6 +7793,10 @@ paths:
         - External Connectors
       summary: Propose registering or revoking an external connector
       operationId: proposeExternalConnectorChange
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Proposes connecting your own system to Parmana with no Parmana code
         change: `register` names a
@@ -7980,6 +8040,10 @@ paths:
         - External Connectors
       summary: List external connector changes
       operationId: listExternalConnectorChanges
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Lists external connector changes, newest first. A checker uses
         `status=PENDING_APPROVAL` to find what
@@ -8119,6 +8183,10 @@ paths:
         - External Connectors
       summary: Approve an external connector change
       operationId: approveExternalConnectorChange
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Approves an external connector change and applies it at once: `register`
         makes the registration
@@ -8340,6 +8408,10 @@ paths:
         - External Connectors
       summary: Reject an external connector change
       operationId: rejectExternalConnectorChange
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Rejects an external connector change. No registration changes. The same
         checks as approve, with a
@@ -8529,6 +8601,10 @@ paths:
         - Business Signal Sources
       summary: List business signal sources
       operationId: listBusinessSignalSources
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Lists every business signal source registration, active and revoked: the
         name a policy's
@@ -8638,6 +8714,10 @@ paths:
         - Business Signal Sources
       summary: Propose registering or revoking a business signal source
       operationId: proposeBusinessSignalSourceChange
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Proposes connecting a business system, any system that owns facts a
         policy needs (an ERP, an
@@ -8892,6 +8972,10 @@ paths:
         - Business Signal Sources
       summary: List business signal source changes
       operationId: listBusinessSignalSourceChanges
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Lists business signal source changes, newest first. A checker uses
         `status=PENDING_APPROVAL` to
@@ -9035,6 +9119,10 @@ paths:
         - Business Signal Sources
       summary: Approve a business signal source change
       operationId: approveBusinessSignalSourceChange
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Approves a business signal source change and applies it at once:
         `register` makes the
@@ -9254,6 +9342,10 @@ paths:
         - Business Signal Sources
       summary: Reject a business signal source change
       operationId: rejectBusinessSignalSourceChange
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Rejects a business signal source change. No registration changes. The
         same checks as approve,
@@ -9424,6 +9516,10 @@ paths:
         - Authority Grants
       summary: List authority grants
       operationId: listAuthorityGrants
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Lists every authority grant, active and revoked: which caller may have
         which capability decided,
@@ -9539,6 +9635,10 @@ paths:
         - Authority Grants
       summary: Propose granting or revoking an agent's authority
       operationId: proposeAuthorityGrantChange
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Proposes per-agent authority (RFC-0023 phase 3): `grant` says the API
         key with `callerId` may have
@@ -9795,6 +9895,10 @@ paths:
         - Authority Grants
       summary: List authority grant changes
       operationId: listAuthorityGrantChanges
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Lists authority grant changes, newest first. A checker uses
         `status=PENDING_APPROVAL` to find what
@@ -9948,6 +10052,10 @@ paths:
         - Authority Grants
       summary: Approve an authority grant change
       operationId: approveAuthorityGrantChange
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Approves an authority grant change and applies it at once: `grant` makes
         the grant active,
@@ -10173,6 +10281,10 @@ paths:
         - Authority Grants
       summary: Reject an authority grant change
       operationId: rejectAuthorityGrantChange
+      servers:
+        - url: https://parmana-api-real.vercel.app
+          description: Production. The public sandbox refuses this route for its demo key,
+            so use a key issued by the operator.
       description: >
         Rejects an authority grant change. No grant changes. The same checks as
         approve, with a step up
