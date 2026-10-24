@@ -26,6 +26,7 @@ This file is generated from the documentation navigation. Do not edit it by hand
 ## Get started: Evaluate and audit
 
 * [License](https://docs.parmanasystems.com/license): The Parmana repository, including the server, is licensed under the Apache License 2.0. So are the client and connector SDKs.
+* [Community and security](https://docs.parmanasystems.com/community): How to report a bug or a security issue in Parmana, where to ask questions, and what the contribution policy is.
 ## Get started: For AI agents
 
 * [Integrate Parmana: specification for AI agents](https://docs.parmanasystems.com/agents/integrate): An exact, ordered procedure to send an action to Parmana and act on the answer. Every step says what to do, what you should see, and what to do if you do not.

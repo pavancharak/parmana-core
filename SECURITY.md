@@ -39,7 +39,7 @@ residual risk.
 ## Published advisories
 
 Fixed vulnerabilities with security impact are published as GitHub Security Advisories:
-[github.com/pavancharak/parmana/security/advisories](https://github.com/pavancharak/parmana/security/advisories).
+[github.com/pavancharak/parmana-core/security/advisories](https://github.com/pavancharak/parmana-core/security/advisories).
 Every gap found and fixed, including those without an advisory, is recorded in
 [docs/VERIFICATION-GAPS.md](docs/VERIFICATION-GAPS.md).
 

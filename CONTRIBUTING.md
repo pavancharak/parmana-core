@@ -2,13 +2,13 @@
 
 ## External contributions
 
-This repository is licensed under the Apache License 2.0 (see [LICENSE](LICENSE)). Pull requests from outside Parmana Systems are not accepted without a
-prior written contributor agreement, and will be closed. Questions, feedback and bug reports
-are welcome in [GitHub Discussions](https://github.com/pavancharak/parmana/discussions), by email
+This repository is licensed under the Apache License 2.0 (see [LICENSE](LICENSE)). Pull requests from outside Parmana Systems are welcome. For anything larger than a small fix,
+open an issue or a discussion first, so the design is agreed before the code is written. Questions, feedback and bug reports
+are welcome in [GitHub Discussions](https://github.com/pavancharak/parmana-core/discussions), by email
 at [founder@parmanasystems.com](mailto:founder@parmanasystems.com) or as a GitHub issue. Report security issues privately, as described in [SECURITY.md](SECURITY.md).
 Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-The rest of this file is the process for people working on Parmana under such an agreement.
+The rest of this file is the process every change follows, whoever writes it.
 A second reviewer approves pull requests and reviews the security-critical code once in depth;
 [docs/REVIEWING.md](docs/REVIEWING.md) is their brief.
 
