@@ -15,14 +15,13 @@ class ExecutionApi()
 
 Execution API.
 
-## Responsibilities
-
+Responsibilities
+----------------
 - Runtime health check
 - Runtime version info
 - Execute Business Transactions
 
 This API does NOT:
-
 - verify trust records
 - replay executions
 - generate receipts
@@ -52,11 +51,12 @@ def execute(transaction: BusinessTransaction) -> ExecutionTrustRecord
 
 Execute a Business Transaction.
 
-## Parameters
-
+Parameters
+----------
 transaction:
-Business Transaction submitted to the Parmana Runtime.
+    Business Transaction submitted to the Parmana Runtime.
 
-## Returns
-
+Returns
+-------
 Execution Trust Record.
+
