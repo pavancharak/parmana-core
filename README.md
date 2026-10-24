@@ -4,10 +4,10 @@
 person's signed approval before it runs, and leaves a signed record anyone can
 verify afterwards.**
 
-[![CI](https://github.com/pavancharak/parmana/actions/workflows/ci.yml/badge.svg)](https://github.com/pavancharak/parmana/actions/workflows/ci.yml)
+[![CI](https://github.com/pavancharak/parmana-core/actions/workflows/ci.yml/badge.svg)](https://github.com/pavancharak/parmana-core/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](./LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D24.6-brightgreen)](package.json)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/pavancharak/parmana/badge)](https://scorecard.dev/viewer/?uri=github.com/pavancharak/parmana)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/pavancharak/parmana-core/badge)](https://scorecard.dev/viewer/?uri=github.com/pavancharak/parmana-core)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15230/badge)](https://www.bestpractices.dev/projects/15230)
 
 > Licensed under the [Apache License 2.0](./LICENSE). See [NOTICE](./NOTICE).
@@ -93,7 +93,7 @@ the agent was allowed to do it.
 - **Standard cryptography.** Ed25519 signatures by default, post quantum ML-DSA-65
   available.
 - **Supply chain hygiene in the open.**
-  [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/pavancharak/parmana),
+  [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/pavancharak/parmana-core),
   CodeQL on every change, and signed build provenance for SDK releases and the
   server image.
 
