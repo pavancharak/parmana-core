@@ -36,7 +36,8 @@
 CREATE TABLE IF NOT EXISTS sandbox_retention_runs (
     id BIGSERIAL PRIMARY KEY,
     ran_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
-    retention_days INTEGER NOT NULL,
+    retention_days INTEGER,
+    retention_hours INTEGER,
     cutoff TIMESTAMPTZ NOT NULL,
     run_by TEXT NOT NULL DEFAULT session_user,
     application_name TEXT DEFAULT current_setting('application_name', true),
@@ -45,6 +46,10 @@ CREATE TABLE IF NOT EXISTS sandbox_retention_runs (
     deleted JSONB NOT NULL
 );
 
+-- Hourly runs record retention_hours; daily runs record retention_days.
+ALTER TABLE sandbox_retention_runs ALTER COLUMN retention_days DROP NOT NULL;
+ALTER TABLE sandbox_retention_runs ADD COLUMN IF NOT EXISTS retention_hours INTEGER;
+
 -- Not readable through Supabase's REST API: RLS on, no policy.
 ALTER TABLE sandbox_retention_runs ENABLE ROW LEVEL SECURITY;
 
@@ -52,29 +57,22 @@ ALTER TABLE sandbox_retention_runs ENABLE ROW LEVEL SECURITY;
 -- never reach the old, unguarded body.
 DROP FUNCTION IF EXISTS parmana_sandbox_retention(INTEGER);
 
-CREATE OR REPLACE FUNCTION parmana_sandbox_retention(
-    retention_days INTEGER DEFAULT 7,
-    confirmation TEXT DEFAULT NULL
+-- The one delete body, shared by the daily and the hourly job. Each caller has
+-- already checked its own period; this checks that the database is the sandbox
+-- before it deletes anything, so no caller can skip that check.
+CREATE OR REPLACE FUNCTION parmana_sandbox_retention_core(
+    run_cutoff TIMESTAMPTZ,
+    days_label INTEGER,
+    hours_label INTEGER
 )
 RETURNS TABLE (table_name TEXT, deleted BIGINT)
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    cutoff TIMESTAMPTZ := now() - make_interval(days => retention_days);
     old_transactions TEXT[];
     n BIGINT;
     summary JSONB := '{}'::jsonb;
 BEGIN
-    IF retention_days IS NULL OR retention_days < 0 THEN
-        RAISE EXCEPTION 'retention_days must be 0 or more';
-    END IF;
-
-    -- 0 deletes everything visitors sent: a manual reset, and what the
-    -- kit's check runs inside a transaction it rolls back.
-    IF retention_days < 7 AND confirmation IS DISTINCT FROM 'DELETE RECENT DATA' THEN
-        RAISE EXCEPTION 'A period under 7 days deletes recent data. Pass ''DELETE RECENT DATA'' as the second argument to mean it. Nothing was deleted.';
-    END IF;
-
     IF NOT EXISTS (
         SELECT 1 FROM external_connectors
         WHERE capability = 'sandbox:receipt' AND status = 'active'
@@ -85,7 +83,7 @@ BEGIN
     SELECT coalesce(array_agg(business_transaction_id), '{}')
     INTO old_transactions
     FROM business_transactions
-    WHERE created_at < cutoff;
+    WHERE created_at < run_cutoff;
 
     DELETE FROM verifications WHERE business_transaction_id = ANY (old_transactions);
     GET DIAGNOSTICS n = ROW_COUNT; table_name := 'verifications'; deleted := n; summary := summary || jsonb_build_object(table_name, n); RETURN NEXT;
@@ -114,26 +112,100 @@ BEGIN
     DELETE FROM business_transactions WHERE business_transaction_id = ANY (old_transactions);
     GET DIAGNOSTICS n = ROW_COUNT; table_name := 'business_transactions'; deleted := n; summary := summary || jsonb_build_object(table_name, n); RETURN NEXT;
 
-    DELETE FROM caller_audit_events WHERE occurred_at < cutoff;
+    DELETE FROM caller_audit_events WHERE occurred_at < run_cutoff;
     GET DIAGNOSTICS n = ROW_COUNT; table_name := 'caller_audit_events'; deleted := n; summary := summary || jsonb_build_object(table_name, n); RETURN NEXT;
 
-    DELETE FROM execution_audit_events WHERE occurred_at < cutoff;
+    DELETE FROM execution_audit_events WHERE occurred_at < run_cutoff;
     GET DIAGNOSTICS n = ROW_COUNT; table_name := 'execution_audit_events'; deleted := n; summary := summary || jsonb_build_object(table_name, n); RETURN NEXT;
 
-    DELETE FROM consumed_nonces WHERE expires_at < cutoff;
+    DELETE FROM consumed_nonces WHERE expires_at < run_cutoff;
     GET DIAGNOSTICS n = ROW_COUNT; table_name := 'consumed_nonces'; deleted := n; summary := summary || jsonb_build_object(table_name, n); RETURN NEXT;
 
-    DELETE FROM consumed_approval_nonces WHERE expires_at < cutoff;
+    DELETE FROM consumed_approval_nonces WHERE expires_at < run_cutoff;
     GET DIAGNOSTICS n = ROW_COUNT; table_name := 'consumed_approval_nonces'; deleted := n; summary := summary || jsonb_build_object(table_name, n); RETURN NEXT;
 
-    DELETE FROM handbook_download_leads WHERE captured_at < cutoff;
+    DELETE FROM handbook_download_leads WHERE captured_at < run_cutoff;
     GET DIAGNOSTICS n = ROW_COUNT; table_name := 'handbook_download_leads'; deleted := n; summary := summary || jsonb_build_object(table_name, n); RETURN NEXT;
 
     DELETE FROM rate_limit_counters WHERE reset_time < now() - interval '1 day';
     GET DIAGNOSTICS n = ROW_COUNT; table_name := 'rate_limit_counters'; deleted := n; summary := summary || jsonb_build_object(table_name, n); RETURN NEXT;
 
-    INSERT INTO sandbox_retention_runs (retention_days, cutoff, deleted)
-    VALUES (retention_days, cutoff, summary);
+    INSERT INTO sandbox_retention_runs (retention_days, retention_hours, cutoff, deleted)
+    VALUES (days_label, hours_label, run_cutoff, summary);
+END;
+$$;
+
+REVOKE ALL ON FUNCTION parmana_sandbox_retention_core(TIMESTAMPTZ, INTEGER, INTEGER) FROM PUBLIC;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+        REVOKE ALL ON FUNCTION parmana_sandbox_retention_core(TIMESTAMPTZ, INTEGER, INTEGER) FROM anon;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+        REVOKE ALL ON FUNCTION parmana_sandbox_retention_core(TIMESTAMPTZ, INTEGER, INTEGER) FROM authenticated;
+    END IF;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION parmana_sandbox_retention(
+    retention_days INTEGER DEFAULT 7,
+    confirmation TEXT DEFAULT NULL
+)
+RETURNS TABLE (table_name TEXT, deleted BIGINT)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF retention_days IS NULL OR retention_days < 0 THEN
+        RAISE EXCEPTION 'retention_days must be 0 or more';
+    END IF;
+
+    -- 0 deletes everything visitors sent: a manual reset, and what the
+    -- kit's check runs inside a transaction it rolls back.
+    IF retention_days < 7 AND confirmation IS DISTINCT FROM 'DELETE RECENT DATA' THEN
+        RAISE EXCEPTION 'A period under 7 days deletes recent data. Pass ''DELETE RECENT DATA'' as the second argument to mean it. Nothing was deleted.';
+    END IF;
+
+    RETURN QUERY
+    SELECT * FROM parmana_sandbox_retention_core(
+        now() - make_interval(days => retention_days), retention_days, NULL
+    );
+END;
+$$;
+
+-- The hourly job: deletes what visitors sent more than retention_hours ago.
+-- Every hourly run is under 7 days, so it always needs the confirmation word.
+CREATE OR REPLACE FUNCTION parmana_sandbox_retention_hours(
+    retention_hours INTEGER,
+    confirmation TEXT DEFAULT NULL
+)
+RETURNS TABLE (table_name TEXT, deleted BIGINT)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF retention_hours IS NULL OR retention_hours < 1 THEN
+        RAISE EXCEPTION 'retention_hours must be 1 or more';
+    END IF;
+
+    IF confirmation IS DISTINCT FROM 'DELETE RECENT DATA' THEN
+        RAISE EXCEPTION 'An hourly period deletes recent data. Pass ''DELETE RECENT DATA'' as the second argument to mean it. Nothing was deleted.';
+    END IF;
+
+    RETURN QUERY
+    SELECT * FROM parmana_sandbox_retention_core(
+        now() - make_interval(hours => retention_hours), NULL, retention_hours
+    );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION parmana_sandbox_retention_hours(INTEGER, TEXT) FROM PUBLIC;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+        REVOKE ALL ON FUNCTION parmana_sandbox_retention_hours(INTEGER, TEXT) FROM anon;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+        REVOKE ALL ON FUNCTION parmana_sandbox_retention_hours(INTEGER, TEXT) FROM authenticated;
+    END IF;
 END;
 $$;
 
@@ -200,4 +272,11 @@ SELECT cron.schedule(
     'parmana-sandbox-retention',
     '30 3 * * *',
     'SELECT * FROM parmana_sandbox_retention(7)'
+);
+
+-- Hourly, at minute 0: visitor data older than one hour. The sandbox only.
+SELECT cron.schedule(
+    'parmana-sandbox-retention-hourly',
+    '0 * * * *',
+    'SELECT * FROM parmana_sandbox_retention_hours(1, ''DELETE RECENT DATA'')'
 );
