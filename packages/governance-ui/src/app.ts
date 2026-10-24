@@ -4,6 +4,7 @@ import session from "express-session";
 import { createLoginRouter } from "./routes/login.js";
 import { createPendingChangesRouter } from "./routes/pendingChanges.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { requireSameOrigin } from "./middleware/sameOrigin.js";
 
 const EIGHT_HOURS_MS = 8 * 60 * 60 * 1000;
 
@@ -31,6 +32,7 @@ export function createGovernanceUiApp(options: CreateGovernanceUiAppOptions) {
   const app = express();
 
   app.use(express.urlencoded({ extended: false }));
+  app.use(requireSameOrigin);
 
   app.use(
     session({
