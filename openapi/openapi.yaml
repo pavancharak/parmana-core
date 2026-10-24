@@ -2280,6 +2280,8 @@ paths:
         - Execution Intents
       summary: List Execution Intents that never reached a signed Trust Record
       operationId: listUnfinalizedExecutionIntents
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -2450,6 +2452,8 @@ paths:
         - Execution Intents
       summary: Rebuild the signed Trust Record for a released action
       operationId: finalizeExecutionIntent
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -3058,6 +3062,8 @@ paths:
         - Execution Intents
       summary: Close an intent you reconciled by hand
       operationId: resolveExecutionIntent
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -4355,6 +4361,8 @@ paths:
         - Policy Governance
       summary: List pending policy changes (maker-checker)
       operationId: listPendingPolicyChanges
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -4689,6 +4697,8 @@ paths:
         - Policy Governance
       summary: Approve a pending policy change (checker)
       operationId: approvePolicyChange
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -4792,6 +4802,8 @@ paths:
         - Policy Governance
       summary: Reject a pending policy change (checker)
       operationId: rejectPolicyChange
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -4891,6 +4903,8 @@ paths:
         - Approvers
       summary: List approver keys
       operationId: listApprovalIssuers
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -4954,6 +4968,8 @@ paths:
         - Approvers
       summary: Propose adding or revoking an approver key
       operationId: proposeApprovalIssuerChange
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -5052,6 +5068,8 @@ paths:
         - Approvers
       summary: List approver changes
       operationId: listApprovalIssuerChanges
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -5129,6 +5147,8 @@ paths:
         - Approvers
       summary: Approve an approver change
       operationId: approveApprovalIssuerChange
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -5254,6 +5274,8 @@ paths:
         - Approvers
       summary: Reject an approver change
       operationId: rejectApprovalIssuerChange
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -5361,6 +5383,8 @@ paths:
         - External Connectors
       summary: List external connectors
       operationId: listExternalConnectors
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -5440,6 +5464,8 @@ paths:
         - External Connectors
       summary: Propose registering or revoking an external connector
       operationId: proposeExternalConnectorChange
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -5621,6 +5647,8 @@ paths:
         - External Connectors
       summary: List external connector changes
       operationId: listExternalConnectorChanges
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -5736,6 +5764,8 @@ paths:
         - External Connectors
       summary: Approve an external connector change
       operationId: approveExternalConnectorChange
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -5885,6 +5915,8 @@ paths:
         - External Connectors
       summary: Reject an external connector change
       operationId: rejectExternalConnectorChange
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -6010,6 +6042,8 @@ paths:
         - Business Signal Sources
       summary: List business signal sources
       operationId: listBusinessSignalSources
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -6088,6 +6122,8 @@ paths:
         - Business Signal Sources
       summary: Propose registering or revoking a business signal source
       operationId: proposeBusinessSignalSourceChange
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -6269,6 +6305,8 @@ paths:
         - Business Signal Sources
       summary: List business signal source changes
       operationId: listBusinessSignalSourceChanges
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -6382,6 +6420,8 @@ paths:
         - Business Signal Sources
       summary: Approve a business signal source change
       operationId: approveBusinessSignalSourceChange
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -6530,6 +6570,8 @@ paths:
         - Business Signal Sources
       summary: Reject a business signal source change
       operationId: rejectBusinessSignalSourceChange
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -6636,6 +6678,8 @@ paths:
         - Authority Grants
       summary: List authority grants
       operationId: listAuthorityGrants
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -6721,6 +6765,8 @@ paths:
         - Authority Grants
       summary: Propose granting or revoking an agent's authority
       operationId: proposeAuthorityGrantChange
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -6909,6 +6955,8 @@ paths:
         - Authority Grants
       summary: List authority grant changes
       operationId: listAuthorityGrantChanges
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -7029,6 +7077,8 @@ paths:
         - Authority Grants
       summary: Approve an authority grant change
       operationId: approveAuthorityGrantChange
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -7189,6 +7239,8 @@ paths:
         - Authority Grants
       summary: Reject an authority grant change
       operationId: rejectAuthorityGrantChange
+      security:
+        - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
           description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
@@ -7388,6 +7440,11 @@ components:
       $ref: "../schemas/common/error.schema.json"
 
   securitySchemes:
+    operatorBearer:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: "A human key (credentialHolderType: USER) issued by the operator. Sent as Authorization: Bearer <key>. The public sandbox and its demo key are refused on these routes, so no key is prefilled here."
     bearerAuth:
       # An apiKey scheme in the Authorization header: the docs panel sends the
       # value exactly as typed, so the value includes the "Bearer " prefix.
