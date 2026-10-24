@@ -1,6 +1,7 @@
 import type { BusinessSignalSourceRegistry } from "./business-validation/BusinessSignalSource.js";
 import type { AuthorityGrantSource } from "./authority/AuthorityGrantEvaluator.js";
 import type { SigningReadiness } from "./SigningReadiness.js";
+import type { RuntimeHook } from "./hooks/RuntimeHook.js";
 import type {
   CurrentPolicyVersionSource,
   ExternalPolicyBindingSource,
@@ -62,6 +63,7 @@ export class RuntimeFactory {
     externalPolicyBindings?: ExternalPolicyBindingSource,
     businessSignalSources?: BusinessSignalSourceRegistry,
     authorityGrants?: AuthorityGrantSource,
+    hooks?: RuntimeHook[],
   ): ExecutionTrustApplication {
     //
     // Application Services
@@ -122,6 +124,10 @@ export class RuntimeFactory {
 
     if (authorityGrants) {
       builder.withAuthorityGrants(authorityGrants);
+    }
+
+    for (const hook of hooks ?? []) {
+      builder.addHook(hook);
     }
 
     //
