@@ -26,7 +26,9 @@ export function createPendingChangesRouter(apiBaseUrl: string): Router {
       try {
         const changes = await fetchPendingChanges(apiBaseUrl, apiKey);
 
-        res.send(renderPendingChangesList(changes, callerId));
+        res.send(
+          renderPendingChangesList(changes, callerId, res.locals.csrfToken),
+        );
       } catch (error) {
         handleFetchError(req, res, next, error, callerId);
       }
@@ -52,12 +54,15 @@ export function createPendingChangesRouter(apiBaseUrl: string): Router {
               renderErrorPage(
                 `No pending change found with id '${req.params.id}'.`,
                 callerId,
+                res.locals.csrfToken,
               ),
             );
           return;
         }
 
-        res.send(renderDiffPage(change, callerId, apiBaseUrl));
+        res.send(
+          renderDiffPage(change, callerId, apiBaseUrl, res.locals.csrfToken),
+        );
       } catch (error) {
         handleFetchError(req, res, next, error, callerId);
       }
@@ -91,12 +96,16 @@ function handleFetchError(
       return;
     }
 
-    res.status(error.status).send(renderErrorPage(error.message, callerId));
+    res
+      .status(error.status)
+      .send(renderErrorPage(error.message, callerId, res.locals.csrfToken));
     return;
   }
 
   if (error instanceof ApiUnreachableError) {
-    res.status(502).send(renderErrorPage(error.message, callerId));
+    res
+      .status(502)
+      .send(renderErrorPage(error.message, callerId, res.locals.csrfToken));
     return;
   }
 

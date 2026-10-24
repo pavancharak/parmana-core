@@ -63,6 +63,7 @@ export function renderDiffPage(
   change: PendingPolicyChangeWithDiff,
   callerId: string,
   apiBaseUrl: string,
+  csrfToken?: string,
 ): string {
   const currentPanel =
     change.diff.current === null
@@ -113,5 +114,6 @@ ${change.status === "PENDING_APPROVAL" ? renderInstructions(change, apiBaseUrl) 
     title: `${change.policyName} @ ${change.policyVersion}`,
     callerId,
     body,
+    csrfToken,
   });
 }

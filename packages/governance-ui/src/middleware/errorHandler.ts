@@ -15,6 +15,17 @@ export function errorHandler(
   res: Response,
   _next: NextFunction,
 ): void {
+  if (isCsrfRejection(error)) {
+    res
+      .status(403)
+      .send(
+        renderErrorPage(
+          "This form is out of date. Reload the page and try again.",
+        ),
+      );
+    return;
+  }
+
   console.error({
     event: "governance_ui_unhandled_error",
     error: error instanceof Error ? error.message : String(error),
@@ -24,4 +35,12 @@ export function errorHandler(
   res
     .status(500)
     .send(renderErrorPage("Something went wrong. Please try again."));
+}
+
+/** csrf-csrf refuses a request with a missing or mismatched token by name. */
+function isCsrfRejection(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    (error as { code?: unknown }).code === "EBADCSRFTOKEN"
+  );
 }

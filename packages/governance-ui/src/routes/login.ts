@@ -73,7 +73,7 @@ export function createLoginRouter(apiBaseUrl: string): Router {
         return;
       }
 
-      res.send(renderLoginPage());
+      res.send(renderLoginPage(undefined, res.locals.csrfToken));
     },
   );
 
@@ -85,7 +85,9 @@ export function createLoginRouter(apiBaseUrl: string): Router {
         typeof req.body?.apiKey === "string" ? req.body.apiKey.trim() : "";
 
       if (apiKey === "") {
-        res.status(400).send(renderLoginPage("API key is required."));
+        res
+          .status(400)
+          .send(renderLoginPage("API key is required.", res.locals.csrfToken));
         return;
       }
 
@@ -109,12 +111,14 @@ export function createLoginRouter(apiBaseUrl: string): Router {
               ? "Invalid API key."
               : `The Parmana API rejected this key: ${error.message}`;
 
-          res.status(401).send(renderLoginPage(message));
+          res.status(401).send(renderLoginPage(message, res.locals.csrfToken));
           return;
         }
 
         if (error instanceof ApiUnreachableError) {
-          res.status(502).send(renderLoginPage(error.message));
+          res
+            .status(502)
+            .send(renderLoginPage(error.message, res.locals.csrfToken));
           return;
         }
 

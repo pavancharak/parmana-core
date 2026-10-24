@@ -4,6 +4,14 @@ export interface LayoutOptions {
   readonly title: string;
   readonly callerId?: string;
   readonly body: string;
+  readonly csrfToken?: string | undefined;
+}
+
+/** Hidden form field carrying the CSRF token; empty when no token is set. */
+export function csrfField(token: string | undefined): string {
+  return token !== undefined
+    ? `<input type="hidden" name="_csrf" value="${escapeHtml(token)}">`
+    : "";
 }
 
 /**
@@ -17,6 +25,7 @@ export function renderLayout(options: LayoutOptions): string {
            <span class="caller">Signed in as <strong>${escapeHtml(options.callerId)}</strong></span>
            <a href="/">Pending changes</a>
            <form method="post" action="/logout" class="logout-form">
+             ${csrfField(options.csrfToken)}
              <button type="submit">Log out</button>
            </form>
          </nav>`

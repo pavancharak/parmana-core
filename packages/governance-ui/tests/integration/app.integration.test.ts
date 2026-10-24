@@ -12,6 +12,24 @@ function jsonResponse(status: number, body: unknown): Response {
   });
 }
 
+function csrfTokenIn(html: string): string {
+  const match = /name="_csrf" value="([^"]+)"/.exec(html);
+  if (match === null) throw new Error("page has no CSRF token");
+  return match[1] ?? "";
+}
+
+/** Signs in the way the login form does: fetch the page, then post its token. */
+async function postLogin(
+  agent: ReturnType<typeof request.agent>,
+  apiKey: string,
+) {
+  const page = await agent.get("/login");
+  return agent
+    .post("/login")
+    .type("form")
+    .send({ apiKey, _csrf: csrfTokenIn(page.text) });
+}
+
 const VALID_IDENTITY = {
   callerId: "human-checker-1",
   allowedPrincipalIds: [],
@@ -105,10 +123,7 @@ describe("governance-ui app", () => {
 
     const agent = request.agent(app);
 
-    const loginResponse = await agent
-      .post("/login")
-      .type("form")
-      .send({ apiKey: "bad-key" });
+    const loginResponse = await postLogin(agent, "bad-key");
 
     expect(loginResponse.status).toBe(401);
     expect(loginResponse.text).toContain("Invalid API key");
@@ -126,10 +141,7 @@ describe("governance-ui app", () => {
 
     let lastStatus = 0;
     for (let attempt = 0; attempt < 11; attempt++) {
-      const response = await agent
-        .post("/login")
-        .type("form")
-        .send({ apiKey: `bad-key-${attempt}` });
+      const response = await postLogin(agent, `bad-key-${attempt}`);
       lastStatus = response.status;
     }
 
@@ -142,10 +154,7 @@ describe("governance-ui app", () => {
 
     const agent = request.agent(app);
 
-    const loginResponse = await agent
-      .post("/login")
-      .type("form")
-      .send({ apiKey: "good-key" });
+    const loginResponse = await postLogin(agent, "good-key");
 
     expect(loginResponse.status).toBe(302);
     expect(loginResponse.headers.location).toBe("/");
@@ -164,7 +173,7 @@ describe("governance-ui app", () => {
     stubApi({});
 
     const agent = request.agent(app);
-    await agent.post("/login").type("form").send({ apiKey: "good-key" });
+    await postLogin(agent, "good-key");
 
     const response = await agent.get("/pending-changes/ppc-1");
 
@@ -201,7 +210,7 @@ describe("governance-ui app", () => {
     });
 
     const agent = request.agent(app);
-    await agent.post("/login").type("form").send({ apiKey: "good-key" });
+    await postLogin(agent, "good-key");
 
     const response = await agent.get("/pending-changes/ppc-1");
 
@@ -214,7 +223,7 @@ describe("governance-ui app", () => {
     stubApi({});
 
     const agent = request.agent(app);
-    await agent.post("/login").type("form").send({ apiKey: "good-key" });
+    await postLogin(agent, "good-key");
 
     const response = await agent.get("/pending-changes/does-not-exist");
 
@@ -236,7 +245,7 @@ describe("governance-ui app", () => {
     });
 
     const agent = request.agent(app);
-    await agent.post("/login").type("form").send({ apiKey: "good-key" });
+    await postLogin(agent, "good-key");
 
     const response = await agent.get("/");
 
@@ -250,7 +259,7 @@ describe("governance-ui app", () => {
     const fetchSpy = stubApi({});
 
     const agent = request.agent(app);
-    await agent.post("/login").type("form").send({ apiKey: "good-key" });
+    await postLogin(agent, "good-key");
 
     fetchSpy.mockImplementation(async (input) => {
       const url = typeof input === "string" ? input : (input as Request).url;
@@ -277,9 +286,13 @@ describe("governance-ui app", () => {
     stubApi({});
 
     const agent = request.agent(app);
-    await agent.post("/login").type("form").send({ apiKey: "good-key" });
+    await postLogin(agent, "good-key");
 
-    const logoutResponse = await agent.post("/logout");
+    const signedIn = await agent.get("/");
+    const logoutResponse = await agent
+      .post("/logout")
+      .type("form")
+      .send({ _csrf: csrfTokenIn(signedIn.text) });
     expect(logoutResponse.status).toBe(302);
     expect(logoutResponse.headers.location).toBe("/login");
 
@@ -292,12 +305,51 @@ describe("governance-ui app", () => {
     const app = buildApp();
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("ECONNREFUSED"));
 
-    const response = await request(app)
-      .post("/login")
-      .type("form")
-      .send({ apiKey: "any-key" });
+    const response = await postLogin(request.agent(app), "any-key");
 
     expect(response.status).toBe(502);
     expect(response.text).toContain("Could not reach the Parmana API");
+  });
+
+  it("refuses a sign-in that carries no CSRF token", async () => {
+    const app = buildApp();
+    stubApi({});
+
+    const response = await request(app)
+      .post("/login")
+      .type("form")
+      .send({ apiKey: "good-key" });
+
+    expect(response.status).toBe(403);
+  });
+
+  it("refuses a sign-in with a token from another session", async () => {
+    const app = buildApp();
+    stubApi({});
+
+    const otherVisitor = request.agent(app);
+    const otherPage = await otherVisitor.get("/login");
+    const stolenToken = csrfTokenIn(otherPage.text);
+
+    const response = await request(app)
+      .post("/login")
+      .type("form")
+      .send({ apiKey: "good-key", _csrf: stolenToken });
+
+    expect(response.status).toBe(403);
+  });
+
+  it("refuses a logout with no CSRF token and keeps the session signed in", async () => {
+    const app = buildApp();
+    stubApi({});
+
+    const agent = request.agent(app);
+    await postLogin(agent, "good-key");
+
+    const logoutResponse = await agent.post("/logout");
+    expect(logoutResponse.status).toBe(403);
+
+    const listResponse = await agent.get("/");
+    expect(listResponse.status).toBe(200);
   });
 });
