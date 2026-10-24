@@ -5962,6 +5962,8 @@ paths:
         - Policy Governance
       summary: Propose a policy change (maker)
       operationId: proposePolicyChange
+      security:
+        - operatorBearer: []
       description: >
         Proposes new content for a policy, the maker's step in maker checker
         governance. Nothing changes
@@ -5980,19 +5982,22 @@ paths:
       parameters:
         - name: name
           description: The policy name, for example `customer-refund`. Not `.` or `..`.
+            Prefilled with the sandbox's policy.
           in: path
           required: true
           schema:
             type: string
             pattern: ^[A-Za-z0-9._-]+$
+            x-default: sandbox-receipt
         - name: version
           description: The version this proposal changes, for example `1.2.0`. Not `.` or
-            `..`.
+            `..`. Prefilled with the sandbox's version.
           in: path
           required: true
           schema:
             type: string
             pattern: ^[A-Za-z0-9._-]+$
+            x-default: 1.0.0
       requestBody:
         required: true
         content:
