@@ -79,10 +79,10 @@ unit level.
 
 The checks above run on Parmana's server. To check a record yourself, with no network access and
 no trust in Parmana's servers or database, use the [offline verifier](/verification/offline-verifier),
-which is a separate repository:
+which is a separate repository and is published on npm as `@parmana/verifier`:
 
 ```sh
-node bin/parmana-verify.mjs proof.json trust.json
+npx @parmana/verifier proof.json trust.json
 ```
 
 It checks the record hash and every signature, including the ML-DSA-65 signature on hybrid

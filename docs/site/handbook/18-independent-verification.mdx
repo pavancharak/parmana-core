@@ -44,7 +44,7 @@ like `sha3-512`/`blake3` have no real provider), a record hashed under a genuine
 algorithm could not be distinguished from a tampered one by this check alone, since the
 algorithm used isn't itself recorded on the artifact separately from the hash value.
 
-The offline verifier is a separate, public repository, `pavancharak/parmana-verifier`. It recomputes a
+The offline verifier is a separate, public repository, `pavancharak/parmana-verifier`, published on npm as `@parmana/verifier`. It recomputes a
 record's hash and checks its signatures against keys the verifier operator pins. It makes no network calls.
 
 ### Large records signed under AWS KMS
