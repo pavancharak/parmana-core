@@ -1,3 +1,4 @@
+import { escapeMdxUnsafeCharacters } from "./python-sdk-reference/escapeMdx.js";
 import { execFileSync } from "node:child_process";
 import {
   existsSync,
@@ -114,47 +115,6 @@ function unescapeHtmlEntities(text: string): string {
     .replace(/&lt;/g, "<")
     .replace(/&quot;/g, '"')
     .replace(/&amp;/g, "&");
-}
-
-function escapeMdxUnsafeCharacters(text: string): string {
-  let inCodeFence = false;
-  let inFrontmatter = false;
-
-  return text
-    .split("\n")
-    .map((line, index) => {
-      if (index === 0 && line.trim() === "---") {
-        inFrontmatter = true;
-        return line;
-      }
-      if (inFrontmatter) {
-        if (line.trim() === "---") inFrontmatter = false;
-        return line;
-      }
-
-      if (line.trimStart().startsWith("```")) {
-        inCodeFence = !inCodeFence;
-        return line;
-      }
-
-      if (inCodeFence) return line;
-
-      /**
-       * `<a id="...">...</a>` is pydoc-markdown's own generated anchor,
-       * a real, already-valid HTML tag MDX renders as-is -- left alone.
-       * Every other bare `<word` is prose describing syntax (a
-       * placeholder like `<api_key>`, a type like `dict[str, Any]`
-       * used outside a code span), not a real tag, and MDX would try
-       * to parse it as an unclosed JSX element and fail the build.
-       */
-      if (/^\s*<a id="/.test(line)) return line;
-
-      return line
-        .replace(/\{/g, "\\{")
-        .replace(/\}/g, "\\}")
-        .replace(/<(?=[A-Za-z/])/g, "&lt;");
-    })
-    .join("\n");
 }
 
 /**
