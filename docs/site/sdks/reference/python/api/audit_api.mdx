@@ -13,12 +13,11 @@ class AuditApi()
 
 Audit Event API.
 
-## Responsibilities
-
+Responsibilities
+----------------
 - Verify a signed caller-authentication audit event's signature
 
 This API does NOT:
-
 - execute Business Transactions
 - look up an audit event by id -- there is no such lookup route;
   verification takes the event and its stored signature directly.
@@ -38,20 +37,21 @@ No caller authentication is required by this route -- the same
 independent, third-party verifiability as
 RefusalApi.verify().
 
-## Parameters
-
+Parameters
+----------
 event:
-The signed audit event, exactly as recorded (`type`,
-`occurredAt`, `route`, plus event-specific fields). Left as
-a generic dict, like the Runtime route itself
-(packages/api/src/routes/audit-verify.ts): the two event
-shapes this can verify diverge on every field past those
-three, and verification operates on canonical bytes over
-whatever object was actually signed, not a fixed schema.
+    The signed audit event, exactly as recorded (`type`,
+    `occurredAt`, `route`, plus event-specific fields). Left as
+    a generic dict, like the Runtime route itself
+    (packages/api/src/routes/audit-verify.ts): the two event
+    shapes this can verify diverge on every field past those
+    three, and verification operates on canonical bytes over
+    whatever object was actually signed, not a fixed schema.
 
 signature:
-The signature stored alongside the event.
+    The signature stored alongside the event.
 
-## Returns
-
+Returns
+-------
 True if the signature is valid, False otherwise.
+

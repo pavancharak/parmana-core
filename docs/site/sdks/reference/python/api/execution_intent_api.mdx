@@ -18,8 +18,8 @@ released to a connector, of exactly what is about to be released. It proves
 what was about to be released. It does NOT prove the action was released,
 or what its result was.
 
-## Responsibilities
-
+Responsibilities
+----------------
 - Verify an intent's hash and signature (no credential needed)
 - Retrieve an intent and its status
 - List intents that never reached a signed Trust Record
@@ -52,7 +52,7 @@ Retrieve an Execution Intent and its status.
 Maps to GET /execution-intents/:businessTransactionId. Behind caller
 authentication and ownership scoping.
 
-#### list_unfinalized
+#### list\_unfinalized
 
 ```python
 def list_unfinalized(limit: int | None = None) -> UnfinalizedExecutionIntents
@@ -91,13 +91,14 @@ the connector.
 
 Maps to POST /execution-intents/:businessTransactionId/resolve.
 
-## Parameters
-
+Parameters
+----------
 resolution:
-What you found at the connector: NOT_EXECUTED or EXECUTED.
+    What you found at the connector: NOT_EXECUTED or EXECUTED.
 note:
-Required, at most 2000 characters. What you checked and found.
+    Required, at most 2000 characters. What you checked and found.
 
 The resolution is an attributed operator statement in unsigned status.
 It is not tamper evident and it is not a Trust Record. It never calls
 a connector and is idempotent.
+

@@ -15,14 +15,13 @@ class TransactionApi()
 
 Transaction API.
 
-## Responsibilities
-
+Responsibilities
+----------------
 - Create (execute) a Business Transaction via POST /transactions
 - Retrieve Business Transactions
 - List Business Transactions
 
 This API does NOT:
-
 - verify trust records
 - replay executions
 - generate receipts
@@ -41,13 +40,13 @@ ExecutionApi.execute() (POST /execute). The only behavioral
 difference is the success status code, 201 instead of 200; the
 response body shape is otherwise identical.
 
-## Parameters
-
+Parameters
+----------
 transaction:
-Business Transaction submitted to the Parmana Runtime.
+    Business Transaction submitted to the Parmana Runtime.
 
-## Returns
-
+Returns
+-------
 Execution Trust Record.
 
 #### get
@@ -58,13 +57,13 @@ def get(business_transaction_id: str) -> BusinessTransaction
 
 Retrieve a Business Transaction.
 
-## Parameters
-
+Parameters
+----------
 business_transaction_id:
-Business Transaction identifier.
+    Business Transaction identifier.
 
-## Returns
-
+Returns
+-------
 Business Transaction.
 
 #### list
@@ -75,16 +74,16 @@ def list(*, page: int = 1, page_size: int = 25) -> list[BusinessTransaction]
 
 List Business Transactions.
 
-## Parameters
-
+Parameters
+----------
 page:
-Page number.
+    Page number.
 
 page_size:
-Number of transactions per page.
+    Number of transactions per page.
 
-## Returns
-
+Returns
+-------
 List of Business Transactions.
 
 #### \_\_call\_\_
@@ -94,3 +93,4 @@ directly, alongside the existing `client.transactions.list(...)`
 (and `.get(...)`, `.create(...)`), without renaming the
 `ParmanaClient.transactions` attribute out from under existing
 callers (examples/08_list_transactions.py, examples/11_end_to_end.py).
+

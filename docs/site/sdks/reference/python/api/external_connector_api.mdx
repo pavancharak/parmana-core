@@ -29,7 +29,7 @@ Every registration, active and revoked.
 
 Maps to GET /external-connectors.
 
-#### propose_register
+#### propose\_register
 
 ```python
 def propose_register(*,
@@ -50,7 +50,7 @@ a public host name. `allowed_parameters` may be empty.
 `timeout_ms` is 1000 to 30000; the server defaults it to 10000.
 Nothing changes until a different person approves it.
 
-#### propose_revoke
+#### propose\_revoke
 
 ```python
 def propose_revoke(*, capability: str, reason: str) -> ExternalConnectorChange
@@ -60,7 +60,7 @@ Propose revoking the active registration for a capability.
 
 Maps to POST /external-connectors/changes with action "revoke".
 
-#### list_changes
+#### list\_changes
 
 ```python
 def list_changes(
@@ -71,12 +71,12 @@ List external connector changes, newest first.
 
 Maps to GET /external-connectors/changes.
 
-## Parameters
-
+Parameters
+----------
 status:
-"PENDING_APPROVAL", "APPROVED" or "REJECTED". Omit for all.
+    "PENDING_APPROVAL", "APPROVED" or "REJECTED". Omit for all.
 
-#### approve_change
+#### approve\_change
 
 ```python
 def approve_change(
@@ -92,7 +92,7 @@ Make `step_up_authorization` with
 `parmana.crypto.sign_policy_change_step_up()`, `change_id` as
 `pending_policy_change_id`, and action "approve".
 
-#### reject_change
+#### reject\_change
 
 ```python
 def reject_change(
@@ -104,3 +104,4 @@ Reject an external connector change.
 
 Maps to POST /external-connectors/changes/\{id\}/reject. Same caller
 rules as `approve_change()`; sign with action "reject".
+
