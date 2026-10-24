@@ -1,5 +1,12 @@
 # Contributing to Parmana
 
+## Set up
+
+- Node.js 24 or later.
+- `npm ci`. Its `prepare` step points Git at the repository's hooks in `scripts/git-hooks`.
+- Install [gitleaks](https://github.com/gitleaks/gitleaks#installing) or Docker. The pre-commit hook scans staged files for secrets with one of them, and refuses the commit if neither is available. Do not skip it with `--no-verify` unless you have reviewed the staged files yourself.
+- Check the set-up with `npm run build` and `npm test`.
+
 ## External contributions
 
 This repository is licensed under the Apache License 2.0 (see [LICENSE](LICENSE)). Pull requests from outside Parmana Systems are welcome. For anything larger than a small fix,
