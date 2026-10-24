@@ -3,7 +3,10 @@
 ## External contributions
 
 This repository is licensed under the Apache License 2.0 (see [LICENSE](LICENSE)). Pull requests from outside Parmana Systems are welcome. For anything larger than a small fix,
-open an issue or a discussion first, so the design is agreed before the code is written. Questions, feedback and bug reports
+open an issue or a discussion first, so the design is agreed before the code is written.
+
+Every commit must carry a `Signed-off-by` line, certifying the [Developer Certificate of Origin](https://developercertificate.org).
+Add it with `git commit -s`. A pull request with an unsigned commit is not merged until the commit is signed off. Questions, feedback and bug reports
 are welcome in [GitHub Discussions](https://github.com/pavancharak/parmana-core/discussions), by email
 at [founder@parmanasystems.com](mailto:founder@parmanasystems.com) or as a GitHub issue. Report security issues privately, as described in [SECURITY.md](SECURITY.md).
 Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md).
