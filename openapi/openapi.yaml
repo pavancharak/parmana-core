@@ -1765,7 +1765,7 @@ paths:
         - name: businessTransactionId
           in: path
           required: true
-          description: "The id you chose when you sent the transaction."
+          description: "The id you chose when you sent the transaction. In the sandbox, use an id from a playground run: its responses include it. Sandbox data is deleted hourly, so an older id returns `404`; run the playground again for a new one."
           schema:
             type: string
       responses:
@@ -1911,7 +1911,7 @@ paths:
       description: "Returns the most recent Verification appended to a Trust Record by `POST /verify`."
       parameters:
         - name: businessTransactionId
-          description: "The transaction's id."
+          description: "The transaction's id. In the sandbox, use an id from a playground run: its responses include it. Sandbox data is deleted hourly, so an older id returns `404`; run the playground again for a new one."
           in: path
           required: true
           schema:
@@ -2109,7 +2109,7 @@ paths:
         or pass it to `POST /refusal/verify`, which anyone can call.
       parameters:
         - name: businessTransactionId
-          description: "The id of the refused transaction."
+          description: "The id of the refused transaction. In the sandbox, use an id from a playground run: its responses include it. Sandbox data is deleted hourly, so an older id returns `404`; run the playground again for a new one."
           in: path
           required: true
           schema:
@@ -3373,7 +3373,7 @@ paths:
         action.
       parameters:
         - name: businessTransactionId
-          description: "The transaction's id."
+          description: "The transaction's id. In the sandbox, use an id from a playground run: its responses include it. Sandbox data is deleted hourly, so an older id returns `404`; run the playground again for a new one."
           in: path
           required: true
           schema:
@@ -3750,7 +3750,7 @@ paths:
         - name: businessTransactionId
           in: path
           required: true
-          description: "The transaction's id, not the record's `trustRecordId`."
+          description: "The transaction's id, not the record's `trustRecordId`. In the sandbox, use an id from a playground run: its responses include it. Sandbox data is deleted hourly, so an older id returns `404`; run the playground again for a new one."
           schema:
             type: string
       responses:

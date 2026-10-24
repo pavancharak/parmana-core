@@ -210,7 +210,7 @@
                 {
                   "key": "businessTransactionId",
                   "value": "",
-                  "description": "The id you chose when you sent the transaction."
+                  "description": "The id you chose when you sent the transaction. In the sandbox, use an id from a playground run: its responses include it. Sandbox data is deleted hourly, so an older id returns `404`; run the playground again for a new one."
                 }
               ]
             },
@@ -272,7 +272,7 @@
                 {
                   "key": "businessTransactionId",
                   "value": "",
-                  "description": "The transaction's id."
+                  "description": "The transaction's id. In the sandbox, use an id from a playground run: its responses include it. Sandbox data is deleted hourly, so an older id returns `404`; run the playground again for a new one."
                 }
               ]
             },
@@ -335,7 +335,7 @@
                 {
                   "key": "businessTransactionId",
                   "value": "",
-                  "description": "The transaction's id."
+                  "description": "The transaction's id. In the sandbox, use an id from a playground run: its responses include it. Sandbox data is deleted hourly, so an older id returns `404`; run the playground again for a new one."
                 }
               ]
             },
@@ -409,7 +409,7 @@
                 {
                   "key": "businessTransactionId",
                   "value": "",
-                  "description": "The transaction's id, not the record's `trustRecordId`."
+                  "description": "The transaction's id, not the record's `trustRecordId`. In the sandbox, use an id from a playground run: its responses include it. Sandbox data is deleted hourly, so an older id returns `404`; run the playground again for a new one."
                 }
               ]
             },
@@ -1681,7 +1681,7 @@
                 {
                   "key": "businessTransactionId",
                   "value": "",
-                  "description": "The id of the refused transaction."
+                  "description": "The id of the refused transaction. In the sandbox, use an id from a playground run: its responses include it. Sandbox data is deleted hourly, so an older id returns `404`; run the playground again for a new one."
                 }
               ]
             },
