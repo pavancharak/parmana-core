@@ -26,3 +26,4 @@ export * from "./authorization-no-longer-valid-error.js";
 export * from "./non-human-caller-denied-error.js";
 export * from "./same-actor-cannot-approve-own-change-error.js";
 export * from "./step-up-authorization-invalid-error.js";
+export * from "./kill-switch-active-error.js";

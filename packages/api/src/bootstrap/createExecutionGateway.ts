@@ -1,4 +1,4 @@
-import { ExecutionGateway } from "@parmana/execution-gateway";
+import { ExecutionGateway, type ReleaseGate } from "@parmana/execution-gateway";
 
 import {
   FileKeyExpiryStore,
@@ -78,7 +78,9 @@ const ungovernedPolicyVerifier: PolicyExecutionVerifier = {
  *   execution boundary, that the runtime signals an authorization was
  *   signed under still match real-world state.
  */
-export async function createExecutionGateway(): Promise<ExecutionSystem> {
+export async function createExecutionGateway(
+  releaseGate?: ReleaseGate,
+): Promise<ExecutionSystem> {
   const signer = await SignerBootstrap.create();
 
   const publicKey = await createGatewayPublicKey(signer);
@@ -119,6 +121,7 @@ export async function createExecutionGateway(): Promise<ExecutionSystem> {
     createPolicyExecutionVerifier() ?? ungovernedPolicyVerifier;
 
   return new ExecutionGateway({
+    ...(releaseGate === undefined ? {} : { releaseGate }),
     publicKey,
     keyProvider,
     keyExpiryStore,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { KillSwitchActiveError } from "@parmana/runtime";
+import { KillSwitchActiveError } from "@parmana/shared";
 
 import {
   KillSwitchService,

@@ -22,6 +22,7 @@ import { schedulePolicyGovernanceIntegrityCheck } from "./bootstrap/schedulePoli
 import { createRateLimitStore } from "./bootstrap/createRateLimitStore.js";
 import { createSandboxOptions } from "./bootstrap/createSandboxOptions.js";
 import { createKillSwitch } from "./bootstrap/createKillSwitch.js";
+import { killSwitchReleaseGate } from "./killSwitch/killSwitchReleaseHook.js";
 import { createApp } from "./app.js";
 import { distrustCompromisedRoots } from "./bootstrap/distrustCompromisedRoots.js";
 
@@ -67,10 +68,12 @@ assertPaytmConnectorConfigured();
 // when unsafe (see createSandboxOptions).
 const sandbox = createSandboxOptions();
 
-const executionSystem = await createExecutionSystem();
-
 // ADR-0017: the kill switch is off unless KILL_SWITCH_ENABLED=true.
 const killSwitch = createKillSwitch();
+
+const executionSystem = await createExecutionSystem(
+  killSwitch ? killSwitchReleaseGate(killSwitch) : undefined,
+);
 
 const application = createApplication(executionSystem, undefined, killSwitch);
 

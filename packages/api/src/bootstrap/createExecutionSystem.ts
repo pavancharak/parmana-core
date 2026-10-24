@@ -1,4 +1,5 @@
 import type { ExecutionSystem } from "@parmana/execution-system";
+import type { ReleaseGate } from "@parmana/execution-gateway";
 
 import { createExecutionGateway } from "./createExecutionGateway.js";
 
@@ -8,6 +9,8 @@ import { createExecutionGateway } from "./createExecutionGateway.js";
  * This is the single architectural entry point for
  * execution-system composition.
  */
-export async function createExecutionSystem(): Promise<ExecutionSystem> {
-  return createExecutionGateway();
+export async function createExecutionSystem(
+  releaseGate?: ReleaseGate,
+): Promise<ExecutionSystem> {
+  return createExecutionGateway(releaseGate);
 }

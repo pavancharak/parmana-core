@@ -6,7 +6,7 @@ import type { BusinessTransaction } from "@parmana/shared";
 import { FilePolicyRepository } from "@parmana/policy";
 import { MemoryExecutionTrustRecordRepository } from "@parmana/storage";
 
-import { KillSwitchActiveError } from "../../src/errors/KillSwitchActiveError.js";
+import { KillSwitchActiveError } from "@parmana/shared";
 import { RuntimeBuilder } from "../../src/RuntimeBuilder.js";
 
 import {

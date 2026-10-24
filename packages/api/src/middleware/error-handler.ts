@@ -15,6 +15,7 @@ import {
 
 import {
   ConnectorNotRegisteredError,
+  KillSwitchActiveError,
   NonceAlreadyConsumedError,
   AuthorizationNoLongerValidError,
 } from "@parmana/shared";
@@ -198,7 +199,8 @@ export function createErrorHandler(auditSink?: CallerAuditSink) {
     if (
       error instanceof NonceAlreadyConsumedError ||
       error instanceof ConnectorNotRegisteredError ||
-      error instanceof AuthorizationNoLongerValidError
+      error instanceof AuthorizationNoLongerValidError ||
+      error instanceof KillSwitchActiveError
     ) {
       res.status(error.status).json({
         error: error.message,

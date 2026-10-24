@@ -75,6 +75,16 @@ export interface AuthorizationRevocationList {
   isRevoked(authorizationId: string): Promise<boolean>;
 }
 
+/**
+ * Checked immediately before a verified action is released to a connector.
+ * Throws to refuse the release; nothing is executed when it throws. The API
+ * uses it to stop an action when an operator has tripped the kill switch
+ * (ADR-0017), including a trip that lands after the request passed the guard.
+ */
+export interface ReleaseGate {
+  assertOpen(): Promise<void>;
+}
+
 export interface ExecutionGatewayOptions {
   /**
    * Parmana's public key. Supplied by the caller,
@@ -82,6 +92,12 @@ export interface ExecutionGatewayOptions {
    * this package never reads key material itself.
    */
   readonly publicKey: KeyObject;
+
+  /**
+   * Checked immediately before release, after verification. Optional; when
+   * absent, the gateway releases as before.
+   */
+  readonly releaseGate?: ReleaseGate;
 
   /**
    * Optional keyId-aware key lookup, forwarded to EnvelopeVerifier.
@@ -257,6 +273,7 @@ export class ExecutionGateway implements ExecutionSystem {
   private readonly requirePolicyBinding: boolean;
   private readonly signalStateVerifier: SignalStateVerifier | undefined;
   private readonly connector: Connector | undefined;
+  private readonly releaseGate: ReleaseGate | undefined;
   private readonly executionControl: ExecutionControlOptions | undefined;
   private readonly authorityGrants:
     Pick<AuthorityGrantRepository, "findActive"> | undefined;
@@ -324,6 +341,7 @@ export class ExecutionGateway implements ExecutionSystem {
 
     this.connector = options.connector;
     this.executionControl = options.executionControl;
+    this.releaseGate = options.releaseGate;
   }
 
   /**
@@ -742,6 +760,10 @@ export class ExecutionGateway implements ExecutionSystem {
     }
 
     const transaction = deepFreeze(executableContent);
+
+    // Last check before anything is released. A trip that lands after the
+    // request passed earlier checks is caught here, and nothing is executed.
+    await this.releaseGate?.assertOpen();
 
     if (this.executionControl !== undefined) {
       if (this.executionControl.service !== undefined) {

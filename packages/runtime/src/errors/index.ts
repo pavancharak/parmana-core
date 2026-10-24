@@ -11,4 +11,3 @@ export * from "./ExecutionIntentNotFinalizableError.js";
 export * from "./ExecutionIntentNotFoundError.js";
 export * from "./ExecutionIntentNotResolvableError.js";
 export * from "./ExecutionIntentResolutionInvalidError.js";
-export * from "./KillSwitchActiveError.js";

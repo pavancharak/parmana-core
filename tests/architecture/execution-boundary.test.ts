@@ -282,7 +282,8 @@ describe("execution boundary — exactly one production execution pipeline", () 
     });
 
     it("binds ExecutionSystem to createExecutionGateway() and nothing else", () => {
-      expect(content).toMatch(/return createExecutionGateway\(\)/);
+      // The argument is the optional release gate (ADR-0017), not a second binding.
+      expect(content).toMatch(/return createExecutionGateway\(/);
       // No other execution-system-shaped factory or adapter constructed here.
       expect(content).not.toMatch(/new (Gateway|Connector|Http|HubSpot)\w*\(/);
     });

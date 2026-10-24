@@ -16,7 +16,7 @@ import {
   type ConnectorExecutor,
 } from "@parmana/execution-control";
 
-import { ExecutionGateway } from "@parmana/execution-gateway";
+import { ExecutionGateway, type ReleaseGate } from "@parmana/execution-gateway";
 import { MemoryNonceStore } from "@parmana/envelope-verifier";
 import type { ExecutionSystem } from "@parmana/execution-system";
 import type { ExecutionResult } from "@parmana/shared";
@@ -63,6 +63,9 @@ export interface InspectableExecutionSystemOptions {
    * the REAL public key, so this is guaranteed to fail verification.
    */
   readonly signAttestationWithWrongKey?: boolean;
+
+  /** Refuse a release at the gateway, e.g. a kill-switch check (ADR-0017). */
+  readonly releaseGate?: ReleaseGate;
 }
 
 export function createInspectableExecutionSystem(
@@ -161,6 +164,9 @@ export function createInspectableExecutionSystem(
   const gateway = new ExecutionGateway({
     // Legacy fixture: predates fail-closed policy binding.
     allowUnverifiedPolicy: true,
+    ...(options.releaseGate === undefined
+      ? {}
+      : { releaseGate: options.releaseGate }),
     publicKey: gatewayPublicKey,
     nonceStore,
     executionControl: {
