@@ -69,6 +69,21 @@ for each is in the registration form.
 | Security                | vulnerabilities_fixed_60_days                                 | Open                | See section 4                                                                                                                                   |
 | Security                | know_secure_design, know_common_errors                        | Owner's attestation | `THREAT-MODEL.md`                                                                                                                               |
 
+## 3a. Node.js and the eMudhra certificate issue
+
+- The official Node.js security release of 2026-10-21 lists
+  "ca-cert (eMudhra Intermediate CA Compromise)" as a dependency update on
+  the 22.x, 24.x and 26.x lines
+  (https://nodejs.org/en/blog/vulnerability/october-2026-security-releases).
+- The 24.22.1 changelog records "update root certificates to NSS 3.131.1"
+  (https://github.com/nodejs/node/blob/v24.22.1/doc/changelogs/CHANGELOG_V24.md).
+- Neither official source says which roots are removed. The downloaded
+  24.22.1 binary still bundles `emSign Root CA - G1`, which the server
+  removes at startup (`packages/api/src/bootstrap/distrustCompromisedRoots.ts`).
+- Unresolved: whether the bundled root store of the official binaries no
+  longer contains the other three listed roots. Check the binary, not
+  secondary reports.
+
 ## 4. Dependency advisories
 
 Source: `npm audit` on the lockfile, 2026-10-24.
