@@ -6,7 +6,7 @@ change nobody else read is a change nobody else checked.
 
 ## Before you start
 
-- **Agreement.** The repository is source-available for evaluation only ([LICENSE](../LICENSE)).
+- **Licence.** The repository is licensed under the Apache License 2.0 ([LICENSE](../LICENSE)).
   Reviewing it as a collaborator needs a written agreement with Parmana Systems, as described in
   [CONTRIBUTING.md](../CONTRIBUTING.md).
 - **Access.** Write access to `pavancharak/parmana`, so your approval counts toward the branch rule on

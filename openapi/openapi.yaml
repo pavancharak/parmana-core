@@ -42,7 +42,7 @@ info:
     email: founder@parmanasystems.com
 
   license:
-    name: Proprietary, source-available for evaluation only, see LICENSE
+    name: Apache License 2.0, see LICENSE
     url: https://docs.parmanasystems.com/license
 
 servers:
