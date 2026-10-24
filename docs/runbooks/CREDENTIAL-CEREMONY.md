@@ -160,6 +160,8 @@ Put every entry file in `%USERPROFILE%\parmana-entries`:
 
 Keep the existing entries already in the folder: `paytm-refund-agent.json` and `razorpay-demo-agent.json`. Replacing the key list drops every caller that is missing, so none may be left out.
 
+**Stand-in for operator B (2026-10-24, approved).** While the real `operator-b` is not yet available, the folder may hold a stand-in `operator-b.json`: an entry generated with `--credential-holder-type USER` and no `--allowed-capabilities`, whose printed key was discarded. It has no capabilities, so it cannot trip, reset or probe, and a two-person reset still needs a second real operator. Replace it with the real entry (with `kill-switch:reset`) as soon as that operator is available, then redeploy and re-run the probe. Gap log G-122 records this.
+
 Print the list:
 
 ```powershell
