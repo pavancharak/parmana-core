@@ -8,10 +8,14 @@ import tls from "node:tls";
  *
  * Why: in October 2026 eight eMudhra intermediate CA keys were found to be
  * weak, so anyone who recovered them could issue certificates that chain to
- * these roots. Browsers blocked the intermediates; Node's TLS stack checks
- * no revocation, and only Node 22.23.4, 24.22.1 and 26.12.1 (21 October 2026)
- * reject them. The hosted runtime can lag behind those releases (Vercel
- * still ran 24.21.0 on 23 October), so the server removes the roots itself.
+ * these roots. Node's TLS stack checks no revocation, so it trusts whatever
+ * roots its bundled store holds. The server removes the listed roots from
+ * that store itself, so a lagging Node release cannot leave them trusted.
+ *
+ * Scope: this removes only the roots in the bundled store. The official
+ * Node 22.23.4, 24.22.1 and 26.12.1 binaries each bundle only
+ * `emSign Root CA - G1` of the four listed roots, so on those builds the
+ * other three are already absent and this removes just G1.
  *
  * Cost: a server whose certificate chains to an emSign root can no longer be
  * reached. None of the systems this server calls uses one.
