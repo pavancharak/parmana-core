@@ -46,7 +46,7 @@ project is held to, and the engineering references that code or tests cite.
 
 ## License and security
 
-- [../LICENSE](../LICENSE): proprietary, source available for evaluation.
+- [../LICENSE](../LICENSE): Apache License 2.0.
 - [../SECURITY.md](../SECURITY.md): reporting a vulnerability.
 - [../THREAT-MODEL.md](../THREAT-MODEL.md): threats, controls, evidence and residual risk.
 - [MUTATION-TESTING.md](MUTATION-TESTING.md): mutation scores for the security packages, the

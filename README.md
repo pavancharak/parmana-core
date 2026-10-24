@@ -5,16 +5,12 @@ person's signed approval before it runs, and leaves a signed record anyone can
 verify afterwards.**
 
 [![CI](https://github.com/pavancharak/parmana/actions/workflows/ci.yml/badge.svg)](https://github.com/pavancharak/parmana/actions/workflows/ci.yml)
-[![License](https://img.shields.io/badge/license-proprietary-lightgrey)](./LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](./LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D24.6-brightgreen)](package.json)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/pavancharak/parmana/badge)](https://scorecard.dev/viewer/?uri=github.com/pavancharak/parmana)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15230/badge)](https://www.bestpractices.dev/projects/15230)
 
-> **Proprietary software evaluation only.** This repository is source-available
-> for evaluation purposes. No license is granted to use, copy, modify, or
-> distribute this software, in whole or in part, without a separate written
-> agreement with Parmana Systems. See [LICENSE](./LICENSE). The client SDKs
-> and connector SDKs are the exception: they are Apache 2.0 (see [License](#license)).
+> Licensed under the [Apache License 2.0](./LICENSE). See [NOTICE](./NOTICE).
 
 ## The problem
 
@@ -294,20 +290,10 @@ Interested in running Parmana against a real integration? See
 
 ## License
 
-Source-available for evaluation only. See [LICENSE](./LICENSE). No
-license is granted to use, copy, modify, distribute, or create
-derivative works from this repository except as expressly permitted in a
-separate written agreement with Parmana Systems.
+Parmana is licensed under the [Apache License, Version 2.0](./LICENSE). The
+trademark terms are in [NOTICE](./NOTICE).
 
-The exceptions are the SDKs, which are licensed under the Apache License 2.0:
-the client SDKs in [typescript/](typescript/) and [python/](python/) (published
-as `@parmana/sdk` and `parmana`), and the connector SDKs in
-[packages/connector-sdk/](packages/connector-sdk/) and
-[python-connector-sdk/](python-connector-sdk/). See the LICENSE file in each
-directory.
-
-Copyright (c) 2026 Parmana Systems Private Limited. "Parmana" is a trademark of Parmana Systems
-Private Limited. See [NOTICE](./NOTICE).
+Copyright (c) 2026 Parmana Systems Private Limited.
 
 ## More documentation
 
