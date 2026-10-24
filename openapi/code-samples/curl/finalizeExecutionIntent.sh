@@ -1,2 +1,5 @@
-curl -X POST https://parmana-api-real.vercel.app/execution-intents/5f0c2a7e-3d7b-4d0e-9a55-2f6d8b1c4e90/finalize \
+# TXN_ID: the businessTransactionId of the transaction. In the sandbox, use one from a playground run;
+# sandbox data is deleted hourly, so an older id returns 404.
+TXN_ID="${TXN_ID:?set TXN_ID to a businessTransactionId}"
+curl -X POST https://parmana-api-real.vercel.app/execution-intents/$TXN_ID/finalize \
   -H "Authorization: Bearer $PARMANA_API_KEY"
