@@ -297,7 +297,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"businessTransactionId\": \"44b34a79-e0f2-49d7-a48e-e52fff88182e\"\n}",
+              "raw": "{\n  \"businessTransactionId\": \"<uuid>\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -313,7 +313,7 @@
                 "receipt"
               ]
             },
-            "description": "Real captured request\n\noperationId: generateReceipt\n\nGenerates a signed Receipt for a Trust Record: a compact proof of what was decided and executed,\nto hand to a person or another system. The record must have a `VERIFIED` Verification first; run\n`POST /verify`."
+            "description": "operationId: generateReceipt\n\nGenerates a signed Receipt for a Trust Record: a compact proof of what was decided and executed,\nto hand to a person or another system. The record must have a `VERIFIED` Verification first; run\n`POST /verify`.\n\nIn the sandbox, the ID must come from a playground run that was approved and released: each run's responses\ninclude its `businessTransactionId`. Sandbox data is deleted hourly, so an older ID returns `404`."
           }
         },
         {
