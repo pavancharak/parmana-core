@@ -1,9 +1,7 @@
 # Evaluating Parmana
 
-This repository is source-available for evaluation only. Reading, building and running it to
-assess Parmana is permitted. Any other use, including production deployment, redistribution or
-derivative works, needs a separate written agreement with Parmana Systems. See
-[LICENSE](./LICENSE).
+This repository is licensed under the Apache License 2.0. See [LICENSE](./LICENSE). Read it,
+build it and run it to assess Parmana, and use it under the terms of that licence.
 
 This guide is the shortest path from a fresh clone to a working local system. It needs no
 accounts, credentials, database or network access beyond `npm ci`.
@@ -130,12 +128,7 @@ the record and the public keys, without Parmana's runtime or database, using
 
 ## Licensing
 
-The proprietary [LICENSE](./LICENSE) covers the server and everything else in this repository
-except the SDKs. The SDKs are licensed under the Apache License 2.0: [typescript/](typescript/)
-(`@parmana/sdk` on npm), [python/](python/) (`parmana` on PyPI),
-[packages/connector-sdk/](packages/connector-sdk/) and
-[python-connector-sdk/](python-connector-sdk/). `@parmana/sign` is a separate repository, also
-under the Apache License 2.0.
+The whole repository is licensed under the Apache License 2.0 ([LICENSE](./LICENSE)). `@parmana/sign` is a separate repository, also under the Apache License 2.0.
 
 ## Break it
 
