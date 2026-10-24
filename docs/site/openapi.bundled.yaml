@@ -1008,50 +1008,44 @@ paths:
             schema:
               $ref: "#/components/schemas/transaction-create-request.schema"
             examples:
-              test-fixture-flow:
-                summary: A request that runs on a server started with NODE_ENV=test, using the
-                  test only capability test:fixture-execute. It was captured
-                  live on 2026-09-14 and is approved.
+              sandbox-receipt:
+                summary: The public sandbox's receipt action, sent without an approval. The
+                  sandbox refuses it (403 POLICY_DENIED), as the playground
+                  shows. Get a demo approval from POST /sandbox/approvals for
+                  the same target and add it to signals to release it.
                 value:
-                  businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
+                  businessTransactionId: 8ddd9ae9-eebe-4a5a-8182-4e6187466a74
                   metadata:
-                    businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
-                    correlationId: 9c039d73-7fb1-461f-908f-c646c905633c
-                    sourceSystem: docs-api-reference
-                    submittedBy: docs-example
-                    submittedAt: 2026-09-14T17:17:50.000Z
+                    businessTransactionId: 8ddd9ae9-eebe-4a5a-8182-4e6187466a74
+                    correlationId: cc1ca975-4935-4e9a-a591-8897af6b56fb
+                    sourceSystem: docs-example
+                    submittedBy: docs-reader
+                    submittedAt: 2026-07-13T17:36:00.835Z
                   authority:
-                    authorityId: f10f016f-b7c0-443e-8307-d26f5fa98067
+                    authorityId: authority-1
                     authorityType: SERVICE
-                    principalId: docs-example-caller
-                    displayName: Docs Example Caller
-                    issuedAt: 2026-09-14T17:17:50.000Z
+                    principalId: sandbox-visitor
+                    issuedAt: 2026-07-13T17:36:00.835Z
                   authorization:
-                    authorizationId: 5f112f4c-a43d-41dd-bfee-66a49efe33de
-                    authorityId: f10f016f-b7c0-443e-8307-d26f5fa98067
-                    purpose: "API reference example: refund authorization"
-                    issuedAt: 2026-09-14T17:17:50.000Z
+                    authorizationId: authorization-1
+                    authorityId: authority-1
+                    purpose: Trying the Parmana sandbox
+                    issuedAt: 2026-07-13T17:36:00.835Z
                   intent:
-                    intentId: 462c2efd-3b88-4f59-8c47-8ba01a63d37e
-                    authorizationId: 5f112f4c-a43d-41dd-bfee-66a49efe33de
-                    action: test:fixture-execute
-                    target: vendor://payments
+                    intentId: intent-1
+                    authorizationId: authorization-1
+                    action: sandbox:receipt
+                    target: order-docs-example
                     parameters:
-                      amount: 1000
-                      currency: USD
-                    createdAt: 2026-09-14T17:17:50.000Z
+                      note: hello
+                    createdAt: 2026-07-13T17:36:00.835Z
                   policy:
-                    name: vendor-payment
-                    version: 2.0.0
+                    name: sandbox-receipt
+                    version: 1.0.0
                     schemaVersion: 1.0.0
                   signals:
-                    vendorVerified: true
-                    invoiceVerified: true
-                    paymentApproved: true
-                    sufficientFunds: true
-                    paymentAmount: 1000
-                    riskScore: 5
-                    vendorId: vendor://payments
+                    note: hello
+                    receiptApproved: false
               vendor-payment-flow:
                 summary: Historical capture (vendor-payment 2.0.0, approved). The
                   payments:execute action no longer exists on a current server.
