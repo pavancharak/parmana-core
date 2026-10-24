@@ -17,11 +17,10 @@ signed record of exactly what happened. The [Quickstart](/quickstart) runs a loc
 by step.
 
 <Info>
-  **Proprietary software, evaluation only.** You may read, build and run Parmana
-  to assess it; any other use needs a written agreement. The client and
-  connector SDKs are the exception: they are open source under the Apache
-  License 2.0. See [License and evaluation](/license). Evaluators and auditors
-  start at Evaluate Parmana and the Audit guide.
+  **Apache License 2.0.** The whole Parmana repository, including the server, is
+  open source under the Apache License 2.0, as are the client and connector
+  SDKs. See [License](/license). Evaluators and auditors start at Evaluate
+  Parmana and the Audit guide.
 </Info>
 
 <Tip>
@@ -837,8 +836,8 @@ Source: https://docs.parmanasystems.com/quickstart
   approvers](/guides/manage-approvers).
 </Warning>
 
-Running Parmana locally to evaluate it is permitted; any other use needs a written agreement, see
-[License and evaluation](/license).
+Parmana is licensed under the Apache License 2.0, so running it locally is permitted. See
+[License](/license).
 
 <Steps>
   <Step title="Install and build">
