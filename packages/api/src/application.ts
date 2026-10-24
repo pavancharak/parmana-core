@@ -19,6 +19,8 @@ import {
 import { PostgresPoolFactory } from "@parmana/storage";
 
 import { RuntimeFactory } from "@parmana/runtime";
+import { killSwitchReleaseHook } from "./killSwitch/killSwitchReleaseHook.js";
+import type { KillSwitchService } from "./killSwitch/KillSwitchService.js";
 
 import type { ExecutionSystem } from "@parmana/execution-system";
 
@@ -102,6 +104,7 @@ export const policyRepository: PolicyRepository = new Proxy(
 export function createApplication(
   executionSystem: ExecutionSystem,
   approvalVerifier: ApprovalVerifier = createApprovalVerifier(),
+  killSwitch?: KillSwitchService,
 ) {
   const signalStateVerifier = new CompositeSignalStateVerifier([
     createHubSpotSignalStateVerifier(
@@ -144,5 +147,8 @@ export function createApplication(
     // RFC-0023 phase 3: the authority grants approved through maker
     // checker, for policies with requireAuthorityGrant.
     authorityGrantRepository,
+    // ADR-0017: refuse a release made after a trip, not just a request that
+    // arrives after one. See killSwitchReleaseHook.
+    killSwitch === undefined ? [] : [killSwitchReleaseHook(killSwitch)],
   );
 }

@@ -69,7 +69,10 @@ const sandbox = createSandboxOptions();
 
 const executionSystem = await createExecutionSystem();
 
-const application = createApplication(executionSystem);
+// ADR-0017: the kill switch is off unless KILL_SWITCH_ENABLED=true.
+const killSwitch = createKillSwitch();
+
+const application = createApplication(executionSystem, undefined, killSwitch);
 
 const callerAuth = createCallerAuthenticator();
 
@@ -79,9 +82,6 @@ const healthRateLimitStore = createRateLimitStore("health:");
 
 const publicRateLimitStore = createRateLimitStore("public:");
 const authFailureRateLimitStore = createRateLimitStore("auth-failure:");
-
-// ADR-0017: the kill switch is off unless KILL_SWITCH_ENABLED=true.
-const killSwitch = createKillSwitch();
 
 const app = createApp(application, {
   ...(killSwitch ? { killSwitch } : {}),
