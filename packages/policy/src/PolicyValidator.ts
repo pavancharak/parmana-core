@@ -1,3 +1,4 @@
+import RE2 from "re2";
 import type {
   Policy,
   PolicyCondition,
@@ -459,7 +460,8 @@ export class PolicyValidator {
     }
 
     try {
-      new RegExp(pattern);
+      // RE2 rejects lookaround and backreferences, and runs in linear time.
+      new RE2(pattern);
     } catch {
       throw new PolicyValidationError(
         `Invalid regular expression '${pattern}'.`,
