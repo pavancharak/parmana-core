@@ -129,7 +129,10 @@ approver, and browser access for the docs site only. Its record is saved to `dep
   until `publish-demo-key.ps1` writes the key in. Every other file in `D:\key\parmana-sandbox` stays
   private.
 - Retention (ADR-0014 open question 3, accepted: 7 days, daily) is stage 17: `retention.sql` installs the function
-  `parmana_sandbox_retention(days)` and a `pg_cron` job that runs it at 03:30 UTC with 7 days. It deletes requests,
+  `parmana_sandbox_retention(days)` and a `pg_cron` job that runs it at 03:30 UTC with 7 days. Since 2026-10-24 it also
+  installs `parmana_sandbox_retention_hours(hours)` and a second `pg_cron` job, `parmana-sandbox-retention-hourly`, that
+  runs at minute 0 of every hour with 1 hour: visitor data older than an hour is deleted hourly. Both call one shared
+  core that checks the sandbox registration before it deletes anything. It deletes requests,
   their records, audit events, expired nonces and handbook leads older than that, children first; it keeps governance.
   It refuses any database without the active `sandbox:receipt` registration, and it is not a migration, so it never
   reaches production. A period under 7 days is refused unless a second argument confirms it, and every run that

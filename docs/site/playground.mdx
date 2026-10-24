@@ -30,7 +30,7 @@ signed record you can verify yourself.
 | Rate limit           | `POST /execute`: 30 requests a minute for the demo key, shared by every visitor. Over it: `429 RATE_LIMITED`.                                                                        |
 | Governance routes    | Refused for the demo key: `403 NON_HUMAN_CALLER_DENIED`. Their pages show real captured responses instead.                                                                           |
 | Typical time         | 10 to 15 seconds for an approved request, a few seconds for a refusal. Set your client timeout to 120 seconds.                                                                       |
-| Kept for             | Not guaranteed. A daily job, at 03:30 UTC, deletes every request and record visitors sent more than 7 days ago. Keep any record you need. Policies and approvals of governance stay. |
+| Kept for             | Not guaranteed. A job runs every hour and deletes every request and record visitors sent more than an hour ago. Keep any record you need. Policies and approvals of governance stay. |
 
 ## Try it in your browser
 

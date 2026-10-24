@@ -251,3 +251,111 @@ describe("the sandbox retention job against real Postgres", () => {
     ]);
   });
 });
+
+describe("the hourly sandbox retention job against real Postgres", () => {
+  const hourlyCommand =
+    "SELECT * FROM parmana_sandbox_retention_hours(1, 'DELETE RECENT DATA')";
+
+  async function seedAges(): Promise<void> {
+    for (const [id, age] of [
+      ["fresh", "10 minutes"],
+      ["stale", "2 hours"],
+    ]) {
+      await db.query(
+        `INSERT INTO business_transactions
+           (business_transaction_id, status, authority_json, authorization_json,
+            intent_json, metadata_json, policy_json, signals_json, created_at)
+         VALUES ($1, 'COMPLETED', '{}', '{}', '{}', '{}', '{}', '{}', now() - $2::interval)`,
+        [id, age],
+      );
+      await db.query(
+        `INSERT INTO caller_audit_events (type, occurred_at, route, caller_id)
+         VALUES ('caller.authenticated', now() - $1::interval, '/transactions', 'sandbox-visitor')`,
+        [age],
+      );
+    }
+  }
+
+  it("is scheduled hourly with the command the test runs", () => {
+    expect(retention).toContain("'0 * * * *'");
+    expect(retention).toContain(
+      "parmana_sandbox_retention_hours(1, ''DELETE RECENT DATA'')",
+    );
+  });
+
+  it("keeps data under an hour old and deletes data older than an hour", async () => {
+    await seedRegistration();
+    await seedAges();
+
+    await db.exec(hourlyCommand);
+
+    const left = await db.query<{ business_transaction_id: string }>(
+      "SELECT business_transaction_id FROM business_transactions",
+    );
+    expect(left.rows.map((row) => row.business_transaction_id)).toEqual([
+      "fresh",
+    ]);
+    expect(await count("caller_audit_events")).toBe(1);
+  });
+
+  it("writes a run log row for the hour period, with no day period", async () => {
+    await seedRegistration();
+    await seedAges();
+
+    await db.exec(hourlyCommand);
+
+    const runs = await db.query<{
+      retention_days: number | null;
+      retention_hours: number;
+      deleted: Record<string, number>;
+    }>(
+      "SELECT retention_days, retention_hours, deleted FROM sandbox_retention_runs",
+    );
+    expect(runs.rows).toHaveLength(1);
+    expect(runs.rows[0]?.retention_days).toBeNull();
+    expect(runs.rows[0]?.retention_hours).toBe(1);
+    expect(runs.rows[0]?.deleted.business_transactions).toBe(1);
+  });
+
+  it("refuses an hourly period without the confirmation word, deleting nothing", async () => {
+    await seedRegistration();
+    await seedAges();
+
+    for (const call of [
+      "SELECT * FROM parmana_sandbox_retention_hours(1)",
+      "SELECT * FROM parmana_sandbox_retention_hours(1, 'yes')",
+    ]) {
+      await db.exec("SAVEPOINT refused");
+      await expect(db.query(call)).rejects.toThrow(/DELETE RECENT DATA/);
+      await db.exec("ROLLBACK TO SAVEPOINT refused");
+    }
+    expect(await count("business_transactions")).toBe(2);
+    expect(await count("caller_audit_events")).toBe(2);
+  });
+
+  it.each([0, -1])("refuses %i hours", async (hours) => {
+    await seedRegistration();
+    await seedAges();
+
+    await db.exec("SAVEPOINT refused");
+    await expect(
+      db.query(
+        "SELECT * FROM parmana_sandbox_retention_hours($1, 'DELETE RECENT DATA')",
+        [hours],
+      ),
+    ).rejects.toThrow(/retention_hours must be 1 or more/);
+    await db.exec("ROLLBACK TO SAVEPOINT refused");
+    expect(await count("business_transactions")).toBe(2);
+  });
+
+  it("refuses a database without the active sandbox:receipt registration", async () => {
+    await seedAges();
+
+    await db.exec("SAVEPOINT refused");
+    await expect(db.query(hourlyCommand)).rejects.toThrow(
+      /Not the sandbox database/,
+    );
+    await db.exec("ROLLBACK TO SAVEPOINT refused");
+    expect(await count("business_transactions")).toBe(2);
+  });
+});
