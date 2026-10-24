@@ -20,7 +20,8 @@
     "businessTransactionId": {
       "type": "string",
       "format": "uuid",
-      "description": "Unique Business Transaction identifier. Same value as metadata.businessTransactionId. Must be a valid UUID on both POST /execute and POST /transactions (rejected with a 400 otherwise)."
+      "description": "Unique Business Transaction identifier. Same value as metadata.businessTransactionId. Must be a valid UUID on both POST /execute and POST /transactions (rejected with a 400 otherwise).",
+      "x-default": "8ddd9ae9-eebe-4a5a-8182-4e6187466a74"
     },
     "metadata": {
       "$ref": "./metadata.schema.json"

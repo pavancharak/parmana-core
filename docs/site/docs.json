@@ -828,5 +828,10 @@
   "banner": {
     "content": "The Parmana repository, including the server, the SDKs and the offline verifier, is licensed under the Apache License 2.0. [License](/license)",
     "dismissible": false
+  },
+  "api": {
+    "examples": {
+      "prefill": true
+    }
   }
 }
