@@ -7317,11 +7317,15 @@ components:
 
   securitySchemes:
     bearerAuth:
-      type: http
-      scheme: bearer
+      # An apiKey scheme in the Authorization header: the docs panel sends the
+      # value exactly as typed, so the value includes the "Bearer " prefix.
+      # With type http the panel added a second prefix and the request failed.
+      type: apiKey
+      in: header
+      name: Authorization
       # Prefills the docs playground with the public sandbox's demo key
       # (ADR-0014): caller sandbox-visitor, allowed only sandbox:receipt.
-      x-default: 2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME
+      x-default: Bearer 2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME
       description: >
         Caller API key issued by scripts/generate-api-key.ts. Sent as
         Authorization: Bearer <key>. Verified against a stored SHA-256 hash
