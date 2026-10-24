@@ -3991,10 +3991,11 @@ paths:
         - name: capability
           in: query
           required: true
-          description: "The action, as in `intent.action`, for example `paytm:refund`."
+          description: "The action, as in `intent.action`. The sandbox's only action is `sandbox:receipt`; production answers for its own capabilities, such as `paytm:refund`."
           schema:
             type: string
-          example: "paytm:refund"
+            x-default: "sandbox:receipt"
+          example: "sandbox:receipt"
       responses:
         "200":
           description: "What to declare and carry."
