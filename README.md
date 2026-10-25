@@ -1,6 +1,6 @@
 # Parmana
 
-**Let AI agents act on real systems. Every action needs a policy decision and a person's signed approval before it runs, and leaves a signed record that anyone can verify afterwards.**
+**Every action stays within what your business allowed.** Parmana checks every action, whether a person or a machine takes it, against the limits you set. Then it keeps proof of what happened.
 
 [![CI](https://github.com/pavancharak/parmana-core/actions/workflows/ci.yml/badge.svg)](https://github.com/pavancharak/parmana-core/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/pavancharak/parmana-core/actions/workflows/codeql.yml/badge.svg)](https://github.com/pavancharak/parmana-core/actions/workflows/codeql.yml)
