@@ -794,17 +794,17 @@
     "links": [
       {
         "label": "GitHub",
-        "href": "https://github.com/pavancharak/parmana-verifier"
+        "href": "https://github.com/pavancharak/parmana-core"
       },
       {
         "label": "Discussions",
-        "href": "https://github.com/pavancharak/parmana-verifier/discussions"
+        "href": "https://github.com/pavancharak/parmana-core/discussions"
       }
     ]
   },
   "footer": {
     "socials": {
-      "github": "https://github.com/pavancharak/parmana-verifier"
+      "github": "https://github.com/pavancharak/parmana-core"
     },
     "links": [
       {
