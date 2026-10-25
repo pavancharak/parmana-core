@@ -186,6 +186,18 @@ Parmana is licensed under the [Apache License, Version 2.0](./LICENSE). The trad
 
 Copyright (c) 2026 Parmana Systems Private Limited.
 
+## Read the Parmana blog
+
+The [Parmana blog](https://blog.parmanasystems.com) explains the product, the evidence and the open limits in plain terms. Read the post for your role:
+
+- **Business leaders:** [What AI spending limits mean for your business](https://blog.parmanasystems.com/2026/10/25/what-ai-limits-mean-for-your-business/). Why limits must sit outside the AI, and what proof to ask for.
+- **Engineers:** [Run the checks in an afternoon](https://blog.parmanasystems.com/2026/10/25/run-the-checks-in-an-afternoon/). Build, test, run the attack scenarios and verify a record.
+- **Auditors and risk teams:** [Check a record offline, without trusting us](https://blog.parmanasystems.com/2026/10/25/check-a-record-offline/). How to verify a signed record with only a file and a trust file.
+- **Buyers and evaluators:** [How to choose a control for AI actions](https://blog.parmanasystems.com/2026/10/25/how-to-choose-an-ai-action-control/). Seven questions to ask any vendor.
+- **Anyone who wants the honest picture:** [Lessons from the limits we still have](https://blog.parmanasystems.com/2026/10/25/lessons-from-the-limits-we-still-have/). What we got wrong, and what remains open.
+
+New posts are published regularly, so check the blog for updates.
+
 ## Documentation
 
 **New here? Start with [The Parmana Handbook](https://docs.parmanasystems.com/handbook/overview).** It covers every capability in this codebase in 23 chapters, and is also available as a [PDF](https://docs.parmanasystems.com/handbook/download).
