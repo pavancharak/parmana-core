@@ -17,12 +17,12 @@ This file is generated from the documentation navigation. Do not edit it by hand
 
 ## Get started: Start here
 
-* [Welcome](https://docs.parmanasystems.com): Every action stays within what your business allowed. Parmana checks every action, whether a person or a machine takes it, against the limits you set, and keeps proof of what happened.
-* [Playground](https://docs.parmanasystems.com/playground): Send real requests to a live Parmana sandbox with a published demo key: a refusal, a signed approval, an approved and signed release, and an offline check. No install, no account.
+* [Welcome](https://docs.parmanasystems.com): Every action stays within what your business allowed. Parmana checks each one and keeps signed proof of what happened.
+* [Playground](https://docs.parmanasystems.com/playground): Send real requests to a live Parmana sandbox with a published demo key: a refusal, a signed approval, an approved and signed release, and an offline check.
 * [Choose your path](https://docs.parmanasystems.com/choose-your-path): One table that tells you exactly where to start, whether you are a developer, an operator, an auditor or an AI agent.
 * [Quickstart](https://docs.parmanasystems.com/quickstart): See one action checked against approved limits, with its proof kept, in under 10 minutes on your own local server.
-* [How Parmana thinks](https://docs.parmanasystems.com/how-parmana-thinks): The six ideas behind every request Parmana handles: deterministic policy, fail-closed defaults, signed authorization, gateway verification, credential isolation, and trust records.
-* [How Parmana compares](https://docs.parmanasystems.com/how-parmana-compares): Parmana next to IAM, API gateways, LLM guardrails, policy engines and agent framework confirmations: what each answers, what Parmana adds, where Parmana is weaker, and how to use them together.
+* [How Parmana thinks](https://docs.parmanasystems.com/how-parmana-thinks): The six ideas behind every request: deterministic policy, fail-closed defaults, signed authorization, gateway verification, and trust records.
+* [How Parmana compares](https://docs.parmanasystems.com/how-parmana-compares): Parmana next to IAM, API gateways, LLM guardrails, policy engines and agent framework confirmations: what each answers, and where Parmana is weaker.
 ## Get started: Evaluate and audit
 
 * [License](https://docs.parmanasystems.com/license): The Parmana repository, including the server, is licensed under the Apache License 2.0. So are the client and connector SDKs.
@@ -37,14 +37,14 @@ This file is generated from the documentation navigation. Do not edit it by hand
 * [Execution Authorization](https://docs.parmanasystems.com/concepts/execution-authorization): The signed envelope: proof that Parmana authorized one specific execution request. Single use, time bounded, content bound.
 * [The Gateway](https://docs.parmanasystems.com/concepts/the-gateway): The sole boundary through which Parmana releases approved execution requests to connectors. Wired into the default server unconditionally.
 * [Credential Isolation](https://docs.parmanasystems.com/concepts/credential-isolation): The caller that proposes an action never holds the credential that executes it. Session credentials are issued fresh, scoped to one call, and consumed once.
-* [Gateway Attestation](https://docs.parmanasystems.com/concepts/gateway-attestation): A request-bound signature proving the gateway itself released one specific request, separate from the authorization envelope's own signature. What it proves, and what it does not.
+* [Gateway Attestation](https://docs.parmanasystems.com/concepts/gateway-attestation): A request-bound signature proving the gateway itself released one specific request, separate from the authorization envelope's own signature.
 * [Execution Trust Records](https://docs.parmanasystems.com/concepts/execution-trust-records): The canonical, immutable, cryptographically signed record of everything Parmana knows about a Business Transaction.
 * [Refusal Records](https://docs.parmanasystems.com/concepts/refusal-records): The evidence a rejected transaction leaves behind: a signed, independently verifiable Refusal Record, and the two scope caveats that bound the claim.
-* [Human approval](https://docs.parmanasystems.com/concepts/human-approval): No action goes ahead without a signed approval from a person, reads included. How the rule is enforced, how to sign an approval, how to add one to a new action, and how to review refused requests.
-* [Business validation](https://docs.parmanasystems.com/concepts/business-validation): An agent's proposed fact is never a business fact. How a policy names the system that owns each fact, how Parmana asks it and records a Trusted Signal, and the separate authority, validation and execution statuses on every decision.
-* [Execution Intents](https://docs.parmanasystems.com/concepts/execution-intents): A signed statement, stored before an action is released, of exactly what is about to be released. Why it exists, what it proves and does not prove, every failure and what to do about it, and how to find and repair a released action that has no signed record.
+* [Human approval](https://docs.parmanasystems.com/concepts/human-approval): No action goes ahead without a signed approval from a person, reads included.
+* [Business validation](https://docs.parmanasystems.com/concepts/business-validation): An agent's proposed fact is never a business fact.
+* [Execution Intents](https://docs.parmanasystems.com/concepts/execution-intents): A signed statement, stored before an action is released, of exactly what is about to be released.
 * [Caller Audit Trail](https://docs.parmanasystems.com/concepts/caller-audit-trail): Every caller-authentication event (success, denial, or structural rejection) is signed, durable, and, per caller, chained so a deleted row is detectable.
-* [Determinism and Clocks](https://docs.parmanasystems.com/concepts/determinism-and-clocks): 'Two different things share the word "deterministic" on this site. This page is about the narrower one: injected Clock and IdGenerator, and exactly where that pattern is and isn''t used.'
+* [Determinism and Clocks](https://docs.parmanasystems.com/concepts/determinism-and-clocks): Two different things share the word deterministic on this site. This page covers the narrower one: injected Clock and IdGenerator, and where they are used.
 * [Content Binding & TOCTOU](https://docs.parmanasystems.com/concepts/content-binding-toctou): The real mechanism that closes the check-vs-use gap between authorization and execution, what it covers, and what it doesn't.
 ## Concepts: Architecture
 
@@ -61,7 +61,7 @@ This file is generated from the documentation navigation. Do not edit it by hand
 * [Storage](https://docs.parmanasystems.com/storage/overview): Append-only persistence for Business Transactions, Trust Records, and policies.
 ## Guides: Build with Parmana
 
-* [Full Integration Overview](https://docs.parmanasystems.com/guides/full-integration-overview): A map of the four independent pieces a real business system integration needs: policy, caller, connector and signal verification, and how they fit together. Read this before the individual guides.
+* [Full Integration Overview](https://docs.parmanasystems.com/guides/full-integration-overview): A map of the four independent pieces a real business system integration needs: policy, caller, connector and signal verification, and how they fit together.
 * [Write Your First Policy](https://docs.parmanasystems.com/guides/write-your-first-policy): Write a custom Policy, evaluate a transaction against it, and confirm both the approve and reject paths.
 * [Policy Governance: Maker-Checker Approval](https://docs.parmanasystems.com/guides/policy-governance-maker-checker): Propose, review, and approve a policy change end to end, with the exact commands and how to debug each failure mode.
 * [Policy lifecycle and approvals](https://docs.parmanasystems.com/guides/policy-lifecycle-and-approvals): End to end: write a policy, propose it, have a second person approve it, how it takes effect, and how a person signs off on a single critical action.
@@ -70,18 +70,18 @@ This file is generated from the documentation navigation. Do not edit it by hand
 * [Credentials for maker, checker, approver and agent](https://docs.parmanasystems.com/guides/credentials-maker-checker-approver): The four kinds of credential a Parmana deployment uses, who creates each one, and the commands to create, deploy, test and rotate them.
 * [Authorize and Execute an Action End to End](https://docs.parmanasystems.com/guides/authorize-and-execute): See the signed authorization envelope Quickstart hides behind the REST API, then run the same request through the full gateway-wired server.
 * [Connect an agent you already run](https://docs.parmanasystems.com/guides/connect-an-agent): How to connect an AI agent you already run to Parmana, so each of its actions is checked against approved limits before it runs.
-* [Connect any external system](https://docs.parmanasystems.com/guides/connect-any-external-system): An exact, ordered procedure to put an action in a system Parmana has no code for under Parmana's control: write and approve its policy, run an endpoint, register it through maker checker, grant it, and send requests. Every step says what to do, what you should see, and what to do if you do not.
-* [Connect a business signal source](https://docs.parmanasystems.com/guides/connect-a-business-signal-source): Register any business system that owns facts a policy needs, an ERP, an order system, a CRM or a ledger, so Parmana asks it instead of trusting the agent. The procedure, the signed query and answer protocol, and what each failure does.
-* [Grant an agent authority](https://docs.parmanasystems.com/guides/grant-an-agent-authority): Say which agent may have which action decided, within which limits, until when, through maker checker, and make a policy require it. What each refusal means, and what the signed record holds.
+* [Connect any external system](https://docs.parmanasystems.com/guides/connect-any-external-system): An exact, ordered procedure to put an action in a system Parmana has no code for under Parmana control.
+* [Connect a business signal source](https://docs.parmanasystems.com/guides/connect-a-business-signal-source): Register any business system that owns facts a policy needs, an ERP, an order system, a CRM or a ledger, so Parmana asks it instead of trusting the agent.
+* [Grant an agent authority](https://docs.parmanasystems.com/guides/grant-an-agent-authority): Say which agent may have which action decided, within which limits, until when, through maker checker, and make a policy require it.
 * [Issue and Verify Session Credentials](https://docs.parmanasystems.com/guides/session-credentials): Issue a single-use, time-bounded session credential, consume it, and confirm expiry, reuse, and revocation are all rejected.
 * [Choose a Signature Provider](https://docs.parmanasystems.com/guides/choose-a-signature-provider): Ed25519 by default, ML-DSA-65 (post-quantum) as a configured alternative, and hybrid signing with both at once. What each one actually requires and costs.
 ## Guides: Verify and audit
 
 * [Verify a Trust Record Independently](https://docs.parmanasystems.com/guides/verify-independently): Take a trust record someone else gave you and verify its hash and signature with only the public key, no Parmana server, no database, no network call.
-* [Detect Tampering](https://docs.parmanasystems.com/guides/detect-tampering): Mutate a parameter, a signature, and a nonce, run the same verification each time, and watch each one fail. This mirrors the always-running negative-path tutorials.
+* [Detect Tampering](https://docs.parmanasystems.com/guides/detect-tampering): Mutate a parameter, a signature, and a nonce, run the same verification each time, and watch each one fail.
 ## Guides: Worked examples
 
-* [Live API and Demos](https://docs.parmanasystems.com/guides/live-api-and-demos): Call the real, deployed Parmana API directly: authentication, the request shape, every deployed policy, how to author and deploy a new one, and independent offline verification.
+* [Live API and Demos](https://docs.parmanasystems.com/guides/live-api-and-demos): Call the real, deployed Parmana API directly: authentication, the request shape, every deployed policy, how to deploy a new one, and offline verification.
 * [Walkthrough: an agent, Parmana and an external system](https://docs.parmanasystems.com/guides/end-to-end-paytm-flow): How an agent's request passes through Parmana to an external system, step by step, and where to find the exact request and response formats.
 * [Tutorials](https://docs.parmanasystems.com/tutorials/index): Numbered examples in examples/tutorials/, grouped by what they demonstrate. This page links to them, it does not duplicate their content.
 ## TypeScript SDK: Get started
@@ -106,7 +106,7 @@ This file is generated from the documentation navigation. Do not edit it by hand
 * [Python SDK Production Guide](https://docs.parmanasystems.com/guides/python-sdk-production): Deploy the Python SDK to production: real error handling, audit logging, and a deployment checklist.
 ## Connector SDKs: Overview
 
-* [Integrations](https://docs.parmanasystems.com/integrations/overview): The Connector SDK foundation is real. Four enterprise-named connectors exist as explicit, self-documented mocks; no real enterprise integration is built on it yet.
+* [Integrations](https://docs.parmanasystems.com/integrations/overview): The Connector SDK foundation is real. Four enterprise-named connectors exist as explicit mocks, and no real enterprise integration is built yet.
 * [Other Languages](https://docs.parmanasystems.com/sdks/other-languages): [ROADMAP], no Go, Java, or.NET SDK exists in this repository today.
 ## Connector SDKs: Build a connector
 
@@ -235,28 +235,28 @@ This file is generated from the documentation navigation. Do not edit it by hand
 * [Approve a policy](https://docs.parmanasystems.com/self-hosted/policy-approval): Make a policy take effect on a self hosted deployment: one person proposes it, a different person approves it with a signed step up authorization.
 * [Manage API keys](https://docs.parmanasystems.com/self-hosted/api-keys): List, add, rotate and remove the API keys of a self hosted deployment.
 * [Connect a system](https://docs.parmanasystems.com/self-hosted/connectors): Configure the connector a self hosted deployment releases authorized actions to, including one that uses your own certificate authority.
-* [Offline verification](https://docs.parmanasystems.com/self-hosted/offline-verification): Prove, with one command, that a self hosted deployment authorizes, refuses and signs with no internet connection, and that its records verify with only the public keys.
+* [Offline verification](https://docs.parmanasystems.com/self-hosted/offline-verification): Prove, with one command, that a self hosted deployment authorizes, refuses and signs with no internet connection, and that its records verify offline.
 * [Operate a self hosted deployment](https://docs.parmanasystems.com/self-hosted/operations): Start, stop, upgrade, back up, restore, read logs and change the database password of a self hosted deployment.
 * [Self hosted configuration reference](https://docs.parmanasystems.com/self-hosted/configuration): Every setting, file, service, volume and port of the self hosted deployment, with defaults and exact behavior.
 * [Self hosted troubleshooting](https://docs.parmanasystems.com/self-hosted/troubleshooting): Every error the self hosted deployment is known to produce, what causes it, and the exact fix.
 ## Deploy and operate: Deploy
 
-* [Run the server from source](https://docs.parmanasystems.com/deployment/local): Run the Parmana server as a single Node.js process from a clone of the repository, for development. To run Parmana on your own infrastructure, use the self hosted deployment.
+* [Run the server from source](https://docs.parmanasystems.com/deployment/local): Run the Parmana server as a single Node.js process from a clone of the repository, for development.
 * [Production deployment runbook](https://docs.parmanasystems.com/deployment/production): A numbered procedure to deploy the Parmana server to production, with the check that proves each step worked and the fix when it did not.
 * [AWS KMS signing](https://docs.parmanasystems.com/deployment/aws-kms-signing): Keep the signing key inside AWS KMS so the private key is never released. Set it up, verify it works, and understand the 4096 byte KMS limit.
 * [Environment variable reference](https://docs.parmanasystems.com/deployment/environment-variables): Every environment variable the Parmana server reads: whether it is required, its default, its allowed values, and what it does.
-* [Deploy Patterns](https://docs.parmanasystems.com/guides/deploy-patterns): In-memory vs Supabase storage, the full environment variable checklist, and how key management actually works: two separate keypairs, one directory, one optional rotation variable.
+* [Deploy Patterns](https://docs.parmanasystems.com/guides/deploy-patterns): In-memory vs Supabase storage, the full environment variable checklist, and how key management works.
 ## Deploy and operate: Security
 
 * [Security](https://docs.parmanasystems.com/security/overview): What Parmana actually guarantees, precisely scoped, and, as important, what it explicitly does not claim.
 * [Limitations](https://docs.parmanasystems.com/security/limitations): What Parmana does not claim, the specific threats its tests actually cover, and what you're responsible for.
-* [OWASP mapping](https://docs.parmanasystems.com/security/owasp-mapping): Each risk in the OWASP Top 10 for LLM Applications (2026) and the OWASP Top 10 for Agentic Applications (2026): what Parmana does about it, the evidence, and what it leaves to you.
-* [Regulation mapping](https://docs.parmanasystems.com/security/regulation-mapping): How Parmana supports human oversight and record keeping under the EU AI Act (Articles 12, 14 and 26), the NIST AI RMF, ISO/IEC 42001 and RBI guidance for Indian banks and NBFCs: what it provides, the evidence, and what stays with your organization.
+* [OWASP mapping](https://docs.parmanasystems.com/security/owasp-mapping): Each risk in the OWASP Top 10 for LLM Applications (2026) and the OWASP Top 10 for Agentic Applications (2026): what Parmana does about it, and the evidence.
+* [Regulation mapping](https://docs.parmanasystems.com/security/regulation-mapping): How Parmana supports human oversight and record keeping under the EU AI Act (Articles 12, 14 and 26), the NIST AI RMF, ISO/IEC 42001 and RBI guidance.
 * [Operator kill switch](https://docs.parmanasystems.com/security/operator-kill-switch): How an operator stops every new execution and approval in a Parmana deployment, how two people reset it, how to check it, and what it does not stop.
 ## Deploy and operate: Operate
 
 * [Troubleshooting](https://docs.parmanasystems.com/troubleshooting): Real problems encountered while building and using this repo, with real causes.
-* [Database Schema Reference](https://docs.parmanasystems.com/storage/schema-reference): Every live table: what it is for, its columns, which migration built it, what code owns it, plus a library of real SQL for troubleshooting, audit and verification.
+* [Database Schema Reference](https://docs.parmanasystems.com/storage/schema-reference): Every live table: what it is for, its columns, which migration built it, and what code owns it, plus real SQL for troubleshooting and audit.
 ## Reference: Packages
 
 * [@parmana/shared](https://docs.parmanasystems.com/reference/shared): Domain types, config loading, and error classes every other package depends on. No business logic of its own.
@@ -275,7 +275,7 @@ This file is generated from the documentation navigation. Do not edit it by hand
 * [Glossary](https://docs.parmanasystems.com/glossary): Every term used on this site, mapped to its real source.
 * [FAQ](https://docs.parmanasystems.com/faq): Direct answers, including the ones that aren't flattering.
 * [Roadmap](https://docs.parmanasystems.com/roadmap): What's designed but not built, stated plainly, this is a feature of this documentation, not an apology.
-* [Changelog](https://docs.parmanasystems.com/changelog): What shipped, newest first.
+* [Changelog](https://docs.parmanasystems.com/changelog): What shipped in Parmana, newest first, and the changes that affect what you build against it.
 * [Contributing to This Documentation](https://docs.parmanasystems.com/contributing): The rule this entire site follows, and how to add a page without breaking it.
 ## Build book: Build with Parmana
 
