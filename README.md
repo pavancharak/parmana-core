@@ -38,6 +38,7 @@ Start with the goal closest to yours. The full documentation is at [docs.parmana
 | Connect an AI agent                        | [Connect an agent](https://docs.parmanasystems.com/guides/connect-an-agent)                                   |
 | Use the SDKs                               | [TypeScript quickstart](https://docs.parmanasystems.com/guides/typescript-sdk-quickstart) or [Python quickstart](https://docs.parmanasystems.com/guides/python-sdk-quickstart) |
 | Check a record myself, without trusting us | [Verify independently](https://docs.parmanasystems.com/guides/verify-independently)                           |
+| Check a record with a standalone tool      | [Parmana Verifier](https://github.com/pavancharak/parmana-verifier), an offline checker with no network access and no account                |
 | Review the security model                  | [Security](https://docs.parmanasystems.com/security/overview)                                                 |
 | See the evidence behind the claims         | [Reports and evidence](#reports-and-evidence)                                                                  |
 | Run it on my own infrastructure            | [Self hosted](https://docs.parmanasystems.com/self-hosted/overview)                                           |
