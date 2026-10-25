@@ -98,7 +98,8 @@ release-dist/
 evaluation-report.json
 
 # npm run mutation output
-reports/
+reports/*
+!reports/README.md
 .stryker-tmp/
 stryker.log
 
