@@ -26,6 +26,27 @@ Parmana sits between an AI agent and the systems it calls.
 
 Parmana does not decide what the agent should do. It decides whether the agent was allowed to do it, and it proves that decision.
 
+## Find your way around
+
+Start with the goal closest to yours. The full documentation is at [docs.parmanasystems.com](https://docs.parmanasystems.com).
+
+| I want to                                  | Go to                                                                                                         |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| See it work, with nothing installed        | [Playground](https://docs.parmanasystems.com/playground)                                                      |
+| Understand the ideas behind it             | [How Parmana thinks](https://docs.parmanasystems.com/how-parmana-thinks), then the [glossary](https://docs.parmanasystems.com/glossary) |
+| Run it on my own machine                   | [Quickstart](https://docs.parmanasystems.com/quickstart)                                                      |
+| Connect an AI agent                        | [Connect an agent](https://docs.parmanasystems.com/guides/connect-an-agent)                                   |
+| Use the SDKs                               | [TypeScript quickstart](https://docs.parmanasystems.com/guides/typescript-sdk-quickstart) or [Python quickstart](https://docs.parmanasystems.com/guides/python-sdk-quickstart) |
+| Check a record myself, without trusting us | [Verify independently](https://docs.parmanasystems.com/guides/verify-independently)                           |
+| Review the security model                  | [Security](https://docs.parmanasystems.com/security/overview)                                                 |
+| See the evidence behind the claims         | [Reports and evidence](#reports-and-evidence)                                                                  |
+| Run it on my own infrastructure            | [Self hosted](https://docs.parmanasystems.com/self-hosted/overview)                                           |
+| Choose the right path for my role          | [Choose your path](https://docs.parmanasystems.com/choose-your-path)                                          |
+
+Not sure where to begin? [Choose your path](https://docs.parmanasystems.com/choose-your-path) has one table for developers, operators, auditors and AI agents.
+
+For AI tools, every docs page is listed in [llms.txt](https://docs.parmanasystems.com/llms.txt).
+
 ## Quick start
 
 The short version, on Node.js 24 or later with no `.env` file or credentials:

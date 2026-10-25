@@ -3,7 +3,7 @@
 Welcome to the Parmana Examples directory.
 
 This directory contains tutorials, production scenarios, shared assets, and audit artifacts
-demonstrating how Parmana authorizes, executes, verifies, and proves enterprise AI decisions.
+demonstrating how Parmana checks every action against the limits a business sets, and keeps proof of what happened.
 
 ---
 

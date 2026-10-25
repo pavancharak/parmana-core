@@ -1,14 +1,14 @@
 # Parmana
 
-> **Execution Trust Infrastructure for AI systems**
+> **Every action stays within what your business allowed.**
 
 [![PyPI](https://img.shields.io/pypi/v/parmana)](https://pypi.org/project/parmana/)
 [![Python](https://img.shields.io/pypi/pyversions/parmana)](https://pypi.org/project/parmana/)
 [![License](https://img.shields.io/pypi/l/parmana)](https://docs.parmanasystems.com/license)
 
-The official Python SDK for **Parmana Execution Trust Infrastructure**.
+The official Python SDK for **Parmana**, the trust layer for every action.
 
-Parmana lets organizations verify what automated systems executed, not simply trust that they executed correctly. An action routed through Parmana runs only when the policy bound to it, approved through policy governance, approves it, and a trusted person has signed an approval for that action (every action needs one, reads included; `parmana.crypto.sign_approval`), and each execution produces a signed Execution Trust Record that anyone with the public key can verify.
+Parmana checks every action, whether a person or a machine takes it, against the limits you set, then keeps proof of what happened, so you can verify it rather than trust it. An action routed through Parmana runs only when the policy bound to it, approved through policy governance, approves it, and a trusted person has signed an approval for that action (every action needs one, reads included; `parmana.crypto.sign_approval`), and each execution produces a signed Execution Trust Record that anyone with the public key can verify.
 
 ## Why Parmana
 
