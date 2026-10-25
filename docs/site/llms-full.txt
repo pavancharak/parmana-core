@@ -10,6 +10,9 @@ This file concatenates the integration pages of the Parmana documentation. It is
 
 Source: https://docs.parmanasystems.com
 
+Every action stays within what your business allowed. Parmana checks every action, whether a
+person or a machine takes it, against the limits you set. Then it keeps proof of what happened.
+
 Parmana sits between an AI agent (or a script, or a person) and the systems that carry out its
 actions. Before anything executes, Parmana checks it against a policy you write and issues a
 signed, single-use authorization. After it executes, you have an independently verifiable
@@ -1424,7 +1427,7 @@ signals and policy.
 
 Source: https://docs.parmanasystems.com/concepts/human-approval
 
-**No AI agent action is authorized without a signed human approval. Reads included.** A
+**No action goes ahead without a signed approval from a person. Reads included.** A
 refund, a merge, a Slack post, a HubSpot update, reading a pull request or a deal: each runs
 only when a trusted person has signed an approval for that action, on that resource, and the
 approval has not expired or been used.
