@@ -39,6 +39,7 @@ Start with the goal closest to yours. The full documentation is at [docs.parmana
 | Use the SDKs                               | [TypeScript quickstart](https://docs.parmanasystems.com/guides/typescript-sdk-quickstart) or [Python quickstart](https://docs.parmanasystems.com/guides/python-sdk-quickstart) |
 | Check a record myself, without trusting us | [Verify independently](https://docs.parmanasystems.com/guides/verify-independently)                           |
 | Review the security model                  | [Security](https://docs.parmanasystems.com/security/overview)                                                 |
+| See the evidence behind the claims         | [Reports and evidence](#reports-and-evidence)                                                                  |
 | Run it on my own infrastructure            | [Self hosted](https://docs.parmanasystems.com/self-hosted/overview)                                           |
 | Choose the right path for my role          | [Choose your path](https://docs.parmanasystems.com/choose-your-path)                                          |
 
@@ -115,18 +116,34 @@ Authority --> Authorization --> Intent --> Business Transaction
 
 Key properties: fail-closed configuration (a misconfigured process refuses to start rather than degrade silently), credential isolation (a connector never receives long-lived credentials, only a single-use session), exactly-once consumption of every authorization and webhook event, append-only signed evidence, and both classical (Ed25519) and post-quantum (ML-DSA-65) signing.
 
-## Evidence and assurance
+## Reports and evidence
 
-- **Claims you can check.** [docs/CLAIMS.md](docs/CLAIMS.md) states each claim at the scope its evidence supports, with the code and tests behind it, and lists what is not yet true.
-- **A threat model with its gaps.** [THREAT-MODEL.md](THREAT-MODEL.md) gives each threat its control, the attack that tests it, and the risk that remains.
-- **Open issues, listed.** Every gap still open, with its evidence and what to do meanwhile, is in [docs/VERIFICATION-GAPS.md](docs/VERIFICATION-GAPS.md). Past incidents and their fixes are recorded there too; see G-24 for an authorization bypass that was found and fixed.
-- **A standing challenge.** [SECURITY-CHALLENGE.md](SECURITY-CHALLENGE.md) describes what counts as breaking Parmana on a copy you run yourself, and credits every confirmed break.
-- **Tests that are tested.** [Mutation testing](docs/MUTATION-TESTING.md) breaks the security code on purpose and checks that the tests notice. Fuzz tests send damaged and arbitrary requests, policies and records, and require a clear refusal, never a crash.
-- **Mapped to standards.** The [OWASP mapping](https://docs.parmanasystems.com/security/owasp-mapping) covers the OWASP Top 10 for LLM Applications and for Agentic Applications (2026). The [regulation mapping](https://docs.parmanasystems.com/security/regulation-mapping) covers the EU AI Act, the NIST AI RMF, ISO/IEC 42001 and RBI guidance.
-- **Compared honestly.** [How Parmana compares](https://docs.parmanasystems.com/how-parmana-compares) sets it beside IAM, API gateways and LLM guardrails, including where it is weaker.
-- **Technical paper.** Design, threat model, evaluation and limitations: [the paper](docs/paper/parmana-paper.pdf).
-- **Supply chain.** [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/pavancharak/parmana-core), CodeQL on every change, and signed build provenance for SDK releases and the server image.
-- **Reviewed internally.** Four internal passes traced the execution path for every registered capability, looking for any action that could run without authorization. The fourth pass found none for the capabilities in production, with the caveats in [CLAIMS.md 2.25](docs/CLAIMS.md). These were internal reviews, not an independent audit. The [Audit guide](https://docs.parmanasystems.com/evaluation/audit-guide) is the starting point for one.
+Every report is listed once, here. Start with the question you have.
+
+**Test results**
+
+- **Live CI runs:** every push runs the build, lint, typecheck and test suite. Results for each run are on the [CI workflow page](https://github.com/pavancharak/parmana-core/actions/workflows/ci.yml). To reproduce them, see [Quick start](#quick-start).
+- **Evaluation scenarios:** the 16 attack scenarios are in [evaluations/scenarios.json](evaluations/scenarios.json). [EVALUATION.md](EVALUATION.md) explains the result.
+- **Mutation testing:** [docs/MUTATION-TESTING.md](docs/MUTATION-TESTING.md) breaks the security code on purpose and checks that the tests notice. Fuzz tests send damaged and arbitrary requests, policies and records, and require a clear refusal, never a crash.
+
+**Security**
+
+- **Threat model:** [THREAT-MODEL.md](THREAT-MODEL.md) gives each threat its control, the attack that tests it, and the risk that remains.
+- **Security challenge:** [SECURITY-CHALLENGE.md](SECURITY-CHALLENGE.md) describes what counts as breaking Parmana on a copy you run yourself, and credits every confirmed break.
+- **Open issues and past incidents:** [docs/VERIFICATION-GAPS.md](docs/VERIFICATION-GAPS.md) lists every gap still open, with its evidence and what to do meanwhile. Past incidents and their fixes are recorded there too; see G-24 for an authorization bypass that was found and fixed. The full incident log is in [04-INCIDENTS-LOG.md](04-INCIDENTS-LOG.md).
+- **Claims you can check:** [docs/CLAIMS.md](docs/CLAIMS.md) states each claim at the scope its evidence supports, with the code and tests behind it, and lists what is not yet true.
+- **Mapped to standards:** the [OWASP mapping](https://docs.parmanasystems.com/security/owasp-mapping) covers the OWASP Top 10 for LLM Applications and for Agentic Applications (2026). The [regulation mapping](https://docs.parmanasystems.com/security/regulation-mapping) covers the EU AI Act, the NIST AI RMF, ISO/IEC 42001 and RBI guidance.
+- **Supply chain:** [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/pavancharak/parmana-core), CodeQL on every change, and signed build provenance for SDK releases and the server image.
+- **Reviewed internally:** four internal passes traced the execution path for every registered capability, looking for any action that could run without authorization. The fourth pass found none for the capabilities in production, with the caveats in [CLAIMS.md 2.25](docs/CLAIMS.md). These were internal reviews, not an independent audit.
+
+**Governance**
+
+- **Policy approval log:** [governance/README.md](governance/README.md) describes the hash-chained log of policy change approvals, and how to verify it.
+
+**Paper and comparison**
+
+- **Technical paper:** design, threat model, evaluation and limitations, in [docs/paper/parmana-paper.pdf](docs/paper/parmana-paper.pdf).
+- **Compared honestly:** [How Parmana compares](https://docs.parmanasystems.com/how-parmana-compares) sets Parmana beside IAM, API gateways and LLM guardrails, including where it is weaker.
 
 ## Status and scope
 
