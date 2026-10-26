@@ -152,3 +152,12 @@ Environment notes:
   current policy is to dismiss a false positive with a written reason.
 - Who approves PRs for this package. The repo requires an approval from
   someone other than the last pusher.
+
+## Update: live path built, kept off
+
+The decision is to build the whole connector and keep live trading off until the approvals below are recorded. Nothing is enabled, and nothing is registered with the gateway.
+
+- Built: `KiteLiveClient` (HTTPS only, no retries, unknown-outcome errors, no secrets in messages) and `GatewayZerodhaAdapter` with paper and live modes.
+- Live mode refuses to construct unless a `ZerodhaLiveApproval` with `sebiCircularReviewRef`, `kiteApiApprovalRef`, and `approvedBy` is supplied. No such record exists in the repository.
+- Paper mode is refused in production.
+- Still open: the SEBI circular check, Zerodha's API approval, and the Kite facts marked for re-verification in `src/KiteLiveClient.ts`. See `README.md` for the full list before enabling anything.

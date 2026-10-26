@@ -24,6 +24,7 @@
     { "path": "../connector-hubspot" },
     { "path": "../connector-github" },
     { "path": "../connector-paytm" },
+    { "path": "../connector-zerodha" },
     { "path": "../connector-slack" }
   ]
 }

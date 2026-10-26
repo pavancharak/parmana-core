@@ -34,3 +34,11 @@ export type {
   KiteProduct,
   KiteVariety,
 } from "./PaperKiteClient.js";
+
+export { KiteLiveClient, isKiteCredentials } from "./KiteLiveClient.js";
+export type {
+  KiteCredentials,
+  KiteLiveClientOptions,
+  KiteOrderResult,
+} from "./KiteLiveClient.js";
+export { validatePaperOrder } from "./PaperKiteClient.js";
