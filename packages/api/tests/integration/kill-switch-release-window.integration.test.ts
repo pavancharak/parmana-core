@@ -11,6 +11,7 @@ import {
 
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
+import type { ConnectorExecutor } from "@parmana/execution-control";
 
 /**
  * A trip that lands after the HTTP guard has passed a request, but before the
@@ -23,7 +24,17 @@ import { createInspectableExecutionSystem } from "../bootstrap/createInspectable
  */
 describe("kill switch between the HTTP guard and release", () => {
   function buildApp(tripAfterGuard: boolean) {
-    const { executionSystem } = createInspectableExecutionSystem();
+    const execute = vi.fn(
+      async (executableContent: Record<string, unknown>) => ({
+        ...executableContent,
+        success: true,
+        executedAt: new Date(),
+        metadata: {},
+      }),
+    );
+    const { executionSystem } = createInspectableExecutionSystem({
+      executor: { execute } as unknown as ConnectorExecutor,
+    });
     const killSwitch = new KillSwitchService(new MemoryKillSwitchStore(), {
       resetNeedsSecondOperator: false,
       probes: new MemoryKillSwitchProbeLog(),
@@ -41,14 +52,17 @@ describe("kill switch between the HTTP guard and release", () => {
       killSwitch,
     );
 
-    return createApp(application, {
-      callerAuth: "disabled",
-      killSwitch,
-    });
+    return {
+      app: createApp(application, {
+        callerAuth: "disabled",
+        killSwitch,
+      }),
+      execute,
+    };
   }
 
   it("refuses the release with KILL_SWITCH_ACTIVE when the switch trips after the guard", async () => {
-    const app = buildApp(true);
+    const { app, execute } = buildApp(true);
 
     const response = await request(app)
       .post("/execute")
@@ -56,15 +70,17 @@ describe("kill switch between the HTTP guard and release", () => {
 
     expect(response.status).toBe(503);
     expect(response.body.code).toBe("KILL_SWITCH_ACTIVE");
+    expect(execute).not.toHaveBeenCalled();
   });
 
   it("releases the same request when the switch stays off (control)", async () => {
-    const app = buildApp(false);
+    const { app, execute } = buildApp(false);
 
     const response = await request(app)
       .post("/execute")
       .send(await createBusinessTransaction());
 
     expect(response.status).toBe(200);
+    expect(execute).toHaveBeenCalledTimes(1);
   });
 });
