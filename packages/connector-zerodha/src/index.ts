@@ -20,3 +20,17 @@ export {
   kiteChecksum,
   kiteAuthorizationHeader,
 } from "./KiteSession.js";
+
+export {
+  PaperKiteClient,
+  PaperOrderValidationError,
+} from "./PaperKiteClient.js";
+export type {
+  PaperOrderRequest,
+  PaperOrderRecord,
+  KiteExchange,
+  KiteTransactionType,
+  KiteOrderType,
+  KiteProduct,
+  KiteVariety,
+} from "./PaperKiteClient.js";
