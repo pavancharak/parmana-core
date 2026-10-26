@@ -2576,3 +2576,21 @@ This discipline ensures that Parmana's public positioning remains aligned with i
 - The five skipped envelope tests need ML-DSA-65, which needs Node 24. The run used Node 22.22.0, so the post-quantum path is not checked by this run.
 - The signal-type check covers only signals the schema declares. A signal absent from the payload is not a type violation, and the rules decide it. This is the design, not a gap in the check.
 - The 2026-10-26 runs needed local builds of the workspace packages and a rebuilt `re2` native module. Nothing was committed for them.
+
+## 3.29 Kill Switch, Approval Binding and Audit Tamper Checked Against the Source (Scoped, 2026-10-26)
+
+**Claim.** An active kill switch refuses execution with `KILL_SWITCH_ACTIVE`, and the connector is not called when the switch trips between the HTTP guard and release. An approval for one action does not authorize another. A tampered audit event or execution intent is reported invalid.
+
+**Evidence.**
+
+- Kill switch refusal: `packages/api/tests/integration/kill-switch.integration.test.ts` and `kill-switch-release-window.integration.test.ts`. The refusal is a 503 with `KILL_SWITCH_ACTIVE`. On branch `test/kill-switch-no-connector` (commit `8a857f2`, not yet merged), the release-window test also asserts that the executor is never called on refusal, and is called once in the control case. That assertion is not yet on `main`.
+- Approval binding: `approval-issuers-governance.integration.test.ts`, `business-signal-sources-governance.integration.test.ts` and `external-connectors-governance.integration.test.ts` refuse an approval with no step-up, or a step-up for the other action. `paytm-refund.integration.test.ts` rejects a declared amount that does not match the authorized amount.
+- Audit tamper: `audit-verify.integration.test.ts` reports a tampered event as invalid. `execution-intents.integration.test.ts` returns `{ valid: false }` for a tampered intent.
+
+Run on 2026-10-26, Node 22.22.0: the eight files above pass, 88 of 88.
+
+**Limits.**
+
+- The kill-switch no-connector assertion is on a branch and is not part of `main` until that branch merges.
+- The approval tests cover the governance-approval flows. They do not show the same binding for every connector.
+- The audit-tamper tests cover the caller audit event and the execution intent. They do not cover every record the system writes.
