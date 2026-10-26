@@ -27,7 +27,9 @@ Status as of 2026-10-26. No maintainer has replied on any item below. Each comme
 
 Also checked and held: OpenBox (reference repo not reachable from this session: 404). Anthropic Agent SDK (CONTRIBUTING returned 404). LangGraph (`langchain-ai/langgraph`): research only, nothing posted. `interrupt()` pauses a graph and resumes with `Command(resume=...)`, which fits an approval step. The docs describe human review, not an automated policy hook before a tool runs. Nine open issues matched; none mention policy or authorization. Most relevant to approval safety: #8039 (replay order under `durability="sync"`), #7417 (long tool calls re-executed from checkpoint), #9240 (durability modes do not give exactly-once side effects). CONTRIBUTING returned 404 on both GitHub and raw URLs, so contribution rules are unverified.
 
-Candidates still to check: Sigstore (Rekor and Cosign, Apache-2.0; its contributor rules were read, but the Rekor CONTRIBUTING page returned 404), in-toto. Earlier candidates, not yet checked: MCPGuard, jamjet-policy, withHuman, HumanLayer, awaithumans, Agent Receipts (obsigna), Signet, raucle.
+in-toto (`in-toto/in-toto`): research only, nothing posted. Layouts are signed policy, and inspections and predicates are extension points. The two open issues found (#79, #109) are 2017 discussions and do not match a verifier plugin. The CONTRIBUTING page returned 404. Witness (`in-toto/go-witness`, the attestor and verifier project) is the more likely integration point. Its contribution rules: an issue is preferred, DCO sign-off, Conventional Commits, tests where possible, a maintainer must approve, and no AI disclosure rule was found. It had no open issues matching policy or verifier plugins.
+
+Candidates still to check: Sigstore (Rekor and Cosign, Apache-2.0; its contributor rules were read, but the Rekor CONTRIBUTING page returned 404). Earlier candidates, not yet checked: MCPGuard, jamjet-policy, withHuman, HumanLayer, awaithumans, Agent Receipts (obsigna), Signet, raucle.
 
 Contribution rules learned so far:
 
