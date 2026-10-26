@@ -34,6 +34,17 @@ Parmana's own context PR: [#143](https://github.com/pavancharak/parmana-core/pul
 - Go test `TestCrossLanguagePyRichSignature` was shown to fail on a tampered vector and pass when restored.
 - Design: `py_vectors.json` gains a `signingRich` entry, and `ts_rich_vectors.json` holds the same unsigned receipt signed by TypeScript. TypeScript and Python produce the same `proofValue`.
 
+## Watched threads
+
+Status as of 2026-10-26, 06:56 UTC. Checked by hand at each step. The sandbox could not subscribe to GitHub events for these repos, so an hourly scheduled check re-reads them (trigger `trig_0158KWvcDBv1atbQjfYhDMMd`, first run 07:57 UTC). The check stays silent when nothing changes. It reports new maintainer replies and drafts nothing without approval.
+
+| Thread | What we posted or filed | Status at last check |
+| ------ | ----------------------- | -------------------- |
+| [agent-receipts/obsigna#1146](https://github.com/agent-receipts/obsigna/pull/1146) | Test-vector PR for the Python- and TypeScript-signed receipts | Open. Two commits, no reviews. CI waits for maintainer approval of fork workflows. |
+| [openai/openai-agents-python#5413](https://github.com/openai/openai-agents-python/issues/5413) | Offline reproduction comment: a run 1 approval authorizes the same `call_id` in run 2 | Commented. No maintainer reply seen. |
+| [google/adk-python#7569](https://github.com/google/adk-python/issues/7569) | Comment proposing a verifiable approval signature alongside the caller-identity check | Commented. Assigned to `surajksharma07`. No maintainer reply seen. |
+| [microsoft/agent-governance-toolkit#4426](https://github.com/microsoft/agent-governance-toolkit/issues/4426) | RFC: optional detached Ed25519 signature for `ApprovalResolution` | Open, triage. Only the repo's welcome bot has replied. |
+
 ## Outside projects: posts and watches
 
 Except where a row says otherwise, no maintainer has replied on any item below. Each comment was posted by the operator, and the operator decides the next step.
