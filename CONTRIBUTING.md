@@ -44,11 +44,11 @@ verifiable evidence come before convenience.
 
 ## Generated Python reference docs
 
-`npm run generate:python-sdk-reference` rewrites `docs/site/sdks/reference/python/`, and it does not keep hand edits. Before you commit a regeneration:
+`npm run generate:python-sdk-reference` rewrites `docs/site/sdks/reference/python/` and `docs/site/docs.json`. The output is formatted with Prettier, so a clean regeneration leaves the committed pages unchanged. Run `git status` afterwards to confirm.
 
-- **Descriptions.** Each page has a one-line `description:` added by hand in `54d7290`. The generator does not write it, so regeneration removes it. Put it back.
-- **Formatting.** Do not run `npx prettier --write` on the regenerated pages. Prettier can turn an underscore inside a word, such as `POLICY_DENIED`, into an asterisk. Use `npx prettier --check` and fix anything it flags by hand.
 - **Tool version.** The generator runs `python -m pydoc_markdown`. Install the version pinned in `python/requirements-dev.txt` (`pydoc-markdown==4.8.2`) first.
+- **Descriptions.** pydoc-markdown writes no page description, so they live in `scripts/python-sdk-reference/descriptions.json`, keyed by page path. A new page without an entry is written without a description and reported as a warning. Add its description to that file.
+- **Docstrings.** Prettier can read an underscore inside a word, such as `POLICY_DENIED`, as emphasis and turn it into an asterisk. Put identifiers like that in a code span in the docstring.
 
 ## Dependency updates
 
