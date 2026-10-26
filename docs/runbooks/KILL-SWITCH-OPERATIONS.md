@@ -108,22 +108,22 @@ This section is for operators. It never contains a key, a key hash, or a databas
 
 ### What is required
 
-| Where | Name | Value | Used by |
-| --- | --- | --- | --- |
-| Vercel, Production, Secret | `PARMANA_API_KEYS` | JSON array of `{callerId, keyHash, allowedCapabilities, credentialHolderType}` entries. Hashes only. | the API, to check every bearer key |
-| GitHub repo secret | `PARMANA_PROBE_KEY` | the `kill-switch-probe` key itself (plaintext) | the probe workflow |
-| Vercel, Production, Config | `KILL_SWITCH_ENABLED` | `true` | turns the switch on |
-| Vercel, Production, Config | `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` | `true` | requires two operators to reset |
+| Where                      | Name                                      | Value                                                                                                | Used by                            |
+| -------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| Vercel, Production, Secret | `PARMANA_API_KEYS`                        | JSON array of `{callerId, keyHash, allowedCapabilities, credentialHolderType}` entries. Hashes only. | the API, to check every bearer key |
+| GitHub repo secret         | `PARMANA_PROBE_KEY`                       | the `kill-switch-probe` key itself (plaintext)                                                       | the probe workflow                 |
+| Vercel, Production, Config | `KILL_SWITCH_ENABLED`                     | `true`                                                                                               | turns the switch on                |
+| Vercel, Production, Config | `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` | `true`                                                                                               | requires two operators to reset    |
 
 The `PARMANA_API_KEYS` value must list every caller that needs access. Setting it replaces the whole list, so a caller left out loses access.
 
 ### Callers and capabilities
 
-| `callerId` | `allowedCapabilities` | `credentialHolderType` | Role |
-| --- | --- | --- | --- |
-| a named operator (the maker) | `kill-switch:trip`, `kill-switch:reset` | `USER` | trips the switch and requests a reset |
-| a second named operator (the checker) | `kill-switch:reset` | `USER` | confirms the reset |
-| `kill-switch-probe` | `kill-switch:probe` | (omit) | the scheduled probe |
+| `callerId`                            | `allowedCapabilities`                   | `credentialHolderType` | Role                                  |
+| ------------------------------------- | --------------------------------------- | ---------------------- | ------------------------------------- |
+| a named operator (the maker)          | `kill-switch:trip`, `kill-switch:reset` | `USER`                 | trips the switch and requests a reset |
+| a second named operator (the checker) | `kill-switch:reset`                     | `USER`                 | confirms the reset                    |
+| `kill-switch-probe`                   | `kill-switch:probe`                     | (omit)                 | the scheduled probe                   |
 
 Use two different people for the maker and the checker. Two keys held by one person pass the system check, but they do not give the two-person control. Give each person their own `callerId`, and do not share a key.
 
@@ -151,6 +151,7 @@ npm run generate:api-key -- --caller-id <callerId> --allowed-capabilities <cap1,
    ```
 
    Or use the dashboard: open the variable, choose Edit, paste the validated JSON, and save.
+
 4. `vercel env rm` does not revoke a credential. To revoke, remove the entry and redeploy.
 
 ### Set the GitHub secret
@@ -205,12 +206,12 @@ After any change to a variable, deploy again: variables are read when a deployme
 
 ### Common failures
 
-| Symptom | Cause | Fix |
-| --- | --- | --- |
-| every route returns 500 `FUNCTION_INVOCATION_FAILED`; logs say `PARMANA_API_KEYS is not valid JSON` | malformed value | rebuild the JSON and set it with the file redirect, then deploy |
-| `/ready` returns 500 with no clear log line | a kill-switch setting is not exactly `true` or `false` | check `vercel env ls production` and correct it, then deploy |
-| `Cannot GET /kill-switch/status` | the deployed code is older than the kill-switch routes | deploy from current `main` |
-| `401 authentication required` | the key is wrong, truncated, or not stored | check the key length (43) and the `callerId` entry |
-| `400 Malformed JSON body` | inline JSON quoting | send the body with `--data-binary "@file"` |
-| probe workflow fails with 401 | `PARMANA_PROBE_KEY` does not match the stored hash | set the secret to the current probe key, then run the workflow again |
-| `git pull` refuses to run | uncommitted local changes | commit or stash them, then pull |
+| Symptom                                                                                             | Cause                                                  | Fix                                                                  |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------- |
+| every route returns 500 `FUNCTION_INVOCATION_FAILED`; logs say `PARMANA_API_KEYS is not valid JSON` | malformed value                                        | rebuild the JSON and set it with the file redirect, then deploy      |
+| `/ready` returns 500 with no clear log line                                                         | a kill-switch setting is not exactly `true` or `false` | check `vercel env ls production` and correct it, then deploy         |
+| `Cannot GET /kill-switch/status`                                                                    | the deployed code is older than the kill-switch routes | deploy from current `main`                                           |
+| `401 authentication required`                                                                       | the key is wrong, truncated, or not stored             | check the key length (43) and the `callerId` entry                   |
+| `400 Malformed JSON body`                                                                           | inline JSON quoting                                    | send the body with `--data-binary "@file"`                           |
+| probe workflow fails with 401                                                                       | `PARMANA_PROBE_KEY` does not match the stored hash     | set the secret to the current probe key, then run the workflow again |
+| `git pull` refuses to run                                                                           | uncommitted local changes                              | commit or stash them, then pull                                      |
