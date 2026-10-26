@@ -103,6 +103,12 @@ Research only, nothing posted. Checked 2026-10-26.
 - **AP2 (`google-agentic-commerce/AP2`):** the core specification moved to FIDO, so the repo accepts contributions only for samples and the SDK. It requires a CLA. Its signed mandates (Intent, Cart, Payment) are a close fit for Parmana's signed records, and it has a verifier that issues receipts. Rules on issues and AI use are not stated.
 - **Posted:** a comment on #7569 proposing a verifiable approval signature alongside the caller-identity check. It notes that ADK already binds name and arguments through session history, and that the live path (`live/_live_llm_flow.py`) is not yet covered. Checked against ADK at `bf67397`. The issue is assigned to `surajksharma07`, and the linked development item is the caller-principal fix. No maintainer reply yet, as of this check. The comment was not checked on the page beyond the author's view.
 
+## More candidates (checked 2026-10-26, nothing posted)
+
+- **HumanLayer (`humanlayer/humanlayer`, Apache-2.0).** Approval API and SDK for agents. The `@hl.require_approval()` decorator gates a tool function, and approvals route to Slack, email, or other channels. Python and TypeScript. Overlaps with Parmana's approval step. Contribution rules: code PRs need a maintainer's `!vouch` first, through a design-first proposal issue. Bug reports and feedback are open to anyone. Use `bun` only, and CI runs without secrets. No CLA, DCO, or AI-disclosure rule. Requests that need a real API key won't pass CI.
+- **OpenFGA (`openfga/openfga`).** Its CONTRIBUTING defers to the main guide in `openfga/.github`, which was not readable from here. Testing rules are listed in the file. The closest open item is #3023, "Log the decision": an enhancement request for an audit record of why an authorization decision was made. No maintainer has replied. The one substantive comment is a product pitch, not a maintainer. No mention of signed decisions.
+- **Still unchecked or unconfirmed:** MCPGuard, awaithumans (no results), raucle (no repository found).
+
 ## OpenAI (`openai/openai-agents-python`, `openai/codex`)
 
 Reproduction of #5413, run 2026-10-26 on `main` at `0dc4cf1`. Offline, `ScriptedModel`, no API key. The script lives in the sandbox scratchpad (`repro_5413.py`), not in this repo. Output:
