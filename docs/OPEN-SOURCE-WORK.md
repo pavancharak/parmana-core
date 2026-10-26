@@ -21,7 +21,18 @@ Status as of 2026-10-26.
 | Project | PR | Change | Status |
 | ------- | -- | ------ | ------ |
 | Agent Receipts (`agent-receipts/obsigna`, Apache-2.0) | [#1146](https://github.com/agent-receipts/obsigna/pull/1146) | Test vectors for a receipt with `action.target` and `parameters_hash`, signed by the Python and TypeScript SDKs and checked in all three SDKs. Test-only. Addresses the test gap in issue #1001 for those two signing paths. | Open. Two commits (`30f2b0b`, `7c402f5`), no reviews. Title and description set. Workflows from the fork need maintainer approval, so CI has not run upstream. |
-| vengtoo MCP gateway (`vengtoo/mcp-gateway`, Apache-2.0) | Fork branch `pavancharak/mcp-gateway:fix/npm-audit` (commit `82833f5`), PR opened by the operator | `npm audit fix` on the lockfile only. Production audit shows 0 vulnerabilities. 52 tests pass and typecheck is clean. | Open upstream. The push to `authzx/mcp-gateway` was refused (403), so the fork carries the branch. |
+| vengtoo MCP gateway (`vengtoo/mcp-gateway`, Apache-2.0) | Fork branch `pavancharak/mcp-gateway:fix/npm-audit` (commit `82833f5`). The operator reports an upstream PR against `vengtoo/mcp-gateway`; not verified from this session. | `npm audit fix` on the lockfile only. Production audit shows 0 vulnerabilities. 52 tests pass and typecheck is clean. | Fork branch pushed. The push to `authzx/mcp-gateway` was refused (403). Upstream PR status to be confirmed. |
+
+Parmana's own context PR: [#143](https://github.com/pavancharak/parmana-core/pull/143) on `claude/open-source-context`, not merged. Merging it is the operator's decision.
+
+### Obsigna fix for #1001: local record
+
+- Branch `test/py-rich-receipt-vectors` on the fork. Commits `30f2b0b` (Python-signed rich receipt) and `7c402f5` (TypeScript-signed). Both had the `Claude-Session` line removed from their messages, with `--force-with-lease`.
+- The earlier local commits `04a7505` and `a335aff` are superseded by the rewritten history.
+- Patches for both commits are in the sandbox scratchpad, not in this repo.
+- Checks run before the commit: Python 565 passed, 7 skipped; TypeScript 501 passed; the Go SDK and cross-SDK suites pass; ruff, gofmt, vet, and tsc clean. Biome reports 2 warnings in `src/receipt/chain.ts`, which this change does not touch.
+- Go test `TestCrossLanguagePyRichSignature` was shown to fail on a tampered vector and pass when restored.
+- Design: `py_vectors.json` gains a `signingRich` entry, and `ts_rich_vectors.json` holds the same unsigned receipt signed by TypeScript. TypeScript and Python produce the same `proofValue`.
 
 ## Outside projects: posts and watches
 
