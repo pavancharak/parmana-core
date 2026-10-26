@@ -20,18 +20,18 @@ class CallerIdentity()
 
 Who the API key belongs to and what it may do.
 
-#### allowed\_principal\_ids
+#### allowed_principal_ids
 
 Principal IDs this key may name in a request's `authority.principalId`.
 Only its own caller ID unless the key lists others.
 
-#### allowed\_capabilities
+#### allowed_capabilities
 
 Capabilities this key may request. Empty means none.
 
-#### unrestricted\_capabilities
+#### unrestricted_capabilities
 
-True when `allowed_capabilities` contains "*".
+True when `allowed_capabilities` contains "\*".
 
 ## PublicKeyInfo Objects
 
@@ -49,4 +49,3 @@ SPKI PEM. Pass it to the offline verifiers in `parmana.crypto`.
 #### jwk
 
 The same key as a JSON Web Key, when the algorithm has a JWK form.
-

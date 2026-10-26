@@ -59,18 +59,17 @@ Version 1.3, 23 October 2026. This is a living document. When a new scenario, co
 - Part 39. Founder checklists
 - Part 40. Glossary additions
 
-
 ---
 
 ## Part 0. How to use this book
 
 ### 0.1 Status markers
 
-| Marker | Meaning |
-| --- | --- |
-| ✅ | Run, and the result was seen, on 23 October 2026. The evidence is in Part 14. |
-| ⚠️ | Written from the repository or from earlier work. Not run end to end. Treat as a plan until it is run. |
-| ❌ | Does not exist yet. This is a gap, listed in Part 15. |
+| Marker | Meaning                                                                                                |
+| ------ | ------------------------------------------------------------------------------------------------------ |
+| ✅     | Run, and the result was seen, on 23 October 2026. The evidence is in Part 14.                          |
+| ⚠️     | Written from the repository or from earlier work. Not run end to end. Treat as a plan until it is run. |
+| ❌     | Does not exist yet. This is a gap, listed in Part 15.                                                  |
 
 ### 0.2 Rules that apply everywhere
 
@@ -93,6 +92,7 @@ Parmana does three things:
 3. **Records.** Every decision, approved or refused, is written as a signed record that can be verified offline with Parmana's public key.
 
 The point of the design is that no single component can act alone:
+
 - the agent cannot approve itself;
 - the approver cannot exceed the agent's grant;
 - the policy cannot be changed without a second person;
@@ -104,41 +104,41 @@ The point of the design is that no single component can act alone:
 
 ### 2.1 Concepts
 
-| Term | Meaning | Where you see it |
-| --- | --- | --- |
-| **Caller** | Anything that calls Parmana with an API key. Identified by `callerId`. Examples: `razorpay-demo-agent`, `maker-pavan`, `checker-pavan`. | Key entry file; `GET /callers/me` |
-| **Capability** | A namespaced action, `<namespace>:<action>`, for example `razorpay:refund`. | Policy, connector, grant |
-| **Policy** | Ordered rules that decide approve or reject for a capability. Versioned (`name` + `version`). The last rule is the default reject. | `policies/`, `examples/razorpay-refund/policy.json`; `GET /policies/in-effect` |
-| **External connector** | A registered HTTPS endpoint for a capability. Parmana sends it signed releases. Registered without a deploy (ADR-0013). | `GET /external-connectors` |
-| **Authority grant** | A caller's permission for one capability, with limits (for example `parameters.amount` max 500) and a validity window (`validUntil`). | `GET /authority-grants` |
-| **Approval** | A human's signed statement for one target and one amount. Checked against the registered approval issuers. Single use. | `send.ts --save-approval` |
-| **Approval issuer** | A registered public key that may sign approvals, with an approver id and key id. Revocable. | `GET /approval-issuers` |
-| **Signal source** | An external system Parmana asks for a fact. The source signs its answer. | `propose-source` |
-| **Release** | The signed statement Parmana sends to a connector. It names the audience (endpoint URL), capability, target, parameters, approvals used, and an expiry. | Endpoint's `verifyParmanaRelease` |
-| **Trust record** | The signed record of an approved decision and its execution. | `GET /trust-records/<businessTransactionId>` |
-| **Refusal record** | The signed record of a refused decision, including the rule and reason. | `GET /refusal/<businessTransactionId>` |
-| **businessTransactionId** | Parmana's id for one request. The endpoint uses it as the Razorpay receipt, so one decision refunds at most once. | Records; Razorpay refund `receipt` |
+| Term                      | Meaning                                                                                                                                                 | Where you see it                                                               |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| **Caller**                | Anything that calls Parmana with an API key. Identified by `callerId`. Examples: `razorpay-demo-agent`, `maker-pavan`, `checker-pavan`.                 | Key entry file; `GET /callers/me`                                              |
+| **Capability**            | A namespaced action, `<namespace>:<action>`, for example `razorpay:refund`.                                                                             | Policy, connector, grant                                                       |
+| **Policy**                | Ordered rules that decide approve or reject for a capability. Versioned (`name` + `version`). The last rule is the default reject.                      | `policies/`, `examples/razorpay-refund/policy.json`; `GET /policies/in-effect` |
+| **External connector**    | A registered HTTPS endpoint for a capability. Parmana sends it signed releases. Registered without a deploy (ADR-0013).                                 | `GET /external-connectors`                                                     |
+| **Authority grant**       | A caller's permission for one capability, with limits (for example `parameters.amount` max 500) and a validity window (`validUntil`).                   | `GET /authority-grants`                                                        |
+| **Approval**              | A human's signed statement for one target and one amount. Checked against the registered approval issuers. Single use.                                  | `send.ts --save-approval`                                                      |
+| **Approval issuer**       | A registered public key that may sign approvals, with an approver id and key id. Revocable.                                                             | `GET /approval-issuers`                                                        |
+| **Signal source**         | An external system Parmana asks for a fact. The source signs its answer.                                                                                | `propose-source`                                                               |
+| **Release**               | The signed statement Parmana sends to a connector. It names the audience (endpoint URL), capability, target, parameters, approvals used, and an expiry. | Endpoint's `verifyParmanaRelease`                                              |
+| **Trust record**          | The signed record of an approved decision and its execution.                                                                                            | `GET /trust-records/<businessTransactionId>`                                   |
+| **Refusal record**        | The signed record of a refused decision, including the rule and reason.                                                                                 | `GET /refusal/<businessTransactionId>`                                         |
+| **businessTransactionId** | Parmana's id for one request. The endpoint uses it as the Razorpay receipt, so one decision refunds at most once.                                       | Records; Razorpay refund `receipt`                                             |
 
 ### 2.2 Roles
 
-| Role | Who | Can do | Cannot do |
-| --- | --- | --- | --- |
-| Operator | You (the person at the keyboard) | Generate keys, deploy, propose changes | Approve their own proposals |
-| Maker | A `USER` caller, for example `maker-pavan` | Propose policies, connectors, grants, revocations | Approve |
-| Checker | A `USER` caller, for example `checker-pavan`, with a step-up key | Approve changes | Approve a change they proposed |
-| Approver (manager) | A registered approval issuer, for example `manager-pavan` | Sign one approval per payment and amount | Lift a grant limit |
-| Agent | An API key with capabilities, for example `razorpay-demo-agent` | Ask Parmana to release one action | Create approvals, change policy, exceed its grant |
-| External endpoint | An HTTPS service you deploy | Act on verified releases | Trust anything unsigned |
+| Role               | Who                                                              | Can do                                            | Cannot do                                         |
+| ------------------ | ---------------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------- |
+| Operator           | You (the person at the keyboard)                                 | Generate keys, deploy, propose changes            | Approve their own proposals                       |
+| Maker              | A `USER` caller, for example `maker-pavan`                       | Propose policies, connectors, grants, revocations | Approve                                           |
+| Checker            | A `USER` caller, for example `checker-pavan`, with a step-up key | Approve changes                                   | Approve a change they proposed                    |
+| Approver (manager) | A registered approval issuer, for example `manager-pavan`        | Sign one approval per payment and amount          | Lift a grant limit                                |
+| Agent              | An API key with capabilities, for example `razorpay-demo-agent`  | Ask Parmana to release one action                 | Create approvals, change policy, exceed its grant |
+| External endpoint  | An HTTPS service you deploy                                      | Act on verified releases                          | Trust anything unsigned                           |
 
 ### 2.3 Change states
 
 A governed change moves through these states:
 
-| State | Meaning | Next |
-| --- | --- | --- |
-| `PENDING_APPROVAL` | Proposed; waiting for a checker | Approved, or refused by the approve step |
-| `APPROVED` | Applied | — |
-| `REJECTED` | Refused by a checker (rejection reason recorded) | — |
+| State              | Meaning                                          | Next                                     |
+| ------------------ | ------------------------------------------------ | ---------------------------------------- |
+| `PENDING_APPROVAL` | Proposed; waiting for a checker                  | Approved, or refused by the approve step |
+| `APPROVED`         | Applied                                          | —                                        |
+| `REJECTED`         | Refused by a checker (rejection reason recorded) | —                                        |
 
 For a grant, a revoke is itself a change. Revoking records `revokedByChangeId` and `revokedAt`.
 
@@ -148,14 +148,14 @@ For a grant, a revoke is itself a change. Revoking records `revokedByChangeId` a
 
 ### 3.1 Components
 
-| Component | What it is | Where | Holds a secret? |
-| --- | --- | --- | --- |
-| Parmana API | The authorization service (Express). Routes for execute, policies, grants, connectors, approval issuers, records. | Vercel project `parmana-api-real` (`https://parmana-api-real.vercel.app`) | Yes: `PARMANA_API_KEYS` (hashes), signing keys, database URL |
-| Governance script | Maker and checker commands | `examples/live-checks/governance.ts` | No: keys are passed at run time |
-| Agent runner | Asks Parmana to release one refund | `examples/razorpay-refund/send.ts`, `examples/razorpay-refund-agent/send.ts` | Agent key, at run time |
-| Refund agent (library) | Input checks and the Parmana call | `examples/razorpay-refund-agent/agent.ts` | No |
-| MCP bridge | One tool, `propose_refund`, for an agent platform | `examples/razorpay-agent-studio/mcp.ts`, Vercel project `parmana-agent-studio-mcp` | Bearer token; Parmana agent key |
-| External endpoint | Verifies the release and acts | `examples/razorpay-refund/endpoint.ts`, Vercel project `parmana-razorpay-demo` | Razorpay test keys |
+| Component              | What it is                                                                                                        | Where                                                                              | Holds a secret?                                              |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Parmana API            | The authorization service (Express). Routes for execute, policies, grants, connectors, approval issuers, records. | Vercel project `parmana-api-real` (`https://parmana-api-real.vercel.app`)          | Yes: `PARMANA_API_KEYS` (hashes), signing keys, database URL |
+| Governance script      | Maker and checker commands                                                                                        | `examples/live-checks/governance.ts`                                               | No: keys are passed at run time                              |
+| Agent runner           | Asks Parmana to release one refund                                                                                | `examples/razorpay-refund/send.ts`, `examples/razorpay-refund-agent/send.ts`       | Agent key, at run time                                       |
+| Refund agent (library) | Input checks and the Parmana call                                                                                 | `examples/razorpay-refund-agent/agent.ts`                                          | No                                                           |
+| MCP bridge             | One tool, `propose_refund`, for an agent platform                                                                 | `examples/razorpay-agent-studio/mcp.ts`, Vercel project `parmana-agent-studio-mcp` | Bearer token; Parmana agent key                              |
+| External endpoint      | Verifies the release and acts                                                                                     | `examples/razorpay-refund/endpoint.ts`, Vercel project `parmana-razorpay-demo`     | Razorpay test keys                                           |
 
 ### 3.2 The refund path, end to end
 
@@ -186,19 +186,20 @@ Parmana records the outcome (the endpoint's answer is recorded as its claim)
 ```
 
 Points of control:
+
 - Steps 1 to 5 happen inside Parmana. A refused request never reaches the endpoint.
 - Step 7 is the endpoint's own check. It refuses anything Parmana did not sign for its own address.
 - Step 8 makes a repeated release harmless.
 
 ### 3.3 Trust boundaries
 
-| Boundary | What crosses it | Protection |
-| --- | --- | --- |
-| Platform to MCP bridge | The tool call | Bearer token (`AGENT_STUDIO_TOKEN`), compared in constant time |
-| Bridge to Parmana | The caller's request | Agent key, sent as `Authorization: Bearer` |
-| Parmana to endpoint | The release | Ed25519 signature (`verifyParmanaRelease`), audience, expiry |
-| Endpoint to Razorpay | The refund call | Razorpay test key, HTTP basic auth, 4 s timeout per call |
-| Operator to Parmana governance | Proposals and approvals | Maker and checker keys; checker step-up signature |
+| Boundary                       | What crosses it         | Protection                                                     |
+| ------------------------------ | ----------------------- | -------------------------------------------------------------- |
+| Platform to MCP bridge         | The tool call           | Bearer token (`AGENT_STUDIO_TOKEN`), compared in constant time |
+| Bridge to Parmana              | The caller's request    | Agent key, sent as `Authorization: Bearer`                     |
+| Parmana to endpoint            | The release             | Ed25519 signature (`verifyParmanaRelease`), audience, expiry   |
+| Endpoint to Razorpay           | The refund call         | Razorpay test key, HTTP basic auth, 4 s timeout per call       |
+| Operator to Parmana governance | Proposals and approvals | Maker and checker keys; checker step-up signature              |
 
 ### 3.4 Why it is built this way
 
@@ -239,13 +240,13 @@ New-Item -ItemType Directory -Force "$env:USERPROFILE\parmana-vercel-link" | Out
 
 What goes where:
 
-| Folder | Contents | Secret? |
-| --- | --- | --- |
-| `parmana-entries` | One JSON per caller: `callerId`, `keyHash`, `allowedCapabilities`, `credentialHolderType`, `stepUpPublicKey` | No (hashes and public keys) |
-| `parmana-secrets` | `<name>.dpapi` files: encrypted with Windows DPAPI, readable only by this Windows user on this machine | Yes (encrypted) |
-| `parmana-checker` | `step-up.private.pem` | Yes |
-| `parmana-approver` | `<approver>__<key-id>.private.pem` | Yes |
-| `parmana-vercel-link` | Vercel project link for `parmana-api-real` | No |
+| Folder                | Contents                                                                                                     | Secret?                     |
+| --------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------- |
+| `parmana-entries`     | One JSON per caller: `callerId`, `keyHash`, `allowedCapabilities`, `credentialHolderType`, `stepUpPublicKey` | No (hashes and public keys) |
+| `parmana-secrets`     | `<name>.dpapi` files: encrypted with Windows DPAPI, readable only by this Windows user on this machine       | Yes (encrypted)             |
+| `parmana-checker`     | `step-up.private.pem`                                                                                        | Yes                         |
+| `parmana-approver`    | `<approver>__<key-id>.private.pem`                                                                           | Yes                         |
+| `parmana-vercel-link` | Vercel project link for `parmana-api-real`                                                                   | No                          |
 
 ### 4.3 Vercel CLI
 
@@ -281,6 +282,7 @@ function Read-Secret([string]$Name) {
 ✅ All three helpers were used on 23 October.
 
 What each helper does:
+
 - `Use-Key` reads a key with hidden input and sets `PARMANA_API_KEY` for the rest of the window. Every governance command after it uses that key.
 - `Save-Secret` encrypts a value with DPAPI and writes it to `parmana-secrets`. Only this Windows user on this machine can read it back.
 - `Read-Secret` decrypts a value into memory. It prints nothing unless you print it.
@@ -291,16 +293,16 @@ What each helper does:
 
 ### 5.1 The kinds of credential
 
-| Credential | Used for | Who holds it | Where it is stored |
-| --- | --- | --- | --- |
-| Agent key | Calling `/execute` for allowed capabilities | The agent (or the MCP bridge) | Vercel sensitive variable of the bridge; `parmana-secrets`; password manager |
-| Maker key | Proposing changes | The maker (a human) | Password manager |
-| Checker key | Approving changes | The checker (a human) | Password manager |
-| Checker step-up key (Ed25519 private) | Signing each approve | The checker | `parmana-checker\step-up.private.pem`; password manager |
-| Manager approver key | Signing approvals for one payment and amount | The manager | `parmana-approver`; password manager |
-| MCP bearer token | Calling the bridge | The platform | Vercel sensitive variable; password manager |
-| Endpoint keys (Razorpay test keys) | Calling the external system | The endpoint | Vercel sensitive variables of the endpoint |
-| Parmana public key | Verifying releases and records | Public | Embedded in the endpoint bundle at build time |
+| Credential                            | Used for                                     | Who holds it                  | Where it is stored                                                           |
+| ------------------------------------- | -------------------------------------------- | ----------------------------- | ---------------------------------------------------------------------------- |
+| Agent key                             | Calling `/execute` for allowed capabilities  | The agent (or the MCP bridge) | Vercel sensitive variable of the bridge; `parmana-secrets`; password manager |
+| Maker key                             | Proposing changes                            | The maker (a human)           | Password manager                                                             |
+| Checker key                           | Approving changes                            | The checker (a human)         | Password manager                                                             |
+| Checker step-up key (Ed25519 private) | Signing each approve                         | The checker                   | `parmana-checker\step-up.private.pem`; password manager                      |
+| Manager approver key                  | Signing approvals for one payment and amount | The manager                   | `parmana-approver`; password manager                                         |
+| MCP bearer token                      | Calling the bridge                           | The platform                  | Vercel sensitive variable; password manager                                  |
+| Endpoint keys (Razorpay test keys)    | Calling the external system                  | The endpoint                  | Vercel sensitive variables of the endpoint                                   |
+| Parmana public key                    | Verifying releases and records               | Public                        | Embedded in the endpoint bundle at build time                                |
 
 ### 5.2 Generating an agent key
 
@@ -310,6 +312,7 @@ $out = npx tsx scripts/generate-api-key.ts --caller-id <caller-id> --allowed-cap
 ```
 
 Flags:
+
 - `--caller-id` (required): the caller's id. Use a stable, descriptive id; it appears in every record.
 - `--allowed-capabilities` (optional): comma-separated capabilities the key may invoke. Omit only for a deliberate reason.
 - `--allowed-principal-ids` (optional): restricts the principals the key may act for.
@@ -317,6 +320,7 @@ Flags:
 - `--generate-step-up-key` (optional): also generates an Ed25519 step-up key. Only for `USER` credentials.
 
 What the script prints:
+
 - `Key :` the raw key (43 characters). Shown once. The script writes nothing to disk.
 - `Key hash :` the SHA-256 of the raw key. This is what Parmana stores.
 - One line of JSON beginning `{"callerId"`. This is the entry. It contains the hash, not the key.
@@ -359,6 +363,7 @@ Select-String -Path "$env:USERPROFILE\parmana-checker\step-up.private.pem" -Patt
 Expected: one matching line. ✅ On 23 October the checker's step-up file had one `BEGIN PRIVATE KEY` line.
 
 Rules:
+
 - Makers and checkers are different people, with different ids. A checker cannot approve its own proposal.
 - The raw key and the step-up PEM go to the password manager. Keep the step-up file only where the checker runs approvals.
 - A human credential is never given to a machine or an agent.
@@ -419,6 +424,7 @@ npx vercel env ls production                       # names only; values show as 
 Rotate when a key may have been seen by anyone other than its holder, when a holder leaves, or on a schedule you set.
 
 Procedure for an agent key (scenario H):
+
 1. Generate a new key under the same caller id (5.2).
 2. Replace the entry file in `parmana-entries`.
 3. Replace `PARMANA_API_KEYS` as a whole (Part 7). The old key stops working when the list is replaced.
@@ -434,20 +440,20 @@ Procedure for a grant (not a key): revoke it (Part 6). The key keeps working but
 
 ### 6.1 The four kinds of change
 
-| Kind | Purpose | Propose (maker) | Approve (checker) |
-| --- | --- | --- | --- |
-| Policy | Rules for a capability | `propose-policy --file <json>` | `approve --kind policy --id <id>` |
-| Connector | An endpoint for a capability | `propose-connector --capability <cap> --endpoint-url <https-url> --policy <name> --allowed-parameters <csv>` | `approve --kind connector --id <id>` |
-| Signal source | An external fact source | `propose-source --name <n> --endpoint-url <https-url> --public-key-file <pem> --key-id <id>` | `approve --kind source --id <id>` |
-| Grant | Permission for a caller | `propose-grant --caller-id <id> --capability <cap> --max-amount <n> --valid-days <d>` | `approve --kind grant --id <id>` |
+| Kind          | Purpose                      | Propose (maker)                                                                                              | Approve (checker)                    |
+| ------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------ |
+| Policy        | Rules for a capability       | `propose-policy --file <json>`                                                                               | `approve --kind policy --id <id>`    |
+| Connector     | An endpoint for a capability | `propose-connector --capability <cap> --endpoint-url <https-url> --policy <name> --allowed-parameters <csv>` | `approve --kind connector --id <id>` |
+| Signal source | An external fact source      | `propose-source --name <n> --endpoint-url <https-url> --public-key-file <pem> --key-id <id>`                 | `approve --kind source --id <id>`    |
+| Grant         | Permission for a caller      | `propose-grant --caller-id <id> --capability <cap> --max-amount <n> --valid-days <d>`                        | `approve --kind grant --id <id>`     |
 
 Revocations are changes too:
 
-| Kind | Propose | Approve |
-| --- | --- | --- |
-| Grant | `propose-revoke --kind grant --caller-id <id> --capability <cap>` | `approve --kind grant --id <revoke-id>` |
-| Connector | `propose-revoke --kind connector --capability <cap>` | `approve --kind connector --id <revoke-id>` |
-| Source | `propose-revoke --kind source ...` | `approve --kind source --id <revoke-id>` |
+| Kind      | Propose                                                           | Approve                                     |
+| --------- | ----------------------------------------------------------------- | ------------------------------------------- |
+| Grant     | `propose-revoke --kind grant --caller-id <id> --capability <cap>` | `approve --kind grant --id <revoke-id>`     |
+| Connector | `propose-revoke --kind connector --capability <cap>`              | `approve --kind connector --id <revoke-id>` |
+| Source    | `propose-revoke --kind source ...`                                | `approve --kind source --id <revoke-id>`    |
 
 ### 6.2 How to run a pair
 
@@ -496,6 +502,7 @@ curl.exe -s "$env:PARMANA_URL/authority-grants/changes" -H "Authorization: Beare
 ✅ All five returned data on 23 October.
 
 How to read them:
+
 - `policies/in-effect` shows the policy name, version, `authorityGrantRequired` and the signal facts. Check it after every policy approval.
 - `external-connectors` shows `status` (`active` or `revoked`), `endpointUrl`, `allowedParameters`.
 - `authority-grants` shows `validUntil` and `limits`. An `active` grant with a past `validUntil` is not in force.
@@ -590,6 +597,7 @@ npx tsx examples/razorpay-refund/build-endpoint.ts --parmana-url https://parmana
 ```
 
 What it does:
+
 - Fetches Parmana's public key from `GET {parmana-url}/keys/default`.
 - Bundles `endpoint.ts` with esbuild into `api/refund.mjs`, writing in the public key and the endpoint URL as constants.
 - Writes a `package.json` and a `vercel.json` with a 30 second `maxDuration`.
@@ -625,6 +633,7 @@ Agent platforms such as Razorpay Agent Studio call tools over MCP (Model Context
 ### 9.1 What the bridge does
 
 `examples/razorpay-agent-studio/mcp.ts`:
+
 - Protocol: MCP over HTTP, JSON responses. Methods `initialize`, `ping`, `tools/list`, `tools/call`. Notifications return 202.
 - Authentication: the `Authorization` header must equal `Bearer <AGENT_STUDIO_TOKEN>`, compared in constant time. Anything else is 401 and calls nothing.
 - Tool: `propose_refund(paymentId, amountPaise, purpose?, approval?)`. The input is validated first. Parmana is called only for valid input.
@@ -646,9 +655,14 @@ npx vercel deploy --prod --yes
 ```
 
 Two fixes are needed for the bundle to deploy (scenario N):
+
 - Add a `vercel.json` that replaces the project's build command, since the project may still carry the repository's:
   ```json
-  { "buildCommand": "echo prebuilt", "installCommand": "echo no install", "functions": { "api/mcp.mjs": { "maxDuration": 60 } } }
+  {
+    "buildCommand": "echo prebuilt",
+    "installCommand": "echo no install",
+    "functions": { "api/mcp.mjs": { "maxDuration": 60 } }
+  }
   ```
 - Add `public/index.html`, since the project may expect a `public` output folder.
 
@@ -681,51 +695,62 @@ The platform owner registers the URL and the bearer token as a custom tool or co
 Use this list to connect any new external system. The order matters, because each step depends on the previous one.
 
 **Step 1. Decide the shape.**
+
 - The capability: `<namespace>:<action>`. One namespace per external system.
 - Money or records changed? If yes, the policy needs a human approval rule. If read-only, a grant may be enough.
 - The caller: which agent or service, and which principal.
 - The limit: the maximum per request, in the system's smallest unit (paise for rupees).
 
 **Step 2. Write the policy.**
+
 - Start from `policies/` or `examples/razorpay-refund/policy.json`.
 - Rules are evaluated in order. The last rule must be `always` → reject.
 - Declare `boundSignals` for any value the policy trusts from the request, and `approvalSignals` for approvals.
 - Submit it with `propose-policy`. The proposal is validated before it is stored; an invalid file is refused. ✅ The validator's tests pass.
 
 **Step 3. Build the endpoint.**
+
 - Use the template (Part 8). Change only the capability and the action.
 - Build with `build-endpoint.ts` (or your own build), embedding Parmana's public key and the endpoint URL.
 
 **Step 4. Deploy the endpoint.**
+
 - Create the Vercel project and add the external system's test keys as sensitive variables.
 - Check that an unsigned body is refused (Part 8.4).
 
 **Step 5. Propose the policy (maker) and approve it (checker).**
+
 - Confirm with `policies/in-effect?capability=<cap>`.
 
 **Step 6. Propose the connector (maker) and approve it (checker).**
+
 - `--endpoint-url` must match the endpoint's registered address exactly.
 - `--allowed-parameters` lists only what the endpoint needs. Anything else is not sent.
 - Confirm with `external-connectors`: status `active`.
 
 **Step 7. Create the caller's key.**
+
 - Generate (Part 5.2), with `--allowed-capabilities` set to the new capability only.
 - Save the entry and the key.
 
 **Step 8. Replace the live key list (Part 7) and check `/callers/me`.**
 
 **Step 9. Propose the grant (maker) and approve it (checker).**
+
 - Set `--max-amount` to the limit from Step 1 and `--valid-days` to the period you want.
 - Confirm with `authority-grants`: `validUntil` is in the future.
 
 **Step 10. Run the cases.**
+
 - At minimum: no approval (refused), a valid approval (approved), above the limit (refused), a replay (refused).
 - Keep each `record-*.json`. Each run prints `PASS` or `FAIL`.
 
 **Step 11. Confirm in the external system.**
+
 - For a payment system: the test dashboard, the refund list for the period, the amount, the receipt.
 
 **Step 12. Connect the trigger, then go live.**
+
 - Connect the platform or event source (Part 9, or scenario G).
 - Go live only after the go-live plan in Part 11, scenario P, is agreed with the counterparty.
 
@@ -800,6 +825,7 @@ Each scenario states the situation, the steps, the expected result, and the stat
 **Situation.** An external system posts signed events to Parmana's connector, rather than an agent calling a tool.
 
 **Steps.** ❌ Not built. Needed:
+
 - an HTTPS receiver that reads the raw body;
 - a check of `X-Event-Signature` as HMAC-SHA256 of `timestamp + "." + raw_body`;
 - a check that `X-Event-Timestamp` is within 5 minutes and not in the future;
@@ -854,6 +880,7 @@ Then check the external system for a refund with that receipt. A resend would re
 **Situation.** A call is refused for authentication.
 
 **Steps.**
+
 - `authentication required` (401): check the key length (43), check the hash against the entry file (5.2), check the live list (Part 7). If the key is right, the list is stale: redeploy.
 - `Caller is not permitted to invoke this capability`: the wrong key is loaded. This happened on 23 October after `Use-Key "Checker"` in the same window. Reload the caller's key: `$env:PARMANA_API_KEY = Read-Secret "<caller-id>.key"`.
 
@@ -877,12 +904,12 @@ Then check the external system for a refund with that receipt. A resend would re
 
 ### Scenario N. A Vercel deploy fails
 
-| Error | Cause | Fix |
-| --- | --- | --- |
-| `npm error Missing script: "openapi"` | The project's build command is the repository's, and the bundle has no such script | Add the `vercel.json` build override (9.2) |
-| `No Output Directory named "public" found` | The project expects a `public` output folder | Add `public/index.html` (9.2) |
-| `Deployment Protection is on for this project` | Vercel Authentication is on | Requests with the project's bearer token still work. Turn protection off only if the caller cannot send the token |
-| `vercel link` in the repository root connects the wrong repository | The link was made in the wrong folder | Unlink; link from the bundle folder |
+| Error                                                              | Cause                                                                              | Fix                                                                                                               |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `npm error Missing script: "openapi"`                              | The project's build command is the repository's, and the bundle has no such script | Add the `vercel.json` build override (9.2)                                                                        |
+| `No Output Directory named "public" found`                         | The project expects a `public` output folder                                       | Add `public/index.html` (9.2)                                                                                     |
+| `Deployment Protection is on for this project`                     | Vercel Authentication is on                                                        | Requests with the project's bearer token still work. Turn protection off only if the caller cannot send the token |
+| `vercel link` in the repository root connects the wrong repository | The link was made in the wrong folder                                              | Unlink; link from the bundle folder                                                                               |
 
 **Status.** ✅ All four seen and fixed on 23 October.
 
@@ -899,6 +926,7 @@ Then check the external system for a refund with that receipt. A resend would re
 **Situation.** Test mode has passed and the counterparty agrees to live use.
 
 **Steps.**
+
 1. Agree with the counterparty: the trigger, the approval model, the limit, and the refusal status code.
 2. Switch the external system's keys from test to live. The endpoint must still refuse test keys in live, and live keys in test. Make both checks explicit in code.
 3. First live action: a small refund on one of the company's own payments. Show the approval and the refund end to end.
@@ -947,6 +975,7 @@ Then check the external system for a refund with that receipt. A resend would re
 **Situation.** A refund appears that should not exist.
 
 **Steps.**
+
 1. Stop further requests: revoke the grant for the caller (6.1). A revoke is a governed change, so ask a checker to approve it. If the checker is unavailable, rotate the caller's key (5.7) and replace the list (Part 7).
 2. Find the decision: the trust record for its `businessTransactionId` (scenario J).
 3. Check the external system: the refund, its amount, its receipt.
@@ -958,28 +987,28 @@ Then check the external system for a refund with that receipt. A resend would re
 
 ## Part 12. Troubleshooting: exact messages
 
-| Message | Where | Meaning | What to do |
-| --- | --- | --- | --- |
-| `authentication required` | Parmana, 401 | The key is not accepted | Scenario K |
-| `Caller is not permitted to invoke this capability.` | Runner | The key does not allow the capability | Load the caller's key (scenario K) |
-| `authority-not-authorized` / `NOT_AUTHORIZED` | Parmana refusal | Amount above the grant | Correct refusal. Change the limit only through a governed change (Q) |
-| `reject-manager-approval-required` | Parmana refusal | No signed approval | Correct refusal. Add an approval |
-| `signal-state-verification-violation` | Parmana refusal | Approval spent, or not matching | Correct refusal for replays (E) |
-| `A PENDING_APPROVAL change already exists for policy '<name>' version '<v>'.` | Governance | A change for this version is pending | Approve or leave it; propose a new version for new content |
-| `Capability '<cap>' already has an active external connector. Revoke it first.` | Governance | A connector is active | Revoke, approve, then propose |
-| `'<caller>' already holds a grant for '<cap>'. Revoke it first.` | Governance | A grant exists, even if expired | Revoke, approve, then propose |
-| `CHECKER_NOT_IN_SCOPE` | Governance | Checker not allowed for this change type | Scenario I |
-| `This action requires a caller credential provisioned as a verified human (credentialHolderType: USER).` | Governance | Non-human key used to approve | Scenario L |
-| `Unable to communicate with the Parmana Runtime.` | Governance | Connectivity | Scenario O |
-| `Refund rejected because the amount must be greater than 0 paise.` | Parmana refusal | Amount zero or below | Use whole paise above 0 |
-| `The change to review ... Type APPROVE to approve exactly this change (anything else stops)` | Governance | Confirmation prompt | Type `APPROVE` only if the change is the one intended |
-| `Could not add <name> to Vercel.` | Setup script | `vercel env add` failed | Check the variable name, the project link, and that you are in the right folder |
-| `Removed trailing newline from stdin input` | Vercel CLI | A piped value had a newline | Expected; the CLI strips it |
-| `Error: Environment Variable was not found.` | Vercel CLI, on `env rm` | Nothing to remove | Expected when the variable was never set |
-| `curl: (3) URL rejected: Port number was not a decimal number` | curl | The URL had unescaped text, usually from a broken command | Re-paste the command; put the body in a file |
-| `{"jsonrpc":"2.0","id":null,"error":{"code":-32700,"message":"Parse error."}}` | MCP bridge, 400 | The body arrived mangled | Send the body with `--data-binary "@file"` (9.3) |
-| `Error: [BUILD_UTILS_SPAWN_1] ... exited with 1` | Vercel deploy | Build command from the repository | Scenario N |
-| `Missing script: "openapi"` | Vercel deploy | Same | Scenario N |
+| Message                                                                                                  | Where                   | Meaning                                                   | What to do                                                                      |
+| -------------------------------------------------------------------------------------------------------- | ----------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `authentication required`                                                                                | Parmana, 401            | The key is not accepted                                   | Scenario K                                                                      |
+| `Caller is not permitted to invoke this capability.`                                                     | Runner                  | The key does not allow the capability                     | Load the caller's key (scenario K)                                              |
+| `authority-not-authorized` / `NOT_AUTHORIZED`                                                            | Parmana refusal         | Amount above the grant                                    | Correct refusal. Change the limit only through a governed change (Q)            |
+| `reject-manager-approval-required`                                                                       | Parmana refusal         | No signed approval                                        | Correct refusal. Add an approval                                                |
+| `signal-state-verification-violation`                                                                    | Parmana refusal         | Approval spent, or not matching                           | Correct refusal for replays (E)                                                 |
+| `A PENDING_APPROVAL change already exists for policy '<name>' version '<v>'.`                            | Governance              | A change for this version is pending                      | Approve or leave it; propose a new version for new content                      |
+| `Capability '<cap>' already has an active external connector. Revoke it first.`                          | Governance              | A connector is active                                     | Revoke, approve, then propose                                                   |
+| `'<caller>' already holds a grant for '<cap>'. Revoke it first.`                                         | Governance              | A grant exists, even if expired                           | Revoke, approve, then propose                                                   |
+| `CHECKER_NOT_IN_SCOPE`                                                                                   | Governance              | Checker not allowed for this change type                  | Scenario I                                                                      |
+| `This action requires a caller credential provisioned as a verified human (credentialHolderType: USER).` | Governance              | Non-human key used to approve                             | Scenario L                                                                      |
+| `Unable to communicate with the Parmana Runtime.`                                                        | Governance              | Connectivity                                              | Scenario O                                                                      |
+| `Refund rejected because the amount must be greater than 0 paise.`                                       | Parmana refusal         | Amount zero or below                                      | Use whole paise above 0                                                         |
+| `The change to review ... Type APPROVE to approve exactly this change (anything else stops)`             | Governance              | Confirmation prompt                                       | Type `APPROVE` only if the change is the one intended                           |
+| `Could not add <name> to Vercel.`                                                                        | Setup script            | `vercel env add` failed                                   | Check the variable name, the project link, and that you are in the right folder |
+| `Removed trailing newline from stdin input`                                                              | Vercel CLI              | A piped value had a newline                               | Expected; the CLI strips it                                                     |
+| `Error: Environment Variable was not found.`                                                             | Vercel CLI, on `env rm` | Nothing to remove                                         | Expected when the variable was never set                                        |
+| `curl: (3) URL rejected: Port number was not a decimal number`                                           | curl                    | The URL had unescaped text, usually from a broken command | Re-paste the command; put the body in a file                                    |
+| `{"jsonrpc":"2.0","id":null,"error":{"code":-32700,"message":"Parse error."}}`                           | MCP bridge, 400         | The body arrived mangled                                  | Send the body with `--data-binary "@file"` (9.3)                                |
+| `Error: [BUILD_UTILS_SPAWN_1] ... exited with 1`                                                         | Vercel deploy           | Build command from the repository                         | Scenario N                                                                      |
+| `Missing script: "openapi"`                                                                              | Vercel deploy           | Same                                                      | Scenario N                                                                      |
 
 ---
 
@@ -987,67 +1016,67 @@ Then check the external system for a refund with that receipt. A resend would re
 
 ### 13.1 Setup and builds
 
-| Purpose | Command |
-| --- | --- |
-| Install | `npm ci --ignore-scripts` |
-| Build the SDK and OpenAPI | `npm run build` |
+| Purpose                   | Command                                                                                                      |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Install                   | `npm ci --ignore-scripts`                                                                                    |
+| Build the SDK and OpenAPI | `npm run build`                                                                                              |
 | Build the endpoint bundle | `npx tsx examples/razorpay-refund/build-endpoint.ts --parmana-url <url> --endpoint-url <url> --out <folder>` |
-| Build the MCP bundle | `npx tsx examples/razorpay-agent-studio/build-mcp.ts --out <folder>` |
-| Run the Razorpay tests | `npx vitest run examples/razorpay-agent-studio examples/razorpay-refund-agent examples/razorpay-refund` |
+| Build the MCP bundle      | `npx tsx examples/razorpay-agent-studio/build-mcp.ts --out <folder>`                                         |
+| Run the Razorpay tests    | `npx vitest run examples/razorpay-agent-studio examples/razorpay-refund-agent examples/razorpay-refund`      |
 
 ### 13.2 Keys
 
-| Purpose | Command |
-| --- | --- |
-| Generate a key | `npx tsx scripts/generate-api-key.ts --caller-id <id> [--allowed-capabilities <csv>] [--allowed-principal-ids <csv>] [--credential-holder-type USER] [--generate-step-up-key]` |
-| Generate a random token | `[Convert]::ToBase64String(...)` (Part 5.5) |
+| Purpose                 | Command                                                                                                                                                                        |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Generate a key          | `npx tsx scripts/generate-api-key.ts --caller-id <id> [--allowed-capabilities <csv>] [--allowed-principal-ids <csv>] [--credential-holder-type USER] [--generate-step-up-key]` |
+| Generate a random token | `[Convert]::ToBase64String(...)` (Part 5.5)                                                                                                                                    |
 
 ### 13.3 Governance
 
-| Purpose | Command |
-| --- | --- |
-| Propose a policy | `npx tsx $g propose-policy --file <json>` |
-| Propose a connector | `npx tsx $g propose-connector --capability <cap> --endpoint-url <url> --policy <name> --allowed-parameters <csv>` |
-| Propose a signal source | `npx tsx $g propose-source --name <n> --endpoint-url <url> --public-key-file <pem> --key-id <id>` |
-| Propose a grant | `npx tsx $g propose-grant --caller-id <id> --capability <cap> --max-amount <n> --valid-days <d>` |
-| Propose a revoke | `npx tsx $g propose-revoke --kind grant\|connector\|source ...` |
-| Approve | `npx tsx $g approve --kind policy\|connector\|source\|grant --id <id> --step-up-key-file $stepUp --step-up-key-id $stepUpId` |
+| Purpose                 | Command                                                                                                                      |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Propose a policy        | `npx tsx $g propose-policy --file <json>`                                                                                    |
+| Propose a connector     | `npx tsx $g propose-connector --capability <cap> --endpoint-url <url> --policy <name> --allowed-parameters <csv>`            |
+| Propose a signal source | `npx tsx $g propose-source --name <n> --endpoint-url <url> --public-key-file <pem> --key-id <id>`                            |
+| Propose a grant         | `npx tsx $g propose-grant --caller-id <id> --capability <cap> --max-amount <n> --valid-days <d>`                             |
+| Propose a revoke        | `npx tsx $g propose-revoke --kind grant\|connector\|source ...`                                                              |
+| Approve                 | `npx tsx $g approve --kind policy\|connector\|source\|grant --id <id> --step-up-key-file $stepUp --step-up-key-id $stepUpId` |
 
 ### 13.4 Agent and approval runs
 
-| Purpose | Command |
-| --- | --- |
+| Purpose             | Command                                                                                                                             |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | The four demo cases | `npx tsx examples/razorpay-refund/send.ts --case approved\|no-approval\|over-limit\|replay --payment <pay_> --amount <paise> [...]` |
-| The agent runner | `npx tsx examples/razorpay-refund-agent/send.ts --payment <pay_> --amount <paise> [--approval-file <json>] --out <json>` |
-| Sign an approval | `--approver-key-file <pem> --approver-id <id> --approver-key-id <id> --save-approval <json>` |
+| The agent runner    | `npx tsx examples/razorpay-refund-agent/send.ts --payment <pay_> --amount <paise> [--approval-file <json>] --out <json>`            |
+| Sign an approval    | `--approver-key-file <pem> --approver-id <id> --approver-key-id <id> --save-approval <json>`                                        |
 
 ### 13.5 Reads (any valid key for the caller that should see it)
 
-| Purpose | Request |
-| --- | --- |
-| Health | `GET /health` |
-| Who am I | `GET /callers/me` |
-| Policy in force | `GET /policies/in-effect?capability=<cap>` |
-| Pending policy changes | `GET /policies/pending-changes` |
-| Connectors | `GET /external-connectors` |
-| Grants | `GET /authority-grants` |
-| Grant changes | `GET /authority-grants/changes` |
-| Approval issuers | `GET /approval-issuers` |
-| Trust record | `GET /trust-records/<businessTransactionId>` |
-| Refusal record | `GET /refusal/<businessTransactionId>` |
-| Public key | `GET /keys/default` |
+| Purpose                | Request                                      |
+| ---------------------- | -------------------------------------------- |
+| Health                 | `GET /health`                                |
+| Who am I               | `GET /callers/me`                            |
+| Policy in force        | `GET /policies/in-effect?capability=<cap>`   |
+| Pending policy changes | `GET /policies/pending-changes`              |
+| Connectors             | `GET /external-connectors`                   |
+| Grants                 | `GET /authority-grants`                      |
+| Grant changes          | `GET /authority-grants/changes`              |
+| Approval issuers       | `GET /approval-issuers`                      |
+| Trust record           | `GET /trust-records/<businessTransactionId>` |
+| Refusal record         | `GET /refusal/<businessTransactionId>`       |
+| Public key             | `GET /keys/default`                          |
 
 ### 13.6 Vercel
 
-| Purpose | Command |
-| --- | --- |
-| Link a folder | `npx vercel link --yes --project <name>` |
-| Add a secret | `$value \| npx vercel env add <NAME> production --sensitive` |
-| Remove a secret | `npx vercel env rm <NAME> production --yes` |
-| List secrets (names) | `npx vercel env ls production` |
-| List deployments | `npx vercel ls <project> --cwd <folder>` |
-| Deploy | `npx vercel deploy --prod --yes` (in the folder) |
-| Redeploy | `npx vercel redeploy <url> --target production` |
+| Purpose              | Command                                                      |
+| -------------------- | ------------------------------------------------------------ |
+| Link a folder        | `npx vercel link --yes --project <name>`                     |
+| Add a secret         | `$value \| npx vercel env add <NAME> production --sensitive` |
+| Remove a secret      | `npx vercel env rm <NAME> production --yes`                  |
+| List secrets (names) | `npx vercel env ls production`                               |
+| List deployments     | `npx vercel ls <project> --cwd <folder>`                     |
+| Deploy               | `npx vercel deploy --prod --yes` (in the folder)             |
+| Redeploy             | `npx vercel redeploy <url> --target production`              |
 
 ### 13.7 Session helpers
 
@@ -1057,21 +1086,22 @@ Then check the external system for a refund with that receipt. A resend would re
 
 ## Part 14. Evidence: what was tested on 23 October 2026
 
-| Area | What was run | Result | Identifiers |
-| --- | --- | --- | --- |
-| Refund refused, no approval | Runner, no approval | REFUSED, `reject-manager-approval-required` | Transaction `a0f74bc9-e929-43e8-87b8-8b1962ace5e5` |
-| Refund approved | Runner, with manager approval | APPROVED; refund processed; record verifies offline | Refund `rfnd_TrPyItqZ6h7Dgo`; transaction `4346a484-f85d-4c3c-bc61-2f416aabd586` |
-| Refund over limit | Runner, ₹8 against ₹5 grant | REFUSED, `NOT_AUTHORIZED` | Transaction `5960dc40-7383-429c-a251-c863d32f3f1d` |
-| Refund replay | Runner, approval reused | REFUSED, `signal-state-verification-violation` | Transaction `0bb0de83-b31f-4e7f-b9b2-22014901691e` |
-| Grant renewal | Revoke, approve, propose, approve | Revoke `68e3d72a-a8a8-409a-9b0f-9808f53ba8c4`; grant `7fda621d-b8dd-4eeb-938e-b508e301da7b` active to 2026-10-30 | As listed |
-| Policy duplicate | Approve a duplicate pending change | Refused: `CHECKER_NOT_IN_SCOPE` | `cf85a4af-082a-424a-a646-31acc1cf8019` (still pending) |
-| Key list | Replace `PARMANA_API_KEYS` | Four entries; agent key returns 200 on `/callers/me` | — |
-| Bridge | Unauthenticated and authenticated `tools/list` | 401, then 200 with `propose_refund` | — |
-| Endpoint | Unsigned body | Refused with the envelope message | — |
-| Repository checks | Razorpay examples; policy validator | 22 tests pass (earlier count) and 16 tests pass (policy checks, re-run today) | — |
-| Public health | `GET /health` | `{"status":"UP"}` (seen on the operator's machine) | — |
+| Area                        | What was run                                   | Result                                                                                                           | Identifiers                                                                      |
+| --------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Refund refused, no approval | Runner, no approval                            | REFUSED, `reject-manager-approval-required`                                                                      | Transaction `a0f74bc9-e929-43e8-87b8-8b1962ace5e5`                               |
+| Refund approved             | Runner, with manager approval                  | APPROVED; refund processed; record verifies offline                                                              | Refund `rfnd_TrPyItqZ6h7Dgo`; transaction `4346a484-f85d-4c3c-bc61-2f416aabd586` |
+| Refund over limit           | Runner, ₹8 against ₹5 grant                    | REFUSED, `NOT_AUTHORIZED`                                                                                        | Transaction `5960dc40-7383-429c-a251-c863d32f3f1d`                               |
+| Refund replay               | Runner, approval reused                        | REFUSED, `signal-state-verification-violation`                                                                   | Transaction `0bb0de83-b31f-4e7f-b9b2-22014901691e`                               |
+| Grant renewal               | Revoke, approve, propose, approve              | Revoke `68e3d72a-a8a8-409a-9b0f-9808f53ba8c4`; grant `7fda621d-b8dd-4eeb-938e-b508e301da7b` active to 2026-10-30 | As listed                                                                        |
+| Policy duplicate            | Approve a duplicate pending change             | Refused: `CHECKER_NOT_IN_SCOPE`                                                                                  | `cf85a4af-082a-424a-a646-31acc1cf8019` (still pending)                           |
+| Key list                    | Replace `PARMANA_API_KEYS`                     | Four entries; agent key returns 200 on `/callers/me`                                                             | —                                                                                |
+| Bridge                      | Unauthenticated and authenticated `tools/list` | 401, then 200 with `propose_refund`                                                                              | —                                                                                |
+| Endpoint                    | Unsigned body                                  | Refused with the envelope message                                                                                | —                                                                                |
+| Repository checks           | Razorpay examples; policy validator            | 22 tests pass (earlier count) and 16 tests pass (policy checks, re-run today)                                    | —                                                                                |
+| Public health               | `GET /health`                                  | `{"status":"UP"}` (seen on the operator's machine)                                                               | —                                                                                |
 
 What this table does not prove:
+
 - The record lookup after a timeout (scenario J) was not run against live Parmana.
 - The cause of `CHECKER_NOT_IN_SCOPE` was not confirmed.
 - Scenarios G, S, T and U were not run.
@@ -1080,39 +1110,39 @@ What this table does not prove:
 
 ## Part 15. Gaps and decisions
 
-| # | Gap | Impact | Action | Owner |
-| --- | --- | --- | --- | --- |
-| 1 | The operator script (`governance.ts`) has no `reject` command; the SDK and API do | An unwanted change can stay pending if no one rejects it through the SDK | Add `reject` to the script, with step-up and a test | Engineering |
-| 2 | No command to propose or approve an approval-issuer change | New approvers need direct API calls | Add `propose-approver` and an approve kind | Engineering |
-| 3 | `CHECKER_NOT_IN_SCOPE` for policy approvals | Policy changes cannot be approved by this checker | Confirm `POLICY_CHANGE_CHECKERS`; decide whether to add the checker | Owner of the policy process |
-| 4 | The bridge is not registered with Razorpay Agent Studio | Agent Studio cannot call Parmana | Razorpay registers the tool | Razorpay |
-| 5 | No event receiver for signed `refund.requested` events | The spec's trigger path is missing | Build with tests (scenario G) | Engineering |
-| 6 | The approval model: per-refund approval or a limit without one | A spec-style request is always refused today | Decide; change the policy through a governed change | Decision: owner, with Razorpay |
-| 7 | The ₹1,00,00,000 backstop is not built; the grant is ₹5 for testing | Limits are not the agreed ones | Decide the limit; set grant and policy to match | Decision: owner, with Razorpay |
-| 8 | The setup script reads the production URL from piped `vercel ls` output | The script stops at the redeploy step | Take the URL as a parameter | Engineering |
-| 9 | The refusal HTTP status (the spec says 403) | Unconfirmed | Confirm with Parmana's API behaviour | Engineering |
-| 10 | Node 22 fails three tests in `distrustCompromisedRoots` | CI on Node 22 would fail | Run CI on Node 24 (`package.json` requires it) | Engineering |
-| 11 | No second approval test for a second caller (scenario S) | Multi-caller behaviour is unverified | Run it | Engineering |
-| 12 | The MCP bridge's endpoint and the Razorpay endpoint are not behind a shared change process | Drift is possible | Keep both in the repository; review changes together | Engineering |
+| #   | Gap                                                                                        | Impact                                                                   | Action                                                              | Owner                          |
+| --- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ | ------------------------------------------------------------------- | ------------------------------ |
+| 1   | The operator script (`governance.ts`) has no `reject` command; the SDK and API do          | An unwanted change can stay pending if no one rejects it through the SDK | Add `reject` to the script, with step-up and a test                 | Engineering                    |
+| 2   | No command to propose or approve an approval-issuer change                                 | New approvers need direct API calls                                      | Add `propose-approver` and an approve kind                          | Engineering                    |
+| 3   | `CHECKER_NOT_IN_SCOPE` for policy approvals                                                | Policy changes cannot be approved by this checker                        | Confirm `POLICY_CHANGE_CHECKERS`; decide whether to add the checker | Owner of the policy process    |
+| 4   | The bridge is not registered with Razorpay Agent Studio                                    | Agent Studio cannot call Parmana                                         | Razorpay registers the tool                                         | Razorpay                       |
+| 5   | No event receiver for signed `refund.requested` events                                     | The spec's trigger path is missing                                       | Build with tests (scenario G)                                       | Engineering                    |
+| 6   | The approval model: per-refund approval or a limit without one                             | A spec-style request is always refused today                             | Decide; change the policy through a governed change                 | Decision: owner, with Razorpay |
+| 7   | The ₹1,00,00,000 backstop is not built; the grant is ₹5 for testing                        | Limits are not the agreed ones                                           | Decide the limit; set grant and policy to match                     | Decision: owner, with Razorpay |
+| 8   | The setup script reads the production URL from piped `vercel ls` output                    | The script stops at the redeploy step                                    | Take the URL as a parameter                                         | Engineering                    |
+| 9   | The refusal HTTP status (the spec says 403)                                                | Unconfirmed                                                              | Confirm with Parmana's API behaviour                                | Engineering                    |
+| 10  | Node 22 fails three tests in `distrustCompromisedRoots`                                    | CI on Node 22 would fail                                                 | Run CI on Node 24 (`package.json` requires it)                      | Engineering                    |
+| 11  | No second approval test for a second caller (scenario S)                                   | Multi-caller behaviour is unverified                                     | Run it                                                              | Engineering                    |
+| 12  | The MCP bridge's endpoint and the Razorpay endpoint are not behind a shared change process | Drift is possible                                                        | Keep both in the repository; review changes together                | Engineering                    |
 
 ---
 
 ## Part 16. Mapping to the Razorpay Agent Studio spec (20 October 2026)
 
-| Spec item | Built | Gap |
-| --- | --- | --- |
-| Support channel posts signed `refund.requested` (Appendix A) | No | Gap 5 |
-| Agent reads `pay_` and amount; asks once if missing | Input validation in `agent.ts` rejects bad input before any call. The one-question reply to the customer is not built | Gap 5 (reply path) |
-| Backstop ₹1,00,00,000, held for the team | No | Gap 7 |
-| `POST /execute` with payment id, `razorpay:refund`, amount in paise; no approval, no manager flag | Yes (the runner sends no approval when none is given) | Gap 6: Parmana then refuses without an approval |
-| Approved: customer hears the amount and that the refund goes to the original method | The approval result is returned; the customer message is not built | Gap 5 |
-| Refused: 403 with a reason; customer hears "a member of our team will follow up" | Parmana returns a refusal record; the HTTP status is not confirmed | Gap 9 |
-| Refund is a Razorpay normal refund (`POST /v1/payments/{id}/refund`) | Yes, from the Razorpay endpoint | Spec step 4a says Parmana executes it; ours is the endpoint. Agree the wording |
-| Idempotency: `Idempotency-Key` for 24 hours; duplicate returns `status: duplicate` | Not for events. The receipt check prevents double refunds | Gap 5 |
-| Retries for 5xx and timeouts; never for 400 or 401 | Not in the agent | Gap 5 |
-| Signing: HMAC-SHA256 of `timestamp + "." + raw_body`; 5-minute window | Not for events. Parmana's own releases are Ed25519-signed and verified by the endpoint | Gap 5 |
-| Testing: "3 of 3 cases that can run in a test passed" (simulated, 14 October) | Live test mode on 23 October: four cases, with a real ₹1 refund | None; update the spec's testing section |
-| Go-live: live payments, first live request a ₹1 refund | Test mode only | Scenario P |
+| Spec item                                                                                         | Built                                                                                                                 | Gap                                                                            |
+| ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Support channel posts signed `refund.requested` (Appendix A)                                      | No                                                                                                                    | Gap 5                                                                          |
+| Agent reads `pay_` and amount; asks once if missing                                               | Input validation in `agent.ts` rejects bad input before any call. The one-question reply to the customer is not built | Gap 5 (reply path)                                                             |
+| Backstop ₹1,00,00,000, held for the team                                                          | No                                                                                                                    | Gap 7                                                                          |
+| `POST /execute` with payment id, `razorpay:refund`, amount in paise; no approval, no manager flag | Yes (the runner sends no approval when none is given)                                                                 | Gap 6: Parmana then refuses without an approval                                |
+| Approved: customer hears the amount and that the refund goes to the original method               | The approval result is returned; the customer message is not built                                                    | Gap 5                                                                          |
+| Refused: 403 with a reason; customer hears "a member of our team will follow up"                  | Parmana returns a refusal record; the HTTP status is not confirmed                                                    | Gap 9                                                                          |
+| Refund is a Razorpay normal refund (`POST /v1/payments/{id}/refund`)                              | Yes, from the Razorpay endpoint                                                                                       | Spec step 4a says Parmana executes it; ours is the endpoint. Agree the wording |
+| Idempotency: `Idempotency-Key` for 24 hours; duplicate returns `status: duplicate`                | Not for events. The receipt check prevents double refunds                                                             | Gap 5                                                                          |
+| Retries for 5xx and timeouts; never for 400 or 401                                                | Not in the agent                                                                                                      | Gap 5                                                                          |
+| Signing: HMAC-SHA256 of `timestamp + "." + raw_body`; 5-minute window                             | Not for events. Parmana's own releases are Ed25519-signed and verified by the endpoint                                | Gap 5                                                                          |
+| Testing: "3 of 3 cases that can run in a test passed" (simulated, 14 October)                     | Live test mode on 23 October: four cases, with a real ₹1 refund                                                       | None; update the spec's testing section                                        |
+| Go-live: live payments, first live request a ₹1 refund                                            | Test mode only                                                                                                        | Scenario P                                                                     |
 
 ---
 
@@ -1120,21 +1150,21 @@ What this table does not prove:
 
 ### 17.1 Glossary
 
-| Term | Meaning |
-| --- | --- |
-| Audience | The endpoint URL a release is addressed to. The endpoint refuses a release for any other address. |
-| Authority grant | A caller's permission for one capability, with limits and a validity window. |
-| Business transaction | One request, with a Parmana id. Its id is the Razorpay receipt. |
-| Capability | `<namespace>:<action>`, the thing being authorized. |
-| Checker | The human who approves governed changes, with a step-up key. |
-| Connector | A registered endpoint for a capability. |
-| DPAPI | Windows Data Protection API. Encrypts a value for one user on one machine. |
-| Ed25519 | The signature scheme for releases, records and step-up envelopes. |
-| Maker | The human who proposes governed changes. |
-| Policy in force | The version of a policy that decides requests now. |
-| Release | Parmana's signed statement that an action is approved, addressed to one endpoint. |
-| Step-up key | The checker's Ed25519 key, used to sign each approval. |
-| Trust record | The signed record of an approved decision and its execution. |
+| Term                 | Meaning                                                                                           |
+| -------------------- | ------------------------------------------------------------------------------------------------- |
+| Audience             | The endpoint URL a release is addressed to. The endpoint refuses a release for any other address. |
+| Authority grant      | A caller's permission for one capability, with limits and a validity window.                      |
+| Business transaction | One request, with a Parmana id. Its id is the Razorpay receipt.                                   |
+| Capability           | `<namespace>:<action>`, the thing being authorized.                                               |
+| Checker              | The human who approves governed changes, with a step-up key.                                      |
+| Connector            | A registered endpoint for a capability.                                                           |
+| DPAPI                | Windows Data Protection API. Encrypts a value for one user on one machine.                        |
+| Ed25519              | The signature scheme for releases, records and step-up envelopes.                                 |
+| Maker                | The human who proposes governed changes.                                                          |
+| Policy in force      | The version of a policy that decides requests now.                                                |
+| Release              | Parmana's signed statement that an action is approved, addressed to one endpoint.                 |
+| Step-up key          | The checker's Ed25519 key, used to sign each approval.                                            |
+| Trust record         | The signed record of an approved decision and its execution.                                      |
 
 ### 17.2 FAQ
 
@@ -1182,6 +1212,7 @@ What Parmana does, in three moments:
 ## Part 20. Who it is for, and the problem
 
 Who it is for (README):
+
 - Teams putting agents near money: refunds, payouts, vendor payments.
 - Teams letting agents change systems of record: CRM, code repositories, internal tools.
 - Security, risk and compliance teams who sign off on what an agent may do, and auditors who need evidence rather than assurances.
@@ -1196,24 +1227,24 @@ What a founder should be able to say in one breath: an agent can propose; a name
 
 ### 21.1 Packages (repository `packages/`)
 
-| Package | Role (from its name and the current-state notes) |
-| --- | --- |
-| `api` | HTTP service: routes for execute, policies, grants, connectors, approval issuers, records; bootstrap of connectors and auth |
-| `runtime` | The core pipeline: policy load, binding checks, rule evaluation, authorization signing |
-| `policy` | Policy model, validator, the reference policies, the policy decision (pure function, no I/O) |
-| `approval` | Approval verification and the approval signal checks |
-| `capability-registry` | Which capability is bound to which policy; the canonical bindings |
-| `execution-control` | Caller identity, external connector identity, authenticators |
-| `execution-gateway` | Re-verifies the signed authorization before any connector runs; holds connector adapters; the single-use credential session |
-| `execution-system` | Execution orchestration |
-| `connector-sdk` | The SDK connector authors implement |
-| `connector-hubspot`, `connector-github`, `connector-paytm`, `connector-slack` | Built-in connectors |
-| `crypto` | Ed25519 and ML-DSA-65 signing, key providers, canonical serialization |
-| `envelope-verifier` | Verifies records and authorizations, including offline |
-| `replay` | Replay of a recorded decision to check it again |
-| `storage` | Memory and Postgres storage; the Supabase audit sink |
-| `shared` | Domain types, errors, repositories, the business validation |
-| `governance-ui` | The governance interface |
+| Package                                                                       | Role (from its name and the current-state notes)                                                                            |
+| ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `api`                                                                         | HTTP service: routes for execute, policies, grants, connectors, approval issuers, records; bootstrap of connectors and auth |
+| `runtime`                                                                     | The core pipeline: policy load, binding checks, rule evaluation, authorization signing                                      |
+| `policy`                                                                      | Policy model, validator, the reference policies, the policy decision (pure function, no I/O)                                |
+| `approval`                                                                    | Approval verification and the approval signal checks                                                                        |
+| `capability-registry`                                                         | Which capability is bound to which policy; the canonical bindings                                                           |
+| `execution-control`                                                           | Caller identity, external connector identity, authenticators                                                                |
+| `execution-gateway`                                                           | Re-verifies the signed authorization before any connector runs; holds connector adapters; the single-use credential session |
+| `execution-system`                                                            | Execution orchestration                                                                                                     |
+| `connector-sdk`                                                               | The SDK connector authors implement                                                                                         |
+| `connector-hubspot`, `connector-github`, `connector-paytm`, `connector-slack` | Built-in connectors                                                                                                         |
+| `crypto`                                                                      | Ed25519 and ML-DSA-65 signing, key providers, canonical serialization                                                       |
+| `envelope-verifier`                                                           | Verifies records and authorizations, including offline                                                                      |
+| `replay`                                                                      | Replay of a recorded decision to check it again                                                                             |
+| `storage`                                                                     | Memory and Postgres storage; the Supabase audit sink                                                                        |
+| `shared`                                                                      | Domain types, errors, repositories, the business validation                                                                 |
+| `governance-ui`                                                               | The governance interface                                                                                                    |
 
 Only the names above are taken from the repository. Read each package's source before describing it to a customer in detail.
 
@@ -1238,13 +1269,13 @@ A customer's own endpoint can be registered without a code deploy. Parmana sends
 
 Registered only when their configuration is present (createConnectorRegistry.ts, read on 2026-09-27):
 
-| Connector | Configuration needed | Capabilities |
-| --- | --- | --- |
-| HubSpot | `HUBSPOT_PRIVATE_APP_TOKEN` | `hubspot:deal-fetch`, `hubspot:deal-update` |
-| GitHub | `GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY` | `github:pr-fetch`, `github:pr-merge` |
-| Paytm (refunds) | `PAYTM_CONNECTOR_URL`, `PAYTM_CONNECTOR_SHARED_SECRET` (a separate connector service) | `paytm:refund` |
-| Slack | `SLACK_BOT_TOKEN`; a post also needs its channel in `SLACK_ALLOWED_CHANNEL_IDS` (since 2026-09-28, G-76) | `slack:post-message` |
-| Test fixture | Only with `NODE_ENV=test` | Tests only |
+| Connector       | Configuration needed                                                                                     | Capabilities                                |
+| --------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| HubSpot         | `HUBSPOT_PRIVATE_APP_TOKEN`                                                                              | `hubspot:deal-fetch`, `hubspot:deal-update` |
+| GitHub          | `GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY`                                      | `github:pr-fetch`, `github:pr-merge`        |
+| Paytm (refunds) | `PAYTM_CONNECTOR_URL`, `PAYTM_CONNECTOR_SHARED_SECRET` (a separate connector service)                    | `paytm:refund`                              |
+| Slack           | `SLACK_BOT_TOKEN`; a post also needs its channel in `SLACK_ALLOWED_CHANNEL_IDS` (since 2026-09-28, G-76) | `slack:post-message`                        |
+| Test fixture    | Only with `NODE_ENV=test`                                                                                | Tests only                                  |
 
 Six capabilities are reachable on the built-in path. A new built-in connector is a code change, and it must be wired into credential isolation deliberately. The architecture does not do this for you (the limitations page, `docs/site/security/limitations.mdx`).
 
@@ -1259,6 +1290,7 @@ See Part 3.3 for the request path. At the system level: Parmana holds its own si
 ### 22.1 Anatomy of a policy
 
 A policy is a JSON file with:
+
 - `policyId`, `policyVersion`, `schemaVersion`, `description`;
 - `signalsSchema`: the facts the rules may read, with their types;
 - `boundSignals`: facts taken from the request and checked against the intent (for example `refundAmount` bound to `parameters.amount`);
@@ -1318,11 +1350,11 @@ The repository has an approval-email path (Resend). On 20 October the sending do
 
 ### 24.1 The three kinds of record
 
-| Record | Written when | Content | Route |
-| --- | --- | --- | --- |
-| Execution Trust Record | An approved action runs | The decision, the policy and version, the approval, the authorization, the connector's result | `GET /trust-records/<businessTransactionId>` |
-| Refusal Record | A request is refused | The rule, the reason, the authority status | `GET /refusal/<businessTransactionId>` |
-| Caller audit event | Every caller request, in a hash chain | Caller, route, outcome | Audit chain; `POST /audit/verify` (route exists in the API) |
+| Record                 | Written when                          | Content                                                                                       | Route                                                       |
+| ---------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Execution Trust Record | An approved action runs               | The decision, the policy and version, the approval, the authorization, the connector's result | `GET /trust-records/<businessTransactionId>`                |
+| Refusal Record         | A request is refused                  | The rule, the reason, the authority status                                                    | `GET /refusal/<businessTransactionId>`                      |
+| Caller audit event     | Every caller request, in a hash chain | Caller, route, outcome                                                                        | Audit chain; `POST /audit/verify` (route exists in the API) |
 
 ### 24.2 Verifying offline
 
@@ -1345,21 +1377,21 @@ Records live in the deployer's own database. Parmana's repositories have no dele
 
 ### 25.1 Algorithms
 
-| Use | Algorithm | Notes |
-| --- | --- | --- |
-| Default signing | Ed25519 | `CRYPTO_MODE` default; the release, authorization and record signatures |
-| Hybrid signing | Ed25519 plus ML-DSA-65 (Node's `ml-dsa-65`, named "Dilithium3" in code) | Under `CRYPTO_MODE=hybrid`. Not live in production (G-119) |
-| Record hashing | SHA-256 | Record hashes and key hashes |
+| Use             | Algorithm                                                               | Notes                                                                   |
+| --------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Default signing | Ed25519                                                                 | `CRYPTO_MODE` default; the release, authorization and record signatures |
+| Hybrid signing  | Ed25519 plus ML-DSA-65 (Node's `ml-dsa-65`, named "Dilithium3" in code) | Under `CRYPTO_MODE=hybrid`. Not live in production (G-119)              |
+| Record hashing  | SHA-256                                                                 | Record hashes and key hashes                                            |
 
 ML-DSA-65 signatures are randomized by design; only verification is deterministic.
 
 ### 25.2 Key custody
 
-| Provider | Status |
-| --- | --- |
-| `KEY_PROVIDER=local` (`FileKeyProvider`) | Implemented. Reads PEM files from disk |
-| `KEY_PROVIDER=aws-kms` (`KmsSigner`) | Implemented. The signing key is never released from KMS |
-| `azure-key-vault`, `gcp-kms`, `hsm` | Declared configuration values with no implementation. Startup fails loudly rather than silently falling back |
+| Provider                                 | Status                                                                                                       |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `KEY_PROVIDER=local` (`FileKeyProvider`) | Implemented. Reads PEM files from disk                                                                       |
+| `KEY_PROVIDER=aws-kms` (`KmsSigner`)     | Implemented. The signing key is never released from KMS                                                      |
+| `azure-key-vault`, `gcp-kms`, `hsm`      | Declared configuration values with no implementation. Startup fails loudly rather than silently falling back |
 
 The roadmap's first move is a real KMS/HSM provider (Part 33). The local-file path is the exposure class behind the committed-key incident (Part 31).
 
@@ -1387,32 +1419,32 @@ AWS KMS refuses a raw Ed25519 message over 4096 bytes. A record or authorization
 
 ### 27.1 Targets
 
-| Target | Documentation | Status |
-| --- | --- | --- |
-| Production (Vercel) | `docs/site/deployment/production.mdx` | In use: `parmana-api-real` |
-| Self-hosted | `docs/site/self-hosted/` | Built and merged 25 September 2026 (G-56 to G-63) |
-| Local | `docs/site/deployment/local.mdx` | Available |
-| AWS KMS signing | `docs/site/deployment/aws-kms-signing.mdx` | Implemented |
+| Target              | Documentation                              | Status                                            |
+| ------------------- | ------------------------------------------ | ------------------------------------------------- |
+| Production (Vercel) | `docs/site/deployment/production.mdx`      | In use: `parmana-api-real`                        |
+| Self-hosted         | `docs/site/self-hosted/`                   | Built and merged 25 September 2026 (G-56 to G-63) |
+| Local               | `docs/site/deployment/local.mdx`           | Available                                         |
+| AWS KMS signing     | `docs/site/deployment/aws-kms-signing.mdx` | Implemented                                       |
 
 ### 27.2 Environment variables seen in production (names only)
 
 Names from the production variable list on 23 October, and their use:
 
-| Name | Use |
-| --- | --- |
-| `PARMANA_API_KEYS` | Caller key entries (hashes); replaced as a whole (Part 7) |
-| `POLICY_CHANGE_CHECKERS` | Checkers allowed to approve policy changes (Part 11, scenario I) |
-| `DATABASE_URL` | Postgres connection (rotated 19 October) |
-| `KILL_SWITCH_ENABLED`, `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` | Kill switch and its reset rule (Part 29) |
-| `RATE_LIMIT_EXECUTE_PER_MINUTE`, `RATE_LIMIT_HEALTH_PER_MINUTE` | Rate limits |
-| `POLICY_EXECUTION_VERIFICATION_ENFORCED`, `EXECUTION_AUTHORIZATION_TTL_SECONDS`, `TRUST_PROFILE` | Execution checks and lifetimes |
-| `PRIMARY_SIGNATURE_PROVIDER`, `KEY_PROVIDER`, `CRYPTO_MODE`, `HASH_PROVIDER` | Cryptography and key custody (Part 25) |
-| `PARMANA_STORAGE`, `PARMANA_KEY_DIR`, `PARMANA_POLICY_DIR`, `PARMANA_GATEWAY_KEY_ID` | Storage and file locations |
-| `PAYTM_CONNECTOR_URL`, `PAYTM_CONNECTOR_TIMEOUT_MS`, `PAYTM_CONNECTOR_SHARED_SECRET` | Paytm connector |
-| `APPROVAL_EMAIL_TO`, `RESEND_EMAIL_DOMAIN`, `RESEND_API_KEY` | Approval email (Part 23.4) |
-| `SLACK_ALLOWED_CHANNEL_IDS` | Slack channel allowlist |
-| `AWS_REGION`, `AWS_ROLE_ARN` | AWS access for KMS |
-| `NODE_ENV`, `LOG_LEVEL` | Runtime |
+| Name                                                                                             | Use                                                              |
+| ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| `PARMANA_API_KEYS`                                                                               | Caller key entries (hashes); replaced as a whole (Part 7)        |
+| `POLICY_CHANGE_CHECKERS`                                                                         | Checkers allowed to approve policy changes (Part 11, scenario I) |
+| `DATABASE_URL`                                                                                   | Postgres connection (rotated 19 October)                         |
+| `KILL_SWITCH_ENABLED`, `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR`                                 | Kill switch and its reset rule (Part 29)                         |
+| `RATE_LIMIT_EXECUTE_PER_MINUTE`, `RATE_LIMIT_HEALTH_PER_MINUTE`                                  | Rate limits                                                      |
+| `POLICY_EXECUTION_VERIFICATION_ENFORCED`, `EXECUTION_AUTHORIZATION_TTL_SECONDS`, `TRUST_PROFILE` | Execution checks and lifetimes                                   |
+| `PRIMARY_SIGNATURE_PROVIDER`, `KEY_PROVIDER`, `CRYPTO_MODE`, `HASH_PROVIDER`                     | Cryptography and key custody (Part 25)                           |
+| `PARMANA_STORAGE`, `PARMANA_KEY_DIR`, `PARMANA_POLICY_DIR`, `PARMANA_GATEWAY_KEY_ID`             | Storage and file locations                                       |
+| `PAYTM_CONNECTOR_URL`, `PAYTM_CONNECTOR_TIMEOUT_MS`, `PAYTM_CONNECTOR_SHARED_SECRET`             | Paytm connector                                                  |
+| `APPROVAL_EMAIL_TO`, `RESEND_EMAIL_DOMAIN`, `RESEND_API_KEY`                                     | Approval email (Part 23.4)                                       |
+| `SLACK_ALLOWED_CHANNEL_IDS`                                                                      | Slack channel allowlist                                          |
+| `AWS_REGION`, `AWS_ROLE_ARN`                                                                     | AWS access for KMS                                               |
+| `NODE_ENV`, `LOG_LEVEL`                                                                          | Runtime                                                          |
 
 Values are secrets or configuration; do not print them. The CLI shows them as Hidden; a Config value is readable from the dashboard (Part 31, item 4).
 
@@ -1484,6 +1516,7 @@ Structured logs are written by the service. Monitor the production logs after ea
 ### 30.2 Incidents already on record
 
 From the repository's own notes:
+
 - A committed key (the "committed-key incident"), which is the exposure class behind the local-key roadmap item (Part 33).
 - The production Supabase database password was pasted into a chat and was rotated on 19 October. Vercel `DATABASE_URL` and the operator's local backup were updated; `/health`, `/ready` and an unauthenticated execute check were run afterwards.
 - Two test credentials were pasted into a chat and a local file during an approval-email test on 20 October. The bearer keys must be rotated; the local test files were deleted.
@@ -1501,20 +1534,20 @@ From the repository's own notes:
 
 Each item below is recorded in the repository's own notes. Owner and status are as recorded on the dates given.
 
-| # | Risk or decision | Status (as recorded) | Owner |
-| --- | --- | --- | --- |
-| 1 | `RESEND_API_KEY` is stored as a Config value, which anyone with dashboard access can reveal | Open (21 October). Done when `vercel env ls production` lists it as Secret | Operator |
-| 2 | Separation of duties: one operator holds both maker and checker roles | Open (19 October). Items that need two people stay open until a second person holds the checker credential | Founder |
-| 3 | Approval issuers are not scoped per policy; no quorum | Open (G-50) | Engineering |
-| 4 | Hybrid signing is not live in production | Open (G-119). Steps are in the repository notes; none has run in production | Engineering |
-| 5 | Downgrade of schema version 2 records | Open (G-120). A cutover setting closes it for new records once every record is hybrid-signed | Engineering |
-| 6 | Third-party verifiers do not read schema version 3 | Open (G-121). Schema version 3 stays off | Engineering |
-| 7 | Approval email not verified end to end | Deferred by decision (20 October); needs a second checker | Founder |
-| 8 | Release tags for SDK versions 1.2.0 to 1.6.0 do not exist in this repository | Open (22 October). Their tags need the earlier repository | Engineering |
-| 9 | CAGE integration design (ADR-0018) was never merged and its branches were deleted | Not built | Founder decides whether to revive |
-| 10 | Two test credentials pasted in chat (20 October) | Rotation required; check it is done | Operator |
-| 11 | No KMS/HSM for Azure, GCP or on-premise HSM | Designed, not built (Part 33) | Engineering |
-| 12 | The customer's approver is not limited to particular actions | Limitation (regulation mapping, Art. 26) | Product |
+| #   | Risk or decision                                                                            | Status (as recorded)                                                                                       | Owner                             |
+| --- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| 1   | `RESEND_API_KEY` is stored as a Config value, which anyone with dashboard access can reveal | Open (21 October). Done when `vercel env ls production` lists it as Secret                                 | Operator                          |
+| 2   | Separation of duties: one operator holds both maker and checker roles                       | Open (19 October). Items that need two people stay open until a second person holds the checker credential | Founder                           |
+| 3   | Approval issuers are not scoped per policy; no quorum                                       | Open (G-50)                                                                                                | Engineering                       |
+| 4   | Hybrid signing is not live in production                                                    | Open (G-119). Steps are in the repository notes; none has run in production                                | Engineering                       |
+| 5   | Downgrade of schema version 2 records                                                       | Open (G-120). A cutover setting closes it for new records once every record is hybrid-signed               | Engineering                       |
+| 6   | Third-party verifiers do not read schema version 3                                          | Open (G-121). Schema version 3 stays off                                                                   | Engineering                       |
+| 7   | Approval email not verified end to end                                                      | Deferred by decision (20 October); needs a second checker                                                  | Founder                           |
+| 8   | Release tags for SDK versions 1.2.0 to 1.6.0 do not exist in this repository                | Open (22 October). Their tags need the earlier repository                                                  | Engineering                       |
+| 9   | CAGE integration design (ADR-0018) was never merged and its branches were deleted           | Not built                                                                                                  | Founder decides whether to revive |
+| 10  | Two test credentials pasted in chat (20 October)                                            | Rotation required; check it is done                                                                        | Operator                          |
+| 11  | No KMS/HSM for Azure, GCP or on-premise HSM                                                 | Designed, not built (Part 33)                                                                              | Engineering                       |
+| 12  | The customer's approver is not limited to particular actions                                | Limitation (regulation mapping, Art. 26)                                                                   | Product                           |
 
 ---
 
@@ -1524,15 +1557,15 @@ Parmana is not legal advice, and it does not make a system compliant. It is a te
 
 ### 32.1 EU AI Act
 
-| Provision | Rating | What Parmana provides |
-| --- | --- | --- |
-| Art. 14(1) human oversight | Supports | A person is placed before every action: a signed approval for the action and resource, and the amount where the policy names one |
-| Art. 14(4)(a) monitoring | Partly | Signed records of every action and refusal; approvers can be told when a request waits |
-| Art. 14(4)(d) disregard or override | Supports | An action not signed is refused, and the refusal is recorded |
-| Art. 14(4)(e) intervene or stop | Partly | Remove an agent's key, revoke an approver or connector, approve a refusing policy. An action already released is not recalled |
-| Art. 12 record keeping | Supports | Signed execution and refusal records, and chained audit events, verifiable offline |
-| Art. 26(1), (2) competence and authority | Partly | Approvers are registered and recorded; choosing and training them is yours |
-| Art. 26(6) six-month logs | Partly | Records are kept in your database; retention is yours |
+| Provision                                | Rating   | What Parmana provides                                                                                                            |
+| ---------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Art. 14(1) human oversight               | Supports | A person is placed before every action: a signed approval for the action and resource, and the amount where the policy names one |
+| Art. 14(4)(a) monitoring                 | Partly   | Signed records of every action and refusal; approvers can be told when a request waits                                           |
+| Art. 14(4)(d) disregard or override      | Supports | An action not signed is refused, and the refusal is recorded                                                                     |
+| Art. 14(4)(e) intervene or stop          | Partly   | Remove an agent's key, revoke an approver or connector, approve a refusing policy. An action already released is not recalled    |
+| Art. 12 record keeping                   | Supports | Signed execution and refusal records, and chained audit events, verifiable offline                                               |
+| Art. 26(1), (2) competence and authority | Partly   | Approvers are registered and recorded; choosing and training them is yours                                                       |
+| Art. 26(6) six-month logs                | Partly   | Records are kept in your database; retention is yours                                                                            |
 
 The high-risk obligations apply from 2 December 2027 for Annex III systems and 2 August 2028 for Annex I systems, as stated in the mapping. Check the current text with counsel.
 
@@ -1567,12 +1600,12 @@ The founder should treat the roadmap as a list of decisions, not promises. Each 
 
 ### 34.1 Packages published
 
-| Package | Language | Version (as recorded) |
-| --- | --- | --- |
-| `@parmana/sdk` | TypeScript | 1.6.1 |
-| `parmana` | Python | 1.6.1 |
-| `@parmana/connector-sdk` | TypeScript | 0.3.1 |
-| `parmana-connector-sdk` | Python | 0.2.1 |
+| Package                  | Language   | Version (as recorded) |
+| ------------------------ | ---------- | --------------------- |
+| `@parmana/sdk`           | TypeScript | 1.6.1                 |
+| `parmana`                | Python     | 1.6.1                 |
+| `@parmana/connector-sdk` | TypeScript | 0.3.1                 |
+| `parmana-connector-sdk`  | Python     | 0.2.1                 |
 
 The release `sdk-v1.6.1` is on GitHub with the packages, SBOMs and provenance attached (22 October). Private repository links were removed from the package metadata of all four packages.
 
@@ -1583,6 +1616,7 @@ The TypeScript SDK exposes `ParmanaClient` (`execute`, `policyInEffect`, `caller
 ### 34.3 Writing a connector
 
 Two paths:
+
 - **External (no deploy):** build an endpoint, register it through governance (Part 6). Preferred for customers' own systems.
 - **Built-in (code):** implement the connector SDK, wire it into credential isolation, and add tests. `docs/connectors/BUILDING_A_CONNECTOR.md` is the guide.
 
@@ -1605,6 +1639,7 @@ What this means for the founder: the SDKs can be given to customers and partners
 ## Part 36. Go-to-market material
 
 Documents in the repository and public docs that support sales and diligence:
+
 - The technical paper (`docs/paper/parmana-paper.pdf`): design, threat model, evaluation and limitations.
 - The talk slides (`docs/paper/parmana-talk-slides.pdf`) and the demo video scripts.
 - "How Parmana compares" (honest comparison with IAM, API gateways and guardrails, including where Parmana is weaker).
@@ -1674,14 +1709,14 @@ Read these before committing to a customer on any capability.
 
 ## Part 40. Glossary additions
 
-| Term | Meaning |
-| --- | --- |
-| Checker scope | The list of checkers allowed to approve policy changes (`POLICY_CHANGE_CHECKERS`) |
-| Commitment (KMS) | The fixed form KMS signs for messages over 4096 bytes (Part 25.3) |
+| Term                 | Meaning                                                                                            |
+| -------------------- | -------------------------------------------------------------------------------------------------- |
+| Checker scope        | The list of checkers allowed to approve policy changes (`POLICY_CHANGE_CHECKERS`)                  |
+| Commitment (KMS)     | The fixed form KMS signs for messages over 4096 bytes (Part 25.3)                                  |
 | Credential isolation | The gateway holds the connector credential only inside its own boundary; the caller never holds it |
-| Kill switch | A system-wide stop of actions, with a reset rule that can require a second operator |
-| Refusal record | The signed record of a refused request |
-| Trust profile | A configured set of execution rules (`TRUST_PROFILE`) |
+| Kill switch          | A system-wide stop of actions, with a reset rule that can require a second operator                |
+| Refusal record       | The signed record of a refused request                                                             |
+| Trust profile        | A configured set of execution rules (`TRUST_PROFILE`)                                              |
 
 ---
 
@@ -1693,20 +1728,21 @@ Parmana can be connected to a system in six ways. Choose one per flow. Each has 
 
 ### 42.1 Overview
 
-| # | Mechanism | Who initiates | What crosses the boundary | Status |
-| --- | --- | --- | --- | --- |
-| A | Agent calls Parmana through an SDK | The agent's code | A business transaction; a trust record back | ✅ Used by the refund runner (TypeScript SDK) |
-| B | MCP tool bridge | An agent platform calling a tool | The tool call; a bridge call to Parmana | ✅ Deployed; ❌ platform registration pending |
-| C | External connector (ADR-0013) | Parmana, after approval | A signed release to your endpoint | ✅ Live for `razorpay:refund` |
-| D | Built-in connector (code) | Parmana, after approval | A call from Parmana's own connector to the external system | ✅ Four connectors, registered by configuration |
-| E | Business signal source | Parmana asks the source for a fact | A signed answer from the source | ⚠️ Built and live-checked earlier; not re-run in this book |
-| F | Governance API | The maker, the checker, the operator | Proposals and approvals | ✅ Used on 23 October for all change kinds that were run |
-| G | Offline verification by the customer | The customer | A record, checked with the public key | ✅ Verified in every approved run |
-| H | Signed event receiver | An external system posts events | A signed `refund.requested`-style event | ❌ Not built (scenario G) |
+| #   | Mechanism                            | Who initiates                        | What crosses the boundary                                  | Status                                                     |
+| --- | ------------------------------------ | ------------------------------------ | ---------------------------------------------------------- | ---------------------------------------------------------- |
+| A   | Agent calls Parmana through an SDK   | The agent's code                     | A business transaction; a trust record back                | ✅ Used by the refund runner (TypeScript SDK)              |
+| B   | MCP tool bridge                      | An agent platform calling a tool     | The tool call; a bridge call to Parmana                    | ✅ Deployed; ❌ platform registration pending              |
+| C   | External connector (ADR-0013)        | Parmana, after approval              | A signed release to your endpoint                          | ✅ Live for `razorpay:refund`                              |
+| D   | Built-in connector (code)            | Parmana, after approval              | A call from Parmana's own connector to the external system | ✅ Four connectors, registered by configuration            |
+| E   | Business signal source               | Parmana asks the source for a fact   | A signed answer from the source                            | ⚠️ Built and live-checked earlier; not re-run in this book |
+| F   | Governance API                       | The maker, the checker, the operator | Proposals and approvals                                    | ✅ Used on 23 October for all change kinds that were run   |
+| G   | Offline verification by the customer | The customer                         | A record, checked with the public key                      | ✅ Verified in every approved run                          |
+| H   | Signed event receiver                | An external system posts events      | A signed `refund.requested`-style event                    | ❌ Not built (scenario G)                                  |
 
 ### 42.2 Mechanism A: an agent calls Parmana through an SDK
 
 Flow:
+
 1. Create a client with the endpoint, the caller's API key and a timeout.
 2. Read the caller's identity (`caller()`) and the policy in force for the capability (`policyInEffect(capability)`).
 3. Build the business transaction: principal, purpose, action (the capability), target, parameters, the policy reference, and the signals the policy declares.
@@ -1727,7 +1763,10 @@ const tx = createBusinessTransaction({
   target: paymentId,
   parameters: { amount: amountPaise },
   policy: inEffect.policy,
-  signals: { refundAmount: amountPaise, managerApproved: approval !== undefined },
+  signals: {
+    refundAmount: amountPaise,
+    managerApproved: approval !== undefined,
+  },
 });
 try {
   const record = await client.execute(tx);
@@ -1739,6 +1778,7 @@ try {
 ```
 
 Points to remember:
+
 - The `signals` object must include every fact the policy declares, and every bound signal must match the intent. A mismatch is rejected as a tamper attempt.
 - `businessTransactionId` is an idempotency key. Reuse it only for the same attempt.
 - A timeout is not a failure report. Read the trust record before retrying (scenario J).
@@ -1756,6 +1796,7 @@ Use when an agent platform calls tools over MCP. The bridge is `examples/razorpa
 Use for a system you own, or one whose team will build an endpoint. No code change in Parmana.
 
 Contract the endpoint must meet:
+
 - Accept `POST` with a JSON body `{ release, signature }`.
 - Verify with `verifyParmanaRelease(body, { publicKeys, audience })`. The audience must equal the endpoint's own registered URL.
 - Check the release is not expired (verification does this).
@@ -1791,13 +1832,13 @@ Status: built and live-checked during earlier work; the source and the policy we
 
 Every governed change is available through three routes: the operator script (`examples/live-checks/governance.ts`), the TypeScript SDK (`propose*`, `approve*`, `reject*`), and the Python SDK (`propose_policy_change`, `approve_policy_change`, `reject_policy_change`, and the matching functions for each change kind).
 
-| Change kind | SDK propose | SDK approve | SDK reject | Operator script |
-| --- | --- | --- | --- | --- |
-| Policy | `proposePolicyChange` | `approvePolicyChange` | `rejectPolicyChange` | propose-policy, approve |
-| Approver | `proposeApproverChange` | `approveApproverChange` | `rejectApproverChange` | ❌ not in script |
-| External connector | `proposeExternalConnectorChange` | `approveExternalConnectorChange` | `rejectExternalConnectorChange` | propose-connector, propose-revoke, approve |
-| Signal source | `proposeBusinessSignalSourceChange` | `approveBusinessSignalSourceChange` | `rejectBusinessSignalSourceChange` | propose-source, propose-revoke, approve |
-| Authority grant | `proposeAuthorityGrantChange` | `approveAuthorityGrantChange` | `rejectAuthorityGrantChange` | propose-grant, propose-revoke, approve |
+| Change kind        | SDK propose                         | SDK approve                         | SDK reject                         | Operator script                            |
+| ------------------ | ----------------------------------- | ----------------------------------- | ---------------------------------- | ------------------------------------------ |
+| Policy             | `proposePolicyChange`               | `approvePolicyChange`               | `rejectPolicyChange`               | propose-policy, approve                    |
+| Approver           | `proposeApproverChange`             | `approveApproverChange`             | `rejectApproverChange`             | ❌ not in script                           |
+| External connector | `proposeExternalConnectorChange`    | `approveExternalConnectorChange`    | `rejectExternalConnectorChange`    | propose-connector, propose-revoke, approve |
+| Signal source      | `proposeBusinessSignalSourceChange` | `approveBusinessSignalSourceChange` | `rejectBusinessSignalSourceChange` | propose-source, propose-revoke, approve    |
+| Authority grant    | `proposeAuthorityGrantChange`       | `approveAuthorityGrantChange`       | `rejectAuthorityGrantChange`       | propose-grant, propose-revoke, approve     |
 
 Correction to earlier chapters: the operator script has no reject command, but the SDK and the API do. Reject through the SDK, or add the command to the script (gap 1).
 
@@ -1820,16 +1861,16 @@ The Razorpay spec describes a support channel that posts signed `refund.requeste
 
 ### 42.10 Choosing a mechanism
 
-| If the system is | Use | Why |
-| --- | --- | --- |
-| An agent you write | A (SDK) | Direct, typed, and you control the signals |
-| An agent platform that calls tools | B (MCP bridge) | The platform owns the agent; you own the bridge |
-| A system you run that acts on requests | C (external connector) | No code change in Parmana; you verify releases |
-| A standard integration Parmana already supports | D (built-in) | Already tested for its configuration |
-| A source of facts for a policy | E (signal source) | The policy trusts the source's signed answer, not the caller |
-| Your own team making changes | F (governance) | Maker and checker, with step-up |
-| A customer who needs proof | G (offline verification) | Independent of Parmana's servers |
-| A system that pushes events at you | H (event receiver) | Not built |
+| If the system is                                | Use                      | Why                                                          |
+| ----------------------------------------------- | ------------------------ | ------------------------------------------------------------ |
+| An agent you write                              | A (SDK)                  | Direct, typed, and you control the signals                   |
+| An agent platform that calls tools              | B (MCP bridge)           | The platform owns the agent; you own the bridge              |
+| A system you run that acts on requests          | C (external connector)   | No code change in Parmana; you verify releases               |
+| A standard integration Parmana already supports | D (built-in)             | Already tested for its configuration                         |
+| A source of facts for a policy                  | E (signal source)        | The policy trusts the source's signed answer, not the caller |
+| Your own team making changes                    | F (governance)           | Maker and checker, with step-up                              |
+| A customer who needs proof                      | G (offline verification) | Independent of Parmana's servers                             |
+| A system that pushes events at you              | H (event receiver)       | Not built                                                    |
 
 ---
 
@@ -1837,12 +1878,12 @@ The Razorpay spec describes a support channel that posts signed `refund.requeste
 
 ### 43.1 Packages
 
-| Package | Language | Version | Purpose |
-| --- | --- | --- | --- |
-| `@parmana/sdk` | TypeScript | 1.6.1 | Client, builders, signing for approvals, offline verification, release verification |
-| `parmana` | Python | 1.6.1 | Client, models, approval signing, offline verification |
-| `@parmana/connector-sdk` | TypeScript | 0.3.1 | Building built-in connectors; capability types; mock connector; credential provider |
-| `parmana-connector-sdk` | Python | 0.2.1 | Connector types and helpers in Python |
+| Package                  | Language   | Version | Purpose                                                                             |
+| ------------------------ | ---------- | ------- | ----------------------------------------------------------------------------------- |
+| `@parmana/sdk`           | TypeScript | 1.6.1   | Client, builders, signing for approvals, offline verification, release verification |
+| `parmana`                | Python     | 1.6.1   | Client, models, approval signing, offline verification                              |
+| `@parmana/connector-sdk` | TypeScript | 0.3.1   | Building built-in connectors; capability types; mock connector; credential provider |
+| `parmana-connector-sdk`  | Python     | 0.2.1   | Connector types and helpers in Python                                               |
 
 The release `sdk-v1.6.1` is on GitHub with packages, SBOMs and provenance (22 October).
 
@@ -1905,21 +1946,21 @@ Methods (public, as in `typescript/src/client/ParmanaClient.ts`):
 
 Errors: every SDK error extends `ParmanaError` and carries a code.
 
-| Code | Meaning in practice |
-| --- | --- |
-| `CONFIGURATION_ERROR` | The client or server is misconfigured (for example a missing endpoint). Fix configuration; retrying does not help. |
-| `VALIDATION_ERROR` | The request is malformed or fails validation. Fix the request before retrying. |
-| `AUTHENTICATION_ERROR` | The credential is missing or not accepted (HTTP 401). Check the key (scenario K). |
-| `AUTHORIZATION_ERROR` | The caller is authenticated but not allowed this action (HTTP 403). |
-| `NOT_FOUND_ERROR` | The record or route does not exist, or is not visible to this caller (cross-caller reads return 404). |
-| `CONFLICT_ERROR` | The change conflicts with existing state, for example a pending change or an active connector. |
-| `EXECUTION_REJECTED` | Parmana refused the action. The SDK raises ExecutionRejectedError; the refusal record explains the rule. |
-| `VERIFICATION_ERROR` | A record or signature did not verify. |
-| `REPLAY_ERROR` | A replay was detected or a replayed record is not acceptable. |
-| `NETWORK_ERROR` | The request did not reach the server. Retry with backoff. |
-| `TIMEOUT_ERROR` | The request timed out. Do not assume failure or success: read the trust record first (scenario J). |
-| `RATE_LIMIT_ERROR` | Too many requests in the window. Back off and retry later. |
-| `INTERNAL_SERVER_ERROR` | The server failed. Check logs and /ready; retry only idempotent requests. |
+| Code                    | Meaning in practice                                                                                                |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `CONFIGURATION_ERROR`   | The client or server is misconfigured (for example a missing endpoint). Fix configuration; retrying does not help. |
+| `VALIDATION_ERROR`      | The request is malformed or fails validation. Fix the request before retrying.                                     |
+| `AUTHENTICATION_ERROR`  | The credential is missing or not accepted (HTTP 401). Check the key (scenario K).                                  |
+| `AUTHORIZATION_ERROR`   | The caller is authenticated but not allowed this action (HTTP 403).                                                |
+| `NOT_FOUND_ERROR`       | The record or route does not exist, or is not visible to this caller (cross-caller reads return 404).              |
+| `CONFLICT_ERROR`        | The change conflicts with existing state, for example a pending change or an active connector.                     |
+| `EXECUTION_REJECTED`    | Parmana refused the action. The SDK raises ExecutionRejectedError; the refusal record explains the rule.           |
+| `VERIFICATION_ERROR`    | A record or signature did not verify.                                                                              |
+| `REPLAY_ERROR`          | A replay was detected or a replayed record is not acceptable.                                                      |
+| `NETWORK_ERROR`         | The request did not reach the server. Retry with backoff.                                                          |
+| `TIMEOUT_ERROR`         | The request timed out. Do not assume failure or success: read the trust record first (scenario J).                 |
+| `RATE_LIMIT_ERROR`      | Too many requests in the window. Back off and retry later.                                                         |
+| `INTERNAL_SERVER_ERROR` | The server failed. Check logs and /ready; retry only idempotent requests.                                          |
 
 Refusals are raised as `ExecutionRejectedError` (code `EXECUTION_REJECTED`).
 
@@ -1993,73 +2034,74 @@ Methods:
 
 The API has the operations below, read from the OpenAPI specification (`openapi/openapi.yaml`). Each route's request and response schema is in the specification and in the public reference (`docs/site/api-reference`).
 
-| Method | Path | Operation ID | Summary |
-| --- | --- | --- | --- |
-| GET | `/` | `getRoot` | Root |
-| GET | `/health` | `getHealth` | Health check |
-| GET | `/ready` | `getReady` | Readiness check |
-| GET | `/openapi.yaml` | `getOpenApiSpec` | Get the OpenAPI spec |
-| GET | `/openapi.json` | `getOpenApiSpecJson` | Get the OpenAPI spec, as JSON |
-| GET | `/api-manifest.json` | `getApiManifest` | Machine-readable SDK and discovery manifest |
-| GET | `/version` | `getVersion` | Service version |
-| GET | `/keys/{keyId}` | `getKey` | Fetch a public signing key for independent, offline verification |
-| GET | `/.well-known/jwks.json` | `getJwks` | List every public signing key this deployment can currently produce |
-| GET | `/callers/me` | `getCallerMe` | Get the authenticated caller's identity and resolved scope |
-| POST | `/execute` | `executeTransaction` | Execute a Business Transaction |
-| GET | `/transactions` | `listTransactions` | List Business Transactions |
-| POST | `/transactions` | `createTransaction` | Create (execute) a Business Transaction |
-| GET | `/transactions/{businessTransactionId}` | `getTransaction` | Get Business Transaction |
-| POST | `/verify` | `verifyTransaction` | Verify an Execution Trust Record |
-| GET | `/verification/{businessTransactionId}` | `getLatestVerification` | Get latest Verification |
-| POST | `/refusal/verify` | `verifyRefusalRecord` | Verify a Refusal Record's signature |
-| GET | `/parmana-handbook.pdf` | `getHandbookPdf` | Download the Parmana Handbook (PDF) |
-| GET | `/handbook/download-leads` | `getHandbookDownloadLead` | Capture an email address, then redirect straight to the handbook PDF |
-| POST | `/handbook/download-leads` | `createHandbookDownloadLead` | Capture an email address before unlocking the handbook PDF download |
-| GET | `/refusal/{businessTransactionId}` | `getRefusalRecord` | Get a Refusal Record by transaction ID |
-| POST | `/execution-intents/verify` | `verifyExecutionIntent` | Verify an Execution Intent's signature |
-| GET | `/execution-intents/unfinalized` | `listUnfinalizedExecutionIntents` | List Execution Intents that never reached a signed Trust Record |
-| GET | `/execution-intents/{businessTransactionId}` | `getExecutionIntent` | Get an Execution Intent and its status |
-| POST | `/execution-intents/{businessTransactionId}/finalize` | `finalizeExecutionIntent` | Rebuild the signed Trust Record for a released action |
-| POST | `/execution-intents/{businessTransactionId}/resolve` | `resolveExecutionIntent` | Close an intent you reconciled by hand |
-| POST | `/audit/verify` | `verifyAuditEvent` | Verify a signed caller-authentication audit event |
-| POST | `/receipt` | `generateReceipt` | Generate a Receipt |
-| GET | `/receipt/latest/{businessTransactionId}` | `getLatestReceipt` | Get latest Receipt |
-| GET | `/trust-records` | `listTrustRecords` | Bulk-export Execution Trust Records (compliance/audit) |
-| GET | `/trust-records/{businessTransactionId}` | `getTrustRecord` | Get Execution Trust Record |
-| POST | `/replay` | `replayTransaction` | Replay an Execution Trust Record |
-| GET | `/policies/in-effect` | `getPolicyInEffect` | Get the policy a capability's requests must declare right now |
-| POST | `/policies/validate` | `validatePolicy` | Validate that a Policy exists and is readable |
-| POST | `/policies/{name}/{version}/pending-changes` | `proposePolicyChange` | Propose a policy change (maker) |
-| GET | `/policies/pending-changes` | `listPendingPolicyChanges` | List pending policy changes (maker-checker) |
-| POST | `/kill-switch/trip` | `tripKillSwitch` | Trip the operator kill switch |
-| POST | `/kill-switch/reset` | `resetKillSwitch` | Reset the operator kill switch |
-| GET | `/kill-switch/status` | `getKillSwitchStatus` | Read the kill switch state |
-| POST | `/kill-switch/probes` | `recordKillSwitchProbe` | Record a kill switch probe result |
-| POST | `/policies/pending-changes/{id}/approve` | `approvePolicyChange` | Approve a pending policy change (checker) |
-| POST | `/policies/pending-changes/{id}/reject` | `rejectPolicyChange` | Reject a pending policy change (checker) |
-| GET | `/approval-issuers` | `listApprovalIssuers` | List approver keys |
-| GET | `/approval-issuers/changes` | `listApprovalIssuerChanges` | List approver changes |
-| POST | `/approval-issuers/changes` | `proposeApprovalIssuerChange` | Propose adding or revoking an approver key |
-| POST | `/approval-issuers/changes/{id}/approve` | `approveApprovalIssuerChange` | Approve an approver change |
-| POST | `/approval-issuers/changes/{id}/reject` | `rejectApprovalIssuerChange` | Reject an approver change |
-| GET | `/external-connectors` | `listExternalConnectors` | List external connectors |
-| GET | `/external-connectors/changes` | `listExternalConnectorChanges` | List external connector changes |
-| POST | `/external-connectors/changes` | `proposeExternalConnectorChange` | Propose registering or revoking an external connector |
-| POST | `/external-connectors/changes/{id}/approve` | `approveExternalConnectorChange` | Approve an external connector change |
-| POST | `/external-connectors/changes/{id}/reject` | `rejectExternalConnectorChange` | Reject an external connector change |
-| GET | `/business-signal-sources` | `listBusinessSignalSources` | List business signal sources |
-| GET | `/business-signal-sources/changes` | `listBusinessSignalSourceChanges` | List business signal source changes |
-| POST | `/business-signal-sources/changes` | `proposeBusinessSignalSourceChange` | Propose registering or revoking a business signal source |
-| POST | `/business-signal-sources/changes/{id}/approve` | `approveBusinessSignalSourceChange` | Approve a business signal source change |
-| POST | `/business-signal-sources/changes/{id}/reject` | `rejectBusinessSignalSourceChange` | Reject a business signal source change |
-| GET | `/authority-grants` | `listAuthorityGrants` | List authority grants |
-| GET | `/authority-grants/changes` | `listAuthorityGrantChanges` | List authority grant changes |
-| POST | `/authority-grants/changes` | `proposeAuthorityGrantChange` | Propose granting or revoking an agent's authority |
-| POST | `/authority-grants/changes/{id}/approve` | `approveAuthorityGrantChange` | Approve an authority grant change |
-| POST | `/authority-grants/changes/{id}/reject` | `rejectAuthorityGrantChange` | Reject an authority grant change |
-| POST | `/sandbox/approvals` | `createSandboxApproval` | Get a demo approval (sandbox only) |
+| Method | Path                                                  | Operation ID                        | Summary                                                              |
+| ------ | ----------------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------- |
+| GET    | `/`                                                   | `getRoot`                           | Root                                                                 |
+| GET    | `/health`                                             | `getHealth`                         | Health check                                                         |
+| GET    | `/ready`                                              | `getReady`                          | Readiness check                                                      |
+| GET    | `/openapi.yaml`                                       | `getOpenApiSpec`                    | Get the OpenAPI spec                                                 |
+| GET    | `/openapi.json`                                       | `getOpenApiSpecJson`                | Get the OpenAPI spec, as JSON                                        |
+| GET    | `/api-manifest.json`                                  | `getApiManifest`                    | Machine-readable SDK and discovery manifest                          |
+| GET    | `/version`                                            | `getVersion`                        | Service version                                                      |
+| GET    | `/keys/{keyId}`                                       | `getKey`                            | Fetch a public signing key for independent, offline verification     |
+| GET    | `/.well-known/jwks.json`                              | `getJwks`                           | List every public signing key this deployment can currently produce  |
+| GET    | `/callers/me`                                         | `getCallerMe`                       | Get the authenticated caller's identity and resolved scope           |
+| POST   | `/execute`                                            | `executeTransaction`                | Execute a Business Transaction                                       |
+| GET    | `/transactions`                                       | `listTransactions`                  | List Business Transactions                                           |
+| POST   | `/transactions`                                       | `createTransaction`                 | Create (execute) a Business Transaction                              |
+| GET    | `/transactions/{businessTransactionId}`               | `getTransaction`                    | Get Business Transaction                                             |
+| POST   | `/verify`                                             | `verifyTransaction`                 | Verify an Execution Trust Record                                     |
+| GET    | `/verification/{businessTransactionId}`               | `getLatestVerification`             | Get latest Verification                                              |
+| POST   | `/refusal/verify`                                     | `verifyRefusalRecord`               | Verify a Refusal Record's signature                                  |
+| GET    | `/parmana-handbook.pdf`                               | `getHandbookPdf`                    | Download the Parmana Handbook (PDF)                                  |
+| GET    | `/handbook/download-leads`                            | `getHandbookDownloadLead`           | Capture an email address, then redirect straight to the handbook PDF |
+| POST   | `/handbook/download-leads`                            | `createHandbookDownloadLead`        | Capture an email address before unlocking the handbook PDF download  |
+| GET    | `/refusal/{businessTransactionId}`                    | `getRefusalRecord`                  | Get a Refusal Record by transaction ID                               |
+| POST   | `/execution-intents/verify`                           | `verifyExecutionIntent`             | Verify an Execution Intent's signature                               |
+| GET    | `/execution-intents/unfinalized`                      | `listUnfinalizedExecutionIntents`   | List Execution Intents that never reached a signed Trust Record      |
+| GET    | `/execution-intents/{businessTransactionId}`          | `getExecutionIntent`                | Get an Execution Intent and its status                               |
+| POST   | `/execution-intents/{businessTransactionId}/finalize` | `finalizeExecutionIntent`           | Rebuild the signed Trust Record for a released action                |
+| POST   | `/execution-intents/{businessTransactionId}/resolve`  | `resolveExecutionIntent`            | Close an intent you reconciled by hand                               |
+| POST   | `/audit/verify`                                       | `verifyAuditEvent`                  | Verify a signed caller-authentication audit event                    |
+| POST   | `/receipt`                                            | `generateReceipt`                   | Generate a Receipt                                                   |
+| GET    | `/receipt/latest/{businessTransactionId}`             | `getLatestReceipt`                  | Get latest Receipt                                                   |
+| GET    | `/trust-records`                                      | `listTrustRecords`                  | Bulk-export Execution Trust Records (compliance/audit)               |
+| GET    | `/trust-records/{businessTransactionId}`              | `getTrustRecord`                    | Get Execution Trust Record                                           |
+| POST   | `/replay`                                             | `replayTransaction`                 | Replay an Execution Trust Record                                     |
+| GET    | `/policies/in-effect`                                 | `getPolicyInEffect`                 | Get the policy a capability's requests must declare right now        |
+| POST   | `/policies/validate`                                  | `validatePolicy`                    | Validate that a Policy exists and is readable                        |
+| POST   | `/policies/{name}/{version}/pending-changes`          | `proposePolicyChange`               | Propose a policy change (maker)                                      |
+| GET    | `/policies/pending-changes`                           | `listPendingPolicyChanges`          | List pending policy changes (maker-checker)                          |
+| POST   | `/kill-switch/trip`                                   | `tripKillSwitch`                    | Trip the operator kill switch                                        |
+| POST   | `/kill-switch/reset`                                  | `resetKillSwitch`                   | Reset the operator kill switch                                       |
+| GET    | `/kill-switch/status`                                 | `getKillSwitchStatus`               | Read the kill switch state                                           |
+| POST   | `/kill-switch/probes`                                 | `recordKillSwitchProbe`             | Record a kill switch probe result                                    |
+| POST   | `/policies/pending-changes/{id}/approve`              | `approvePolicyChange`               | Approve a pending policy change (checker)                            |
+| POST   | `/policies/pending-changes/{id}/reject`               | `rejectPolicyChange`                | Reject a pending policy change (checker)                             |
+| GET    | `/approval-issuers`                                   | `listApprovalIssuers`               | List approver keys                                                   |
+| GET    | `/approval-issuers/changes`                           | `listApprovalIssuerChanges`         | List approver changes                                                |
+| POST   | `/approval-issuers/changes`                           | `proposeApprovalIssuerChange`       | Propose adding or revoking an approver key                           |
+| POST   | `/approval-issuers/changes/{id}/approve`              | `approveApprovalIssuerChange`       | Approve an approver change                                           |
+| POST   | `/approval-issuers/changes/{id}/reject`               | `rejectApprovalIssuerChange`        | Reject an approver change                                            |
+| GET    | `/external-connectors`                                | `listExternalConnectors`            | List external connectors                                             |
+| GET    | `/external-connectors/changes`                        | `listExternalConnectorChanges`      | List external connector changes                                      |
+| POST   | `/external-connectors/changes`                        | `proposeExternalConnectorChange`    | Propose registering or revoking an external connector                |
+| POST   | `/external-connectors/changes/{id}/approve`           | `approveExternalConnectorChange`    | Approve an external connector change                                 |
+| POST   | `/external-connectors/changes/{id}/reject`            | `rejectExternalConnectorChange`     | Reject an external connector change                                  |
+| GET    | `/business-signal-sources`                            | `listBusinessSignalSources`         | List business signal sources                                         |
+| GET    | `/business-signal-sources/changes`                    | `listBusinessSignalSourceChanges`   | List business signal source changes                                  |
+| POST   | `/business-signal-sources/changes`                    | `proposeBusinessSignalSourceChange` | Propose registering or revoking a business signal source             |
+| POST   | `/business-signal-sources/changes/{id}/approve`       | `approveBusinessSignalSourceChange` | Approve a business signal source change                              |
+| POST   | `/business-signal-sources/changes/{id}/reject`        | `rejectBusinessSignalSourceChange`  | Reject a business signal source change                               |
+| GET    | `/authority-grants`                                   | `listAuthorityGrants`               | List authority grants                                                |
+| GET    | `/authority-grants/changes`                           | `listAuthorityGrantChanges`         | List authority grant changes                                         |
+| POST   | `/authority-grants/changes`                           | `proposeAuthorityGrantChange`       | Propose granting or revoking an agent's authority                    |
+| POST   | `/authority-grants/changes/{id}/approve`              | `approveAuthorityGrantChange`       | Approve an authority grant change                                    |
+| POST   | `/authority-grants/changes/{id}/reject`               | `rejectAuthorityGrantChange`        | Reject an authority grant change                                     |
+| POST   | `/sandbox/approvals`                                  | `createSandboxApproval`             | Get a demo approval (sandbox only)                                   |
 
 Notes:
+
 - Governance reads and writes need the caller's key to be provisioned for that kind of work. Governance routes refuse keys not provisioned as a human (limitations).
 - Cross-caller reads of transactions and records return 404, not 403.
 - Public routes (`/`, `/health`, `/ready`, `/version`, `/keys/...`, `/.well-known/jwks.json`, `/openapi.yaml`) need no key.
@@ -2070,55 +2112,55 @@ Notes:
 
 Every npm script in `package.json`:
 
-| Script | Command |
-| --- | --- |
-| `prepare` | `git config core.hooksPath scripts/git-hooks \|\| true` |
-| `build` | `npm run openapi && node node_modules/typescript7/bin/tsc -b && npm run build --workspace=typescript` |
-| `build:verbose` | `node node_modules/typescript7/bin/tsc -b --verbose` |
-| `build:force` | `node node_modules/typescript7/bin/tsc -b --force --verbose` |
-| `clean` | `node node_modules/typescript7/bin/tsc -b --clean` |
-| `openapi` | `npm run lint:openapi && npx redocly bundle openapi/openapi.yaml -o openapi/openapi.bundled.yaml --ext yaml && npx tsx scripts/strip-openapi-schema-ids.ts && npx` |
-| `bundle:openapi` | `redocly bundle openapi/openapi.yaml -o openapi/openapi.bundled.yaml --ext yaml && tsx scripts/strip-openapi-schema-ids.ts && tsx scripts/add-openapi-code-sample` |
-| `lint:openapi` | `redocly lint openapi/openapi.yaml` |
-| `rebuild` | `npm run clean && npm run build:force` |
-| `dev` | `tsx packages/api/src/server.ts` |
-| `generate:gateway-keys` | `tsx scripts/generate-keypair.ts --algorithm ed25519 --key-id gateway` |
-| `generate:hybrid-secondary-key` | `tsx scripts/generate-keypair.ts --algorithm dilithium3 --key-id default-secondary` |
-| `generate:api-key` | `tsx scripts/generate-api-key.ts` |
-| `generate:migration-bundle` | `tsx scripts/generate-migration-bundle.ts` |
-| `db:migrate` | `tsx scripts/migrate-database.ts` |
-| `verify:kms` | `tsx scripts/verify-kms-signing.ts` |
-| `generate:llms-txt` | `tsx scripts/generate-llms-txt.ts` |
-| `generate:postman` | `tsx scripts/generate-postman-collection.ts` |
-| `check:sdk-docs` | `tsx scripts/check-sdk-docs.ts` |
-| `generate:endpoint-pages` | `tsx scripts/generate-endpoint-pages.ts` |
-| `generate:build-book-reference` | `tsx scripts/generate-build-book-reference.ts` |
-| `generate:build-book-pdf` | `tsx scripts/generate-build-book-pdf.ts` |
-| `generate:typescript-sdk-reference` | `tsx scripts/generate-typescript-sdk-reference.ts` |
-| `generate:python-sdk-reference` | `tsx scripts/generate-python-sdk-reference.ts` |
-| `rotate:verification-key` | `tsx scripts/rotate-verification-key.ts` |
-| `typecheck` | `node node_modules/typescript7/bin/tsc --noEmit -p tsconfig.json` |
-| `lint` | `eslint . --ext .ts` |
-| `lint:fix` | `eslint . --ext .ts --fix` |
-| `format` | `prettier --write .` |
-| `format:check` | `prettier --check .` |
-| `pretest` | `tsx scripts/check-dist-fresh.ts` |
-| `test` | `vitest run` |
-| `test:watch` | `vitest` |
-| `coverage` | `vitest run --coverage` |
-| `examples` | `tsx scripts/run-examples.ts` |
-| `preevaluate` | `tsx scripts/check-dist-fresh.ts` |
-| `evaluate` | `tsx scripts/evaluate.ts` |
-| `evaluate:agentrust-refund` | `tsx scripts/evaluate-agentrust-refund.ts` |
-| `mutation` | `tsx scripts/mutation.ts` |
-| `policy-log:verify` | `tsx scripts/policy-approval-log.ts verify` |
-| `policy-log:export` | `tsx scripts/policy-approval-log.ts export` |
-| `policy-log:check-db` | `tsx scripts/policy-approval-log.ts check-db` |
-| `loadtest` | `tsx scripts/load-test.ts` |
-| `generate:python-models` | `tsx python/scripts/generate_models.ts` |
-| `check:python-models` | `tsx python/scripts/generate_models.ts --check` |
-| `check` | `npm run typecheck && npm run lint && npm run format:check && npm run check:python-models && npm run test && npm run build` |
-| `preflight` | `npm run check && npm run examples` |
+| Script                              | Command                                                                                                                                                            |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `prepare`                           | `git config core.hooksPath scripts/git-hooks \|\| true`                                                                                                            |
+| `build`                             | `npm run openapi && node node_modules/typescript7/bin/tsc -b && npm run build --workspace=typescript`                                                              |
+| `build:verbose`                     | `node node_modules/typescript7/bin/tsc -b --verbose`                                                                                                               |
+| `build:force`                       | `node node_modules/typescript7/bin/tsc -b --force --verbose`                                                                                                       |
+| `clean`                             | `node node_modules/typescript7/bin/tsc -b --clean`                                                                                                                 |
+| `openapi`                           | `npm run lint:openapi && npx redocly bundle openapi/openapi.yaml -o openapi/openapi.bundled.yaml --ext yaml && npx tsx scripts/strip-openapi-schema-ids.ts && npx` |
+| `bundle:openapi`                    | `redocly bundle openapi/openapi.yaml -o openapi/openapi.bundled.yaml --ext yaml && tsx scripts/strip-openapi-schema-ids.ts && tsx scripts/add-openapi-code-sample` |
+| `lint:openapi`                      | `redocly lint openapi/openapi.yaml`                                                                                                                                |
+| `rebuild`                           | `npm run clean && npm run build:force`                                                                                                                             |
+| `dev`                               | `tsx packages/api/src/server.ts`                                                                                                                                   |
+| `generate:gateway-keys`             | `tsx scripts/generate-keypair.ts --algorithm ed25519 --key-id gateway`                                                                                             |
+| `generate:hybrid-secondary-key`     | `tsx scripts/generate-keypair.ts --algorithm dilithium3 --key-id default-secondary`                                                                                |
+| `generate:api-key`                  | `tsx scripts/generate-api-key.ts`                                                                                                                                  |
+| `generate:migration-bundle`         | `tsx scripts/generate-migration-bundle.ts`                                                                                                                         |
+| `db:migrate`                        | `tsx scripts/migrate-database.ts`                                                                                                                                  |
+| `verify:kms`                        | `tsx scripts/verify-kms-signing.ts`                                                                                                                                |
+| `generate:llms-txt`                 | `tsx scripts/generate-llms-txt.ts`                                                                                                                                 |
+| `generate:postman`                  | `tsx scripts/generate-postman-collection.ts`                                                                                                                       |
+| `check:sdk-docs`                    | `tsx scripts/check-sdk-docs.ts`                                                                                                                                    |
+| `generate:endpoint-pages`           | `tsx scripts/generate-endpoint-pages.ts`                                                                                                                           |
+| `generate:build-book-reference`     | `tsx scripts/generate-build-book-reference.ts`                                                                                                                     |
+| `generate:build-book-pdf`           | `tsx scripts/generate-build-book-pdf.ts`                                                                                                                           |
+| `generate:typescript-sdk-reference` | `tsx scripts/generate-typescript-sdk-reference.ts`                                                                                                                 |
+| `generate:python-sdk-reference`     | `tsx scripts/generate-python-sdk-reference.ts`                                                                                                                     |
+| `rotate:verification-key`           | `tsx scripts/rotate-verification-key.ts`                                                                                                                           |
+| `typecheck`                         | `node node_modules/typescript7/bin/tsc --noEmit -p tsconfig.json`                                                                                                  |
+| `lint`                              | `eslint . --ext .ts`                                                                                                                                               |
+| `lint:fix`                          | `eslint . --ext .ts --fix`                                                                                                                                         |
+| `format`                            | `prettier --write .`                                                                                                                                               |
+| `format:check`                      | `prettier --check .`                                                                                                                                               |
+| `pretest`                           | `tsx scripts/check-dist-fresh.ts`                                                                                                                                  |
+| `test`                              | `vitest run`                                                                                                                                                       |
+| `test:watch`                        | `vitest`                                                                                                                                                           |
+| `coverage`                          | `vitest run --coverage`                                                                                                                                            |
+| `examples`                          | `tsx scripts/run-examples.ts`                                                                                                                                      |
+| `preevaluate`                       | `tsx scripts/check-dist-fresh.ts`                                                                                                                                  |
+| `evaluate`                          | `tsx scripts/evaluate.ts`                                                                                                                                          |
+| `evaluate:agentrust-refund`         | `tsx scripts/evaluate-agentrust-refund.ts`                                                                                                                         |
+| `mutation`                          | `tsx scripts/mutation.ts`                                                                                                                                          |
+| `policy-log:verify`                 | `tsx scripts/policy-approval-log.ts verify`                                                                                                                        |
+| `policy-log:export`                 | `tsx scripts/policy-approval-log.ts export`                                                                                                                        |
+| `policy-log:check-db`               | `tsx scripts/policy-approval-log.ts check-db`                                                                                                                      |
+| `loadtest`                          | `tsx scripts/load-test.ts`                                                                                                                                         |
+| `generate:python-models`            | `tsx python/scripts/generate_models.ts`                                                                                                                            |
+| `check:python-models`               | `tsx python/scripts/generate_models.ts --check`                                                                                                                    |
+| `check`                             | `npm run typecheck && npm run lint && npm run format:check && npm run check:python-models && npm run test && npm run build`                                        |
+| `preflight`                         | `npm run check && npm run examples`                                                                                                                                |
 
 Commands used in this book that are not npm scripts are in Part 13.
 
@@ -2128,94 +2170,94 @@ Commands used in this book that are not npm scripts are in Part 13.
 
 Every variable named in `.env.example`. Variables marked "(see .env.example)" have no inline comment there; read the file before setting them.
 
-| Variable | Meaning (from `.env.example`; commented-out entries marked) |
-| --- | --- |
-| `NODE_ENV` | Runtime environment. Not validated against a fixed list in code (no parse function) — the only branch that actually changes behavior anywhere in this codebase is `NODE_ENV === "test"` vs everything else; conventionally development \| test \| production. Optional, defaults to "development". |
-| `PARMANA_POLICY_DIR` | Directory containing policy files (policies/<name>/<version>/policy.json). Required — the process refuses to start without it. |
-| `PARMANA_KEY_DIR` | Directory containing signing key material (default.private.pem, default.public.pem, gateway.private.pem, gateway.public.pem, ...). Required whenever NODE_ENV != test — the process refuses to start without it. |
-| `POLICY_EXECUTION_VERIFICATION_ENFORCED` | Execution time policy governance verification (approval record required for every policy that authorizes or releases an execution). ENFORCED BY DEFAULT. Governance is skipped only when BOTH NODE_ENV is exactly "test" or "development" AND PARMANA_ALLOW_UNGOVERNED_POLICY=true is set explicitly (see be |
-| `PARMANA_ALLOW_UNGOVERNED_POLICY` | Explicit opt-in to skip governance approval records. Honoured only when NODE_ENV is "test" or "development" and POLICY_EXECUTION_VERIFICATION_ENFORCED is not "true". Never set it in a deployment: it lets unapproved policies run. |
-| `PARMANA_SKIP_DOTENV` | Set to 1 to stop the loaders reading a .env file. The test suite sets it itself, so a local .env cannot change test results. |
-| `PARMANA_VERIFIER_KEY_ID` | Key id the Signal/State verifier signs its read-only HubSpot fetches with. The key must exist (public and private PEM in PARMANA_KEY_DIR, or in KMS). The gateway accepts this key only for the read capability it is for, so a leaked verifier key cannot release a write. Default: signal-verifier. |
-| `SIGNING_READINESS_CHECK` | Signing readiness (docs/adr/ADR-0011). ENFORCED BY DEFAULT. Before an action is released to a connector, the runtime signs and verifies a probe artifact through the evidence signing key and refuses with 503 SIGNING_UNAVAILABLE if that fails. Relaxed only when NODE_ENV is exactly "test" or "developme |
-| `EXECUTION_INTENTS_CHECK` | Execution Intents (docs/adr/ADR-0012). ENFORCED BY DEFAULT. Before an action is released to a connector, the runtime signs and stores an Execution Intent, and refuses with 503 EXECUTION_INTENT_UNAVAILABLE, releasing nothing, if it cannot. Relaxed only when NODE_ENV is exactly "test" or "development" |
-| `PARMANA_KEY_MATERIAL_JSON` | JSON object of { "<keyId>": { "privateKeyPem": string, "publicKeyPem": string } }, materialized into PARMANA_KEY_DIR at boot for any file that doesn't already exist there. Optional — the "load key material from env" path for platforms with no persistent-volume/secret-file primitive; leave unset if y |
-| `PARMANA_GATEWAY_KEY_ID` | Key id prefix for the Gateway's attestation-signing keypair (expects <PARMANA_KEY_DIR>/<id>.{private,public}.pem). Optional, defaults to "gateway". |
-| `PARMANA_GATEWAY_ID` | Identity this process presents to Execution Control as the Gateway (GatewayIdentity.gatewayId/publicIdentity — appears in every audit event and attestation this process signs). Distinct from PARMANA_GATEWAY_KEY_ID above (that's a key file prefix; this is the logical identity name). Set a distinct va |
-| `PORT` | HTTP port the API server binds to. Optional, defaults to 3000 — PaaS platforms (Railway, Render, Fly, etc.) commonly inject this at deploy time. |
-| `HOST` | Host/interface the API server binds to. Optional, defaults to "0.0.0.0". |
-| `SHUTDOWN_TIMEOUT_MS` | Milliseconds the graceful-shutdown handler waits for in-flight requests to drain on SIGTERM/SIGINT before forcing exit. Optional, defaults to 10000. |
-| `LOG_LEVEL` | Log verbosity. Not validated against a fixed list in code (no parse function, no logger library enforcing it) — any string is accepted as-is; conventionally debug \| info \| warn \| error. Optional, defaults to "info". |
-| `PARMANA_STORAGE` | Storage backend for business-transaction/trust-record repositories. Valid values (enforced, packages/shared/src/config/StorageProviders.ts, via ConfigValidation.ts's parseStorageProvider): memory \| postgres \| supabase. Optional, defaults to "memory". `postgres` and `supabase` select the same Postgre |
-| `DATABASE_URL` | trust-record repositories. Format placeholder only. |
-| `SUPABASE_URL` | The three SUPABASE_* variables below are NOT read by the Parmana server. The server reaches Postgres only through DATABASE_URL above. They are used by some tests, CI and tutorials. Leave them unset for a server deployment. See docs/site/deployment/environment-variables.mdx. |
-| `SUPABASE_SERVICE_ROLE_KEY` | (see .env.example) |
-| `SUPABASE_ANON_KEY` | (see .env.example) |
-| `ALLOW_LIVE_SUPABASE` | Opt-in required by tests/helpers/supabase-availability.ts before any Supabase-gated test suite runs against a live project. Optional; unset by default. WARNING: enables real writes to a live Supabase project during `npm test` — do not set for routine local runs. |
-| `CRYPTO_MODE` | Signing mode. Valid values (enforced, CryptoAlgorithms.ts's CryptoModes, via parseCryptoMode): single \| hybrid \| pq. single: only PRIMARY_SIGNATURE_PROVIDER signs/verifies. hybrid: Trust Records and Receipts are additionally signed by SECONDARY_SIGNATURE_PROVIDER. pq is reserved, not read by any cal |
-| `PRIMARY_SIGNATURE_PROVIDER` | Primary signature algorithm. Valid values (enforced, CryptoAlgorithms.ts's SignatureAlgorithms, via parseSignatureAlgorithm): ed25519 \| ecdsa-p256 \| dilithium3 \| dilithium5 \| sphincs-plus. Optional, defaults to "ed25519". |
-| `SECONDARY_SIGNATURE_PROVIDER` | Secondary signature algorithm — required only when CRYPTO_MODE=hybrid; must differ from PRIMARY_SIGNATURE_PROVIDER. Same valid-values list as PRIMARY_SIGNATURE_PROVIDER above. Its key material must exist at <PARMANA_KEY_DIR>/default-secondary.{private,public}.pem. Optional, unset by default. |
-| `HYBRID_SIGNATURE_REQUIRED` | When "true", VerificationCrypto.verifySignature() requires a valid `signatures` array (both configured algorithms) on every ExecutionTrustRecord it checks -- a record with `signatures` absent, empty, or partial is rejected outright, never silently verified via the legacy single signature alone (clos |
-| `HYBRID_SCHEMA_VERSION` | Schema version that hybrid signatures are made under (ADR-0016). 2 signs the canonical fields plus schemaVersion. 3 signs the whole record except the signature envelope, verifications and receipts. Only 2 and 3 are accepted. Switch to 3 only after every verifier you rely on supports version 3. |
-| `HYBRID_SCHEMA_V3_ACKNOWLEDGED` | Required, and set to the exact string true, only with HYBRID_SCHEMA_VERSION=3. |
-| `POLICY_CHANGE_CHECKERS` | Cutover (ADR-0016): records created at or after this UTC instant must carry a valid hybrid envelope. Leave unset until every new record is hybrid-signed. Which callers may approve policy changes, per policy (G-50). Unset lists no one. |
-| `KILL_SWITCH_ENABLED` | Operator kill switch (ADR-0017). Off unless set to true. When true, needs DATABASE_URL and KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR. Production uses true for the second operator, so a reset takes two different people. |
-| `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` | (see .env.example) |
-| `HYBRID_REQUIRED_FROM` | (see .env.example) |
-| `HASH_PROVIDER` | Hash algorithm. Valid values (enforced, CryptoAlgorithms.ts's HashAlgorithms, via parseHashAlgorithm): sha256 \| sha3-512 \| blake3. Optional, defaults to "sha256". |
-| `KEY_PROVIDER` | Signing-key backend. Valid values (enforced, KeyProviders.ts, via parseKeyProvider): local \| aws-kms \| azure-key-vault \| gcp-kms \| hsm. Only "local" (FileKeyProvider) has an implementing class today — setting this to any of the other four values does nothing. Optional, defaults to "local". |
-| `EXECUTION_AUTHORIZATION_TTL_SECONDS` | TTL, in seconds, applied to a signed Execution Authorization when the caller does not specify one. Free-form number. Optional, defaults to 120. |
-| `TRUST_PROFILE` | Trust record schema profile. Valid values (enforced, TrustProfiles.ts, via parseTrustProfile): v1 — the only value defined today. Optional, defaults to "v1". |
-| `RECEIPT_VERSION` | Receipt schema version. Not validated against a fixed list in code (no parse function) — free-form string, only "1" is meaningful today. Optional, defaults to "1". |
-| `PARMANA_AUTH_DISABLED` | JSON array of { "callerId": string, "keyHash": string (sha256 hex, 64 lowercase hex chars) } entries. Generate with `npm run generate:api-key -- --caller-id <id>`. Required unless |
-| `PARMANA_API_KEYS` | and auth not explicitly disabled. Optional, defaults to "[]". |
-| `RATE_LIMIT_EXECUTE_PER_MINUTE` | POST /execute only, keyed by authenticated caller identity (not IP) — only enforced when caller-auth is enabled. Optional, defaults to 30. |
-| `RATE_LIMIT_HEALTH_PER_MINUTE` | GET /health and GET /ready, keyed by IP. Optional, defaults to 300 — deliberately generous so PaaS health-check polling is never throttled. |
-| `RATE_LIMIT_PUBLIC_PER_MINUTE` | The unauthenticated routes that do work (POST /refusal/verify, POST /execution-intents/verify, POST /audit/verify, /handbook), keyed by IP. Also covers key discovery (GET /keys/:keyId, GET /.well-known/jwks.json). Optional, defaults to 60 (G-78). |
-| `RATE_LIMIT_AUTH_FAILURE_PER_MINUTE` | Failed caller authentications (401) per IP, on every authenticated route. Each one writes a signed audit event. Requests with a valid key do not count. Optional, defaults to 30. |
-| `PARMANA_CORS_ORIGINS` | Origins allowed to call the API from a browser, separated by commas, each exactly scheme://host[:port]. Unset: no CORS header is sent. |
-| `PARMANA_SANDBOX` | Sandbox mode: mounts POST /sandbox/approvals, the demo approver. Refused at startup with caller authentication disabled or any Paytm, HubSpot, Slack or GitHub variable set. Never in production. |
-| `PARMANA_SANDBOX_APPROVER_ID` | (see .env.example) |
-| `PARMANA_SANDBOX_APPROVER_KEY_ID` | (see .env.example) |
-| `PARMANA_SANDBOX_APPROVER_PRIVATE_KEY` | (see .env.example) |
-| `HUBSPOT_PRIVATE_APP_TOKEN` | HubSpot Private App token, production (NODE_ENV != test). Optional — if unset, the HubSpot connector is simply not registered. Format placeholder only. Long-lived, static credential with no built-in expiry (unlike the GitHub connector's ephemeral per-execution token) — rotate it periodically (recomm |
-| `HUBSPOT_PRIVATE_APP_TOKEN_ROTATED_AT` | Date HUBSPOT_PRIVATE_APP_TOKEN was last rotated (ISO 8601, e.g. 2026-09-10). Optional, but without it startup logs a reminder that this token's age can't be tracked; past the 90-day recommended cadence, startup logs a staleness warning naming the actual age. |
-| `TEST_HUBSPOT_PRIVATE_APP_TOKEN` | HubSpot test-mode Private App token, used under NODE_ENV=test and by the gated live-integration suite. Must start with "pat-" (enforced; aborts before any network call if it doesn't). Scope to crm.objects.deals.read/write only. Optional, unset by default. |
-| `ALLOW_LIVE_HUBSPOT` | Opt-in required alongside TEST_HUBSPOT_PRIVATE_APP_TOKEN before the live HubSpot suite runs. Optional; unset by default. WARNING: makes real network calls to HubSpot's API and can mutate a real deal (reverted before the suite finishes) — do not set for routine local `npm test` runs. |
-| `TEST_HUBSPOT_DEAL_ID` | A real test deal id in the same HubSpot developer/test account, required only by the mutating deal-update case in the live suite. Optional — absent, only that one case skips. |
-| `HUBSPOT_BASE_URL` | Test seam only: points the HubSpot connector at a hermetic mock server instead of HubSpot's real API (https://api.hubapi.com). Never set in production. Optional, unset by default. |
-| `GITHUB_APP_ID` | GitHub App id, installation id, and private key, production (NODE_ENV != test). All three are required together — if any is unset, the GitHub connector is simply not registered. The credential is ephemeral (docs/CLAIMS.md Claim 1): every execution mints a fresh, short-lived installation access token |
-| `GITHUB_INSTALLATION_ID` | (see .env.example) |
-| `GITHUB_APP_PRIVATE_KEY` | (see .env.example) |
-| `TEST_GITHUB_APP_ID` | GitHub App id / installation id / private key used under NODE_ENV=test by the gated live-integration suite. All three are required together for the live suite to mint a real installation token. Optional, unset by default — the hermetic suite does not need these; it generates its own throwaway RSA ke |
-| `TEST_GITHUB_INSTALLATION_ID` | (see .env.example) |
-| `TEST_GITHUB_APP_PRIVATE_KEY` | (see .env.example) |
-| `ALLOW_LIVE_GITHUB` | Opt-in required alongside the TEST_GITHUB_* triple before the live GitHub suite runs. Optional; unset by default. WARNING: makes real network calls to GitHub's API and can merge a real pull request (reverted before the suite finishes) — do not set for routine local `npm test` runs. |
-| `TEST_GITHUB_REPOSITORY` | A real test repository and pull request number in the same GitHub App installation, required only by the mutating merge case in the live suite. Optional — absent, only that one case skips. |
-| `TEST_GITHUB_PULL_NUMBER` | (see .env.example) |
-| `GITHUB_BASE_URL` | Test seam only: points the GitHub connector and credential provider at a hermetic mock server instead of GitHub's real API (https://api.github.com). Never set in production. Optional, unset by default. |
-| `PAYTM_CONNECTOR_URL` | Unlike HubSpot/GitHub, this connector never calls Paytm's own API directly. It forwards an already Parmana-authorized paytm:refund request to a separate, trusted service (parmana-paytm-agent) that is the only thing that ever holds a real Paytm merchant key. See docs/connectors/PAYTM_CONNECTOR.md for |
-| `PAYTM_CONNECTOR_SHARED_SECRET` | Shared secret Parmana's gateway authenticates itself to the Paytm connector service with, sent as a Bearer token. This is transport authentication between Parmana and its own connector service — it is NOT Paytm's merchant key/checksum and does NOT substitute for Parmana's own policy authorization. F |
-| `PAYTM_CONNECTOR_TIMEOUT_MS` | Per-request timeout for calls to the Paytm connector service. Optional, defaults to 10000 (10s) when unset. |
-| `TEST_PAYTM_CONNECTOR_SHARED_SECRET` | Paytm connector shared secret used under NODE_ENV=test and by a future gated live-integration suite (not yet implemented — no live suite exists this milestone; see docs/connectors/PAYTM_CONNECTOR.md "Staging -> production setup"). Optional, unset by default. |
-| `PARMANA_SECRETS_PROVIDER` | AWS region and role, needed when KEY_PROVIDER=aws-kms or |
-| `AWS_REGION` | with the Vercel OIDC token and never uses a static access key. |
-| `AWS_ROLE_ARN` | (see .env.example) |
-| `PARMANA_VERIFICATION_KEY_ID` | Key ids used to sign Execution Trust Records. Defaults: default and default-secondary. Change only if you rotate to a new key id. |
-| `PARMANA_VERIFICATION_SECONDARY_KEY_ID` | (see .env.example) |
-| `POLICY_GOVERNANCE_INTEGRITY_CHECK_INTERVAL_MS` | How often the server re checks that live policy files still match their approval records, in milliseconds. Default 300000 (5 minutes). Zero or less leaves only the startup check. |
-| `SLACK_BOT_TOKEN` | Slack connector. It registers only when SLACK_BOT_TOKEN is set. The base URL is optional and only overrides the Slack API address for testing. |
-| `SLACK_BASE_URL` | (see .env.example) |
-| `SLACK_ALLOWED_CHANNEL_IDS` | Comma separated Slack channel ids the server may post to (G-76). A post to any other channel is refused, whatever the caller declares. Unset or empty refuses every post. |
-| `APPROVAL_WEBHOOK_URL` | Approval notifications. When a refused request would have been authorized with a signed approval, the server POSTs a signed approval.needed event here. Set both or neither. The URL must be https outside test and development. The secret may be a secret reference (PARMANA_SECRETS_PROVIDER). |
-| `APPROVAL_WEBHOOK_SECRET` | (see .env.example) |
-| `APPROVAL_EMAIL_TO` | Approval notifications by email, through Resend. RESEND_API_KEY and RESEND_EMAIL_DOMAIN are set by the Resend integration on Vercel. The sender defaults to approvals@ that domain. |
-| `APPROVAL_EMAIL_FROM` | (see .env.example) |
-| `RESEND_API_KEY` | (see .env.example) |
-| `RESEND_EMAIL_DOMAIN` | (see .env.example) |
-| `PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE` | Local test approver. No agent action is authorized without a signed human approval, so a local test server can trust the approver local-test-approver with this Ed25519 public key (see docs/site/quickstart.mdx). Honored only when NODE_ENV is test; with any other NODE_ENV the server refuses to start. |
-| `PARMANA_GITHUB_VERCEL_CONNECT_CONNECTOR_ID` | Alternative GitHub credential source using Vercel Connect. When set it takes precedence over GITHUB_APP_ID, GITHUB_INSTALLATION_ID and GITHUB_APP_PRIVATE_KEY. |
-| `TEST_SLACK_BOT_TOKEN` | Slack bot token used only under NODE_ENV=test. Optional, unset by default. |
+| Variable                                        | Meaning (from `.env.example`; commented-out entries marked)                                                                                                                                                                                                                                                    |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`                                      | Runtime environment. Not validated against a fixed list in code (no parse function) — the only branch that actually changes behavior anywhere in this codebase is `NODE_ENV === "test"` vs everything else; conventionally development \| test \| production. Optional, defaults to "development".             |
+| `PARMANA_POLICY_DIR`                            | Directory containing policy files (policies/<name>/<version>/policy.json). Required — the process refuses to start without it.                                                                                                                                                                                 |
+| `PARMANA_KEY_DIR`                               | Directory containing signing key material (default.private.pem, default.public.pem, gateway.private.pem, gateway.public.pem, ...). Required whenever NODE_ENV != test — the process refuses to start without it.                                                                                               |
+| `POLICY_EXECUTION_VERIFICATION_ENFORCED`        | Execution time policy governance verification (approval record required for every policy that authorizes or releases an execution). ENFORCED BY DEFAULT. Governance is skipped only when BOTH NODE_ENV is exactly "test" or "development" AND PARMANA_ALLOW_UNGOVERNED_POLICY=true is set explicitly (see be   |
+| `PARMANA_ALLOW_UNGOVERNED_POLICY`               | Explicit opt-in to skip governance approval records. Honoured only when NODE_ENV is "test" or "development" and POLICY_EXECUTION_VERIFICATION_ENFORCED is not "true". Never set it in a deployment: it lets unapproved policies run.                                                                           |
+| `PARMANA_SKIP_DOTENV`                           | Set to 1 to stop the loaders reading a .env file. The test suite sets it itself, so a local .env cannot change test results.                                                                                                                                                                                   |
+| `PARMANA_VERIFIER_KEY_ID`                       | Key id the Signal/State verifier signs its read-only HubSpot fetches with. The key must exist (public and private PEM in PARMANA_KEY_DIR, or in KMS). The gateway accepts this key only for the read capability it is for, so a leaked verifier key cannot release a write. Default: signal-verifier.          |
+| `SIGNING_READINESS_CHECK`                       | Signing readiness (docs/adr/ADR-0011). ENFORCED BY DEFAULT. Before an action is released to a connector, the runtime signs and verifies a probe artifact through the evidence signing key and refuses with 503 SIGNING_UNAVAILABLE if that fails. Relaxed only when NODE_ENV is exactly "test" or "developme   |
+| `EXECUTION_INTENTS_CHECK`                       | Execution Intents (docs/adr/ADR-0012). ENFORCED BY DEFAULT. Before an action is released to a connector, the runtime signs and stores an Execution Intent, and refuses with 503 EXECUTION_INTENT_UNAVAILABLE, releasing nothing, if it cannot. Relaxed only when NODE_ENV is exactly "test" or "development"   |
+| `PARMANA_KEY_MATERIAL_JSON`                     | JSON object of { "<keyId>": { "privateKeyPem": string, "publicKeyPem": string } }, materialized into PARMANA_KEY_DIR at boot for any file that doesn't already exist there. Optional — the "load key material from env" path for platforms with no persistent-volume/secret-file primitive; leave unset if y   |
+| `PARMANA_GATEWAY_KEY_ID`                        | Key id prefix for the Gateway's attestation-signing keypair (expects <PARMANA_KEY_DIR>/<id>.{private,public}.pem). Optional, defaults to "gateway".                                                                                                                                                            |
+| `PARMANA_GATEWAY_ID`                            | Identity this process presents to Execution Control as the Gateway (GatewayIdentity.gatewayId/publicIdentity — appears in every audit event and attestation this process signs). Distinct from PARMANA_GATEWAY_KEY_ID above (that's a key file prefix; this is the logical identity name). Set a distinct va   |
+| `PORT`                                          | HTTP port the API server binds to. Optional, defaults to 3000 — PaaS platforms (Railway, Render, Fly, etc.) commonly inject this at deploy time.                                                                                                                                                               |
+| `HOST`                                          | Host/interface the API server binds to. Optional, defaults to "0.0.0.0".                                                                                                                                                                                                                                       |
+| `SHUTDOWN_TIMEOUT_MS`                           | Milliseconds the graceful-shutdown handler waits for in-flight requests to drain on SIGTERM/SIGINT before forcing exit. Optional, defaults to 10000.                                                                                                                                                           |
+| `LOG_LEVEL`                                     | Log verbosity. Not validated against a fixed list in code (no parse function, no logger library enforcing it) — any string is accepted as-is; conventionally debug \| info \| warn \| error. Optional, defaults to "info".                                                                                     |
+| `PARMANA_STORAGE`                               | Storage backend for business-transaction/trust-record repositories. Valid values (enforced, packages/shared/src/config/StorageProviders.ts, via ConfigValidation.ts's parseStorageProvider): memory \| postgres \| supabase. Optional, defaults to "memory". `postgres` and `supabase` select the same Postgre |
+| `DATABASE_URL`                                  | trust-record repositories. Format placeholder only.                                                                                                                                                                                                                                                            |
+| `SUPABASE_URL`                                  | The three SUPABASE_* variables below are NOT read by the Parmana server. The server reaches Postgres only through DATABASE_URL above. They are used by some tests, CI and tutorials. Leave them unset for a server deployment. See docs/site/deployment/environment-variables.mdx.                             |
+| `SUPABASE_SERVICE_ROLE_KEY`                     | (see .env.example)                                                                                                                                                                                                                                                                                             |
+| `SUPABASE_ANON_KEY`                             | (see .env.example)                                                                                                                                                                                                                                                                                             |
+| `ALLOW_LIVE_SUPABASE`                           | Opt-in required by tests/helpers/supabase-availability.ts before any Supabase-gated test suite runs against a live project. Optional; unset by default. WARNING: enables real writes to a live Supabase project during `npm test` — do not set for routine local runs.                                         |
+| `CRYPTO_MODE`                                   | Signing mode. Valid values (enforced, CryptoAlgorithms.ts's CryptoModes, via parseCryptoMode): single \| hybrid \| pq. single: only PRIMARY_SIGNATURE_PROVIDER signs/verifies. hybrid: Trust Records and Receipts are additionally signed by SECONDARY_SIGNATURE_PROVIDER. pq is reserved, not read by any cal |
+| `PRIMARY_SIGNATURE_PROVIDER`                    | Primary signature algorithm. Valid values (enforced, CryptoAlgorithms.ts's SignatureAlgorithms, via parseSignatureAlgorithm): ed25519 \| ecdsa-p256 \| dilithium3 \| dilithium5 \| sphincs-plus. Optional, defaults to "ed25519".                                                                              |
+| `SECONDARY_SIGNATURE_PROVIDER`                  | Secondary signature algorithm — required only when CRYPTO_MODE=hybrid; must differ from PRIMARY_SIGNATURE_PROVIDER. Same valid-values list as PRIMARY_SIGNATURE_PROVIDER above. Its key material must exist at <PARMANA_KEY_DIR>/default-secondary.{private,public}.pem. Optional, unset by default.           |
+| `HYBRID_SIGNATURE_REQUIRED`                     | When "true", VerificationCrypto.verifySignature() requires a valid `signatures` array (both configured algorithms) on every ExecutionTrustRecord it checks -- a record with `signatures` absent, empty, or partial is rejected outright, never silently verified via the legacy single signature alone (clos   |
+| `HYBRID_SCHEMA_VERSION`                         | Schema version that hybrid signatures are made under (ADR-0016). 2 signs the canonical fields plus schemaVersion. 3 signs the whole record except the signature envelope, verifications and receipts. Only 2 and 3 are accepted. Switch to 3 only after every verifier you rely on supports version 3.         |
+| `HYBRID_SCHEMA_V3_ACKNOWLEDGED`                 | Required, and set to the exact string true, only with HYBRID_SCHEMA_VERSION=3.                                                                                                                                                                                                                                 |
+| `POLICY_CHANGE_CHECKERS`                        | Cutover (ADR-0016): records created at or after this UTC instant must carry a valid hybrid envelope. Leave unset until every new record is hybrid-signed. Which callers may approve policy changes, per policy (G-50). Unset lists no one.                                                                     |
+| `KILL_SWITCH_ENABLED`                           | Operator kill switch (ADR-0017). Off unless set to true. When true, needs DATABASE_URL and KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR. Production uses true for the second operator, so a reset takes two different people.                                                                                       |
+| `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR`       | (see .env.example)                                                                                                                                                                                                                                                                                             |
+| `HYBRID_REQUIRED_FROM`                          | (see .env.example)                                                                                                                                                                                                                                                                                             |
+| `HASH_PROVIDER`                                 | Hash algorithm. Valid values (enforced, CryptoAlgorithms.ts's HashAlgorithms, via parseHashAlgorithm): sha256 \| sha3-512 \| blake3. Optional, defaults to "sha256".                                                                                                                                           |
+| `KEY_PROVIDER`                                  | Signing-key backend. Valid values (enforced, KeyProviders.ts, via parseKeyProvider): local \| aws-kms \| azure-key-vault \| gcp-kms \| hsm. Only "local" (FileKeyProvider) has an implementing class today — setting this to any of the other four values does nothing. Optional, defaults to "local".         |
+| `EXECUTION_AUTHORIZATION_TTL_SECONDS`           | TTL, in seconds, applied to a signed Execution Authorization when the caller does not specify one. Free-form number. Optional, defaults to 120.                                                                                                                                                                |
+| `TRUST_PROFILE`                                 | Trust record schema profile. Valid values (enforced, TrustProfiles.ts, via parseTrustProfile): v1 — the only value defined today. Optional, defaults to "v1".                                                                                                                                                  |
+| `RECEIPT_VERSION`                               | Receipt schema version. Not validated against a fixed list in code (no parse function) — free-form string, only "1" is meaningful today. Optional, defaults to "1".                                                                                                                                            |
+| `PARMANA_AUTH_DISABLED`                         | JSON array of { "callerId": string, "keyHash": string (sha256 hex, 64 lowercase hex chars) } entries. Generate with `npm run generate:api-key -- --caller-id <id>`. Required unless                                                                                                                            |
+| `PARMANA_API_KEYS`                              | and auth not explicitly disabled. Optional, defaults to "[]".                                                                                                                                                                                                                                                  |
+| `RATE_LIMIT_EXECUTE_PER_MINUTE`                 | POST /execute only, keyed by authenticated caller identity (not IP) — only enforced when caller-auth is enabled. Optional, defaults to 30.                                                                                                                                                                     |
+| `RATE_LIMIT_HEALTH_PER_MINUTE`                  | GET /health and GET /ready, keyed by IP. Optional, defaults to 300 — deliberately generous so PaaS health-check polling is never throttled.                                                                                                                                                                    |
+| `RATE_LIMIT_PUBLIC_PER_MINUTE`                  | The unauthenticated routes that do work (POST /refusal/verify, POST /execution-intents/verify, POST /audit/verify, /handbook), keyed by IP. Also covers key discovery (GET /keys/:keyId, GET /.well-known/jwks.json). Optional, defaults to 60 (G-78).                                                         |
+| `RATE_LIMIT_AUTH_FAILURE_PER_MINUTE`            | Failed caller authentications (401) per IP, on every authenticated route. Each one writes a signed audit event. Requests with a valid key do not count. Optional, defaults to 30.                                                                                                                              |
+| `PARMANA_CORS_ORIGINS`                          | Origins allowed to call the API from a browser, separated by commas, each exactly scheme://host[:port]. Unset: no CORS header is sent.                                                                                                                                                                         |
+| `PARMANA_SANDBOX`                               | Sandbox mode: mounts POST /sandbox/approvals, the demo approver. Refused at startup with caller authentication disabled or any Paytm, HubSpot, Slack or GitHub variable set. Never in production.                                                                                                              |
+| `PARMANA_SANDBOX_APPROVER_ID`                   | (see .env.example)                                                                                                                                                                                                                                                                                             |
+| `PARMANA_SANDBOX_APPROVER_KEY_ID`               | (see .env.example)                                                                                                                                                                                                                                                                                             |
+| `PARMANA_SANDBOX_APPROVER_PRIVATE_KEY`          | (see .env.example)                                                                                                                                                                                                                                                                                             |
+| `HUBSPOT_PRIVATE_APP_TOKEN`                     | HubSpot Private App token, production (NODE_ENV != test). Optional — if unset, the HubSpot connector is simply not registered. Format placeholder only. Long-lived, static credential with no built-in expiry (unlike the GitHub connector's ephemeral per-execution token) — rotate it periodically (recomm   |
+| `HUBSPOT_PRIVATE_APP_TOKEN_ROTATED_AT`          | Date HUBSPOT_PRIVATE_APP_TOKEN was last rotated (ISO 8601, e.g. 2026-09-10). Optional, but without it startup logs a reminder that this token's age can't be tracked; past the 90-day recommended cadence, startup logs a staleness warning naming the actual age.                                             |
+| `TEST_HUBSPOT_PRIVATE_APP_TOKEN`                | HubSpot test-mode Private App token, used under NODE_ENV=test and by the gated live-integration suite. Must start with "pat-" (enforced; aborts before any network call if it doesn't). Scope to crm.objects.deals.read/write only. Optional, unset by default.                                                |
+| `ALLOW_LIVE_HUBSPOT`                            | Opt-in required alongside TEST_HUBSPOT_PRIVATE_APP_TOKEN before the live HubSpot suite runs. Optional; unset by default. WARNING: makes real network calls to HubSpot's API and can mutate a real deal (reverted before the suite finishes) — do not set for routine local `npm test` runs.                    |
+| `TEST_HUBSPOT_DEAL_ID`                          | A real test deal id in the same HubSpot developer/test account, required only by the mutating deal-update case in the live suite. Optional — absent, only that one case skips.                                                                                                                                 |
+| `HUBSPOT_BASE_URL`                              | Test seam only: points the HubSpot connector at a hermetic mock server instead of HubSpot's real API (https://api.hubapi.com). Never set in production. Optional, unset by default.                                                                                                                            |
+| `GITHUB_APP_ID`                                 | GitHub App id, installation id, and private key, production (NODE_ENV != test). All three are required together — if any is unset, the GitHub connector is simply not registered. The credential is ephemeral (docs/CLAIMS.md Claim 1): every execution mints a fresh, short-lived installation access token   |
+| `GITHUB_INSTALLATION_ID`                        | (see .env.example)                                                                                                                                                                                                                                                                                             |
+| `GITHUB_APP_PRIVATE_KEY`                        | (see .env.example)                                                                                                                                                                                                                                                                                             |
+| `TEST_GITHUB_APP_ID`                            | GitHub App id / installation id / private key used under NODE_ENV=test by the gated live-integration suite. All three are required together for the live suite to mint a real installation token. Optional, unset by default — the hermetic suite does not need these; it generates its own throwaway RSA ke   |
+| `TEST_GITHUB_INSTALLATION_ID`                   | (see .env.example)                                                                                                                                                                                                                                                                                             |
+| `TEST_GITHUB_APP_PRIVATE_KEY`                   | (see .env.example)                                                                                                                                                                                                                                                                                             |
+| `ALLOW_LIVE_GITHUB`                             | Opt-in required alongside the TEST_GITHUB_* triple before the live GitHub suite runs. Optional; unset by default. WARNING: makes real network calls to GitHub's API and can merge a real pull request (reverted before the suite finishes) — do not set for routine local `npm test` runs.                     |
+| `TEST_GITHUB_REPOSITORY`                        | A real test repository and pull request number in the same GitHub App installation, required only by the mutating merge case in the live suite. Optional — absent, only that one case skips.                                                                                                                   |
+| `TEST_GITHUB_PULL_NUMBER`                       | (see .env.example)                                                                                                                                                                                                                                                                                             |
+| `GITHUB_BASE_URL`                               | Test seam only: points the GitHub connector and credential provider at a hermetic mock server instead of GitHub's real API (https://api.github.com). Never set in production. Optional, unset by default.                                                                                                      |
+| `PAYTM_CONNECTOR_URL`                           | Unlike HubSpot/GitHub, this connector never calls Paytm's own API directly. It forwards an already Parmana-authorized paytm:refund request to a separate, trusted service (parmana-paytm-agent) that is the only thing that ever holds a real Paytm merchant key. See docs/connectors/PAYTM_CONNECTOR.md for   |
+| `PAYTM_CONNECTOR_SHARED_SECRET`                 | Shared secret Parmana's gateway authenticates itself to the Paytm connector service with, sent as a Bearer token. This is transport authentication between Parmana and its own connector service — it is NOT Paytm's merchant key/checksum and does NOT substitute for Parmana's own policy authorization. F   |
+| `PAYTM_CONNECTOR_TIMEOUT_MS`                    | Per-request timeout for calls to the Paytm connector service. Optional, defaults to 10000 (10s) when unset.                                                                                                                                                                                                    |
+| `TEST_PAYTM_CONNECTOR_SHARED_SECRET`            | Paytm connector shared secret used under NODE_ENV=test and by a future gated live-integration suite (not yet implemented — no live suite exists this milestone; see docs/connectors/PAYTM_CONNECTOR.md "Staging -> production setup"). Optional, unset by default.                                             |
+| `PARMANA_SECRETS_PROVIDER`                      | AWS region and role, needed when KEY_PROVIDER=aws-kms or                                                                                                                                                                                                                                                       |
+| `AWS_REGION`                                    | with the Vercel OIDC token and never uses a static access key.                                                                                                                                                                                                                                                 |
+| `AWS_ROLE_ARN`                                  | (see .env.example)                                                                                                                                                                                                                                                                                             |
+| `PARMANA_VERIFICATION_KEY_ID`                   | Key ids used to sign Execution Trust Records. Defaults: default and default-secondary. Change only if you rotate to a new key id.                                                                                                                                                                              |
+| `PARMANA_VERIFICATION_SECONDARY_KEY_ID`         | (see .env.example)                                                                                                                                                                                                                                                                                             |
+| `POLICY_GOVERNANCE_INTEGRITY_CHECK_INTERVAL_MS` | How often the server re checks that live policy files still match their approval records, in milliseconds. Default 300000 (5 minutes). Zero or less leaves only the startup check.                                                                                                                             |
+| `SLACK_BOT_TOKEN`                               | Slack connector. It registers only when SLACK_BOT_TOKEN is set. The base URL is optional and only overrides the Slack API address for testing.                                                                                                                                                                 |
+| `SLACK_BASE_URL`                                | (see .env.example)                                                                                                                                                                                                                                                                                             |
+| `SLACK_ALLOWED_CHANNEL_IDS`                     | Comma separated Slack channel ids the server may post to (G-76). A post to any other channel is refused, whatever the caller declares. Unset or empty refuses every post.                                                                                                                                      |
+| `APPROVAL_WEBHOOK_URL`                          | Approval notifications. When a refused request would have been authorized with a signed approval, the server POSTs a signed approval.needed event here. Set both or neither. The URL must be https outside test and development. The secret may be a secret reference (PARMANA_SECRETS_PROVIDER).              |
+| `APPROVAL_WEBHOOK_SECRET`                       | (see .env.example)                                                                                                                                                                                                                                                                                             |
+| `APPROVAL_EMAIL_TO`                             | Approval notifications by email, through Resend. RESEND_API_KEY and RESEND_EMAIL_DOMAIN are set by the Resend integration on Vercel. The sender defaults to approvals@ that domain.                                                                                                                            |
+| `APPROVAL_EMAIL_FROM`                           | (see .env.example)                                                                                                                                                                                                                                                                                             |
+| `RESEND_API_KEY`                                | (see .env.example)                                                                                                                                                                                                                                                                                             |
+| `RESEND_EMAIL_DOMAIN`                           | (see .env.example)                                                                                                                                                                                                                                                                                             |
+| `PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE`         | Local test approver. No agent action is authorized without a signed human approval, so a local test server can trust the approver local-test-approver with this Ed25519 public key (see docs/site/quickstart.mdx). Honored only when NODE_ENV is test; with any other NODE_ENV the server refuses to start.    |
+| `PARMANA_GITHUB_VERCEL_CONNECT_CONNECTOR_ID`    | Alternative GitHub credential source using Vercel Connect. When set it takes precedence over GITHUB_APP_ID, GITHUB_INSTALLATION_ID and GITHUB_APP_PRIVATE_KEY.                                                                                                                                                 |
+| `TEST_SLACK_BOT_TOKEN`                          | Slack bot token used only under NODE_ENV=test. Optional, unset by default.                                                                                                                                                                                                                                     |
 
 Set values in Vercel (sensitive) or the process environment, never in the repository. Changes apply on the next deployment (scenario M).
 
@@ -2225,35 +2267,35 @@ Set values in Vercel (sensitive) or the process environment, never in the reposi
 
 ### 47.1 SDK error codes
 
-| Code | Meaning in practice |
-| --- | --- |
-| `CONFIGURATION_ERROR` | The client or server is misconfigured (for example a missing endpoint). Fix configuration; retrying does not help. |
-| `VALIDATION_ERROR` | The request is malformed or fails validation. Fix the request before retrying. |
-| `AUTHENTICATION_ERROR` | The credential is missing or not accepted (HTTP 401). Check the key (scenario K). |
-| `AUTHORIZATION_ERROR` | The caller is authenticated but not allowed this action (HTTP 403). |
-| `NOT_FOUND_ERROR` | The record or route does not exist, or is not visible to this caller (cross-caller reads return 404). |
-| `CONFLICT_ERROR` | The change conflicts with existing state, for example a pending change or an active connector. |
-| `EXECUTION_REJECTED` | Parmana refused the action. The SDK raises ExecutionRejectedError; the refusal record explains the rule. |
-| `VERIFICATION_ERROR` | A record or signature did not verify. |
-| `REPLAY_ERROR` | A replay was detected or a replayed record is not acceptable. |
-| `NETWORK_ERROR` | The request did not reach the server. Retry with backoff. |
-| `TIMEOUT_ERROR` | The request timed out. Do not assume failure or success: read the trust record first (scenario J). |
-| `RATE_LIMIT_ERROR` | Too many requests in the window. Back off and retry later. |
-| `INTERNAL_SERVER_ERROR` | The server failed. Check logs and /ready; retry only idempotent requests. |
+| Code                    | Meaning in practice                                                                                                |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `CONFIGURATION_ERROR`   | The client or server is misconfigured (for example a missing endpoint). Fix configuration; retrying does not help. |
+| `VALIDATION_ERROR`      | The request is malformed or fails validation. Fix the request before retrying.                                     |
+| `AUTHENTICATION_ERROR`  | The credential is missing or not accepted (HTTP 401). Check the key (scenario K).                                  |
+| `AUTHORIZATION_ERROR`   | The caller is authenticated but not allowed this action (HTTP 403).                                                |
+| `NOT_FOUND_ERROR`       | The record or route does not exist, or is not visible to this caller (cross-caller reads return 404).              |
+| `CONFLICT_ERROR`        | The change conflicts with existing state, for example a pending change or an active connector.                     |
+| `EXECUTION_REJECTED`    | Parmana refused the action. The SDK raises ExecutionRejectedError; the refusal record explains the rule.           |
+| `VERIFICATION_ERROR`    | A record or signature did not verify.                                                                              |
+| `REPLAY_ERROR`          | A replay was detected or a replayed record is not acceptable.                                                      |
+| `NETWORK_ERROR`         | The request did not reach the server. Retry with backoff.                                                          |
+| `TIMEOUT_ERROR`         | The request timed out. Do not assume failure or success: read the trust record first (scenario J).                 |
+| `RATE_LIMIT_ERROR`      | Too many requests in the window. Back off and retry later.                                                         |
+| `INTERNAL_SERVER_ERROR` | The server failed. Check logs and /ready; retry only idempotent requests.                                          |
 
 ### 47.2 HTTP statuses the API returns
 
-| Status | Meaning | Action |
-| --- | --- | --- |
-| 200 | Success; or duplicate with `status: duplicate` (signed-event receiver, Part 42.9) | Read the body |
-| 202 | Accepted for asynchronous work | Store the id; wait for the outcome |
-| 400 | The request is malformed; the envelope names the step | Fix the request; do not retry unchanged |
-| 401 | Authentication failed (`authentication required`, or a signature/timestamp problem for signed events) | Check the key or the signature (scenario K) |
-| 403 | Authorized failure, such as a refusal that returns 403 (confirm, Part 15 gap 9) | Read the reason; do not retry with another amount |
-| 404 | Not found, or not visible to this caller | Check ids and the caller |
-| 409 | Conflict with existing state (pending change, active connector, active grant) | Revoke or approve first (Part 6.3) |
-| 429 | Rate limited | Back off; respect the window |
-| 5xx | Server or upstream failure | Retry with backoff and the same idempotency key; read the record first |
+| Status | Meaning                                                                                               | Action                                                                 |
+| ------ | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| 200    | Success; or duplicate with `status: duplicate` (signed-event receiver, Part 42.9)                     | Read the body                                                          |
+| 202    | Accepted for asynchronous work                                                                        | Store the id; wait for the outcome                                     |
+| 400    | The request is malformed; the envelope names the step                                                 | Fix the request; do not retry unchanged                                |
+| 401    | Authentication failed (`authentication required`, or a signature/timestamp problem for signed events) | Check the key or the signature (scenario K)                            |
+| 403    | Authorized failure, such as a refusal that returns 403 (confirm, Part 15 gap 9)                       | Read the reason; do not retry with another amount                      |
+| 404    | Not found, or not visible to this caller                                                              | Check ids and the caller                                               |
+| 409    | Conflict with existing state (pending change, active connector, active grant)                         | Revoke or approve first (Part 6.3)                                     |
+| 429    | Rate limited                                                                                          | Back off; respect the window                                           |
+| 5xx    | Server or upstream failure                                                                            | Retry with backoff and the same idempotency key; read the record first |
 
 ---
 
@@ -2297,13 +2339,13 @@ This part is the procedure for creating the maker, the checker and the operator 
 
 ### 50.2 What each credential is for
 
-| Credential | `callerId` (example) | Holder | Capability on the key | Purpose |
-| --- | --- | --- | --- | --- |
-| Maker | `maker-<name>` | Maker (a human) | none | Proposes governed changes |
-| Checker | `checker-<name>` | Checker (a different human) | none | Approves changes, with a step-up key |
-| Operator A | `operator-a` | Operator A | `kill-switch:trip`, `kill-switch:reset` | Trips the switch; first reset request |
-| Operator B | `operator-b` | Operator B (a different person) | `kill-switch:reset` | Second reset request, completes the reset |
-| Probe | `kill-switch-probe` | Automation (GitHub Actions) | `kill-switch:probe` | Records probes; already in production (runbook) |
+| Credential | `callerId` (example) | Holder                          | Capability on the key                   | Purpose                                         |
+| ---------- | -------------------- | ------------------------------- | --------------------------------------- | ----------------------------------------------- |
+| Maker      | `maker-<name>`       | Maker (a human)                 | none                                    | Proposes governed changes                       |
+| Checker    | `checker-<name>`     | Checker (a different human)     | none                                    | Approves changes, with a step-up key            |
+| Operator A | `operator-a`         | Operator A                      | `kill-switch:trip`, `kill-switch:reset` | Trips the switch; first reset request           |
+| Operator B | `operator-b`         | Operator B (a different person) | `kill-switch:reset`                     | Second reset request, completes the reset       |
+| Probe      | `kill-switch-probe`  | Automation (GitHub Actions)     | `kill-switch:probe`                     | Records probes; already in production (runbook) |
 
 A key without the capability gets `403 CAPABILITY_NOT_ALLOWED` (runbook). A key with a capability it does not need is a risk; give each operator only the capabilities listed above.
 
@@ -2407,7 +2449,7 @@ Expected: `200` for `/callers/me`; status shows `active: false`. Repeat for each
 
 Run only when the founder has agreed the drill, and never in the same window as a governed approval (trip blocks approvals).
 
-*3a. Trip (operator A, reason required):*
+_3a. Trip (operator A, reason required):_
 
 ```powershell
 $k = Read-Secret "operator-a.key"
@@ -2417,7 +2459,7 @@ Remove-Variable k
 
 Expected: `200` with the state. Without a reason the request returns `400`.
 
-*3b. Confirm the stop, without moving money.* Send the no-approval case of the runner. The switch answers before the policy, so the expected result is `503` with `KILL_SWITCH_ACTIVE`, not the policy refusal:
+_3b. Confirm the stop, without moving money._ Send the no-approval case of the runner. The switch answers before the policy, so the expected result is `503` with `KILL_SWITCH_ACTIVE`, not the policy refusal:
 
 ```powershell
 $env:PARMANA_API_KEY = Read-Secret "razorpay-demo-agent.key"
@@ -2426,7 +2468,7 @@ npx tsx examples/razorpay-refund/send.ts --case no-approval --payment pay_TrPtgJ
 
 ⚠️ Not run. The runbook states that execution is refused with 503 `KILL_SWITCH_ACTIVE` when tripped, and the tutorial 124 (`examples/tutorials/124-kill-switch-trip-and-refuse`) checks it in tests. Record what the live call returns.
 
-*3c. Reset, two operators.* Operator A first (`202`, pending); operator B second, with their own key (`200`, lifted):
+_3c. Reset, two operators._ Operator A first (`202`, pending); operator B second, with their own key (`200`, lifted):
 
 ```powershell
 # Operator A
@@ -2442,7 +2484,7 @@ Remove-Variable k
 
 Expected: operator A gets `202` and `outcome: "pending"`; operator B gets `200` and `outcome: "reset"`. If operator A repeats the request, the answer is `409 SAME_OPERATOR_CANNOT_CONFIRM_RESET`. A new trip cancels a pending reset.
 
-*3d. Verify.* Status shows `active: false`. Re-run the no-approval case: it must now return the policy refusal, `reject-manager-approval-required`.
+_3d. Verify._ Status shows `active: false`. Re-run the no-approval case: it must now return the policy refusal, `reject-manager-approval-required`.
 
 ⚠️ The two-person reset is enabled in production but not yet exercised with two real operator keys (runbook, "Still open"). Phase 3 is the first real exercise; record its result.
 
@@ -2452,10 +2494,10 @@ Expected: operator A gets `202` and `outcome: "pending"`; operator B gets `200` 
 
 Two different things are called "the kill switch". Do not confuse them.
 
-| Control | What it does | How it changes | Needs a redeploy |
-| --- | --- | --- | --- |
-| The **trip** (routes `/kill-switch/trip`, `/reset`) | Stops execution and approvals; a reset lifts it | API call, by an operator with the capability | No |
-| The **feature** (`KILL_SWITCH_ENABLED`) | Turns the guard machinery on or off | Vercel variable | Yes |
+| Control                                             | What it does                                    | How it changes                               | Needs a redeploy |
+| --------------------------------------------------- | ----------------------------------------------- | -------------------------------------------- | ---------------- |
+| The **trip** (routes `/kill-switch/trip`, `/reset`) | Stops execution and approvals; a reset lifts it | API call, by an operator with the capability | No               |
+| The **feature** (`KILL_SWITCH_ENABLED`)             | Turns the guard machinery on or off             | Vercel variable                              | Yes              |
 
 **Enable the feature (Production, per the runbook):**
 
@@ -2497,7 +2539,6 @@ npx vercel deploy --prod --yes
 - [ ] Rotation of any key pasted in chat (runbook, "Still open").
 - [ ] Changelog entry in Part 49.
 
-
 ## Part 49. Changelog
 
 - **1.0 (23 October 2026).** First version: workstation setup, credentials, governed changes, the key list, the connection sequence, scenarios A to U, troubleshooting, command reference, test evidence, gaps, the Razorpay spec mapping, glossary and FAQ.
@@ -2507,4 +2548,3 @@ npx vercel deploy --prod --yes
 - **1.3 (23 October 2026).** Part 50: the credential ceremony for makers, checkers and operators, with the kill-switch procedure (trip, reset, drill, enable and disable). Records that tripping also stops approvals, so the ceremony keeps the switch untripped.
 
 **To add an entry:** write the topic, the source (file, command or document), the date verified, and the status marker. Add a line here.
-

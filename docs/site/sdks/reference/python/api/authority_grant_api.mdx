@@ -30,7 +30,7 @@ Every grant, active and revoked.
 
 Maps to GET /authority-grants.
 
-#### propose\_grant
+#### propose_grant
 
 ```python
 def propose_grant(
@@ -54,7 +54,7 @@ Intent path ("target", "parameters.&lt;name>") to \{"min", "max",
 "oneOf"\}. You may not propose authority for your own key. Nothing
 changes until a different person approves it.
 
-#### propose\_revoke
+#### propose_revoke
 
 ```python
 def propose_revoke(*, caller_id: str, capability: str,
@@ -65,7 +65,7 @@ Propose revoking the active grant of `caller_id` for `capability`.
 
 Maps to POST /authority-grants/changes with action "revoke".
 
-#### list\_changes
+#### list_changes
 
 ```python
 def list_changes(
@@ -76,12 +76,12 @@ List authority grant changes, newest first.
 
 Maps to GET /authority-grants/changes.
 
-Parameters
-----------
-status:
-    "PENDING_APPROVAL", "APPROVED" or "REJECTED". Omit for all.
+## Parameters
 
-#### approve\_change
+status:
+"PENDING_APPROVAL", "APPROVED" or "REJECTED". Omit for all.
+
+#### approve_change
 
 ```python
 def approve_change(
@@ -97,7 +97,7 @@ registered step up key. Make `step_up_authorization` with
 `parmana.crypto.sign_policy_change_step_up()`, `change_id` as
 `pending_policy_change_id`, and action "approve".
 
-#### reject\_change
+#### reject_change
 
 ```python
 def reject_change(
@@ -109,4 +109,3 @@ Reject an authority grant change.
 
 Maps to POST /authority-grants/changes/\{id\}/reject. Same caller
 rules as `approve_change()`; sign with action "reject".
-

@@ -11,14 +11,14 @@ One short script for each HTTP endpoint the Python SDK calls. Each script makes 
 
 ## What the scripts cover
 
-| Prefix                | What they do                                                                      | Examples                                                              |
-| --------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `get_`                | Read one record or status.                                                        | `get_health.py`, `get_transaction.py`, `get_trust_record.py`          |
-| `list_`               | List records.                                                                     | `list_transactions.py`, `list_trust_records.py`                       |
-| `create_`, `propose_` | Create a record, or propose a policy change.                                      | `create_transaction.py`, `propose_policy_change.py`                   |
-| `approve_`, `reject_` | Approve or reject a proposed change. These need a step-up signing key, see below. | `approve_policy_change.py`, `reject_policy_change.py`                 |
-| `verify_`             | Check a record.                                                                   | `verify_transaction.py`, `verify_audit_event.py`                      |
-| `trip_`, `reset_`, `record_` | Kill switch operations.                                                    | `trip_kill_switch.py`, `reset_kill_switch.py`                         |
+| Prefix                       | What they do                                                                      | Examples                                                     |
+| ---------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `get_`                       | Read one record or status.                                                        | `get_health.py`, `get_transaction.py`, `get_trust_record.py` |
+| `list_`                      | List records.                                                                     | `list_transactions.py`, `list_trust_records.py`              |
+| `create_`, `propose_`        | Create a record, or propose a policy change.                                      | `create_transaction.py`, `propose_policy_change.py`          |
+| `approve_`, `reject_`        | Approve or reject a proposed change. These need a step-up signing key, see below. | `approve_policy_change.py`, `reject_policy_change.py`        |
+| `verify_`                    | Check a record.                                                                   | `verify_transaction.py`, `verify_audit_event.py`             |
+| `trip_`, `reset_`, `record_` | Kill switch operations.                                                           | `trip_kill_switch.py`, `reset_kill_switch.py`                |
 
 ## Changes need care
 

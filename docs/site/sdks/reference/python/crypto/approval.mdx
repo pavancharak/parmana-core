@@ -18,7 +18,7 @@ key never leaves the process that calls this function.
 
 Needs the optional `cryptography` dependency: `pip install "parmana[verify]"`.
 
-#### sign\_approval
+#### sign_approval
 
 ```python
 def sign_approval(
@@ -34,32 +34,31 @@ def sign_approval(
 
 Sign an approval of one action on one resource.
 
-Parameters
-----------
+## Parameters
+
 private_key_pem:
-    The approver's Ed25519 private key, PEM (PKCS `8`), as made by
-    scripts/generate-approver-key.ts.
+The approver's Ed25519 private key, PEM (PKCS `8`), as made by
+scripts/generate-approver-key.ts.
 
 approver_id, key_id:
-    The approver and key as registered on the server.
+The approver and key as registered on the server.
 
 capability:
-    The action approved, such as "paytm:refund" or "github:pr-merge".
+The action approved, such as "paytm:refund" or "github:pr-merge".
 
 resource_id:
-    The value at the policy's approvalSignals resourceId path: an order
-    id, or for "target" the Intent's target, such as "acme/api#42".
+The value at the policy's approvalSignals resourceId path: an order
+id, or for "target" the Intent's target, such as "acme/api#42".
 
 max_amount:
-    The largest amount approved. Give it when the policy declares a value
-    path (an amount), and leave it out when it does not: the approval
-    then names exactly this resource.
+The largest amount approved. Give it when the policy declares a value
+path (an amount), and leave it out when it does not: the approval
+then names exactly this resource.
 
 ttl_seconds:
-    How long the approval stays valid. Default 900, at most 86400.
+How long the approval stays valid. Default 900, at most 86400.
 
-Returns
--------
+## Returns
+
 The signed approval as a JSON ready dict, to send in the policy's
 approval signal. It is valid once, until its `expiresAt`.
-

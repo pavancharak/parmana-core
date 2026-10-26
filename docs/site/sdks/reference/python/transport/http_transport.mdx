@@ -27,8 +27,8 @@ class HttpTransport(Transport)
 
 Canonical HTTP transport.
 
-Responsibilities
-----------------
+## Responsibilities
+
 - Send HTTP requests over a reused connection pool
 - Retry idempotent (GET) requests with backoff
 - Parse Runtime responses
@@ -64,4 +64,3 @@ an ordinary payload instead of raising, because this specific
 route's response body at that specific status is not the shared
 \{error, code?\} envelope. Today exactly one route needs this: see
 PolicyApi.validate.
-

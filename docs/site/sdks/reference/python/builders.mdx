@@ -11,9 +11,9 @@ server's own BusinessTransactionValidator checks for cross-consistency
 caller can never build a request that fails one of those checks by
 mistake:
 
-  - metadata.business_transaction_id always equals business_transaction_id
-  - authorization.authority_id always equals authority.authority_id
-  - intent.authorization_id always equals authorization.authorization_id
+- metadata.business_transaction_id always equals business_transaction_id
+- authorization.authority_id always equals authority.authority_id
+- intent.authorization_id always equals authorization.authorization_id
 
 Hand-building a BusinessTransaction by constructing all five nested
 dataclasses and keeping three id pairs in sync by hand is exactly the
@@ -27,7 +27,7 @@ hand-maintained convenience layer, not a 1:1 mirror of a TypeScript
 domain type -- python/scripts/generate_models.ts never touches this
 file.
 
-#### create\_business\_transaction
+#### create_business_transaction
 
 ```python
 def create_business_transaction(
@@ -64,4 +64,3 @@ server-side.
 principal_id must match one of the caller API key's own
 allowed_principal_ids server-side, or the request is rejected
 before policy ever runs -- see GET /callers/me.
-

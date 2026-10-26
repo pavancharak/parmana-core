@@ -16,12 +16,13 @@ class TrustRecordApi()
 
 Trust Record API.
 
-Responsibilities
-----------------
+## Responsibilities
+
 - Retrieve Execution Trust Records
 - List Execution Trust Records
 
 This API does NOT:
+
 - execute Business Transactions
 - verify trust records
 - replay executions
@@ -35,13 +36,13 @@ def get(business_transaction_id: str) -> ExecutionTrustRecord
 
 Retrieve an Execution Trust Record.
 
-Parameters
-----------
-business_transaction_id:
-    Business Transaction identifier.
+## Parameters
 
-Returns
--------
+business_transaction_id:
+Business Transaction identifier.
+
+## Returns
+
 Execution Trust Record.
 
 #### list
@@ -60,19 +61,18 @@ Maps to GET /trust-records. Only records of Business Transactions
 this caller submitted are returned, so a page may hold fewer than
 `page_size` records.
 
-Parameters
-----------
+## Parameters
+
 page:
-    Page number.
+Page number.
 
 page_size:
-    Number of Business Transactions per page.
+Number of Business Transactions per page.
 
 since:
-    Only records of transactions created at or after this ISO 8601
-    time.
+Only records of transactions created at or after this ISO 8601
+time.
 
 until:
-    Only records of transactions created at or before this ISO 8601
-    time.
-
+Only records of transactions created at or before this ISO 8601
+time.
