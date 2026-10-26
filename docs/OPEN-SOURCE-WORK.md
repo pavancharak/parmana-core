@@ -35,7 +35,9 @@ Agent Receipts (`agent-receipts/obsigna`, Apache-2.0, protocol spec MIT, about 2
 
 withHuman (research only, nothing posted). Its product page calls it open source and describes the Agent Approval Protocol as an open spec, but no repository link is given. The `github.com/withhuman` organization lists zero public repositories, and the `withhuman/core` CONTRIBUTING page returned 404. The open-source claim cannot be verified, and there is no repository to contribute to yet. Its direct overlap with Parmana's approval layer means it may also compete with the pitch. Recheck before any outreach.
 
-Remaining candidates, ranked: JamJet Policy (`jamjet-labs/jamjet-policy`, repo unconfirmed), Signet (`prismer-ai/signet`, near obsigna). Could not confirm: MCPGuard, awaithumans, raucle (no repository found). HumanLayer is a separate project with a fork and PyPI releases 0.5.7 to 0.5.11rc1; its upstream repository is unchecked.
+JamJet Policy (`jamjet-labs/jamjet-policy`, Apache-2.0, 2 stars, 66 commits): research only, nothing posted. Its README calls it "the portable policy layer for AI agent actions," with one policy file and one audit trail across a Claude Code hook, an OpenAI guardrail, an MCP shim, Cedar policies, and a CLI with `approve`. That overlaps directly with Parmana's approval and audit path. No CONTRIBUTING, SECURITY, or DCO file is listed, so contribution rules are unknown. It has one open issue, #11 (source-rights evidence gate before content-related actions, opened 2026-10-05 by reflectme-source). No issue covers external policy engines, approval flow, or audit signing. The CONTRIBUTING page returned 404. Its README says "four adapters" but lists five packages, which is a small documentation fix.
+
+Remaining candidates: Signet (`prismer-ai/signet`, near obsigna). Could not confirm: MCPGuard, awaithumans, raucle (no repository found). HumanLayer is a separate project with a fork and PyPI releases 0.5.7 to 0.5.11rc1; its upstream repository is unchecked.
 
 Contribution rules learned so far:
 
