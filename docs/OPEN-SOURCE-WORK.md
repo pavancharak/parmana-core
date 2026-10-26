@@ -65,7 +65,14 @@ Work is done one item at a time. Items 1 and 2 are done locally. Nothing is push
    - `pavancharak/parmana-verifier`, branch `security-python-scope`, commit `743190a` (DCO): SECURITY.md covered only `src/`, so the Python package, which is on PyPI, was out of scope. The scope now covers `python/` too, and the supported-versions table lists the PyPI package, with a note that it cannot check ML-DSA-65 signatures.
    - Still open: whether to publish a full status page, and an outside review. The third-party check is an operator decision.
 
-Items 5 and 7 are still to do: follow each project's gate, and track responses.
+5. **Follow each project's gate** (checked 2026-10-26, nothing new posted).
+   - Microsoft AGT [#4427](https://github.com/microsoft/agent-governance-toolkit/pull/4427): blocked on the Microsoft CLA. The policy bot asks the author to reply `@microsoft-github-policy-service agree`. Only the author can post that, and the CLA checklist box is ticked after signing. Three code owners are required reviewers. The AI review checks show "incomplete; ready for human review." Pipelines may need an authorized maintainer to comment `/azp run`.
+   - Obsigna [#1146](https://github.com/agent-receipts/obsigna/pull/1146): no bot actions and no review requests. Fork workflows need maintainer approval before CI runs.
+   - Signet [#12](https://github.com/Prismer-AI/signet/pull/12): no review requests and no required bot actions for the code. A Vercel preview on the `willamhou` team needs that team's approval, which doesn't gate the review.
+   - Parmana context PR [#143](https://github.com/pavancharak/parmana-core/pull/143): build-and-test was failing on Prettier, fixed in `bf77474`. Vercel deployments are rate-limited for about 24 hours. Merge needs an approving review.
+7. **Track responses.** Covered by the hourly watches on the four threads and the three PRs. See "Watched threads."
+
+Item 7 is the watch. Item 5 needs the author's CLA reply on AGT before the review can start.
 
 ## Watched threads
 
