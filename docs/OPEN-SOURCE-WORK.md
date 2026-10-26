@@ -95,6 +95,13 @@ Next: wait for a maintainer decision on placement (core versus `agentmesh-integr
 
 ## OpenAI (`openai/openai-agents-python`, `openai/codex`)
 
+Reproduction of #5413, run 2026-10-26 on `main` at `0dc4cf1`. Offline, `ScriptedModel`, no API key. The script lives in the sandbox scratchpad (`repro_5413.py`), not in this repo. Output:
+- `after run 1: ['A']`
+- `run 2 interruptions before stale approve: 1`
+- `after run 2: ['A', 'A']`
+
+So the approval from run 1 authorized the same `call_id` in run 2, and the tool ran with no decision in run 2. The comment for #5413 has not been posted. It needs your approval.
+
 Research only, nothing posted. Checked 2026-10-26.
 
 - **Agents SDK fit:** the SDK has tool guardrails and human-in-the-loop approvals. A tool marked `needsApproval` pauses the run, and the caller resumes it with the decision. Per a third-party write-up, tool guardrails do not cover handoffs or hosted tools. That's unverified, so check the official docs first.
