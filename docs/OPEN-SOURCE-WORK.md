@@ -56,6 +56,8 @@ Work is done one item at a time. Items 1 and 2 are done locally. Nothing is push
    - **Unknown:** LangChain (its CONTRIBUTING returned 404), OpenFGA (the guide is elsewhere), JamJet Policy (no CONTRIBUTING file), in-toto (404), and withHuman (no public repo).
    - **Best next targets:** Signet, because it accepts a PR with no issue required and fits our receipts model. Second, an ADK follow-up on #7569, once the CLA is signed. The Microsoft and Obsigna PRs are already open and need only responses.
 
+   **Signet, first look** (checked 2026-10-26 at `6704117`, nothing posted). Signet's guide asks for fork, branch, tests, `cargo test --workspace`, `cargo clippy -D warnings`, `cargo fmt`, and Conventional Commits. Crypto lives only in `signet-core`, the TypeScript packages wrap WASM, and `unsafe` is banned. The framework integrations we would have proposed already exist: LangChain, CrewAI, AutoGen, Google ADK, LlamaIndex, OpenAI Agents, Pydantic AI, Semantic Kernel, and smolagents. The open TODOs are larger: off-host chain anchoring (L), a TUI dashboard (M), and OAGS conformance (M, waits on the spec). A grep for untested public functions was a false lead: all seven candidates have callers elsewhere in the workspace, so a real gap needs a coverage run. Open choice for the operator: a coverage run (heavy Rust build), or a first PR on off-host anchoring, which should start with an issue.
+
 Items 5 to 7 are still to do: follow each project's gate, make trust visible, and track responses.
 
 ## Watched threads
