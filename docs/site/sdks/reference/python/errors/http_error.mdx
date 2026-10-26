@@ -71,7 +71,7 @@ docs/site/api-reference/error-catalog.mdx). Distinct from the two
 _other_ 403 shapes this API returns (both AuthorizationError: a
 caller-identity/principal mismatch, no `code` field at all; and a
 capability-scoping denial, `code: "CAPABILITY_NOT_ALLOWED"`) -- see
-build_http_error's POLICY_DENIED check, which runs ahead of the
+build_http_error's `POLICY_DENIED` check, which runs ahead of the
 generic status-based mapping for exactly this reason.
 
 Previously reached over HTTP 500, code RUNTIME_ERROR (no dedicated
