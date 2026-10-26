@@ -63,3 +63,10 @@
 - Use environment variables for configuration (see .env.example)
 - Implement proper error handling for AWS API calls
 - Monitor CloudWatch logs for production deployments
+
+## Open-source contribution context
+
+Before continuing open-source contribution work in this repo, read
+`docs/OPEN-SOURCE-WORK.md`. It records the merged PRs, the outside
+projects being followed, and the working rules (Node 24, sign-off on
+commits, no model names in commits, and PRs or watching only when asked).
