@@ -36,12 +36,14 @@ Parmana's own context PR: [#143](https://github.com/pavancharak/parmana-core/pul
 
 ## Outside projects: posts and watches
 
-No maintainer has replied on any item below. Each comment was posted by the operator, and the operator decides the next step.
+Except where a row says otherwise, no maintainer has replied on any item below. Each comment was posted by the operator, and the operator decides the next step.
+
+- **OPA #9426: closed as not planned.** Maintainer `anderseknert` declined the ecosystem entry. He said a listed project must clearly focus on OPA, and that Parmana's README doesn't mention OPA. He also disputed our claim that OPA cannot produce offline-verifiable records, pointing to its decision-log documentation. Reopen only if Parmana's README and focus change. Do not repeat the offline-verifiability claim in any future post.
 
 | Project | Item | Our post | Status |
 | ------- | ---- | -------- | ------ |
 | Vengtoo MCP Gateway (`vengtoo/mcp-gateway`, Apache-2.0) | [Issue #2](https://github.com/vengtoo/mcp-gateway/issues/2): signed audit records | Two comments: design (per-record signature, hash chain, checkpoints) and an update (rotatable keys, configurable algorithm, witnesses) | Open, no labels, no assignee, no maintainer reply |
-| OPA (`open-policy-agent/opa`, Apache-2.0) | [Issue #9426](https://github.com/open-policy-agent/opa/issues/9426): ecosystem entry and Envoy to OPA to Parmana guide | Feature request, no comments yet | Open, no labels, no assignee |
+| OPA (`open-policy-agent/opa`, Apache-2.0) | [Issue #9426](https://github.com/open-policy-agent/opa/issues/9426): ecosystem entry and Envoy to OPA to Parmana guide | Feature request. Maintainer replied (see the note above). | Closed as not planned |
 | NVIDIA NeMo Guardrails (Apache-2.0) | [Issue #2245](https://github.com/NVIDIA-NeMo/Guardrails/issues/2245): external policy-engine example for custom actions | Offer comment posted by the operator. The page did not show it in the last check: confirm it in the browser | Open, "needs triage", no assignee. The issue author (ktirupati) already has an exploratory PolicyAware example and asks to be assigned after triage |
 | Model Context Protocol (`modelcontextprotocol/modelcontextprotocol`) | [Issue #3394](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/3394): lost-response retry re-executes tool calls | Comment: single-use authorization with a signed nonce, implemented at the gateway | Open, no reply visible. Eight comments are hidden behind "Load more" |
 | Anthropic Claude Code (`anthropics/claude-code`) | [Issue #103994](https://github.com/anthropics/claude-code/issues/103994): a PreToolUse hook's `ask` is overridden in bypass mode | Comment: asks whether `ask` should hold in every permission mode, and offers a repro | Open, no Anthropic reply. Labels: bug, area:hooks, area:permissions, has repro. Contribution rules not confirmed (CONTRIBUTING returned 404) |
@@ -97,6 +99,10 @@ Next: wait for a maintainer decision on placement (core versus `agentmesh-integr
 - **OPA:** feature requests start as an issue. Every commit needs a human sign-off. AI may help write code, but issue text, PR descriptions, and replies must be written by a human. Reviewers reject AI-generated replies.
 - **MCP:** spec changes follow the SEP process: discuss with a working group, build a prototype, then write the SEP. AI assistance must be disclosed.
 - **Sigstore:** issue first, DCO sign-off, updated docs, passing CI, maintainer review.
+- **OPA:** a maintainer declined a listed-project entry because the project must focus on OPA. Check fit with the maintainers before asking for listings.
+- **Casbin:** issue first for significant PRs. No DCO, test, or AI rules in the excerpt read. Its open issues show no MCP, agent, or signed-decision topic. The Casbin blog's MCP work is not visible in the tracker.
+- **Cedar:** issue first when in doubt. RFC process for substantial features. No DCO or AI rule stated. PRs target `main`. Conduct: CNCF Code of Conduct.
+- **OpenFGA:** contribution rules not yet read. Closest open item to an audit feature is #3023, "Log the decision" (enhancement).
 - **Agent Receipts:** see the entry above. No model names, session links, or attribution lines in commits or PRs.
 
 ## Working rules
