@@ -44,7 +44,7 @@ export class PaperOrderValidationError extends Error {
   }
 }
 
-function validate(request: PaperOrderRequest): void {
+export function validatePaperOrder(request: PaperOrderRequest): void {
   if (request.tradingsymbol.trim() === "") {
     throw new PaperOrderValidationError("tradingsymbol", "must be non-empty");
   }
@@ -105,7 +105,7 @@ export class PaperKiteClient {
 
   /** Validates the request and records it. Returns the simulated record. */
   placeOrder(request: PaperOrderRequest): PaperOrderRecord {
-    validate(request);
+    validatePaperOrder(request);
     this.#sequence += 1;
     const record: PaperOrderRecord = Object.freeze({
       orderId: `PAPER-${String(this.#sequence).padStart(6, "0")}`,

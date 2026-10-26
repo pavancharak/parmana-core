@@ -114,6 +114,12 @@ describe("execution boundary — exactly one production execution pipeline", () 
       // remote pattern Paytm uses, made general. It lives here with the
       // other adapters and runs only through the Gateway pipeline.
       "packages/execution-gateway/src/connector-execution/GatewayExternalAdapter.ts",
+      // Zerodha Kite connector (paper and approval-gated live modes). Lives in
+      // execution-gateway with the other adapters; live mode refuses to
+      // construct without a recorded ZerodhaLiveApproval, and the connector is
+      // not registered with the gateway. Capability identifiers and the Kite
+      // client live in @parmana/connector-zerodha.
+      "packages/execution-gateway/src/connector-execution/GatewayZerodhaAdapter.ts",
       // Explicit, intentional test double — never executes a real vendor
       // call. Constructed by production bootstrap (createVendorPaymentConnector.ts,
       // via createConnectorRegistry.ts) ONLY when NODE_ENV=test; outside test
