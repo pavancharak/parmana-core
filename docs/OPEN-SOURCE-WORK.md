@@ -93,6 +93,21 @@ Posted: [microsoft/agent-governance-toolkit#4426](https://github.com/microsoft/a
 
 Next: wait for a maintainer decision on placement (core versus `agentmesh-integrations/`) and on the signing scope. Build any code only after they respond, and do not open a PR without maintainer approval. Core changes need maintainer approval.
 
+## OpenAI (`openai/openai-agents-python`, `openai/codex`)
+
+Research only, nothing posted. Checked 2026-10-26.
+
+- **Agents SDK fit:** the SDK has tool guardrails and human-in-the-loop approvals. A tool marked `needsApproval` pauses the run, and the caller resumes it with the decision. Per a third-party write-up, tool guardrails do not cover handoffs or hosted tools. That's unverified, so check the official docs first.
+- **Open issues closest to Parmana:**
+  - #5409: an approved tool can run again if the process stops after it runs but before its state is saved. This is the replay problem that ADR-0030's approval binding addresses.
+  - #5413: an approval can carry over to another run when a call ID is reused. This is the binding problem.
+  - #5407: a payment guardrail proposal with external spend authority and auditable receipts. Closest to Parmana's receipts.
+  - #5408: pre-execution guardrails for agent loops (enhancement).
+  - #5353: "Support the OpenAI Decisions API." Unclear; read it before relying on it.
+- **Contribution rules (`openai-agents-python`, `CONTRIBUTING.md`):** only repository collaborators open PRs. Outsiders must open an issue, including for docs or examples. An issue needs the affected version, expected and actual behavior, and a small sanitized reproduction. Security reports go through `SECURITY.md`. Setup uses Python 3.10+, `uv`, and `make sync`. No DCO, CLA, or AI rule stated.
+- **Codex:** does not accept external code contributions. Issues only, with the Codex team making code changes.
+- **Implication:** a useful contribution to the Agents SDK is an issue with a reproduction, not a PR. The strongest candidate is a reproduction for #5409 or #5413 that shows what a binding check would catch. That needs approval before anything is posted.
+
 ## LangChain (`langchain-ai/langchain`)
 
 Research only, nothing posted. Checked 2026-10-26.
