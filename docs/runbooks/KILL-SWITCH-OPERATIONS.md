@@ -224,3 +224,49 @@ After any change to a variable, deploy again: variables are read when a deployme
 | `400 Malformed JSON body`                                                                           | inline JSON quoting                                    | send the body with `--data-binary "@file"`                           |
 | probe workflow fails with 401                                                                       | `PARMANA_PROBE_KEY` does not match the stored hash     | set the secret to the current probe key, then run the workflow again |
 | `git pull` refuses to run                                                                           | uncommitted local changes                              | commit or stash them, then pull                                      |
+
+## Probe history retention
+
+ADR-0017 (decision 3) requires probe history to be kept for at least one year. The rows live in `kill_switch_probe`.
+
+The code is in `packages/api/src/killSwitch/PostgresKillSwitchProbePruner.ts` (merged in PR #138):
+
+- `probeRetentionCutoff(now)` returns the instant exactly one year before `now`.
+- `assertPruneCutoffAllowed(cutoff, now)` throws if the cutoff is invalid, or if it is more recent than one year before `now`. Nothing is deleted when it throws.
+- `PostgresKillSwitchProbePruner.pruneBefore(cutoff, now)` runs the guard first, then deletes probes probed before the cutoff, and returns how many were deleted.
+
+To delete probes that are at least one year old:
+
+```ts
+const pruner = new PostgresKillSwitchProbePruner(pool);
+const deleted = await pruner.pruneBefore(probeRetentionCutoff(new Date()));
+```
+
+Nothing calls the pruner yet. Scheduling it is deferred (see "Still open"). Until it is scheduled, no probe rows are deleted.
+
+## Branch housekeeping
+
+Only delete a remote branch when its work is already in `main`. Git cannot always confirm this, because squash-merged branches keep their own commits. Before any deletion, save the branch names and their commit SHAs to a file, so each branch can be restored.
+
+Restore one branch from its saved SHA:
+
+```powershell
+git push origin <sha>:refs/heads/<branch-name>
+```
+
+Restore every branch in a saved file, where each line is `<sha> <branch-name>`:
+
+```powershell
+Get-Content <file> | ForEach-Object {
+  $sha, $name = $_ -split ' '
+  git push origin "${sha}:refs/heads/$name"
+}
+```
+
+Check that a deleted branch is gone:
+
+```powershell
+git ls-remote --heads origin <branch-name>
+```
+
+An empty result means the branch is gone. A deletion never touches `main`.
