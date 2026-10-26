@@ -11,6 +11,7 @@ import {
 } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { format } from "prettier";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,8 +22,19 @@ const DOCS_DIR = path.join(root, "docs", "site", "sdks", "reference", "python");
 const NAV_BASE = "sdks/reference/python";
 const DOCS_JSON_PATH = path.join(root, "docs", "site", "docs.json");
 const PYDOC_MARKDOWN_CONFIG = path.join(root, "pydoc-markdown.python.yml");
+// pydoc-markdown does not write a page description, so each page's description
+// is kept here, keyed by its path under DOCS_DIR without the .mdx extension.
+const DESCRIPTIONS_PATH = path.join(
+  root,
+  "scripts",
+  "python-sdk-reference",
+  "descriptions.json",
+);
+const descriptions: Record<string, string> = JSON.parse(
+  readFileSync(DESCRIPTIONS_PATH, "utf8"),
+);
 
-function run(): void {
+async function run(): Promise<void> {
   console.log("generate-python-sdk-reference: running pydoc-markdown...");
 
   /**
@@ -42,16 +54,36 @@ function run(): void {
   }
   mkdirSync(DOCS_DIR, { recursive: true });
 
-  const navPages = walkAndTransform(
+  const navPages = await walkAndTransform(
     path.join(STAGING_DIR, "parmana"),
     DOCS_DIR,
   );
   navPages.sort();
 
-  updateNav(navPages);
+  await updateNav(navPages);
 
   console.log(
     `generate-python-sdk-reference: wrote ${navPages.length} pages to ${DOCS_DIR}`,
+  );
+}
+
+/**
+ * Adds the page's description to its frontmatter, just before the closing
+ * `---`, from descriptions.json. A page with no entry is written without a
+ * description and reported, so a new page is noticed rather than missed.
+ */
+function withDescription(body: string, key: string): string {
+  if (/^description:/m.test(body.split("\n---\n")[0] ?? "")) return body;
+  const description = descriptions[key];
+  if (description === undefined) {
+    console.warn(
+      `generate-python-sdk-reference: no description for ${key}; add it to descriptions.json.`,
+    );
+    return body;
+  }
+  return body.replace(
+    "\n---\n",
+    `\ndescription: ${JSON.stringify(description)}\n---\n`,
   );
 }
 
@@ -76,11 +108,11 @@ function run(): void {
  * lines inside triple-backtick fences where the exact same characters
  * are legitimate Python/JSON syntax Mintlify already renders literally.
  */
-function walkAndTransform(
+async function walkAndTransform(
   sourceDir: string,
   destDir: string,
   navPrefixParts: string[] = [],
-): string[] {
+): Promise<string[]> {
   const navPages: string[] = [];
 
   for (const entry of readdirSync(sourceDir)) {
@@ -90,7 +122,10 @@ function walkAndTransform(
       const nestedDest = path.join(destDir, entry);
       mkdirSync(nestedDest, { recursive: true });
       navPages.push(
-        ...walkAndTransform(sourcePath, nestedDest, [...navPrefixParts, entry]),
+        ...(await walkAndTransform(sourcePath, nestedDest, [
+          ...navPrefixParts,
+          entry,
+        ])),
       );
       continue;
     }
@@ -101,7 +136,17 @@ function walkAndTransform(
     const body = escapeMdxUnsafeCharacters(unescapeHtmlEntities(raw));
 
     const name = entry.replace(/\.md$/, "");
-    writeFileSync(path.join(destDir, `${name}.mdx`), body, "utf8");
+    const key = path
+      .relative(DOCS_DIR, path.join(destDir, name))
+      .split(path.sep)
+      .join("/");
+    // Prettier's markdown output is the committed format: it turns the
+    // setext headings pydoc emits into `##` headings, and spaces lists.
+    writeFileSync(
+      path.join(destDir, `${name}.mdx`),
+      await format(withDescription(body, key), { parser: "mdx" }),
+      "utf8",
+    );
 
     navPages.push([NAV_BASE, ...navPrefixParts, name].join("/"));
   }
@@ -127,7 +172,7 @@ function unescapeHtmlEntities(text: string): string {
  * sub group inside it. It was reorganized into one tab per SDK, and this
  * function follows that structure.
  */
-function updateNav(navPages: string[]): void {
+async function updateNav(navPages: string[]): Promise<void> {
   const config = JSON.parse(readFileSync(DOCS_JSON_PATH, "utf8"));
 
   const tab = (
@@ -149,7 +194,11 @@ function updateNav(navPages: string[]): void {
 
   referenceGroup.pages = navPages;
 
-  writeFileSync(DOCS_JSON_PATH, JSON.stringify(config, null, 2) + "\n", "utf8");
+  writeFileSync(
+    DOCS_JSON_PATH,
+    await format(JSON.stringify(config, null, 2), { parser: "json" }),
+    "utf8",
+  );
 }
 
-run();
+await run();
