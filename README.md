@@ -22,7 +22,7 @@ Parmana sits between an AI agent and the systems it calls.
 
 - **Before an action:** the request is checked against an explicit, versioned policy, and it needs a signed approval from a person you trust. No approval, no action, reads included ([CLAIMS.md 2.47](docs/CLAIMS.md)).
 - **When it runs:** the agent never holds the real credentials. The gateway releases one approved action, once, through a connector.
-- **After it runs:** a signed record of what was authorized and what happened. Anyone can verify it offline, without trusting Parmana's servers or database.
+- **After it runs:** a signed record of what was authorized and what happened. Anyone can verify it offline, using only the public key they choose to trust. The verifier cannot prove that the key belongs to Parmana.
 
 Parmana does not decide what the agent should do. It decides whether the agent was allowed to do it, and it proves that decision.
 
@@ -96,24 +96,24 @@ Authority --> Authorization --> Intent --> Business Transaction
                                 Verification  <-->  Settlement Confirmation
 ```
 
-| Package                        | Role                                                                                                               |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| `@parmana/api`                 | REST API: `/execute`, `/verification`, webhooks, caller authentication                                             |
-| `@parmana/runtime`             | Orchestrates a Business Transaction through policy, execution and evidence                                         |
-| `@parmana/policy`              | Deterministic policy evaluation, sequential rules, first-match semantics                                           |
-| `@parmana/execution-gateway`   | The sole boundary that releases an approved request to a connector                                                 |
-| `@parmana/execution-control`   | Credential-isolating, single-use execution release                                                                 |
-| `@parmana/connector-sdk`       | Connector authoring contract: capability definitions, schemas, and the Connector and CredentialProvider interfaces |
-| `@parmana/envelope-verifier`   | Verifies a Parmana authorization independently, with no trust in Parmana's runtime or database                     |
-| `@parmana/crypto`              | Signing and verification: Ed25519 by default, ML-DSA-65 (post-quantum) configurable                                |
-| `@parmana/approval`            | Verifies signed approvals issued by a business authority, independent of the caller and of Parmana's runtime       |
-| `@parmana/capability-registry` | Binds each capability to the policy that governs it, and refuses a request that names another                      |
-| `@parmana/execution-system`    | The interface approved requests are forwarded through, with an HTTP implementation                                 |
-| `@parmana/connector-*`         | Connectors: HubSpot, GitHub, Slack and Paytm                                                                       |
-| `@parmana/governance-ui`       | Internal UI to propose and review policy changes; approval stays on the approver's machine                         |
-| `@parmana/replay`              | Deterministic reconstruction of a past policy decision                                                             |
-| `@parmana/storage`             | Append-only persistence, in memory or Supabase-backed                                                              |
-| `@parmana/shared`              | Domain model and configuration shared across every package                                                         |
+| Package                        | Role                                                                                                                                     |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `@parmana/api`                 | REST API: `/execute`, `/verification`, webhooks, caller authentication                                                                   |
+| `@parmana/runtime`             | Orchestrates a Business Transaction through policy, execution and evidence                                                               |
+| `@parmana/policy`              | Deterministic policy evaluation, sequential rules, first-match semantics                                                                 |
+| `@parmana/execution-gateway`   | The sole boundary that releases an approved request to a connector                                                                       |
+| `@parmana/execution-control`   | Credential-isolating, single-use execution release                                                                                       |
+| `@parmana/connector-sdk`       | Connector authoring contract: capability definitions, schemas, and the Connector and CredentialProvider interfaces                       |
+| `@parmana/envelope-verifier`   | Verifies a Parmana authorization independently, with no trust in Parmana's runtime or database                                           |
+| `@parmana/crypto`              | Signing and verification: Ed25519 by default; ML-DSA-65 (post-quantum) in the Node packages, which need Node 24 and OpenSSL 3.5 or later |
+| `@parmana/approval`            | Verifies signed approvals issued by a business authority, independent of the caller and of Parmana's runtime                             |
+| `@parmana/capability-registry` | Binds each capability to the policy that governs it, and refuses a request that names another                                            |
+| `@parmana/execution-system`    | The interface approved requests are forwarded through, with an HTTP implementation                                                       |
+| `@parmana/connector-*`         | Connectors: HubSpot, GitHub, Slack and Paytm                                                                                             |
+| `@parmana/governance-ui`       | Internal UI to propose and review policy changes; approval stays on the approver's machine                                               |
+| `@parmana/replay`              | Deterministic reconstruction of a past policy decision                                                                                   |
+| `@parmana/storage`             | Append-only persistence, in memory or Supabase-backed                                                                                    |
+| `@parmana/shared`              | Domain model and configuration shared across every package                                                                               |
 
 Key properties: fail-closed configuration (a misconfigured process refuses to start rather than degrade silently), credential isolation (a connector never receives long-lived credentials, only a single-use session), exactly-once consumption of every authorization and webhook event, append-only signed evidence, and both classical (Ed25519) and post-quantum (ML-DSA-65) signing.
 
