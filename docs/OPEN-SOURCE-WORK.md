@@ -18,10 +18,10 @@ Status as of 2026-10-26.
 
 ## Pull requests opened on other projects
 
-| Project | PR | Change | Status |
-| ------- | -- | ------ | ------ |
-| Agent Receipts (`agent-receipts/obsigna`, Apache-2.0) | [#1146](https://github.com/agent-receipts/obsigna/pull/1146) | Test vectors for a receipt with `action.target` and `parameters_hash`, signed by the Python and TypeScript SDKs and checked in all three SDKs. Test-only. Addresses the test gap in issue #1001 for those two signing paths. | Open. Two commits (`30f2b0b`, `7c402f5`), no reviews. Title and description set. Workflows from the fork need maintainer approval, so CI has not run upstream. |
-| vengtoo MCP gateway (`vengtoo/mcp-gateway`, Apache-2.0) | Fork branch `pavancharak/mcp-gateway:fix/npm-audit` (commit `82833f5`). Upstream [vengtoo/mcp-gateway#3](https://github.com/vengtoo/mcp-gateway/pull/3), "fix(deps): resolve production npm audit findings," is open. Its head branch was not confirmed from this session. | `npm audit fix` on the lockfile only. Production audit shows 0 vulnerabilities. 52 tests pass and typecheck is clean. | Fork branch pushed. The push to `authzx/mcp-gateway` was refused (403). Upstream PR open. |
+| Project                                                 | PR                                                                                                                                                                                                                                                                         | Change                                                                                                                                                                                                                       | Status                                                                                                                                                         |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Agent Receipts (`agent-receipts/obsigna`, Apache-2.0)   | [#1146](https://github.com/agent-receipts/obsigna/pull/1146)                                                                                                                                                                                                               | Test vectors for a receipt with `action.target` and `parameters_hash`, signed by the Python and TypeScript SDKs and checked in all three SDKs. Test-only. Addresses the test gap in issue #1001 for those two signing paths. | Open. Two commits (`30f2b0b`, `7c402f5`), no reviews. Title and description set. Workflows from the fork need maintainer approval, so CI has not run upstream. |
+| vengtoo MCP gateway (`vengtoo/mcp-gateway`, Apache-2.0) | Fork branch `pavancharak/mcp-gateway:fix/npm-audit` (commit `82833f5`). Upstream [vengtoo/mcp-gateway#3](https://github.com/vengtoo/mcp-gateway/pull/3), "fix(deps): resolve production npm audit findings," is open. Its head branch was not confirmed from this session. | `npm audit fix` on the lockfile only. Production audit shows 0 vulnerabilities. 52 tests pass and typecheck is clean.                                                                                                        | Fork branch pushed. The push to `authzx/mcp-gateway` was refused (403). Upstream PR open.                                                                      |
 
 Parmana's own context PR: [#143](https://github.com/pavancharak/parmana-core/pull/143) on `claude/open-source-context`, not merged. Merging it is the operator's decision.
 
@@ -58,7 +58,7 @@ Work is done one item at a time. Items 1 and 2 are done locally. Nothing is push
 
    **Signet, first look** (checked 2026-10-26 at `6704117`, nothing posted). Signet's guide asks for fork, branch, tests, `cargo test --workspace`, `cargo clippy -D warnings`, `cargo fmt`, and Conventional Commits. Crypto lives only in `signet-core`, the TypeScript packages wrap WASM, and `unsafe` is banned. The framework integrations we would have proposed already exist: LangChain, CrewAI, AutoGen, Google ADK, LlamaIndex, OpenAI Agents, Pydantic AI, Semantic Kernel, and smolagents. The open TODOs are larger: off-host chain anchoring (L), a TUI dashboard (M), and OAGS conformance (M, waits on the spec). A grep for untested public functions was a false lead: all seven candidates have callers elsewhere in the workspace, so a real gap needs a coverage run. Coverage run done (`cargo llvm-cov --workspace`, pinned nightly, at `6704117`). Five public `signet-core` functions are never entered by the test suite: `constraint.rs` `is_empty`, `receipt.rs` `verified`, `trust.rs` `active_root_entry`, `verify.rs` `with_nonce_checker`, and `verify.rs` `is_agent_trusted`. All five are short. A first PR could add focused tests for them, which the guide requires. Written on branch `test/core-public-functions` in the Signet clone, commit `4ed8688` (Conventional Commit `test(core)`). Checks: `cargo test -p signet-core` passes 372 tests (367 existing plus 5), `cargo fmt --check` and `cargo clippy --all-targets -D warnings` are clean. Pushed to the fork `pavancharak/signet`, branch `test/core-public-functions`, head `4ed8688`. PR [Prismer-AI/signet#12](https://github.com/Prismer-AI/signet/pull/12), open against `main`, from the fork branch. Not yet watched. The patch is in the sandbox scratchpad.
 
-6. **Make trust visible** (done; both PRs open on the operator's own repos).
+5. **Make trust visible** (done; both PRs open on the operator's own repos).
    - PR [pavancharak/parmana-core#145](https://github.com/pavancharak/parmana-core/pull/145): SECURITY.md "Open security items" section, from `docs/security-status`.
    - PR [pavancharak/parmana-verifier#20](https://github.com/pavancharak/parmana-verifier/pull/20): the Python package in the security scope, from `security-python-scope`.
    - `pavancharak/parmana-core`, branch `docs/security-status`, commit `de557e1`: SECURITY.md gains an "Open security items" section. It lists the two-person control, the third-party check, signed status (G-118), key rotation, and the unscheduled retention job, with a link to the runbook's "Still open" section for owners.
@@ -71,12 +71,12 @@ Items 5 and 7 are still to do: follow each project's gate, and track responses.
 
 Status as of 2026-10-26, 06:56 UTC. Checked by hand at each step. The sandbox could not subscribe to GitHub events for these repos, so an hourly scheduled check re-reads them (trigger `trig_0158KWvcDBv1atbQjfYhDMMd`, first run 07:57 UTC). The check stays silent when nothing changes. It reports new maintainer replies and drafts nothing without approval.
 
-| Thread | What we posted or filed | Status at last check |
-| ------ | ----------------------- | -------------------- |
-| [agent-receipts/obsigna#1146](https://github.com/agent-receipts/obsigna/pull/1146) | Test-vector PR for the Python- and TypeScript-signed receipts | Open. Two commits, no reviews. CI waits for maintainer approval of fork workflows. |
-| [openai/openai-agents-python#5413](https://github.com/openai/openai-agents-python/issues/5413) | Offline reproduction comment: a run 1 approval authorizes the same `call_id` in run 2 | Commented. No maintainer reply seen. |
-| [google/adk-python#7569](https://github.com/google/adk-python/issues/7569) | Comment proposing a verifiable approval signature alongside the caller-identity check | Commented. Assigned to `surajksharma07`. No maintainer reply seen. |
-| [microsoft/agent-governance-toolkit#4426](https://github.com/microsoft/agent-governance-toolkit/issues/4426) | RFC: optional detached Ed25519 signature for `ApprovalResolution` | Open, triage. Only the repo's welcome bot has replied. |
+| Thread                                                                                                       | What we posted or filed                                                               | Status at last check                                                               |
+| ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| [agent-receipts/obsigna#1146](https://github.com/agent-receipts/obsigna/pull/1146)                           | Test-vector PR for the Python- and TypeScript-signed receipts                         | Open. Two commits, no reviews. CI waits for maintainer approval of fork workflows. |
+| [openai/openai-agents-python#5413](https://github.com/openai/openai-agents-python/issues/5413)               | Offline reproduction comment: a run 1 approval authorizes the same `call_id` in run 2 | Commented. No maintainer reply seen.                                               |
+| [google/adk-python#7569](https://github.com/google/adk-python/issues/7569)                                   | Comment proposing a verifiable approval signature alongside the caller-identity check | Commented. Assigned to `surajksharma07`. No maintainer reply seen.                 |
+| [microsoft/agent-governance-toolkit#4426](https://github.com/microsoft/agent-governance-toolkit/issues/4426) | RFC: optional detached Ed25519 signature for `ApprovalResolution`                     | Open, triage. Only the repo's welcome bot has replied.                             |
 
 ## Outside projects: posts and watches
 
@@ -84,13 +84,13 @@ Except where a row says otherwise, no maintainer has replied on any item below. 
 
 - **OPA #9426: closed as not planned.** Maintainer `anderseknert` declined the ecosystem entry. He said a listed project must clearly focus on OPA, and that Parmana's README doesn't mention OPA. He also disputed our claim that OPA cannot produce offline-verifiable records, pointing to its decision-log documentation. Reopen only if Parmana's README and focus change. Do not repeat the offline-verifiability claim in any future post.
 
-| Project | Item | Our post | Status |
-| ------- | ---- | -------- | ------ |
-| Vengtoo MCP Gateway (`vengtoo/mcp-gateway`, Apache-2.0) | [Issue #2](https://github.com/vengtoo/mcp-gateway/issues/2): signed audit records | Two comments: design (per-record signature, hash chain, checkpoints) and an update (rotatable keys, configurable algorithm, witnesses) | Open, no labels, no assignee, no maintainer reply |
-| OPA (`open-policy-agent/opa`, Apache-2.0) | [Issue #9426](https://github.com/open-policy-agent/opa/issues/9426): ecosystem entry and Envoy to OPA to Parmana guide | Feature request. Maintainer replied (see the note above). | Closed as not planned |
-| NVIDIA NeMo Guardrails (Apache-2.0) | [Issue #2245](https://github.com/NVIDIA-NeMo/Guardrails/issues/2245): external policy-engine example for custom actions | Offer comment posted by the operator. The page did not show it in the last check: confirm it in the browser | Open, "needs triage", no assignee. The issue author (ktirupati) already has an exploratory PolicyAware example and asks to be assigned after triage |
-| Model Context Protocol (`modelcontextprotocol/modelcontextprotocol`) | [Issue #3394](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/3394): lost-response retry re-executes tool calls | Comment: single-use authorization with a signed nonce, implemented at the gateway | Open, no reply visible. Eight comments are hidden behind "Load more" |
-| Anthropic Claude Code (`anthropics/claude-code`) | [Issue #103994](https://github.com/anthropics/claude-code/issues/103994): a PreToolUse hook's `ask` is overridden in bypass mode | Comment: asks whether `ask` should hold in every permission mode, and offers a repro | Open, no Anthropic reply. Labels: bug, area:hooks, area:permissions, has repro. Contribution rules not confirmed (CONTRIBUTING returned 404) |
+| Project                                                              | Item                                                                                                                                | Our post                                                                                                                               | Status                                                                                                                                              |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Vengtoo MCP Gateway (`vengtoo/mcp-gateway`, Apache-2.0)              | [Issue #2](https://github.com/vengtoo/mcp-gateway/issues/2): signed audit records                                                   | Two comments: design (per-record signature, hash chain, checkpoints) and an update (rotatable keys, configurable algorithm, witnesses) | Open, no labels, no assignee, no maintainer reply                                                                                                   |
+| OPA (`open-policy-agent/opa`, Apache-2.0)                            | [Issue #9426](https://github.com/open-policy-agent/opa/issues/9426): ecosystem entry and Envoy to OPA to Parmana guide              | Feature request. Maintainer replied (see the note above).                                                                              | Closed as not planned                                                                                                                               |
+| NVIDIA NeMo Guardrails (Apache-2.0)                                  | [Issue #2245](https://github.com/NVIDIA-NeMo/Guardrails/issues/2245): external policy-engine example for custom actions             | Offer comment posted by the operator. The page did not show it in the last check: confirm it in the browser                            | Open, "needs triage", no assignee. The issue author (ktirupati) already has an exploratory PolicyAware example and asks to be assigned after triage |
+| Model Context Protocol (`modelcontextprotocol/modelcontextprotocol`) | [Issue #3394](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/3394): lost-response retry re-executes tool calls | Comment: single-use authorization with a signed nonce, implemented at the gateway                                                      | Open, no reply visible. Eight comments are hidden behind "Load more"                                                                                |
+| Anthropic Claude Code (`anthropics/claude-code`)                     | [Issue #103994](https://github.com/anthropics/claude-code/issues/103994): a PreToolUse hook's `ask` is overridden in bypass mode    | Comment: asks whether `ask` should hold in every permission mode, and offers a repro                                                   | Open, no Anthropic reply. Labels: bug, area:hooks, area:permissions, has repro. Contribution rules not confirmed (CONTRIBUTING returned 404)        |
 
 ## Research: candidates checked (nothing posted)
 
@@ -111,12 +111,14 @@ Not confirmed: MCPGuard, awaithumans, raucle (no repository found). HumanLayer h
 Checked 2026-10-26 at commit `70a4ab8`. Research only, nothing posted. Public Preview, about 6.5k stars. Languages: Python, TypeScript, .NET, Rust, Go.
 
 Audit code, read from the repo:
+
 - **TypeScript** (`agent-governance-typescript/src/audit.ts`): a SHA-256 hash chain with no signature and no key. Anyone can recompute it, but it proves nothing about who wrote the entries.
 - **Python** (`agent-governance-python/agent-mesh/src/agentmesh/governance/audit_backends.py`): `SignedAuditEntry` is a hash chain with an HMAC-SHA256 over a caller-supplied secret. Only a holder of that key can verify it. Third parties cannot.
 - **Ed25519** appears only in the experimental `agent-os/modules/nexus` prototype, for manifests and escrow messages. I did not see job receipts signed there.
 - **Conclusion:** the review's "no cryptographic signing" is close for the audit trail. Nothing is publicly verifiable by a third party. That is the gap a Parmana receipt would fill.
 
 Contribution rules (`CONTRIBUTING.md`, `GOVERNANCE.md`):
+
 - Core packages are maintainer-only. An outside contributor must open an issue and get explicit maintainer approval before a PR.
 - `agentmesh-integrations/` accepts extensions from anyone. Each needs its own README, tests, and license notice, and must not modify core packages.
 - CLA checked by a bot, and `git commit -s` on every commit.
@@ -125,6 +127,7 @@ Contribution rules (`CONTRIBUTING.md`, `GOVERNANCE.md`):
 - External PRs need a maintainer code owner's approval. Bot approvals do not count.
 
 Open issues that match Parmana:
+
 - [#4363](https://github.com/microsoft/agent-governance-toolkit/issues/4363): approval requests do not say which tool or action they approve. ADR-0030 already answers this with `ActionBinding` and `action_digest`, which are implemented in `approval_protocol/binding.py`. Probably resolved; do not comment on it.
 - [#4298](https://github.com/microsoft/agent-governance-toolkit/issues/4298): an optional example-only governance substrate. Its "shutdown receipts" are not signed. Community-authored, awaiting maintainer triage.
 - [#4217](https://github.com/microsoft/agent-governance-toolkit/issues/4217): external authority admission across federated runtimes.
@@ -156,6 +159,7 @@ Research only, nothing posted. Checked 2026-10-26.
 ## OpenAI (`openai/openai-agents-python`, `openai/codex`)
 
 Reproduction of #5413, run 2026-10-26 on `main` at `0dc4cf1`. Offline, `ScriptedModel`, no API key. The script lives in the sandbox scratchpad (`repro_5413.py`), not in this repo. Output:
+
 - `after run 1: ['A']`
 - `run 2 interruptions before stale approve: 1`
 - `after run 2: ['A', 'A']`
