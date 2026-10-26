@@ -70,10 +70,10 @@ deployed:
 an automated caller that is assumed hostile.
 
 **Authorization languages.** Policy engines such as OPA and Cedar [Cutler et al. 2024] decide
-allow or deny from inputs. Parmana's policy language is deliberately smaller (first matching
-rule wins; no matching rule refuses) and adds two things engines leave to the caller: a
-required signed human approval as a condition, and a signed decision that the release point
-re-verifies.
+allow or deny from inputs. OPA's documented decision logs carry no signature, so a signed
+decision record is not part of its default output. Parmana's policy language is deliberately
+smaller (first matching rule wins; no matching rule refuses). It adds a required signed human
+approval as a condition, and a signed decision that the release point re-verifies.
 
 **Capability tokens.** Macaroons [Birgisson et al. 2014] attach caveats to bearer tokens.
 Parmana's execution authorization is a signed, single use, time bounded token bound to the
