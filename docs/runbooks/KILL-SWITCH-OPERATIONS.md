@@ -96,11 +96,20 @@ Two keys were pasted into chat during setup. Treat both as exposed, and rotate t
 
 ## Still open
 
-- **Probe scheduler:** live on `main` since 2026-10-20, running every 15 minutes. Its key is the repository secret `PARMANA_PROBE_KEY`. Rotate it by generating a new probe key, replacing its entry in `PARMANA_API_KEYS`, then updating the secret. Do not reuse a key that has been pasted into chat.
-- **Signed status and audit events (G-118).** Waits for the build-bound signing key.
-- **Third-party check.** Needs a non-production deployment and an outside party.
-- **Two-person reset in production.** Enabled, but not yet exercised with two real operator keys.
-- **Key rotation.** Rotate the keys pasted during setup, and remove the old ones from `PARMANA_API_KEYS`.
+Status as of 2026-10-26. Each item says what is done, what is open, and who decides the next step.
+
+- **Probe scheduler: running.** The workflow runs every 15 minutes and was verified green on 2026-10-26 (run #42). Its key is the repository secret `PARMANA_PROBE_KEY`. To rotate: generate a new probe key, replace its entry in `PARMANA_API_KEYS`, redeploy, then update the secret. Do not reuse a key that has been pasted into chat.
+- **Probe history retention: not yet enforced.** The ADR (decision 3) requires probe rows to be kept for at least one year. Nothing deletes them today, so the minimum holds. Open: a retention job that keeps rows for a year before any deletion is allowed. Owner: the maintainers. Next step: write the job and a test that refuses to delete a row younger than one year.
+- **Signed status and audit events (G-118): open.** Status responses are unsigned (`signed: false`) until a signing key tied to the running build exists. Open: provision that key and sign the status response. Owner: the maintainers. Until then, the status endpoint must say its responses are unsigned.
+- **Third-party check: open.** ADR-0017 requires an independent party to check that the switch works, and to keep the evidence. It cannot be closed from inside the repository.
+  - What it needs: a non-production deployment of this repository, with its own database, its own keys, and its own `PARMANA_API_KEYS`. It must never run against `parmana-api-real`, because tripping production stops real traffic.
+  - The steps the outside party runs: trip the switch, confirm a refusal with a fresh nonce, reset with two operators, and confirm the request is accepted again. The result is signed evidence. The signing is not built yet (see G-118), so the evidence is unsigned until then.
+  - Owner: the operator, who chooses the outside party and provides the non-production deployment. Next step: name the party and the deployment, then run the steps above.
+- **Two-person reset in production: open.** The reset has been tested with two keys held by one person, which proves the mechanics but not the control. The control needs two different named operators, each with their own `callerId` and key, neither sharing a key.
+  - What it needs: two people, each named, each issued a key under the process in ADR-0017 decision 2, and each recorded in `PARMANA_API_KEYS`.
+  - The test to run afterwards: the maker trips, the maker requests a reset (`202`), the maker's own confirmation is refused (`409`), and the second operator confirms (`200`). See the credential section below for the commands.
+  - Owner: the operator, who names the second operator. Next step: name that person.
+- **Key rotation: open.** Rotate the keys that were pasted into chat during setup, and remove the old entries from `PARMANA_API_KEYS`. Owner: the operator.
 
 ## Credentials: generate, store, deploy and test
 
