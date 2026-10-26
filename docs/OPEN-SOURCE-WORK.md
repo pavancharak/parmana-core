@@ -49,6 +49,33 @@ Ranked by overlap with Parmana. "Rules" lists what each project's own files say.
 
 Not confirmed: MCPGuard, awaithumans, raucle (no repository found). HumanLayer has a fork and PyPI releases 0.5.7 to 0.5.11rc1; its upstream repository is unchecked. OpenBox (reference repo returned 404). Anthropic Agent SDK (CONTRIBUTING returned 404).
 
+## Microsoft Agent Governance Toolkit (`microsoft/agent-governance-toolkit`, MIT)
+
+Checked 2026-10-26 at commit `70a4ab8`. Research only, nothing posted. Public Preview, about 6.5k stars. Languages: Python, TypeScript, .NET, Rust, Go.
+
+Audit code, read from the repo:
+- **TypeScript** (`agent-governance-typescript/src/audit.ts`): a SHA-256 hash chain with no signature and no key. Anyone can recompute it, but it proves nothing about who wrote the entries.
+- **Python** (`agent-governance-python/agent-mesh/src/agentmesh/governance/audit_backends.py`): `SignedAuditEntry` is a hash chain with an HMAC-SHA256 over a caller-supplied secret. Only a holder of that key can verify it. Third parties cannot.
+- **Ed25519** appears only in the experimental `agent-os/modules/nexus` prototype, for manifests and escrow messages. I did not see job receipts signed there.
+- **Conclusion:** the review's "no cryptographic signing" is close for the audit trail. Nothing is publicly verifiable by a third party. That is the gap a Parmana receipt would fill.
+
+Contribution rules (`CONTRIBUTING.md`, `GOVERNANCE.md`):
+- Core packages are maintainer-only. An outside contributor must open an issue and get explicit maintainer approval before a PR.
+- `agentmesh-integrations/` accepts extensions from anyone. Each needs its own README, tests, and license notice, and must not modify core packages.
+- CLA checked by a bot, and `git commit -s` on every commit.
+- `ruff check --fix .` and `pytest tests/ -q`, with `ruff==0.12.4` pinned.
+- AI use allowed, but the contributor must explain every change. Disclosure required for autonomous AI activity and for unreviewed AI content. Agents may not open PRs, file issues, or reply to reviews without human oversight, and AI must not write replies to review comments.
+- External PRs need a maintainer code owner's approval. Bot approvals do not count.
+
+Open issues that match Parmana:
+- [#4363](https://github.com/microsoft/agent-governance-toolkit/issues/4363): ADR-0030 approval requests do not say which tool or action they approve. Closest match to Parmana's approvals.
+- [#4298](https://github.com/microsoft/agent-governance-toolkit/issues/4298): RFC for an optional governance substrate for verified execution. Possible entry point.
+- [#4217](https://github.com/microsoft/agent-governance-toolkit/issues/4217): external authority admission across federated runtimes.
+- [#4374](https://github.com/microsoft/agent-governance-toolkit/issues/4374) and [#4375](https://github.com/microsoft/agent-governance-toolkit/issues/4375): a Cedar dispatcher and docs.
+- No issue names receipts or cryptographic evidence directly.
+
+Next step: take the approval-binding point to #4363 or #4298 as an issue, not a PR. Build any code as an `agentmesh-integrations/` extension after maintainers respond. ADR-0030 has not been read yet.
+
 ## Contribution rules learned so far
 
 - **NeMo Guardrails:** an issue must come first, and the contributor must be assigned to it before opening a PR. DCO sign-off is required. Disclose AI assistance in the PR description.
