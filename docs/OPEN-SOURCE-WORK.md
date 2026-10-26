@@ -29,7 +29,9 @@ Also checked and held: OpenBox (reference repo not reachable from this session: 
 
 in-toto (`in-toto/in-toto`): research only, nothing posted. Layouts are signed policy, and inspections and predicates are extension points. The two open issues found (#79, #109) are 2017 discussions and do not match a verifier plugin. The CONTRIBUTING page returned 404. Witness (`in-toto/go-witness`, the attestor and verifier project) is the more likely integration point. Its contribution rules: an issue is preferred, DCO sign-off, Conventional Commits, tests where possible, a maintainer must approve, and no AI disclosure rule was found. It had no open issues matching policy or verifier plugins.
 
-Candidates still to check: Sigstore (Rekor and Cosign, Apache-2.0; its contributor rules were read, but the Rekor CONTRIBUTING page returned 404). Earlier candidates, not yet checked: MCPGuard, jamjet-policy, withHuman, HumanLayer, awaithumans, Agent Receipts (obsigna), Signet, raucle.
+Sigstore (research only, nothing posted). Cosign's attestation policies already accept CUE and Rego on in-toto predicates, so an external verdict check would overlap with existing features. Policy-controller has no open issue about external policy engines or OPA. The closest open issues are #2005 (matching fields across attestations) and #1891 (source repository metadata checks). Rekor's only open issue in the filtered search, #1944, is about certificate chains and does not touch policy. Contribution rules, Cosign: an issue is optional, DCO sign-off, `make test` and `make lint` must pass, `make docgen` when commands change, and the AI policy in `sigstore/.github` applies. The Rekor CONTRIBUTING page returned 404, so Rekor's rules are unverified.
+
+Earlier candidates, not yet checked: MCPGuard, jamjet-policy, withHuman, HumanLayer, awaithumans, Agent Receipts (obsigna), Signet, raucle.
 
 Contribution rules learned so far:
 
