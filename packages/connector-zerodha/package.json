@@ -1,0 +1,35 @@
+{
+  "name": "@parmana/connector-zerodha",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Zerodha Kite Connect connector for Parmana. This first slice is passive: capability identifiers, connector metadata, and pure Kite session helpers. It places no orders and makes no network calls.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@parmana/connector-sdk": "0.3.1",
+    "@parmana/shared": "0.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "SEE LICENSE IN LICENSE"
+}
