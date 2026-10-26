@@ -68,13 +68,15 @@ Contribution rules (`CONTRIBUTING.md`, `GOVERNANCE.md`):
 - External PRs need a maintainer code owner's approval. Bot approvals do not count.
 
 Open issues that match Parmana:
-- [#4363](https://github.com/microsoft/agent-governance-toolkit/issues/4363): ADR-0030 approval requests do not say which tool or action they approve. Closest match to Parmana's approvals.
-- [#4298](https://github.com/microsoft/agent-governance-toolkit/issues/4298): RFC for an optional governance substrate for verified execution. Possible entry point.
+- [#4363](https://github.com/microsoft/agent-governance-toolkit/issues/4363): approval requests do not say which tool or action they approve. ADR-0030 already answers this with `ActionBinding` and `action_digest`, which are implemented in `approval_protocol/binding.py`. Probably resolved; do not comment on it.
+- [#4298](https://github.com/microsoft/agent-governance-toolkit/issues/4298): an optional example-only governance substrate. Its "shutdown receipts" are not signed. Community-authored, awaiting maintainer triage.
 - [#4217](https://github.com/microsoft/agent-governance-toolkit/issues/4217): external authority admission across federated runtimes.
 - [#4374](https://github.com/microsoft/agent-governance-toolkit/issues/4374) and [#4375](https://github.com/microsoft/agent-governance-toolkit/issues/4375): a Cedar dispatcher and docs.
-- No issue names receipts or cryptographic evidence directly.
+- No issue names receipts or cryptographic signatures directly.
 
-Next step: take the approval-binding point to #4363 or #4298 as an issue, not a PR. Build any code as an `agentmesh-integrations/` extension after maintainers respond. ADR-0030 has not been read yet.
+ADR-0030 (accepted, 2026-06-11) makes the approval hash chain mandatory and names detached Ed25519 signatures or externally anchored receipts as optional extensions. The Python and .NET implementations have no signatures. That optional extension is the right target for Parmana.
+
+Next step: open a new issue proposing a detached Ed25519 signature over `ApprovalResolution` (or its `final_entry_digest`), verifiable with a public key. Reference ADR-0030 and #4298. Build any code as an `agentmesh-integrations/` extension after maintainers respond. Core changes need maintainer approval.
 
 ## Contribution rules learned so far
 
