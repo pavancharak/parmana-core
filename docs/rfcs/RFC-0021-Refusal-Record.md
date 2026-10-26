@@ -83,7 +83,7 @@ made today. This RFC closes that gap.
 Relevant reading: `docs/VERIFICATION-GAPS.md` G-24 (the signal-binding-mismatch fix this RFC's
 motivation traces back to), `ADR-0005-Evidence-Is-Append-Only.md`, `ADR-0006-Cryptographic-Agility.md`,
 the `ExecutionTrustRecord` domain model (`packages/shared/src/domain/execution-trust-record.ts`),
-and `parmana-sign` (the now-published, standalone extraction of this codebase's signing/
+and the separately published verifier (the now-published, standalone extraction of this codebase's signing/
 verification primitives — relevant to the signing decision below, not because it's proposed for
 direct reuse, but because its existence changes what "third-party-verifiable" can mean here).
 
@@ -159,7 +159,7 @@ append to the way an approved transaction's executions/receipts accumulate). One
 `businessTransactionId` maps to at most one `RefusalRecord`, mirroring how at most one
 `ExecutionTrustRecord` exists per transaction today.
 
-## 2. Signing — reuse `packages/crypto`'s existing stack, not a direct `@parmana/sign` dependency
+## 2. Signing — reuse `packages/crypto`'s existing stack, not a direct dependency on the separately published verifier
 
 **Recommendation: sign Refusal Records with the exact same mechanism trust records already use** —
 `CryptoBootstrap.create()`, `FileKeyProvider`, the same `DEFAULT_KEY_ID` ("default"). Concretely:
@@ -168,17 +168,17 @@ a new `RefusalCrypto` class parallel to `VerificationCrypto`
 `ArtifactSigner`/`SignatureVerifier` primitives, over a canonical view of `RefusalRecord`
 excluding `signature` itself (identical pattern to `VerificationCrypto.canonicalRecord()`).
 
-**Why not depend on `@parmana/sign` directly from `parmana-exp`**: it would point the dependency
-arrow backwards. `@parmana/sign` was deliberately extracted _from_ `packages/crypto` as a clean,
+**Why not depend on the separately published verifier directly from `parmana-exp`**: it would point the dependency
+arrow backwards. The separately published verifier was deliberately extracted _from_ `packages/crypto` as a clean,
 decoupled, publicly-auditable subset — `parmana-exp` depending on its own spun-off package for
 live production signing would mean two independently-versioned copies of near-identical
 crypto code (the extraction audit confirmed `Dilithium3SignatureProvider`,
 `CanonicalSerializer`, and `SignatureVerifier`'s logic are near-verbatim between the two), with
-`parmana-exp`'s release cadence now coupled to `@parmana/sign`'s npm publish cadence for a
+`parmana-exp`'s release cadence now coupled to the separately published verifier's npm publish cadence for a
 core internal capability. That's real ongoing coupling and maintenance cost for a purity gain
 that doesn't actually improve verifiability.
 
-**The nice property this doesn't cost anything to keep**: because `@parmana/sign` is a faithful,
+**The nice property this doesn't cost anything to keep**: because the separately published verifier is a faithful,
 independently-auditable extraction of the _same algorithms_ `packages/crypto` uses internally, a
 third party can already inspect and trust the signing/verification _logic_ via the public
 package without parmana-exp depending on it — only the key material and its use stay internal,
@@ -264,7 +264,7 @@ able to check a refusal happened:
 - **`POST /refusal/verify`** — takes a `RefusalRecord` (or its `refusalRecordHash` +
   `signature`) the caller already has in hand and verifies the signature against the public key,
   cryptographically, with **no caller authentication required** — the same trust model
-  `parmana-sign`'s `SignatureVerifier` demonstrates: verification needs the artifact and the
+  the separately published verifier's `SignatureVerifier` demonstrates: verification needs the artifact and the
   public key, nothing else. This is the capability that makes "third-party-verifiable" literally
   true rather than aspirational — someone who was shown a refusal record by the rejected caller,
   or found one some other way, can check it themselves without an API key.
@@ -438,5 +438,5 @@ implementation date forward.
 - `packages/api/src/routes/verify.ts`, `packages/api/src/auth/isOwnedByCaller.ts`
 - `supabase/migrations/20260629013035_initial_schema.sql`,
   `20260702183000_add_signature_to_execution_trust_records.sql`
-- `parmana-sign` (github.com/pavancharak/parmana-sign) — referenced in §2 for the signing
+- (retired) — referenced in §2 for the signing
   decision, not proposed as a direct dependency

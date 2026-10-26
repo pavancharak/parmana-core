@@ -8,7 +8,7 @@ import type { SignatureAlgorithm } from "../config/CryptoAlgorithms.js";
  * that type's singular `signature` field on ExecutionTrustRecord /
  * Receipt is always computed exactly as it was before this milestone,
  * over exactly the same canonical content, so pre-existing single-
- * signature records and third-party verifiers (@parmana/sign) that
+ * signature records and third-party verifiers that
  * only know that field keep working unchanged. `signatures` is
  * additive: present only on records signed under CRYPTO_MODE=hybrid,
  * where every entry must independently verify (see

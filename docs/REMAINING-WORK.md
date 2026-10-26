@@ -25,7 +25,7 @@ Snapshot: 2026-09-21, with section F added and updated on 2026-09-25, section G 
 
 - **Hybrid signing is not live in production (G-119).** Production signs with Ed25519 only. No deployment runs hybrid signing today: the earlier test project was removed on 2026-10-23, and no live hybrid record was ever created and verified through an API. The remaining steps, in order: keep a copy of the production signing key in a safe place, create and verify a live hybrid record on a separate test deployment, then change production and check that new records carry `signatures`.
 - **Downgrade of schema version 2 records is open (G-120).** A cutover (`HYBRID_REQUIRED_FROM`) closes it for new records. It is unset, and should be set only once every new record is hybrid-signed.
-- **Third-party consumers do not read schema version 3 (G-121).** The public verifier 0.3.0 does. `@parmana/sign` and both SDKs do not, so schema version 3 stays off.
+- **Third-party consumers do not read schema version 3 (G-121).** The public verifier 0.3.0 does. The separately published verifier and both SDKs do not, so schema version 3 stays off.
 
 - **Approval email is not yet verified end to end (2026-10-20).** The sending domain `notify.parmanasystems.com` is verified in Resend, its DNS records are added at Hostinger, a test email from `approvals@notify.parmanasystems.com` arrived, and `APPROVAL_EMAIL_TO` is set on production. The approval email itself has not been sent: a local test is blocked by policy governance, which needs a second person to approve the policy. It will be verified the first time a real approval request runs.
 

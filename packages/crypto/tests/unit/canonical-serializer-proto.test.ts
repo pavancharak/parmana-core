@@ -11,7 +11,7 @@ describe("CanonicalSerializer: literal __proto__ keys", () => {
     const value = JSON.parse('{"amount":100,"__proto__":{"admin":true}}');
 
     // Byte for byte what the Python SDK (json.dumps, sort_keys) and
-    // @parmana/sign produce for the same input.
+    // the third-party verifier produce for the same input.
     expect(decode(serializer.serialize(value))).toBe(
       '{"__proto__":{"admin":true},"amount":100}',
     );

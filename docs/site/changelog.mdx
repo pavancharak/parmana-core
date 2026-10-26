@@ -388,7 +388,7 @@ pavancharak/parmana#8):
 
 - From the next release, `@parmana/sdk` and `parmana` are licensed under the same proprietary,
   evaluation only license as the rest of the repository, replacing the Apache License 2.0.
-  Versions already published keep the license they were published under. `@parmana/sign`
+  Versions already published keep the license they were published under. The separately published verifier
   stays under the Apache License 2.0.
 
 **Moved: the source is now in a private repository**
@@ -396,9 +396,9 @@ pavancharak/parmana#8):
 - The source moved from `pavancharak/AgentLabsBuildathon` to a private repository, with its full
   history. Public links point to the documentation site and to the offline verifier repository.
 
-**Added: the Verification SDK (`@parmana/sign` 0.2.0)**
+**Added: the Verification SDK (the separately published verifier)**
 
-- `@parmana/sign` 0.2.0 is on npm. It verifies Execution Trust
+- The separately published verifier is on npm. It verifies Execution Trust
   Records and Execution Intents offline, with only the record and the public keys, including
   hybrid (Ed25519 and ML-DSA-65) records and large records signed through AWS KMS.
 - New **Verification SDK** tab: overview and quick start, public keys, a reference page for
@@ -410,7 +410,7 @@ pavancharak/parmana#8):
 
 - The server's canonical serializer and the TypeScript SDK's `canonicalSerialize` silently
   dropped an object key named `"__proto__"`, so its content was not covered by the hash or
-  signature. Both now keep it, matching the Python SDK and `@parmana/sign`. Output for data
+  signature. Both now keep it, matching the Python SDK and the separately published verifier. Output for data
   without that key is unchanged, so existing signatures stay valid.
 
 **Sandbox: visitor data deleted, retention paused**
