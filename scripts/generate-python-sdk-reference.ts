@@ -69,17 +69,16 @@ async function run(): Promise<void> {
 
 /**
  * Adds the page's description to its frontmatter, just before the closing
- * `---`, from descriptions.json. A page with no entry is written without a
- * description and reported, so a new page is noticed rather than missed.
+ * `---`, from descriptions.json. A page with no entry is an error, so a new
+ * page cannot be generated, or committed, without a description.
  */
 function withDescription(body: string, key: string): string {
   if (/^description:/m.test(body.split("\n---\n")[0] ?? "")) return body;
   const description = descriptions[key];
   if (description === undefined) {
-    console.warn(
+    throw new Error(
       `generate-python-sdk-reference: no description for ${key}; add it to descriptions.json.`,
     );
-    return body;
   }
   return body.replace(
     "\n---\n",

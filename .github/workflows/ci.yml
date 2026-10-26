@@ -68,6 +68,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Format
+        run: npm run format:check
+
       - name: Guard against retired terminology
         # Locked vocabulary is "execution authorization" / "AI Execution
         # Authorization". Every exclusion below falls into exactly one of
@@ -184,3 +187,39 @@ jobs:
           # build-and-test sets at job level.
           PARMANA_POLICY_DIR: ./policies
         run: npx tsx scripts/verify-policy-changes-approved.ts --full-scan
+
+  # Regenerates the Python SDK reference and fails if the committed docs
+  # differ. Catches a generator change that drops a hand-kept description,
+  # or a formatter that rewrites the wording. Uses the hash-pinned
+  # pydoc-markdown in python/requirements-dev.txt.
+  python-reference-drift:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Install workspace
+        run: npm ci
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+
+      - name: Install pinned pydoc-markdown
+        run: pip install --require-hashes -r python/requirements-dev.txt
+
+      - name: Regenerate the Python SDK reference
+        run: npm run generate:python-sdk-reference
+
+      - name: Fail if the committed reference differs from the output
+        run: |
+          if [ -n "$(git status --porcelain -- docs/site)" ]; then
+            echo "The regenerated Python SDK reference differs from the committed docs."
+            git --no-pager diff -- docs/site
+            git status --porcelain -- docs/site
+            exit 1
+          fi
