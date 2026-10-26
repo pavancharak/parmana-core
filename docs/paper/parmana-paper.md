@@ -13,15 +13,15 @@ date: "6 October 2026"
 AI agents now call tools that move money, merge code and change customer records. The usual
 controls answer narrower questions: identity and access management decides who may call an
 API, and guardrails decide whether text looks harmful. Neither decides whether one specific
-action, with its exact parameters, may run now, and neither leaves evidence a third party can
-check without trusting the operator. We describe Parmana, a server that sits between an agent
+action, with its exact parameters, may run now, and, in the systems we reviewed, neither leaves
+evidence a third party can check without trusting the operator. We describe Parmana, a server that sits between an agent
 and the systems it acts on. Every proposed action is evaluated against a versioned,
 deterministic policy; an action whose policy requires it runs only with a signed, single use,
 time bounded approval from a registered person, bound to the action, the resource and the
 amount; release happens only at a gateway that re-verifies a signed authorization and holds the
 credentials the agent never receives; and every action and every refusal yields a signed record
-that verifies offline with only a public key. We state a threat model with 18 threats and seven
-explicit assumptions, back it with 16 runnable attack scenarios, mutation testing of the
+that verifies offline with only a public key. We state a threat model with 18 threats and ten
+explicit assumptions (A0 to A9), back it with 16 runnable attack scenarios, mutation testing of the
 security-critical packages (83.6% to 96.0% mutation score) and property-based fuzzing, and
 publish the open gaps alongside the claims. We report what the design does not do: it does not
 detect prompt injection, it governs only actions routed through it, and an approval covers the
