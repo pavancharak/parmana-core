@@ -34,6 +34,15 @@ Parmana's own context PR: [#143](https://github.com/pavancharak/parmana-core/pul
 - Go test `TestCrossLanguagePyRichSignature` was shown to fail on a tampered vector and pass when restored.
 - Design: `py_vectors.json` gains a `signingRich` entry, and `ts_rich_vectors.json` holds the same unsigned receipt signed by TypeScript. TypeScript and Python produce the same `proofValue`.
 
+## Adoption plan: progress
+
+Work is done one item at a time. Items 1 and 2 are done locally. Nothing is pushed upstream yet.
+
+1. **Audit the claims** (done). On `docs/verifier-claims` (`7a26274`, pushed to `pavancharak/parmana-core`), the README now says that offline verification trusts only the key the reader chooses, and that the verifier cannot prove the key belongs to Parmana. The crypto row says ML-DSA-65 is in the Node packages and needs Node 24 with OpenSSL 3.5 or later. Still open: the verifier's "no network access" claim needs a code check, and the paper's OPA comparison and "Cutler et al. 2024" citation need checking.
+2. **Ship one runnable integration** (done locally). Branch `parmana-trust-verify` in the Microsoft toolkit clone, commit `bc596b0` (DCO sign-off, author as the operator). New community extension `agentmesh-integrations/parmana-trust-verify/`: `verify_record(record, trust_document)` returns a fail-closed verdict using the offline `parmana-verifier` package. Seven tests pass; the example runs; ruff check and format pass with the pinned 0.12.4. The extension does not implement the approval-signature RFC (#4426), which waits on maintainers. To publish it, the branch needs a fork, a PR to `microsoft/agent-governance-toolkit`, and maintainer approval. Nothing has been pushed or opened.
+
+Items 3 to 7 are still to do: publish the verifier quickstart, pick targets that accept outside work, follow each project's gate, make trust visible, and track responses.
+
 ## Watched threads
 
 Status as of 2026-10-26, 06:56 UTC. Checked by hand at each step. The sandbox could not subscribe to GitHub events for these repos, so an hourly scheduled check re-reads them (trigger `trig_0158KWvcDBv1atbQjfYhDMMd`, first run 07:57 UTC). The check stays silent when nothing changes. It reports new maintainer replies and drafts nothing without approval.
