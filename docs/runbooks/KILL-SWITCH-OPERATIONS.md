@@ -96,11 +96,14 @@ Two keys were pasted into chat during setup. Treat both as exposed, and rotate t
 
 ## Still open
 
-- **Probe scheduler:** live on `main` since 2026-10-20, running every 15 minutes. Its key is the repository secret `PARMANA_PROBE_KEY`. Rotate it by generating a new probe key, replacing its entry in `PARMANA_API_KEYS`, then updating the secret. Do not reuse a key that has been pasted into chat.
-- **Signed status and audit events (G-118).** Waits for the build-bound signing key.
-- **Third-party check.** Needs a non-production deployment and an outside party.
-- **Two-person reset in production.** Enabled, but not yet exercised with two real operator keys.
-- **Key rotation.** Rotate the keys pasted during setup, and remove the old ones from `PARMANA_API_KEYS`.
+Status as of 2026-10-26. Each item says what is done, what is open, and who decides the next step.
+
+- **Probe scheduler: running.** The workflow runs every 15 minutes and was verified green on 2026-10-26 (run #42). Its key is the repository secret `PARMANA_PROBE_KEY`. To rotate: generate a new probe key, replace its entry in `PARMANA_API_KEYS`, redeploy, then update the secret. Do not reuse a key that has been pasted into chat.
+- **Probe history retention: not yet enforced.** The ADR (decision 3) requires probe rows to be kept for at least one year. Nothing deletes them today, so the minimum holds. Open: a retention job that keeps rows for a year before any deletion is allowed. Owner: the maintainers. Next step: write the job and a test that refuses to delete a row younger than one year.
+- **Signed status and audit events (G-118): open.** Status responses are unsigned (`signed: false`) until a signing key tied to the running build exists. Open: provision that key and sign the status response. Owner: the maintainers. Until then, the status endpoint must say its responses are unsigned.
+- **Third-party check: open.** The check must run on a non-production deployment by someone outside the team. It cannot be closed from inside the repository. Owner: the operator, who must choose the outside party.
+- **Two-person reset in production: open.** The reset has been tested with two keys held by one person, which proves the mechanics but not the control. Open: two different named operators. Owner: the operator.
+- **Key rotation: open.** Rotate the keys that were pasted into chat during setup, and remove the old entries from `PARMANA_API_KEYS`. Owner: the operator.
 
 ## Credentials: generate, store, deploy and test
 
