@@ -76,7 +76,9 @@ Open issues that match Parmana:
 
 ADR-0030 (accepted, 2026-06-11) makes the approval hash chain mandatory and names detached Ed25519 signatures or externally anchored receipts as optional extensions. The Python and .NET implementations have no signatures. That optional extension is the right target for Parmana.
 
-Next step: open a new issue proposing a detached Ed25519 signature over `ApprovalResolution` (or its `final_entry_digest`), verifiable with a public key. Reference ADR-0030 and #4298. Build any code as an `agentmesh-integrations/` extension after maintainers respond. Core changes need maintainer approval.
+Posted: [microsoft/agent-governance-toolkit#4426](https://github.com/microsoft/agent-governance-toolkit/issues/4426), "RFC: Optional detached Ed25519 signature for ApprovalResolution (ADR-0030 optional extension)". Opened 2026-10-26 under the RFC template, labelled triage. Only the repo's welcome bot has commented so far. No maintainer has responded.
+
+Next: wait for a maintainer decision on placement (core versus `agentmesh-integrations/`) and on the signing scope. Build any code only after they respond, and do not open a PR without maintainer approval. Core changes need maintainer approval.
 
 ## Contribution rules learned so far
 
