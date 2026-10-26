@@ -45,12 +45,12 @@ does not occur anywhere in this system's real payloads today.
 
 A second narrow limitation: number formatting. Python and JavaScript
 print the same JSON number differently in two cases: an exponent below
-1e-6 (Python writes 1e-07, JavaScript 1e-7) and an integer above 2**53
+1e-6 (Python writes 1e-07, JavaScript 1e-7) and an integer above 2\*\*53
 (JavaScript has already rounded it when parsing). Neither occurs in this
 system's payloads, whose amounts are bounded and have at most two
 decimals.
 
-#### canonical\_serialize
+#### canonical_serialize
 
 ```python
 def canonical_serialize(value: Any) -> bytes
@@ -59,4 +59,3 @@ def canonical_serialize(value: Any) -> bytes
 Serializes an already-JSON-decoded value into the same canonical
 UTF-8 bytes CanonicalSerializer.ts would produce for the
 equivalent JavaScript value.
-

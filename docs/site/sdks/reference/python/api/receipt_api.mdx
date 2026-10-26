@@ -16,12 +16,13 @@ class ReceiptApi()
 
 Receipt API.
 
-Responsibilities
-----------------
+## Responsibilities
+
 - Generate execution receipts
 - Retrieve the latest cached receipt
 
 This API does NOT:
+
 - execute Business Transactions
 - replay executions
 - verify trust records
@@ -37,13 +38,13 @@ Generate an execution receipt.
 
 Maps to POST /receipt.
 
-Parameters
-----------
-business_transaction_id:
-    Business Transaction identifier.
+## Parameters
 
-Returns
--------
+business_transaction_id:
+Business Transaction identifier.
+
+## Returns
+
 Receipt.
 
 #### \_\_call\_\_
@@ -53,7 +54,7 @@ alongside the existing `client.receipt.generate(...)`, without
 renaming the `ParmanaClient.receipt` attribute out from under
 existing callers (examples/05_receipt.py, examples/11_end_to_end.py).
 
-#### get\_latest
+#### get_latest
 
 ```python
 def get_latest(business_transaction_id: str) -> Receipt
@@ -64,12 +65,11 @@ Retrieve the most recent Receipt without generating a new one.
 Maps to GET /receipt/latest/:id, distinct from `generate()`
 (POST /receipt), which generates a new Receipt.
 
-Parameters
-----------
+## Parameters
+
 business_transaction_id:
-    Business Transaction identifier.
+Business Transaction identifier.
 
-Returns
--------
+## Returns
+
 Receipt.
-

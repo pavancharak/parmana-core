@@ -16,14 +16,20 @@ const ONE_OPERATOR = {
 
 describe("killSwitchReleaseHook", () => {
   it("lets a release through while the switch is off", async () => {
-    const service = new KillSwitchService(new MemoryKillSwitchStore(), ONE_OPERATOR);
+    const service = new KillSwitchService(
+      new MemoryKillSwitchStore(),
+      ONE_OPERATOR,
+    );
     const hook = killSwitchReleaseHook(service);
 
     await expect(hook.beforeExecution?.({} as never)).resolves.toBeUndefined();
   });
 
   it("refuses a release with KILL_SWITCH_ACTIVE once the switch is on", async () => {
-    const service = new KillSwitchService(new MemoryKillSwitchStore(), ONE_OPERATOR);
+    const service = new KillSwitchService(
+      new MemoryKillSwitchStore(),
+      ONE_OPERATOR,
+    );
     await service.trip("operator-a", "suspicious refunds");
     const hook = killSwitchReleaseHook(service);
 

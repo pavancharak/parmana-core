@@ -10,14 +10,14 @@ This guide never contains a key, a token or a database URL. Do not paste any of 
 
 ## 1. The two operators
 
-| | Operator 1 (operator A) | Operator 2 (operator B) |
-| --- | --- | --- |
-| Caller id | `operator-a` | `operator-b` |
-| Capabilities on the key | `kill-switch:trip`, `kill-switch:reset` | `kill-switch:reset` |
-| Can trip the switch | Yes | No |
-| Can start a reset | Yes (first request, `202`) | Yes (second request, completes it) |
-| Can complete a reset started by the other operator | No | Yes |
-| Must be a different person from the other operator | Yes | Yes |
+|                                                    | Operator 1 (operator A)                 | Operator 2 (operator B)            |
+| -------------------------------------------------- | --------------------------------------- | ---------------------------------- |
+| Caller id                                          | `operator-a`                            | `operator-b`                       |
+| Capabilities on the key                            | `kill-switch:trip`, `kill-switch:reset` | `kill-switch:reset`                |
+| Can trip the switch                                | Yes                                     | No                                 |
+| Can start a reset                                  | Yes (first request, `202`)              | Yes (second request, completes it) |
+| Can complete a reset started by the other operator | No                                      | Yes                                |
+| Must be a different person from the other operator | Yes                                     | Yes                                |
 
 Operator 1 can stop the system. Operator 2 is the second pair of hands needed to restart it. Neither can do the other's part alone.
 
@@ -74,13 +74,13 @@ curl.exe -s "$env:PARMANA_URL/kill-switch/status?nonce=check-<yyyymmdd-hhmm>" -H
 
 What you should see:
 
-| Field | Normal | Meaning if different |
-| --- | --- | --- |
-| `/ready` | `READY` | The service is not ready. Check the deploy and the environment variables |
-| `active` | `false` | `true`: the switch is tripped. Execution and approvals are refused |
-| `nonce` | Your nonce, echoed back | Proves the answer is fresh |
-| `signed` | `false` | Expected today; signing is not yet built (G-118) |
-| `version` | A number that rises with each trip or reset | Use it when you write the log |
+| Field     | Normal                                      | Meaning if different                                                     |
+| --------- | ------------------------------------------- | ------------------------------------------------------------------------ |
+| `/ready`  | `READY`                                     | The service is not ready. Check the deploy and the environment variables |
+| `active`  | `false`                                     | `true`: the switch is tripped. Execution and approvals are refused       |
+| `nonce`   | Your nonce, echoed back                     | Proves the answer is fresh                                               |
+| `signed`  | `false`                                     | Expected today; signing is not yet built (G-118)                         |
+| `version` | A number that rises with each trip or reset | Use it when you write the log                                            |
 
 `Cannot GET /kill-switch/status` means the deployment does not have the kill-switch routes. Stop, and tell the founder: an old checkout was deployed.
 
@@ -109,6 +109,7 @@ Expected: `200` with the new state. The `version` has risen, and `active` is `tr
 **Step 5.** Tell Operator 2 and the founder that the switch is tripped, with the reason and the time.
 
 Errors:
+
 - `400`: no reason was sent. Send the reason and try again.
 - `403 CAPABILITY_NOT_ALLOWED`: this key cannot trip. You are not Operator 1, or the key is wrong. Do not try another key.
 - `401`: the key is not in the live list. Check section 8 of the ceremony runbook.
@@ -174,13 +175,13 @@ If the result is still `KILL_SWITCH_ACTIVE`, do not allow approvals; tell Operat
 
 ## 8. What the other operator can and cannot do
 
-| Action | Operator 1 | Operator 2 |
-| --- | --- | --- |
-| Trip | Yes | No (`403`) |
-| First reset request | Yes (`202`) | Yes (`202`), if Operator 1 has not started one |
-| Second reset request (completes) | No (`409` from the same key) | Yes (`200`) |
-| Check status | Yes | Yes |
-| Trip while Operator 2 has a reset pending | Yes (cancels the pending reset) | No |
+| Action                                    | Operator 1                      | Operator 2                                     |
+| ----------------------------------------- | ------------------------------- | ---------------------------------------------- |
+| Trip                                      | Yes                             | No (`403`)                                     |
+| First reset request                       | Yes (`202`)                     | Yes (`202`), if Operator 1 has not started one |
+| Second reset request (completes)          | No (`409` from the same key)    | Yes (`200`)                                    |
+| Check status                              | Yes                             | Yes                                            |
+| Trip while Operator 2 has a reset pending | Yes (cancels the pending reset) | No                                             |
 
 Operator 2 should not start a reset while Operator 1 has one pending, and should not trip. If Operator 2 needs to stop the system, they tell Operator 1 and the founder, who decides.
 
@@ -192,19 +193,19 @@ Keep one log for each trip. Keep it outside the repository, on an operator's mac
 
 Record:
 
-| Field | Example |
-| --- | --- |
-| Incident id | INC-2026-10-23-01 |
-| Trip time (local, with time zone) | 2026-10-23 16:40 IST |
-| Trip by | Operator 1 |
-| Trip reason | Suspected unauthorised refund |
-| Status `version` before and after the trip | 0 then 1 |
-| Affected callers and transactions | `razorpay-demo-agent`, `<businessTransactionId>` |
-| Checks done | Trust records read; external refunds compared |
-| Reset requested by | Operator 1 at (time), `202` |
-| Reset completed by | Operator 2 at (time), `200` |
-| Final status | `active:false`, `version` |
-| Follow-up | Keys rotated? Policy changed? |
+| Field                                      | Example                                          |
+| ------------------------------------------ | ------------------------------------------------ |
+| Incident id                                | INC-2026-10-23-01                                |
+| Trip time (local, with time zone)          | 2026-10-23 16:40 IST                             |
+| Trip by                                    | Operator 1                                       |
+| Trip reason                                | Suspected unauthorised refund                    |
+| Status `version` before and after the trip | 0 then 1                                         |
+| Affected callers and transactions          | `razorpay-demo-agent`, `<businessTransactionId>` |
+| Checks done                                | Trust records read; external refunds compared    |
+| Reset requested by                         | Operator 1 at (time), `202`                      |
+| Reset completed by                         | Operator 2 at (time), `200`                      |
+| Final status                               | `active:false`, `version`                        |
+| Follow-up                                  | Keys rotated? Policy changed?                    |
 
 Never write a key in the log.
 
@@ -234,18 +235,18 @@ Note: the trust record for a transaction the operator did not start can only be 
 
 ## 11. Errors and what they mean
 
-| Response | Who sees it | Meaning | Action |
-| --- | --- | --- | --- |
-| `200` on trip | Operator 1 | The switch is tripped | Confirm with status |
-| `200` with `outcome: "reset"` | Operator 2 | The reset is complete | Confirm with status, then re-check (section 7) |
-| `202` with `outcome: "pending"` | Operator 1 or 2 | The first request of a reset | Hand over to the other operator |
-| `400` `reason is required` | Either | No reason sent | Send a reason |
-| `401` | Either | Key not in the live list | Check the ceremony runbook, section 12 |
-| `403` `CAPABILITY_NOT_ALLOWED` | Either | The key lacks the capability | Use the right operator's key; do not borrow another |
-| `409` `SAME_OPERATOR_CANNOT_CONFIRM_RESET` | Operator 1 repeating | The same key cannot finish its own reset | Operator 2 completes it |
-| `503` `KILL_SWITCH_ACTIVE` | Anyone sending a request | The switch is tripped; execution and approvals refused | Expected while tripped |
-| `500` on every request | Anyone | `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` is not exactly `true` or `false` | Founder and engineering; a deploy is needed |
-| `Cannot GET /kill-switch/...` | Anyone | An old checkout was deployed | Stop; deploy from current `main` |
+| Response                                   | Who sees it              | Meaning                                                                    | Action                                              |
+| ------------------------------------------ | ------------------------ | -------------------------------------------------------------------------- | --------------------------------------------------- |
+| `200` on trip                              | Operator 1               | The switch is tripped                                                      | Confirm with status                                 |
+| `200` with `outcome: "reset"`              | Operator 2               | The reset is complete                                                      | Confirm with status, then re-check (section 7)      |
+| `202` with `outcome: "pending"`            | Operator 1 or 2          | The first request of a reset                                               | Hand over to the other operator                     |
+| `400` `reason is required`                 | Either                   | No reason sent                                                             | Send a reason                                       |
+| `401`                                      | Either                   | Key not in the live list                                                   | Check the ceremony runbook, section 12              |
+| `403` `CAPABILITY_NOT_ALLOWED`             | Either                   | The key lacks the capability                                               | Use the right operator's key; do not borrow another |
+| `409` `SAME_OPERATOR_CANNOT_CONFIRM_RESET` | Operator 1 repeating     | The same key cannot finish its own reset                                   | Operator 2 completes it                             |
+| `503` `KILL_SWITCH_ACTIVE`                 | Anyone sending a request | The switch is tripped; execution and approvals refused                     | Expected while tripped                              |
+| `500` on every request                     | Anyone                   | `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` is not exactly `true` or `false` | Founder and engineering; a deploy is needed         |
+| `Cannot GET /kill-switch/...`              | Anyone                   | An old checkout was deployed                                               | Stop; deploy from current `main`                    |
 
 ---
 
@@ -278,11 +279,13 @@ Full commands are in `docs/runbooks/CREDENTIAL-CEREMONY.md`, section 14.
 ## 14. Summary card (print and keep with the operator)
 
 **Operator 1 (operator A):**
+
 1. Check status. Write the reason.
 2. Trip with the reason. Confirm `active:true`. Tell Operator 2.
 3. When the cause is known: start the reset (`202`). Do not repeat it.
 
 **Operator 2 (operator B):**
+
 1. Check status. Read the log. Check the cause yourself.
 2. If resolved: complete the reset (`200`). Confirm `active:false`.
 3. Re-check with the no-approval case: expect the policy refusal.

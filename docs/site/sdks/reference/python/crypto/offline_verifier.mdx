@@ -28,7 +28,7 @@ independently checked from Python until that support lands upstream
 and this module is updated to use it -- stated plainly rather than
 silently skipped or faked.
 
-#### verify\_execution\_trust\_record\_offline
+#### verify_execution_trust_record_offline
 
 ```python
 def verify_execution_trust_record_offline(
@@ -41,7 +41,7 @@ produce from a Trust Record JSON file or API response body, or the
 ExecutionTrustRecord that `client.trust_record()` returns.
 `public_keys` maps keyId -> PEM-encoded public key text.
 
-#### verify\_execution\_intent\_offline
+#### verify_execution_intent_offline
 
 ```python
 def verify_execution_intent_offline(
@@ -60,4 +60,3 @@ PEM-encoded public key text.
 A valid result proves the intent was signed by the holder of that key and
 has not been altered. It does NOT prove the action was released, or what its
 result was: an intent is written BEFORE release.
-

@@ -21,7 +21,7 @@ class BusinessSignalSource()
 
 A business system registered under a name, active or revoked.
 
-#### registration\_id
+#### registration_id
 
 The change_id of the approved register change that created it.
 
@@ -29,7 +29,7 @@ The change_id of the approved register change that created it.
 
 The name a policy's signalSources uses in `source`.
 
-#### endpoint\_url
+#### endpoint_url
 
 The HTTPS endpoint Parmana posts each signed query to.
 
@@ -37,7 +37,7 @@ The HTTPS endpoint Parmana posts each signed query to.
 
 "active" or "revoked". At most one active registration per name.
 
-#### public\_key\_pem
+#### public_key_pem
 
 The Ed25519 public key (SPKI PEM) the source signs its answers with.
 When present, an answer without a valid signature is refused.
@@ -56,4 +56,3 @@ resolution. Sign the step up authorization for approve or reject with
 #### action
 
 "register" or "revoke".
-

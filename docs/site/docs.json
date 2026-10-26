@@ -40,17 +40,11 @@
           },
           {
             "group": "Evaluate and audit",
-            "pages": [
-              "license",
-              "community"
-            ]
+            "pages": ["license", "community"]
           },
           {
             "group": "For AI agents",
-            "pages": [
-              "agents/integrate",
-              "agents/deploy"
-            ]
+            "pages": ["agents/integrate", "agents/deploy"]
           }
         ]
       },
@@ -120,10 +114,7 @@
           },
           {
             "group": "Verify and audit",
-            "pages": [
-              "guides/verify-independently",
-              "guides/detect-tampering"
-            ]
+            "pages": ["guides/verify-independently", "guides/detect-tampering"]
           },
           {
             "group": "Worked examples",
@@ -393,10 +384,7 @@
         "groups": [
           {
             "group": "Overview",
-            "pages": [
-              "integrations/overview",
-              "sdks/other-languages"
-            ]
+            "pages": ["integrations/overview", "sdks/other-languages"]
           },
           {
             "group": "Build a connector",
@@ -414,9 +402,7 @@
           },
           {
             "group": "Ready made connectors",
-            "pages": [
-              "integrations/hubspot"
-            ]
+            "pages": ["integrations/hubspot"]
           }
         ]
       },
@@ -436,9 +422,7 @@
           },
           {
             "group": "Execution",
-            "pages": [
-              "api-reference/endpoints/execute-transaction"
-            ]
+            "pages": ["api-reference/endpoints/execute-transaction"]
           },
           {
             "group": "Transactions",
@@ -471,9 +455,7 @@
           },
           {
             "group": "Replay",
-            "pages": [
-              "api-reference/endpoints/replay-transaction"
-            ]
+            "pages": ["api-reference/endpoints/replay-transaction"]
           },
           {
             "group": "Policies",
@@ -533,9 +515,7 @@
           },
           {
             "group": "Sandbox",
-            "pages": [
-              "api-reference/endpoints/create-sandbox-approval"
-            ]
+            "pages": ["api-reference/endpoints/create-sandbox-approval"]
           },
           {
             "group": "Kill Switch",
@@ -565,9 +545,7 @@
           },
           {
             "group": "Audit",
-            "pages": [
-              "api-reference/endpoints/verify-audit-event"
-            ]
+            "pages": ["api-reference/endpoints/verify-audit-event"]
           },
           {
             "group": "System",
@@ -633,10 +611,7 @@
           },
           {
             "group": "Operate",
-            "pages": [
-              "troubleshooting",
-              "storage/schema-reference"
-            ]
+            "pages": ["troubleshooting", "storage/schema-reference"]
           }
         ]
       },
@@ -661,13 +636,7 @@
           },
           {
             "group": "Project",
-            "pages": [
-              "glossary",
-              "faq",
-              "roadmap",
-              "changelog",
-              "contributing"
-            ]
+            "pages": ["glossary", "faq", "roadmap", "changelog", "contributing"]
           }
         ]
       },

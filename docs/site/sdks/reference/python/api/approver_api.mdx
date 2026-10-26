@@ -29,7 +29,7 @@ Every approver key the server trusts or trusted, revoked ones marked.
 
 Maps to GET /approval-issuers.
 
-#### propose\_add
+#### propose_add
 
 ```python
 def propose_add(*, approver_id: str, key_id: str, public_key_pem: str,
@@ -43,7 +43,7 @@ Maps to POST /approval-issuers/changes with action "add".
 scripts/generate-approver-key.ts writes. Nothing changes until a
 different person approves it.
 
-#### propose\_revoke
+#### propose_revoke
 
 ```python
 def propose_revoke(*, approver_id: str, key_id: str,
@@ -55,7 +55,7 @@ Propose revoking an approver key added through approver changes.
 Maps to POST /approval-issuers/changes with action "revoke". Once
 approved, every approval the key ever signed is refused.
 
-#### list\_changes
+#### list_changes
 
 ```python
 def list_changes(
@@ -66,12 +66,12 @@ List approver changes, newest first.
 
 Maps to GET /approval-issuers/changes.
 
-Parameters
-----------
-status:
-    "PENDING_APPROVAL", "APPROVED" or "REJECTED". Omit for all.
+## Parameters
 
-#### approve\_change
+status:
+"PENDING_APPROVAL", "APPROVED" or "REJECTED". Omit for all.
+
+#### approve_change
 
 ```python
 def approve_change(
@@ -87,7 +87,7 @@ not be the proposer and must have a registered step up key. Make
 `parmana.crypto.sign_policy_change_step_up()`, `change_id` as
 `pending_policy_change_id`, and action "approve".
 
-#### reject\_change
+#### reject_change
 
 ```python
 def reject_change(
@@ -99,4 +99,3 @@ Reject an approver change.
 
 Maps to POST /approval-issuers/changes/\{id\}/reject. Same caller rules
 as `approve_change()`; sign with action "reject".
-

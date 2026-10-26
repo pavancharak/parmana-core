@@ -184,7 +184,11 @@ Then disconnect the wrong Git repository in the Vercel dashboard (Settings → G
 **Fix:** add a `vercel.json` to the deployed folder that overrides the build:
 
 ```json
-{ "buildCommand": "echo prebuilt", "installCommand": "echo no install", "functions": { "api/mcp.mjs": { "maxDuration": 60 } } }
+{
+  "buildCommand": "echo prebuilt",
+  "installCommand": "echo no install",
+  "functions": { "api/mcp.mjs": { "maxDuration": 60 } }
+}
 ```
 
 Then redeploy.
@@ -243,17 +247,17 @@ npx vercel whoami
 
 ## 5. Parmana API: status codes
 
-| Code | Common cause | First check | Fix |
-| --- | --- | --- | --- |
-| 400 | Missing field, or a malformed body | The response's `error` or `message` names the field | Fix the request. Do not retry unchanged |
-| 401 `authentication required` | Key not in the live list, wrong key, or stale list | `callers/me` with the key; the entry hash | Section 8 |
-| 403 `CAPABILITY_NOT_ALLOWED` | The key lacks the capability | The key's `allowedCapabilities` in the entry file | Use the right key |
-| 404 | Not found, or not visible to this caller | The id, and the caller | Check the id; cross-caller reads return 404 by design |
-| 409 `SAME_OPERATOR_CANNOT_CONFIRM_RESET` | The same key tried to finish its own reset | Who started the reset | Operator 2 completes it |
-| 409 (governance) | A pending change, an active connector, or an active grant exists | `pending-changes`, `external-connectors`, `authority-grants` | Section 6 |
-| 429 | Rate limit | The time since the last request | Wait, then retry |
-| 500 on every request | `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` is invalid | Vercel `env ls`; the value must be exactly `true` or `false` | Fix the variable and redeploy |
-| 503 `KILL_SWITCH_ACTIVE` | The switch is tripped | `kill-switch/status` | Kill switch section 9 |
+| Code                                     | Common cause                                                     | First check                                                  | Fix                                                   |
+| ---------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------- |
+| 400                                      | Missing field, or a malformed body                               | The response's `error` or `message` names the field          | Fix the request. Do not retry unchanged               |
+| 401 `authentication required`            | Key not in the live list, wrong key, or stale list               | `callers/me` with the key; the entry hash                    | Section 8                                             |
+| 403 `CAPABILITY_NOT_ALLOWED`             | The key lacks the capability                                     | The key's `allowedCapabilities` in the entry file            | Use the right key                                     |
+| 404                                      | Not found, or not visible to this caller                         | The id, and the caller                                       | Check the id; cross-caller reads return 404 by design |
+| 409 `SAME_OPERATOR_CANNOT_CONFIRM_RESET` | The same key tried to finish its own reset                       | Who started the reset                                        | Operator 2 completes it                               |
+| 409 (governance)                         | A pending change, an active connector, or an active grant exists | `pending-changes`, `external-connectors`, `authority-grants` | Section 6                                             |
+| 429                                      | Rate limit                                                       | The time since the last request                              | Wait, then retry                                      |
+| 500 on every request                     | `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` is invalid             | Vercel `env ls`; the value must be exactly `true` or `false` | Fix the variable and redeploy                         |
+| 503 `KILL_SWITCH_ACTIVE`                 | The switch is tripped                                            | `kill-switch/status`                                         | Kill switch section 9                                 |
 
 **General checks for any API problem:**
 
@@ -400,6 +404,7 @@ Expected: `match: True`. `False` means the key you hold is not the key for that 
 4. The redeploy happened after the list changed.
 
 **Fixes:**
+
 - Key does not match: find the right key, or regenerate that caller's key and its entry, then update the list.
 - Caller missing from the list: add the entry file, replace the list (ceremony runbook, section 9), and redeploy.
 - List changed but no redeploy: redeploy from current `main`.
@@ -551,6 +556,7 @@ npm run build
 ## 13. When to escalate
 
 Escalate to the founder at once when:
+
 - a refund or other action happened that nobody approved;
 - a key was seen by someone who should not have seen it (rotate it, then tell the founder);
 - the switch is tripped and the cause is not known;
@@ -572,6 +578,7 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
 **Goal.** A working build and the Razorpay examples running.
 
 **Steps.**
+
 1. Confirm the folder and branch: `cd D:\last\parmana-core`, then `git status -sb`. Why: most failures come from the wrong branch or an old checkout.
 2. Install from the lockfile without lifecycle scripts: `npm ci --ignore-scripts`. Why: `--ignore-scripts` avoids changing git hooks on your machine.
 3. Build the workspace packages: `npm run build`. Why: the examples import built packages, and a missing build gives `Failed to resolve entry for package`.
@@ -588,6 +595,7 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
 **Goal.** Find which rule refused it, and whether the refusal is correct.
 
 **Steps.**
+
 1. Read the refusal line. The runner prints `Refused by` with the rule and the reason. Why: the rule name tells you which requirement failed.
 2. Match the rule to a cause:
    - `reject-manager-approval-required`: the request had no approval. Add a signed approval for this payment and amount.
@@ -616,6 +624,7 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
 **Goal.** Every caller back to `200` on `/callers/me`.
 
 **Steps.**
+
 1. Restore the list at once. Why: a list replacement drops any caller that is missing, and every minute out is an outage for that caller.
    ```powershell
    $value | vercel env add PARMANA_API_KEYS production --sensitive --cwd $link
@@ -636,6 +645,7 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
 **Goal.** The change is approved, or deliberately left, with a note.
 
 **Steps.**
+
 1. List the pending changes so you have the id and the content:
    ```powershell
    curl.exe -s "$env:PARMANA_URL/policies/pending-changes" -H "Authorization: Bearer $k"
@@ -656,6 +666,7 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
 **Goal.** Execution and approvals stopped at once; then a reset, by two operators, after the cause is known.
 
 **Steps.**
+
 1. Operator 1 trips with a reason: `kill-switch/trip` with `{"reason": "..."}`. Why: a reason is required and is recorded.
 2. Confirm: `kill-switch/status` shows `active: true`. Why: confirms the stop took effect.
 3. Confirm the refusal is in force: the runner's no-approval case returns `KILL_SWITCH_ACTIVE`. Why: this proves the stop, without moving money.
@@ -674,6 +685,7 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
 **Goal.** Production runs the current `main`.
 
 **Steps.**
+
 1. Check the local checkout: `git switch main`, `git pull origin main`, `git log -1 --oneline`. Why: a deploy uploads the working folder, so an old checkout deploys old code.
 2. Check the kill-switch routes are in the code: `Select-String -Path api\index.ts -Pattern "createKillSwitch"`. Why: two lines means the routes are present.
 3. Deploy: `npx vercel deploy --prod --yes`.
@@ -691,6 +703,7 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
 **Goal.** The exposed key stops working, and a new key is in use.
 
 **Steps.**
+
 1. Treat the key as exposed from that moment. Why: you cannot know who copied it.
 2. Note the caller id and the time in the incident log. Never write the key in the log.
 3. Generate a new key for the same caller, on the holder's machine (ceremony runbook, the matching step).
@@ -711,6 +724,7 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
 **Goal.** A working step-up key for the checker, and no unapproved change.
 
 **Steps.**
+
 1. Check the file: `Test-Path "$env:USERPROFILE\parmana-checker\step-up.private.pem"`. Why: a missing file is the most common cause.
 2. If it is there, check it contains the key: `Select-String -Path ... -Pattern "BEGIN PRIVATE KEY"`. Why: an empty or partial file fails the approve.
 3. If the file is lost and the password manager has the PEM, restore it to the same path.
@@ -727,6 +741,7 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
 **Goal.** A successful deploy of the right code.
 
 **Steps.**
+
 1. Read the first error line, not the last. Why: the first line names the real cause.
 2. Match it to section 4 of this guide (for example `Missing script: "openapi"` or `No Output Directory named "public"`).
 3. Apply the fix in the deployed folder, not in the repository, unless the fix belongs in the code.
@@ -744,6 +759,7 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
 **Goal.** Find the refund, or prove it was not created.
 
 **Steps.**
+
 1. Read the record file the runner wrote (`--out`). Note the Razorpay refund id (`rfnd_...`, if the record has one) and the business transaction id.
 2. Check the dashboard in Test Mode, for the payment, under refunds. Filter by the period. Why: the list can be filtered by date and status.
 3. Search by refund id, then by the payment id.
@@ -761,6 +777,7 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
 **Goal.** Know whether the record is genuine.
 
 **Steps.**
+
 1. Keep the record file. Do not delete it. Why: it is the evidence.
 2. Re-run the verification with the current public key, to rule out a stale key: fetch `GET /keys/default` and verify again.
 3. If it still fails, compare the record's `errors` list with the rule for each error.
@@ -777,6 +794,7 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
 **Goal.** The hook stops reporting, without pushing again.
 
 **Steps.**
+
 1. Confirm the remote: `git ls-remote --heads origin <branch>` and `git log -1 --oneline` on the branch. Why: if the remote commit equals the local commit, nothing is unpushed.
 2. Fetch the branch into the checkout the hook reads: `git fetch origin <branch>:<branch>`.
 3. Check: `git status -sb` shows the branch with no ahead or behind.
@@ -793,6 +811,7 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
 **Goal.** The token the caller sends matches the one on the server.
 
 **Steps.**
+
 1. Check the length: `$t.Length` should be 43 for a token made by the standard command. Why: a short or long value means a bad copy.
 2. Send the request from a file, with `--data-binary` (section 3.6). Why: inline JSON can be mangled.
 3. If the length is right and it still fails, the server holds a different value. Replace `AGENT_STUDIO_TOKEN` in Vercel and redeploy the bridge.
@@ -819,7 +838,6 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
 - [ ] Scenario 11: every record verifies, or is escalated.
 - [ ] Scenario 12: the hook is quiet, or the PR is merged.
 - [ ] Scenario 13: the bridge answers `200` with the token.
-
 
 ## Change log
 

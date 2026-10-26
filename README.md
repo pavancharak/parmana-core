@@ -30,19 +30,19 @@ Parmana does not decide what the agent should do. It decides whether the agent w
 
 Start with the goal closest to yours. The full documentation is at [docs.parmanasystems.com](https://docs.parmanasystems.com).
 
-| I want to                                  | Go to                                                                                                         |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| See it work, with nothing installed        | [Playground](https://docs.parmanasystems.com/playground)                                                      |
-| Understand the ideas behind it             | [How Parmana thinks](https://docs.parmanasystems.com/how-parmana-thinks), then the [glossary](https://docs.parmanasystems.com/glossary) |
-| Run it on my own machine                   | [Quickstart](https://docs.parmanasystems.com/quickstart)                                                      |
-| Connect an AI agent                        | [Connect an agent](https://docs.parmanasystems.com/guides/connect-an-agent)                                   |
+| I want to                                  | Go to                                                                                                                                                                          |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| See it work, with nothing installed        | [Playground](https://docs.parmanasystems.com/playground)                                                                                                                       |
+| Understand the ideas behind it             | [How Parmana thinks](https://docs.parmanasystems.com/how-parmana-thinks), then the [glossary](https://docs.parmanasystems.com/glossary)                                        |
+| Run it on my own machine                   | [Quickstart](https://docs.parmanasystems.com/quickstart)                                                                                                                       |
+| Connect an AI agent                        | [Connect an agent](https://docs.parmanasystems.com/guides/connect-an-agent)                                                                                                    |
 | Use the SDKs                               | [TypeScript quickstart](https://docs.parmanasystems.com/guides/typescript-sdk-quickstart) or [Python quickstart](https://docs.parmanasystems.com/guides/python-sdk-quickstart) |
-| Check a record myself, without trusting us | [Verify independently](https://docs.parmanasystems.com/guides/verify-independently)                           |
-| Check a record with a standalone tool      | [Parmana Verifier](https://github.com/pavancharak/parmana-verifier), an offline checker with no network access and no account                |
-| Review the security model                  | [Security](https://docs.parmanasystems.com/security/overview)                                                 |
-| See the evidence behind the claims         | [Reports and evidence](#reports-and-evidence)                                                                  |
-| Run it on my own infrastructure            | [Self hosted](https://docs.parmanasystems.com/self-hosted/overview)                                           |
-| Choose the right path for my role          | [Choose your path](https://docs.parmanasystems.com/choose-your-path)                                          |
+| Check a record myself, without trusting us | [Verify independently](https://docs.parmanasystems.com/guides/verify-independently)                                                                                            |
+| Check a record with a standalone tool      | [Parmana Verifier](https://github.com/pavancharak/parmana-verifier), an offline checker with no network access and no account                                                  |
+| Review the security model                  | [Security](https://docs.parmanasystems.com/security/overview)                                                                                                                  |
+| See the evidence behind the claims         | [Reports and evidence](#reports-and-evidence)                                                                                                                                  |
+| Run it on my own infrastructure            | [Self hosted](https://docs.parmanasystems.com/self-hosted/overview)                                                                                                            |
+| Choose the right path for my role          | [Choose your path](https://docs.parmanasystems.com/choose-your-path)                                                                                                           |
 
 Not sure where to begin? [Choose your path](https://docs.parmanasystems.com/choose-your-path) has one table for developers, operators, auditors and AI agents.
 
@@ -96,24 +96,24 @@ Authority --> Authorization --> Intent --> Business Transaction
                                 Verification  <-->  Settlement Confirmation
 ```
 
-| Package                        | Role                                                                                                           |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| `@parmana/api`                 | REST API: `/execute`, `/verification`, webhooks, caller authentication                                         |
-| `@parmana/runtime`             | Orchestrates a Business Transaction through policy, execution and evidence                                     |
-| `@parmana/policy`              | Deterministic policy evaluation, sequential rules, first-match semantics                                       |
-| `@parmana/execution-gateway`   | The sole boundary that releases an approved request to a connector                                             |
-| `@parmana/execution-control`   | Credential-isolating, single-use execution release                                                             |
+| Package                        | Role                                                                                                               |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| `@parmana/api`                 | REST API: `/execute`, `/verification`, webhooks, caller authentication                                             |
+| `@parmana/runtime`             | Orchestrates a Business Transaction through policy, execution and evidence                                         |
+| `@parmana/policy`              | Deterministic policy evaluation, sequential rules, first-match semantics                                           |
+| `@parmana/execution-gateway`   | The sole boundary that releases an approved request to a connector                                                 |
+| `@parmana/execution-control`   | Credential-isolating, single-use execution release                                                                 |
 | `@parmana/connector-sdk`       | Connector authoring contract: capability definitions, schemas, and the Connector and CredentialProvider interfaces |
-| `@parmana/envelope-verifier`   | Verifies a Parmana authorization independently, with no trust in Parmana's runtime or database                 |
-| `@parmana/crypto`              | Signing and verification: Ed25519 by default, ML-DSA-65 (post-quantum) configurable                            |
-| `@parmana/approval`            | Verifies signed approvals issued by a business authority, independent of the caller and of Parmana's runtime   |
-| `@parmana/capability-registry` | Binds each capability to the policy that governs it, and refuses a request that names another                  |
-| `@parmana/execution-system`    | The interface approved requests are forwarded through, with an HTTP implementation                             |
-| `@parmana/connector-*`         | Connectors: HubSpot, GitHub, Slack and Paytm                                                                   |
-| `@parmana/governance-ui`       | Internal UI to propose and review policy changes; approval stays on the approver's machine                     |
-| `@parmana/replay`              | Deterministic reconstruction of a past policy decision                                                         |
-| `@parmana/storage`             | Append-only persistence, in memory or Supabase-backed                                                          |
-| `@parmana/shared`              | Domain model and configuration shared across every package                                                     |
+| `@parmana/envelope-verifier`   | Verifies a Parmana authorization independently, with no trust in Parmana's runtime or database                     |
+| `@parmana/crypto`              | Signing and verification: Ed25519 by default, ML-DSA-65 (post-quantum) configurable                                |
+| `@parmana/approval`            | Verifies signed approvals issued by a business authority, independent of the caller and of Parmana's runtime       |
+| `@parmana/capability-registry` | Binds each capability to the policy that governs it, and refuses a request that names another                      |
+| `@parmana/execution-system`    | The interface approved requests are forwarded through, with an HTTP implementation                                 |
+| `@parmana/connector-*`         | Connectors: HubSpot, GitHub, Slack and Paytm                                                                       |
+| `@parmana/governance-ui`       | Internal UI to propose and review policy changes; approval stays on the approver's machine                         |
+| `@parmana/replay`              | Deterministic reconstruction of a past policy decision                                                             |
+| `@parmana/storage`             | Append-only persistence, in memory or Supabase-backed                                                              |
+| `@parmana/shared`              | Domain model and configuration shared across every package                                                         |
 
 Key properties: fail-closed configuration (a misconfigured process refuses to start rather than degrade silently), credential isolation (a connector never receives long-lived credentials, only a single-use session), exactly-once consumption of every authorization and webhook event, append-only signed evidence, and both classical (Ed25519) and post-quantum (ML-DSA-65) signing.
 

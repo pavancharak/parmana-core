@@ -314,7 +314,9 @@ describe("the hourly sandbox retention job against real Postgres", () => {
     const left = await db.query<{ business_transaction_id: string }>(
       "SELECT business_transaction_id FROM business_transactions",
     );
-    expect(left.rows.map((row) => row.business_transaction_id)).toEqual([seeded]);
+    expect(left.rows.map((row) => row.business_transaction_id)).toEqual([
+      seeded,
+    ]);
   });
 
   it("writes a run log row for the hour period, with no day period", async () => {

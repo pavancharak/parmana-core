@@ -21,12 +21,12 @@ This runbook never contains a key, a token or a database URL. Do not paste any o
 
 ## 1. Roles and credentials
 
-| Credential | Caller id (example) | Holder | Capabilities on the key | Stored by the holder in |
-| --- | --- | --- | --- | --- |
-| Maker | `maker-<name>` | Maker | none | Password manager |
-| Checker | `checker-<name>` | Checker | none | Password manager, and the step-up PEM in `%USERPROFILE%\parmana-checker\step-up.private.pem` |
-| Operator A | `operator-a` | Operator A | `kill-switch:trip`, `kill-switch:reset` | Password manager |
-| Operator B | `operator-b` | Operator B | `kill-switch:reset` | Password manager |
+| Credential | Caller id (example) | Holder     | Capabilities on the key                 | Stored by the holder in                                                                      |
+| ---------- | ------------------- | ---------- | --------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Maker      | `maker-<name>`      | Maker      | none                                    | Password manager                                                                             |
+| Checker    | `checker-<name>`    | Checker    | none                                    | Password manager, and the step-up PEM in `%USERPROFILE%\parmana-checker\step-up.private.pem` |
+| Operator A | `operator-a`        | Operator A | `kill-switch:trip`, `kill-switch:reset` | Password manager                                                                             |
+| Operator B | `operator-b`        | Operator B | `kill-switch:reset`                     | Password manager                                                                             |
 
 The probe key (`kill-switch-probe`, `kill-switch:probe`) belongs to the scheduled probe workflow and is not part of this ceremony.
 
@@ -63,6 +63,7 @@ curl.exe -s "$env:PARMANA_URL/kill-switch/status?nonce=ceremony-start" -H "Autho
 ```
 
 Expected:
+
 - `/ready` returns `READY`.
 - Status shows `"active":false`, with your nonce echoed and `"signed":false`.
 
@@ -82,6 +83,7 @@ Set-Clipboard -Value $k
 ```
 
 Then:
+
 1. Expect `key length: 43`. Anything else means the capture failed; run it again.
 2. Save the key in the password manager under the maker's name.
 3. Clear the clipboard: `Set-Clipboard -Value " "`.
@@ -109,6 +111,7 @@ Select-String -Path "$env:USERPROFILE\parmana-checker\step-up.private.pem" -Patt
 ```
 
 Then:
+
 1. Expect `key length: 43` and one matching `BEGIN PRIVATE KEY` line.
 2. Save the key and the step-up PEM (the whole block shown in the terminal) in the password manager.
 3. Clear the clipboard and the variables: `Set-Clipboard -Value " "`, `Remove-Variable k, out, pem`.
@@ -153,6 +156,7 @@ If there is no second person, stop. Operator B's reset cannot be completed witho
 ## 8. Step 6: Assemble the entries (the operator)
 
 Put every entry file in `%USERPROFILE%\parmana-entries`:
+
 - `maker-<name>.json` from the maker
 - `checker-<name>.json` from the checker
 - `operator-a.json` (created on this machine in step 4)
@@ -236,16 +240,16 @@ Remove-Variable k
 
 ## 12. Troubleshooting
 
-| What you see | Cause | Action |
-| --- | --- | --- |
-| `key length` is not 43 | The copy failed | Run the generation again |
-| `401 authentication required` on `/callers/me` | The key is not in the live list, or the wrong key is used | Check the key against its entry (hash), then the list; redeploy if the list changed |
-| `403 CAPABILITY_NOT_ALLOWED` on a kill-switch route | The key lacks the capability | Check section 1; regenerate the key with the right capabilities |
-| `503 KILL_SWITCH_ACTIVE` | The switch is tripped | Find the trip reason; reset only after the cause is known (section 13) |
-| `Caller is not permitted to invoke this capability` | The wrong key was loaded in the session | Load the right key, in a new window if needed |
-| `This action requires a caller credential provisioned as a verified human` | A non-human key was used to approve | Use the checker's key |
-| `Cannot GET /kill-switch/status` | An old checkout was deployed | Deploy from current `main` (section 10) |
-| The function fails at startup with `500` on every request | `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` is not exactly `true` or `false` | Set it to `true` or `false` and redeploy |
+| What you see                                                               | Cause                                                                      | Action                                                                              |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `key length` is not 43                                                     | The copy failed                                                            | Run the generation again                                                            |
+| `401 authentication required` on `/callers/me`                             | The key is not in the live list, or the wrong key is used                  | Check the key against its entry (hash), then the list; redeploy if the list changed |
+| `403 CAPABILITY_NOT_ALLOWED` on a kill-switch route                        | The key lacks the capability                                               | Check section 1; regenerate the key with the right capabilities                     |
+| `503 KILL_SWITCH_ACTIVE`                                                   | The switch is tripped                                                      | Find the trip reason; reset only after the cause is known (section 13)              |
+| `Caller is not permitted to invoke this capability`                        | The wrong key was loaded in the session                                    | Load the right key, in a new window if needed                                       |
+| `This action requires a caller credential provisioned as a verified human` | A non-human key was used to approve                                        | Use the checker's key                                                               |
+| `Cannot GET /kill-switch/status`                                           | An old checkout was deployed                                               | Deploy from current `main` (section 10)                                             |
+| The function fails at startup with `500` on every request                  | `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` is not exactly `true` or `false` | Set it to `true` or `false` and redeploy                                            |
 
 ---
 
@@ -302,10 +306,10 @@ Note: the two-operator reset is enabled in production but has not yet been exerc
 
 Two controls are easy to confuse:
 
-| Control | What it does | How | Redeploy |
-| --- | --- | --- | --- |
-| Trip and reset (the API routes) | Stops execution and approvals; a reset lifts it | API call by an operator | No |
-| The feature (`KILL_SWITCH_ENABLED`) | Turns the guard machinery on or off | Vercel variable | Yes |
+| Control                             | What it does                                    | How                     | Redeploy |
+| ----------------------------------- | ----------------------------------------------- | ----------------------- | -------- |
+| Trip and reset (the API routes)     | Stops execution and approvals; a reset lifts it | API call by an operator | No       |
+| The feature (`KILL_SWITCH_ENABLED`) | Turns the guard machinery on or off             | Vercel variable         | Yes      |
 
 Enable (production, per the runbook):
 
@@ -331,19 +335,19 @@ Verify after any change: `vercel env ls production` (both names, as Config), `np
 
 Record each step, the person, the date and the result. Do not record keys.
 
-| Step | Done by | Date | Result |
-| --- | --- | --- | --- |
-| 1. Production clear (`active:false`) | | | |
-| 2. Maker generated; entry sent | | | |
-| 3. Checker generated; step-up PEM saved; entry sent | | | |
-| 4. Operator A generated (`key length: 43`) | Operator A | 23 Oct 2026 | Done; key to password manager, clipboard cleared |
-| 5. Operator B generated; entry sent | | | |
-| 6. Entries assembled; list printed (six callers) | | | |
-| 7. `PARMANA_API_KEYS` replaced | | | |
-| 8. Redeployed from `main`; `api\index.ts` check passed | | | |
-| 9. Each caller returns `200` on `/callers/me` | | | |
-| 10. Drill (13.1 to 13.4) run or skipped, with reason | | | |
-| 11. Keys pasted into chat rotated | | | |
+| Step                                                   | Done by    | Date        | Result                                           |
+| ------------------------------------------------------ | ---------- | ----------- | ------------------------------------------------ |
+| 1. Production clear (`active:false`)                   |            |             |                                                  |
+| 2. Maker generated; entry sent                         |            |             |                                                  |
+| 3. Checker generated; step-up PEM saved; entry sent    |            |             |                                                  |
+| 4. Operator A generated (`key length: 43`)             | Operator A | 23 Oct 2026 | Done; key to password manager, clipboard cleared |
+| 5. Operator B generated; entry sent                    |            |             |                                                  |
+| 6. Entries assembled; list printed (six callers)       |            |             |                                                  |
+| 7. `PARMANA_API_KEYS` replaced                         |            |             |                                                  |
+| 8. Redeployed from `main`; `api\index.ts` check passed |            |             |                                                  |
+| 9. Each caller returns `200` on `/callers/me`          |            |             |                                                  |
+| 10. Drill (13.1 to 13.4) run or skipped, with reason   |            |             |                                                  |
+| 11. Keys pasted into chat rotated                      |            |             |                                                  |
 
 ---
 
