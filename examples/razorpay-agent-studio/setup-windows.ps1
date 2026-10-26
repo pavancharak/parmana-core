@@ -120,8 +120,17 @@ $entries | ForEach-Object {
 }
 $value = ConvertTo-Json -InputObject $entries -Depth 5 -Compress
 cmd /c "npx vercel env rm PARMANA_API_KEYS production --yes --cwd `"$Link`" >nul 2>&1"
-$value | & npx vercel env add PARMANA_API_KEYS production --sensitive --cwd $Link
-if ($LASTEXITCODE -ne 0) { throw "Could not set PARMANA_API_KEYS. Parmana may reject all keys: fix this first." }
+# Write the value to a file and redirect it. Piping into the CLI from
+# PowerShell stored an invalid value during setup, and Parmana then refused
+# every key. The file holds hashes only, and it is deleted afterwards.
+$valueFile = Join-Path $env:TEMP "parmana-api-keys.json"
+Set-Content -Path $valueFile -Value $value -NoNewline -Encoding ascii
+try {
+  cmd /c "npx vercel env add PARMANA_API_KEYS production --sensitive --cwd `"$Link`" < `"$valueFile`""
+  if ($LASTEXITCODE -ne 0) { throw "Could not set PARMANA_API_KEYS. Parmana may reject all keys: fix this first." }
+} finally {
+  Remove-Item $valueFile -Force -ErrorAction SilentlyContinue
+}
 
 # 7. Redeploy the newest production deployment of parmana-api-real, then check.
 Set-Location $Link
