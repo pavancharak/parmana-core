@@ -2,7 +2,7 @@
 
 ## Set up
 
-- Node.js 24 or later.
+- Node.js 24 or later. On Node 22 the build passes but tests fail: the `distrustCompromisedRoots` tests expect Node's bundled emSign root, and the `re2` native module built for Node 22 will not load under Node 24. If you switch Node versions after `npm ci`, run `npm rebuild re2`.
 - `npm ci`. Its `prepare` step points Git at the repository's hooks in `scripts/git-hooks`.
 - Install [gitleaks](https://github.com/gitleaks/gitleaks#installing) or Docker. The pre-commit hook scans staged files for secrets with one of them, and refuses the commit if neither is available. Do not skip it with `--no-verify` unless you have reviewed the staged files yourself.
 - Check the set-up with `npm run build` and `npm test`.
@@ -41,6 +41,14 @@ verifiable evidence come before convenience.
    - An ADR in [docs/adr/](docs/adr/) when an architectural decision is made or reversed.
    - The published docs in [docs/site/](docs/site/) when behavior a reader relies on changes,
      and the changelog (`docs/site/changelog.mdx`).
+
+## Generated Python reference docs
+
+`npm run generate:python-sdk-reference` rewrites `docs/site/sdks/reference/python/`, and it does not keep hand edits. Before you commit a regeneration:
+
+- **Descriptions.** Each page has a one-line `description:` added by hand in `54d7290`. The generator does not write it, so regeneration removes it. Put it back.
+- **Formatting.** Do not run `npx prettier --write` on the regenerated pages. Prettier can turn an underscore inside a word, such as `POLICY_DENIED`, into an asterisk. Use `npx prettier --check` and fix anything it flags by hand.
+- **Tool version.** The generator runs `python -m pydoc_markdown`. Install the version pinned in `python/requirements-dev.txt` (`pydoc-markdown==4.8.2`) first.
 
 ## Dependency updates
 
