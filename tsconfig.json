@@ -18,6 +18,7 @@
     { "path": "./packages/connector-hubspot" },
     { "path": "./packages/connector-github" },
     { "path": "./packages/connector-paytm" },
+    { "path": "./packages/connector-zerodha" },
     { "path": "./packages/connector-slack" },
     { "path": "./packages/approval" }
   ],
