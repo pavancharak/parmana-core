@@ -96,10 +96,10 @@ Two keys were pasted into chat during setup. Treat both as exposed, and rotate t
 
 ## Still open
 
-Status as of 2026-10-26. Each item says what is done, what is open, and who decides the next step.
+Status as of 2026-10-26. Each item says what is done, what is open, and who decides the next step. These items are **deferred**: they are recorded here so they can be picked up later. None of them blocks the current service.
 
 - **Probe scheduler: running.** The workflow runs every 15 minutes and was verified green on 2026-10-26 (run #42). Its key is the repository secret `PARMANA_PROBE_KEY`. To rotate: generate a new probe key, replace its entry in `PARMANA_API_KEYS`, redeploy, then update the secret. Do not reuse a key that has been pasted into chat.
-- **Probe history retention: not yet enforced.** The ADR (decision 3) requires probe rows to be kept for at least one year. Nothing deletes them today, so the minimum holds. Open: a retention job that keeps rows for a year before any deletion is allowed. Owner: the maintainers. Next step: write the job and a test that refuses to delete a row younger than one year.
+- **Probe history retention: guard built, not scheduled.** The ADR (decision 3) requires probe rows to be kept for at least one year. Nothing deletes them today, so the minimum holds. `PostgresKillSwitchProbePruner` (merged in PR #138) deletes only probes at least one year old, and refuses any other cutoff before it runs a query. Open: nothing calls it yet. Owner: the maintainers. Next step: decide when and where the job runs, then schedule it.
 - **Signed status and audit events (G-118): open.** Status responses are unsigned (`signed: false`) until a signing key tied to the running build exists. Open: provision that key and sign the status response. Owner: the maintainers. Until then, the status endpoint must say its responses are unsigned.
 - **Third-party check: open.** ADR-0017 requires an independent party to check that the switch works, and to keep the evidence. It cannot be closed from inside the repository.
   - What it needs: a non-production deployment of this repository, with its own database, its own keys, and its own `PARMANA_API_KEYS`. It must never run against `parmana-api-real`, because tripping production stops real traffic.
