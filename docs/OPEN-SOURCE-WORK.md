@@ -100,7 +100,7 @@ Reproduction of #5413, run 2026-10-26 on `main` at `0dc4cf1`. Offline, `Scripted
 - `run 2 interruptions before stale approve: 1`
 - `after run 2: ['A', 'A']`
 
-So the approval from run 1 authorized the same `call_id` in run 2, and the tool ran with no decision in run 2. The comment for #5413 has not been posted. It needs your approval.
+So the approval from run 1 authorized the same `call_id` in run 2, and the tool ran with no decision in run 2. Posted as a comment on [openai/openai-agents-python#5413](https://github.com/openai/openai-agents-python/issues/5413), 2026-10-26. Five other comments were on the issue before it. No maintainer has replied yet.
 
 Research only, nothing posted. Checked 2026-10-26.
 
