@@ -2,7 +2,7 @@
 
 ## Set up
 
-- Node.js 24 or later.
+- Node.js 24 or later. On Node 22 the build passes but tests fail: the `distrustCompromisedRoots` tests expect Node's bundled emSign root, and the `re2` native module built for Node 22 will not load under Node 24. If you switch Node versions after `npm ci`, run `npm rebuild re2`.
 - `npm ci`. Its `prepare` step points Git at the repository's hooks in `scripts/git-hooks`.
 - Install [gitleaks](https://github.com/gitleaks/gitleaks#installing) or Docker. The pre-commit hook scans staged files for secrets with one of them, and refuses the commit if neither is available. Do not skip it with `--no-verify` unless you have reviewed the staged files yourself.
 - Check the set-up with `npm run build` and `npm test`.
