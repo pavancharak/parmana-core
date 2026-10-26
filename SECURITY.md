@@ -49,6 +49,16 @@ Every gap found and fixed, including those without an advisory, is recorded in
 you run yourself: what counts as a break, what does not, and how breaks are credited. It
 covers local copies only, never the hosted API or the sandbox.
 
+## Open security items
+
+We list the items that are still open, so you can judge the current state for yourself. They are deferred, not forgotten. The full status, with owners and next steps, is in [docs/runbooks/KILL-SWITCH-OPERATIONS.md](docs/runbooks/KILL-SWITCH-OPERATIONS.md#still-open). Status as of 2026-10-26.
+
+- **Two-person reset control.** The reset has been tested with two keys held by one person. That proves the mechanics, not the control. The control needs two named operators, each with their own key.
+- **Third-party check of the kill switch (ADR-0017).** Not done. An independent party has to run the check and keep the evidence.
+- **Signed status responses (G-118).** Status responses are unsigned until a signing key tied to the running build exists. The endpoint says so.
+- **Key rotation.** Keys that were pasted into chat during setup are being rotated.
+- **Probe retention job.** The retention guard exists, but nothing schedules it yet. Today no probe rows are deleted, so the one-year minimum holds.
+
 ## Acknowledged reports
 
 We are happy to credit reporters by name in release notes, with your
