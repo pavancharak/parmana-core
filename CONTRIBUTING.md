@@ -42,6 +42,14 @@ verifiable evidence come before convenience.
    - The published docs in [docs/site/](docs/site/) when behavior a reader relies on changes,
      and the changelog (`docs/site/changelog.mdx`).
 
+## Generated Python reference docs
+
+`npm run generate:python-sdk-reference` rewrites `docs/site/sdks/reference/python/`, and it does not keep hand edits. Before you commit a regeneration:
+
+- **Descriptions.** Each page has a one-line `description:` added by hand in `54d7290`. The generator does not write it, so regeneration removes it. Put it back.
+- **Formatting.** Do not run `npx prettier --write` on the regenerated pages. Prettier can turn an underscore inside a word, such as `POLICY_DENIED`, into an asterisk. Use `npx prettier --check` and fix anything it flags by hand.
+- **Tool version.** The generator runs `python -m pydoc_markdown`. Install the version pinned in `python/requirements-dev.txt` (`pydoc-markdown==4.8.2`) first.
+
 ## Dependency updates
 
 Dependabot opens grouped pull requests every week for npm, Python, the Dockerfile and GitHub
