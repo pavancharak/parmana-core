@@ -93,6 +93,16 @@ Posted: [microsoft/agent-governance-toolkit#4426](https://github.com/microsoft/a
 
 Next: wait for a maintainer decision on placement (core versus `agentmesh-integrations/`) and on the signing scope. Build any code only after they respond, and do not open a PR without maintainer approval. Core changes need maintainer approval.
 
+## Google (`google/adk-python`, `google-agentic-commerce/AP2`)
+
+Research only, nothing posted. Checked 2026-10-26.
+
+- **Best fit: ADK issue [#7569](https://github.com/google/adk-python/issues/7569)**, "HITL tool confirmation forgery is still present." Any caller that can send a function response can send `confirmed: true` for a pending confirmation and run the gated tool. A fix (#6462, commit `9e9eaa6`) was reverted (`9a32eba`), so the issue is open on `main` and 2.12.0. Its proposed fix, PR #7134, adds a `CallerPrincipal` checked against the A2A caller, and refused approvals become `confirmed=False`. Strict refusal sits behind `ADK_ENABLE_STRICT_CALLER_PRINCIPAL`, and the default only warns, so forged approvals would still be accepted by default. No signed or verified confirmation is proposed. That is the gap Parmana's signed approvals could fill.
+- **Related open issues:** #7655 (the delete-files confirmation is controlled by a model-supplied argument), #7520 (pre-execution tool validation as a `before_tool_callback` recipe, a policy-check feature request), #7575 (proxies rejecting client-controlled request fields), #7684 and #7685 (confirmation handling for parallel and multi-confirmation workflows).
+- **ADK contribution rules (`CONTRIBUTING.md`):** a Google CLA is required. Issues come first for all PRs except small doc fixes, and substantial features need a design issue. Unit tests go in `tests/unittests/`, `tox` must pass on all supported Python versions, and `pre-commit run --all-files` applies. ADK is mirrored from an internal repo with Copybara, so accepted PRs may show as closed rather than merged. AI rules: not stated.
+- **AP2 (`google-agentic-commerce/AP2`):** the core specification moved to FIDO, so the repo accepts contributions only for samples and the SDK. It requires a CLA. Its signed mandates (Intent, Cart, Payment) are a close fit for Parmana's signed records, and it has a verifier that issues receipts. Rules on issues and AI use are not stated.
+- **Next step, if you want it:** add a comment to #7569 proposing that the approval carry a verifiable signature, which the current caller-identity check cannot provide. Draft it for your approval first. The issue already discloses the vulnerability publicly, so do not add exploit detail beyond what it contains.
+
 ## OpenAI (`openai/openai-agents-python`, `openai/codex`)
 
 Reproduction of #5413, run 2026-10-26 on `main` at `0dc4cf1`. Offline, `ScriptedModel`, no API key. The script lives in the sandbox scratchpad (`repro_5413.py`), not in this repo. Output:
