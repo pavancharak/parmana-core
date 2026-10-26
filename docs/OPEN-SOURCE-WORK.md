@@ -15,9 +15,23 @@ when a PR merges or an outside project replies. It is not a product document.
 
 ## Outside projects
 
-- **Vengtoo MCP Gateway** (`vengtoo/mcp-gateway`, Apache-2.0). The `authzx/mcp-gateway` repo has the same package name, but it has not been confirmed as the same repository. It sits in front of MCP tool calls and writes an unsigned JSON audit line per call (`src/audit.ts`).
-- **Issue #2** on `vengtoo/mcp-gateway`: "Sign audit records so they can be verified outside the gateway". Proposes an optional Ed25519 signature per record, hash-chained to the previous record, plus an offline verifier. It asks whether signing is in scope, and whether signatures go on each record or on periodic checkpoints. Status: open, no maintainer reply recorded yet.
-- Other candidates considered: MCPGuard, jamjet-policy, withHuman, HumanLayer, awaithumans, Agent Receipts (obsigna), Signet, raucle.
+Status as of 2026-10-26. No maintainer has replied on any item below. Each comment was posted by the operator, and the operator decides the next step.
+
+| Project                                                              | Item                                                                                                                                | Our post                                                                                                                               | Status                                                                                                                                              |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Vengtoo MCP Gateway (`vengtoo/mcp-gateway`, Apache-2.0)              | [Issue #2](https://github.com/vengtoo/mcp-gateway/issues/2): signed audit records                                                   | Two comments: design (per-record signature, hash chain, checkpoints) and an update (rotatable keys, configurable algorithm, witnesses) | Open, no labels, no assignee, no maintainer reply                                                                                                   |
+| OPA (`open-policy-agent/opa`, Apache-2.0)                            | [Issue #9426](https://github.com/open-policy-agent/opa/issues/9426): ecosystem entry and Envoy to OPA to Parmana guide              | Feature request, no comments yet                                                                                                       | Open, no labels, no assignee                                                                                                                        |
+| NVIDIA NeMo Guardrails (Apache-2.0)                                  | [Issue #2245](https://github.com/NVIDIA-NeMo/Guardrails/issues/2245): external policy-engine example for custom actions             | Offer comment posted by the operator. The page did not show it in the last check: confirm it in the browser                            | Open, "needs triage", no assignee. The issue author (ktirupati) already has an exploratory PolicyAware example and asks to be assigned after triage |
+| Model Context Protocol (`modelcontextprotocol/modelcontextprotocol`) | [Issue #3394](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/3394): lost-response retry re-executes tool calls | Comment: single-use authorization with a signed nonce, implemented at the gateway                                                      | Open, no reply visible. Eight comments are hidden behind "Load more"                                                                                |
+
+Candidates still to check: Sigstore (Rekor and Cosign, Apache-2.0; its contributor rules were read, but the Rekor CONTRIBUTING page returned 404), in-toto, LangGraph. Earlier candidates, not yet checked: MCPGuard, jamjet-policy, withHuman, HumanLayer, awaithumans, Agent Receipts (obsigna), Signet, raucle.
+
+Contribution rules learned so far:
+
+- **NeMo Guardrails:** an issue must come first, and the contributor must be assigned to it before opening a PR. DCO sign-off is required. Disclose AI assistance in the PR description.
+- **OPA:** feature requests start as an issue. Every commit needs a human sign-off. AI may help write code, but issue text, PR descriptions, and replies must be written by a human. Reviewers reject discussion that uses AI-generated replies.
+- **MCP:** spec changes follow the SEP process. Discuss on Discord with a working group, build a prototype, then write the SEP. AI assistance must be disclosed in the PR or issue.
+- **Sigstore:** issue first, DCO sign-off, updated docs, passing CI, maintainer review.
 
 ## Working rules
 
