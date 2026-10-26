@@ -132,3 +132,6 @@ PARMANA_API_KEYS*.json
 
 # Committed template for the test settings file (see .env.test.example).
 !.env.test.example
+
+# Operator context notes (local only, never commit)
+PARMANA-OPS-CONTEXT.md
