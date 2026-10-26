@@ -12,7 +12,7 @@ The legacy `signature` covers seven fields, defined by `canonicalExecutionTrustR
 
 Two constraints apply:
 
-1. The code comment in `ExecutionTrustRecordCanonicalView.ts` says the legacy signature's content must never change, so that pre-hybrid verifiers, including `@parmana/sign`, keep working. Coverage must therefore be added in a new envelope, not by changing the legacy signature.
+1. The code comment in `ExecutionTrustRecordCanonicalView.ts` says the legacy signature's content must never change, so that pre-hybrid verifiers, including the separately published verifier, keep working. Coverage must therefore be added in a new envelope, not by changing the legacy signature.
 2. The hybrid envelope already exists. It signs the canonical fields plus `schemaVersion`, and the current version is 2.
 
 ## Decision (proposed)
@@ -79,7 +79,7 @@ Done 2026-10-19 by reading the code. Results:
 v3 issuance stays off (`HYBRID_SCHEMA_VERSION` defaults to `2`) until all of these hold:
 
 - the downgrade gap above is closed or accepted in writing, with the option chosen recorded here;
-- step 5 is published: the public verifier, `@parmana/sign`, and the SDKs read v3 and report `coverage`;
+- step 5 is published: the public verifier, the separately published verifier, and the SDKs read v3 and report `coverage`;
 - the verifier's `docs/FORMAT.md` describes v3 coverage exactly as the signing code implements it.
 
 Until the gate opens, a deployment that sets `HYBRID_SCHEMA_VERSION=3` is running an unsupported configuration. Enabling it is an operational decision, not a code default.
