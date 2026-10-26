@@ -181,7 +181,8 @@ messages over 4096 bytes, longer messages are signed as a fixed commitment (a do
 the SHA-512 digest); a verifier accepts the commitment form only above that length, so a small
 message cannot be downgraded.
 
-Verification needs only the record and the public key: the open source `@parmana/sign` package,
+Verification needs only the record and the public key: the open source `@parmana/verifier` package
+(Node) or `parmana-verifier` (Python),
 a Python module, or a page in the browser. A valid result proves the record is unchanged and
 was signed by the key holder; it does not prove the key holder was honest.
 

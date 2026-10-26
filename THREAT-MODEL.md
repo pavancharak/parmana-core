@@ -17,7 +17,7 @@ capability changes, this file changes in the same pull request.
 policy and signs authorizations, the execution gateway and execution control, the built in
 connectors (HubSpot, GitHub, Slack, Paytm), release to registered external connectors, policy
 and approver governance, and the records it signs. Also in scope: offline verification of
-those records with `@parmana/envelope-verifier`, `@parmana/crypto` and `@parmana/sign`.
+those records with `@parmana/envelope-verifier`, `@parmana/crypto` and the published `@parmana/verifier`.
 
 **Out of scope:**
 

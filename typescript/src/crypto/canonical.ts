@@ -26,7 +26,7 @@ function normalize(value: unknown): unknown {
       // defineProperty, not normalized[key] = ...: plain assignment sends a
       // literal "__proto__" key to the prototype setter, dropping it from
       // the output (and from what is signed). The server's
-      // CanonicalSerializer, the Python SDK and @parmana/sign all keep it.
+      // CanonicalSerializer, the Python SDK and the third-party verifier all keep it.
       Object.defineProperty(normalized, key, {
         value: normalize(object[key]),
         enumerable: true,

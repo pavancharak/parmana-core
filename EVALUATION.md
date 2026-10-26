@@ -106,9 +106,8 @@ against a server you run.
 
 Every approved action produces a signed Execution Trust Record. It can be checked with only
 the record and the public keys, without Parmana's runtime or database, using
-[`@parmana/sign`](https://github.com/pavancharak/parmana-sign) or this repository's own
-`packages/crypto/src/OfflineVerifier.ts`. See
-[Verification SDK](https://docs.parmanasystems.com/sdks/parmana-sign/overview).
+the [`@parmana/verifier`](https://github.com/pavancharak/parmana-verifier) package, or this repository's own
+`packages/crypto/src/OfflineVerifier.ts`. See the [verifier README](https://github.com/pavancharak/parmana-verifier).
 
 ## Where to read next
 
@@ -128,7 +127,7 @@ the record and the public keys, without Parmana's runtime or database, using
 
 ## Licensing
 
-The whole repository is licensed under the Apache License 2.0 ([LICENSE](./LICENSE)). `@parmana/sign` is a separate repository, also under the Apache License 2.0.
+The whole repository is licensed under the Apache License 2.0 ([LICENSE](./LICENSE)). `@parmana/verifier` is a separate repository, also under the Apache License 2.0.
 
 ## Break it
 

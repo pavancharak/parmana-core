@@ -70,7 +70,7 @@ export class CanonicalSerializer {
         // creating an own property, so it silently vanished from the
         // signed bytes. Its content was then not covered by the hash or
         // signature, and the output disagreed with the Python SDK and
-        // @parmana/sign, which both keep it.
+        // third-party verifiers, which both keep it.
         //
         Object.defineProperty(normalized, key, {
           value: this.normalize(object[key]),
