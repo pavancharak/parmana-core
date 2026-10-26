@@ -43,7 +43,20 @@ Work is done one item at a time. Items 1 and 2 are done locally. Nothing is push
 
 3. **Publish the verifier quickstart** (done on a branch). The verifier's Node quick start already existed. The Python package had none, and every sample record was hybrid (ML-DSA-65), which the Python verifier rejects. Branch `quickstart-python` in `pavancharak/parmana-verifier`, commit `3001baa` (DCO sign-off), pushed. It adds an Ed25519-only sample record, a tampered copy, and a trust set, signed with a fixed test key and labelled as test material. The Python README gains a quick start with a CLI run and a Python snippet, both checked. The verifier's 38 Python tests pass. PR [pavancharak/parmana-verifier#19](https://github.com/pavancharak/parmana-verifier/pull/19), open against `main`. This is the operator's own repo.
 
-Items 4 to 7 are still to do: pick targets that accept outside work, follow each project's gate, make trust visible, and track responses.
+4. **Pick targets that accept outside work** (done, sorted by the rules each project wrote down).
+   - **Accepts outside PRs, rules clear:**
+     - Microsoft Agent Governance Toolkit, `agentmesh-integrations/` only. Core packages are maintainer-only. The extension is PR #4427.
+     - Signet (`prismer-ai/signet`). Fork, branch, tests, PR. No issue required. Rust and TypeScript checks.
+     - Obsigna (`agent-receipts/obsigna`). PR #1146 is open. Protocol changes need an ADR first.
+     - Sigstore (Cosign). Issue optional. DCO, `make test` and `make lint`.
+     - Google ADK. Issue first for PRs other than small doc fixes. Requires a Google CLA.
+     - Cedar and Casbin. Issue first when in doubt, or for significant changes. Their rules don't mention DCO or AI use.
+   - **Issues only, no outside PRs:** OpenAI Agents SDK (`openai-agents-python`) and Codex. An outsider files an issue with a version, a repro, and a sanitized script. Security reports go through `SECURITY.md`.
+   - **Gated:** HumanLayer needs a maintainer's `!vouch` before a code PR. NeMo Guardrails needs an assignee before a PR. OPA declined our listing request, so check fit with its maintainers before asking again. MCP changes go through the SEP process.
+   - **Unknown:** LangChain (its CONTRIBUTING returned 404), OpenFGA (the guide is elsewhere), JamJet Policy (no CONTRIBUTING file), in-toto (404), and withHuman (no public repo).
+   - **Best next targets:** Signet, because it accepts a PR with no issue required and fits our receipts model. Second, an ADK follow-up on #7569, once the CLA is signed. The Microsoft and Obsigna PRs are already open and need only responses.
+
+Items 5 to 7 are still to do: follow each project's gate, make trust visible, and track responses.
 
 ## Watched threads
 
