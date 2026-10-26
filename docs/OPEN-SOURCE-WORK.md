@@ -93,6 +93,16 @@ Posted: [microsoft/agent-governance-toolkit#4426](https://github.com/microsoft/a
 
 Next: wait for a maintainer decision on placement (core versus `agentmesh-integrations/`) and on the signing scope. Build any code only after they respond, and do not open a PR without maintainer approval. Core changes need maintainer approval.
 
+## LangChain (`langchain-ai/langchain`)
+
+Research only, nothing posted. Checked 2026-10-26.
+
+- **Fit:** LangChain has a built-in human-in-the-loop middleware that pauses before a tool runs. Per-tool rules decide which calls need review, and a reviewer can approve, edit, or reject. Resuming uses `Command`, and pausing needs a checkpointer and a thread ID. A deterministic pre-execution policy hook is the gap.
+- **Closed proposals on that gap:** #41231 and #41234 proposed a pre-execution tool-call guard with operator-declared policy, plus a test. Both were closed as not planned by the automated triage bot `langchain-oss-automated-triage`. The bot said the issues "appear to have been submitted programmatically" because they had no issue type, and that "We do not allow automated issue submission at this time." No maintainer read the proposal. The author, PHM-Audit, says the filing was made through the API, which cannot set an issue type. #41233 was a duplicate of #41234.
+- **Lesson:** file any LangChain issue through the web UI and set the issue type yourself. Ask a maintainer to reopen the closed items, rather than filing a duplicate.
+- **Open items nearby:** #41051 (`@wrap_tool_call` loses custom context type, which affects middleware that gates tools).
+- **Contribution rules:** `CONTRIBUTING.md` returned 404 at both the `.github/` and root paths. Rules are unverified.
+
 ## Contribution rules learned so far
 
 - **NeMo Guardrails:** an issue must come first, and the contributor must be assigned to it before opening a PR. DCO sign-off is required. Disclose AI assistance in the PR description.
