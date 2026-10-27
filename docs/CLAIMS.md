@@ -2497,7 +2497,10 @@ This discipline ensures that Parmana's public positioning remains aligned with i
 
 **Claim.** The following hold on the current branch. Each was reported by the 2026-10-15 read-only audit and checked against the code before it was fixed.
 
-1. Connector base-URL overrides (`HUBSPOT_BASE_URL`, `GITHUB_BASE_URL`, `SLACK_BASE_URL`) must use `https://`, or `http://` for loopback. Embedded credentials are refused. The GitHub credential provider applies the same rule.
+1. Connector base-URL overrides (`HUBSPOT_BASE_URL`, `GITHUB_BASE_URL`, `SLACK_BASE_URL`) must use `https://`. `http://` is accepted only for loopback (`localhost`, `127.0.0.1`, `[::1]`) and only when `NODE_ENV` is `test`, where the hermetic mock-server seams run. Embedded credentials are refused. The GitHub credential provider applies the same rule.
+
+   **Update (2026-10-27, G-126):** before this date the loopback exception applied in every environment, so a production override of `http://localhost` would have sent a connector credential in clear text. The exception is now limited to `NODE_ENV=test`. Fixed on branch `claude/funny-allen-b2w5ue` (commit `2b00dc5`); not yet merged to `main`. Tests: `packages/api/tests/unit/bootstrap/read-connector-base-url.test.ts` (six cases: https outside tests, loopback refused outside tests, remote http refused in every environment, loopback accepted under `NODE_ENV=test`, embedded credentials refused, unset returns undefined).
+
 2. A GitHub or HubSpot response with a 2xx status and a body that is not JSON fails the action. It is no longer recorded as success with empty evidence.
 3. A step-up envelope whose `authorizedAt` is more than 60 seconds in the future is not valid. Previously only the expiry was checked.
 4. The TypeScript SDK refuses an endpoint that is not `https://` (or loopback `http://`) and refuses embedded credentials, as the Python SDK already did. Its client no longer prints the API key in `console.log` or `JSON.stringify`.

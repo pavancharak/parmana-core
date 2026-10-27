@@ -47,6 +47,8 @@ Keep `PAYTM_CONNECTOR_SHARED_SECRET` set, or in `.env`, for every later `docker 
 
 What each variable accepts: [Environment variable reference, Connectors](/deployment/environment-variables#connectors).
 
+A base URL override (`HUBSPOT_BASE_URL`, `SLACK_BASE_URL`, `GITHUB_BASE_URL`) must use `https://`. `http://` is accepted only for localhost, and only when `NODE_ENV=test`. The server refuses any other value at startup, so a connector credential is never sent in clear text.
+
 Only the Paytm connector has been run on the self hosted deployment, by the [offline check](/self-hosted/offline-verification). HubSpot, Slack and GitHub use the same server code as the hosted API but call services on the internet, so a deployment that uses them is not isolated from the internet.
 
 ## Rules the server enforces

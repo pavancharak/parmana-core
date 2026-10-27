@@ -6,8 +6,9 @@ const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
  * text or to a host the operator did not name in full.
  *
  * Overrides exist as test seams for hermetic mock servers, which run on
- * loopback. A production override must use https://, and an http:// value
- * is accepted only for loopback. Embedded credentials are refused.
+ * loopback. A production override must use https://. An http:// value is
+ * accepted only for loopback and only when NODE_ENV is "test". Embedded
+ * credentials are refused.
  */
 export function readConnectorBaseUrl(name: string): string | undefined {
   const raw = process.env[name];
@@ -28,11 +29,15 @@ export function readConnectorBaseUrl(name: string): string | undefined {
     throw new Error(`${name} must not contain credentials in the URL.`);
   }
 
-  const loopback = LOOPBACK_HOSTS.has(url.hostname);
+  const loopbackTestSeam =
+    process.env.NODE_ENV === "test" && LOOPBACK_HOSTS.has(url.hostname);
 
-  if (url.protocol !== "https:" && !(url.protocol === "http:" && loopback)) {
+  if (
+    url.protocol !== "https:" &&
+    !(url.protocol === "http:" && loopbackTestSeam)
+  ) {
     throw new Error(
-      `${name} must use https:// (http:// is allowed only for localhost).`,
+      `${name} must use https:// (http:// is allowed only for localhost in tests).`,
     );
   }
 
