@@ -15,6 +15,10 @@
  *   npx tsx examples/live-checks/governance.ts propose-revoke --kind grant|connector|source ...
  *   npx tsx examples/live-checks/governance.ts approve --kind policy|connector|source|grant --id <changeId> `
  *     --step-up-key-file step-up.private.pem --step-up-key-id checker-pavan
+ *   npx tsx examples/live-checks/governance.ts propose-issuer --approver-id manager-pavan --key-id manager-pavan-key-2 `
+ *     --public-key-file manager-pavan__manager-pavan-key-2.public.pem --reason "Approver for the live refund check."
+ *   npx tsx examples/live-checks/governance.ts approve-issuer --id <changeId> `
+ *     --step-up-key-file step-up.private.pem --step-up-key-id checker-pavan
  *
  * approve prints the change and asks the checker to type APPROVE before
  * it signs the step up authorization (valid 120 seconds) and sends it.
@@ -185,6 +189,114 @@ async function proposeRevoke(parmana: ParmanaClient): Promise<void> {
   }
 }
 
+interface IssuerChange {
+  readonly changeId: string;
+  readonly status: string;
+  readonly action: string;
+  readonly approverId: string;
+  readonly keyId: string;
+}
+
+const ISSUER_CHANGES = "/approval-issuers/changes";
+
+/**
+ * Approval issuers are not in the SDK, so these calls use the routes
+ * directly, with the same API key the other commands use.
+ */
+async function issuerRequest<T>(
+  method: "GET" | "POST",
+  path: string,
+  body?: object,
+): Promise<T> {
+  const endpoint = process.env.PARMANA_URL?.trim().replace(/\/+$/, "");
+  const apiKey = process.env.PARMANA_API_KEY?.trim();
+
+  if (!endpoint || !apiKey) {
+    throw new Error("Set PARMANA_URL and PARMANA_API_KEY.");
+  }
+
+  const response = await fetch(`${endpoint}${path}`, {
+    method,
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const text = await response.text();
+  const parsed: unknown = text === "" ? {} : JSON.parse(text);
+
+  if (!response.ok) {
+    throw new Error(
+      `${method} ${path} failed with ${response.status}: ${JSON.stringify(parsed)}`,
+    );
+  }
+
+  return parsed as T;
+}
+
+/** The maker proposes an approver with its public key. */
+async function proposeIssuer(): Promise<void> {
+  const change = await issuerRequest<IssuerChange>("POST", ISSUER_CHANGES, {
+    action: "add",
+    approverId: required("--approver-id"),
+    keyId: required("--key-id"),
+    publicKeyPem: readFileSync(required("--public-key-file"), "utf8"),
+    reason: reason("Approver added for the live refund check."),
+  });
+  show(`Proposed: ${change.changeId}, ${change.status}`, change);
+}
+
+/** The checker approves it, with a step up authorization for this change. */
+async function approveIssuer(): Promise<void> {
+  const id = required("--id");
+  const privateKeyPem = readFileSync(required("--step-up-key-file"), "utf8");
+  const keyId = required("--step-up-key-id");
+
+  const { changes } = await issuerRequest<{ changes: IssuerChange[] }>(
+    "GET",
+    `${ISSUER_CHANGES}?status=PENDING_APPROVAL`,
+  );
+  const change = changes.find((item) => item.changeId === id);
+
+  if (change === undefined) {
+    throw new Error(
+      `approver change ${id} is not waiting for approval: it may be approved or rejected already.`,
+    );
+  }
+
+  console.log("The change to review:\n");
+  console.log(JSON.stringify(change, null, 2));
+
+  const terminal = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  const answer = await terminal.question(
+    "\nType APPROVE to approve exactly this change (anything else stops): ",
+  );
+  terminal.close();
+
+  if (answer.trim() !== "APPROVE") {
+    console.log("Stopped. Nothing was approved.");
+    return;
+  }
+
+  const stepUp = signPolicyChangeStepUp({
+    pendingPolicyChangeId: id,
+    action: "approve",
+    privateKeyPem,
+    keyId,
+  });
+
+  const approved = await issuerRequest<IssuerChange>(
+    "POST",
+    `${ISSUER_CHANGES}/${id}/approve`,
+    { stepUpAuthorization: stepUp },
+  );
+  console.log(`Status: ${approved.status}`);
+}
+
 /** The pending change to review, or undefined when it is not pending. */
 async function pending(
   parmana: ParmanaClient,
@@ -267,6 +379,8 @@ const COMMANDS: Record<string, (parmana: ParmanaClient) => Promise<void>> = {
   "propose-grant": proposeGrant,
   "propose-revoke": proposeRevoke,
   approve,
+  "propose-issuer": proposeIssuer,
+  "approve-issuer": approveIssuer,
 };
 
 async function main(): Promise<void> {
