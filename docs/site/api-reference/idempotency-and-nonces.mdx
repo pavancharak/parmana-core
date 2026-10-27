@@ -50,8 +50,10 @@ A caller never sends or manages a nonce. The word means two single use values in
 - **The authorization nonce.** Every approved decision becomes a `SignedExecutionAuthorization` with its own `nonce`.
   The [gateway](/concepts/the-gateway) consumes it before it releases the action, so one authorization can release
   one action. Over HTTP you never meet this check: a repeated `businessTransactionId` is refused with `409` before a
-  second authorization exists. It protects a system that calls `@parmana/execution-gateway` directly, which refuses a
-  replay with `NONCE_ALREADY_CONSUMED`.
+  second authorization exists. For a system that calls `@parmana/execution-gateway` directly, a replay of an execution that completed
+  returns the recorded result, and the connector is not called again. A replay while the first attempt is in flight, or
+  after one that stopped without recording completion, is refused with `OUTCOME_UNKNOWN` (`409`): do not retry, check the
+  external system first. A replay with no recorded outcome is refused with `NONCE_ALREADY_CONSUMED`.
 - **The approval nonce.** A signed human approval carries a nonce too, and is accepted once. Sending the same approval
   again, even under a new `businessTransactionId`, is refused with `403 POLICY_DENIED`: the approval no longer
   verifies, so the policy's approval signal is false (`declared signal(s) do not match independently verified state
@@ -66,11 +68,11 @@ Authorization](/concepts/execution-authorization) for the full mechanism.
 
 Three replay defenses exist at different layers, and none is an `Idempotency-Key` header:
 
-| Layer                              | Mechanism                           | What repeating gets you                                         |
-| ---------------------------------- | ----------------------------------- | --------------------------------------------------------------- |
-| REST API (`businessTransactionId`) | Unique key in the database          | `409`, not the original response                                |
-| Human approval (approval nonce)    | Single use, checked in the database | `403 POLICY_DENIED`, nothing runs                               |
-| Internal authorization (`nonce`)   | Single use, consumed by the gateway | Refused by the gateway (`NONCE_ALREADY_CONSUMED`), nothing runs |
+| Layer                              | Mechanism                                             | What repeating gets you                                                                                                                        |
+| ---------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| REST API (`businessTransactionId`) | Unique key in the database                            | `409`, not the original response                                                                                                               |
+| Human approval (approval nonce)    | Single use, checked in the database                   | `403 POLICY_DENIED`, nothing runs                                                                                                              |
+| Internal authorization (`nonce`)   | Single use, consumed by the gateway, outcome recorded | Completed: the recorded result, no second call. In flight or unrecorded: refused (`OUTCOME_UNKNOWN` or `NONCE_ALREADY_CONSUMED`), nothing runs |
 
 None of them is configurable per request, and there is no way to opt out of the `businessTransactionId` uniqueness
 check from the API.

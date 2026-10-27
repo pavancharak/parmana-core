@@ -16,6 +16,7 @@ import {
 import {
   ConnectorNotRegisteredError,
   NonceAlreadyConsumedError,
+  OutcomeUnknownError,
   AuthorizationNoLongerValidError,
 } from "@parmana/shared";
 
@@ -197,6 +198,7 @@ export function createErrorHandler(auditSink?: CallerAuditSink) {
     //
     if (
       error instanceof NonceAlreadyConsumedError ||
+      error instanceof OutcomeUnknownError ||
       error instanceof ConnectorNotRegisteredError ||
       error instanceof AuthorizationNoLongerValidError
     ) {
