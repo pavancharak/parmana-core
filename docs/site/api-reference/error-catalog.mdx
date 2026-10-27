@@ -111,6 +111,11 @@ external system](/guides/connect-any-external-system).
   authorization, and so a second nonce, is ever generated. It's a library-level
   guarantee for a receiving system calling `@parmana/execution-gateway`
   directly, not an HTTP-reachable outcome of Parmana's own server.
+
+`OutcomeUnknownError` (409, code `OUTCOME_UNKNOWN`) is the same kind of library-level error: the gateway throws it
+for a replay whose first attempt has no recorded result. A replay whose first attempt completed returns the recorded
+result instead of an error.
+
 </Note>
 
 ## Signing and evidence (the action could not be recorded)
