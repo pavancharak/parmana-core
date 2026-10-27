@@ -377,9 +377,10 @@ export function createApp(
   // mounted without the guard, so the switch can always be cleared. The guard
   // runs before execute, transactions and the two approval routes.
   //
-  // Mounted only when a kill switch is supplied. The server does not supply one
-  // yet: the store is in memory, so a trip would not survive a restart (see
-  // ADR-0017). Until a durable store exists, production runs without it.
+  // Mounted only when a kill switch is supplied. The server supplies a durable
+  // one (Postgres) when KILL_SWITCH_ENABLED=true; see ADR-0017 and
+  // bootstrap/createKillSwitch.ts. With the variable unset, no kill switch is
+  // mounted and no guard runs.
   //
   const killSwitch = options.killSwitch;
   const killSwitchGuards =
