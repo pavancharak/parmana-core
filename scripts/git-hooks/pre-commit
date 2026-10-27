@@ -88,7 +88,22 @@ echo "pre-commit: gitleaks clean. Running the full preflight pipeline (typecheck
 echo "python-models check, tests, build, examples) -- this takes a few minutes."
 echo ""
 
+# Format staged files before the preflight, so a formatting difference cannot
+# block the commit. A file with unstaged changes is skipped, so only content the
+# commit already includes is ever staged here. The preflight still checks format.
+format_staged() {
+  local file
+  while IFS= read -r -d '' file; do
+    if git diff --quiet -- "$file"; then
+      npx prettier --write --ignore-unknown -- "$file" >/dev/null
+      git add -- "$file"
+    fi
+  done < <(git diff --cached --name-only --diff-filter=ACM -z)
+}
+
 cd "$REPO_ROOT"
+
+format_staged
 
 if npm run preflight; then
   preflight_status=0
