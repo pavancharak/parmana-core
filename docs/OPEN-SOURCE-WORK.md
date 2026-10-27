@@ -84,6 +84,7 @@ Status as of 2026-10-26, 06:56 UTC. Checked by hand at each step. The sandbox co
 | [openai/openai-agents-python#5413](https://github.com/openai/openai-agents-python/issues/5413)               | Offline reproduction comment: a run 1 approval authorizes the same `call_id` in run 2 | Commented. No maintainer reply seen.                                               |
 | [google/adk-python#7569](https://github.com/google/adk-python/issues/7569)                                   | Comment proposing a verifiable approval signature alongside the caller-identity check | Commented. Assigned to `surajksharma07`. No maintainer reply seen.                 |
 | [microsoft/agent-governance-toolkit#4426](https://github.com/microsoft/agent-governance-toolkit/issues/4426) | RFC: optional detached Ed25519 signature for `ApprovalResolution`                     | Open, triage. Only the repo's welcome bot has replied.                             |
+| [modelcontextprotocol/modelcontextprotocol#3394](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/3394) | Not ours. Third-party comment by `silentxtrader` (2026-10-27) reporting TypeScript SDK v2.4.0 results | Unverified. Fixture is in a private repo and CI failed before tests ran. No raw logs. Label any use of these results as contributor-reported. |
 
 ## Outside projects: posts and watches
 
