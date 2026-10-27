@@ -106,6 +106,8 @@ async function mint(dealstage = "qualifiedtobuy") {
     .find((r) => r.action === "hubspot:deal-update")!;
 }
 
+const REPLAY_CODES = ["NONCE_ALREADY_CONSUMED", "OUTCOME_UNKNOWN"];
+
 async function attempt(
   label: string,
   proof: any,
@@ -115,18 +117,20 @@ async function attempt(
   resetDeal();
   let threw = false;
   let message = "";
+  let errorCode = "";
   try {
     await gateway.execute(proof);
   } catch (e) {
     threw = true;
     message = (e as Error).message;
+    errorCode = (e as { code?: string }).code ?? "";
   }
   const stage = server.getDeal(DEAL)?.properties.dealstage;
   const released = stage === "qualifiedtobuy";
-  // A replay must not release again. It is either refused or answered with the recorded
-  // result (G-125), so `threw` is not checked for a replay.
+  // A replay must not release again. It may return the recorded result, or be refused with
+  // a replay code (G-125). Any other error fails the check.
   const ok = replay
-    ? !released
+    ? !released && (!threw || REPLAY_CODES.includes(errorCode))
     : expectRelease
       ? !threw && released
       : threw && !released;
