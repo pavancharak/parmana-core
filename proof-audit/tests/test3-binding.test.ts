@@ -42,7 +42,12 @@ async function mintProof(orderId: string, amount: number) {
   return captured;
 }
 
-async function attempt(label: string, proof: any, expectCalls: number) {
+async function attempt(
+  label: string,
+  proof: any,
+  expectCalls: number,
+  replay = false,
+) {
   const before = harness.server.paytmInvocationCount;
   let threw = false;
   let message = "";
@@ -53,13 +58,21 @@ async function attempt(label: string, proof: any, expectCalls: number) {
     message = (e as Error).message;
   }
   const delta = harness.server.paytmInvocationCount - before;
-  const ok = delta === expectCalls && (expectCalls === 0 ? threw : !threw);
+  // A replay must make no second external call. It is either refused or answered with
+  // the recorded result (G-125), so `threw` is not checked for a replay.
+  const ok = replay
+    ? delta === 0
+    : delta === expectCalls && (expectCalls === 0 ? threw : !threw);
   cases.push({
     case: label,
     rejected: threw,
     message: message.slice(0, 220),
     paytmCallsDelta: delta,
-    expected: expectCalls === 0 ? "rejected, 0 calls" : "accepted, 1 call",
+    expected: replay
+      ? "no second call"
+      : expectCalls === 0
+        ? "rejected, 0 calls"
+        : "accepted, 1 call",
     verdict: ok ? "PASS" : "FAIL",
   });
   return { ok, threw, delta };
@@ -170,7 +183,12 @@ describe("TEST 3: binding to the exact action", () => {
   it("replay: the same proof a second time at the gateway", async () => {
     const proof = await mintProof("ORD-BIND-REPLAY", 10000);
     const first = await attempt("replay step 1: first use of proof", proof, 1);
-    const second = await attempt("replay step 2: same proof again", proof, 0);
+    const second = await attempt(
+      "replay step 2: same proof again",
+      proof,
+      0,
+      true,
+    );
     expect(first.ok).toBe(true);
     expect(second.ok).toBe(true);
   });

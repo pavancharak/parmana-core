@@ -106,7 +106,12 @@ async function mint(dealstage = "qualifiedtobuy") {
     .find((r) => r.action === "hubspot:deal-update")!;
 }
 
-async function attempt(label: string, proof: any, expectRelease: boolean) {
+async function attempt(
+  label: string,
+  proof: any,
+  expectRelease: boolean,
+  replay = false,
+) {
   resetDeal();
   let threw = false;
   let message = "";
@@ -118,7 +123,13 @@ async function attempt(label: string, proof: any, expectRelease: boolean) {
   }
   const stage = server.getDeal(DEAL)?.properties.dealstage;
   const released = stage === "qualifiedtobuy";
-  const ok = expectRelease ? !threw && released : threw && !released;
+  // A replay must not release again. It is either refused or answered with the recorded
+  // result (G-125), so `threw` is not checked for a replay.
+  const ok = replay
+    ? !released
+    : expectRelease
+      ? !threw && released
+      : threw && !released;
   cases.push({
     connector: "hubspot:deal-update",
     case: label,
@@ -127,7 +138,9 @@ async function attempt(label: string, proof: any, expectRelease: boolean) {
     dealStageAfter: stage,
     expected: expectRelease
       ? "released, stage changed"
-      : "rejected, stage unchanged",
+      : replay
+        ? "no second release, stage unchanged"
+        : "rejected, stage unchanged",
     verdict: ok ? "PASS" : "FAIL",
   });
   return ok;
@@ -242,6 +255,7 @@ describe("TEST 9: HubSpot deal-update gate conditions", () => {
       "replay step 2: same proof again",
       proof,
       false,
+      true,
     );
     expect(first && second).toBe(true);
   });

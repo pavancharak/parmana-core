@@ -30,6 +30,15 @@ receiving system that runs `@parmana/envelope-verifier` with its own per instanc
 accept the same authorization once per instance; `MemoryNonceStore`, for tests, loses all
 state on restart. Every envelope's bounded TTL limits, but does not eliminate, that exposure.
 
+**A retry after a lost response returns the recorded outcome (partly built).** Single use
+stops a second execution. Parmana also records each execution's result against its nonce. A
+retry of a completed execution returns that result without calling the connector again. A retry
+while the first attempt is in flight, or after it stopped without recording completion, is
+refused as unknown (`OUTCOME_UNKNOWN`), and the caller must check the external system before
+acting again. Two cases are not yet covered: a failure before the connector runs on the
+external-control path is not recorded as failed, and an attempt whose response never arrives
+stays unknown until a reconciler is built. Provider idempotency keys are not yet used.
+
 **Durable, third-party-verifiable refusal and audit records (3.11).** Every
 policy rejection produces a signed Refusal Record, independently verifiable at `POST
 /refusal/verify` with no API key or database lookup required, just the artifact and
