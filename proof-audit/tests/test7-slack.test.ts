@@ -87,6 +87,8 @@ async function mint(channel: string) {
   return captured[before]!;
 }
 
+const REPLAY_CODES = ["NONCE_ALREADY_CONSUMED", "OUTCOME_UNKNOWN"];
+
 async function attempt(
   label: string,
   proof: any,
@@ -97,17 +99,19 @@ async function attempt(
   const before = server.calls.length;
   let threw = false;
   let message = "";
+  let errorCode = "";
   try {
     await gateway.execute(proof);
   } catch (e) {
     threw = true;
     message = (e as Error).message;
+    errorCode = (e as { code?: string }).code ?? "";
   }
   const delta = server.calls.length - before;
-  // A replay must make no second external call. It is either refused or answered with
-  // the recorded result (G-125), so `threw` is not checked for a replay.
+  // A replay must make no second external call. It may return the recorded result, or be
+  // refused with a replay code (G-125). Any other error fails the check.
   const ok = replay
-    ? delta === 0
+    ? delta === 0 && (!threw || REPLAY_CODES.includes(errorCode))
     : expectCalls === 0
       ? threw && delta === 0
       : !threw && delta === expectCalls;

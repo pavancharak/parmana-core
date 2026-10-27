@@ -42,6 +42,8 @@ async function mintProof(orderId: string, amount: number) {
   return captured;
 }
 
+const REPLAY_CODES = ["NONCE_ALREADY_CONSUMED", "OUTCOME_UNKNOWN"];
+
 async function attempt(
   label: string,
   proof: any,
@@ -51,17 +53,19 @@ async function attempt(
   const before = harness.server.paytmInvocationCount;
   let threw = false;
   let message = "";
+  let errorCode = "";
   try {
     await harness.gateway.execute(proof);
   } catch (e) {
     threw = true;
     message = (e as Error).message;
+    errorCode = (e as { code?: string }).code ?? "";
   }
   const delta = harness.server.paytmInvocationCount - before;
-  // A replay must make no second external call. It is either refused or answered with
-  // the recorded result (G-125), so `threw` is not checked for a replay.
+  // A replay must make no second external call. It may return the recorded result, or be
+  // refused with a replay code (G-125). Any other error fails the check.
   const ok = replay
-    ? delta === 0
+    ? delta === 0 && (!threw || REPLAY_CODES.includes(errorCode))
     : delta === expectCalls && (expectCalls === 0 ? threw : !threw);
   cases.push({
     case: label,
