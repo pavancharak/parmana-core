@@ -22,6 +22,7 @@ import { createExecutionControl } from "./createExecutionControl.js";
 import { createGatewayIdentity } from "./createGatewayIdentity.js";
 import { createGatewayKeyPair } from "./createGatewayKeyPair.js";
 import { createGatewayPublicKey } from "./createGatewayPublicKey.js";
+import { createExecutionOutcomeStore } from "./createExecutionOutcomeStore.js";
 import { createNonceStore } from "./createNonceStore.js";
 import { createAuthorizationRevocationList } from "./createAuthorizationRevocationList.js";
 import { verifierKeyId } from "./verifierKeyId.js";
@@ -123,6 +124,10 @@ export async function createExecutionGateway(): Promise<ExecutionSystem> {
     keyProvider,
     keyExpiryStore,
     nonceStore,
+
+    // G-125: the outcome of each authorization is recorded against its
+    // nonce, so a retry after a lost response can recover it.
+    executionOutcomeStore: createExecutionOutcomeStore(),
     policyRepository,
     policyApprovalVerifier,
     signalStateVerifier: executionGatewaySignalStateVerifier,

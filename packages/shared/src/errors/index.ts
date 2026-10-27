@@ -2,6 +2,7 @@ export * from "./parmana-error.js";
 export * from "./business-transaction-not-found-error.js";
 export * from "./duplicate-business-transaction-error.js";
 export * from "./nonce-already-consumed-error.js";
+export * from "./outcome-unknown-error.js";
 export * from "./connector-not-registered-error.js";
 export * from "./policy-not-found-error.js";
 export * from "./override-not-allowed-error.js";

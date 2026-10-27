@@ -313,6 +313,7 @@ Do not edit it by hand: run `npx tsx scripts/gap-status.ts`. `npm test` fails wh
 | G-122 | Parmana has no operator kill switch, and no fresh check that a stop is in force.                    | open, partly closed                                                                            |
 | G-123 | Production policy approvals were refused: the Vercel entry did not pass the checker scope.          | fixed 2026-10-21                                                                               |
 | G-124 | The server trusted certificates from eMudhra's compromised intermediate CA keys.                    | fixed 2026-10-23                                                                               |
+| G-125 | A retry after a lost response cannot recover the outcome of a mutating call.                        | in progress                                                                                    |
 
 <!-- gap-status:end -->
 
@@ -355,6 +356,18 @@ still open: G-108 (operator step), G-111, G-115, G-117. Open, structural: G-118.
   signing), and G-118 (attestation key location). None of these is closed by the merged code.
 - **Not tested here.** KMS, a live external connector endpoint, the Postgres advisory lock (the PGlite
   test serializes connections), and head anchoring. See the limits in `proof-audit/REPORT.md` §5.
+
+## N. Lost response outcome record (added 2026-10-27, in progress)
+
+Gap G-125 in `docs/VERIFICATION-GAPS.md`. A consumed nonce whose connector call did not return left the outcome unrecorded, so a retry was refused with no information. Part 1 records each outcome against its nonce.
+
+| Part | What                                                                                                                                                                                                                                                                                                                               | Status                                                |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| 1    | `execution_outcomes` table keyed by nonce (`in_flight` / `completed` / `failed`). Nonce consume and `in_flight` insert in one transaction. Result written after the connector call. Retry returns the stored result or error, or `OutcomeUnknownError`. Shared by the direct gateway path and the `executionControl` release path. | Implemented 2026-10-27; not yet applied to a database |
+| 2    | Idempotency key derived from the nonce on every provider call that accepts one. Paytm `refId` is currently derived from the order ID (`GatewayPaytmAdapter.ts:73`). No idempotency support found in HubSpot, GitHub or Slack.                                                                                                      | Not started                                           |
+| 3    | Reconciler for stale `in_flight` rows: asks the provider whether the effect exists, writes `completed` or `failed`.                                                                                                                                                                                                                | Not started                                           |
+
+Operator follow up for Part 1: apply `supabase/migrations/20261027120000_add_execution_outcomes.sql` (or the regenerated `scripts/apply-all-migrations.sql` on a fresh project) before deploying this change. Deploying first makes every new execution fail after its nonce is consumed. Parts 2 and 3 need a decision on which connectors get a provider-side key, and who runs reconciliation, before they are built.
 
 ## H. Considered, not built (moved here from the old root `ROADMAP.md`, 2026-09-28)
 

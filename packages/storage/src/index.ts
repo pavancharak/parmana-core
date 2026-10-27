@@ -52,6 +52,7 @@ export * from "./supabase/SupabaseExternalConnectorRepository.js";
 export * from "./supabase/SupabaseBusinessSignalSourceRepository.js";
 export * from "./supabase/SupabaseAuthorityGrantRepository.js";
 export * from "./supabase/SupabaseNonceStore.js";
+export * from "./supabase/SupabaseExecutionOutcomeStore.js";
 export * from "./supabase/SupabaseApprovalNonceStore.js";
 export * from "./supabase/SupabasePolicyChangeStepUpNonceStore.js";
 export * from "./supabase/SupabaseExecutionAuditSink.js";

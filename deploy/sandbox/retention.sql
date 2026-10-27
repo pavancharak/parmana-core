@@ -132,6 +132,9 @@ BEGIN
     DELETE FROM consumed_approval_nonces WHERE expires_at < run_cutoff;
     GET DIAGNOSTICS n = ROW_COUNT; table_name := 'consumed_approval_nonces'; deleted := n; summary := summary || jsonb_build_object(table_name, n); RETURN NEXT;
 
+    DELETE FROM execution_outcomes WHERE expires_at < run_cutoff;
+    GET DIAGNOSTICS n = ROW_COUNT; table_name := 'execution_outcomes'; deleted := n; summary := summary || jsonb_build_object(table_name, n); RETURN NEXT;
+
     DELETE FROM handbook_download_leads WHERE captured_at < run_cutoff;
     GET DIAGNOSTICS n = ROW_COUNT; table_name := 'handbook_download_leads'; deleted := n; summary := summary || jsonb_build_object(table_name, n); RETURN NEXT;
 
