@@ -20,6 +20,14 @@ export {
 export { PaytmMetadata } from "./PaytmMetadata.js";
 
 export {
+  PAYTM_REFUND_STATUS_PATH,
+  lookupPaytmRefundStatus,
+  type PaytmRefundStatusClientOptions,
+  type PaytmRefundStatusLookup,
+  type PaytmRefundStatusResult,
+} from "./PaytmRefundStatusClient.js";
+
+export {
   MockPaytmConnectorServer,
   type MockPaytmConnectorServerOptions,
 } from "./MockPaytmConnectorServer.js";
