@@ -21,6 +21,7 @@ import { ParmanaClient } from "@parmana/sdk";
 import {
   type AgentClient,
   CAPABILITY,
+  RefundNotCompletedError,
   type RefundDecision,
   requestRefund,
   type RefundInput,
@@ -145,10 +146,50 @@ async function callTool(client: AgentClient, params: Record<string, unknown>) {
     };
   }
 
-  const decision = await requestRefund(client, {
-    ...input,
-    purpose: input.purpose ?? `Agent Studio refund proposal (${CAPABILITY})`,
-  });
+  let decision: RefundDecision;
+
+  try {
+    decision = await requestRefund(client, {
+      ...input,
+      purpose: input.purpose ?? `Agent Studio refund proposal (${CAPABILITY})`,
+    });
+  } catch (error) {
+    if (error instanceof RefundNotCompletedError) {
+      // Not a refusal: the outcome is unknown. The transaction id lets a
+      // person find the record, and the message tells the agent not to retry.
+      console.log(
+        JSON.stringify({
+          event: "mcp_refund_not_completed",
+          businessTransactionId: error.businessTransactionId,
+          message:
+            error.original instanceof Error
+              ? error.original.message
+              : String(error.original),
+        }),
+      );
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                status: "NOT_COMPLETED",
+                businessTransactionId: error.businessTransactionId,
+                message:
+                  "The refund proposal did not complete, so its outcome is unknown. Do not send it again. Report this to the team with the businessTransactionId.",
+              },
+              null,
+              2,
+            ),
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    throw error;
+  }
 
   return {
     content: [

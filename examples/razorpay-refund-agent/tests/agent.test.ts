@@ -1,7 +1,12 @@
 import { ExecutionRejectedError } from "@parmana/sdk";
 import { describe, expect, it } from "vitest";
 
-import { type AgentClient, CAPABILITY, requestRefund } from "../agent.js";
+import {
+  type AgentClient,
+  CAPABILITY,
+  RefundNotCompletedError,
+  requestRefund,
+} from "../agent.js";
 
 const PAYMENT = "pay_TestPayment123";
 
@@ -125,12 +130,23 @@ describe("requestRefund", () => {
     });
   });
 
-  it("passes any other failure up, rather than reporting it as a refusal", async () => {
+  it("reports any other failure as not completed, with the transaction id, rather than as a refusal", async () => {
     const parmana = fakeParmana({ fail: new Error("network down") });
 
-    await expect(
-      requestRefund(parmana.client, { paymentId: PAYMENT, amountPaise: 100 }),
-    ).rejects.toThrow("network down");
+    const failure = await requestRefund(parmana.client, {
+      paymentId: PAYMENT,
+      amountPaise: 100,
+    }).catch((error: unknown) => error);
+
+    expect(failure).toBeInstanceOf(RefundNotCompletedError);
+    const notCompleted = failure as RefundNotCompletedError;
+    const sent = parmana.calls.find((call) => call.name === "execute")
+      ?.args[0] as SentTransaction | undefined;
+    expect(sent?.businessTransactionId).toBeTruthy();
+    expect(notCompleted.businessTransactionId).toBe(
+      sent?.businessTransactionId,
+    );
+    expect(notCompleted.original).toEqual(new Error("network down"));
     expect(parmana.calls.map((call) => call.name)).not.toContain(
       "refusalRecord",
     );
