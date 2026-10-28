@@ -229,3 +229,35 @@ Research only, nothing posted. Checked 2026-10-26.
 - Regenerate the Python SDK reference with the version pinned in `python/requirements-dev.txt` (`pydoc-markdown==4.8.2`).
 - GitHub tools only reach repositories attached to the session. Attach an outside repository with `add_repo` before reading its issues or opening a PR there. Attaching with push access needs the session owner's approval.
 - Anonymous `git clone` works for public repositories, but PR creation through the GitHub tools needs the repository attached.
+
+## Update 2026-10-28: ADK signature check and MCP #3394
+
+Insert this section after "Adoption plan: progress" in `docs/OPEN-SOURCE-WORK.md`, or at the top of "Watched threads". Nothing here is pushed to an outside project except the two comments and the fork branch listed below.
+
+### Google ADK, issue #7569 (signature-gated confirmation)
+
+- **Done.** A prototype check runs as a user-message plugin. It verifies a detached Ed25519 signature over `call_id:decision` before the confirmation processor sees the approval, and rewrites unverified approvals to `confirmed=False`.
+- **Tests.** Six new tests in `tests/unittests/plugins/test_signed_confirmation_plugin.py` cover forged, wrong-key, decision-flip, cross-call, valid-signature, and decline cases. All six pass on the ADK branch at `9b74119` (PR #7134). The existing confirmation and HITL tests still pass alongside them, 68 in total. Run on Windows with Python 3.14.
+- **Fork branch.** `pavancharak/adk-python`, branch `signed-confirmation-validation`. It holds only the test commit on top of upstream `main`, with a DCO sign-off. Pushed from the operator's Windows clone.
+- **Comment posted** on #7569 by the operator, linking the branch and asking whether a user-message plugin is the right place, or whether the check belongs in the confirmation processor.
+- **Not done.** No PR. The maintainer asked for validation first, and the placement question is open. The live path (`_live_llm_flow.py`) and a full `Runner` run were not exercised.
+- **Limit.** The sandbox cannot push to `google/adk-python` and has no access to fork it. The GitHub tools refused the comment, so the operator posted it.
+
+### Model Context Protocol, issue #3394 (lost-response retry on a mutating `tools/call`)
+
+- **Comment posted** by the operator, answering the three questions from the maintainer (Arjun Garg). It states what the Parmana source does, and that the MCP-side questions are still open.
+- **What the source shows:** the nonce is issued inside a signed execution authorization envelope and consumed before the connector runs. A retry with the same authorization returns 409 `NonceAlreadyConsumedError` and no stored result. A live connector that fails after release returns `EXECUTION_OUTCOME_UNKNOWN`, also with no result.
+- **Not confirmed:** how an unmodified MCP client would attach the envelope, whether MCP has a discovery mechanism for this, and the reproduction. The TypeScript SDK fixture is private (silentxtrader's reply in the thread).
+- **Open.** Waiting on the maintainers' answer. No PR, and no SEP drafted.
+
+### Zerodha connector (`pavancharak/parmana-core`)
+
+- **Branch on GitHub:** `feat/connector-zerodha-gateway-adapter`, head `9288ab5` ("build live Kite client and approval-gated adapter"). It holds the live client and the approval-gated gateway adapter.
+- **Live trading stays off.** Nothing records the SEBI circular review or Zerodha's API approval, and the adapter is not registered with the gateway.
+- **Sandbox copy.** The sandbox clone is reset to that branch. Its earlier uncommitted work was identical to the remote commit, and a backup of the diff is in the scratchpad.
+- **Open.** PR #158 needs an approving review from someone other than the last pusher.
+
+### Still open, unchanged
+
+- Latency test bound (`execution-pipeline-latency.test.ts`, 500 ms). Needs the operator's decision to raise it. Retry the preflight first.
+- Microsoft AGT #4427, Obsigna #1146, Signet #12, Parmana #143 and #145, parmana-verifier #19 and #20: see the sections above.
