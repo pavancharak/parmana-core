@@ -370,6 +370,18 @@ Gap G-125 in `docs/VERIFICATION-GAPS.md`. A consumed nonce whose connector call 
 
 Operator follow up for Part 1: apply `supabase/migrations/20261027120000_add_execution_outcomes.sql` (or the regenerated `scripts/apply-all-migrations.sql` on a fresh project) before deploying this change. Deploying first makes every new execution fail after its nonce is consumed. Parts 2 and 3 need a decision on which connectors get a provider-side key, and who runs reconciliation, before they are built.
 
+## O. Open after the 2026-10-28 review (added 2026-10-28)
+
+What is still open after the connector URL, kill switch and documentation work merged in PRs #169 to #172. Each item names who can close it and where the result is recorded.
+
+1. **G-126 deployment check.** Confirm that `HUBSPOT_BASE_URL`, `GITHUB_BASE_URL` and `SLACK_BASE_URL` are unset or use `https://` in the hosted (Vercel) and self-hosted environments. Needs someone with access to those environments. Record the result in the G-126 entry in `docs/VERIFICATION-GAPS.md`. Until it is recorded, G-126 stays open.
+2. **Kill switch two-person reset with two real operators.** The reset has only been tested with two keys held by one person. Run the test in `docs/runbooks/KILL-SWITCH-OPERATIONS.md` with two named operators, each with their own key. Needs two people. Record the result in G-122.
+3. **Kill switch third-party check.** Not built. The runbook describes the steps and the non-production deployment it needs. Needs an outside party. Record the result in G-122.
+4. **Signed kill switch status (G-118).** Status responses are not signed. Needs a build-bound signing key. Record the result in G-118.
+5. **Gap between the kill switch release check and the connector call (G-122).** Narrowed, not closed. A trip between the two steps can still release one action. Needs a code change, which is not yet designed.
+6. **G-125 Parts 2 and 3.** Part 2 is provider idempotency keys. Part 3 is reconciliation of stale `in_flight` rows. Neither is started. Part 1's migration (`20261027120000_add_execution_outcomes.sql`) has to be applied to a database before it takes effect; until then the record is not written.
+7. **Unverified gap statuses (G-95 to G-114).** They cite branches and commits that are no longer on GitHub (`ccr-6f1b8d3b-o5pqwj`, `claude/startup-integrity-block`, `fix/policy-scan-and-governance-url`, and local commit `a8ac2961`). Whoever still has those branches can confirm whether the fixes reached `main`, and the entries can be updated.
+
 ## H. Considered, not built (moved here from the old root `ROADMAP.md`, 2026-09-28)
 
 None of these is scheduled. They are recorded so the ideas are not lost when the old roadmap is removed.
