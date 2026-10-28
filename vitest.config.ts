@@ -18,5 +18,6 @@ export default defineConfig({
     hookTimeout: 30000,
 
     setupFiles: [join(here, "vitest.setup.ts")],
+    globalSetup: [join(here, "vitest.global-setup.ts")],
   },
 });
