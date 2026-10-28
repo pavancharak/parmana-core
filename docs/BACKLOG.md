@@ -87,6 +87,15 @@ PR #176 (the doc update) was closed without merging on 2026-10-28. Its branch `d
 | 49  | Three-role policy approval, tiered approval, freeze after repeated denied attempts, write-once approval storage, Connector secrets in AWS Secrets Manager, GitHub App key via Vercel Connect | H (not scheduled)    | Decision                       | No                 | Only if scheduled                            |
 | 50  | CAGE integration: design never merged, branches deleted                                                                                                                                      | A ("not built")      | Decision                       | No                 | Only if wanted                               |
 
+## Low priority: nice to have, deferred
+
+Deferred by the 2026-09-10 production-readiness session. The external audit called both "nice to have" and "not urgent" (`docs/VERIFICATION-GAPS.md`, the 2026-09-10 section).
+
+| #   | Item                                                                                                                                                                                         | Gap / issue          | Owner                          | Sandbox?           | Close when                                   |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ------------------------------ | ------------------ | -------------------------------------------- |
+| 51  | Key-rotation tooling: automate key rotation (audit LOW item 10)                                                                                                                              | 2026-09-10 audit     | Engineering                    | Yes                | Rotation runs from a script or command, tested |
+| 52  | Settlement poll loop: split into its own container (audit LOW item 13)                                                                                                                       | 2026-09-10 audit     | Engineering + operator         | Partly             | Poll loop runs in its own container, tested  |
+
 ## Closed by decision (no action unless reopened)
 
 - G-3 cleanup of live database rows left by opt-in tests: closed by decision 2026-09-29.
@@ -104,7 +113,8 @@ PR #176 (the doc update) was closed without merging on 2026-10-28. Its branch `d
 - P1: rows 1 to 5 (5 items).
 - P2: rows 6 to 24 (19 items, including the operator items 15, 16, 20 to 24).
 - P3: rows 25 to 50 (26 items).
-- Total: 50 rows.
+- Low priority (nice to have): rows 51 to 52 (2 items).
+- Total: 52 rows.
 
 ## Not in this inventory
 
