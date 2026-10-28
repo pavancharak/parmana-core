@@ -31,5 +31,9 @@
     "tsx": "^4.23.15",
     "typescript-eslint": "^8.72.0"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "description": "Binds each Parmana capability to the policy that governs it, and refuses a request that names another"
 }

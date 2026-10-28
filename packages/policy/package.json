@@ -38,5 +38,9 @@
     "tsx": "^4.23.15",
     "typescript-eslint": "^8.72.0"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "description": "Deterministic policy evaluation for Parmana: sequential rules with first-match semantics, as a pure function with no I/O"
 }

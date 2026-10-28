@@ -17,7 +17,7 @@
     "NOTICE"
   ],
   "scripts": {
-    "clean": "rmdir /s /q dist",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run"

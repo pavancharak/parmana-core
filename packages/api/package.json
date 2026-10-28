@@ -50,5 +50,9 @@
     "dist",
     "LICENSE",
     "NOTICE"
-  ]
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "description": "The HTTP surface over the Parmana Execution Trust runtime: execute, verification, receipts, replay, trust record reads and policy governance"
 }
