@@ -9,7 +9,12 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
+
+// These suites run real PostgreSQL-semantics writes (PGlite) and are slow when
+// the full suite runs in parallel, so the default 30 s limit is too tight.
+vi.setConfig({ testTimeout: 120_000, hookTimeout: 120_000 });
+
 import { PGlite } from "@electric-sql/pglite";
 import {
   CallerAuditChainVerifier,
