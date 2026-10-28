@@ -115,11 +115,11 @@ quickstart's commands against its documented output.
 **Not yet verified:** a real downstream system instead of the stand in, and
 any customer running it.
 
-## SDKs (updated 2026-10-22)
+## SDKs (updated 2026-10-28)
 
-Current versions, all published on 2026-10-22 from release `sdk-v1.6.1`: `@parmana/sdk` 1.6.1 on npm and `parmana` 1.6.1 on
-PyPI. `@parmana/connector-sdk` 0.3.1 on npm and `parmana-connector-sdk` 0.2.1 on PyPI. 1.6.1 changes no SDK code; it
-removes the links to the private repository from the package metadata.
+Current versions, all published on 2026-10-28 from release `sdk-v1.6.2`: `@parmana/sdk` 1.6.2 on npm, `parmana` 1.6.2 on
+PyPI, `@parmana/connector-sdk` 1.6.2 on npm and `parmana-connector-sdk` 1.6.2 on PyPI. The four packages share one version.
+The TypeScript and Python SDKs change no code in 1.6.2. `@parmana/connector-sdk` now requires Node.js 24 or later.
 
 Tests on this commit: TypeScript SDK 227 and Python SDK 190, all passing. The Python linters and `mypy --strict` pass.
 The route by route mapping is `docs/site/sdks/api-coverage.mdx`.

@@ -207,9 +207,9 @@ The full list, with the exact messages, is the [error catalog](/api-reference/er
 
 | You use                                | Package                                     | Current version | Install                                                       |
 | -------------------------------------- | ------------------------------------------- | --------------- | ------------------------------------------------------------- |
-| TypeScript or JavaScript               | [`@parmana/sdk`](/sdks/typescript) on npm   | 1.6.1           | `npm install @parmana/sdk`                                    |
-| Python                                 | [`parmana`](/sdks/python) on PyPI           | 1.6.1           | `pip install parmana`                                         |
-| Python, and you verify records offline | `parmana` with the `verify` extra           | 1.6.1           | `pip install "parmana[verify]"`                               |
+| TypeScript or JavaScript               | [`@parmana/sdk`](/sdks/typescript) on npm   | 1.6.2           | `npm install @parmana/sdk`                                    |
+| Python                                 | [`parmana`](/sdks/python) on PyPI           | 1.6.2           | `pip install parmana`                                         |
+| Python, and you verify records offline | `parmana` with the `verify` extra           | 1.6.2           | `pip install "parmana[verify]"`                               |
 | Another language                       | The [REST API](/api-reference/introduction) | Not applicable  | Any HTTP client, see [Other languages](/sdks/other-languages) |
 
 Both SDKs never retry `POST /execute` for you. They only retry idempotent `GET` requests, so an SDK can never turn a
@@ -1220,8 +1220,8 @@ Reference: [every endpoint](/build-book/reference-endpoints), [every SDK method]
 
 ## Versions
 
-The published SDKs are 1.6.0 (`@parmana/sdk` on npm,
-`parmana` on PyPI), published 2026-10-11. Methods marked **1.5.0** need that version or later:
+The published SDKs are 1.6.2 (`@parmana/sdk` on npm,
+`parmana` on PyPI), published 2026-10-28. Methods marked **1.5.0** need that version or later:
 `policyInEffect` and `policy_in_effect`, `verifyParmanaRelease` and `verify_parmana_release`.
 
 ---
@@ -4981,20 +4981,21 @@ Source: https://docs.parmanasystems.com/sdks/typescript
   Bearer-key authentication, a real thrown error taxonomy, and full test
   coverage are all in place, along with corrected model types (see below),
   `client.verify()`/`client.version()`, and `client.createTransaction()`.
-  v1.6.1, published 2026-10-22, is the current version. It changes no code: it
-  removes the links to a private repository from the package metadata. v1.6.0,
-  published 2026-10-11, added the business signal source and authority grant
-  methods, and `conditions` on a release: see [New in 1.6.0](#new-in-160).
-  v1.5.0, published 2026-10-04, added the external connector methods,
-  `policyInEffect()` and `verifyParmanaRelease()`, and the Apache License 2.0:
-  see [New in 1.5.0](#new-in-150). v1.4.0, published 2026-09-29, added
-  `signApproval()` and the approver methods: see [New in 1.4.0](#new-in-140).
-  v1.3.0, published 2026-09-25, added policy governance with step up signing,
-  offline verification, `caller()`, `publicKey()`, `trustRecords()`,
-  `latestReceipt()` and `statusCode` on errors: see [New in 1.3.0](#new-in-130).
-  v1.2.0, published 2026-09-21, added the Execution Intent methods. v1.1.6,
-  published 2026-09-20, builds a default `HttpTransport` when you omit
-  `transport`, and sends `userAgent`. v1.1.3 added `serverCode` on
+  v1.6.2, published 2026-10-28, is the current version. It changes no SDK code:
+  it only changes documentation, formatting and tests. v1.6.1, published
+  2026-10-22, removed the links to a private repository from the package
+  metadata. v1.6.0, published 2026-10-11, added the business signal source and
+  authority grant methods, and `conditions` on a release: see [New in
+  1.6.0](#new-in-160). v1.5.0, published 2026-10-04, added the external
+  connector methods, `policyInEffect()` and `verifyParmanaRelease()`, and the
+  Apache License 2.0: see [New in 1.5.0](#new-in-150). v1.4.0, published
+  2026-09-29, added `signApproval()` and the approver methods: see [New in
+  1.4.0](#new-in-140). v1.3.0, published 2026-09-25, added policy governance
+  with step up signing, offline verification, `caller()`, `publicKey()`,
+  `trustRecords()`, `latestReceipt()` and `statusCode` on errors: see [New in
+  1.3.0](#new-in-130). v1.2.0, published 2026-09-21, added the Execution Intent
+  methods. v1.1.6, published 2026-09-20, builds a default `HttpTransport` when
+  you omit `transport`, and sends `userAgent`. v1.1.3 added `serverCode` on
   `InternalServerError` (see below). v1.1.2, published 2026-09-14, added
   `createBusinessTransaction()`. See the fix history at the bottom of this page.
 </Info>
@@ -6163,14 +6164,15 @@ Source: https://docs.parmanasystems.com/sdks/python
   and the `offline_verifier.py` fix. Two quick follow-up releases, v1.1.3 and
   v1.1.4, corrected the published package metadata (repo name, docs domain,
   added a `Website` URL); v1.1.5 and v1.1.6, both published 2026-09-20, follow;
-  v1.6.1, published 2026-10-22, is the current version. It changes no code: it
-  removes the links to a private repository from the package metadata. v1.6.0,
-  published 2026-10-11, added the business signal source and authority grant
-  methods, and `conditions` on a release: see [New in 1.6.0](#new-in-160).
-  v1.5.0, published 2026-10-04, added the external connector methods,
-  `policy_in_effect()` and `verify_parmana_release()`, fixed offline
-  verification of a decoded record, and moved to the Apache License 2.0: see
-  [New in 1.5.0](#new-in-150). v1.4.0, published 2026-09-29, added
+  v1.6.2, published 2026-10-28, is the current version. It changes no SDK code:
+  it only changes documentation, formatting and tests. v1.6.1, published
+  2026-10-22, removed the links to a private repository from the package
+  metadata. v1.6.0, published 2026-10-11, added the business signal source and
+  authority grant methods, and `conditions` on a release: see [New in
+  1.6.0](#new-in-160). v1.5.0, published 2026-10-04, added the external
+  connector methods, `policy_in_effect()` and `verify_parmana_release()`, fixed
+  offline verification of a decoded record, and moved to the Apache License 2.0:
+  see [New in 1.5.0](#new-in-150). v1.4.0, published 2026-09-29, added
   `sign_approval()` and the approver methods: see [New in 1.4.0](#new-in-140).
   v1.3.0, published 2026-09-25, added policy governance, step up signing,
   `caller()`, `public_key()`, `trust_records.list()` and `latest_receipt()`, and
@@ -8506,13 +8508,13 @@ workflow, recording the commit, the workflow and each file's SHA-256. To check a
 package with [slsa-verifier](https://github.com/slsa-framework/slsa-verifier):
 
 ```bash
-slsa-verifier verify-artifact parmana-sdk-1.6.1.tgz \
+slsa-verifier verify-artifact parmana-sdk-1.6.2.tgz \
   --provenance-path multiple.intoto.jsonl \
   --source-uri github.com/pavancharak/parmana-core \
-  --source-tag sdk-v1.6.1
+  --source-tag sdk-v1.6.2
 ```
 
-The provenance covers the files attached to the release. The files published to npm and PyPI from 1.6.1 on are the release's own files, so a registry download has the same hash as the release file and the provenance covers it too: `@parmana/sdk` 1.6.1, `@parmana/connector-sdk` 0.3.1, `parmana` 1.6.1 and `parmana-connector-sdk` 0.2.1 are the files of release `sdk-v1.6.1`. Versions before 1.6.1 were published before this repository had a release workflow. No release here holds them, so the provenance does not cover them: `@parmana/sdk` and `parmana` 1.6.0 and before, `@parmana/connector-sdk` 0.3.0 and before, and `parmana-connector-sdk` 0.2.0.
+The provenance covers the files attached to the release. The files published to npm and PyPI from 1.6.1 on are the release's own files, so a registry download has the same hash as the release file and the provenance covers it too: `@parmana/sdk` 1.6.2, `@parmana/connector-sdk` 1.6.2, `parmana` 1.6.2 and `parmana-connector-sdk` 1.6.2 are the files of release `sdk-v1.6.2`. Release `sdk-v1.6.1` holds `@parmana/sdk` 1.6.1, `@parmana/connector-sdk` 0.3.1, `parmana` 1.6.1 and `parmana-connector-sdk` 0.2.1. Versions before 1.6.1 were published before this repository had a release workflow. No release here holds them, so the provenance does not cover them: `@parmana/sdk` and `parmana` 1.6.0 and before, `@parmana/connector-sdk` 0.3.0 and before, and `parmana-connector-sdk` 0.2.0.
 
 Each npm package and each wheel also has a [CycloneDX](https://cyclonedx.org) 1.5 SBOM beside it,
 named after it (for example `parmana-sdk-1.6.0.tgz.cdx.json`): the package, and every dependency

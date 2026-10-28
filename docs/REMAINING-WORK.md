@@ -9,6 +9,11 @@
 
 Snapshot: 2026-09-21, with section F added and updated on 2026-09-25, section G added on 2026-09-27, and section L added and updated on 2026-10-11. This is the current list of what is left. It replaces `02-REMAINING.md` (a July 5 snapshot) for current status.
 
+## Update 2026-10-28
+
+- **SDK 1.6.2 published.** `@parmana/sdk` and `parmana` 1.6.2, `@parmana/connector-sdk` and `parmana-connector-sdk` 1.6.2. The release `sdk-v1.6.2` is on GitHub with the packages, SBOMs and provenance attached. The six packages were verified with `slsa-verifier` against the provenance, built from commit `85ee6ce`.
+- **Open: `parmana-api` visibility.** Set the package to Public on GitHub, as `typescript/RELEASING.md` step 4 says. This is not yet confirmed.
+
 ## Update 2026-10-22
 
 - **SDK 1.6.1 published.** `@parmana/sdk` and `parmana` 1.6.1, `@parmana/connector-sdk` 0.3.1 and `parmana-connector-sdk`
