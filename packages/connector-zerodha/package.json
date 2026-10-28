@@ -1,7 +1,6 @@
 {
   "name": "@parmana/connector-zerodha",
   "version": "0.1.0",
-  "private": true,
   "description": "Zerodha Kite Connect connector for Parmana. This first slice is passive: capability identifiers, connector metadata, and pure Kite session helpers. It places no orders and makes no network calls.",
   "type": "module",
   "main": "./dist/index.js",
@@ -13,7 +12,9 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "NOTICE"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -29,7 +30,7 @@
     "vitest": "^5.0.3"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
-  "license": "SEE LICENSE IN LICENSE"
+  "license": "Apache-2.0"
 }

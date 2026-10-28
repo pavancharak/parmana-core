@@ -1,7 +1,6 @@
 {
   "name": "@parmana/execution-gateway",
   "version": "0.1.0",
-  "private": true,
   "description": "The sole boundary through which Parmana releases approved execution requests to connectors, binding each release to the exact authorized content",
   "type": "module",
   "main": "./dist/index.js",
@@ -13,7 +12,9 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "NOTICE"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -41,5 +42,5 @@
   "engines": {
     "node": ">=24"
   },
-  "license": "SEE LICENSE IN LICENSE"
+  "license": "Apache-2.0"
 }

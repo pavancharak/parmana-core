@@ -1,7 +1,6 @@
 {
   "name": "@parmana/capability-registry",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -12,7 +11,9 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "NOTICE"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -30,5 +31,9 @@
     "tsx": "^4.23.15",
     "typescript-eslint": "^8.72.0"
   },
-  "license": "SEE LICENSE IN LICENSE"
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "description": "Binds each Parmana capability to the policy that governs it, and refuses a request that names another"
 }

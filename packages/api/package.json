@@ -1,7 +1,6 @@
 {
   "name": "@parmana/api",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "scripts": {
     "dev": "tsx src/server.ts",
@@ -46,5 +45,14 @@
     "typescript-eslint": "^8.72.0",
     "vitest": "^5.0.3"
   },
-  "license": "SEE LICENSE IN LICENSE"
+  "license": "Apache-2.0",
+  "files": [
+    "dist",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "description": "The HTTP surface over the Parmana Execution Trust runtime: execute, verification, receipts, replay, trust record reads and policy governance"
 }

@@ -1,7 +1,6 @@
 {
   "name": "@parmana/governance-ui",
   "version": "0.1.0",
-  "private": true,
   "description": "Policy Governance internal UI: propose/list/diff-review for pending policy changes. Read-only by design -- approve/reject stay CLI-only via scripts/sign-policy-change-step-up.ts, since step-up's security depends on the checker's private key never leaving their machine.",
   "type": "module",
   "scripts": {
@@ -33,7 +32,12 @@
     "vitest": "^5.0.3"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
-  "license": "SEE LICENSE IN LICENSE"
+  "license": "Apache-2.0",
+  "files": [
+    "dist",
+    "LICENSE",
+    "NOTICE"
+  ]
 }
