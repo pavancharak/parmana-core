@@ -14,6 +14,7 @@ Operator guides for running Parmana in production and for working on it locally.
 | Creating or checking the `.env` file, or a setting's allowed values                                    | [ENV-FILE.md](ENV-FILE.md)                                                   |
 | The local build, typecheck or tests fail, or the local tools cannot import a package                   | [LOCAL-DEVELOPMENT.md](LOCAL-DEVELOPMENT.md)                                 |
 | A Razorpay refund demo, the draft refund policy, or the live-money gate                                | [RAZORPAY-REFUND.md](RAZORPAY-REFUND.md)                                     |
+| Where the Razorpay refund agent stands, what is next, and how to resume                                | [RAZORPAY-STATUS.md](RAZORPAY-STATUS.md)                                     |
 | What one environment variable means, why it is required, and what happens if it is missing             | [ENV-VARIABLE-REFERENCE.md](ENV-VARIABLE-REFERENCE.md)                       |
 | The kill switch is on, or the probe reports it                                                         | [KILL-SWITCH-OPERATIONS.md](KILL-SWITCH-OPERATIONS.md)                       |
 | The server refuses to start over Paytm settings, or a Paytm refund fails to authenticate               | [PAYTM-CONNECTOR.md](PAYTM-CONNECTOR.md)                                     |

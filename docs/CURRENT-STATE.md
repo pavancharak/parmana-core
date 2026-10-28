@@ -362,6 +362,12 @@ handed to this session, and none of them are:
 
 ## Known structural limitations, read directly from the implementation
 
+- A consumed nonce whose connector call did not return is recorded as
+  `in_flight`: a retry is refused as `OUTCOME_UNKNOWN`, and the client must
+  check the external system before acting again (`docs/VERIFICATION-GAPS.md`
+  G-125, added 2026-10-27). A failure before the connector runs on the
+  external-control path is also left `in_flight` until the reconciler is built,
+  and provider idempotency keys are not yet used.
 - Rate limiting (`express-rate-limit`) is per-process, in-memory by
   default: a fleet of N machines has N independent limits, not one
   shared limit, **unless `DATABASE_URL` is configured**, in which case

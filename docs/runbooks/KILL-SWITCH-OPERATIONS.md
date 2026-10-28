@@ -52,6 +52,20 @@ Reset needs two different people. Each uses their own named key:
 
 Operator A cannot finish their own reset (`409`). A new trip cancels a pending reset.
 
+### What trips it, and what a trip stops
+
+Checked against the code on 2026-10-27.
+
+- **Trigger.** Only a person or script holding a key with `kill-switch:trip` can trip it, by calling `POST /kill-switch/trip` with a `reason`. Nothing trips it automatically. No monitor, budget or anomaly rule calls it.
+- **Stops.** While the switch is on, these return `503 KILL_SWITCH_ACTIVE`: `POST /execute` (the guard in `packages/api/src/app.ts`), `POST /policies/pending-changes/:id/approve`, and `POST /sandbox/approvals`. A release that already passed the guard is checked again just before the connector call (`killSwitchReleaseHook`), so a trip that lands between the two still stops it. The gap between that check and the connector call is not closed; see G-122 in `docs/VERIFICATION-GAPS.md`.
+- **Does not stop.** `GET /kill-switch/status`, the kill-switch routes themselves, and reads. An action already released to a connector is not recalled.
+- **Fails closed.** If the switch cannot read its state, it reports the switch as on, and the guard refuses the request.
+- **Wiring.** The switch is built only when `KILL_SWITCH_ENABLED=true` (`server.ts` and `api/index.ts`, through `createKillSwitch`). With it unset there are no kill-switch routes and no guard, so a trip cannot be made.
+- **Reset.** `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` must be `"true"` or `"false"` when the switch is on; nothing defaults it, and the switch refuses to start otherwise. Production sets `"true"`, so a reset needs two named operators, as above. The switch also needs `DATABASE_URL`.
+- **Not signed.** A status response is not signed yet (G-118). A signed refusal proves a refusal happened, not that the switch is on now.
+
+Known documentation mismatch: the comment above the kill-switch wiring in `packages/api/src/app.ts` (around line 381) says the server does not supply a kill switch yet. That was true before ADR-0017 went live. The code now supplies one when `KILL_SWITCH_ENABLED=true`, and the comment should be updated.
+
 ## Deployment
 
 Production is deployed from the code on `main`. Before any `vercel deploy --prod`:

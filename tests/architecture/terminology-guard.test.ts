@@ -2,7 +2,11 @@ import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// These suites run a real PGlite or a repository scan that is slow when the
+// full suite runs in parallel, so the default 30 s limit is too tight (#177).
+vi.setConfig({ testTimeout: 120_000, hookTimeout: 120_000 });
 
 /**
  * Phase 2C — regression coverage for the CI terminology guard

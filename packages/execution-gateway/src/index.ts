@@ -19,6 +19,7 @@ export * from "./GatewayVerificationResult.js";
 export * from "./ConnectorRequest.js";
 export * from "./Connector.js";
 export * from "./ExecutionGateway.js";
+export * from "./MemoryExecutionOutcomeStore.js";
 export * from "./HttpConnector.js";
 export * from "./deepFreeze.js";
 export * from "./connector-runtime/index.js";

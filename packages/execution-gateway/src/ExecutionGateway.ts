@@ -29,8 +29,10 @@ import {
   toExecutableContent,
   AuthorizationNoLongerValidError,
   NonceAlreadyConsumedError,
+  OutcomeUnknownError,
   type ExecutableContent,
   type AuthorityGrantRepository,
+  type ExecutionOutcomeStore,
   type ExecutionResult,
   type ReleaseApproval,
 } from "@parmana/shared";
@@ -169,6 +171,14 @@ export interface ExecutionGatewayOptions {
   readonly executionControl?: ExecutionControlOptions;
 
   /**
+   * Records each authorization's outcome against its nonce (G-125,
+   * docs/VERIFICATION-GAPS.md). Without it, a retry after a lost response
+   * is refused with no information about the first attempt. The production
+   * bootstrap always supplies one.
+   */
+  readonly executionOutcomeStore?: ExecutionOutcomeStore;
+
+  /**
    * Forwarded to the underlying EnvelopeVerifier.
    * Defaults to 300 seconds.
    */
@@ -263,6 +273,7 @@ export class ExecutionGateway implements ExecutionSystem {
   private readonly authorizationRevocations:
     AuthorizationRevocationList | undefined;
   private readonly verificationOnlyKeys: ExecutionGatewayOptions["verificationOnlyKeys"];
+  private readonly executionOutcomeStore: ExecutionOutcomeStore | undefined;
 
   constructor(options: ExecutionGatewayOptions) {
     this.envelopeVerifier = new EnvelopeVerifier({
@@ -291,6 +302,7 @@ export class ExecutionGateway implements ExecutionSystem {
     this.authorityGrants = options.authorityGrants;
     this.authorizationRevocations = options.authorizationRevocations;
     this.verificationOnlyKeys = options.verificationOnlyKeys;
+    this.executionOutcomeStore = options.executionOutcomeStore;
     this.requirePolicyBinding = options.allowUnverifiedPolicy !== true;
 
     if (
@@ -718,9 +730,7 @@ export class ExecutionGateway implements ExecutionSystem {
 
     if (!result.valid) {
       if (this.isSoleFailureNonceReplay(result)) {
-        throw new NonceAlreadyConsumedError(
-          executableContent.businessTransactionId,
-        );
+        return this.replayedOutcome(request);
       }
 
       if (this.isOnlyNoLongerValid(result)) {
@@ -743,6 +753,69 @@ export class ExecutionGateway implements ExecutionSystem {
 
     const transaction = deepFreeze(executableContent);
 
+    //
+    // Outcome recording (G-125). begin() runs before the connector call.
+    // On the direct path verify() already consumed the nonce, so begin()
+    // creates the row. On the executionControl path the release verifier
+    // consumes the nonce later, so begin() must run first: a repeated or
+    // concurrent attempt that finds a row is answered from it and never
+    // reaches the connector.
+    //
+    const nonce = request.authorization.payload.nonce;
+
+    if (this.executionOutcomeStore !== undefined) {
+      const created = await this.executionOutcomeStore.begin(
+        nonce,
+        request.authorization.payload.expiresAt,
+      );
+
+      if (!created) {
+        return this.replayedOutcome(request);
+      }
+    }
+
+    const dispatched = await this.releaseToConnector(
+      request,
+      transaction,
+      result,
+    );
+
+    if (this.executionOutcomeStore !== undefined) {
+      await this.executionOutcomeStore.complete(nonce, dispatched);
+    }
+
+    return dispatched;
+  }
+
+  /**
+   * Answers a request whose nonce was already consumed, without executing
+   * anything. A recorded result is returned as it was. An in-flight outcome
+   * is OutcomeUnknownError, since the earlier attempt may have run. With no
+   * recorded outcome, this is the same NonceAlreadyConsumedError as before.
+   */
+  private async replayedOutcome(
+    request: ExecutionRequest,
+  ): Promise<ExecutionResult> {
+    const outcome = await this.executionOutcomeStore?.get(
+      request.authorization.payload.nonce,
+    );
+
+    if (outcome?.status === "completed") {
+      return outcome.result;
+    }
+
+    if (outcome?.status === "in_flight") {
+      throw new OutcomeUnknownError(request.businessTransactionId);
+    }
+
+    throw new NonceAlreadyConsumedError(request.businessTransactionId);
+  }
+
+  private async releaseToConnector(
+    request: ExecutionRequest,
+    transaction: Readonly<ExecutableContent>,
+    result: GatewayVerificationResult,
+  ): Promise<ExecutionResult> {
     if (this.executionControl !== undefined) {
       if (this.executionControl.service !== undefined) {
         const gatewayAuthentication =

@@ -68,14 +68,16 @@ export function createHubSpotSignalStateVerifier(
     gateway: executionSystem,
     resolveSigner,
     signerKeyId: verifierKeyId(),
-    policyName: "hubspot-deal-update",
+    // The fetch is a read, so it is signed under the policy bound to
+    // hubspot:deal-fetch (CapabilityPolicyBinding), not the update policy.
+    policyName: "hubspot-deal-read",
     policyVersion: "1.0.0",
     // The fetch is bound to the same policy content the gateway checks it
     // against, so it verifies under the policy's live content hash.
     ...(policies !== undefined && {
       resolvePolicyContentHash: async () =>
         new TrustRecordHasher(crypto).hash(
-          await policies.load("hubspot-deal-update", "1.0.0"),
+          await policies.load("hubspot-deal-read", "1.0.0"),
         ),
     }),
     crypto,

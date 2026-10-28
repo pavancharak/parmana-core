@@ -87,31 +87,45 @@ async function mint(channel: string) {
   return captured[before]!;
 }
 
+const REPLAY_CODES = ["NONCE_ALREADY_CONSUMED", "OUTCOME_UNKNOWN"];
+
 async function attempt(
   label: string,
   proof: any,
   expectCalls: number,
   extra: Record<string, unknown> = {},
+  replay = false,
 ) {
   const before = server.calls.length;
   let threw = false;
   let message = "";
+  let errorCode = "";
   try {
     await gateway.execute(proof);
   } catch (e) {
     threw = true;
     message = (e as Error).message;
+    errorCode = (e as { code?: string }).code ?? "";
   }
   const delta = server.calls.length - before;
-  const ok =
-    expectCalls === 0 ? threw && delta === 0 : !threw && delta === expectCalls;
+  // A replay must make no second external call. It may return the recorded result, or be
+  // refused with a replay code (G-125). Any other error fails the check.
+  const ok = replay
+    ? delta === 0 && (!threw || REPLAY_CODES.includes(errorCode))
+    : expectCalls === 0
+      ? threw && delta === 0
+      : !threw && delta === expectCalls;
   cases.push({
     connector: "slack:post-message",
     case: label,
     rejected: threw,
     message: message.slice(0, 160),
     callsDelta: delta,
-    expected: expectCalls === 0 ? "rejected, 0 calls" : "released, 1 call",
+    expected: replay
+      ? "no second call"
+      : expectCalls === 0
+        ? "rejected, 0 calls"
+        : "released, 1 call",
     verdict: ok ? "PASS" : "FAIL",
     ...extra,
   });
@@ -215,7 +229,13 @@ describe("TEST 7: Slack post-message gate conditions", () => {
   it("replay: the same proof a second time", async () => {
     const proof = await mint("C_ALLOWED");
     const first = await attempt("replay step 1: first use", proof, 1);
-    const second = await attempt("replay step 2: same proof again", proof, 0);
+    const second = await attempt(
+      "replay step 2: same proof again",
+      proof,
+      0,
+      {},
+      true,
+    );
     expect(first && second).toBe(true);
   });
 });

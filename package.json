@@ -40,7 +40,7 @@
     "lint:fix": "eslint . --ext .ts --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "pretest": "tsx scripts/check-dist-fresh.ts",
+    "pretest": "node node_modules/typescript7/bin/tsc -b && tsx scripts/check-dist-fresh.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",

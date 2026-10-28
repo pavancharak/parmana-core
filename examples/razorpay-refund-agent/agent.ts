@@ -49,6 +49,24 @@ export type RefundDecision =
       readonly reason: string;
     };
 
+/**
+ * A refund request that did not complete for a reason other than a
+ * refusal: a timeout, a connection failure, or an error from Parmana.
+ * It carries the transaction id, because the request may have reached
+ * Parmana, and the id is how a person finds its record.
+ */
+export class RefundNotCompletedError extends Error {
+  readonly businessTransactionId: string;
+  readonly original: unknown;
+
+  constructor(businessTransactionId: string, original: unknown) {
+    super("The refund proposal did not complete.");
+    this.name = "RefundNotCompletedError";
+    this.businessTransactionId = businessTransactionId;
+    this.original = original;
+  }
+}
+
 /** Throws before any call is made if the input cannot be a refund. */
 export function validateRefundInput(input: RefundInput): void {
   if (!PAYMENT_ID.test(input.paymentId)) {
@@ -93,17 +111,21 @@ export async function requestRefund(
     return { status: "APPROVED", businessTransactionId, record };
   } catch (error) {
     if (!(error instanceof ExecutionRejectedError)) {
-      throw error;
+      throw new RefundNotCompletedError(businessTransactionId, error);
     }
 
-    const record = await client.refusalRecord(businessTransactionId);
+    try {
+      const record = await client.refusalRecord(businessTransactionId);
 
-    return {
-      status: "REFUSED",
-      businessTransactionId,
-      record,
-      rule: record.decision.matchedRuleId ?? "not recorded",
-      reason: record.decision.reason ?? "not recorded",
-    };
+      return {
+        status: "REFUSED",
+        businessTransactionId,
+        record,
+        rule: record.decision.matchedRuleId ?? "not recorded",
+        reason: record.decision.reason ?? "not recorded",
+      };
+    } catch (refusalError) {
+      throw new RefundNotCompletedError(businessTransactionId, refusalError);
+    }
   }
 }

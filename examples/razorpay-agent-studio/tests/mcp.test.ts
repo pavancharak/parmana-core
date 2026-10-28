@@ -7,9 +7,15 @@ import { createMcpHandler } from "../mcp.js";
 const TOKEN = "t".repeat(40);
 const PAYMENT = "pay_TestPayment123";
 
-/** A fake Parmana: records the transactions it is sent, and refuses or approves. */
-function fakeParmana(options: { reject?: boolean } = {}) {
-  const executed: { intent: { target: string; parameters: unknown } }[] = [];
+/**
+ * A fake Parmana: records the transactions it is sent, and refuses,
+ * approves, or fails to answer (a timeout) as the test asks.
+ */
+function fakeParmana(options: { reject?: boolean; timeout?: boolean } = {}) {
+  const executed: {
+    businessTransactionId: string;
+    intent: { target: string; parameters: unknown };
+  }[] = [];
 
   const client = {
     async caller() {
@@ -20,6 +26,10 @@ function fakeParmana(options: { reject?: boolean } = {}) {
     },
     async execute(transaction: (typeof executed)[number]) {
       executed.push(transaction);
+
+      if (options.timeout) {
+        throw new Error("The request timed out.");
+      }
 
       if (options.reject) {
         throw new ExecutionRejectedError("refused");
@@ -159,6 +169,36 @@ describe("propose_refund", () => {
       status: "REFUSED",
       rule: "reject-manager-approval-required",
     });
+  });
+
+  it("reports a request that did not complete with its transaction id, and says not to retry", async () => {
+    const parmana = fakeParmana({ timeout: true });
+    const mcp = createMcpHandler({ token: TOKEN, client: parmana.client });
+
+    const answer = await mcp(
+      AUTH,
+      toolCall({
+        paymentId: PAYMENT,
+        amountPaise: 100,
+        approval: { approverId: "manager" },
+      }),
+    );
+
+    expect(parmana.executed).toHaveLength(1);
+    const transactionId = parmana.executed[0]?.businessTransactionId;
+    expect(transactionId).toBeTruthy();
+
+    expect(answer.status).toBe(200);
+    expect(answer.body).toMatchObject({ result: { isError: true } });
+
+    const text = (answer.body as { result: { content: { text: string }[] } })
+      .result.content[0]?.text;
+    const reported = JSON.parse(text ?? "{}");
+    expect(reported).toMatchObject({
+      status: "NOT_COMPLETED",
+      businessTransactionId: transactionId,
+    });
+    expect(reported.message).toMatch(/Do not send it again/);
   });
 
   it("rejects bad input as a tool error, before calling Parmana", async () => {

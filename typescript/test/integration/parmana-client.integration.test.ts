@@ -21,7 +21,11 @@
  *    assumption about what it would return.
  */
 
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+
+// These suites run real PostgreSQL-semantics writes (PGlite) and are slow when
+// the full suite runs in parallel, so the default 30 s limit is too tight.
+vi.setConfig({ testTimeout: 120_000, hookTimeout: 120_000 });
 
 import type { AddressInfo } from "node:net";
 import type { Server } from "node:http";

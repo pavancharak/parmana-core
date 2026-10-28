@@ -1,5 +1,12 @@
 # Remaining work
 
+## Update 2026-10-28
+
+- **The full list now lives in `docs/BACKLOG.md`.** It has 50 items, with priority, owner, and whether the sandbox can work on each. Update it when an item closes or a new gap appears. This page keeps the detail behind each item.
+- **#177 is done.** The preflight timeouts are fixed by #185, merged to `main`. The full `npm test` passed on that branch (393 files, 4067 tests, 0 failed).
+- **G-111 is in progress, not done.** The HubSpot deal read now needs a signed approval of its own. The change is on `fix/hubspot-self-approval` and is paused. Production would refuse every `hubspot:deal-update` until a new policy version declares the read approval signal and the integration fixtures send it. See the G-111 entry in `docs/VERIFICATION-GAPS.md`.
+- **Open items from the 2026-10-28 review are in section O below.**
+
 Snapshot: 2026-09-21, with section F added and updated on 2026-09-25, section G added on 2026-09-27, and section L added and updated on 2026-10-11. This is the current list of what is left. It replaces `02-REMAINING.md` (a July 5 snapshot) for current status.
 
 ## Update 2026-10-22
@@ -289,35 +296,37 @@ Do not edit it by hand: run `npx tsx scripts/gap-status.ts`. `npm test` fails wh
 
 <!-- gap-status:start -->
 
-| Gap   | Item                                                                                                | Status                                                                                         |
-| ----- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| G-103 | A signed authorization released for a denied decision.                                              | fixed on branch `ccr-6f1b8d3b-o5pqwj` (commit ddb6009), not yet merged                         |
-| G-104 | The in-process release service trusted the caller's verification flags.                             | fixed on branch `ccr-6f1b8d3b-o5pqwj`, not yet merged to main                                  |
-| G-105 | Test and development environments skipped policy governance by default.                             | fixed on branch `ccr-6f1b8d3b-o5pqwj` (commit ddb6009), not yet merged                         |
-| G-106 | A published policy version could be overwritten in place.                                           | fixed on branch `ccr-6f1b8d3b-o5pqwj` (commit ddb6009), not yet merged                         |
-| G-107 | The HubSpot verification fetch carried no policy hash.                                              | fixed on branch `ccr-6f1b8d3b-o5pqwj` (commit ddb6009), not yet merged                         |
-| G-108 | The caller audit chain cannot detect deleting its newest row.                                       | narrowed, not closed, on branch `ccr-6f1b8d3b-o5pqwj` (commit ddb6009), not yet merged to main |
-| G-109 | Caller authentication could be disabled and the demo approver enabled in production.                | fixed on branch `ccr-6f1b8d3b-o5pqwj` (commit ddb6009), not yet merged                         |
-| G-110 | There is no revocation of a single authorization.                                                   | fixed on branch `ccr-6f1b8d3b-o5pqwj`, not yet merged to main                                  |
-| G-111 | The HubSpot verification helper approves its own fetch.                                             | partly fixed on branch `ccr-6f1b8d3b-o5pqwj`, not yet merged to main                           |
-| G-112 | The offline verifier loads the repository `.env`.                                                   | fixed on branch `ccr-6f1b8d3b-o5pqwj`, not yet merged to main                                  |
-| G-113 | The execution-boundary signal check fails open during bootstrap.                                    | fixed on branch `ccr-6f1b8d3b-o5pqwj`, not yet merged to main                                  |
-| G-114 | The `legacyInsecure` connector option skips the session credential and audit requirement.           | fixed on branch `ccr-6f1b8d3b-o5pqwj`, not yet merged to main                                  |
-| G-115 | End-to-end proof audit covered only the Paytm refund path.                                          | partly fixed on branch `ccr-6f1b8d3b-o5pqwj`, not yet merged to main                           |
-| G-116 | The startup governance integrity check was not exercised by the proof audit.                        | fixed in the proof audit on branch `ccr-6f1b8d3b-o5pqwj`, not yet merged to main               |
-| G-117 | The production stores and signing backends were not exercised by the proof audit.                   | partly fixed on branch `ccr-6f1b8d3b-o5pqwj`, not yet merged to main                           |
-| G-118 | The attestation key that authorizes the in-process release path lives in the process that calls it. | open, structural                                                                               |
-| G-119 | Hybrid signing is not live on any deployment.                                                       | open, operator decision                                                                        |
-| G-120 | A schema version 2 record can be downgraded by anyone who can write to storage.                     | open, accepted for records created before a cutover, closed for records after one              |
-| G-121 | Verifiers outside this repository read only schema version 2.                                       | open, gates schema version 3 issuance                                                          |
-| G-122 | Parmana has no operator kill switch, and no fresh check that a stop is in force.                    | open, partly closed                                                                            |
-| G-123 | Production policy approvals were refused: the Vercel entry did not pass the checker scope.          | fixed 2026-10-21                                                                               |
-| G-124 | The server trusted certificates from eMudhra's compromised intermediate CA keys.                    | fixed 2026-10-23                                                                               |
+| Gap   | Item                                                                                                | Status                                                                                                                                                         |
+| ----- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| G-103 | A signed authorization released for a denied decision.                                              | fixed on branch `ccr-6f1b8d3b-o5pqwj` (commit ddb6009); that branch and commit are no longer in the repository, so whether this reached `main` is not verified |
+| G-104 | The in-process release service trusted the caller's verification flags.                             | fixed on branch `ccr-6f1b8d3b-o5pqwj`; that branch and commit are no longer in the repository, so whether this reached `main` is not verified                  |
+| G-105 | Test and development environments skipped policy governance by default.                             | fixed on branch `ccr-6f1b8d3b-o5pqwj` (commit ddb6009); that branch and commit are no longer in the repository, so whether this reached `main` is not verified |
+| G-106 | A published policy version could be overwritten in place.                                           | fixed on branch `ccr-6f1b8d3b-o5pqwj` (commit ddb6009); that branch and commit are no longer in the repository, so whether this reached `main` is not verified |
+| G-107 | The HubSpot verification fetch carried no policy hash.                                              | fixed on branch `ccr-6f1b8d3b-o5pqwj` (commit ddb6009); that branch and commit are no longer in the repository, so whether this reached `main` is not verified |
+| G-108 | The caller audit chain cannot detect deleting its newest row.                                       | narrowed, not closed, on branch `ccr-6f1b8d3b-o5pqwj` (commit ddb6009), not yet merged to main                                                                 |
+| G-109 | Caller authentication could be disabled and the demo approver enabled in production.                | fixed on branch `ccr-6f1b8d3b-o5pqwj` (commit ddb6009); that branch and commit are no longer in the repository, so whether this reached `main` is not verified |
+| G-110 | There is no revocation of a single authorization.                                                   | fixed on branch `ccr-6f1b8d3b-o5pqwj`; that branch and commit are no longer in the repository, so whether this reached `main` is not verified                  |
+| G-111 | The HubSpot verification helper approves its own fetch.                                             | in progress (2026-10-28)                                                                                                                                       |
+| G-112 | The offline verifier loads the repository `.env`.                                                   | fixed on branch `ccr-6f1b8d3b-o5pqwj`; that branch and commit are no longer in the repository, so whether this reached `main` is not verified                  |
+| G-113 | The execution-boundary signal check fails open during bootstrap.                                    | fixed on branch `ccr-6f1b8d3b-o5pqwj`; that branch and commit are no longer in the repository, so whether this reached `main` is not verified                  |
+| G-114 | The `legacyInsecure` connector option skips the session credential and audit requirement.           | fixed on branch `ccr-6f1b8d3b-o5pqwj`; that branch and commit are no longer in the repository, so whether this reached `main` is not verified                  |
+| G-115 | End-to-end proof audit covered only the Paytm refund path.                                          | partly fixed on branch `ccr-6f1b8d3b-o5pqwj`; that branch and commit are no longer in the repository, so whether this reached `main` is not verified           |
+| G-116 | The startup governance integrity check was not exercised by the proof audit.                        | fixed in the proof audit on branch `ccr-6f1b8d3b-o5pqwj`, not yet merged to main                                                                               |
+| G-117 | The production stores and signing backends were not exercised by the proof audit.                   | partly fixed on branch `ccr-6f1b8d3b-o5pqwj`; that branch and commit are no longer in the repository, so whether this reached `main` is not verified           |
+| G-118 | The attestation key that authorizes the in-process release path lives in the process that calls it. | open, structural                                                                                                                                               |
+| G-119 | Hybrid signing is not live on any deployment.                                                       | open, operator decision                                                                                                                                        |
+| G-120 | A schema version 2 record can be downgraded by anyone who can write to storage.                     | open, accepted for records created before a cutover, closed for records after one                                                                              |
+| G-121 | Verifiers outside this repository read only schema version 2.                                       | open, gates schema version 3 issuance                                                                                                                          |
+| G-122 | Parmana has no operator kill switch, and no fresh check that a stop is in force.                    | open, partly closed                                                                                                                                            |
+| G-123 | Production policy approvals were refused: the Vercel entry did not pass the checker scope.          | fixed 2026-10-21                                                                                                                                               |
+| G-124 | The server trusted certificates from eMudhra's compromised intermediate CA keys.                    | fixed 2026-10-23                                                                                                                                               |
+| G-125 | A retry after a lost response cannot recover the outcome of a mutating call.                        | in progress                                                                                                                                                    |
+| G-126 | A loopback `http://` connector base URL was accepted in production.                                 | fixed 2026-10-27 (commit `2b00dc5`), merged to `main` in PR #169 on 2026-10-28; the deployment check below is still open                                       |
 
 <!-- gap-status:end -->
 
 The proof audit (CLAIMS 2.57) found gaps. Each entry's status is in `docs/VERIFICATION-GAPS.md`, G-103 to G-118.
-Fixed on branch `ccr-6f1b8d3b-o5pqwj`, not yet merged to main: G-103, G-104 (the release nonce point; its residual is
+Reported fixed on branch `ccr-6f1b8d3b-o5pqwj`, which is no longer in the repository, so whether these reached `main` is not verified: G-103, G-104 (the release nonce point; its residual is
 G-118), G-105, G-106, G-107, G-109, G-110, G-112, G-113, G-114. Fixed in the audit: G-116. Partly fixed or narrowed,
 still open: G-108 (operator step), G-111, G-115, G-117. Open, structural: G-118.
 
@@ -355,6 +364,30 @@ still open: G-108 (operator step), G-111, G-115, G-117. Open, structural: G-118.
   signing), and G-118 (attestation key location). None of these is closed by the merged code.
 - **Not tested here.** KMS, a live external connector endpoint, the Postgres advisory lock (the PGlite
   test serializes connections), and head anchoring. See the limits in `proof-audit/REPORT.md` §5.
+
+## N. Lost response outcome record (added 2026-10-27, in progress)
+
+Gap G-125 in `docs/VERIFICATION-GAPS.md`. A consumed nonce whose connector call did not return left the outcome unrecorded, so a retry was refused with no information. Part 1 records each outcome against its nonce.
+
+| Part | What                                                                                                                                                                                                                                                                                                                               | Status                                                |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| 1    | `execution_outcomes` table keyed by nonce (`in_flight` / `completed` / `failed`). Nonce consume and `in_flight` insert in one transaction. Result written after the connector call. Retry returns the stored result or error, or `OutcomeUnknownError`. Shared by the direct gateway path and the `executionControl` release path. | Implemented 2026-10-27; not yet applied to a database |
+| 2    | Idempotency key derived from the nonce on every provider call that accepts one. Paytm `refId` is currently derived from the order ID (`GatewayPaytmAdapter.ts:73`). No idempotency support found in HubSpot, GitHub or Slack.                                                                                                      | Not started                                           |
+| 3    | Reconciler for stale `in_flight` rows: asks the provider whether the effect exists, writes `completed` or `failed`.                                                                                                                                                                                                                | Not started                                           |
+
+Operator follow up for Part 1: apply `supabase/migrations/20261027120000_add_execution_outcomes.sql` (or the regenerated `scripts/apply-all-migrations.sql` on a fresh project) before deploying this change. Deploying first makes every new execution fail after its nonce is consumed. Parts 2 and 3 need a decision on which connectors get a provider-side key, and who runs reconciliation, before they are built.
+
+## O. Open after the 2026-10-28 review (added 2026-10-28)
+
+What is still open after the connector URL, kill switch and documentation work merged in PRs #169 to #172. Each item names who can close it and where the result is recorded.
+
+1. **G-126 deployment check.** Confirm that `HUBSPOT_BASE_URL`, `GITHUB_BASE_URL` and `SLACK_BASE_URL` are unset or use `https://` in the hosted (Vercel) and self-hosted environments. Needs someone with access to those environments. Record the result in the G-126 entry in `docs/VERIFICATION-GAPS.md`. Until it is recorded, G-126 stays open.
+2. **Kill switch two-person reset with two real operators.** The reset has only been tested with two keys held by one person. Run the test in `docs/runbooks/KILL-SWITCH-OPERATIONS.md` with two named operators, each with their own key. Needs two people. Record the result in G-122.
+3. **Kill switch third-party check.** Not built. The runbook describes the steps and the non-production deployment it needs. Needs an outside party. Record the result in G-122.
+4. **Signed kill switch status (G-118).** Status responses are not signed. Needs a build-bound signing key. Record the result in G-118.
+5. **Gap between the kill switch release check and the connector call (G-122).** Narrowed, not closed. A trip between the two steps can still release one action. Needs a code change, which is not yet designed.
+6. **G-125 Parts 2 and 3.** Part 2 is provider idempotency keys. Part 3 is reconciliation of stale `in_flight` rows. Neither is started. Part 1's migration (`20261027120000_add_execution_outcomes.sql`) has to be applied to a database before it takes effect; until then the record is not written.
+7. **Unverified gap statuses (G-95 to G-114).** They cite branches and commits that are no longer on GitHub (`ccr-6f1b8d3b-o5pqwj`, `claude/startup-integrity-block`, `fix/policy-scan-and-governance-url`, and local commit `a8ac2961`). Whoever still has those branches can confirm whether the fixes reached `main`, and the entries can be updated.
 
 ## H. Considered, not built (moved here from the old root `ROADMAP.md`, 2026-09-28)
 

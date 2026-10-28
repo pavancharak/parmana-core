@@ -4,6 +4,7 @@ export * from "./decision.js";
 export * from "./business-validation.js";
 export * from "./business-transaction.js";
 export * from "./execution.js";
+export * from "./execution-outcome-store.js";
 export * from "./execution-result.js";
 export * from "./execution-evidence.js";
 export * from "./metadata.js";

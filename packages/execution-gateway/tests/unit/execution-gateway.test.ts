@@ -14,13 +14,17 @@ import type { ExecutionRequest } from "@parmana/execution-system";
 
 import {
   NonceAlreadyConsumedError,
+  OutcomeUnknownError,
   type ExecutableContent,
   type ExecutionResult,
   type SignedExecutionAuthorization,
 } from "@parmana/shared";
 
 import type { Connector, ConnectorRequest } from "../../src/index.js";
-import { ExecutionGateway } from "../../src/index.js";
+import {
+  ExecutionGateway,
+  MemoryExecutionOutcomeStore,
+} from "../../src/index.js";
 
 const crypto = CryptoBootstrap.create();
 const contentHasher = new ExecutableContentHasher(crypto);
@@ -281,6 +285,129 @@ describe("ExecutionGateway", () => {
     expect((caught as NonceAlreadyConsumedError).message).toContain(
       SAMPLE_EXECUTABLE_CONTENT.businessTransactionId,
     );
+  });
+
+  describe("outcome recording (G-125)", () => {
+    class CountingConnector implements Connector {
+      public calls = 0;
+
+      constructor(private readonly failFirstCall = false) {}
+
+      async execute(request: ConnectorRequest): Promise<ExecutionResult> {
+        this.calls += 1;
+
+        if (this.failFirstCall && this.calls === 1) {
+          throw new Error("connection reset after the request was sent");
+        }
+
+        return {
+          businessTransactionId: request.transaction.businessTransactionId,
+          action: request.transaction.action,
+          target: request.transaction.target,
+          parameters: request.transaction.parameters,
+          success: true,
+          executedAt: new Date(),
+          metadata: { providerRef: "ref-1" },
+        };
+      }
+    }
+
+    it("returns the recorded result to a replay without calling the connector again", async () => {
+      const { privateKey, publicKey } = generateKeyPair();
+      const authorization = await signAuthorization(privateKey);
+
+      const connector = new CountingConnector();
+      const gateway = new ExecutionGateway({
+        // Legacy fixture: predates fail-closed policy binding.
+        allowUnverifiedPolicy: true,
+        publicKey,
+        nonceStore: new MemoryNonceStore(),
+        connector,
+        executionOutcomeStore: new MemoryExecutionOutcomeStore(),
+      });
+
+      const request = buildRequest(SAMPLE_EXECUTABLE_CONTENT, authorization);
+
+      const first = await gateway.execute(request);
+      const replay = await gateway.execute(request);
+
+      expect(connector.calls).toBe(1);
+      expect(replay).toEqual(first);
+      expect(replay.executedAt).toBeInstanceOf(Date);
+      expect(replay.metadata).toEqual({ providerRef: "ref-1" });
+    });
+
+    it("refuses a replay with OutcomeUnknownError when the first connector call did not return", async () => {
+      const { privateKey, publicKey } = generateKeyPair();
+      const authorization = await signAuthorization(privateKey);
+
+      const connector = new CountingConnector(true);
+      const gateway = new ExecutionGateway({
+        // Legacy fixture: predates fail-closed policy binding.
+        allowUnverifiedPolicy: true,
+        publicKey,
+        nonceStore: new MemoryNonceStore(),
+        connector,
+        executionOutcomeStore: new MemoryExecutionOutcomeStore(),
+      });
+
+      const request = buildRequest(SAMPLE_EXECUTABLE_CONTENT, authorization);
+
+      await expect(gateway.execute(request)).rejects.toThrow(
+        "connection reset",
+      );
+
+      let caught: unknown;
+
+      try {
+        await gateway.execute(request);
+      } catch (error) {
+        caught = error;
+      }
+
+      expect(caught).toBeInstanceOf(OutcomeUnknownError);
+      expect((caught as OutcomeUnknownError).status).toBe(409);
+      expect((caught as OutcomeUnknownError).code).toBe("OUTCOME_UNKNOWN");
+      expect(connector.calls).toBe(1);
+    });
+
+    it("does not return a recorded result once the authorization has expired", async () => {
+      const { privateKey, publicKey } = generateKeyPair();
+      const authorization = await signAuthorization(
+        privateKey,
+        SAMPLE_EXECUTABLE_CONTENT,
+        1,
+      );
+
+      const connector = new CountingConnector();
+      const gateway = new ExecutionGateway({
+        // Legacy fixture: predates fail-closed policy binding.
+        allowUnverifiedPolicy: true,
+        publicKey,
+        nonceStore: new MemoryNonceStore(),
+        connector,
+        executionOutcomeStore: new MemoryExecutionOutcomeStore(),
+      });
+
+      const request = buildRequest(SAMPLE_EXECUTABLE_CONTENT, authorization);
+
+      await gateway.execute(request);
+
+      await new Promise((resolve) => setTimeout(resolve, 1_100));
+
+      let caught: unknown;
+      let replay: ExecutionResult | undefined;
+
+      try {
+        replay = await gateway.execute(request);
+      } catch (error) {
+        caught = error;
+      }
+
+      expect(replay).toBeUndefined();
+      expect(caught).toBeDefined();
+      expect(connector.calls).toBe(1);
+    });
   });
 
   it("rejects an expired authorization", async () => {
