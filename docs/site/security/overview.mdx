@@ -222,7 +222,7 @@ slsa-verifier verify-artifact parmana-sdk-1.6.2.tgz \
 The provenance covers the files attached to the release. The files published to npm and PyPI from 1.6.1 on are the release's own files, so a registry download has the same hash as the release file and the provenance covers it too: `@parmana/sdk` 1.6.2, `@parmana/connector-sdk` 1.6.2, `parmana` 1.6.2 and `parmana-connector-sdk` 1.6.2 are the files of release `sdk-v1.6.2`. Release `sdk-v1.6.1` holds `@parmana/sdk` 1.6.1, `@parmana/connector-sdk` 0.3.1, `parmana` 1.6.1 and `parmana-connector-sdk` 0.2.1. Versions before 1.6.1 were published before this repository had a release workflow. No release here holds them, so the provenance does not cover them: `@parmana/sdk` and `parmana` 1.6.0 and before, `@parmana/connector-sdk` 0.3.0 and before, and `parmana-connector-sdk` 0.2.0.
 
 Each npm package and each wheel also has a [CycloneDX](https://cyclonedx.org) 1.5 SBOM beside it,
-named after it (for example `parmana-sdk-1.6.0.tgz.cdx.json`): the package, and every dependency
+named after it (for example `parmana-sdk-1.6.2.tgz.cdx.json`): the package, and every dependency
 installed with it, with versions and package URLs. For the npm packages it lists runtime
 dependencies only; for `parmana` it includes the optional `verify` extra (`cryptography`). The
 versions are the ones resolved when the release was built; a later install can resolve newer

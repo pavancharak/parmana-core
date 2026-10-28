@@ -155,6 +155,21 @@ The claims file also tracks what has no implementation yet. Adding a connector i
 
 The HubSpot connector has been run against HubSpot's production API: a deal stage and amount were changed under policy through the signed gateway, then read back and reverted ([CLAIMS.md 3.10](docs/CLAIMS.md)).
 
+## Packages
+
+The SDKs and the verifier are published at version 1.6.2. All of them share one version.
+
+| Package                  | Registry | Install                              |
+| ------------------------ | -------- | ------------------------------------ |
+| `@parmana/sdk`           | npm      | `npm install @parmana/sdk`           |
+| `parmana`                | PyPI     | `pip install parmana`                |
+| `@parmana/connector-sdk` | npm      | `npm install @parmana/connector-sdk` |
+| `parmana-connector-sdk`  | PyPI     | `pip install parmana-connector-sdk`  |
+| `@parmana/verifier`      | npm      | `npm install -g @parmana/verifier`   |
+| `parmana-verifier`       | PyPI     | `pip install parmana-verifier`       |
+
+The verifier lives in its own repository, [pavancharak/parmana-verifier](https://github.com/pavancharak/parmana-verifier). The release history for the SDKs is in the [changelog](https://docs.parmanasystems.com/changelog).
+
 ## Running it
 
 - **Production:** [Deploy to production](https://docs.parmanasystems.com/deployment/production) covers the required configuration, the fail-closed startup checks, and how to confirm a deployment.
