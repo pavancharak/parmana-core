@@ -1,6 +1,6 @@
 # Razorpay refund agent: status and how to resume
 
-Status as of 28 October 2026. Read this first when picking the work up again. It says what is live, what is not, what to do next, and where the detail is.
+Status as of 28 October 2026. Last live check: 28 October, about 02:25 UTC. The kill switch was off, the API and the tool answered, and the checker key read the status. Read this first when picking the work up again. It says what is live, what is not, what to do next, and where the detail is.
 
 This page holds identifiers, not secrets. Keys, tokens and step-up keys are named by where they live, and their values are only in the password manager and encrypted files on the operator's machine.
 
@@ -13,7 +13,7 @@ Parmana decides whether a Razorpay refund may go out. The refund agent asks Parm
 | Part                                                | State                                                                                 | Evidence                                                                                              |
 | --------------------------------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | Parmana API, `parmana-api-real`                     | Serving production with the four current callers                                      | `/policies` returns `401` without a key (observed, 27 Oct)                                            |
-| Kill switch                                         | Off, version 3                                                                        | Status check (observed, 27 Oct)                                                                       |
+| Kill switch                                         | Off, version 3                                                                        | Status check (observed, 27 Oct) Checked 28 Oct 2026, 02:3x UTC: `active false`, version 3 (observed). |
 | Probe, `kill-switch-probe`                          | Running on schedule with the new key                                                  | Manual run green (observed, 27 Oct)                                                                   |
 | Grant for `razorpay-refund-agent`                   | `razorpay:refund`, up to 500 paise (₹5) per request, valid until 2026-11-03T18:43:24Z | Change `dbdd05f1-dac6-4477-86f3-4fa4ca528e82`, approved (observed, 27 Oct)                            |
 | Approver `manager-pavan`, key `manager-pavan-key-2` | Registered as an approval issuer                                                      | Change `f85a497a-139e-447a-94fb-e6ea01874f50`, `APPROVED` (observed, 27 Oct). Helper support: PR #168 |
