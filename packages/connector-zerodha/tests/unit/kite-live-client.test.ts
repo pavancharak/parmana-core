@@ -75,6 +75,7 @@ describe("KiteLiveClient", () => {
     expect(body.get("quantity")).toBe("2");
     expect(body.get("order_type")).toBe("MARKET");
     expect(body.get("product")).toBe("CNC");
+    expect(body.get("validity")).toBe("DAY");
     expect(body.has("price")).toBe(false);
     expect(body.has("trigger_price")).toBe(false);
   });

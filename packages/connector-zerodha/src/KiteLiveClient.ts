@@ -52,6 +52,8 @@ function formFields(order: PaperOrderRequest): Record<string, string> {
     quantity: String(order.quantity),
     order_type: order.orderType,
     product: order.product,
+    // Kite's documented default for regular orders (Kite Connect v3 orders page, 2026-10-28).
+    validity: "DAY",
   };
   if (order.price !== undefined) {
     fields.price = String(order.price);
