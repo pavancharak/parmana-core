@@ -211,7 +211,11 @@ describe("RuntimeEngine pipeline latency (in-process, no HTTP/network/database)"
 
     // Generous smoke bound, not an SLA -- catches a catastrophic
     // regression (e.g. an accidental synchronous file/key reload per
-    // call), not a performance target.
-    expect(p99).toBeLessThan(500);
+    // call), not a performance target. Raised from 500 ms (#178): the
+    // in-process p99 measured 590 to 790 ms under a full parallel run and
+    // about 800 ms alone on the CI-class machines used so far, so 500 ms
+    // flagged normal load as a regression. A file or key reload per call
+    // costs far more than 1000 ms, so the bound still catches it.
+    expect(p99).toBeLessThan(1000);
   });
 });
