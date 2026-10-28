@@ -1,5 +1,12 @@
 # Remaining work
 
+## Update 2026-10-28
+
+- **The full list now lives in `docs/BACKLOG.md`.** It has 50 items, with priority, owner, and whether the sandbox can work on each. Update it when an item closes or a new gap appears. This page keeps the detail behind each item.
+- **#177 is done.** The preflight timeouts are fixed by #185, merged to `main`. The full `npm test` passed on that branch (393 files, 4067 tests, 0 failed).
+- **G-111 is in progress, not done.** The HubSpot deal read now needs a signed approval of its own. The change is on `fix/hubspot-self-approval` and is paused. Production would refuse every `hubspot:deal-update` until a new policy version declares the read approval signal and the integration fixtures send it. See the G-111 entry in `docs/VERIFICATION-GAPS.md`.
+- **Open items from the 2026-10-28 review are in section O below.**
+
 Snapshot: 2026-09-21, with section F added and updated on 2026-09-25, section G added on 2026-09-27, and section L added and updated on 2026-10-11. This is the current list of what is left. It replaces `02-REMAINING.md` (a July 5 snapshot) for current status.
 
 ## Update 2026-10-22
@@ -299,7 +306,7 @@ Do not edit it by hand: run `npx tsx scripts/gap-status.ts`. `npm test` fails wh
 | G-108 | The caller audit chain cannot detect deleting its newest row.                                       | narrowed, not closed, on branch `ccr-6f1b8d3b-o5pqwj` (commit ddb6009), not yet merged to main                                                                 |
 | G-109 | Caller authentication could be disabled and the demo approver enabled in production.                | fixed on branch `ccr-6f1b8d3b-o5pqwj` (commit ddb6009); that branch and commit are no longer in the repository, so whether this reached `main` is not verified |
 | G-110 | There is no revocation of a single authorization.                                                   | fixed on branch `ccr-6f1b8d3b-o5pqwj`; that branch and commit are no longer in the repository, so whether this reached `main` is not verified                  |
-| G-111 | The HubSpot verification helper approves its own fetch.                                             | partly fixed on branch `ccr-6f1b8d3b-o5pqwj`; that branch and commit are no longer in the repository, so whether this reached `main` is not verified           |
+| G-111 | The HubSpot verification helper approves its own fetch.                                             | in progress (2026-10-28)                                                                                                                                       |
 | G-112 | The offline verifier loads the repository `.env`.                                                   | fixed on branch `ccr-6f1b8d3b-o5pqwj`; that branch and commit are no longer in the repository, so whether this reached `main` is not verified                  |
 | G-113 | The execution-boundary signal check fails open during bootstrap.                                    | fixed on branch `ccr-6f1b8d3b-o5pqwj`; that branch and commit are no longer in the repository, so whether this reached `main` is not verified                  |
 | G-114 | The `legacyInsecure` connector option skips the session credential and audit requirement.           | fixed on branch `ccr-6f1b8d3b-o5pqwj`; that branch and commit are no longer in the repository, so whether this reached `main` is not verified                  |
