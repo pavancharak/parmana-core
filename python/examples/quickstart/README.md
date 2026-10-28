@@ -62,7 +62,7 @@ python python/examples/quickstart/run.py
 ## Expected output (real run against a local server, 2026-09-14)
 
 ```
-Connected to http://localhost:3000 (SDK v1.6.1)
+Connected to http://localhost:3000 (SDK v1.6.2)
 
 Business Transaction ID: 40ba54d1-1038-443c-80ec-9cd6ad7757a1
 Trust Record ID:         9c82c5c6-b465-41c8-8a03-ac07ec839c20

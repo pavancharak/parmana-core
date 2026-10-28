@@ -24,7 +24,7 @@
     "migrate": "tsx scripts/migrate.ts"
   },
   "dependencies": {
-    "@parmana/connector-sdk": "0.3.1",
+    "@parmana/connector-sdk": "1.6.2",
     "@parmana/crypto": "0.1.0",
     "@parmana/envelope-verifier": "0.1.0",
     "@parmana/shared": "0.1.0",

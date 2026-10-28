@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "parmana-connector-sdk"
-version = "0.2.1"
+version = "1.6.2"
 description = "Connector authoring contracts and reference implementations for Parmana, the authorization layer for AI execution."
 
 readme = { file = "README.md", content-type = "text/markdown" }

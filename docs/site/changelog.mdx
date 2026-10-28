@@ -10,6 +10,13 @@ product version). The SDKs are versioned independently on their own registries, 
 and per-version notes. This page covers changes that affect what you can build against, not
 every commit, run `git log` in the repository for the complete record.
 
+## 2026-10-28
+
+**Changed: SDK versions for the next release**
+
+- `@parmana/sdk` and `parmana` (Python) move to 1.6.2. The TypeScript and Python SDK code is unchanged since 1.6.1: the changes are documentation, formatting and tests.
+- `@parmana/connector-sdk` and `parmana-connector-sdk` (Python) move to 1.6.2, so all four SDK packages share one version. Their previous versions were 0.3.1 and 0.2.1. The TypeScript connector SDK changes its tests and now requires Node.js 24 or later; it declared Node.js 22 before. The Python connector SDK changes only its README and its version string.
+
 ## 2026-10-24
 
 **Changed: the whole repository is licensed under the Apache License 2.0**
