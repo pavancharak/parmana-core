@@ -22,6 +22,7 @@ Operator guides for running Parmana in production and for working on it locally.
 | A file was deleted by mistake                                                                          | [PRODUCTION-TROUBLESHOOTING.md](PRODUCTION-TROUBLESHOOTING.md), section 12   |
 | Commits show as unverified on GitHub, or `git commit` fails at signing                                 | [SIGNING-COMMITS.md](SIGNING-COMMITS.md)                                     |
 | A Dependabot alert is open, or you need to check that a dependency fix is on `main`                    | [DEPENDABOT-ALERTS.md](DEPENDABOT-ALERTS.md)                                 |
+| `npm audit` reports a finding or the audit gate fails in CI, or a dependency override is changed       | [NPM-AUDIT-RECORD.md](NPM-AUDIT-RECORD.md)                                   |
 
 ## Rules that apply to every runbook
 
