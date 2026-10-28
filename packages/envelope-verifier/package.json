@@ -1,7 +1,6 @@
 {
   "name": "@parmana/envelope-verifier",
   "version": "0.1.0",
-  "private": true,
   "description": "Verifies that an incoming execution request was authorized by Parmana",
   "type": "module",
   "main": "./dist/index.js",
@@ -17,7 +16,9 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "NOTICE"
   ],
   "scripts": {
     "clean": "rmdir /s /q dist",
@@ -45,5 +46,5 @@
   "engines": {
     "node": ">=24"
   },
-  "license": "SEE LICENSE IN LICENSE"
+  "license": "Apache-2.0"
 }
