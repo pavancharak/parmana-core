@@ -1,7 +1,6 @@
 {
   "name": "@parmana/execution-control",
   "version": "0.1.0",
-  "private": true,
   "description": "Credential-isolating, single-use execution release for Parmana connectors",
   "type": "module",
   "main": "./dist/index.js",
@@ -13,7 +12,9 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "NOTICE"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -31,5 +32,5 @@
   "engines": {
     "node": ">=22"
   },
-  "license": "SEE LICENSE IN LICENSE"
+  "license": "Apache-2.0"
 }

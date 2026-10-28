@@ -1,7 +1,6 @@
 {
   "name": "@parmana/storage",
   "version": "0.1.0",
-  "private": true,
   "description": "Parmana Storage Engine - Append-only execution ledger system",
   "type": "module",
   "main": "./dist/index.js",
@@ -13,7 +12,9 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "NOTICE"
   ],
   "scripts": {
     "clean": "rmdir /s /q dist",
@@ -47,5 +48,5 @@
   "engines": {
     "node": ">=22"
   },
-  "license": "SEE LICENSE IN LICENSE"
+  "license": "Apache-2.0"
 }

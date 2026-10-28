@@ -1,7 +1,6 @@
 {
   "name": "@parmana/policy",
   "version": "0.1.1",
-  "private": true,
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -12,7 +11,9 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "NOTICE"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -37,5 +38,5 @@
     "tsx": "^4.23.15",
     "typescript-eslint": "^8.72.0"
   },
-  "license": "SEE LICENSE IN LICENSE"
+  "license": "Apache-2.0"
 }
