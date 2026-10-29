@@ -222,3 +222,41 @@ regression.
 Confirmed, not a misunderstanding on your part, see [TypeScript SDK](/sdks/typescript).
 Check `response.status` on the returned object yourself, or use the
 [Python SDK](/sdks/python), which raises structured exceptions.
+
+## `POST /execute` returns 502 `EXECUTION_OUTCOME_UNKNOWN` for an external connector whose endpoint is a site root
+
+**Cause:** Parmana sends the release to the registered URL exactly as it was registered. If you registered the root of a
+site, such as `https://example.com/`, but the endpoint answers only on a path, such as `/execute`, the release is
+posted to the root and the endpoint answers with an error. The action was released, so the outcome is unknown. The
+connector's own error is never in the response.
+
+**Do not retry as a new transaction.** Check the target system first, as in the entry above.
+
+**Fix:** register the exact URL the endpoint serves, for example `https://example.com/execute`. Then register the
+capability again through the maker and checker flow, because the registration's endpoint is part of what is approved.
+See [connect any external system](/guides/connect-any-external-system).
+
+## Policy approval is refused with 403 `CHECKER_NOT_IN_SCOPE`
+
+**Cause:** the approver's caller ID is not listed for this policy in `POLICY_CHANGE_CHECKERS`. The setting is a JSON
+object keyed by policy name, and each value lists the caller IDs allowed to approve changes to that policy. Nothing
+was changed.
+
+**Fix:** have the operator add the caller ID under the policy's name, then restart the server. See
+[policy governance, maker and checker](/guides/policy-governance-maker-checker).
+
+## Registrations or approvals are gone after the server restarts
+
+**Cause:** the server was started with `NODE_ENV=test`. In that mode the database is not used, so anything proposed or
+approved during that run is lost when it stops. A test run is useful for checks that do not need to be kept.
+
+**Fix:** start the server without `NODE_ENV=test`, so it uses its database, then propose and approve again.
+
+## `POST /external-connectors/changes` returns 401 `authentication required`
+
+**Cause:** the bearer key is missing, empty, or does not match a key hash in the server's `PARMANA_API_KEYS` setting.
+Caller keys are checked by their hash, so a key that was rotated on the caller's side but not on the server fails the
+same way.
+
+**Fix:** confirm the key being sent is the one whose hash the server holds. If it was rotated, update the hash on the
+server and restart it. See [credentials, maker, checker and approver](/guides/credentials-maker-checker-approver).

@@ -32,6 +32,23 @@ signed record you can verify yourself.
 | Typical time         | 10 to 15 seconds for an approved request, a few seconds for a refusal. Set your client timeout to 120 seconds.                                                                       |
 | Kept for             | Not guaranteed. A job runs every hour and deletes every request and record visitors sent more than an hour ago. Keep any record you need. Policies and approvals of governance stay. |
 
+## Why you can trust what you see here
+
+The sandbox is built so that you do not have to take its word for anything. Four things make that possible:
+
+1. **Every release returns a signed record.** The record covers the request, the policy version, the approval and the outcome. It is signed with a key that the sandbox publishes at `GET /keys/default`.
+2. **You can verify a record without us.** The [offline verifier](/verification/offline-verifier) checks a record's signatures and hashes on your own machine, with no network call and no account. A record that has been changed fails the check.
+3. **The sandbox keys are separate from production.** A sandbox record never verifies against production's key, and production's never against the sandbox's. You cannot mix the two up by accident.
+4. **The rules are the same as production's.** The sandbox runs the same policy engine, the same approval check and the same signing code. Its one action is harmless, so the path is real and the effect is not.
+
+What the sandbox does not promise:
+
+- **It is a demo, not a production service.** Its demo key is public, so every visitor shares one rate limit and sees each other's requests.
+- **Records are kept for about an hour.** A job deletes requests and records older than that. Save any record you need as soon as you receive it.
+- **Passing here does not show that a real action is safe.** It shows that the path works. Whether a real action should be allowed is decided by your own policy and approvals.
+
+For the reasons behind these choices, read [why Parmana is built this way](/why-parmana-is-built-this-way).
+
 ## Try it in your browser
 
 Every page in the [REST API](/api-reference/introduction) tab has a **Try it** panel. It calls the sandbox first, with

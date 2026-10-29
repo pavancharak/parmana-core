@@ -1,0 +1,95 @@
+---
+title: "Why Parmana is built this way"
+description: "The main design choices behind Parmana, in plain words: what each one does, why it was chosen, and what it costs. Each choice links to the decision record behind it."
+---
+
+Parmana makes one promise: an agent's action runs only if a policy allowed it, a person approved that exact action, and a signed record shows what happened. Most of its design follows from that promise. This page explains each choice, the reason for it, and what it costs. Read [how Parmana thinks](/how-parmana-thinks) first if you want the request flow, and [the architecture overview](/architecture/overview) if you want the code layout.
+
+Each decision below links to its record in the repository. The records have the full context, the alternatives that were rejected, and the dates.
+
+## 1. Anyone can check a decision without trusting Parmana
+
+**What it does.** Every decision produces a signed record. The public key that checks those signatures is published (`GET /keys/default`), and the verifier runs offline, on your own machine, with nothing else.
+
+**Why.** If the only way to know what happened is to trust the server, the record proves nothing to anyone who doesn't trust the server. An independent check changes that: an auditor, a regulator, or a customer can verify a decision without an account, a network call, or Parmana's cooperation.
+
+**What it costs.** Keys have to be managed carefully. A signature proves who signed a record, not that the decision was wise. Verification tells you the record is intact and was signed by the expected key, nothing more.
+
+Record: [ADR-0003, verification is independent](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0003-Verification-Is-Independent.md). Try it: [verify a record in your browser](/verification/verify-in-browser).
+
+## 2. Evidence is added, never edited
+
+**What it does.** A record of what happened is appended to. An existing record is not changed. If something has to be corrected, the correction is a new record that refers to the old one.
+
+**Why.** An edit that leaves no trace would make the record worthless as evidence. Append-only history means a change to the past can be detected.
+
+**What it costs.** A mistake stays in the history. Corrections take another record, so the history grows.
+
+Record: [ADR-0005, evidence is append-only](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0005-Evidence-Is-Append-Only.md). See also [detect tampering](/guides/detect-tampering).
+
+## 3. The same input gives the same decision
+
+**What it does.** A policy is a fixed set of rules. Given the same request, the same policy version and the same approval, the decision is the same.
+
+**Why.** A decision that could change between runs can't be explained or reproduced later. Determinism means an auditor can re-run a decision and get the same answer.
+
+**What it costs.** Rules must be written precisely. A rule cannot depend on something the system cannot see, such as the time of day, unless that value is passed in as a signal.
+
+Record: [ADR-0007, deterministic execution](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0007-Deterministic-Execution.md). See also [determinism and clocks](/concepts/determinism-and-clocks).
+
+## 4. What is released is signed before it leaves
+
+**What it does.** Parmana writes an execution intent and signs it before the action is released to a connector. The record of what was about to happen exists before the action runs.
+
+**Why.** If a record is written only after the action, a failure between the two leaves an action with no record. Signing the intent first closes that gap. If the connector fails afterwards, the record still shows what was attempted.
+
+**What it costs.** One more step in the request path, and the operator has to resolve intents that end in an unknown outcome.
+
+Record: [ADR-0012, signed execution intent before release](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0012-Signed-Execution-Intent-Before-Release.md). Operator guide: [execution intents](/concepts/execution-intents).
+
+## 5. A person approves each sensitive action
+
+**What it does.** An action that needs a human has a policy rule that is true only when an approval artifact is attached. The approval is signed by a trusted issuer, names one capability and one resource, expires, and can be used once.
+
+**Why.** Rules can say what is allowed in general. A person is needed for a specific case: this refund, this order, this change. The approval names that case, so it cannot be reused for another.
+
+**What it costs.** A person has to be available. Approvals expire, so a slow approval has to be signed again.
+
+Guide: [connect an agent](/guides/connect-an-agent). Policy rules: [policies and the decision](/concepts/policies-and-the-decision).
+
+## 6. Two people change the rules
+
+**What it does.** A change to a policy, a connector registration, or an approval issuer is proposed by one caller and approved by a different caller. The approval needs a step-up signature from the approver's own key, which is valid for two minutes. The server refuses an approval from the same caller that proposed the change.
+
+**Why.** One person should not be able to change the rules and then approve their own change. The step-up signature means a stolen session token is not enough to approve.
+
+**What it costs.** Every change takes two people and two signatures. Urgent changes are slower.
+
+Guides: [policy governance, maker and checker](/guides/policy-governance-maker-checker) and [manage approvers](/guides/manage-approvers).
+
+## 7. External systems are connected without a shared secret
+
+**What it does.** An operator registers a capability and the HTTPS endpoint that serves it, through the maker and checker flow. Parmana sends each approved action to that endpoint as a signed release. The endpoint verifies the signature with Parmana's public key and checks the release's audience, which must be the endpoint's own URL, and its expiry.
+
+**Why.** Sharing a secret with every connector means storing it, rotating it and risking its leak. A signature needs only the public key on the endpoint side. The audience stops a release sent to one endpoint from being replayed to another.
+
+**What it costs.** The endpoint must implement the check. The SDK helpers do this for you, and the rest of the protocol is in the connect guide.
+
+Record: [ADR-0013, generic external connector](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0013-Generic-External-Connector.md). Guide: [connect any external system](/guides/connect-any-external-system).
+
+## 8. A stop control is designed, and not yet shipped
+
+**What it does (planned).** An operator kill switch would stop all actions at once, with a fresh check that can be repeated.
+
+**Why.** Today, no single control halts every action. Partial controls exist: approving a policy that refuses the actions, or revoking a connector or an approver.
+
+**What it costs.** Until the kill switch is built and deployed, an emergency stop is a set of partial controls, not one switch. Do not rely on the kill switch yet.
+
+Record: [ADR-0017, operator kill switch](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0017-Operator-Kill-Switch.md). Its status line says it is not merged and not deployed.
+
+## Where to go next
+
+- To try it, start with the [playground](/playground).
+- To connect an agent, read [connect an agent](/guides/connect-an-agent).
+- To check a decision yourself, read [verify independently](/guides/verify-independently).
+- When something fails, read [troubleshooting](/troubleshooting).
