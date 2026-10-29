@@ -118,6 +118,38 @@ Authority --> Authorization --> Intent --> Business Transaction
 
 Key properties: fail-closed configuration (a misconfigured process refuses to start rather than degrade silently), credential isolation (a connector never receives long-lived credentials, only a single-use session), single-use authorizations (a nonce is accepted once), append-only signed evidence, and both classical (Ed25519) and post-quantum (ML-DSA-65, in the Node packages) signing.
 
+## How external systems connect
+
+Parmana sits between the parties that want an action and the systems the action changes. Three roles connect to it.
+
+| Role                    | Connects to                           | How                                                                                                                                                       |
+| ----------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Agents, apps and people | Parmana core                          | The HTTP API (`/execute`, `/policies/in-effect`, approvals), the TypeScript and Python SDKs, or the MCP tools in parmana-connect, which call the same API |
+| Approvers               | Parmana core                          | Signed approvals through maker and checker. The signing key stays on the approver's machine                                                               |
+| Connectors              | Parmana core, and the business system | Parmana releases an approved action to the connector as a signed release. The connector calls the business system with its own credentials                |
+
+```
+Agent / app / person
+  |  request (HTTP API, SDK or MCP)
+  v
+Parmana core: policy, approval, signed decision, trust record
+  |  signed release, only for an approved action
+  v
+Connector: verifies signature, audience, expiry and replay
+  |  call with the connector's own credentials
+  v
+Business system (CRM, payments, chat ...)
+  |  result returns: connector -> core (recorded) -> caller
+```
+
+These rules hold at every step:
+
+- A business system never calls Parmana, and a caller never calls a connector or a business system directly.
+- Parmana core does not hold the credentials for a business system that an external connector serves.
+- A connector runs only an action that Parmana has approved and signed for it, and it runs that action once. A repeated release with the same transaction id is refused.
+
+**Current state.** HubSpot, GitHub, Slack and Paytm still run inside this repository. The plan is to move each one to a connector service outside it; see [ADR-0018](docs/adr/ADR-0018-Connectors-Outside-Core.md), which is proposed and not yet accepted. New connectors are built outside this repository and are registered through the flow described below.
+
 ## Connecting a system you run
 
 Built-in connectors cover HubSpot, GitHub, Slack and Paytm. For any other system, an operator registers an **external connector**: a capability, the HTTPS endpoint that serves it, and the policy that governs it. Registration is a change that one person proposes and a different person approves with a step-up signature. Once active, Parmana sends each approved action to the endpoint as a signed release. The endpoint checks the release's signature and its audience, and it needs no shared secret.
