@@ -50,7 +50,11 @@ const REFERENCE_GROUPS = new Set(["API reference", "The Parmana Handbook"]);
 const FULL_TEXT_PAGES = [
   "index",
   "choose-your-path",
+  "agents/start-here",
   "agents/integrate",
+  "why-parmana-is-built-this-way",
+  "troubleshooting",
+  "glossary",
   "agents/deploy",
   "quickstart",
   "build-book/overview",

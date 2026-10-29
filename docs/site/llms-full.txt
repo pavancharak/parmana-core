@@ -226,6 +226,151 @@ thinks](/how-parmana-thinks) and the [Quickstart](/quickstart). None of them nee
 
 ---
 
+## Start here for AI agents
+
+Source: https://docs.parmanasystems.com/agents/start-here
+
+This page is written for an AI agent that needs to act through Parmana. A person can read it too. Follow the steps in order. Each step names the call, the exact shape to send, the result to expect, and what to do if the result differs.
+
+If you are a crawler building an index: the authoritative machine-readable sources are [`/llms.txt`](/llms.txt) (an index of every page), [`/llms-full.txt`](/llms-full.txt) (the integration pages in full), and [`/openapi.bundled.yaml`](/openapi.bundled.yaml) (every endpoint, with its schema).
+
+## 0. Know what Parmana will and will not do
+
+- Parmana decides whether an action may run, under a versioned policy. It does not run the action itself. A **connector** runs it, after Parmana releases it.
+- Every action needs a decision and a record. A refusal is a normal outcome, not an error to work around.
+- A rule that needs a person returns a refusal the first time. A person approves, and then you send the request again with the approval attached.
+- Do not change a refusal into an approval by setting a signal to `true`. The server checks signed approvals, and it refuses a `true` it cannot verify.
+
+## 1. Check the server is up
+
+```http
+GET /health
+```
+
+Expected: `200` with `{"status":"UP"}`.
+
+If it is not `UP`, stop. Do not send actions to a server that cannot check them.
+
+## 2. Find out what a request must carry
+
+```http
+GET /policies/in-effect?capability=<namespace:verb>
+Authorization: Bearer <your key>
+```
+
+Expected: `200` with `capability`, `policy` (`name`, `version`, `schemaVersion`), and `signals`:
+
+- `signals.facts`: every name you must send under `signals`.
+- `signals.schema`: the type of each fact.
+- `signals.bound`: facts that must equal a value in your intent.
+- `signals.approval`: the approval signals, and the path in your request that each approval must name.
+
+Send the `policy` object exactly as returned. Send one signal for every name in `signals.facts`.
+
+If you get `404` with `CAPABILITY_NOT_BOUND`, no policy governs that capability on this server. Stop. Do not invent a policy name.
+
+## 3. Build the request
+
+Every request to `POST /execute` has this shape. Replace every UUID with a new one, and every timestamp with the current time in ISO 8601:
+
+```json
+{
+  "businessTransactionId": "<new UUID>",
+  "metadata": { "businessTransactionId": "<same UUID>" },
+  "authority": {
+    "authorityId": "<UUID>",
+    "authorityType": "SERVICE",
+    "principalId": "<your caller id>",
+    "issuedAt": "<now>"
+  },
+  "authorization": {
+    "authorizationId": "<new UUID>",
+    "authorityId": "<same as authority.authorityId>",
+    "purpose": "<one sentence: why this action>",
+    "issuedAt": "<now>"
+  },
+  "intent": {
+    "intentId": "<new UUID>",
+    "authorizationId": "<same as authorization.authorizationId>",
+    "action": "<the capability, exactly>",
+    "target": "<what the action applies to>",
+    "parameters": {},
+    "createdAt": "<now>"
+  },
+  "policy": { "name": "...", "version": "...", "schemaVersion": "..." },
+  "signals": {
+    "<each name in signals.facts>": "<value of the declared type>",
+    "approvalArtifact": "<the signed approval, exactly as received, when you have one>"
+  }
+}
+```
+
+The server checks these rules, and refuses a request that breaks them:
+
+1. `metadata.businessTransactionId` equals `businessTransactionId`.
+2. `authorization.authorityId` equals `authority.authorityId`.
+3. `intent.authorizationId` equals `authorization.authorizationId`.
+4. `policy.name`, `policy.version` and `intent.action` are not empty.
+5. Every `businessTransactionId` is a valid UUID.
+6. A signal bound to an intent value must equal that value exactly. A mismatch is refused as `POLICY_DENIED`, with a message saying the declared signals do not match the executed intent.
+
+## 4. Send it
+
+```http
+POST /execute
+Authorization: Bearer <your key>
+Content-Type: application/json
+```
+
+Read the response, and branch on it:
+
+| Response                                                                                | Meaning                                                                 | Your next step                                                                         |
+| --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `200`, `executions[0].decision.outcome` is `APPROVED`                                   | Approved, released, and recorded.                                       | Go to step 6.                                                                          |
+| `403`, `POLICY_DENIED`, one approval signal sent as `false`, every other signal true    | A person's signed approval is needed. Nothing ran.                      | Go to step 5.                                                                          |
+| `403`, `POLICY_DENIED`, the message says a newer policy version took effect             | The policy changed after step 2. Nothing ran.                           | Go back to step 2 and rebuild.                                                         |
+| `403`, `POLICY_DENIED`, any other reason                                                | A rule refused. Final.                                                  | Do not retry. Report the refusal.                                                      |
+| `403`, `CAPABILITY_NOT_ALLOWED`                                                         | Your key may not invoke this action.                                    | Stop. Ask the operator to grant it.                                                    |
+| `400`                                                                                   | The request is malformed. The message names the problem.                | Fix it, and use a new `businessTransactionId`.                                         |
+| `401`                                                                                   | The key is missing or wrong.                                            | Stop. Ask for a valid key.                                                             |
+| `404`                                                                                   | The policy was not found.                                               | Go back to step 2.                                                                     |
+| `409`                                                                                   | This `businessTransactionId` was already used.                          | Do not resend. Go to step 7 to look it up.                                             |
+| `429`                                                                                   | Rate limited. Nothing was recorded.                                     | Wait the seconds in `Retry-After`, then send again with a new `businessTransactionId`. |
+| `503` with `SIGNING_UNAVAILABLE`, `EXECUTION_INTENT_UNAVAILABLE` or `AUDIT_UNAVAILABLE` | Refused before release. Nothing ran.                                    | Wait, then retry with a new `businessTransactionId`.                                   |
+| `500` with `EXECUTION_RECORD_INCOMPLETE`                                                | The action ran, but its record could not be produced.                   | Do not resend under any id. Go to step 7 and tell the operator.                        |
+| `502` with `EXECUTION_OUTCOME_UNKNOWN`                                                  | The action was released and the connector call failed. It may have run. | Do not resend under any id. Go to step 7 and tell the operator.                        |
+| Any other `5xx`, a timeout, or no response                                              | Unknown.                                                                | Do not proceed. Go to step 7.                                                          |
+
+## 5. If a person must approve
+
+A refusal for want of an approval is not a failure. Parmana does not hold your request open. Do this:
+
+1. Tell the operator what needs approving: the action, the target, and any amount.
+2. Wait for a signed approval artifact from a trusted approval issuer. Do not create one yourself.
+3. When you hold the artifact, send the request again, with a **new** `businessTransactionId`, the approval signal set to `true`, and the artifact exactly as received in `signals.approvalArtifact`.
+
+An approval names one action, one target and an expiry, and it can be used once. If it expires, ask for another.
+
+## 6. Keep the record
+
+A release returns a signed Execution Trust Record. Store it. It is the evidence that the action was allowed, and it can be checked later with the public key from `GET /keys/default` and the [offline verifier](/verification/offline-verifier).
+
+## 7. When something is unclear
+
+- Read the status table in step 4, and the [troubleshooting](/troubleshooting) page.
+- To look up a transaction, use `GET /execution-intents/<businessTransactionId>`. If it is not found, the server did not record it.
+- If the outcome is `EXECUTION_OUTCOME_UNKNOWN` or `EXECUTION_RECORD_INCOMPLETE`, do not retry. Tell the operator the `businessTransactionId` and the `authorizationId` from the response.
+
+## 8. Connecting a new external system
+
+If the capability you need is not served by Parmana's built-in connectors, an operator can register it. Registration is a change that one person proposes and a different person approves. Read [connect any external system](/guides/connect-any-external-system) and [why Parmana is built this way](/why-parmana-is-built-this-way) before you ask for one.
+
+## Try it first, without a real system
+
+The [playground](/playground) runs this whole path against a sandbox with a published demo key. Use it to confirm your request shape before you send anything real.
+
+---
+
 ## Integrate Parmana: specification for AI agents
 
 Source: https://docs.parmanasystems.com/agents/integrate
@@ -600,6 +745,418 @@ Transaction and keeps the identifiers consistent. Neither retries `POST /execute
 
 For a human reading this page, the same material with explanations is in [Full integration
 overview](/guides/full-integration-overview) and the [Error catalog](/api-reference/error-catalog).
+
+---
+
+## Why Parmana is built this way
+
+Source: https://docs.parmanasystems.com/why-parmana-is-built-this-way
+
+Parmana makes one promise: an agent's action runs only if a policy allowed it, a person approved that exact action, and a signed record shows what happened. Most of its design follows from that promise. This page explains each choice, the reason for it, and what it costs. Read [how Parmana thinks](/how-parmana-thinks) first if you want the request flow, and [the architecture overview](/architecture/overview) if you want the code layout.
+
+Each decision below links to its record in the repository. The records have the full context, the alternatives that were rejected, and the dates.
+
+## 1. Anyone can check a decision without trusting Parmana
+
+**What it does.** Every decision produces a signed record. The public key that checks those signatures is published (`GET /keys/default`), and the verifier runs offline, on your own machine, with nothing else.
+
+**Why.** If the only way to know what happened is to trust the server, the record proves nothing to anyone who doesn't trust the server. An independent check changes that: an auditor, a regulator, or a customer can verify a decision without an account, a network call, or Parmana's cooperation.
+
+**What it costs.** Keys have to be managed carefully. A signature proves who signed a record, not that the decision was wise. Verification tells you the record is intact and was signed by the expected key, nothing more.
+
+Record: [ADR-0003, verification is independent](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0003-Verification-Is-Independent.md). Try it: [verify a record in your browser](/verification/verify-in-browser).
+
+## 2. Evidence is added, never edited
+
+**What it does.** A record of what happened is appended to. An existing record is not changed. If something has to be corrected, the correction is a new record that refers to the old one.
+
+**Why.** An edit that leaves no trace would make the record worthless as evidence. Append-only history means a change to the past can be detected.
+
+**What it costs.** A mistake stays in the history. Corrections take another record, so the history grows.
+
+Record: [ADR-0005, evidence is append-only](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0005-Evidence-Is-Append-Only.md). See also [detect tampering](/guides/detect-tampering).
+
+## 3. The same input gives the same decision
+
+**What it does.** A policy is a fixed set of rules. Given the same request, the same policy version and the same approval, the decision is the same.
+
+**Why.** A decision that could change between runs can't be explained or reproduced later. Determinism means an auditor can re-run a decision and get the same answer.
+
+**What it costs.** Rules must be written precisely. A rule cannot depend on something the system cannot see, such as the time of day, unless that value is passed in as a signal.
+
+Record: [ADR-0007, deterministic execution](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0007-Deterministic-Execution.md). See also [determinism and clocks](/concepts/determinism-and-clocks).
+
+## 4. What is released is signed before it leaves
+
+**What it does.** Parmana writes an execution intent and signs it before the action is released to a connector. The record of what was about to happen exists before the action runs.
+
+**Why.** If a record is written only after the action, a failure between the two leaves an action with no record. Signing the intent first closes that gap. If the connector fails afterwards, the record still shows what was attempted.
+
+**What it costs.** One more step in the request path, and the operator has to resolve intents that end in an unknown outcome.
+
+Record: [ADR-0012, signed execution intent before release](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0012-Signed-Execution-Intent-Before-Release.md). Operator guide: [execution intents](/concepts/execution-intents).
+
+## 5. A person approves each sensitive action
+
+**What it does.** An action that needs a human has a policy rule that is true only when an approval artifact is attached. The approval is signed by a trusted issuer, names one capability and one resource, expires, and can be used once.
+
+**Why.** Rules can say what is allowed in general. A person is needed for a specific case: this refund, this order, this change. The approval names that case, so it cannot be reused for another.
+
+**What it costs.** A person has to be available. Approvals expire, so a slow approval has to be signed again.
+
+Guide: [connect an agent](/guides/connect-an-agent). Policy rules: [policies and the decision](/concepts/policies-and-the-decision).
+
+## 6. Two people change the rules
+
+**What it does.** A change to a policy, a connector registration, or an approval issuer is proposed by one caller and approved by a different caller. The approval needs a step-up signature from the approver's own key, which is valid for two minutes. The server refuses an approval from the same caller that proposed the change.
+
+**Why.** One person should not be able to change the rules and then approve their own change. The step-up signature means a stolen session token is not enough to approve.
+
+**What it costs.** Every change takes two people and two signatures. Urgent changes are slower.
+
+Guides: [policy governance, maker and checker](/guides/policy-governance-maker-checker) and [manage approvers](/guides/manage-approvers).
+
+## 7. External systems are connected without a shared secret
+
+**What it does.** An operator registers a capability and the HTTPS endpoint that serves it, through the maker and checker flow. Parmana sends each approved action to that endpoint as a signed release. The endpoint verifies the signature with Parmana's public key and checks the release's audience, which must be the endpoint's own URL, and its expiry.
+
+**Why.** Sharing a secret with every connector means storing it, rotating it and risking its leak. A signature needs only the public key on the endpoint side. The audience stops a release sent to one endpoint from being replayed to another.
+
+**What it costs.** The endpoint must implement the check. The SDK helpers do this for you, and the rest of the protocol is in the connect guide.
+
+Record: [ADR-0013, generic external connector](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0013-Generic-External-Connector.md). Guide: [connect any external system](/guides/connect-any-external-system).
+
+## 8. A stop control is designed, and not yet shipped
+
+**What it does (planned).** An operator kill switch would stop all actions at once, with a fresh check that can be repeated.
+
+**Why.** Today, no single control halts every action. Partial controls exist: approving a policy that refuses the actions, or revoking a connector or an approver.
+
+**What it costs.** Until the kill switch is built and deployed, an emergency stop is a set of partial controls, not one switch. Do not rely on the kill switch yet.
+
+Record: [ADR-0017, operator kill switch](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0017-Operator-Kill-Switch.md). Its status line says it is not merged and not deployed.
+
+## Where to go next
+
+- To try it, start with the [playground](/playground).
+- To connect an agent, read [connect an agent](/guides/connect-an-agent).
+- To check a decision yourself, read [verify independently](/guides/verify-independently).
+- When something fails, read [troubleshooting](/troubleshooting).
+
+---
+
+## Troubleshooting
+
+Source: https://docs.parmanasystems.com/troubleshooting
+
+## `npm run <script>` or `npx <bin>` does something unexpected at the repo root
+
+**Cause, confirmed:** `package.json` and `typescript/package.json` both declare `"name":
+"parmana"`. This duplicate workspace name breaks npm's resolution: `npm run <script>`
+cascades across every workspace instead of running only the root script, and `npx <bin>`
+resolves paths relative to an arbitrary workspace directory instead of the repo root.
+
+**Workaround:** invoke the local binary directly:
+
+```bash./node_modules/.bin/tsx packages/api/src/server.ts./node_modules/.bin/vitest run   # from the repository root, or with a path: vitest run packages/runtime
+
+```
+
+## `POST /execute` (or `runtime.execute()`) rejects with "declared signal(s) do not match the executed intent"
+
+**Not a bug — this is `SignalIntentBinder` doing its job.** Your transaction's `policy`
+declares `boundSignals` (check `policies/<name>/<version>/policy.json`), and at least one
+signal you declared doesn't exactly equal the value at its bound `intent` dot-path — often
+because you never declared that signal at all (`vendorId=undefined` is the most common
+shape of this). See [Policies and the decision](/concepts/policies-and-the-decision) for the
+mechanism, and [Security](/security/overview) for why it exists: this closed a real,
+previously live bypass where a caller's declared signals didn't have to describe the same
+action `intent` actually executed. Fix: add the missing/mismatched signal so it equals the
+real `intent` field the policy binds it to, exactly.
+
+## `POST /execute` returns 404 "Policy '...' was not found"
+
+**Cause:** the referenced `policy.version` doesn't match a real
+`policies/<name>/<version>/policy.json` on disk. Check `PARMANA_POLICY_DIR` and the exact
+version folder, for example `policies/vendor-payment/` currently only has a `2.0.0/`
+folder, not `1.0.0/`.
+
+## Execution is rejected with "Execution Gateway rejected request: failed checks [policyStillCurrent]" or "policy approval check failed"
+
+**Cause:** the gateway fails closed on policy binding. The rejection names the reason. "has no
+PolicyChangeApprovalRecord" means the policy was never approved through the maker checker flow.
+"does not match approval record contentHashAfter" means the policy file was edited outside the
+approval API, or the record is stale. "policyContentHash mismatch" means the policy changed after
+the authorization was signed. "absent: authorization carries no policyContentHash" means the
+authorization predates that field. `policyBindingNotVerified` means a required policy check did
+not run.
+
+**Fix:** approve the policy version through `POST /policies/:name/:version/pending-changes` and
+`.../approve` (see [Policy governance](/guides/policy-governance-maker-checker)), then submit a
+new transaction so a fresh authorization is signed. Nothing was executed and the nonce was not
+consumed.
+
+## `POST /execute` returns 500 and the log shows "Member must have length less than or equal to 4096"
+
+**Cause:** AWS KMS refuses to sign a raw Ed25519 message longer than 4096 bytes, and a full Execution
+Trust Record is larger. This is fixed by signing a message over that size as a fixed 97 byte commitment, so first check that your deployment includes that change. The stack is
+`KmsSigner.sign` called from `VerificationCrypto.sign`.
+
+Do not assume the action did not happen. A current build returns `503 SIGNING_UNAVAILABLE` before release when signing is unhealthy, and `500 EXECUTION_RECORD_INCOMPLETE` when the action was released and the record then failed, so check which code you received. Query `execution_audit_events` for the `business_transaction_id` to see what the
+connector did, and generate a fresh `businessTransactionId` for any retry, since the original was
+already recorded.
+
+## `POST /execute` returns 503 `SIGNING_UNAVAILABLE`
+
+**Cause:** before releasing the action, the runtime proves it can sign an Execution Trust Record. The
+probe failed, so nothing was executed. The message includes the cause, for example a KMS
+`AccessDeniedException`, a disabled key, a network outage or a signing key that does not match its
+published public key.
+
+**Fix:** restore the signing path (check the KMS key state, the role's `kms:Sign` and `kms:GetPublicKey`
+permissions and the key id), then retry with a new `businessTransactionId`, because the original was
+already accepted. Nothing was sent to the connector.
+
+## `POST /execute` returns 503 `EXECUTION_INTENT_UNAVAILABLE`
+
+**Cause:** before releasing the action, the runtime signs and stores an [Execution Intent](/concepts/execution-intents). That failed, so **nothing was released**. The message includes the cause. The two usual causes are a database failure, and a database that is missing the `execution_intents` table because the migration was not applied before this version was deployed. A signing failure at that step is the third.
+
+**Fix:**
+
+1. Check `GET /ready`. If the table is missing it returns `503` with `status: NOT_READY` and a `reason` that names the migration file.
+2. If the table is missing, apply the migration, then check `GET /ready` again:
+
+   ```bash
+   psql "$DATABASE_URL" -f supabase/migrations/20260921120000_add_execution_intents.sql
+   psql "$DATABASE_URL" -tA -c "select to_regclass('public.execution_intents')"
+   ```
+
+   The second command must print `execution_intents`.
+
+3. Otherwise restore the database or the signing path, then retry with a new `businessTransactionId`, because the original was already accepted.
+
+Nothing was sent to the connector, so a retry with a new `businessTransactionId` cannot repeat the action.
+
+## `GET /ready` returns 503 and the reason mentions `execution_intents`
+
+**Cause:** Execution Intents are enforced on this deployment, and the `execution_intents` table does not exist. Every execution would be refused with `EXECUTION_INTENT_UNAVAILABLE`.
+
+**Fix:** apply `supabase/migrations/20260921120000_add_execution_intents.sql`, as in the section above. The migration only adds a table and is safe to run twice.
+
+## `POST /execute` returns 503 `CONNECTOR_NOT_REGISTERED`
+
+**Cause:** the request passed authentication, the policy and the approval check, but no connector is registered for its action on this deployment. A connector registers only when its own credentials are configured, for example `PAYTM_CONNECTOR_URL` and `PAYTM_CONNECTOR_SHARED_SECRET` for `paytm:refund`. Nothing was executed. Before this code existed the same case was a bare `500` with no code, so on an older server, look for `No connector registered for capability` in the log.
+
+**Fix:** configure the connector on the server (see the [connector section of the environment reference](/deployment/environment-variables#connectors)), deploy again, then retry with a new `businessTransactionId`, because the original was already accepted.
+
+## `POST /execute` returns 502 `EXECUTION_OUTCOME_UNKNOWN`
+
+**Cause:** the action was released to the connector and the call failed: the connector could not be reached, timed out, or answered with an error. Whether the action was performed is unknown. The response names the `businessTransactionId` and `authorizationId`; the connector's own error is never in the response.
+
+**Do not retry as a new transaction.** That could perform the action twice.
+
+1. Find the cause. The server log has a critical `execution_outcome_unknown` event, and the Execution Intent has it as `status.failureReason`:
+
+   ```bash
+   curl -s "$PARMANA_API_URL/execution-intents/<businessTransactionId>" \
+     -H "Authorization: Bearer $PARMANA_OPERATOR_KEY"
+   ```
+
+   `status.state` is `ERRORED`.
+
+2. Check the target system for this transaction.
+3. Close the intent with what you found, `EXECUTED` or `NOT_EXECUTED`, and a note. This needs a verified human credential and never calls the connector:
+
+   ```bash
+   curl -s -X POST "$PARMANA_API_URL/execution-intents/<businessTransactionId>/resolve" \
+     -H "Authorization: Bearer $PARMANA_OPERATOR_KEY" -H "Content-Type: application/json" \
+     -d '{"resolution":"NOT_EXECUTED","note":"Agent was unreachable; no refund in Paytm for this order."}'
+   ```
+
+4. Fix the connector before sending new requests. If the action was not executed and is still wanted, send it again with a **new** `businessTransactionId`.
+
+## `POST /execute` returns 500 `EXECUTION_RECORD_INCOMPLETE`
+
+**Cause:** the action was released to the connector, but the signed Execution Trust Record could not be
+produced or persisted afterwards. The response names the `businessTransactionId` and `authorizationId`.
+
+**Do not retry as a new transaction.** That could repeat the action.
+
+A signed [Execution Intent](/concepts/execution-intents) exists for it, because it was stored before the action was released. Read it:
+
+```bash
+curl -s "$PARMANA_API_URL/execution-intents/<businessTransactionId>" \
+  -H "Authorization: Bearer $PARMANA_OPERATOR_KEY"
+```
+
+- `status.state` is `RELEASED`: the execution context was saved. Fix the underlying cause (the runtime log has a critical `execution_released_record_failed` or `execution_released_record_persist_failed` event with the cause), then rebuild the record. This never calls the connector:
+
+  ```bash
+  curl -s -X POST "$PARMANA_API_URL/execution-intents/<businessTransactionId>/finalize" \
+    -H "Authorization: Bearer $PARMANA_OPERATOR_KEY"
+  ```
+
+  Both calls need a credential provisioned as a verified human (`credentialHolderType: USER`).
+
+- `status.state` is `PREPARED`: the context was not saved, so finalize refuses with `409 EXECUTION_INTENT_RESULT_NOT_RECORDED`. Query `execution_audit_events` for the `businessTransactionId` and check the connector's own record to see what ran, then close the intent with `POST /execution-intents/<businessTransactionId>/resolve`, giving what you found (`NOT_EXECUTED` or `EXECUTED`) and a note. Record the outcome in your own systems as well.
+- `404 EXECUTION_INTENT_NOT_FOUND`: the transaction predates Execution Intents, or Execution Intents are off on this deployment. Use the manual reconciliation above.
+
+## `POST /execution-intents/<id>/finalize` returns 409 `EXECUTION_INTENT_RESULT_NOT_RECORDED`
+
+**Cause:** the intent exists, but the execution result was never saved, so the signed Trust Record cannot be rebuilt from nothing. The action may or may not have been released. Nothing was called and nothing was changed.
+
+**Fix:** establish the outcome at the connector, using the `businessTransactionId`, `action` and `target` from `GET /execution-intents/<id>`, then close the intent with `POST /execution-intents/<id>/resolve`, giving what you found (`NOT_EXECUTED` or `EXECUTED`) and a required note. Closing it takes it out of `GET /execution-intents/unfinalized`. See [Execution Intents](/concepts/execution-intents#step-4-close-an-intent-you-reconciled-at-the-connector-prepared-or-errored).
+
+## `GET /execution-intents/unfinalized` lists an intent in state `ERRORED`
+
+**Cause:** the release stage raised an error, most often a connector timeout, and the intent recorded `status.failureReason`. **The action may still have been executed**, for example when the connector received the request and answered too slowly.
+
+**Fix:** check the connector for the `businessTransactionId` and `target` before doing anything else. Finalize cannot help, because no result was saved. Once you know what happened, close the intent with `POST /execution-intents/<id>/resolve`, which records what you found and a required note, and takes it out of the list.
+
+## A signed approval is refused, and the approver was added through approver changes
+
+Check, in order:
+
+1. `GET /approval-issuers` lists the approver and key with `revoked: false`. A change that is
+   still `PENDING_APPROVAL` trusts nothing yet.
+2. The approval's `payload.issuer.approverId` and `keyId` match that entry exactly.
+3. The server log has no `approval_issuer_lookup_failed`. If it has, the `approval_issuers`
+   table could not be read: apply the migration `20260929120000_add_approval_issuers.sql` or fix
+   the database connection. Until then those approvers are unknown, so their approvals are refused.
+
+The approval's own checks (expiry, action, resource, amount, used once) are on
+[Human approval](/concepts/human-approval).
+
+## `POST /approval-issuers/changes` returns 409 `CONFLICT`
+
+The message says which case applies: the key id is listed in the server code, it already exists
+(revoked keys included: key ids are used once, so add the next one), the key to revoke is not
+an active key added through approver changes, or another change for the same key is still
+pending. See [Manage approvers](/guides/manage-approvers#errors).
+
+## No approval email or `approval.needed` event arrives
+
+- For email: `APPROVAL_EMAIL_TO` is set, the Resend integration is installed, and the sending
+  domain shows **Verified** in Resend. Until it is, the log has `approval_needed_notification_failed`
+  with Resend's reason. Check the spam folder once, and mark the first email as not spam.
+- For the webhook: both `APPROVAL_WEBHOOK_URL` and `APPROVAL_WEBHOOK_SECRET` are set.
+- The server was redeployed after setting them.
+- The request was refused only for want of an approval. A refusal for any other reason, such as
+  a failed fraud check, sends nothing, by design.
+- The server log has `approval_needed_notification_failed` with the reason: your endpoint
+  answered something other than `2xx`, took longer than 3 seconds, or redirected. There is no
+  retry. See [Approval notifications](/guides/approval-notifications#delivery).
+
+## `PARMANA_POLICY_DIR` and running from a fresh clone
+
+The server refuses to start when `PARMANA_POLICY_DIR` is not set, with an error naming it
+(`packages/shared/src/config/Config.ts`). There is no default directory, so set it
+explicitly (for example `./policies`), as shown in [Quickstart](/quickstart).
+
+## A resubmitted, modified transaction under the same ID isn't rejected the way I expected
+
+As of commit `651497a`, content-binding protection **is** wired in by default for
+`POST /execute` against the default server, see [Content Binding &
+TOCTOU](/concepts/content-binding-toctou) and [The gateway](/concepts/the-gateway) before
+debugging further. If you're seeing a resubmitted, modified transaction succeed anyway, check
+that you're actually hitting the Execution Gateway path (the default server always does) and
+not a lower-level API call that bypasses it, this is more likely a setup mismatch than a
+regression.
+
+## The TypeScript SDK isn't throwing on a 4xx/5xx response
+
+Confirmed, not a misunderstanding on your part, see [TypeScript SDK](/sdks/typescript).
+Check `response.status` on the returned object yourself, or use the
+[Python SDK](/sdks/python), which raises structured exceptions.
+
+## `POST /execute` returns 502 `EXECUTION_OUTCOME_UNKNOWN` for an external connector whose endpoint is a site root
+
+**Cause:** Parmana sends the release to the registered URL exactly as it was registered. If you registered the root of a
+site, such as `https://example.com/`, but the endpoint answers only on a path, such as `/execute`, the release is
+posted to the root and the endpoint answers with an error. The action was released, so the outcome is unknown. The
+connector's own error is never in the response.
+
+**Do not retry as a new transaction.** Check the target system first, as in the entry above.
+
+**Fix:** register the exact URL the endpoint serves, for example `https://example.com/execute`. Then register the
+capability again through the maker and checker flow, because the registration's endpoint is part of what is approved.
+See [connect any external system](/guides/connect-any-external-system).
+
+## Policy approval is refused with 403 `CHECKER_NOT_IN_SCOPE`
+
+**Cause:** the approver's caller ID is not listed for this policy in `POLICY_CHANGE_CHECKERS`. The setting is a JSON
+object keyed by policy name, and each value lists the caller IDs allowed to approve changes to that policy. Nothing
+was changed.
+
+**Fix:** have the operator add the caller ID under the policy's name, then restart the server. See
+[policy governance, maker and checker](/guides/policy-governance-maker-checker).
+
+## Registrations or approvals are gone after the server restarts
+
+**Cause:** the server was started with `NODE_ENV=test`. In that mode the database is not used, so anything proposed or
+approved during that run is lost when it stops. A test run is useful for checks that do not need to be kept.
+
+**Fix:** start the server without `NODE_ENV=test`, so it uses its database, then propose and approve again.
+
+## `POST /external-connectors/changes` returns 401 `authentication required`
+
+**Cause:** the bearer key is missing, empty, or does not match a key hash in the server's `PARMANA_API_KEYS` setting.
+Caller keys are checked by their hash, so a key that was rotated on the caller's side but not on the server fails the
+same way.
+
+**Fix:** confirm the key being sent is the one whose hash the server holds. If it was rotated, update the hash on the
+server and restart it. See [credentials, maker, checker and approver](/guides/credentials-maker-checker-approver).
+
+---
+
+## Glossary
+
+Source: https://docs.parmanasystems.com/glossary
+
+| Term                                | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Source                                                                                                            |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **Policy**                          | A named, versioned, ordered list of rules; first match wins, no match rejects                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | [Policies and the decision](/concepts/policies-and-the-decision)                                                  |
+| **`boundSignals`**                  | A policy's optional map from a signal key to an `intent` dot-path (e.g. `{ "vendorId": "target" }`); `SignalIntentBinder` rejects a transaction whose declared signal doesn't exactly equal the bound `intent` field, before any rule evaluates                                                                                                                                                                                                                                                                                                                                                                                                                                       | [Policies and the decision](/concepts/policies-and-the-decision), [Security](/security/overview)                  |
+| **`SignalIntentBinder`**            | Checks every `boundSignals` entry, `packages/policy/src/SignalIntentBinder.ts`; invoked by `RuntimeEngine` immediately before `PolicyEngine.evaluate`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | [Policies and the decision](/concepts/policies-and-the-decision)                                                  |
+| **Fail-closed**                     | The absence of a matching rule, a missing connector, or a failed check always denies, there is no default-allow path anywhere in this system                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | [Policies and the decision](/concepts/policies-and-the-decision)                                                  |
+| **Approval signal**                 | A policy fact declared in `approvalSignals`. Every approve rule must require one with `is_true`; it counts as true only with a valid signed approval for the action and resource. No agent action is authorized without one                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| **Trusted Signal**                  | A business fact Parmana established itself, from the system a policy's `signalSources` names, bound to the business object and the action; the policy is evaluated on it, never on the agent's proposed value                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | [Business validation](/concepts/business-validation)                                                              |
+| **Assessment**                      | The separate authority, business validation and execution statuses on every Decision. `AUTHORIZED` means the action may be decided, not that the action is valid or ran                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | [Business validation](/concepts/business-validation)                                                              |
+| **Business signal source**          | A business system registered under a name through maker checker, which Parmana asks for the facts a policy's `signalSources` names. When registered with an Ed25519 key, its answers must be signed with it                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | [Connect a business signal source](/guides/connect-a-business-signal-source)                                      |
+| **Authority grant**                 | Authority given to one API key for one capability, within limits on the request, until an expiry, through maker checker. A policy with `requireAuthorityGrant` decides a request only when its caller holds one in force                                                                                                                                                                                                                                                                                                                                                                                                                                                              | [Grant an agent authority](/guides/grant-an-agent-authority)                                                      |
+| **Approver key**                    | An Ed25519 public key trusted to sign approvals for policies with `approvalSignals`. Listed in the server code, or added through an approver change                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | [Manage approvers](/guides/manage-approvers)                                                                      |
+| **Approver change**                 | A proposal to add or revoke an approver key; applies only once a different person approves it with a step up authorization                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | [Manage approvers](/guides/manage-approvers)                                                                      |
+| **`approval.needed`**               | The webhook event sent when a request was refused only for want of a signed approval                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | [Approval notifications](/guides/approval-notifications)                                                          |
+| **Authority**                       | The entity empowered to authorize execution within a trust domain                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | `packages/shared/src/domain/authority.ts`                                                                         |
+| **Authorization**                   | A grant, from an Authority, for a specific business purpose                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | `packages/shared/src/domain/authorization.ts`                                                                     |
+| **Intent**                          | The specific action + target + parameters an Authority intends to execute                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | `packages/shared/src/domain/intent.ts`                                                                            |
+| **Business Transaction**            | The immutable input to policy evaluation, combining Authority + Authorization + Intent + a Policy reference                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | `packages/shared/src/domain/business-transaction.ts`                                                              |
+| **Decision**                        | The immutable result of evaluating an Intent against a Policy, `APPROVED` or `REJECTED`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | `packages/shared/src/domain/decision.ts`                                                                          |
+| **Execution**                       | What actually happened after a Decision, status, mode, evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `packages/shared/src/domain/execution.ts`                                                                         |
+| **Execution Trust Record**          | The canonical, append-only, signed aggregate of a Business Transaction's complete history                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | [Execution trust records](/concepts/execution-trust-records)                                                      |
+| **Signed Execution Authorization**  | The v1 envelope: a signed, content-bound, single-use, time-bounded proof that Parmana authorized one specific execution                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | [Execution authorization](/concepts/execution-authorization)                                                      |
+| **Execution Permit**                | Two different things share this name. An earlier prototype (`packages/shared/src/domain/execution-permit.ts`, added and deleted the same day) is gone, do not treat old references to it as shipped behavior. A later `ExecutionPermit` model in `@parmana/execution-control`, used only by a since deleted receipt package and by tutorials 53-56, was also deleted; those tutorials now demonstrate hybrid signing. Today the term means the signed [execution authorization](/concepts/execution-authorization).                                                                                                                                                                   | [@parmana/execution-control](/reference/execution-control)                                                        |
+| **`businessTransactionHash`**       | The canonical content hash bound into a Signed Execution Authorization's payload, the mechanism that closes the check-vs-use (TOCTOU) gap                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | [Content Binding & TOCTOU](/concepts/content-binding-toctou)                                                      |
+| **Execution Gateway**               | The sole boundary that recomputes `businessTransactionHash` and releases verified content to a Connector. Wired into the default server unconditionally as of commit `651497a`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | [The gateway](/concepts/the-gateway)                                                                              |
+| **Gateway Attestation**             | A request-bound signature proving the gateway itself, not just Parmana's policy engine, released one specific request                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | [Gateway attestation](/concepts/gateway-attestation)                                                              |
+| **Connector**                       | An interface for an enterprise execution system (SAP, a bank's payment rail, etc.) integrated behind the Gateway. `HttpConnector` and `MockConnector` are reference implementations; four enterprise-named connectors exist as explicit, unregistered mocks (`SapConnector`, `WorkdayConnector`, `OracleConnector`, `SalesforceConnector`). `hubspot` registers whenever `HUBSPOT_PRIVATE_APP_TOKEN` is configured, see [HubSpot](/integrations/hubspot); `github` registers alongside it for `github:pr-fetch`/`github:pr-merge`. Two other connectors were previously registered here — `razorpay` and `vendor-payment` — and have since been removed from the repository entirely. | `packages/api/src/bootstrap/createConnectorRegistry.ts`                                                           |
+| **Execution Control**               | Gateway-authenticated, session-scoped credential isolation for connectors. Real, tested, and wired into the default server for the one registered connector this is proven for, `hubspot`; not yet a general-purpose claim for arbitrary connectors                                                                                                                                                                                                                                                                                                                                                                                                                                   | [Credential isolation](/concepts/credential-isolation)                                                            |
+| **Session Credential**              | A single-use, time-bounded credential lease issued only after gateway attestation succeeds, consumed exactly once by a connector                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | [Credential isolation](/concepts/credential-isolation)                                                            |
+| **Credential Provider**             | Resolves a connector's credential from a source (environment variable, static map); never returns a raw value a caller upstream can see                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | [Credential isolation](/concepts/credential-isolation)                                                            |
+| **Connector Evidence**              | What a connector's execution leaves on the trust record: connector ID, version, capability, sanitized endpoint, a `connectorEvidenceHash`, never the credential itself                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | [Execution trust records](/concepts/execution-trust-records)                                                      |
+| **Nonce**                           | A single-use value inside an authorization payload; a receiving system must reject a repeat                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | [Execution authorization](/concepts/execution-authorization)                                                      |
+| **Verification**                    | The 3-check process (integrity, signature, authorization binding) confirming an Execution Trust Record's validity                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | [Verification](/verification/overview)                                                                            |
+| **Replay**                          | Two unconnected things share this name: a signature recheck (`POST /replay`) and a disconnected engine (`packages/replay`) that genuinely re-evaluates the recorded policy decision, scoped to one execution, not reachable from the API.                                                                                                                                                                                                                                                                                                                                                                                                                                             | [Replay](/replay/overview)                                                                                        |
+| **Receipt**                         | A signed, independently-verifiable attestation of an Execution Trust Record's state                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | `packages/shared/src/domain/receipt.ts`                                                                           |
+| **TOCTOU**                          | Time-Of-Check-To-Time-Of-Use, the gap between what was authorized and what was actually executed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | [Content Binding & TOCTOU](/concepts/content-binding-toctou)                                                      |
+| **TTL**                             | Time-to-live; the bounded window an authorization is valid for, capped to limit exposure from other gaps (for example, an unshared `NonceStore`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |                                                                                                                   |
+| **Release**                         | Parmana's signed message to a registered external endpoint, saying an approved action may run. The endpoint verifies its signature before it acts.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | [Connect any external system](/guides/connect-any-external-system)                                                |
+| **Endpoint audience**               | The endpoint URL a release names. An endpoint refuses a release whose audience is not its own URL, which stops a release sent to one endpoint being replayed to another.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | [ADR-0013](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0013-Generic-External-Connector.md) |
+| **External connector registration** | A capability bound to an HTTPS endpoint and to the policy that governs it. Active only after a different caller approves it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | [Connect any external system](/guides/connect-any-external-system)                                                |
+| **Approval artifact**               | A signed statement by a trusted issuer that a person approved one action on one resource. Usable once, and it expires.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | [Connect an agent](/guides/connect-an-agent)                                                                      |
+| **Step-up signature**               | A signature from the approver's own key over one exact change, sent with the approval. The server checks it before it accepts the approval.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | [Policy governance, maker and checker](/guides/policy-governance-maker-checker)                                   |
+| **Approval issuer**                 | A person or key trusted to sign approval artifacts. Added through a proposal and a separate approval.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | [Manage approvers](/guides/manage-approvers)                                                                      |
+| **Maker and checker**               | The caller who proposes a change, and a different caller who approves it. The server refuses an approval by the proposer.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | [Policy governance, maker and checker](/guides/policy-governance-maker-checker)                                   |
 
 ---
 
@@ -8775,3 +9332,41 @@ regression.
 Confirmed, not a misunderstanding on your part, see [TypeScript SDK](/sdks/typescript).
 Check `response.status` on the returned object yourself, or use the
 [Python SDK](/sdks/python), which raises structured exceptions.
+
+## `POST /execute` returns 502 `EXECUTION_OUTCOME_UNKNOWN` for an external connector whose endpoint is a site root
+
+**Cause:** Parmana sends the release to the registered URL exactly as it was registered. If you registered the root of a
+site, such as `https://example.com/`, but the endpoint answers only on a path, such as `/execute`, the release is
+posted to the root and the endpoint answers with an error. The action was released, so the outcome is unknown. The
+connector's own error is never in the response.
+
+**Do not retry as a new transaction.** Check the target system first, as in the entry above.
+
+**Fix:** register the exact URL the endpoint serves, for example `https://example.com/execute`. Then register the
+capability again through the maker and checker flow, because the registration's endpoint is part of what is approved.
+See [connect any external system](/guides/connect-any-external-system).
+
+## Policy approval is refused with 403 `CHECKER_NOT_IN_SCOPE`
+
+**Cause:** the approver's caller ID is not listed for this policy in `POLICY_CHANGE_CHECKERS`. The setting is a JSON
+object keyed by policy name, and each value lists the caller IDs allowed to approve changes to that policy. Nothing
+was changed.
+
+**Fix:** have the operator add the caller ID under the policy's name, then restart the server. See
+[policy governance, maker and checker](/guides/policy-governance-maker-checker).
+
+## Registrations or approvals are gone after the server restarts
+
+**Cause:** the server was started with `NODE_ENV=test`. In that mode the database is not used, so anything proposed or
+approved during that run is lost when it stops. A test run is useful for checks that do not need to be kept.
+
+**Fix:** start the server without `NODE_ENV=test`, so it uses its database, then propose and approve again.
+
+## `POST /external-connectors/changes` returns 401 `authentication required`
+
+**Cause:** the bearer key is missing, empty, or does not match a key hash in the server's `PARMANA_API_KEYS` setting.
+Caller keys are checked by their hash, so a key that was rotated on the caller's side but not on the server fails the
+same way.
+
+**Fix:** confirm the key being sent is the one whose hash the server holds. If it was rotated, update the hash on the
+server and restart it. See [credentials, maker, checker and approver](/guides/credentials-maker-checker-approver).

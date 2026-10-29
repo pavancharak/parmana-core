@@ -1,0 +1,143 @@
+---
+title: "Start here for AI agents"
+description: "A complete, ordered integration path for an AI agent: the calls to make, the exact request shape, what each response means, and what to do next. Written so an agent can follow it without a human reading it first."
+---
+
+This page is written for an AI agent that needs to act through Parmana. A person can read it too. Follow the steps in order. Each step names the call, the exact shape to send, the result to expect, and what to do if the result differs.
+
+If you are a crawler building an index: the authoritative machine-readable sources are [`/llms.txt`](/llms.txt) (an index of every page), [`/llms-full.txt`](/llms-full.txt) (the integration pages in full), and [`/openapi.bundled.yaml`](/openapi.bundled.yaml) (every endpoint, with its schema).
+
+## 0. Know what Parmana will and will not do
+
+- Parmana decides whether an action may run, under a versioned policy. It does not run the action itself. A **connector** runs it, after Parmana releases it.
+- Every action needs a decision and a record. A refusal is a normal outcome, not an error to work around.
+- A rule that needs a person returns a refusal the first time. A person approves, and then you send the request again with the approval attached.
+- Do not change a refusal into an approval by setting a signal to `true`. The server checks signed approvals, and it refuses a `true` it cannot verify.
+
+## 1. Check the server is up
+
+```http
+GET /health
+```
+
+Expected: `200` with `{"status":"UP"}`.
+
+If it is not `UP`, stop. Do not send actions to a server that cannot check them.
+
+## 2. Find out what a request must carry
+
+```http
+GET /policies/in-effect?capability=<namespace:verb>
+Authorization: Bearer <your key>
+```
+
+Expected: `200` with `capability`, `policy` (`name`, `version`, `schemaVersion`), and `signals`:
+
+- `signals.facts`: every name you must send under `signals`.
+- `signals.schema`: the type of each fact.
+- `signals.bound`: facts that must equal a value in your intent.
+- `signals.approval`: the approval signals, and the path in your request that each approval must name.
+
+Send the `policy` object exactly as returned. Send one signal for every name in `signals.facts`.
+
+If you get `404` with `CAPABILITY_NOT_BOUND`, no policy governs that capability on this server. Stop. Do not invent a policy name.
+
+## 3. Build the request
+
+Every request to `POST /execute` has this shape. Replace every UUID with a new one, and every timestamp with the current time in ISO 8601:
+
+```json
+{
+  "businessTransactionId": "<new UUID>",
+  "metadata": { "businessTransactionId": "<same UUID>" },
+  "authority": {
+    "authorityId": "<UUID>",
+    "authorityType": "SERVICE",
+    "principalId": "<your caller id>",
+    "issuedAt": "<now>"
+  },
+  "authorization": {
+    "authorizationId": "<new UUID>",
+    "authorityId": "<same as authority.authorityId>",
+    "purpose": "<one sentence: why this action>",
+    "issuedAt": "<now>"
+  },
+  "intent": {
+    "intentId": "<new UUID>",
+    "authorizationId": "<same as authorization.authorizationId>",
+    "action": "<the capability, exactly>",
+    "target": "<what the action applies to>",
+    "parameters": {},
+    "createdAt": "<now>"
+  },
+  "policy": { "name": "...", "version": "...", "schemaVersion": "..." },
+  "signals": {
+    "<each name in signals.facts>": "<value of the declared type>",
+    "approvalArtifact": "<the signed approval, exactly as received, when you have one>"
+  }
+}
+```
+
+The server checks these rules, and refuses a request that breaks them:
+
+1. `metadata.businessTransactionId` equals `businessTransactionId`.
+2. `authorization.authorityId` equals `authority.authorityId`.
+3. `intent.authorizationId` equals `authorization.authorizationId`.
+4. `policy.name`, `policy.version` and `intent.action` are not empty.
+5. Every `businessTransactionId` is a valid UUID.
+6. A signal bound to an intent value must equal that value exactly. A mismatch is refused as `POLICY_DENIED`, with a message saying the declared signals do not match the executed intent.
+
+## 4. Send it
+
+```http
+POST /execute
+Authorization: Bearer <your key>
+Content-Type: application/json
+```
+
+Read the response, and branch on it:
+
+| Response                                                                                | Meaning                                                                 | Your next step                                                                         |
+| --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `200`, `executions[0].decision.outcome` is `APPROVED`                                   | Approved, released, and recorded.                                       | Go to step 6.                                                                          |
+| `403`, `POLICY_DENIED`, one approval signal sent as `false`, every other signal true    | A person's signed approval is needed. Nothing ran.                      | Go to step 5.                                                                          |
+| `403`, `POLICY_DENIED`, the message says a newer policy version took effect             | The policy changed after step 2. Nothing ran.                           | Go back to step 2 and rebuild.                                                         |
+| `403`, `POLICY_DENIED`, any other reason                                                | A rule refused. Final.                                                  | Do not retry. Report the refusal.                                                      |
+| `403`, `CAPABILITY_NOT_ALLOWED`                                                         | Your key may not invoke this action.                                    | Stop. Ask the operator to grant it.                                                    |
+| `400`                                                                                   | The request is malformed. The message names the problem.                | Fix it, and use a new `businessTransactionId`.                                         |
+| `401`                                                                                   | The key is missing or wrong.                                            | Stop. Ask for a valid key.                                                             |
+| `404`                                                                                   | The policy was not found.                                               | Go back to step 2.                                                                     |
+| `409`                                                                                   | This `businessTransactionId` was already used.                          | Do not resend. Go to step 7 to look it up.                                             |
+| `429`                                                                                   | Rate limited. Nothing was recorded.                                     | Wait the seconds in `Retry-After`, then send again with a new `businessTransactionId`. |
+| `503` with `SIGNING_UNAVAILABLE`, `EXECUTION_INTENT_UNAVAILABLE` or `AUDIT_UNAVAILABLE` | Refused before release. Nothing ran.                                    | Wait, then retry with a new `businessTransactionId`.                                   |
+| `500` with `EXECUTION_RECORD_INCOMPLETE`                                                | The action ran, but its record could not be produced.                   | Do not resend under any id. Go to step 7 and tell the operator.                        |
+| `502` with `EXECUTION_OUTCOME_UNKNOWN`                                                  | The action was released and the connector call failed. It may have run. | Do not resend under any id. Go to step 7 and tell the operator.                        |
+| Any other `5xx`, a timeout, or no response                                              | Unknown.                                                                | Do not proceed. Go to step 7.                                                          |
+
+## 5. If a person must approve
+
+A refusal for want of an approval is not a failure. Parmana does not hold your request open. Do this:
+
+1. Tell the operator what needs approving: the action, the target, and any amount.
+2. Wait for a signed approval artifact from a trusted approval issuer. Do not create one yourself.
+3. When you hold the artifact, send the request again, with a **new** `businessTransactionId`, the approval signal set to `true`, and the artifact exactly as received in `signals.approvalArtifact`.
+
+An approval names one action, one target and an expiry, and it can be used once. If it expires, ask for another.
+
+## 6. Keep the record
+
+A release returns a signed Execution Trust Record. Store it. It is the evidence that the action was allowed, and it can be checked later with the public key from `GET /keys/default` and the [offline verifier](/verification/offline-verifier).
+
+## 7. When something is unclear
+
+- Read the status table in step 4, and the [troubleshooting](/troubleshooting) page.
+- To look up a transaction, use `GET /execution-intents/<businessTransactionId>`. If it is not found, the server did not record it.
+- If the outcome is `EXECUTION_OUTCOME_UNKNOWN` or `EXECUTION_RECORD_INCOMPLETE`, do not retry. Tell the operator the `businessTransactionId` and the `authorizationId` from the response.
+
+## 8. Connecting a new external system
+
+If the capability you need is not served by Parmana's built-in connectors, an operator can register it. Registration is a change that one person proposes and a different person approves. Read [connect any external system](/guides/connect-any-external-system) and [why Parmana is built this way](/why-parmana-is-built-this-way) before you ask for one.
+
+## Try it first, without a real system
+
+The [playground](/playground) runs this whole path against a sandbox with a published demo key. Use it to confirm your request shape before you send anything real.
