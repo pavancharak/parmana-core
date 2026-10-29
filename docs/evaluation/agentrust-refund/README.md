@@ -19,8 +19,12 @@ Parmana, and the limits below still apply.
 
 A follow-up requesting the Verified tier was opened on 2026-10-13: it pins the released `parmana` SDK 1.6.0 and adds
 exact reproduction steps. On 2026-10-14 a maintainer reproduced it with the released packages (byte-for-byte
-`references.json`, 18 tests passed); the tier change follows in a separate maintainer PR, and until then the tier is
-`community`.
+`references.json`, 18 tests passed); the tier change followed in a separate maintainer PR.
+
+**Verified tier (read 2026-10-29).** AgenTrust's `main` sets `tier: verified` for `integrations/parmana-server`. The
+integration's README scopes that tier to the offline fixture path: every connector result is a mock,
+`refundEligible` and `fraudCheckPassed` are declared by the caller, and no conformance level is claimed. The
+`community` tier stated above is the record at its date.
 
 ## What it shows, and what it does not
 
