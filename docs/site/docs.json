@@ -107,6 +107,7 @@
               "guides/authorize-and-execute",
               "guides/connect-an-agent",
               "guides/connect-any-external-system",
+              "connectors/parmana-connect",
               "guides/connect-a-business-signal-source",
               "guides/grant-an-agent-authority",
               "guides/session-credentials",

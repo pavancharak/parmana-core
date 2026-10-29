@@ -363,7 +363,7 @@ A release returns a signed Execution Trust Record. Store it. It is the evidence 
 
 ## 8. Connecting a new external system
 
-If the capability you need is not served by Parmana's built-in connectors, an operator can register it. Registration is a change that one person proposes and a different person approves. Read [connect any external system](/guides/connect-any-external-system) and [why Parmana is built this way](/why-parmana-is-built-this-way) before you ask for one.
+If the capability you need is not served by Parmana's built-in connectors, an operator can register it. Registration is a change that one person proposes and a different person approves. Read [connect any external system](/guides/connect-any-external-system) and [the parmana-connect service](/connectors/parmana-connect), which is the ready-made connector service that verifies releases and runs the call. Read [why Parmana is built this way](/why-parmana-is-built-this-way) before you ask for one.
 
 ## Try it first, without a real system
 
@@ -745,6 +745,146 @@ Transaction and keeps the identifiers consistent. Neither retries `POST /execute
 
 For a human reading this page, the same material with explanations is in [Full integration
 overview](/guides/full-integration-overview) and the [Error catalog](/api-reference/error-catalog).
+
+---
+
+## parmana-connect: the connector service
+
+Source: https://docs.parmanasystems.com/connectors/parmana-connect
+
+`parmana-connect` is a small Node.js service that runs one connector. Parmana decides whether an action may run and signs the decision. It then releases the action to a connector. `parmana-connect` is a ready-made connector service: it receives the signed release, verifies it, runs the call described by a manifest, and answers.
+
+It lives in its own repository, [pavancharak/parmana-connect](https://github.com/pavancharak/parmana-connect). This page describes it as an operator and a developer use it. For the protocol that connects every external connector to Parmana, read [connect any external system](/guides/connect-any-external-system). For the reasons behind the design, read [why Parmana is built this way](/why-parmana-is-built-this-way).
+
+## What it does, in order
+
+1. **Receives a request** at `POST /execute`.
+2. **Decides which kind of request it is.** A body with `release` and `signature` is a signed release from Parmana. Anything else is treated as a signed authorization, and needs the bearer token (see "Two request shapes" below).
+3. **Verifies the signed release**, with the checks listed in "The checks, in order".
+4. **Runs the connector.** The connector makes the upstream HTTP call described in the manifest, using the upstream credential the service reads from its environment.
+5. **Answers** with the result, in the shape Parmana expects.
+
+The service never decides policy. It checks that Parmana approved the action, and then runs exactly what was approved.
+
+## Two request shapes
+
+| Shape                    | How it is recognised                          | Authentication                                         | Used by                                                                                     |
+| ------------------------ | --------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| **Signed release**       | The body has `release` and `signature`        | The signature. No bearer token                         | Parmana's external connector protocol, for a capability registered as an external connector |
+| **Signed authorization** | Any other body, with an `authorization` field | `Authorization: Bearer <PARMANA_SERVICE_BEARER_TOKEN>` | Parmana's direct execution path, for an action sent through `HttpExecutionSystem`           |
+
+Both shapes arrive at the same path, `POST /execute`. The service checks the shape first, then the matching authentication.
+
+## The checks, in order
+
+For a signed release, the service runs these checks. It stops at the first failure and returns the failure in `errors`.
+
+1. **Shape.** `release.version` is `1`. `businessTransactionId`, `capability`, `target`, `audience` and `expiresAt` are non-empty strings. `parameters` is an object.
+2. **Signature algorithm.** `signature.algorithm` is `ed25519`.
+3. **Key.** `signature.keyId` is `default`. The public key the service was given is the one checked against.
+4. **Signature.** The signature is valid over the canonical serialization of `release`. Any change to the release after signing fails this check.
+5. **Audience.** `release.audience` equals `PARMANA_RELEASE_AUDIENCE` exactly. This stops a release sent to one endpoint from being replayed to another.
+6. **Expiry.** The release has not expired. The service allows 30 seconds of clock difference.
+7. **Replay.** The `businessTransactionId` has not run before. The service records it only after every other check passes, so a release refused for another reason can still be sent again with a fresh signature.
+
+A release that passes every check runs the connector. A release that fails returns `403` with the reasons.
+
+## The answer
+
+A successful release returns `200` with:
+
+```json
+{
+  "businessTransactionId": "<the same id as the release>",
+  "capability": "<the same capability as the release>",
+  "success": true,
+  "result": { "status": 200, "body": {} },
+  "executedAt": "<ISO 8601 time>"
+}
+```
+
+- `success` is `true` when the connector call succeeded, and `false` when it failed. Both are `200`. Parmana records either.
+- `result` is an object. If its serialized size is above 16 KB, the service returns `success: false` with an error saying so, because Parmana refuses results above that size.
+- If the connector throws, the service returns `success: false` and `result.error`, with a short message. It never returns the upstream credential.
+
+## Settings
+
+Every setting is read from the environment. The service refuses to start if a required one is missing, and the error names the setting, never its value.
+
+| Setting                         | Required        | Default     | What it does                                                                                                                                                |
+| ------------------------------- | --------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PARMANA_SERVICE_BEARER_TOKEN`  | Yes             | None        | Shared secret for signed authorizations. At least 32 characters.                                                                                            |
+| `PARMANA_PUBLIC_KEY_FILE`       | Yes             | None        | Path to Parmana's Ed25519 public key, in PEM. It checks both shapes.                                                                                        |
+| `PARMANA_CONNECTOR_MANIFEST`    | Yes             | None        | Path to the connector manifest, in JSON or YAML.                                                                                                            |
+| The manifest's `secretRef` name | Yes             | None        | The environment variable that holds the upstream credential. Its name is the `secretRef` in the manifest.                                                   |
+| `PARMANA_POLICY_DIR`            | Yes             | None        | An existing folder. The crypto setup requires it.                                                                                                           |
+| `PARMANA_RELEASE_AUDIENCE`      | For releases    | Unset       | The endpoint URL exactly as registered in Parmana, for example `https://service.example.com/execute`. Must be `https`. Unset, signed releases return `503`. |
+| `PARMANA_NONCE_STORE`           | No              | `postgres`  | `postgres` or `memory`. See "Replay protection".                                                                                                            |
+| `PARMANA_DATABASE_URL`          | With `postgres` | None        | Connection string for the replay store.                                                                                                                     |
+| `PARMANA_SERVICE_PORT`          | No              | `8080`      | The port to listen on. Hosts often set this for you.                                                                                                        |
+| `PARMANA_SERVICE_HOST`          | No              | `127.0.0.1` | The address to bind. A hosted service needs `0.0.0.0`, or the host cannot reach it.                                                                         |
+| `PARMANA_CONNECTOR_TIMEOUT_MS`  | No              | `10000`     | How long the upstream call may take, in milliseconds.                                                                                                       |
+
+### The manifest
+
+The manifest says what the connector can do. A minimal one:
+
+```json
+{
+  "system": "httpbin",
+  "baseUrl": "https://httpbin.org",
+  "apiVersion": "1",
+  "credential": { "type": "bearer", "secretRef": "HTTPBIN_TOKEN" },
+  "capabilities": [
+    { "id": "httpbin:get", "method": "GET", "path": "/get", "effect": "read" }
+  ]
+}
+```
+
+- `system` is a short name. Every capability `id` must start with `system:`.
+- `baseUrl` must be `https`, must not contain credentials, and must not contain a query or fragment.
+- `credential.type` is `bearer` or `header`. A `header` credential also needs `headerName`.
+- `secretRef` is an upper-case environment variable name. The service reads the upstream value from it, never from the manifest.
+- Each capability has an `id`, a `method`, a `path`, and an `effect` of `read` or `write`. A `GET` cannot be a `write`. A `write` must declare its inputs. Each `{name}` in a path must be a declared, required input.
+
+## Replay protection
+
+The replay store records every `businessTransactionId` that has run, until the release expires.
+
+- `postgres` (the default) shares the record across every instance of the service. Use it for any deployment that runs more than one instance.
+- `memory` keeps the record in one process. A restart forgets it, and a second instance does not see it. Use it only for one instance on your own machine or a test.
+
+## Deploying
+
+The service needs three things from its host: a way to start it (`npm ci && npm run build`, then `npm run start`), the secret files named in its settings, and the environment variables above.
+
+On a host that mounts secret files under `/etc/secrets/`, set `PARMANA_PUBLIC_KEY_FILE` and `PARMANA_CONNECTOR_MANIFEST` to those paths. Set `PARMANA_SERVICE_HOST=0.0.0.0` and the port the host expects. Set `PARMANA_RELEASE_AUDIENCE` to the exact public URL of `/execute`, and register that same URL in Parmana.
+
+The service has no health route. Do not set a health check path to `/healthz`, because the host will mark the service unhealthy.
+
+Free hosting plans can sleep when idle. The first request after a sleep took about 50 seconds when we measured it. Parmana's releases expire 60 seconds after they are issued, so a release sent to a sleeping service can expire before it is answered. For production, use a plan that does not sleep.
+
+## Troubleshooting
+
+| What you see                                                       | Cause                                                                         | Fix                                                                                                                   |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| The service exits at start, naming a setting                       | A required setting is missing, or invalid                                     | Set the named setting. The message never shows a value                                                                |
+| `503` with "no release audience configured"                        | `PARMANA_RELEASE_AUDIENCE` is unset                                           | Set it to the exact registered URL                                                                                    |
+| `403` with `errors` containing "is not this endpoint"              | The release's audience differs from `PARMANA_RELEASE_AUDIENCE`                | Make the setting equal the URL registered in Parmana, character for character                                         |
+| `403` with "the signature does not verify"                         | The release was changed after signing, or was signed by a different key       | Check that `PARMANA_PUBLIC_KEY_FILE` holds the key Parmana signs with                                                 |
+| `403` with "the release expired"                                   | The release is older than its expiry, allowing 30 seconds of clock difference | Check the server's clock. Ask Parmana for a new release                                                               |
+| `403` with "already executed"                                      | The same `businessTransactionId` ran before                                   | This is the replay protection working. Do not resend it as a new run                                                  |
+| `401` on a signed authorization                                    | The bearer token is missing or wrong                                          | Send `Authorization: Bearer` with the value of `PARMANA_SERVICE_BEARER_TOKEN`                                         |
+| Parmana reports `502 EXECUTION_OUTCOME_UNKNOWN` for this connector | The service refused or failed the release, or was not reachable               | Check the service's logs for the release. Make sure the registered URL is the full `/execute` path, not the site root |
+| The host reports no open port                                      | The service listens on `127.0.0.1`                                            | Set `PARMANA_SERVICE_HOST=0.0.0.0`                                                                                    |
+| The host sees the service on another port                          | `PARMANA_SERVICE_PORT` does not match the host's port                         | Set it to the port the host expects                                                                                   |
+| The upstream call times out                                        | The upstream is slow, or unreachable                                          | Raise `PARMANA_CONNECTOR_TIMEOUT_MS` within reason, or check the upstream                                             |
+
+## What the service does not do
+
+- It does not decide policy, and it does not approve anything. Parmana does both.
+- It does not store the upstream credential anywhere except its environment, and it does not return it.
+- It does not check the business meaning of a request. It checks that the release is authentic, addressed to it, fresh, and new, then runs the manifest's call.
 
 ---
 

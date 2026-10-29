@@ -52,6 +52,7 @@ const FULL_TEXT_PAGES = [
   "choose-your-path",
   "agents/start-here",
   "agents/integrate",
+  "connectors/parmana-connect",
   "why-parmana-is-built-this-way",
   "troubleshooting",
   "glossary",
