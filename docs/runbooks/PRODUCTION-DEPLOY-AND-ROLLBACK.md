@@ -57,11 +57,40 @@ Expect `401 {"error":"authentication required"}`.
 
 - `500 FUNCTION_INVOCATION_FAILED` = startup failed. Go to section 5.
 
-**3b. Readiness:** `GET /ready` should return `200` with `"status":"READY"` and `"authDisabled":false`. It checks the database and that the `execution_intents` table exists.
+**3b. Health and readiness:** `GET /health` should return `200` with `{"status":"UP"}`. It shows the process is running and checks nothing else. `GET /ready` should return `200` with `"status":"READY"` and `"authDisabled":false`. It checks the database and that the `execution_intents` table exists.
+
+```powershell
+Invoke-RestMethod "$env:PARMANA_URL/health"
+Invoke-RestMethod "$env:PARMANA_URL/ready"
+```
 
 **3c. The kill-switch probe.** Run the **kill-switch-probe** workflow in GitHub Actions. Expect a green run. A `201` from `POST /kill-switch/probes` means the probe key works.
 
 **3d. Startup log.** In the Vercel dashboard → **Logs** → **Runtime Logs**, the startup line should show the policy approval check, the signing check and the execution-intent check all enabled (the repo's production guide names these: `policyExecutionVerifierConfigured`, `signingReadinessConfigured`, `executionIntentsConfigured`).
+
+**3e. Which commit is live.** Steps 3a to 3d show that the API runs, not which commit it was built from. Read the build log of the newest production deployment:
+
+```powershell
+vercel ls parmana-api-real --prod --cwd $link
+vercel inspect <first-url-in-the-list> --logs --cwd $link
+```
+
+The first lines name the commit Vercel cloned:
+
+```
+Cloning github.com/pavancharak/parmana-core (Branch: main, Commit: <sha>)
+```
+
+Compare `<sha>` with `main`. Fetch first, then read the short hash:
+
+```bash
+git fetch origin main
+git rev-parse --short origin/main
+```
+
+If they match, the live API is current. If `main` has moved on, a merge after that build started a newer build. Check the newest deployment with `vercel ls`. If it has not reached `Ready`, or it failed, look at it on the Deployments page in the Vercel dashboard.
+
+`vercel inspect --json` did not include the commit in the `parmana-connectors` project. Use `--logs`.
 
 ---
 
