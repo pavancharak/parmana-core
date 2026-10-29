@@ -21,9 +21,9 @@ ADR-0013 already gives a way to run a connector outside core: a signed release, 
 ## Decision
 
 1. **Core holds no vendor code.** After the migration, parmana-core contains no `packages/connector-*` package, no connector bootstrap, and no vendor credential. Its only connector route is the external connector path from ADR-0013.
-2. **Every vendor connector runs as an external connector.** Its code lives in `parmana-connect`, in its own module, with its own tests. Core reaches it only through a registration (ADR-0013 step 1), approved through maker and checker.
+2. **Every vendor connector runs as an external connector.** Its code lives in the `parmana-connectors` repository, in its own folder (`src/connectors/<vendor>/`), with its own tests. Each connector is deployed as its own endpoint. Core reaches it only through a registration (ADR-0013 step 1), approved through maker and checker.
 3. **Core's connector-specific code is removed in steps, not in one change.** A connector is removed from core only after its external version has passed the same checks the in-core version passed, against the same live or sandbox system, and after its production registration is in place.
-4. **parmana-connect is the reference connector service.** It holds vendor modules side by side (`src/razorpay-connector.ts` is the first), selected by configuration. A vendor module never imports core code. Core and parmana-connect share only the signed-release format and the public key.
+4. **parmana-connect stays generic and holds no vendor code.** It is the service that runs connectors defined by a manifest. Vendor connectors live in `parmana-connectors`, one folder per vendor. Each vendor module imports only the shared contract module (`src/connector-contract.ts`), which has no imports of its own. A vendor module never imports core code, the manifest engine, or another vendor's module. Core and each connector share only the signed-release format and the public key.
 
 ## Migration order
 
@@ -33,11 +33,11 @@ ADR-0013 already gives a way to run a connector outside core: a signed release, 
 | 1     | Razorpay refund        | New. Built as an external connector from the start, so it never enters core.                                                                                                                                           |
 | 2     | Paytm refund           | Already a forwarder to an external service (`PAYTM_CONNECTOR_URL`), using a shared secret. Moves to the signed release path. Production points at it today, so it moves before anything else in production is touched. |
 | 3     | Slack                  | Single capability. No write-back to Parmana's own data.                                                                                                                                                                |
-| 4     | GitHub                 | App authentication (an app JWT signed with a private key) needs code, not a manifest, in the connector. Built as a module in parmana-connect.                                                                          |
+| 4     | GitHub                 | App authentication (an app JWT signed with a private key) needs code, not a manifest, in the connector. Built as a module in parmana-connectors.                                                                       |
 | 5     | HubSpot                | Most used by the tutorials and the most test coverage in core. Last, so the migration pattern is proven before it.                                                                                                     |
 | 6     | Zerodha                | Package exists, not registered. Remove it with no migration.                                                                                                                                                           |
 
-Each step is one pull request in each repository, in this order: the module and its tests in parmana-connect; the registration in core, through maker and checker; the removal from core. A step is not finished until the removal is merged and the production check passes again.
+Each step is one pull request in each repository, in this order: the module and its tests in parmana-connectors; the registration in core, through maker and checker; the removal from core. A step is not finished until the removal is merged and the production check passes again.
 
 ## What is removed from core, per step
 
@@ -45,7 +45,7 @@ Each step is one pull request in each repository, in this order: the module and 
 - The gateway adapter in `packages/execution-gateway` for that vendor.
 - The bootstrap files and the registry entry in `packages/api/src/bootstrap/`.
 - The capability-to-policy binding in `packages/capability-registry`.
-- Integration tests that exercised only that vendor. Their behaviour moves to parmana-connect's tests and to the live check.
+- Integration tests that exercised only that vendor. Their behaviour moves to the tests of the vendor's connector in parmana-connectors, and to the live check.
 - Tutorials and examples for that vendor, rewritten to call the external path.
 
 ## What stays in core
@@ -64,7 +64,7 @@ Each step is one pull request in each repository, in this order: the module and 
 
 ## Open questions for the operator
 
-1. **Production Paytm.** Production points `PAYTM_CONNECTOR_URL` at the agent today. Confirm that the Paytm move may happen after the Razorpay module is live in parmana-connect, not before.
+1. **Production Paytm.** Production points `PAYTM_CONNECTOR_URL` at the agent today. Confirm that the Paytm move may happen after the Razorpay connector is deployed from parmana-connectors, not before.
 2. **HubSpot and Slack in production.** Confirm whether their tokens are set in production. If they are, their registrations come before the removal, with no gap.
 3. **Live Razorpay money.** Confirm that live keys stay refused (`PARMANA_RAZORPAY_ALLOW_LIVE_KEYS` unset) until the live check in step 1 is written and passed.
-4. **Repository.** Confirm that parmana-connect is the place for the vendor modules, and that it is not published as a separate product.
+4. **Repository.** Confirm that parmana-connectors is the place for the vendor modules, and that it stays private until a connector must be released or licensed separately.
