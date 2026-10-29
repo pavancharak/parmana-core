@@ -41,6 +41,7 @@ Start with the goal closest to yours. The full documentation is at [docs.parmana
 | Check a record with a standalone tool      | [Parmana Verifier](https://github.com/pavancharak/parmana-verifier), an offline checker with no network access and no account                                                  |
 | Review the security model                  | [Security](https://docs.parmanasystems.com/security/overview)                                                                                                                  |
 | See the evidence behind the claims         | [Reports and evidence](#reports-and-evidence)                                                                                                                                  |
+| Connect a system I run                     | [Connect any external system](https://docs.parmanasystems.com/guides/connect-any-external-system), and [connecting a system you run](#connecting-a-system-you-run) below       |
 | Run it on my own infrastructure            | [Self hosted](https://docs.parmanasystems.com/self-hosted/overview)                                                                                                            |
 | Choose the right path for my role          | [Choose your path](https://docs.parmanasystems.com/choose-your-path)                                                                                                           |
 
@@ -117,6 +118,14 @@ Authority --> Authorization --> Intent --> Business Transaction
 
 Key properties: fail-closed configuration (a misconfigured process refuses to start rather than degrade silently), credential isolation (a connector never receives long-lived credentials, only a single-use session), single-use authorizations (a nonce is accepted once), append-only signed evidence, and both classical (Ed25519) and post-quantum (ML-DSA-65, in the Node packages) signing.
 
+## Connecting a system you run
+
+Built-in connectors cover HubSpot, GitHub, Slack and Paytm. For any other system, an operator registers an **external connector**: a capability, the HTTPS endpoint that serves it, and the policy that governs it. Registration is a change that one person proposes and a different person approves with a step-up signature. Once active, Parmana sends each approved action to the endpoint as a signed release. The endpoint checks the release's signature and its audience, and it needs no shared secret.
+
+- [Connect any external system](https://docs.parmanasystems.com/guides/connect-any-external-system): the full order of steps.
+- [The parmana-connect service](https://docs.parmanasystems.com/connectors/parmana-connect): a ready-made endpoint that verifies releases and runs a manifest's HTTP call. Its source is in [pavancharak/parmana-connect](https://github.com/pavancharak/parmana-connect).
+- [ADR-0013](docs/adr/ADR-0013-Generic-External-Connector.md): the decision record, with its alternatives and limits.
+
 ## Reports and evidence
 
 Every report is listed once, here. Start with the question you have.
@@ -155,7 +164,7 @@ Every report is listed once, here. Start with the question you have.
 
 Assessed at Technology Readiness Level 6 (prototype demonstrated in a relevant environment) on the evidence in [docs/CLAIMS.md](docs/CLAIMS.md). Not claimed: sustained volume, load-bearing production traffic, high availability, or multi-tenant production operation.
 
-The claims file also tracks what has no implementation yet. Adding a connector is a source change today, not a runtime option; see [docs/connectors/BUILDING_A_CONNECTOR.md](docs/connectors/BUILDING_A_CONNECTOR.md).
+The claims file also tracks what has no implementation yet. Built-in connectors are source changes; see [docs/connectors/BUILDING_A_CONNECTOR.md](docs/connectors/BUILDING_A_CONNECTOR.md). An external connector is different: an operator registers it through maker and checker approval, with no deploy, as [ADR-0013](docs/adr/ADR-0013-Generic-External-Connector.md) describes.
 
 The HubSpot connector has been run against HubSpot's production API: a deal stage and amount were changed under policy through the signed gateway, then read back and reverted ([CLAIMS.md 3.10](docs/CLAIMS.md)).
 
