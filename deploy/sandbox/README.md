@@ -43,7 +43,7 @@ Expect: `Wrote 8 files to D:\key\parmana-sandbox`, listing them, and `No key was
 
 ### 2. Create the Supabase project (in the browser)
 
-In the Supabase dashboard: **New project**, a name such as `parmana-playground`, region **South Asia (Mumbai)**, a new
+In the Supabase dashboard: **New project**, a name such as `parmana-public-sandbox`, region **South Asia (Mumbai)**, a new
 database password. **Do not use the existing Supabase project named `parmana-sandbox`: despite its name, it is
 production's database** (project `ltjadvsjlpcygborxzet`); never pause or delete it. The project made on 2026-10-02
 (`zkrfrfyokkpfwghoohne`) and the `parmana-sandbox` Vercel project were removed; the sandbox is being set up again from
