@@ -2286,6 +2286,11 @@ and reported reproducing it at `80c3a92` in a clean environment with the release
 byte, and 18 tests passed. The maintainer stated that the tier change follows in a separate maintainer PR. Until that
 PR is merged, the tier is `community`, and nothing here claims Verified. #313 itself was merged into AgenTrust's `main` as `1aac6c8` on 2026-10-14, still at tier `community`.
 
+**Update (2026-10-29): Verified tier, scoped.** AgenTrust's `main` now sets `tier: verified` in
+`integrations/parmana-server/integration.yaml`, read on 2026-10-29. The integration's README scopes that tier to the
+offline fixture path: every connector result is a mock, `refundEligible` and `fraudCheckPassed` are declared by the
+caller, and no conformance level is claimed. The earlier `community` entries above are the record at their dates.
+
 **Where the replay refusal is checked.** The `replay` case (the approval from `valid-approval`, sent again with a new request) is refused with HTTP 403 `POLICY_DENIED`, zero connector invocations, and a Refusal Record whose `matchedRuleId` is `signal-state-verification-violation`, with the reason `managerApproved=true != verified managerApproved=false`: the approval is spent, so its verified state is false. The same run is in the AgenTrust integration merged as [integrations#294](https://github.com/agentrust-io/integrations/pull/294) (commit `6de4cb9`):
 
 - Fixture: [`fixtures/03-replay.refusal-record.json` line 46](https://github.com/agentrust-io/integrations/blob/6de4cb9/integrations/parmana-server/fixtures/03-replay.refusal-record.json#L46), `matchedRuleId`.
