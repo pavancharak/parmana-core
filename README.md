@@ -142,6 +142,10 @@ Every report is listed once, here. Start with the question you have.
 
 - **Policy approval log:** [governance/README.md](governance/README.md) describes the hash-chained log of policy change approvals, and how to verify it.
 
+**Third-party listing**
+
+- **AgenTrust:** the `parmana-server` integration is listed in the AgenTrust integrations repository at tier `verified` (read 2026-10-29). That tier covers the offline fixture path only: the connector results are mocks, and no conformance level is claimed. See [CLAIMS.md 3.23](docs/CLAIMS.md) and the [AgenTrust refund evaluation](docs/evaluation/agentrust-refund/README.md).
+
 **Paper and comparison**
 
 - **Technical paper:** design, threat model, evaluation and limitations, in [docs/paper/parmana-paper.pdf](docs/paper/parmana-paper.pdf).
