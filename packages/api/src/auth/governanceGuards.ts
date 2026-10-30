@@ -111,6 +111,15 @@ export function requirePendingForResolution(
  * no legitimate need for. A real checker debugging their own signing
  * tool has that detail available locally, from the tool that produced
  * the envelope, not from this response.
+ *
+ * Known limitation: a passing envelope's nonce is recorded here, before
+ * the approve or reject action runs. If that action then fails (for
+ * example, the policy file cannot be written), the envelope stays spent
+ * and the checker must sign a new one. Nothing is applied in that case,
+ * and no approval can be applied twice. Reserving the nonce and
+ * confirming it after the action would avoid the re-sign, at the cost
+ * of a schema change and a way to tell failures apart. This is kept on
+ * purpose; revisit it if these failures become common.
  */
 export async function requireStepUpAuthorization(
   req: Request,
