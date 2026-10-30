@@ -56,7 +56,7 @@ describe("GET /ready", () => {
 
   it("surfaces authDisabled:false when caller auth is enabled", async () => {
     const app = await buildApp({
-      authenticator: { authenticate: () => undefined },
+      authenticator: { authenticate: async () => undefined },
       auditSink: { record: async () => {} },
     });
 

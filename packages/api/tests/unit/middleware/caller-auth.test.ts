@@ -25,7 +25,7 @@ function createMockRes(): Response {
 }
 
 const VALID_AUTHENTICATOR: CallerAuthenticator = {
-  authenticate: (credential) =>
+  authenticate: async (credential) =>
     credential === "good-key" ? { callerId: "caller-1" } : undefined,
 };
 

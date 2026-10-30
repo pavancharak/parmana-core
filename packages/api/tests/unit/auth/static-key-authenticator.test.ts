@@ -1,6 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { AuthorityType } from "@parmana/shared";
+import type { CallerKeyRevocationRepository } from "@parmana/shared";
+import { MemoryCallerKeyRevocationRepository } from "@parmana/storage";
 
 import { hashApiKey } from "../../../src/auth/hashApiKey.js";
 import { StaticKeyAuthenticator } from "../../../src/auth/StaticKeyAuthenticator.js";
@@ -20,112 +22,118 @@ describe("hashApiKey", () => {
 });
 
 describe("StaticKeyAuthenticator", () => {
-  it("authenticates a caller whose key matches a configured hash", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("authenticates a caller whose key matches a configured hash", async () => {
     const rawKey = "correct-horse-battery-staple";
 
     const authenticator = new StaticKeyAuthenticator([
       { callerId: "orchestrator-1", keyHash: hashApiKey(rawKey) },
     ]);
 
-    expect(authenticator.authenticate(rawKey)).toEqual({
+    await expect(authenticator.authenticate(rawKey)).resolves.toEqual({
       callerId: "orchestrator-1",
     });
   });
 
-  it("rejects an unrecognized key", () => {
+  it("rejects an unrecognized key", async () => {
     const authenticator = new StaticKeyAuthenticator([
       { callerId: "orchestrator-1", keyHash: hashApiKey("the-real-key") },
     ]);
 
-    expect(
+    await expect(
       authenticator.authenticate("a-completely-different-key"),
-    ).toBeUndefined();
+    ).resolves.toBeUndefined();
   });
 
-  it("rejects an undefined credential", () => {
+  it("rejects an undefined credential", async () => {
     const authenticator = new StaticKeyAuthenticator([
       { callerId: "orchestrator-1", keyHash: hashApiKey("the-real-key") },
     ]);
 
-    expect(authenticator.authenticate(undefined)).toBeUndefined();
+    await expect(
+      authenticator.authenticate(undefined),
+    ).resolves.toBeUndefined();
   });
 
-  it("rejects an empty-string credential", () => {
+  it("rejects an empty-string credential", async () => {
     const authenticator = new StaticKeyAuthenticator([
       { callerId: "orchestrator-1", keyHash: hashApiKey("the-real-key") },
     ]);
 
-    expect(authenticator.authenticate("")).toBeUndefined();
+    await expect(authenticator.authenticate("")).resolves.toBeUndefined();
   });
 
-  it("distinguishes between two different callers' keys", () => {
+  it("distinguishes between two different callers' keys", async () => {
     const authenticator = new StaticKeyAuthenticator([
       { callerId: "caller-a", keyHash: hashApiKey("key-a") },
       { callerId: "caller-b", keyHash: hashApiKey("key-b") },
     ]);
 
-    expect(authenticator.authenticate("key-a")).toEqual({
+    await expect(authenticator.authenticate("key-a")).resolves.toEqual({
       callerId: "caller-a",
     });
-    expect(authenticator.authenticate("key-b")).toEqual({
+    await expect(authenticator.authenticate("key-b")).resolves.toEqual({
       callerId: "caller-b",
     });
   });
 
-  it("a key valid for one caller does not authenticate as a different caller", () => {
+  it("a key valid for one caller does not authenticate as a different caller", async () => {
     const authenticator = new StaticKeyAuthenticator([
       { callerId: "caller-a", keyHash: hashApiKey("key-a") },
       { callerId: "caller-b", keyHash: hashApiKey("key-b") },
     ]);
 
-    const result = authenticator.authenticate("key-a");
+    const result = await authenticator.authenticate("key-a");
 
     expect(result?.callerId).toBe("caller-a");
     expect(result?.callerId).not.toBe("caller-b");
   });
 
-  it("supports multiple active keys for the same caller (rotation, both valid)", () => {
+  it("supports multiple active keys for the same caller (rotation, both valid)", async () => {
     const authenticator = new StaticKeyAuthenticator([
       { callerId: "orchestrator-1", keyHash: hashApiKey("old-key") },
       { callerId: "orchestrator-1", keyHash: hashApiKey("new-key") },
     ]);
 
-    expect(authenticator.authenticate("old-key")).toEqual({
+    await expect(authenticator.authenticate("old-key")).resolves.toEqual({
       callerId: "orchestrator-1",
     });
-    expect(authenticator.authenticate("new-key")).toEqual({
+    await expect(authenticator.authenticate("new-key")).resolves.toEqual({
       callerId: "orchestrator-1",
     });
   });
 
-  it("a revoked key stops authenticating once its entry is removed", () => {
+  it("a retired key stops authenticating once its entry is removed at restart", async () => {
     const oldKey = "old-key";
     const newKey = "new-key";
 
-    const beforeRevocation = new StaticKeyAuthenticator([
+    const beforeRetirement = new StaticKeyAuthenticator([
       { callerId: "orchestrator-1", keyHash: hashApiKey(oldKey) },
       { callerId: "orchestrator-1", keyHash: hashApiKey(newKey) },
     ]);
 
-    expect(beforeRevocation.authenticate(oldKey)).toEqual({
+    await expect(beforeRetirement.authenticate(oldKey)).resolves.toEqual({
       callerId: "orchestrator-1",
     });
 
-    // Rotation completes: the old entry is removed from config, the new
-    // one remains. This models "add-new, migrate, revoke-old" with no
-    // downtime — the authenticator is just reconstructed from the new
-    // config, exactly like a real config reload would do.
-    const afterRevocation = new StaticKeyAuthenticator([
+    // Retirement at restart: the old entry is removed from config, the new
+    // one remains. The authenticator is rebuilt from the new config, as a
+    // config reload would do. Use a revocation to refuse a key without a
+    // restart (see the revocation tests below).
+    const afterRetirement = new StaticKeyAuthenticator([
       { callerId: "orchestrator-1", keyHash: hashApiKey(newKey) },
     ]);
 
-    expect(afterRevocation.authenticate(oldKey)).toBeUndefined();
-    expect(afterRevocation.authenticate(newKey)).toEqual({
+    await expect(afterRetirement.authenticate(oldKey)).resolves.toBeUndefined();
+    await expect(afterRetirement.authenticate(newKey)).resolves.toEqual({
       callerId: "orchestrator-1",
     });
   });
 
-  it("propagates allowedCapabilities onto the returned identity when configured", () => {
+  it("propagates allowedCapabilities onto the returned identity when configured", async () => {
     const authenticator = new StaticKeyAuthenticator([
       {
         callerId: "orchestrator-1",
@@ -134,23 +142,23 @@ describe("StaticKeyAuthenticator", () => {
       },
     ]);
 
-    expect(authenticator.authenticate("the-real-key")).toEqual({
+    await expect(authenticator.authenticate("the-real-key")).resolves.toEqual({
       callerId: "orchestrator-1",
       allowedCapabilities: ["razorpay:refund-create"],
     });
   });
 
-  it("omits allowedCapabilities from the returned identity when not configured", () => {
+  it("omits allowedCapabilities from the returned identity when not configured", async () => {
     const authenticator = new StaticKeyAuthenticator([
       { callerId: "orchestrator-1", keyHash: hashApiKey("the-real-key") },
     ]);
 
-    expect(
-      authenticator.authenticate("the-real-key")?.allowedCapabilities,
-    ).toBeUndefined();
+    const identity = await authenticator.authenticate("the-real-key");
+
+    expect(identity?.allowedCapabilities).toBeUndefined();
   });
 
-  it("propagates credentialHolderType onto the returned identity when configured", () => {
+  it("propagates credentialHolderType onto the returned identity when configured", async () => {
     const authenticator = new StaticKeyAuthenticator([
       {
         callerId: "orchestrator-1",
@@ -159,19 +167,120 @@ describe("StaticKeyAuthenticator", () => {
       },
     ]);
 
-    expect(authenticator.authenticate("the-real-key")).toEqual({
+    await expect(authenticator.authenticate("the-real-key")).resolves.toEqual({
       callerId: "orchestrator-1",
       credentialHolderType: AuthorityType.USER,
     });
   });
 
-  it("omits credentialHolderType from the returned identity when not configured", () => {
+  it("omits credentialHolderType from the returned identity when not configured", async () => {
     const authenticator = new StaticKeyAuthenticator([
       { callerId: "orchestrator-1", keyHash: hashApiKey("the-real-key") },
     ]);
 
-    expect(
-      authenticator.authenticate("the-real-key")?.credentialHolderType,
-    ).toBeUndefined();
+    const identity = await authenticator.authenticate("the-real-key");
+
+    expect(identity?.credentialHolderType).toBeUndefined();
+  });
+
+  describe("revocation", () => {
+    it("refuses a configured key on the next request once it is revoked, with no restart", async () => {
+      const revocations = new MemoryCallerKeyRevocationRepository();
+      const authenticator = new StaticKeyAuthenticator(
+        [{ callerId: "agent-1", keyHash: hashApiKey("agent-key") }],
+        revocations,
+      );
+
+      await expect(authenticator.authenticate("agent-key")).resolves.toEqual({
+        callerId: "agent-1",
+      });
+
+      await revocations.revoke({
+        keyHash: hashApiKey("agent-key"),
+        callerId: "agent-1",
+        revokedBy: "operator-1",
+        reason: "key exposed",
+        revokedAt: new Date(),
+      });
+
+      await expect(
+        authenticator.authenticate("agent-key"),
+      ).resolves.toBeUndefined();
+    });
+
+    it("leaves other keys working when one key is revoked", async () => {
+      const revocations = new MemoryCallerKeyRevocationRepository();
+      const authenticator = new StaticKeyAuthenticator(
+        [
+          { callerId: "agent-1", keyHash: hashApiKey("key-1") },
+          { callerId: "agent-2", keyHash: hashApiKey("key-2") },
+        ],
+        revocations,
+      );
+
+      await revocations.revoke({
+        keyHash: hashApiKey("key-1"),
+        callerId: "agent-1",
+        revokedBy: "operator-1",
+        reason: "rotated",
+        revokedAt: new Date(),
+      });
+
+      await expect(
+        authenticator.authenticate("key-1"),
+      ).resolves.toBeUndefined();
+      await expect(authenticator.authenticate("key-2")).resolves.toEqual({
+        callerId: "agent-2",
+      });
+    });
+
+    it("refuses the key when the revocation store fails, so a store outage never admits a revoked key", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      const failingStore: CallerKeyRevocationRepository = {
+        isRevoked: async () => {
+          throw new Error("database unavailable");
+        },
+        revoke: async () => {},
+      };
+
+      const authenticator = new StaticKeyAuthenticator(
+        [{ callerId: "agent-1", keyHash: hashApiKey("agent-key") }],
+        failingStore,
+      );
+
+      await expect(
+        authenticator.authenticate("agent-key"),
+      ).resolves.toBeUndefined();
+      expect(consoleError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: "caller_key_revocation_lookup_failed",
+        }),
+      );
+    });
+
+    it("a repeated revoke of the same key changes nothing", async () => {
+      const revocations = new MemoryCallerKeyRevocationRepository();
+      const revocation = {
+        keyHash: hashApiKey("agent-key"),
+        callerId: "agent-1",
+        revokedBy: "operator-1",
+        reason: "key exposed",
+        revokedAt: new Date("2026-10-30T10:00:00Z"),
+      };
+
+      await revocations.revoke(revocation);
+      await revocations.revoke({
+        ...revocation,
+        revokedBy: "operator-2",
+        revokedAt: new Date("2026-10-30T11:00:00Z"),
+      });
+
+      await expect(revocations.isRevoked(revocation.keyHash)).resolves.toBe(
+        true,
+      );
+    });
   });
 });

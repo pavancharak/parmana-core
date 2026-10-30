@@ -73,6 +73,10 @@ export const approvalIssuerRepository = lazyRepository(
   (provider) => provider.approvalIssuers,
 );
 
+export const callerKeyRevocationRepository = lazyRepository(
+  (provider) => provider.callerKeyRevocations,
+);
+
 export const externalConnectorRepository = lazyRepository(
   (provider) => provider.externalConnectors,
 );

@@ -60,7 +60,7 @@ export function createCallerAuthMiddleware(
     next: NextFunction,
   ): Promise<void> => {
     const credential = extractBearerToken(req.headers.authorization);
-    const identity = authenticator.authenticate(credential);
+    const identity = await authenticator.authenticate(credential);
 
     if (!identity) {
       const recorded = await recordCallerAuditEvent(

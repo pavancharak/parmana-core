@@ -3,6 +3,7 @@ import { loadConfig, type Config } from "@parmana/shared";
 import { StaticKeyAuthenticator } from "../auth/StaticKeyAuthenticator.js";
 import type { CallerAuthenticator } from "../auth/CallerAuthenticator.js";
 import type { CallerAuditSink } from "../auth/CallerAuditSink.js";
+import { callerKeyRevocationRepository } from "../repositories.js";
 
 import { createCallerAuditSink } from "./createCallerAuditSink.js";
 
@@ -56,7 +57,10 @@ export function createCallerAuthenticator(
 
   return {
     disabled: false,
-    authenticator: new StaticKeyAuthenticator(config.auth.keys),
+    authenticator: new StaticKeyAuthenticator(
+      config.auth.keys,
+      callerKeyRevocationRepository,
+    ),
     auditSink: createCallerAuditSink(),
   };
 }

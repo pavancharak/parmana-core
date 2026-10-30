@@ -87,6 +87,16 @@ PR #176 (the doc update) was closed without merging on 2026-10-28. Its branch `d
 | 49  | Three-role policy approval, tiered approval, freeze after repeated denied attempts, write-once approval storage, Connector secrets in AWS Secrets Manager, GitHub App key via Vercel Connect | H (not scheduled)    | Decision                       | No                 | Only if scheduled                            |
 | 50  | CAGE integration: design never merged, branches deleted                                                                                                                                      | A ("not built")      | Decision                       | No                 | Only if wanted                               |
 
+## Found by the code check (2026-10-30)
+
+Rows 51 and 52 block safety claims, so they are P1. Row 53 is P2. Each row was checked against the code on `main` at `b1e12d7`.
+
+| #   | Item                                                                                                                                                                                                                                                                          | Gap / issue                                                                            | Owner                  | Sandbox            | Done when                                                                       |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------- | ------------------ | ------------------------------------------------------------------------------- |
+| 51  | P1, safety claim: a revoked agent API key still works until the server restarts with a new `PARMANA_API_KEYS`. Caller keys are loaded once at startup. Make revocation take effect on the next request, as approver revocation does, or document the restart and enforce it   | `packages/api/src/bootstrap/createCallerAuthenticator.ts`, `StaticKeyAuthenticator.ts` | Engineering            | Yes, code and test | A revoked key is refused on the next request, with a test                       |
+| 52  | P1, safety claim: connector credentials are readable by any code in the server process or host that can read its environment. The claim "the agent never holds the real credentials" holds only for HTTP callers. Isolate the gateway, or qualify the claim in CLAIMS.md 2.47 | `packages/api/src/bootstrap/secrets/EnvSecretsProvider.ts`, gateway adapters           | Engineering + decision | Partly             | Either the claim holds for co-located code, or its wording names the limit      |
+| 53  | P2: approval gates reads per policy, not globally. The shipped `github-pr-read` and `hubspot-deal-read` policies declare `readApproved`; other read capabilities were not checked                                                                                             | `policies/`, CLAIMS.md 2.47                                                            | Engineering            | Yes, code and docs | Every read policy declares `readApproved`, or is listed as ungated in CLAIMS.md |
+
 ## Closed by decision (no action unless reopened)
 
 - G-3 cleanup of live database rows left by opt-in tests: closed by decision 2026-09-29.
@@ -104,7 +114,8 @@ PR #176 (the doc update) was closed without merging on 2026-10-28. Its branch `d
 - P1: rows 1 to 5 (5 items).
 - P2: rows 6 to 24 (19 items, including the operator items 15, 16, 20 to 24).
 - P3: rows 25 to 50 (26 items).
-- Total: 50 rows.
+- Code check (2026-10-30): rows 51 to 53 (3 items; 51 and 52 are P1, 53 is P2).
+- Total: 53 rows.
 
 ## Not in this inventory
 
