@@ -102,9 +102,6 @@ BEGIN
     DELETE FROM overrides WHERE business_transaction_id = ANY (old_transactions);
     GET DIAGNOSTICS n = ROW_COUNT; table_name := 'overrides'; deleted := n; summary := summary || jsonb_build_object(table_name, n); RETURN NEXT;
 
-    DELETE FROM settlement_confirmations WHERE business_transaction_id = ANY (old_transactions);
-    GET DIAGNOSTICS n = ROW_COUNT; table_name := 'settlement_confirmations'; deleted := n; summary := summary || jsonb_build_object(table_name, n); RETURN NEXT;
-
     DELETE FROM executions WHERE business_transaction_id = ANY (old_transactions);
     GET DIAGNOSTICS n = ROW_COUNT; table_name := 'executions'; deleted := n; summary := summary || jsonb_build_object(table_name, n); RETURN NEXT;
 
