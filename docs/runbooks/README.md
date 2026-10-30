@@ -19,6 +19,7 @@ Operator guides for running Parmana in production and for working on it locally.
 | The kill switch is on, or the probe reports it                                                         | [KILL-SWITCH-OPERATIONS.md](KILL-SWITCH-OPERATIONS.md)                       |
 | The server refuses to start over Paytm settings, or a Paytm refund fails to authenticate               | [PAYTM-CONNECTOR.md](PAYTM-CONNECTOR.md)                                     |
 | An approval signed by an approver is refused, or you need to add or revoke an approval issuer          | [APPROVAL-ISSUERS.md](APPROVAL-ISSUERS.md)                                   |
+| A revoked caller API key still works, or a caller is refused after a revocation                        | [CALLER-KEY-REVOCATION.md](CALLER-KEY-REVOCATION.md)                         |
 | A file was deleted by mistake                                                                          | [PRODUCTION-TROUBLESHOOTING.md](PRODUCTION-TROUBLESHOOTING.md), section 12   |
 | Commits show as unverified on GitHub, or `git commit` fails at signing                                 | [SIGNING-COMMITS.md](SIGNING-COMMITS.md)                                     |
 | A Dependabot alert is open, or you need to check that a dependency fix is on `main`                    | [DEPENDABOT-ALERTS.md](DEPENDABOT-ALERTS.md)                                 |
