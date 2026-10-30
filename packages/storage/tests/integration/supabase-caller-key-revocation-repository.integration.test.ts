@@ -8,14 +8,39 @@ import { SupabaseCallerKeyRevocationRepository } from "../../src/supabase/Supaba
 import { resolveDatabaseGate } from "../helpers/database-availability.js";
 
 /**
+ * Whether DATABASE_URL points at a database this suite may write to: a
+ * local host, or one the operator has declared disposable with
+ * TEST_DATABASE_IS_DISPOSABLE=1. A hosted database, such as the Supabase
+ * pooler, is refused by default, even when ALLOW_LIVE_SUPABASE=1 is set,
+ * because this suite writes rows to it.
+ */
+function isLocalOrDeclaredDisposable(): boolean {
+  const url = process.env.DATABASE_URL;
+
+  if (url === undefined) return false;
+
+  let host: string;
+
+  try {
+    host = new URL(url).hostname;
+  } catch {
+    return false;
+  }
+
+  const local = host === "127.0.0.1" || host === "localhost";
+
+  return local || process.env.TEST_DATABASE_IS_DISPOSABLE === "1";
+}
+
+/**
  * Runs against a real Postgres with migration 20261030120000 applied:
  * CI's Docker image workflow, or a disposable local database. Never
  * point it at production. It inserts rows with random key hashes and
  * deletes them again afterwards.
  */
-const databaseConfigured = resolveDatabaseGate(
-  "Supabase Caller Key Revocation Repository",
-);
+const databaseConfigured =
+  resolveDatabaseGate("Supabase Caller Key Revocation Repository") &&
+  isLocalOrDeclaredDisposable();
 
 describe.skipIf(!databaseConfigured)(
   "SupabaseCallerKeyRevocationRepository (live)",
