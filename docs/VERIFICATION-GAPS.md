@@ -308,9 +308,10 @@ exhaustiveness)` by the Strategic Positioning source-code validation audit (2026
   `appendReceipt`, `appendSettlementConfirmation`) and `BusinessTransactionRepository`
   (`accept`/`create`) to its callers, repo-wide: every one has exactly one caller, always
   inside `packages/runtime/src/services/*` or `ExecutionTrustApplication`
-  (`appendSettlementConfirmation`'s sole caller, `RazorpaySettlementProcessor.ts:203`, is
-  itself gated by an independent re-fetch of real Razorpay state before writing, not
-  caller-triggered directly). Zero routes in `packages/api/src/routes`, zero SDK methods in
+  (`appendSettlementConfirmation`'s sole caller, `RazorpaySettlementProcessor.ts:203`, at the time of the
+  2026-08-09 audit, was itself gated by an independent re-fetch of real Razorpay state before writing, not
+  caller-triggered directly; that processor and the table were removed later, the table on 2026-10-30
+  by `20261030130000`). Zero routes in `packages/api/src/routes`, zero SDK methods in
   `typescript/src`/`python/parmana`, write to either repository directly. **Now DIRECTLY
   VALIDATED**, not merely unvalidated-but-presumed-clean: `docs/CLAIMS.md` 2.22's "no code
   path that does not pass through `RuntimeEngine`" scope is confirmed to extend to the
