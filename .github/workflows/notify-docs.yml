@@ -1,0 +1,28 @@
+name: Notify docs repo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "THREAT-MODEL.md"
+      - "DECISIONS.md"
+      - "CONTRIBUTING.md"
+      - "04-INCIDENTS-LOG.md"
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ask parmana-docs to sync internal/
+        env:
+          TOKEN: ${{ secrets.DOCS_DISPATCH_TOKEN }}
+        run: |
+          curl -sSf -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $TOKEN" \
+            https://api.github.com/repos/pavancharak/parmana-docs/dispatches \
+            -d '{"event_type":"core-docs-changed"}'
