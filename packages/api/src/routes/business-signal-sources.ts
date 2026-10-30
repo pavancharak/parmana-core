@@ -20,6 +20,7 @@ import {
 
 import {
   requireHumanCaller,
+  requirePendingForResolution,
   requireStepUpAuthorization,
 } from "../auth/governanceGuards.js";
 import type { PolicyChangeStepUpVerifier } from "../auth/PolicyChangeStepUpVerifier.js";
@@ -357,6 +358,8 @@ export function createBusinessSignalSourcesRouter(
         "Business signal source change",
       );
     }
+
+    requirePendingForResolution(existing, id);
 
     await requireStepUpAuthorization(req, stepUpVerifier, {
       pendingPolicyChangeId: id,

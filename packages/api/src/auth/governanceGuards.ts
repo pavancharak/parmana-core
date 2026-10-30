@@ -3,7 +3,9 @@ import crypto from "node:crypto";
 import type { NextFunction, Request } from "express";
 
 import {
+  ConflictError,
   NonHumanCallerDeniedError,
+  PendingPolicyChangeStatus,
   StepUpAuthorizationInvalidError,
 } from "@parmana/shared";
 
@@ -65,6 +67,25 @@ export async function requireHumanCaller(
 }
 
 /**
+ * Refuses an approve/reject on a change that is no longer
+ * PENDING_APPROVAL (409). Call it before requireStepUpAuthorization:
+ * that guard consumes the envelope's nonce, so a state check that runs
+ * after it would spend a valid envelope on a change that is never
+ * resolved, and the checker would have to sign a new one.
+ */
+export function requirePendingForResolution(
+  change: { readonly status: PendingPolicyChangeStatus },
+  id: string,
+): void {
+  if (change.status !== PendingPolicyChangeStatus.PENDING_APPROVAL) {
+    throw new ConflictError(
+      `Pending Policy Change '${id}' is already '${change.status}' -- ` +
+        "only a PENDING_APPROVAL change can be approved or rejected.",
+    );
+  }
+}
+
+/**
  * Enforces PolicyChangeStepUpVerifier on an approve/reject request,
  * on top of (never instead of) requireHumanCaller and maker != checker
  * -- see this file's top-of-file note and
@@ -90,6 +111,15 @@ export async function requireHumanCaller(
  * no legitimate need for. A real checker debugging their own signing
  * tool has that detail available locally, from the tool that produced
  * the envelope, not from this response.
+ *
+ * Known limitation: a passing envelope's nonce is recorded here, before
+ * the approve or reject action runs. If that action then fails (for
+ * example, the policy file cannot be written), the envelope stays spent
+ * and the checker must sign a new one. Nothing is applied in that case,
+ * and no approval can be applied twice. Reserving the nonce and
+ * confirming it after the action would avoid the re-sign, at the cost
+ * of a schema change and a way to tell failures apart. This is kept on
+ * purpose; revisit it if these failures become common.
  */
 export async function requireStepUpAuthorization(
   req: Request,

@@ -16,6 +16,7 @@ import {
 
 import {
   requireHumanCaller,
+  requirePendingForResolution,
   requireStepUpAuthorization,
 } from "../auth/governanceGuards.js";
 import type { PolicyChangeStepUpVerifier } from "../auth/PolicyChangeStepUpVerifier.js";
@@ -413,6 +414,8 @@ export function createAuthorityGrantsRouter(
     if (existing.callerId === req.callerId) {
       throw new SelfGrantError(existing.callerId);
     }
+
+    requirePendingForResolution(existing, id);
 
     await requireStepUpAuthorization(req, stepUpVerifier, {
       pendingPolicyChangeId: id,

@@ -218,8 +218,9 @@ describe("Policy Governance: isHumanCaller, maker != checker, step-up (HTTP boun
 
     const callerAuditSink = new InMemoryCallerAuditSink();
 
+    const stepUpNonceStore = new MemoryNonceStore();
     const stepUpVerifier = new PolicyChangeStepUpVerifier({
-      nonceStore: new MemoryNonceStore(),
+      nonceStore: stepUpNonceStore,
     });
 
     const app = createApp(application, {
@@ -234,6 +235,7 @@ describe("Policy Governance: isHumanCaller, maker != checker, step-up (HTTP boun
       callerAuditSink,
       scratchPolicyDir,
       policyChangeApprovalRecordRepository,
+      stepUpNonceStore,
     };
   }
 
@@ -907,6 +909,31 @@ describe("Policy Governance: isHumanCaller, maker != checker, step-up (HTTP boun
       ).resolves.toEqual([]);
     });
 
+    it("does not spend the step-up envelope when the change is no longer pending", async () => {
+      const { app, stepUpNonceStore } = buildApp();
+      const id = await proposeChange(app, "governance-nonce-not-spent");
+
+      const rejected = await request(app)
+        .post(`/policies/pending-changes/${id}/reject`)
+        .set("Authorization", `Bearer ${HUMAN_CHECKER_KEY}`)
+        .send({
+          rejectionReason: "does not meet bar",
+          stepUpAuthorization: await signStepUp(id, "reject"),
+        });
+
+      expect(rejected.status).toBe(200);
+
+      const consumeNonce = vi.spyOn(stepUpNonceStore, "checkAndRecord");
+
+      const approved = await request(app)
+        .post(`/policies/pending-changes/${id}/approve`)
+        .set("Authorization", `Bearer ${HUMAN_CHECKER_KEY}`)
+        .send({ stepUpAuthorization: await signStepUp(id, "approve") });
+
+      expect(approved.status).toBe(409);
+      expect(consumeNonce).not.toHaveBeenCalled();
+    });
+
     it("lets exactly one of two concurrent approvals through, with one approval record", async () => {
       const { app, scratchPolicyDir, policyChangeApprovalRecordRepository } =
         buildApp();
@@ -932,32 +959,33 @@ describe("Policy Governance: isHumanCaller, maker != checker, step-up (HTTP boun
       expect(records[0].pendingPolicyChangeId).toBe(id);
     });
 
-    it("denies a replayed (reused) step-up envelope on a second approval attempt", async () => {
-      const { app } = buildApp();
+    it("denies a replayed (reused) step-up envelope on a still-pending change", async () => {
+      const { app, stepUpNonceStore } = buildApp();
       const id = await proposeChange(app, "governance-approve-replay");
 
       const stepUpAuthorization = await signStepUp(id, "approve");
 
-      const first = await request(app)
-        .post(`/policies/pending-changes/${id}/approve`)
-        .set("Authorization", `Bearer ${HUMAN_CHECKER_KEY}`)
-        .send({ stepUpAuthorization });
-
-      expect(first.status).toBe(200);
+      // The envelope was already used once, so its nonce is recorded. The
+      // change is still PENDING_APPROVAL, so only the replay check can refuse
+      // this request.
+      await stepUpNonceStore.checkAndRecord(
+        stepUpAuthorization.payload.nonce,
+        stepUpAuthorization.payload.expiresAt,
+      );
 
       const consoleError = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
 
       try {
-        const second = await request(app)
+        const replay = await request(app)
           .post(`/policies/pending-changes/${id}/approve`)
           .set("Authorization", `Bearer ${HUMAN_CHECKER_KEY}`)
           .send({ stepUpAuthorization });
 
-        expect(second.status).toBe(403);
-        expect(second.body.code).toBe("STEP_UP_AUTHORIZATION_INVALID");
-        expect(second.body.checks).toBeUndefined();
+        expect(replay.status).toBe(403);
+        expect(replay.body.code).toBe("STEP_UP_AUTHORIZATION_INVALID");
+        expect(replay.body.checks).toBeUndefined();
         expect(loggedChecks(consoleError)).toMatchObject({
           nonceUnseen: false,
         });
