@@ -21,6 +21,7 @@ import { CANONICAL_CAPABILITY_POLICY_BINDINGS } from "@parmana/policy";
 
 import {
   requireHumanCaller,
+  requirePendingForResolution,
   requireStepUpAuthorization,
 } from "../auth/governanceGuards.js";
 import type { PolicyChangeStepUpVerifier } from "../auth/PolicyChangeStepUpVerifier.js";
@@ -395,6 +396,8 @@ export function createExternalConnectorsRouter(
         "External connector change",
       );
     }
+
+    requirePendingForResolution(existing, id);
 
     await requireStepUpAuthorization(req, stepUpVerifier, {
       pendingPolicyChangeId: id,

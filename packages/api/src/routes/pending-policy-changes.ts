@@ -8,7 +8,6 @@ import { Router } from "express";
 import type { NextFunction, Request, Response } from "express";
 
 import {
-  ConflictError,
   ParmanaError,
   PendingPolicyChangeStatus,
   SameActorCannotApproveOwnChangeError,
@@ -28,6 +27,7 @@ import { pendingPolicyChangeRepository } from "../repositories.js";
 import { policyRepository } from "../application.js";
 import {
   requireHumanCaller,
+  requirePendingForResolution,
   requireStepUpAuthorization,
 } from "../auth/governanceGuards.js";
 import type { PolicyChangeStepUpVerifier } from "../auth/PolicyChangeStepUpVerifier.js";
@@ -357,9 +357,11 @@ export function createPendingPolicyChangesRouter(
    * POST /policies/pending-changes/:id/approve
    *
    * Approve (checker). Enforces isHumanCaller, maker != checker
-   * (SameActorCannotApproveOwnChangeError), and step-up authorization
-   * (StepUpAuthorizationInvalidError) -- in that order, each a
-   * precondition for the next, all fail-closed. Once those pass,
+   * (SameActorCannotApproveOwnChangeError), checker scope, the change
+   * still being PENDING_APPROVAL (ConflictError), and step-up
+   * authorization (StepUpAuthorizationInvalidError) -- in that order,
+   * each a precondition for the next, all fail-closed. The step-up
+   * check is last because it consumes the envelope's nonce. Once those pass,
    * PolicyChangeApprovalService applies the change's live effect and
    * records signed evidence of it, and only then does this handler
    * resolve the pending change to APPROVED -- see this file's
@@ -414,24 +416,17 @@ export function createPendingPolicyChangesRouter(
           return;
         }
 
+        //
+        // Before the step-up guard, which consumes the envelope's nonce.
+        // Without this, a rejected or already approved change answered 409
+        // only after the envelope was spent.
+        //
+        requirePendingForResolution(existing, id);
+
         await requireStepUpAuthorization(req, stepUpVerifier, {
           pendingPolicyChangeId: id,
           action: "approve",
         });
-
-        //
-        // Checked here, before PolicyChangeApprovalService.approve()
-        // writes the live policy and its signed approval record. The
-        // same guard in pendingPolicyChangeRepository.resolve() runs
-        // only afterwards, so without this a rejected or already
-        // approved change went live and then answered 409.
-        //
-        if (existing.status !== PendingPolicyChangeStatus.PENDING_APPROVAL) {
-          throw new ConflictError(
-            `Pending Policy Change '${id}' is already '${existing.status}' -- ` +
-              "only a PENDING_APPROVAL change can be approved or rejected.",
-          );
-        }
 
         if (policyChangeApprovalService === undefined) {
           throw new Error(
@@ -544,6 +539,8 @@ export function createPendingPolicyChangesRouter(
           });
           return;
         }
+
+        requirePendingForResolution(existing, id);
 
         await requireStepUpAuthorization(req, stepUpVerifier, {
           pendingPolicyChangeId: id,

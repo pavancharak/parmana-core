@@ -15,6 +15,7 @@ import {
 
 import {
   requireHumanCaller,
+  requirePendingForResolution,
   requireStepUpAuthorization,
 } from "../auth/governanceGuards.js";
 import type { PolicyChangeStepUpVerifier } from "../auth/PolicyChangeStepUpVerifier.js";
@@ -304,6 +305,8 @@ export function createApprovalIssuersRouter(
     if (existing.proposedBy === req.callerId) {
       throw new SameActorCannotApproveOwnChangeError(id, "Approver change");
     }
+
+    requirePendingForResolution(existing, id);
 
     await requireStepUpAuthorization(req, stepUpVerifier, {
       pendingPolicyChangeId: id,

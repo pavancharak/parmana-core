@@ -3,7 +3,9 @@ import crypto from "node:crypto";
 import type { NextFunction, Request } from "express";
 
 import {
+  ConflictError,
   NonHumanCallerDeniedError,
+  PendingPolicyChangeStatus,
   StepUpAuthorizationInvalidError,
 } from "@parmana/shared";
 
@@ -62,6 +64,25 @@ export async function requireHumanCaller(
   }
 
   throw new NonHumanCallerDeniedError();
+}
+
+/**
+ * Refuses an approve/reject on a change that is no longer
+ * PENDING_APPROVAL (409). Call it before requireStepUpAuthorization:
+ * that guard consumes the envelope's nonce, so a state check that runs
+ * after it would spend a valid envelope on a change that is never
+ * resolved, and the checker would have to sign a new one.
+ */
+export function requirePendingForResolution(
+  change: { readonly status: PendingPolicyChangeStatus },
+  id: string,
+): void {
+  if (change.status !== PendingPolicyChangeStatus.PENDING_APPROVAL) {
+    throw new ConflictError(
+      `Pending Policy Change '${id}' is already '${change.status}' -- ` +
+        "only a PENDING_APPROVAL change can be approved or rejected.",
+    );
+  }
 }
 
 /**
