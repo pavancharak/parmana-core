@@ -28,7 +28,6 @@ psql "$DATABASE_URL"
 | `execution_trust_records`               | The signed, final trust record                                          | `SupabaseExecutionTrustRecordRepository`       |
 | `verifications`                         | Log of independent verification calls                                   | `SupabaseExecutionTrustRecordRepository`       |
 | `receipts`                              | Signed receipts                                                         | `SupabaseExecutionTrustRecordRepository`       |
-| `settlement_confirmations`              | Signed settlement confirmations                                         | `SupabaseExecutionTrustRecordRepository`       |
 | `overrides`                             | `OverrideService` backing table, deliberately unreachable, expect empty | `SupabaseExecutionTrustRecordRepository`       |
 | `refusal_records`                       | Signed record of a refused decision                                     | `SupabaseRefusalRecordRepository`              |
 | `execution_intents`                     | Signed intent stored before an action is released                       | `SupabaseExecutionIntentRepository`            |
@@ -113,19 +112,6 @@ Created by `20260629013035_initial_schema.sql` (`trust_record_id` primary key,
   through this table).
 
 RLS enabled.
-
-### `settlement_confirmations`
-
-Signed confirmations that a transaction settled. Created by
-`20260718190412_add_settlement_confirmations_and_audit_severity.sql` with the same shape as
-`receipts`: `confirmation_id TEXT` primary key, `business_transaction_id TEXT NOT NULL`,
-`confirmation_json JSONB NOT NULL`, `issued_at TIMESTAMPTZ NOT NULL`, `seq BIGSERIAL`,
-`created_at TIMESTAMPTZ NOT NULL DEFAULT now()`. Indexed on `business_transaction_id`, RLS
-enabled, append only.
-
-Unlike the tables in the initial schema, this one has **no foreign key** back to
-`business_transactions`. Do not rely on referential integrity here the way you can for
-`executions` or `execution_trust_records`.
 
 ### `refusal_records`
 
