@@ -21,7 +21,7 @@ Companies want AI agents to issue refunds, pay vendors, update CRM deals, merge 
 Parmana sits between an AI agent and the systems it calls.
 
 - **Before an action:** the request is checked against an explicit, versioned policy, and it needs a signed approval from a person you trust. No approval, no action, reads included ([CLAIMS.md 2.47](docs/CLAIMS.md)).
-- **When it runs:** on the supported paths, the agent does not hold the real credentials. The gateway releases one approved action, once, through a connector.
+- **When it runs:** on the supported paths, the gateway resolves connector credentials, and an agent calling the HTTP API never receives them. Code that runs on the same host, with access to the server's environment, can read those credentials ([G-128](docs/VERIFICATION-GAPS.md)). The gateway releases one approved action, once, through a connector.
 - **After it runs:** a signed record of what was authorized and what happened. Anyone can verify it offline, using only the public key they choose to trust. The verifier cannot prove that the key belongs to Parmana.
 
 Parmana does not decide what the agent should do. It decides whether the agent was allowed to do it, and it records that decision in a signed record that anyone can check with the verifier.
@@ -85,7 +85,7 @@ Authority --> Authorization --> Intent --> Business Transaction
                                                   |
                                                   v
                                           Execution Gateway
-                                     (credentials never touch the caller)
+                                     (credentials are not returned to the caller)
                                                   |
                                                   v
                                         Connector -> real system

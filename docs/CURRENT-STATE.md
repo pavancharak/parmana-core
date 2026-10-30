@@ -398,3 +398,11 @@ handed to this session, and none of them are:
   stops a _newly registered_ capability from shipping unbound. The binding pins the policy name in code; where policy governance is enforced, the version in effect is the one most recently approved (G-66, on `main` since 2026-09-27), so a new version needs no deploy.
 - Signing keys are read from disk files (`FileKeyProvider`) at a fixed
   default key ID; there is no key-rotation mechanism in code.
+
+## Caller API key revocation (verified 2026-10-30)
+
+- Caller keys are checked against `caller_key_revocations` (migration `20261030120000`) on every request. A revoked key is refused. A failed lookup refuses the key.
+- Merged to `main` in PR #238 (`fba4b2c`). It is not live until a build of that commit is Ready. Production runs `b1e12d7` as of this writing.
+- The migration is applied to the database that the production `DATABASE_URL` points at. The table is present and empty. Which Supabase project that is was not confirmed by reference ID.
+- The live-database suite for the repository runs only against a local or declared disposable database. It has not been run against one.
+- There is no un-revoke path in code. A revoked key stays in `PARMANA_API_KEYS` and is refused.

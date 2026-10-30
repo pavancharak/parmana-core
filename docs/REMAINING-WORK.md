@@ -327,6 +327,8 @@ Do not edit it by hand: run `npx tsx scripts/gap-status.ts`. `npm test` fails wh
 | G-124 | The server trusted certificates from eMudhra's compromised intermediate CA keys.                    | fixed 2026-10-23                                                                                                                                               |
 | G-125 | A retry after a lost response cannot recover the outcome of a mutating call.                        | in progress                                                                                                                                                    |
 | G-126 | A loopback `http://` connector base URL was accepted in production.                                 | fixed 2026-10-27 (commit `2b00dc5`), merged to `main` in PR #169 on 2026-10-28; the deployment check below is still open                                       |
+| G-127 | A revoked caller API key stayed valid until the server restarted.                                   | fixed in code, not yet live                                                                                                                                    |
+| G-128 | Connector credentials are readable by code on the same host.                                        | open                                                                                                                                                           |
 
 <!-- gap-status:end -->
 
