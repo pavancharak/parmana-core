@@ -50,7 +50,7 @@ describe("createCallerAuthenticator", () => {
     warnSpy.mockRestore();
   });
 
-  it("builds a working authenticator when at least one key is configured", () => {
+  it("builds a working authenticator when at least one key is configured", async () => {
     const rawKey = "a-real-configured-key";
 
     const config = {
@@ -66,7 +66,7 @@ describe("createCallerAuthenticator", () => {
     expect(result.disabled).toBe(false);
     if (result.disabled) throw new Error("unreachable");
 
-    expect(result.authenticator.authenticate(rawKey)).toEqual({
+    await expect(result.authenticator.authenticate(rawKey)).resolves.toEqual({
       callerId: "caller-1",
     });
     expect(result.auditSink).toBeDefined();

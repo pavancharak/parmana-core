@@ -48,5 +48,11 @@ export interface CallerIdentity {
  * this one boundary, not an architecture change.
  */
 export interface CallerAuthenticator {
-  authenticate(credential: string | undefined): CallerIdentity | undefined;
+  /**
+   * Async because a key can be revoked after startup, and that check
+   * reads the revocation store on every request.
+   */
+  authenticate(
+    credential: string | undefined,
+  ): Promise<CallerIdentity | undefined>;
 }
