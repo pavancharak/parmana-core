@@ -16,6 +16,13 @@ import { PolicyNotFoundError } from "./errors/PolicyNotFoundError.js";
 import { PolicyWriteRejectedError } from "./errors/PolicyWriteRejectedError.js";
 import { PolicyVersionImmutableError } from "./errors/PolicyVersionImmutableError.js";
 
+/** True only for "this path does not exist", never for other read failures. */
+function isMissing(error: unknown): boolean {
+  return (
+    error instanceof Error && (error as NodeJS.ErrnoException).code === "ENOENT"
+  );
+}
+
 /** Key-sorted JSON, so equal content compares equal regardless of key order. */
 function canonicalJson(value: unknown): string {
   return JSON.stringify(value, (_key, v: unknown) =>
@@ -163,9 +170,9 @@ export class FilePolicyRepository implements PolicyRepository {
   /**
    * Walks `<basePath>/<name>/<version>/policy.json`, two directory
    * levels deep. Missing basePath (no policy has ever been written)
-   * is not an error -- returns an empty list, the same "nothing here
-   * yet" shape load() uses PolicyNotFoundError for at the single-policy
-   * level.
+   * is not an error -- returns an empty list. A version directory with no
+   * policy.json is skipped. Any other read failure throws, so a store that
+   * cannot be read is never reported as one with fewer policies.
    */
   public async listAll(): Promise<
     ReadonlyArray<{ readonly name: string; readonly version: string }>
@@ -176,8 +183,13 @@ export class FilePolicyRepository implements PolicyRepository {
 
     try {
       nameEntries = await readdir(this.basePath, { withFileTypes: true });
-    } catch {
-      return results;
+    } catch (error) {
+      // No store directory yet means no policies. Any other failure must
+      // surface: an unreadable store is not an empty one.
+      if (isMissing(error)) {
+        return results;
+      }
+      throw error;
     }
 
     for (const nameEntry of nameEntries) {
@@ -188,13 +200,9 @@ export class FilePolicyRepository implements PolicyRepository {
       const name = nameEntry.name;
       const nameDir = path.join(this.basePath, name);
 
-      let versionEntries;
-
-      try {
-        versionEntries = await readdir(nameDir, { withFileTypes: true });
-      } catch {
-        continue;
-      }
+      // A directory that was just listed must still be readable. A failure
+      // here would otherwise hide every policy under this name.
+      const versionEntries = await readdir(nameDir, { withFileTypes: true });
 
       for (const versionEntry of versionEntries) {
         if (!versionEntry.isDirectory()) {
@@ -207,8 +215,13 @@ export class FilePolicyRepository implements PolicyRepository {
           await readFile(path.join(nameDir, version, "policy.json"), "utf8");
 
           results.push({ name, version });
-        } catch {
+        } catch (error) {
           // No policy.json in this version directory -- not a policy.
+          // Any other read failure (permissions, I/O) is refused, not skipped.
+          if (isMissing(error)) {
+            continue;
+          }
+          throw error;
         }
       }
     }
