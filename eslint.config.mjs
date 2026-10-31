@@ -87,4 +87,32 @@ export default [
       "@typescript-eslint/no-explicit-any": "warn",
     },
   },
+
+  {
+    // Text from requests, records, policies or connectors is shown as text
+    // (CONTRIBUTING.md, "Principles a change must keep"). These sinks parse
+    // a string as HTML, so they are refused everywhere.
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "MemberExpression[property.name=/^(innerHTML|outerHTML|insertAdjacentHTML)$/]",
+          message:
+            "Do not parse strings as HTML. Use textContent or the framework's text binding (CONTRIBUTING.md).",
+        },
+        {
+          selector:
+            "MemberExpression[object.name='document'][property.name='write']",
+          message:
+            "document.write parses strings as HTML. Use textContent or the framework's text binding (CONTRIBUTING.md).",
+        },
+        {
+          selector: "JSXAttribute[name.name='dangerouslySetInnerHTML']",
+          message:
+            "dangerouslySetInnerHTML parses strings as HTML. Render the text as a child instead (CONTRIBUTING.md).",
+        },
+      ],
+    },
+  },
 ];
