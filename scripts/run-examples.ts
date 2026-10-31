@@ -173,24 +173,35 @@ for (const [name, value] of Object.entries(LOCAL_DEFAULTS)) {
 }
 
 //
+// Every key id an example may sign with by default. "signal-verifier" signs
+// the read-only HubSpot fetches (see .env.example).
+//
+const EXAMPLE_KEY_IDS = ["default", "gateway", "signal-verifier"];
+
+//
 // Sign with throwaway Ed25519 keys in a temp directory that is deleted
-// afterwards, unless PARMANA_KEY_DIR already holds the default key. A key
-// directory named by .env but empty (or missing) is replaced, never written
-// into. Never writes into ./keys.
+// afterwards, unless PARMANA_KEY_DIR already holds every example key. If any
+// one of them is missing (for example signal-verifier), the whole set is
+// generated throwaway, so no example runs with a half-complete key directory.
+// A key directory named by .env but empty (or missing) is replaced, never
+// written into. Never writes into ./keys.
 //
 let throwawayKeyDir: string | undefined;
 
 const configuredKeyDir = process.env.PARMANA_KEY_DIR;
-const hasDefaultKey =
-  configuredKeyDir !== undefined &&
-  existsSync(path.join(configuredKeyDir, "default.private.pem"));
+const missingExampleKeys =
+  configuredKeyDir === undefined
+    ? EXAMPLE_KEY_IDS
+    : EXAMPLE_KEY_IDS.filter(
+        (keyId) =>
+          !existsSync(path.join(configuredKeyDir, `${keyId}.private.pem`)) ||
+          !existsSync(path.join(configuredKeyDir, `${keyId}.public.pem`)),
+      );
 
-if (!hasDefaultKey) {
+if (missingExampleKeys.length > 0) {
   throwawayKeyDir = mkdtempSync(path.join(tmpdir(), "parmana-example-keys-"));
 
-  // Every key id an example may sign with by default: "signal-verifier" signs
-  // the read-only HubSpot fetches (see .env.example).
-  for (const keyId of ["default", "gateway", "signal-verifier"]) {
+  for (const keyId of EXAMPLE_KEY_IDS) {
     const { privateKey, publicKey } = generateKeyPairSync("ed25519");
 
     writeFileSync(
@@ -207,7 +218,7 @@ if (!hasDefaultKey) {
   appliedDefaults.push(
     configuredKeyDir === undefined
       ? `PARMANA_KEY_DIR=<throwaway keys in ${throwawayKeyDir}>`
-      : `PARMANA_KEY_DIR=<throwaway keys in ${throwawayKeyDir}; ${configuredKeyDir} has no default key>`,
+      : `PARMANA_KEY_DIR=<throwaway keys in ${throwawayKeyDir}; ${configuredKeyDir} is missing ${missingExampleKeys.join(", ")}>`,
   );
 }
 
