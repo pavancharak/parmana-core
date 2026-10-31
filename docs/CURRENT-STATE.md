@@ -258,9 +258,9 @@ decisions for refunds and the other built in capabilities are unchanged. No real
 (G-92); cumulative grant limits are not built (G-93, design in RFC-0023); built in connectors get only the gateway
 re-check at release (G-94). What is left: `docs/REMAINING-WORK.md` section L.
 
-## Public sandbox (retired)
+## Public sandbox (not set up)
 
-The public sandbox at `parmana-sandbox.vercel.app`, its receipt endpoint and its published demo key are retired. The docs playground page and the sandbox example scripts were removed with them. The Parmana API at `https://parmana-api-real.vercel.app` is the sandbox from now on. Its key is issued by the operator; the repository publishes no key. Historical records of the 2026-10-02 and 2026-10-23 sandbox work remain in `docs/CLAIMS.md` and `docs/VERIFICATION-GAPS.md`.
+The public sandbox at `parmana-sandbox.vercel.app`, its receipt endpoint and its demo key are retired. `https://parmana-api-real.vercel.app` is production, not a sandbox: it is a Vercel production deployment of `main`, and the docs must not call it a sandbox. A separate sandbox project has not been created yet. Historical records of the 2026-10-02 and 2026-10-23 sandbox work remain in `docs/CLAIMS.md` and `docs/VERIFICATION-GAPS.md`.
 
 ## AgenTrust TRACE listing (merged 2026-10-12)
 

@@ -1460,7 +1460,7 @@
     },
     {
       "name": "Sandbox",
-      "description": "Routes that exist only on the public sandbox (ADR-0014), for trying Parmana from a browser",
+      "description": "Routes that exist only in sandbox mode, not on production",
       "item": [
         {
           "name": "Get a demo approval (sandbox only)",
