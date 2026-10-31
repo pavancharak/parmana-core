@@ -27,8 +27,8 @@ info:
     **Ownership.** Every lookup by `businessTransactionId` is scoped to the key that submitted the
     transaction. A transaction submitted by another key returns the same `404` as one that does not exist.
 
-    **Try it live.** Every "Try it" panel calls `https://parmana-api-real.vercel.app`. Enter your key in the
-    Authorization field. Production needs a key issued by its operator.
+    **Try it live.** The "Try it" panels call production, `https://parmana-api-real.vercel.app`, with whatever key
+    you enter. There is no public sandbox yet, so do not send test data through these panels.
 
     **Start here:** the [Quickstart](/quickstart), then [Integrate Parmana](/agents/integrate) for agents
     and [Connect any external system](/guides/connect-any-external-system) for your own endpoint.
@@ -88,7 +88,7 @@ tags:
     description: Maker-checker for which agent may have which action decided, within which limits, until when (RFC-0023)
 
   - name: Sandbox
-    description: Routes that exist only on the public sandbox (ADR-0014), for trying Parmana from a browser
+    description: Routes that exist only in sandbox mode, not on production
 
   - name: Kill Switch
     description: Operator kill switch (ADR-0017). Trip and reset need the operator capabilities, and probe results need the probe capability; status is open to any authenticated caller
@@ -340,7 +340,7 @@ paths:
       operationId: getKey
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. This deployment's own public signing keys; the public sandbox has separate keys.
+          description: Production. This deployment's own public signing keys.
       description: |
         Returns the public half of a signing key, so anyone can verify a Parmana signature without a Parmana
         account: "an auditor, a regulator, or an endpoint receiving a release. Every signed artifact names its"
@@ -421,7 +421,7 @@ paths:
       operationId: getJwks
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Lists every public signing key this deployment can serve, the enumeration form of `GET /keys/{keyId}`.
         With local key files that is every key in the key directory. Under AWS KMS it is the keys this
@@ -2285,7 +2285,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         The operator's work queue: Execution Intents that never reached a signed Trust Record and were not
         closed by hand, oldest first. Each one is an action that may have been performed without a record.
@@ -2458,7 +2458,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Rebuilds the signed Trust Record for an action that was released but whose record was never
         produced, the repair for a `500` `EXECUTION_RECORD_INCOMPLETE`. It never calls the connector: it uses
@@ -3068,7 +3068,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Closes an intent in state `PREPARED` or `ERRORED` after a person checked the target system, the
         repair for a `502` `EXECUTION_OUTCOME_UNKNOWN`. Record what you found, `NOT_EXECUTED` or `EXECUTED`,
@@ -4374,7 +4374,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Lists policy changes with a diff: the content in effect today (`current`, or `null` for a new version)
         next to the proposed content. A checker uses `status=PENDING_APPROVAL` to find what waits for review.
@@ -4710,7 +4710,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Approves a policy change, the checker's step, and puts it into effect. Checked in order: a human key,
         not the person who proposed it, and a step up authorization signed with your step up key for this
@@ -4815,7 +4815,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Rejects a policy change. The policy in effect does not change. The same checks as approve, with a
         step up authorization for action `reject` and a `rejectionReason`.
@@ -4916,7 +4916,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Lists every approver key the server trusts, or once trusted, to sign human approvals for policies
         that require one. Keys in the server code come first (`source: code`), then keys added through
@@ -4981,7 +4981,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Proposes trusting a new approver key (`add`, with its Ed25519 public key) or revoking one added this
         way (`revoke`). Nothing changes until a different person approves it. Keys in the server code change
@@ -5081,7 +5081,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Lists approver changes, newest first. A checker uses `status=PENDING_APPROVAL` to find what waits for
         review. Needs a human key.
@@ -5160,7 +5160,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Approves an approver change and applies it at once: an added key is trusted from the next approval
         checked; a revoked key's approvals are refused from the next request on, including ones it already
@@ -5287,7 +5287,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Rejects an approver change. No key changes. The same checks as approve, with a step up authorization
         for action `reject` and a `rejectionReason`.
@@ -5396,7 +5396,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Lists every external connector registration, active and revoked: the capability, the HTTPS endpoint
         Parmana releases it to, the policy that governs it and the parameters forwarded. Revoked
@@ -5477,7 +5477,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Proposes connecting your own system to Parmana with no Parmana code change: `register` names a
         capability, the HTTPS endpoint to release it to, the policy that governs it, the parameters to
@@ -5660,7 +5660,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Lists external connector changes, newest first. A checker uses `status=PENDING_APPROVAL` to find what
         waits for review. Needs a human key.
@@ -5777,7 +5777,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Approves an external connector change and applies it at once: `register` makes the registration
         active, `revoke` ends it. For a register, the endpoint's address is checked again first, so a DNS
@@ -5928,7 +5928,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Rejects an external connector change. No registration changes. The same checks as approve, with a
         step up authorization for action `reject` and a `rejectionReason`.
@@ -6055,7 +6055,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Lists every business signal source registration, active and revoked: the name a policy's
         `signalSources` uses, the HTTPS endpoint Parmana asks, and the Ed25519 key its answers must be
@@ -6135,7 +6135,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Proposes connecting a business system, any system that owns facts a policy needs (an ERP, an
         order system, a CRM, a ledger), so Parmana can ask it instead of trusting the agent's claim.
@@ -6318,7 +6318,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Lists business signal source changes, newest first. A checker uses `status=PENDING_APPROVAL` to
         find what waits for review. Needs a human key.
@@ -6433,7 +6433,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Approves a business signal source change and applies it at once: `register` makes the
         registration active, so policies that name it can be evaluated; `revoke` ends it, so they are
@@ -6583,7 +6583,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Rejects a business signal source change. No registration changes. The same checks as approve,
         with a step up authorization for action `reject` and a `rejectionReason`.
@@ -6691,7 +6691,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Lists every authority grant, active and revoked: which caller may have which capability decided,
         within which limits, from when until when. A grant matters only under a policy with
@@ -6778,7 +6778,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Proposes per-agent authority (RFC-0023 phase 3): `grant` says the API key with `callerId` may have
         requests for `capability` decided, within `limits` on the request, until `validUntil` (at most 366
@@ -6968,7 +6968,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Lists authority grant changes, newest first. A checker uses `status=PENDING_APPROVAL` to find what
         waits for review. Needs a human key.
@@ -7090,7 +7090,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Approves an authority grant change and applies it at once: `grant` makes the grant active,
         starting now unless it names a later `validFrom`; `revoke` ends it, so the caller's next request
@@ -7252,7 +7252,7 @@ paths:
         - operatorBearer: []
       servers:
         - url: https://parmana-api-real.vercel.app
-          description: Production. The public sandbox refuses this route for its demo key, so use a key issued by the operator.
+          description: Production. Use a key issued by the operator.
       description: |
         Rejects an authority grant change. No grant changes. The same checks as approve, with a step up
         authorization for action `reject` and a `rejectionReason`.
