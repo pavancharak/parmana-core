@@ -29,6 +29,8 @@ let lastRequest:
   | undefined;
 let responseDelayMs = 0;
 let responseStatus = 200;
+let rawResponse:
+  { status: number; contentType: string; body: string } | undefined;
 
 function handler(req: IncomingMessage, res: ServerResponse): void {
   const chunks: Buffer[] = [];
@@ -41,6 +43,13 @@ function handler(req: IncomingMessage, res: ServerResponse): void {
       body: Buffer.concat(chunks).toString("utf8"),
     };
     setTimeout(() => {
+      if (rawResponse !== undefined) {
+        res.writeHead(rawResponse.status, {
+          "Content-Type": rawResponse.contentType,
+        });
+        res.end(rawResponse.body);
+        return;
+      }
       res.writeHead(responseStatus, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ ok: responseStatus < 300 }));
     }, responseDelayMs);
@@ -51,6 +60,7 @@ beforeEach(async () => {
   lastRequest = undefined;
   responseDelayMs = 0;
   responseStatus = 200;
+  rawResponse = undefined;
   server = createServer(handler);
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address() as AddressInfo;
@@ -174,5 +184,48 @@ describe("GatewayHttpAdapter", () => {
 
     await connector.execute(request(), context());
     expect(lastRequest?.headers["x-connector"]).toBe("stripe");
+  });
+});
+
+describe("GatewayHttpAdapter: response bodies", () => {
+  function connector(): GatewayHttpAdapter {
+    return new GatewayHttpAdapter({
+      connectorId: "stripe",
+      capabilities: connectorCapabilities(["http:post"]),
+      baseUrl,
+    });
+  }
+
+  it("refuses a 2xx response whose body is not JSON, and does not record success", async () => {
+    rawResponse = {
+      status: 200,
+      contentType: "text/html",
+      body: "<html><body>Maintenance</body></html>",
+    };
+
+    await expect(connector().execute(request(), context())).rejects.toThrow(
+      /returned a 2xx response that is not JSON; the outcome is not confirmed/,
+    );
+  });
+
+  it("accepts an empty 204 response as success with an empty body", async () => {
+    rawResponse = { status: 204, contentType: "text/plain", body: "" };
+
+    const result = await connector().execute(request(), context());
+
+    expect(result.success).toBe(true);
+    expect(result.metadata).toEqual({ status: 204, body: {} });
+  });
+
+  it("returns a JSON body unchanged on success", async () => {
+    rawResponse = {
+      status: 200,
+      contentType: "application/json",
+      body: '{"id":"ch_1"}',
+    };
+
+    const result = await connector().execute(request(), context());
+
+    expect(result.metadata).toEqual({ status: 200, body: { id: "ch_1" } });
   });
 });

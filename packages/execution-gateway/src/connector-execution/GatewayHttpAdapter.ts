@@ -102,7 +102,20 @@ export class GatewayHttpAdapter implements Connector {
         );
       }
 
-      const body: unknown = await response.json().catch(() => ({}));
+      // An empty body (for example HTTP 204) carries no outcome to check.
+      // A non-empty body that is not JSON is not evidence of the action:
+      // recording it as success would sign an outcome nothing confirmed.
+      const text = await response.text();
+      let body: unknown = {};
+      if (text.trim().length > 0) {
+        try {
+          body = JSON.parse(text) as unknown;
+        } catch {
+          throw new Error(
+            `HttpConnector "${this.connectorId}" returned a 2xx response that is not JSON; the outcome is not confirmed.`,
+          );
+        }
+      }
 
       return {
         success: true,
