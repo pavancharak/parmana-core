@@ -1,0 +1,338 @@
+From 4042e9b081ac45ead8e956c5c75146815bcbc4a1 Mon Sep 17 00:00:00 2001
+From: pavancharak <charak1987@gmail.com>
+Date: Wed, 28 Oct 2026 14:20:53 +0000
+Subject: [PATCH] chore: release SDKs at version 1.6.2
+
+Bump all four SDK packages to 1.6.2 so they share one version:
+@parmana/sdk and parmana (Python) from 1.6.1, and @parmana/connector-sdk
+(from 0.3.1) and parmana-connector-sdk (from 0.2.1) to match.
+
+Update the workspace pins on @parmana/connector-sdk, the hardcoded version
+string in parmana-connector-sdk, the quickstart line, the regenerated
+llms.txt, the lock file, and add a changelog entry.
+
+Signed-off-by: pavancharak <charak1987@gmail.com>
+---
+ docs/site/changelog.mdx                       |  7 +++++++
+ docs/site/llms.txt                            |  4 ++--
+ package-lock.json                             | 20 +++++++++----------
+ packages/api/package.json                     |  2 +-
+ packages/connector-github/package.json        |  2 +-
+ packages/connector-hubspot/package.json       |  2 +-
+ packages/connector-paytm/package.json         |  2 +-
+ packages/connector-sdk/package.json           |  2 +-
+ packages/connector-slack/package.json         |  2 +-
+ packages/connector-zerodha/package.json       |  2 +-
+ packages/execution-gateway/package.json       |  2 +-
+ packages/storage/package.json                 |  2 +-
+ .../parmana_connector_sdk/version.py          |  2 +-
+ python-connector-sdk/pyproject.toml           |  2 +-
+ python/examples/quickstart/README.md          |  2 +-
+ python/pyproject.toml                         |  2 +-
+ typescript/package.json                       |  2 +-
+ 17 files changed, 33 insertions(+), 26 deletions(-)
+
+diff --git a/docs/site/changelog.mdx b/docs/site/changelog.mdx
+index 69b3a60..77adf5d 100644
+--- a/docs/site/changelog.mdx
++++ b/docs/site/changelog.mdx
+@@ -10,6 +10,13 @@ product version). The SDKs are versioned independently on their own registries,
+ and per-version notes. This page covers changes that affect what you can build against, not
+ every commit, run `git log` in the repository for the complete record.
+ 
++## 2026-10-28
++
++**Changed: SDK versions for the next release**
++
++- `@parmana/sdk` and `parmana` (Python) move to 1.6.2. The TypeScript and Python SDK code is unchanged since 1.6.1: the changes are documentation, formatting and tests.
++- `@parmana/connector-sdk` and `parmana-connector-sdk` (Python) move to 1.6.2, so all four SDK packages share one version. Their previous versions were 0.3.1 and 0.2.1. The TypeScript connector SDK changes its tests and now requires Node.js 24 or later; it declared Node.js 22 before. The Python connector SDK changes only its README and its version string.
++
+ ## 2026-10-24
+ 
+ **Changed: the whole repository is licensed under the Apache License 2.0**
+diff --git a/docs/site/llms.txt b/docs/site/llms.txt
+index 5a1189f..80ef928 100644
+--- a/docs/site/llms.txt
++++ b/docs/site/llms.txt
+@@ -10,8 +10,8 @@ This file is generated from the documentation navigation. Do not edit it by hand
+ * There is no fixed public API base URL. Every deployment has its own, so ask the operator for it.
+ * Authentication: every request carries `Authorization: Bearer <key>`. The operator issues the key.
+ * On any running server, the machine readable API description is at `/openapi.json`, `/openapi.yaml` and `/api-manifest.json`.
+-* TypeScript SDK: `@parmana/sdk` 1.6.1 on npm.
+-* Python SDK: `parmana` 1.6.1 on PyPI.
++* TypeScript SDK: `@parmana/sdk` 1.6.2 on npm.
++* Python SDK: `parmana` 1.6.2 on PyPI.
+ * If you are an AI agent, start with https://docs.parmanasystems.com/agents/integrate and follow it exactly.
+ * For the integration pages concatenated into one document, read https://docs.parmanasystems.com/llms-full.txt.
+ 
+diff --git a/package-lock.json b/package-lock.json
+index 5cdbb01..261d318 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -11798,7 +11798,7 @@
+         "@parmana/approval": "0.1.0",
+         "@parmana/connector-hubspot": "0.1.0",
+         "@parmana/connector-paytm": "0.1.0",
+-        "@parmana/connector-sdk": "0.3.1",
++        "@parmana/connector-sdk": "1.6.2",
+         "@parmana/connector-slack": "0.1.0",
+         "@parmana/crypto": "0.1.0",
+         "@parmana/envelope-verifier": "0.1.0",
+@@ -11902,7 +11902,7 @@
+       "version": "0.1.0",
+       "license": "Apache-2.0",
+       "dependencies": {
+-        "@parmana/connector-sdk": "0.3.1"
++        "@parmana/connector-sdk": "1.6.2"
+       },
+       "devDependencies": {
+         "typescript": "^6.0.3",
+@@ -11918,7 +11918,7 @@
+       "license": "Apache-2.0",
+       "dependencies": {
+         "@parmana/approval": "0.1.0",
+-        "@parmana/connector-sdk": "0.3.1",
++        "@parmana/connector-sdk": "1.6.2",
+         "@parmana/crypto": "0.1.0",
+         "@parmana/envelope-verifier": "0.1.0",
+         "@parmana/execution-system": "0.1.0",
+@@ -11938,7 +11938,7 @@
+       "version": "0.1.0",
+       "license": "Apache-2.0",
+       "dependencies": {
+-        "@parmana/connector-sdk": "0.3.1",
++        "@parmana/connector-sdk": "1.6.2",
+         "@parmana/crypto": "0.1.0",
+         "@parmana/shared": "0.1.0"
+       },
+@@ -11952,7 +11952,7 @@
+     },
+     "packages/connector-sdk": {
+       "name": "@parmana/connector-sdk",
+-      "version": "0.3.1",
++      "version": "1.6.2",
+       "license": "Apache-2.0",
+       "devDependencies": {
+         "@types/node": "^24.19.2",
+@@ -11968,7 +11968,7 @@
+       "version": "0.1.0",
+       "license": "Apache-2.0",
+       "dependencies": {
+-        "@parmana/connector-sdk": "0.3.1",
++        "@parmana/connector-sdk": "1.6.2",
+         "@parmana/shared": "0.1.0"
+       },
+       "devDependencies": {
+@@ -11984,7 +11984,7 @@
+       "version": "0.1.0",
+       "license": "Apache-2.0",
+       "dependencies": {
+-        "@parmana/connector-sdk": "0.3.1",
++        "@parmana/connector-sdk": "1.6.2",
+         "@parmana/shared": "0.1.0"
+       },
+       "devDependencies": {
+@@ -12070,7 +12070,7 @@
+         "@parmana/connector-github": "0.1.0",
+         "@parmana/connector-hubspot": "0.1.0",
+         "@parmana/connector-paytm": "0.1.0",
+-        "@parmana/connector-sdk": "0.3.1",
++        "@parmana/connector-sdk": "1.6.2",
+         "@parmana/connector-slack": "0.1.0",
+         "@parmana/connector-zerodha": "0.1.0",
+         "@parmana/crypto": "0.1.0",
+@@ -12233,7 +12233,7 @@
+       "version": "0.1.0",
+       "license": "Apache-2.0",
+       "dependencies": {
+-        "@parmana/connector-sdk": "0.3.1",
++        "@parmana/connector-sdk": "1.6.2",
+         "@parmana/crypto": "0.1.0",
+         "@parmana/envelope-verifier": "0.1.0",
+         "@parmana/shared": "0.1.0",
+@@ -12260,7 +12260,7 @@
+     },
+     "typescript": {
+       "name": "@parmana/sdk",
+-      "version": "1.6.1",
++      "version": "1.6.2",
+       "license": "Apache-2.0",
+       "dependencies": {
+         "dotenv": "^18.0.8"
+diff --git a/packages/api/package.json b/packages/api/package.json
+index 77439b9..f98ef89 100644
+--- a/packages/api/package.json
++++ b/packages/api/package.json
+@@ -13,7 +13,7 @@
+     "@parmana/approval": "0.1.0",
+     "@parmana/connector-hubspot": "0.1.0",
+     "@parmana/connector-paytm": "0.1.0",
+-    "@parmana/connector-sdk": "0.3.1",
++    "@parmana/connector-sdk": "1.6.2",
+     "@parmana/connector-slack": "0.1.0",
+     "@parmana/crypto": "0.1.0",
+     "@parmana/envelope-verifier": "0.1.0",
+diff --git a/packages/connector-github/package.json b/packages/connector-github/package.json
+index b8c76bf..58aa3fa 100644
+--- a/packages/connector-github/package.json
++++ b/packages/connector-github/package.json
+@@ -22,7 +22,7 @@
+     "test": "vitest run"
+   },
+   "dependencies": {
+-    "@parmana/connector-sdk": "0.3.1"
++    "@parmana/connector-sdk": "1.6.2"
+   },
+   "devDependencies": {
+     "typescript": "^6.0.3",
+diff --git a/packages/connector-hubspot/package.json b/packages/connector-hubspot/package.json
+index 74c5b84..cad9eb5 100644
+--- a/packages/connector-hubspot/package.json
++++ b/packages/connector-hubspot/package.json
+@@ -23,7 +23,7 @@
+   },
+   "dependencies": {
+     "@parmana/approval": "0.1.0",
+-    "@parmana/connector-sdk": "0.3.1",
++    "@parmana/connector-sdk": "1.6.2",
+     "@parmana/crypto": "0.1.0",
+     "@parmana/envelope-verifier": "0.1.0",
+     "@parmana/execution-system": "0.1.0",
+diff --git a/packages/connector-paytm/package.json b/packages/connector-paytm/package.json
+index 842e8d3..7eb2ae6 100644
+--- a/packages/connector-paytm/package.json
++++ b/packages/connector-paytm/package.json
+@@ -22,7 +22,7 @@
+     "test": "vitest run"
+   },
+   "dependencies": {
+-    "@parmana/connector-sdk": "0.3.1",
++    "@parmana/connector-sdk": "1.6.2",
+     "@parmana/crypto": "0.1.0",
+     "@parmana/shared": "0.1.0"
+   },
+diff --git a/packages/connector-sdk/package.json b/packages/connector-sdk/package.json
+index de0ce1d..5fa218f 100644
+--- a/packages/connector-sdk/package.json
++++ b/packages/connector-sdk/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@parmana/connector-sdk",
+-  "version": "0.3.1",
++  "version": "1.6.2",
+   "private": false,
+   "description": "Connector authoring contracts and reference implementations for Parmana, the authorization layer for AI execution",
+   "type": "module",
+diff --git a/packages/connector-slack/package.json b/packages/connector-slack/package.json
+index 080a614..5757f63 100644
+--- a/packages/connector-slack/package.json
++++ b/packages/connector-slack/package.json
+@@ -22,7 +22,7 @@
+     "test": "vitest run"
+   },
+   "dependencies": {
+-    "@parmana/connector-sdk": "0.3.1",
++    "@parmana/connector-sdk": "1.6.2",
+     "@parmana/shared": "0.1.0"
+   },
+   "devDependencies": {
+diff --git a/packages/connector-zerodha/package.json b/packages/connector-zerodha/package.json
+index 4defc20..3be8f18 100644
+--- a/packages/connector-zerodha/package.json
++++ b/packages/connector-zerodha/package.json
+@@ -22,7 +22,7 @@
+     "test": "vitest run"
+   },
+   "dependencies": {
+-    "@parmana/connector-sdk": "0.3.1",
++    "@parmana/connector-sdk": "1.6.2",
+     "@parmana/shared": "0.1.0"
+   },
+   "devDependencies": {
+diff --git a/packages/execution-gateway/package.json b/packages/execution-gateway/package.json
+index d853c01..8cf6dc2 100644
+--- a/packages/execution-gateway/package.json
++++ b/packages/execution-gateway/package.json
+@@ -27,7 +27,7 @@
+     "@parmana/connector-paytm": "0.1.0",
+     "@parmana/connector-zerodha": "0.1.0",
+     "@parmana/connector-slack": "0.1.0",
+-    "@parmana/connector-sdk": "0.3.1",
++    "@parmana/connector-sdk": "1.6.2",
+     "@parmana/crypto": "0.1.0",
+     "@parmana/envelope-verifier": "0.1.0",
+     "@parmana/execution-control": "0.1.0",
+diff --git a/packages/storage/package.json b/packages/storage/package.json
+index 6861e58..bac91c8 100644
+--- a/packages/storage/package.json
++++ b/packages/storage/package.json
+@@ -24,7 +24,7 @@
+     "migrate": "tsx scripts/migrate.ts"
+   },
+   "dependencies": {
+-    "@parmana/connector-sdk": "0.3.1",
++    "@parmana/connector-sdk": "1.6.2",
+     "@parmana/crypto": "0.1.0",
+     "@parmana/envelope-verifier": "0.1.0",
+     "@parmana/shared": "0.1.0",
+diff --git a/python-connector-sdk/parmana_connector_sdk/version.py b/python-connector-sdk/parmana_connector_sdk/version.py
+index 3ced358..51bbb3f 100644
+--- a/python-connector-sdk/parmana_connector_sdk/version.py
++++ b/python-connector-sdk/parmana_connector_sdk/version.py
+@@ -1 +1 @@
+-__version__ = "0.2.1"
++__version__ = "1.6.2"
+diff --git a/python-connector-sdk/pyproject.toml b/python-connector-sdk/pyproject.toml
+index 69efeea..7e48c54 100644
+--- a/python-connector-sdk/pyproject.toml
++++ b/python-connector-sdk/pyproject.toml
+@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
+ 
+ [project]
+ name = "parmana-connector-sdk"
+-version = "0.2.1"
++version = "1.6.2"
+ description = "Connector authoring contracts and reference implementations for Parmana, the authorization layer for AI execution."
+ 
+ readme = { file = "README.md", content-type = "text/markdown" }
+diff --git a/python/examples/quickstart/README.md b/python/examples/quickstart/README.md
+index d50d716..cf887fe 100644
+--- a/python/examples/quickstart/README.md
++++ b/python/examples/quickstart/README.md
+@@ -62,7 +62,7 @@ python python/examples/quickstart/run.py
+ ## Expected output (real run against a local server, 2026-09-14)
+ 
+ ```
+-Connected to http://localhost:3000 (SDK v1.6.1)
++Connected to http://localhost:3000 (SDK v1.6.2)
+ 
+ Business Transaction ID: 40ba54d1-1038-443c-80ec-9cd6ad7757a1
+ Trust Record ID:         9c82c5c6-b465-41c8-8a03-ac07ec839c20
+diff --git a/python/pyproject.toml b/python/pyproject.toml
+index 361275d..d26593a 100644
+--- a/python/pyproject.toml
++++ b/python/pyproject.toml
+@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
+ 
+ [project]
+ name = "parmana"
+-version = "1.6.1"
++version = "1.6.2"
+ description = "Python SDK for Parmana Execution Trust Infrastructure."
+ 
+ readme = { file = "README.md", content-type = "text/markdown" }
+diff --git a/typescript/package.json b/typescript/package.json
+index e44c3a3..d8f56df 100644
+--- a/typescript/package.json
++++ b/typescript/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@parmana/sdk",
+-  "version": "1.6.1",
++  "version": "1.6.2",
+   "private": false,
+   "description": "Official Parmana TypeScript SDK",
+   "license": "Apache-2.0",
+-- 
+2.43.0
+
