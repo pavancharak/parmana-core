@@ -5,7 +5,7 @@ import os
 import requests
 
 response = requests.post(
-    "https://parmana-sandbox.vercel.app/sandbox/approvals",
+    "https://parmana-api-real.vercel.app/sandbox/approvals",
     headers={"Authorization": f"Bearer {os.environ['PARMANA_API_KEY']}"},
     json={"capability": "sandbox:receipt", "resourceId": "demo-order-1"},
     timeout=30,

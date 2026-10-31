@@ -128,7 +128,7 @@ describe("createSandboxOptions", () => {
 describe("parseCorsOrigins", () => {
   it.each([
     "https://docs.parmanasystems.com/",
-    "https://docs.parmanasystems.com/playground",
+    "https://docs.parmanasystems.com/quickstart",
     "docs.parmanasystems.com",
     "ftp://docs.parmanasystems.com",
     "*",

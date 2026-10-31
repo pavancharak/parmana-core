@@ -62,27 +62,14 @@ info:
     as one that does not exist.
 
 
-    **Try it live.** The first server below is the public sandbox,
-    `https://parmana-sandbox.vercel.app`: the same
+    **Try it live.** Every "Try it" panel calls
+    `https://parmana-api-real.vercel.app`. Enter your key in the
 
-    code as production with its own database, keys and demo approver, whose one
-    action, `sandbox:receipt`,
-
-    acts on nothing. Every "Try it" panel calls it with the published demo key
-    prefilled. The demo key may
-
-    invoke only `sandbox:receipt`, so other capabilities return `403` and
-    governance routes return
-
-    `403 NON_HUMAN_CALLER_DENIED`. Everything sent to the sandbox is visible to
-    every visitor. See
-
-    [Playground](/playground). Production needs a key issued by its operator.
+    Authorization field. Production needs a key issued by its operator.
 
 
-    **Start here:** the [Playground](/playground) (no install), the
-    [Quickstart](/quickstart), then [Integrate Parmana](/agents/integrate) for
-    agents
+    **Start here:** the [Quickstart](/quickstart), then [Integrate
+    Parmana](/agents/integrate) for agents
 
     and [Connect any external system](/guides/connect-any-external-system) for
     your own endpoint.
@@ -93,9 +80,6 @@ info:
     name: Apache License 2.0, see LICENSE
     url: https://docs.parmanasystems.com/license
 servers:
-  - url: https://parmana-sandbox.vercel.app
-    description: Public sandbox (the docs playground). Same code as production, demo
-      data only, acts on nothing. Demo key prefilled.
   - url: https://parmana-api-real.vercel.app
     description: Production. Needs a key issued by the operator.
   - url: http://localhost:3000
@@ -181,7 +165,7 @@ paths:
         - lang: bash
           label: cURL
           source: |-
-            curl https://parmana-sandbox.vercel.app/ \
+            curl https://parmana-api-real.vercel.app/ \
               -H "Authorization: Bearer $PARMANA_API_KEY"
         - lang: typescript
           label: TypeScript
@@ -237,7 +221,7 @@ paths:
       x-codeSamples:
         - lang: bash
           label: cURL
-          source: curl https://parmana-sandbox.vercel.app/health
+          source: curl https://parmana-api-real.vercel.app/health
         - lang: typescript
           label: TypeScript
           source: |-
@@ -323,7 +307,7 @@ paths:
       x-codeSamples:
         - lang: bash
           label: cURL
-          source: curl https://parmana-sandbox.vercel.app/ready
+          source: curl https://parmana-api-real.vercel.app/ready
         - lang: typescript
           label: TypeScript
           source: >-
@@ -368,7 +352,7 @@ paths:
       x-codeSamples:
         - lang: bash
           label: cURL
-          source: curl https://parmana-sandbox.vercel.app/openapi.yaml
+          source: curl https://parmana-api-real.vercel.app/openapi.yaml
         - lang: typescript
           label: TypeScript
           source: |-
@@ -410,7 +394,7 @@ paths:
       x-codeSamples:
         - lang: bash
           label: cURL
-          source: curl https://parmana-sandbox.vercel.app/openapi.json
+          source: curl https://parmana-api-real.vercel.app/openapi.json
         - lang: typescript
           label: TypeScript
           source: |-
@@ -506,7 +490,7 @@ paths:
       x-codeSamples:
         - lang: bash
           label: cURL
-          source: curl https://parmana-sandbox.vercel.app/api-manifest.json
+          source: curl https://parmana-api-real.vercel.app/api-manifest.json
         - lang: typescript
           label: TypeScript
           source: |-
@@ -559,7 +543,7 @@ paths:
         - lang: bash
           label: cURL
           source: |-
-            curl https://parmana-sandbox.vercel.app/version \
+            curl https://parmana-api-real.vercel.app/version \
               -H "Authorization: Bearer $PARMANA_API_KEY"
         - lang: typescript
           label: TypeScript
@@ -898,7 +882,7 @@ paths:
         - lang: bash
           label: cURL
           source: |-
-            curl https://parmana-sandbox.vercel.app/callers/me \
+            curl https://parmana-api-real.vercel.app/callers/me \
               -H "Authorization: Bearer $PARMANA_API_KEY"
         - lang: typescript
           label: TypeScript
@@ -938,8 +922,7 @@ paths:
         In the sandbox, each `businessTransactionId` works once: a prefilled id
         returns `409` after its first use.
 
-        For a new id each run, use the [playground](/playground) or the cURL
-        sample, which generate one.
+        For a new id each run, use the cURL sample, which generates one.
 
         Sends one action for a decision and, if approved, performs it. This is
         the call an agent makes. The
@@ -1017,9 +1000,9 @@ paths:
             examples:
               sandbox-receipt:
                 summary: The public sandbox's receipt action, sent without an approval. The
-                  sandbox refuses it (403 POLICY_DENIED), as the playground
-                  shows. Get a demo approval from POST /sandbox/approvals for
-                  the same target and add it to signals to release it.
+                  sandbox refuses it (403 POLICY_DENIED). Get a demo approval
+                  from POST /sandbox/approvals for the same target and add it to
+                  signals to release it.
                 value:
                   businessTransactionId: 8ddd9ae9-eebe-4a5a-8182-4e6187466a74
                   metadata:
@@ -1561,7 +1544,7 @@ paths:
             TXN_ID=$( (uuidgen 2>/dev/null || python3 -c 'import uuid;
             print(uuid.uuid4())') | tr 'A-Z' 'a-z')
 
-            curl -X POST https://parmana-sandbox.vercel.app/execute \
+            curl -X POST https://parmana-api-real.vercel.app/execute \
               --silent \
               -H "Authorization: Bearer $PARMANA_API_KEY" \
               -H "Content-Type: application/json" \
@@ -1717,8 +1700,7 @@ paths:
         In the sandbox, each `businessTransactionId` works once: a prefilled id
         returns `409` after its first use.
 
-        For a new id each run, use the [playground](/playground) or the cURL
-        sample, which generate one.
+        For a new id each run, use the cURL sample, which generates one.
 
         The same as `POST /execute` in every way except the success status,
         `201` instead of `200`. Use
@@ -1736,9 +1718,9 @@ paths:
             examples:
               sandbox-receipt:
                 summary: The public sandbox's receipt action, sent without an approval. The
-                  sandbox refuses it (403 POLICY_DENIED), as the playground
-                  shows. Get a demo approval from POST /sandbox/approvals for
-                  the same target and add it to signals to release it.
+                  sandbox refuses it (403 POLICY_DENIED). Get a demo approval
+                  from POST /sandbox/approvals for the same target and add it to
+                  signals to release it.
                 value:
                   businessTransactionId: ae94f2aa-6120-4c83-bf5d-7108e380d5a8
                   metadata:
@@ -2224,7 +2206,7 @@ paths:
         - lang: bash
           label: cURL
           source: >-
-            curl -X POST https://parmana-sandbox.vercel.app/transactions \
+            curl -X POST https://parmana-api-real.vercel.app/transactions \
               -H "Authorization: Bearer $PARMANA_API_KEY" \
               -H "Content-Type: application/json" \
               -d '{
@@ -2551,10 +2533,8 @@ paths:
       x-codeSamples:
         - lang: bash
           label: cURL
-          source: >-
-            curl
-            "https://parmana-sandbox.vercel.app/transactions?page=1&pageSize=25"
-            \
+          source: |-
+            curl "https://parmana-api-real.vercel.app/transactions?page=1&pageSize=25" \
               -H "Authorization: Bearer $PARMANA_API_KEY"
         - lang: typescript
           label: TypeScript
@@ -2681,7 +2661,7 @@ paths:
 
             TXN_ID="${TXN_ID:?set TXN_ID to a businessTransactionId}"
 
-            curl https://parmana-sandbox.vercel.app/transactions/$TXN_ID \
+            curl https://parmana-api-real.vercel.app/transactions/$TXN_ID \
               -H "Authorization: Bearer $PARMANA_API_KEY"
         - lang: typescript
           label: TypeScript
@@ -2803,7 +2783,7 @@ paths:
 
             TXN_ID="${TXN_ID:?set TXN_ID to a businessTransactionId}"
 
-            curl -X POST https://parmana-sandbox.vercel.app/verify \
+            curl -X POST https://parmana-api-real.vercel.app/verify \
               -H "Authorization: Bearer $PARMANA_API_KEY" \
               -H "Content-Type: application/json" \
               -d "$(cat <<JSON
@@ -2904,7 +2884,7 @@ paths:
 
             TXN_ID="${TXN_ID:?set TXN_ID to a businessTransactionId}"
 
-            curl https://parmana-sandbox.vercel.app/verification/$TXN_ID \
+            curl https://parmana-api-real.vercel.app/verification/$TXN_ID \
               -H "Authorization: Bearer $PARMANA_API_KEY"
         - lang: typescript
           label: TypeScript
@@ -2992,7 +2972,7 @@ paths:
             # The Refusal Record, as returned by GET
             /refusal/<businessTransactionId>:
 
-            curl -X POST https://parmana-sandbox.vercel.app/refusal/verify \
+            curl -X POST https://parmana-api-real.vercel.app/refusal/verify \
               -H "Content-Type: application/json" \
               --data @refusal-record.json
         - lang: typescript
@@ -3052,7 +3032,7 @@ paths:
       x-codeSamples:
         - lang: bash
           label: cURL
-          source: curl https://parmana-sandbox.vercel.app/parmana-handbook.pdf -o
+          source: curl https://parmana-api-real.vercel.app/parmana-handbook.pdf -o
             parmana-handbook.pdf
         - lang: typescript
           label: TypeScript
@@ -3127,7 +3107,7 @@ paths:
         - lang: bash
           label: cURL
           source: curl
-            "https://parmana-sandbox.vercel.app/handbook/download-leads?email=reader%40example.com"
+            "https://parmana-api-real.vercel.app/handbook/download-leads?email=reader%40example.com"
         - lang: typescript
           label: TypeScript
           source: >-
@@ -3208,7 +3188,7 @@ paths:
           label: cURL
           source: >-
             curl -X POST
-            https://parmana-sandbox.vercel.app/handbook/download-leads \
+            https://parmana-api-real.vercel.app/handbook/download-leads \
               -H "Content-Type: application/json" \
               -d '{
                 "email": "reader@example.com"
@@ -3362,7 +3342,7 @@ paths:
 
             TXN_ID="${TXN_ID:?set TXN_ID to a businessTransactionId}"
 
-            curl https://parmana-sandbox.vercel.app/refusal/$TXN_ID \
+            curl https://parmana-api-real.vercel.app/refusal/$TXN_ID \
               -H "Authorization: Bearer $PARMANA_API_KEY"
         - lang: typescript
           label: TypeScript
@@ -3464,7 +3444,7 @@ paths:
             /execution-intents/<businessTransactionId>:
 
             curl -X POST
-            https://parmana-sandbox.vercel.app/execution-intents/verify \
+            https://parmana-api-real.vercel.app/execution-intents/verify \
               -H "Content-Type: application/json" \
               --data @execution-intent.json
         - lang: typescript
@@ -3725,7 +3705,7 @@ paths:
 
             TXN_ID="${TXN_ID:?set TXN_ID to a businessTransactionId}"
 
-            curl https://parmana-sandbox.vercel.app/execution-intents/$TXN_ID \
+            curl https://parmana-api-real.vercel.app/execution-intents/$TXN_ID \
               -H "Authorization: Bearer $PARMANA_API_KEY"
         - lang: typescript
           label: TypeScript
@@ -4600,7 +4580,7 @@ paths:
             # A signed audit event and its signature, as exported from
             caller_audit_events:
 
-            curl -X POST https://parmana-sandbox.vercel.app/audit/verify \
+            curl -X POST https://parmana-api-real.vercel.app/audit/verify \
               -H "Content-Type: application/json" \
               --data @audit-event.json
         - lang: typescript
@@ -4686,8 +4666,8 @@ paths:
         `POST /verify`.
 
 
-        In the sandbox, the ID must come from a playground run that was approved
-        and released: each run's responses
+        In the sandbox, the ID must come from a run that was approved and
+        released: each run's responses
 
         include its `businessTransactionId`. Sandbox data is deleted hourly, so
         an older ID returns `404`.
@@ -4765,7 +4745,7 @@ paths:
 
             TXN_ID="${TXN_ID:?set TXN_ID to a businessTransactionId}"
 
-            curl -X POST https://parmana-sandbox.vercel.app/receipt \
+            curl -X POST https://parmana-api-real.vercel.app/receipt \
               -H "Authorization: Bearer $PARMANA_API_KEY" \
               -H "Content-Type: application/json" \
               -d "$(cat <<JSON
@@ -4876,7 +4856,7 @@ paths:
 
             TXN_ID="${TXN_ID:?set TXN_ID to a businessTransactionId}"
 
-            curl https://parmana-sandbox.vercel.app/receipt/latest/$TXN_ID \
+            curl https://parmana-api-real.vercel.app/receipt/latest/$TXN_ID \
               -H "Authorization: Bearer $PARMANA_API_KEY"
         - lang: typescript
           label: TypeScript
@@ -5179,7 +5159,7 @@ paths:
         - lang: bash
           label: cURL
           source: |-
-            curl "https://parmana-sandbox.vercel.app/trust-records?page=1&pageSize=25&since=2026-10-01T00%3A00%3A00Z" \
+            curl "https://parmana-api-real.vercel.app/trust-records?page=1&pageSize=25&since=2026-10-01T00%3A00%3A00Z" \
               -H "Authorization: Bearer $PARMANA_API_KEY"
         - lang: typescript
           label: TypeScript
@@ -5401,7 +5381,7 @@ paths:
 
             TXN_ID="${TXN_ID:?set TXN_ID to a businessTransactionId}"
 
-            curl https://parmana-sandbox.vercel.app/trust-records/$TXN_ID \
+            curl https://parmana-api-real.vercel.app/trust-records/$TXN_ID \
               -H "Authorization: Bearer $PARMANA_API_KEY"
         - lang: typescript
           label: TypeScript
@@ -5511,7 +5491,7 @@ paths:
 
             TXN_ID="${TXN_ID:?set TXN_ID to a businessTransactionId}"
 
-            curl -X POST https://parmana-sandbox.vercel.app/replay \
+            curl -X POST https://parmana-api-real.vercel.app/replay \
               -H "Authorization: Bearer $PARMANA_API_KEY" \
               -H "Content-Type: application/json" \
               -d "$(cat <<JSON
@@ -5810,7 +5790,7 @@ paths:
         - lang: bash
           label: cURL
           source: |-
-            curl "https://parmana-sandbox.vercel.app/policies/in-effect?capability=sandbox%3Areceipt" \
+            curl "https://parmana-api-real.vercel.app/policies/in-effect?capability=sandbox%3Areceipt" \
               -H "Authorization: Bearer $PARMANA_API_KEY"
         - lang: typescript
           label: TypeScript
@@ -5917,7 +5897,7 @@ paths:
         - lang: bash
           label: cURL
           source: |-
-            curl -X POST https://parmana-sandbox.vercel.app/policies/validate \
+            curl -X POST https://parmana-api-real.vercel.app/policies/validate \
               -H "Authorization: Bearer $PARMANA_API_KEY" \
               -H "Content-Type: application/json" \
               -d '{
@@ -6073,7 +6053,7 @@ paths:
           label: cURL
           source: |-
             # proposal.json: {"reason": "...", "proposedContent": <the policy file, unchanged>}
-            curl -X POST https://parmana-sandbox.vercel.app/policies/customer-refund/1.3.0/pending-changes \
+            curl -X POST https://parmana-api-real.vercel.app/policies/customer-refund/1.3.0/pending-changes \
               -H "Authorization: Bearer $PARMANA_API_KEY" \
               -H "Content-Type: application/json" \
               --data @proposal.json
@@ -10663,14 +10643,13 @@ paths:
         it accepts it once. Needs the published demo key.
 
 
-        Live at `https://parmana-sandbox.vercel.app`. The request that uses it
+        Live at `https://parmana-api-real.vercel.app`. The request that uses it
         carries
 
         `signals: { "note": "<the same text as parameters.note>",
         "receiptApproved": true, "approvalArtifact": <this response> }`,
 
-        with `target` equal to the `resourceId` you named here. The
-        [Playground](/playground) walks through every step.
+        with `target` equal to the `resourceId` you named here.
       requestBody:
         required: true
         content:
@@ -10737,7 +10716,7 @@ paths:
           label: cURL
           source: >-
             curl -X POST
-            https://parmana-sandbox.vercel.app/sandbox/approvals   -H
+            https://parmana-api-real.vercel.app/sandbox/approvals   -H
             "Authorization: Bearer $PARMANA_API_KEY"   -H "Content-Type:
             application/json"   -d '{
                 "capability": "sandbox:receipt",
@@ -10752,7 +10731,7 @@ paths:
             // the product API. Call the route directly.
 
             const response = await fetch(
-              "https://parmana-sandbox.vercel.app/sandbox/approvals",
+              "https://parmana-api-real.vercel.app/sandbox/approvals",
               {
                 method: "POST",
                 headers: {
@@ -10788,7 +10767,7 @@ paths:
 
 
             response = requests.post(
-                "https://parmana-sandbox.vercel.app/sandbox/approvals",
+                "https://parmana-api-real.vercel.app/sandbox/approvals",
                 headers={"Authorization": f"Bearer {os.environ['PARMANA_API_KEY']}"},
                 json={"capability": "sandbox:receipt", "resourceId": "demo-order-1"},
                 timeout=30,
@@ -14379,7 +14358,6 @@ components:
       type: apiKey
       in: header
       name: Authorization
-      x-default: Bearer 2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME
       description: >
         Caller API key issued by scripts/generate-api-key.ts. Sent as
         Authorization: Bearer <key>. Verified against a stored SHA-256 hash in

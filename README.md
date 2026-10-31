@@ -32,7 +32,6 @@ Start with the goal closest to yours. The full documentation is at [docs.parmana
 
 | I want to                                  | Go to                                                                                                                                                                          |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| See it work, with nothing installed        | [Playground](https://docs.parmanasystems.com/playground)                                                                                                                       |
 | Understand the ideas behind it             | [How Parmana thinks](https://docs.parmanasystems.com/how-parmana-thinks), then the [glossary](https://docs.parmanasystems.com/glossary)                                        |
 | Run it on my own machine                   | [Quickstart](https://docs.parmanasystems.com/quickstart)                                                                                                                       |
 | Connect an AI agent                        | [Connect an agent](https://docs.parmanasystems.com/guides/connect-an-agent)                                                                                                    |
@@ -68,7 +67,7 @@ npm run evaluate
   npx tsx examples/tutorials/60-end-to-end-enterprise-execution/run.ts
   ```
 
-- For the step-by-step evaluation guide, see [EVALUATION.md](EVALUATION.md). To try the public sandbox without installing anything, see the [docs playground](https://docs.parmanasystems.com/playground).
+- For the step-by-step evaluation guide, see [EVALUATION.md](EVALUATION.md).
 
 ## How it works
 

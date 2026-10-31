@@ -1,2 +1,2 @@
-curl https://parmana-sandbox.vercel.app/callers/me \
+curl https://parmana-api-real.vercel.app/callers/me \
   -H "Authorization: Bearer $PARMANA_API_KEY"

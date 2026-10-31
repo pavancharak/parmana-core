@@ -1,7 +1,7 @@
 // Sandbox only, and not in the SDK: a demo for trying Parmana, not part of
 // the product API. Call the route directly.
 const response = await fetch(
-  "https://parmana-sandbox.vercel.app/sandbox/approvals",
+  "https://parmana-api-real.vercel.app/sandbox/approvals",
   {
     method: "POST",
     headers: {

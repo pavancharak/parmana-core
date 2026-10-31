@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 
 /**
  * CORS for an explicit list of origins (ADR-0014, PARMANA_CORS_ORIGINS):
- * the docs site's playground calls the API from a browser.
+ * the docs site calls the API from a browser.
  *
  * Only a listed origin gets an Access-Control-Allow-Origin header, and it
  * is that exact origin, never "*". A preflight (OPTIONS) from a listed

@@ -673,7 +673,7 @@ Verification
 
 - `packages/api/tests/unit/createSandboxOptions.test.ts` and `tests/architecture/sandbox-connector-variables.test.ts`: sandbox mode refuses every connector variable, even empty, and the approver variables outside it.
 - `packages/api/tests/integration/sandbox.integration.test.ts`: `POST /sandbox/approvals` behind the key, for `sandbox:receipt` only, expiring in 300 s.
-- `tests/architecture/sandbox-policy.test.ts`: `deploy/sandbox/policy.json`.
+- The sandbox-policy test, removed with the sandbox: its `deploy/sandbox/policy.json` is gone too.
 
 Evidence: the live check, 2026-10-02 (`deploy/sandbox/README.md`, stage `Check`)
 

@@ -258,15 +258,9 @@ decisions for refunds and the other built in capabilities are unchanged. No real
 (G-92); cumulative grant limits are not built (G-93, design in RFC-0023); built in connectors get only the gateway
 re-check at release (G-94). What is left: `docs/REMAINING-WORK.md` section L.
 
-## Public sandbox (ADR-0014, live 2026-10-02)
+## Public sandbox (retired)
 
-`https://parmana-sandbox.vercel.app`: the same `main` as production with `PARMANA_SANDBOX=true`, its own Supabase
-project (`zkrfrfyokkpfwghoohne`), keys and demo approver. One capability, `sandbox:receipt`, registered as an external
-connector to `https://parmana-sandbox-receipt.vercel.app/api/release`, which acts on nothing. Published demo key:
-caller `sandbox-visitor`, allowed only `sandbox:receipt`. Live check passed 2026-10-02 (`docs/CLAIMS.md` 2.51). Docs:
-`docs/site/playground.mdx`, the first OpenAPI server. Retention: a daily `pg_cron` job in the sandbox database deletes what visitors sent more than 7 days
-ago (`deploy/sandbox/retention.sql`, kit stage `Retention`). Not set up: the custom domain
-`sandbox.parmanasystems.com`. Vercel deploys it on every merge to `main`, as production.
+The public sandbox at `parmana-sandbox.vercel.app`, its receipt endpoint and its published demo key are retired. The docs playground page and the sandbox example scripts were removed with them. The Parmana API at `https://parmana-api-real.vercel.app` is the sandbox from now on. Its key is issued by the operator; the repository publishes no key. Historical records of the 2026-10-02 and 2026-10-23 sandbox work remain in `docs/CLAIMS.md` and `docs/VERIFICATION-GAPS.md`.
 
 ## AgenTrust TRACE listing (merged 2026-10-12)
 

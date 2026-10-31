@@ -5,7 +5,7 @@
 # for the same target and add it as signals.approvalArtifact with
 # receiptApproved true.
 TXN_ID=$( (uuidgen 2>/dev/null || python3 -c 'import uuid; print(uuid.uuid4())') | tr 'A-Z' 'a-z')
-curl -X POST https://parmana-sandbox.vercel.app/execute \
+curl -X POST https://parmana-api-real.vercel.app/execute \
   --silent \
   -H "Authorization: Bearer $PARMANA_API_KEY" \
   -H "Content-Type: application/json" \
