@@ -118,6 +118,10 @@ security-critical packages, what the surviving changes showed, and what was done
   never degrades silently.
 - Evidence is signed and append only, and can be verified without trusting Parmana.
 - Policy evaluation is deterministic.
+- Text from requests, records, policies or connectors is shown as text. Do not assign it with
+  `innerHTML`, `dangerouslySetInnerHTML`, `insertAdjacentHTML` or `document.write`; use
+  `textContent` or the framework's text binding. A test that renders a value containing markup
+  should show it as literal text.
 
 ## Connectors
 
