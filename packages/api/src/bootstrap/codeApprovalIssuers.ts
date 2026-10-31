@@ -1,4 +1,4 @@
-import { createPublicKey, type KeyObject } from "node:crypto";
+import { createPrivateKey, createPublicKey, type KeyObject } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -120,11 +120,51 @@ function localTestApproverEntries(): ConfiguredApprovalIssuer[] {
 }
 
 /**
- * The approvers listed in code above, plus the local test approver on
- * a test server.
+ * The sandbox's demo approver, trusted only in sandbox mode. It signs the
+ * approvals that POST /sandbox/approvals issues, so without this entry
+ * the verifier cannot tell them apart from forged ones and refuses every
+ * sandbox approval. Its public key is derived from the private key the
+ * sandbox already holds, so the two cannot disagree.
+ *
+ * Empty unless PARMANA_SANDBOX=true and all three demo approver
+ * variables are set. createSandboxOptions refuses NODE_ENV=production
+ * with sandbox mode, so this entry can't be trusted in production.
+ */
+export function sandboxApproverEntries(
+  env: Readonly<Record<string, string | undefined>> = process.env,
+): ConfiguredApprovalIssuer[] {
+  if (env.PARMANA_SANDBOX?.trim() !== "true") {
+    return [];
+  }
+
+  const approverId = env.PARMANA_SANDBOX_APPROVER_ID?.trim();
+  const keyId = env.PARMANA_SANDBOX_APPROVER_KEY_ID?.trim();
+  const privateKeyPem = env.PARMANA_SANDBOX_APPROVER_PRIVATE_KEY?.replace(
+    /\\n/g,
+    "\n",
+  );
+
+  if (!approverId || !keyId || !privateKeyPem) {
+    return [];
+  }
+
+  const publicKeyPem = createPublicKey(createPrivateKey(privateKeyPem))
+    .export({ type: "spki", format: "pem" })
+    .toString();
+
+  return [{ approverId, keyId, revoked: false, publicKeyPem }];
+}
+
+/**
+ * The approvers listed in code above, the local test approver on a test
+ * server, and the sandbox demo approver in sandbox mode.
  */
 export function createCodeApprovalIssuerRegistry(): StaticApprovalIssuerRegistry {
-  const entries = [...TRUSTED_APPROVAL_ISSUERS, ...localTestApproverEntries()];
+  const entries = [
+    ...TRUSTED_APPROVAL_ISSUERS,
+    ...localTestApproverEntries(),
+    ...sandboxApproverEntries(),
+  ];
 
   return buildApprovalIssuerRegistry(entries, () => {
     const config = loadConfig();
