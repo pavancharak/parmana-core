@@ -138,6 +138,7 @@ const examples = [
   "examples/tutorials/125-kill-switch-two-person-reset/run.ts",
   "examples/tutorials/126-kill-switch-probe/run.ts",
   "examples/tutorials/127-checker-scope/run.ts",
+  "examples/tutorials/128-nbfc-loan-disbursement/run.ts",
   "examples/scenarios/expense-approval/run.ts",
   "examples/scenarios/purchase-order/run.ts",
   "examples/04-verified-execution/run.ts",
