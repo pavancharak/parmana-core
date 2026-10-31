@@ -137,6 +137,26 @@ describe("FilePolicyRepository listing and reading", () => {
     ).resolves.toEqual([]);
   });
 
+  it("refuses a policy.json it cannot read instead of skipping it", async () => {
+    dir = mkdtempSync(path.join(tmpdir(), "policies-"));
+    mkdirSync(path.join(dir, "a", "1.0.0", "policy.json"), { recursive: true });
+
+    await expect(new FilePolicyRepository(dir).listAll()).rejects.toMatchObject(
+      { code: "EISDIR" },
+    );
+  });
+
+  it("still skips a version directory that has no policy.json", async () => {
+    dir = mkdtempSync(path.join(tmpdir(), "policies-"));
+    mkdirSync(path.join(dir, "a", "1.0.0"), { recursive: true });
+    mkdirSync(path.join(dir, "a", "2.0.0"), { recursive: true });
+    writeFileSync(path.join(dir, "a", "2.0.0", "policy.json"), "{}");
+
+    await expect(new FilePolicyRepository(dir).listAll()).resolves.toEqual([
+      { name: "a", version: "2.0.0" },
+    ]);
+  });
+
   it("reports a policy.json that is not JSON as not found", async () => {
     dir = mkdtempSync(path.join(tmpdir(), "policies-"));
     mkdirSync(path.join(dir, "a", "1.0.0"), { recursive: true });
