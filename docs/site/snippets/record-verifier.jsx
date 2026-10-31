@@ -224,7 +224,7 @@ export const RecordVerifier = ({ exampleRecord, examplePublicKey }) => {
   const fetchSandboxKey = async () => {
     try {
       const response = await fetch(
-        "https://parmana-sandbox.vercel.app/keys/default",
+        "https://parmana-api-real.vercel.app/keys/default",
       );
       const body = await response.json();
       setKeyText(body.pem);

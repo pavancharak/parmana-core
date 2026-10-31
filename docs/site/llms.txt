@@ -18,7 +18,6 @@ This file is generated from the documentation navigation. Do not edit it by hand
 ## Get started: Start here
 
 * [Welcome](https://docs.parmanasystems.com): Every action stays within what your business allowed. Parmana checks each one and keeps signed proof of what happened.
-* [Playground](https://docs.parmanasystems.com/playground): Send real requests to a live Parmana sandbox with a published demo key: a refusal, a signed approval, an approved and signed release, and an offline check.
 * [Choose your path](https://docs.parmanasystems.com/choose-your-path): One table that tells you exactly where to start, whether you are a developer, an operator, an auditor or an AI agent.
 * [Quickstart](https://docs.parmanasystems.com/quickstart): See one action checked against approved limits, with its proof kept, in under 10 minutes on your own local server.
 * [How Parmana thinks](https://docs.parmanasystems.com/how-parmana-thinks): The six ideas behind every request: deterministic policy, fail-closed defaults, signed authorization, gateway verification, and trust records.

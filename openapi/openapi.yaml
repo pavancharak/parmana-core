@@ -27,14 +27,10 @@ info:
     **Ownership.** Every lookup by `businessTransactionId` is scoped to the key that submitted the
     transaction. A transaction submitted by another key returns the same `404` as one that does not exist.
 
-    **Try it live.** The first server below is the public sandbox, `https://parmana-sandbox.vercel.app`: the same
-    code as production with its own database, keys and demo approver, whose one action, `sandbox:receipt`,
-    acts on nothing. Every "Try it" panel calls it with the published demo key prefilled. The demo key may
-    invoke only `sandbox:receipt`, so other capabilities return `403` and governance routes return
-    `403 NON_HUMAN_CALLER_DENIED`. Everything sent to the sandbox is visible to every visitor. See
-    [Playground](/playground). Production needs a key issued by its operator.
+    **Try it live.** Every "Try it" panel calls `https://parmana-api-real.vercel.app`. Enter your key in the
+    Authorization field. Production needs a key issued by its operator.
 
-    **Start here:** the [Playground](/playground) (no install), the [Quickstart](/quickstart), then [Integrate Parmana](/agents/integrate) for agents
+    **Start here:** the [Quickstart](/quickstart), then [Integrate Parmana](/agents/integrate) for agents
     and [Connect any external system](/guides/connect-any-external-system) for your own endpoint.
 
   contact:
@@ -46,8 +42,6 @@ info:
     url: https://docs.parmanasystems.com/license
 
 servers:
-  - url: https://parmana-sandbox.vercel.app
-    description: Public sandbox (the docs playground). Same code as production, demo data only, acts on nothing. Demo key prefilled.
   - url: https://parmana-api-real.vercel.app
     description: Production. Needs a key issued by the operator.
   - url: http://localhost:3000
@@ -547,7 +541,7 @@ paths:
       operationId: executeTransaction
       description: |
         In the sandbox, each `businessTransactionId` works once: a prefilled id returns `409` after its first use.
-        For a new id each run, use the [playground](/playground) or the cURL sample, which generate one.
+        For a new id each run, use the cURL sample, which generates one.
         Sends one action for a decision and, if approved, performs it. This is the call an agent makes. The
         server stores the Business Transaction, evaluates the policy, checks any signed human approval the
         policy requires, releases the action to its connector, and returns the signed Execution Trust Record.
@@ -593,7 +587,7 @@ paths:
               sandbox-receipt:
                 summary: >-
                   The public sandbox's receipt action, sent without an approval. The sandbox
-                  refuses it (403 POLICY_DENIED), as the playground shows. Get a demo approval
+                  refuses it (403 POLICY_DENIED). Get a demo approval
                   from POST /sandbox/approvals for the same target and add it to signals to release it.
                 value:
                   businessTransactionId: 8ddd9ae9-eebe-4a5a-8182-4e6187466a74
@@ -1088,7 +1082,7 @@ paths:
       operationId: createTransaction
       description: |
         In the sandbox, each `businessTransactionId` works once: a prefilled id returns `409` after its first use.
-        For a new id each run, use the [playground](/playground) or the cURL sample, which generate one.
+        For a new id each run, use the cURL sample, which generates one.
         The same as `POST /execute` in every way except the success status, `201` instead of `200`. Use
         whichever fits your client. Read [Execute a Business Transaction](/api-reference/endpoints/execute-transaction)
         for the full behavior, the outcomes and what to do after each.
@@ -1102,7 +1096,7 @@ paths:
               sandbox-receipt:
                 summary: >-
                   The public sandbox's receipt action, sent without an approval. The sandbox
-                  refuses it (403 POLICY_DENIED), as the playground shows. Get a demo approval
+                  refuses it (403 POLICY_DENIED). Get a demo approval
                   from POST /sandbox/approvals for the same target and add it to signals to release it.
                 value:
                   businessTransactionId: ae94f2aa-6120-4c83-bf5d-7108e380d5a8
@@ -3303,7 +3297,7 @@ paths:
         to hand to a person or another system. The record must have a `VERIFIED` Verification first; run
         `POST /verify`.
 
-        In the sandbox, the ID must come from a playground run that was approved and released: each run's responses
+        In the sandbox, the ID must come from a run that was approved and released: each run's responses
         include its `businessTransactionId`. Sandbox data is deleted hourly, so an older ID returns `404`.
       requestBody:
         required: true
@@ -7373,9 +7367,9 @@ paths:
         any other approval: a trusted approver key, the signature, the capability, the resource and the expiry, and
         it accepts it once. Needs the published demo key.
 
-        Live at `https://parmana-sandbox.vercel.app`. The request that uses it carries
+        Live at `https://parmana-api-real.vercel.app`. The request that uses it carries
         `signals: { "note": "<the same text as parameters.note>", "receiptApproved": true, "approvalArtifact": <this response> }`,
-        with `target` equal to the `resourceId` you named here. The [Playground](/playground) walks through every step.
+        with `target` equal to the `resourceId` you named here.
       requestBody:
         required: true
         content:
@@ -7467,9 +7461,6 @@ components:
       type: apiKey
       in: header
       name: Authorization
-      # Prefills the docs playground with the public sandbox's demo key
-      # (ADR-0014): caller sandbox-visitor, allowed only sandbox:receipt.
-      x-default: Bearer 2VfYWCzt_cBAPK-8uufX6ordfY2JuQhFPsohuEumKME
       description: >
         Caller API key issued by scripts/generate-api-key.ts. Sent as
         Authorization: Bearer <key>. Verified against a stored SHA-256 hash
