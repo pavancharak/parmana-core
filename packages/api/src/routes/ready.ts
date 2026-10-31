@@ -79,7 +79,8 @@ export function createReadyRouter(options: CreateReadyRouterOptions): Router {
       //
       if (executionIntentsEnforced()) {
         const { rows } = await pool.query(
-          "SELECT to_regclass('public.execution_intents') AS execution_intents",
+          // Unqualified, so the connection's search_path (PARMANA_DB_SCHEMA) applies.
+          "SELECT to_regclass('execution_intents') AS execution_intents",
         );
 
         if (rows[0]?.execution_intents == null) {
