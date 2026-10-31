@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
  * `new Pool(...)` requires the mock to be usable as a constructor --
@@ -22,12 +22,25 @@ function createPoolMock(connect: () => Promise<{ release: () => void }>) {
 
 describe("PostgresPoolFactory", () => {
   const originalDatabaseUrl = process.env.DATABASE_URL;
+  const originalSchema = process.env.PARMANA_DB_SCHEMA;
+
+  beforeEach(() => {
+    // The pool reads PARMANA_DB_SCHEMA from the environment. A value set in a
+    // developer's .env must not change these expectations.
+    delete process.env.PARMANA_DB_SCHEMA;
+  });
 
   afterEach(() => {
     if (originalDatabaseUrl === undefined) {
       delete process.env.DATABASE_URL;
     } else {
       process.env.DATABASE_URL = originalDatabaseUrl;
+    }
+
+    if (originalSchema === undefined) {
+      delete process.env.PARMANA_DB_SCHEMA;
+    } else {
+      process.env.PARMANA_DB_SCHEMA = originalSchema;
     }
 
     vi.doUnmock("pg");
