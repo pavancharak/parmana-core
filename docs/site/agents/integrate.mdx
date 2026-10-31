@@ -317,13 +317,13 @@ person has approved.
 2. **Wait for a signed approval.** It is a JSON object with `payload` and `signature`, made by the approver on their
    own machine. You cannot make one, and you must never ask for or hold an approver's private key.
 3. **Check it matches before sending.** `payload.capability` equals `ACTION`, `payload.resourceId` equals the resource,
-   and `payload.expiresAt` is in the future. An approval is usually valid for 15 minutes and works once.
+   and `payload.expiresAt` is in the future. Use that field for the lifetime. Do not assume a fixed duration. An approval works once.
 4. **Send a new request** (step 3 again, then step 4) with a **new** `businessTransactionId`, the same action and amount,
    the approval signal `true`, and the approval in `signals.approvalArtifact`. Do not change anything else.
 5. If it is refused again, do not retry with the same approval: it may be expired, used, for a different resource or
    amount, or from an approver the server does not trust. Report the message to the operator.
 
-**On a local development server only**, you may need to make the approval yourself, from a key you control. On any other server, never try to make an approval yourself.
+**Making an approval yourself is not allowed unless the operator gives you a signing key and says, in writing, that you may approve on that server.** Without that written permission, stop and ask the operator for an approval. On any server, never ask for or hold an approver's private key.
 
 For people: [Human approval](/concepts/human-approval) and [Approval notifications](/guides/approval-notifications).
 
