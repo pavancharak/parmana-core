@@ -20,11 +20,8 @@ from parmana.crypto import verify_execution_trust_record_offline
 from parmana.serialization import decode, encode
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-RECORD = json.loads(
-    (REPO_ROOT / "python" / "tests" / "fixtures" / "sandbox-check-record.json").read_text(
-        encoding="utf-8"
-    )
-)
+FIXTURE = REPO_ROOT / "python" / "tests" / "fixtures" / "sandbox-check-record.json"
+RECORD = json.loads(FIXTURE.read_text(encoding="utf-8"))
 SANDBOX_DEFAULT_PUBLIC_KEY = (
     "-----BEGIN PUBLIC KEY-----\n"
     "MCowBQYDK2VwAyEAST3Fm9eSnXiX6XERfqlXW1zXtfHwFWUEgmZbPxPcjLc=\n"
