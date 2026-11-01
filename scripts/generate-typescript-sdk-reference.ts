@@ -66,14 +66,22 @@ function categoryOf(decl: ts.Declaration): Category | undefined {
   return undefined;
 }
 
-/** Escapes text so MDX does not read braces or angle brackets as JSX. */
-function prose(text: string): string {
-  return text
+/**
+ * Escapes text for MDX prose, or for a table cell when `table` is set. The
+ * backslash is escaped first, so an escape is never doubled or lost. Braces
+ * and angle brackets become MDX-safe; in a table, pipes are escaped and line
+ * breaks removed.
+ */
+function escapeMdx(text: string, table: boolean): string {
+  let out = text
     .replace(/\\/g, "\\\\")
     .replace(/\{/g, "\\{")
     .replace(/\}/g, "\\}")
-    .replace(/</g, "&lt;")
-    .trim();
+    .replace(/</g, "&lt;");
+  if (table) {
+    out = out.replace(/\|/g, "\\|").replace(/\n/g, " ");
+  }
+  return out.trim();
 }
 
 /** Inline code, with backticks in the text replaced so the span stays closed. */
@@ -81,8 +89,8 @@ function code(text: string): string {
   return "`" + text.replace(/\n/g, " ").replace(/`/g, "'") + "`";
 }
 
-/** A table cell: pipes escaped and no line breaks. */
-function cell(text: string): string {
+/** Escapes pipes in a table cell whose content is already inline markup. */
+function tablePipes(text: string): string {
   return text
     .replace(/\\/g, "\\\\")
     .replace(/\|/g, "\\|")
@@ -120,9 +128,7 @@ function isHidden(decl: ts.Declaration): boolean {
 }
 
 function describe(checker: ts.TypeChecker, symbol: ts.Symbol): string {
-  return prose(
-    ts.displayPartsToString(symbol.getDocumentationComment(checker)),
-  );
+  return ts.displayPartsToString(symbol.getDocumentationComment(checker));
 }
 
 function memberRows(
@@ -140,7 +146,7 @@ function memberRows(
     const kind = isMethod ? "Method" : "Property";
     const name = member.name + (optional ? "?" : "");
     rows.push(
-      `| ${cell(code(name))} | ${kind} | ${cell(typeMarkup(checker.typeToString(memberType), known))} | ${cell(describe(checker, member))} |`,
+      `| ${tablePipes(code(name))} | ${kind} | ${tablePipes(typeMarkup(checker.typeToString(memberType), known))} | ${escapeMdx(describe(checker, member), true)} |`,
     );
   }
   return rows;
@@ -153,7 +159,7 @@ function renderPage(
   known: KnownTypes,
 ): string {
   const parts: string[] = [];
-  const description = describe(checker, symbol);
+  const description = escapeMdx(describe(checker, symbol), false);
   if (description) parts.push(description);
 
   if (ts.isFunctionDeclaration(decl) || ts.isVariableDeclaration(decl)) {
@@ -181,7 +187,7 @@ function renderPage(
       .getPropertiesOfType(type)
       .map(
         (member) =>
-          `| ${cell(code(member.name))} | ${cell(describe(checker, member))} |`,
+          `| ${tablePipes(code(member.name))} | ${escapeMdx(describe(checker, member), true)} |`,
       );
     if (rows.length > 0) {
       parts.push(
