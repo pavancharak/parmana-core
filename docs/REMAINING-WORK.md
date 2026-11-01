@@ -145,7 +145,7 @@ Taken from `docs/site/deployment/environment-variables.mdx`. Since 2026-11-01 th
 1. `KEY_PROVIDER`: `azure-key-vault`, `gcp-kms`, `hsm`. Refused.
 2. `PRIMARY_SIGNATURE_PROVIDER` and `SECONDARY_SIGNATURE_PROVIDER`: `ecdsa-p256`, `dilithium5`, `sphincs-plus`. Refused.
 3. `HASH_PROVIDER`: `sha3-512`, `blake3`. Refused.
-4. `PARMANA_STORAGE=postgres`. Not refused: it selects the implemented Postgres storage (`isPostgresStorage`). This item looks stale; confirm against a running Postgres before closing it.
+4. `PARMANA_STORAGE=postgres`. Not refused, and implemented. Verified 2026-11-01 against a local Postgres 16 with all 43 migrations applied: the server starts, `/ready` runs its `SELECT 1` check, and the live suites in `packages/storage/tests/integration` and `packages/api/tests/integration` pass (`ALLOW_LIVE_SUPABASE=1`, 391 tests, 3 skipped), including the nonce store test, which writes to `consumed_nonces`. This item can be closed.
 5. `CRYPTO_MODE=pq`. Refused: no production code reads it.
 
 ## E. Tooling limits
