@@ -5,10 +5,11 @@ title: "Interface: RetryPolicy"
 Immutable retry configuration.
 
 ## Members
-| Name | Kind | Type | Description |
-| --- | --- | --- | --- |
-| `enabled?` | Property | `boolean \| undefined` | Enables or disables retries.  Default: false |
-| `maxAttempts?` | Property | `number \| undefined` | Maximum retry attempts.  Default: 0 |
-| `initialDelayMs?` | Property | `number \| undefined` | Initial retry delay in milliseconds.  Default: 1000 |
-| `maxDelayMs?` | Property | `number \| undefined` | Maximum delay between retries.  Default: 30000 |
-| `strategy?` | Property | [`RetryStrategy`](/sdks/reference/typescript/enumerations/RetryStrategy)` \| undefined` | Retry backoff strategy.  Default: EXPONENTIAL |
+
+| Name              | Kind     | Type                                                                                    | Description                                        |
+| ----------------- | -------- | --------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `enabled?`        | Property | `boolean \| undefined`                                                                  | Enables or disables retries. Default: false        |
+| `maxAttempts?`    | Property | `number \| undefined`                                                                   | Maximum retry attempts. Default: 0                 |
+| `initialDelayMs?` | Property | `number \| undefined`                                                                   | Initial retry delay in milliseconds. Default: 1000 |
+| `maxDelayMs?`     | Property | `number \| undefined`                                                                   | Maximum delay between retries. Default: 30000      |
+| `strategy?`       | Property | [`RetryStrategy`](/sdks/reference/typescript/enumerations/RetryStrategy)` \| undefined` | Retry backoff strategy. Default: EXPONENTIAL       |

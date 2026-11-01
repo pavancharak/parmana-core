@@ -5,7 +5,8 @@ title: "Interface: ProposePolicyChangeInput"
 The body of POST /policies/\{name\}/\{version\}/pending-changes.
 
 ## Members
-| Name | Kind | Type | Description |
-| --- | --- | --- | --- |
+
+| Name              | Kind     | Type      | Description                                                                          |
+| ----------------- | -------- | --------- | ------------------------------------------------------------------------------------ |
 | `proposedContent` | Property | `unknown` | The whole policy.json content. Its `policyId` must equal the policy name in the URL. |
-| `reason` | Property | `string` | Why the change should take effect. Required. |
+| `reason`          | Property | `string`  | Why the change should take effect. Required.                                         |

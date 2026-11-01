@@ -5,17 +5,18 @@ title: "Interface: ApprovalIssuerChange"
 A proposal to add or revoke an approver key, and its resolution.
 
 ## Members
-| Name | Kind | Type | Description |
-| --- | --- | --- | --- |
-| `changeId` | Property | `string` | Sign the step up authorization for approve or reject with this id as `pendingPolicyChangeId`. |
-| `action` | Property | `"add" \| "revoke"` |  |
-| `approverId` | Property | `string` |  |
-| `keyId` | Property | `string` |  |
-| `publicKeyPem?` | Property | `string \| undefined` |  |
-| `reason` | Property | `string` |  |
-| `proposedBy` | Property | `string` |  |
-| `proposedAt` | Property | `string` |  |
-| `status` | Property | [`PendingPolicyChangeStatus`](/sdks/reference/typescript/type-aliases/PendingPolicyChangeStatus) |  |
-| `resolvedBy?` | Property | `string \| undefined` |  |
-| `resolvedAt?` | Property | `string \| undefined` |  |
-| `rejectionReason?` | Property | `string \| undefined` |  |
+
+| Name               | Kind     | Type                                                                                             | Description                                                                                   |
+| ------------------ | -------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| `changeId`         | Property | `string`                                                                                         | Sign the step up authorization for approve or reject with this id as `pendingPolicyChangeId`. |
+| `action`           | Property | `"add" \| "revoke"`                                                                              |                                                                                               |
+| `approverId`       | Property | `string`                                                                                         |                                                                                               |
+| `keyId`            | Property | `string`                                                                                         |                                                                                               |
+| `publicKeyPem?`    | Property | `string \| undefined`                                                                            |                                                                                               |
+| `reason`           | Property | `string`                                                                                         |                                                                                               |
+| `proposedBy`       | Property | `string`                                                                                         |                                                                                               |
+| `proposedAt`       | Property | `string`                                                                                         |                                                                                               |
+| `status`           | Property | [`PendingPolicyChangeStatus`](/sdks/reference/typescript/type-aliases/PendingPolicyChangeStatus) |                                                                                               |
+| `resolvedBy?`      | Property | `string \| undefined`                                                                            |                                                                                               |
+| `resolvedAt?`      | Property | `string \| undefined`                                                                            |                                                                                               |
+| `rejectionReason?` | Property | `string \| undefined`                                                                            |                                                                                               |

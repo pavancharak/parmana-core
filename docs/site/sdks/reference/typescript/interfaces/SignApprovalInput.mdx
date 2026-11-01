@@ -3,12 +3,13 @@ title: "Interface: SignApprovalInput"
 ---
 
 ## Members
-| Name | Kind | Type | Description |
-| --- | --- | --- | --- |
-| `privateKeyPem` | Property | `string` | The approver's Ed25519 private key, PEM (PKCS #8), as made by scripts/generate-approver-key.ts. |
-| `approverId` | Property | `string` | The approver and key as registered on the server. |
-| `keyId` | Property | `string` |  |
-| `capability` | Property | `string` | The action approved, such as paytm:refund or github:pr-merge. |
-| `resourceId` | Property | `string` | The value at the policy's approvalSignals resourceId path: an order id, or for "target" the Intent's target, such as acme/api#42. |
-| `maxAmount?` | Property | `number \| undefined` | The largest amount approved. Give it when the policy declares a value path (an amount), and leave it out when it does not: the approval then names exactly this resource. |
-| `ttlSeconds?` | Property | `number \| undefined` | How long the approval stays valid. Default 900, at most 86400. |
+
+| Name            | Kind     | Type                  | Description                                                                                                                                                               |
+| --------------- | -------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `privateKeyPem` | Property | `string`              | The approver's Ed25519 private key, PEM (PKCS #8), as made by scripts/generate-approver-key.ts.                                                                           |
+| `approverId`    | Property | `string`              | The approver and key as registered on the server.                                                                                                                         |
+| `keyId`         | Property | `string`              |                                                                                                                                                                           |
+| `capability`    | Property | `string`              | The action approved, such as paytm:refund or github:pr-merge.                                                                                                             |
+| `resourceId`    | Property | `string`              | The value at the policy's approvalSignals resourceId path: an order id, or for "target" the Intent's target, such as acme/api#42.                                         |
+| `maxAmount?`    | Property | `number \| undefined` | The largest amount approved. Give it when the policy declares a value path (an amount), and leave it out when it does not: the approval then names exactly this resource. |
+| `ttlSeconds?`   | Property | `number \| undefined` | How long the approval stays valid. Default 900, at most 86400.                                                                                                            |

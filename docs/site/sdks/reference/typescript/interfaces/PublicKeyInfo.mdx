@@ -6,10 +6,11 @@ A signing public key of the deployment. The response of
 GET /keys/\{keyId\}.
 
 ## Members
-| Name | Kind | Type | Description |
-| --- | --- | --- | --- |
-| `keyId` | Property | `string` |  |
-| `algorithm` | Property | `string` |  |
-| `use` | Property | `"sig"` |  |
-| `pem` | Property | `string` | SPKI PEM. Pass it to the offline verifiers. |
-| `jwk?` | Property | `Record<string, unknown> \| undefined` | The same key as a JSON Web Key, when the algorithm has a JWK form. |
+
+| Name        | Kind     | Type                                   | Description                                                        |
+| ----------- | -------- | -------------------------------------- | ------------------------------------------------------------------ |
+| `keyId`     | Property | `string`                               |                                                                    |
+| `algorithm` | Property | `string`                               |                                                                    |
+| `use`       | Property | `"sig"`                                |                                                                    |
+| `pem`       | Property | `string`                               | SPKI PEM. Pass it to the offline verifiers.                        |
+| `jwk?`      | Property | `Record<string, unknown> \| undefined` | The same key as a JSON Web Key, when the algorithm has a JWK form. |

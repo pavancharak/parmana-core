@@ -3,7 +3,8 @@ title: "Class: RefusalApi"
 ---
 
 ## Members
-| Name | Kind | Type | Description |
-| --- | --- | --- | --- |
-| `verify` | Method | `(record: `[`RefusalRecord`](/sdks/reference/typescript/interfaces/RefusalRecord)`) => Promise<boolean>` | Verifies a Refusal Record's signature. Maps to POST /refusal/verify -- takes the record itself, not a lookup by id. No caller authentication is required by this route: it is the capability that makes a refusal independently third-party verifiable (RFC-0021). |
-| `get` | Method | `(businessTransactionId: string) => Promise<`[`RefusalRecord`](/sdks/reference/typescript/interfaces/RefusalRecord)`>` | Retrieves a Refusal Record by Business Transaction ID. Maps to GET /refusal/:businessTransactionId. Unlike verify() above, this route is behind caller-auth and ownership scoping, identically to TrustRecordApi.get(). |
+
+| Name     | Kind   | Type                                                                                                                   | Description                                                                                                                                                                                                                                                        |
+| -------- | ------ | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `verify` | Method | `(record: `[`RefusalRecord`](/sdks/reference/typescript/interfaces/RefusalRecord)`) => Promise<boolean>`               | Verifies a Refusal Record's signature. Maps to POST /refusal/verify -- takes the record itself, not a lookup by id. No caller authentication is required by this route: it is the capability that makes a refusal independently third-party verifiable (RFC-0021). |
+| `get`    | Method | `(businessTransactionId: string) => Promise<`[`RefusalRecord`](/sdks/reference/typescript/interfaces/RefusalRecord)`>` | Retrieves a Refusal Record by Business Transaction ID. Maps to GET /refusal/:businessTransactionId. Unlike verify() above, this route is behind caller-auth and ownership scoping, identically to TrustRecordApi.get().                                            |

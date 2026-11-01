@@ -7,19 +7,20 @@ effect now next to the proposed content, and any warnings the policy
 validator raised about the proposal.
 
 ## Members
-| Name | Kind | Type | Description |
-| --- | --- | --- | --- |
-| `diff` | Property | `{ readonly current: unknown; readonly proposed: unknown; }` |  |
-| `coverageWarnings?` | Property | `readonly unknown[] \| undefined` |  |
-| `ruleConflicts?` | Property | `readonly unknown[] \| undefined` |  |
-| `pendingPolicyChangeId` | Property | `string` |  |
-| `policyName` | Property | `string` |  |
-| `policyVersion` | Property | `string` |  |
-| `proposedContent` | Property | `unknown` | The full policy content that takes effect when the change is approved. |
-| `proposedBy` | Property | `string` | Caller ID of the proposer. |
-| `proposedAt` | Property | `string` | ISO 8601 timestamp. |
-| `status` | Property | [`PendingPolicyChangeStatus`](/sdks/reference/typescript/type-aliases/PendingPolicyChangeStatus) |  |
-| `reason` | Property | `string` |  |
-| `resolvedBy?` | Property | `string \| undefined` | Caller ID of whoever approved or rejected it. Absent while pending. |
-| `resolvedAt?` | Property | `string \| undefined` | ISO 8601 timestamp. Absent while pending. |
-| `rejectionReason?` | Property | `string \| undefined` | Present only on a rejected change. |
+
+| Name                    | Kind     | Type                                                                                             | Description                                                            |
+| ----------------------- | -------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| `diff`                  | Property | `{ readonly current: unknown; readonly proposed: unknown; }`                                     |                                                                        |
+| `coverageWarnings?`     | Property | `readonly unknown[] \| undefined`                                                                |                                                                        |
+| `ruleConflicts?`        | Property | `readonly unknown[] \| undefined`                                                                |                                                                        |
+| `pendingPolicyChangeId` | Property | `string`                                                                                         |                                                                        |
+| `policyName`            | Property | `string`                                                                                         |                                                                        |
+| `policyVersion`         | Property | `string`                                                                                         |                                                                        |
+| `proposedContent`       | Property | `unknown`                                                                                        | The full policy content that takes effect when the change is approved. |
+| `proposedBy`            | Property | `string`                                                                                         | Caller ID of the proposer.                                             |
+| `proposedAt`            | Property | `string`                                                                                         | ISO 8601 timestamp.                                                    |
+| `status`                | Property | [`PendingPolicyChangeStatus`](/sdks/reference/typescript/type-aliases/PendingPolicyChangeStatus) |                                                                        |
+| `reason`                | Property | `string`                                                                                         |                                                                        |
+| `resolvedBy?`           | Property | `string \| undefined`                                                                            | Caller ID of whoever approved or rejected it. Absent while pending.    |
+| `resolvedAt?`           | Property | `string \| undefined`                                                                            | ISO 8601 timestamp. Absent while pending.                              |
+| `rejectionReason?`      | Property | `string \| undefined`                                                                            | Present only on a rejected change.                                     |

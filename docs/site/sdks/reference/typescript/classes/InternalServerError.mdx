@@ -7,6 +7,7 @@ Raised when the Runtime encounters an internal error.
 `serverCode` carries the Runtime's own `code` field when the response had
 one, so callers can tell apart failures that share this class. Two matter
 for what to do next:
+
 - `SIGNING_UNAVAILABLE` (503): the Runtime refused BEFORE releasing the
   action because it could not sign an Execution Trust Record. Nothing was
   executed. Retry once signing is healthy, with a NEW businessTransactionId.
@@ -14,16 +15,17 @@ for what to do next:
   execution system but its signed Execution Trust Record could not be
   produced. Do NOT retry as a new transaction, reconcile against the
   connector and the execution audit events for the businessTransactionId.
-Undefined when the response carried no `code`.
+  Undefined when the response carried no `code`.
 
 ## Members
-| Name | Kind | Type | Description |
-| --- | --- | --- | --- |
-| `serverCode?` | Property | `string \| undefined` |  |
-| `code` | Property | [`ErrorCode`](/sdks/reference/typescript/enumerations/ErrorCode) | Stable machine-readable error code. |
-| `requestId?` | Property | `string \| undefined` | Optional request identifier. |
-| `cause?` | Property | `unknown` | Optional underlying cause. |
-| `statusCode?` | Property | `number \| undefined` | The HTTP status of the response this error was made from, for example 403 or 503. Absent when no response was received (a network error or a timeout) and for errors raised by the SDK itself. The Python SDK's equivalent is `status_code`. |
-| `name` | Property | `string` |  |
-| `message` | Property | `string` |  |
-| `stack?` | Property | `string \| undefined` |  |
+
+| Name          | Kind     | Type                                                             | Description                                                                                                                                                                                                                                  |
+| ------------- | -------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `serverCode?` | Property | `string \| undefined`                                            |                                                                                                                                                                                                                                              |
+| `code`        | Property | [`ErrorCode`](/sdks/reference/typescript/enumerations/ErrorCode) | Stable machine-readable error code.                                                                                                                                                                                                          |
+| `requestId?`  | Property | `string \| undefined`                                            | Optional request identifier.                                                                                                                                                                                                                 |
+| `cause?`      | Property | `unknown`                                                        | Optional underlying cause.                                                                                                                                                                                                                   |
+| `statusCode?` | Property | `number \| undefined`                                            | The HTTP status of the response this error was made from, for example 403 or 503. Absent when no response was received (a network error or a timeout) and for errors raised by the SDK itself. The Python SDK's equivalent is `status_code`. |
+| `name`        | Property | `string`                                                         |                                                                                                                                                                                                                                              |
+| `message`     | Property | `string`                                                         |                                                                                                                                                                                                                                              |
+| `stack?`      | Property | `string \| undefined`                                            |                                                                                                                                                                                                                                              |

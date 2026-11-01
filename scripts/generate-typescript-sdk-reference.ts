@@ -8,6 +8,7 @@ import {
 } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { format, resolveConfig } from "prettier";
 
 /**
  * Generates the TypeScript SDK reference pages under
@@ -15,7 +16,9 @@ import { fileURLToPath } from "node:url";
  * TypeScript compiler API directly. One page per exported declaration, in a
  * folder per kind, with the same paths the llms text builder and the API
  * manifest link to (for example classes/ParmanaClient). A type that names
- * another exported type links to that type's page.
+ * another exported type links to that type's page. Every file written is
+ * formatted with the repository's Prettier configuration, so the output
+ * matches what the formatting check expects.
  */
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -84,8 +87,7 @@ function cell(text: string): string {
 
 /**
  * A type as inline markup. Each identifier that names an exported type is a
- * link to its page; the rest stays in code spans. Splitting on identifiers
- * means the link text is always the exact type name.
+ * link to its page; the rest stays in code spans.
  */
 function typeMarkup(text: string, known: KnownTypes): string {
   const flat = text.replace(/\n/g, " ");
@@ -201,7 +203,17 @@ function renderPage(
   return parts.filter((part) => part.length > 0).join("\n\n") + "\n";
 }
 
-function run(): void {
+/** Formats text the way the repository's Prettier configuration does. */
+async function formatFile(
+  filePath: string,
+  text: string,
+  parser: "mdx" | "json",
+): Promise<string> {
+  const config = (await resolveConfig(filePath)) ?? {};
+  return format(text, { ...config, filepath: filePath, parser });
+}
+
+async function run(): Promise<void> {
   console.log(
     "generate-typescript-sdk-reference: reading the TypeScript source...",
   );
@@ -263,18 +275,16 @@ function run(): void {
     mkdirSync(destDir, { recursive: true });
     const title = `${KIND_LABELS[entry.category]}: ${entry.name}`;
     const body = renderPage(checker, entry.symbol, entry.decl, known);
-    writeFileSync(
-      path.join(destDir, `${entry.name}.mdx`),
-      `---\ntitle: ${JSON.stringify(title)}\n---\n\n${body}`,
-      "utf8",
-    );
+    const destFile = path.join(destDir, `${entry.name}.mdx`);
+    const text = `---\ntitle: ${JSON.stringify(title)}\n---\n\n${body}`;
+    writeFileSync(destFile, await formatFile(destFile, text, "mdx"), "utf8");
     (navByCategory[entry.category] ??= []).push(
       `${NAV_BASE}/${entry.category}/${entry.name}`,
     );
   }
 
   for (const pages of Object.values(navByCategory)) pages.sort();
-  updateNav(navByCategory);
+  await updateNav(navByCategory);
 
   console.log(
     `generate-typescript-sdk-reference: wrote ${entries.length} pages to ${DOCS_DIR}`,
@@ -285,7 +295,9 @@ function run(): void {
  * Replaces the pages of the "API reference" group in the "TypeScript SDK" tab
  * with the freshly computed sub groups. Every other group and tab is untouched.
  */
-function updateNav(navByCategory: Record<string, string[]>): void {
+async function updateNav(
+  navByCategory: Record<string, string[]>,
+): Promise<void> {
   const config = JSON.parse(readFileSync(DOCS_JSON_PATH, "utf8"));
 
   const tab = (
@@ -312,7 +324,15 @@ function updateNav(navByCategory: Record<string, string[]>): void {
       pages: navByCategory[category],
     }));
 
-  writeFileSync(DOCS_JSON_PATH, JSON.stringify(config, null, 2) + "\n", "utf8");
+  const text = JSON.stringify(config, null, 2) + "\n";
+  writeFileSync(
+    DOCS_JSON_PATH,
+    await formatFile(DOCS_JSON_PATH, text, "json"),
+    "utf8",
+  );
 }
 
-run();
+run().catch((error: unknown) => {
+  console.error(error);
+  process.exit(1);
+});

@@ -8,22 +8,24 @@ for. Covers two distinct denials, both intentionally collapsed to
 this one SDK error class since both share the same "who you are is
 known; you can't do this" shape — distinguish them via `serverCode`/
 `message` if needed, not via `instanceof`:
+
 - a caller asserting an authority.principalId it isn't permitted to
   assert (isPrincipalAllowed, packages/api/src/routes/execute.ts and
   transactions.ts) — carries no `code` field of its own.
 - a caller invoking a capability (intent.action) it isn't permitted
   to invoke (isCapabilityAllowed.ts) — carries
   `code: "CAPABILITY_NOT_ALLOWED"`, preserved on `serverCode` below.
-Distinct from AuthenticationError (401, no valid credential at all).
+  Distinct from AuthenticationError (401, no valid credential at all).
 
 ## Members
-| Name | Kind | Type | Description |
-| --- | --- | --- | --- |
-| `serverCode?` | Property | `string \| undefined` | The Runtime's own `code` field, when the 403 carried one (currently only the capability-denied case: "CAPABILITY_NOT_ALLOWED"). Undefined for the principal-mismatch case, which the Runtime sends with no `code` at all — see mapHttpErrorResponse.ts for the exact check. |
-| `code` | Property | [`ErrorCode`](/sdks/reference/typescript/enumerations/ErrorCode) | Stable machine-readable error code. |
-| `requestId?` | Property | `string \| undefined` | Optional request identifier. |
-| `cause?` | Property | `unknown` | Optional underlying cause. |
-| `statusCode?` | Property | `number \| undefined` | The HTTP status of the response this error was made from, for example 403 or 503. Absent when no response was received (a network error or a timeout) and for errors raised by the SDK itself. The Python SDK's equivalent is `status_code`. |
-| `name` | Property | `string` |  |
-| `message` | Property | `string` |  |
-| `stack?` | Property | `string \| undefined` |  |
+
+| Name          | Kind     | Type                                                             | Description                                                                                                                                                                                                                                                                 |
+| ------------- | -------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `serverCode?` | Property | `string \| undefined`                                            | The Runtime's own `code` field, when the 403 carried one (currently only the capability-denied case: "CAPABILITY_NOT_ALLOWED"). Undefined for the principal-mismatch case, which the Runtime sends with no `code` at all — see mapHttpErrorResponse.ts for the exact check. |
+| `code`        | Property | [`ErrorCode`](/sdks/reference/typescript/enumerations/ErrorCode) | Stable machine-readable error code.                                                                                                                                                                                                                                         |
+| `requestId?`  | Property | `string \| undefined`                                            | Optional request identifier.                                                                                                                                                                                                                                                |
+| `cause?`      | Property | `unknown`                                                        | Optional underlying cause.                                                                                                                                                                                                                                                  |
+| `statusCode?` | Property | `number \| undefined`                                            | The HTTP status of the response this error was made from, for example 403 or 503. Absent when no response was received (a network error or a timeout) and for errors raised by the SDK itself. The Python SDK's equivalent is `status_code`.                                |
+| `name`        | Property | `string`                                                         |                                                                                                                                                                                                                                                                             |
+| `message`     | Property | `string`                                                         |                                                                                                                                                                                                                                                                             |
+| `stack?`      | Property | `string \| undefined`                                            |                                                                                                                                                                                                                                                                             |

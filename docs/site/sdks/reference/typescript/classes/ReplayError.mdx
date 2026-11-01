@@ -5,12 +5,13 @@ title: "Class: ReplayError"
 Raised when deterministic replay fails.
 
 ## Members
-| Name | Kind | Type | Description |
-| --- | --- | --- | --- |
-| `code` | Property | [`ErrorCode`](/sdks/reference/typescript/enumerations/ErrorCode) | Stable machine-readable error code. |
-| `requestId?` | Property | `string \| undefined` | Optional request identifier. |
-| `cause?` | Property | `unknown` | Optional underlying cause. |
-| `statusCode?` | Property | `number \| undefined` | The HTTP status of the response this error was made from, for example 403 or 503. Absent when no response was received (a network error or a timeout) and for errors raised by the SDK itself. The Python SDK's equivalent is `status_code`. |
-| `name` | Property | `string` |  |
-| `message` | Property | `string` |  |
-| `stack?` | Property | `string \| undefined` |  |
+
+| Name          | Kind     | Type                                                             | Description                                                                                                                                                                                                                                  |
+| ------------- | -------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `code`        | Property | [`ErrorCode`](/sdks/reference/typescript/enumerations/ErrorCode) | Stable machine-readable error code.                                                                                                                                                                                                          |
+| `requestId?`  | Property | `string \| undefined`                                            | Optional request identifier.                                                                                                                                                                                                                 |
+| `cause?`      | Property | `unknown`                                                        | Optional underlying cause.                                                                                                                                                                                                                   |
+| `statusCode?` | Property | `number \| undefined`                                            | The HTTP status of the response this error was made from, for example 403 or 503. Absent when no response was received (a network error or a timeout) and for errors raised by the SDK itself. The Python SDK's equivalent is `status_code`. |
+| `name`        | Property | `string`                                                         |                                                                                                                                                                                                                                              |
+| `message`     | Property | `string`                                                         |                                                                                                                                                                                                                                              |
+| `stack?`      | Property | `string \| undefined`                                            |                                                                                                                                                                                                                                              |

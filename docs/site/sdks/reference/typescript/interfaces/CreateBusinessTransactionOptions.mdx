@@ -9,9 +9,9 @@ server's own BusinessTransactionValidator checks for cross-consistency
 caller can never build a request that fails one of those checks by
 mistake:
 
-  - metadata.businessTransactionId always equals businessTransactionId
-  - authorization.authorityId always equals authority.authorityId
-  - intent.authorizationId always equals authorization.authorizationId
+- metadata.businessTransactionId always equals businessTransactionId
+- authorization.authorityId always equals authority.authorityId
+- intent.authorizationId always equals authorization.authorizationId
 
 Hand-building a BusinessTransaction by writing out all five nested
 objects and keeping three id pairs in sync by hand is exactly the
@@ -27,19 +27,20 @@ idempotency key (see docs/site/guides/end-to-end-paytm-flow.mdx,
 "businessTransactionId is an idempotency key").
 
 ## Members
-| Name | Kind | Type | Description |
-| --- | --- | --- | --- |
-| `businessTransactionId?` | Property | `string \| undefined` | Defaults to a fresh crypto.randomUUID() if omitted. |
-| `authorityType?` | Property | `"USER" \| "ROLE" \| "SERVICE" \| "ORGANIZATION" \| undefined` | Defaults to "SERVICE", the correct value for an autonomous agent. Never "AGENT"; that value does not exist server-side. |
-| `principalId` | Property | `string` | The identity this transaction is submitted as. Must match one of the caller API key's own allowedPrincipalIds server-side, or the request is rejected before policy ever runs. See GET /callers/me. |
-| `displayName?` | Property | `string \| undefined` |  |
-| `purpose` | Property | `string` | Human-readable reason for authorization.purpose. |
-| `action` | Property | `string` | The capability being invoked, e.g. "paytm:refund". |
-| `target` | Property | `string` |  |
-| `parameters` | Property | `Record<string, unknown>` |  |
-| `policy` | Property | [`PolicyReference`](/sdks/reference/typescript/interfaces/PolicyReference) |  |
-| `signals` | Property | `Record<string, unknown>` | Facts the named policy evaluates. Every fact a policy rule references must appear here, and every boundSignals entry the policy declares is cross-checked against the matching intent field (see the policy's own boundSignals) before evaluation runs at all. A mismatch is rejected as a binding-tamper attempt, not silently ignored. |
-| `correlationId?` | Property | `string \| undefined` |  |
-| `tenantId?` | Property | `string \| undefined` |  |
-| `sourceSystem?` | Property | `string \| undefined` |  |
-| `submittedBy?` | Property | `string \| undefined` |  |
+
+| Name                     | Kind     | Type                                                                       | Description                                                                                                                                                                                                                                                                                                                              |
+| ------------------------ | -------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `businessTransactionId?` | Property | `string \| undefined`                                                      | Defaults to a fresh crypto.randomUUID() if omitted.                                                                                                                                                                                                                                                                                      |
+| `authorityType?`         | Property | `"USER" \| "ROLE" \| "SERVICE" \| "ORGANIZATION" \| undefined`             | Defaults to "SERVICE", the correct value for an autonomous agent. Never "AGENT"; that value does not exist server-side.                                                                                                                                                                                                                  |
+| `principalId`            | Property | `string`                                                                   | The identity this transaction is submitted as. Must match one of the caller API key's own allowedPrincipalIds server-side, or the request is rejected before policy ever runs. See GET /callers/me.                                                                                                                                      |
+| `displayName?`           | Property | `string \| undefined`                                                      |                                                                                                                                                                                                                                                                                                                                          |
+| `purpose`                | Property | `string`                                                                   | Human-readable reason for authorization.purpose.                                                                                                                                                                                                                                                                                         |
+| `action`                 | Property | `string`                                                                   | The capability being invoked, e.g. "paytm:refund".                                                                                                                                                                                                                                                                                       |
+| `target`                 | Property | `string`                                                                   |                                                                                                                                                                                                                                                                                                                                          |
+| `parameters`             | Property | `Record<string, unknown>`                                                  |                                                                                                                                                                                                                                                                                                                                          |
+| `policy`                 | Property | [`PolicyReference`](/sdks/reference/typescript/interfaces/PolicyReference) |                                                                                                                                                                                                                                                                                                                                          |
+| `signals`                | Property | `Record<string, unknown>`                                                  | Facts the named policy evaluates. Every fact a policy rule references must appear here, and every boundSignals entry the policy declares is cross-checked against the matching intent field (see the policy's own boundSignals) before evaluation runs at all. A mismatch is rejected as a binding-tamper attempt, not silently ignored. |
+| `correlationId?`         | Property | `string \| undefined`                                                      |                                                                                                                                                                                                                                                                                                                                          |
+| `tenantId?`              | Property | `string \| undefined`                                                      |                                                                                                                                                                                                                                                                                                                                          |
+| `sourceSystem?`          | Property | `string \| undefined`                                                      |                                                                                                                                                                                                                                                                                                                                          |
+| `submittedBy?`           | Property | `string \| undefined`                                                      |                                                                                                                                                                                                                                                                                                                                          |

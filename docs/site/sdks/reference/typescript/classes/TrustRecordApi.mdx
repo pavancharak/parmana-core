@@ -5,7 +5,8 @@ title: "Class: TrustRecordApi"
 Trust Record API.
 
 ## Members
-| Name | Kind | Type | Description |
-| --- | --- | --- | --- |
-| `get` | Method | `(businessTransactionId: string) => Promise<`[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)`>` | Retrieve an Execution Trust Record. |
+
+| Name   | Kind   | Type                                                                                                                                                                                                       | Description                                                                                                                                                                                         |
+| ------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `get`  | Method | `(businessTransactionId: string) => Promise<`[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)`>`                                                                       | Retrieve an Execution Trust Record.                                                                                                                                                                 |
 | `list` | Method | `(page?: number, pageSize?: number, options?: { readonly since?: string; readonly until?: string; }) => Promise<`[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)`[]>` | List Execution Trust Records, newest first. Maps to GET /trust-records. Only records of Business Transactions this caller submitted are returned, so a page may hold fewer than `pageSize` records. |

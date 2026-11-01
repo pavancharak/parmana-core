@@ -4,20 +4,22 @@ title: "Class: TransactionApi"
 
 Transaction API.
 
-Responsibilities
-----------------
+## Responsibilities
+
 - Create (execute) a Business Transaction via POST /transactions
 - Retrieve Business Transactions
 - List Business Transactions
 
 This API does NOT:
+
 - verify trust records
 - replay executions
 - generate receipts
 
 ## Members
-| Name | Kind | Type | Description |
-| --- | --- | --- | --- |
+
+| Name     | Kind   | Type                                                                                                                                                                                                     | Description                                                                                                                                                                                                                                                                                                                        |
+| -------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `create` | Method | `(transaction: `[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)`) => Promise<`[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)`>` | Create (execute) a Business Transaction. Maps to POST /transactions: a second, independent entry point into the identical application.execute() pipeline as ExecutionApi.execute() (POST /execute). The only behavioral difference is the success status code, 201 instead of 200; the response body shape is otherwise identical. |
-| `get` | Method | `(businessTransactionId: string) => Promise<`[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)`>` | Retrieve a Business Transaction. |
-| `list` | Method | `(page?: number, pageSize?: number) => Promise<`[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)`[]>` | List Business Transactions. |
+| `get`    | Method | `(businessTransactionId: string) => Promise<`[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)`>`                                                                       | Retrieve a Business Transaction.                                                                                                                                                                                                                                                                                                   |
+| `list`   | Method | `(page?: number, pageSize?: number) => Promise<`[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)`[]>`                                                                  | List Business Transactions.                                                                                                                                                                                                                                                                                                        |

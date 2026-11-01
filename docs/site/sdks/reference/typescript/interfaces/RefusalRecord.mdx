@@ -10,15 +10,16 @@ ExecutionTrustRecord. At most one RefusalRecord exists per
 businessTransactionId.
 
 ## Members
-| Name | Kind | Type | Description |
-| --- | --- | --- | --- |
-| `refusalRecordId` | Property | `string` |  |
-| `businessTransactionId` | Property | `string` |  |
-| `decision` | Property | [`Decision`](/sdks/reference/typescript/interfaces/Decision) |  |
-| `evaluatedIntent` | Property | [`RefusalIntentSnapshot`](/sdks/reference/typescript/interfaces/RefusalIntentSnapshot) |  |
-| `bindingViolations?` | Property | `readonly `[`RefusalBindingViolation`](/sdks/reference/typescript/interfaces/RefusalBindingViolation)`[] \| undefined` | Present only when the rejection came from SignalIntentBinder. Absent (not an empty array) for an ordinary PolicyEngine.evaluate REJECT that never reached binding-violation logic at all. |
-| `submittedBy?` | Property | `string \| undefined` | Authenticated caller who submitted the rejected request. Absent when caller-auth is disabled. |
-| `policyContentHash?` | Property | `string \| undefined` | SHA-256 hash of the policy content that decided the refusal. Absent on Refusal Records written before 2026-10-06. |
-| `refusalRecordHash` | Property | `string` |  |
-| `signature` | Property | [`Signature`](/sdks/reference/typescript/interfaces/Signature) |  |
-| `createdAt` | Property | `Date` |  |
+
+| Name                    | Kind     | Type                                                                                                                   | Description                                                                                                                                                                               |
+| ----------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `refusalRecordId`       | Property | `string`                                                                                                               |                                                                                                                                                                                           |
+| `businessTransactionId` | Property | `string`                                                                                                               |                                                                                                                                                                                           |
+| `decision`              | Property | [`Decision`](/sdks/reference/typescript/interfaces/Decision)                                                           |                                                                                                                                                                                           |
+| `evaluatedIntent`       | Property | [`RefusalIntentSnapshot`](/sdks/reference/typescript/interfaces/RefusalIntentSnapshot)                                 |                                                                                                                                                                                           |
+| `bindingViolations?`    | Property | `readonly `[`RefusalBindingViolation`](/sdks/reference/typescript/interfaces/RefusalBindingViolation)`[] \| undefined` | Present only when the rejection came from SignalIntentBinder. Absent (not an empty array) for an ordinary PolicyEngine.evaluate REJECT that never reached binding-violation logic at all. |
+| `submittedBy?`          | Property | `string \| undefined`                                                                                                  | Authenticated caller who submitted the rejected request. Absent when caller-auth is disabled.                                                                                             |
+| `policyContentHash?`    | Property | `string \| undefined`                                                                                                  | SHA-256 hash of the policy content that decided the refusal. Absent on Refusal Records written before 2026-10-06.                                                                         |
+| `refusalRecordHash`     | Property | `string`                                                                                                               |                                                                                                                                                                                           |
+| `signature`             | Property | [`Signature`](/sdks/reference/typescript/interfaces/Signature)                                                         |                                                                                                                                                                                           |
+| `createdAt`             | Property | `Date`                                                                                                                 |                                                                                                                                                                                           |

@@ -5,15 +5,16 @@ title: "Interface: ExternalConnector"
 A capability registered to an HTTPS endpoint, active or revoked.
 
 ## Members
-| Name | Kind | Type | Description |
-| --- | --- | --- | --- |
-| `registrationId` | Property | `string` | The changeId of the approved register change that created it. |
-| `capability` | Property | `string` |  |
-| `endpointUrl` | Property | `string` |  |
-| `policy` | Property | `string` | The policy that governs the capability. A request must declare the version approved through policy governance. |
-| `allowedParameters` | Property | `readonly string[]` | The intent parameters Parmana forwards to the endpoint. |
-| `timeoutMs` | Property | `number` |  |
-| `status` | Property | `"active" \| "revoked"` | At most one active registration per capability. |
-| `registeredAt` | Property | `string` |  |
-| `revokedByChangeId?` | Property | `string \| undefined` |  |
-| `revokedAt?` | Property | `string \| undefined` |  |
+
+| Name                 | Kind     | Type                    | Description                                                                                                    |
+| -------------------- | -------- | ----------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `registrationId`     | Property | `string`                | The changeId of the approved register change that created it.                                                  |
+| `capability`         | Property | `string`                |                                                                                                                |
+| `endpointUrl`        | Property | `string`                |                                                                                                                |
+| `policy`             | Property | `string`                | The policy that governs the capability. A request must declare the version approved through policy governance. |
+| `allowedParameters`  | Property | `readonly string[]`     | The intent parameters Parmana forwards to the endpoint.                                                        |
+| `timeoutMs`          | Property | `number`                |                                                                                                                |
+| `status`             | Property | `"active" \| "revoked"` | At most one active registration per capability.                                                                |
+| `registeredAt`       | Property | `string`                |                                                                                                                |
+| `revokedByChangeId?` | Property | `string \| undefined`   |                                                                                                                |
+| `revokedAt?`         | Property | `string \| undefined`   |                                                                                                                |
