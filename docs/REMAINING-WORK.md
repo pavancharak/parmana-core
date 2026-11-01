@@ -116,6 +116,16 @@ Closed by decision on 2026-09-29:
 
 - **Operator kill switch:** open items are listed in section A2 above, with their owners.
 
+## B.1 HubSpot read self-approval: waiting for a policy version (G-111, issues #186 and #219)
+
+Decision, 2026-11-01: wait for a new `hubspot-deal-update` policy version. The alternative, a dedicated verifier key limited to `hubspot:deal-fetch`, was not chosen.
+
+- `executeHubSpotCapability` signs its own deal read as `decisionOutcome: "APPROVED"` (G-111). The register's glance table omits G-111, which is still open.
+- The fix on branch `fix/hubspot-self-approval` (not merged) makes the read need its own signed approval. It refuses every `hubspot:deal-update` until a new `hubspot-deal-update` policy version declares the `readApprovalArtifact` signal, and the integration fixtures send a read approval.
+- Done when: the new policy version is approved through governance; the four integration tests in `packages/api/tests/integration/hubspot-deal-update.integration.test.ts` and `proof-audit/tests/test9-hubspot.test.ts` pass with the change; the change is merged; G-111 is closed.
+- Current state: `hubspot-deal-update` 1.1.0 has a signed approval in the governance log (seq 33), which may already satisfy the approval step. Confirm whether issue #186 still blocks before writing a new version.
+- Owner: a maintainer for the governance approval; engineering for the fixtures. Issues #186 and #219 are both tracked here.
+
 ## C. Open items in the verification record (not re audited)
 
 Read the entry in `docs/VERIFICATION-GAPS.md` before relying on any of these.
