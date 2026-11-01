@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { Router } from "express";
+import type { AuthorityGrant } from "@parmana/shared";
 import type { NextFunction, Request, Response } from "express";
 
 /**
@@ -12,7 +13,9 @@ import type { NextFunction, Request, Response } from "express";
  * the store, approved or rejected.
  */
 
-export const INBOUND_REFUND_CAPABILITY = "inbound.refund";
+/** The authority grant capability for inbound refunds, and the Intent path its limit applies to. */
+export const INBOUND_REFUND_CAPABILITY = "inbound:refund";
+const AMOUNT_LIMIT_PATH = "parameters.amountInr";
 const DECISION_TTL_MS = 10 * 60 * 1000;
 
 export interface InboundDecisionFields {
@@ -27,8 +30,8 @@ export interface InboundDecisionFields {
 }
 
 export interface InboundDecisionDependencies {
-  /** Returns the partner's refund limit in INR, or undefined when the partner has no grant. */
-  readonly limitFor: (partnerId: string) => number | undefined;
+  /** The partner's active grant for inbound refunds, or null. */
+  readonly findGrant: (partnerId: string) => Promise<AuthorityGrant | null>;
   /** Signs the canonical bytes of a decision, returning a base64 signature. */
   readonly sign: (canonicalBytes: Buffer) => Promise<string>;
   /** Appends every issued decision. */
@@ -56,6 +59,16 @@ function isPositiveWholeRupees(value: unknown): value is number {
   return typeof value === "number" && Number.isInteger(value) && value >= 1;
 }
 
+/** The grant's refund limit, if the grant is current; otherwise undefined. */
+export function grantedLimit(
+  grant: AuthorityGrant,
+  at: Date,
+): number | undefined {
+  if (grant.status !== "active") return undefined;
+  if (at < grant.validFrom || at > grant.validUntil) return undefined;
+  return grant.limits?.[AMOUNT_LIMIT_PATH]?.max;
+}
+
 export function createInboundDecisionRouter(
   deps: InboundDecisionDependencies,
 ): Router {
@@ -71,12 +84,9 @@ export function createInboundDecisionRouter(
           res.status(401).json({ error: "unauthenticated" });
           return;
         }
-        const capabilities = req.callerAllowedCapabilities ?? [];
-        if (!capabilities.includes(INBOUND_REFUND_CAPABILITY)) {
-          res.status(403).json({ error: "capability_not_granted" });
-          return;
-        }
-        const limitInr = deps.limitFor(partnerId);
+        const grant = await deps.findGrant(partnerId);
+        const issuedAt = now();
+        const limitInr = grant ? grantedLimit(grant, issuedAt) : undefined;
         if (limitInr === undefined) {
           res.status(403).json({ error: "no_active_grant" });
           return;
@@ -102,7 +112,6 @@ export function createInboundDecisionRouter(
           return;
         }
 
-        const issuedAt = now();
         const approved = body.amountInr <= limitInr;
         const fields: InboundDecisionFields = {
           decisionId: `dec-${randomUUID()}`,

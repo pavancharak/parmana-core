@@ -8,14 +8,33 @@ import {
   createInboundDecisionRouter,
   type InboundDecisionFields,
 } from "../../../src/routes/inbound-decisions.js";
+import type { AuthorityGrant } from "@parmana/shared";
 
 const parmana = generateKeyPairSync("ed25519");
 const AUDIENCE = "billing.example";
 
+const NOW = new Date("2026-11-02T10:00:00Z");
+
+function grant(
+  overrides: Partial<AuthorityGrant> & { max?: number } = {},
+): AuthorityGrant {
+  const { max = 1000, ...rest } = overrides;
+  return {
+    grantId: "grant-1",
+    callerId: "partner-a",
+    capability: "inbound:refund",
+    limits: { "parameters.amountInr": { max } },
+    validFrom: new Date("2026-11-01T00:00:00Z"),
+    validUntil: new Date("2026-12-31T00:00:00Z"),
+    status: "active",
+    grantedAt: new Date("2026-11-01T00:00:00Z"),
+    ...rest,
+  };
+}
+
 function buildApp(options: {
   callerId?: string;
-  capabilities?: string[];
-  limitInr?: number;
+  grant?: AuthorityGrant | null;
   appended?: unknown[];
 }) {
   const appended = options.appended ?? [];
@@ -23,18 +42,18 @@ function buildApp(options: {
   app.use(express.json());
   app.use((req, _res, next) => {
     if (options.callerId !== undefined) req.callerId = options.callerId;
-    req.callerAllowedCapabilities = options.capabilities ?? ["inbound.refund"];
     next();
   });
   app.use(
     "/v1/inbound/decisions",
     createInboundDecisionRouter({
       audience: AUDIENCE,
-      limitFor: () => options.limitInr ?? 1000,
+      findGrant: async () =>
+        options.grant === undefined ? grant() : options.grant,
       sign: async (bytes) =>
         sign(null, bytes, parmana.privateKey).toString("base64"),
       store: { append: async (record) => void appended.push(record) },
-      now: () => new Date("2026-11-02T10:00:00Z"),
+      now: () => NOW,
     }),
   );
   return { app, appended };
@@ -84,35 +103,29 @@ describe("POST /v1/inbound/decisions", () => {
     expect(res.status).toBe(401);
   });
 
-  it("refuses a caller without the inbound refund capability", async () => {
+  it("refuses a partner whose grant has been revoked", async () => {
     const { app, appended } = buildApp({
       callerId: "partner-a",
-      capabilities: ["other"],
+      grant: grant({ status: "revoked" }),
     });
     const res = await request(app).post("/v1/inbound/decisions").send(body);
     expect(res.status).toBe(403);
-    expect(res.body.error).toBe("capability_not_granted");
+    expect(res.body.error).toBe("no_active_grant");
     expect(appended).toHaveLength(0);
   });
 
-  it("refuses a partner with no active grant", async () => {
-    const app2 = express();
-    app2.use(express.json());
-    app2.use((req, _res, next) => {
-      req.callerId = "partner-b";
-      req.callerAllowedCapabilities = ["inbound.refund"];
-      next();
+  it("refuses a partner whose grant has expired", async () => {
+    const { app } = buildApp({
+      callerId: "partner-a",
+      grant: grant({ validUntil: new Date("2026-11-01T23:00:00Z") }),
     });
-    app2.use(
-      "/v1/inbound/decisions",
-      createInboundDecisionRouter({
-        audience: AUDIENCE,
-        limitFor: () => undefined,
-        sign: async () => "x",
-        store: { append: async () => {} },
-      }),
-    );
-    const res = await request(app2).post("/v1/inbound/decisions").send(body);
+    const res = await request(app).post("/v1/inbound/decisions").send(body);
+    expect(res.status).toBe(403);
+  });
+
+  it("refuses a partner with no grant at all", async () => {
+    const { app } = buildApp({ callerId: "partner-a", grant: null });
+    const res = await request(app).post("/v1/inbound/decisions").send(body);
     expect(res.status).toBe(403);
     expect(res.body.error).toBe("no_active_grant");
   });

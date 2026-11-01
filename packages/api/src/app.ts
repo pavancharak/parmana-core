@@ -43,6 +43,11 @@ import { createVerifyGetRouter } from "./routes/verify-get.js";
 import { createVerifyRouter } from "./routes/verify.js";
 import { createRefusalVerifyRouter } from "./routes/refusal-verify.js";
 import {
+  createInboundDecisionRouter,
+  type InboundDecisionFields,
+} from "./routes/inbound-decisions.js";
+import { authorityGrantRepository } from "./repositories.js";
+import {
   createExecutionIntentsRouter,
   createExecutionIntentVerifyRouter,
 } from "./routes/execution-intents.js";
@@ -140,6 +145,20 @@ const DEFAULT_AUTH_FAILURE_PER_MINUTE = 30;
 export interface CreateAppOptions {
   readonly callerAuth: CallerAuthOption;
   readonly rateLimit?: RateLimitOption;
+
+  /**
+   * Inbound refund decisions (RFC-0025). Mounted only when given. `sign` signs the canonical
+   * decision bytes with Parmana's key; `store` receives every decision issued.
+   */
+  readonly inboundDecisions?: {
+    readonly audience: string;
+    readonly sign: (canonicalBytes: Buffer) => Promise<string>;
+    readonly store: {
+      append(
+        record: InboundDecisionFields & { signature: string },
+      ): Promise<void>;
+    };
+  };
 
   /**
    * Verifies the step-up authorization envelope required on POST
@@ -436,6 +455,18 @@ export function createApp(
   /**
    * Receipts
    */
+  if (options.inboundDecisions) {
+    app.use(
+      "/v1/inbound/decisions",
+      createInboundDecisionRouter({
+        audience: options.inboundDecisions.audience,
+        sign: options.inboundDecisions.sign,
+        store: options.inboundDecisions.store,
+        findGrant: (partnerId) =>
+          authorityGrantRepository.findActive(partnerId, "inbound:refund"),
+      }),
+    );
+  }
   app.use("/receipt", createReceiptRouter(application));
   app.use("/receipt/latest", createReceiptGetRouter(application));
 
