@@ -121,3 +121,64 @@ Rows 51 and 52 block safety claims, so they are P1. Row 53 is P2. Each row was c
 
 - Items on other projects (ADK #7569, MCP #3394, Microsoft AGT #4427, Obsigna #1146, Signet #12, parmana-verifier #19 and #20): tracked in `docs/OPEN-SOURCE-WORK.md`.
 - Items closed by the doc update on the branch: none.
+
+---
+
+## Consolidated view, 2026-11-01
+
+This section puts every open item in one place: the 27 open GitHub issues on `pavancharak/parmana-core` as of 2026-11-01, the work from this session, and the status changes since 2026-10-28. Rows 1 to 53 above are unchanged except where noted. Row numbers below refer to those rows.
+
+### Status changes since 2026-10-28
+
+- **Row 17 (config values):** the server now refuses at startup every documented value with no implementation: `CRYPTO_MODE=pq`, `HASH_PROVIDER` sha3-512 and blake3, `SIGNATURE_PROVIDER` ecdsa-p256, dilithium5 and sphincs-plus, `KEY_PROVIDER` azure-key-vault, gcp-kms and hsm. `PARMANA_STORAGE=postgres` is implemented and verified against a local Postgres 16. Issue #222 stays open until PR #261 merges and the signed-execution check is done. PR #261: https://github.com/pavancharak/parmana-core/pull/261
+- **Governance approval log:** six approvals (seq 46 to 51) exported to `governance/policy-approvals.jsonl`. The log now holds 51 entries and verifies. PR #262: https://github.com/pavancharak/parmana-core/pull/262
+- **Status document:** PR #263 adds `docs/status/2026-11-01-status.md`.
+- **Verifier 1.6.3:** the fix is merged and documented in its changelog. The GitHub release, npm and PyPI publish, and the two advisory publications are not confirmed.
+
+### Open GitHub issues (27, as of 2026-11-01)
+
+| Issue | Priority     | Title (short)                                                                                      | Row here  | Status                                                                                                                  |
+| ----- | ------------ | -------------------------------------------------------------------------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------- |
+| #186  | P2, security | HubSpot deal read approves itself; read approval refuses every update until a policy version ships | new       | Open. The log has a signed approval for `hubspot-deal-update` 1.1.0 (seq 33). Confirm whether the blocker is still real |
+| #189  | tracker      | Backlog tracker: work through open items one at a time                                             | this file | Open                                                                                                                    |
+| #217  | P2           | G-125 Part 2: provider idempotency keys from the nonce                                             | 6         | Open, not started                                                                                                       |
+| #218  | P2           | G-125 Part 3: reconciler for stale `in_flight` rows                                                | 7         | Open, not started                                                                                                       |
+| #219  | P2           | G-111: HubSpot verification helper asserts APPROVED for its own read                               | 8         | Open, not started                                                                                                       |
+| #220  | P2           | G-115: run the proof audit against a live external connector endpoint                              | 9         | Open                                                                                                                    |
+| #221  | P2           | G-117: run proof-audit cases against a KMS key in a staging account                                | 10        | Open, needs AWS staging                                                                                                 |
+| #222  | P2           | D: documented but not implemented config values                                                    | 17        | Config part done in PR #261; signed-execution and production checks open                                                |
+| #223  | P2           | Investigate 24 to 32 second latency for an approved external request                               | 18        | Open                                                                                                                    |
+| #224  | P2           | Confirm gap statuses G-95 to G-114 on main                                                         | 19        | Open                                                                                                                    |
+| #225  | P3           | G-120 and G-121: schema version 2 can be downgraded                                                | 33        | Open                                                                                                                    |
+| #226  | P3           | G-93: daily and cumulative grant limits                                                            | 35        | Open                                                                                                                    |
+| #227  | P3           | G-94: refusal at release through POST /execute needs a test hook                                   | 36        | Open                                                                                                                    |
+| #228  | P3           | G-94: built-in connectors re-check conditions at release                                           | 37        | Open                                                                                                                    |
+| #229  | P3           | G-93: check that a grant's caller ID exists                                                        | 38        | Open                                                                                                                    |
+| #230  | P3           | G-92: limit which claims a source may answer, per policy                                           | 39        | Open                                                                                                                    |
+| #231  | P3           | Public sandbox: in-browser record check on the Playground                                          | 44        | Open                                                                                                                    |
+| #232  | P3           | Tooling: mint validate, score and broken-links on Linux                                            | 46        | Open                                                                                                                    |
+| #233  | P3           | AgenTrust Verified tier for integrations/parmana-server                                            | 48        | Open, waiting on maintainer                                                                                             |
+| #234  | P3           | Design: three-role approval, tiered approval, freeze after repeated denials                        | 49        | Open, not scheduled                                                                                                     |
+| #235  | P3           | CAGE integration: design never merged, branches deleted                                            | 50        | Open, not scheduled                                                                                                     |
+| #236  | P3           | Step-up nonce is spent before the approval action runs (known limitation)                          | new       | Open                                                                                                                    |
+| #180  | P2           | Get an approving review for PR #158 (Zerodha gateway adapter)                                      | 28        | Open, needs a person                                                                                                    |
+| #181  | P3           | Record the SEBI circular review reference for live Zerodha trading                                 | 29        | Open, needs compliance                                                                                                  |
+| #182  | P3           | Obtain Zerodha written API approval for live algo use                                              | 30        | Open, needs Zerodha                                                                                                     |
+| #183  | P3           | Design a recovery path for a lost response on a gated execution                                    | 25        | Open, needs a decision                                                                                                  |
+| #184  | P3           | Publish a public reproduction fixture for the MCP lost-response thread                             | 26        | Open                                                                                                                    |
+
+Other repositories in scope (`parmana-verifier`, `parmana-connectors`, `parmana-connect`) have no open issues.
+
+### Items from the 2026-11-01 work that are not in rows 1 to 53
+
+Pending, in order of what unblocks the most:
+
+1. **Review PR #261 (config refusal) and PR #262 (governance log).** CI on #261 was still running at the last check. A reviewer must confirm the six approvals in #262 are real and not self-approved.
+2. **Signed execution through a running server, consuming a nonce in Postgres.** Not verified. A fresh database has no governance approval records, so `/execute` refuses with `POLICY_DENIED`. The approval log holds the approvals, but no repo tool loads it into a database, and each approval needs its `pending_policy_changes` row. Options: a staging database that already has the governance rows (read-only check first), a restore tool with a trusted source for the pending rows, or stop at the in-memory coverage.
+3. **Production database check.** Not done. Needs a connection string provided through the environment, and a read-only check first. Confirm which database is sandbox, staging or production before any write.
+4. **Verifier 1.6.3 release.** The GitHub release, `@parmana/verifier` on npm, and `parmana-verifier` on PyPI. Not confirmed.
+5. **Advisories.** Publish GHSA-f794-3h4p-75jm (core, 0.1.1) and GHSA-x7p7-rwh2-7cp7 (verifier, 1.6.3) after the releases exist. Not confirmed.
+6. **Live GitHub and HubSpot tests.** Three tests skipped; they need external credentials.
+7. **Dependabot alert on the default branch.** One moderate alert: dev dependency `minimatch` (GHSA-g3hv-75wg-m249). Unrelated to this work.
+8. **Commit identity.** Core commits use `Pavan Charak <charak1987@gmail.com>`. Confirm this address. An earlier message gave `charak10987@gmail.com`.
+9. **PR #263 DCO check.** GitHub recorded the author of the status-document commit as the connector account, not the commit identity. The check may fail until the author is fixed.
