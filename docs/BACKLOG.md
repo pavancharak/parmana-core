@@ -130,7 +130,7 @@ This section puts every open item in one place: the 27 open GitHub issues on `pa
 
 ### Status changes since 2026-10-28
 
-- **Row 17 (config values):** the server now refuses at startup every documented value with no implementation: `CRYPTO_MODE=pq`, `HASH_PROVIDER` sha3-512 and blake3, `SIGNATURE_PROVIDER` ecdsa-p256, dilithium5 and sphincs-plus, `KEY_PROVIDER` azure-key-vault, gcp-kms and hsm. `PARMANA_STORAGE=postgres` is implemented and verified against a local Postgres 16. Issue #222 stays open until PR #261 merges and the signed-execution check is done. PR #261: https://github.com/pavancharak/parmana-core/pull/261
+- **Row 17 (config values):** the server now refuses at startup every documented value with no implementation: `CRYPTO_MODE=pq`, `HASH_PROVIDER` sha3-512 and blake3, `SIGNATURE_PROVIDER` ecdsa-p256, dilithium5 and sphincs-plus, `KEY_PROVIDER` azure-key-vault, gcp-kms and hsm. `PARMANA_STORAGE=postgres` is implemented and verified against a local Postgres 16. Issue #222 stays open until the signed-execution check and the production database check are done. PR #261 (merged 2026-11-01): https://github.com/pavancharak/parmana-core/pull/261
 - **Governance approval log:** six approvals (seq 46 to 51) exported to `governance/policy-approvals.jsonl`. The log now holds 51 entries and verifies. PR #262: https://github.com/pavancharak/parmana-core/pull/262
 - **Status document:** PR #263 adds `docs/status/2026-11-01-status.md`.
 - **Verifier 1.6.3:** the fix is merged and documented in its changelog. The GitHub release, npm and PyPI publish, and the two advisory publications are not confirmed.
@@ -173,7 +173,7 @@ Other repositories in scope (`parmana-verifier`, `parmana-connectors`, `parmana-
 
 Pending, in order of what unblocks the most:
 
-1. **Review PR #261 (config refusal) and PR #262 (governance log).** CI on #261 was still running at the last check. A reviewer must confirm the six approvals in #262 are real and not self-approved.
+1. **Review PR #262 (governance log).** A reviewer must confirm the six approvals are real and not self-approved. PR #261 (config refusal) merged 2026-11-01.
 2. **Signed execution through a running server, consuming a nonce in Postgres.** Not verified. A fresh database has no governance approval records, so `/execute` refuses with `POLICY_DENIED`. The approval log holds the approvals, but no repo tool loads it into a database, and each approval needs its `pending_policy_changes` row. Options: a staging database that already has the governance rows (read-only check first), a restore tool with a trusted source for the pending rows, or stop at the in-memory coverage.
 3. **Production database check.** Not done. Needs a connection string provided through the environment, and a read-only check first. Confirm which database is sandbox, staging or production before any write.
 4. **Verifier 1.6.3 release.** The GitHub release, `@parmana/verifier` on npm, and `parmana-verifier` on PyPI. Not confirmed.
