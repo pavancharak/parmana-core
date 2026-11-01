@@ -21,7 +21,11 @@ Option 2 would make a retry after an unclear outcome look like a second refund t
 
 - Two different refunds of one transaction are separated only by `refundReference`. A caller that sends no reference gets one refund per transaction key.
 - The adapter test "#217: a new authorization for the same refund keeps its refId" pins this behaviour. Changing the key to use the authorization fails that test.
-- Other providers in issue #217 (HubSpot, GitHub, Slack): the current API documentation found no idempotency key in the create-object, REST, or `chat.postMessage` references. This is not yet confirmed. Confirm each against its official reference before saying the provider takes no key.
+- Other providers in issue #217, checked against the official pages on 2026-11-01:
+  - **HubSpot** (create object reference): no idempotency or deduplication key. The only identifiers are response and error fields (`objectWriteTraceId`, `correlationId`).
+  - **GitHub** (REST best practices): no key that prevents duplicate writes on POST. The page covers retries and rate limits only.
+  - **Slack** (`chat.postMessage`): `client_msg_id` appears only in two error descriptions. The page does not document it as a request parameter, so this is unverified.
+  - These pages are not proof of absence across each whole API. Confirm again before any change that depends on it.
 
 ## Sources
 
