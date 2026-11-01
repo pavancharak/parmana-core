@@ -35,6 +35,34 @@ function parse<T extends string>(
   throw new Error(`Invalid ${name}: ${resolved}`);
 }
 
+/**
+ * A value can be a documented name that no runtime implements yet. Refuse it
+ * at startup, naming what works, rather than accepting it and failing later
+ * or quietly using a different provider (#222). Called after parse(), so the
+ * value is already a known name and is safe to echo.
+ */
+function requireImplemented<T extends string>(
+  name: string,
+  value: T,
+  implemented: readonly T[],
+): T {
+  if (implemented.includes(value)) {
+    return value;
+  }
+
+  throw new Error(
+    `${name}=${value} is not implemented in this build. Use one of: ${implemented.join(", ")}.`,
+  );
+}
+
+const IMPLEMENTED_CRYPTO_MODES = [CryptoModes.SINGLE, CryptoModes.HYBRID];
+const IMPLEMENTED_HASH_ALGORITHMS = [HashAlgorithms.SHA256];
+const IMPLEMENTED_SIGNATURE_ALGORITHMS = [
+  SignatureAlgorithms.ED25519,
+  SignatureAlgorithms.DILITHIUM3,
+];
+const IMPLEMENTED_KEY_PROVIDERS = [KeyProviders.LOCAL, KeyProviders.AWS_KMS];
+
 export const parseStorageProvider = (value?: string): StorageProvider => {
   if (process.env.DATABASE_PROVIDER !== undefined) {
     throw new Error(
@@ -51,10 +79,18 @@ export const parseStorageProvider = (value?: string): StorageProvider => {
 };
 
 export const parseCryptoMode = (value?: string): CryptoMode =>
-  parse(value, CryptoModes, "CRYPTO_MODE", CryptoModes.SINGLE);
+  requireImplemented(
+    "CRYPTO_MODE",
+    parse(value, CryptoModes, "CRYPTO_MODE", CryptoModes.SINGLE),
+    IMPLEMENTED_CRYPTO_MODES,
+  );
 
 export const parseHashAlgorithm = (value?: string): HashAlgorithm =>
-  parse(value, HashAlgorithms, "HASH_PROVIDER", HashAlgorithms.SHA256);
+  requireImplemented(
+    "HASH_PROVIDER",
+    parse(value, HashAlgorithms, "HASH_PROVIDER", HashAlgorithms.SHA256),
+    IMPLEMENTED_HASH_ALGORITHMS,
+  );
 
 /**
  * Accepted input aliases for a SignatureAlgorithm config value, resolved
@@ -70,16 +106,29 @@ const SIGNATURE_ALGORITHM_ALIASES: Record<string, SignatureAlgorithm> = {
   "ml-dsa-65": SignatureAlgorithms.DILITHIUM3,
 };
 
-export const parseSignatureAlgorithm = (value?: string): SignatureAlgorithm =>
-  parse(
-    value !== undefined ? (SIGNATURE_ALGORITHM_ALIASES[value] ?? value) : value,
-    SignatureAlgorithms,
-    "SIGNATURE_PROVIDER",
-    SignatureAlgorithms.ED25519,
+export const parseSignatureAlgorithm = (
+  value?: string,
+  variable = "PRIMARY_SIGNATURE_PROVIDER",
+): SignatureAlgorithm =>
+  requireImplemented(
+    variable,
+    parse(
+      value !== undefined
+        ? (SIGNATURE_ALGORITHM_ALIASES[value] ?? value)
+        : value,
+      SignatureAlgorithms,
+      "SIGNATURE_PROVIDER",
+      SignatureAlgorithms.ED25519,
+    ),
+    IMPLEMENTED_SIGNATURE_ALGORITHMS,
   );
 
 export const parseKeyProvider = (value?: string): KeyProvider =>
-  parse(value, KeyProviders, "KEY_PROVIDER", KeyProviders.LOCAL);
+  requireImplemented(
+    "KEY_PROVIDER",
+    parse(value, KeyProviders, "KEY_PROVIDER", KeyProviders.LOCAL),
+    IMPLEMENTED_KEY_PROVIDERS,
+  );
 
 /**
  * Unlike the other settings, an invalid value is not echoed: a value set

@@ -140,13 +140,13 @@ Decisions on 2026-09-21: G-3 and G-4 are skipped. They stay listed so the record
 
 ## D. Documented as not implemented
 
-Taken from `docs/site/deployment/environment-variables.mdx`. These values pass validation but have no working implementation, and the server refuses to start with the key providers, or fails at first use:
+Taken from `docs/site/deployment/environment-variables.mdx`. Since 2026-11-01 the server refuses each of these at startup, naming the variable and the values that work (`packages/shared/src/config/ConfigValidation.ts`). Verified end to end by starting `packages/api/src/server.ts` with each value set:
 
-1. `KEY_PROVIDER`: `azure-key-vault`, `gcp-kms`, `hsm`.
-2. `PRIMARY_SIGNATURE_PROVIDER` and `SECONDARY_SIGNATURE_PROVIDER`: `ecdsa-p256`, `dilithium5`, `sphincs-plus`.
-3. `HASH_PROVIDER`: `sha3-512`, `blake3`.
-4. `PARMANA_STORAGE=postgres`. Use `supabase`.
-5. `CRYPTO_MODE=pq` behaves the same as `single`.
+1. `KEY_PROVIDER`: `azure-key-vault`, `gcp-kms`, `hsm`. Refused.
+2. `PRIMARY_SIGNATURE_PROVIDER` and `SECONDARY_SIGNATURE_PROVIDER`: `ecdsa-p256`, `dilithium5`, `sphincs-plus`. Refused.
+3. `HASH_PROVIDER`: `sha3-512`, `blake3`. Refused.
+4. `PARMANA_STORAGE=postgres`. Not refused: it selects the implemented Postgres storage (`isPostgresStorage`). This item looks stale; confirm against a running Postgres before closing it.
+5. `CRYPTO_MODE=pq`. Refused: no production code reads it.
 
 ## E. Tooling limits
 
