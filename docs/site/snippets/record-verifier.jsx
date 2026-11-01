@@ -12,8 +12,9 @@ export const RecordVerifier = ({ exampleRecord, examplePublicKey }) => {
   // Defined inside the component: Mintlify renders each exported
   // component on its own, so a helper outside it is not available.
   // BEGIN verifyParmanaTrustRecord
-  const verifyParmanaTrustRecord = async (record, publicKeyPem) => {
+  const verifyParmanaTrustRecord = async (record, publicKeyPem, options = {}) => {
     const subtle = globalThis.crypto.subtle;
+    const allowLegacyOnly = options.allowLegacyOnly === true;
     const encoder = new TextEncoder();
     const errors = [];
     const notes = [];
@@ -146,14 +147,29 @@ export const RecordVerifier = ({ exampleRecord, examplePublicKey }) => {
       }
     }
 
-    if (Array.isArray(record.signatures) && record.signatures.length > 0) {
+    // A record with no hybrid (post-quantum) envelope is refused unless the
+    // reader allows legacy-only records, the same default as the offline
+    // verifier. Without this, a record whose envelope was removed would pass.
+    const hasEnvelope =
+      Array.isArray(record.signatures) && record.signatures.length > 0;
+    const envelopeOk = hasEnvelope || allowLegacyOnly;
+
+    if (!hasEnvelope && !allowLegacyOnly) {
+      errors.push(
+        "The record has no hybrid (post-quantum) envelope, so it is refused. Tick \"Accept a legacy-only record\" only if you accept records made without one.",
+      );
+    }
+    if (!hasEnvelope && allowLegacyOnly) {
+      notes.push("Accepted as a legacy-only record: it has no hybrid envelope.");
+    }
+    if (hasEnvelope) {
       notes.push(
         "The record also carries a hybrid signatures array (for example ML-DSA-65). This page does not check it; the offline verifier does.",
       );
     }
 
     return {
-      valid: hashValid && signatureValid,
+      valid: hashValid && signatureValid && envelopeOk,
       hashValid,
       signatureValid,
       keyId: signature && signature.keyId,
@@ -168,6 +184,7 @@ export const RecordVerifier = ({ exampleRecord, examplePublicKey }) => {
   const [keyText, setKeyText] = useState("");
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [allowLegacy, setAllowLegacy] = useState(false);
 
   const run = async (text, pem) => {
     setBusy(true);
@@ -191,7 +208,11 @@ export const RecordVerifier = ({ exampleRecord, examplePublicKey }) => {
         });
         return;
       }
-      setResult(await verifyParmanaTrustRecord(record, pem));
+      setResult(
+        await verifyParmanaTrustRecord(record, pem, {
+          allowLegacyOnly: allowLegacy,
+        }),
+      );
     } catch (error) {
       setResult({
         valid: false,
@@ -278,6 +299,14 @@ export const RecordVerifier = ({ exampleRecord, examplePublicKey }) => {
         onChange={(event) => setKeyText(event.target.value)}
         placeholder="-----BEGIN PUBLIC KEY-----"
       />
+      <label style={{ display: "block", marginTop: "8px" }}>
+        <input
+          type="checkbox"
+          checked={allowLegacy}
+          onChange={(event) => setAllowLegacy(event.target.checked)}
+        />{" "}
+        Accept a legacy-only record (no post-quantum envelope)
+      </label>
       <div>
         <button
           type="button"

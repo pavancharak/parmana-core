@@ -50,7 +50,10 @@ key.
 
 ## Try it
 
-1. **Load the example**, then **Verify**. The result is valid.
+1. **Load the example**, then **Verify**. The example has no post-quantum envelope, so the
+   result is "not valid" until you tick **Accept a legacy-only record**. With the box ticked,
+   the result is valid. The box is unticked by default, so a record with its envelope removed is
+   refused, the same as the offline verifier.
 2. **Load the example, changed**: the same record with the amount changed from 100 to 100000.
    **Verify** reports that the hash no longer matches. Changing any signed field has the
    same effect.
