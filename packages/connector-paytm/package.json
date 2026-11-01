@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@parmana/connector-sdk": "1.6.2",
-    "@parmana/crypto": "0.1.0",
+    "@parmana/crypto": "0.1.1",
     "@parmana/shared": "0.1.0"
   },
   "devDependencies": {

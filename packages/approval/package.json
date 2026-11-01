@@ -23,7 +23,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@parmana/crypto": "0.1.0",
+    "@parmana/crypto": "0.1.1",
     "@parmana/envelope-verifier": "0.1.0",
     "@parmana/policy": "0.1.1",
     "@parmana/shared": "0.1.0"

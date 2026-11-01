@@ -28,7 +28,7 @@
     "@parmana/connector-zerodha": "0.1.0",
     "@parmana/connector-slack": "0.1.0",
     "@parmana/connector-sdk": "1.6.2",
-    "@parmana/crypto": "0.1.0",
+    "@parmana/crypto": "0.1.1",
     "@parmana/envelope-verifier": "0.1.0",
     "@parmana/execution-control": "0.1.0",
     "@parmana/execution-system": "0.1.0",
