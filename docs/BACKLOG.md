@@ -254,3 +254,59 @@ Result: none of the 20 can be confirmed closed on `main` from the register alone
 | G-114 | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
 
 Summary: reopen G-108, G-110 and G-111. Re-verify the other 17 with a test on `main` before closing them. Also add G-111 to the glance table in `docs/VERIFICATION-GAPS.md`.
+
+## Triage of all 27 open issues, 2026-11-01
+
+Every open issue on `pavancharak/parmana-core` as of 2026-11-01, sorted by what unblocks it. "Code" means this repo can change it now. "Decision" means a maintainer must choose before work starts. "Person" or "external" means someone outside this repo must act.
+
+### Code, can start now
+
+| Issue | Pri | Title                                                            | Next step                                                                                                      |
+| ----- | --- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| #217  | P2  | Provider idempotency keys from the nonce                         | Add a key to each provider call that accepts one (Paytm `refId` already derives from the order ID). Test each. |
+| #218  | P2  | Reconciler for stale `in_flight` rows                            | Write a reconciler that asks the provider and writes `completed` or `failed`. Test with provider doubles.      |
+| #224  | P2  | Confirm gap statuses G-95 to G-114 on main                       | Done in part. Reopen G-108, G-110, G-111. Re-verify the other 17 with tests on `main`.                         |
+| #226  | P3  | G-93: daily and cumulative grant limits                          | Build the limits. The four open questions in RFC-0023 must be answered first.                                  |
+| #227  | P3  | G-94: refusal at release through POST /execute needs a test hook | Add the hook and an end-to-end test.                                                                           |
+| #228  | P3  | G-94: built-in connectors re-check conditions at release         | Add the re-check to built-in connectors.                                                                       |
+| #229  | P3  | G-93: check that a grant's caller ID exists                      | Refuse an unknown caller ID. Add a test.                                                                       |
+| #230  | P3  | G-92: limit which claims a source may answer, per policy         | Enforce per-policy limits. Require a key for registered sources. Test.                                         |
+| #231  | P3  | In-browser record check on the Playground                        | Build the page on the existing in-browser verifier.                                                            |
+| #232  | P3  | `mint validate`, `score`, `broken-links` on Linux                | Run the checks on Linux, then fix the false positives under `/sdks/reference`.                                 |
+| #184  | P3  | Public reproduction fixture for the MCP lost-response thread     | Publish a fixture and link it from the MCP thread.                                                             |
+
+### Decision first
+
+| Issue | Pri | Title                                                      | Decision needed                                                                                                                                                |
+| ----- | --- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #183  | P3  | Recovery path for a lost response on a gated execution     | Return the first result for a replayed authorization, or keep the 409 and document client recovery.                                                            |
+| #186  | P2  | HubSpot deal read approves itself                          | Wait for a new `hubspot-deal-update` policy version (section B.1 of `REMAINING-WORK.md`).                                                                      |
+| #219  | P2  | G-111: HubSpot helper asserts APPROVED for its own read    | Same as #186. Or the containment option: a dedicated verifier key limited to `hubspot:deal-fetch`.                                                             |
+| #223  | P2  | 24 to 32 second latency for an approved external request   | Needs production timings. Decide the acceptable bound.                                                                                                         |
+| #222  | P2  | Documented but not implemented config values               | Config part done in PR #261. Remaining: the signed-execution check on Postgres and the production database check. Both need a decision on the database to use. |
+| #225  | P3  | G-120 and G-121: schema version 2 can be downgraded        | Decide the cutover policy, then gate version 3 issuance.                                                                                                       |
+| #234  | P3  | Three-role approval, tiered approval, freeze after denials | Decide whether to schedule it. Not scheduled.                                                                                                                  |
+| #235  | P3  | CAGE integration: design never merged, branches deleted    | Decide whether to build it.                                                                                                                                    |
+| #236  | P3  | Step-up nonce is spent before the approval action runs     | Decide whether to change the order, or keep and document the limitation.                                                                                       |
+
+### Person or external
+
+| Issue | Pri     | Title                                                     | Who                                                   |
+| ----- | ------- | --------------------------------------------------------- | ----------------------------------------------------- |
+| #180  | P2      | Approving review for PR #158 (Zerodha gateway adapter)    | Maintainer review.                                    |
+| #181  | P3      | SEBI circular review reference for live Zerodha trading   | Compliance. Recorded outside the repo.                |
+| #182  | P3      | Zerodha written API approval for live algo use            | Zerodha. Recorded outside the repo.                   |
+| #220  | P2      | Proof audit against a live external connector endpoint    | Operator, with a live endpoint.                       |
+| #221  | P2      | Proof-audit cases against a KMS key in a staging account  | Operator, with an AWS staging account.                |
+| #233  | P3      | AgenTrust Verified tier for `integrations/parmana-server` | Maintainer PR in the integration repo.                |
+| #189  | tracker | Backlog tracker: work through open items one at a time    | This document. Close when the items above are closed. |
+
+### Count
+
+- Code, can start now: 11 issues.
+- Decision first: 9 issues (including #222, whose config part is done).
+- Person or external: 6 issues.
+- Tracker: #189, counted once.
+- Total: 11 + 9 + 6 + 1 = 27 issues.
+
+Nothing in this table is closed by this document. Close each issue when its next step is done, and update the table.
