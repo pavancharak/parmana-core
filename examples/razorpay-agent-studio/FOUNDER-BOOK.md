@@ -1602,12 +1602,12 @@ The founder should treat the roadmap as a list of decisions, not promises. Each 
 
 | Package                  | Language   | Version |
 | ------------------------ | ---------- | ------- |
-| `@parmana/sdk`           | TypeScript | 1.6.2   |
-| `parmana`                | Python     | 1.6.2   |
-| `@parmana/connector-sdk` | TypeScript | 1.6.2   |
-| `parmana-connector-sdk`  | Python     | 1.6.2   |
+| `@parmana/sdk`           | TypeScript | 1.6.3   |
+| `parmana`                | Python     | 1.6.3   |
+| `@parmana/connector-sdk` | TypeScript | 1.6.3   |
+| `parmana-connector-sdk`  | Python     | 1.6.3   |
 
-All four packages are published at 1.6.2 (28 October), from the release `sdk-v1.6.2`, with the packages, SBOMs and provenance attached. In 1.6.1 (22 October) the private repository links were removed from the package metadata.
+All four packages are published at 1.6.3 (1 November), from the release `sdk-v1.6.3`, with the packages, SBOMs and provenance attached. In 1.6.1 (22 October) the private repository links were removed from the package metadata.
 
 ### 34.2 Using the SDK
 
@@ -1880,12 +1880,12 @@ The Razorpay spec describes a support channel that posts signed `refund.requeste
 
 | Package                  | Language   | Version | Purpose                                                                             |
 | ------------------------ | ---------- | ------- | ----------------------------------------------------------------------------------- |
-| `@parmana/sdk`           | TypeScript | 1.6.2   | Client, builders, signing for approvals, offline verification, release verification |
-| `parmana`                | Python     | 1.6.2   | Client, models, approval signing, offline verification                              |
-| `@parmana/connector-sdk` | TypeScript | 1.6.2   | Building built-in connectors; capability types; mock connector; credential provider |
-| `parmana-connector-sdk`  | Python     | 1.6.2   | Connector types and helpers in Python                                               |
+| `@parmana/sdk`           | TypeScript | 1.6.3   | Client, builders, signing for approvals, offline verification, release verification |
+| `parmana`                | Python     | 1.6.3   | Client, models, approval signing, offline verification                              |
+| `@parmana/connector-sdk` | TypeScript | 1.6.3   | Building built-in connectors; capability types; mock connector; credential provider |
+| `parmana-connector-sdk`  | Python     | 1.6.3   | Connector types and helpers in Python                                               |
 
-All four packages are published at 1.6.2 (28 October), from the release `sdk-v1.6.2`, with packages, SBOMs and provenance.
+All four packages are published at 1.6.3 (1 November), from the release `sdk-v1.6.3`, with packages, SBOMs and provenance.
 
 ### 43.2 TypeScript client
 

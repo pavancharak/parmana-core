@@ -201,7 +201,7 @@ The HubSpot connector has been run against HubSpot's production API: a deal stag
 
 ## Packages
 
-The SDKs and the verifier are published at version 1.6.2. All of them share one version.
+The SDKs and the verifier are published at version 1.6.3. All of them share one version.
 
 | Package                  | Registry | Install                              |
 | ------------------------ | -------- | ------------------------------------ |
