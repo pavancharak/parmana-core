@@ -121,3 +121,137 @@ Rows 51 and 52 block safety claims, so they are P1. Row 53 is P2. Each row was c
 
 - Items on other projects (ADK #7569, MCP #3394, Microsoft AGT #4427, Obsigna #1146, Signet #12, parmana-verifier #19 and #20): tracked in `docs/OPEN-SOURCE-WORK.md`.
 - Items closed by the doc update on the branch: none.
+
+---
+
+## Consolidated view, 2026-11-01
+
+This section puts every open item in one place: the 27 open GitHub issues on `pavancharak/parmana-core` as of 2026-11-01, the work from this session, and the status changes since 2026-10-28. Rows 1 to 53 above are unchanged except where noted. Row numbers below refer to those rows.
+
+### Status changes since 2026-10-28
+
+- **Row 17 (config values):** the server now refuses at startup every documented value with no implementation: `CRYPTO_MODE=pq`, `HASH_PROVIDER` sha3-512 and blake3, `SIGNATURE_PROVIDER` ecdsa-p256, dilithium5 and sphincs-plus, `KEY_PROVIDER` azure-key-vault, gcp-kms and hsm. `PARMANA_STORAGE=postgres` is implemented and verified against a local Postgres 16. Issue #222 stays open until the signed-execution check and the production database check are done. PR #261 (merged 2026-11-01): https://github.com/pavancharak/parmana-core/pull/261
+- **Governance approval log:** six approvals (seq 46 to 51) exported to `governance/policy-approvals.jsonl`. The log now holds 51 entries and verifies. PR #262: https://github.com/pavancharak/parmana-core/pull/262
+- **Status document:** PR #263 adds `docs/status/2026-11-01-status.md`.
+- **Verifier 1.6.3:** the fix is merged and documented in its changelog. The GitHub release, npm and PyPI publish, and the two advisory publications are not confirmed.
+
+### Open GitHub issues (27, as of 2026-11-01)
+
+| Issue | Priority     | Title (short)                                                                                      | Row here  | Status                                                                                                                  |
+| ----- | ------------ | -------------------------------------------------------------------------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------- |
+| #186  | P2, security | HubSpot deal read approves itself; read approval refuses every update until a policy version ships | new       | Open. The log has a signed approval for `hubspot-deal-update` 1.1.0 (seq 33). Confirm whether the blocker is still real |
+| #189  | tracker      | Backlog tracker: work through open items one at a time                                             | this file | Open                                                                                                                    |
+| #217  | P2           | G-125 Part 2: provider idempotency keys from the nonce                                             | 6         | Open, not started                                                                                                       |
+| #218  | P2           | G-125 Part 3: reconciler for stale `in_flight` rows                                                | 7         | Open, not started                                                                                                       |
+| #219  | P2           | G-111: HubSpot verification helper asserts APPROVED for its own read                               | 8         | Open, not started                                                                                                       |
+| #220  | P2           | G-115: run the proof audit against a live external connector endpoint                              | 9         | Open                                                                                                                    |
+| #221  | P2           | G-117: run proof-audit cases against a KMS key in a staging account                                | 10        | Open, needs AWS staging                                                                                                 |
+| #222  | P2           | D: documented but not implemented config values                                                    | 17        | Config part done in PR #261; signed-execution and production checks open                                                |
+| #223  | P2           | Investigate 24 to 32 second latency for an approved external request                               | 18        | Open                                                                                                                    |
+| #224  | P2           | Confirm gap statuses G-95 to G-114 on main                                                         | 19        | Open                                                                                                                    |
+| #225  | P3           | G-120 and G-121: schema version 2 can be downgraded                                                | 33        | Open                                                                                                                    |
+| #226  | P3           | G-93: daily and cumulative grant limits                                                            | 35        | Open                                                                                                                    |
+| #227  | P3           | G-94: refusal at release through POST /execute needs a test hook                                   | 36        | Open                                                                                                                    |
+| #228  | P3           | G-94: built-in connectors re-check conditions at release                                           | 37        | Open                                                                                                                    |
+| #229  | P3           | G-93: check that a grant's caller ID exists                                                        | 38        | Open                                                                                                                    |
+| #230  | P3           | G-92: limit which claims a source may answer, per policy                                           | 39        | Open                                                                                                                    |
+| #231  | P3           | Public sandbox: in-browser record check on the Playground                                          | 44        | Open                                                                                                                    |
+| #232  | P3           | Tooling: mint validate, score and broken-links on Linux                                            | 46        | Open                                                                                                                    |
+| #233  | P3           | AgenTrust Verified tier for integrations/parmana-server                                            | 48        | Open, waiting on maintainer                                                                                             |
+| #234  | P3           | Design: three-role approval, tiered approval, freeze after repeated denials                        | 49        | Open, not scheduled                                                                                                     |
+| #235  | P3           | CAGE integration: design never merged, branches deleted                                            | 50        | Open, not scheduled                                                                                                     |
+| #236  | P3           | Step-up nonce is spent before the approval action runs (known limitation)                          | new       | Open                                                                                                                    |
+| #180  | P2           | Get an approving review for PR #158 (Zerodha gateway adapter)                                      | 28        | Open, needs a person                                                                                                    |
+| #181  | P3           | Record the SEBI circular review reference for live Zerodha trading                                 | 29        | Open, needs compliance                                                                                                  |
+| #182  | P3           | Obtain Zerodha written API approval for live algo use                                              | 30        | Open, needs Zerodha                                                                                                     |
+| #183  | P3           | Design a recovery path for a lost response on a gated execution                                    | 25        | Open, needs a decision                                                                                                  |
+| #184  | P3           | Publish a public reproduction fixture for the MCP lost-response thread                             | 26        | Open                                                                                                                    |
+
+Other repositories in scope (`parmana-verifier`, `parmana-connectors`, `parmana-connect`) have no open issues.
+
+### Items from the 2026-11-01 work that are not in rows 1 to 53
+
+Pending, in order of what unblocks the most:
+
+1. **Review PR #262 (governance log).** A reviewer must confirm the six approvals are real and not self-approved. PR #261 (config refusal) merged 2026-11-01.
+2. **Signed execution through a running server, consuming a nonce in Postgres.** Not verified. A fresh database has no governance approval records, so `/execute` refuses with `POLICY_DENIED`. The approval log holds the approvals, but no repo tool loads it into a database, and each approval needs its `pending_policy_changes` row. Options: a staging database that already has the governance rows (read-only check first), a restore tool with a trusted source for the pending rows, or stop at the in-memory coverage.
+3. **Production database check.** Not done. Needs a connection string provided through the environment, and a read-only check first. Confirm which database is sandbox, staging or production before any write.
+4. **Verifier 1.6.3 release.** The GitHub release, `@parmana/verifier` on npm, and `parmana-verifier` on PyPI. Not confirmed.
+5. **Advisories.** Publish GHSA-f794-3h4p-75jm (core, 0.1.1) and GHSA-x7p7-rwh2-7cp7 (verifier, 1.6.3) after the releases exist. Not confirmed.
+6. **Live GitHub and HubSpot tests.** Three tests skipped; they need external credentials.
+7. **Dependabot alert on the default branch.** One moderate alert: dev dependency `minimatch` (GHSA-g3hv-75wg-m249). Unrelated to this work.
+8. **Commit identity.** Core commits use `Pavan Charak <charak1987@gmail.com>`. Confirm this address. An earlier message gave `charak10987@gmail.com`.
+9. **PR #263 DCO check.** GitHub recorded the author of the status-document commit as the connector account, not the commit identity. The check may fail until the author is fixed.
+
+## Verification gaps still open, and the claims that depend on them
+
+Source: the "Open issues at a glance" table in `docs/VERIFICATION-GAPS.md` (updated 2026-10-27). That table lists every open gap; anything not in it is closed, with its evidence in the gap's own entry. The claims are in `docs/CLAIMS.md`, cited by line number at this commit. Each gap row names the backlog row that tracks its next step, if there is one.
+
+| Gap        | What is open                                                                                                                                                                                          | Claims that depend on it (CLAIMS.md line) | Next step, and backlog row                                                                                                                          |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| G-4        | Hybrid signing covers Trust Records and receipts only. Refusal records, audit events and authorizations are signed with one algorithm.                                                                | Hybrid signing (333)                      | Decision on signing scope. Row 32 (G-119)                                                                                                           |
+| G-119      | Hybrid signing is configured on a test project only. Production signs with Ed25519 only.                                                                                                              | Hybrid signing (333)                      | Operator decision. Row 32                                                                                                                           |
+| G-120      | A schema version 2 record can be downgraded by stripping its signatures. Closed for new records by the cutover, which is unset.                                                                       | Schema versions (no separate line)        | Decision and engineering. Row 33 (#225)                                                                                                             |
+| G-121      | Third-party verifiers and SDKs do not read schema version 3, so it stays off.                                                                                                                         | Schema versions (no separate line)        | Decision and engineering. Row 33                                                                                                                    |
+| G-125      | A retry after a lost response cannot recover the outcome of a mutating call. Part 1 (outcome record per nonce) is implemented and tested, not applied to any database. Parts 2 and 3 are not started. | Replay single use (229)                   | Apply migration `20261027120000_add_execution_outcomes.sql` before deploy: row 2. Part 2: row 6 (#217). Part 3: row 7 (#218). Design: row 25 (#183) |
+| G-65       | Nothing holds a refused request for review in the server. An approver learns of it through the optional webhook or by query.                                                                          | Approval notifications                    | Engineering. Row 22 (webhook not set)                                                                                                               |
+| G-66       | Binding an action to a different policy name, or adding a built-in capability, still needs a deploy.                                                                                                  | Capability policy binding (521)           | Engineering decision                                                                                                                                |
+| G-9        | Execution Control and the secure connector each write an audit record for the same execution.                                                                                                         | Audit trail                               | Engineering                                                                                                                                         |
+| G-50       | A policy change approver or approval issuer is not limited to particular policies or actions. Any provisioned approver can approve any.                                                               | Approval issuers                          | Row 34 (G-50)                                                                                                                                       |
+| G-51, G-76 | Facts an agent declares (`refundEligible`, `fraudCheckPassed`, Slack `contentApproved`) are not checked against another system. Since G-80, they can only make a rule refuse.                         | Human approval (561)                      | Row 40 (name the refund eligibility system), row 41                                                                                                 |
+| G-53       | When an action ran but neither its Trust Record nor its result could be saved, the outcome is recorded by hand from the connector.                                                                    | Execution records                         | Engineering. Covered in part by row 2 and rows 6 and 7                                                                                              |
+| G-82       | What an external endpoint answers is its claim, not proof that it acted.                                                                                                                              | External endpoints (637)                  | Documentation of the limit; row 36                                                                                                                  |
+| G-84       | An approved request took 24 to 32 seconds in production on 2026-10-01. Not measured since. Checked live on 2026-10-02 and 2026-10-23 at 14.1 s.                                                       | Sandbox latency (640, 670)                | Row 18 (#223)                                                                                                                                       |
+| G-86       | All visitor data in the public sandbox was deleted around the retention job's first run. Cause not established.                                                                                       | Public sandbox (668)                      | Row 45. Retention job reinstalled on 2026-10-23                                                                                                     |
+| G-92       | Business validation: sources can be registered and their signed answers verified, but no real business system is connected. A source registered without a key is trusted on TLS alone.                | Signal sources (724)                      | Rows 39 (#230) and 40                                                                                                                               |
+| G-93       | Per-agent authority grants: opt-in per policy, and no shipped policy opts in. Limits are per request, not cumulative. The grantee's caller ID is not checked to exist.                                | Authority grants (722, 776, 816)          | Rows 35 (#226), 38 (#229)                                                                                                                           |
+| G-94       | An external endpoint must itself check signed conditions. Built-in connectors get only the gateway re-check. A release refused at release leaves the intent ERRORED.                                  | Release control (613)                     | Rows 36 (#227), 37 (#228)                                                                                                                           |
+
+### Claims with a caveat that points at a gap (CLAIMS.md)
+
+- **Hybrid signing is not live in production** (333). Depends on G-4, G-119.
+- **Replay is single use** (229). Depends on G-125: the outcome record is not yet applied to a database.
+- **Policy name is checked for form only at registration** (616). Depends on G-81, closed. Still a limit.
+- **What the endpoint answers is its claim** (637). Depends on G-82.
+- **Slow in production** (640). Depends on G-84.
+- **Public sandbox retention** (668). Depends on G-86, closed by the retention job's hardening. Still a caveat.
+- **`PARMANA_AUTH_DISABLED=true` scope** (355). Caller identity is removed when the flag is set. Not a gap, but a caveat readers must see.
+- **Authority is today's checks** (722). Depends on G-93: per-agent limits and expiry are phase work.
+- **The digest proves what Parmana observed, not what the source said** (724). Depends on G-92.
+
+### Counting
+
+- Open gaps in the register: 17 (G-4, G-9, G-50, G-51/G-76, G-53, G-65, G-66, G-82, G-84, G-86, G-92, G-93, G-94, G-119, G-120, G-121, G-125).
+- Gaps with no backlog row yet: G-9, G-65, G-66, G-53 (partly covered). Add rows, or record a decision that they stay open.
+- The register was last updated 2026-10-27. The 2026-10-30 code check added rows 51 to 53 above. Check whether the register needs a new pass before it is treated as current.
+
+## Gap statuses G-95 to G-114, checked against main (issue #224), 2026-11-01
+
+Method: each entry in `docs/VERIFICATION-GAPS.md` on `main` was read, and the files it cites were checked on `main`. A cited file that exists is not proof that the fix works: each gap needs a test on `main` before it can be called closed.
+
+Result: none of the 20 can be confirmed closed on `main` from the register alone. Most of their evidence is a branch that is no longer on GitHub (`claude/startup-integrity-block`, `fix/policy-scan-and-governance-url`, `ccr-6f1b8d3b-o5pqwj`).
+
+| Gap   | Register says                                        | Found on main                                                     | Verdict                                                                                        |
+| ----- | ---------------------------------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| G-95  | fixed on deleted branch                              | `server.ts` present                                               | Re-verify with a test, or reopen                                                               |
+| G-96  | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+| G-97  | fixed on deleted branch                              | `packages/governance-ui/src/apiClient.ts` present                 | Re-verify                                                                                      |
+| G-98  | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+| G-99  | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+| G-100 | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+| G-101 | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+| G-102 | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+| G-103 | fixed on deleted branch `ccr-6f1b8d3b-o5pqwj`        | cited file present                                                | Re-verify                                                                                      |
+| G-104 | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+| G-105 | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+| G-106 | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+| G-107 | closed through the policy repository                 | cited file present                                                | Closed per the register; confirm by test                                                       |
+| G-108 | register: not closed, not merged to main             | chain-head anchoring not found on main                            | Reopen                                                                                         |
+| G-109 | fixed on deleted branch                              | `createCallerAuthenticator.ts`, `createSandboxOptions.ts` present | Re-verify                                                                                      |
+| G-110 | fixed on deleted branch                              | `key-expiry.json` not on main                                     | Reopen                                                                                         |
+| G-111 | in progress; not merged; held until a policy version | `executeHubSpotCapability` still signs `APPROVED` on main         | Reopen. The register's glance table omits G-111, which is an error. Same blocker as issue #186 |
+| G-112 | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+| G-113 | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+| G-114 | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+
+Summary: reopen G-108, G-110 and G-111. Re-verify the other 17 with a test on `main` before closing them. Also add G-111 to the glance table in `docs/VERIFICATION-GAPS.md`.
