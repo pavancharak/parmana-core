@@ -162,6 +162,30 @@ describe("GatewayPaytmAdapter", () => {
     );
   });
 
+  it("#217: a new authorization for the same refund keeps its refId, so Paytm sees the retry as one refund", async () => {
+    // A second attempt after an unclear outcome gets a new authorization,
+    // so a new businessTransactionId and nonce. The refId must not change,
+    // or Paytm would treat the retry as a second refund and pay it twice.
+    const first = refundRequest({ orderId: "order-9", transactionId: "txn-9" });
+    const second = {
+      ...refundRequest({ orderId: "order-9", transactionId: "txn-9" }),
+      businessTransactionId: "btx-retry-after-unclear-outcome",
+    };
+
+    await connector().execute(first, context());
+    await connector().execute(second, context());
+
+    expect(server.calls[1]?.businessTransactionId).toBe(
+      "btx-retry-after-unclear-outcome",
+    );
+    expect(server.calls[1]?.parameters.refId).toBe(
+      server.calls[0]?.parameters.refId,
+    );
+    expect(server.calls[0]?.parameters.refId).toBe(
+      deriveDeterministicPaytmRefId("order-9", "txn-9"),
+    );
+  });
+
   it.each([
     ["an empty refundReference", { refundReference: "  " }],
     ["a refundReference that is not a string", { refundReference: 42 }],
