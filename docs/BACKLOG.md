@@ -277,17 +277,17 @@ Every open issue on `pavancharak/parmana-core` as of 2026-11-01, sorted by what 
 
 ### Decision first
 
-| Issue | Pri | Title                                                      | Decision needed                                                                                                                                                |
-| ----- | --- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| #183  | P3  | Recovery path for a lost response on a gated execution     | Return the first result for a replayed authorization, or keep the 409 and document client recovery.                                                            |
-| #186  | P2  | HubSpot deal read approves itself                          | Wait for a new `hubspot-deal-update` policy version (section B.1 of `REMAINING-WORK.md`).                                                                      |
-| #219  | P2  | G-111: HubSpot helper asserts APPROVED for its own read    | Same as #186. Or the containment option: a dedicated verifier key limited to `hubspot:deal-fetch`.                                                             |
-| #223  | P2  | 24 to 32 second latency for an approved external request   | Needs production timings. Decide the acceptable bound.                                                                                                         |
-| #222  | P2  | Documented but not implemented config values               | Config part done in PR #261. Remaining: the signed-execution check on Postgres and the production database check. Both need a decision on the database to use. |
-| #225  | P3  | G-120 and G-121: schema version 2 can be downgraded        | Decide the cutover policy, then gate version 3 issuance.                                                                                                       |
-| #234  | P3  | Three-role approval, tiered approval, freeze after denials | Decide whether to schedule it. Not scheduled.                                                                                                                  |
-| #235  | P3  | CAGE integration: design never merged, branches deleted    | Decide whether to build it.                                                                                                                                    |
-| #236  | P3  | Step-up nonce is spent before the approval action runs     | Decide whether to change the order, or keep and document the limitation.                                                                                       |
+| Issue | Pri | Title                                                      | Decision needed                                                                                                  |
+| ----- | --- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| #183  | P3  | Recovery path for a lost response on a gated execution     | Return the first result for a replayed authorization, or keep the 409 and document client recovery.              |
+| #186  | P2  | HubSpot deal read approves itself                          | Wait for a new `hubspot-deal-update` policy version (section B.1 of `REMAINING-WORK.md`).                        |
+| #219  | P2  | G-111: HubSpot helper asserts APPROVED for its own read    | Same as #186. Or the containment option: a dedicated verifier key limited to `hubspot:deal-fetch`.               |
+| #223  | P2  | 24 to 32 second latency for an approved external request   | Needs production timings. Decide the acceptable bound.                                                           |
+| #222  | P2  | Documented but not implemented config values               | **Closed 2026-11-01** as completed: every value refused at startup with a test, or working with tests (PR #261). |
+| #225  | P3  | G-120 and G-121: schema version 2 can be downgraded        | Decide the cutover policy, then gate version 3 issuance.                                                         |
+| #234  | P3  | Three-role approval, tiered approval, freeze after denials | Decide whether to schedule it. Not scheduled.                                                                    |
+| #235  | P3  | CAGE integration: design never merged, branches deleted    | Decide whether to build it.                                                                                      |
+| #236  | P3  | Step-up nonce is spent before the approval action runs     | Decide whether to change the order, or keep and document the limitation.                                         |
 
 ### Person or external
 
@@ -304,9 +304,9 @@ Every open issue on `pavancharak/parmana-core` as of 2026-11-01, sorted by what 
 ### Count
 
 - Code, can start now: 11 issues.
-- Decision first: 9 issues (including #222, whose config part is done).
+- Decision first: 8 issues. #222 is closed.
 - Person or external: 6 issues.
 - Tracker: #189, counted once.
-- Total: 11 + 9 + 6 + 1 = 27 issues.
+- Total: 11 + 8 + 6 + 1 = 26 open, plus #222 closed = 27 issues.
 
 Nothing in this table is closed by this document. Close each issue when its next step is done, and update the table.
