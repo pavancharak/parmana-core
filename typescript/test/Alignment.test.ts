@@ -380,11 +380,19 @@ describe("offline verification", () => {
     const pem = String(publicKey.export({ type: "spki", format: "pem" }));
 
     expect(
-      verifyExecutionTrustRecordOffline(record, { default: pem }).valid,
+      verifyExecutionTrustRecordOffline(
+        record,
+        { default: pem },
+        { allowLegacyOnly: true },
+      ).valid,
     ).toBe(true);
 
     // The server's own reference verifier agrees.
-    const reference = await serverVerifyTrustRecord(record, { default: pem });
+    const reference = await serverVerifyTrustRecord(
+      record,
+      { default: pem },
+      { allowLegacyOnly: true },
+    );
     expect(reference.valid).toBe(true);
 
     const hybrid = verifyExecutionTrustRecordOffline(

@@ -30,7 +30,10 @@ type BrowserResult = {
 type BrowserVerifier = (
   record: unknown,
   publicKeyPem: string,
+  options?: { allowLegacyOnly?: boolean },
 ) => Promise<BrowserResult>;
+
+const ALLOW_LEGACY = { allowLegacyOnly: true };
 
 const root = process.cwd();
 const snippet = readFileSync(
@@ -82,11 +85,17 @@ afterAll(() => {
 const keyIdOf = (record: Record<string, unknown>) =>
   (record.signature as { keyId: string }).keyId;
 
-async function bothVerifiers(record: Record<string, unknown>, key = pem) {
-  const browser = await verify(record, key);
-  const reference = await verifyExecutionTrustRecordOffline(record as never, {
-    [keyIdOf(small)]: key,
-  });
+async function bothVerifiers(
+  record: Record<string, unknown>,
+  key = pem,
+  options = ALLOW_LEGACY,
+) {
+  const browser = await verify(record, key, options);
+  const reference = await verifyExecutionTrustRecordOffline(
+    record as never,
+    { [keyIdOf(small)]: key },
+    options,
+  );
   return { browser, reference };
 }
 
@@ -151,11 +160,30 @@ describe("the in browser record verifier", () => {
     const { record, key } = new Function(
       `${exports}\nreturn { record: exampleRecord, key: examplePublicKey };`,
     )() as { record: Record<string, unknown>; key: string };
-    const browser = await verify(record, key);
+    const browser = await verify(record, key, ALLOW_LEGACY);
     expect(browser).toMatchObject({ valid: true, hashValid: true });
-    const reference = await verifyExecutionTrustRecordOffline(record, {
-      [keyIdOf(record)]: key,
-    });
+    const reference = await verifyExecutionTrustRecordOffline(
+      record,
+      { [keyIdOf(record)]: key },
+      ALLOW_LEGACY,
+    );
     expect(reference.valid).toBe(true);
+  });
+
+  it("refuses a legacy-only record by default, as the offline verifier does", async () => {
+    const browser = await verify(small, pem);
+    expect(browser).toMatchObject({
+      valid: false,
+      hashValid: true,
+      signatureValid: true,
+    });
+    expect(browser.errors.join(" ")).toMatch(
+      /no hybrid \(post-quantum\) envelope/,
+    );
+
+    const reference = await verifyExecutionTrustRecordOffline(small as never, {
+      [keyIdOf(small)]: pem,
+    });
+    expect(reference.valid).toBe(false);
   });
 });

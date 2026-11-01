@@ -11,7 +11,12 @@
 import { readFileSync } from "node:fs";
 import { verifyExecutionTrustRecordOffline } from "../../packages/crypto/dist/index.js";
 
-const [proofPath, keysPath, policyPath] = process.argv.slice(2);
+const argv = process.argv.slice(2);
+// Legacy-only records (no hybrid envelope) are refused unless the caller opts in.
+const allowLegacyOnly = argv.includes("--allow-legacy-only");
+const [proofPath, keysPath, policyPath] = argv.filter(
+  (a) => a !== "--allow-legacy-only",
+);
 
 if (!proofPath || !keysPath || !policyPath) {
   console.error(
@@ -30,7 +35,9 @@ try {
   process.exit(2);
 }
 
-const result = await verifyExecutionTrustRecordOffline(proof, publicKeys);
+const result = await verifyExecutionTrustRecordOffline(proof, publicKeys, {
+  allowLegacyOnly,
+});
 
 console.log(
   JSON.stringify({

@@ -35,6 +35,10 @@ x-api-image: &api-image
     # The code loads a .env file when there is one; there is none in the
     # image. This only silences dotenv's banner in the logs.
     DOTENV_CONFIG_QUIET: "true"
+    # Every Trust Record is signed by Ed25519 (primary) and ML-DSA-65 (secondary).
+    CRYPTO_MODE: "hybrid"
+    PRIMARY_SIGNATURE_PROVIDER: "ed25519"
+    SECONDARY_SIGNATURE_PROVIDER: "dilithium3"
 
 x-database-url: &database-url postgresql://parmana:${PARMANA_DB_PASSWORD:-parmana-local}@postgres:5432/parmana
 

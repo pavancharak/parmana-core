@@ -94,6 +94,7 @@ services:
       - ./docker/local:/app/docker/local:ro
       - stand-in-certs:/certs:ro
       - ./parmana-local/keys/default.public.pem:/public-keys/default.public.pem:ro
+      - ./parmana-local/keys/default-secondary.public.pem:/public-keys/default-secondary.public.pem:ro
       - ./parmana-local/keys/gateway.public.pem:/public-keys/gateway.public.pem:ro
 
   offline-check:
@@ -111,6 +112,7 @@ services:
       - ./docker/local:/app/docker/local:ro
       - check-identities:/identities:ro
       - ./parmana-local/keys/default.public.pem:/public-keys/default.public.pem:ro
+      - ./parmana-local/keys/default-secondary.public.pem:/public-keys/default-secondary.public.pem:ro
       - ./parmana-local/keys/gateway.public.pem:/public-keys/gateway.public.pem:ro
       - ./parmana-local/offline-check:/out
       - stand-in-certs:/certs:ro

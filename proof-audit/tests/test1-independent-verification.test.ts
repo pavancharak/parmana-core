@@ -64,7 +64,14 @@ function runFreshVerifier(
   policyFile: string,
   osIsolated = netnsAvailable,
 ): VerifyRun {
-  const args = [process.execPath, verifier, proofFile, keysFile, policyFile];
+  const args = [
+    process.execPath,
+    verifier,
+    proofFile,
+    keysFile,
+    policyFile,
+    "--allow-legacy-only",
+  ];
   const command = osIsolated
     ? `env -i PATH=$PATH NODE_OPTIONS=--import=${denyHook} unshare -rn node verify-offline.mjs <proof> <keys> <policy>`
     : `env -i PATH=$PATH NODE_OPTIONS=--import=${denyHook} node verify-offline.mjs <proof> <keys> <policy>`;

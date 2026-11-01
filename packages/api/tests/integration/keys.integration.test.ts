@@ -130,9 +130,11 @@ describe("Public-key discovery (HTTP boundary)", () => {
     const signature = await crypto.sign(withHash);
     const record: ExecutionTrustRecord = { ...withHash, signature };
 
-    const result = await verifyExecutionTrustRecordOffline(record, {
-      default: keyResponse.body.pem,
-    });
+    const result = await verifyExecutionTrustRecordOffline(
+      record,
+      { default: keyResponse.body.pem },
+      { allowLegacyOnly: true },
+    );
 
     expect(result.valid).toBe(true);
   });

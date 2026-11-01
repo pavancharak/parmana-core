@@ -96,6 +96,15 @@ A key is used only when all of these hold:
 
 A compromised key is rejected whatever the timestamp, so signatures it made stay void.
 
+## Records with no hybrid envelope
+
+A record with no `signatures` array is refused unless one of these holds:
+
+- the trust file sets `hybridRequiredFrom` and the record was created before that instant;
+- the trust file sets `"allowLegacyOnly": true` and does not set `hybridRequiredFrom`.
+
+A record created at or after `hybridRequiredFrom` always needs a valid hybrid envelope. The default is refusal so that a removed envelope cannot pass unnoticed.
+
 ## What it does not show
 
 - It shows that a record was signed by the key you pinned. It cannot show that the key belongs to

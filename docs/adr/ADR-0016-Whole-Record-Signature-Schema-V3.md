@@ -91,3 +91,7 @@ Until the gate opens, a deployment that sets `HYBRID_SCHEMA_VERSION=3` is runnin
 - The legacy `signature` bytes for a record are identical before and after this change.
 - The public verifier's documentation describes v3 coverage exactly as the signing code implements it.
 - The downgrade gap is closed, or accepted in writing with the option recorded in "Known gap" above, before v3 is issued anywhere.
+
+## Addendum (2026-10-31): offline verifiers refuse legacy-only records by default
+
+Option 2 required a verifier to reject a post-cutover record with no hybrid envelope. Without a cutover date, the offline verifier also accepted a record with its envelope removed, because a missing envelope counted as a pass. That is fixed: a record with no envelope is accepted only if it predates a supplied `hybridRequiredFrom`, or if no cutover is set and the caller passes `allowLegacyOnly: true` (the `allowLegacyOnly` trust-file field in `parmana-verifier`). A cutover, when given, decides alone. Affected: `verifyExecutionTrustRecordOffline` in `packages/crypto`, and `parmana-verifier` (Node and Python). The in-browser verifier in `docs/site/snippets/record-verifier.jsx` applies the same default, with an explicit reader opt-in.

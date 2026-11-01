@@ -96,9 +96,11 @@ describe("verifyExecutionTrustRecordOffline", () => {
       "offline-test-key",
     );
 
-    const result = await verifyExecutionTrustRecordOffline(record, {
-      "offline-test-key": publicKeyPem,
-    });
+    const result = await verifyExecutionTrustRecordOffline(
+      record,
+      { "offline-test-key": publicKeyPem },
+      { allowLegacyOnly: true },
+    );
 
     expect(result.valid).toBe(true);
     expect(result.hashValid).toBe(true);

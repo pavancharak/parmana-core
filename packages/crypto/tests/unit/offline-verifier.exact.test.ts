@@ -83,7 +83,9 @@ const KEYS = { primary: pem(edKeys.publicKey) };
 describe("verifyExecutionTrustRecordOffline, exactly", () => {
   it("reports a genuine legacy record with nothing else", async () => {
     expect(
-      await verifyExecutionTrustRecordOffline(await legacyRecord(), KEYS),
+      await verifyExecutionTrustRecordOffline(await legacyRecord(), KEYS, {
+        allowLegacyOnly: true,
+      }),
     ).toStrictEqual({
       valid: true,
       hashValid: true,
@@ -108,6 +110,7 @@ describe("verifyExecutionTrustRecordOffline, exactly", () => {
     const result = await verifyExecutionTrustRecordOffline(
       await legacyRecord(),
       { primary: pem(otherEdKeys.publicKey) },
+      { allowLegacyOnly: true },
     );
     expect(result).toMatchObject({ valid: false, legacySignatureValid: false });
     expect(result.errors).toEqual([
@@ -159,6 +162,7 @@ describe("verifyExecutionTrustRecordOffline, exactly", () => {
     const result = await verifyExecutionTrustRecordOffline(
       { ...(await legacyRecord()), signatures: [] },
       KEYS,
+      { allowLegacyOnly: true },
     );
     expect(result.valid).toBe(true);
     expect(result).not.toHaveProperty("hybridSignaturesValid");

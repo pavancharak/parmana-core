@@ -35,7 +35,12 @@ const offlineCheckDir = path.join(root, "offline-check");
 mkdirSync(keyDir, { recursive: true, mode: 0o700 });
 mkdirSync(offlineCheckDir, { recursive: true, mode: 0o755 });
 
-for (const keyId of ["default", "gateway"]) {
+for (const { keyId, algorithm } of [
+  { keyId: "default", algorithm: "ed25519" },
+  { keyId: "gateway", algorithm: "ed25519" },
+  // Post-quantum half of each Trust Record signature (CRYPTO_MODE=hybrid).
+  { keyId: "default-secondary", algorithm: "ml-dsa-65" },
+]) {
   const privatePath = path.join(keyDir, `${keyId}.private.pem`);
   const publicPath = path.join(keyDir, `${keyId}.public.pem`);
 
@@ -56,7 +61,7 @@ for (const keyId of ["default", "gateway"]) {
     process.exit(1);
   }
 
-  const { privateKey, publicKey } = generateKeyPairSync("ed25519");
+  const { privateKey, publicKey } = generateKeyPairSync(algorithm);
 
   writeFileSync(
     privatePath,
@@ -67,7 +72,7 @@ for (const keyId of ["default", "gateway"]) {
     mode: 0o644,
   });
 
-  console.log(`[setup] generated Ed25519 key "${keyId}"`);
+  console.log(`[setup] generated ${algorithm} key "${keyId}"`);
 }
 
 const apiKeysPath = path.join(root, "api-keys.json");
@@ -114,7 +119,7 @@ if (process.getuid?.() === 0) {
     root,
     keyDir,
     offlineCheckDir,
-    ...["default", "gateway"].flatMap((keyId) => [
+    ...["default", "gateway", "default-secondary"].flatMap((keyId) => [
       path.join(keyDir, `${keyId}.private.pem`),
       path.join(keyDir, `${keyId}.public.pem`),
     ]),

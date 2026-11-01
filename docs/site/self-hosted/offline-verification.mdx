@@ -50,7 +50,7 @@ The copy signs with your deployment's own keys from `./parmana-local/keys`, so t
 | 10  | refused refund is rejected by the policy's rules                               | A refund of 50,000 with no manager approval is refused with `403 POLICY_DENIED`, for the policy's own reason.            |
 | 11  | refused refund never reached the downstream system                             | A refused action is never released.                                                                                      |
 | 12  | Trust Record stored                                                            | The authorized refund has a Trust Record.                                                                                |
-| 13  | Trust Record verifies with only the public keys                                | The record's hash and signature are valid, checked with the two public keys and nothing else.                            |
+| 13  | Trust Record verifies with only the public keys                                | The record's hash and signature are valid, checked with the public keys and nothing else.                                |
 | 14  | a changed Trust Record fails verification                                      | Changing the amount in the record makes verification fail, so check 13 is not vacuous.                                   |
 
 No agent action is authorized without a signed human approval ([Human approval](/concepts/human-approval)), so the
@@ -68,11 +68,12 @@ The downstream system in the check is `docker/local/offline-check/paytm-agent-st
 
 ## Verify the record again, anywhere
 
-The check leaves three files in `parmana-local/offline-check/`: `trust-record.json`, `default.public.pem` and `gateway.public.pem`. Anyone can check the record on any machine with a clone of the repository, `npm install` and Node.js 24 or newer:
+The check leaves four files in `parmana-local/offline-check/`: `trust-record.json`, `default.public.pem`, `default-secondary.public.pem` and `gateway.public.pem`. Anyone can check the record on any machine with a clone of the repository, `npm install` and Node.js 24 or newer:
 
 ```bash
 npx tsx scripts/verify-trust-record.ts parmana-local/offline-check/trust-record.json \
   default=parmana-local/offline-check/default.public.pem \
+  default-secondary=parmana-local/offline-check/default-secondary.public.pem \
   gateway=parmana-local/offline-check/gateway.public.pem
 ```
 
