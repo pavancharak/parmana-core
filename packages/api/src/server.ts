@@ -87,7 +87,7 @@ const authFailureRateLimitStore = createRateLimitStore("auth-failure:");
 /**
  * Inbound refund decisions (RFC-0025). Enabled only when INBOUND_AUDIENCE is set. Fails closed:
  * if it is enabled and the gateway signing key cannot be read, the server does not start.
- * The decision store is in memory for now; the database table is a later step.
+ * Decisions are stored through the inbound decision repository.
  */
 function inboundDecisionOptions():
   Parameters<typeof createApp>[1]["inboundDecisions"] | undefined {
@@ -107,15 +107,9 @@ function inboundDecisionOptions():
     );
   }
   const privateKey = createPrivateKey(pem);
-  const records: unknown[] = [];
   return {
     audience,
     sign: async (bytes) => sign(null, bytes, privateKey).toString("base64"),
-    store: {
-      append: async (record) => {
-        records.push(record);
-      },
-    },
   };
 }
 

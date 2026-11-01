@@ -53,6 +53,10 @@ export const refusalRecordRepository = lazyRepository(
   (provider) => provider.refusalRecords,
 );
 
+export const inboundDecisionRepository = lazyRepository(
+  (provider) => provider.inboundDecisions,
+);
+
 export const executionIntentRepository = lazyRepository(
   (provider) => provider.executionIntents,
 );

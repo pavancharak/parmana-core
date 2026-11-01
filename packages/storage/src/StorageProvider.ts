@@ -11,6 +11,7 @@ import type {
   PendingPolicyChangeRepository,
   PolicyChangeApprovalRecordRepository,
   RefusalRecordRepository,
+  InboundDecisionRepository,
 } from "@parmana/shared";
 
 /**
@@ -34,6 +35,11 @@ export interface StorageProvider {
    * Refusal Record repository (RFC-0021).
    */
   readonly refusalRecords: RefusalRecordRepository;
+
+  /**
+   * Inbound refund decisions (RFC-0025).
+   */
+  readonly inboundDecisions: InboundDecisionRepository;
 
   /**
    * Execution Intent repository (ADR-0012).

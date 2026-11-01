@@ -42,11 +42,11 @@ import { createTrustRecordsRouter } from "./routes/trust-records.js";
 import { createVerifyGetRouter } from "./routes/verify-get.js";
 import { createVerifyRouter } from "./routes/verify.js";
 import { createRefusalVerifyRouter } from "./routes/refusal-verify.js";
+import { createInboundDecisionRouter } from "./routes/inbound-decisions.js";
 import {
-  createInboundDecisionRouter,
-  type InboundDecisionFields,
-} from "./routes/inbound-decisions.js";
-import { authorityGrantRepository } from "./repositories.js";
+  authorityGrantRepository,
+  inboundDecisionRepository,
+} from "./repositories.js";
 import {
   createExecutionIntentsRouter,
   createExecutionIntentVerifyRouter,
@@ -148,16 +148,11 @@ export interface CreateAppOptions {
 
   /**
    * Inbound refund decisions (RFC-0025). Mounted only when given. `sign` signs the canonical
-   * decision bytes with Parmana's key; `store` receives every decision issued.
+   * decision bytes with Parmana's key. Every decision issued is stored through the repository.
    */
   readonly inboundDecisions?: {
     readonly audience: string;
     readonly sign: (canonicalBytes: Buffer) => Promise<string>;
-    readonly store: {
-      append(
-        record: InboundDecisionFields & { signature: string },
-      ): Promise<void>;
-    };
   };
 
   /**
@@ -461,7 +456,13 @@ export function createApp(
       createInboundDecisionRouter({
         audience: options.inboundDecisions.audience,
         sign: options.inboundDecisions.sign,
-        store: options.inboundDecisions.store,
+        store: {
+          append: (record) =>
+            inboundDecisionRepository.append({
+              ...record,
+              issuedAt: new Date(),
+            }),
+        },
         findGrant: (partnerId) =>
           authorityGrantRepository.findActive(partnerId, "inbound:refund"),
       }),
