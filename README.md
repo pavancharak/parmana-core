@@ -26,6 +26,8 @@ Parmana sits between an AI agent and the systems it calls.
 
 Parmana does not decide what the agent should do. It decides whether the agent was allowed to do it, and it records that decision in a signed record that anyone can check with the verifier.
 
+Parmana checks actions that leave through its gateway. It does not check an agent run by a customer or a partner that calls one of your systems directly. That path is not covered yet; see [G-129](docs/VERIFICATION-GAPS.md) and [RFC-0024](docs/rfcs/RFC-0024-Inbound-Agent-Authorization.md).
+
 ## Find your way around
 
 Start with the goal closest to yours. The full documentation is at [docs.parmanasystems.com](https://docs.parmanasystems.com).
