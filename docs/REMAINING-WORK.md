@@ -146,7 +146,8 @@ Taken from `docs/site/deployment/environment-variables.mdx`. Since 2026-11-01 th
 2. `PRIMARY_SIGNATURE_PROVIDER` and `SECONDARY_SIGNATURE_PROVIDER`: `ecdsa-p256`, `dilithium5`, `sphincs-plus`. Refused.
 3. `HASH_PROVIDER`: `sha3-512`, `blake3`. Refused.
 4. `PARMANA_STORAGE=postgres`. Not refused, and implemented. Verified 2026-11-01 against a local Postgres 16 with all 43 migrations applied: the server starts, `/ready` runs its `SELECT 1` check, and the live suites in `packages/storage/tests/integration` and `packages/api/tests/integration` pass (`ALLOW_LIVE_SUPABASE=1`, 391 tests, 3 skipped). The 3 skipped tests need external GitHub and HubSpot credentials. Not yet verified: the in-process HTTP suites run under `NODE_ENV=test`, which uses the in-memory nonce store, so a signed execution through a running server that consumes a nonce in Postgres is still open. Only the nonce store unit-level live test writes to `consumed_nonces`. The item stays open until that path is tested, and until a production database is checked.
-5. `CRYPTO_MODE=pq`. Refused: no production code reads it.
+
+Blocker found 2026-11-01: with `PARMANA_STORAGE=postgres` the server reads policies from the `policies` table (backfilled from `policies/` with `scripts/apply-policies-table-and-backfill.ts`), and refuses each one with `POLICY_DENIED` until a Policy Governance approval record exists. A fresh database has none, so a signed `POST /execute` through a running server is refused before any nonce is consumed. Completing the path needs the real governance approval flow for a policy such as `hubspot-deal-update` 1.1.0 (issue #186), with its human approvers. Seeding approval records directly would bypass the control, so it was not done. 5. `CRYPTO_MODE=pq`. Refused: no production code reads it.
 
 ## E. Tooling limits
 
