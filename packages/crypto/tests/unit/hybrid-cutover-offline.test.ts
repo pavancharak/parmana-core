@@ -116,7 +116,7 @@ describe("offline verifier: hybridRequiredFrom cutover", () => {
     expect(result.valid).toBe(false);
   });
 
-  it("does not apply a cutover when none is given", async () => {
+  it("refuses a legacy-only record when no cutover and no opt-in is given", async () => {
     const record = await buildLegacyRecord(
       CREATED_AT,
       "cutover-key",
@@ -125,6 +125,37 @@ describe("offline verifier: hybridRequiredFrom cutover", () => {
 
     const result = await verifyExecutionTrustRecordOffline(record, keys);
 
+    expect(result.valid).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/no hybrid envelope/);
+  });
+
+  it("accepts a legacy-only record only when legacy-only is explicitly allowed", async () => {
+    const record = await buildLegacyRecord(
+      CREATED_AT,
+      "cutover-key",
+      privateKey,
+    );
+
+    const result = await verifyExecutionTrustRecordOffline(record, keys, {
+      allowLegacyOnly: true,
+    });
+
     expect(result.valid).toBe(true);
+  });
+
+  it("refuses a legacy-only record after the cutover even when legacy-only is allowed", async () => {
+    const record = await buildLegacyRecord(
+      CREATED_AT,
+      "cutover-key",
+      privateKey,
+    );
+
+    const result = await verifyExecutionTrustRecordOffline(record, keys, {
+      hybridRequiredFrom: "2026-03-01T00:00:00.000Z",
+      allowLegacyOnly: true,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/hybridRequiredFrom/);
   });
 });

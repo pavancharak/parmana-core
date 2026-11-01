@@ -133,7 +133,15 @@ export interface OfflineVerificationResult {
 export async function verifyExecutionTrustRecordOffline(
   trustRecord: ExecutionTrustRecord,
   publicKeys: Readonly<Record<string, string>>,
-  options: { readonly hybridRequiredFrom?: string } = {},
+  options: {
+    readonly hybridRequiredFrom?: string;
+    /**
+     * Explicit opt-in to accept a record with no hybrid envelope. Off by
+     * default: a legacy-only record is refused unless it predates a cutover
+     * the caller supplied, or this is set.
+     */
+    readonly allowLegacyOnly?: boolean;
+  } = {},
 ): Promise<OfflineVerificationResult> {
   const malformed = malformedArtifact(trustRecord, "trustRecordHash");
 
@@ -258,25 +266,36 @@ export async function verifyExecutionTrustRecordOffline(
   }
 
   //
-  // ADR-0016 option 2: at or after the cutover, a record with no hybrid
-  // envelope is invalid. An envelope that is present has already been
-  // judged above.
+  // A record with no hybrid envelope is accepted only when the caller
+  // allows it: explicitly (allowLegacyOnly), or because the record predates
+  // a cutover the caller supplied (ADR-0016). Otherwise it is refused, so a
+  // stripped envelope can never pass by default. An envelope that is present
+  // has already been judged above.
   //
-  const missingAtCutover =
-    hybridSignaturesValid === undefined &&
-    isAtOrAfterCutover(trustRecord.createdAt, options.hybridRequiredFrom);
+  const predatesCutover =
+    options.hybridRequiredFrom !== undefined &&
+    !isAtOrAfterCutover(trustRecord.createdAt, options.hybridRequiredFrom);
 
-  if (missingAtCutover) {
+  // With a cutover, the cutover alone decides; allowLegacyOnly applies only when none is given.
+  const legacyOnlyAllowed =
+    options.hybridRequiredFrom !== undefined
+      ? predatesCutover
+      : options.allowLegacyOnly === true;
+
+  const hybridOk =
+    hybridSignaturesValid === undefined
+      ? legacyOnlyAllowed
+      : hybridSignaturesValid;
+
+  if (hybridSignaturesValid === undefined && !legacyOnlyAllowed) {
     errors.push(
-      `record created at or after hybridRequiredFrom (${options.hybridRequiredFrom}) has no valid hybrid envelope.`,
+      options.hybridRequiredFrom === undefined
+        ? "record has no hybrid envelope: pass hybridRequiredFrom or allowLegacyOnly to accept a legacy-only record."
+        : `record created at or after hybridRequiredFrom (${options.hybridRequiredFrom}) has no valid hybrid envelope.`,
     );
   }
 
-  const valid =
-    hashValid &&
-    legacySignatureValid &&
-    (hybridSignaturesValid ?? true) &&
-    !missingAtCutover;
+  const valid = hashValid && legacySignatureValid && hybridOk;
 
   return {
     valid,

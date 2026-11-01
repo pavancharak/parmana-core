@@ -10,6 +10,15 @@ product version). The SDKs are versioned independently on their own registries, 
 and per-version notes. This page covers changes that affect what you can build against, not
 every commit, run `git log` in the repository for the complete record.
 
+## 2026-10-31
+
+**Changed: the offline verifier refuses a record with no hybrid envelope by default**
+
+- A record with no `signatures` array (a legacy-only record) is now invalid unless the caller accepts it. It is accepted only if it was created before the `hybridRequiredFrom` cutover, or if no cutover is set and `allowLegacyOnly` is `true`. Before this change, a record whose post-quantum envelope had been removed still verified on its classical signature.
+- `verifyExecutionTrustRecordOffline` takes a new option, `allowLegacyOnly`, default `false`. A caller that verifies legacy-only records and has no cutover must pass `{ allowLegacyOnly: true }`.
+- The verifier in `parmana-verifier` makes the same change: the trust file takes `"allowLegacyOnly": true`, and the Node and Python verifiers agree.
+- The in-browser verifier on the [verify in browser](/verification/verify-in-browser) page has not changed yet. It checks the hash and the classical signature only.
+
 ## 2026-10-29
 
 **Changed: the AgenTrust integration is listed at the verified tier**
