@@ -1,32 +1,9 @@
 ---
 title: "Interface: SignedApproval"
-description: "TypeScript SDK reference: Interface: SignedApproval."
 ---
 
-## Properties
-
-### payload
-
-> `readonly` **payload**: [`ApprovalPayload`](/sdks/reference/typescript/interfaces/ApprovalPayload)
-
----
-
-### signature
-
-> `readonly` **signature**: `object`
-
-#### algorithm
-
-> `readonly` **algorithm**: `"ed25519"`
-
-#### keyId
-
-> `readonly` **keyId**: `string`
-
-#### value
-
-> `readonly` **value**: `string`
-
-#### signedAt
-
-> `readonly` **signedAt**: `string`
+## Members
+| Name | Kind | Type | Description |
+| --- | --- | --- | --- |
+| `payload` | Property | `ApprovalPayload` |  |
+| `signature` | Property | `{ readonly algorithm: "ed25519"; readonly keyId: string; readonly value: string; readonly signedAt: string; }` |  |

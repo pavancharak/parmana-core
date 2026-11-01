@@ -1,94 +1,24 @@
 ---
 title: "Interface: ExternalConnectorChange"
-description: "Python SDK reference: A proposal to register or revoke an external connector, and its resolution."
 ---
 
 A proposal to register or revoke an external connector, and its
 resolution.
 
-## Properties
-
-### changeId
-
-> `readonly` **changeId**: `string`
-
-Sign the step up authorization for approve or reject with this id as
-`pendingPolicyChangeId`.
-
----
-
-### action
-
-> `readonly` **action**: `"revoke"` \| `"register"`
-
----
-
-### capability
-
-> `readonly` **capability**: `string`
-
----
-
-### endpointUrl?
-
-> `readonly` `optional` **endpointUrl?**: `string`
-
----
-
-### policy?
-
-> `readonly` `optional` **policy?**: `string`
-
----
-
-### allowedParameters?
-
-> `readonly` `optional` **allowedParameters?**: readonly `string`[]
-
----
-
-### timeoutMs?
-
-> `readonly` `optional` **timeoutMs?**: `number`
-
----
-
-### reason
-
-> `readonly` **reason**: `string`
-
----
-
-### proposedBy
-
-> `readonly` **proposedBy**: `string`
-
----
-
-### proposedAt
-
-> `readonly` **proposedAt**: `string`
-
----
-
-### status
-
-> `readonly` **status**: [`PendingPolicyChangeStatus`](/sdks/reference/typescript/type-aliases/PendingPolicyChangeStatus)
-
----
-
-### resolvedBy?
-
-> `readonly` `optional` **resolvedBy?**: `string`
-
----
-
-### resolvedAt?
-
-> `readonly` `optional` **resolvedAt?**: `string`
-
----
-
-### rejectionReason?
-
-> `readonly` `optional` **rejectionReason?**: `string`
+## Members
+| Name | Kind | Type | Description |
+| --- | --- | --- | --- |
+| `changeId` | Property | `string` | Sign the step up authorization for approve or reject with this id as `pendingPolicyChangeId`. |
+| `action` | Property | `"revoke" \| "register"` |  |
+| `capability` | Property | `string` |  |
+| `endpointUrl?` | Property | `string \| undefined` |  |
+| `policy?` | Property | `string \| undefined` |  |
+| `allowedParameters?` | Property | `readonly string[] \| undefined` |  |
+| `timeoutMs?` | Property | `number \| undefined` |  |
+| `reason` | Property | `string` |  |
+| `proposedBy` | Property | `string` |  |
+| `proposedAt` | Property | `string` |  |
+| `status` | Property | `PendingPolicyChangeStatus` |  |
+| `resolvedBy?` | Property | `string \| undefined` |  |
+| `resolvedAt?` | Property | `string \| undefined` |  |
+| `rejectionReason?` | Property | `string \| undefined` |  |

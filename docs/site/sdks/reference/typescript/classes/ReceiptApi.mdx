@@ -1,72 +1,22 @@
 ---
 title: "Class: ReceiptApi"
-description: "Python SDK reference: Receipt API."
 ---
 
 Receipt API.
 
-## Responsibilities
-
+Responsibilities
+----------------
 - Generate execution receipts
 - Retrieve the most recent receipt
 
 This API does NOT:
-
 - execute Business Transactions
 - replay executions
 - verify trust records
 - validate policies
 
-## Constructors
-
-### Constructor
-
-> **new ReceiptApi**(`transport`): `ReceiptApi`
-
-#### Parameters
-
-##### transport
-
-[`Transport`](/sdks/reference/typescript/interfaces/Transport)
-
-#### Returns
-
-`ReceiptApi`
-
-## Methods
-
-### generate()
-
-> **generate**(`businessTransactionId`): `Promise`\<[`Receipt`](/sdks/reference/typescript/interfaces/Receipt)\>
-
-Generate an execution receipt.
-
-#### Parameters
-
-##### businessTransactionId
-
-`string`
-
-#### Returns
-
-`Promise`\<[`Receipt`](/sdks/reference/typescript/interfaces/Receipt)\>
-
----
-
-### getLatest()
-
-> **getLatest**(`businessTransactionId`): `Promise`\<[`Receipt`](/sdks/reference/typescript/interfaces/Receipt)\>
-
-Retrieve the most recent receipt without generating a new one. Maps to
-GET /receipt/latest/:businessTransactionId, distinct from generate(),
-which generates a new receipt.
-
-#### Parameters
-
-##### businessTransactionId
-
-`string`
-
-#### Returns
-
-`Promise`\<[`Receipt`](/sdks/reference/typescript/interfaces/Receipt)\>
+## Members
+| Name | Kind | Type | Description |
+| --- | --- | --- | --- |
+| `generate` | Method | `(businessTransactionId: string) => Promise<Receipt>` | Generate an execution receipt. |
+| `getLatest` | Method | `(businessTransactionId: string) => Promise<Receipt>` | Retrieve the most recent receipt without generating a new one. Maps to GET /receipt/latest/:businessTransactionId, distinct from generate(), which generates a new receipt. |

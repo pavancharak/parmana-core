@@ -1,163 +1,25 @@
 ---
 title: "Interface: PolicyChangeForReview"
-description: "Python SDK reference: A policy change as listed for review: the change, plus the content in effect now next to the proposed content, and any warnings the pol..."
 ---
 
 A policy change as listed for review: the change, plus the content in
 effect now next to the proposed content, and any warnings the policy
 validator raised about the proposal.
 
-## Extends
-
-- [`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange)
-
-## Properties
-
-### pendingPolicyChangeId
-
-> `readonly` **pendingPolicyChangeId**: `string`
-
-#### Inherited from
-
-[`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange).[`pendingPolicyChangeId`](/sdks/reference/typescript/interfaces/PendingPolicyChange#pendingpolicychangeid)
-
----
-
-### policyName
-
-> `readonly` **policyName**: `string`
-
-#### Inherited from
-
-[`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange).[`policyName`](/sdks/reference/typescript/interfaces/PendingPolicyChange#policyname)
-
----
-
-### policyVersion
-
-> `readonly` **policyVersion**: `string`
-
-#### Inherited from
-
-[`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange).[`policyVersion`](/sdks/reference/typescript/interfaces/PendingPolicyChange#policyversion)
-
----
-
-### proposedContent
-
-> `readonly` **proposedContent**: `unknown`
-
-The full policy content that takes effect when the change is approved.
-
-#### Inherited from
-
-[`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange).[`proposedContent`](/sdks/reference/typescript/interfaces/PendingPolicyChange#proposedcontent)
-
----
-
-### proposedBy
-
-> `readonly` **proposedBy**: `string`
-
-Caller ID of the proposer.
-
-#### Inherited from
-
-[`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange).[`proposedBy`](/sdks/reference/typescript/interfaces/PendingPolicyChange#proposedby)
-
----
-
-### proposedAt
-
-> `readonly` **proposedAt**: `string`
-
-ISO 8601 timestamp.
-
-#### Inherited from
-
-[`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange).[`proposedAt`](/sdks/reference/typescript/interfaces/PendingPolicyChange#proposedat)
-
----
-
-### status
-
-> `readonly` **status**: [`PendingPolicyChangeStatus`](/sdks/reference/typescript/type-aliases/PendingPolicyChangeStatus)
-
-#### Inherited from
-
-[`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange).[`status`](/sdks/reference/typescript/interfaces/PendingPolicyChange#status)
-
----
-
-### reason
-
-> `readonly` **reason**: `string`
-
-#### Inherited from
-
-[`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange).[`reason`](/sdks/reference/typescript/interfaces/PendingPolicyChange#reason)
-
----
-
-### resolvedBy?
-
-> `readonly` `optional` **resolvedBy?**: `string`
-
-Caller ID of whoever approved or rejected it. Absent while pending.
-
-#### Inherited from
-
-[`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange).[`resolvedBy`](/sdks/reference/typescript/interfaces/PendingPolicyChange#resolvedby)
-
----
-
-### resolvedAt?
-
-> `readonly` `optional` **resolvedAt?**: `string`
-
-ISO 8601 timestamp. Absent while pending.
-
-#### Inherited from
-
-[`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange).[`resolvedAt`](/sdks/reference/typescript/interfaces/PendingPolicyChange#resolvedat)
-
----
-
-### rejectionReason?
-
-> `readonly` `optional` **rejectionReason?**: `string`
-
-Present only on a rejected change.
-
-#### Inherited from
-
-[`PendingPolicyChange`](/sdks/reference/typescript/interfaces/PendingPolicyChange).[`rejectionReason`](/sdks/reference/typescript/interfaces/PendingPolicyChange#rejectionreason)
-
----
-
-### diff
-
-> `readonly` **diff**: `object`
-
-#### current
-
-> `readonly` **current**: `unknown`
-
-The content in effect now, or null for a policy version that has
-none yet.
-
-#### proposed
-
-> `readonly` **proposed**: `unknown`
-
----
-
-### coverageWarnings?
-
-> `readonly` `optional` **coverageWarnings?**: readonly `unknown`[]
-
----
-
-### ruleConflicts?
-
-> `readonly` `optional` **ruleConflicts?**: readonly `unknown`[]
+## Members
+| Name | Kind | Type | Description |
+| --- | --- | --- | --- |
+| `diff` | Property | `{ readonly current: unknown; readonly proposed: unknown; }` |  |
+| `coverageWarnings?` | Property | `readonly unknown[] \| undefined` |  |
+| `ruleConflicts?` | Property | `readonly unknown[] \| undefined` |  |
+| `pendingPolicyChangeId` | Property | `string` |  |
+| `policyName` | Property | `string` |  |
+| `policyVersion` | Property | `string` |  |
+| `proposedContent` | Property | `unknown` | The full policy content that takes effect when the change is approved. |
+| `proposedBy` | Property | `string` | Caller ID of the proposer. |
+| `proposedAt` | Property | `string` | ISO 8601 timestamp. |
+| `status` | Property | `PendingPolicyChangeStatus` |  |
+| `reason` | Property | `string` |  |
+| `resolvedBy?` | Property | `string \| undefined` | Caller ID of whoever approved or rejected it. Absent while pending. |
+| `resolvedAt?` | Property | `string \| undefined` | ISO 8601 timestamp. Absent while pending. |
+| `rejectionReason?` | Property | `string \| undefined` | Present only on a rejected change. |

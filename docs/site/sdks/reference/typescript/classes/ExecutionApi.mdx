@@ -1,77 +1,23 @@
 ---
 title: "Class: ExecutionApi"
-description: "Python SDK reference: Execution API."
 ---
 
 Execution API.
 
-## Responsibilities
-
+Responsibilities
+----------------
 - Runtime health check
 - Execute Business Transactions
 
 This API does NOT:
-
 - verify trust records
 - replay executions
 - generate receipts
 - validate policies
 
-## Constructors
-
-### Constructor
-
-> **new ExecutionApi**(`transport`): `ExecutionApi`
-
-#### Parameters
-
-##### transport
-
-[`Transport`](/sdks/reference/typescript/interfaces/Transport)
-
-#### Returns
-
-`ExecutionApi`
-
-## Methods
-
-### health()
-
-> **health**(): `Promise`\<`unknown`\>
-
-Returns the Runtime health status.
-
-#### Returns
-
-`Promise`\<`unknown`\>
-
----
-
-### version()
-
-> **version**(): `Promise`\<`unknown`\>
-
-Returns the Runtime name, version, and API version. Requires caller
-authentication, unlike GET /health.
-
-#### Returns
-
-`Promise`\<`unknown`\>
-
----
-
-### execute()
-
-> **execute**(`transaction`): `Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)\>
-
-Execute a Business Transaction.
-
-#### Parameters
-
-##### transaction
-
-[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)
-
-#### Returns
-
-`Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)\>
+## Members
+| Name | Kind | Type | Description |
+| --- | --- | --- | --- |
+| `health` | Method | `() => Promise<unknown>` | Returns the Runtime health status. |
+| `version` | Method | `() => Promise<unknown>` | Returns the Runtime name, version, and API version. Requires caller authentication, unlike GET /health. |
+| `execute` | Method | `(transaction: BusinessTransaction) => Promise<ExecutionTrustRecord>` | Execute a Business Transaction. |

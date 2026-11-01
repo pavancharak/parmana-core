@@ -1,9 +1,6 @@
 ---
-title: "Function: verifyExecutionIntentOffline()"
-description: "Python SDK reference: Verifies an Execution Intent with only public keys."
+title: "Function: verifyExecutionIntentOffline"
 ---
-
-> **verifyExecutionIntentOffline**(`intent`, `publicKeys`): [`OfflineVerificationResult`](/sdks/reference/typescript/interfaces/OfflineVerificationResult)
 
 Verifies an Execution Intent with only public keys.
 
@@ -11,21 +8,8 @@ A valid result proves the intent was signed by the holder of that key and
 has not been altered. It does not prove the action was released, or what
 its result was: an intent is written before release.
 
-## Parameters
+## Signature
 
-### intent
-
-`unknown`
-
-The `intent` field of `client.executionIntent()` or
-`GET /execution-intents/{id}`.
-
-### publicKeys
-
-[`PublicKeys`](/sdks/reference/typescript/type-aliases/PublicKeys)
-
-Key ID to PEM public key.
-
-## Returns
-
-[`OfflineVerificationResult`](/sdks/reference/typescript/interfaces/OfflineVerificationResult)
+```ts
+(intent: unknown, publicKeys: Readonly<Record<string, string>>): OfflineVerificationResult
+```

@@ -1,77 +1,19 @@
 ---
 title: "Interface: BusinessSignalSource"
-description: "Python SDK reference: A business system registered under a name, active or revoked."
 ---
 
 A business system registered under a name, active or revoked.
 
-## Properties
-
-### registrationId
-
-> `readonly` **registrationId**: `string`
-
-The changeId of the approved register change that created it.
-
----
-
-### name
-
-> `readonly` **name**: `string`
-
-The name a policy's signalSources uses in `source`.
-
----
-
-### endpointUrl
-
-> `readonly` **endpointUrl**: `string`
-
-The HTTPS endpoint Parmana posts each signed query to.
-
----
-
-### timeoutMs
-
-> `readonly` **timeoutMs**: `number`
-
----
-
-### publicKeyPem?
-
-> `readonly` `optional` **publicKeyPem?**: `string`
-
-The Ed25519 public key (SPKI PEM) the source signs its answers with.
-When present, an answer without a valid signature is refused.
-
----
-
-### keyId?
-
-> `readonly` `optional` **keyId?**: `string`
-
----
-
-### status
-
-> `readonly` **status**: `"active"` \| `"revoked"`
-
-At most one active registration per name.
-
----
-
-### registeredAt
-
-> `readonly` **registeredAt**: `string`
-
----
-
-### revokedByChangeId?
-
-> `readonly` `optional` **revokedByChangeId?**: `string`
-
----
-
-### revokedAt?
-
-> `readonly` `optional` **revokedAt?**: `string`
+## Members
+| Name | Kind | Type | Description |
+| --- | --- | --- | --- |
+| `registrationId` | Property | `string` | The changeId of the approved register change that created it. |
+| `name` | Property | `string` | The name a policy's signalSources uses in `source`. |
+| `endpointUrl` | Property | `string` | The HTTPS endpoint Parmana posts each signed query to. |
+| `timeoutMs` | Property | `number` |  |
+| `publicKeyPem?` | Property | `string \| undefined` | The Ed25519 public key (SPKI PEM) the source signs its answers with. When present, an answer without a valid signature is refused. |
+| `keyId?` | Property | `string \| undefined` |  |
+| `status` | Property | `"active" \| "revoked"` | At most one active registration per name. |
+| `registeredAt` | Property | `string` |  |
+| `revokedByChangeId?` | Property | `string \| undefined` |  |
+| `revokedAt?` | Property | `string \| undefined` |  |

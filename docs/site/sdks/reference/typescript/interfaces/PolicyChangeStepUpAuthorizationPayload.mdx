@@ -1,46 +1,15 @@
 ---
 title: "Interface: PolicyChangeStepUpAuthorizationPayload"
-description: "Python SDK reference: The signed part of a step up authorization."
 ---
 
 The signed part of a step up authorization.
 
-## Properties
-
-### version
-
-> `readonly` **version**: `1`
-
----
-
-### nonce
-
-> `readonly` **nonce**: `string`
-
----
-
-### pendingPolicyChangeId
-
-> `readonly` **pendingPolicyChangeId**: `string`
-
----
-
-### action
-
-> `readonly` **action**: `"approve"` \| `"reject"`
-
----
-
-### authorizedAt
-
-> `readonly` **authorizedAt**: `string`
-
-ISO 8601 timestamp.
-
----
-
-### expiresAt
-
-> `readonly` **expiresAt**: `string`
-
-ISO 8601 timestamp.
+## Members
+| Name | Kind | Type | Description |
+| --- | --- | --- | --- |
+| `version` | Property | `1` |  |
+| `nonce` | Property | `string` |  |
+| `pendingPolicyChangeId` | Property | `string` |  |
+| `action` | Property | `"approve" \| "reject"` |  |
+| `authorizedAt` | Property | `string` | ISO 8601 timestamp. |
+| `expiresAt` | Property | `string` | ISO 8601 timestamp. |

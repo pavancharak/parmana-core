@@ -1,80 +1,11 @@
 ---
 title: "Class: TrustRecordApi"
-description: "Python SDK reference: Trust Record API."
 ---
 
 Trust Record API.
 
-## Constructors
-
-### Constructor
-
-> **new TrustRecordApi**(`transport`): `TrustRecordApi`
-
-#### Parameters
-
-##### transport
-
-[`Transport`](/sdks/reference/typescript/interfaces/Transport)
-
-#### Returns
-
-`TrustRecordApi`
-
-## Methods
-
-### get()
-
-> **get**(`businessTransactionId`): `Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)\>
-
-Retrieve an Execution Trust Record.
-
-#### Parameters
-
-##### businessTransactionId
-
-`string`
-
-#### Returns
-
-`Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)\>
-
----
-
-### list()
-
-> **list**(`page?`, `pageSize?`, `options?`): `Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)[]\>
-
-List Execution Trust Records, newest first. Maps to GET /trust-records.
-Only records of Business Transactions this caller submitted are
-returned, so a page may hold fewer than `pageSize` records.
-
-#### Parameters
-
-##### page?
-
-`number` = `1`
-
-##### pageSize?
-
-`number` = `25`
-
-##### options?
-
-###### since?
-
-`string`
-
-Only records of transactions created at or after
-this ISO 8601 time.
-
-###### until?
-
-`string`
-
-Only records of transactions created at or before
-this ISO 8601 time.
-
-#### Returns
-
-`Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)[]\>
+## Members
+| Name | Kind | Type | Description |
+| --- | --- | --- | --- |
+| `get` | Method | `(businessTransactionId: string) => Promise<ExecutionTrustRecord>` | Retrieve an Execution Trust Record. |
+| `list` | Method | `(page?: number, pageSize?: number, options?: { readonly since?: string; readonly until?: string; }) => Promise<ExecutionTrustRecord[]>` | List Execution Trust Records, newest first. Maps to GET /trust-records. Only records of Business Transactions this caller submitted are returned, so a page may hold fewer than `pageSize` records. |

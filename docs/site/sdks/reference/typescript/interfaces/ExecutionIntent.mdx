@@ -1,6 +1,5 @@
 ---
 title: "Interface: ExecutionIntent"
-description: "Python SDK reference: Execution Intent."
 ---
 
 Execution Intent (ADR-0012).
@@ -16,98 +15,22 @@ it to them). An intent proves what was about to be released. It does NOT
 prove the action was released, or what its result was. At most one exists per
 businessTransactionId.
 
-## Properties
-
-### intentId
-
-> `readonly` **intentId**: `string`
-
----
-
-### businessTransactionId
-
-> `readonly` **businessTransactionId**: `string`
-
----
-
-### decisionId
-
-> `readonly` **decisionId**: `string`
-
----
-
-### authorizationId
-
-> `readonly` **authorizationId**: `string`
-
----
-
-### policyName
-
-> `readonly` **policyName**: `string`
-
----
-
-### policyVersion
-
-> `readonly` **policyVersion**: `string`
-
----
-
-### policyContentHash?
-
-> `readonly` `optional` **policyContentHash?**: `string`
-
----
-
-### signalsHash?
-
-> `readonly` `optional` **signalsHash?**: `string`
-
----
-
-### businessTransactionHash
-
-> `readonly` **businessTransactionHash**: `string`
-
----
-
-### action
-
-> `readonly` **action**: `string`
-
----
-
-### target
-
-> `readonly` **target**: `string`
-
----
-
-### submittedBy?
-
-> `readonly` `optional` **submittedBy?**: `string`
-
----
-
-### grantedCapability?
-
-> `readonly` `optional` **grantedCapability?**: `string`
-
----
-
-### createdAt
-
-> `readonly` **createdAt**: `Date`
-
----
-
-### intentHash
-
-> `readonly` **intentHash**: `string`
-
----
-
-### signature
-
-> `readonly` **signature**: [`Signature`](/sdks/reference/typescript/interfaces/Signature)
+## Members
+| Name | Kind | Type | Description |
+| --- | --- | --- | --- |
+| `intentId` | Property | `string` |  |
+| `businessTransactionId` | Property | `string` |  |
+| `decisionId` | Property | `string` |  |
+| `authorizationId` | Property | `string` |  |
+| `policyName` | Property | `string` |  |
+| `policyVersion` | Property | `string` |  |
+| `policyContentHash?` | Property | `string \| undefined` |  |
+| `signalsHash?` | Property | `string \| undefined` |  |
+| `businessTransactionHash` | Property | `string` |  |
+| `action` | Property | `string` |  |
+| `target` | Property | `string` |  |
+| `submittedBy?` | Property | `string \| undefined` |  |
+| `grantedCapability?` | Property | `string \| undefined` |  |
+| `createdAt` | Property | `Date` |  |
+| `intentHash` | Property | `string` |  |
+| `signature` | Property | `Signature` |  |

@@ -1,27 +1,11 @@
 ---
-title: "Function: verifyExecutionTrustRecordOffline()"
-description: "Python SDK reference: Verifies an Execution Trust Record with only public keys."
+title: "Function: verifyExecutionTrustRecordOffline"
 ---
-
-> **verifyExecutionTrustRecordOffline**(`trustRecord`, `publicKeys`): [`OfflineVerificationResult`](/sdks/reference/typescript/interfaces/OfflineVerificationResult)
 
 Verifies an Execution Trust Record with only public keys.
 
-## Parameters
+## Signature
 
-### trustRecord
-
-`unknown`
-
-The record exactly as `client.trustRecord()` or
-`GET /trust-records/{id}` returned it, or as parsed from a JSON file.
-
-### publicKeys
-
-[`PublicKeys`](/sdks/reference/typescript/type-aliases/PublicKeys)
-
-Key ID to PEM public key.
-
-## Returns
-
-[`OfflineVerificationResult`](/sdks/reference/typescript/interfaces/OfflineVerificationResult)
+```ts
+(trustRecord: unknown, publicKeys: Readonly<Record<string, string>>): OfflineVerificationResult
+```

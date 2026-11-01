@@ -1,67 +1,18 @@
 ---
 title: "Interface: ApprovalIssuer"
-description: "Python SDK reference: A key the server trusts, or trusted, to sign approvals."
 ---
 
 A key the server trusts, or trusted, to sign approvals.
 
-## Properties
-
-### approverId
-
-> `readonly` **approverId**: `string`
-
----
-
-### keyId
-
-> `readonly` **keyId**: `string`
-
----
-
-### publicKeyPem
-
-> `readonly` **publicKeyPem**: `string`
-
-Ed25519 public key, PEM (SPKI).
-
----
-
-### revoked
-
-> `readonly` **revoked**: `boolean`
-
-true: every approval signed with this key is refused.
-
----
-
-### source
-
-> `readonly` **source**: `"code"` \| `"governed"`
-
-"code": listed in the server code, changed only by a deploy.
-"governed": added through an approver change.
-
----
-
-### addedByChangeId?
-
-> `readonly` `optional` **addedByChangeId?**: `string`
-
----
-
-### addedAt?
-
-> `readonly` `optional` **addedAt?**: `string`
-
----
-
-### revokedByChangeId?
-
-> `readonly` `optional` **revokedByChangeId?**: `string`
-
----
-
-### revokedAt?
-
-> `readonly` `optional` **revokedAt?**: `string`
+## Members
+| Name | Kind | Type | Description |
+| --- | --- | --- | --- |
+| `approverId` | Property | `string` |  |
+| `keyId` | Property | `string` |  |
+| `publicKeyPem` | Property | `string` | Ed25519 public key, PEM (SPKI). |
+| `revoked` | Property | `boolean` | true: every approval signed with this key is refused. |
+| `source` | Property | `"code" \| "governed"` | "code": listed in the server code, changed only by a deploy. "governed": added through an approver change. |
+| `addedByChangeId?` | Property | `string \| undefined` |  |
+| `addedAt?` | Property | `string \| undefined` |  |
+| `revokedByChangeId?` | Property | `string \| undefined` |  |
+| `revokedAt?` | Property | `string \| undefined` |  |

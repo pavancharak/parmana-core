@@ -1,6 +1,5 @@
 ---
 title: "Interface: RefusalRecord"
-description: "Python SDK reference: Refusal Record."
 ---
 
 Refusal Record (RFC-0021).
@@ -10,72 +9,16 @@ decision REJECTED a transaction -- the REJECT-path counterpart to
 ExecutionTrustRecord. At most one RefusalRecord exists per
 businessTransactionId.
 
-## Properties
-
-### refusalRecordId
-
-> `readonly` **refusalRecordId**: `string`
-
----
-
-### businessTransactionId
-
-> `readonly` **businessTransactionId**: `string`
-
----
-
-### decision
-
-> `readonly` **decision**: [`Decision`](/sdks/reference/typescript/interfaces/Decision)
-
----
-
-### evaluatedIntent
-
-> `readonly` **evaluatedIntent**: [`RefusalIntentSnapshot`](/sdks/reference/typescript/interfaces/RefusalIntentSnapshot)
-
----
-
-### bindingViolations?
-
-> `readonly` `optional` **bindingViolations?**: readonly [`RefusalBindingViolation`](/sdks/reference/typescript/interfaces/RefusalBindingViolation)[]
-
-Present only when the rejection came from SignalIntentBinder.
-Absent (not an empty array) for an ordinary PolicyEngine.evaluate
-REJECT that never reached binding-violation logic at all.
-
----
-
-### submittedBy?
-
-> `readonly` `optional` **submittedBy?**: `string`
-
-Authenticated caller who submitted the rejected request. Absent
-when caller-auth is disabled.
-
----
-
-### policyContentHash?
-
-> `readonly` `optional` **policyContentHash?**: `string`
-
-SHA-256 hash of the policy content that decided the refusal. Absent
-on Refusal Records written before 2026-10-06.
-
----
-
-### refusalRecordHash
-
-> `readonly` **refusalRecordHash**: `string`
-
----
-
-### signature
-
-> `readonly` **signature**: [`Signature`](/sdks/reference/typescript/interfaces/Signature)
-
----
-
-### createdAt
-
-> `readonly` **createdAt**: `Date`
+## Members
+| Name | Kind | Type | Description |
+| --- | --- | --- | --- |
+| `refusalRecordId` | Property | `string` |  |
+| `businessTransactionId` | Property | `string` |  |
+| `decision` | Property | `Decision` |  |
+| `evaluatedIntent` | Property | `RefusalIntentSnapshot` |  |
+| `bindingViolations?` | Property | `readonly RefusalBindingViolation[] \| undefined` | Present only when the rejection came from SignalIntentBinder. Absent (not an empty array) for an ordinary PolicyEngine.evaluate REJECT that never reached binding-violation logic at all. |
+| `submittedBy?` | Property | `string \| undefined` | Authenticated caller who submitted the rejected request. Absent when caller-auth is disabled. |
+| `policyContentHash?` | Property | `string \| undefined` | SHA-256 hash of the policy content that decided the refusal. Absent on Refusal Records written before 2026-10-06. |
+| `refusalRecordHash` | Property | `string` |  |
+| `signature` | Property | `Signature` |  |
+| `createdAt` | Property | `Date` |  |

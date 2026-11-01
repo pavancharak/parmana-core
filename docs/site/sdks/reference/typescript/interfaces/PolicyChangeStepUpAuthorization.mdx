@@ -1,34 +1,15 @@
 ---
 title: "Interface: PolicyChangeStepUpAuthorization"
-description: "Python SDK reference: Proof that the approver, holding their step up private key, authorized this one action on this one change."
 ---
 
 Proof that the approver, holding their step up private key, authorized
 this one action on this one change. Valid once, until `expiresAt`.
 Make one with `signPolicyChangeStepUp()`.
 
-## Properties
-
-### payload
-
-> `readonly` **payload**: [`PolicyChangeStepUpAuthorizationPayload`](/sdks/reference/typescript/interfaces/PolicyChangeStepUpAuthorizationPayload)
-
----
-
-### signature
-
-> `readonly` **signature**: `string`
-
-Base64 Ed25519 signature over the canonical JSON of `payload`.
-
----
-
-### keyId
-
-> `readonly` **keyId**: `string`
-
----
-
-### algorithm
-
-> `readonly` **algorithm**: `"ed25519"`
+## Members
+| Name | Kind | Type | Description |
+| --- | --- | --- | --- |
+| `payload` | Property | `PolicyChangeStepUpAuthorizationPayload` |  |
+| `signature` | Property | `string` | Base64 Ed25519 signature over the canonical JSON of `payload`. |
+| `keyId` | Property | `string` |  |
+| `algorithm` | Property | `"ed25519"` |  |

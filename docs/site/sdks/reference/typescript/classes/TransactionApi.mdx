@@ -1,97 +1,23 @@
 ---
 title: "Class: TransactionApi"
-description: "Python SDK reference: Transaction API."
 ---
 
 Transaction API.
 
-## Responsibilities
-
+Responsibilities
+----------------
 - Create (execute) a Business Transaction via POST /transactions
 - Retrieve Business Transactions
 - List Business Transactions
 
 This API does NOT:
-
 - verify trust records
 - replay executions
 - generate receipts
 
-## Constructors
-
-### Constructor
-
-> **new TransactionApi**(`transport`): `TransactionApi`
-
-#### Parameters
-
-##### transport
-
-[`Transport`](/sdks/reference/typescript/interfaces/Transport)
-
-#### Returns
-
-`TransactionApi`
-
-## Methods
-
-### create()
-
-> **create**(`transaction`): `Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)\>
-
-Create (execute) a Business Transaction. Maps to POST
-/transactions: a second, independent entry point into the
-identical application.execute() pipeline as ExecutionApi.execute()
-(POST /execute). The only behavioral difference is the success
-status code, 201 instead of 200; the response body shape is
-otherwise identical.
-
-#### Parameters
-
-##### transaction
-
-[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)
-
-#### Returns
-
-`Promise`\<[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)\>
-
----
-
-### get()
-
-> **get**(`businessTransactionId`): `Promise`\<[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)\>
-
-Retrieve a Business Transaction.
-
-#### Parameters
-
-##### businessTransactionId
-
-`string`
-
-#### Returns
-
-`Promise`\<[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)\>
-
----
-
-### list()
-
-> **list**(`page?`, `pageSize?`): `Promise`\<[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)[]\>
-
-List Business Transactions.
-
-#### Parameters
-
-##### page?
-
-`number` = `1`
-
-##### pageSize?
-
-`number` = `25`
-
-#### Returns
-
-`Promise`\<[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)[]\>
+## Members
+| Name | Kind | Type | Description |
+| --- | --- | --- | --- |
+| `create` | Method | `(transaction: BusinessTransaction) => Promise<ExecutionTrustRecord>` | Create (execute) a Business Transaction. Maps to POST /transactions: a second, independent entry point into the identical application.execute() pipeline as ExecutionApi.execute() (POST /execute). The only behavioral difference is the success status code, 201 instead of 200; the response body shape is otherwise identical. |
+| `get` | Method | `(businessTransactionId: string) => Promise<BusinessTransaction>` | Retrieve a Business Transaction. |
+| `list` | Method | `(page?: number, pageSize?: number) => Promise<BusinessTransaction[]>` | List Business Transactions. |

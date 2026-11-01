@@ -1,8 +1,7 @@
-import { execFileSync } from "node:child_process";
+import ts from "typescript";
 import {
   existsSync,
   mkdirSync,
-  readdirSync,
   readFileSync,
   rmSync,
   writeFileSync,
@@ -10,11 +9,18 @@ import {
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const root = path.resolve(__dirname, "..");
+/**
+ * Generates the TypeScript SDK reference pages under
+ * docs/site/sdks/reference/typescript from the TypeScript source, using the
+ * TypeScript compiler API directly. One page per exported declaration, in a
+ * folder per kind, with the same paths the llms text builder and the API
+ * manifest link to (for example classes/ParmanaClient). Replaces typedoc and
+ * typedoc-plugin-markdown, which pinned an old minimatch.
+ */
 
-const STAGING_DIR = path.join(root, ".typedoc-staging", "typescript");
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const ENTRY = path.join(root, "typescript", "src", "index.ts");
+const TSCONFIG = path.join(root, "typescript", "tsconfig.json");
 const DOCS_DIR = path.join(
   root,
   "docs",
@@ -23,13 +29,9 @@ const DOCS_DIR = path.join(
   "reference",
   "typescript",
 );
-const NAV_BASE = "sdks/reference/typescript";
 const DOCS_JSON_PATH = path.join(root, "docs", "site", "docs.json");
+const NAV_BASE = "sdks/reference/typescript";
 
-/**
- * typedoc-plugin-markdown groups reflections into these directories.
- * Order here is the order they appear in the generated nav group.
- */
 const CATEGORY_LABELS: Record<string, string> = {
   classes: "Classes",
   interfaces: "Interfaces",
@@ -39,139 +41,210 @@ const CATEGORY_LABELS: Record<string, string> = {
   variables: "Variables",
 };
 
-function run(): void {
-  console.log("generate-typescript-sdk-reference: running typedoc...");
+const KIND_LABELS: Record<string, string> = {
+  classes: "Class",
+  interfaces: "Interface",
+  enumerations: "Enumeration",
+  "type-aliases": "Type Alias",
+  functions: "Function",
+  variables: "Variable",
+};
 
-  /**
-   * Invokes typedoc's own JS entry point directly with the current
-   * Node binary rather than shelling out to `npx typedoc`: the latter
-   * needs shell:true to resolve on Windows (a .cmd shim), which
-   * Node's own execFileSync docs warn is an argument-injection risk
-   * once shell:true and an args array are combined.
-   */
-  const typedocBin = path.join(
-    root,
-    "node_modules",
-    "typedoc",
-    "bin",
-    "typedoc",
+type Category = keyof typeof CATEGORY_LABELS;
+
+function categoryOf(decl: ts.Declaration): Category | undefined {
+  if (ts.isClassDeclaration(decl)) return "classes";
+  if (ts.isInterfaceDeclaration(decl)) return "interfaces";
+  if (ts.isEnumDeclaration(decl)) return "enumerations";
+  if (ts.isTypeAliasDeclaration(decl)) return "type-aliases";
+  if (ts.isFunctionDeclaration(decl)) return "functions";
+  if (ts.isVariableDeclaration(decl)) return "variables";
+  return undefined;
+}
+
+/** Escapes text so MDX does not read braces or angle brackets as JSX. */
+function prose(text: string): string {
+  return text
+    .replace(/\{/g, "\\{")
+    .replace(/\}/g, "\\}")
+    .replace(/</g, "&lt;")
+    .trim();
+}
+
+/** A type or signature shown in an inline code span, with table-safe pipes. */
+function code(text: string): string {
+  return "`" + text.replace(/\n/g, " ").replace(/`/g, "'") + "`";
+}
+
+function cell(text: string): string {
+  return text.replace(/\|/g, "\\|").replace(/\n/g, " ").trim();
+}
+
+function isHidden(decl: ts.Declaration): boolean {
+  const flags = ts.getCombinedModifierFlags(decl as ts.Declaration);
+  return (
+    (flags & ts.ModifierFlags.Private) !== 0 ||
+    (flags & ts.ModifierFlags.Protected) !== 0
   );
-  execFileSync(
-    process.execPath,
-    [typedocBin, "--options", path.join(root, "typedoc.typescript.json")],
-    { cwd: root, stdio: "inherit" },
+}
+
+function describe(checker: ts.TypeChecker, symbol: ts.Symbol): string {
+  return prose(
+    ts.displayPartsToString(symbol.getDocumentationComment(checker)),
   );
+}
+
+function memberRows(checker: ts.TypeChecker, type: ts.Type): string[] {
+  const rows: string[] = [];
+  for (const member of checker.getPropertiesOfType(type)) {
+    const decl = member.declarations?.[0];
+    if (decl && isHidden(decl)) continue;
+    const memberType = checker.getTypeOfSymbol(member);
+    const isMethod = (member.flags & ts.SymbolFlags.Method) !== 0;
+    const optional = (member.flags & ts.SymbolFlags.Optional) !== 0;
+    const kind = isMethod ? "Method" : "Property";
+    const name = member.name + (optional ? "?" : "");
+    rows.push(
+      `| ${cell(code(name))} | ${kind} | ${cell(code(checker.typeToString(memberType)))} | ${cell(describe(checker, member))} |`,
+    );
+  }
+  return rows;
+}
+
+function renderPage(
+  checker: ts.TypeChecker,
+  symbol: ts.Symbol,
+  decl: ts.Declaration,
+): string {
+  const parts: string[] = [];
+  const description = describe(checker, symbol);
+  if (description) parts.push(description);
+
+  if (ts.isFunctionDeclaration(decl) || ts.isVariableDeclaration(decl)) {
+    const type = checker.getTypeOfSymbol(symbol);
+    const signatures = type.getCallSignatures();
+    if (signatures.length > 0) {
+      parts.push("## Signature");
+      for (const signature of signatures) {
+        parts.push("```ts\n" + checker.signatureToString(signature) + "\n```");
+      }
+    } else {
+      parts.push("## Type");
+      parts.push("```ts\n" + checker.typeToString(type) + "\n```");
+    }
+  } else if (ts.isTypeAliasDeclaration(decl)) {
+    parts.push("## Type");
+    parts.push(
+      "```ts\n" +
+        checker.typeToString(checker.getTypeAtLocation(decl)) +
+        "\n```",
+    );
+  } else if (ts.isEnumDeclaration(decl)) {
+    const type = checker.getTypeOfSymbol(symbol);
+    const rows = checker
+      .getPropertiesOfType(type)
+      .map(
+        (member) =>
+          `| ${cell(code(member.name))} | ${cell(describe(checker, member))} |`,
+      );
+    if (rows.length > 0) {
+      parts.push(
+        ["## Members", "| Name | Description |", "| --- | --- |", ...rows].join(
+          "\n",
+        ),
+      );
+    }
+  } else if (ts.isClassDeclaration(decl) || ts.isInterfaceDeclaration(decl)) {
+    const type = checker.getDeclaredTypeOfSymbol(symbol);
+    const rows = memberRows(checker, type);
+    if (rows.length > 0) {
+      parts.push(
+        [
+          "## Members",
+          "| Name | Kind | Type | Description |",
+          "| --- | --- | --- | --- |",
+          ...rows,
+        ].join("\n"),
+      );
+    }
+  }
+
+  return parts.filter((part) => part.length > 0).join("\n\n") + "\n";
+}
+
+function run(): void {
+  console.log(
+    "generate-typescript-sdk-reference: reading the TypeScript source...",
+  );
+
+  const parsed = ts.getParsedCommandLineOfConfigFile(
+    TSCONFIG,
+    {},
+    {
+      ...ts.sys,
+      onUnRecoverableConfigFileDiagnostic: (diagnostic) => {
+        throw new Error(
+          ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
+        );
+      },
+    },
+  );
+  const program = ts.createProgram([ENTRY], parsed?.options ?? {});
+  const checker = program.getTypeChecker();
+  const sourceFile = program.getSourceFile(ENTRY);
+  if (!sourceFile) {
+    throw new Error(`generate-typescript-sdk-reference: ${ENTRY} not found`);
+  }
+  const moduleSymbol = checker.getSymbolAtLocation(sourceFile);
+  if (!moduleSymbol) {
+    throw new Error(
+      "generate-typescript-sdk-reference: no module symbol for the entry point",
+    );
+  }
 
   if (existsSync(DOCS_DIR)) {
     rmSync(DOCS_DIR, { recursive: true, force: true });
   }
-  mkdirSync(DOCS_DIR, { recursive: true });
 
   const navByCategory: Record<string, string[]> = {};
+  let written = 0;
 
-  for (const category of Object.keys(CATEGORY_LABELS)) {
-    const sourceDir = path.join(STAGING_DIR, category);
-    if (!existsSync(sourceDir)) continue;
+  for (const exported of checker.getExportsOfModule(moduleSymbol)) {
+    const symbol =
+      exported.flags & ts.SymbolFlags.Alias
+        ? checker.getAliasedSymbol(exported)
+        : exported;
+    const decl = symbol.declarations?.[0];
+    if (!decl) continue;
+    const category = categoryOf(decl);
+    if (!category) continue;
 
+    const name = exported.name;
     const destDir = path.join(DOCS_DIR, category);
     mkdirSync(destDir, { recursive: true });
 
-    const files = readdirSync(sourceDir).filter((f) => f.endsWith(".md"));
-    const navPages: string[] = [];
-
-    for (const file of files) {
-      const name = file.replace(/\.md$/, "");
-      const raw = readFileSync(path.join(sourceDir, file), "utf8");
-      const { title, body } = transform(raw, category);
-
-      const frontmatter = `---\ntitle: ${JSON.stringify(title)}\n---\n\n`;
-      writeFileSync(
-        path.join(destDir, `${name}.mdx`),
-        frontmatter + body,
-        "utf8",
-      );
-      navPages.push(`${NAV_BASE}/${category}/${name}`);
-    }
-
-    navPages.sort();
-    navByCategory[category] = navPages;
+    const title = `${KIND_LABELS[category]}: ${name}`;
+    const body = renderPage(checker, symbol, decl);
+    writeFileSync(
+      path.join(destDir, `${name}.mdx`),
+      `---\ntitle: ${JSON.stringify(title)}\n---\n\n${body}`,
+      "utf8",
+    );
+    (navByCategory[category] ??= []).push(`${NAV_BASE}/${category}/${name}`);
+    written++;
   }
 
+  for (const pages of Object.values(navByCategory)) pages.sort();
   updateNav(navByCategory);
 
   console.log(
-    `generate-typescript-sdk-reference: wrote ${Object.values(navByCategory).flat().length} pages to ${DOCS_DIR}`,
+    `generate-typescript-sdk-reference: wrote ${written} pages to ${DOCS_DIR}`,
   );
-}
-
-/**
- * typedoc-plugin-markdown emits a breadcrumb block
- * ("[**@parmana/sdk**](../README.md)\n\n***\n\n[...] / Name\n\n") before
- * the real "# Category: Name" heading -- Mintlify's own sidebar already
- * gives breadcrumb-equivalent context, and the relative ../README.md
- * link has nothing to resolve against once these files move under
- * docs/site. Strips that block, pulls the heading text out as the page
- * title (Mintlify renders its own <title>, a duplicate H1 in the body
- * is redundant), and rewrites every relative link to a sibling
- * generated page into an absolute Mintlify path. Three link shapes
- * appear in practice (surveyed across the full staging output before
- * writing this): "../interfaces/Configuration.md" (cross-category,
- * optionally with a "#anchor"), a bare "AuthenticationError.md"
- * (same-category, since typedoc-plugin-markdown omits "./" for
- * same-directory links), and "../README.md" (the module index this
- * script never generates a copy of, redirected to the hand-written
- * overview page instead).
- */
-function transform(
-  raw: string,
-  currentCategory: string,
-): { title: string; body: string } {
-  const lines = raw.split("\n");
-  let i = 0;
-
-  while (i < lines.length && !lines[i].startsWith("# ")) {
-    i++;
-  }
-
-  if (i >= lines.length) {
-    throw new Error(
-      "generate-typescript-sdk-reference: no '# ' heading found in generated page",
-    );
-  }
-
-  const title = lines[i].slice(2).trim();
-  let body = lines
-    .slice(i + 1)
-    .join("\n")
-    .replace(/^\n+/, "");
-
-  body = body.replace(/\]\(\.\.\/README\.md\)/g, "](/sdks/typescript)");
-
-  body = body.replace(
-    /\]\(\.\.\/([a-z-]+)\/([^)#]+)\.md(#[^)]+)?\)/g,
-    (_match, category: string, name: string, anchor = "") =>
-      `](/${NAV_BASE}/${category}/${name}${anchor})`,
-  );
-
-  body = body.replace(
-    /\]\(([^./)][^)#]*)\.md(#[^)]+)?\)/g,
-    (_match, name: string, anchor = "") =>
-      `](/${NAV_BASE}/${currentCategory}/${name}${anchor})`,
-  );
-
-  return { title, body };
 }
 
 /**
  * Replaces the pages of the "API reference" group in the "TypeScript SDK" tab
- * with a freshly computed set of sub groups (Classes, Interfaces and so on).
- * Idempotent, so re-running this script after the source changes never leaves
- * stale page entries behind. Every other group and tab in docs.json is left
- * untouched: this only ever rewrites the one group it owns.
- *
- * The navigation used to have one "SDKs" group with a "TypeScript SDK
- * Reference" sub group inside it. It was reorganized into one tab per SDK, and
- * this function follows that structure.
+ * with the freshly computed sub groups. Every other group and tab is untouched.
  */
 function updateNav(navByCategory: Record<string, string[]>): void {
   const config = JSON.parse(readFileSync(DOCS_JSON_PATH, "utf8"));

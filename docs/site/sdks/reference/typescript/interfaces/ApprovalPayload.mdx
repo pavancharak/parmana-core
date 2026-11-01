@@ -1,66 +1,16 @@
 ---
 title: "Interface: ApprovalPayload"
-description: "TypeScript SDK reference: Interface: ApprovalPayload."
 ---
 
-## Properties
-
-### version
-
-> `readonly` **version**: `1`
-
----
-
-### approvalId
-
-> `readonly` **approvalId**: `string`
-
----
-
-### issuer
-
-> `readonly` **issuer**: `object`
-
-#### approverId
-
-> `readonly` **approverId**: `string`
-
-#### keyId
-
-> `readonly` **keyId**: `string`
-
----
-
-### issuedAt
-
-> `readonly` **issuedAt**: `string`
-
----
-
-### expiresAt
-
-> `readonly` **expiresAt**: `string`
-
----
-
-### capability
-
-> `readonly` **capability**: `string`
-
----
-
-### resourceId
-
-> `readonly` **resourceId**: `string`
-
----
-
-### scope
-
-> `readonly` **scope**: [`ApprovalScope`](/sdks/reference/typescript/interfaces/ApprovalScope)
-
----
-
-### nonce
-
-> `readonly` **nonce**: `string`
+## Members
+| Name | Kind | Type | Description |
+| --- | --- | --- | --- |
+| `version` | Property | `1` |  |
+| `approvalId` | Property | `string` |  |
+| `issuer` | Property | `{ readonly approverId: string; readonly keyId: string; }` |  |
+| `issuedAt` | Property | `string` |  |
+| `expiresAt` | Property | `string` |  |
+| `capability` | Property | `string` |  |
+| `resourceId` | Property | `string` |  |
+| `scope` | Property | `ApprovalScope` |  |
+| `nonce` | Property | `string` |  |

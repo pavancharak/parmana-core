@@ -1,36 +1,12 @@
 ---
-title: "Interface: TransportResponse\\<T\\>"
-description: "Python SDK reference: Transport response."
+title: "Interface: TransportResponse"
 ---
 
 Transport response.
 
-## Type Parameters
-
-### T
-
-`T` = `unknown`
-
-## Properties
-
-### status
-
-> `readonly` **status**: `number`
-
-HTTP status code.
-
----
-
-### headers
-
-> `readonly` **headers**: `Readonly`\<`Record`\<`string`, `string`\>\>
-
-Response headers.
-
----
-
-### body
-
-> `readonly` **body**: `T`
-
-Response body.
+## Members
+| Name | Kind | Type | Description |
+| --- | --- | --- | --- |
+| `status` | Property | `number` | HTTP status code. |
+| `headers` | Property | `Readonly<Record<string, string>>` | Response headers. |
+| `body` | Property | `T` | Response body. |

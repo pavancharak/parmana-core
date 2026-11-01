@@ -1,9 +1,6 @@
 ---
 title: "Type Alias: ExecutionIntentState"
-description: "Python SDK reference: Operational state kept next to a signed intent."
 ---
-
-> **ExecutionIntentState** = `"PREPARED"` \| `"RELEASED"` \| `"FINALIZED"` \| `"ERRORED"` \| `"RESOLVED"`
 
 Operational state kept next to a signed intent. It is NOT signed.
 
@@ -13,3 +10,9 @@ Operational state kept next to a signed intent. It is NOT signed.
 - ERRORED: the release stage raised an error. The action may still have run.
 - RESOLVED: a verified human reconciled a PREPARED or ERRORED intent at the
   connector and closed it.
+
+## Type
+
+```ts
+ExecutionIntentState
+```
