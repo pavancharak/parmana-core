@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   parseApiKeys,
   parseCryptoMode,
+  parseHashAlgorithm,
+  parseKeyProvider,
   parseSecretsProvider,
   parseSignatureAlgorithm,
   parseStorageProvider,
@@ -29,13 +31,58 @@ describe("parseSignatureAlgorithm", () => {
       "Invalid SIGNATURE_PROVIDER: rsa",
     );
   });
+
+  it.each(["ecdsa-p256", "dilithium5", "sphincs-plus"])(
+    "refuses the documented but unimplemented %s at startup (#222)",
+    (value) => {
+      expect(() => parseSignatureAlgorithm(value)).toThrow(
+        `SIGNATURE_PROVIDER=${value} is not implemented in this build`,
+      );
+    },
+  );
+});
+
+describe("parseHashAlgorithm", () => {
+  it("accepts sha256, the only implemented hash", () => {
+    expect(parseHashAlgorithm("sha256")).toBe("sha256");
+  });
+
+  it.each(["sha3-512", "blake3"])(
+    "refuses the documented but unimplemented %s at startup (#222)",
+    (value) => {
+      expect(() => parseHashAlgorithm(value)).toThrow(
+        `HASH_PROVIDER=${value} is not implemented in this build`,
+      );
+    },
+  );
+});
+
+describe("parseKeyProvider", () => {
+  it.each(["azure-key-vault", "gcp-kms", "hsm"])(
+    "refuses the documented but unimplemented %s at startup (#222)",
+    (value) => {
+      expect(() => parseKeyProvider(value)).toThrow(
+        `KEY_PROVIDER=${value} is not implemented in this build`,
+      );
+    },
+  );
+
+  it("accepts local and aws-kms", () => {
+    expect(parseKeyProvider("local")).toBe("local");
+    expect(parseKeyProvider("aws-kms")).toBe("aws-kms");
+  });
 });
 
 describe("parseCryptoMode", () => {
   it("selects the mode named by CRYPTO_MODE", () => {
     expect(parseCryptoMode("single")).toBe("single");
     expect(parseCryptoMode("hybrid")).toBe("hybrid");
-    expect(parseCryptoMode("pq")).toBe("pq");
+  });
+
+  it("refuses CRYPTO_MODE=pq at startup, since no production code reads it (#222)", () => {
+    expect(() => parseCryptoMode("pq")).toThrow(
+      "CRYPTO_MODE=pq is not implemented in this build",
+    );
   });
 
   it("defaults to single when CRYPTO_MODE is unset", () => {
