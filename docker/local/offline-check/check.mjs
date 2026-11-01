@@ -66,6 +66,10 @@ const policyContent = JSON.parse(
 const publicKeys = {
   default: readFileSync("/public-keys/default.public.pem", "utf8"),
   gateway: readFileSync("/public-keys/gateway.public.pem", "utf8"),
+  "default-secondary": readFileSync(
+    "/public-keys/default-secondary.public.pem",
+    "utf8",
+  ),
 };
 
 const results = [];
@@ -354,6 +358,10 @@ check("Trust Record stored", record.status === 200, `HTTP ${record.status}`);
 if (record.status === 200) {
   writeFileSync("/out/trust-record.json", JSON.stringify(record.body, null, 2));
   writeFileSync("/out/default.public.pem", publicKeys.default);
+  writeFileSync(
+    "/out/default-secondary.public.pem",
+    publicKeys["default-secondary"],
+  );
   writeFileSync("/out/gateway.public.pem", publicKeys.gateway);
 
   const verification = await verifyExecutionTrustRecordOffline(

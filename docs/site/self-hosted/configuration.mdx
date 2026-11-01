@@ -58,11 +58,12 @@ Any other server variable, for example a connector's, is added as described in [
 
 Runs `docker/local/setup.mjs` as root inside the image, then hands the files to uid 1000, the user the API runs as. On each start:
 
-| If this file is missing                                  | It does                                                                |
-| -------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `keys/default.private.pem` and `keys/default.public.pem` | Makes a new Ed25519 key pair `default`.                                |
-| `keys/gateway.private.pem` and `keys/gateway.public.pem` | Makes a new Ed25519 key pair `gateway`.                                |
-| `api-keys.json`                                          | Makes one API key, writes its hash there and the key to `api-key.txt`. |
+| If this file is missing                                                      | It does                                                                                                                |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `keys/default.private.pem` and `keys/default.public.pem`                     | Makes a new Ed25519 key pair `default`.                                                                                |
+| `keys/default-secondary.private.pem` and `keys/default-secondary.public.pem` | Makes a new ML-DSA-65 (dilithium3) key pair `default-secondary`, the post-quantum half of each Trust Record signature. |
+| `keys/gateway.private.pem` and `keys/gateway.public.pem`                     | Makes a new Ed25519 key pair `gateway`.                                                                                |
+| `api-keys.json`                                                              | Makes one API key, writes its hash there and the key to `api-key.txt`.                                                 |
 
 If only one file of a key pair exists, it stops with an error and changes nothing, so a missing file never silently changes your signing key.
 
@@ -88,15 +89,16 @@ The Parmana server, unchanged from the hosted API. The health check calls `GET /
 
 ## Files in `./parmana-local`
 
-| Path                       | Created by              | Contains                                                                                                         | Mode   |
-| -------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------- | ------ |
-| `keys/default.private.pem` | `setup`                 | The private key that signs authorizations, Trust Records, Refusal Records and Execution Intents.                 | `0600` |
-| `keys/default.public.pem`  | `setup`                 | Its public key. Give it to anyone who verifies your records.                                                     | `0644` |
-| `keys/gateway.private.pem` | `setup`                 | The private key the Execution Gateway signs its attestations with.                                               | `0600` |
-| `keys/gateway.public.pem`  | `setup`                 | Its public key.                                                                                                  | `0644` |
-| `api-keys.json`            | `setup`, `api-keys.mjs` | The API keys the server accepts: caller ID, SHA-256 hash of the key, and permissions. Never the keys themselves. | `0644` |
-| `api-key.txt`              | `setup`                 | The first API key, in plain text. Move it to a secret store, then delete this file.                              | `0600` |
-| `offline-check/`           | `setup`, offline check  | The Trust Record and public keys saved by the [offline check](/self-hosted/offline-verification).                | `0755` |
+| Path                                | Created by              | Contains                                                                                                         | Mode   |
+| ----------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------- | ------ |
+| `keys/default.private.pem`          | `setup`                 | The private key that signs authorizations, Trust Records, Refusal Records and Execution Intents.                 | `0600` |
+| `keys/default.public.pem`           | `setup`                 | Its public key. Give it to anyone who verifies your records.                                                     | `0644` |
+| `keys/default-secondary.public.pem` | `setup`                 | Its public key for the post-quantum signature. Give it to anyone who verifies your records.                      | `0644` |
+| `keys/gateway.private.pem`          | `setup`                 | The private key the Execution Gateway signs its attestations with.                                               | `0600` |
+| `keys/gateway.public.pem`           | `setup`                 | Its public key.                                                                                                  | `0644` |
+| `api-keys.json`                     | `setup`, `api-keys.mjs` | The API keys the server accepts: caller ID, SHA-256 hash of the key, and permissions. Never the keys themselves. | `0644` |
+| `api-key.txt`                       | `setup`                 | The first API key, in plain text. Move it to a secret store, then delete this file.                              | `0600` |
+| `offline-check/`                    | `setup`, offline check  | The Trust Record and public keys saved by the [offline check](/self-hosted/offline-verification).                | `0755` |
 
 On Linux these files belong to uid 1000. Read them through a container, as the pages of this guide show, or as root.
 
