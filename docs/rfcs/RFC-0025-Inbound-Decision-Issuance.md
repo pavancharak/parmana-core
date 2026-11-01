@@ -49,7 +49,14 @@ expiresAt, audience, signature }`, signed with Parmana's key. Expiry is short (1
 - Per-partner keys beyond the existing caller keys (open question below).
 - Any change to the business system's verification (it already verifies Parmana's signature).
 
-# Open questions
+# Decisions (approved 2026-11-02)
+
+1. One caller key per partner, so the key proves the partner.
+2. An approval-required rejection also notifies the approver through the existing notifier.
+3. Parmana's existing Ed25519 signing key signs inbound decisions.
+4. Decisions are stored through the existing repository layer, with a migration applied before deploy.
+
+# Open questions (resolved above)
 
 1. **Partner-to-caller mapping.** Does each partner get its own caller key, or do partners share
    one with `partnerId` in the request? Recommend one caller key per partner, so the caller key
