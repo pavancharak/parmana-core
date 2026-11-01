@@ -12,7 +12,11 @@ export const RecordVerifier = ({ exampleRecord, examplePublicKey }) => {
   // Defined inside the component: Mintlify renders each exported
   // component on its own, so a helper outside it is not available.
   // BEGIN verifyParmanaTrustRecord
-  const verifyParmanaTrustRecord = async (record, publicKeyPem, options = {}) => {
+  const verifyParmanaTrustRecord = async (
+    record,
+    publicKeyPem,
+    options = {},
+  ) => {
     const subtle = globalThis.crypto.subtle;
     const allowLegacyOnly = options.allowLegacyOnly === true;
     const encoder = new TextEncoder();
@@ -156,11 +160,13 @@ export const RecordVerifier = ({ exampleRecord, examplePublicKey }) => {
 
     if (!hasEnvelope && !allowLegacyOnly) {
       errors.push(
-        "The record has no hybrid (post-quantum) envelope, so it is refused. Tick \"Accept a legacy-only record\" only if you accept records made without one.",
+        'The record has no hybrid (post-quantum) envelope, so it is refused. Tick "Accept a legacy-only record" only if you accept records made without one.',
       );
     }
     if (!hasEnvelope && allowLegacyOnly) {
-      notes.push("Accepted as a legacy-only record: it has no hybrid envelope.");
+      notes.push(
+        "Accepted as a legacy-only record: it has no hybrid envelope.",
+      );
     }
     if (hasEnvelope) {
       notes.push(

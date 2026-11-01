@@ -170,7 +170,13 @@ describe("TEST 4: verification against historical policy", () => {
     });
     const response = await request(harness.app).post("/execute").send(tx);
     const keys = { default: publicKeyPem() };
-    const result = await verifyExecutionTrustRecordOffline(response.body, keys);
+    const result = await verifyExecutionTrustRecordOffline(
+      response.body,
+      keys,
+      {
+        allowLegacyOnly: true,
+      },
+    );
     cases.push({
       step: "offline trust record after 1.3.0 added",
       citedVersion: response.body.transaction.policy.version,
@@ -260,9 +266,11 @@ describe("TEST 4: verification against historical policy", () => {
 
   it("offline trust record stays valid and its cited contentHash still matches the stored version", async () => {
     const tr = (globalThis as any).__tr;
-    const result = await verifyExecutionTrustRecordOffline(tr, {
-      default: publicKeyPem(),
-    });
+    const result = await verifyExecutionTrustRecordOffline(
+      tr,
+      { default: publicKeyPem() },
+      { allowLegacyOnly: true },
+    );
     const current = await repo.load("customer-refund", "1.2.0");
     const currentHash = await hasher.hash(current);
     const citedHash = tr.transaction.policy.contentHash;
