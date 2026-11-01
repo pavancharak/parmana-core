@@ -1,6 +1,5 @@
 ---
 title: "Interface: EvidenceAnchor"
-description: "Python SDK reference: Explicit binding linking policy-governance provenance to what a connector actually did -- see the server's EvidenceAnchor domain type f..."
 ---
 
 Explicit binding linking policy-governance provenance to what a
@@ -8,26 +7,11 @@ connector actually did -- see the server's EvidenceAnchor domain
 type for the full rationale. Absent on a Trust Record built before
 this field existed.
 
-## Properties
+## Members
 
-### policyContentHash?
-
-> `readonly` `optional` **policyContentHash?**: `string`
-
----
-
-### governanceAnchorStatus?
-
-> `readonly` `optional` **governanceAnchorStatus?**: [`PolicyGovernanceAnchorStatus`](/sdks/reference/typescript/type-aliases/PolicyGovernanceAnchorStatus)
-
----
-
-### connectorEvidenceHash?
-
-> `readonly` `optional` **connectorEvidenceHash?**: `string`
-
----
-
-### anchorHash
-
-> `readonly` **anchorHash**: `string`
+| Name                      | Kind     | Type                                                                                                                  | Description |
+| ------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------- | ----------- |
+| `policyContentHash?`      | Property | `string \| undefined`                                                                                                 |             |
+| `governanceAnchorStatus?` | Property | [`PolicyGovernanceAnchorStatus`](/sdks/reference/typescript/type-aliases/PolicyGovernanceAnchorStatus)` \| undefined` |             |
+| `connectorEvidenceHash?`  | Property | `string \| undefined`                                                                                                 |             |
+| `anchorHash`              | Property | `string`                                                                                                              |             |

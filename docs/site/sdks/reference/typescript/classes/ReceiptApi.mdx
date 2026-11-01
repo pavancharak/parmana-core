@@ -1,6 +1,5 @@
 ---
 title: "Class: ReceiptApi"
-description: "Python SDK reference: Receipt API."
 ---
 
 Receipt API.
@@ -17,56 +16,9 @@ This API does NOT:
 - verify trust records
 - validate policies
 
-## Constructors
+## Members
 
-### Constructor
-
-> **new ReceiptApi**(`transport`): `ReceiptApi`
-
-#### Parameters
-
-##### transport
-
-[`Transport`](/sdks/reference/typescript/interfaces/Transport)
-
-#### Returns
-
-`ReceiptApi`
-
-## Methods
-
-### generate()
-
-> **generate**(`businessTransactionId`): `Promise`\<[`Receipt`](/sdks/reference/typescript/interfaces/Receipt)\>
-
-Generate an execution receipt.
-
-#### Parameters
-
-##### businessTransactionId
-
-`string`
-
-#### Returns
-
-`Promise`\<[`Receipt`](/sdks/reference/typescript/interfaces/Receipt)\>
-
----
-
-### getLatest()
-
-> **getLatest**(`businessTransactionId`): `Promise`\<[`Receipt`](/sdks/reference/typescript/interfaces/Receipt)\>
-
-Retrieve the most recent receipt without generating a new one. Maps to
-GET /receipt/latest/:businessTransactionId, distinct from generate(),
-which generates a new receipt.
-
-#### Parameters
-
-##### businessTransactionId
-
-`string`
-
-#### Returns
-
-`Promise`\<[`Receipt`](/sdks/reference/typescript/interfaces/Receipt)\>
+| Name        | Kind   | Type                                                                                                       | Description                                                                                                                                                                 |
+| ----------- | ------ | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `generate`  | Method | `(businessTransactionId: string) => Promise<`[`Receipt`](/sdks/reference/typescript/interfaces/Receipt)`>` | Generate an execution receipt.                                                                                                                                              |
+| `getLatest` | Method | `(businessTransactionId: string) => Promise<`[`Receipt`](/sdks/reference/typescript/interfaces/Receipt)`>` | Retrieve the most recent receipt without generating a new one. Maps to GET /receipt/latest/:businessTransactionId, distinct from generate(), which generates a new receipt. |

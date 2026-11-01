@@ -1,61 +1,13 @@
 ---
 title: "Interface: VerifyParmanaReleaseOptions"
-description: "Python SDK reference: Key ID to PEM public key."
 ---
 
-## Properties
+## Members
 
-### publicKeys
-
-> `readonly` **publicKeys**: [`PublicKeys`](/sdks/reference/typescript/type-aliases/PublicKeys)
-
-Key ID to PEM public key. The release names its key in
-signature.keyId, usually `default`.
-
----
-
-### audience
-
-> `readonly` **audience**: `string`
-
-This endpoint's URL exactly as Parmana stored it at registration
-(GET /external-connectors shows it). A release made for another
-endpoint is refused.
-
----
-
-### isAlreadyExecuted
-
-> `readonly` **isAlreadyExecuted**: (`businessTransactionId`) => `boolean` \| `Promise`\<`boolean`\>
-
-Whether this endpoint already executed the businessTransactionId.
-Keep that record durably: Parmana may send the same release again
-after a timeout, and the endpoint must answer with its first result,
-not act twice. Called only for a release that passed every other
-check.
-
-#### Parameters
-
-##### businessTransactionId
-
-`string`
-
-#### Returns
-
-`boolean` \| `Promise`\<`boolean`\>
-
----
-
-### now?
-
-> `readonly` `optional` **now?**: `Date`
-
-Defaults to the current time.
-
----
-
-### clockSkewSeconds?
-
-> `readonly` `optional` **clockSkewSeconds?**: `number`
-
-Defaults to DEFAULT_RELEASE_CLOCK_SKEW_SECONDS.
+| Name                | Kind     | Type                                                             | Description                                                                                                                                                                                                                                                                      |
+| ------------------- | -------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `publicKeys`        | Property | `Readonly<Record<string, string>>`                               | Key ID to PEM public key. The release names its key in signature.keyId, usually `default`.                                                                                                                                                                                       |
+| `audience`          | Property | `string`                                                         | This endpoint's URL exactly as Parmana stored it at registration (GET /external-connectors shows it). A release made for another endpoint is refused.                                                                                                                            |
+| `isAlreadyExecuted` | Property | `(businessTransactionId: string) => boolean \| Promise<boolean>` | Whether this endpoint already executed the businessTransactionId. Keep that record durably: Parmana may send the same release again after a timeout, and the endpoint must answer with its first result, not act twice. Called only for a release that passed every other check. |
+| `now?`              | Property | `Date \| undefined`                                              | Defaults to the current time.                                                                                                                                                                                                                                                    |
+| `clockSkewSeconds?` | Property | `number \| undefined`                                            | Defaults to DEFAULT_RELEASE_CLOCK_SKEW_SECONDS.                                                                                                                                                                                                                                  |

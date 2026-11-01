@@ -1,54 +1,9 @@
 ---
 title: "Class: HttpTransport"
-description: "Canonical SDK transport."
 ---
 
-Canonical SDK transport.
+## Members
 
-## Implements
-
-- [`Transport`](/sdks/reference/typescript/interfaces/Transport)
-
-## Constructors
-
-### Constructor
-
-> **new HttpTransport**(`configuration`): `HttpTransport`
-
-#### Parameters
-
-##### configuration
-
-[`Configuration`](/sdks/reference/typescript/interfaces/Configuration)
-
-#### Returns
-
-`HttpTransport`
-
-## Methods
-
-### send()
-
-> **send**\<`T`\>(`request`): `Promise`\<[`TransportResponse`](/sdks/reference/typescript/interfaces/TransportResponse)\<`T`\>\>
-
-Sends a request to the Parmana Runtime.
-
-#### Type Parameters
-
-##### T
-
-`T`
-
-#### Parameters
-
-##### request
-
-[`TransportRequest`](/sdks/reference/typescript/interfaces/TransportRequest)
-
-#### Returns
-
-`Promise`\<[`TransportResponse`](/sdks/reference/typescript/interfaces/TransportResponse)\<`T`\>\>
-
-#### Implementation of
-
-[`Transport`](/sdks/reference/typescript/interfaces/Transport).[`send`](/sdks/reference/typescript/interfaces/Transport#send)
+| Name   | Kind   | Type                                                                                                                                                                                           | Description                             |
+| ------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| `send` | Method | `<T>(request: `[`TransportRequest`](/sdks/reference/typescript/interfaces/TransportRequest)`) => Promise<`[`TransportResponse`](/sdks/reference/typescript/interfaces/TransportResponse)`<T>>` | Sends a request to the Parmana Runtime. |

@@ -1,45 +1,13 @@
 ---
 title: "Interface: SignPolicyChangeStepUpInput"
-description: "Python SDK reference: The change to approve or reject."
 ---
 
-## Properties
+## Members
 
-### pendingPolicyChangeId
-
-> `readonly` **pendingPolicyChangeId**: `string`
-
-The change to approve or reject.
-
----
-
-### action
-
-> `readonly` **action**: `"approve"` \| `"reject"`
-
----
-
-### privateKeyPem
-
-> `readonly` **privateKeyPem**: `string`
-
-The approver's Ed25519 step up private key, PEM (PKCS #8), as made by
-`openssl genpkey -algorithm ed25519`.
-
----
-
-### keyId
-
-> `readonly` **keyId**: `string`
-
-A label for the key. It is recorded with the authorization; the server
-verifies with the public key registered on the approver's API key, not
-by this label.
-
----
-
-### ttlSeconds?
-
-> `readonly` `optional` **ttlSeconds?**: `number`
-
-How long the authorization stays valid. Default 120.
+| Name                    | Kind     | Type                    | Description                                                                                                                                                  |
+| ----------------------- | -------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pendingPolicyChangeId` | Property | `string`                | The change to approve or reject.                                                                                                                             |
+| `action`                | Property | `"approve" \| "reject"` |                                                                                                                                                              |
+| `privateKeyPem`         | Property | `string`                | The approver's Ed25519 step up private key, PEM (PKCS #8), as made by `openssl genpkey -algorithm ed25519`.                                                  |
+| `keyId`                 | Property | `string`                | A label for the key. It is recorded with the authorization; the server verifies with the public key registered on the approver's API key, not by this label. |
+| `ttlSeconds?`           | Property | `number \| undefined`   | How long the authorization stays valid. Default 120.                                                                                                         |

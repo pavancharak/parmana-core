@@ -1,20 +1,12 @@
 ---
 title: "Interface: ResolveExecutionIntentInput"
-description: "Python SDK reference: Request body of POST /execution-intents/{businessTransactionId}/resolve."
 ---
 
-Request body of POST /execution-intents/{businessTransactionId}/resolve.
+Request body of POST /execution-intents/\{businessTransactionId\}/resolve.
 
-## Properties
+## Members
 
-### resolution
-
-> `readonly` **resolution**: [`ExecutionIntentResolution`](/sdks/reference/typescript/type-aliases/ExecutionIntentResolution)
-
----
-
-### note
-
-> `readonly` **note**: `string`
-
-Required, at most 2000 characters. What you checked and found.
+| Name         | Kind     | Type                                                                                             | Description                                                    |
+| ------------ | -------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| `resolution` | Property | [`ExecutionIntentResolution`](/sdks/reference/typescript/type-aliases/ExecutionIntentResolution) |                                                                |
+| `note`       | Property | `string`                                                                                         | Required, at most 2000 characters. What you checked and found. |

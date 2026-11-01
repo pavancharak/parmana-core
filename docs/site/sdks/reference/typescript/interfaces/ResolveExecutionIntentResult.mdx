@@ -1,42 +1,14 @@
 ---
 title: "Interface: ResolveExecutionIntentResult"
-description: "Python SDK reference: Response of POST /execution-intents/{businessTransactionId}/resolve."
 ---
 
-Response of POST /execution-intents/{businessTransactionId}/resolve.
+Response of POST /execution-intents/\{businessTransactionId\}/resolve.
 
-## Extends
+## Members
 
-- [`ExecutionIntentView`](/sdks/reference/typescript/interfaces/ExecutionIntentView)
-
-## Properties
-
-### intent
-
-> `readonly` **intent**: [`ExecutionIntent`](/sdks/reference/typescript/interfaces/ExecutionIntent)
-
-#### Inherited from
-
-[`ExecutionIntentView`](/sdks/reference/typescript/interfaces/ExecutionIntentView).[`intent`](/sdks/reference/typescript/interfaces/ExecutionIntentView#intent)
-
----
-
-### status
-
-> `readonly` **status**: [`ExecutionIntentStatus`](/sdks/reference/typescript/interfaces/ExecutionIntentStatus)
-
-#### Inherited from
-
-[`ExecutionIntentView`](/sdks/reference/typescript/interfaces/ExecutionIntentView).[`status`](/sdks/reference/typescript/interfaces/ExecutionIntentView#status)
-
----
-
-### outcome
-
-> `readonly` **outcome**: [`ResolveExecutionIntentOutcome`](/sdks/reference/typescript/type-aliases/ResolveExecutionIntentOutcome)
-
----
-
-### businessTransactionId
-
-> `readonly` **businessTransactionId**: `string`
+| Name                    | Kind     | Type                                                                                                     | Description |
+| ----------------------- | -------- | -------------------------------------------------------------------------------------------------------- | ----------- |
+| `outcome`               | Property | [`ResolveExecutionIntentOutcome`](/sdks/reference/typescript/type-aliases/ResolveExecutionIntentOutcome) |             |
+| `businessTransactionId` | Property | `string`                                                                                                 |             |
+| `intent`                | Property | [`ExecutionIntent`](/sdks/reference/typescript/interfaces/ExecutionIntent)                               |             |
+| `status`                | Property | [`ExecutionIntentStatus`](/sdks/reference/typescript/interfaces/ExecutionIntentStatus)                   |             |

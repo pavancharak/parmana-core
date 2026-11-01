@@ -1,39 +1,15 @@
 ---
 title: "Interface: CallerIdentity"
-description: "Python SDK reference: Who the API key belongs to and what it may do."
 ---
 
 Who the API key belongs to and what it may do. The response of
 GET /callers/me.
 
-## Properties
+## Members
 
-### callerId
-
-> `readonly` **callerId**: `string`
-
----
-
-### allowedPrincipalIds
-
-> `readonly` **allowedPrincipalIds**: readonly `string`[]
-
-Principal IDs this key may name in a request's
-`authority.principalId`. Only its own caller ID unless the key lists
-others.
-
----
-
-### allowedCapabilities
-
-> `readonly` **allowedCapabilities**: readonly `string`[]
-
-Capabilities this key may request. Empty means none.
-
----
-
-### unrestrictedCapabilities
-
-> `readonly` **unrestrictedCapabilities**: `boolean`
-
-True when `allowedCapabilities` contains `*`.
+| Name                       | Kind     | Type                | Description                                                                                                                 |
+| -------------------------- | -------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `callerId`                 | Property | `string`            |                                                                                                                             |
+| `allowedPrincipalIds`      | Property | `readonly string[]` | Principal IDs this key may name in a request's `authority.principalId`. Only its own caller ID unless the key lists others. |
+| `allowedCapabilities`      | Property | `readonly string[]` | Capabilities this key may request. Empty means none.                                                                        |
+| `unrestrictedCapabilities` | Property | `boolean`           | True when `allowedCapabilities` contains `*`.                                                                               |

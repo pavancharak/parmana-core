@@ -1,42 +1,11 @@
 ---
 title: "Type Alias: ProposeApproverChangeInput"
-description: "Python SDK reference: What proposeApproverChange() sends."
 ---
-
-> **ProposeApproverChangeInput** = \{ `action`: `"add"`; `approverId`: `string`; `keyId`: `string`; `publicKeyPem`: `string`; `reason`: `string`; \} \| \{ `action`: `"revoke"`; `approverId`: `string`; `keyId`: `string`; `reason`: `string`; \}
 
 What proposeApproverChange() sends.
 
-## Union Members
+## Type
 
-### Type Literal
-
-\{ `action`: `"add"`; `approverId`: `string`; `keyId`: `string`; `publicKeyPem`: `string`; `reason`: `string`; \}
-
-#### action
-
-> `readonly` **action**: `"add"`
-
-#### approverId
-
-> `readonly` **approverId**: `string`
-
-#### keyId
-
-> `readonly` **keyId**: `string`
-
-#### publicKeyPem
-
-> `readonly` **publicKeyPem**: `string`
-
-The .public.pem file scripts/generate-approver-key.ts writes.
-
-#### reason
-
-> `readonly` **reason**: `string`
-
----
-
-### Type Literal
-
-\{ `action`: `"revoke"`; `approverId`: `string`; `keyId`: `string`; `reason`: `string`; \}
+```ts
+ProposeApproverChangeInput;
+```

@@ -1,20 +1,13 @@
 ---
-title: "Function: signApproval()"
-description: "Python SDK reference: Signs an approval for one action on one resource, optionally up to an amount, valid for ttlSeconds (default 900, at most 86400) and usa..."
+title: "Function: signApproval"
 ---
-
-> **signApproval**(`input`): [`SignedApproval`](/sdks/reference/typescript/interfaces/SignedApproval)
 
 Signs an approval for one action on one resource, optionally up to an
 amount, valid for ttlSeconds (default 900, at most 86400) and usable once.
 Run by the approver, with their own private key.
 
-## Parameters
+## Signature
 
-### input
-
-[`SignApprovalInput`](/sdks/reference/typescript/interfaces/SignApprovalInput)
-
-## Returns
-
-[`SignedApproval`](/sdks/reference/typescript/interfaces/SignedApproval)
+```ts
+(input: SignApprovalInput): SignedApproval
+```

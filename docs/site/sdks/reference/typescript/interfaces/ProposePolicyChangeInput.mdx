@@ -1,23 +1,12 @@
 ---
 title: "Interface: ProposePolicyChangeInput"
-description: "Python SDK reference: The body of POST /policies/{name}/{version}/pending-changes."
 ---
 
-The body of POST /policies/{name}/{version}/pending-changes.
+The body of POST /policies/\{name\}/\{version\}/pending-changes.
 
-## Properties
+## Members
 
-### proposedContent
-
-> `readonly` **proposedContent**: `unknown`
-
-The whole policy.json content. Its `policyId` must equal the policy
-name in the URL.
-
----
-
-### reason
-
-> `readonly` **reason**: `string`
-
-Why the change should take effect. Required.
+| Name              | Kind     | Type      | Description                                                                          |
+| ----------------- | -------- | --------- | ------------------------------------------------------------------------------------ |
+| `proposedContent` | Property | `unknown` | The whole policy.json content. Its `policyId` must equal the policy name in the URL. |
+| `reason`          | Property | `string`  | Why the change should take effect. Required.                                         |

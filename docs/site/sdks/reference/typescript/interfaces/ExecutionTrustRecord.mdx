@@ -1,76 +1,20 @@
 ---
 title: "Interface: ExecutionTrustRecord"
-description: "TypeScript SDK reference: Interface: ExecutionTrustRecord."
 ---
 
-## Properties
+## Members
 
-### trustRecordId
-
-> `readonly` **trustRecordId**: `string`
-
----
-
-### businessTransactionId
-
-> `readonly` **businessTransactionId**: `string`
-
----
-
-### transaction
-
-> `readonly` **transaction**: [`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)
-
----
-
-### overrides
-
-> `readonly` **overrides**: [`Override`](/sdks/reference/typescript/interfaces/Override)[]
-
----
-
-### executions
-
-> `readonly` **executions**: [`Execution`](/sdks/reference/typescript/interfaces/Execution)[]
-
----
-
-### verifications
-
-> `readonly` **verifications**: [`Verification`](/sdks/reference/typescript/interfaces/Verification)[]
-
----
-
-### receipts
-
-> `readonly` **receipts**: [`Receipt`](/sdks/reference/typescript/interfaces/Receipt)[]
-
----
-
-### trustRecordHash
-
-> `readonly` **trustRecordHash**: `string`
-
----
-
-### signature
-
-> `readonly` **signature**: [`Signature`](/sdks/reference/typescript/interfaces/Signature)
-
----
-
-### createdAt
-
-> `readonly` **createdAt**: `Date`
-
----
-
-### updatedAt
-
-> `readonly` **updatedAt**: `Date`
-
----
-
-### evidenceAnchor?
-
-> `readonly` `optional` **evidenceAnchor?**: [`EvidenceAnchor`](/sdks/reference/typescript/interfaces/EvidenceAnchor)
+| Name                    | Kind     | Type                                                                                    | Description |
+| ----------------------- | -------- | --------------------------------------------------------------------------------------- | ----------- |
+| `trustRecordId`         | Property | `string`                                                                                |             |
+| `businessTransactionId` | Property | `string`                                                                                |             |
+| `transaction`           | Property | [`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)      |             |
+| `overrides`             | Property | [`Override`](/sdks/reference/typescript/interfaces/Override)`[]`                        |             |
+| `executions`            | Property | [`Execution`](/sdks/reference/typescript/interfaces/Execution)`[]`                      |             |
+| `verifications`         | Property | [`Verification`](/sdks/reference/typescript/interfaces/Verification)`[]`                |             |
+| `receipts`              | Property | [`Receipt`](/sdks/reference/typescript/interfaces/Receipt)`[]`                          |             |
+| `trustRecordHash`       | Property | `string`                                                                                |             |
+| `signature`             | Property | [`Signature`](/sdks/reference/typescript/interfaces/Signature)                          |             |
+| `createdAt`             | Property | `Date`                                                                                  |             |
+| `updatedAt`             | Property | `Date`                                                                                  |             |
+| `evidenceAnchor?`       | Property | [`EvidenceAnchor`](/sdks/reference/typescript/interfaces/EvidenceAnchor)` \| undefined` |             |

@@ -1,93 +1,24 @@
 ---
 title: "Interface: AuthorityGrantChange"
-description: "Python SDK reference: A proposal to grant or revoke authority, and its resolution."
 ---
 
 A proposal to grant or revoke authority, and its resolution.
 
-## Properties
+## Members
 
-### changeId
-
-> `readonly` **changeId**: `string`
-
-Sign the step up authorization for approve or reject with this id as
-`pendingPolicyChangeId`.
-
----
-
-### action
-
-> `readonly` **action**: `"revoke"` \| `"grant"`
-
----
-
-### callerId
-
-> `readonly` **callerId**: `string`
-
----
-
-### capability
-
-> `readonly` **capability**: `string`
-
----
-
-### limits?
-
-> `readonly` `optional` **limits?**: `Readonly`\<`Record`\<`string`, [`AuthorityGrantLimit`](/sdks/reference/typescript/interfaces/AuthorityGrantLimit)\>\>
-
----
-
-### validFrom?
-
-> `readonly` `optional` **validFrom?**: `string`
-
----
-
-### validUntil?
-
-> `readonly` `optional` **validUntil?**: `string`
-
----
-
-### reason
-
-> `readonly` **reason**: `string`
-
----
-
-### proposedBy
-
-> `readonly` **proposedBy**: `string`
-
----
-
-### proposedAt
-
-> `readonly` **proposedAt**: `string`
-
----
-
-### status
-
-> `readonly` **status**: [`PendingPolicyChangeStatus`](/sdks/reference/typescript/type-aliases/PendingPolicyChangeStatus)
-
----
-
-### resolvedBy?
-
-> `readonly` `optional` **resolvedBy?**: `string`
-
----
-
-### resolvedAt?
-
-> `readonly` `optional` **resolvedAt?**: `string`
-
----
-
-### rejectionReason?
-
-> `readonly` `optional` **rejectionReason?**: `string`
+| Name               | Kind     | Type                                                                                                                          | Description                                                                                   |
+| ------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `changeId`         | Property | `string`                                                                                                                      | Sign the step up authorization for approve or reject with this id as `pendingPolicyChangeId`. |
+| `action`           | Property | `"revoke" \| "grant"`                                                                                                         |                                                                                               |
+| `callerId`         | Property | `string`                                                                                                                      |                                                                                               |
+| `capability`       | Property | `string`                                                                                                                      |                                                                                               |
+| `limits?`          | Property | `Readonly<Record<string, `[`AuthorityGrantLimit`](/sdks/reference/typescript/interfaces/AuthorityGrantLimit)`>> \| undefined` |                                                                                               |
+| `validFrom?`       | Property | `string \| undefined`                                                                                                         |                                                                                               |
+| `validUntil?`      | Property | `string \| undefined`                                                                                                         |                                                                                               |
+| `reason`           | Property | `string`                                                                                                                      |                                                                                               |
+| `proposedBy`       | Property | `string`                                                                                                                      |                                                                                               |
+| `proposedAt`       | Property | `string`                                                                                                                      |                                                                                               |
+| `status`           | Property | [`PendingPolicyChangeStatus`](/sdks/reference/typescript/type-aliases/PendingPolicyChangeStatus)                              |                                                                                               |
+| `resolvedBy?`      | Property | `string \| undefined`                                                                                                         |                                                                                               |
+| `resolvedAt?`      | Property | `string \| undefined`                                                                                                         |                                                                                               |
+| `rejectionReason?` | Property | `string \| undefined`                                                                                                         |                                                                                               |

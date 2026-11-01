@@ -1,81 +1,22 @@
 ---
 title: "Interface: ApprovalIssuerChange"
-description: "Python SDK reference: A proposal to add or revoke an approver key, and its resolution."
 ---
 
 A proposal to add or revoke an approver key, and its resolution.
 
-## Properties
+## Members
 
-### changeId
-
-> `readonly` **changeId**: `string`
-
-Sign the step up authorization for approve or reject with this id as
-`pendingPolicyChangeId`.
-
----
-
-### action
-
-> `readonly` **action**: `"add"` \| `"revoke"`
-
----
-
-### approverId
-
-> `readonly` **approverId**: `string`
-
----
-
-### keyId
-
-> `readonly` **keyId**: `string`
-
----
-
-### publicKeyPem?
-
-> `readonly` `optional` **publicKeyPem?**: `string`
-
----
-
-### reason
-
-> `readonly` **reason**: `string`
-
----
-
-### proposedBy
-
-> `readonly` **proposedBy**: `string`
-
----
-
-### proposedAt
-
-> `readonly` **proposedAt**: `string`
-
----
-
-### status
-
-> `readonly` **status**: [`PendingPolicyChangeStatus`](/sdks/reference/typescript/type-aliases/PendingPolicyChangeStatus)
-
----
-
-### resolvedBy?
-
-> `readonly` `optional` **resolvedBy?**: `string`
-
----
-
-### resolvedAt?
-
-> `readonly` `optional` **resolvedAt?**: `string`
-
----
-
-### rejectionReason?
-
-> `readonly` `optional` **rejectionReason?**: `string`
+| Name               | Kind     | Type                                                                                             | Description                                                                                   |
+| ------------------ | -------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| `changeId`         | Property | `string`                                                                                         | Sign the step up authorization for approve or reject with this id as `pendingPolicyChangeId`. |
+| `action`           | Property | `"add" \| "revoke"`                                                                              |                                                                                               |
+| `approverId`       | Property | `string`                                                                                         |                                                                                               |
+| `keyId`            | Property | `string`                                                                                         |                                                                                               |
+| `publicKeyPem?`    | Property | `string \| undefined`                                                                            |                                                                                               |
+| `reason`           | Property | `string`                                                                                         |                                                                                               |
+| `proposedBy`       | Property | `string`                                                                                         |                                                                                               |
+| `proposedAt`       | Property | `string`                                                                                         |                                                                                               |
+| `status`           | Property | [`PendingPolicyChangeStatus`](/sdks/reference/typescript/type-aliases/PendingPolicyChangeStatus) |                                                                                               |
+| `resolvedBy?`      | Property | `string \| undefined`                                                                            |                                                                                               |
+| `resolvedAt?`      | Property | `string \| undefined`                                                                            |                                                                                               |
+| `rejectionReason?` | Property | `string \| undefined`                                                                            |                                                                                               |

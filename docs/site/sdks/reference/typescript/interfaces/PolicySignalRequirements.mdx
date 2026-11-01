@@ -1,54 +1,16 @@
 ---
 title: "Interface: PolicySignalRequirements"
-description: "Python SDK reference: What a request under a policy must carry."
 ---
 
 What a request under a policy must carry. Rule conditions are not
 included.
 
-## Properties
+## Members
 
-### facts
-
-> `readonly` **facts**: readonly `string`[]
-
-Every fact the policy's rules read, sorted. Send each one in the
-request's `signals`.
-
----
-
-### schema
-
-> `readonly` **schema**: `Readonly`\<`Record`\<`string`, `string`\>\>
-
-The declared type of each signal: `boolean`, `number` or `string`.
-
----
-
-### bound
-
-> `readonly` **bound**: `Readonly`\<`Record`\<`string`, `string`\>\>
-
-Signals that must equal a value of the Intent, as signal name to path,
-for example `refundAmount` to `parameters.amount`.
-
----
-
-### approval
-
-> `readonly` **approval**: `Readonly`\<`Record`\<`string`, \{ `resourceId`: `string`; `value?`: `string`; \}\>\>
-
-Signals that count as true only with a signed approval in
-`signals.approvalArtifact`, and where the resource (and the amount, if
-any) the approval must name are in the request.
-
----
-
-### sourced?
-
-> `readonly` `optional` **sourced?**: `Readonly`\<`Record`\<`string`, \{ `source`: `string`; `claim`: `string`; `subject`: `string`; `maxAgeSeconds?`: `number`; \}\>\>
-
-Facts the server asks a business system for itself, as signal name to
-source, claim and subject path. Present only when the policy has any.
-You need not send them; a value you send that differs from the
-source's is refused.
+| Name       | Kind     | Type                                                                                                                                                     | Description                                                                                                                                                                                                                     |
+| ---------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `facts`    | Property | `readonly string[]`                                                                                                                                      | Every fact the policy's rules read, sorted. Send each one in the request's `signals`.                                                                                                                                           |
+| `schema`   | Property | `Readonly<Record<string, string>>`                                                                                                                       | The declared type of each signal: `boolean`, `number` or `string`.                                                                                                                                                              |
+| `bound`    | Property | `Readonly<Record<string, string>>`                                                                                                                       | Signals that must equal a value of the Intent, as signal name to path, for example `refundAmount` to `parameters.amount`.                                                                                                       |
+| `approval` | Property | `Readonly<Record<string, { readonly resourceId: string; readonly value?: string; }>>`                                                                    | Signals that count as true only with a signed approval in `signals.approvalArtifact`, and where the resource (and the amount, if any) the approval must name are in the request.                                                |
+| `sourced?` | Property | `Readonly<Record<string, { readonly source: string; readonly claim: string; readonly subject: string; readonly maxAgeSeconds?: number; }>> \| undefined` | Facts the server asks a business system for itself, as signal name to source, claim and subject path. Present only when the policy has any. You need not send them; a value you send that differs from the source's is refused. |

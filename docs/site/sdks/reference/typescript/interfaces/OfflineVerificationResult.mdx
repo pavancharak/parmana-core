@@ -1,44 +1,15 @@
 ---
 title: "Interface: OfflineVerificationResult"
-description: "Python SDK reference: The result of an offline verification."
 ---
 
 The result of an offline verification.
 
-## Properties
+## Members
 
-### valid
-
-> `readonly` **valid**: `boolean`
-
-True only when the hash matches and the signature verifies.
-
----
-
-### hashValid
-
-> `readonly` **hashValid**: `boolean`
-
-The record's own hash matches a fresh SHA-256 of its canonical form.
-
----
-
-### legacySignatureValid
-
-> `readonly` **legacySignatureValid**: `boolean`
-
-The Ed25519 signature verifies with the supplied public key.
-
----
-
-### algorithmsChecked
-
-> `readonly` **algorithmsChecked**: readonly `string`[]
-
----
-
-### errors
-
-> `readonly` **errors**: readonly `string`[]
-
-Why verification failed, in plain words. Empty when valid.
+| Name                   | Kind     | Type                | Description                                                          |
+| ---------------------- | -------- | ------------------- | -------------------------------------------------------------------- |
+| `valid`                | Property | `boolean`           | True only when the hash matches and the signature verifies.          |
+| `hashValid`            | Property | `boolean`           | The record's own hash matches a fresh SHA-256 of its canonical form. |
+| `legacySignatureValid` | Property | `boolean`           | The Ed25519 signature verifies with the supplied public key.         |
+| `algorithmsChecked`    | Property | `readonly string[]` |                                                                      |
+| `errors`               | Property | `readonly string[]` | Why verification failed, in plain words. Empty when valid.           |

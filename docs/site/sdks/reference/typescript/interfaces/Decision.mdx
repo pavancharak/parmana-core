@@ -1,70 +1,18 @@
 ---
 title: "Interface: Decision"
-description: 'Python SDK reference: Identifier of the Policy rule that matched, or "none".'
 ---
 
-## Properties
+## Members
 
-### decisionId
-
-> `readonly` **decisionId**: `string`
-
----
-
-### intentId
-
-> `readonly` **intentId**: `string`
-
----
-
-### policy
-
-> `readonly` **policy**: [`PolicyReference`](/sdks/reference/typescript/interfaces/PolicyReference)
-
----
-
-### signals
-
-> `readonly` **signals**: `Record`\<`string`, `unknown`\>
-
----
-
-### outcome
-
-> `readonly` **outcome**: [`DecisionOutcome`](/sdks/reference/typescript/type-aliases/DecisionOutcome)
-
----
-
-### reason?
-
-> `readonly` `optional` **reason?**: `string`
-
----
-
-### matchedRuleId?
-
-> `readonly` `optional` **matchedRuleId?**: `string`
-
-Identifier of the Policy rule that matched, or "none". Absent on a Decision built before this field existed.
-
----
-
-### evaluatedRules?
-
-> `readonly` `optional` **evaluatedRules?**: `number`
-
-Number of rules evaluated before reaching a match (or exhausting the rule list).
-
----
-
-### matchedPath?
-
-> `readonly` `optional` **matchedPath?**: readonly `string`[]
-
-Ordered rule-id trace evaluation walked to reach matchedRuleId.
-
----
-
-### evaluatedAt
-
-> `readonly` **evaluatedAt**: `Date`
+| Name              | Kind     | Type                                                                         | Description                                                                                                  |
+| ----------------- | -------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `decisionId`      | Property | `string`                                                                     |                                                                                                              |
+| `intentId`        | Property | `string`                                                                     |                                                                                                              |
+| `policy`          | Property | [`PolicyReference`](/sdks/reference/typescript/interfaces/PolicyReference)   |                                                                                                              |
+| `signals`         | Property | `Record<string, unknown>`                                                    |                                                                                                              |
+| `outcome`         | Property | [`DecisionOutcome`](/sdks/reference/typescript/type-aliases/DecisionOutcome) |                                                                                                              |
+| `reason?`         | Property | `string \| undefined`                                                        |                                                                                                              |
+| `matchedRuleId?`  | Property | `string \| undefined`                                                        | Identifier of the Policy rule that matched, or "none". Absent on a Decision built before this field existed. |
+| `evaluatedRules?` | Property | `number \| undefined`                                                        | Number of rules evaluated before reaching a match (or exhausting the rule list).                             |
+| `matchedPath?`    | Property | `readonly string[] \| undefined`                                             | Ordered rule-id trace evaluation walked to reach matchedRuleId.                                              |
+| `evaluatedAt`     | Property | `Date`                                                                       |                                                                                                              |
