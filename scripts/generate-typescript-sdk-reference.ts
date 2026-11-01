@@ -14,8 +14,8 @@ import { fileURLToPath } from "node:url";
  * docs/site/sdks/reference/typescript from the TypeScript source, using the
  * TypeScript compiler API directly. One page per exported declaration, in a
  * folder per kind, with the same paths the llms text builder and the API
- * manifest link to (for example classes/ParmanaClient). Replaces typedoc and
- * typedoc-plugin-markdown, which pinned an old minimatch.
+ * manifest link to (for example classes/ParmanaClient). A type that names
+ * another exported type links to that type's page.
  */
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -51,6 +51,7 @@ const KIND_LABELS: Record<string, string> = {
 };
 
 type Category = keyof typeof CATEGORY_LABELS;
+type KnownTypes = Map<string, Category>;
 
 function categoryOf(decl: ts.Declaration): Category | undefined {
   if (ts.isClassDeclaration(decl)) return "classes";
@@ -71,17 +72,40 @@ function prose(text: string): string {
     .trim();
 }
 
-/** A type or signature shown in an inline code span, with table-safe pipes. */
+/** Inline code, with backticks in the text replaced so the span stays closed. */
 function code(text: string): string {
   return "`" + text.replace(/\n/g, " ").replace(/`/g, "'") + "`";
 }
 
+/** A table cell: pipes escaped and no line breaks. */
 function cell(text: string): string {
   return text.replace(/\|/g, "\\|").replace(/\n/g, " ").trim();
 }
 
+/**
+ * A type as inline markup. Each identifier that names an exported type is a
+ * link to its page; the rest stays in code spans. Splitting on identifiers
+ * means the link text is always the exact type name.
+ */
+function typeMarkup(text: string, known: KnownTypes): string {
+  const flat = text.replace(/\n/g, " ");
+  let out = "";
+  let last = 0;
+  for (const match of flat.matchAll(/[A-Za-z_][A-Za-z0-9_]*/g)) {
+    const name = match[0];
+    const index = match.index ?? 0;
+    const category = known.get(name);
+    if (!category) continue;
+    if (index > last) out += code(flat.slice(last, index));
+    out += `[${code(name)}](/${NAV_BASE}/${category}/${name})`;
+    last = index + name.length;
+  }
+  if (last < flat.length) out += code(flat.slice(last));
+  return out.length > 0 ? out : code(flat);
+}
+
 function isHidden(decl: ts.Declaration): boolean {
-  const flags = ts.getCombinedModifierFlags(decl as ts.Declaration);
+  const flags = ts.getCombinedModifierFlags(decl);
   return (
     (flags & ts.ModifierFlags.Private) !== 0 ||
     (flags & ts.ModifierFlags.Protected) !== 0
@@ -94,7 +118,11 @@ function describe(checker: ts.TypeChecker, symbol: ts.Symbol): string {
   );
 }
 
-function memberRows(checker: ts.TypeChecker, type: ts.Type): string[] {
+function memberRows(
+  checker: ts.TypeChecker,
+  type: ts.Type,
+  known: KnownTypes,
+): string[] {
   const rows: string[] = [];
   for (const member of checker.getPropertiesOfType(type)) {
     const decl = member.declarations?.[0];
@@ -105,7 +133,7 @@ function memberRows(checker: ts.TypeChecker, type: ts.Type): string[] {
     const kind = isMethod ? "Method" : "Property";
     const name = member.name + (optional ? "?" : "");
     rows.push(
-      `| ${cell(code(name))} | ${kind} | ${cell(code(checker.typeToString(memberType)))} | ${cell(describe(checker, member))} |`,
+      `| ${cell(code(name))} | ${kind} | ${cell(typeMarkup(checker.typeToString(memberType), known))} | ${cell(describe(checker, member))} |`,
     );
   }
   return rows;
@@ -115,6 +143,7 @@ function renderPage(
   checker: ts.TypeChecker,
   symbol: ts.Symbol,
   decl: ts.Declaration,
+  known: KnownTypes,
 ): string {
   const parts: string[] = [];
   const description = describe(checker, symbol);
@@ -156,7 +185,7 @@ function renderPage(
     }
   } else if (ts.isClassDeclaration(decl) || ts.isInterfaceDeclaration(decl)) {
     const type = checker.getDeclaredTypeOfSymbol(symbol);
-    const rows = memberRows(checker, type);
+    const rows = memberRows(checker, type, known);
     if (rows.length > 0) {
       parts.push(
         [
@@ -202,13 +231,13 @@ function run(): void {
     );
   }
 
-  if (existsSync(DOCS_DIR)) {
-    rmSync(DOCS_DIR, { recursive: true, force: true });
-  }
-
-  const navByCategory: Record<string, string[]> = {};
-  let written = 0;
-
+  // First pass: every exported declaration, so a type can link to any other.
+  const entries: {
+    name: string;
+    symbol: ts.Symbol;
+    decl: ts.Declaration;
+    category: Category;
+  }[] = [];
   for (const exported of checker.getExportsOfModule(moduleSymbol)) {
     const symbol =
       exported.flags & ts.SymbolFlags.Alias
@@ -218,27 +247,37 @@ function run(): void {
     if (!decl) continue;
     const category = categoryOf(decl);
     if (!category) continue;
+    entries.push({ name: exported.name, symbol, decl, category });
+  }
+  const known: KnownTypes = new Map(
+    entries.map((entry) => [entry.name, entry.category]),
+  );
 
-    const name = exported.name;
-    const destDir = path.join(DOCS_DIR, category);
+  if (existsSync(DOCS_DIR)) {
+    rmSync(DOCS_DIR, { recursive: true, force: true });
+  }
+
+  const navByCategory: Record<string, string[]> = {};
+  for (const entry of entries) {
+    const destDir = path.join(DOCS_DIR, entry.category);
     mkdirSync(destDir, { recursive: true });
-
-    const title = `${KIND_LABELS[category]}: ${name}`;
-    const body = renderPage(checker, symbol, decl);
+    const title = `${KIND_LABELS[entry.category]}: ${entry.name}`;
+    const body = renderPage(checker, entry.symbol, entry.decl, known);
     writeFileSync(
-      path.join(destDir, `${name}.mdx`),
+      path.join(destDir, `${entry.name}.mdx`),
       `---\ntitle: ${JSON.stringify(title)}\n---\n\n${body}`,
       "utf8",
     );
-    (navByCategory[category] ??= []).push(`${NAV_BASE}/${category}/${name}`);
-    written++;
+    (navByCategory[entry.category] ??= []).push(
+      `${NAV_BASE}/${entry.category}/${entry.name}`,
+    );
   }
 
   for (const pages of Object.values(navByCategory)) pages.sort();
   updateNav(navByCategory);
 
   console.log(
-    `generate-typescript-sdk-reference: wrote ${written} pages to ${DOCS_DIR}`,
+    `generate-typescript-sdk-reference: wrote ${entries.length} pages to ${DOCS_DIR}`,
   );
 }
 

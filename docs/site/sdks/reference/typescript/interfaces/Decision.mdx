@@ -7,9 +7,9 @@ title: "Interface: Decision"
 | --- | --- | --- | --- |
 | `decisionId` | Property | `string` |  |
 | `intentId` | Property | `string` |  |
-| `policy` | Property | `PolicyReference` |  |
+| `policy` | Property | [`PolicyReference`](/sdks/reference/typescript/interfaces/PolicyReference) |  |
 | `signals` | Property | `Record<string, unknown>` |  |
-| `outcome` | Property | `DecisionOutcome` |  |
+| `outcome` | Property | [`DecisionOutcome`](/sdks/reference/typescript/type-aliases/DecisionOutcome) |  |
 | `reason?` | Property | `string \| undefined` |  |
 | `matchedRuleId?` | Property | `string \| undefined` | Identifier of the Policy rule that matched, or "none". Absent on a Decision built before this field existed. |
 | `evaluatedRules?` | Property | `number \| undefined` | Number of rules evaluated before reaching a match (or exhausting the rule list). |

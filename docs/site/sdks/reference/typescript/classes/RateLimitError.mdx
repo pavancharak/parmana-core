@@ -15,7 +15,7 @@ to honor the Runtime's own hint rather than guess a delay.
 | Name | Kind | Type | Description |
 | --- | --- | --- | --- |
 | `retryAfterSeconds?` | Property | `number \| undefined` | Seconds to wait before retrying, taken from the response's `Retry-After` header. Undefined when the Runtime didn't send one. |
-| `code` | Property | `ErrorCode` | Stable machine-readable error code. |
+| `code` | Property | [`ErrorCode`](/sdks/reference/typescript/enumerations/ErrorCode) | Stable machine-readable error code. |
 | `requestId?` | Property | `string \| undefined` | Optional request identifier. |
 | `cause?` | Property | `unknown` | Optional underlying cause. |
 | `statusCode?` | Property | `number \| undefined` | The HTTP status of the response this error was made from, for example 403 or 503. Absent when no response was received (a network error or a timeout) and for errors raised by the SDK itself. The Python SDK's equivalent is `status_code`. |

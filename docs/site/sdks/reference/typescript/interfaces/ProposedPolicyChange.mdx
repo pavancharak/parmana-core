@@ -15,7 +15,7 @@ A proposal as returned when it is created, with any validator warnings.
 | `proposedContent` | Property | `unknown` | The full policy content that takes effect when the change is approved. |
 | `proposedBy` | Property | `string` | Caller ID of the proposer. |
 | `proposedAt` | Property | `string` | ISO 8601 timestamp. |
-| `status` | Property | `PendingPolicyChangeStatus` |  |
+| `status` | Property | [`PendingPolicyChangeStatus`](/sdks/reference/typescript/type-aliases/PendingPolicyChangeStatus) |  |
 | `reason` | Property | `string` |  |
 | `resolvedBy?` | Property | `string \| undefined` | Caller ID of whoever approved or rejected it. Absent while pending. |
 | `resolvedAt?` | Property | `string \| undefined` | ISO 8601 timestamp. Absent while pending. |

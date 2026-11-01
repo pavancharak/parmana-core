@@ -7,9 +7,9 @@ title: "Interface: Execution"
 | --- | --- | --- | --- |
 | `executionId` | Property | `string` |  |
 | `businessTransactionId` | Property | `string` |  |
-| `decision` | Property | `Decision` |  |
-| `status` | Property | `ExecutionStatus` |  |
-| `mode` | Property | `ExecutionMode` |  |
+| `decision` | Property | [`Decision`](/sdks/reference/typescript/interfaces/Decision) |  |
+| `status` | Property | [`ExecutionStatus`](/sdks/reference/typescript/type-aliases/ExecutionStatus) |  |
+| `mode` | Property | [`ExecutionMode`](/sdks/reference/typescript/type-aliases/ExecutionMode) |  |
 | `startedAt` | Property | `Date` |  |
 | `completedAt?` | Property | `Date \| undefined` | Present only for terminal executions. |
 | `evidence?` | Property | `Record<string, unknown> \| undefined` | businessTransactionId, action, target, parameters, success, executedAt, and an optional attributes bag (e.g. Connector SDK evidence). Left as a generic bag here, same as the real schema (schemas/common/execution.schema.json), not a nested model. |

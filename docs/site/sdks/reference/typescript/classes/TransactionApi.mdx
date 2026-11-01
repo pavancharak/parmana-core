@@ -18,6 +18,6 @@ This API does NOT:
 ## Members
 | Name | Kind | Type | Description |
 | --- | --- | --- | --- |
-| `create` | Method | `(transaction: BusinessTransaction) => Promise<ExecutionTrustRecord>` | Create (execute) a Business Transaction. Maps to POST /transactions: a second, independent entry point into the identical application.execute() pipeline as ExecutionApi.execute() (POST /execute). The only behavioral difference is the success status code, 201 instead of 200; the response body shape is otherwise identical. |
-| `get` | Method | `(businessTransactionId: string) => Promise<BusinessTransaction>` | Retrieve a Business Transaction. |
-| `list` | Method | `(page?: number, pageSize?: number) => Promise<BusinessTransaction[]>` | List Business Transactions. |
+| `create` | Method | `(transaction: `[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)`) => Promise<`[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)`>` | Create (execute) a Business Transaction. Maps to POST /transactions: a second, independent entry point into the identical application.execute() pipeline as ExecutionApi.execute() (POST /execute). The only behavioral difference is the success status code, 201 instead of 200; the response body shape is otherwise identical. |
+| `get` | Method | `(businessTransactionId: string) => Promise<`[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)`>` | Retrieve a Business Transaction. |
+| `list` | Method | `(page?: number, pageSize?: number) => Promise<`[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)`[]>` | List Business Transactions. |

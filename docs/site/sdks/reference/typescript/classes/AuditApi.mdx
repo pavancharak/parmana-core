@@ -5,4 +5,4 @@ title: "Class: AuditApi"
 ## Members
 | Name | Kind | Type | Description |
 | --- | --- | --- | --- |
-| `verify` | Method | `(event: AuditEvent, signature: Signature) => Promise<boolean>` | Verifies a signed caller-authentication audit event's signature. Maps to POST /audit/verify -- takes the event and its stored signature directly, not a lookup by id. No caller authentication is required by this route, mirroring RefusalApi.verify()'s independent third-party verifiability. |
+| `verify` | Method | `(event: `[`AuditEvent`](/sdks/reference/typescript/interfaces/AuditEvent)`, signature: `[`Signature`](/sdks/reference/typescript/interfaces/Signature)`) => Promise<boolean>` | Verifies a signed caller-authentication audit event's signature. Maps to POST /audit/verify -- takes the event and its stored signature directly, not a lookup by id. No caller authentication is required by this route, mirroring RefusalApi.verify()'s independent third-party verifiability. |

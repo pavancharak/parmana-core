@@ -20,4 +20,4 @@ This API does NOT:
 | --- | --- | --- | --- |
 | `health` | Method | `() => Promise<unknown>` | Returns the Runtime health status. |
 | `version` | Method | `() => Promise<unknown>` | Returns the Runtime name, version, and API version. Requires caller authentication, unlike GET /health. |
-| `execute` | Method | `(transaction: BusinessTransaction) => Promise<ExecutionTrustRecord>` | Execute a Business Transaction. |
+| `execute` | Method | `(transaction: `[`BusinessTransaction`](/sdks/reference/typescript/interfaces/BusinessTransaction)`) => Promise<`[`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord)`>` | Execute a Business Transaction. |

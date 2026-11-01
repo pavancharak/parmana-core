@@ -37,7 +37,7 @@ idempotency key (see docs/site/guides/end-to-end-paytm-flow.mdx,
 | `action` | Property | `string` | The capability being invoked, e.g. "paytm:refund". |
 | `target` | Property | `string` |  |
 | `parameters` | Property | `Record<string, unknown>` |  |
-| `policy` | Property | `PolicyReference` |  |
+| `policy` | Property | [`PolicyReference`](/sdks/reference/typescript/interfaces/PolicyReference) |  |
 | `signals` | Property | `Record<string, unknown>` | Facts the named policy evaluates. Every fact a policy rule references must appear here, and every boundSignals entry the policy declares is cross-checked against the matching intent field (see the policy's own boundSignals) before evaluation runs at all. A mismatch is rejected as a binding-tamper attempt, not silently ignored. |
 | `correlationId?` | Property | `string \| undefined` |  |
 | `tenantId?` | Property | `string \| undefined` |  |

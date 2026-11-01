@@ -13,4 +13,4 @@ GET /policies/in-effect?capability=...
 | `policy` | Property | `{ readonly name: string; readonly version: string; readonly schemaVersion: string; }` | Declare this, exactly, as the request's `policy`. |
 | `description` | Property | `string \| null` | The policy author's description for people, or null. |
 | `authorityGrantRequired?` | Property | `true \| undefined` | Present only when the policy requires it: your key needs a current authority grant for this capability, and each request must be within the grant's limits (RFC-0023 phase 3). |
-| `signals` | Property | `PolicySignalRequirements` |  |
+| `signals` | Property | [`PolicySignalRequirements`](/sdks/reference/typescript/interfaces/PolicySignalRequirements) |  |

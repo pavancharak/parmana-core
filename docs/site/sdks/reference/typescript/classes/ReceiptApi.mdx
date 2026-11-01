@@ -18,5 +18,5 @@ This API does NOT:
 ## Members
 | Name | Kind | Type | Description |
 | --- | --- | --- | --- |
-| `generate` | Method | `(businessTransactionId: string) => Promise<Receipt>` | Generate an execution receipt. |
-| `getLatest` | Method | `(businessTransactionId: string) => Promise<Receipt>` | Retrieve the most recent receipt without generating a new one. Maps to GET /receipt/latest/:businessTransactionId, distinct from generate(), which generates a new receipt. |
+| `generate` | Method | `(businessTransactionId: string) => Promise<`[`Receipt`](/sdks/reference/typescript/interfaces/Receipt)`>` | Generate an execution receipt. |
+| `getLatest` | Method | `(businessTransactionId: string) => Promise<`[`Receipt`](/sdks/reference/typescript/interfaces/Receipt)`>` | Retrieve the most recent receipt without generating a new one. Maps to GET /receipt/latest/:businessTransactionId, distinct from generate(), which generates a new receipt. |

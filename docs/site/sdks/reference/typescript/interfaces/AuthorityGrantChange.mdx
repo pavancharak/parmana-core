@@ -11,13 +11,13 @@ A proposal to grant or revoke authority, and its resolution.
 | `action` | Property | `"revoke" \| "grant"` |  |
 | `callerId` | Property | `string` |  |
 | `capability` | Property | `string` |  |
-| `limits?` | Property | `Readonly<Record<string, AuthorityGrantLimit>> \| undefined` |  |
+| `limits?` | Property | `Readonly<Record<string, `[`AuthorityGrantLimit`](/sdks/reference/typescript/interfaces/AuthorityGrantLimit)`>> \| undefined` |  |
 | `validFrom?` | Property | `string \| undefined` |  |
 | `validUntil?` | Property | `string \| undefined` |  |
 | `reason` | Property | `string` |  |
 | `proposedBy` | Property | `string` |  |
 | `proposedAt` | Property | `string` |  |
-| `status` | Property | `PendingPolicyChangeStatus` |  |
+| `status` | Property | [`PendingPolicyChangeStatus`](/sdks/reference/typescript/type-aliases/PendingPolicyChangeStatus) |  |
 | `resolvedBy?` | Property | `string \| undefined` |  |
 | `resolvedAt?` | Property | `string \| undefined` |  |
 | `rejectionReason?` | Property | `string \| undefined` |  |
