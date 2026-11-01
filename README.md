@@ -1,6 +1,6 @@
 # Parmana
 
-**Parmana makes sure your AI agents take only the actions your business has approved, even when they could technically do more.** Parmana checks every action, whether a person or a machine takes it, against the limits you set. Then it keeps proof of what happened.
+**Parmana makes sure your AI agents take only the actions your business has approved, even when they could technically do more.** It checks every action, whether a person or a machine takes it, against the limits you set, and it keeps proof of what happened.
 
 [![CI](https://github.com/pavancharak/parmana-core/actions/workflows/ci.yml/badge.svg)](https://github.com/pavancharak/parmana-core/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/pavancharak/parmana-core/actions/workflows/codeql.yml/badge.svg)](https://github.com/pavancharak/parmana-core/actions/workflows/codeql.yml)
@@ -11,9 +11,9 @@
 
 ## The problem
 
-Companies want AI agents to issue refunds, pay vendors, update CRM deals, merge pull requests and post to team channels. Two questions stop that from reaching production:
+Companies want AI agents to issue refunds, pay vendors, update CRM deals, merge pull requests and post to team channels. Two questions stand between that and production:
 
-- **What may this agent do?** An instruction in a prompt ("only refund up to 500") is not a control. The agent, or whatever text gets injected into it, can ignore it.
+- **What may this agent do?** An instruction in a prompt ("only refund up to 500") is not a control. The agent, or any text injected into it, can ignore it.
 - **Can we prove what it did?** Logs written by the same system that acted are a claim, not evidence.
 
 ## What Parmana does
@@ -21,7 +21,7 @@ Companies want AI agents to issue refunds, pay vendors, update CRM deals, merge 
 Parmana sits between an AI agent and the systems it calls.
 
 - **Before an action:** the request is checked against an explicit, versioned policy, and it needs a signed approval from a person you trust. No approval, no action, reads included ([CLAIMS.md 2.47](docs/CLAIMS.md)).
-- **When it runs:** on the supported paths, the gateway resolves connector credentials, and an agent calling the HTTP API never receives them. Code that runs on the same host, with access to the server's environment, can read those credentials ([G-128](docs/VERIFICATION-GAPS.md)). The gateway releases one approved action, once, through a connector.
+- **When it runs:** on the supported paths, the gateway resolves connector credentials, and an agent calling the HTTP API never receives them. Code on the same host that can read the server's environment can still read those credentials ([G-128](docs/VERIFICATION-GAPS.md)). The gateway releases one approved action, once, through a connector.
 - **After it runs:** a signed record of what was authorized and what happened. Anyone can verify it offline, using only the public key they choose to trust. The verifier cannot prove that the key belongs to Parmana.
 
 Parmana does not decide what the agent should do. It decides whether the agent was allowed to do it, and it records that decision in a signed record that anyone can check with the verifier.
@@ -50,7 +50,7 @@ For AI tools, every docs page is listed in [llms.txt](https://docs.parmanasystem
 
 ## Quick start
 
-The short version, on Node.js 24 or later with no `.env` file or credentials:
+On Node.js 24 or later, with no `.env` file and no credentials:
 
 ```bash
 npm ci
@@ -71,7 +71,7 @@ npm run evaluate
 
 ## How it works
 
-The chain is **authorize, verify, execute, confirm**. A Business Transaction carries an explicit authority, authorization and intent. A deterministic policy evaluates it and approves or rejects it. An approved transaction executes through a gateway that never lets the caller hold real credentials. The result is signed into an append-only Execution Trust Record, which can be verified without trusting Parmana's runtime or database.
+The chain is **authorize, verify, execute, confirm**. A Business Transaction carries an explicit authority, authorization and intent. A deterministic policy evaluates it and approves or rejects it. An approved transaction executes through a gateway that never gives the caller real credentials. The result is signed into an append-only Execution Trust Record, which can be verified without trusting Parmana's runtime or database.
 
 ```
 Authority --> Authorization --> Intent --> Business Transaction
@@ -115,7 +115,12 @@ Authority --> Authorization --> Intent --> Business Transaction
 | `@parmana/storage`             | Append-only persistence, in memory or Supabase-backed                                                                                    |
 | `@parmana/shared`              | Domain model and configuration shared across every package                                                                               |
 
-Key properties: fail-closed configuration (a misconfigured process refuses to start rather than degrade silently), credential isolation (a connector never receives long-lived credentials, only a single-use session), single-use authorizations (a nonce is accepted once), append-only signed evidence, and both classical (Ed25519) and post-quantum (ML-DSA-65, in the Node packages) signing.
+Key properties:
+
+- **Fail-closed configuration:** a misconfigured process refuses to start rather than degrade silently.
+- **Credential isolation:** a connector never receives long-lived credentials, only a single-use session.
+- **Single-use authorizations:** a nonce is accepted once.
+- **Append-only signed evidence**, with both classical (Ed25519) and post-quantum (ML-DSA-65, in the Node packages) signing.
 
 ## How external systems connect
 
@@ -151,7 +156,7 @@ These rules hold at every step:
 
 ## Connecting a system you run
 
-Built-in connectors cover HubSpot, GitHub, Slack and Paytm. For any other system, an operator registers an **external connector**: a capability, the HTTPS endpoint that serves it, and the policy that governs it. Registration is a change that one person proposes and a different person approves with a step-up signature. Once active, Parmana sends each approved action to the endpoint as a signed release. The endpoint checks the release's signature and its audience, and it needs no shared secret.
+Built-in connectors cover HubSpot, GitHub, Slack and Paytm. For any other system, an operator registers an **external connector**: a capability, the HTTPS endpoint that serves it, and the policy that governs it. One person proposes the registration, and a different person approves it with a step-up signature. Once active, Parmana sends each approved action to the endpoint as a signed release. The endpoint checks the release's signature and audience, and it needs no shared secret.
 
 - [Connect any external system](https://docs.parmanasystems.com/guides/connect-any-external-system): the full order of steps.
 - [The parmana-connect service](https://docs.parmanasystems.com/connectors/parmana-connect): a ready-made endpoint that verifies releases and runs a manifest's HTTP call. Its source is in [pavancharak/parmana-connect](https://github.com/pavancharak/parmana-connect).
@@ -242,7 +247,7 @@ Email **founder@parmanasystems.com** with a line about your use case. The websit
 
 ## License
 
-Parmana is licensed under the [Apache License, Version 2.0](./LICENSE). The trademark terms are in [NOTICE](./NOTICE). Citing Parmana: [CITATION.cff](CITATION.cff), or **Cite this repository** on GitHub.
+Parmana is licensed under the [Apache License, Version 2.0](./LICENSE). The trademark terms are in [NOTICE](./NOTICE). To cite Parmana, use [CITATION.cff](CITATION.cff), or **Cite this repository** on GitHub.
 
 Copyright (c) 2026 Parmana Systems Private Limited.
 
