@@ -119,7 +119,7 @@ if (process.getuid?.() === 0) {
     root,
     keyDir,
     offlineCheckDir,
-    ...["default", "gateway"].flatMap((keyId) => [
+    ...["default", "gateway", "default-secondary"].flatMap((keyId) => [
       path.join(keyDir, `${keyId}.private.pem`),
       path.join(keyDir, `${keyId}.public.pem`),
     ]),
