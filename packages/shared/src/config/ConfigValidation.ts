@@ -106,9 +106,12 @@ const SIGNATURE_ALGORITHM_ALIASES: Record<string, SignatureAlgorithm> = {
   "ml-dsa-65": SignatureAlgorithms.DILITHIUM3,
 };
 
-export const parseSignatureAlgorithm = (value?: string): SignatureAlgorithm =>
+export const parseSignatureAlgorithm = (
+  value?: string,
+  variable = "PRIMARY_SIGNATURE_PROVIDER",
+): SignatureAlgorithm =>
   requireImplemented(
-    "SIGNATURE_PROVIDER",
+    variable,
     parse(
       value !== undefined
         ? (SIGNATURE_ALGORITHM_ALIASES[value] ?? value)

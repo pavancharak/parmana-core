@@ -36,10 +36,16 @@ describe("parseSignatureAlgorithm", () => {
     "refuses the documented but unimplemented %s at startup (#222)",
     (value) => {
       expect(() => parseSignatureAlgorithm(value)).toThrow(
-        `SIGNATURE_PROVIDER=${value} is not implemented in this build`,
+        `PRIMARY_SIGNATURE_PROVIDER=${value} is not implemented in this build`,
       );
     },
   );
+
+  it("names the variable that was set, so a secondary refusal is not reported as primary", () => {
+    expect(() =>
+      parseSignatureAlgorithm("dilithium5", "SECONDARY_SIGNATURE_PROVIDER"),
+    ).toThrow("SECONDARY_SIGNATURE_PROVIDER=dilithium5 is not implemented");
+  });
 });
 
 describe("parseHashAlgorithm", () => {

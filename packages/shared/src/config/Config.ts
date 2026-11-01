@@ -432,7 +432,10 @@ export function loadConfig(): Readonly<Config> {
       ...optionalProperty(
         "secondarySignatureProvider",
         process.env.SECONDARY_SIGNATURE_PROVIDER
-          ? parseSignatureAlgorithm(process.env.SECONDARY_SIGNATURE_PROVIDER)
+          ? parseSignatureAlgorithm(
+              process.env.SECONDARY_SIGNATURE_PROVIDER,
+              "SECONDARY_SIGNATURE_PROVIDER",
+            )
           : undefined,
       ),
 
