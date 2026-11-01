@@ -69,6 +69,7 @@ function categoryOf(decl: ts.Declaration): Category | undefined {
 /** Escapes text so MDX does not read braces or angle brackets as JSX. */
 function prose(text: string): string {
   return text
+    .replace(/\\/g, "\\\\")
     .replace(/\{/g, "\\{")
     .replace(/\}/g, "\\}")
     .replace(/</g, "&lt;")
@@ -82,7 +83,11 @@ function code(text: string): string {
 
 /** A table cell: pipes escaped and no line breaks. */
 function cell(text: string): string {
-  return text.replace(/\|/g, "\\|").replace(/\n/g, " ").trim();
+  return text
+    .replace(/\\/g, "\\\\")
+    .replace(/\|/g, "\\|")
+    .replace(/\n/g, " ")
+    .trim();
 }
 
 /**
