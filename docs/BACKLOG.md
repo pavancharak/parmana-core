@@ -224,3 +224,34 @@ Source: the "Open issues at a glance" table in `docs/VERIFICATION-GAPS.md` (upda
 - Open gaps in the register: 17 (G-4, G-9, G-50, G-51/G-76, G-53, G-65, G-66, G-82, G-84, G-86, G-92, G-93, G-94, G-119, G-120, G-121, G-125).
 - Gaps with no backlog row yet: G-9, G-65, G-66, G-53 (partly covered). Add rows, or record a decision that they stay open.
 - The register was last updated 2026-10-27. The 2026-10-30 code check added rows 51 to 53 above. Check whether the register needs a new pass before it is treated as current.
+
+## Gap statuses G-95 to G-114, checked against main (issue #224), 2026-11-01
+
+Method: each entry in `docs/VERIFICATION-GAPS.md` on `main` was read, and the files it cites were checked on `main`. A cited file that exists is not proof that the fix works: each gap needs a test on `main` before it can be called closed.
+
+Result: none of the 20 can be confirmed closed on `main` from the register alone. Most of their evidence is a branch that is no longer on GitHub (`claude/startup-integrity-block`, `fix/policy-scan-and-governance-url`, `ccr-6f1b8d3b-o5pqwj`).
+
+| Gap   | Register says                                        | Found on main                                                     | Verdict                                                                                        |
+| ----- | ---------------------------------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| G-95  | fixed on deleted branch                              | `server.ts` present                                               | Re-verify with a test, or reopen                                                               |
+| G-96  | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+| G-97  | fixed on deleted branch                              | `packages/governance-ui/src/apiClient.ts` present                 | Re-verify                                                                                      |
+| G-98  | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+| G-99  | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+| G-100 | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+| G-101 | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+| G-102 | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+| G-103 | fixed on deleted branch `ccr-6f1b8d3b-o5pqwj`        | cited file present                                                | Re-verify                                                                                      |
+| G-104 | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+| G-105 | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+| G-106 | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+| G-107 | closed through the policy repository                 | cited file present                                                | Closed per the register; confirm by test                                                       |
+| G-108 | register: not closed, not merged to main             | chain-head anchoring not found on main                            | Reopen                                                                                         |
+| G-109 | fixed on deleted branch                              | `createCallerAuthenticator.ts`, `createSandboxOptions.ts` present | Re-verify                                                                                      |
+| G-110 | fixed on deleted branch                              | `key-expiry.json` not on main                                     | Reopen                                                                                         |
+| G-111 | in progress; not merged; held until a policy version | `executeHubSpotCapability` still signs `APPROVED` on main         | Reopen. The register's glance table omits G-111, which is an error. Same blocker as issue #186 |
+| G-112 | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+| G-113 | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+| G-114 | fixed on deleted branch                              | cited file present                                                | Re-verify                                                                                      |
+
+Summary: reopen G-108, G-110 and G-111. Re-verify the other 17 with a test on `main` before closing them. Also add G-111 to the glance table in `docs/VERIFICATION-GAPS.md`.
