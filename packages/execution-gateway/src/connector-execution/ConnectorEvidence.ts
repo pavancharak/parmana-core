@@ -39,7 +39,7 @@ export interface ConnectorEvidence {
    * Defaults to false and, as of this field's introduction
    * (docs/VERIFICATION-GAPS.md G-45's Record-3 half), no connector in
    * this codebase sets it true -- confirmed for every in-process
-   * adapter (HubSpot, GitHub, Slack) and, for the one connector that
+   * adapter (HubSpot, GitHub) and, for the one connector that
    * touches real money (Paytm), documented explicitly in
    * GatewayPaytmAdapter's own doc comment: that adapter forwards to a
    * separate out-of-process service which holds Paytm's own checksum

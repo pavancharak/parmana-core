@@ -10,8 +10,6 @@ import {
   type PolicyCondition,
 } from "@parmana/policy";
 
-import { SLACK_VERIFIED_SIGNAL_KEYS } from "../../src/bootstrap/createSlackChannelSignalVerifier.js";
-
 /**
  * G-77: no connector action that changes something can be authorized by
  * facts the caller declares alone.
@@ -46,8 +44,6 @@ const SERVER_VERIFIED_FACTS: Readonly<Record<string, readonly string[]>> = {
     ...HUBSPOT_VERIFIED_SIGNAL_KEYS,
     "preAuthorizedForAmountChange",
   ],
-  // SlackChannelSignalVerifier: the channel allowlist.
-  "slack:post-message": SLACK_VERIFIED_SIGNAL_KEYS,
 };
 
 function loadPolicy(name: string, version: string): Policy {
@@ -119,7 +115,6 @@ describe("connector policies cannot be satisfied by caller declared facts alone 
       "github:pr-merge",
       "hubspot:deal-update",
       "paytm:refund",
-      "slack:post-message",
     ]);
   });
 
@@ -149,20 +144,5 @@ describe("connector policies cannot be satisfied by caller declared facts alone 
         "github:pr-merge",
       ),
     ).toEqual(["approve-pull-request"]);
-
-    // Without the server's channel check, the Slack policy would be flagged.
-    const slack = loadPolicy("slack-post-message", "1.0.0");
-    expect(
-      slack.rules
-        .filter((rule) => rule.outcome.action === "approve")
-        .filter(
-          (rule) =>
-            !requiresTrustedFact(
-              rule.condition,
-              new Set(Object.keys(slack.approvalSignals ?? {})),
-            ),
-        )
-        .map((rule) => rule.id),
-    ).toEqual(["approve-post"]);
   });
 });

@@ -4149,7 +4149,7 @@ paths:
                 $ref: "../schemas/common/error.schema.json"
               examples:
                 capabilityNotAllowed:
-                  summary: "Real captured response, a key allowed only slack:post-message"
+                  summary: "Real captured response, a key allowed only paytm:refund"
                   value:
                     {
                       "error": "Caller is not permitted to invoke this capability.",

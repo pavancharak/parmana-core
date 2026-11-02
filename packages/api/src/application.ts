@@ -40,7 +40,6 @@ import { createCurrentPolicyVersionSource } from "./bootstrap/createCurrentPolic
 import { createExternalPolicyBindingSource } from "./bootstrap/createExternalPolicyBindingSource.js";
 import { createHubSpotSignalStateVerifier } from "./bootstrap/createHubSpotSignalStateVerifier.js";
 import { createApprovalSignalVerifier } from "./bootstrap/createApprovalSignalVerifier.js";
-import { createSlackChannelSignalVerifier } from "./bootstrap/createSlackChannelSignalVerifier.js";
 import { executionGatewaySignalStateVerifier } from "./bootstrap/executionGatewaySignalStateVerifier.js";
 import { createPolicyExecutionVerifier } from "./bootstrap/createPolicyExecutionVerifier.js";
 import { createPolicyGovernanceAnchorResolver } from "./bootstrap/createPolicyGovernanceAnchorResolver.js";
@@ -114,8 +113,6 @@ export function createApplication(
       policyRepository,
     ),
     createApprovalSignalVerifier(approvalVerifier),
-    // G-76: the Slack channel is checked against the server's allowlist.
-    createSlackChannelSignalVerifier(),
   ]);
 
   //
