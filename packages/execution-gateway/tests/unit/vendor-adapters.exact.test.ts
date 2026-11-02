@@ -15,24 +15,19 @@ import {
   connectorCapabilities,
   type ConnectorExecutionContext,
 } from "@parmana/connector-sdk";
-import {
-  SLACK_POST_MESSAGE_CAPABILITY,
-  SLACK_TEST_MODE_PLACEHOLDER_TOKEN,
-} from "@parmana/connector-slack";
 
 import {
   GatewayGitHubAdapter,
   GatewayHttpAdapter,
   GatewayHubSpotAdapter,
-  GatewaySlackAdapter,
 } from "../../src/connector-execution/index.js";
 import { HttpConnector } from "../../src/HttpConnector.js";
 
 /**
- * Mutation testing found these checks in the Slack, HubSpot and GitHub
- * adapters tested loosely or not at all: required fields, the refusal of
- * "." and ".." as a repository, the placeholder token guards (in both
- * directions), Slack's answer shape, and HTTPS accepted in production.
+ * Mutation testing found these checks in the HubSpot and GitHub adapters
+ * tested loosely or not at all: required fields, the refusal of "." and
+ * ".." as a repository, the placeholder token guards (in both directions),
+ * and HTTPS accepted in production.
  * fetch is stubbed: each check either refuses before any network call,
  * or is observed in the request sent.
  */
@@ -59,76 +54,6 @@ const contextWith = (value: unknown): ConnectorExecutionContext => ({
   }),
   timeoutMs: 2_000,
   requestedAt: new Date(),
-});
-
-describe("GatewaySlackAdapter, exactly", () => {
-  const slack = (baseUrl = "http://127.0.0.1:9") =>
-    new GatewaySlackAdapter({
-      connectorId: "slack",
-      capabilities: connectorCapabilities([SLACK_POST_MESSAGE_CAPABILITY]),
-      baseUrl,
-    });
-  const post = (parameters: Record<string, unknown>, target = "C1") => ({
-    capability: SLACK_POST_MESSAGE_CAPABILITY,
-    businessTransactionId: "btx-1",
-    action: SLACK_POST_MESSAGE_CAPABILITY,
-    target,
-    parameters,
-  });
-  const context = contextWith({ botToken: SLACK_TEST_MODE_PLACEHOLDER_TOKEN });
-
-  it.each([
-    ["channel", { text: "hi" }],
-    ["channel", { channel: "", text: "hi" }],
-    ["text", { channel: "C1" }],
-    ["text", { channel: "C1", text: "" }],
-  ])(
-    "refuses a missing %s before any network call",
-    async (field, parameters) => {
-      const fetchSpy = stubFetch({ ok: true });
-      await expect(slack().execute(post(parameters), context)).rejects.toThrow(
-        `SlackConnector request is missing required field "parameters.${field}".`,
-      );
-      expect(fetchSpy).not.toHaveBeenCalled();
-    },
-  );
-
-  it("refuses an answer without Slack's ok field", async () => {
-    stubFetch({ channel: "C1" });
-    await expect(
-      slack().execute(post({ channel: "C1", text: "hi" }), context),
-    ).rejects.toThrow(
-      'SlackConnector "slack" received a malformed response -- missing "ok" field.',
-    );
-  });
-
-  it("records the channel it posted to when Slack does not echo one", async () => {
-    stubFetch({ ok: true, ts: "1.2" });
-    const response = await slack().execute(
-      post({ channel: "C1", text: "hi" }),
-      context,
-    );
-    expect(response.metadata).toMatchObject({ channel: "C1", ts: "1.2" });
-  });
-
-  it("allows the placeholder token to a localhost target", async () => {
-    const fetchSpy = stubFetch({ ok: true });
-    await slack("http://localhost:9").execute(
-      post({ channel: "C1", text: "hi" }),
-      context,
-    );
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it("accepts an HTTPS base URL outside NODE_ENV=test", () => {
-    const original = process.env.NODE_ENV;
-    process.env.NODE_ENV = "production";
-    try {
-      expect(() => slack("https://slack.com/api")).not.toThrow();
-    } finally {
-      process.env.NODE_ENV = original;
-    }
-  });
 });
 
 describe("GatewayHubSpotAdapter, exactly", () => {
