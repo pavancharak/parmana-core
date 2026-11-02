@@ -15,12 +15,9 @@ import {
 } from "../../shared/helpers/demo-approval.js";
 
 //
-// A Slack post and a HubSpot deal update, each with a person's signed
-// approval. No agent action is authorized without one.
+// A HubSpot deal update, with a person's signed approval. No agent action
+// is authorized without one.
 //
-//   * policies/slack-post-message/1.1.0: postApproved, for the channel
-//     (the Intent's target). contentApproved and channelAuthorized can
-//     still refuse a post, never authorize one alone.
 //   * policies/hubspot-deal-update/1.1.0: dealUpdateApproved, for the deal
 //     (parameters.dealId), on every update. A stage move that is not
 //     forward is refused even with an approval.
@@ -29,8 +26,7 @@ import {
 //
 // Runs the real RuntimeEngine with the policy files and the real approval
 // check, with a demo approver (a key made in memory). On the server,
-// SlackChannelSignalVerifier also checks the channel against
-// SLACK_ALLOWED_CHANNEL_IDS, and HubSpotSignalStateVerifier checks the
+// HubSpotSignalStateVerifier checks the
 // declared deal facts against the real deal; this tutorial shows only the
 // approval.
 //
@@ -81,21 +77,6 @@ function request(options: {
     status: BusinessTransactionStatus.RECEIVED,
     createdAt: new Date(),
   } as unknown as BusinessTransaction;
-}
-
-function post(channel: string, signals: Record<string, unknown> = {}) {
-  return request({
-    action: "slack:post-message",
-    target: channel,
-    parameters: { channel, text: "Deploy 481 finished." },
-    policy: { name: "slack-post-message", version: "1.1.0" },
-    signals: {
-      contentApproved: true,
-      channelAuthorized: true,
-      channelId: channel,
-      ...signals,
-    },
-  });
 }
 
 function update(
@@ -158,62 +139,31 @@ async function step(
   console.log();
 }
 
-console.log("Tutorial 122: an approval for a Slack post and a HubSpot update");
+console.log("Tutorial 122: an approval for a HubSpot deal update");
 console.log();
-console.log("Slack");
-console.log();
-
-await step(
-  "1. Post to C_OPS with every caller fact true and no approval: refused",
-  post("C_OPS"),
-  false,
-);
-
-const opsApproval = signalsOf(await withDemoApproval(post("C_OPS")));
-await step(
-  "2. A person approves posting to C_OPS; the agent posts there: approved",
-  post("C_OPS", opsApproval),
-  true,
-);
-
-await step(
-  "3. An approval for C_OPS used to post to C_EXFIL: refused",
-  post("C_EXFIL", signalsOf(await withDemoApproval(post("C_OPS")))),
-  false,
-);
-
-await step(
-  "4. An approval for C_OPS, but the content review failed: refused",
-  post("C_OPS", {
-    ...signalsOf(await withDemoApproval(post("C_OPS"))),
-    contentApproved: false,
-  }),
-  false,
-);
-
 console.log("HubSpot");
 console.log();
 
 await step(
-  "5. Move deal 9001 forward with no approval: refused",
+  "1. Move deal 9001 forward with no approval: refused",
   update("9001"),
   false,
 );
 
 await step(
-  "6. A person approves updating deal 9001; the agent moves it forward: approved",
+  "2. A person approves updating deal 9001; the agent moves it forward: approved",
   await withDemoApproval(update("9001")),
   true,
 );
 
 await step(
-  "7. An approval for deal 9001 used to update deal 9002: refused",
+  "3. An approval for deal 9001 used to update deal 9002: refused",
   update("9002", signalsOf(await withDemoApproval(update("9001")))),
   false,
 );
 
 await step(
-  "8. An approval for deal 9001, but the stage move is not forward: refused",
+  "4. An approval for deal 9001, but the stage move is not forward: refused",
   update(
     "9001",
     signalsOf(await withDemoApproval(update("9001", {}, false))),
@@ -223,7 +173,7 @@ await step(
 );
 
 await step(
-  "9. An approval to update deal 9001 used to read it: refused, a read needs its own",
+  "5. An approval to update deal 9001 used to read it: refused, a read needs its own",
   read("9001", {
     readApproved: true,
     approvalArtifact: signalsOf(await withDemoApproval(update("9001")))
@@ -233,7 +183,7 @@ await step(
 );
 
 await step(
-  "10. A person approves reading deal 9001: approved",
+  "6. A person approves reading deal 9001: approved",
   await withDemoApproval(read("9001")),
   true,
 );

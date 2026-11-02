@@ -29,15 +29,12 @@ import { externalConnectorRepository } from "../repositories.js";
 import { HubSpotMetadata } from "@parmana/connector-hubspot";
 import { GitHubMetadata } from "@parmana/connector-github";
 import { PaytmMetadata } from "@parmana/connector-paytm";
-import { SlackMetadata } from "@parmana/connector-slack";
 import { createHubSpotConnector } from "./createHubSpotConnector.js";
 import { createHubSpotCredentialProvider } from "./createHubSpotCredentialProvider.js";
 import { createGitHubConnector } from "./createGitHubConnector.js";
 import { createGitHubCredentialProvider } from "./createGitHubCredentialProvider.js";
 import { createPaytmConnector } from "./createPaytmConnector.js";
 import { createPaytmCredentialProvider } from "./createPaytmCredentialProvider.js";
-import { createSlackConnector } from "./createSlackConnector.js";
-import { createSlackCredentialProvider } from "./createSlackCredentialProvider.js";
 import { createTestFixtureConnector } from "./createTestFixtureConnector.js";
 import { assertConnectorCapabilitiesBound } from "./assertConnectorCapabilitiesBound.js";
 import { warnIfHubSpotTokenStale } from "./warnIfHubSpotTokenStale.js";
@@ -222,37 +219,6 @@ export function createConnectorRegistry(
         Number.isFinite(paytmTimeoutMs) && paytmTimeoutMs > 0
           ? paytmTimeoutMs
           : DEFAULT_PAYTM_CONNECTOR_TIMEOUT_MS,
-    });
-  }
-
-  const slackCredentialProvider = createSlackCredentialProvider();
-
-  if (slackCredentialProvider === undefined) {
-    console.warn({
-      event: "slack_connector_unavailable",
-      reason: "SLACK_BOT_TOKEN is not configured.",
-    });
-  } else {
-    registrations.push({
-      connector: createSlackConnector(),
-
-      metadata: SlackMetadata,
-
-      connectorIdentity: {
-        connectorId: "slack",
-        publicIdentity: "spiffe://parmana/connectors/slack",
-        authenticationMetadata: {},
-      },
-
-      credentialProvider: slackCredentialProvider,
-
-      policy: new DefaultConnectorPolicy(authenticator, sessions),
-
-      gatewayAuthentication,
-
-      crypto,
-
-      audit,
     });
   }
 

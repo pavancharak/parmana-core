@@ -243,7 +243,7 @@ describe("External connector changes (HTTP boundary)", () => {
       const app = governanceApp();
 
       expect([...BUILT_IN_CAPABILITY_NAMESPACES]).toEqual(
-        expect.arrayContaining(["paytm", "hubspot", "github", "slack"]),
+        expect.arrayContaining(["paytm", "hubspot", "github"]),
       );
 
       for (const namespace of BUILT_IN_CAPABILITY_NAMESPACES) {

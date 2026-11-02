@@ -27,7 +27,6 @@ COPY packages/connector-github/package.json packages/connector-github/package.js
 COPY packages/connector-hubspot/package.json packages/connector-hubspot/package.json
 COPY packages/connector-paytm/package.json packages/connector-paytm/package.json
 COPY packages/connector-sdk/package.json packages/connector-sdk/package.json
-COPY packages/connector-slack/package.json packages/connector-slack/package.json
 COPY packages/crypto/package.json packages/crypto/package.json
 COPY packages/envelope-verifier/package.json packages/envelope-verifier/package.json
 COPY packages/execution-control/package.json packages/execution-control/package.json
@@ -80,7 +79,6 @@ COPY packages/connector-github/package.json packages/connector-github/package.js
 COPY packages/connector-hubspot/package.json packages/connector-hubspot/package.json
 COPY packages/connector-paytm/package.json packages/connector-paytm/package.json
 COPY packages/connector-sdk/package.json packages/connector-sdk/package.json
-COPY packages/connector-slack/package.json packages/connector-slack/package.json
 COPY packages/crypto/package.json packages/crypto/package.json
 COPY packages/envelope-verifier/package.json packages/envelope-verifier/package.json
 COPY packages/execution-control/package.json packages/execution-control/package.json

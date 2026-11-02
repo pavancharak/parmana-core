@@ -1694,7 +1694,7 @@ Verification
 - `packages/api/tests/integration/github-caller-scoping.integration.test.ts` (4): a fetch under `github-pr-read`, a merge with an approval.
 - `packages/api/tests/integration/paytm-refund.integration.test.ts` (18, moved to 1.2.0): a small refund with every caller fact true and no approval is refused with zero connector calls, with `managerApproved` false and true; a refund of 0 with an approval is refused; a small refund with an approval executes once; declaring 1.1.0 is refused, naming 1.2.0.
 - `packages/api/tests/unit/connector-policies-not-self-authorizing.test.ts` (6): the four write capabilities pass at the bound versions; the check flags `customer-refund` 1.1.0 and `github-pr-approval` 1.0.0; every bound capability is classified.
-- `packages/api/tests/integration/slack-post-message.integration.test.ts` (4) and `packages/api/tests/unit/bootstrap/create-slack-channel-signal-verifier.test.ts` (7): only a listed channel that is the target receives a post; an unset list refuses every post.
+- slack-post-message.integration.test.ts (4; removed 2026-11-02 with the Slack connector, ADR-0018) and create-slack-channel-signal-verifier.test.ts (7; removed 2026-11-02 with the Slack connector, ADR-0018): only a listed channel that is the target receives a post; an unset list refuses every post.
 - Tutorial 96 (`examples/tutorials/96-github-pr-merge-connector`) shows the refusal and the approved merge through the production composition. Tutorials 111 and 119 use 1.2.0. Tutorial 112 refuses a channel off the list.
 
 Evidence
@@ -1702,7 +1702,7 @@ Evidence
 - `policies/github-pr-approval/1.1.0/policy.json`, `policies/github-pr-read/1.0.0/policy.json`, `policies/llm-tool-call/1.1.0/policy.json`, `policies/customer-refund/1.2.0/policy.json`
 - `packages/capability-registry/src/CapabilityPolicyBinding.ts` (`github:pr-fetch` to `github-pr-read`, `github:pr-merge` to `github-pr-approval` 1.1.0)
 - `packages/api/src/application.ts` (`createApplication` takes an optional `approvalVerifier`, defaulting to the production one; the composite verifier includes the Slack channel check)
-- `packages/api/src/bootstrap/createSlackChannelSignalVerifier.ts`, `packages/execution-gateway/src/connector-execution/GatewaySlackAdapter.ts`
+- createSlackChannelSignalVerifier.ts and GatewaySlackAdapter.ts (both removed 2026-11-02, ADR-0018)
 
 ---
 

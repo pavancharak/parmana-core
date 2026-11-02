@@ -5732,7 +5732,7 @@ paths:
                 $ref: "#/components/schemas/error.schema"
               examples:
                 capabilityNotAllowed:
-                  summary: Real captured response, a key allowed only slack:post-message
+                  summary: Real captured response, a key allowed only paytm:refund
                   value:
                     error: Caller is not permitted to invoke this capability.
                     code: CAPABILITY_NOT_ALLOWED

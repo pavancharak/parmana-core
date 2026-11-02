@@ -23,7 +23,6 @@
     { "path": "../connector-sdk" },
     { "path": "../connector-hubspot" },
     { "path": "../connector-github" },
-    { "path": "../connector-paytm" },
-    { "path": "../connector-slack" }
+    { "path": "../connector-paytm" }
   ]
 }
