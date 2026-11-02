@@ -1,3 +1,4 @@
+import { createPrivateKey, sign } from "node:crypto";
 import "dotenv/config";
 
 import { parsePolicyChangeCheckers } from "./governance/policyChangeCheckers.js";
@@ -83,8 +84,40 @@ const healthRateLimitStore = createRateLimitStore("health:");
 const publicRateLimitStore = createRateLimitStore("public:");
 const authFailureRateLimitStore = createRateLimitStore("auth-failure:");
 
+/**
+ * Inbound refund decisions (RFC-0025). Enabled only when INBOUND_AUDIENCE is set. Fails closed:
+ * if it is enabled and the gateway signing key cannot be read, the server does not start.
+ * Decisions are stored through the inbound decision repository.
+ */
+function inboundDecisionOptions():
+  Parameters<typeof createApp>[1]["inboundDecisions"] | undefined {
+  const audience = process.env.INBOUND_AUDIENCE;
+  if (!audience) return undefined;
+  const keyId = process.env.PARMANA_GATEWAY_KEY_ID;
+  const material = process.env.PARMANA_KEY_MATERIAL_JSON
+    ? (JSON.parse(process.env.PARMANA_KEY_MATERIAL_JSON) as Record<
+        string,
+        { privateKeyPem?: string }
+      >)
+    : undefined;
+  const pem = keyId && material?.[keyId]?.privateKeyPem;
+  if (!pem) {
+    throw new Error(
+      "INBOUND_AUDIENCE is set, but PARMANA_KEY_MATERIAL_JSON does not hold a private key for PARMANA_GATEWAY_KEY_ID.",
+    );
+  }
+  const privateKey = createPrivateKey(pem);
+  return {
+    audience,
+    sign: async (bytes) => sign(null, bytes, privateKey).toString("base64"),
+  };
+}
+
+const inboundDecisions = inboundDecisionOptions();
+
 const app = createApp(application, {
   ...(killSwitch ? { killSwitch } : {}),
+  ...(inboundDecisions ? { inboundDecisions } : {}),
   callerAuth: callerAuth.disabled
     ? "disabled"
     : {

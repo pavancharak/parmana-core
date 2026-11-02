@@ -12,3 +12,5 @@ export * from "./business-signal-source-repository.js";
 export * from "./authority-grant-repository.js";
 export * from "./policy-change-approval-record-repository.js";
 export * from "./handbook-download-lead-repository.js";
+export * from "./inbound-decision-repository.js";
+export * from "./inbound-outcome-repository.js";

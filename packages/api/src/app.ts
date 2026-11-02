@@ -42,6 +42,13 @@ import { createTrustRecordsRouter } from "./routes/trust-records.js";
 import { createVerifyGetRouter } from "./routes/verify-get.js";
 import { createVerifyRouter } from "./routes/verify.js";
 import { createRefusalVerifyRouter } from "./routes/refusal-verify.js";
+import { createInboundDecisionRouter } from "./routes/inbound-decisions.js";
+import { createInboundOutcomeRouter } from "./routes/inbound-outcomes.js";
+import {
+  authorityGrantRepository,
+  inboundDecisionRepository,
+  inboundOutcomeRepository,
+} from "./repositories.js";
 import {
   createExecutionIntentsRouter,
   createExecutionIntentVerifyRouter,
@@ -140,6 +147,15 @@ const DEFAULT_AUTH_FAILURE_PER_MINUTE = 30;
 export interface CreateAppOptions {
   readonly callerAuth: CallerAuthOption;
   readonly rateLimit?: RateLimitOption;
+
+  /**
+   * Inbound refund decisions (RFC-0025). Mounted only when given. `sign` signs the canonical
+   * decision bytes with Parmana's key. Every decision issued is stored through the repository.
+   */
+  readonly inboundDecisions?: {
+    readonly audience: string;
+    readonly sign: (canonicalBytes: Buffer) => Promise<string>;
+  };
 
   /**
    * Verifies the step-up authorization envelope required on POST
@@ -436,6 +452,47 @@ export function createApp(
   /**
    * Receipts
    */
+  if (options.inboundDecisions) {
+    app.use(
+      "/v1/inbound/outcomes",
+      createInboundOutcomeRouter({
+        findDecision: async (decisionId) => {
+          const decision = await inboundDecisionRepository.findById(decisionId);
+          return decision
+            ? {
+                decisionId: decision.decisionId,
+                partnerId: decision.partnerId,
+                paymentId: decision.paymentId,
+                limitInr: decision.limitInr,
+              }
+            : null;
+        },
+        store: {
+          append: (record) =>
+            inboundOutcomeRepository.append({
+              ...record,
+              recordedAt: new Date(record.recordedAt),
+            }),
+        },
+      }),
+    );
+    app.use(
+      "/v1/inbound/decisions",
+      createInboundDecisionRouter({
+        audience: options.inboundDecisions.audience,
+        sign: options.inboundDecisions.sign,
+        store: {
+          append: (record) =>
+            inboundDecisionRepository.append({
+              ...record,
+              issuedAt: new Date(),
+            }),
+        },
+        findGrant: (partnerId) =>
+          authorityGrantRepository.findActive(partnerId, "inbound:refund"),
+      }),
+    );
+  }
   app.use("/receipt", createReceiptRouter(application));
   app.use("/receipt/latest", createReceiptGetRouter(application));
 

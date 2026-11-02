@@ -11,6 +11,8 @@ import type {
   PendingPolicyChangeRepository,
   PolicyChangeApprovalRecordRepository,
   RefusalRecordRepository,
+  InboundDecisionRepository,
+  InboundOutcomeRepository,
 } from "@parmana/shared";
 
 import type { StorageProvider } from "../StorageProvider.js";
@@ -23,6 +25,8 @@ import { SupabaseExecutionTrustRecordRepository } from "./SupabaseExecutionTrust
 
 import { SupabaseExecutionIntentRepository } from "./SupabaseExecutionIntentRepository.js";
 import { SupabaseRefusalRecordRepository } from "./SupabaseRefusalRecordRepository.js";
+import { SupabaseInboundDecisionRepository } from "./SupabaseInboundDecisionRepository.js";
+import { SupabaseInboundOutcomeRepository } from "./SupabaseInboundOutcomeRepository.js";
 
 import { SupabasePendingPolicyChangeRepository } from "./SupabasePendingPolicyChangeRepository.js";
 
@@ -51,6 +55,8 @@ export class SupabaseStorageProvider implements StorageProvider {
   readonly businessTransactions: BusinessTransactionRepository;
   readonly trustRecords: ExecutionTrustRecordRepository;
   readonly refusalRecords: RefusalRecordRepository;
+  readonly inboundDecisions: InboundDecisionRepository;
+  readonly inboundOutcomes: InboundOutcomeRepository;
   readonly executionIntents: ExecutionIntentRepository;
   readonly pendingPolicyChanges: PendingPolicyChangeRepository;
   readonly policyChangeApprovalRecords: PolicyChangeApprovalRecordRepository;
@@ -69,6 +75,8 @@ export class SupabaseStorageProvider implements StorageProvider {
     this.trustRecords = new SupabaseExecutionTrustRecordRepository(pool);
 
     this.refusalRecords = new SupabaseRefusalRecordRepository(pool);
+    this.inboundDecisions = new SupabaseInboundDecisionRepository(pool);
+    this.inboundOutcomes = new SupabaseInboundOutcomeRepository(pool);
 
     this.executionIntents = new SupabaseExecutionIntentRepository(pool);
 

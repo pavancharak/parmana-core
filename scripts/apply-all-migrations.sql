@@ -2585,3 +2585,74 @@ ALTER TABLE caller_key_revocations ENABLE ROW LEVEL SECURITY;
 -- it; that step is removed in the same change.
 
 DROP TABLE IF EXISTS settlement_confirmations;
+
+
+-- =============================================================================
+-- Source: supabase/migrations/20261102120000_add_inbound_decisions.sql
+-- =============================================================================
+-- Inbound refund decisions (RFC-0025)
+-- =============================================================================
+--
+-- Backs SupabaseInboundDecisionRepository. Each row is a decision Parmana issued for an inbound
+-- refund request, approved or rejected, with Parmana's signature. Append-only in practice:
+-- rows are inserted and never updated. The primary key makes a duplicate insert fail.
+
+CREATE TABLE IF NOT EXISTS inbound_decisions (
+
+    decision_id TEXT PRIMARY KEY,
+
+    outcome TEXT NOT NULL CHECK (outcome IN ('approved', 'rejected')),
+
+    reason TEXT,
+
+    partner_id TEXT NOT NULL,
+
+    payment_id TEXT NOT NULL,
+
+    limit_inr NUMERIC NOT NULL,
+
+    expires_at TIMESTAMPTZ NOT NULL,
+
+    audience TEXT NOT NULL,
+
+    signature TEXT NOT NULL,
+
+    issued_at TIMESTAMPTZ NOT NULL
+
+);
+
+ALTER TABLE inbound_decisions ENABLE ROW LEVEL SECURITY;
+
+
+-- =============================================================================
+-- Source: supabase/migrations/20261102130000_add_inbound_outcomes.sql
+-- =============================================================================
+-- Inbound refund outcomes (RFC-0025)
+-- =============================================================================
+--
+-- Backs SupabaseInboundOutcomeRepository. One row per decision: what happened to the refund after
+-- Parmana issued the decision. The primary key makes a second outcome for the same decision fail.
+
+CREATE TABLE IF NOT EXISTS inbound_outcomes (
+
+    decision_id TEXT PRIMARY KEY REFERENCES inbound_decisions (decision_id),
+
+    partner_id TEXT NOT NULL,
+
+    order_id TEXT NOT NULL,
+
+    payment_id TEXT NOT NULL,
+
+    amount_inr NUMERIC NOT NULL,
+
+    status TEXT NOT NULL CHECK (status IN ('refunded', 'refused', 'error')),
+
+    refund_id TEXT,
+
+    reason TEXT,
+
+    recorded_at TIMESTAMPTZ NOT NULL
+
+);
+
+ALTER TABLE inbound_outcomes ENABLE ROW LEVEL SECURITY;
