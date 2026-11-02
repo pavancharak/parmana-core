@@ -73,6 +73,12 @@ Work is done one item at a time. Items 1 and 2 are done locally. Nothing is push
    - Parmana SECURITY.md PR [#145](https://github.com/pavancharak/parmana-core/pull/145): merged, merge commit `7ff177b`. One Vercel deployment hit the free-tier daily limit. A separate `parmana-sandbox` preview is Ready.
 7. **Track responses.** Covered by the hourly watches on the four threads and the three PRs. See "Watched threads."
 
+## Credibility: claims audit
+
+First pass, on `origin/main`, of absolute language in the README, paper, and `docs/CLAIMS.md`. Branch `docs/readme-claims`, commit `da2fa35`, pushed, no PR yet. It qualifies four README sentences: "never holds" credentials (now "on the supported paths"), "proves that decision" (now a signed record anyone can check), "exactly-once consumption of every webhook event" (no support in the claims doc, so it now states the single-use nonce property), and ML-DSA-65 (now named as a Node-package feature).
+
+Still to do: the paper's absolute sentences, and the README's standards-mapping links (docs.parmanasystems.com OWASP and regulation pages). Those pages are not in this repo's docs folder, so their claims are unverified.
+
 Item 7 is the watch. Item 5 needs the author's CLA reply on AGT before the review can start.
 
 ## Watched threads
