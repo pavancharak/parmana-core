@@ -51,19 +51,20 @@ describe("sandbox mode's built in connector variables", () => {
     const registry = path.join(bootstrap, "createConnectorRegistry.ts");
     const imported = [
       ...readFileSync(registry, "utf8").matchAll(
-        /from "\.\/(create(?:HubSpot|GitHub|Paytm|Slack)[A-Za-z]*)\.js"/g,
+        /from "\.\/(create(?:HubSpot|GitHub)[A-Za-z]*)\.js"/g,
       ),
     ].map((match) => path.join(bootstrap, `${match[1]}.ts`));
 
-    const credentialProviders = ["HubSpot", "GitHub", "Paytm", "Slack"].map(
-      (name) => path.join(bootstrap, `create${name}CredentialProvider.ts`),
+    const credentialProviders = ["HubSpot", "GitHub"].map((name) =>
+      path.join(bootstrap, `create${name}CredentialProvider.ts`),
     );
 
     const files = [registry, ...imported, ...credentialProviders].filter(
       (file) => existsSync(file),
     );
 
-    expect(files.length).toBeGreaterThanOrEqual(9);
+    // Registry plus the HubSpot and GitHub bootstrap files. Paytm and Slack were removed from core (ADR-0018).
+    expect(files.length).toBe(7);
 
     const decisive = new Set(
       files

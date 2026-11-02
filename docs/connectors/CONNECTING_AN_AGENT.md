@@ -7,7 +7,7 @@ This guide lives on the docs site, so there is one copy to keep current:
 
 It covers what an agent needs (a capability, a scoped key, the policy in effect, a signed human
 approval), how to build and send the request, and every response the server can return.
-`examples/tutorials/111-connect-an-agent/` runs the documented request contract end to end.
+Tutorial 111 (connect an agent) was removed on 2026-11-02 with the Paytm connector (ADR-0018). The documented request contract is covered by the tests in `packages/api/tests`.
 
 For an AI agent integrating Parmana, read
 [Integrate Parmana: specification for AI agents](https://docs.parmanasystems.com/agents/integrate).
