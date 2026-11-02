@@ -5,7 +5,9 @@ It uses a separate test database and test keys, and holds no real partner's key.
 
 ## 1. Database (test project only)
 
-- Use a Supabase project that is **not** the production or sandbox project.
+- Use the `parmana-connectors and sandbox` Supabase project. It is the only project on the free plan
+  with room for this, and the owner has approved sharing it. Test rows from this API live alongside the
+  sandbox data, so clear them out regularly (`inbound_decisions` and `inbound_outcomes`).
 - Apply the migrations in order, then check each table:
 
   ```sql
