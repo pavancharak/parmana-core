@@ -105,3 +105,18 @@ expiresAt, audience, signature }`, signed with Parmana's key. Expiry is short (1
 6. **Production is not approved.** The test service uses the sandbox database, which is labelled
    production, and test keys. Live use needs its own decision, a separate database, and key
    ceremony under `docs/runbooks/CREDENTIAL-CEREMONY.md`.
+
+## Production status (2026-11-02)
+
+| Item                                                              | State                                                                                                          |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Production API `parmana-api-real` (Vercel)                        | Live. Health `UP` after redeploy.                                                                              |
+| `INBOUND_AUDIENCE` on production                                  | Set to `refunds.parmanasystems.com`, Config type.                                                              |
+| Production database `parmana-production-db`                       | `inbound_decisions` and `inbound_outcomes` applied and checked with `to_regclass`.                             |
+| Production keys (`PARMANA_KEY_MATERIAL_JSON`, `PARMANA_API_KEYS`) | Set earlier. Contents not re-verified in this record. The key ceremony runbook (PR #281) governs any new keys. |
+| Inbound route answering an authenticated request on production    | Not yet verified. Checked when the first production grant exists.                                              |
+| Production partner grants                                         | None. No inbound decision can be issued on production yet.                                                     |
+| Partner onboarding                                                | Documented in `for-pilots/docs/PARTNER-ONBOARDING.md`.                                                         |
+
+Open: live Razorpay keys for the pilot; a persistent store for pilot records; the production order
+feed; and the ceremony PR #281 review.
