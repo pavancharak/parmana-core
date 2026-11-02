@@ -142,6 +142,9 @@ const examples = [
   "examples/scenarios/expense-approval/run.ts",
   "examples/scenarios/purchase-order/run.ts",
   "examples/04-verified-execution/run.ts",
+  "examples/05-inbound-decision/run.ts",
+  "examples/06-inbound-outcome/run.ts",
+  "examples/07-inbound-refund-flow/run.ts",
 ];
 
 //

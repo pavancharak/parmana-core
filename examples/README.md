@@ -19,6 +19,9 @@ examples/
 │   └── AS-001-approved-vendor-payment   an example audit package (all evidence from one run)
 ├── shared/                 helper functions, reference policies, common transactions
 ├── 04-verified-execution/  runs its own receiving-side HTTP server on a free port
+├── 05-inbound-decision/    RFC-0025: Parmana decides an inbound refund request (approve, reject, no grant)
+├── 06-inbound-outcome/     RFC-0025: the partner reports the outcome; each decision takes one
+├── 07-inbound-refund-flow/ RFC-0025: the whole inbound refund, end to end (refund is simulated)
 └── archive/                superseded examples, kept for history only
 ```
 
