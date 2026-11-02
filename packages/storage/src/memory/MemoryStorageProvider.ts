@@ -12,6 +12,7 @@ import type {
   PolicyChangeApprovalRecordRepository,
   RefusalRecordRepository,
   InboundDecisionRepository,
+  InboundOutcomeRepository,
 } from "@parmana/shared";
 
 import type { StorageProvider } from "../StorageProvider.js";
@@ -23,6 +24,7 @@ import { MemoryExecutionTrustRecordRepository } from "./MemoryExecutionTrustReco
 import { MemoryExecutionIntentRepository } from "./MemoryExecutionIntentRepository.js";
 import { MemoryRefusalRecordRepository } from "./MemoryRefusalRecordRepository.js";
 import { MemoryInboundDecisionRepository } from "./MemoryInboundDecisionRepository.js";
+import { MemoryInboundOutcomeRepository } from "./MemoryInboundOutcomeRepository.js";
 
 import { MemoryPendingPolicyChangeRepository } from "./MemoryPendingPolicyChangeRepository.js";
 
@@ -49,6 +51,7 @@ export class MemoryStorageProvider implements StorageProvider {
 
   readonly refusalRecords: RefusalRecordRepository;
   readonly inboundDecisions: InboundDecisionRepository;
+  readonly inboundOutcomes: InboundOutcomeRepository;
 
   readonly executionIntents: ExecutionIntentRepository;
 
@@ -72,6 +75,7 @@ export class MemoryStorageProvider implements StorageProvider {
 
     this.refusalRecords = new MemoryRefusalRecordRepository();
     this.inboundDecisions = new MemoryInboundDecisionRepository();
+    this.inboundOutcomes = new MemoryInboundOutcomeRepository();
 
     this.executionIntents = new MemoryExecutionIntentRepository();
 

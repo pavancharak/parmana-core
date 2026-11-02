@@ -43,13 +43,11 @@ import { createVerifyGetRouter } from "./routes/verify-get.js";
 import { createVerifyRouter } from "./routes/verify.js";
 import { createRefusalVerifyRouter } from "./routes/refusal-verify.js";
 import { createInboundDecisionRouter } from "./routes/inbound-decisions.js";
-import {
-  createInboundOutcomeRouter,
-  type InboundOutcomeRecord,
-} from "./routes/inbound-outcomes.js";
+import { createInboundOutcomeRouter } from "./routes/inbound-outcomes.js";
 import {
   authorityGrantRepository,
   inboundDecisionRepository,
+  inboundOutcomeRepository,
 } from "./repositories.js";
 import {
   createExecutionIntentsRouter,
@@ -455,9 +453,6 @@ export function createApp(
    * Receipts
    */
   if (options.inboundDecisions) {
-    // Outcomes are held in memory until an outcome table exists (a later step); they are lost on restart.
-    const outcomes: InboundOutcomeRecord[] = [];
-    const recordedDecisions = new Set<string>();
     app.use(
       "/v1/inbound/outcomes",
       createInboundOutcomeRouter({
@@ -473,12 +468,11 @@ export function createApp(
             : null;
         },
         store: {
-          append: async (record) => {
-            if (recordedDecisions.has(record.decisionId)) return false;
-            recordedDecisions.add(record.decisionId);
-            outcomes.push(record);
-            return true;
-          },
+          append: (record) =>
+            inboundOutcomeRepository.append({
+              ...record,
+              recordedAt: new Date(record.recordedAt),
+            }),
         },
       }),
     );
