@@ -1,6 +1,6 @@
 # ADR-0020: The authority object extends AuthorityGrant
 
-**Status:** Proposed. Not accepted. Written for the operator to accept or change. No code changes until accepted.
+**Status:** Accepted on 2026-11-02 by the operator, with the three decisions below. No implementation yet; the decision-link change is the next piece of work and needs its own design check against the signed record format.
 
 **Relates to:** `docs/architecture/BUSINESS-AUTHORITY-BLUEPRINT.md` (phase 1, section 10); `docs/rfcs/` RFC-0023 (per-agent authority, phase 3); `packages/shared/src/domain/authority-grant.ts`; `packages/policy/src/types/Policy.ts` (`requireAuthorityGrant`).
 
@@ -49,11 +49,11 @@ Option B is deferred. It should be revisited only after a customer needs authori
 - The decision link adds a field to decision records. This is a change to the evidence format, so it needs a schema-version decision and tests against the verifier before it ships.
 - Option A does not give the organisation-wide view the blueprint describes. The blueprint should keep that as a planned item until B or C is chosen.
 
-## Open questions
+## Decisions
 
-1. Should the decision link be a new field in the signed decision record, or a separate linked record? A new field changes the signed bytes; a separate record needs its own integrity link.
-2. Should "required authority" be set per policy, per capability, or per organisation?
-3. Does delegation belong in this ADR, or in a later one for option B?
+1. **Decision link: a new field in the signed decision record, for new records only.** Each decision that consults a grant records the `grantId` and the change that created it inside the signed record. Existing records are not re-signed. The schema version change is stated in the implementation ADR or PR, and tests check the verifier against both old and new records.
+2. **Required authority: set per capability.** A capability listed as requiring authority needs a current grant, whatever the policy says. A policy cannot skip authority for a listed capability by omitting `requireAuthorityGrant`. The list is part of the organisation's configuration and is changed through the same maker-checker path.
+3. **Delegation: out of scope for this ADR.** It belongs with option B, the organisation-level authority object, if and when that is chosen.
 
 ## Not in scope
 
