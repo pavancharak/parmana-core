@@ -14,7 +14,8 @@ import { SupabaseInboundDecisionRepository } from "../../src/supabase/SupabaseIn
  * Refuses to run if TEST_DATABASE_URL is the same as DATABASE_URL, so production cannot be used
  * by mistake.
  */
-const url = process.env.TEST_DATABASE_URL;
+// Trimmed: a stray space or carriage return from a Windows-edited .env would break the database name.
+const url = process.env.TEST_DATABASE_URL?.trim();
 if (url && url === process.env.DATABASE_URL) {
   throw new Error(
     "TEST_DATABASE_URL equals DATABASE_URL. Point TEST_DATABASE_URL at a separate test database.",
