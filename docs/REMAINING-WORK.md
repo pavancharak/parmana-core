@@ -155,7 +155,12 @@ Taken from `docs/site/deployment/environment-variables.mdx`. Since 2026-11-01 th
 1. `KEY_PROVIDER`: `azure-key-vault`, `gcp-kms`, `hsm`. Refused.
 2. `PRIMARY_SIGNATURE_PROVIDER` and `SECONDARY_SIGNATURE_PROVIDER`: `ecdsa-p256`, `dilithium5`, `sphincs-plus`. Refused.
 3. `HASH_PROVIDER`: `sha3-512`, `blake3`. Refused.
-4. `PARMANA_STORAGE=postgres`. Not refused: it selects the implemented Postgres storage (`isPostgresStorage`). This item looks stale; confirm against a running Postgres before closing it.
+4. `PARMANA_STORAGE=postgres`. Not refused, and implemented. Verified 2026-11-01 against a local Postgres 16 with all 43 migrations applied: the server starts, `/ready` runs its `SELECT 1` check, and the live suites in `packages/storage/tests/integration` and `packages/api/tests/integration` pass (`ALLOW_LIVE_SUPABASE=1`, 391 tests, 3 skipped). The 3 skipped tests need external GitHub and HubSpot credentials. Not yet verified: the in-process HTTP suites run under `NODE_ENV=test`, which uses the in-memory nonce store, so a signed execution through a running server that consumes a nonce in Postgres is still open. Only the nonce store unit-level live test writes to `consumed_nonces`. The item stays open until that path is tested, and until a production database is checked.
+
+   Blocker found 2026-11-01: with `PARMANA_STORAGE=postgres` the server reads policies from the `policies` table (backfilled from `policies/` with `scripts/apply-policies-table-and-backfill.ts`), and refuses each one with `POLICY_DENIED` until a Policy Governance approval record exists. A fresh database has none, so a signed `POST /execute` through a running server is refused before any nonce is consumed.
+
+   The public log `governance/policy-approvals.jsonl` holds 45 real, signed approvals covering 33 policy versions, including `hubspot-deal-update` 1.1.0. `scripts/policy-approval-log.ts verify` reports the chain intact and every signature valid. The repo has no tool to load that log into a database: `export` only writes from a database to the log. Each approval record also needs its `pending_policy_changes` parent row, which the log does not contain. Rebuilding those rows by hand would fabricate governance records, so it was not done. The synthetic-approval backfill in `scripts/backfill-legacy-policy-approvals.ts` was not used either, because it approves policies under a system identity. Issue #186 says a governance approval is still needed; the log suggests the approval exists and the gap is the restore path. Confirm before acting on #186.
+
 5. `CRYPTO_MODE=pq`. Refused: no production code reads it.
 
 ## E. Tooling limits
