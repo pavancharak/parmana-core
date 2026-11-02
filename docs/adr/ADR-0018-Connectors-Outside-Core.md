@@ -1,6 +1,6 @@
 # ADR-0018: Connectors Outside Core
 
-**Status:** Proposed. Not accepted. Written for the operator to accept or change. Nothing in this record has been removed from the code yet.
+**Status:** Accepted by the operator on 2026-11-02. The migration below is the plan. No connector has been removed from core yet; each step starts only when its external version is ready.
 
 **Date:** Proposed 2026-10-29. Corrected 2026-11-02: the production statements below were wrong and have been removed.
 
