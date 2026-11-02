@@ -36,9 +36,8 @@ It uses a separate test database and test keys, and holds no real partner's key.
 ## 3. Render service
 
 - Type: web service, Node 24 or later.
-- Build command: `npm ci && npm run build --workspace=@parmana/api`
-- Start command: confirm the compiled entry point under `packages/api/dist` before the first deploy,
-  then run it with `node`. The API's `dev` script points at `src/server.ts`.
+- Build command: `npm ci && npm run build` (the root build, which also builds the shared and storage packages the API uses)
+- Start command: `node packages/api/dist/server.js` (confirmed: the build writes `server.js` to that folder).
 - Environment variables:
 
 | Name                        | Value                                        |
