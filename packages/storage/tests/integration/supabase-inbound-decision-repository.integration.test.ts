@@ -8,10 +8,18 @@ import { SupabaseInboundDecisionRepository } from "../../src/supabase/SupabaseIn
 
 /**
  * Runs against a real Postgres database with the inbound_decisions migration applied. Each test
- * runs inside a transaction that is rolled back, so nothing is left in the database. Skipped when
- * DATABASE_URL is not set.
+ * runs inside a transaction that is rolled back, so nothing is left in the database.
+ *
+ * Reads TEST_DATABASE_URL only, never DATABASE_URL. Skipped when TEST_DATABASE_URL is not set.
+ * Refuses to run if TEST_DATABASE_URL is the same as DATABASE_URL, so production cannot be used
+ * by mistake.
  */
-const url = process.env.DATABASE_URL;
+const url = process.env.TEST_DATABASE_URL;
+if (url && url === process.env.DATABASE_URL) {
+  throw new Error(
+    "TEST_DATABASE_URL equals DATABASE_URL. Point TEST_DATABASE_URL at a separate test database.",
+  );
+}
 
 function record(
   overrides: Partial<InboundDecisionRecord> = {},
