@@ -1,6 +1,6 @@
 # RFC-0025 — Inbound decision issuance: Parmana issues the decision before an inbound refund
 
-Status: Draft (scoping; no implementation started)
+Status: Accepted for the test service. Implemented in steps 1 to 3 and the outcome endpoint; deployed to a test service. Not yet approved for production.
 
 Created: 2026-11-02
 
@@ -76,3 +76,32 @@ expiresAt, audience, signature }`, signed with Parmana's key. Expiry is short (1
 - The signature verifies with Parmana's public key, and the pilot's gate accepts it unchanged.
 - A decision with no matching caller, or a partner without a grant, is refused with 403.
 - Each issued decision appears in the record store.
+
+# Implementation status (2026-11-02)
+
+| Part                                        | Where                                                                     | State                                                                                             |
+| ------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Decision route `POST /v1/inbound/decisions` | `packages/api/src/routes/inbound-decisions.ts`, mounted in `app.ts`       | Built, 8 unit tests. Mounted only when `INBOUND_AUDIENCE` is set.                                 |
+| Limit from the grant                        | Authority grant `inbound:refund`, `parameters.amountInr.max`              | Built. Current, not revoked, within validity.                                                     |
+| Signing                                     | Gateway key from `PARMANA_KEY_MATERIAL_JSON`, id `PARMANA_GATEWAY_KEY_ID` | Built. Server refuses to start if the key is missing.                                             |
+| Decision table                              | `inbound_decisions` (migration `20261102120000`)                          | Applied to the sandbox database. Postgres tests pass there.                                       |
+| Outcome route `POST /v1/inbound/outcomes`   | `packages/api/src/routes/inbound-outcomes.ts`                             | Built, 9 unit tests. Stores through `inbound_outcomes` (migration `20261102130000`).              |
+| Outcome table                               | `inbound_outcomes`, one outcome per decision                              | Applied to the sandbox database. Postgres tests pass there.                                       |
+| Pilot                                       | `pavancharak/for-pilots`                                                  | Requests decisions and reports outcomes when `PARMANA_BASE_URL` and `PARMANA_CALLER_KEY` are set. |
+| Test service                                | Render, `https://parmana-core.onrender.com`                               | Live. Uses `PARMANA_STORAGE=supabase` and the sandbox database.                                   |
+| End-to-end                                  | Pilot to Parmana to Razorpay Test Mode                                    | Run once: decision `dec-59d145ea-6f7e-4dba-89d5-42b9e5755823`, refund `rfnd_TvAk5OOPhADmIh`.      |
+
+## Known gaps and limits
+
+1. **The decision does not sign the amount.** The gate checks the amount against the limit only.
+   Adding `amountInr` to the signed fields would bind the decision to one amount. Open.
+2. **Outcomes are not signed by Parmana.** They are stored, and the pilot's local log is
+   tamper-evident, but Parmana does not sign an outcome record. Open.
+3. **Grant changes lose their state if the store is in memory.** A redeploy cleared a pending
+   change. Set `PARMANA_STORAGE=supabase` on every hosted service. Mitigated by configuration; no
+   code change.
+4. **Step-up signatures expire after 120 seconds.** Sign and submit in one step.
+5. **Raw caller keys were pasted into a chat during setup.** Rotate them. Open.
+6. **Production is not approved.** The test service uses the sandbox database, which is labelled
+   production, and test keys. Live use needs its own decision, a separate database, and key
+   ceremony under `docs/runbooks/CREDENTIAL-CEREMONY.md`.
