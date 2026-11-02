@@ -2,7 +2,7 @@
 
 Version: 1.0
 
-Status: Public
+Status: Public 1.0
 
 ---
 
