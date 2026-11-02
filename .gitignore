@@ -145,3 +145,4 @@ PARMANA-OPS-CONTEXT.md
 
 # Local credential runbook: never commit
 nbfc-credentials-runbook.md
+.env.local
