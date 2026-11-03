@@ -142,6 +142,10 @@ PARMANA_API_KEYS*.json
 
 # Operator context notes (local only, never commit)
 PARMANA-OPS-CONTEXT.md
+CLAUDE.md
+docs/status/
+docs/BACKLOG.md
+examples/razorpay-agent-studio/FOUNDER-BOOK.md
 
 # Local credential runbook: never commit
 nbfc-credentials-runbook.md

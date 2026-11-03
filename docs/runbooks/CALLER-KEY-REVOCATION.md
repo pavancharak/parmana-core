@@ -100,5 +100,5 @@ Revoked key <first 12 characters>... for caller <callerId>. It is refused from t
 ## Related
 
 - `docs/VERIFICATION-GAPS.md`: G-127 (the restart window) and G-128 (credentials on the same host).
-- `docs/BACKLOG.md`: rows 51 and 52.
+- The operator's backlog, kept outside this repository: rows 51 and 52.
 - `docs/CLAIMS.md`: 2.16.
