@@ -4,39 +4,28 @@ Written 2 November 2026, end of day. Read this first when you come back.
 
 ADR-0018 (accepted 2 November 2026, PR #294) moves each vendor connector out of parmana-core into `parmana-connectors`, one at a time. Each step has three parts: the module in `parmana-connectors`, the registration in core (maker and checker), then the removal from core.
 
-## Where things stand
+## Where things stand (updated 3 November 2026)
 
-- **Moved out and merged:** Zerodha (removed from core, PR #295), Slack (removed, PR #296). Razorpay, Paytm, Slack, GitHub, HubSpot and Zerodha (paper only) are all on `main` in `parmana-connectors`.
-- **In progress:** Paytm removal. Branch `claude/remove-paytm-from-core`, commit `1e98c81`, pushed but not signed and not yet a PR.
+- **Moved out and merged:** Zerodha (PR #295), Slack (PR #296), Paytm (PR #297). Razorpay, Paytm, Slack, GitHub, HubSpot and Zerodha (paper only) are all on `main` in `parmana-connectors`.
 - **Still in core:** GitHub and HubSpot.
-- **Lost coverage:** seven tests that checked core's execution gate through the Paytm connector (proof-audit tests 1 to 4 and their helper, and three integration tests) were removed with your approval. Core's gate is still covered by the remaining tests. Rewriting them against a core test connector is open.
+- **Coverage lost on purpose (operator approved):**
+  - seven tests that checked core's execution gate through the Paytm connector (proof-audit tests 1 to 4 and their helper, and three integration tests);
+  - the approval-email integration test (its unit tests remain);
+  - the offline check (`docker-compose.offline-check.yml` and `docker/local/offline-check/`), which ran a Paytm refund through the whole stack.
+    Rewriting the gate tests against a core test connector is open.
 - **Nothing is live:** no live traffic, no vendor credentials in production, no live money.
 
 ## Do these first tomorrow
 
-1. **Sign and open the Paytm removal PR.** From `D:\last\parmana-core`:
+1. **Razorpay registration in core.** You are the maker. Mamta is the checker and approves with her own key. This needs the Razorpay preview signed-release test first (see `parmana-connectors/RESUME.md`).
 
-   ```bash
-   git fetch origin main
-   git fetch origin claude/remove-paytm-from-core
-   git checkout claude/remove-paytm-from-core
-   git config user.signingkey EA52495306CAD70F
-   git rebase --exec "git commit --amend --no-edit -S -s" origin/main
-   git log --format="%h %G? %s" origin/main..HEAD
-   git push --force-with-lease origin claude/remove-paytm-from-core
-   ```
-
-   The `git log` should show one commit with `G`. Then ask Claude to open the PR, and merge it once the checks pass.
-
-2. **Razorpay registration in core.** You are the maker. Mamta is the checker and approves with her own key. This needs the Razorpay preview signed-release test first (see `parmana-connectors/RESUME.md`).
-
-3. **Check the live registrations** in the running core, and record which connectors are registered before removing any more.
+2. **Check the live registrations** in the running core, and record which connectors are registered before removing any more.
 
 ## Remaining steps, in order
 
 - **GitHub:** registration approved, then removal PR from core.
 - **HubSpot:** registration approved, then removal PR from core.
-- **Core gate tests:** rewrite the seven removed tests against a core test connector, if you want core's gate proven by its own tests again.
+- **Core gate tests:** rewrite the removed gate tests against a core test connector, if you want core's gate proven by its own tests again.
 
 ## Notes
 
