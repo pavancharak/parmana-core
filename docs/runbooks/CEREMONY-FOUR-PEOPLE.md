@@ -23,15 +23,15 @@ The runbook requires at least two people. This run uses four, so that no one hol
 
 ## 2. Roles and responsibilities
 
-| Role                 | Person (this run) | Caller id       | Machine    | Capabilities on the key                 | Responsible for                                                                                                              |
-| -------------------- | ----------------- | --------------- | ---------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Maker                | Pavan             | `maker-pavan`   | Pavan's    | none                                    | Generates the maker key. Proposes changes to the key list, and to policies. Sends only the entry file.                       |
-| Checker              | Mamta             | `checker-mamta` | Mamta's    | none, plus a step-up key                | Generates the checker key and its step-up key pair. Keeps the step-up private key on her machine. Sends only the entry file. |
-| Operator A           | Asha              | `operator-a`    | Asha's     | `kill-switch:trip`, `kill-switch:reset` | Generates the operator A key. Can trip the kill switch. Sends only the entry file.                                           |
-| Operator B           | Mohinder          | `operator-b`    | Mohinder's | `kill-switch:reset`                     | Generates the operator B key. Confirms a reset with operator A. Sends only the entry file.                                   |
-| Operator (assembler) | Pavan             | —               | Pavan's    | —                                       | Collects the four entry files, checks the list, replaces the live list, redeploys, and checks each caller.                   |
+| Role       | Person (this run) | Caller id       | Machine    | Capabilities on the key                 | Responsible for                                                                                                                                       |
+| ---------- | ----------------- | --------------- | ---------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Maker      | Pavan             | `maker-pavan`   | Pavan's    | none                                    | Generates the maker key. Proposes changes to the key list, and to policies. Sends only the entry file.                                                |
+| Checker    | Mamta             | `checker-mamta` | Mamta's    | none, plus a step-up key                | Generates the checker key and its step-up key pair. Keeps the step-up private key on her machine. Sends only the entry file.                          |
+| Operator A | Asha              | `operator-a`    | Asha's     | `kill-switch:trip`, `kill-switch:reset` | Generates the operator A key. Can trip the kill switch. Sends only the entry file.                                                                    |
+| Operator B | Mohinder          | `operator-b`    | Mohinder's | `kill-switch:reset`                     | Generates the operator B key. Confirms a reset with operator A. Sends only the entry file.                                                            |
+| Assembler  | Shalini           | —               | Shalini's  | none, holds no key                      | Collects the four entry files, checks the list, replaces the live list, redeploys, and checks each caller. Needs Vercel access to `parmana-api-real`. |
 
-Pavan is both the maker and the assembler. That is not a second role for the purpose of the rule: the assembler only handles public entry files and runs the Vercel commands. The assembler never generates a key for another role. If this is not accepted, a fifth person should assemble.
+The assembler is Shalini. She holds no key and generates none, so the four key roles are held by four different people. She handles only public entry files and runs the Vercel commands. Five people are involved in total: the four key holders and the assembler.
 
 The live caller `kill-switch-probe` (`kill-switch:probe`) belongs to the scheduled probe workflow, not to this ceremony. It is kept in the list (see section 6).
 
@@ -67,7 +67,7 @@ The `parmana-entries` folder is only needed by the assembler. The other people c
 
 ---
 
-## 5. Step 0: Check production is clear (assembler)
+## 5. Step 0: Check production is clear (any operator, or the assembler with a valid key)
 
 ```powershell
 curl.exe -s "$env:PARMANA_URL/ready"
@@ -80,7 +80,7 @@ Expect `/ready` to return `READY`, and the status to show `"active":false` with 
 
 ## 6. Generate the keys (each holder, on their own machine)
 
-Each holder runs only their own block below, and sends only the entry file to the assembler.
+Each holder runs only their own block below, and sends only the entry file to the assembler, Shalini.
 
 ### 6.1 Maker (Pavan)
 
@@ -98,7 +98,7 @@ Expect `key length: 43`. Anything else means the capture failed: run the block a
 1. Save the key in the password manager under the maker's name.
 2. Clear the clipboard: `Set-Clipboard -Value " "`.
 3. Clear the variables: `Remove-Variable k, out`.
-4. Send the assembler `maker-pavan.json` only.
+4. Send Shalini (assembler) `maker-pavan.json` only.
 
 ### 6.2 Checker (Mamta)
 
@@ -120,7 +120,7 @@ Expect `key length: 43` and one matching `BEGIN PRIVATE KEY` line. Then:
 
 1. Save the key and the step-up PEM (the whole block shown in the terminal) in the password manager.
 2. Clear the clipboard and variables: `Set-Clipboard -Value " "`, `Remove-Variable k, out, pem`.
-3. Send the assembler `checker-mamta.json` only. Its `stepUpPublicKey` is inside it.
+3. Send Shalini (assembler) `checker-mamta.json` only. Its `stepUpPublicKey` is inside it.
 
 ### 6.3 Operator A (Asha)
 
@@ -133,7 +133,7 @@ $k = (($out | Where-Object { $_ -match '^Key\s+:' }) -replace '^Key\s+:\s*', '')
 Set-Clipboard -Value $k
 ```
 
-Expect `key length: 43`. Save the key in the password manager, clear the clipboard and variables, and send the assembler `operator-a.json` only.
+Expect `key length: 43`. Save the key in the password manager, clear the clipboard and variables, and send Shalini (assembler) `operator-a.json` only.
 
 ### 6.4 Operator B (Mohinder)
 
@@ -146,11 +146,11 @@ $k = (($out | Where-Object { $_ -match '^Key\s+:' }) -replace '^Key\s+:\s*', '')
 Set-Clipboard -Value $k
 ```
 
-Expect `key length: 43`. Save the key, clear the clipboard and variables, and send the assembler `operator-b.json` only.
+Expect `key length: 43`. Save the key, clear the clipboard and variables, and send Shalini (assembler) `operator-b.json` only.
 
 ---
 
-## 7. Assemble the entries (assembler: Pavan)
+## 7. Assemble the entries (assembler: Shalini)
 
 Put the four entry files in `%USERPROFILE%\parmana-entries`. Keep the `kill-switch-probe` entry (see section 8). Move these entries out of the folder into `%USERPROFILE%\parmana-entries-archive`, not deleted:
 
@@ -186,7 +186,7 @@ Save it as `%USERPROFILE%\parmana-entries\kill-switch-probe.json`, one line, ASC
 
 ---
 
-## 9. Replace the live key list (assembler)
+## 9. Replace the live key list (assembler: Shalini)
 
 If the `add` step fails, every key is rejected until the list is restored. If it fails, run the `add` again with the same `$value` straight away. Only run `rm` again after an `add` failure.
 
@@ -200,7 +200,7 @@ Expect `Added PARMANA_API_KEYS`. Record the time in the ceremony log.
 
 ---
 
-## 10. Redeploy from current main (assembler)
+## 10. Redeploy from current main (assembler: Shalini)
 
 The runbook requires production to be deployed from a current checkout of `main`.
 
@@ -263,12 +263,12 @@ Tick the checklist (runbook section 16).
 
 ## 14. Who sends what, and when
 
-| Order | Who      | Sends                    | Receives              |
-| ----- | -------- | ------------------------ | --------------------- |
-| 1     | Mamta    | `checker-mamta.json`     | —                     |
-| 2     | Mohinder | `operator-b.json`        | —                     |
-| 3     | Asha     | `operator-a.json`        | —                     |
-| 4     | Pavan    | `maker-pavan.json` (own) | all three files above |
+| Order | Who      | Sends                | Receives |
+| ----- | -------- | -------------------- | -------- |
+| 1     | Mamta    | `checker-mamta.json` | Shalini  |
+| 2     | Mohinder | `operator-b.json`    | Shalini  |
+| 3     | Asha     | `operator-a.json`    | Shalini  |
+| 4     | Pavan    | `maker-pavan.json`   | Shalini  |
 
 Mamta, Mohinder and Asha can generate their keys in any order, but each sends only after their own block has printed `key length: 43`. Never send a private key, a raw key, or a clipboard copy of either.
 
