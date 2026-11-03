@@ -32,8 +32,7 @@ built `dist/` output; `npm test` refuses to run against stale output.
 
 No `.env` is needed. The test setup uses the same local defaults as CI (the committed
 `./policies`, in memory storage, local Ed25519 keys generated per run) unless you set them
-yourself. Suites that need live services (HubSpot, Supabase) skip cleanly. Expect roughly
-2,800 passing tests and about 50 skipped.
+yourself. Suites that need live services (HubSpot, Supabase) skip cleanly. Expect 3,524 passing tests and 83 skipped, as recorded below.
 
 ## 2. Run the examples
 
@@ -91,6 +90,35 @@ EV-04 covers prompt injection by its effect, not by detecting it: whatever an in
 sends, an action that needs approval is not authorized without a signed approval from a trusted
 person. These are tests of the code in this repository, run locally. They do not test a
 deployment's configuration, its key custody or its network.
+
+### Recorded results
+
+Recorded on 3 November 2026 from a clean working tree at commit `7c00042`, with Node.js 24.22.2.
+The run is reproducible: `npm run evaluate` writes the same commit, tree state and policy hash to
+`evaluation-report.json`.
+
+| ID    | Attack                                                                      | Result  | Tests |
+| ----- | --------------------------------------------------------------------------- | ------- | ----- |
+| EV-01 | Replay a used authorization                                                 | BLOCKED | 36    |
+| EV-02 | Forge or alter an authorization                                             | BLOCKED | 36    |
+| EV-03 | Use an expired authorization or a revoked key                               | BLOCKED | 29    |
+| EV-04 | Act without a person's signed approval (for example after prompt injection) | BLOCKED | 43    |
+| EV-05 | Forge or misuse an approval                                                 | BLOCKED | 58    |
+| EV-06 | Declare one action, execute another                                         | BLOCKED | 9     |
+| EV-07 | Have an action judged by a weaker policy                                    | BLOCKED | 31    |
+| EV-08 | Execute under an outdated policy version                                    | BLOCKED | 7     |
+| EV-09 | Rely on facts that changed after approval (time of check, time of use)      | BLOCKED | 10    |
+| EV-10 | Obtain a connector's credentials                                            | BLOCKED | 5     |
+| EV-11 | Reach a connector without going through the gateway                         | BLOCKED | 147   |
+| EV-12 | Act without credentials or outside a caller's scope                         | BLOCKED | 51    |
+| EV-13 | Change a policy without a second person                                     | BLOCKED | 46    |
+| EV-14 | Alter a signed record after the fact                                        | BLOCKED | 24    |
+| EV-15 | Run the same transaction twice by racing                                    | BLOCKED | 2     |
+| EV-16 | Read or write a policy file outside the policy directory                    | BLOCKED | 21    |
+
+All 16 are BLOCKED. Two of them, EV-04 and EV-10, were NOT RUN for a time, because the tests that proved
+them were removed with the Paytm and HubSpot connectors. New tests against the core test connector, added in
+PR #315, now prove them, and the scenarios point at those tests.
 
 ## 4. Run it yourself
 
