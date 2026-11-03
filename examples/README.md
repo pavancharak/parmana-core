@@ -22,7 +22,6 @@ examples/
 ├── 05-inbound-decision/    RFC-0025: Parmana decides an inbound refund request (approve, reject, no grant)
 ├── 06-inbound-outcome/     RFC-0025: the partner reports the outcome; each decision takes one
 ├── 07-inbound-refund-flow/ RFC-0025: the whole inbound refund, end to end (refund is simulated)
-└── archive/                superseded examples, kept for history only
 ```
 
 ---
