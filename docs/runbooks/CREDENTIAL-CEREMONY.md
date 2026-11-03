@@ -162,9 +162,11 @@ Put every entry file in `%USERPROFILE%\parmana-entries`:
 - `operator-a.json` (created on this machine in step 4)
 - `operator-b.json` from operator B
 
-Keep the existing entries already in the folder: `razorpay-demo-agent.json` and, unless the exception below applies, `paytm-refund-agent.json`. Replacing the key list drops every caller that is missing, so none may be left out.
+Keep the existing entries already in the folder, except the two callers named in the exception below. Replacing the key list drops every caller that is missing, so none may be left out.
 
-**Exception: `paytm-refund-agent` removed (decided by the operator, 3 November 2026).** Paytm was removed from core in parmana-core #297, so this caller has no live use. Its entry is moved out of the folder, to an archive folder, and not included in the list. The removal is recorded in section 14. Every other step is unchanged.
+**Exception: `paytm-refund-agent` and `razorpay-demo-agent` removed (decided by the operator, 3 November 2026).** Paytm was removed from core in parmana-core #297, so `paytm-refund-agent` has no live use. There is no live demo, so `razorpay-demo-agent` has no live use either. Their entries are moved out of the folder, to an archive folder, and not included in the list. The removals are recorded in section 14. Every other step is unchanged.
+
+**Order matters for `razorpay-demo-agent`:** the kill-switch drill in section 13 (13.2) sends a request with its key. Run section 13 before this caller is removed, or give the drill another key first. Do not remove the key while the drill still needs it.
 
 **Stand-in for operator B (2026-10-24, approved).** While the real `operator-b` is not yet available, the folder may hold a stand-in `operator-b.json`: an entry generated with `--credential-holder-type USER` and no `--allowed-capabilities`, whose printed key was discarded. It has no capabilities, so it cannot trip, reset or probe, and a two-person reset still needs a second real operator. Replace it with the real entry (with `kill-switch:reset`) as soon as that operator is available, then redeploy and re-run the probe. Gap log G-122 records this.
 
@@ -176,7 +178,7 @@ $entries = @(Get-ChildItem "$env:USERPROFILE\parmana-entries\*.json" | ForEach-O
 $entries | ForEach-Object { "{0}  capabilities={1}" -f $_.callerId, ($_.allowedCapabilities -join ",") }
 ```
 
-Check that the expected callers appear: `maker-<name>`, `checker-<name>`, `operator-a`, `operator-b`, `razorpay-demo-agent`, and `paytm-refund-agent` unless the exception above applies. If one is missing without the exception, stop.
+Check that the expected callers appear: `maker-<name>`, `checker-<name>`, `operator-a`, `operator-b`, and not `paytm-refund-agent` or `razorpay-demo-agent`, which the exception above removes. If any other caller is missing, stop.
 
 ---
 
