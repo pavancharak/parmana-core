@@ -149,3 +149,8 @@ examples/razorpay-agent-studio/FOUNDER-BOOK.md
 
 # Local credential runbook: never commit
 nbfc-credentials-runbook.md
+
+# Operator status and registration notes (local only)
+docs/RESUME-STATUS.md
+docs/RESUME-CONNECTOR-MIGRATION.md
+docs/REGISTRATIONS-PENDING.md
