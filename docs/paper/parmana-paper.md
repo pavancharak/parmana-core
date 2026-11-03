@@ -6,7 +6,7 @@ date: "6 October 2026"
 
 > Also on the docs site: https://docs.parmanasystems.com/evaluation/paper. Every number and claim is taken from
 > [CLAIMS.md](../CLAIMS.md), [THREAT-MODEL.md](../../THREAT-MODEL.md), [VERIFICATION-GAPS.md](../VERIFICATION-GAPS.md)
-> and [MUTATION-TESTING.md](../MUTATION-TESTING.md) as of the date above; those files are the current record.
+> and [MUTATION-TESTING.md](../testing/MUTATION-TESTING.md) as of the date above; those files are the current record.
 
 ## Abstract
 

@@ -104,7 +104,7 @@ Change the published-version statements, and nothing else that is historical:
 - `docs/site/choose-your-path.mdx`, `docs/site/build-book/overview.mdx`: the version table and the published date.
 - `docs/site/verification/offline-verifier.mdx`: the verifier version line.
 - `docs/site/security/overview.mdx`: the `slsa-verifier` example and the file list.
-- `docs/CURRENT-STATE.md`, `docs/REMAINING-WORK.md`: the current release status.
+- `docs/project/CURRENT-STATE.md`, `docs/REMAINING-WORK.md`: the current release status.
 - `README.md` (the Packages section) and `parmana-verifier/README.md` (the Published versions line).
 
 Do not rewrite these historical records: `docs/CLAIMS.md`, older changelog entries, and older dated sections of `REMAINING-WORK.md`. If a historical statement needs correcting, add a dated update line.

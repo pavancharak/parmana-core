@@ -1,4 +1,4 @@
-# Contributing to Parmana
+﻿# Contributing to Parmana
 
 Thank you for helping. Parmana decides whether an automated action may run, and records the evidence for that decision. Correctness, determinism and verifiable evidence come before convenience, so every change is reviewed carefully. This guide takes you from a fresh clone to an accepted pull request.
 
@@ -38,7 +38,7 @@ Thank you for helping. Parmana decides whether an automated action may run, and 
 3. **Run the full check.** The pre-commit hook runs gitleaks, typecheck, lint, format, every test, the build and the runnable examples. CI runs the same. If the hook reports stale build output, run `npm run build` and commit again.
 4. **Commit with a sign-off and a GPG signature.** See [Commit requirements](#commit-requirements).
 5. **Open a pull request** and fill in the template, which asks what changed and why.
-6. **Review.** A second reviewer approves the pull request. Security-critical code gets an in-depth review; [docs/REVIEWING.md](docs/REVIEWING.md) is the reviewer's brief.
+6. **Review.** A second reviewer approves the pull request. Security-critical code gets an in-depth review; [docs/contributing/REVIEWING.md](docs/contributing/REVIEWING.md) is the reviewer's brief.
 
 ## Commit requirements
 

@@ -518,7 +518,7 @@ Scope: gap G-52 found in the live refund run. It is mitigated here, not closed. 
 
 Scope: a read of the source on 2026-09-25, as the first step of offering a deployment the
 customer runs next to the hosted API on Vercel, then the build that closed what the read found.
-The summary of the deployment is in `docs/CURRENT-STATE.md`, section "Self hosted deployment",
+The summary of the deployment is in `docs/project/CURRENT-STATE.md`, section "Self hosted deployment",
 and the operator guide is `DEPLOYMENT.md`, section "Self hosted with Docker Compose".
 
 **Where it was verified:** Docker Desktop 29.8.0 on Windows 11, 2026-09-25, and on Linux in
@@ -2943,7 +2943,7 @@ not via any HTTP path this server currently exposes:**
   configuration this repo wires up: `DefaultConnectorPolicy.assertAllowed()` runs the
   identical check earlier in the same call chain and always wins first.
 
-**Update (2026-10-06):** the `SdkConnectorExecutor` branches named above are now tested directly: version mismatch, an unavailable connector, an undeclared capability and a raw credential (`packages/execution-gateway/tests/unit/sdk-connector-executor.exact.test.ts`, from mutation testing, `docs/MUTATION-TESTING.md`).
+**Update (2026-10-06):** the `SdkConnectorExecutor` branches named above are now tested directly: version mismatch, an unavailable connector, an undeclared capability and a raw credential (`packages/execution-gateway/tests/unit/sdk-connector-executor.exact.test.ts`, from mutation testing, `docs/testing/MUTATION-TESTING.md`).
 
 **G-9. `ExecutionControlService` and `SessionCredentialSecureConnector` each independently
 audit-log the same execution** (confirmed directly this pass while writing the new
