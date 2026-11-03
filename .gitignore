@@ -154,3 +154,11 @@ nbfc-credentials-runbook.md
 docs/RESUME-STATUS.md
 docs/RESUME-CONNECTOR-MIGRATION.md
 docs/REGISTRATIONS-PENDING.md
+=======
+# Operator-only runbooks and notes (local only)
+docs/runbooks/CREDENTIAL-CEREMONY.md
+docs/runbooks/CEREMONY-FIVE-PEOPLE.md
+docs/runbooks/PRODUCTION-KEY-CEREMONY.md
+docs/runbooks/RAZORPAY-STATUS.md
+docs/SIGNING-WORK-SUMMARY.md
+
