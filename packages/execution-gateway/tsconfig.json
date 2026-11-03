@@ -20,7 +20,6 @@
     { "path": "../execution-control" },
     { "path": "../policy" },
     { "path": "../execution-system" },
-    { "path": "../connector-sdk" },
-    { "path": "../connector-hubspot" }
+    { "path": "../connector-sdk" }
   ]
 }

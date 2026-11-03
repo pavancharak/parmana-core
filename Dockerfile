@@ -23,7 +23,6 @@ COPY package.json package-lock.json ./
 COPY packages/api/package.json packages/api/package.json
 COPY packages/approval/package.json packages/approval/package.json
 COPY packages/capability-registry/package.json packages/capability-registry/package.json
-COPY packages/connector-hubspot/package.json packages/connector-hubspot/package.json
 COPY packages/connector-sdk/package.json packages/connector-sdk/package.json
 COPY packages/crypto/package.json packages/crypto/package.json
 COPY packages/envelope-verifier/package.json packages/envelope-verifier/package.json
@@ -73,7 +72,6 @@ COPY package.json package-lock.json ./
 COPY packages/api/package.json packages/api/package.json
 COPY packages/approval/package.json packages/approval/package.json
 COPY packages/capability-registry/package.json packages/capability-registry/package.json
-COPY packages/connector-hubspot/package.json packages/connector-hubspot/package.json
 COPY packages/connector-sdk/package.json packages/connector-sdk/package.json
 COPY packages/crypto/package.json packages/crypto/package.json
 COPY packages/envelope-verifier/package.json packages/envelope-verifier/package.json
