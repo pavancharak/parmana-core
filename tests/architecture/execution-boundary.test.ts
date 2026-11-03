@@ -249,8 +249,10 @@ describe("execution boundary — exactly one production execution pipeline", () 
       name.startsWith("connector-"),
     );
 
-    it("found at least the known connector packages", () => {
-      expect(connectorPackages.length).toBeGreaterThanOrEqual(2);
+    // Vendor connectors left core (ADR-0018). connector-sdk is the one left,
+    // so this checks only that the scan finds at least one connector package.
+    it("found at least one connector package", () => {
+      expect(connectorPackages.length).toBeGreaterThanOrEqual(1);
     });
 
     for (const pkg of connectorPackages) {
