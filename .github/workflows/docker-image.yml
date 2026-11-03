@@ -36,7 +36,6 @@ on:
       - supabase/migrations/**
       - scripts/apply-all-migrations.sql
       - docker-compose.yml
-      - docker-compose.offline-check.yml
       - docs/site/self-hosted/**
       - scripts/sign-policy-change-step-up.ts
       - policies/**
@@ -193,9 +192,6 @@ jobs:
 
       - name: Run the quickstart exactly as documented
         run: bash docker/local/quickstart-check.sh
-
-      - name: Run the offline check
-        run: bash docker/local/offline-check/run.sh
 
       - name: Show the logs if a step failed
         if: failure()

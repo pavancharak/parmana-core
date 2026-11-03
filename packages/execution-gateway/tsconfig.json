@@ -22,7 +22,6 @@
     { "path": "../execution-system" },
     { "path": "../connector-sdk" },
     { "path": "../connector-hubspot" },
-    { "path": "../connector-github" },
-    { "path": "../connector-paytm" }
+    { "path": "../connector-github" }
   ]
 }

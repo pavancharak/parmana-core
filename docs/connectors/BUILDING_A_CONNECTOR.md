@@ -249,7 +249,7 @@ to a separate service that holds the credential, as `GatewayPaytmAdapter` does f
 the gateway, not which parameters were approved, and the remote service is a public endpoint.
 Sign a canonical string of the exact parameters with the gateway's key and have the remote
 service verify it against `GET /keys/:keyId` before acting. See
-`packages/connector-paytm/src/PaytmTypes.ts` (`canonicalPaytmAuthorizationString`,
+PaytmTypes.ts (removed 2026-11-02 with the Paytm connector, ADR-0018) (`canonicalPaytmAuthorizationString`,
 `PAYTM_AUTHORIZATION_SIGNATURE_TTL_MS`) and [PAYTM_CONNECTOR.md](./PAYTM_CONNECTOR.md).
 
 ## 9. Review checklist
@@ -331,5 +331,5 @@ suite was not run. This guide itself is never a claim.
   target and is in `SLACK_ALLOWED_CHANNEL_IDS`, and the adapter refuses a channel that is not the
   target. This is the pattern for a fact the server can check from its own configuration.
   Tutorials 111 (the caller side) and 112 (the connector end to end).
-- **Paytm** (out of process): `packages/connector-paytm/src/`, `GatewayPaytmAdapter.ts`,
+- **Paytm** (out of process): `packages/connector-paytm/src/`, GatewayPaytmAdapter.ts (removed 2026-11-02 with the Paytm connector, ADR-0018),
   [PAYTM_CONNECTOR.md](./PAYTM_CONNECTOR.md).

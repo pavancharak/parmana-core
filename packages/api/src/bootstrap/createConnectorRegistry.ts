@@ -28,18 +28,13 @@ import { externalConnectorRepository } from "../repositories.js";
 
 import { HubSpotMetadata } from "@parmana/connector-hubspot";
 import { GitHubMetadata } from "@parmana/connector-github";
-import { PaytmMetadata } from "@parmana/connector-paytm";
 import { createHubSpotConnector } from "./createHubSpotConnector.js";
 import { createHubSpotCredentialProvider } from "./createHubSpotCredentialProvider.js";
 import { createGitHubConnector } from "./createGitHubConnector.js";
 import { createGitHubCredentialProvider } from "./createGitHubCredentialProvider.js";
-import { createPaytmConnector } from "./createPaytmConnector.js";
-import { createPaytmCredentialProvider } from "./createPaytmCredentialProvider.js";
 import { createTestFixtureConnector } from "./createTestFixtureConnector.js";
 import { assertConnectorCapabilitiesBound } from "./assertConnectorCapabilitiesBound.js";
 import { warnIfHubSpotTokenStale } from "./warnIfHubSpotTokenStale.js";
-
-const DEFAULT_PAYTM_CONNECTOR_TIMEOUT_MS = 10_000;
 
 /**
  * Creates the production connector registry.
@@ -177,48 +172,6 @@ export function createConnectorRegistry(
       crypto,
 
       audit,
-    });
-  }
-
-  const paytmCredentialProvider = createPaytmCredentialProvider();
-
-  if (paytmCredentialProvider === undefined) {
-    console.warn({
-      event: "paytm_connector_unavailable",
-      reason:
-        "PAYTM_CONNECTOR_URL / PAYTM_CONNECTOR_SHARED_SECRET are not configured.",
-    });
-  } else {
-    const paytmTimeoutMs = Number(
-      process.env.PAYTM_CONNECTOR_TIMEOUT_MS ??
-        DEFAULT_PAYTM_CONNECTOR_TIMEOUT_MS,
-    );
-
-    registrations.push({
-      connector: createPaytmConnector(),
-
-      metadata: PaytmMetadata,
-
-      connectorIdentity: {
-        connectorId: "paytm",
-        publicIdentity: "spiffe://parmana/connectors/paytm-refund",
-        authenticationMetadata: {},
-      },
-
-      credentialProvider: paytmCredentialProvider,
-
-      policy: new DefaultConnectorPolicy(authenticator, sessions),
-
-      gatewayAuthentication,
-
-      crypto,
-
-      audit,
-
-      timeoutMs:
-        Number.isFinite(paytmTimeoutMs) && paytmTimeoutMs > 0
-          ? paytmTimeoutMs
-          : DEFAULT_PAYTM_CONNECTOR_TIMEOUT_MS,
     });
   }
 
