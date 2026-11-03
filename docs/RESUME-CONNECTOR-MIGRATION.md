@@ -7,7 +7,7 @@ ADR-0018 (accepted 2 November 2026, PR #294) moves each vendor connector out of 
 ## Where things stand (updated 3 November 2026)
 
 - **Moved out and merged:** Zerodha (PR #295), Slack (PR #296), Paytm (PR #297), GitHub (PR #299), HubSpot (PR #300). Razorpay, Paytm, Slack, GitHub, HubSpot and Zerodha (paper only) are all on `main` in `parmana-connectors`.
-- **Still in core:** no vendor connector. All of them are out of core.
+- **Still in core:** no production vendor connector. The connector SDK (`packages/connector-sdk`) still ships four sample vendor connectors (Oracle, Salesforce, SAP, Workday), which are not in the migration order.
 - **Registrations still open:** GitHub and HubSpot were removed from core before their registrations were approved (operator's decision, following the earlier removals). Mamta's checker approval is still needed before either one can run live from `parmana-connectors`.
 - **Coverage lost on purpose (operator approved):**
   - seven tests that checked core's execution gate through the Paytm connector (proof-audit tests 1 to 4 and their helper, and three integration tests);
