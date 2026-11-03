@@ -162,7 +162,11 @@ Put every entry file in `%USERPROFILE%\parmana-entries`:
 - `operator-a.json` (created on this machine in step 4)
 - `operator-b.json` from operator B
 
-Keep the existing entries already in the folder: `paytm-refund-agent.json` and `razorpay-demo-agent.json`. Replacing the key list drops every caller that is missing, so none may be left out.
+Keep the existing entries already in the folder, except the two callers named in the exception below. Replacing the key list drops every caller that is missing, so none may be left out.
+
+**Exception: `paytm-refund-agent` and `razorpay-demo-agent` removed (decided by the operator, 3 November 2026).** Paytm was removed from core in parmana-core #297, so `paytm-refund-agent` has no live use. There is no live demo, so `razorpay-demo-agent` has no live use either. Their entries are moved out of the folder, to an archive folder, and not included in the list. The removals are recorded in section 14. Every other step is unchanged.
+
+**Order matters for `razorpay-demo-agent`:** the kill-switch drill in section 13 (13.2) sends a request with its key. Run section 13 before this caller is removed, or give the drill another key first. Do not remove the key while the drill still needs it.
 
 **Stand-in for operator B (2026-10-24, approved).** While the real `operator-b` is not yet available, the folder may hold a stand-in `operator-b.json`: an entry generated with `--credential-holder-type USER` and no `--allowed-capabilities`, whose printed key was discarded. It has no capabilities, so it cannot trip, reset or probe, and a two-person reset still needs a second real operator. Replace it with the real entry (with `kill-switch:reset`) as soon as that operator is available, then redeploy and re-run the probe. Gap log G-122 records this.
 
@@ -174,7 +178,7 @@ $entries = @(Get-ChildItem "$env:USERPROFILE\parmana-entries\*.json" | ForEach-O
 $entries | ForEach-Object { "{0}  capabilities={1}" -f $_.callerId, ($_.allowedCapabilities -join ",") }
 ```
 
-Check that all six callers appear: `maker-<name>`, `checker-<name>`, `operator-a`, `operator-b`, `paytm-refund-agent`, `razorpay-demo-agent`. If one is missing, stop.
+Check that the expected callers appear: `maker-<name>`, `checker-<name>`, `operator-a`, `operator-b`, and not `paytm-refund-agent` or `razorpay-demo-agent`, which the exception above removes. If any other caller is missing, stop.
 
 ---
 
@@ -335,19 +339,19 @@ Verify after any change: `vercel env ls production` (both names, as Config), `np
 
 Record each step, the person, the date and the result. Do not record keys.
 
-| Step                                                   | Done by    | Date        | Result                                           |
-| ------------------------------------------------------ | ---------- | ----------- | ------------------------------------------------ |
-| 1. Production clear (`active:false`)                   |            |             |                                                  |
-| 2. Maker generated; entry sent                         |            |             |                                                  |
-| 3. Checker generated; step-up PEM saved; entry sent    |            |             |                                                  |
-| 4. Operator A generated (`key length: 43`)             | Operator A | 23 Oct 2026 | Done; key to password manager, clipboard cleared |
-| 5. Operator B generated; entry sent                    |            |             |                                                  |
-| 6. Entries assembled; list printed (six callers)       |            |             |                                                  |
-| 7. `PARMANA_API_KEYS` replaced                         |            |             |                                                  |
-| 8. Redeployed from `main`; `api\index.ts` check passed |            |             |                                                  |
-| 9. Each caller returns `200` on `/callers/me`          |            |             |                                                  |
-| 10. Drill (13.1 to 13.4) run or skipped, with reason   |            |             |                                                  |
-| 11. Keys pasted into chat rotated                      |            |             |                                                  |
+| Step                                                                 | Done by    | Date        | Result                                           |
+| -------------------------------------------------------------------- | ---------- | ----------- | ------------------------------------------------ |
+| 1. Production clear (`active:false`)                                 |            |             |                                                  |
+| 2. Maker generated; entry sent                                       |            |             |                                                  |
+| 3. Checker generated; step-up PEM saved; entry sent                  |            |             |                                                  |
+| 4. Operator A generated (`key length: 43`)                           | Operator A | 23 Oct 2026 | Done; key to password manager, clipboard cleared |
+| 5. Operator B generated; entry sent                                  |            |             |                                                  |
+| 6. Entries assembled; list printed (expected callers, see exception) |            |             |                                                  |
+| 7. `PARMANA_API_KEYS` replaced                                       |            |             |                                                  |
+| 8. Redeployed from `main`; `api\index.ts` check passed               |            |             |                                                  |
+| 9. Each caller returns `200` on `/callers/me`                        |            |             |                                                  |
+| 10. Drill (13.1 to 13.4) run or skipped, with reason                 |            |             |                                                  |
+| 11. Keys pasted into chat rotated                                    |            |             |                                                  |
 
 ---
 
@@ -357,7 +361,7 @@ Record each step, the person, the date and the result. Do not record keys.
 - [ ] Maker and checker generated on their own machines, by different people.
 - [ ] Operator A and operator B generated, by different people.
 - [ ] Every key saved to a password manager; clipboards cleared; no key in chat, email or a commit.
-- [ ] Entry files in `parmana-entries`; the printed list has all six callers.
+- [ ] Entry files in `parmana-entries`; the printed list has every expected caller (see the exception in section 8).
 - [ ] `PARMANA_API_KEYS` replaced; redeploy from current `main`; `Select-String` check passed.
 - [ ] Each caller's key returns `200` on `/callers/me`.
 - [ ] Drill run, or skipped with a reason.
