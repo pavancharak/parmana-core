@@ -14,7 +14,7 @@ project is held to, and the engineering references that code or tests cite.
   or wrong, how severe, and how and when it was closed.
 - **[REMAINING-WORK.md](REMAINING-WORK.md)**: what is left to do, including what needs the
   operator, and ideas considered but not built.
-- **[CURRENT-STATE.md](CURRENT-STATE.md)**: a short description of the system as it stands.
+- **[CURRENT-STATE.md](project/CURRENT-STATE.md)**: a short description of the system as it stands.
 - **[adr/](adr/)**: architecture decision records.
 - **[../04-INCIDENTS-LOG.md](../04-INCIDENTS-LOG.md)**: security and release incidents and
   their resolutions.
@@ -49,7 +49,7 @@ project is held to, and the engineering references that code or tests cite.
 - [../LICENSE](../LICENSE): Apache License 2.0.
 - [../SECURITY.md](../SECURITY.md): reporting a vulnerability.
 - [../THREAT-MODEL.md](../THREAT-MODEL.md): threats, controls, evidence and residual risk.
-- [MUTATION-TESTING.md](MUTATION-TESTING.md): mutation scores for the security packages, the
+- [MUTATION-TESTING.md](testing/MUTATION-TESTING.md): mutation scores for the security packages, the
   gaps they showed and what was fixed.
 - [../governance/README.md](../governance/README.md): the public, hash chained log of policy
   change approvals, and how to verify it.

@@ -172,7 +172,7 @@ Every report is listed once, here. Start with the question you have.
 
 - **Live CI runs:** every push runs the build, lint, typecheck and test suite. Results for each run are on the [CI workflow page](https://github.com/pavancharak/parmana-core/actions/workflows/ci.yml). To reproduce them, see [Quick start](#quick-start).
 - **Evaluation scenarios:** the 16 attack scenarios are in [evaluations/scenarios.json](evaluations/scenarios.json). [EVALUATION.md](EVALUATION.md) explains the result.
-- **Mutation testing:** [docs/MUTATION-TESTING.md](docs/MUTATION-TESTING.md) breaks the security code on purpose and checks that the tests notice. Fuzz tests send damaged and arbitrary requests, policies and records, and require a clear refusal, never a crash.
+- **Mutation testing:** [docs/testing/MUTATION-TESTING.md](docs/testing/MUTATION-TESTING.md) breaks the security code on purpose and checks that the tests notice. Fuzz tests send damaged and arbitrary requests, policies and records, and require a clear refusal, never a crash.
 
 **Security**
 
