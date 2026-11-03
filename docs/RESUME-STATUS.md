@@ -30,6 +30,18 @@ Status as of 3 November 2026. Read this first when you come back to this work. T
 - [ ] Register Razorpay, then GitHub, HubSpot and Slack. Each needs a maker proposal and a checker approval.
 - [ ] Rewrite the seven core gate tests that were removed with Paytm, against a core test connector, if core's gate should be covered by its own proof again.
 
+## Recommended order
+
+Do these in order. Each step depends on the one before it.
+
+1. **Confirm the registration mechanism with Mamta.** This is the first step. Nothing else starts until she agrees that a registration is the policy approval in `docs/runbooks/POLICY-CHANGE-APPROVAL.md`, or until a different process is agreed. Record the decision here.
+2. **Run the Razorpay preview signed-release test.** It needs a Vercel login and a local core, so the operator runs it. Record the result here.
+3. **Register Razorpay only.** Stop and review before any other connector.
+4. **Decide, for each of GitHub, HubSpot and Slack, whether it should run at all.** Their code is already out of core. Only after that decision, propose its registration.
+5. **Optional, not blocking:** rewrite the seven core gate tests removed with Paytm, against a core test connector. Decide whether the SDK's four sample vendor connectors stay in core. Open the parmana-verifier `dilithium3` PR (issues #27 and #28).
+
+Live money stays off until each connector has its own approval.
+
 ## Why
 
 A connector can change a real system, such as issuing a refund or updating a deal. A second person must approve that before it can run in production. The maker and checker roles keep those two steps separate, and the server enforces the separation.
