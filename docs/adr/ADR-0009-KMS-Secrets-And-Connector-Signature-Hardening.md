@@ -13,7 +13,7 @@ production bugs were found and fixed getting this live — none visible from cod
 only from testing against real Vercel/AWS/traffic — full detail in those documents and in
 `docs/VERIFICATION-GAPS.md` G-48/G-49.
 
-**Update (2026-09-15, later same day):** Provisioning Step 1 (IAM OIDC identity provider + role) is now also done — `arn:aws:iam::013659367671:role/parmana-vercel-kms-signer`, trust policy scoped to this specific Vercel project/environment (`parmana-api-real`, production only), least-privilege policy limited to `kms:Sign`/`kms:GetPublicKey`/`kms:DescribeKey` on the one gateway key. Not yet done: setting `AWS_ROLE_ARN`/`AWS_REGION`/`KEY_PROVIDER=aws-kms` on the actual Vercel project (Provisioning Step 3) and Step 4 (deleting `PARMANA_KEY_MATERIAL_JSON` once the above is live and verified) — see `ROADMAP.md`'s update for full detail.
+**Update (2026-09-15, later same day):** Provisioning Step 1 (IAM OIDC identity provider + role) is now also done — `arn:aws:iam::<aws-account-id>:role/parmana-vercel-kms-signer`, trust policy scoped to this specific Vercel project/environment (`parmana-api-real`, production only), least-privilege policy limited to `kms:Sign`/`kms:GetPublicKey`/`kms:DescribeKey` on the one gateway key. Not yet done: setting `AWS_ROLE_ARN`/`AWS_REGION`/`KEY_PROVIDER=aws-kms` on the actual Vercel project (Provisioning Step 3) and Step 4 (deleting `PARMANA_KEY_MATERIAL_JSON` once the above is live and verified) — see `ROADMAP.md`'s update for full detail.
 
 **Decision Makers:** Parmana Architecture Team
 

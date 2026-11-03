@@ -4,7 +4,7 @@ Commits from the maintainer's Windows machine are signed with a GPG key, so GitH
 
 ## Current state
 
-- Identity: `Pavan Dev Singh Charak <charak1987@gmail.com>`
+- Identity: `Maintainer Name <maintainer@example.com>`
 - Key ID: `EA52495306CAD70F`
 - Fingerprint: `167D31744CE05C3517DD1D86EA52495306CAD70F`
 - Type: RSA 4096. The primary key is certify and sign. The encryption subkey is `2FC37694484DBE74`.
@@ -46,7 +46,7 @@ Only the public key is ever shared. The secret key stays in the GnuPG home direc
 
 ## Verifying
 
-- Locally: `git log -1 --show-signature` should print `Good signature from "Pavan Dev Singh Charak <charak1987@gmail.com>"`.
+- Locally: `git log -1 --show-signature` should print `Good signature from "Maintainer Name <maintainer@example.com>"`.
 - On GitHub: the commit page shows **Verified**. If it shows **Unverified**, the public key is not on the account, or its email does not match a verified email on the account.
 
 ## Routine
