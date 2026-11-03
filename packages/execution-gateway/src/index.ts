@@ -40,8 +40,6 @@ export {
   type GatewayConnectorRegistration,
 } from "./connector-execution/createGatewayConnectorRegistry.js";
 export { createGatewayHubSpotConnector } from "./connector-execution/createGatewayHubSpotConnector.js";
-export { createGatewayGitHubConnector } from "./connector-execution/createGatewayGitHubConnector.js";
-export { createGatewayGitHubCredentialProvider } from "./connector-execution/createGatewayGitHubCredentialProvider.js";
 
 /**
  * External connectors (ADR-0013): the adapter that releases an approved

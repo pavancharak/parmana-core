@@ -51,11 +51,11 @@ describe("sandbox mode's built in connector variables", () => {
     const registry = path.join(bootstrap, "createConnectorRegistry.ts");
     const imported = [
       ...readFileSync(registry, "utf8").matchAll(
-        /from "\.\/(create(?:HubSpot|GitHub)[A-Za-z]*)\.js"/g,
+        /from "\.\/(createHubSpot[A-Za-z]*)\.js"/g,
       ),
     ].map((match) => path.join(bootstrap, `${match[1]}.ts`));
 
-    const credentialProviders = ["HubSpot", "GitHub"].map((name) =>
+    const credentialProviders = ["HubSpot"].map((name) =>
       path.join(bootstrap, `create${name}CredentialProvider.ts`),
     );
 
@@ -63,8 +63,8 @@ describe("sandbox mode's built in connector variables", () => {
       (file) => existsSync(file),
     );
 
-    // Registry plus the HubSpot and GitHub bootstrap files. Paytm and Slack were removed from core (ADR-0018).
-    expect(files.length).toBe(7);
+    // Registry plus the HubSpot bootstrap files. Paytm, Slack and GitHub were removed from core (ADR-0018).
+    expect(files.length).toBe(4);
 
     const decisive = new Set(
       files

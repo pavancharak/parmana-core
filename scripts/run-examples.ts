@@ -106,7 +106,6 @@ const examples = [
   "examples/tutorials/93-trust-record-ordering/run.ts",
   "examples/tutorials/94-sdk-http-transport/run.ts",
   "examples/tutorials/95-approval-verifier-generic/run.ts",
-  "examples/tutorials/96-github-pr-merge-connector/run.ts",
   "examples/tutorials/97-execution-chain-integrity/run.ts",
   "examples/tutorials/98-signal-freshness-enforcement/run.ts",
   "examples/tutorials/99-key-algorithm-binding-guard/run.ts",

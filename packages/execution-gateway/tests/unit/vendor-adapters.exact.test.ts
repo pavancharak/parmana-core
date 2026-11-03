@@ -1,11 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
-  GITHUB_PR_FETCH_CAPABILITY,
-  GITHUB_PR_MERGE_CAPABILITY,
-  GITHUB_TEST_MODE_PLACEHOLDER_TOKEN,
-} from "@parmana/connector-github";
-import {
   HUBSPOT_DEAL_FETCH_CAPABILITY,
   HUBSPOT_DEAL_UPDATE_CAPABILITY,
   HUBSPOT_TEST_MODE_PLACEHOLDER_TOKEN,
@@ -17,14 +12,13 @@ import {
 } from "@parmana/connector-sdk";
 
 import {
-  GatewayGitHubAdapter,
   GatewayHttpAdapter,
   GatewayHubSpotAdapter,
 } from "../../src/connector-execution/index.js";
 import { HttpConnector } from "../../src/HttpConnector.js";
 
 /**
- * Mutation testing found these checks in the HubSpot and GitHub adapters
+ * Mutation testing found these checks in the HubSpot adapter
  * tested loosely or not at all: required fields, the refusal of "." and
  * ".." as a repository, the placeholder token guards (in both directions),
  * and HTTPS accepted in production.
@@ -122,121 +116,6 @@ describe("GatewayHubSpotAdapter, exactly", () => {
       hubspot("http://127.0.0.1:9").execute(update(parameters), real),
     ).rejects.toThrow(message);
     expect(fetchSpy).not.toHaveBeenCalled();
-  });
-});
-
-describe("GatewayGitHubAdapter, exactly", () => {
-  const github = (baseUrl?: string) =>
-    new GatewayGitHubAdapter({
-      connectorId: "github",
-      capabilities: connectorCapabilities([
-        GITHUB_PR_FETCH_CAPABILITY,
-        GITHUB_PR_MERGE_CAPABILITY,
-      ]),
-      ...(baseUrl !== undefined ? { baseUrl } : {}),
-    });
-  const fetchPr = (target: string) => ({
-    capability: GITHUB_PR_FETCH_CAPABILITY,
-    businessTransactionId: "btx-1",
-    action: GITHUB_PR_FETCH_CAPABILITY,
-    target,
-    parameters: {},
-  });
-  const merge = (parameters: Record<string, unknown>) => ({
-    ...fetchPr("acme/widgets#42"),
-    capability: GITHUB_PR_MERGE_CAPABILITY,
-    action: GITHUB_PR_MERGE_CAPABILITY,
-    parameters,
-  });
-  const real = contextWith({ installationToken: "ghs_real" });
-  const PR = {
-    number: 42,
-    mergeable: true,
-    merged_at: null,
-    head: { sha: "abc" },
-    base: { ref: "main" },
-  };
-
-  it.each([
-    "acme/.#1",
-    "acme/..#1",
-    "acme/widgets#",
-    "acme/widgets/extra#1",
-    "x acme/widgets#1",
-    "acme/widgets#1 ",
-    "acme/wid?gets#1",
-  ])("refuses the target %j before any network call", async (target) => {
-    const fetchSpy = stubFetch(PR);
-    await expect(
-      github("http://127.0.0.1:9").execute(fetchPr(target), real),
-    ).rejects.toThrow(
-      `GitHubConnector received an invalid target "${target}".`,
-    );
-    expect(fetchSpy).not.toHaveBeenCalled();
-  });
-
-  it("accepts a repository with dots that is not . or ..", async () => {
-    const fetchSpy = stubFetch(PR);
-    await github("http://127.0.0.1:9").execute(fetchPr("acme/.github#7"), real);
-    expect(String(fetchSpy.mock.calls[0]![0])).toBe(
-      "http://127.0.0.1:9/repos/acme/.github/pulls/7",
-    );
-  });
-
-  it("sends a real token to GitHub's API, and refuses only the placeholder there", async () => {
-    const fetchSpy = stubFetch(PR);
-    await github().execute(fetchPr("acme/widgets#42"), real);
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
-
-    await expect(
-      github().execute(
-        fetchPr("acme/widgets#42"),
-        contextWith({ installationToken: GITHUB_TEST_MODE_PLACEHOLDER_TOKEN }),
-      ),
-    ).rejects.toThrow(/refuses to send the built-in test-mode placeholder/);
-
-    // The placeholder is allowed to a mock server.
-    await github("http://127.0.0.1:9").execute(
-      fetchPr("acme/widgets#42"),
-      contextWith({ installationToken: GITHUB_TEST_MODE_PLACEHOLDER_TOKEN }),
-    );
-    expect(fetchSpy).toHaveBeenCalledTimes(2);
-  });
-
-  it.each([
-    [{}, "parameters.mergeMethod"],
-    [{ mergeMethod: "" }, "parameters.mergeMethod"],
-    [
-      { mergeMethod: "squash", expectedHeadSha: "" },
-      "parameters.expectedHeadSha",
-    ],
-  ])("refuses a merge with %j", async (parameters, field) => {
-    const fetchSpy = stubFetch({ merged: true });
-    await expect(
-      github("http://127.0.0.1:9").execute(merge(parameters), real),
-    ).rejects.toThrow(
-      `GitHubConnector request is missing required field "${field}".`,
-    );
-    expect(fetchSpy).not.toHaveBeenCalled();
-  });
-
-  it("forwards expectedHeadSha as GitHub's sha, and only when given", async () => {
-    const fetchSpy = stubFetch({ merged: true });
-    await github("http://127.0.0.1:9").execute(
-      merge({ mergeMethod: "squash", expectedHeadSha: "abc" }),
-      real,
-    );
-    await github("http://127.0.0.1:9").execute(
-      merge({ mergeMethod: "squash" }),
-      real,
-    );
-    expect(JSON.parse(String(fetchSpy.mock.calls[0]![1]!.body))).toEqual({
-      merge_method: "squash",
-      sha: "abc",
-    });
-    expect(JSON.parse(String(fetchSpy.mock.calls[1]![1]!.body))).toEqual({
-      merge_method: "squash",
-    });
   });
 });
 
