@@ -1113,7 +1113,7 @@ protection stood in the way.
   production one) so tutorials can trust an in memory approver.
 - **Tests:** `packages/policy/tests/unit/ApprovalBackedPolicies.test.ts` (the structural check that
   every approve rule requires the approval fact; the most permissive caller facts are refused);
-  `packages/api/tests/integration/github-pr-merge.integration.test.ts` (4 new: every caller fact true
+  github-pr-merge.integration.test.ts (removed 2026-11-03 with the GitHub connector, ADR-0018) (4 new: every caller fact true
   and no approval, `mergeApproved: true` and no approval, an approval for another pull request, an
   approval used twice; each makes zero merge calls where refused), `github-caller-scoping` updated.
   Tutorial 96 shows the refusal and the approved merge.
@@ -2238,7 +2238,7 @@ any deployment that has configured GitHub.
 
 **Fixed same-day: Option A, as originally scoped.** `github:pr-fetch`/`github:pr-merge` added
 to `CANONICAL_CAPABILITY_POLICY_BINDINGS`, both pointing at `github-pr-approval/1.0.0` —
-exactly the policy `packages/api/tests/integration/github-pr-merge.integration.test.ts`
+exactly the policy github-pr-merge.integration.test.ts (removed 2026-11-03 with the GitHub connector, ADR-0018)
 already declares (line 115-117), so no behavior change for the passing case, only a new
 rejection for a caller declaring anything else. `CapabilityPolicyBinder.test.ts`'s "binds
 every capability the production connector registry actually registers" test now includes
@@ -2264,7 +2264,7 @@ no such method exists on `ConnectorRegistry`). Recommendation there: Option A no
 later. Awaiting Pavan's decision; nothing beyond this entry's own fix has been implemented.
 
 **Verified:** `packages/policy/tests/unit/CapabilityPolicyBinder.test.ts` (11/11, this file),
-`packages/api/tests/integration/github-pr-merge.integration.test.ts` (4/4, confirms the
+github-pr-merge.integration.test.ts (removed 2026-11-03 with the GitHub connector, ADR-0018) (4/4, confirms the
 already-correct policy pairing still passes unchanged). Full repo `npm run build` (rebuilt
 `@parmana/policy`'s stale `dist/`) and `npm test`: 1274 passed, 37 skipped, 0 failed —
 identical counts to before this fix, since no new `it()` blocks were added, only an existing

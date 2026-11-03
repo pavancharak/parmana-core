@@ -43,7 +43,7 @@ and forge cryptographically valid records for actions that were never policy-app
 
 ## Finding 2: connector credentials are plain env reads, several long-lived and unscoped
 
-- `GITHUB_APP_PRIVATE_KEY` (`packages/api/src/bootstrap/createGitHubCredentialProvider.ts`):
+- `GITHUB_APP_PRIVATE_KEY` (createGitHubCredentialProvider.ts (removed 2026-11-03 with the GitHub connector, ADR-0018)):
   the GitHub App's actual private key. The connector's "ephemeral credential" design
   claim (docs/CLAIMS.md Claim 1) only covers the installation token it mints — the
   master key that mints those tokens is a static env var.
