@@ -272,7 +272,7 @@ The feature is separate from the trip. Do not change it as an operator; the foun
 - **Enable:** `KILL_SWITCH_ENABLED=true` (Config) and `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR=true`, then redeploy from current `main`.
 - **Disable:** removing `KILL_SWITCH_ENABLED` turns the guard off. Then operators cannot stop the system through the API. Only in an emergency, with the founder's agreement, and recorded.
 
-Full commands are in `docs/runbooks/CREDENTIAL-CEREMONY.md`, section 14.
+Full commands are in the operator's credential ceremony runbook, kept outside this repository, section 14.
 
 ---
 

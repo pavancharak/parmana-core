@@ -104,7 +104,7 @@ expiresAt, audience, signature }`, signed with Parmana's key. Expiry is short (1
 5. **Raw caller keys were pasted into a chat during setup.** Rotated on 2026-11-02, along with the database passwords and the signing key material. Closed.
 6. **Production is not approved.** The test service uses the sandbox database, which is labelled
    production, and test keys. Live use needs its own decision, a separate database, and key
-   ceremony under `docs/runbooks/CREDENTIAL-CEREMONY.md`.
+   ceremony in the operator's credential ceremony runbook, kept outside this repository.
 
 ## Production status (2026-11-02)
 
