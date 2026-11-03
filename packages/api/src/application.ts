@@ -38,7 +38,6 @@ import type { ApprovalVerifier } from "@parmana/approval";
 import { createApprovalVerifier } from "./bootstrap/createApprovalVerifier.js";
 import { createCurrentPolicyVersionSource } from "./bootstrap/createCurrentPolicyVersionSource.js";
 import { createExternalPolicyBindingSource } from "./bootstrap/createExternalPolicyBindingSource.js";
-import { createHubSpotSignalStateVerifier } from "./bootstrap/createHubSpotSignalStateVerifier.js";
 import { createApprovalSignalVerifier } from "./bootstrap/createApprovalSignalVerifier.js";
 import { executionGatewaySignalStateVerifier } from "./bootstrap/executionGatewaySignalStateVerifier.js";
 import { createPolicyExecutionVerifier } from "./bootstrap/createPolicyExecutionVerifier.js";
@@ -106,12 +105,6 @@ export function createApplication(
   killSwitch?: KillSwitchService,
 ) {
   const signalStateVerifier = new CompositeSignalStateVerifier([
-    createHubSpotSignalStateVerifier(
-      executionSystem,
-      approvalVerifier,
-      undefined,
-      policyRepository,
-    ),
     createApprovalSignalVerifier(approvalVerifier),
   ]);
 

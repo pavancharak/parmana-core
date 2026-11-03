@@ -84,6 +84,19 @@ const HISTORICALLY_REAL_NOW_REMOVED_PATHS = new Set([
   // this logic lives today" -- moved/refactored during Phase 1C, not
   // deleted, but no longer resolvable at this original path.
   "packages/connector-hubspot/src/HubSpotConnector.ts",
+  // HubSpot connector removed from core (ADR-0018). Cited by docs as history.
+  "packages/api/src/bootstrap/createHubSpotConnector.ts",
+  "packages/api/src/bootstrap/createHubSpotSignalStateVerifier.ts",
+  "packages/api/src/bootstrap/createHubSpotCredentialProvider.ts",
+  "packages/api/tests/helpers/hubspot-live-availability.ts",
+  "packages/execution-gateway/tests/unit/credential-non-exposure.test.ts",
+  "packages/api/tests/integration/hubspot-deal-update.integration.test.ts",
+  "packages/api/tests/integration/hubspot-live.integration.test.ts",
+  "packages/execution-gateway/src/connector-execution/GatewayHubSpotAdapter.ts",
+  "packages/execution-gateway/tests/unit/hubspot-connector.test.ts",
+  "packages/connector-hubspot/src/HubSpotSignalStateVerifier.ts",
+  "packages/connector-hubspot/src/MockHubSpotServer.ts",
+  "packages/connector-hubspot/tests/unit/hubspot-deal-update-policy.test.ts",
   // docs/CLAIMS.md §2.34: unexported, unimported dead code, deleted as
   // part of the same fix the section documents (commit 437f5ec).
   "packages/policy/src/types/LedgerEntry.ts",

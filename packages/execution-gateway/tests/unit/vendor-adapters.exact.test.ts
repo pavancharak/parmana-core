@@ -1,30 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
-  HUBSPOT_DEAL_FETCH_CAPABILITY,
-  HUBSPOT_DEAL_UPDATE_CAPABILITY,
-  HUBSPOT_TEST_MODE_PLACEHOLDER_TOKEN,
-} from "@parmana/connector-hubspot";
-import {
   brandCredentialHandle,
   connectorCapabilities,
   type ConnectorExecutionContext,
 } from "@parmana/connector-sdk";
 
-import {
-  GatewayHttpAdapter,
-  GatewayHubSpotAdapter,
-} from "../../src/connector-execution/index.js";
+import { GatewayHttpAdapter } from "../../src/connector-execution/index.js";
 import { HttpConnector } from "../../src/HttpConnector.js";
-
-/**
- * Mutation testing found these checks in the HubSpot adapter
- * tested loosely or not at all: required fields, the refusal of "." and
- * ".." as a repository, the placeholder token guards (in both directions),
- * and HTTPS accepted in production.
- * fetch is stubbed: each check either refuses before any network call,
- * or is observed in the request sent.
- */
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -48,75 +31,6 @@ const contextWith = (value: unknown): ConnectorExecutionContext => ({
   }),
   timeoutMs: 2_000,
   requestedAt: new Date(),
-});
-
-describe("GatewayHubSpotAdapter, exactly", () => {
-  const hubspot = (baseUrl?: string) =>
-    new GatewayHubSpotAdapter({
-      connectorId: "hubspot",
-      capabilities: connectorCapabilities([
-        HUBSPOT_DEAL_FETCH_CAPABILITY,
-        HUBSPOT_DEAL_UPDATE_CAPABILITY,
-      ]),
-      ...(baseUrl !== undefined ? { baseUrl } : {}),
-    });
-  const update = (parameters: Record<string, unknown>) => ({
-    capability: HUBSPOT_DEAL_UPDATE_CAPABILITY,
-    businessTransactionId: "btx-1",
-    action: HUBSPOT_DEAL_UPDATE_CAPABILITY,
-    target: "deal/1",
-    parameters,
-  });
-  const real = contextWith({ privateAppToken: "pat-real-token" });
-
-  it("sends a real token to HubSpot's API, and refuses only the placeholder there", async () => {
-    const fetchSpy = stubFetch({ id: "1" });
-    await hubspot().execute(update({ dealId: "1", amount: 5 }), real);
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
-
-    await expect(
-      hubspot().execute(
-        update({ dealId: "1", amount: 5 }),
-        contextWith({ privateAppToken: HUBSPOT_TEST_MODE_PLACEHOLDER_TOKEN }),
-      ),
-    ).rejects.toThrow(/refuses to send the built-in test-mode placeholder/);
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it("sends only the properties given", async () => {
-    const fetchSpy = stubFetch({ id: "1" });
-    await hubspot("http://127.0.0.1:9").execute(
-      update({ dealId: "1", amount: 5 }),
-      real,
-    );
-    expect(JSON.parse(String(fetchSpy.mock.calls[0]![1]!.body))).toEqual({
-      properties: { amount: "5" },
-    });
-  });
-
-  it.each([
-    [{ dealId: "1" }, /neither dealstage nor amount/],
-    [{ amount: 5 }, 'missing required field "parameters.dealId"'],
-    [{ dealId: "", amount: 5 }, 'missing required field "parameters.dealId"'],
-    [
-      { dealId: "1", dealstage: "" },
-      'missing required field "parameters.dealstage"',
-    ],
-    [
-      { dealId: "1", amount: "5" },
-      '"parameters.amount" must be a finite number',
-    ],
-    [
-      { dealId: "1", amount: Number.NaN },
-      '"parameters.amount" must be a finite number',
-    ],
-  ])("refuses %j before any network call", async (parameters, message) => {
-    const fetchSpy = stubFetch({});
-    await expect(
-      hubspot("http://127.0.0.1:9").execute(update(parameters), real),
-    ).rejects.toThrow(message);
-    expect(fetchSpy).not.toHaveBeenCalled();
-  });
 });
 
 describe("GatewayHttpAdapter, exactly", () => {

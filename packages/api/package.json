@@ -11,7 +11,6 @@
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.1159.0",
     "@parmana/approval": "0.1.0",
-    "@parmana/connector-hubspot": "0.1.0",
     "@parmana/connector-sdk": "1.6.3",
     "@parmana/crypto": "0.1.1",
     "@parmana/envelope-verifier": "0.1.0",

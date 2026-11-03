@@ -26,12 +26,8 @@ import type { ExternalConnectorRepository } from "@parmana/shared";
 
 import { externalConnectorRepository } from "../repositories.js";
 
-import { HubSpotMetadata } from "@parmana/connector-hubspot";
-import { createHubSpotConnector } from "./createHubSpotConnector.js";
-import { createHubSpotCredentialProvider } from "./createHubSpotCredentialProvider.js";
 import { createTestFixtureConnector } from "./createTestFixtureConnector.js";
 import { assertConnectorCapabilitiesBound } from "./assertConnectorCapabilitiesBound.js";
-import { warnIfHubSpotTokenStale } from "./warnIfHubSpotTokenStale.js";
 
 /**
  * Creates the production connector registry.
@@ -96,39 +92,6 @@ export function createConnectorRegistry(
       credentialProvider: new StaticCredentialProvider({
         "test-fixture": { token: "test-fixture-token" },
       }),
-
-      policy: new DefaultConnectorPolicy(authenticator, sessions),
-
-      gatewayAuthentication,
-
-      crypto,
-
-      audit,
-    });
-  }
-
-  warnIfHubSpotTokenStale();
-
-  const hubspotCredentialProvider = createHubSpotCredentialProvider();
-
-  if (hubspotCredentialProvider === undefined) {
-    console.warn({
-      event: "hubspot_connector_unavailable",
-      reason: "HUBSPOT_PRIVATE_APP_TOKEN is not configured.",
-    });
-  } else {
-    registrations.push({
-      connector: createHubSpotConnector(),
-
-      metadata: HubSpotMetadata,
-
-      connectorIdentity: {
-        connectorId: "hubspot",
-        publicIdentity: "spiffe://parmana/connectors/hubspot",
-        authenticationMetadata: {},
-      },
-
-      credentialProvider: hubspotCredentialProvider,
 
       policy: new DefaultConnectorPolicy(authenticator, sessions),
 

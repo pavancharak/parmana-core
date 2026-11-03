@@ -49,22 +49,10 @@ function sourceFiles(directory: string): string[] {
 describe("sandbox mode's built in connector variables", () => {
   it("lists every variable that decides whether a built in connector is registered", () => {
     const registry = path.join(bootstrap, "createConnectorRegistry.ts");
-    const imported = [
-      ...readFileSync(registry, "utf8").matchAll(
-        /from "\.\/(createHubSpot[A-Za-z]*)\.js"/g,
-      ),
-    ].map((match) => path.join(bootstrap, `${match[1]}.ts`));
+    const files = [registry];
 
-    const credentialProviders = ["HubSpot"].map((name) =>
-      path.join(bootstrap, `create${name}CredentialProvider.ts`),
-    );
-
-    const files = [registry, ...imported, ...credentialProviders].filter(
-      (file) => existsSync(file),
-    );
-
-    // Registry plus the HubSpot bootstrap files. Paytm, Slack and GitHub were removed from core (ADR-0018).
-    expect(files.length).toBe(4);
+    // Only the registry remains: the HubSpot bootstrap files were removed from core (ADR-0018).
+    expect(files.length).toBe(1);
 
     const decisive = new Set(
       files
@@ -78,6 +66,9 @@ describe("sandbox mode's built in connector variables", () => {
   it("lists every connector prefixed variable the server reads", () => {
     const packages = path.join(root, "packages");
     const read = new Set<string>();
+    // Sanity check that the scan reads any variable at all. No vendor connector
+    // variable is read in core now (ADR-0018), so the connector-prefixed set may be empty.
+    const anyRead = new Set<string>();
 
     for (const name of readdirSync(packages)) {
       const src = path.join(packages, name, "src");
@@ -86,6 +77,7 @@ describe("sandbox mode's built in connector variables", () => {
 
       for (const file of sourceFiles(src)) {
         for (const variable of variablesRead(file)) {
+          anyRead.add(variable);
           if (/^(?:PAYTM|HUBSPOT|GITHUB|SLACK)_/.test(variable)) {
             read.add(variable);
           }
@@ -93,7 +85,7 @@ describe("sandbox mode's built in connector variables", () => {
       }
     }
 
-    expect(read.size).toBeGreaterThan(0);
+    expect(anyRead.size).toBeGreaterThan(0);
     expect([...read].filter((name) => !listed.has(name))).toEqual([]);
   });
 });

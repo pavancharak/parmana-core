@@ -8,8 +8,8 @@ import { MemoryExternalConnectorRepository } from "@parmana/storage";
 // Tutorials 57-59 show the credential-isolation and secure-connector
 // session mechanics generically, with one hand-built "sap" connector.
 // This tutorial shows the layer above that: GatewayConnectorRegistry,
-// the real production registry every capability (hubspot:deal-update,
-// hubspot:deal-fetch, test:fixture-execute) actually resolves through --
+// the real production registry every capability (test:fixture-execute
+// here, the only built in connector left in core) actually resolves through --
 // the exact class createConnectorRegistry.ts wires up, exercised the
 // same way its own unit test suite does.
 //
@@ -44,47 +44,29 @@ console.log("==================================================");
 console.log();
 
 console.log(
-  "Scenario 1: NODE_ENV=test -- every connector's capabilities resolve",
+  "Scenario 1: NODE_ENV=test -- the test-fixture capability resolves",
 );
 console.log("--------------------------------------------------");
 
 const registry1 = buildRegistry();
-console.log(
-  `hubspot:deal-update    -> connector "${(await registry1.resolveCapability("hubspot:deal-update")).connectorId}"`,
-);
-console.log(
-  `hubspot:deal-fetch     -> connector "${(await registry1.resolveCapability("hubspot:deal-fetch")).connectorId}"`,
-);
-console.log(
-  `test:fixture-execute   -> connector "${(await registry1.resolveCapability("test:fixture-execute")).connectorId}"`,
-);
+const testFixtureConnector = (
+  await registry1.resolveCapability("test:fixture-execute")
+).connectorId;
+console.log(`test:fixture-execute   -> connector "${testFixtureConnector}"`);
 console.log();
 
 console.log(
-  "Scenario 2: Outside test mode, with no HubSpot credentials configured -- fails closed, per capability",
+  "Scenario 2: Outside test mode -- the test-fixture connector is not registered and fails closed",
 );
 console.log("--------------------------------------------------");
 
 const previousNodeEnv = process.env.NODE_ENV;
-const previousToken = process.env.HUBSPOT_PRIVATE_APP_TOKEN;
-
 process.env.NODE_ENV = "production";
-delete process.env.HUBSPOT_PRIVATE_APP_TOKEN;
 
 const registry2 = buildRegistry();
 
-let hubspotError: string | undefined;
-try {
-  await registry2.resolveCapability("hubspot:deal-update");
-} catch (error) {
-  hubspotError = error instanceof Error ? error.message : String(error);
-}
-console.log(`hubspot:deal-update    -> throws: ${hubspotError}`);
-
-// test-fixture (a NODE_ENV=test-only MockConnector) is ALSO absent
-// outside test mode -- one missing connector's credentials never take
-// the whole registry down, but every connector still fails closed
-// independently on its own terms.
+// test-fixture (a NODE_ENV=test-only MockConnector) is absent outside test
+// mode, and the registry fails closed for it on its own terms.
 let testFixtureError: string | undefined;
 try {
   await registry2.resolveCapability("test:fixture-execute");
@@ -95,46 +77,21 @@ console.log(`test:fixture-execute   -> throws: ${testFixtureError}`);
 console.log();
 
 process.env.NODE_ENV = previousNodeEnv;
-if (previousToken !== undefined)
-  process.env.HUBSPOT_PRIVATE_APP_TOKEN = previousToken;
-
-console.log(
-  "Scenario 3: Outside test mode, WITH a real-looking HubSpot credential configured",
-);
-console.log("--------------------------------------------------");
-
-process.env.NODE_ENV = "production";
-process.env.HUBSPOT_PRIVATE_APP_TOKEN = "hubspot-tutorial-test-token";
-
-const registry3 = buildRegistry();
-console.log(
-  `hubspot:deal-update    -> connector "${(await registry3.resolveCapability("hubspot:deal-update")).connectorId}"`,
-);
-
-delete process.env.HUBSPOT_PRIVATE_APP_TOKEN;
-process.env.NODE_ENV = previousNodeEnv;
-console.log();
 
 const allPassed =
-  (await registry1.resolveCapability("hubspot:deal-update")).connectorId ===
-    "hubspot" &&
-  (await registry1.resolveCapability("test:fixture-execute")).connectorId ===
-    "test-fixture" &&
-  hubspotError?.includes("hubspot:deal-update") === true &&
-  testFixtureError?.includes("test:fixture-execute") === true &&
-  (await registry3.resolveCapability("hubspot:deal-update")).connectorId ===
-    "hubspot";
+  testFixtureConnector === "test-fixture" &&
+  testFixtureError?.includes("test:fixture-execute") === true;
 
 if (allPassed) {
   console.log(
-    "✓ Capabilities resolve to their registered connector when credentials exist, and fail closed, per capability, when they don't.",
+    "✓ The test-fixture capability resolves to its connector in test mode, and fails closed outside it.",
   );
 } else {
   console.log(
-    "✗ Expected every capability resolution above to match the credential-configuration state.",
+    "✗ Expected the test-fixture capability to resolve in test mode and fail closed outside it.",
   );
 }
 
 console.log();
 console.log("Tutorial Complete");
-console.log("Next: Tutorial 82 - Composite Signal-State Verification");
+console.log("Next: Tutorial 83 - Capability Policy Binding");

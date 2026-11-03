@@ -30,7 +30,7 @@ export * from "./connector-runtime/index.js";
  * Deliberately NOT `export * from "./connector-execution/index.js"` —
  * that internal barrel also carries GatewayConnectorRegistry,
  * GatewayCapabilityConnectorPolicy, SdkConnectorExecutor,
- * CredentialVaultAdapter, ConnectorEvidence, GatewayHubSpotAdapter, and
+ * CredentialVaultAdapter, ConnectorEvidence, and
  * GatewayHttpAdapter — implementation classes bootstrap composition
  * constructs internally. Only the factory functions and the DTO callers
  * need to build a registration are public.
@@ -39,7 +39,6 @@ export {
   createGatewayConnectorRegistry,
   type GatewayConnectorRegistration,
 } from "./connector-execution/createGatewayConnectorRegistry.js";
-export { createGatewayHubSpotConnector } from "./connector-execution/createGatewayHubSpotConnector.js";
 
 /**
  * External connectors (ADR-0013): the adapter that releases an approved

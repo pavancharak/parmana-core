@@ -21,7 +21,6 @@ describe("execution-gateway public API boundary", () => {
     "GatewayCapabilityConnectorPolicy",
     "SdkConnectorExecutor",
     "CredentialVaultAdapter",
-    "GatewayHubSpotAdapter",
     "GatewayHttpAdapter",
     "GatewayPaytmAdapter",
     "buildConnectorEvidence",
@@ -44,6 +43,5 @@ describe("execution-gateway public API boundary", () => {
 
   it("exports the connector-execution factories, not the classes they construct", () => {
     expect(publicApi.createGatewayConnectorRegistry).toBeTypeOf("function");
-    expect(publicApi.createGatewayHubSpotConnector).toBeTypeOf("function");
   });
 });

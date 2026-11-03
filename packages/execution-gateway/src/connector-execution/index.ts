@@ -13,7 +13,7 @@
  * tests via a relative path, not through ../index.ts. The implementation
  * classes below (ConnectorEvidence, CredentialVaultAdapter,
  * SdkConnectorExecutor, GatewayCapabilityConnectorPolicy,
- * GatewayConnectorRegistry, GatewayHubSpotAdapter, GatewayHttpAdapter,
+ * GatewayConnectorRegistry, GatewayHttpAdapter,
  * ) are NOT re-exported from ../index.ts — the package's public surface is
  * the createGateway*() factories plus the GatewayConnectorRegistration
  * DTO, which construct and return these classes without exposing them.
@@ -24,7 +24,5 @@ export * from "./CredentialVaultAdapter.js";
 export * from "./SdkConnectorExecutor.js";
 export * from "./GatewayCapabilityConnectorPolicy.js";
 export * from "./GatewayConnectorRegistry.js";
-export * from "./GatewayHubSpotAdapter.js";
 export * from "./GatewayHttpAdapter.js";
 export * from "./createGatewayConnectorRegistry.js";
-export * from "./createGatewayHubSpotConnector.js";

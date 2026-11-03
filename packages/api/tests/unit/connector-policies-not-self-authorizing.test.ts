@@ -3,7 +3,6 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { HUBSPOT_VERIFIED_SIGNAL_KEYS } from "@parmana/connector-hubspot";
 import {
   CANONICAL_CAPABILITY_POLICY_BINDINGS,
   type Policy,
@@ -33,6 +32,22 @@ import {
  * approve on the caller's grant alone.
  */
 const READ_CAPABILITIES = new Set(["hubspot:deal-fetch", "github:pr-fetch"]);
+
+/**
+ * The keys HubSpotSignalStateVerifier verified. The connector moved to
+ * parmana-connectors (ADR-0018); its last copy here is commit b6aae31,
+ * packages/connector-hubspot/src/HubSpotSignalStateVerifier.ts. The
+ * hubspot-deal-update policy is still in core, so the G-77 check still
+ * applies to it.
+ */
+const HUBSPOT_VERIFIED_SIGNAL_KEYS = [
+  "currentDealStage",
+  "dealStageChangeRequested",
+  "dealStageTransitionAllowed",
+  "amountChangeRequested",
+  "amountDeltaAbs",
+  "amountChangeExceedsThreshold",
+] as const;
 
 /**
  * Facts a server side verifier checks itself, per write capability.
