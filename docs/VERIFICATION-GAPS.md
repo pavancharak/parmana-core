@@ -2943,7 +2943,7 @@ not via any HTTP path this server currently exposes:**
   configuration this repo wires up: `DefaultConnectorPolicy.assertAllowed()` runs the
   identical check earlier in the same call chain and always wins first.
 
-**Update (2026-10-06):** the `SdkConnectorExecutor` branches named above are now tested directly: version mismatch, an unavailable connector, an undeclared capability and a raw credential (`packages/execution-gateway/tests/unit/sdk-connector-executor.exact.test.ts`, from mutation testing, `docs/MUTATION-TESTING.md`).
+**Update (2026-10-06):** the `SdkConnectorExecutor` branches named above are now tested directly: version mismatch, an unavailable connector, an undeclared capability and a raw credential (`packages/execution-gateway/tests/unit/sdk-connector-executor.exact.test.ts`, from mutation testing, `docs/testing/MUTATION-TESTING.md`).
 
 **G-9. `ExecutionControlService` and `SessionCredentialSecureConnector` each independently
 audit-log the same execution** (confirmed directly this pass while writing the new

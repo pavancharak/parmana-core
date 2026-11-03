@@ -20,7 +20,7 @@ Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 The rest of this file is the process every change follows, whoever writes it.
 A second reviewer approves pull requests and reviews the security-critical code once in depth;
-[docs/REVIEWING.md](docs/REVIEWING.md) is their brief.
+[docs/contributing/REVIEWING.md](docs/contributing/REVIEWING.md) is their brief.
 
 Parmana authorizes and evidences what automated systems do, so correctness, determinism and
 verifiable evidence come before convenience.
@@ -107,7 +107,7 @@ The command prints a score per package and writes `reports/mutation/<package>.ht
 (not committed). Open the HTML report to see each change the tests missed. It is slow, because
 every change runs the package's whole test suite, so it is not part of `npm test` or CI.
 
-[docs/MUTATION-TESTING.md](docs/MUTATION-TESTING.md) has the scores for the five
+[docs/testing/MUTATION-TESTING.md](docs/testing/MUTATION-TESTING.md) has the scores for the five
 security-critical packages, what the surviving changes showed, and what was done about them.
 `stryker.config.mjs` explains why the command runner is used rather than Stryker's Vitest plugin.
 

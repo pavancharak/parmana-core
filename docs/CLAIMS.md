@@ -694,7 +694,7 @@ Evidence: the live check, 2026-10-02 (`deploy/sandbox/README.md`, stage `Check`)
 
 **Claim:** before any rule runs, every signal a policy declares in `signalsSchema` must have the declared type (`boolean`, `number` or `string`). A request that sends one with another type, such as an amount as text (`"150000"`), `null`, an array, `NaN` or `Infinity` for a number, is refused with `matchedRuleId` `signal-type-violation`, a reason naming each mismatching signal, and no rule evaluated. A policy whose `signalsSchema` declares any other type fails validation.
 
-Why: numeric operators are false for a value that is not a number, so without this check a rule written as "reject if amount gt X, otherwise approve" would not fire for an amount sent as text. Mutation testing surfaced it (docs/MUTATION-TESTING.md); no shipped policy was found to approve such a request, since each also needs a signed approval.
+Why: numeric operators are false for a value that is not a number, so without this check a rule written as "reject if amount gt X, otherwise approve" would not fire for an amount sent as text. Mutation testing surfaced it (docs/testing/MUTATION-TESTING.md); no shipped policy was found to approve such a request, since each also needs a signed approval.
 
 Scope, stated plainly:
 

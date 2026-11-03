@@ -15,7 +15,7 @@ for what is built.
 - Not changed, and still to decide by the owner:
   - The contributor-agreement rule in `CONTRIBUTING.md` (pull requests from
     outside are not accepted without a prior written agreement).
-  - The collaborator-agreement rule in `docs/REVIEWING.md`.
+  - The collaborator-agreement rule in `docs/contributing/REVIEWING.md`.
   - The `"license": "SEE LICENSE IN LICENSE"` field in package manifests.
     It resolves to Apache 2.0 but could name `Apache-2.0` explicitly.
 
@@ -185,7 +185,7 @@ are those shown on the repository's Code scanning page for `main`.
 7. **Second reviewer** for pull requests, then require one approval on `main-protection` (alert #7).
 8. **Best Practices registration** for `parmana-core` (alert #9). Owner: project owner.
 9. **Git history rewrite** to remove the deleted working notes (section 5). Owner: project owner, with a decision on rewriting `main`.
-10. **Agreement rules** in `CONTRIBUTING.md` and `docs/REVIEWING.md`. Owner: project owner.
+10. **Agreement rules** in `CONTRIBUTING.md` and `docs/contributing/REVIEWING.md`. Owner: project owner.
 
 ## 9. Alert status after the Scorecard run of 2026-10-24 06:30 UTC
 
