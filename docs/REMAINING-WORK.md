@@ -2,7 +2,7 @@
 
 ## Update 2026-10-28
 
-- **The full list now lives in `docs/BACKLOG.md`.** It has 50 items, with priority, owner, and whether the sandbox can work on each. Update it when an item closes or a new gap appears. This page keeps the detail behind each item.
+- **The full list is kept by the operator, outside this repository.** It has 50 items, with priority, owner, and whether the sandbox can work on each. Update it when an item closes or a new gap appears. This page keeps the detail behind each item.
 - **#177 is done.** The preflight timeouts are fixed by #185, merged to `main`. The full `npm test` passed on that branch (393 files, 4067 tests, 0 failed).
 - **G-111 is in progress, not done.** The HubSpot deal read now needs a signed approval of its own. The change is on `fix/hubspot-self-approval` and is paused. Production would refuse every `hubspot:deal-update` until a new policy version declares the read approval signal and the integration fixtures send it. See the G-111 entry in `docs/VERIFICATION-GAPS.md`.
 - **Open items from the 2026-10-28 review are in section O below.**
