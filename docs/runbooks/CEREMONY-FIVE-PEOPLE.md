@@ -1,14 +1,26 @@
-# Credential ceremony with four people: roles, reasons, steps and commands
+# Credential ceremony with five people: roles, reasons, steps and commands
 
-This document is the working guide for the fresh-credentials ceremony on the production key list (`PARMANA_API_KEYS` on `parmana-api-real`). It sets out who does what, why four people are needed, and every command in order. The full procedure and the rules are in `docs/runbooks/CREDENTIAL-CEREMONY.md`. Where the two differ, this document applies to this run, and the reason is given.
+This document is the working guide for the fresh-credentials ceremony on the production key list (`PARMANA_API_KEYS` on `parmana-api-real`). It names the five people, sets out who does what and why five are needed, and gives every command in order. The full procedure and the rules are in `docs/runbooks/CREDENTIAL-CEREMONY.md`. Where the two differ, this document applies to this run, and the reason is given.
 
 Status: written 3 November 2026. Not yet run.
 
+## People in this run
+
+| Person   | Role                        | Caller id       | Holds a key |
+| -------- | --------------------------- | --------------- | ----------- |
+| Pavan    | Maker                       | `maker-pavan`   | Yes         |
+| Mamta    | Checker, with a step-up key | `checker-mamta` | Yes         |
+| Asha     | Operator A                  | `operator-a`    | Yes         |
+| Mohinder | Operator B                  | `operator-b`    | Yes         |
+| Shalini  | Assembler                   | none            | No          |
+
+Five people in total: four hold a key, and the assembler holds none.
+
 ---
 
-## 1. Why four people
+## 1. Why five people
 
-The ceremony needs four people, each in one role. No person holds two roles.
+The ceremony needs five people. Four of them hold a key, each in one role. The fifth, the assembler, holds no key. No person holds two roles.
 
 | Reason                                                                                                                  | Rule in the runbook                                                                               | What goes wrong with fewer people                                                      |
 | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
@@ -17,7 +29,7 @@ The ceremony needs four people, each in one role. No person holds two roles.
 | Each holder generates their own key on their own machine, and only public material moves between people.                | Section 0, rules 2 and 3.                                                                         | A key that passed through another person's machine is not one that person holds alone. |
 | The runbook says not to run the ceremony with one person, and records any shared role as an open risk.                  | Section 0, rule 1.                                                                                | Shared roles become quiet defaults and are never reviewed.                             |
 
-The runbook requires at least two people. This run uses four, so that no one holds two of the roles. That is the decision for this run.
+The runbook requires at least two people. This run uses five, so that no one holds two of the roles. That is the decision for this run.
 
 ---
 
@@ -43,7 +55,7 @@ Each person needs a checkout of parmana-core on `main`, at `D:\last\parmana-core
 
 Run it only when all of these are true:
 
-1. All four people are available for the whole run.
+1. All five people are available for the whole run.
 2. Production is clear (step 0 below).
 3. No change to the kill switch or to policies is in progress.
 
@@ -247,14 +259,14 @@ Do not trip the switch while the list is being replaced (runbook section 0, rule
 
 ---
 
-## 13. Record the ceremony (all four)
+## 13. Record the ceremony (all five)
 
 Write the ceremony log (runbook section 15) with:
 
 - the date and time of each step, and the deployment ID from section 10;
 - each caller's check result from section 11;
 - the drill decision from section 12;
-- the open risks: none, for this run, if all four roles are different people;
+- the open risks: none, for this run, if the four key roles are held by four different people;
 - each person's sign-off line.
 
 Tick the checklist (runbook section 16).
