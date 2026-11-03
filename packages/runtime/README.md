@@ -72,6 +72,6 @@ root also runs these tests.
 
 ## Related docs
 
-- [`docs/CURRENT-STATE.md`](../../docs/CURRENT-STATE.md): what is built and verified.
+- [`docs/project/CURRENT-STATE.md`](../../docs/project/CURRENT-STATE.md): what is built and verified.
 - [`docs/architecture/system-architecture.md`](../../docs/architecture/system-architecture.md): where the runtime sits in the system.
 - [`docs/adr/ADR-0004-Runtime-Pipeline.md`](../../docs/adr/ADR-0004-Runtime-Pipeline.md): why the pipeline is shaped this way.

@@ -2,7 +2,7 @@
 
 Status as of 2026-10-24. This records what was changed in the 2026-10-24
 work, what each OpenSSF Best Practices answer rests on, what is still open,
-and why. It replaces nothing; `docs/CURRENT-STATE.md` remains the reference
+and why. It replaces nothing; `docs/project/CURRENT-STATE.md` remains the reference
 for what is built.
 
 ## 1. Licence

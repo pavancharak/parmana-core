@@ -518,7 +518,7 @@ Scope: gap G-52 found in the live refund run. It is mitigated here, not closed. 
 
 Scope: a read of the source on 2026-09-25, as the first step of offering a deployment the
 customer runs next to the hosted API on Vercel, then the build that closed what the read found.
-The summary of the deployment is in `docs/CURRENT-STATE.md`, section "Self hosted deployment",
+The summary of the deployment is in `docs/project/CURRENT-STATE.md`, section "Self hosted deployment",
 and the operator guide is `DEPLOYMENT.md`, section "Self hosted with Docker Compose".
 
 **Where it was verified:** Docker Desktop 29.8.0 on Windows 11, 2026-09-25, and on Linux in

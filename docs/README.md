@@ -14,7 +14,7 @@ project is held to, and the engineering references that code or tests cite.
   or wrong, how severe, and how and when it was closed.
 - **[REMAINING-WORK.md](REMAINING-WORK.md)**: what is left to do, including what needs the
   operator, and ideas considered but not built.
-- **[CURRENT-STATE.md](CURRENT-STATE.md)**: a short description of the system as it stands.
+- **[CURRENT-STATE.md](project/CURRENT-STATE.md)**: a short description of the system as it stands.
 - **[adr/](adr/)**: architecture decision records.
 - **[../04-INCIDENTS-LOG.md](../04-INCIDENTS-LOG.md)**: security and release incidents and
   their resolutions.
