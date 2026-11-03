@@ -6,8 +6,9 @@ ADR-0018 (accepted 2 November 2026, PR #294) moves each vendor connector out of 
 
 ## Where things stand (updated 3 November 2026)
 
-- **Moved out and merged:** Zerodha (PR #295), Slack (PR #296), Paytm (PR #297). Razorpay, Paytm, Slack, GitHub, HubSpot and Zerodha (paper only) are all on `main` in `parmana-connectors`.
-- **Still in core:** GitHub and HubSpot.
+- **Moved out and merged:** Zerodha (PR #295), Slack (PR #296), Paytm (PR #297), GitHub (PR #299), HubSpot (PR #300). Razorpay, Paytm, Slack, GitHub, HubSpot and Zerodha (paper only) are all on `main` in `parmana-connectors`.
+- **Still in core:** no production vendor connector. The connector SDK (`packages/connector-sdk`) still ships four sample vendor connectors (Oracle, Salesforce, SAP, Workday), which are not in the migration order.
+- **Registrations still open:** GitHub and HubSpot were removed from core before their registrations were approved (operator's decision, following the earlier removals). Mamta's checker approval is still needed before either one can run live from `parmana-connectors`.
 - **Coverage lost on purpose (operator approved):**
   - seven tests that checked core's execution gate through the Paytm connector (proof-audit tests 1 to 4 and their helper, and three integration tests);
   - the approval-email integration test (its unit tests remain);
@@ -23,8 +24,7 @@ ADR-0018 (accepted 2 November 2026, PR #294) moves each vendor connector out of 
 
 ## Remaining steps, in order
 
-- **GitHub:** registration approved, then removal PR from core.
-- **HubSpot:** registration approved, then removal PR from core.
+- **GitHub and HubSpot registrations:** maker and checker approval, before any live use. The code is already out of core.
 - **Core gate tests:** rewrite the removed gate tests against a core test connector, if you want core's gate proven by its own tests again.
 
 ## Notes
