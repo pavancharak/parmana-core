@@ -861,7 +861,7 @@ paths, not by reading them. The tests are in `proof-audit/tests/` and run with
 **What the audit found first.** The first run falsified claim 2 (the gateway released a validly signed
 denied decision, and the in-process release path accepted caller-set flags), claim 4 (a published
 version could be overwritten) and claim 5 (tail truncation). The fixes and their residuals are recorded in `docs/VERIFICATION-GAPS.md`, G-103 to G-118.
-The first-run measurements are kept in an internal working report that is not part of the repository.
+The first-run measurements are not published in this repository.
 
 **Coverage after the follow-up fixes.** The same gate conditions now run for Paytm refund, Slack post-message,
 GitHub PR merge and HubSpot deal-update (Tests 2, 7, 8, 9). The Postgres nonce store runs on PostgreSQL semantics
