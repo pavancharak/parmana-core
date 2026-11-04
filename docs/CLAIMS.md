@@ -1162,39 +1162,30 @@ Evidence
 
 ---
 
-## 2.28 KeyId-Aware Key Resolution with Expiry/Revocation Checking
+## 2.28 Key Resolution by Key ID, with Expiry and Revocation
 
-Signature verification can resolve the verifying key per-authorization by `keyId` instead of always using one static configured public key, enabling more than one key to be valid at once (for example, during a rotation window) without a restart. `EnvelopeVerifier` accepts optional `keyProvider` and `keyExpiryStore` options (`packages/envelope-verifier/src/EnvelopeVerifier.ts`); `ExecutionGateway` forwards its own same-named optional options straight through to the `EnvelopeVerifier` it composes (`packages/execution-gateway/src/ExecutionGateway.ts`).
+**Claim.** The verifier resolves the signing key for each authorization by its `keyId`, rather than always using one configured key. A key can be marked with an expiry time or revoked, and a verification that depends on such a key fails closed. The same mechanism lets more than one key be valid during a rotation, without a restart.
 
-When `keyProvider` is supplied, each authorization's own `authorization.keyId` is resolved through it (`FileKeyProvider.getPublicKey(keyId)`) instead of the single static `publicKey`; when `keyExpiryStore` is also supplied, the resolved keyId is first checked against it, and a `revoked: true` entry, or an `expiresAt` at or before the verification instant, causes resolution to fail before any key material is even read. Failure at either step — key not found, key unreadable, expired, or revoked — fails closed: `resolveKey()` returns `undefined` rather than throwing or silently falling back to the static `publicKey`, which surfaces as `checks.keyValid: false` and an overall failed verification. A `keyId` with no entry in `keyExpiryStore` at all is treated as always valid (the same "absent means not opted in" convention as 2.27's `policyStillCurrent`). Omitting `keyProvider` entirely preserves the exact prior static-`publicKey` behavior, with `keyValid` staying absent (not `false`) from the result, since key resolution then isn't part of verification's checks at all.
+**How it works.** `EnvelopeVerifier` takes optional `keyProvider` and `keyExpiryStore` options. With `keyProvider` set, each authorization's `keyId` is looked up through it. With `keyExpiryStore` also set, the key is checked first: a revoked key, or one whose expiry time has passed, is refused before its key material is read. A key that cannot be found, read, or checked is refused the same way. The verifier does not fall back to the static key in these cases. Without `keyProvider`, verification uses the single configured public key, as before, and key resolution is not part of its checks.
 
-`FileKeyExpiryStore` (`packages/crypto/src/KeyExpiry.ts`) is the reference `KeyExpiryStore` implementation: it reads one small sidecar JSON file beside the PEM key files `FileKeyProvider` already reads from the same configured key directory (`<keyDirectory>/key-expiry.json`), keyed by `keyId`, with `expiresAt`/`revoked` both optional per entry. A `keyId` absent from the file, or the file itself being absent, means "no expiry, always valid" — the safe default that keeps every deployment that doesn't opt into key expiry behaving exactly as it does today. Malformed JSON, or a value of the wrong shape, throws rather than silently treating the key as unexpiring.
+`FileKeyExpiryStore` is the reference store. It reads `key-expiry.json` from the key directory. A key ID that is not in the file is treated as valid with no expiry. A malformed file stops verification rather than being read as "no expiry".
+
+**Tenant keys (opt-in).** When a transaction carries a tenant ID, `FileTenantKeyResolver` can sign its authorization with a dedicated `tenant.<id>` key, if that key has been provisioned. A transaction without a tenant ID, or for a tenant with no key, is signed with the shared `default` key. An API key may only name the tenants in its `allowedTenantIds` list; a request for another tenant is refused with `TENANT_NOT_ALLOWED`. Under `KEY_PROVIDER=aws-kms`, tenant key IDs map to KMS aliases (`tenant.<id>` becomes `alias/tenant/<id>`); a key ID that would fall under AWS's reserved `alias/aws/` prefix is refused. This mapping has been tested with unit tests and an example, not against a live AWS account.
+
+**Limits.** Tenant keys are provisioned by hand (`scripts/generate-keypair.ts --key-id tenant.<id>`). There is no automatic rotation, and no KMS or HSM support for the expiry file. The durable evidence records (Trust Records, Refusal Records and Audit Events) take their key IDs from `PARMANA_VERIFICATION_KEY_ID` and `PARMANA_VERIFICATION_SECONDARY_KEY_ID`, which is how they rotate. See `docs/VERIFICATION-GAPS.md`, gaps 32 and 53.
 
 Evidence
 
-- `packages/envelope-verifier/src/EnvelopeVerifier.ts` (`keyProvider`, `keyExpiryStore` options; `resolveKey()`; `checks.keyValid`)
+- `packages/envelope-verifier/src/EnvelopeVerifier.ts` (`keyProvider` and `keyExpiryStore` options, `keyValid` check)
+- `packages/execution-gateway/src/ExecutionGateway.ts` (passes both options to its verifier)
+- `packages/crypto/src/KeyExpiry.ts` (`KeyExpiryStore`, `FileKeyExpiryStore`)
+- `packages/crypto/tests/unit/key-expiry.test.ts`
+- `packages/envelope-verifier/tests/unit/envelope-verifier.test.ts` (key resolution, expiry, revocation, and the unchanged static-key behaviour)
+- `packages/runtime/src/TenantKeyResolver.ts` (`FileTenantKeyResolver`)
+- `packages/runtime/tests/unit/tenant-key-resolver.test.ts`
+- `packages/crypto/src/providers/signer/KmsSigner.ts` (`resolveKmsKeyId`)
 
-- `packages/execution-gateway/src/ExecutionGateway.ts` (forwards `keyProvider`/`keyExpiryStore` to its composed `EnvelopeVerifier`)
-
-- `packages/crypto/src/KeyExpiry.ts` (`KeyExpiryStore` interface, `FileKeyExpiryStore`)
-
-- `packages/envelope-verifier/tests/unit/envelope-verifier.test.ts`: "resolves the public key via keyProvider using the authorization's own keyId", "fails closed when keyProvider has no key for the authorization's keyId", "fails closed when the resolved key is expired per keyExpiryStore", "fails closed when the resolved key is revoked per keyExpiryStore", "a keyId with no keyExpiryStore entry is treated as always valid", "omitting keyProvider preserves today's exact static-publicKey behavior, with keyValid absent"
-
-**Scope, precisely — this claim covers the ExecutionAuthorization/Gateway envelope only.** `docs/VERIFICATION-GAPS.md` gap 53 (2026-09-11 PQC audit) found the durable evidence artifacts this system actually keeps long-term — Trust Records, Refusal Records, Audit Events — had none of this: all three signers hardcoded the literal keyId `"default"` for new signatures, with no way to rotate without overwriting that key in place and breaking every prior signature. Closed the same day with `PARMANA_VERIFICATION_KEY_ID`/`PARMANA_VERIFICATION_SECONDARY_KEY_ID`, mirroring this section's own `PARMANA_GATEWAY_KEY_ID` precedent — see that gap entry for full detail.
-
-- `packages/crypto/tests/unit/key-expiry.test.ts` (6 cases: missing file, keyId absent from an existing file, parsed `expiresAt` as a real `Date`, `revoked: true`, malformed JSON throws, non-object JSON throws)
-
-**Update (2026-09-09):** the verification-side machinery above (`keyProvider`, resolved by `authorization.keyId`) had, until this date, never been exercised by anything but the single shared `"default"` keyId — nothing on the signing side ever produced an authorization carrying a different one. `docs/VERIFICATION-GAPS.md` G-32 found and same-day-closed that gap: `RuntimeAuthorizationSigner` (`packages/runtime/src/RuntimeAuthorizationSigner.ts`) now resolves the signing keyId per-transaction via a new `TenantKeyResolver` (`packages/runtime/src/TenantKeyResolver.ts`), signing under a dedicated `tenant.<tenantId>` key when `transaction.metadata.tenantId` is set and that key has been provisioned (same `FileKeyProvider` layout, `scripts/generate-keypair.ts --key-id tenant.<tenantId>`), and falling back to the shared `"default"` key otherwise. This is opt-in per tenant, not a change to the default (single-key) path: a deployment with no tenant-specific keys provisioned behaves exactly as before. See G-32 for the full fix and its own explicitly-stated residual gaps (manual provisioning only, no KMS/HSM/rotation automation, silent fallback on an unprovisioned tenantId).
-
-**Update (2026-10-03, audit):** the tenant id came from the request body (`metadata.tenantId`) with nothing tying it to the caller, so any authenticated caller could have its authorization signed with another tenant's `tenant.<id>` key. `POST /execute` now refuses a `tenantId` that is not in the API key's new `allowedTenantIds` list (`403 TENANT_NOT_ALLOWED`; unset means none). A request with no tenant id is unaffected. Separately, per tenant keys cannot work under `KEY_PROVIDER=aws-kms`: KMS alias names cannot contain the dot in `alias/tenant.<id>`, so the resolver falls back to `default`. Evidence: `packages/api/tests/integration/caller-capability-scoping.integration.test.ts` (3 new), `packages/shared/tests/unit/config-validation.test.ts` (2 new).
-
-**Update (2026-10-03, follow up):** per tenant keys now resolve to a valid KMS alias. `resolveKmsKeyId` replaces each `.` in a logical key id with `/`, so `tenant.acme` is `alias/tenant/acme`; a logical key id never contains `/`, so two ids cannot map to the same alias. An id that would land under AWS's reserved `alias/aws/` prefix is refused. Not verified against real AWS: the evidence is unit tests and tutorial 113. Evidence: `packages/crypto/tests/unit/kms-signer.test.ts` (2 new), `examples/tutorials/113-kms-key-id-resolution`.
-
-- `packages/runtime/src/TenantKeyResolver.ts`, `packages/runtime/src/RuntimeAuthorizationSigner.ts`, `packages/runtime/src/RuntimeEngine.ts`
-
-- `packages/runtime/tests/unit/tenant-key-resolver.test.ts` (5 cases), `packages/runtime/tests/unit/execution-authorization-wiring.test.ts` (2 new cases: tenant-keyed authorization verifies under its own tenant's public key and fails under the shared default public key; no-tenantId transaction still signs under `"default"`)
-
----
+Dated updates for this claim are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
 ## 2.29 Signal-Freshness Enforcement at Execution Time (G-31)
 
