@@ -5563,7 +5563,7 @@ paths:
           required: true
           description: The action, as in `intent.action`. The sandbox's only action is
             `sandbox:receipt`; production answers for its own capabilities, such
-            as `paytm:refund`.
+            as `erp:invoice-pay`.
           schema:
             type: string
             x-default: sandbox:receipt
@@ -5686,7 +5686,7 @@ paths:
                 refund:
                   summary: The refund capability under customer-refund 1.2.0
                   value:
-                    capability: paytm:refund
+                    capability: erp:invoice-pay
                     policy:
                       name: customer-refund
                       version: 1.2.0
@@ -5721,7 +5721,7 @@ paths:
                 missingCapability:
                   summary: Real captured response
                   value:
-                    error: capability is required, for example ?capability=paytm:refund.
+                    error: capability is required, for example ?capability=erp:invoice-pay.
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -5732,7 +5732,7 @@ paths:
                 $ref: "#/components/schemas/error.schema"
               examples:
                 capabilityNotAllowed:
-                  summary: Real captured response, a key allowed only paytm:refund
+                  summary: Real captured response, a key allowed only erp:invoice-pay
                   value:
                     error: Caller is not permitted to invoke this capability.
                     code: CAPABILITY_NOT_ALLOWED
@@ -5761,9 +5761,10 @@ paths:
                 noApprovedVersion:
                   summary: Real captured response
                   value:
-                    error: 'Every request for "paytm:refund" is refused right now: no version of
-                      policy "customer-refund", which capability "paytm:refund"
-                      requires, has been approved through policy governance.'
+                    error: 'Every request for "erp:invoice-pay" is refused right now: no version of
+                      policy "customer-refund", which capability
+                      "erp:invoice-pay" requires, has been approved through
+                      policy governance.'
                     code: NO_APPROVED_POLICY_VERSION
         "503":
           description: "`POLICY_VERSION_UNAVAILABLE`: the version in effect could not be
@@ -5776,9 +5777,9 @@ paths:
                 lookupFailed:
                   summary: Real captured response, the policy version store was unreachable
                   value:
-                    error: 'Every request for "paytm:refund" is refused right now: the version of
+                    error: 'Every request for "erp:invoice-pay" is refused right now: the version of
                       policy "customer-refund" in effect for capability
-                      "paytm:refund" could not be looked up: database
+                      "erp:invoice-pay" could not be looked up: database
                       unreachable.'
                     code: POLICY_VERSION_UNAVAILABLE
       x-codeSamples:
@@ -10670,7 +10671,7 @@ paths:
                 $ref: "#/components/schemas/error.schema"
               examples:
                 otherCapability:
-                  summary: Real captured response, capability paytm:refund
+                  summary: Real captured response, capability erp:invoice-pay
                   value:
                     error: The sandbox approver signs only for capability "sandbox:receipt".
                     code: INVALID_SANDBOX_APPROVAL_REQUEST
@@ -14411,7 +14412,7 @@ components:
             connectorNotRegistered:
               summary: No connector is registered for the action, nothing was executed
               value:
-                error: No connector is registered for capability 'paytm:refund' on this
+                error: No connector is registered for capability 'erp:invoice-pay' on this
                   deployment. Nothing was executed. The operator must configure
                   the connector.
                 code: CONNECTOR_NOT_REGISTERED

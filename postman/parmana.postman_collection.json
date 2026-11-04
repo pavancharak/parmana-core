@@ -477,7 +477,7 @@
                 {
                   "key": "capability",
                   "value": "sandbox:receipt",
-                  "description": "The action, as in `intent.action`. The sandbox's only action is `sandbox:receipt`; production answers for its own capabilities, such as `paytm:refund`."
+                  "description": "The action, as in `intent.action`. The sandbox's only action is `sandbox:receipt`; production answers for its own capabilities, such as `erp:invoice-pay`."
                 }
               ]
             },
