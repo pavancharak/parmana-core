@@ -108,7 +108,7 @@ This file is generated from the documentation navigation. Do not edit it by hand
 * [Python SDK Production Guide](https://docs.parmanasystems.com/guides/python-sdk-production): Deploy the Python SDK to production: real error handling, audit logging, and a deployment checklist.
 ## Connector SDKs: Overview
 
-* [Integrations](https://docs.parmanasystems.com/integrations/overview): The Connector SDK foundation is real. Four enterprise-named connectors exist as explicit mocks, and no real enterprise integration is built yet.
+* [Integrations](https://docs.parmanasystems.com/integrations/overview): How Parmana connects to the systems it releases approved actions to. Parmana ships no built-in connectors; an operator registers an external connector.
 * [Other Languages](https://docs.parmanasystems.com/sdks/other-languages): [ROADMAP], no Go, Java, or.NET SDK exists in this repository today.
 ## Connector SDKs: Build a connector
 
