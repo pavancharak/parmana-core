@@ -72,7 +72,7 @@ esac
 
 expect_equal "step 2: /callers/me" \
   "$(curl -s http://127.0.0.1:3000/callers/me -H "Authorization: Bearer $OPERATOR_KEY")" \
-  '{"callerId":"local-operator","allowedPrincipalIds":["local-operator"],"allowedCapabilities":["paytm:refund"],"unrestrictedCapabilities":false}'
+  '{"callerId":"local-operator","allowedPrincipalIds":["local-operator"],"allowedCapabilities":["erp:invoice-pay"],"unrestrictedCapabilities":false}'
 
 # Step 3
 openssl genpkey -algorithm ed25519 -out "$work/step-up.private.pem"

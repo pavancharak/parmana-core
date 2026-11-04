@@ -83,7 +83,7 @@ if (existsSync(apiKeysPath)) {
 } else {
   const callerId = process.env.PARMANA_LOCAL_CALLER_ID ?? "local-operator";
   const allowedCapabilities = (
-    process.env.PARMANA_LOCAL_ALLOWED_CAPABILITIES ?? "paytm:refund"
+    process.env.PARMANA_LOCAL_ALLOWED_CAPABILITIES ?? "erp:invoice-pay"
   )
     .split(",")
     .map((capability) => capability.trim())

@@ -1,4 +1,4 @@
-// Prints a complete POST /execute request body for a `paytm:refund` under
+// Prints a complete POST /execute request body for an `erp:invoice-pay` under
 // the shipped `customer-refund` policy, with fresh UUIDs, for trying the self
 // hosted deployment. Runs inside the API image, so the host needs only
 // Docker:
@@ -96,8 +96,8 @@ const request = {
   intent: {
     intentId: randomUUID(),
     authorizationId,
-    action: "paytm:refund",
-    target: `paytm://orders/${orderId}`,
+    action: "erp:invoice-pay",
+    target: `erp://invoices/${orderId}`,
     parameters: { orderId, transactionId: `txn-${orderId}`, amount },
     createdAt: now,
   },
