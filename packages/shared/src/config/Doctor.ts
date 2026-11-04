@@ -234,13 +234,16 @@ function checkDatabaseUrl(env: Env, add: (check: DoctorCheck) => void): void {
     });
     return;
   }
-  if (!/[?&]sslmode=/.test(url)) {
+  const sslmode = /[?&]sslmode=([a-z-]+)/.exec(url)?.[1];
+  if (
+    sslmode === undefined ||
+    !["require", "verify-ca", "verify-full"].includes(sslmode)
+  ) {
     add({
       name: "DATABASE_URL",
       level: "warn",
-      message:
-        "DATABASE_URL does not set sslmode. Confirm the connection is encrypted",
-      fix: "Add sslmode=require to the connection string if the database supports TLS",
+      message: `DATABASE_URL sslmode is ${sslmode ?? "not set"}, which does not require TLS. The connection may not be encrypted`,
+      fix: "Set sslmode=require (or verify-full) in the connection string, if the database supports TLS",
     });
     return;
   }

@@ -139,6 +139,14 @@ The `execution_intents` table is checked only when the server enforces it. The r
 
 ## Troubleshooting
 
+- **`database` fails with error `SSL`.** The server does not accept TLS, so `sslmode=require` cannot connect. Either enable TLS on the database, or, for a local database only, use `sslmode=disable` and accept the production warning.
+- **`database` fails with error `28P01`.** The password was rejected. Check the user and password in `DATABASE_URL`.
+- **`database` fails with error `3D000`.** The database named in `DATABASE_URL` does not exist.
+- **`database` fails with error `ECONNREFUSED`.** Nothing is listening on the host and port in `DATABASE_URL`.
+- **`KMS key` fails with error `CredentialsProviderError`.** This machine has no AWS credentials that can reach the key. Set up credentials for the key's account, then check again.
+- **`KMS key` warns that `PARMANA_POLICY_DIR` must be set.** The KMS check does not run until the settings the signer needs are present. Fix the offline check first.
+- **`SUPABASE_URL` fails with error `ENOTFOUND`.** The project host does not exist. Check the project URL in the Supabase dashboard.
+
 - **"dist/ is stale" before the tests.** Run `npm run build`, then the tests again. The tests import the packages from `dist/`.
 - **Doctor reports settings you expected to be set.** You are probably running from a subfolder, so `.env` is not found. Run it from the repository root.
 - **Doctor reports nothing for a setting you set in the shell.** Check the spelling. A misspelt name is reported as a typo, so look for that warning.

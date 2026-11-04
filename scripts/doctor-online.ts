@@ -148,6 +148,20 @@ async function checkKms(
   checks: DoctorCheck[],
 ): Promise<void> {
   if (env.KEY_PROVIDER !== "aws-kms") return;
+  // The signer loads the whole server configuration first, so it cannot start without these.
+  // Without this check, a missing setting is reported as an unreachable KMS.
+  const missing = ["PARMANA_POLICY_DIR", "PARMANA_KEY_DIR"].filter(
+    (name) => (env[name] ?? "").trim() === "",
+  );
+  if (missing.length > 0) {
+    checks.push({
+      name: "KMS key",
+      level: "warn",
+      message: `not checked: ${missing.join(" and ")} must be set before the KMS signer can start`,
+      fix: "Fix the offline checks above, then run doctor with --online again",
+    });
+    return;
+  }
   if (deps.kms === undefined) {
     checks.push({
       name: "KMS key",
@@ -249,6 +263,10 @@ export function errorCode(err: unknown): string {
   if (typeof cause === "string") return cause;
   const code = (err as { code?: unknown }).code;
   if (typeof code === "string") return code;
+  // pg reports a TLS refusal with no code, only a message. The message is read, never printed:
+  // it can name a host.
+  const message = (err as { message?: unknown }).message;
+  if (typeof message === "string" && /\bSSL\b/.test(message)) return "SSL";
   const name = (err as { name?: unknown }).name;
   return typeof name === "string" ? name : "unknown";
 }

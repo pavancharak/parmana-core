@@ -150,6 +150,8 @@ describe("online checks, KMS", () => {
     ...PRODUCTION_ENV,
     KEY_PROVIDER: "aws-kms",
     AWS_REGION: "ap-south-1",
+    PARMANA_POLICY_DIR: "/policies",
+    PARMANA_KEY_DIR: "/keys",
   };
 
   it("passes when the default key exists and its metadata reads", async () => {
@@ -194,6 +196,23 @@ describe("online checks, KMS", () => {
     expect(result.level).toBe("fail");
     expect(result.message).toContain("AccessDeniedException");
     expect(JSON.stringify(checks)).not.toContain(arn);
+  });
+
+  it("does not try KMS when the settings the signer needs are missing, and says so", async () => {
+    let called = false;
+    const checks = await runOnlineChecks(
+      { ...kmsEnv, PARMANA_POLICY_DIR: undefined },
+      deps({
+        kms: async () => {
+          called = true;
+          throw new Error("unreachable");
+        },
+      }),
+    );
+    expect(called).toBe(false);
+    const result = find(checks, "KMS key");
+    expect(result.level).toBe("warn");
+    expect(result.message).toContain("PARMANA_POLICY_DIR");
   });
 
   it("does not look up KMS when the provider is local", async () => {
@@ -275,5 +294,16 @@ describe("errorCode", () => {
     expect(errorCode({ code: "28P01" })).toBe("28P01");
     expect(errorCode(new RangeError("x"))).toBe("RangeError");
     expect(errorCode("not an error")).toBe("unknown");
+  });
+});
+
+describe("errorCode, TLS refusals", () => {
+  it("classifies a TLS refusal, which pg reports with a message and no code, without printing the message", () => {
+    const host = "db.internal.example";
+    expect(
+      errorCode(
+        new Error(`The server at ${host} does not support SSL connections`),
+      ),
+    ).toBe("SSL");
   });
 });

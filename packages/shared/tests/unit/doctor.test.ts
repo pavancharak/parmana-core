@@ -595,4 +595,20 @@ describe("configuration doctor, production rules", () => {
     );
     expect(JSON.stringify(checks)).not.toContain("secret-password-value");
   });
+
+  it("warns when sslmode=disable, which sends the connection unencrypted", () => {
+    const checks = diagnoseConfiguration(
+      env({
+        ...PROD_ENV,
+        DATABASE_URL:
+          "postgresql://parmana:secret-password-value@db.internal/parmana?sslmode=disable",
+      }),
+      readers(),
+      PRODUCTION,
+    );
+    const result = check(checks, "DATABASE_URL");
+    expect(result.level).toBe("warn");
+    expect(result.message).toContain("disable");
+    expect(JSON.stringify(checks)).not.toContain("secret-password-value");
+  });
 });
