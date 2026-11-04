@@ -15,16 +15,19 @@ The checks live in the shared configuration package (`packages/shared/src/config
 ## Stages
 
 **Stage 1: offline checks, local deployment.**
+
 - Run the same loader and validation as the server, and collect every problem rather than stopping at the first.
 - Check the key material exists, and that the verification key is published.
 - Check conflicting settings, such as live keys enabled while the kill switch is off, or hybrid signing required with no secondary provider.
 - Add `npm run doctor`, and tests for each check in the shared package.
 
 **Stage 2: production configuration, offline.**
+
 - The same checks, applied to a production-shaped configuration: Supabase storage, AWS key provider, and the secrets provider.
 - Refuse live settings unless the operator has enabled them explicitly.
 
 **Stage 3: online checks, opt-in.**
+
 - With `--online`: the database and storage are reachable, the nonce and audit tables exist, and the key provider can return the public key.
 - Each network check warns, rather than fails, when its setting is missing.
 - Errors report the error code only, never a connection string.
