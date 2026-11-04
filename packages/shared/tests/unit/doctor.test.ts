@@ -708,4 +708,17 @@ describe("configuration doctor, production rules", () => {
     expect(result.message).toContain("disable");
     expect(JSON.stringify(checks)).not.toContain("secret-password-value");
   });
+
+  it("does not warn about memory storage in the test environment", () => {
+    const checks = diagnoseConfiguration(env({ NODE_ENV: "test" }), readers());
+    expect(check(checks, "PARMANA_STORAGE").level).toBe("pass");
+  });
+
+  it("still warns about memory storage outside the test environment", () => {
+    const checks = diagnoseConfiguration(
+      env({ NODE_ENV: "development" }),
+      readers(),
+    );
+    expect(check(checks, "PARMANA_STORAGE").level).toBe("warn");
+  });
 });
