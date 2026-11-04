@@ -490,33 +490,36 @@ Evidence
 
 ---
 
-## 2.22 Canonical Capability-to-Policy Binding (TD-22)
+## 2.22 Canonical Capability-to-Policy Binding
 
-For every production capability, the policy that governs it is fixed structurally, not selected by the caller. `CapabilityPolicyBinder` checks a request's declared `Intent.action` against `CANONICAL_CAPABILITY_POLICY_BINDINGS`, a single hardcoded map from capability to the one policy reference that authorizes it (`packages/capability-registry/src/CapabilityPolicyBinding.ts`, moved from `packages/policy/src` 2026-08-26; re-exported unchanged from `@parmana/policy`'s public API) — covering every capability the production connector registry actually registers. A request pairing a real capability with any policy other than its canonical one is rejected as an ordinary policy denial, with zero rules evaluated, before `PolicyEngine.evaluate` ever runs.
+**Claim.** Each capability in the canonical table is governed by one policy name, fixed by the table. The caller cannot choose a different policy for it. A request that pairs a bound capability with any other policy is refused as a policy denial, before any rule is evaluated.
 
-This closes the gap that would otherwise exist because policy _loading_ (`FilePolicyRepository.load(name, version)`) is itself keyed by whatever `policy.name`/`policy.version` the caller declares — validated only against a path-traversal allowlist, not against the capability being executed. Without the binder, a caller could pair a real, CRM-mutating capability (e.g. `hubspot:deal-update`) with an unrelated, unprotected policy that has no `boundSignals` for it, and have the real `intent.parameters` executed under that looser policy's rules — bypassing the capability's own protections entirely, not merely weakening them. `CapabilityPolicyBinder` is unconditionally instantiated inside `RuntimeBuilder.build()` — not configuration, not omittable from production wiring — and runs before both `SignalIntentBinder` and `PolicyEngine.evaluate`, so a wrongly-paired policy is loaded but never evaluated.
+**Why it matters.** Policies are loaded by the name and version the request declares. Without the binding, a caller could pair a capability that changes real state with an unrelated policy that does not protect it, and run that capability's parameters under the weaker rules. The binding closes that route.
+
+**Scope.** The table (`CANONICAL_CAPABILITY_POLICY_BINDINGS`) currently binds five capabilities:
+
+| Capability            | Policy name           |
+| --------------------- | --------------------- |
+| `hubspot:deal-fetch`  | `hubspot-deal-read`   |
+| `hubspot:deal-update` | `hubspot-deal-update` |
+| `github:pr-fetch`     | `github-pr-read`      |
+| `github:pr-merge`     | `github-pr-approval`  |
+| `paytm:refund`        | `customer-refund`     |
+
+Reads have their own policy, so that each approval covers only what it reads. The table pins the policy name. Where policy governance is enforced, the version is the one most recently approved for that name (see 2.43).
+
+**Where it runs.** `CapabilityPolicyBinder` is in `packages/capability-registry`. `RuntimeBuilder` constructs it on every build and passes it to the runtime engine, which runs the check before signal binding and policy evaluation.
+
+**Connectors.** Core no longer registers the vendor connectors for these capabilities. They are moving to the `parmana-connectors` repository (ADR-0018, still being migrated). The table stays in core, so a request for one of these capabilities is still checked against its policy name.
 
 Evidence
 
-- packages/capability-registry/src/CapabilityPolicyBinding.ts (`CANONICAL_CAPABILITY_POLICY_BINDINGS`, `CapabilityPolicyBinder`; moved from `packages/policy/src` 2026-08-26, G-30 Option C, re-exported unchanged from `@parmana/policy`'s own public API — see §2.22's own update below)
+- `packages/capability-registry/src/CapabilityPolicyBinding.ts`
+- `packages/runtime/src/RuntimeBuilder.ts` (the binder is always constructed and passed to the engine)
+- `packages/runtime/src/RuntimeEngine.ts` (the binder check runs before signal binding and policy evaluation)
+- `packages/capability-registry/tests/unit/` (the binder's tests)
 
-- packages/runtime/src/RuntimeBuilder.ts (unconditional construction, no configuration flag)
-
-- packages/runtime/src/RuntimeEngine.ts (binder check ordered before `SignalIntentBinder`/`PolicyEngine.evaluate`)
-
-- packages/policy/tests/unit/CapabilityPolicyBinder.test.ts (proves the exact live-shaped exploit — `hubspot:deal-update` paired with the unrelated, unprotected `vendor-payment/2.0.0` policy, and the same substitution shape for `hubspot:deal-fetch` paired with `customer-refund/1.0.0` — is rejected; also proves every production-registered capability has a binding, and, per that file's own comment, that Razorpay capabilities were removed from the bound set entirely when the connector was deleted 2026-08-12, not merely left unbound)
-
-- §5.1 of the Phase 3D independent authorization certification, in git history (independent re-verification, Phase 3D)
-
-**Update (code-only ground-truth capture pass, follow-up closure):** this section's "covering every capability the production connector registry actually registers" was, until this pass, not quite true — `CANONICAL_CAPABILITY_POLICY_BINDINGS` also carried a stale `payments:execute` entry left behind by G-27's vendor-payment removal (`docs/VERIFICATION-GAPS.md` G-27's own update). Removed; the table now matches the claim exactly. See that G-27 update for the full trace.
-
-**Update (2026-08-25 audit-fix pass, RESOLVED same-day):** "covering every capability the production connector registry actually registers" was, briefly, not true. `createConnectorRegistry.ts` conditionally registers `github:pr-fetch`/`github:pr-merge` (3.17) when GitHub App credentials are configured, wired in on 2026-08-19 — five days _before_ the code-only ground-truth pass above — but neither capability had been added to `CANONICAL_CAPABILITY_POLICY_BINDINGS`. Fixed same day: both now map to `github-pr-approval/1.0.0` (the policy §3.17's own connector already evaluates), mirroring HubSpot's own two-capabilities-one-policy shape exactly. `CapabilityPolicyBinder.test.ts`'s "binds every capability the production connector registry actually registers" test — which asserts a hardcoded set rather than reading the registry live, which is why the gap went uncaught for six days — now includes both. Full trace in `docs/VERIFICATION-GAPS.md` G-30 (RESOLVED).
-
-**Update (2026-08-26, G-30 architecture follow-up, Option C implemented):** `CANONICAL_CAPABILITY_POLICY_BINDINGS` and `CapabilityPolicyBinder` moved out of `@parmana/policy` into a new leaf package, `@parmana/capability-registry`, depending only on `@parmana/shared`. `@parmana/policy`'s own public API is unaffected — `packages/policy/src/index.ts` re-exports both symbols from the new package unchanged, so every existing consumer importing from `@parmana/policy` needed no changes; confirmed by grep across the ~10 files that do (`RuntimeEngine.ts`, `RuntimeBuilder.ts`, `execute.ts`, and others). **Deviation from the original Option C sketch, corrected before implementing:** the original Option C plan proposed also importing capability-identifier constants from `@parmana/connector-github`/`@parmana/connector-hubspot` into the new package to remove identifier-string duplication. Checked before doing it: `@parmana/connector-hubspot` already depends on `@parmana/policy` directly, and `@parmana/connector-github` depends on `@parmana/connector-sdk`, which also depends on `@parmana/policy` — either import would have created a direct dependency cycle back through the package this extraction was built to be depended on by. Not done; the four capability-identifier strings remain hand-typed in `CapabilityPolicyBinding.ts`, same as before the move, still duplicated against `GitHubCapabilities.ts`/`HubSpotCapabilities.ts`'s own separate constants. What this move does close: the `packages/policy` → `packages/api` backwards-dependency edge Option B would have required. Full detail in `docs/VERIFICATION-GAPS.md` G-30. Verified: full rebuild (`npx tsc -b`, clean) and full suite unchanged at 1274 passed, 37 skipped, 0 failed.
-
-**Update (2026-09-27, G-66, merged to `main` and deployed to production on 2026-09-27 (PR #46, merge `4eebd5f`)):** the binding pins the policy **name**; where policy governance is enforced, the **version** is the one most recently approved for that name, not the one written in the table. See 2.43.
-
-**Update (2026-09-28, G-73):** `github:pr-fetch` is bound to a new policy name, `github-pr-read`, so reads need no merge approval, and the table names `github-pr-approval` 1.1.0 for `github:pr-merge`. The name change takes effect on deploy; in production a read is then refused until `github-pr-read` 1.0.0 is approved (2.44).
+Dated updates for this claim are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
 ## 2.45 Approver Keys Are Added and Revoked Through Maker Checker, With No Deploy (Scoped, 2026-09-29)
 
