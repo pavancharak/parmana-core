@@ -5,7 +5,8 @@
  * It reads the same environment the server reads, including the repository
  * .env file, and never prints a setting's value. Run it from the repository root:
  *
- *   npm run doctor
+ *   npm run doctor               local deployment
+ *   npm run doctor -- --production   production rules as well
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 
@@ -18,17 +19,24 @@ if (process.env.PARMANA_SKIP_DOTENV !== "1" && existsSync(".env")) {
   dotenv.config({ path: ".env", quiet: true });
 }
 
-const checks: DoctorCheck[] = diagnoseConfiguration(process.env, {
-  directoryExists: (path) => existsSync(path) && statSync(path).isDirectory(),
-  listDirectory: (path) => {
-    try {
-      return readdirSync(path);
-    } catch {
-      return [];
-    }
+// --production applies the production rules as well. Without it, the local rules apply.
+const production = process.argv.includes("--production");
+
+const checks: DoctorCheck[] = diagnoseConfiguration(
+  process.env,
+  {
+    directoryExists: (path) => existsSync(path) && statSync(path).isDirectory(),
+    listDirectory: (path) => {
+      try {
+        return readdirSync(path);
+      } catch {
+        return [];
+      }
+    },
+    readFile: (path) => readFileSync(path, "utf8"),
   },
-  readFile: (path) => readFileSync(path, "utf8"),
-});
+  { production },
+);
 
 const LABEL: Record<DoctorCheck["level"], string> = {
   pass: "PASS",

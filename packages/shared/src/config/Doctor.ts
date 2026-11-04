@@ -7,11 +7,13 @@ import {
   SignatureAlgorithms,
 } from "./CryptoAlgorithms.js";
 import { KeyProviders } from "./KeyProviders.js";
+import { SecretsProviders } from "./SecretsProviders.js";
 import {
   parseApiKeys,
   parseCryptoMode,
   parseHashAlgorithm,
   parseKeyProvider,
+  parseSecretsProvider,
   parseSignatureAlgorithm,
   parseStorageProvider,
   parseTrustProfile,
@@ -36,6 +38,15 @@ export interface DoctorReaders {
   readonly readFile: (path: string) => string;
 }
 
+export interface DoctorOptions {
+  /**
+   * Apply the production rules as well. The server refuses several settings
+   * when NODE_ENV=production, and some storage and key choices are only valid
+   * in production. Without this, the local rules apply.
+   */
+  readonly production: boolean;
+}
+
 type Env = Readonly<Record<string, string | undefined>>;
 
 /**
@@ -44,6 +55,9 @@ type Env = Readonly<Record<string, string | undefined>>;
  * depends on this one, so the name is repeated here rather than imported.
  */
 const DEFAULT_KEY_ID = "default";
+
+/** A plain Postgres schema name, as PostgresPoolFactory accepts. */
+const SCHEMA_NAME = /^[a-z_][a-z0-9_]{0,62}$/;
 
 /**
  * Every PARMANA_ name read by this repository. A name outside this list is
@@ -77,40 +91,55 @@ export const KNOWN_PARMANA_SETTINGS: readonly string[] = [
 ];
 
 /**
- * Runs the configuration checks for the local deployment and returns every
- * result, not just the first failure.
+ * Runs the configuration checks and returns every result, not just the first
+ * failure. With `production: true`, the production rules are added and the
+ * stage 1 "not yet checked" warnings are replaced by real checks.
  *
  * Each setting is checked with the same parser the server uses, so a check
  * cannot pass here and fail at startup. Parser error messages are never shown,
- * because some of them echo the value they rejected, and a secret pasted into
- * the wrong setting would then appear in the output. Messages here name the
- * setting and the allowed values only.
- *
- * Settings for the production deployment (aws-kms, Postgres storage) are
- * reported as not yet checked, rather than checked wrongly. They follow in a
- * later stage.
+ * because some of them echo the value they rejected. Messages name the setting
+ * and the allowed values only.
  */
 export function diagnoseConfiguration(
   env: Env,
   readers: DoctorReaders,
+  options: DoctorOptions = { production: false },
 ): DoctorCheck[] {
+  const production = options.production;
   const checks: DoctorCheck[] = [];
   const add = (check: DoctorCheck) => checks.push(check);
 
-  checkStorage(env, add);
-  checkCrypto(env, add);
+  checkStorage(env, add, production);
+  checkCrypto(env, add, production);
   checkHybrid(env, add);
-  checkKeys(env, readers, add);
+  const keyProvider = keyProviderOf(env);
+  checkKeys(env, readers, add, keyProvider);
   checkPolicy(env, readers, add);
-  checkAuth(env, add);
+  checkAuth(env, add, production);
   checkTrustProfile(env, add);
   checkNumbers(env, add);
   checkUnknownSettings(env, add);
 
+  if (production) {
+    checkProduction(env, add, keyProvider);
+  }
+
   return checks;
 }
 
-function checkStorage(env: Env, add: (check: DoctorCheck) => void): void {
+function keyProviderOf(env: Env): string {
+  try {
+    return parseKeyProvider(env.KEY_PROVIDER);
+  } catch {
+    return KeyProviders.LOCAL;
+  }
+}
+
+function checkStorage(
+  env: Env,
+  add: (check: DoctorCheck) => void,
+  production: boolean,
+): void {
   const name = "PARMANA_STORAGE";
   if (env.DATABASE_PROVIDER !== undefined) {
     add({
@@ -121,34 +150,112 @@ function checkStorage(env: Env, add: (check: DoctorCheck) => void): void {
     });
     return;
   }
+
+  let provider: string;
   try {
-    const provider = parseStorageProvider(env.PARMANA_STORAGE);
-    if (provider === "memory") {
+    provider = parseStorageProvider(env.PARMANA_STORAGE);
+  } catch {
+    add({
+      name,
+      level: "fail",
+      message: `${name} has an unsupported value`,
+      fix: "Use one of: memory, postgres, supabase",
+    });
+    return;
+  }
+
+  if (provider === "memory") {
+    if (production) {
+      add({
+        name,
+        level: "fail",
+        message:
+          "memory storage is not durable, so it is not a production configuration",
+        fix: "Set PARMANA_STORAGE to postgres (or supabase), and set DATABASE_URL",
+      });
+    } else {
       add({
         name,
         level: "warn",
         message:
           "memory storage: state is lost when the process stops. Use it for local work only",
       });
-    } else {
+    }
+  } else {
+    add({ name, level: "pass", message: `${name} is ${provider}` });
+    checkDatabaseUrl(env, add);
+    if (
+      provider === "supabase" &&
+      (env.SUPABASE_URL === undefined || env.SUPABASE_URL === "")
+    ) {
       add({
-        name,
+        name: "SUPABASE_URL",
         level: "warn",
-        message: `${provider} storage is checked by the production stage of this doctor, not yet`,
-        fix: "Run the production checks once they are available",
+        message:
+          "SUPABASE_URL is not set. The Supabase client settings are read by the nonce and audit stores",
+        fix: "Set SUPABASE_URL to the project URL",
       });
     }
-  } catch {
+  }
+
+  const schema = env.PARMANA_DB_SCHEMA;
+  if (schema !== undefined && schema !== "" && !SCHEMA_NAME.test(schema)) {
     add({
-      name,
+      name: "PARMANA_DB_SCHEMA",
       level: "fail",
-      message: `${name} has an unsupported value`,
-      fix: `Use one of: memory, postgres, supabase`,
+      message: "PARMANA_DB_SCHEMA must be a plain Postgres name",
+      fix: "Use a lowercase name, such as parmana_sandbox",
     });
   }
 }
 
-function checkCrypto(env: Env, add: (check: DoctorCheck) => void): void {
+/**
+ * DATABASE_URL is required for postgres and supabase storage. Its value is never
+ * printed, because it holds a password. The check reads the scheme only.
+ */
+function checkDatabaseUrl(env: Env, add: (check: DoctorCheck) => void): void {
+  const url = env.DATABASE_URL;
+  if (url === undefined || url.trim() === "") {
+    add({
+      name: "DATABASE_URL",
+      level: "fail",
+      message:
+        "DATABASE_URL is not set, and postgres and supabase storage need it",
+      fix: "Set DATABASE_URL to the connection string of the database. It holds a password, so never share it",
+    });
+    return;
+  }
+  if (!/^postgres(ql)?:\/\//.test(url)) {
+    add({
+      name: "DATABASE_URL",
+      level: "fail",
+      message: "DATABASE_URL does not start with postgres:// or postgresql://",
+      fix: "Correct the scheme of the connection string",
+    });
+    return;
+  }
+  if (!/[?&]sslmode=/.test(url)) {
+    add({
+      name: "DATABASE_URL",
+      level: "warn",
+      message:
+        "DATABASE_URL does not set sslmode. Confirm the connection is encrypted",
+      fix: "Add sslmode=require to the connection string if the database supports TLS",
+    });
+    return;
+  }
+  add({
+    name: "DATABASE_URL",
+    level: "pass",
+    message: "DATABASE_URL is set with a postgres scheme and sslmode",
+  });
+}
+
+function checkCrypto(
+  env: Env,
+  add: (check: DoctorCheck) => void,
+  production: boolean,
+): void {
   parseOrFail(
     add,
     "CRYPTO_MODE",
@@ -183,25 +290,64 @@ function checkCrypto(env: Env, add: (check: DoctorCheck) => void): void {
     );
   }
 
+  let provider: string;
   try {
-    const provider = parseKeyProvider(env.KEY_PROVIDER);
-    if (provider !== KeyProviders.LOCAL) {
-      add({
-        name: "KEY_PROVIDER",
-        level: "warn",
-        message: `${provider} keys are checked by the production stage of this doctor, not yet`,
-      });
-    } else {
-      add({ name: "KEY_PROVIDER", level: "pass", message: "local key files" });
-    }
+    provider = parseKeyProvider(env.KEY_PROVIDER);
   } catch {
     add({
       name: "KEY_PROVIDER",
       level: "fail",
       message: "KEY_PROVIDER has an unsupported value",
-      fix: "Use local for local work. Other providers are not implemented in this build",
+      fix: "Use local, or aws-kms for production. Other providers are not implemented in this build",
     });
+    return;
   }
+
+  if (provider === KeyProviders.AWS_KMS) {
+    if (env.CRYPTO_MODE === "hybrid") {
+      add({
+        name: "KEY_PROVIDER",
+        level: "fail",
+        message:
+          "CRYPTO_MODE=hybrid is not supported with KEY_PROVIDER=aws-kms",
+        fix: "Use CRYPTO_MODE=single with KMS, or KEY_PROVIDER=local for hybrid signing",
+      });
+      return;
+    }
+    if (production) {
+      if (env.AWS_REGION === undefined || env.AWS_REGION.trim() === "") {
+        add({
+          name: "AWS_REGION",
+          level: "fail",
+          message: "AWS_REGION is not set, and KMS signing needs it",
+          fix: "Set AWS_REGION to the region of the KMS key",
+        });
+      } else {
+        add({
+          name: "AWS_REGION",
+          level: "pass",
+          message: "AWS_REGION is set",
+        });
+      }
+      add({
+        name: "KEY_PROVIDER",
+        level: "pass",
+        message: env.AWS_ROLE_ARN
+          ? "aws-kms, with AWS_ROLE_ARN for short-lived credentials"
+          : "aws-kms. No AWS_ROLE_ARN is set, so credentials come from the environment",
+      });
+    } else {
+      add({
+        name: "KEY_PROVIDER",
+        level: "warn",
+        message: "aws-kms: the KMS settings are checked with --production",
+        fix: "Run npm run doctor -- --production",
+      });
+    }
+    return;
+  }
+
+  add({ name: "KEY_PROVIDER", level: "pass", message: "local key files" });
 }
 
 function checkHybrid(env: Env, add: (check: DoctorCheck) => void): void {
@@ -255,9 +401,11 @@ function checkKeys(
   env: Env,
   readers: DoctorReaders,
   add: (check: DoctorCheck) => void,
+  keyProvider: string,
 ): void {
   const name = "PARMANA_KEY_DIR";
   const dir = env.PARMANA_KEY_DIR;
+  // The server requires this folder under every key provider, so the check does too.
   if (dir === undefined || dir.trim() === "") {
     add({
       name,
@@ -298,11 +446,22 @@ function checkKeys(
     }
   }
 
+  // With KMS the default private key never leaves KMS, so there is no local file to check.
+  if (keyProvider === KeyProviders.AWS_KMS) {
+    add({
+      name: "default key pair",
+      level: "pass",
+      message:
+        "held in AWS KMS. Its reachability is checked with --online (stage 3)",
+    });
+    return;
+  }
+
   const publicPath = `${dir}/${DEFAULT_KEY_ID}.public.pem`;
+  const files = readers.directoryExists(dir) ? readers.listDirectory(dir) : [];
   const present =
-    readers.directoryExists(dir) &&
-    readers.listDirectory(dir).includes(`${DEFAULT_KEY_ID}.private.pem`) &&
-    readers.listDirectory(dir).includes(`${DEFAULT_KEY_ID}.public.pem`);
+    files.includes(`${DEFAULT_KEY_ID}.private.pem`) &&
+    files.includes(`${DEFAULT_KEY_ID}.public.pem`);
 
   if (present) {
     checkPublicKeyFile(publicPath, readers, add);
@@ -422,8 +581,13 @@ function checkPolicy(
   });
 }
 
-function checkAuth(env: Env, add: (check: DoctorCheck) => void): void {
-  if (env.PARMANA_AUTH_DISABLED === "true") {
+function checkAuth(
+  env: Env,
+  add: (check: DoctorCheck) => void,
+  production: boolean,
+): void {
+  // In production the production rules report this as a failure instead.
+  if (env.PARMANA_AUTH_DISABLED === "true" && !production) {
     add({
       name: "PARMANA_AUTH_DISABLED",
       level: "warn",
@@ -473,26 +637,155 @@ function checkTrustProfile(env: Env, add: (check: DoctorCheck) => void): void {
  * becomes NaN and is used as is. Doctor is the one place that catches it.
  */
 function checkNumbers(env: Env, add: (check: DoctorCheck) => void): void {
-  const numbers: Array<{ name: string; fallback: number; min: number }> = [
-    { name: "PORT", fallback: 3000, min: 1 },
-    { name: "EXECUTION_AUTHORIZATION_TTL_SECONDS", fallback: 120, min: 1 },
-    { name: "RATE_LIMIT_EXECUTE_PER_MINUTE", fallback: 30, min: 1 },
-    { name: "RATE_LIMIT_HEALTH_PER_MINUTE", fallback: 300, min: 1 },
-    { name: "RATE_LIMIT_PUBLIC_PER_MINUTE", fallback: 60, min: 1 },
-    { name: "RATE_LIMIT_AUTH_FAILURE_PER_MINUTE", fallback: 30, min: 1 },
+  const numbers: Array<{ name: string; fallback: number }> = [
+    { name: "PORT", fallback: 3000 },
+    { name: "EXECUTION_AUTHORIZATION_TTL_SECONDS", fallback: 120 },
+    { name: "RATE_LIMIT_EXECUTE_PER_MINUTE", fallback: 30 },
+    { name: "RATE_LIMIT_HEALTH_PER_MINUTE", fallback: 300 },
+    { name: "RATE_LIMIT_PUBLIC_PER_MINUTE", fallback: 60 },
+    { name: "RATE_LIMIT_AUTH_FAILURE_PER_MINUTE", fallback: 30 },
   ];
-  for (const { name, fallback, min } of numbers) {
+  for (const { name, fallback } of numbers) {
     const raw = env[name];
     if (raw === undefined || raw === "") continue;
     const value = Number(raw);
-    if (!Number.isInteger(value) || value < min) {
+    if (!Number.isInteger(value) || value < 1) {
       add({
         name,
         level: "fail",
-        message: `${name} must be a whole number of at least ${min}`,
+        message: `${name} must be a whole number of at least 1`,
         fix: `Set ${name} to a whole number, or remove it to use the default (${fallback})`,
       });
     }
+  }
+}
+
+/**
+ * Production rules. Each one mirrors a refusal the server already makes, or a
+ * setting the production deployment needs. The server enforces them at startup
+ * or on the first request; this reports them before the first start.
+ */
+function checkProduction(
+  env: Env,
+  add: (check: DoctorCheck) => void,
+  keyProvider: string,
+): void {
+  if (env.NODE_ENV !== "production") {
+    add({
+      name: "NODE_ENV",
+      level: "warn",
+      message:
+        "NODE_ENV is not production. Production refusals apply only when NODE_ENV=production",
+      fix: "Set NODE_ENV=production for the production deployment",
+    });
+  } else {
+    add({ name: "NODE_ENV", level: "pass", message: "NODE_ENV is production" });
+  }
+
+  if (env.PARMANA_AUTH_DISABLED === "true") {
+    add({
+      name: "production: PARMANA_AUTH_DISABLED",
+      level: "fail",
+      message: "authentication cannot be disabled in production",
+      fix: "Set PARMANA_AUTH_DISABLED to false, and configure PARMANA_API_KEYS",
+    });
+  }
+
+  if (env.PARMANA_SANDBOX === "true") {
+    add({
+      name: "PARMANA_SANDBOX",
+      level: "fail",
+      message: "the sandbox is refused in production",
+      fix: "Set PARMANA_SANDBOX to false, or remove it",
+    });
+  }
+
+  const killSwitch = env.KILL_SWITCH_ENABLED;
+  if (
+    killSwitch === undefined ||
+    killSwitch.trim() === "" ||
+    killSwitch === "false"
+  ) {
+    add({
+      name: "KILL_SWITCH_ENABLED",
+      level: "warn",
+      message: "the kill switch is off. Production sets it to true (ADR-0017)",
+      fix: "Set KILL_SWITCH_ENABLED=true",
+    });
+  } else if (killSwitch !== "true") {
+    add({
+      name: "KILL_SWITCH_ENABLED",
+      level: "fail",
+      message: 'KILL_SWITCH_ENABLED must be "true" or "false"',
+      fix: 'Set it to "true" for production',
+    });
+  } else {
+    const twoPerson = env.KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR;
+    if (twoPerson !== "true" && twoPerson !== "false") {
+      add({
+        name: "KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR",
+        level: "fail",
+        message: "must be stated as true or false when the kill switch is on",
+        fix: 'Set it to "true" for production (ADR-0017 decision 1)',
+      });
+    } else {
+      add({
+        name: "KILL_SWITCH_ENABLED",
+        level: "pass",
+        message: `the kill switch is on, with a second operator required to reset: ${twoPerson}`,
+      });
+    }
+  }
+
+  try {
+    const secrets = parseSecretsProvider(env.PARMANA_SECRETS_PROVIDER);
+    if (
+      secrets === SecretsProviders.AWS_SECRETS_MANAGER &&
+      (env.AWS_REGION === undefined || env.AWS_REGION.trim() === "")
+    ) {
+      add({
+        name: "PARMANA_SECRETS_PROVIDER",
+        level: "fail",
+        message: "aws-secrets-manager needs AWS_REGION",
+        fix: "Set AWS_REGION to the region of the secret store",
+      });
+    } else {
+      add({
+        name: "PARMANA_SECRETS_PROVIDER",
+        level: "pass",
+        message: `secrets come from ${secrets}`,
+      });
+    }
+  } catch {
+    add({
+      name: "PARMANA_SECRETS_PROVIDER",
+      level: "fail",
+      message: "PARMANA_SECRETS_PROVIDER has an unsupported value",
+      fix: "Use env, or aws-secrets-manager",
+    });
+  }
+
+  if (
+    env.PARMANA_KEY_MATERIAL_JSON !== undefined &&
+    env.PARMANA_KEY_MATERIAL_JSON.trim() !== ""
+  ) {
+    add({
+      name: "production: PARMANA_KEY_MATERIAL_JSON",
+      level: "warn",
+      message:
+        "keys are written at startup from an environment variable. That is a fallback for platforms without a secret mount",
+      fix: "Prefer a mounted secret file, or KEY_PROVIDER=aws-kms",
+    });
+  }
+
+  if (keyProvider === KeyProviders.LOCAL) {
+    add({
+      name: "production: KEY_PROVIDER",
+      level: "warn",
+      message:
+        "signing keys are local files. Production is designed for aws-kms",
+      fix: "Confirm the key files are on a protected volume, or move to KEY_PROVIDER=aws-kms",
+    });
   }
 }
 
