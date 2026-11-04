@@ -55,7 +55,13 @@ The server's own parsers produce these results, so a check that passes here pass
 
 ## Fixing the common failures
 
-- **`PARMANA_KEY_DIR` is not set, or the default key pair is missing.** Set `PARMANA_KEY_DIR` to a folder, and put `default.private.pem` and `default.public.pem` in it. For a first local run, `npm run generate:keys` creates a pair. Check the script's name in `package.json` before you run it.
+- **`PARMANA_KEY_DIR` is not set, or the default key pair is missing.** Set `PARMANA_KEY_DIR` to a folder, then generate the pair into it:
+
+  ```bash
+  npx tsx scripts/generate-keypair.ts --algorithm ed25519 --key-id default
+  ```
+
+  The script writes `default.private.pem` and `default.public.pem` to `PARMANA_KEY_DIR`, or to `./keys` when it is unset. It does not overwrite existing files unless you add `--force`. Overwriting a key that is in use breaks every signature made with it, so do not add `--force` on an existing deployment.
 - **`PARMANA_POLICY_DIR` does not exist.** Create the folder, and add the policy files. A missing folder stops the server. An empty one warns, and requests naming a policy fail.
 - **`PARMANA_API_KEYS` is missing.** Either configure at least one entry, a JSON array of `{ "callerId", "keyHash" }`, or set `PARMANA_AUTH_DISABLED=true` for a local machine only.
 - **A typo warning.** Rename the setting to the name the doctor suggests. The server ignores the misspelt name without any message.
