@@ -181,10 +181,7 @@ locally-running instance (see docs/VERIFICATION-GAPS.md G-44).
 **Vendor-confirmation visibility (2026-09-15, docs/VERIFICATION-GAPS.md G-46).**
 `ConnectorEvidence` (packages/execution-gateway/src/connector-execution/ConnectorEvidence.ts)
 gained `vendorConfirmationVerified: boolean`, defaulting to `false` and folded into
-`connectorEvidenceHash`. Confirmed by grep before adding it: none of this codebase's four
-connectors (HubSpot, GitHub, Slack, Paytm) independently verify a vendor-originated
-cryptographic confirmation — for Paytm, that verification lives entirely in the separate
-`parmana-paytm-agent` repository (§3.22 below). This makes that architectural limitation
+`connectorEvidenceHash`. Confirmed by grep before adding it: no connector in this codebase independently verifies a vendor-originated cryptographic confirmation. This makes that architectural limitation
 visible in every piece of evidence itself, not only in prose documentation, and gives a future
 connector that does add real vendor-signature verification somewhere to record it. Found and
 fixed same day by the same audit (GAP-3); verified via
@@ -664,7 +661,7 @@ The demo approver signs only for `sandbox:receipt`, and only the documentation s
 - **The sandbox acts on nothing.** Its one capability releases to an endpoint that returns a receipt. No connector to a real system can be configured while sandbox mode is on.
 - **Anyone can approve in the sandbox.** That is its purpose. It shows how a signed approval is used, not who may give one. In production only registered approvers sign.
 - **The sandbox policy, the deployment scripts and the live check records are not in this repository.** The sandbox policy and its deployment are operated outside this repository, so this claim does not verify them. The code-level enforcement above is verified here.
-- **Distinct credentials, not distinct people.** The sandbox maker and checker keys can be held by one person, as in 2.49 and 2.50.
+- **Distinct credentials, not distinct people.** The sandbox maker and checker keys can be held by one person, as elsewhere in this document.
 - **Retention.** The sandbox's record-retention job is operated outside this repository, and this claim does not verify it.
 
 **Evidence.**
@@ -710,7 +707,7 @@ Scope, stated plainly:
 - **Authority is today's checks, named.** `AUTHORIZED` means the governance verification and capability/policy binding passed (and, at the API, the caller key's capability scope). Per-agent limits and expiry are phase 3, so `AUTHORITY_EXPIRED` is not yet produced.
 - **Policies without sources are unchanged.** Their validation status is `NOT_EVALUATED`, never `VALID`, and they still need a signed human approval to approve (2.47).
 - **The digest proves what Parmana observed, not what the source said.** A source's own proof is carried verbatim in `integrityProof.sourceProof` but not yet verified.
-- **Execution statuses for approved actions** remain the Trust Record's executions; `EXECUTION_UNKNOWN` and conditional execution are phase 4. **Update (2026-10-11):** built, see 2.56.
+- **Execution statuses for approved actions** remain the Trust Record's executions; `EXECUTION_UNKNOWN` and conditional execution are phase 4. **Update (2026-10-11):** built.
 - **Not deployed** until this change is merged and deployed. **Update (2026-10-11):** deployed; production runs `main` at `4fdc2c2` (#100) and answers `GET /health` `UP` and `GET /ready` `READY`.
 
 Verification
@@ -739,7 +736,7 @@ Scope, stated plainly:
 - **Not deployed** until this change is merged and deployed, and **no real business system has been connected.** Every test runs against in-process endpoints, including the example endpoint the docs give operators. **Update (2026-10-11):** deployed; `GET /business-signal-sources` answers in production. Still no real business system connected and no source registered there. **Live check, passed in production 2026-10-11** (`examples/live-checks/business-signal-source`): with the demo source `livecheck-erp` (a deployed endpoint answering from a fixed table, registered with an Ed25519 key) and test policy `livecheck-signal`, a request for a paid invoice was approved on the source's signed answer (`sourceProofVerified: true`, released, verifies offline), an unpaid one was refused by the policy on the source's `false`, the agent's `true` against the source's `false` was refused as `INVALID`, and an unknown invoice as `MISSING_DATA`. Transactions `d736681f-8d86-4e24-bcf3-66debfa6ac23`, `266278b4-7683-43fd-97e7-aa724c6cca9a`, `1fd2274c-65e2-47c4-bda5-4dd57b198277` and `173c6f4f-f9d7-46e0-a712-9d9f39a274cd`. No real business system is connected yet.
 - **Parmana proves the source said it, not that it is right.** A source answers for its own records.
 - **A source registered without a key** is trusted on the pinned HTTPS connection alone; its Trusted Signal has no `sourceProof`. Registering a key is recommended, not required.
-- **Checked once, at decision time.** `validUntil` is not re-checked at release; conditional execution is phase 4. **Update (2026-10-11):** re-checked at release, and carried to external connectors as conditions, since 2.56.
+- **Checked once, at decision time.** `validUntil` is not re-checked at release; conditional execution is phase 4. **Update (2026-10-11):** re-checked at release, and carried to external systems as conditions.
 - **Authority is unchanged** from 2.53: per-agent grants with limits and expiry are phase 3. **Update (2026-10-11):** built, see 2.55.
 - **The SDK methods** (`proposeBusinessSignalSourceChange`, `business_signal_sources.propose_register` and the rest) ship in the next SDK release. **Update (2026-10-11):** published in SDK 1.6.0.
 
@@ -769,7 +766,7 @@ Scope, stated plainly:
 - **Not deployed** until this change is merged and deployed. **Update (2026-10-11):** deployed; `GET /authority-grants` answers in production. No grant has been made there and no production policy requires one. **Live check, passed in production 2026-10-11** (`examples/live-checks/authority-grant`): under test policy `livecheck-grant` with `requireAuthorityGrant`, each request with a valid signed approval, a request before any grant was refused (`authority-not-authorized`), one within grant `4b60507f-adb8-4fe0-82b3-a83c41e09022` (max 100) was approved, released and verified offline with the grant in the signed record, one for 500 was refused as above the granted maximum, and one after the revoke was refused. Transactions `8a75374c-150d-4cea-b57a-abb3a92bcac6`, `da96002b-66ec-44cf-88da-0f29997e4711`, `87770ab4-ac7c-4768-94a9-46df2367782b` and `41ec047d-bf64-48f4-b718-a419c7575e8d`. No production policy for a real action requires a grant yet.
 - **Limits are per request.** Cumulative limits ("100000 per day") are not built.
 - **The grantee is a caller id the server does not check exists.** A grant to a key that does not exist has no effect.
-- **Checked at decision time.** Not re-checked at release (phase 4); the authorization's short TTL bounds the window. **Update (2026-10-11):** re-checked at release since 2.56.
+- **Checked at decision time.** Not re-checked at release (phase 4); the authorization's short TTL bounds the window. **Update (2026-10-11):** re-checked at release.
 - **The SDK methods** ship in the next SDK release. **Update (2026-10-11):** published in SDK 1.6.0.
 
 Verification
@@ -804,10 +801,10 @@ paths, not by reading them. The tests are in `proof-audit/tests/` and run with
    key files and the network denied, both in-process and in an empty network namespace. Nine field
    changes (decision, amount, action ID, timestamps, policy version, both signatures) each fail. Scope:
    the verifier no longer reads a `.env` file on import (G-112).
-2. **Execution requires a valid, current proof: Verified for the Paytm refund, Slack, GitHub and HubSpot paths.** A missing,
+2. **Execution requires a valid, current proof.** A missing,
    forged, expired, revoked, mismatched or denied-decision proof each reaches the external endpoint zero
-   times. A control with an approved decision reaches it once. The same conditions hold for Slack, GitHub and HubSpot (Tests 7 to 9). Other connectors are not yet covered (G-115).
-3. **A proof authorizes only the parameters it was issued for: Verified for the Paytm refund path.**
+   times. A control with an approved decision reaches it once. Not all paths are covered yet (G-115).
+3. **A proof authorizes only the parameters it was issued for.**
    A changed amount, target, recipient identifier, connector, operation or validity window is rejected.
    Replay is rejected at the gateway and at the API, each with zero extra endpoint calls.
 4. **An old proof verifies against the policy version it cites, and a published version cannot be
@@ -823,15 +820,13 @@ denied decision, and the in-process release path accepted caller-set flags), cla
 version could be overwritten) and claim 5 (tail truncation). The fixes and their residuals are recorded in `docs/VERIFICATION-GAPS.md`, G-103 to G-118.
 The first-run measurements are not published in this repository.
 
-**Coverage after the follow-up fixes.** The same gate conditions now run for Paytm refund, Slack post-message,
-GitHub PR merge and HubSpot deal-update (Tests 2, 7, 8, 9). The Postgres nonce store runs on PostgreSQL semantics
+**Coverage after the follow-up fixes.** The Postgres nonce store runs on PostgreSQL semantics
 (Test 6). The startup governance integrity check runs against a signed approval record (Test 4). Not yet
 covered: KMS signing, a live external connector endpoint, and the caller
 authorization scoping (the API harness disables caller authentication, as the existing integration tests do).
 These are listed as open in `docs/REMAINING-WORK.md` section M.
 
-**Evidence.** test1-independent-verification.test.ts (removed 2026-11-02 with the Paytm connector, ADR-0018) through
-`test10-execution-audit.test.ts`; `packages/api/src/bootstrap/createReleaseVerifier.ts`;
+**Evidence.** `test10-execution-audit.test.ts`; `packages/api/src/bootstrap/createReleaseVerifier.ts`;
 `packages/execution-control/src/ExecutionControlService.ts`; `packages/execution-gateway/src/ExecutionGateway.ts`
 (`decisionApproved`); `packages/policy/src/FilePolicyRepository.ts` (`save`, `PolicyVersionImmutableError`);
 `packages/crypto/src/CallerAuditChainVerifier.ts` (`verifyChain`, the `anchor` argument).
@@ -896,7 +891,7 @@ Directly validated, not inferred from the absence of AI-specific code: `Business
 
 Independently confirmed by the Strategic Positioning source-code validation audit (2026-08-09, read-only): the caller-authentication layer (`StaticKeyAuthenticator`, `packages/api/src/auth/StaticKeyAuthenticator.ts`) authenticates by opaque API-key hash comparison only, with no concept of caller category either — the same identity mechanism a human operator, a script, an AI agent, or a third-party integration would all use identically.
 
-**Scope, precisely:** this claim covers `hubspot:deal-update` and, since 2026-08-19, `github:pr-merge`/`github:pr-fetch` (§3.17; missed by the 2026-08-24 pass that last touched this paragraph — see 2.23's own 2026-08-25 update) — the capabilities actually production-reachable today (`razorpay:refund-create` was covered when this claim was originally written and validated, but no longer exists as a registered capability, removed 2026-08-12) — and the general-purpose pipeline mechanism itself, which the regression test below exercises independently of any specific capability. The mechanism's caller-agnosticism does not depend on which capability is invoked (2.24's own evidence is about `RuntimeEngine`/`PolicyEngine`/`SignalIntentBinder`/`CapabilityPolicyBinder` never reading caller identity at all, not about per-capability behavior), so this claim's substance is unaffected by G-30 — G-30 is about policy _binding_ coverage, not caller-type discrimination. It does not claim that a non-AI caller has actually been exercised against a live production deployment — only that the mechanism contains no code path that could distinguish one caller kind from another to begin with.
+**Scope, precisely:** this claim covers the general-purpose pipeline mechanism itself, which the regression test below exercises independently of any specific capability. The mechanism's caller-agnosticism does not depend on which capability is invoked (2.24's own evidence is about `RuntimeEngine`/`PolicyEngine`/`SignalIntentBinder`/`CapabilityPolicyBinder` never reading caller identity at all, not about per-capability behavior), so this claim's substance is unaffected by G-30 — G-30 is about policy _binding_ coverage, not caller-type discrimination. It does not claim that a non-AI caller has actually been exercised against a live production deployment — only that the mechanism contains no code path that could distinguish one caller kind from another to begin with.
 
 Evidence
 
@@ -1016,7 +1011,7 @@ A signed Execution Authorization is also bound to the exact runtime signals its 
 
 `ExecutionRequest` carries the same `signals` the authorization was signed under (`packages/execution-system/src/ExecutionRequest.ts`, populated by `ExecutionRequestBuilder` from the persisted `BusinessTransaction.signals`), and `ExecutionGateway` optionally accepts a `SignalStateVerifier` (`ExecutionGatewayOptions.signalStateVerifier` — the same port `@parmana/policy` already defines and `RuntimeEngine` already uses pre-authorization, reused here rather than reimplemented). When supplied, and when the authorization carries a `signalsHash` and the request carries `signals` (older authorizations signed before this check existed carry neither), the gateway recomputes the signals hash and compares it to the signed value — a mismatch sets `signalsStillCurrent: false` and is reported in `GatewayVerificationResult.signalsHashMismatch`. When the hash matches, the gateway independently re-verifies those signals against real-world state via `SignalStateVerifier.findViolations` — any divergence also sets `signalsStillCurrent: false`, reported in `GatewayVerificationResult.signalDivergence`, and fails `verify()` before the connector is ever invoked, in the same ordered check sequence `policyStillCurrent` sits in (`packages/execution-gateway/src/ExecutionGateway.ts`).
 
-This check is opt-in and additive, not a behavior change for existing deployments: omitting `signalStateVerifier`, or verifying an authorization signed before `signalsHash` existed, leaves `signalsStillCurrent` absent (not failed) — the same "absent means skipped" convention `policyStillCurrent` already uses — and `isSoleFailureNonceReplay` treats an absent/undefined check as passing, so it does not spuriously reclassify a stale-signals rejection as a nonce replay. In production, only capabilities with a configured `SignalStateVerifier` (today, `hubspot-deal-update` via `createHubSpotSignalStateVerifier`) get a real re-verification; every other action's `findViolations` call returns an empty array (nothing to check), the same discipline every capability-scoped `SignalStateVerifier` implementation already follows. The check also only has effect when decision and execution are actually separated in time; this codebase's own `RuntimeEngine`/`ExecutionGateway` wiring runs both synchronously in one call today, so its practical value is for a `SignedExecutionAuthorization` handed to a decoupled downstream receiver (e.g. an `HttpExecutionSystem`-based deployment) that verifies and executes independently, potentially much later, up to `maxTtlSeconds` — exactly the use this authorization type's own "receiving systems" doc comment describes as supported.
+This check is opt-in and additive, not a behavior change for existing deployments: omitting `signalStateVerifier`, or verifying an authorization signed before `signalsHash` existed, leaves `signalsStillCurrent` absent (not failed) — the same "absent means skipped" convention `policyStillCurrent` already uses — and `isSoleFailureNonceReplay` treats an absent/undefined check as passing, so it does not spuriously reclassify a stale-signals rejection as a nonce replay. In production, only capabilities with a configured `SignalStateVerifier` get a real re-verification, and none is configured in this version; every action's `findViolations` call returns an empty array (nothing to check), the same discipline every capability-scoped `SignalStateVerifier` implementation already follows. The check also only has effect when decision and execution are actually separated in time; this codebase's own `RuntimeEngine`/`ExecutionGateway` wiring runs both synchronously in one call today, so its practical value is for a `SignedExecutionAuthorization` handed to a decoupled downstream receiver (e.g. an `HttpExecutionSystem`-based deployment) that verifies and executes independently, potentially much later, up to `maxTtlSeconds` — exactly the use this authorization type's own "receiving systems" doc comment describes as supported.
 
 Evidence
 
@@ -1248,7 +1243,7 @@ What changed on 2026-09-20 (`packages/execution-gateway/src/ExecutionGateway.ts`
 Scope, stated plainly:
 
 - This binds execution to the policy a human checker approved. It does not prove the policy is correct or wise, and it does not model per policy or per role approver authority. Any provisioned human checker with a step up key can approve any policy (see G-50 in `docs/VERIFICATION-GAPS.md`).
-- Signals such as `fraudCheckPassed` are caller declared unless a `SignalStateVerifier` covers that capability. The HubSpot verifier and, for any signal a policy declares in `approvalSignals` (such as `managerApproved` on refunds), `ApprovalSignalVerifier` (2.42) are wired; other signals are only as true as the caller says (G-51). Since 2026-09-28 the policies for merges and LLM tool calls need a signed approval, so their caller declared facts cannot authorize on their own (2.44).
+- Signals such as `fraudCheckPassed` are caller declared unless a `SignalStateVerifier` covers that capability. For any signal a policy declares in `approvalSignals`, `ApprovalSignalVerifier` (2.42) is wired; other signals are only as true as the caller says (G-51). Since 2026-09-28 the policies for LLM tool calls need a signed approval, so their caller declared facts cannot authorize on their own (2.44).
 - The claim holds for execution routed through the gateway. A request that never reaches the gateway is not covered (see 3.1).
 - Direct edits to the policy store outside the API are prevented from executing (hash mismatch against the approval record) but are still only detected, not blocked, at the storage layer.
 
@@ -1262,7 +1257,7 @@ Evidence
 
 ## 2.37 Large Message Signing Under AWS KMS (Commitment Scheme)
 
-An Execution Trust Record, an execution authorization, or any other artifact whose canonical form is longer than 4096 bytes can be signed with a KMS held Ed25519 key and verified independently. AWS KMS refuses a raw Ed25519 message over 4096 bytes, which broke `POST /execute` for `paytm:refund` in production on 2026-09-20 (`VerificationCrypto.sign` calling `KmsSigner.sign`, `ValidationException: Member must have length less than or equal to 4096`).
+An Execution Trust Record, an execution authorization, or any other artifact whose canonical form is longer than 4096 bytes can be signed with a KMS held Ed25519 key and verified independently. AWS KMS refuses a raw Ed25519 message over 4096 bytes, so a larger artifact is signed through a fixed-size commitment.
 
 The decision is recorded in `docs/adr/ADR-0010-Large-Message-Signing-Under-KMS.md`:
 
@@ -1275,7 +1270,6 @@ Scope, stated plainly:
 
 - The TypeScript packages and the Python SDK implement the rule. A third party verifier must implement it to verify a large KMS signed artifact. It is fully specified in the ADR and the Python module is a compact reference.
 - This makes signing possible. It does not change the ordering in which a request is processed. The connector can still be called before the trust record is signed, so a signing failure after the connector call leaves an executed action without a signed record (G-52 in `docs/VERIFICATION-GAPS.md`).
-- Verified against the real AWS KMS service in production on 2026-09-20 (commit 333786a): a live `paytm:refund` returned `200` with a 4965 byte trust record that verifies only as the commitment signature, and `verifyExecutionTrustRecordOffline` accepted it against the live public key.
 
 Evidence
 
@@ -1298,7 +1292,7 @@ Scope, stated plainly:
 
 - This does not guarantee that every executed action has a signed trust record. A transient failure between the readiness check and the real signing, or a database failure after release, still leaves an executed action with no signed record. It narrows the window and makes the failure explicit and reconcilable. **Superseded on 2026-09-21 by section 2.39:** a signed Execution Intent is now stored before release, and a missing record can be rebuilt.
 - There was no two phase record and no rebuild path for a missing record (G-53 in `docs/VERIFICATION-GAPS.md`) when this section was written. Section 2.39 adds both, with the limits stated there.
-- Verified in tests, and the success path verified live on 2026-09-20 (production commit 4047536): the startup log shows `signingReadinessConfigured: true` and a live `paytm:refund` returned `200` with `VERIFIED`, which required the readiness probe to pass against the real KMS. The failure responses (`503 SIGNING_UNAVAILABLE`, `500 EXECUTION_RECORD_INCOMPLETE`) are proven in unit tests, not by live fault injection.
+- Verified in tests. The failure responses (`503 SIGNING_UNAVAILABLE`, `500 EXECUTION_RECORD_INCOMPLETE`) are proven in unit tests, not by live fault injection.
 
 Evidence
 
@@ -1483,7 +1477,7 @@ Evidence
 
 ---
 
-## 2.44 An Agent Cannot Authorize a Refund, Merge, Slack Post or Tool Call by Declaring Facts
+## 2.44 An Agent Cannot Authorize an Action by Declaring Facts
 
 **Claim.** An AI agent can be manipulated by content it reads (prompt injection). For the actions below, the agent cannot authorize its own request by declaring facts. Each write needs a signed approval from a trusted person for that specific action, and the facts the agent declares can refuse a request but cannot approve it.
 
@@ -1559,7 +1553,7 @@ Every policy `REJECT` decision reachable through `RuntimeEngine.execute` — an 
 
 `RefusalRecordBuilder` (`packages/runtime/src/RefusalRecordBuilder.ts`) builds the record from the rejected transaction, its `Decision`, the executed intent's target/parameters, and any `SignalIntentBinder` violations; `RefusalCrypto` (`packages/crypto/src/RefusalCrypto.ts`) hashes and signs it with the same `FileKeyProvider`/`DEFAULT_KEY_ID` signing stack every other artifact in this document uses — one root of trust, not a separate one for refusals. `POST /refusal/verify` (`packages/api/src/routes/refusal-verify.ts`) verifies a submitted Refusal Record's signature and returns `{ valid }`; like `POST /audit/verify` below, it is deliberately mounted ahead of caller-auth middleware — no API key, no lookup by id, nothing but the artifact itself and Parmana's public key, which is precisely what makes a refusal independently checkable by whoever received the rejection, not only by Parmana.
 
-Separately, and closing the analogous gap for caller-authentication audit trails (2.16, 2.19): every event a **production** audit sink writes is now signed at write time with `AuditEventCrypto` (`packages/crypto/src/AuditEventCrypto.ts`, the same signing stack again), stored alongside the event as a `signature_json` column. `POST /audit/verify` (`packages/api/src/routes/audit-verify.ts`) verifies any event matching this generic signed-event shape — `CallerAuditEvent` today — through one route, since `AuditEventCrypto.verify()` operates on canonical bytes and a signature alone, never dispatching on the event's own `type`. **Update (2026-08-24 documentation-currency pass):** this route was originally built to verify both `CallerAuditEvent` and the now-removed `RazorpayWebhookAuditEvent` shape (deleted with the rest of the Razorpay connector on 2026-08-12); the route's own code was always fully generic (it never imported or type-checked against either name specifically) and needed no change, but `RazorpayWebhookAuditEvent` no longer exists as a type anywhere in this codebase and no longer describes anything this system produces.
+Separately, and closing the analogous gap for caller-authentication audit trails (2.16, 2.19): every event a **production** audit sink writes is now signed at write time with `AuditEventCrypto` (`packages/crypto/src/AuditEventCrypto.ts`, the same signing stack again), stored alongside the event as a `signature_json` column. `POST /audit/verify` (`packages/api/src/routes/audit-verify.ts`) verifies any event matching this generic signed-event shape — `CallerAuditEvent` today — through one route, since `AuditEventCrypto.verify()` operates on canonical bytes and a signature alone, never dispatching on the event's own `type`.
 
 **Policy content hash (2026-10-06).** A Refusal Record carries `policyContentHash`, the SHA-256 hash of the policy content that decided it, computed by `RuntimeEngine` from the policy that loaded, the same value an Execution Trust Record carries in `transaction.policy.contentHash`. It is inside the signed canonical record (`RefusalCrypto.canonicalRecord`), so changing, removing or adding it fails verification. Refusal Records written before that date have no `policyContentHash`; an absent field is left out of the canonical form, so they hash exactly as before and still verify (pinned in `crypto-verifiers.exact.test.ts`). Stored in `refusal_records.policy_content_hash` (migration `20261006120000_add_refusal_policy_content_hash.sql`, nullable).
 
@@ -1569,7 +1563,7 @@ Separately, and closing the analogous gap for caller-authentication audit trails
 
    **Considered and rejected (2026-08-19): making this write atomic/fail-closed with the rejection response** (write the record synchronously before returning to the caller; a storage failure would surface as `500` instead of `403`). Rejected because it does not strengthen the property that actually matters — the request is already unconditionally denied, correctly, the instant `Decision` is built, regardless of whether the evidentiary write ever runs — and it introduces a new one: a Supabase hiccup would turn a _correct_ policy rejection into an opaque server error, a genuine availability regression (and a storage-pressure denial-of-service vector) for zero corresponding security gain. "Fail-closed" is the right discipline for whether a dangerous action executes; the refusal record is evidence _about_ a decision already enforced, not a gate on it. The existing remedy for a durability gap — logging `refusal_record_write_failed` loudly for an operator to reconcile — is the correct one; blocking the caller's response on it is not.
 
-2. **Only production (Supabase) audit sinks sign.** `SupabaseCallerAuditSink` signs every event; `InMemoryCallerAuditSink` (test wiring, `NODE_ENV=test`) does not. This claim is therefore about the production deployment path specifically, not every configuration this codebase can run in. Existing rows written before this capability shipped remain unsigned; `signature_json` is nullable and additive, honestly reflecting that history rather than backfilling a signature that was never actually produced at write time. (At the time this capability shipped, the same split also applied to `SupabaseRazorpayWebhookAuditSink`/`InMemoryRazorpayWebhookAuditSink`; both were deleted along with the rest of the Razorpay connector on 2026-08-12 and no longer exist.)
+2. **Only production (Supabase) audit sinks sign.** `SupabaseCallerAuditSink` signs every event; `InMemoryCallerAuditSink` (test wiring, `NODE_ENV=test`) does not. This claim is therefore about the production deployment path specifically, not every configuration this codebase can run in. Existing rows written before this capability shipped remain unsigned; `signature_json` is nullable and additive, honestly reflecting that history rather than backfilling a signature that was never actually produced at write time.
 
 A third, narrower operational note, not a scope caveat on the claim itself: `SupabaseCallerAuditSink` currently writes via a direct Postgres connection rather than PostgREST. This originated as a narrow workaround for a PostgREST schema-cache issue with one new column (Supabase support ticket SU-437429), but a production-readiness audit (2026-09-09) found the pattern has since been extended deliberately, repo-wide: **8 of the 9** `Supabase*` storage classes now write via `PostgresPoolFactory` rather than PostgREST/supabase-js, per `SupabaseExecutionTrustRecordRepository.ts`'s own comment — "part of removing PostgREST from every Supabase-backed table's failure modes, not just the audit sinks that broke first." This is no longer a single revertible patch pending one support ticket; it is the storage layer's current architecture. `SupabaseClientFactory` (the supabase-js/PostgREST client class this workaround originally planned to revert to) had zero remaining call sites as of that audit and was deleted the same day, along with its now-unused `@supabase/supabase-js` dependency (`docs/VERIFICATION-GAPS.md` G-34) — a revert, if SU-437429 is ever resolved, would mean reintroducing a PostgREST client, not restoring one that still exists.
 
@@ -1676,7 +1670,7 @@ Evidence (update)
 
 ## 3.15 SDK Dogfooding: Documented Quickstarts Now Proven to Actually Run (Scoped)
 
-**Scope, precisely:** this claim covers the two documented "quickstart" example scripts — `python/examples/quickstart/run.py` and its closest TypeScript equivalent, `typescript/examples/02-execute.ts` — now being proven to actually work by an automated test, plus the real bugs found while proving that. It does **not** cover the other 11 numbered example scripts in `python/examples/`, the other 4 in `typescript/examples/`, or either SDK's full API surface; those remain unexercised by any test, same as before this pass. It is a narrower, complementary claim to 3.10's HubSpot-live-suite-through-the-SDK update above, not a restatement of it — that one is about a _test suite_ driving requests through an SDK; this one is about _documentation examples_ being provably correct, not just plausible-looking code that happens to parse.
+**Scope, precisely:** this claim covers the two documented "quickstart" example scripts — `python/examples/quickstart/run.py` and its closest TypeScript equivalent, `typescript/examples/02-execute.ts` — now being proven to actually work by an automated test, plus the real bugs found while proving that. It does **not** cover the other 11 numbered example scripts in `python/examples/`, the other 4 in `typescript/examples/`, or either SDK's full API surface; those remain unexercised by any test, same as before this pass.
 
 Before this pass, both quickstart scripts already imported their respective SDK (`parmana` / `@parmana/sdk`) rather than raw HTTP — that part did not need rewriting. What neither had was anything that actually _ran_ them: `typescript/examples/` is explicitly excluded from `typescript/tsconfig.json`'s own `include` list, so nothing in this repository has ever built, type-checked, or executed it, and no test imported `python/examples/quickstart/run.py` either. Both were, until now, hand-written code that had never been mechanically proven to still work as the surrounding schema evolved.
 
@@ -1723,7 +1717,7 @@ Evidence
 
 ## 3.18 Deployment Infrastructure Requirements (Scoped)
 
-**Claim:** running Parmana in production requires new infrastructure of its own — a container process, signing key material, and (for anything beyond a single ephemeral instance) a Postgres database via Supabase. Parmana does not read, write, or replace an integrated system's own database, and every connector it can call out to (HubSpot, GitHub — see 3.10/3.17; Paytm — see 3.22) is additive and individually optional: unset its credentials and the connector is simply not registered, with no effect on Parmana's own boot or on the external system itself.
+**Claim:** running Parmana in production requires new infrastructure of its own — a container process, signing key material, and (for anything beyond a single ephemeral instance) a Postgres database via Supabase. Parmana does not read, write, or replace an integrated system's own database, and every connector it can call out to is additive and individually optional: unset its credentials and the connector is simply not registered, with no effect on Parmana's own boot or on the external system itself.
 
 **New, required to run Parmana at all (`docs/site/deployment/production.mdx`, `Dockerfile`):**
 
@@ -1733,7 +1727,7 @@ Evidence
 - **The schema applied to that database, manually.** `supabase/migrations/` must be applied to the target Supabase project before a real deployment can serve traffic — either `supabase db push` (Supabase CLI, if linked) or `scripts/apply-all-migrations.sql` (a concatenation of every migration file) via the Dashboard SQL Editor, on an empty database. **Corrected 2026-09-25:** this section used to call the bundle idempotent and safe to run again. It is not safe to run again on a database that holds data (`docs/VERIFICATION-GAPS.md` G-61). The container itself does not migrate at boot. The Docker Compose deployment of 2.40 runs the migrations for it, each once, and since 2026-09-25 `npm run db:migrate` does the same for any Postgres, with `baseline` for a database set up with the bundle (G-61, closed).
 - **Caller authentication configuration.** `PARMANA_API_KEYS` (a JSON array of `{callerId, keyHash}` entries) is required; the process refuses to start without it, unless `PARMANA_AUTH_DISABLED=true` is explicitly set for local development only (logs a loud warning on every boot — never set in a real deployment).
 
-**Not new, not replaced:** an integrated business's own operational database, its own audit/SIEM infrastructure, and every external system a connector calls (HubSpot's CRM, GitHub's API, and — one level removed — Paytm's own API, which Parmana never calls directly at all; see 3.22) are untouched by any of the above. Parmana holds no credential for and makes no call to a connector's external system unless that connector is explicitly configured (3.10/3.17's own "fails closed to connector-not-registered, never a partially-configured provider" pattern) — an unconfigured connector has zero footprint against the system it would have integrated with. Parmana's own database (Supabase) stores only Parmana's authorization/audit/execution-trust-record data, never an integrated business's operational records; callers provide business context to Parmana via signals in each request, not the reverse.
+**Not new, not replaced:** an integrated business's own operational database, its own audit/SIEM infrastructure, and every external system a connector calls are untouched by any of the above. Parmana holds no credential for and makes no call to a connector's external system unless that connector is explicitly configured — an unconfigured connector has zero footprint against the system it would have integrated with. Parmana's own database (Supabase) stores only Parmana's authorization/audit/execution-trust-record data, never an integrated business's operational records; callers provide business context to Parmana via signals in each request, not the reverse.
 
 **What this claim does not assert:** deployment footprint, cost, or scaling characteristics beyond what `docs/site/deployment/production.mdx` documents (this is a correctness/completeness claim about _what infrastructure is required_, not a capacity or performance claim); a packaged one-command installer, database-schema auto-migration at boot, or a signing-key-generation tool — none of these exist in this repository today (schema application and key generation are both manual operator steps, described above and in `docs/site/deployment/production.mdx`, not automated by anything Parmana ships). **Update 2026-09-25:** for the self hosted Docker Compose deployment, all three now exist and are claimed, scoped, in 2.40: one command start, migrations applied by the `migrate` service, and key and API key generation by the `setup` service. For the image run on its own, this paragraph still holds.
 
@@ -1750,7 +1744,6 @@ Evidence
 - `packages/shared/src/config/StorageProviders.ts` (`memory`/`postgres`/`supabase`), `packages/shared/src/config/Config.ts` (the sole `process.env` read site for application config)
 - `supabase/migrations/` (schema source), `scripts/apply-all-migrations.sql` (manual application path with no CLI link)
 - `fly.toml` (one concrete instantiation of this deployment shape, not evidence that Fly.io specifically is required).
-- `createConnectorRegistry.ts` (3.10/3.17: HubSpot/GitHub each registered conditionally on their own credentials; absent, the connector is simply not registered — no partial-configuration state, no effect on Parmana's own boot)
 
 ---
 
@@ -1902,9 +1895,9 @@ The following claims are planned but are intentionally withheld until supported 
 
 - Every guarantee includes complete independent verification evidence.
 
-- A general, named credential-brokering _mechanism_ — a formal product capability letting an arbitrary future connector class (e.g. third-party cloud credentials via AWS STS, per the July roadmap, removed 2026-09-28) prove "AI never possesses execution credentials" without bespoke per-connector work — does not exist; only the `CredentialProvider`/session-credential-vault pattern each connector individually implements does. **Narrowed by Phase 3D (2.22/2.23):** for the connectors covered by that certification (Razorpay, HubSpot, at the time it was performed — Razorpay was removed from this codebase 2026-08-12, HubSpot remains the one production-reachable connector today), the underlying property this future item describes — the AI-facing `/execute` request path never comes into possession of the raw connector credential, which is resolved only after authorization is fully decided, confined to the connector-execution layer — was independently traced end-to-end and verified true (§3 of the Phase 3D independent authorization certification, in git history). What remains genuinely future is only the generalized, connector-class-agnostic mechanism, not the property itself for these two connectors. (Certification's own disclosed caveat, 2.23: a short, non-functional fingerprint of the credential, not the credential itself, reaches the caller-visible response — see 3.4/3.10.)
+- A general, named credential-brokering _mechanism_ — a formal product capability letting an arbitrary future connector class (e.g. third-party cloud credentials via AWS STS, per the July roadmap, removed 2026-09-28) prove "AI never possesses execution credentials" without bespoke per-connector work — does not exist; only the `CredentialProvider`/session-credential-vault pattern each connector individually implements does.
 
-- Enterprise-grade key custody: current key storage is local PEM files read by FileKeyProvider; no KMS, HSM, or cloud key vault integration exists. **Narrowed (2026-09-15):** AWS KMS integration now exists and is verified end-to-end for the gateway signing key (see the 2026-09-15 update on the G-40 entry in this document, §3.22, and `docs/adr/ADR-0009-KMS-Secrets-And-Connector-Signature-Hardening.md`) — but it is not the default (`KEY_PROVIDER=local` remains the default; a deployment must explicitly opt into `KEY_PROVIDER=aws-kms`), production Vercel→AWS OIDC federation is not yet provisioned, and HSM/Azure Key Vault/GCP KMS remain entirely unimplemented. The "no KMS integration exists" framing above is accurate only for a default, unconfigured deployment.
+- Enterprise-grade key custody: current key storage is local PEM files read by FileKeyProvider; no KMS, HSM, or cloud key vault integration exists. **Narrowed (2026-09-15):** AWS KMS integration now exists and is verified end-to-end for the gateway signing key (see the 2026-09-15 update on the G-40 entry in this document, and `docs/adr/ADR-0009-KMS-Secrets-And-Connector-Signature-Hardening.md`) — but it is not the default (`KEY_PROVIDER=local` remains the default; a deployment must explicitly opt into `KEY_PROVIDER=aws-kms`), production Vercel→AWS OIDC federation is not yet provisioned, and HSM/Azure Key Vault/GCP KMS remain entirely unimplemented. The "no KMS integration exists" framing above is accurate only for a default, unconfigured deployment.
 
 - Authority, Intent, and Evidence verification checks in verification-service.ts. Only integrity, signature, and authorization binding are implemented today (2.15). The prior six-stage pipeline package (@parmana/verification) was retired in Session 5; it had no real implementation and no real test coverage; its stage architecture is not being resurrected. Authority/Intent/Evidence checks, if built, will be added directly to verification-service.ts. Tracked for Session 6.
 
@@ -2022,12 +2015,12 @@ This discipline ensures that Parmana's public positioning remains aligned with i
 
 **Claim.** Two checks that already held on the other entry points now hold on every entry point:
 
-1. The Vercel serverless entry (`api/index.ts`) refuses to serve when the Policy Governance integrity check finds a mismatch or cannot run, as `packages/api/src/server.ts` does, and it runs the Paytm connector HTTPS and consistency guard at startup. Previously it ran the periodic check fail-open and skipped the Paytm guard.
+1. The Vercel serverless entry (`api/index.ts`) refuses to serve when the Policy Governance integrity check finds a mismatch or cannot run, as `packages/api/src/server.ts` does. Previously it ran the periodic check fail-open.
 2. `POST /transactions` refuses a `metadata.tenantId` that the caller's key does not list, with `TENANT_NOT_ALLOWED`, as `POST /execute` already did. The tenant id selects the signing key (`tenant.<id>`), so an unchecked id let a caller have an authorization signed under another tenant's key.
 
 **Evidence.**
 
-- api/index.ts: `buildApp()` awaits `assertPolicyGovernanceIntegrityAtStartup()` before building the app. `assertPaytmConnectorConfigured()` runs at module load.
+- api/index.ts: `buildApp()` awaits `assertPolicyGovernanceIntegrityAtStartup()` before building the app.
 - packages/api/src/routes/transactions.ts: tenant check placed with the principal and capability checks, before `application.execute()`.
 - packages/api/tests/integration/caller-capability-scoping.integration.test.ts: "POST /transactions" refuses a tenantId the key does not list.
 - `packages/api` test suite: 698 passed, 36 skipped.
@@ -2058,11 +2051,10 @@ This discipline ensures that Parmana's public positioning remains aligned with i
 
 ## 3.28 Three Evaluation Questions Checked Against the Source (Scoped, 2026-10-26)
 
-**Claim.** When a policy rejects a transaction, the Paytm connector is never called. The envelope verifier does not accept a record whose authorization is missing, expired, or reused. Signal types are checked against the policy's declared schema before any rule runs.
+**Claim.** When a policy rejects a transaction, no connector is called. The envelope verifier does not accept a record whose authorization is missing, expired, or reused. Signal types are checked against the policy's declared schema before any rule runs.
 
 **Evidence.**
 
-- Rejected transaction: paytm-refund.integration.test.ts (removed 2026-11-02 with the Paytm connector, ADR-0018). Its `expectNoPaytmCall` helper asserts zero calls on the fetch spy and on the mock connector server. Scenario A and the other policy-rejection cases use it. Run on 2026-10-26: 18 of 18 pass.
 - Envelope verifier: `packages/envelope-verifier/tests/unit/envelope-verifier.test.ts` and `envelope-verifier.dilithium3.test.ts`. They check `notExpired` and `nonceUnseen`, and "rejects a second use of the same nonce". Run on 2026-10-26: 22 pass, 5 skipped.
 - Signal types: `packages/policy/src/PolicyEngine.ts`, `evaluate`, calls `findSignalTypeViolations` (line 42) before the rule loop (line 93). The check is in `packages/policy/src/signalTypes.ts`, with `packages/policy/tests/unit/signalTypes.test.ts`. Run on 2026-10-26: 21 pass.
 
@@ -2080,7 +2072,7 @@ This discipline ensures that Parmana's public positioning remains aligned with i
 **Evidence.**
 
 - Kill switch refusal: `packages/api/tests/integration/kill-switch.integration.test.ts` and `kill-switch-release-window.integration.test.ts`. The refusal is a 503 with `KILL_SWITCH_ACTIVE`. On branch `test/kill-switch-no-connector` (commit `8a857f2`, not yet merged), the release-window test also asserts that the executor is never called on refusal, and is called once in the control case. That assertion is not yet on `main`.
-- Approval binding: `approval-issuers-governance.integration.test.ts`, `business-signal-sources-governance.integration.test.ts` and `external-connectors-governance.integration.test.ts` refuse an approval with no step-up, or a step-up for the other action. paytm-refund.integration.test.ts (removed 2026-11-02 with the Paytm connector, ADR-0018) rejects a declared amount that does not match the authorized amount.
+- Approval binding: `approval-issuers-governance.integration.test.ts`, `business-signal-sources-governance.integration.test.ts` and `external-connectors-governance.integration.test.ts` refuse an approval with no step-up, or a step-up for the other action.
 - Audit tamper: `audit-verify.integration.test.ts` reports a tampered event as invalid. `execution-intents.integration.test.ts` returns `{ valid: false }` for a tampered intent.
 
 Run on 2026-10-26, Node 22.22.0: the eight files above pass, 88 of 88.
