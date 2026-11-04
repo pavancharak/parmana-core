@@ -1,6 +1,6 @@
 # Troubleshooting guide: commands and steps
 
-Step-by-step checks for the problems operators meet most often: local setup, PowerShell, Vercel, the Parmana API, governed changes, the refund runner, the key list, the kill switch and the Razorpay endpoint.
+Step-by-step checks for the problems operators meet most often: local setup, PowerShell, Vercel, the Parmana API, governed changes, the refund runner, the key list, the kill switch and the endpointdpoint.
 
 How to use it: find the symptom in the index, run the checks in order, and stop at the first step that gives an unexpected result. The fix is in the same section. If a fix is not listed, record the exact output and tell the founder.
 
@@ -21,10 +21,9 @@ Scenario walkthroughs (complete, step by step) are at the end of this guide, aft
 7. The refund runner
 8. The live key list
 9. The kill switch
-10. The Razorpay endpoint
-11. The MCP bridge
-12. Building and tests
-13. When to escalate
+10. The MCP bridge
+11. Building and tests
+12. When to escalate
 
 ---
 
@@ -91,7 +90,7 @@ git status -sb
 **Fix:**
 
 ```powershell
-$env:PARMANA_API_KEY = Read-Secret "razorpay-demo-agent.key"
+$env:PARMANA_API_KEY = Read-Secret "demo-agent.key"
 ```
 
 Or open a new PowerShell window and load only the key you need.
@@ -116,7 +115,7 @@ Or open a new PowerShell window and load only the key you need.
 Get-ChildItem "$env:USERPROFILE\parmana-secrets"
 ```
 
-**Fix:** use the exact file name listed (for example `razorpay-demo-agent.key.dpapi`'s base name `razorpay-demo-agent.key`). If the file is missing, load the key from the password manager for this session only.
+**Fix:** use the exact file name listed (for example `demo-agent.key.dpapi`'s base name `demo-agent.key`). If the file is missing, load the key from the password manager for this session only.
 
 ### 3.5 `Read-Secret` fails: cannot decrypt
 
@@ -363,12 +362,6 @@ For a grant, confirm `validUntil` is in the future and the limits are right. For
 
 **Fix:** create a new approval for the request. Do not reuse `approval.json`.
 
-### 7.4 `Razorpay answered` shows an error
-
-**Checks:** the endpoint's answer in the record file (`--out`), and the Razorpay dashboard in Test Mode for the payment's refunds.
-
-**Fix:** if the payment is not captured, create a captured test payment. If the refund exists already, the endpoint returns it rather than creating another (receipt check).
-
 ### 7.5 `Verifies offline : false`
 
 **Meaning:** the record did not verify. This is a serious result.
@@ -379,7 +372,7 @@ For a grant, confirm `validUntil` is in the future and the limits are right. For
 
 **Meaning:** the answer may be lost, not the action. The refund may already exist.
 
-**Fix:** do not send the request again. Read the trust record with the caller's key (`GET /trust-records/<businessTransactionId>`), and check the Razorpay dashboard for a refund with that receipt.
+**Fix:** do not send the request again. Read the trust record with the caller's key (`GET /trust-records/<businessTransactionId>`), and check the payment provider's dashboard for a payment with that receipt.
 
 ---
 
@@ -468,32 +461,6 @@ If `active` is `false` and `/ready` is `READY`, the refusal is a policy or grant
 
 ---
 
-## 10. The Razorpay endpoint
-
-### 10.1 `{"errors":["the body is not { release, signature }"]}`
-
-**Meaning:** correct. The endpoint refuses anything Parmana did not sign.
-
-### 10.2 The endpoint refuses a release with a signature error
-
-**Checks:** the endpoint must hold the current Parmana public key, and the release must be for its own URL (`audience`).
-
-**Fix:** rebuild the endpoint with `build-endpoint.ts`, passing the current `--parmana-url` and the exact `--endpoint-url`, then redeploy.
-
-### 10.3 The endpoint refuses with `expired`
-
-**Cause:** the release is older than its validity window (the release was not used in time).
-
-**Fix:** send a new request. Do not reuse an old release.
-
-### 10.4 `Razorpay refund ... test mode` refused: live key
-
-**Meaning:** the endpoint refuses `rzp_live_` keys before any call. Correct.
-
-**Fix:** use the test-mode key in the endpoint's Vercel variables. Live use needs the go-live plan.
-
----
-
 ## 11. The MCP bridge
 
 ### 11.1 `401` without a token
@@ -522,7 +489,7 @@ Read the tool result's `rule` and `reason`. They are the same as the runner's re
 
 **Cause:** the path is wrong, or you are in the wrong folder.
 
-**Fix:** `cd D:\last\parmana-core`, and check the path with `Test-Path examples\razorpay-agent-studio\build-mcp.ts`.
+**Fix:** `cd D:\last\parmana-core`, and check the path with `Test-Path examples\tutorials\01-hello-world\run.ts`.
 
 ### 12.2 `Failed to resolve entry for package "@parmana/..."`
 
@@ -575,14 +542,14 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
 
 **Situation.** You cloned the repository and a script fails with a missing module or a missing workspace package.
 
-**Goal.** A working build and the Razorpay examples running.
+**Goal.** A working build and the examples running.
 
 **Steps.**
 
 1. Confirm the folder and branch: `cd D:\last\parmana-core`, then `git status -sb`. Why: most failures come from the wrong branch or an old checkout.
 2. Install from the lockfile without lifecycle scripts: `npm ci --ignore-scripts`. Why: `--ignore-scripts` avoids changing git hooks on your machine.
 3. Build the workspace packages: `npm run build`. Why: the examples import built packages, and a missing build gives `Failed to resolve entry for package`.
-4. Run the Razorpay tests: `npx vitest run examples/razorpay-agent-studio examples/razorpay-refund-agent examples/razorpay-refund`. Why: this checks the examples without touching production.
+4. Run the example tests: `npm run examples`. Why: this checks the examples without touching production.
 
 **Success.** The tests pass. Node 24 is expected; on Node 22 the three `distrustCompromisedRoots` tests in the full suite fail, and that is not caused by these examples.
 
@@ -608,7 +575,7 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
    Why: the grant shows `limits` and `validUntil`. An expired grant that still says `active` blocks new grants and gives no approval.
 4. Check the policy in force, if the rule looks wrong:
    ```powershell
-   curl.exe -s "$env:PARMANA_URL/policies/in-effect?capability=razorpay:refund" -H "Authorization: Bearer $k"
+   curl.exe -s "$env:PARMANA_URL/policies/in-effect?capability=erp:invoice-pay" -H "Authorization: Bearer $k"
    ```
    Why: the answer shows which policy version decided the request.
 5. Read the refusal record for the transaction (`GET /refusal/<businessTransactionId>`) if you need the signed detail.
@@ -752,24 +719,6 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
 
 **Escalate** if the error is inside the code (a TypeScript or test error). Send the error and stop; do not change the code to get past a build.
 
-### Scenario 10. A refund does not appear in Razorpay
-
-**Situation.** The runner printed `APPROVED`, but the Razorpay dashboard shows no refund.
-
-**Goal.** Find the refund, or prove it was not created.
-
-**Steps.**
-
-1. Read the record file the runner wrote (`--out`). Note the Razorpay refund id (`rfnd_...`, if the record has one) and the business transaction id.
-2. Check the dashboard in Test Mode, for the payment, under refunds. Filter by the period. Why: the list can be filtered by date and status.
-3. Search by refund id, then by the payment id.
-4. If it is missing, check the endpoint's answer in the record. A `success: false` answer with a stage names the step that failed.
-5. Check the receipt: the refund's receipt should equal the business transaction id.
-
-**Success.** The refund is found with its receipt, or the endpoint's answer shows why it was not created.
-
-**Escalate** if the record says `success: true` and no refund exists. Do not send the request again: tell the founder with the record.
-
 ### Scenario 11. A record does not verify
 
 **Situation.** The runner prints `Verifies offline : false`, or a customer's check fails.
@@ -834,7 +783,6 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
 - [ ] Scenario 7: an exposed key was replaced and the old one returns `401`.
 - [ ] Scenario 8: the checker can approve.
 - [ ] Scenario 9: the deploy reads Ready.
-- [ ] Scenario 10: every refund is traced to Razorpay.
 - [ ] Scenario 11: every record verifies, or is escalated.
 - [ ] Scenario 12: the hook is quiet, or the PR is merged.
 - [ ] Scenario 13: the bridge answers `200` with the token.

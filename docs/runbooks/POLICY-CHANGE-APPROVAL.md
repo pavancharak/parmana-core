@@ -138,7 +138,7 @@ Run both parts close together, because the envelope expires in 120 seconds.
 It is a JSON **object** keyed by policy name. Each value is an array of checker `callerId`s:
 
 ```json
-{ "checker-wiring-check": ["pavancharak"], "razorpay-refund": ["pavancharak"] }
+{ "checker-wiring-check": ["pavancharak"], "example-refund": ["pavancharak"] }
 ```
 
 A plain string such as `pavancharak` is **not** valid and the server refuses to start. An unset or empty value lists nobody, so approve is refused for every policy. Each `callerId` must be non-empty.
