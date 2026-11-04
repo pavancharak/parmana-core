@@ -1639,50 +1639,44 @@ Evidence
 
 ---
 
-## 2.44 A Manipulated Agent Cannot Authorize a Refund, a Merge, a Slack Post to Another Channel or an LLM Tool Call by Declaring Facts (Scoped, 2026-09-28)
+## 2.44 An Agent Cannot Authorize a Refund, Merge, Slack Post or Tool Call by Declaring Facts
 
-An AI agent can be manipulated by content it reads (prompt injection) into sending anything Parmana accepts. A fact the agent declares in `signals` and nothing checks is only as true as the agent says (G-51). This section records what stops such an agent, per action, after the 2026-09-28 AI attack review (`docs/VERIFICATION-GAPS.md`, "Gaps opened in the 2026-09-28 AI attack review").
+**Claim.** An AI agent can be manipulated by content it reads (prompt injection). For the actions below, the agent cannot authorize its own request by declaring facts. Each write needs a signed approval from a trusted person for that specific action, and the facts the agent declares can refuse a request but cannot approve it.
 
-**Pull request merges (`github:pr-merge`, G-73).** `github-pr-approval` 1.1.0 approves a merge only when `mergeApproved` is true, and `mergeApproved` is declared in `approvalSignals` with `resourceId: "target"`, so `ApprovalSignalVerifier` (2.42) counts it as true only with a signed approval from a trusted approver for that exact pull request (`owner/repo#number`), for `github:pr-merge`, not expired, used once. The review, status check, branch protection and risk facts are still caller declared; they can refuse a merge and cannot authorize one on their own. Reading a pull request (`github:pr-fetch`) is now bound to its own policy, `github-pr-read` 1.0.0, which approves a read with no caller declared facts, so reads need no approval. **Update (2026-09-30, 2.47):** reads need a signed approval too; `github:pr-fetch` is bound to `github-pr-read` 1.1.0.
+**Per action.**
 
-**Refunds (`paytm:refund`, G-75).** `customer-refund` 1.1.0 authorizes a refund up to 10000 when the caller declares `refundEligible` and `fraudCheckPassed` true, and nothing checks either. 1.2.0 approves a refund only with `managerApproved` true, which needs a signed approval for that order covering that amount (unchanged declaration from 1.1.0), refuses 0 or less (1.1.0 approved a refund of 0 or a negative amount on the same claims), and refuses above 100000. The binding table names 1.2.0.
+- **Pull request merge (`github:pr-merge`).** The policy `github-pr-approval` 1.1.0 approves a merge only when `mergeApproved` is true. That fact is backed by a signed approval for the exact pull request (`owner/repo#number`), for this action, that is unexpired and used once. Review, status check, branch protection and risk facts are declared by the caller. They can refuse a merge; they cannot approve one.
+- **Pull request read (`github:pr-fetch`).** Bound to its own policy, `github-pr-read` 1.1.0. Reads also need a signed approval, as with every action.
+- **Refund (`paytm:refund`).** `customer-refund` 1.2.0 approves a refund only when `managerApproved` is true. That fact needs a signed approval for the order and the amount. The policy refuses an amount of zero or less, and an amount above 100000. The caller's eligibility and fraud-check declarations are not trusted to approve.
+- **Slack post (`slack:post-message`).** `slack-post-message` 1.1.0 needs a signed approval for the channel. The caller's own `channelAuthorized` declaration is not trusted. The post is refused unless its channel is the intent's target, and is in the server's `SLACK_ALLOWED_CHANNEL_IDS`. The check runs before authorization and again at release. An empty list refuses every post. The text of an approved post is still declared by the caller, but it can only go to a listed channel.
+- **LLM tool call (`llm-tool-call`).** `llm-tool-call` 1.1.0 approves only when `humanApproval` is true. That fact needs a signed approval for the specific tool.
 
-**Slack posts (`slack:post-message`, G-76).** **Update (2026-09-30, 2.47):** `slack-post-message` 1.1.0 also needs a signed approval for the channel. The caller's `channelAuthorized` is not trusted. `SlackChannelSignalVerifier` refuses a post unless the channel the message goes to (`parameters.channel`) equals the Intent's `target` and is in the server's `SLACK_ALLOWED_CHANNEL_IDS`, before authorization and again at release, and `GatewaySlackAdapter` refuses a channel that is not the target. Unset refuses every post. This is a code change, effective on deploy. `contentApproved` is still caller declared: an approved post carries whatever text the agent writes, but only to a listed channel.
+Every approve rule in these policies requires an approval-backed fact to be true. A test checks the structure, not only examples: with every caller-declared fact at its most permissive value and no approval, each request is refused.
 
-**LLM tool calls (`llm-tool-call`, G-74).** `llm-tool-call` 1.1.0 approves only when `humanApproval` is true, declared in `approvalSignals` with `resourceId: "target"` (the tool), so it needs a signed approval for that tool. The tool, resource, environment and risk facts can refuse a call and cannot authorize one on their own.
+**Refusal reasons.** Refusal reasons stay specific. The policy files are public, and a caller can read its own Refusal Record, so hiding the reasons would not help. `connector-policies-not-self-authorizing.test.ts` requires that, for every bound capability that changes state, every approve rule needs an approval-backed fact on every path. A new capability fails that test until it is classified as a read or a write.
 
-A test checks the structure, not only examples: in each of these policies every approve rule requires the approval backed fact to be true, and every caller declared fact at its most permissive value, without the approval, is refused.
+**Scope and limits.**
 
-**Refusal reasons (G-77).** Reasons stay specific; the policy files are public and a caller can read its own Refusal Record, so hiding them would not help. Instead, `connector-policies-not-self-authorizing.test.ts` requires that for every capability bound in `CANONICAL_CAPABILITY_POLICY_BINDINGS` that changes something, every approve rule needs, on every path, a fact declared in `approvalSignals` or a fact a server verifier checks for that capability. So no refusal reason can teach an agent a flag that unlocks a write. A new capability fails the test until it is classified as a read or a write.
+- **Every refund needs a person.** This is a product change: refunds up to the limit no longer run without a manager. Automatic refunds return only with an independent eligibility and fraud check that the server itself reads (a `SignalStateVerifier`). That check does not exist yet.
+- **Any trusted approver can sign for any action.** Approvers are not limited per action (G-50). The approver list is short (2.42).
+- **Versions are pinned.** Production runs the policy version most recently approved through maker checker (2.43). A superseded version is refused for every policy, before authorization and at release. This also means an older approved version cannot be named to get weaker rules. Approving an older version again rolls back (G-74).
+- **No connector runs an LLM tool call.** On the hosted API, an approved `llm-tool-call` decision executes nothing.
+- **Connector configuration is outside this claim.** Whether a given deployment has a connector configured does not change the rules above.
+- **GitHub's own branch protection is separate.** Parmana does not read review or check state from GitHub.
 
-Scope, stated plainly:
+**Evidence.**
 
-- **Approved in production on 2026-09-28.** Production runs the version most recently approved through maker checker (2.43). `customer-refund` 1.2.0, `github-pr-approval` 1.1.0 (17:30:00 UTC), `github-pr-read` 1.0.0 (17:30:18 UTC) and `llm-tool-call` 1.1.0 (17:30:53 UTC) were approved by `reviewer-charak1987` after being proposed by `charak1987`, two credentials held by one person (2.43). Before that, the refund exposure was live in production, where the Paytm connector is configured. Any trusted approver can sign for any action (approvers are not limited to an action, G-50), so `manager-charak1987` can sign merge approvals.
-- **Every refund needs a person.** This is a product change: refunds up to 10000 no longer run without a manager. Automatic refunds come back only with an independent eligibility and fraud check the server itself reads (a `SignalStateVerifier`), which does not exist yet. The self hosted quickstart adopts 1.2.0 and shows a small refund refused; the offline check stays on 1.1.0, since proving an authorized refund there would need a trusted approver key in the image. `github-pr-read` 1.0.0 must be approved before `github:pr-fetch` works again in production after this change is deployed: with no approved version, reads are refused (fails closed).
-- **Whether the GitHub connector is configured in production was not checked** on 2026-09-28 (the available Vercel token could not read the project's variables).
-- **`llm-tool-call` is not bound to an action.** No connector runs an LLM tool call, so on the hosted API an approved `llm-tool-call` decision executes nothing. Older versions are retired instead: once 1.1.0 is approved, 1.0.0 is refused as superseded whatever action names it (below).
-- GitHub's own branch protection remains a separate control. Parmana does not read review or check state from GitHub.
-- **Superseded versions are refused, for every policy (G-74, 2026-09-28).** `PolicyGovernanceExecutionVerifier` refuses any version other than the one most recently approved for its name, before authorization and at release, so an older approved version with weaker rules cannot be named instead. This extends 2.43 from connector actions to all policies. Approving an older version again rolls back.
-- Approvers are the ones listed in `TRUSTED_APPROVAL_ISSUERS`; today that is one approver held by the operator (2.42).
+- `policies/customer-refund/1.2.0/policy.json`
+- `policies/github-pr-approval/1.1.0/policy.json`
+- `policies/github-pr-read/1.1.0/policy.json`
+- `policies/llm-tool-call/1.1.0/policy.json`
+- `packages/capability-registry/src/CapabilityPolicyBinding.ts` (the bindings for these capabilities)
+- `packages/policy/tests/unit/ApprovalBackedPolicies.test.ts`
+- `packages/policy/tests/unit/CustomerRefundPolicy120.test.ts`
+- `packages/api/tests/unit/connector-policies-not-self-authorizing.test.ts`
+- `examples/tutorials/119-human-approval-for-one-action`
 
-Verification
-
-- `packages/policy/tests/unit/ApprovalBackedPolicies.test.ts` (19, including `customer-refund` 1.2.0) and `CustomerRefundPolicy120.test.ts` (11): validity, the approval declaration, every approve rule requires the approval fact, the most permissive caller facts are refused without it, approved with it, a failing caller fact still refuses; `github-pr-read` approves a read.
-- github-pr-merge.integration.test.ts (removed 2026-11-03 with the GitHub connector, ADR-0018) (8, through `POST /execute` and the production bootstrap): a merge with a signed approval lands once on the mock GitHub server; every caller fact true with no approval, and `mergeApproved: true` with no approval, are refused with zero GitHub calls; an approval for another pull request is refused; an approval is used once.
-- github-caller-scoping.integration.test.ts (removed 2026-11-03 with the GitHub connector, ADR-0018) (4): a fetch under `github-pr-read`, a merge with an approval.
-- paytm-refund.integration.test.ts (removed 2026-11-02 with the Paytm connector, ADR-0018) (18, moved to 1.2.0): a small refund with every caller fact true and no approval is refused with zero connector calls, with `managerApproved` false and true; a refund of 0 with an approval is refused; a small refund with an approval executes once; declaring 1.1.0 is refused, naming 1.2.0.
-- `packages/api/tests/unit/connector-policies-not-self-authorizing.test.ts` (6): the four write capabilities pass at the bound versions; the check flags `customer-refund` 1.1.0 and `github-pr-approval` 1.0.0; every bound capability is classified.
-- slack-post-message.integration.test.ts (4; removed 2026-11-02 with the Slack connector, ADR-0018) and create-slack-channel-signal-verifier.test.ts (7; removed 2026-11-02 with the Slack connector, ADR-0018): only a listed channel that is the target receives a post; an unset list refuses every post.
-- Tutorial 96 (`examples/tutorials/96-github-pr-merge-connector`) shows the refusal and the approved merge through the production composition. Tutorials 111 and 119 use 1.2.0. Tutorial 112 refuses a channel off the list.
-
-Evidence
-
-- `policies/github-pr-approval/1.1.0/policy.json`, `policies/github-pr-read/1.0.0/policy.json`, `policies/llm-tool-call/1.1.0/policy.json`, `policies/customer-refund/1.2.0/policy.json`
-- `packages/capability-registry/src/CapabilityPolicyBinding.ts` (`github:pr-fetch` to `github-pr-read`, `github:pr-merge` to `github-pr-approval` 1.1.0)
-- `packages/api/src/application.ts` (`createApplication` takes an optional `approvalVerifier`, defaulting to the production one; the composite verifier includes the Slack channel check)
-- createSlackChannelSignalVerifier.ts and GatewaySlackAdapter.ts (both removed 2026-11-02, ADR-0018)
-
----
+Dated updates and the production approval history for these policies are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md). The text this section had before this rewrite is in the git history of `main`.
 
 # 3. Conditional Claims
 
