@@ -377,7 +377,7 @@ class ParmanaClient:
 
     def verify_audit_event(self, event: dict[str, Any], signature: Signature) -> bool:
         """
-        Verifies a signed caller-authentication or Razorpay-webhook
+        Verifies a signed caller-authentication
         audit event's signature.
         """
         return self.audit.verify(event, signature)
