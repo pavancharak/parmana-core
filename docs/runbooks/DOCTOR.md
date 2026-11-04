@@ -31,25 +31,25 @@ The last line counts failures and warnings.
 
 ## What each check does
 
-| Check | Fails when | Warns when |
-| --- | --- | --- |
-| `DATABASE_PROVIDER` | It is set. The server no longer reads it | — |
-| `PARMANA_STORAGE` | The value is not memory, postgres or supabase | It is memory (state is lost on restart), or postgres or supabase (not yet checked) |
-| `CRYPTO_MODE`, `HASH_PROVIDER`, `PRIMARY_SIGNATURE_PROVIDER`, `SECONDARY_SIGNATURE_PROVIDER` | The value is not one the build implements | — |
-| `KEY_PROVIDER` | The value is not implemented (only `local` and `aws-kms` are) | `aws-kms` (not yet checked) |
-| `HYBRID_SCHEMA_VERSION` | Not 2 or 3, or 3 without `HYBRID_SCHEMA_V3_ACKNOWLEDGED=true` | — |
-| `HYBRID_REQUIRED_FROM` | Set, but not an ISO-8601 UTC timestamp ending in `Z` | — |
-| `HYBRID_SIGNATURE_REQUIRED` | — | It is `true` but `CRYPTO_MODE` is not `hybrid`, so it has no effect |
-| `PARMANA_KEY_DIR` | Not set | — |
-| `PARMANA_KEY_MATERIAL_JSON` | Set, but not a JSON object. Its contents are never printed | — |
-| `default key pair` | Neither the key files nor `PARMANA_KEY_MATERIAL_JSON` provide them | The files are absent but will be written from `PARMANA_KEY_MATERIAL_JSON` at startup. Or `CRYPTO_MODE=hybrid`: hybrid key pairs are not checked here |
-| `default public key` | The file cannot be read, holds a private key, or is not a PEM public key | — |
-| `PARMANA_POLICY_DIR` | Not set, or the folder does not exist | The folder is empty. A request that names a policy then fails with PolicyNotFound |
-| `PARMANA_AUTH_DISABLED` | — | It is `true`. Acceptable only on a local machine |
-| `PARMANA_API_KEYS` | Malformed JSON, or no keys while authentication is enabled | — |
-| `TRUST_PROFILE` | Not `v1` | — |
-| `PORT`, `EXECUTION_AUTHORIZATION_TTL_SECONDS`, `RATE_LIMIT_*` | Not a whole number of at least 1 | — |
-| Unknown `PARMANA_` name | — | The name is not read by any part of the repository. The closest real name is suggested |
+| Check                                                                                        | Fails when                                                               | Warns when                                                                                                                                           |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_PROVIDER`                                                                          | It is set. The server no longer reads it                                 | —                                                                                                                                                    |
+| `PARMANA_STORAGE`                                                                            | The value is not memory, postgres or supabase                            | It is memory (state is lost on restart), or postgres or supabase (not yet checked)                                                                   |
+| `CRYPTO_MODE`, `HASH_PROVIDER`, `PRIMARY_SIGNATURE_PROVIDER`, `SECONDARY_SIGNATURE_PROVIDER` | The value is not one the build implements                                | —                                                                                                                                                    |
+| `KEY_PROVIDER`                                                                               | The value is not implemented (only `local` and `aws-kms` are)            | `aws-kms` (not yet checked)                                                                                                                          |
+| `HYBRID_SCHEMA_VERSION`                                                                      | Not 2 or 3, or 3 without `HYBRID_SCHEMA_V3_ACKNOWLEDGED=true`            | —                                                                                                                                                    |
+| `HYBRID_REQUIRED_FROM`                                                                       | Set, but not an ISO-8601 UTC timestamp ending in `Z`                     | —                                                                                                                                                    |
+| `HYBRID_SIGNATURE_REQUIRED`                                                                  | —                                                                        | It is `true` but `CRYPTO_MODE` is not `hybrid`, so it has no effect                                                                                  |
+| `PARMANA_KEY_DIR`                                                                            | Not set                                                                  | —                                                                                                                                                    |
+| `PARMANA_KEY_MATERIAL_JSON`                                                                  | Set, but not a JSON object. Its contents are never printed               | —                                                                                                                                                    |
+| `default key pair`                                                                           | Neither the key files nor `PARMANA_KEY_MATERIAL_JSON` provide them       | The files are absent but will be written from `PARMANA_KEY_MATERIAL_JSON` at startup. Or `CRYPTO_MODE=hybrid`: hybrid key pairs are not checked here |
+| `default public key`                                                                         | The file cannot be read, holds a private key, or is not a PEM public key | —                                                                                                                                                    |
+| `PARMANA_POLICY_DIR`                                                                         | Not set, or the folder does not exist                                    | The folder is empty. A request that names a policy then fails with PolicyNotFound                                                                    |
+| `PARMANA_AUTH_DISABLED`                                                                      | —                                                                        | It is `true`. Acceptable only on a local machine                                                                                                     |
+| `PARMANA_API_KEYS`                                                                           | Malformed JSON, or no keys while authentication is enabled               | —                                                                                                                                                    |
+| `TRUST_PROFILE`                                                                              | Not `v1`                                                                 | —                                                                                                                                                    |
+| `PORT`, `EXECUTION_AUTHORIZATION_TTL_SECONDS`, `RATE_LIMIT_*`                                | Not a whole number of at least 1                                         | —                                                                                                                                                    |
+| Unknown `PARMANA_` name                                                                      | —                                                                        | The name is not read by any part of the repository. The closest real name is suggested                                                               |
 
 The server's own parsers produce these results, so a check that passes here passes at startup. The doctor does not reuse their error text, because some of it echoes the value it rejected.
 
@@ -62,6 +62,7 @@ The server's own parsers produce these results, so a check that passes here pass
   ```
 
   The script writes `default.private.pem` and `default.public.pem` to `PARMANA_KEY_DIR`, or to `./keys` when it is unset. It does not overwrite existing files unless you add `--force`. Overwriting a key that is in use breaks every signature made with it, so do not add `--force` on an existing deployment.
+
 - **`PARMANA_POLICY_DIR` does not exist.** Create the folder, and add the policy files. A missing folder stops the server. An empty one warns, and requests naming a policy fail.
 - **`PARMANA_API_KEYS` is missing.** Either configure at least one entry, a JSON array of `{ "callerId", "keyHash" }`, or set `PARMANA_AUTH_DISABLED=true` for a local machine only.
 - **A typo warning.** Rename the setting to the name the doctor suggests. The server ignores the misspelt name without any message.
