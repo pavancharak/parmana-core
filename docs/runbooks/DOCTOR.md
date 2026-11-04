@@ -7,7 +7,7 @@ The doctor has two modes:
 - **Local (default):** checks the settings for a local deployment. It makes no network calls.
 - **Production (`--production`):** adds the production rules. These mirror refusals the server already makes when `NODE_ENV=production`, and check the production providers: AWS KMS keys, Postgres or Supabase storage, and the kill switch.
 
-Online checks against the database, storage or the key provider (`--online`) are not yet available. A clean run does not prove that the database or KMS is reachable, so confirm those by starting the server against them.
+- **Online (`--online`):** also probes the database, the KMS key and the Supabase REST endpoint. Nothing is written. See the section "Online checks" below.
 
 ## Running it
 
@@ -77,7 +77,7 @@ These apply only with `--production`. Each one mirrors a refusal the server make
 | `production: PARMANA_KEY_MATERIAL_JSON`   | —                                                                                                        | It is set. Keys are then written at startup from an environment variable, a fallback for platforms without a secret mount |
 | `production: KEY_PROVIDER`                | —                                                                                                        | It is `local`. Production is designed for `aws-kms`                                                                       |
 
-With `KEY_PROVIDER=aws-kms`, the default key stays in KMS, so the doctor does not look for local key files. It checks that the key folder is set, and reports that KMS reachability is checked with `--online` once that is available.
+With `KEY_PROVIDER=aws-kms`, the default key stays in KMS, so the doctor does not look for local key files. It checks that the key folder is set. KMS reachability is checked with `--online`.
 
 The database URL is never printed. The doctor reads its scheme and whether `sslmode` is set, and nothing else.
 
@@ -95,10 +95,32 @@ The database URL is never printed. The doctor reads its scheme and whether `sslm
 - **`PARMANA_API_KEYS` is missing.** Either configure at least one entry, a JSON array of `{ "callerId", "keyHash" }`, or set `PARMANA_AUTH_DISABLED=true` for a local machine only.
 - **A typo warning.** Rename the setting to the name the doctor suggests. The server ignores the misspelt name without any message.
 
+## Online checks (`--online`)
+
+`--online` makes network calls, and reads the database. It writes nothing. Each check uses the probe the server uses:
+
+| Check                                       | What it does                                                                                                                                                                           | Fails when                                                                                                                                                 |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `database`                                  | Runs `SELECT 1`, the query behind `GET /ready`                                                                                                                                         | The query fails. The error code is shown, never the connection string                                                                                      |
+| `database tables`                           | Checks that these tables exist: `consumed_nonces`, `consumed_approval_nonces`, `executions`, `caller_audit_events`, and `execution_intents` when the server enforces execution intents | Any table is missing. The fix is to apply the migrations in `supabase/migrations`                                                                          |
+| `KMS key` (`KEY_PROVIDER=aws-kms`)          | Looks up the default key, as the server does at startup                                                                                                                                | The key is not reachable, or AWS refuses the request. The error code is shown, never the ARN                                                               |
+| `SUPABASE_URL` (`PARMANA_STORAGE=supabase`) | Requests the REST endpoint with no key                                                                                                                                                 | The endpoint answers HTTP 500 or more, or cannot be reached. Any status below 500 counts as reachable, because a keyless request is expected to be refused |
+
+`--online` needs `DATABASE_URL` for the database checks, and AWS credentials for the KMS check. Without `DATABASE_URL`, the database check warns rather than fails.
+
+Run it with the production rules when you check a production configuration:
+
+```bash
+npm run doctor -- --production --online
+```
+
+The `execution_intents` table is checked only when the server enforces it. The rule is the one in `executionIntentsEnforced()`: it is relaxed under `NODE_ENV=test` or `development`, unless `EXECUTION_INTENTS_CHECK=true`.
+
 ## What the doctor does not check
 
-- Whether the database, storage or KMS is reachable, or whether the KMS key exists. These need the network, and come with `--online`.
-- Whether the database has the tables the server needs, or the right grants. The server checks these at startup.
+- The database grants. The table check confirms the tables exist, not that the database user can read or write them.
+- The tables outside the list above. Each storage path needs its own migrations, and the list covers the ones the storage code reads on every request.
+- Whether the server starts. Use the server's own startup for that.
 - The production rules beyond the list above. The server enforces its other production settings at startup.
 - Whether the server starts. Use the server's own startup for that.
 - Hybrid key pairs beyond the default pair. The server checks them at startup.
