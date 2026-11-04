@@ -385,7 +385,7 @@ would need a server side check that reads the facts itself, and a change to this
 ## Why each action is bound to one policy
 
 Each request names the policy that should judge it. If Parmana accepted any approved policy, a
-caller could send a refund and name a policy written for Slack messages, which has no refund
+caller could send a refund and name a policy written for messages, which has no refund
 limit. So each live action is bound to one policy name:
 
 ```text

@@ -27,7 +27,7 @@ else has a safe default.
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `NODE_ENV`           | `production`                                                                                                                                           |
 | `PARMANA_POLICY_DIR` | `./policies`                                                                                                                                           |
-| `PARMANA_API_KEYS`   | `[{"callerId":"my-agent","keyHash":"<64 hex characters>","allowedCapabilities":["paytm:refund"]}]`                                                     |
+| `PARMANA_API_KEYS`   | `[{"callerId":"my-agent","keyHash":"<64 hex characters>","allowedCapabilities":["erp:invoice-pay"]}]`                                                  |
 | `PARMANA_STORAGE`    | `supabase`                                                                                                                                             |
 | `DATABASE_URL`       | `postgresql://postgres.<project>:<password>@<host>:6543/postgres`                                                                                      |
 | `PARMANA_KEY_DIR`    | `./keys` (with `default.private.pem`, `default.public.pem`, `gateway.private.pem` and `gateway.public.pem` inside), or use `PARMANA_KEY_MATERIAL_JSON` |
@@ -59,7 +59,7 @@ A JSON array. Each entry is an object:
 | ---------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `callerId`             | Yes      | A non empty string that names the caller.                                                                                                                                                                                                                              |
 | `keyHash`              | Yes      | The SHA 256 hash of the raw key, as 64 lowercase hexadecimal characters. Only the hash is ever stored.                                                                                                                                                                 |
-| `allowedCapabilities`  | No       | The actions (`intent.action`) this key may invoke, for example `["paytm:refund"]`. If unset or empty the key may invoke **nothing**. The single value `"*"` allows every capability.                                                                                   |
+| `allowedCapabilities`  | No       | The actions (`intent.action`) this key may invoke, for example `["erp:invoice-pay"]`. If unset or empty the key may invoke **nothing**. The single value `"*"` allows every capability.                                                                                |
 | `allowedPrincipalIds`  | No       | The `authority.principalId` values this key may assert. If unset the key may only assert its own `callerId`.                                                                                                                                                           |
 | `allowedTenantIds`     | No       | The `metadata.tenantId` values this key may send. The tenant id picks the signing key `tenant.<tenantId>`, so it must come from the key. If unset or empty, a request with a `tenantId` is refused with `403 TENANT_NOT_ALLOWED`; a request without one is unaffected. |
 | `credentialHolderType` | No       | `USER`, `ROLE`, `SERVICE` or `ORGANIZATION`. Only `USER` keys may use the policy governance endpoints. If unset the key is treated as not human.                                                                                                                       |
@@ -68,7 +68,7 @@ A JSON array. Each entry is an object:
 Generate an entry and its raw key with:
 
 ```bash
-npm run generate:api-key -- --caller-id my-agent --allowed-capabilities paytm:refund
+npm run generate:api-key -- --caller-id my-agent --allowed-capabilities erp:invoice-pay
 ```
 
 The command prints the raw key **once**, and the JSON entry to put in `PARMANA_API_KEYS`. Give the raw key to the caller
@@ -86,7 +86,7 @@ that names `PARMANA_API_KEYS`.
 | `POLICY_EXECUTION_VERIFICATION_ENFORCED`        | No       | Enforced             | `true` only has an effect, and only in `test` and `development` | Requires every policy to have a signed approval record whose hash matches the live policy before it can authorize or release anything. In production, or with `NODE_ENV` unset or any value other than `test` or `development`, it is always on and this variable is ignored. |
 | `PARMANA_ALLOW_UNGOVERNED_POLICY`               | No       | Off                  | `true` only has an effect in `test` and `development`           | Skips the governance approval record check for policies. Ignored in every other `NODE_ENV`, and ignored when `POLICY_EXECUTION_VERIFICATION_ENFORCED=true`. The policy content hash is still required. Never set it in a deployment.                                          |
 | `PARMANA_SKIP_DOTENV`                           | No       | Off                  | `1` only                                                        | Stops the loaders from reading a `.env` file. The test suite sets it, so a developer's local `.env` cannot change test results.                                                                                                                                               |
-| `PARMANA_VERIFIER_KEY_ID`                       | No       | `signal-verifier`    | Any key id that exists in `PARMANA_KEY_DIR` or KMS              | The key the signal verifier signs its read-only HubSpot fetches with. The gateway accepts this key only for `hubspot:deal-fetch`, so a leaked verifier key cannot release a write. The key must be provisioned before a HubSpot deal update can verify its signals.           |
+| `PARMANA_VERIFIER_KEY_ID`                       | No       | `signal-verifier`    | Any key id that exists in `PARMANA_KEY_DIR` or KMS              | The key the signal verifier signs its read-only HubSpot fetches with. The gateway accepts this key only for `erp:record-read`, so a leaked verifier key cannot release a write. The key must be provisioned before a HubSpot deal update can verify its signals.              |
 | `POLICY_GOVERNANCE_INTEGRITY_CHECK_INTERVAL_MS` | No       | `300000` (5 minutes) | Milliseconds                                                    | How often the server re checks that live policy files still match their approval records. A value of zero or less turns the periodic check off and leaves only the startup check. A value that is not a number uses the default.                                              |
 
 ## Storage

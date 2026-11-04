@@ -26,8 +26,8 @@ sequenceDiagram
     S->>W: POST approval.needed (signed)
     S-->>G: 403 POLICY_DENIED
     W->>W: Verify the signature
-    W->>M: Slack, email, ticket: "Refund ORD-1042, 75000, needs you"
-    M->>M: Sign an approval for ORD-1042 up to 75000
+    W->>M: Slack, email, ticket: "Refund INV-1042, 75000, needs you"
+    M->>M: Sign an approval for INV-1042 up to 75000
     M->>G: The approval
     G->>S: POST /execute (same refund, approval attached)
     S-->>G: 200, authorized
@@ -86,20 +86,20 @@ is not valid stops the server at startup, so a broken setup cannot fail silently
 A notification email looks like this:
 
 ```text
-Subject: Approval needed: paytm:refund ORD-1042 up to 75000
+Subject: Approval needed: erp:invoice-pay INV-1042 up to 75000
 
 A request was refused because it needs a signed approval.
 
-Action:       paytm:refund
-Target:       paytm://orders/ORD-1042
+Action:       erp:invoice-pay
+Target:       erp://invoices/INV-1042
 Policy:       customer-refund 1.2.0
 Transaction:  5f0c2a7e-3d7b-4d0e-9a55-2f6d8b1c4e90
 Refused at:   2026-09-29T10:15:02.114Z
 Sent by:      refund-agent
 
 To approve, sign on your own machine:
-  capability  paytm:refund
-  resourceId  ORD-1042
+  capability  erp:invoice-pay
+  resourceId  INV-1042
   maxAmount   75000
   signal      managerApproved
 
@@ -153,14 +153,14 @@ same rules as the webhook: one attempt, a failure is logged and never changes th
   "occurredAt": "2026-09-29T10:15:02.114Z",
   "businessTransactionId": "5f0c2a7e-3d7b-4d0e-9a55-2f6d8b1c4e90",
   "decisionId": "a91e6c1d-0b8f-4f3a-8e57-6f2d1c9b7a44",
-  "action": "paytm:refund",
-  "target": "paytm://orders/ORD-1042",
+  "action": "erp:invoice-pay",
+  "target": "erp://invoices/INV-1042",
   "policyId": "customer-refund",
   "policyVersion": "1.2.0",
   "reason": "No rule matched.",
   "submittedBy": "refund-agent",
   "approvals": [
-    { "signal": "managerApproved", "resourceId": "ORD-1042", "value": 75000 }
+    { "signal": "managerApproved", "resourceId": "INV-1042", "value": 75000 }
   ]
 }
 ```
@@ -182,7 +182,7 @@ same rules as the webhook: one attempt, a failure is logged and never changes th
 </ResponseField>
 
 <ResponseField name="action" type="string" required>
-  The action that needs approval, such as `paytm:refund`. Sign with this as
+  The action that needs approval, such as `erp:invoice-pay`. Sign with this as
   `capability`.
 </ResponseField>
 

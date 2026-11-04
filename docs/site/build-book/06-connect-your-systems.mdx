@@ -6,23 +6,18 @@ description: "How an approved action reaches a real system: the built in connect
 Parmana never gives the agent a system's credentials. An approved action is released by the gateway to a
 **connector**, and only the connector touches the system. There are two kinds.
 
-| Kind     | For                                       | Credentials held by                 | Added by                                     |
-| -------- | ----------------------------------------- | ----------------------------------- | -------------------------------------------- |
-| Built in | HubSpot, GitHub, Paytm, Slack             | Parmana's server, one per execution | Code in Parmana, configured by the operator  |
-| External | Any system with an HTTPS endpoint you run | Your endpoint, never Parmana        | Two people, through maker checker, no deploy |
+| Kind     | For                                       | Credentials held by          | Added by                                     |
+| -------- | ----------------------------------------- | ---------------------------- | -------------------------------------------- |
+| External | Any system with an HTTPS endpoint you run | Your endpoint, never Parmana | Two people, through maker checker, no deploy |
 
 ## Built in connectors
 
 Each is registered only when its configuration is present (`packages/api/src/bootstrap/createConnectorRegistry.ts`).
 
-| Capability            | Bound policy          | Configuration                                                       |
-| --------------------- | --------------------- | ------------------------------------------------------------------- |
-| `hubspot:deal-fetch`  | `hubspot-deal-read`   | `HUBSPOT_PRIVATE_APP_TOKEN`                                         |
-| `hubspot:deal-update` | `hubspot-deal-update` | `HUBSPOT_PRIVATE_APP_TOKEN`                                         |
-| `github:pr-fetch`     | `github-pr-read`      | `GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY` |
-| `github:pr-merge`     | `github-pr-approval`  | The same                                                            |
-| `paytm:refund`        | `customer-refund`     | `PAYTM_CONNECTOR_URL`, `PAYTM_CONNECTOR_SHARED_SECRET`              |
-| `slack:post-message`  | `slack-post-message`  | `SLACK_BOT_TOKEN`, `SLACK_ALLOWED_CHANNEL_IDS`                      |
+| Capability        | Bound policy         | Configuration                                                       |
+| ----------------- | -------------------- | ------------------------------------------------------------------- |
+| `github:pr-fetch` | `github-pr-read`     | `GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY` |
+| `github:pr-merge` | `github-pr-approval` | The same                                                            |
 
 A capability whose connector is not configured is refused with `503 CONNECTOR_NOT_REGISTERED`, before anything is
 sent. Ask the server which policy and version govern a capability with `GET /policies/in-effect?capability=...`.
@@ -132,14 +127,14 @@ external connector. The literal procedure, with what to expect and what to do at
 
 ### Rules Parmana enforces
 
-| Rule                                                                                                               | Checked                                       |
-| ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------- |
-| The capability is `namespace:verb` and not in a built in namespace (`paytm`, `hubspot`, `github`, `slack`, `test`) | At proposal                                   |
-| The endpoint is `https`, names a host (no IP address, no `localhost`), and resolves only to public addresses       | At proposal, at approval and at every release |
-| Parmana connects to the address it checked and follows no redirect                                                 | At every release                              |
-| Only the allowed parameter names are forwarded; a request naming another is not sent                               | At every release                              |
-| One active registration per capability; a revoke stops releases at once                                            | Always                                        |
-| Nothing is deleted; a revoked registration stays listed                                                            | Always                                        |
+| Rule                                                                                                         | Checked                                       |
+| ------------------------------------------------------------------------------------------------------------ | --------------------------------------------- |
+| The capability is `namespace:verb` and not in a built in namespace (such as `test`)                          | At proposal                                   |
+| The endpoint is `https`, names a host (no IP address, no `localhost`), and resolves only to public addresses | At proposal, at approval and at every release |
+| Parmana connects to the address it checked and follows no redirect                                           | At every release                              |
+| Only the allowed parameter names are forwarded; a request naming another is not sent                         | At every release                              |
+| One active registration per capability; a revoke stops releases at once                                      | Always                                        |
+| Nothing is deleted; a revoked registration stays listed                                                      | Always                                        |
 
 ### When it goes wrong
 

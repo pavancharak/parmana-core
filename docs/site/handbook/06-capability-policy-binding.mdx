@@ -7,7 +7,7 @@ description: "CapabilityPolicyBinder (packages/capability-registry/src/Capabilit
 
 `CapabilityPolicyBinder` (`packages/capability-registry/src/CapabilityPolicyBinding.ts`) is a
 one-method class that enforces a single invariant: for a fixed set of production capabilities
-(a connector action like `hubspot:deal-update` or `paytm:refund`), the policy the caller
+(a connector action like `erp:record-update` or `erp:invoice-pay`), the policy the caller
 declares must be the one canonical policy Parmana designates for that capability, never a
 different, caller-chosen one.
 
@@ -30,10 +30,10 @@ Nothing upstream enforces that the request is actually evaluated against _that_ 
 `PolicyRouter`/`FilePolicyRepository` load whatever `policy.name`/`policy.version` the caller
 declares, `PolicyEngine.evaluate` takes no `action` parameter at all, and the connector-level
 capability check only confirms the resolved connector declares the capability, never which
-policy authorized it. A caller could therefore pair a real capability (`hubspot:deal-update`)
+policy authorized it. A caller could therefore pair a real capability (`erp:record-update`)
 with an unrelated, unprotected policy (say, `vendor-payment/2.0.0` at the time, which declares no
 `boundSignals` for that capability at all), have that unrelated policy's looser rules evaluated
-against self-declared signals, and get the real `hubspot:deal-update` intent executed anyway,
+against self-declared signals, and get the real `erp:record-update` intent executed anyway,
 bypassing the capability's intended protections entirely, not merely weakening them.
 
 Found by an independent repository verification (Phase 2K, TD-22) and closed as its own
@@ -51,14 +51,14 @@ effect is the one most recently approved through policy governance, so a new ver
 live when it is approved, with no deploy. Current bindings, with the version used without
 governance:
 
-| Capability            | Bound policy                  |
-| --------------------- | ----------------------------- |
-| `hubspot:deal-fetch`  | `hubspot-deal-read` @ 1.0.0   |
-| `hubspot:deal-update` | `hubspot-deal-update` @ 1.1.0 |
-| `github:pr-fetch`     | `github-pr-read` @ 1.1.0      |
-| `github:pr-merge`     | `github-pr-approval` @ 1.1.0  |
-| `paytm:refund`        | `customer-refund` @ 1.2.0     |
-| `slack:post-message`  | `slack-post-message` @ 1.1.0  |
+| Capability          | Bound policy                  |
+| ------------------- | ----------------------------- |
+| `erp:record-read`   | `hubspot-deal-read` @ 1.0.0   |
+| `erp:record-update` | `hubspot-deal-update` @ 1.1.0 |
+| `github:pr-fetch`   | `github-pr-read` @ 1.1.0      |
+| `github:pr-merge`   | `github-pr-approval` @ 1.1.0  |
+| `erp:invoice-pay`   | `customer-refund` @ 1.2.0     |
+| `chat:post-message` | `slack-post-message` @ 1.1.0  |
 
 Every policy in this table needs a signed human approval for the action and its resource,
 

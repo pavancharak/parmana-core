@@ -305,7 +305,7 @@ Each released action now costs **two** `kms:Sign` calls in the request, one for 
 Not covered by those runs:
 
 1. **The Vercel OIDC role.** The runs used the local AWS credential chain.
-2. **A real Paytm refund.** The agent chain ran with fake Paytm staging credentials, on purpose, so Paytm rejected the call. No refund was sent.
+2. **A real payment provider.** This check did not use one, so no payment was sent.
 3. **Key rotation and other regions.** Neither was tested.
 
 ## Next

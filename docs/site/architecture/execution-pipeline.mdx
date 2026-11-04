@@ -54,7 +54,7 @@ The same pipeline, traced through the classes that run it for one `POST /execute
    no rule evaluated.
 4. **Verify signals against real state.** Only for a provisional `APPROVE`, the configured
    `SignalStateVerifier` runs. In production it is a `CompositeSignalStateVerifier` of the
-   HubSpot verifier and the `ApprovalSignalVerifier` (the policy's `approvalSignals`). A
+   configured verifiers, including the `ApprovalSignalVerifier` (the policy's `approvalSignals`). A
    mismatch overrides the decision to `REJECT` (`"signal-state-verification-violation"`).
 5. **Refuse or authorize.** Any decision that is not `APPROVED` gets a signed Refusal Record, then `ExecutionGate.enforce()` throws. An approved decision is signed by
    `RuntimeAuthorizationSigner`: the frozen `ExecutableContent`, the policy content hash, the
@@ -77,9 +77,7 @@ The same pipeline, traced through the classes that run it for one `POST /execute
    on the audit sink.
 10. **Credential isolation.** `SessionCredentialSecureConnector` checks the connector's own
     `ConnectorPolicy` again, issues a single use session credential, calls
-    `SdkConnectorExecutor`, which calls the vendor adapter (`GatewayHubSpotAdapter`,
-    `GatewayPaytmAdapter`, `GatewayGitHubAdapter`, `GatewaySlackAdapter` or
-    `GatewayHttpAdapter`), then revokes the credential on every exit path and records the
+    `SdkConnectorExecutor`, which calls the adapter for the connector (`GatewayHttpAdapter` for an external endpoint), then revokes the credential on every exit path and records the
     outcome.
 11. **Record.** Back in `RuntimeEngine`, `BusinessTrustPipeline` builds the signed Execution
     Trust Record and `Runtime` stores it. If the action ran but the record cannot be made or

@@ -105,11 +105,7 @@ follows this exact shape, using `executionControl` rather than a direct `connect
 
 A `Connector` is what the gateway hands verified, frozen content to after every check
 passes. `HttpConnector` and `MockConnector` are reference implementations in
-`@parmana/connector-sdk`. Four real, production-registered connectors exist today,
-[`hubspot`](/integrations/hubspot), `github`, `paytm`, and `slack`, each making genuine
-external API calls, not scripted responses, and each registering only when its own
-credentials are configured. A `razorpay` connector was previously registered here too; it was deliberately removed from
-the repository entirely (see [Changelog](/changelog)). Any other HTTPS endpoint can be
+`@parmana/connector-sdk`. Any other HTTPS endpoint can be
 connected without a code change as an **external connector**: an operator registers a
 capability, its policy and its endpoint through maker checker, and the gateway releases to it
 with a signed release the endpoint verifies (`GatewayExternalAdapter`). See [Connect any

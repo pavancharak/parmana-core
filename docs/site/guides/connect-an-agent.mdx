@@ -35,7 +35,7 @@ an approval flag, a fraud-check result, a policy name, the model is broken, even
 | #   | You need                                                      | Why                                                                                                                                                         |
 | --- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | A reachable Parmana deployment                                | Nothing to connect to without one.                                                                                                                          |
-| 2   | A capability name (e.g. `paytm:refund`)                       | Parmana authorizes capabilities, not free-form actions. Exact string matching, `refund` ≠ `paytm:refund`.                                                   |
+| 2   | A capability name (e.g. `erp:invoice-pay`)                    | Parmana authorizes capabilities, not free-form actions. Exact string matching, `refund` ≠ `erp:invoice-pay`.                                                |
 | 3   | A deployed policy bound to that capability                    | Decides APPROVE/REJECT. Missing → `404`; a version other than the one in effect → `403 POLICY_DENIED`.                                                      |
 | 4   | The policy's exact `signalsSchema`/`boundSignals`             | You must send every referenced signal; any `boundSignals` entry must equal the real `intent.parameters` value or the request is rejected before evaluation. |
 | 5   | An API key scoped to exactly that capability                  | Your agent's identity, see below.                                                                                                                           |
@@ -47,7 +47,7 @@ an approval flag, a fraud-check result, a policy name, the model is broken, even
 
 **1. Read the policy file directly.** `cat policies/customer-refund/1.2.0/policy.json`; don't guess
 field names from a description. Ask the server which version is in effect:
-`GET /policies/in-effect?capability=paytm:refund`.
+`GET /policies/in-effect?capability=erp:invoice-pay`.
 
 **2. Pick the exact capability string.** Case- and character-exact. This single detail is the most
 common integration failure in practice.
@@ -57,7 +57,7 @@ common integration failure in practice.
 ```bash
 npx tsx scripts/generate-api-key.ts \
   --caller-id my-refund-agent \
-  --allowed-capabilities "paytm:refund" \
+  --allowed-capabilities "erp:invoice-pay" \
   --credential-holder-type SERVICE
 ```
 
@@ -116,7 +116,7 @@ placeholder to fix later, from day one.
   "intent": {
     "intentId": "<uuid>",
     "authorizationId": "<uuid>",
-    "action": "paytm:refund",
+    "action": "erp:invoice-pay",
     "target": "<orderId>",
     "parameters": {
       "orderId": "<orderId>",

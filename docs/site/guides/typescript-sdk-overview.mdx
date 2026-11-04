@@ -157,8 +157,8 @@ const approval = pendingApprovals.get("order-8842");
 const refund = createBusinessTransaction({
   principalId: "ai-customer-service-agent",
   purpose: "Customer-requested refund",
-  action: "paytm:refund",
-  target: "paytm://orders/order-8842",
+  action: "erp:invoice-pay",
+  target: "erp://invoices/order-8842",
   parameters: {
     orderId: "order-8842",
     amount: 500,

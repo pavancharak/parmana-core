@@ -73,7 +73,7 @@ The operator of the server issues keys. There is no API to create one. On a mach
 
 ```bash
 npx tsx scripts/generate-api-key.ts --caller-id refund-agent \
-  --allowed-capabilities paytm:refund
+  --allowed-capabilities erp:invoice-pay
 ```
 
 Other options: `--allowed-principal-ids a,b`, `--credential-holder-type USER`, and `--generate-step-up-key` (with
@@ -81,7 +81,7 @@ Other options: `--allowed-principal-ids a,b`, `--credential-holder-type USER`, a
 
 ```text
 Add this entry to PARMANA_API_KEYS (a JSON array):
-{"callerId":"refund-agent","keyHash":"<64 hex characters>","allowedCapabilities":["paytm:refund"]}
+{"callerId":"refund-agent","keyHash":"<64 hex characters>","allowedCapabilities":["erp:invoice-pay"]}
 ```
 
 Give the raw key to the caller over a secure channel, add the entry to `PARMANA_API_KEYS`, and restart or redeploy

@@ -360,7 +360,7 @@ equal a value of the Intent (`signals.bound`), and the signals that need a signe
 resource and amount are in the request (`signals.approval`). It never returns the rules.
 
 ```typescript
-const inEffect = await client.policyInEffect("paytm:refund");
+const inEffect = await client.policyInEffect("erp:invoice-pay");
 
 inEffect.policy; // { name: "customer-refund", version: "1.2.0", schemaVersion: "1.0.0" }
 inEffect.signals.facts; // ["fraudCheckPassed", "managerApproved", "refundAmount", "refundEligible"]
@@ -427,8 +427,8 @@ const approval = signApproval({
   ),
   approverId: "approver-example",
   keyId: "approver-example-key-1",
-  capability: "paytm:refund",
-  resourceId: "ORD-1042",
+  capability: "erp:invoice-pay",
+  resourceId: "INV-1042",
   maxAmount: 75000, // leave out when the policy declares no amount
 });
 
@@ -494,7 +494,7 @@ const client = new ParmanaClient({
 });
 
 const me = await client.caller();
-// { callerId: "local-operator", allowedPrincipalIds: ["local-operator"], allowedCapabilities: ["paytm:refund"], unrestrictedCapabilities: false }
+// { callerId: "local-operator", allowedPrincipalIds: ["local-operator"], allowedCapabilities: ["erp:invoice-pay"], unrestrictedCapabilities: false }
 
 const key = await client.publicKey("default");
 // key.pem is the SPKI PEM that signs Trust Records, Refusal Records and Execution Intents

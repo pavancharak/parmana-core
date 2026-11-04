@@ -90,7 +90,7 @@ If a request later fails with `PGRST205` ("Could not find the table"), the schem
 Each caller gets its own key. Generate one for your first caller:
 
 ```bash
-npm run generate:api-key -- --caller-id my-agent --allowed-capabilities paytm:refund
+npm run generate:api-key -- --caller-id my-agent --allowed-capabilities erp:invoice-pay
 ```
 
 The command prints the raw key **once**, and a JSON entry. Give the raw key to the caller and store it nowhere else. Keep the JSON entry for step 5.

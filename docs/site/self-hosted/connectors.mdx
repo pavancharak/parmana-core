@@ -55,7 +55,7 @@ Only the Paytm connector has been run on the self hosted deployment, by the [off
 
 - **HTTPS only.** `PAYTM_CONNECTOR_URL` must start with `https://`. Otherwise the server refuses to start with `PAYTM_CONNECTOR_URL must use HTTPS in production; received "...". Refusing to start with a plaintext connection configured to the trusted Paytm connector service.`
 - **Both or neither.** Setting only one of `PAYTM_CONNECTOR_URL` and `PAYTM_CONNECTOR_SHARED_SECRET` stops the server at start.
-- **Capability on the key.** A key can request `paytm:refund` only if it was added with `--allowed-capabilities paytm:refund`. See [Manage API keys](/self-hosted/api-keys).
+- **Capability on the key.** A key can request `erp:invoice-pay` only if it was added with `--allowed-capabilities erp:invoice-pay`. See [Manage API keys](/self-hosted/api-keys).
 
 ## A connector with a certificate from your own authority
 
