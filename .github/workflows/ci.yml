@@ -62,6 +62,23 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Configuration doctor (offline, generated test keys)
+        # Runs the local configuration rules against a fresh key pair and a
+        # random API key entry, generated on every run. Nothing secret is
+        # committed, and the generated keys are deleted afterwards.
+        run: |
+          set -euo pipefail
+          mkdir -p ci-keys
+          PARMANA_KEY_DIR=ci-keys npx tsx scripts/generate-keypair.ts --algorithm ed25519 --key-id default
+          TOKEN=$(openssl rand -hex 32)
+          HASH=$(printf '%s' "$TOKEN" | sha256sum | cut -d' ' -f1)
+          export PARMANA_KEY_DIR=ci-keys
+          export PARMANA_API_KEYS="[{\"callerId\":\"ci\",\"keyHash\":\"$HASH\"}]"
+          npm run doctor
+      - name: Remove generated test keys
+        if: always()
+        run: rm -rf ci-keys
+
       - name: Lint
         run: npm run lint
 
