@@ -376,7 +376,9 @@ def test_policy_in_effect():
     result = client.policy_in_effect("erp:invoice-pay")
 
     assert transport.calls[0]["method"] == "GET"
-    assert transport.calls[0]["path"] == "/policies/in-effect?capability=erp%3Ainvoice-pay"
+    assert (
+        transport.calls[0]["path"] == "/policies/in-effect?capability=erp%3Ainvoice-pay"
+    )
     assert isinstance(result, PolicyInEffect)
     assert result.policy.version == "1.2.0"
     assert result.policy.schema_version == "1.0.0"

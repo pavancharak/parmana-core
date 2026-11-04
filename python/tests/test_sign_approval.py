@@ -76,7 +76,11 @@ def test_names_exactly_the_resource_when_no_amount_is_given():
     pem, _ = _key()
 
     approval = sign_approval(
-        **{**_base(pem), "capability": "erp:record-update", "resource_id": "acme/api#42"}
+        **{
+            **_base(pem),
+            "capability": "erp:record-update",
+            "resource_id": "acme/api#42",
+        }
     )
 
     assert approval["payload"]["scope"] == {
