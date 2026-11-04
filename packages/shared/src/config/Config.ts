@@ -101,7 +101,7 @@ function loadDotEnvOnce(): void {
  * (ERR_INVALID_ARG_TYPE from path.join(undefined, ...)) inside
  * FilePolicyRepository.load at request time.
  */
-function requirePolicyDirectory(): string {
+export function requirePolicyDirectory(): string {
   const directory = process.env.PARMANA_POLICY_DIR;
 
   if (directory === undefined || directory.trim() === "") {
@@ -355,7 +355,7 @@ export interface LoggingConfig {
  * 2 or 3, and anything else throws, so a typo cannot pick a schema
  * version silently.
  */
-function parseHybridSchemaVersion(
+export function parseHybridSchemaVersion(
   value: string | undefined,
   acknowledged: string | undefined,
 ): 2 | 3 {
@@ -390,7 +390,7 @@ function parseHybridSchemaVersion(
  * HYBRID_REQUIRED_FROM: unset or blank means no cutover. Otherwise it must be
  * an ISO-8601 UTC timestamp ending in "Z", so it means the same time everywhere.
  */
-function parseHybridRequiredFrom(
+export function parseHybridRequiredFrom(
   value: string | undefined,
 ): string | undefined {
   if (value === undefined || value.trim() === "") {
