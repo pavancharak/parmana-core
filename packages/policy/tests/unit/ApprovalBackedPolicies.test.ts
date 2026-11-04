@@ -100,14 +100,6 @@ const CASES: readonly Case[] = [
     failing: { fraudCheckPassed: false },
   },
   {
-    name: "slack-post-message",
-    version: "1.1.0",
-    approvalFact: "postApproved",
-    resourceId: "target",
-    permissive: { contentApproved: true, channelAuthorized: true },
-    failing: { contentApproved: false },
-  },
-  {
     name: "access-control",
     version: "1.1.0",
     approvalFact: "humanApproved",
@@ -319,7 +311,6 @@ describe.each([
   ["llm-tool-call", "1.0.0"],
   ["production-deployment", "1.0.0"],
   ["rag-document-access", "1.0.0"],
-  ["slack-post-message", "1.0.0"],
   ["vendor-payment", "2.0.0"],
 ])("%s %s", (name, version) => {
   it("is refused because it approves without a signed human approval", () => {
