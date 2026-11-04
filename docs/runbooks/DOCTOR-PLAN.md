@@ -1,6 +1,6 @@
 # Doctor for parmana-core: plan
 
-Status: stages 1 and 2 are merged (#319, #321). Stage 3 is in review (#322). This plan is kept as the design record. The operator guide, `DOCTOR.md`, describes what each stage does and what has been verified.
+Status: the three stages are built and merged. This plan is kept as the design record. The reference for everything about the doctor, including how to run it, what it checks, CI and commits, TLS, and troubleshooting, is `DOCTOR.md` in this folder.
 
 ## Decisions
 
