@@ -1,0 +1,31 @@
+name: Issue priority
+
+# Every issue needs a priority label. The issue forms ask for one, but an issue
+# created through the API or the CLI skips the forms, so this workflow adds the
+# label and asks for a level.
+
+on:
+  issues:
+    types: [opened, reopened, unlabeled]
+
+permissions:
+  issues: write
+
+jobs:
+  require-priority:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add the priority label if it is missing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.issue.number }}
+          LABELS: ${{ join(github.event.issue.labels.*.name, ',') }}
+        run: |
+          set -euo pipefail
+          if printf '%s' "$LABELS" | tr ',' '\n' | grep -qx 'priority'; then
+            echo "Issue #$NUMBER already has the priority label."
+            exit 0
+          fi
+          gh issue edit "$NUMBER" --repo "$REPO" --add-label priority
+          gh issue comment "$NUMBER" --repo "$REPO" --body "This issue had no priority. It has been labelled \`priority\`. Please set the level (P0 to P3) in the issue body or in a comment, so the label means something."
