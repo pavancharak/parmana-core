@@ -273,6 +273,17 @@ New posts are published regularly, so check the blog for updates.
 
 ## Documentation
 
-**New here? Start with [The Parmana Handbook](https://docs.parmanasystems.com/handbook/overview).** It covers every capability in this codebase in 23 chapters, and is also available as a [PDF](https://docs.parmanasystems.com/handbook/download).
+**New here? Start with [The Parmana Handbook](https://docs.parmanasystems.com/handbook/overview).** It covers every capability in this codebase in 22 chapters, and is also available as a [PDF](https://docs.parmanasystems.com/handbook/download).
 
-[docs/README.md](docs/README.md) indexes the rest of the repository documentation: the claims register, the gap log, what is left to do, and the architecture decisions. To add a connector, start with [CONNECTOR_ISOLATION.md](docs/internal/architecture/CONNECTOR_ISOLATION.md) and [BUILDING_A_CONNECTOR.md](docs/internal/connectors/BUILDING_A_CONNECTOR.md).
+The documentation lives in two places:
+
+- **[docs/site/](docs/site/)** is the public documentation: guides, concepts, the SDK reference and the handbook. It is published at [docs.parmanasystems.com](https://docs.parmanasystems.com).
+- **[docs/internal/](docs/internal/)** holds the maintainer records: the claims register, the gap log, the architecture decisions (ADRs), the design proposals (RFCs), the operator runbooks and the test notes. [docs/README.md](docs/README.md) is the index to these.
+
+Three indexes in [docs/internal/indexes/](docs/internal/indexes/) answer common questions in one table each:
+
+- **[verification-gaps-index.md](docs/internal/indexes/verification-gaps-index.md)**: every gap in the gap log, with its status.
+- **[claims-index.md](docs/internal/indexes/claims-index.md)**: every claim in the claims register, with the gaps each one mentions.
+- **[adr-rfc-index.md](docs/internal/indexes/adr-rfc-index.md)**: every decision record and proposal, with its status.
+
+To add a connector, start with [CONNECTOR_ISOLATION.md](docs/internal/architecture/CONNECTOR_ISOLATION.md) and [BUILDING_A_CONNECTOR.md](docs/internal/connectors/BUILDING_A_CONNECTOR.md).
