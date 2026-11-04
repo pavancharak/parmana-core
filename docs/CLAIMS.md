@@ -346,36 +346,51 @@ Evidence
 
 ## 2.16 Caller Authentication at the API Boundary
 
-Every route except `/health`, `/ready`, `/openapi.yaml`, `/documentation`, `POST /refusal/verify`, and `POST /audit/verify` requires a valid caller credential (`packages/api/src/app.ts`). The first four are liveness/readiness probes and API documentation; the last two are deliberately unauthenticated, independently third-party-verifiable signature-verification capabilities (RFC-0021 Refusal Record verification and caller-audit/webhook-audit signature verification, see 3.11), not routes that expose any caller's data. createApp's callerAuth option is mandatory: it accepts either an authenticator/auditSink pair or the literal string "disabled", so every call site states its choice explicitly; there is no default that silently mounts the API with no caller authentication. Production (server.ts) refuses to start with PARMANA_AUTH_DISABLED unset and no PARMANA_API_KEYS configured (2.17). Caller keys are checked against the revocation table `caller_key_revocations` on every request. A revoked key is refused on the next request, with no restart, and a failed lookup refuses the key. Before that check shipped (PR #238, `fba4b2c`), removing a key from `PARMANA_API_KEYS` took effect only at restart; that window is [G-127](VERIFICATION-GAPS.md). There is no un-revoke path in code. A key valid for one caller does not grant a different caller's identity, and every accept/reject outcome is audited without ever recording the raw key. In production, that audit trail is durable (see 3.2's sibling claim for the NonceStore side of the same fix), backed by Supabase and shared across every process, not scoped to one process's uptime; `createCallerAuditSink.ts` fails closed at startup if `DATABASE_URL` is not configured (a documented, temporary substitute for a direct Supabase-configuration check — see `createCallerAuditSink.ts`'s own comment, pending resolution of Supabase ticket SU-437429 — that still points at the same underlying Supabase Postgres instance in this deployment). `InMemoryCallerAuditSink` remains available and correct for tests (NODE_ENV=test).
+Every route requires a valid caller credential, except a short list of routes that are public on purpose.
 
-**Precise scope of `PARMANA_AUTH_DISABLED=true` (docs/VERIFICATION-GAPS.md G-28):** this flag, when explicitly opted into, removes _caller identity and accountability only_ — `RuntimeEngine`, `PolicyEngine`, `CapabilityPolicyBinder`, `SignalIntentBinder`, and every `SignalStateVerifier` never read the caller-auth middleware's output at all (confirmed by direct grep: zero references to caller identity anywhere in those files), so _action-level authorization_ (whether a specific `razorpay:refund-create`/`hubspot:deal-update` request is itself authorized) remains fully enforced regardless of this flag. It does not disable the authorization boundary this document's other claims describe; it disables knowing who asked.
+**Public routes.** These routes need no credential:
 
-**Update (2026-09-10):** `.env.example` shipped `PARMANA_AUTH_DISABLED=true` uncommented, so a first-time operator copying it to `.env` without reading every line would deploy with caller authentication off, discoverable only via the startup `console.warn`, easy to miss in a log-aggregation tool after the fact. The example file's line is now commented out (the code's own default remains `"false"`, unchanged). `GET /ready`'s JSON response now also carries `authDisabled: true` (plus a `warning` string) whenever this flag is set, alongside the existing log line. This gives an operator's own monitoring/synthetic checks, already polling this endpoint every 30s per `fly.toml`, a field to assert and alert on directly. See `docs/VERIFICATION-GAPS.md` G-43.
+- Probes and documentation: `/health`, `/ready`, `/openapi.yaml`, `/openapi.json`, `/api-manifest.json`, `/documentation`, and `/reference`.
+- Third-party verification: `POST /refusal/verify`, `POST /audit/verify`, and `POST /execution-intents/verify`. Each checks a signature from the request body and reads no caller data.
+- Public-key discovery: `GET /keys/:keyId` and `GET /.well-known/jwks.json`, so that a third party can verify a signature without holding a Parmana credential.
+- Handbook download: `/handbook`, which captures a download lead from a visitor who has no credential.
 
-Evidence (update)
+The verification, key-discovery and handbook routes are rate limited.
 
-- `.env.example`, `packages/api/src/routes/ready.ts`
-- `packages/api/tests/unit/routes/ready.test.ts`: 2 new cases (`authDisabled: true` with a warning when caller-auth is disabled; `authDisabled: false`, no `warning` key, when enabled)
+Every other route, including `/` and `/version`, sits behind caller authentication.
 
-Evidence
+**Fails closed.** `createApp` requires its `callerAuth` option. The option is either an authenticator with an audit sink, or the string `"disabled"`, so every call site says which it means. There is no default that silently disables authentication.
 
-- packages/api/src/app.ts (CallerAuthOption: "disabled" | { authenticator, auditSink }, required, no default)
+**Startup refusal.** `createCallerAuthenticator.ts` refuses to start when no caller keys are configured, unless `PARMANA_AUTH_DISABLED=true` is set explicitly.
 
-- packages/api/src/bootstrap/createCallerAuthenticator.ts
+**Revocation takes effect on the next request.** Each request checks the revocation store (`caller_key_revocations`, which holds only the SHA-256 hash of each revoked key). A revoked key is refused without a restart. A store error counts as revoked, so the request is refused. The interface has a revoke operation and no un-revoke operation.
 
-- packages/api/src/bootstrap/createCallerAuditSink.ts (production wiring; fails closed when DATABASE_URL is not configured, via assertDatabaseUrlConfigured.ts)
+**Identity and audit.** A key that is valid for one caller does not establish another caller's identity. Every accept and reject outcome is audited, and the audit record never holds the raw key. In production the audit sink writes to the `caller_audit_events` Postgres table through `DATABASE_URL`. It fails closed at startup when `DATABASE_URL` is not set, rather than falling back to memory. `InMemoryCallerAuditSink` is for tests only.
 
-- packages/api/src/auth/StaticKeyAuthenticator.ts
+**Scope of `PARMANA_AUTH_DISABLED=true`.** When set, this flag removes caller identity and accountability. It does not change action-level authorization. The runtime, the policy engine, the capability policy binder and the signal verifiers never read the caller's identity, so each capability is still checked against its policy. The flag affects only knowing who asked.
 
-- packages/api/src/auth/SupabaseCallerAuditSink.ts / InMemoryCallerAuditSink.ts
+**Observability.** While the flag is set, `GET /ready` returns `authDisabled: true` with a warning, as well as logging a line at startup. When the flag is not set, `authDisabled` is `false` and no warning is returned.
 
-- packages/api/tests/integration/supabase-caller-audit-sink.integration.test.ts: a recorded event is read back through a second, independent client
+**Scope and limits.**
 
-- packages/api/tests/integration/caller-auth.integration.test.ts (valid/missing/invalid credential, scoping and revocation, audit trail content never contains the raw key, composition with policy evaluation, full route inventory)
+- Public routes are unauthenticated by design. Their rate limits, not authentication, protect them.
 
-- packages/api/tests/unit/bootstrap/create-caller-authenticator.test.ts
+**Evidence.**
 
----
+- `packages/api/src/app.ts` (the public routes, the required `callerAuth` option, the rate limits on the public routes)
+- `packages/api/src/bootstrap/createCallerAuthenticator.ts` (the startup refusal)
+- `packages/api/src/auth/StaticKeyAuthenticator.ts` (revocation check, fail closed on a store error)
+- `packages/shared/src/repositories/caller-key-revocation-repository.ts` (the revoke and lookup interface)
+- `supabase/migrations/20261030120000_add_caller_key_revocations.sql` (the table; holds hashes only)
+- `packages/api/src/bootstrap/createCallerAuditSink.ts` and `assertDatabaseUrlConfigured.ts` (production wiring, fails closed without `DATABASE_URL`)
+- `packages/api/src/auth/InMemoryCallerAuditSink.ts`
+- `packages/api/src/routes/ready.ts` (the `authDisabled` field and warning)
+- `packages/api/tests/integration/caller-auth.integration.test.ts` (valid, missing and invalid credentials, scoping, revocation, audit content never holds the raw key, the route inventory)
+- `packages/api/tests/integration/supabase-caller-audit-sink.integration.test.ts` (a recorded event is read back through a second client)
+- `packages/api/tests/unit/bootstrap/create-caller-authenticator.test.ts`
+- `packages/api/tests/unit/routes/ready.test.ts` (`authDisabled` true with a warning, and false without one)
+
+Dated updates, including the change to the example configuration and the earlier revocation gap, are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
 ## 2.17 Fail-Closed Startup Configuration Validation
 
