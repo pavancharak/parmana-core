@@ -72,7 +72,7 @@ const EXTERNAL_BINDING_SCHEMA_VERSION = "1.0.0";
  * this map without depending on all of `@parmana/policy` (`PolicyEngine`,
  * `SignalIntentBinder`, etc.), and so `@parmana/policy` itself can depend
  * on this map without creating a cycle back through any connector package.
- * `@parmana/connector-hubspot` (directly) and `@parmana/connector-github`
+ * `@parmana/connector-github`
  * (via `@parmana/connector-sdk`) both already depend on `@parmana/policy`,
  * so this package deliberately depends on nothing except `@parmana/shared`
  * -- not on either connector package -- to keep it a true leaf. See
@@ -88,14 +88,6 @@ export const CANONICAL_CAPABILITY_POLICY_BINDINGS: ReadonlyMap<
   // (PolicyValidator.validateEveryApprovalNeedsSignedApproval). A read
   // keeps its own policy so its approval is scoped to what it reads.
   //
-  [
-    "hubspot:deal-fetch",
-    { name: "hubspot-deal-read", version: "1.0.0", schemaVersion: "1.0.0" },
-  ],
-  [
-    "hubspot:deal-update",
-    { name: "hubspot-deal-update", version: "1.1.0", schemaVersion: "1.0.0" },
-  ],
   [
     "github:pr-fetch",
     { name: "github-pr-read", version: "1.1.0", schemaVersion: "1.0.0" },
@@ -123,7 +115,7 @@ export const CANONICAL_CAPABILITY_POLICY_BINDINGS: ReadonlyMap<
  * `DefaultConnectorPolicy.assertAllowed` checks only that the resolved
  * connector declares the capability, never which policy authorized it.
  * A caller could therefore pair a real capability (e.g.
- * `hubspot:deal-update`) with an unrelated, unprotected policy that
+ * `paytm:refund`) with an unrelated, unprotected policy that
  * has no `boundSignals` for it, evaluate that policy's own (looser)
  * rules against self-declared signals, and have the real, unrelated
  * `intent.parameters` executed -- bypassing the capability's intended

@@ -31,35 +31,12 @@ import {
  * Capabilities that only read. A read changes nothing, so its policy may
  * approve on the caller's grant alone.
  */
-const READ_CAPABILITIES = new Set(["hubspot:deal-fetch", "github:pr-fetch"]);
-
-/**
- * The keys HubSpotSignalStateVerifier verified. The connector moved to
- * parmana-connectors (ADR-0018); its last copy here is commit b6aae31,
- * packages/connector-hubspot/src/HubSpotSignalStateVerifier.ts. The
- * hubspot-deal-update policy is still in core, so the G-77 check still
- * applies to it.
- */
-const HUBSPOT_VERIFIED_SIGNAL_KEYS = [
-  "currentDealStage",
-  "dealStageChangeRequested",
-  "dealStageTransitionAllowed",
-  "amountChangeRequested",
-  "amountDeltaAbs",
-  "amountChangeExceedsThreshold",
-] as const;
+const READ_CAPABILITIES = new Set(["github:pr-fetch"]);
 
 /**
  * Facts a server side verifier checks itself, per write capability.
  */
-const SERVER_VERIFIED_FACTS: Readonly<Record<string, readonly string[]>> = {
-  // HubSpotSignalStateVerifier: deal state from a real deal fetch, and
-  // preAuthorizedForAmountChange from a signed approval.
-  "hubspot:deal-update": [
-    ...HUBSPOT_VERIFIED_SIGNAL_KEYS,
-    "preAuthorizedForAmountChange",
-  ],
-};
+const SERVER_VERIFIED_FACTS: Readonly<Record<string, readonly string[]>> = {};
 
 function loadPolicy(name: string, version: string): Policy {
   return JSON.parse(
@@ -128,7 +105,6 @@ describe("connector policies cannot be satisfied by caller declared facts alone 
 
     expect(writes.sort()).toEqual([
       "github:pr-merge",
-      "hubspot:deal-update",
       "paytm:refund",
     ]);
   });

@@ -3116,7 +3116,7 @@ Source: https://docs.parmanasystems.com/integrations/connector-development-guide
 
 <Info>
   **[AVAILABLE] as a library**, `packages/connector-sdk`, **[AVAILABLE] wired
-  into the default server** for HubSpot, GitHub, Paytm, and Slack, each
+  into the default server** for GitHub, Paytm, and Slack, each
   registering only when its own credentials are configured. Adding another
   connector in code is a code change, see the warning below. To connect a system
   you run an HTTPS endpoint for, with no code change, register an external
@@ -3179,7 +3179,7 @@ capability throws at connector construction, not at execution time. By conventio
 `@parmana/connector-sdk` lets you build and test a `Connector` in isolation. Wiring a built
 connector into a live Parmana deployment happens through `GatewayConnectorRegistry`
 (`@parmana/execution-gateway`) — a private, unpublished package internal to this repository,
-the same way `packages/api/src/bootstrap/*` registers HubSpot, GitHub, Paytm, and Slack
+the same way `packages/api/src/bootstrap/*` registers GitHub, Paytm, and Slack
 today. If you're building a connector against the published `@parmana/connector-sdk` for your
 own deployment, this section shows the shape of that internal step, not an API surface you can
 call from outside this repository.
@@ -3283,31 +3283,7 @@ with a signed `APPROVED` decision but no registered connector fails closed at di
 never silently succeeds. The real, current registration pattern, copied verbatim from
 source:
 
-```typescript
-// packages/api/src/bootstrap/createConnectorRegistry.ts (abridged, real source)
-const hubspotCredentialProvider = createHubSpotCredentialProvider();
-if (hubspotCredentialProvider === undefined) {
-  console.warn({
-    event: "hubspot_connector_unavailable",
-    reason: "HUBSPOT_PRIVATE_APP_TOKEN is not configured.",
-  });
-} else {
-  registrations.push({
-    connector: createHubSpotConnector(),
-    metadata: HubSpotMetadata,
-    connectorIdentity: {
-      connectorId: "hubspot",
-      publicIdentity: "spiffe://parmana/connectors/hubspot",
-      authenticationMetadata: {},
-    },
-    credentialProvider: hubspotCredentialProvider,
-    policy: new DefaultConnectorPolicy(authenticator, sessions),
-    gatewayAuthentication,
-    crypto,
-    audit,
-  });
-}
-```
+See `packages/api/src/bootstrap/createConnectorRegistry.ts` for the registration pattern.
 
 Adding a built in connector to the running server is more than one file. Slack, the most recent,
 

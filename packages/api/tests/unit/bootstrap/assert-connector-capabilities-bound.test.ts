@@ -26,7 +26,7 @@ describe("assertConnectorCapabilitiesBound", () => {
   it("passes silently for capabilities with a canonical binding", () => {
     expect(() =>
       assertConnectorCapabilitiesBound([
-        registration("hubspot", ["hubspot:deal-fetch", "hubspot:deal-update"]),
+        registration("paytm", ["paytm:refund"]),
         registration("github", ["github:pr-fetch", "github:pr-merge"]),
       ]),
     ).not.toThrow();
