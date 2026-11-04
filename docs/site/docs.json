@@ -119,10 +119,7 @@
           },
           {
             "group": "Worked examples",
-            "pages": [
-              "guides/live-api-and-demos",
-                            "tutorials/index"
-            ]
+            "pages": ["guides/live-api-and-demos", "tutorials/index"]
           }
         ]
       },

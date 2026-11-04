@@ -51,14 +51,11 @@ effect is the one most recently approved through policy governance, so a new ver
 live when it is approved, with no deploy. Current bindings, with the version used without
 governance:
 
-| Capability          | Bound policy                  |
-| ------------------- | ----------------------------- |
-| `erp:record-read`   | `hubspot-deal-read` @ 1.0.0   |
-| `erp:record-update` | `hubspot-deal-update` @ 1.1.0 |
-| `github:pr-fetch`   | `github-pr-read` @ 1.1.0      |
-| `github:pr-merge`   | `github-pr-approval` @ 1.1.0  |
-| `erp:invoice-pay`   | `customer-refund` @ 1.2.0     |
-| `chat:post-message` | `slack-post-message` @ 1.1.0  |
+| Capability        | Bound policy                 |
+| ----------------- | ---------------------------- |
+| `github:pr-fetch` | `github-pr-read` @ 1.1.0     |
+| `github:pr-merge` | `github-pr-approval` @ 1.1.0 |
+| `erp:invoice-pay` | `customer-refund` @ 1.2.0    |
 
 Every policy in this table needs a signed human approval for the action and its resource,
 

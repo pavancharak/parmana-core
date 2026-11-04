@@ -8,9 +8,9 @@ refund that needs a manager, Parmana refuses it and the agent must send a new re
 approval attached. Approval notifications tell the approver right away, with exactly what they
 need to sign, in one or both of two ways:
 
-| Channel | You set                                           | Best for                                                                   |
-| ------- | ------------------------------------------------- | -------------------------------------------------------------------------- |
-| Email   | `APPROVAL_EMAIL_TO`, and the Resend integration   | A person's inbox, with nothing to host. [Set up email](#email).            |
+| Channel | You set                                           | Best for                                                                            |
+| ------- | ------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Email   | `APPROVAL_EMAIL_TO`, and the Resend integration   | A person's inbox, with nothing to host. [Set up email](#email).                     |
 | Webhook | `APPROVAL_WEBHOOK_URL`, `APPROVAL_WEBHOOK_SECRET` | Your own system: a chat channel, a ticket, a queue. [Set up the webhook](#webhook). |
 
 Both carry the same facts and are sent under the same rule, below.

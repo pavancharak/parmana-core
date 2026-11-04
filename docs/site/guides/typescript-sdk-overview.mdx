@@ -172,7 +172,7 @@ const refund = createBusinessTransaction({
 });
 
 const trustRecord = await client.execute(refund);
-// trustRecord.executions[0].evidence carries what the Paytm connector actually did;
+// trustRecord.executions[0].evidence carries what the connector actually did;
 // trustRecord.signature is the independently verifiable proof.
 ```
 

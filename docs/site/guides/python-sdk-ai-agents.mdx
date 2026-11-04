@@ -278,7 +278,7 @@ async def refund_payment_async(payment_id: str, amount: int, reason: str) -> dic
 If your workflow needs to react to what the connector does _after_ Parmana's own response,
 settlement confirmation arriving later, for instance, that's a property of the specific
 connector, not the SDK; see [Session credentials](/guides/session-credentials) and the connector's
-own docs (e.g. [HubSpot](/integrations/hubspot)) for what each one actually confirms and when.
+own docs for what each one actually confirms and when.
 
 ## Real example: a CustomerServiceAgent class
 
