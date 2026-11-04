@@ -92,6 +92,16 @@ export function withoutSslParams(connectionString: string): string {
  * parses it via `pg-connection-string`); Supabase connection strings
  * already include `sslmode=require`.
  */
+/** True when the connection string points at this machine. */
+export function isLoopbackUrl(connectionString: string): boolean {
+  try {
+    const host = new URL(connectionString).hostname;
+    return host === "localhost" || host === "127.0.0.1" || host === "::1" || host === "[::1]";
+  } catch {
+    return false;
+  }
+}
+
 export class PostgresPoolFactory {
   private static pool: Pool | undefined;
 
@@ -118,7 +128,12 @@ export class PostgresPoolFactory {
       );
     }
 
-    const tls = databaseSslOptions(process.env);
+    // A database on this machine (the local Docker Postgres) does not use
+    // TLS, so the CA check is skipped for it. The CA still applies to every
+    // other host, so production verification is unchanged.
+    const tls = isLoopbackUrl(connectionString)
+      ? {}
+      : databaseSslOptions(process.env);
 
     this.pool = new Pool({
       connectionString: tls.ssl
