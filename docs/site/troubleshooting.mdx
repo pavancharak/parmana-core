@@ -99,7 +99,7 @@ Nothing was sent to the connector, so a retry with a new `businessTransactionId`
 
 ## `POST /execute` returns 503 `CONNECTOR_NOT_REGISTERED`
 
-**Cause:** the request passed authentication, the policy and the approval check, but no connector is registered for its action on this deployment. A connector registers only when its own credentials are configured, for example `PAYTM_CONNECTOR_URL` and `PAYTM_CONNECTOR_SHARED_SECRET` for `erp:invoice-pay`. Nothing was executed. Before this code existed the same case was a bare `500` with no code, so on an older server, look for `No connector registered for capability` in the log.
+**Cause:** the request passed authentication, the policy and the approval check, but no connector is registered for its action on this deployment. A connector registers only when its own credentials are configured, for example a connector's own settings for `erp:invoice-pay`. Nothing was executed. Before this code existed the same case was a bare `500` with no code, so on an older server, look for `No connector registered for capability` in the log.
 
 **Fix:** configure the connector on the server (see the [connector section of the environment reference](/deployment/environment-variables#connectors)), deploy again, then retry with a new `businessTransactionId`, because the original was already accepted.
 
@@ -124,7 +124,7 @@ Nothing was sent to the connector, so a retry with a new `businessTransactionId`
    ```bash
    curl -s -X POST "$PARMANA_API_URL/execution-intents/<businessTransactionId>/resolve" \
      -H "Authorization: Bearer $PARMANA_OPERATOR_KEY" -H "Content-Type: application/json" \
-     -d '{"resolution":"NOT_EXECUTED","note":"Agent was unreachable; no refund in Paytm for this order."}'
+     -d '{"resolution":"NOT_EXECUTED","note":"Agent was unreachable; no payment was made for this invoice."}'
    ```
 
 4. Fix the connector before sending new requests. If the action was not executed and is still wanted, send it again with a **new** `businessTransactionId`.
