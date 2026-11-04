@@ -399,24 +399,40 @@ Evidence
 
 ## 2.18 Key Provider Input Validation
 
-FileKeyProvider rejects any keyId that does not match ^[A-Za-z0-9._-]+$ before constructing a filesystem path from it, closing the path-traversal surface a crafted keyId (for example, containing "../") would otherwise open against the configured key directory.
+Two behaviours protect the key layer. First, a key identifier cannot be used to escape the key directory. Second, a configured key custody model that is not implemented fails at startup rather than falling back silently.
 
-Evidence
+**Path traversal is refused.** `FileKeyProvider` rejects any key ID that does not match `^[A-Za-z0-9._-]+$` before it builds a file path from it. A crafted key ID such as `../` is refused before the filesystem is touched.
 
-- packages/crypto/src/providers/key/FileKeyProvider.ts (assertValidKeyId)
+**Unimplemented custody is refused.** `KEY_PROVIDER` accepts `local`, `aws-kms`, `azure-key-vault`, `gcp-kms`, and `hsm`. Only two of these have an implementation:
 
-- packages/crypto/tests/unit/file-key-provider.test.ts: rejects a path-traversal keyId in getPrivateKey, getPublicKey, hasKey, and getMetadata
+- `local` uses `FileKeyProvider`, which reads keys from `PARMANA_KEY_DIR`.
+- `aws-kms` uses `KmsSigner` (ADR-0009) for signing. `SignerBootstrap.create()` resolves it.
 
-**Update (2026-09-10):** a separate, previously-unclosed gap in the same area: `KEY_PROVIDER` accepted `aws-kms`, `azure-key-vault`, `gcp-kms`, and `hsm` as valid config values (`packages/shared/src/config/KeyProviders.ts`), each parsed and validated cleanly, but `KeyBootstrap.create()` (`packages/crypto/src/KeyBootstrap.ts`) always constructed `FileKeyProvider` regardless of the configured value -- an operator setting `KEY_PROVIDER=aws-kms`, expecting real KMS custody, got private-key-on-disk instead, with no error at any point. `docs/VERIFICATION-GAPS.md` G-40 closed this: `KeyBootstrap.create()` now throws at startup for any value other than `"local"`, naming the configured value and stating plainly that only `FileKeyProvider` is implemented -- turning the misconfiguration from a silent, false sense of custody into an immediate, actionable startup error. No real cloud KMS/HSM provider exists yet; this closes the silent-fallback failure mode, not the absence of those providers themselves.
+`SignerBootstrap.create()` throws at startup for `azure-key-vault`, `gcp-kms`, and `hsm`, and names the value. The older `KeyBootstrap.create()` throws for every value other than `local`. No value of `KEY_PROVIDER` makes Parmana fall back to file-based keys without saying so.
 
-**Update (2026-09-15):** the "no real cloud KMS/HSM provider exists yet" statement above is now out of date for AWS KMS specifically. `SignerBootstrap.create()` (`packages/crypto/src/SignerBootstrap.ts`, a sibling composition root to the still-unchanged `KeyBootstrap.create()` this entry describes) now resolves a real `KmsSigner` (`packages/crypto/src/providers/signer/KmsSigner.ts`, ADR-0009) for `KEY_PROVIDER=aws-kms`, and all seven signing call sites plus `packages/api/src/routes/keys.ts` already resolve through it. Fixed the same day: `KmsSigner` was passing Parmana's logical keyId (e.g. `DEFAULT_KEY_ID = "default"`) straight through as AWS KMS's `KeyId` parameter, which KMS rejects outright — it must be a real key ID, key ARN, or an `alias/`-prefixed name. `KmsSigner` now maps `keyId` → `alias/<keyId>` (mirroring `FileKeyProvider`'s own `keyId` → `<keyId>.private.pem` convention), passing an already-qualified alias, ARN, or raw key ID through unchanged. Verified end-to-end against a real AWS KMS key (`ECC_NIST_EDWARDS25519`/`ED25519_SHA_512`, account <aws-account-id>, ap-south-1) under a least-privilege IAM identity scoped to that one key: `hasKey`, `getPublicKey`, `sign`, and Node's own `crypto.verify` against the returned signature, and `getMetadata`, all passed. Unit test coverage added (`packages/crypto/tests/unit/kms-signer.test.ts`) for the keyId-mapping behavior itself. Azure Key Vault, GCP KMS, and on-prem HSM remain unimplemented, and `KeyBootstrap.create()` (the older, unused-in-production composition root this entry originally described) is unchanged and still throws for any non-local provider. Not yet done: the Vercel→AWS OIDC IAM role (`AWS_ROLE_ARN`) ADR-0009 specifies for production credential-free authentication — only a local-admin IAM user (`parmana-kms-operator`) was provisioned so far, deliberately scoped to local/CLI key administration, not runtime signing.
+**The AWS KMS signer maps key IDs safely.** `KmsSigner` turns a logical key ID into a KMS alias. A bare ID such as `default` becomes `alias/default`, and a dotted tenant ID such as `tenant.acme` becomes `alias/tenant/acme`, because KMS alias names cannot contain dots. It refuses any ID that would land under AWS's reserved `alias/aws/` prefix. It refuses a full key ARN, because an ARN can name a key in another AWS account. It treats a UUID-shaped ID as an alias name in the configured account, never as a raw key ID.
 
-Evidence (update)
+**Credentials.** `KmsSigner` uses no static AWS access keys. When `AWS_ROLE_ARN` is set, it exchanges Vercel's OIDC token for short-lived credentials. Whether that role is provisioned in a given deployment is an operator step, and this claim does not verify it.
 
-- `packages/crypto/src/KeyBootstrap.ts`
-- `packages/crypto/tests/unit/key-bootstrap.test.ts`: 7 cases, including one per unimplemented `KEY_PROVIDER` value
+**Scope and limits.**
 
----
+- Azure Key Vault, GCP KMS, and HSM are not implemented. Configuring any of them fails at startup.
+- The path check covers the file-based provider only. It does not check the KMS key ID beyond the rules above.
+- Each refusal is covered by a test case, and the bootstrap tests check each non-local value.
+
+**Evidence.**
+
+- `packages/crypto/src/providers/key/FileKeyProvider.ts` (`assertValidKeyId`)
+- `packages/crypto/tests/unit/file-key-provider.test.ts` (path-traversal key IDs rejected in `getPrivateKey`, `getPublicKey`, and `hasKey`)
+- `packages/crypto/src/SignerBootstrap.ts` (`aws-kms` resolves `KmsSigner`; other non-local values throw)
+- `packages/crypto/tests/unit/signer-bootstrap.test.ts`
+- `packages/crypto/src/KeyBootstrap.ts` (throws for any value other than `local`)
+- `packages/crypto/tests/unit/key-bootstrap.test.ts` (refusal for each non-local value)
+- `packages/crypto/src/providers/signer/KmsSigner.ts` (key ID mapping, ARN and reserved-prefix refusal, `AWS_ROLE_ARN` exchange)
+- `packages/crypto/tests/unit/kms-signer.test.ts` (key ID mapping cases, signing, public key, metadata, caching)
+- `packages/shared/src/config/KeyProviders.ts` (the accepted values)
+
+Dated updates, including the 2026 fix that made `KmsSigner` map key IDs to aliases and the live check against a real AWS KMS key, are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
 ## 2.19 Fail-Closed Caller-Authentication Audit Writes
 
