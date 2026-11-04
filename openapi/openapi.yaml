@@ -5561,7 +5561,7 @@ paths:
                   summary: Real captured response
                   value:
                     {
-                      "error": "The namespace 'paytm' belongs to a built in connector. Use another namespace.",
+                      "error": "The namespace 'test' belongs to a built in connector. Use another namespace.",
                       "code": "INVALID_EXTERNAL_CONNECTOR",
                     }
                 privateAddress:

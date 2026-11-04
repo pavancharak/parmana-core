@@ -1657,7 +1657,7 @@ paths:
             )
 
 
-            in_effect = client.policy_in_effect("paytm:refund")
+            in_effect = client.policy_in_effect("erp:invoice-pay")
 
 
             # The signed approval the approver sent, for this order and up to
@@ -1669,7 +1669,7 @@ paths:
             transaction = create_business_transaction(
                 principal_id=client.caller().caller_id,
                 purpose="Refund order ORD-1042",
-                action="paytm:refund",
+                action="erp:invoice-pay",
                 target="ORD-1042",
                 parameters={"orderId": "ORD-1042", "transactionId": "TXN-9", "amount": 750},
                 policy=in_effect.policy,
@@ -2319,7 +2319,7 @@ paths:
             )
 
 
-            in_effect = client.policy_in_effect("paytm:refund")
+            in_effect = client.policy_in_effect("erp:invoice-pay")
 
 
             # The signed approval the approver sent, for this order and up to
@@ -2331,7 +2331,7 @@ paths:
             transaction = create_business_transaction(
                 principal_id=client.caller().caller_id,
                 purpose="Refund order ORD-1042",
-                action="paytm:refund",
+                action="erp:invoice-pay",
                 target="ORD-1042",
                 parameters={"orderId": "ORD-1042", "transactionId": "TXN-9", "amount": 750},
                 policy=in_effect.policy,
@@ -5813,7 +5813,7 @@ paths:
                 api_key=os.environ["PARMANA_API_KEY"],
             )
 
-            in_effect = client.policy_in_effect("paytm:refund")
+            in_effect = client.policy_in_effect("erp:invoice-pay")
 
             print(in_effect.policy, in_effect.signals.approval)
   /policies/validate:
@@ -8021,7 +8021,7 @@ paths:
                 builtInNamespace:
                   summary: Real captured response
                   value:
-                    error: The namespace 'paytm' belongs to a built in connector. Use another
+                    error: The namespace 'test' belongs to a built in connector. Use another
                       namespace.
                     code: INVALID_EXTERNAL_CONNECTOR
                 privateAddress:

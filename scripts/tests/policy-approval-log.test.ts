@@ -229,12 +229,12 @@ describe("the policy approval log", () => {
         approved,
         new Map<string, unknown>([
           ["customer-refund/1.2.0", { ...content, rules: [{ id: "new" }] }],
-          ["slack-post-message/1.1.0", {}],
+          ["example-post-message/1.1.0", {}],
         ]),
       ),
     ).toEqual([
       "policies/customer-refund/1.2.0/policy.json does not match its latest logged approval.",
-      "policies/slack-post-message/1.1.0/policy.json has no approval in the log.",
+      "policies/example-post-message/1.1.0/policy.json has no approval in the log.",
     ]);
   });
 });

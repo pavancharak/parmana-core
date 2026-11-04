@@ -197,7 +197,7 @@ describe("sign-approval", () => {
 
   it.each([
     [["--capability", "refund"], "--capability"],
-    [["--capability", "paytm refund"], "--capability"],
+    [["--capability", "erp refund"], "--capability"],
     [["--max-amount", "0"], "--max-amount"],
     [["--max-amount", "abc"], "--max-amount"],
     [["--ttl-seconds", "0"], "--ttl-seconds"],

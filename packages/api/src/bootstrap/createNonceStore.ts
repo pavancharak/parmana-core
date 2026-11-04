@@ -9,7 +9,7 @@ import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
  *
  * Test wiring (NODE_ENV=test): MemoryNonceStore — the same
  * production/test split every credential provider in this directory
- * uses (e.g. createHubSpotCredentialProvider.ts).
+ * uses (for example, a credential provider).
  *
  * Production: SupabaseNonceStore, a durable store shared across
  * every process pointed at the same Supabase project. Closes G-13
