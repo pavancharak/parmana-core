@@ -44,8 +44,7 @@ if (options.legacyInsecure === true) {
 `legacyInsecure` is documented in its own type (`ConnectorRegistrationOptions.legacyInsecure`,
 same file) as: _"For tests only — every production connector goes through the default,
 session-credential path."_ Nothing in `packages/api/src/bootstrap/createConnectorRegistry.ts` —
-the real production registry composition — sets this flag for HubSpot, GitHub, or the
-`test-fixture` connector. All three get isolation for free.
+the real production registry composition — sets this flag for the `test-fixture` connector. The built in connectors are no longer in this repository. The fixture connector gets isolation for free.
 
 **This means the risk model is the opposite of "developers might forget to wire isolation in."**
 Isolation is on by default and can only be turned off by explicitly setting a flag whose own doc
