@@ -100,10 +100,10 @@ describe("CI terminology guard (Phase 2C regression coverage)", () => {
   it("active documentation contains no instance of the retired phrase, excluded or not", () => {
     const activeDocs = [
       "README.md",
-      "docs/architecture/system-architecture.md",
+      "docs/internal/architecture/system-architecture.md",
       "docs/site/architecture/execution-pipeline.mdx",
-      "docs/architecture/repository-invariants.md",
-      "docs/connectors/BUILDING_A_CONNECTOR.md",
+      "docs/internal/architecture/repository-invariants.md",
+      "docs/internal/connectors/BUILDING_A_CONNECTOR.md",
     ];
 
     for (const doc of activeDocs) {
@@ -116,7 +116,10 @@ describe("CI terminology guard (Phase 2C regression coverage)", () => {
   });
 
   it("historical self-narration files are excluded and legitimately contain the phrase", () => {
-    const historical = ["docs/VERIFICATION-GAPS.md", "docs/site/changelog.mdx"];
+    const historical = [
+      "docs/internal/VERIFICATION-GAPS.md",
+      "docs/site/changelog.mdx",
+    ];
 
     for (const doc of historical) {
       const basename = doc.split("/").pop()!;

@@ -137,7 +137,7 @@ export class VerificationService {
     // Execution with no chain fields at all, before the first chained
     // one, is unprotected legacy data and does not fail this check;
     // one carrying only some chain fields, or following a chained
-    // one, does (docs/VERIFICATION-GAPS.md G-89).
+    // one, does (docs/internal/VERIFICATION-GAPS.md G-89).
     //
     const chainResult = await this.chainCrypto.verifyChain(
       trustRecord.executions,

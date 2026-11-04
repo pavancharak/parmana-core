@@ -39,21 +39,21 @@ Each item below is a claim Parmana makes about an attacker who holds at most a v
 key, a captured authorization or a captured, used approval. Show any of these on the target
 and it counts:
 
-| #   | Break                                                                                                                                    | Related claims (docs/CLAIMS.md) |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| 1   | A connector is called for an action the policy did not approve                                                                           | 2.4, 2.25                       |
-| 2   | An action whose policy needs a signed human approval runs without a valid one for that action, resource and amount                       | 2.42, 2.44, 2.47                |
-| 3   | An action runs with parameters different from the ones authorized, such as a different amount or target                                  | 2.10, 2.44                      |
-| 4   | One authorization or one approval is used twice                                                                                          | 2.10, 2.20, 2.42                |
-| 5   | A capability is evaluated under a policy other than the one bound to it, or under a policy version that is not the approved, current one | 2.22, 2.27, 2.36                |
-| 6   | A policy change takes effect with only one person's credentials, or without a step up signature                                          | 2.26, 2.34                      |
-| 7   | A request is accepted without a valid API key, or for a caller, principal or capability the key does not allow                           | 2.16, 3.16                      |
-| 8   | A Trust Record or Refusal Record that the instance did not sign, or that was changed after signing, still verifies offline               | 2.5, 2.6, 3.11                  |
-| 9   | A connector credential appears in a response, a decision, a record or anything else the caller can read                                  | 2.23                            |
-| 10  | A request reads or writes a file outside the policy directory                                                                            | none yet                        |
+| #   | Break                                                                                                                                    | Related claims (docs/internal/CLAIMS.md) |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| 1   | A connector is called for an action the policy did not approve                                                                           | 2.4, 2.25                                |
+| 2   | An action whose policy needs a signed human approval runs without a valid one for that action, resource and amount                       | 2.42, 2.44, 2.47                         |
+| 3   | An action runs with parameters different from the ones authorized, such as a different amount or target                                  | 2.10, 2.44                               |
+| 4   | One authorization or one approval is used twice                                                                                          | 2.10, 2.20, 2.42                         |
+| 5   | A capability is evaluated under a policy other than the one bound to it, or under a policy version that is not the approved, current one | 2.22, 2.27, 2.36                         |
+| 6   | A policy change takes effect with only one person's credentials, or without a step up signature                                          | 2.26, 2.34                               |
+| 7   | A request is accepted without a valid API key, or for a caller, principal or capability the key does not allow                           | 2.16, 3.16                               |
+| 8   | A Trust Record or Refusal Record that the instance did not sign, or that was changed after signing, still verifies offline               | 2.5, 2.6, 3.11                           |
+| 9   | A connector credential appears in a response, a decision, a record or anything else the caller can read                                  | 2.23                                     |
+| 10  | A request reads or writes a file outside the policy directory                                                                            | none yet                                 |
 
 Something not on this list can still be a finding. If you think it breaks a claim in
-[docs/CLAIMS.md](docs/CLAIMS.md), report it.
+[docs/internal/CLAIMS.md](docs/internal/CLAIMS.md), report it.
 
 ## What does not count
 
@@ -97,9 +97,9 @@ within 10. Please wait for the fix before you publish.
 ## Recognition
 
 There is no cash reward. With your permission, every confirmed break is credited by name in
-this file, in [docs/VERIFICATION-GAPS.md](docs/VERIFICATION-GAPS.md) where the gap and its fix
+this file, in [docs/internal/VERIFICATION-GAPS.md](docs/internal/VERIFICATION-GAPS.md) where the gap and its fix
 are recorded, and in the changelog of the release that fixes it. A claim that a break disproves
-is corrected or withdrawn in docs/CLAIMS.md.
+is corrected or withdrawn in docs/internal/CLAIMS.md.
 
 ## Good faith
 

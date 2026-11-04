@@ -2,7 +2,7 @@
 The local test approver, for tests that run a real server.
 
 No agent action is authorized without a signed human approval
-(docs/CLAIMS.md 2.47), so a test that expects an approved action signs
+(docs/internal/CLAIMS.md 2.47), so a test that expects an approved action signs
 one. A server started with NODE_ENV=test trusts the approver
 ``local-test-approver`` with the public key in the file
 PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE names

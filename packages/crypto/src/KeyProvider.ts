@@ -26,7 +26,7 @@ export const DEFAULT_SECONDARY_KEY_ID = "default-secondary";
  * Resolves the keyId that VerificationCrypto/RefusalCrypto/
  * AuditEventCrypto -- the durable-evidence signers (Trust Records,
  * Refusal Records, Audit Events) -- use for NEW signatures (PQC audit
- * RED-3, docs/VERIFICATION-GAPS.md). Every one of these three signers
+ * RED-3, docs/internal/VERIFICATION-GAPS.md). Every one of these three signers
  * previously hardcoded DEFAULT_KEY_ID directly, so the only way to
  * "rotate" was to overwrite default.private.pem/default.public.pem in
  * place -- which silently invalidates every record ever signed under
@@ -99,7 +99,7 @@ export interface KeyProvider {
 
   /**
    * Lists every keyId this provider can currently load a public key
-   * for (PQC audit RED-2, docs/VERIFICATION-GAPS.md) -- used by the
+   * for (PQC audit RED-2, docs/internal/VERIFICATION-GAPS.md) -- used by the
    * key-discovery endpoints (packages/api/src/routes/keys.ts) to
    * enumerate every key an auditor might need, not only whichever one
    * happens to be "current."

@@ -2,7 +2,7 @@
 
 ## Objective
 
-Exercise the full maker-checker approval flow a policy content change goes through before it can take effect, through a real HTTP server: human-only enforcement, maker ≠ checker, and step-up authorization, each independently enforced (`docs/CLAIMS.md` §2.26). Mirrors `packages/api/tests/integration/pending-policy-changes-governance.integration.test.ts`.
+Exercise the full maker-checker approval flow a policy content change goes through before it can take effect, through a real HTTP server: human-only enforcement, maker ≠ checker, and step-up authorization, each independently enforced (`docs/internal/CLAIMS.md` §2.26). Mirrors `packages/api/tests/integration/pending-policy-changes-governance.integration.test.ts`.
 
 ## What You'll Learn
 

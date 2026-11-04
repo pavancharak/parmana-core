@@ -96,7 +96,7 @@ export class FileKeyProvider implements KeyProvider {
   /**
    * Returns key metadata.
    *
-   * PQC audit RED-2 (docs/VERIFICATION-GAPS.md) fix: algorithm is
+   * PQC audit RED-2 (docs/internal/VERIFICATION-GAPS.md) fix: algorithm is
    * derived from the actual public key material's own
    * `asymmetricKeyType`, not from `config.crypto.primarySignatureProvider`
    * as this method previously did. That global config value describes

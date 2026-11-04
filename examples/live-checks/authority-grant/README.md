@@ -1,8 +1,8 @@
 # Live check: authority grants in production
 
 RFC-0023 phase 3 lets an operator say which agent may have which action decided, within which limits, until when
-(`docs/CLAIMS.md` 2.55). It is built, tested and deployed, but no grant has been made in production and no production
-policy requires one (`docs/VERIFICATION-GAPS.md` G-93). This check proves it against the real server, with an action
+(`docs/internal/CLAIMS.md` 2.55). It is built, tested and deployed, but no grant has been made in production and no production
+policy requires one (`docs/internal/VERIFICATION-GAPS.md` G-93). This check proves it against the real server, with an action
 that changes nothing anywhere:
 
 | #   | Request (each with a valid signed approval) | Required                                                                          |

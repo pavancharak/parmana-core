@@ -175,7 +175,7 @@ export class RuntimeEngine {
     private readonly policyExecutionVerifier?: PolicyExecutionVerifier,
     /**
      * Evidentiary counterpart to policyExecutionVerifier
-     * (docs/VERIFICATION-GAPS.md G-45): never blocks execution, only
+     * (docs/internal/VERIFICATION-GAPS.md G-45): never blocks execution, only
      * records what it found. Optional and trailing for the same
      * backward-compatibility reason as every other optional dependency
      * above. When omitted, no governance anchor is resolved --

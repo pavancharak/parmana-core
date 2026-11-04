@@ -10,7 +10,7 @@ import { resolveDatabaseGate } from "../helpers/database-availability.js";
 const databaseConfigured = resolveDatabaseGate("Supabase Nonce Store");
 
 /**
- * Closes G-13 (docs/VERIFICATION-GAPS.md): proves replay protection is
+ * Closes G-13 (docs/internal/VERIFICATION-GAPS.md): proves replay protection is
  * durable against a real database, not just against this session's
  * mocked-storage unit tests (packages/storage/tests/unit/
  * supabase-nonce-store.test.ts). Requires the consumed_nonces table

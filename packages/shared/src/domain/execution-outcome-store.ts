@@ -17,7 +17,7 @@ export type ExecutionOutcome =
  * Records the outcome of each authorization so a retry after a lost response
  * can recover it instead of being refused with no information.
  *
- * Gap G-125 (docs/VERIFICATION-GAPS.md). Single use (the nonce) still decides
+ * Gap G-125 (docs/internal/VERIFICATION-GAPS.md). Single use (the nonce) still decides
  * whether an authorization may execute. This store records what happened
  * when it did.
  *

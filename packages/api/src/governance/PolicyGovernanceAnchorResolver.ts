@@ -14,7 +14,7 @@ import type { PolicyChangeApprovalRecordRepository } from "@parmana/shared";
  * there refuses real executions, this class only ever records what it
  * found. A NO_APPROVAL_RECORD result for every one of this
  * deployment's ten real policies today is the expected, informative
- * answer (see docs/CLAIMS.md §2.26's "Legacy-policy backfill"), not a
+ * answer (see docs/internal/CLAIMS.md §2.26's "Legacy-policy backfill"), not a
  * fail-closed condition to guard against.
  *
  * Performs the identical three checks

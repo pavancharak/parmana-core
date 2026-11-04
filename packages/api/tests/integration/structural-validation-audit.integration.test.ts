@@ -16,7 +16,7 @@ import { createInspectableExecutionSystem } from "../bootstrap/createInspectable
  * malformed or oversized request body, an invalid businessTransactionId,
  * a structurally invalid Business Transaction, and a duplicate
  * businessTransactionId -- are now durably audited (G-29,
- * docs/VERIFICATION-GAPS.md), closing the gap found during a broader
+ * docs/internal/VERIFICATION-GAPS.md), closing the gap found during a broader
  * gap audit: unlike a policy REJECT (RefusalRecord, RFC-0021) or a
  * caller-identity denial (caller.capability_denied /
  * caller.principal_denied, already audited), these four rejection

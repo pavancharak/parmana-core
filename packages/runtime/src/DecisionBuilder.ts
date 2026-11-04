@@ -48,7 +48,7 @@ export class DecisionBuilder {
       reason: policyDecision.reason,
 
       // Copied verbatim from PolicyEngine's own output, never
-      // recomputed here (docs/VERIFICATION-GAPS.md G-44): these three
+      // recomputed here (docs/internal/VERIFICATION-GAPS.md G-44): these three
       // previously existed only transiently in memory and were
       // dropped before anything durable was written.
       matchedRuleId: policyDecision.matchedRuleId,

@@ -3,7 +3,7 @@
 _Security incidents and latent defects discovered during Sessions 1–8, with resolutions._
 _Snapshot: July 5, 2026. INC-6 and INC-7 added 2026-08-03, from later sessions this log had
 not been updated to reflect — this document's own gap, not a new incident; see RFC-0022
-(docs/rfcs/RFC-0022-Challenge-Record.md) for the durable, structured record type going
+(docs/internal/rfcs/RFC-0022-Challenge-Record.md) for the durable, structured record type going
 forward. INC-8 added 2026-08-09, for an incident that itself dates from the ML-DSA-65
 signature provider work (same gap pattern this note already describes); independently
 re-verified against the actual current state of both remotes as part of adding it, not
@@ -26,7 +26,7 @@ authenticity guarantee while in use.
 
 **Resolution:** treated as permanently compromised. `git rm --cached` + root `.gitignore`
 (`keys/`, `*.pem`), rotated to a fresh Ed25519 pair via the hardened keygen script, full
-suite re-verified green with the new key, compromise notice added to `docs/CLAIMS.md`.
+suite re-verified green with the new key, compromise notice added to `docs/internal/CLAIMS.md`.
 
 **Still open:** history purge (`git filter-repo --path-glob '*.pem'` + force-push) and
 archiving the sibling `pavancharak/parmana` repo, which has the same exposure.
@@ -131,7 +131,7 @@ client-supplied; `isOwnedByCaller` scopes every read route. A related path-trave
 `FilePolicyRepository.load` (same unvalidated-input class as an earlier `FileKeyProvider`
 finding) was fixed alongside these since it was already well-scoped. Full detail, PoC
 figures, and the residual (unbound signals remain caller-declared attestations, not yet
-independently re-verified) are in `docs/VERIFICATION-GAPS.md` G-24.
+independently re-verified) are in `docs/internal/VERIFICATION-GAPS.md` G-24.
 
 **Verified:** 28 new tests reproducing the exact live exploit shapes (signal/intent
 mismatch, principal spoofing, path traversal, cross-caller read), plus positive controls
@@ -156,7 +156,7 @@ optimistic-concurrency guard (`RazorpayCumulativeRefundLedger
 refund actually executes, rather than reading the total early and writing unconditionally
 after success, proven by a concurrent-request regression test confirmed failing (both requests
 approved) against the pre-fix code before the fix, then passing after it. Full detail:
-`docs/VERIFICATION-GAPS.md` G-24's updates.
+`docs/internal/VERIFICATION-GAPS.md` G-24's updates.
 
 ---
 
@@ -343,7 +343,7 @@ PyPI respectively; the root-cause fix is committed on `main`.
 
 ## INC-11 — `parmana-paytm-agent` production outage: a newly-required env var shipped before it was provisioned (DEPLOYMENT)
 
-**What:** the 2026-09-14 GAP-3 remediation (execution-audit trail, `docs/VERIFICATION-GAPS.md` G-42 and G-43) added
+**What:** the 2026-09-14 GAP-3 remediation (execution-audit trail, `docs/internal/VERIFICATION-GAPS.md` G-42 and G-43) added
 `src/parmana/audit.ts` to `parmana-paytm-agent` (a separate repository) and made `DATABASE_URL`
 a required startup variable — `loadConfig()`'s `required("DATABASE_URL")` throws if it's unset,
 and that throw happens at module load (`export const config = loadConfig();`,
@@ -403,7 +403,7 @@ requirement, for free, since it exercises real `loadConfig()` validation, not ju
 passes cleanly with everything valid. This would have turned this incident into a failed build
 visible in the deploy log, not a live outage.
 
-**Relationship to GAP-2 (see `docs/VERIFICATION-GAPS.md`):** this incident
+**Relationship to GAP-2 (see `docs/internal/VERIFICATION-GAPS.md`):** this incident
 prompted revisiting GAP-2's "should Paytm connector configuration fail closed on full absence"
 question. The two are different variables with different intended postures — `DATABASE_URL` is
 unconditionally required by design (an audit trail with no working store is a fail-closed

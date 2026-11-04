@@ -16,7 +16,7 @@ import {
  * every statement and keeps the tracking table in memory; a statement that
  * contains FAIL throws, like a migration that errors in Postgres. The real
  * SQL was also run against a real Postgres on 2026-09-25, see
- * docs/VERIFICATION-GAPS.md G-61.
+ * docs/internal/VERIFICATION-GAPS.md G-61.
  */
 class FakeClient implements QueryClient {
   public readonly statements: string[] = [];

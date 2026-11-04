@@ -4,7 +4,7 @@
 
 Exercise `scripts/local-review-action.ts` and `scripts/refresh-approved-policy-content.ts`
 directly — the exact two scripts used to approve all 14 real production policies the night
-of 2026-09-16 (see `docs/CLAIMS.md` §2.26's "Legacy-policy backfill" entry) — and prove they
+of 2026-09-16 (see `docs/internal/CLAIMS.md` §2.26's "Legacy-policy backfill" entry) — and prove they
 produce the identical durable effects (a written `policy.json`, a signed
 `PolicyChangeApprovalRecord`) as the fully manual sign-then-curl flow Tutorial 103 already
 demonstrates.

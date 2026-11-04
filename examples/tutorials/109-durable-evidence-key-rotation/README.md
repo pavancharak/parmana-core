@@ -2,7 +2,7 @@
 
 ## Objective
 
-Close PQC audit RED-3 (`docs/VERIFICATION-GAPS.md`): `VerificationCrypto`, `RefusalCrypto`,
+Close PQC audit RED-3 (`docs/internal/VERIFICATION-GAPS.md`): `VerificationCrypto`, `RefusalCrypto`,
 and `AuditEventCrypto` — the signers for Trust Records, Refusal Records, and Audit Events,
 the durable evidence an auditor actually queries later — all hardcoded the literal keyId
 `"default"` for every new signature, with the only "rotation" being to overwrite

@@ -68,7 +68,7 @@ export class StorageFactory {
    * Test wiring (NODE_ENV=test): MemoryStorageProvider, unconditionally,
    * regardless of PARMANA_STORAGE — mirrors the production/test split
    * createNonceStore.ts and createCallerAuditSink.ts already established
-   * (G-13). Closes G-15 (docs/VERIFICATION-GAPS.md): this method used to
+   * (G-13). Closes G-15 (docs/internal/VERIFICATION-GAPS.md): this method used to
    * construct whatever PARMANA_STORAGE named — a live Supabase client
    * included — purely as an import-time side effect
    * (packages/api/src/repositories.ts), crashing test collection with

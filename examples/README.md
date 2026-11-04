@@ -33,7 +33,7 @@ few intentional gaps (61, 63–68, 85) from tutorials that were removed or never
 authoritative, current list (also the exact list `npm run examples` executes, in
 `scripts/run-examples.ts`).
 
-Tutorial coverage is not exhaustive: not every `docs/CLAIMS.md`-documented capability has a
+Tutorial coverage is not exhaustive: not every `docs/internal/CLAIMS.md`-documented capability has a
 dedicated tutorial (for example, §2.27's `policyStillCurrent` policy-freshness check has none as
 of this writing). New tutorials get added when a capability's own narrative — "here's the
 exact before/after that makes this concrete" — earns the cost of a new numbered entry, not
@@ -215,4 +215,4 @@ npx tsx examples/scenarios/expense-approval/run.ts
 
 See the Parmana documentation (`docs/`) for architecture, policy authoring, runtime,
 verification, replay, storage, and API reference. For building a new connector specifically,
-start with `docs/architecture/CONNECTOR_ISOLATION.md` and `docs/connectors/BUILDING_A_CONNECTOR.md`.
+start with `docs/internal/architecture/CONNECTOR_ISOLATION.md` and `docs/internal/connectors/BUILDING_A_CONNECTOR.md`.

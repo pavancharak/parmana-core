@@ -77,7 +77,7 @@ import type { PolicyChangeCheckerScope } from "./governance/policyChangeCheckers
  * string "disabled" to mount the app with no caller-auth
  * middleware at all. There is no default: silently omitting
  * this option is exactly the failure mode this type exists to
- * rule out (see docs/CLAIMS.md and the July 2026 audit closeout).
+ * rule out (see docs/internal/CLAIMS.md and the July 2026 audit closeout).
  */
 export type CallerAuthOption =
   | "disabled"
@@ -316,7 +316,7 @@ export function createApp(
   app.use("/audit/verify", publicRateLimiter, createAuditVerifyRouter());
 
   /**
-   * PQC audit RED-2 (docs/VERIFICATION-GAPS.md): public-key discovery,
+   * PQC audit RED-2 (docs/internal/VERIFICATION-GAPS.md): public-key discovery,
    * the same unauthenticated-by-necessity category as
    * /refusal/verify and /audit/verify above -- a third party fetching
    * the key it needs to independently verify a signature cannot be
@@ -615,7 +615,7 @@ export function createApp(
    *
    * Must be registered after all routes. Threaded with the same
    * auditSink every other caller-facing route uses (G-29,
-   * docs/VERIFICATION-GAPS.md) so the one rejection category this file
+   * docs/internal/VERIFICATION-GAPS.md) so the one rejection category this file
    * itself fully handles -- a malformed/oversized request body, rejected
    * by express.json() before caller-auth middleware or any route handler
    * ever runs -- gets a best-effort audit record too, not only the

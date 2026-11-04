@@ -7,7 +7,7 @@ description: "Python SDK reference: Standalone, offline verification of an Execu
 Standalone, offline verification of an Execution Trust Record.
 
 Python counterpart to packages/crypto/src/OfflineVerifier.ts (PQC
-audit RED-1, docs/VERIFICATION-GAPS.md) -- proves the canonical
+audit RED-1, docs/internal/VERIFICATION-GAPS.md) -- proves the canonical
 serialization algorithm and Ed25519 verification are independently
 reproducible in a second language, not just documented as "should be
 portable." Zero network calls, zero disk reads (beyond files the
@@ -17,7 +17,7 @@ Large records (over 4096 bytes of canonical content) may have been
 signed by AWS KMS as a fixed size commitment, because KMS caps a raw
 Ed25519 message at 4096 bytes. This module accepts a raw signature for
 any record, and additionally accepts the commitment form for a record
-over that limit (see docs/adr/ADR-0010). A commitment signature over a
+over that limit (see docs/internal/adr/ADR-0010). A commitment signature over a
 record at or below the limit is rejected.
 
 ML-DSA-65 (Dilithium3) verification is intentionally out of scope

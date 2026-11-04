@@ -45,7 +45,7 @@ export interface CallerAuditEvent {
 
   /**
    * The declared `businessTransactionId` a "caller.structural_rejected"
-   * event concerns (G-29, docs/VERIFICATION-GAPS.md) — present whenever
+   * event concerns (G-29, docs/internal/VERIFICATION-GAPS.md) — present whenever
    * the rejected request got far enough to have one (a malformed UUID
    * that still parsed as JSON, a structurally invalid transaction body,
    * or a duplicate id), absent only for the earliest possible failure

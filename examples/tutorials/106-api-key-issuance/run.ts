@@ -1,5 +1,5 @@
 //
-// docs/VERIFICATION-GAPS.md G-33/G-38/G-39: this tutorial doubles as a
+// docs/internal/VERIFICATION-GAPS.md G-33/G-38/G-39: this tutorial doubles as a
 // worked example of authoring a NEW policy correctly from day one under
 // the fail-closed boundSignals discipline (G-33) and the advisory
 // rule-conflict checker (G-39) -- rather than a policy that needed

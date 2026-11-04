@@ -28,7 +28,7 @@ import {
 } from "../../shared/helpers/demo-approval.js";
 
 //
-// docs/CLAIMS.md 2.35: on top of the maker-checker approval flow
+// docs/internal/CLAIMS.md 2.35: on top of the maker-checker approval flow
 // (Tutorial 103) and the deploy-time/periodic integrity check that
 // detects a bypass after the fact, RuntimeEngine can now refuse
 // execution BEFORE PolicyEngine ever evaluates a single rule, when a
@@ -212,7 +212,7 @@ try {
   }
   console.log(`Refused : ${scenario3Reason}`);
 
-  // Deploy-time/periodic detection (docs/CLAIMS.md 2.34) independently
+  // Deploy-time/periodic detection (docs/internal/CLAIMS.md 2.34) independently
   // catches the same live-file tampering scenario 3 just produced --
   // a second, structurally distinct layer, not a duplicate check.
   const integrityResult = await verifyPolicyGovernanceIntegrityAtStartup({

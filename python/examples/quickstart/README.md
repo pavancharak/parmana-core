@@ -42,7 +42,7 @@ Constructs a `ParmanaClient`, submits a Business Transaction through
   that needs no credential of its own -- the `payments:execute`/
   `vendor-payment` connector and its `VENDOR_PAYMENT_TOKEN` this example
   originally targeted were removed from the repository entirely
-  (docs/VERIFICATION-GAPS.md G-27), not renamed.
+  (docs/internal/VERIFICATION-GAPS.md G-27), not renamed.
 
 - The Python SDK installed: `pip install -e ./python`.
 

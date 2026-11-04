@@ -2,7 +2,7 @@
 
 ## Objective
 
-Show that a policy `REJECTED` decision (`403`/`POLICY_DENIED`), a replayed authorization (`409`/`NONCE_ALREADY_CONSUMED`), and a genuine unexpected failure (plain, uncoded `500`) are all distinguishable from each other — not three flavors of the same opaque error (`docs/CLAIMS.md` §2.21).
+Show that a policy `REJECTED` decision (`403`/`POLICY_DENIED`), a replayed authorization (`409`/`NONCE_ALREADY_CONSUMED`), and a genuine unexpected failure (plain, uncoded `500`) are all distinguishable from each other — not three flavors of the same opaque error (`docs/internal/CLAIMS.md` §2.21).
 
 ## What You'll Learn
 

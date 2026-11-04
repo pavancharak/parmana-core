@@ -5,7 +5,7 @@
 Reproduce the most significant bug found migrating the gateway signing key to AWS KMS —
 signing and verification silently resolving _different_ keys, producing exactly the
 "ambiguous outcome" failure this codebase's fail-closed design otherwise works hard to
-avoid — and demonstrate the real fix. Mirrors `docs/VERIFICATION-GAPS.md` G-48 and
+avoid — and demonstrate the real fix. Mirrors `docs/internal/VERIFICATION-GAPS.md` G-48 and
 item 7 of the 2026-09-15 KMS migration troubleshooting guide (in git history).
 
 ## What You'll Learn

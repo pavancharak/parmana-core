@@ -28,7 +28,7 @@ regexes = [
   # "gateway-from-env", or "mounted", never real key bytes. "gateway-from-env"
   # added 2026-09-16 (assert-signing-key-material-configured.test.ts's new
   # regression test for materializing the separate "gateway" attestation key
-  # under KEY_PROVIDER=aws-kms -- see docs/VERIFICATION-GAPS.md G-48/G-49's
+  # under KEY_PROVIDER=aws-kms -- see docs/internal/VERIFICATION-GAPS.md G-48/G-49's
   # troubleshooting guide).
   '''-----BEGIN (PRIVATE|PUBLIC) KEY-----\\n(existing|from-env|gateway-from-env|mounted)\\n-----END (PRIVATE|PUBLIC) KEY-----''',
 
@@ -39,7 +39,7 @@ regexes = [
   '''325ededd6c3b9988f623c7f964abb9b016b76b0f8b3474df0f7d7c23b941381f''',
 
   # Public GPG key ID of the maintainer's commit-signing key, printed in
-  # docs/runbooks/SIGNING-COMMITS.md so contributors can verify signatures. A key
+  # docs/internal/runbooks/SIGNING-COMMITS.md so contributors can verify signatures. A key
   # ID is public, not a secret.
   '''EA52495306CAD70F''',
 

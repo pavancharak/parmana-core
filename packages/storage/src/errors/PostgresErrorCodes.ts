@@ -4,7 +4,7 @@
  * error object's `code` field.
  *
  * No such mapping existed anywhere in this codebase before this file
- * (see docs/VERIFICATION-GAPS.md D-1: the Supabase repositories rethrow
+ * (see docs/internal/VERIFICATION-GAPS.md D-1: the Supabase repositories rethrow
  * every insert error unmapped). Built here because
  * SupabaseNonceStore's atomic-consumption guarantee requires
  * distinguishing "this nonce already exists" from every other failure

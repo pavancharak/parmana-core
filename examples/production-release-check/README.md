@@ -40,6 +40,6 @@ The full procedure and the raw output are in [`examples/live-checks/external-con
 
 ## How this is backed
 
-- Claim 2.50 in [`docs/CLAIMS.md`](../../docs/CLAIMS.md) states the scope in full. This example must not claim more than that.
+- Claim 2.50 in [`docs/internal/CLAIMS.md`](../../docs/internal/CLAIMS.md) states the scope in full. This example must not claim more than that.
 - Gap G-82 covers what the endpoint answers. G-84 covers the slow end-to-end time.
 - Tutorial 123, [`examples/tutorials/123-external-connector`](../tutorials/123-external-connector), runs on every preflight. It covers register, release, a retry, a release for another endpoint, and a revoke.

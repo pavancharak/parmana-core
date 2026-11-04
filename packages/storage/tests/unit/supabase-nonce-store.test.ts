@@ -10,7 +10,7 @@ import { SupabaseNonceStore } from "../../src/supabase/SupabaseNonceStore.js";
  * has-check and the add) mirrors exactly how a real unique
  * constraint is atomic at the database engine level, and how
  * MemoryNonceStore.checkAndRecord() is itself deterministic under
- * Promise.all (see docs/VERIFICATION-GAPS.md, "Gaps closed this
+ * Promise.all (see docs/internal/VERIFICATION-GAPS.md, "Gaps closed this
  * pass" #10). Restart-simulation and true concurrent-transaction
  * behavior against a real database are proven separately, by the
  * gated integration suite — this file proves only that

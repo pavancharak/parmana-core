@@ -6,7 +6,7 @@ import { ParmanaError } from "./parmana-error.js";
  * so the outcome is unknown. Retrying would risk a second effect, and parmana
  * cannot say which happened.
  *
- * Gap G-125 (docs/VERIFICATION-GAPS.md). Callers must reconcile with the
+ * Gap G-125 (docs/internal/VERIFICATION-GAPS.md). Callers must reconcile with the
  * external system before acting again. Reconciliation of these rows is not
  * built yet (Part 3 of G-125).
  */

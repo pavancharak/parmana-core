@@ -6,7 +6,7 @@
 --
 -- Why this exists: the Execution Trust Record contains the execution result, so
 -- it can only be built after release. If it cannot be built or stored, an
--- executed action has no signed record (docs/VERIFICATION-GAPS.md G-52 and
+-- executed action has no signed record (docs/internal/VERIFICATION-GAPS.md G-52 and
 -- G-53). The intent is signed and stored first, so an action that was released
 -- always has signed evidence behind it.
 --

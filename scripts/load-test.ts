@@ -56,7 +56,7 @@ function parseCliOptions(): CliOptions {
 }
 
 // No agent action is authorized without a signed human approval
-// (docs/CLAIMS.md 2.47), so every /execute request carries one. A server
+// (docs/internal/CLAIMS.md 2.47), so every /execute request carries one. A server
 // started with NODE_ENV=test trusts "local-test-approver" with the public
 // key in PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE
 // (packages/api/src/bootstrap/codeApprovalIssuers.ts). Approvals are

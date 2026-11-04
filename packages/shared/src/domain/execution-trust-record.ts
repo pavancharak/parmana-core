@@ -148,7 +148,7 @@ export interface ExecutionTrustRecord {
    * (transaction.policy.contentHash/governanceAnchor, G-24/G-45) to
    * what a connector actually did (executions[].evidence.attributes.connector,
    * G-46) -- see EvidenceAnchor's own doc comment
-   * (docs/VERIFICATION-GAPS.md G-45's residual "Record 3 is outside
+   * (docs/internal/VERIFICATION-GAPS.md G-45's residual "Record 3 is outside
    * all three [policy-governance] mechanisms" note). Absent on a
    * Trust Record built before this field existed.
    */

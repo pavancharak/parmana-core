@@ -105,7 +105,7 @@ function buildTransaction(
       intentId,
       authorizationId,
       // test:fixture-execute (not payments:execute/vendor-payment, removed
-      // per docs/VERIFICATION-GAPS.md G-27) -- registered only when
+      // per docs/internal/VERIFICATION-GAPS.md G-27) -- registered only when
       // NODE_ENV=test (createTestFixtureConnector.ts). Still governed by
       // the unchanged vendor-payment/2.1.0 policy below.
       action: "test:fixture-execute",

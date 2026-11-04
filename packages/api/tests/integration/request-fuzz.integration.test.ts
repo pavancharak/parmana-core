@@ -16,7 +16,7 @@ import { createBusinessTransaction } from "../fixtures/business-transaction.js";
  * or more of its fields removed or replaced by arbitrary JSON. Whatever
  * the body, the server must answer with a client error naming the
  * problem, never a 500, and must execute nothing unless the request is
- * still valid (G-87, docs/VERIFICATION-GAPS.md).
+ * still valid (G-87, docs/internal/VERIFICATION-GAPS.md).
  */
 
 const KEY = "request-fuzz-caller-raw-key-for-tests-only";

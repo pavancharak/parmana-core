@@ -1,5 +1,5 @@
 {
-  "$comment": "Security evaluation scenarios run by `npm run evaluate`. Each scenario names what an attacker controls, the attack, the invariant that must hold, and the test files that fail if it does not. A scenario is BLOCKED when every test in its files passes. Claim numbers refer to docs/CLAIMS.md. See EVALUATION.md, section 3.",
+  "$comment": "Security evaluation scenarios run by `npm run evaluate`. Each scenario names what an attacker controls, the attack, the invariant that must hold, and the test files that fail if it does not. A scenario is BLOCKED when every test in its files passes. Claim numbers refer to docs/internal/CLAIMS.md. See EVALUATION.md, section 3.",
   "scenarios": [
     {
       "id": "EV-01",

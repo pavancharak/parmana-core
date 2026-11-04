@@ -38,7 +38,7 @@ import {
 } from "../../../../test-support/approvals.js";
 
 /**
- * G-52 (docs/VERIFICATION-GAPS.md): an action must not be released when the
+ * G-52 (docs/internal/VERIFICATION-GAPS.md): an action must not be released when the
  * evidence signing path is down, and a failure to produce the record AFTER
  * release must say so explicitly instead of surfacing a generic error.
  */

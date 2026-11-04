@@ -20,7 +20,7 @@
   },
   "outcome": {
     "changed": true,
-    "description": "Refusal Records: every policy REJECT reachable through RuntimeEngine.execute produces a signed, durable record, verifiable without the server or database (docs/CLAIMS.md 3.11); production audit-sink events are signed at write time.",
+    "description": "Refusal Records: every policy REJECT reachable through RuntimeEngine.execute produces a signed, durable record, verifiable without the server or database (docs/internal/CLAIMS.md 3.11); production audit-sink events are signed at write time.",
     "references": [
       "https://github.com/pavancharak/parmana/blob/main/docs/rfcs/RFC-0021-Refusal-Record.md",
       "https://github.com/pavancharak/parmana/blob/main/docs/CLAIMS.md#311-durable-third-party-verifiable-refusal-and-audit-records-rfc-0021-scoped",
@@ -29,7 +29,7 @@
   },
   "disclosure": {
     "disclosedPublicly": true,
-    "location": "docs/rfcs/RFC-0021-Refusal-Record.md and docs/CLAIMS.md 3.11, in this public repository"
+    "location": "docs/internal/rfcs/RFC-0021-Refusal-Record.md and docs/internal/CLAIMS.md 3.11, in this public repository"
   },
   "createdAt": "2026-10-10T00:00:00.000Z",
   "updatedAt": "2026-10-10T00:00:00.000Z"

@@ -18,7 +18,7 @@ import {
 } from "../../shared/helpers/demo-approval.js";
 
 //
-// docs/CLAIMS.md 2.21: a policy REJECTED decision surfaces as HTTP 403
+// docs/internal/CLAIMS.md 2.21: a policy REJECTED decision surfaces as HTTP 403
 // with code POLICY_DENIED. An execution request whose authorization has
 // already been consumed -- every other Gateway check passed, only nonce
 // consumption failed -- surfaces as HTTP 409 with code

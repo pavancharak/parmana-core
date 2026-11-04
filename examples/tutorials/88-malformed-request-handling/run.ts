@@ -91,7 +91,7 @@ try {
       intentId: "intent-1",
       authorizationId: "authorization-1",
       // test:fixture-execute (not payments:execute/vendor-payment, removed
-      // per docs/VERIFICATION-GAPS.md G-27) -- see
+      // per docs/internal/VERIFICATION-GAPS.md G-27) -- see
       // packages/api/tests/fixtures/business-transaction.ts for the same
       // pattern.
       action: "test:fixture-execute",

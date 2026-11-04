@@ -13,7 +13,7 @@ export class MemoryBusinessTransactionRepository implements BusinessTransactionR
   private readonly transactions = new Map<string, BusinessTransaction>();
 
   /**
-   * Closes G-1 (docs/VERIFICATION-GAPS.md): the has-check and the set
+   * Closes G-1 (docs/internal/VERIFICATION-GAPS.md): the has-check and the set
    * happen in the same synchronous tick, with no `await` between
    * them, exactly like MemoryNonceStore.checkAndRecord() (G-13) —
    * this Map itself is the atomicity mechanism, not a lock. Two

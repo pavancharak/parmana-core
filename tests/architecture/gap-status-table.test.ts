@@ -9,12 +9,12 @@ import {
 } from "../../scripts/gap-status.js";
 
 /**
- * docs/REMAINING-WORK.md's gap status table is generated from the Status lines of
- * docs/VERIFICATION-GAPS.md. A hand edit, or a gap whose status moves without the
+ * docs/internal/REMAINING-WORK.md's gap status table is generated from the Status lines of
+ * docs/internal/VERIFICATION-GAPS.md. A hand edit, or a gap whose status moves without the
  * table, fails here. Regenerate with: npx tsx scripts/gap-status.ts
  */
 describe("gap status table", () => {
-  it("matches the Status lines in docs/VERIFICATION-GAPS.md", () => {
+  it("matches the Status lines in docs/internal/VERIFICATION-GAPS.md", () => {
     const rows = readGaps(readFileSync(GAPS_FILE, "utf8"));
     expect(rows.length).toBeGreaterThan(0);
 

@@ -10,7 +10,7 @@ import {
 } from "@parmana/policy";
 
 //
-// docs/CLAIMS.md §2.26 "Legacy-policy backfill" (2026-09-16 update):
+// docs/internal/CLAIMS.md §2.26 "Legacy-policy backfill" (2026-09-16 update):
 // PolicyChangeApprovalService.approve() writes the live policy.json
 // via PolicyRepository.save() -- FilePolicyRepository writes to the
 // local filesystem, which Vercel's serverless Functions serve as

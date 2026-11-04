@@ -1,7 +1,7 @@
 import { resolveKmsKeyId } from "@parmana/crypto";
 
 //
-// docs/VERIFICATION-GAPS.md G-48, and item 1 of the 2026-09-15 KMS migration
+// docs/internal/VERIFICATION-GAPS.md G-48, and item 1 of the 2026-09-15 KMS migration
 // troubleshooting guide (in git history): every signing call site in this codebase passes a logical
 // keyId ("default", "tenant.acme") to Signer.sign(keyId, data).
 // KmsSigner used to pass that string straight through as AWS KMS's

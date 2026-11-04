@@ -78,7 +78,7 @@ export function withoutSslParams(connectionString: string): string {
  * directly to Postgres (via `pg`) instead of going through
  * supabase-js's REST-based client (PostgREST) -- the class that once
  * provided that client, SupabaseClientFactory, was deleted 2026-09-09
- * (docs/VERIFICATION-GAPS.md G-34) after this factory's own pattern
+ * (docs/internal/VERIFICATION-GAPS.md G-34) after this factory's own pattern
  * had already replaced it everywhere it was still used.
  *
  * Introduced as the stopgap direct-Postgres path for

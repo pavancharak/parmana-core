@@ -1,6 +1,6 @@
 # Evaluating Parmana
 
-This repository is licensed under the Apache License 2.0. See [LICENSE](./LICENSE). Read it,
+This repository is licensed under the Apache License 2.0. See [LICENSE](LICENSE). Read it,
 build it and run it to assess Parmana, and use it under the terms of that licence.
 
 This guide is the shortest path from a fresh clone to a working local system. It needs no
@@ -40,7 +40,7 @@ yourself. Suites that need live services (HubSpot, Supabase) skip cleanly. Expec
 npm run examples
 ```
 
-This runs every tutorial in [examples/tutorials/](examples/tutorials/) against local mock
+This runs every tutorial in [examples/tutorials/](examples/tutorials) against local mock
 connectors, with throwaway keys that are deleted afterwards. To see the whole chain in one
 walkthrough (policy evaluation, signed authorization, envelope verification, credential
 isolation, connector execution and the signed trust record):
@@ -58,7 +58,7 @@ npm run evaluate
 This runs 16 attacks against the code and reports, for each, whether it was blocked. Each
 scenario in [evaluations/scenarios.json](evaluations/scenarios.json) states what the attacker
 controls, the attack, the invariant that must hold, the claims in
-[docs/CLAIMS.md](docs/CLAIMS.md) it supports, and the test files that check it:
+[docs/internal/CLAIMS.md](docs/internal/CLAIMS.md) it supports, and the test files that check it:
 
 | ID    | Attack                                                   |
 | ----- | -------------------------------------------------------- |
@@ -141,18 +141,18 @@ the [`@parmana/verifier`](https://github.com/pavancharak/parmana-verifier) packa
   (including a compromised signing key), and a bounded scenario pinned to a commit.
 - [THREAT-MODEL.md](THREAT-MODEL.md): assets, trust boundaries, attackers, and each threat
   with its control, evidence and residual risk.
-- [docs/CLAIMS.md](docs/CLAIMS.md): every technical claim, scoped to its evidence, with the
+- [docs/internal/CLAIMS.md](docs/internal/CLAIMS.md): every technical claim, scoped to its evidence, with the
   code and tests that back it, and what is explicitly not claimed.
-- [docs/VERIFICATION-GAPS.md](docs/VERIFICATION-GAPS.md): what was found missing or wrong and
+- [docs/internal/VERIFICATION-GAPS.md](docs/internal/VERIFICATION-GAPS.md): what was found missing or wrong and
   how it was closed.
-- [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md):
+- [docs/internal/architecture/system-architecture.md](docs/internal/architecture/system-architecture.md):
   packages and how a request flows through them.
 - [The Parmana Handbook](https://docs.parmanasystems.com/handbook/overview): the codebase
   explained chapter by chapter.
 
 ## Licensing
 
-The whole repository is licensed under the Apache License 2.0 ([LICENSE](./LICENSE)). `@parmana/verifier` is a separate repository, also under the Apache License 2.0.
+The whole repository is licensed under the Apache License 2.0 ([LICENSE](LICENSE)). `@parmana/verifier` is a separate repository, also under the Apache License 2.0.
 
 ## Break it
 

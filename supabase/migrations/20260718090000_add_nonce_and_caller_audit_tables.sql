@@ -2,7 +2,7 @@
 -- Durable replay protection and caller-audit trail (G-13)
 -- =============================================================================
 --
--- Closes G-13 (docs/VERIFICATION-GAPS.md): the production-default NonceStore
+-- Closes G-13 (docs/internal/VERIFICATION-GAPS.md): the production-default NonceStore
 -- and CallerAuditSink were in-memory and reset on process restart. These two
 -- tables back their durable, Supabase-backed replacements
 -- (packages/storage/src/supabase/SupabaseNonceStore.ts,

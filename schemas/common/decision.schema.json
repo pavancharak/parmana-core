@@ -39,7 +39,7 @@
     },
     "matchedRuleId": {
       "type": "string",
-      "description": "Identifier of the Policy rule that matched, or \"none\" when no rule matched. Absent on a Decision built before this field existed (docs/VERIFICATION-GAPS.md G-44)."
+      "description": "Identifier of the Policy rule that matched, or \"none\" when no rule matched. Absent on a Decision built before this field existed (docs/internal/VERIFICATION-GAPS.md G-44)."
     },
     "evaluatedRules": {
       "type": "integer",

@@ -5,7 +5,7 @@ import {
 import type { ExecutionTrustRecord } from "@parmana/shared";
 
 //
-// PQC audit RED-2 (docs/VERIFICATION-GAPS.md): before GET /keys/:keyId
+// PQC audit RED-2 (docs/internal/VERIFICATION-GAPS.md): before GET /keys/:keyId
 // and GET /.well-known/jwks.json existed, no route anywhere in
 // packages/api/src/routes/ let a third party fetch Parmana's public
 // key at all -- even a perfect offline verifier (Tutorial 107) is

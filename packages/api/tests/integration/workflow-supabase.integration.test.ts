@@ -134,7 +134,7 @@ describe.skipIf(!databaseConfigured)("Supabase Workflow Integration", () => {
     // Verify against the same real Supabase-backed repository this
     // test wrote to directly (storage.trustRecords), not through
     // request(app) — app's own repositories are always in-memory
-    // under NODE_ENV=test (G-15, docs/VERIFICATION-GAPS.md), so an
+    // under NODE_ENV=test (G-15, docs/internal/VERIFICATION-GAPS.md), so an
     // HTTP round-trip here would look up this record in a store
     // that never received it. VerificationService is the exact
     // class the real /verify route delegates to
