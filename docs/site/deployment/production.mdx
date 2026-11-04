@@ -112,10 +112,8 @@ A connector registers only when its settings are present. If you do not set a co
 
 | Variable                        | Value                                              |
 | ------------------------------- | -------------------------------------------------- |
-| `PAYTM_CONNECTOR_URL`           | The `https://` URL of your `example-agent` service |
-| `PAYTM_CONNECTOR_SHARED_SECRET` | The shared secret that service expects             |
 
-The other connectors (HubSpot, Slack, GitHub) are in the [connector section of the environment reference](/deployment/environment-variables#connectors). To keep connector credentials in AWS Secrets Manager set `PARMANA_SECRETS_PROVIDER=aws-secrets-manager`.
+To keep any connector credential in AWS Secrets Manager set `PARMANA_SECRETS_PROVIDER=aws-secrets-manager`.
 
 ## Step 5: Set the environment on your host
 
@@ -274,7 +272,7 @@ Parmana checks the actions that go through it. An agent host that can open its o
 Requirements for every host that runs an agent:
 
 1. **Outbound traffic is allowed only to the Parmana endpoint.** Enforce this at the network layer: a firewall rule, a container network policy, or a sandbox with no default route. An application-level setting is not enough, because the agent can change it.
-2. **No connector credential is present on an agent host.** Connector credentials (`HUBSPOT_PRIVATE_APP_TOKEN`, `PAYTM_CONNECTOR_SHARED_SECRET`, GitHub App keys and similar) belong only on the Parmana host. The agent holds its own Parmana caller key and nothing else.
+2. **No connector credential is present on an agent host.** Connector credentials (for example a signing or endpoint secret) belong only on the Parmana host. The agent holds its own Parmana caller key and nothing else.
 3. **Check it.** From the agent host, each of these must fail, and the Parmana endpoint must succeed:
 
 ```bash

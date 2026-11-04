@@ -35,7 +35,6 @@ PARMANA_GATEWAY_KEY_ID=gateway       # optional, defaults to "gateway"
 TRUST_PROFILE=v1
 LOG_LEVEL=...                # read into config; gates @parmana/shared's createLogger/getLogger, not yet threaded through every console.* call site, see Roadmap
 PARMANA_POLICY_DIR=...
-HUBSPOT_PRIVATE_APP_TOKEN=...  # credential for the hubspot connector, omit to leave it unregistered
 PARMANA_API_KEYS=...         # required, fails closed if unset, see Authentication
 ```
 
@@ -85,9 +84,7 @@ skips needing this key.
   fleet-wide. Outside `NODE_ENV=test`, `SupabaseNonceStore` is durable and shared across
   replicas pointed at the same Supabase project, but this deployment shape is still one
   process behind no load balancer.
-- **No connectors registered unless their credentials are configured.** HubSpot, GitHub,
-  Paytm, and Slack each register only when their own environment variable is set
-  (`HUBSPOT_PRIVATE_APP_TOKEN` and similar). See [The gateway](/concepts/the-gateway) for
+- **No built in connectors.** Parmana ships none. See [The gateway](/concepts/the-gateway) for
   what adding a new connector requires.
 
 ## Node version

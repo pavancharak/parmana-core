@@ -9,23 +9,16 @@ description: "A map of the four independent pieces a real business system integr
   the repository.
 </Info>
 
-**A naming trap worth avoiding first:** this codebase has two different things called
-"connector." [`@parmana/connector-sdk`](/integrations/overview) is a generic library with
-reference mocks (`SapConnector`, `OracleConnector`, etc.) that never talk to a real system. The
-connectors the default server actually registers and runs in production, HubSpot, GitHub,
-Paytm and Slack, follow a different, simpler pattern documented in the
-[Connector Development Guide](/integrations/connector-development-guide). Any other HTTPS
-endpoint can be connected with no code at all, as an **external connector**: see [Connect any
-external system](/guides/connect-any-external-system). This page covers both real paths.
+**A naming trap worth avoiding first:** this codebase has two different things called "connector." [`@parmana/connector-sdk`](/integrations/overview) is a generic library with reference mocks (`SapConnector`, `OracleConnector`, etc.) that never talk to a real system. Parmana ships no built in connector. Any HTTPS endpoint can be connected with no code at all, as an **external connector**: see [Connect any external system](/guides/connect-any-external-system). This page covers that path.
 
 ## The four pieces
 
-| #   | Piece                                      | Answers                                                       | Exists independently of the others?                                                                                                           |
-| --- | ------------------------------------------ | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **A policy** bound to a capability         | Should this request be allowed?                               | Yes. It decides with no connector or caller wired to it. Every approve rule needs a signed human approval.                                    |
-| 2   | **A caller (agent)** with a scoped API key | Who's allowed to even ask?                                    | Yes. It gets real decisions with no connector registered.                                                                                     |
-| 3   | **A connector** for the capability         | Who performs the real world action once approved?             | Yes. A built in one is testable alone with `MockConnector`; an external one is your own endpoint.                                             |
-| 4   | **A `SignalStateVerifier`**                | Are the caller's claims about real world state actually true? | The human approval is always verified this way. Other facts are checked only where a verifier exists (HubSpot deal state, the Slack channel). |
+| #   | Piece                                      | Answers                                                       | Exists independently of the others?                                                                                                                                            |
+| --- | ------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | **A policy** bound to a capability         | Should this request be allowed?                               | Yes. It decides with no connector or caller wired to it. Every approve rule needs a signed human approval.                                                                     |
+| 2   | **A caller (agent)** with a scoped API key | Who's allowed to even ask?                                    | Yes. It gets real decisions with no connector registered.                                                                                                                      |
+| 3   | **A connector** for the capability         | Who performs the real world action once approved?             | Yes. A built in one is testable alone with `MockConnector`; an external one is your own endpoint.                                                                              |
+| 4   | **A `SignalStateVerifier`**                | Are the caller's claims about real world state actually true? | The human approval is always verified this way. Other facts are checked only where a verifier exists (for example a record's state, checked against the system that holds it). |
 
 They're deliberately decoupled. That's why "got `APPROVED`" and "the action actually
 happened" are two separate, independently verifiable claims (see

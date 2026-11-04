@@ -11,7 +11,7 @@ need to sign, in one or both of two ways:
 | Channel | You set                                           | Best for                                                                   |
 | ------- | ------------------------------------------------- | -------------------------------------------------------------------------- |
 | Email   | `APPROVAL_EMAIL_TO`, and the Resend integration   | A person's inbox, with nothing to host. [Set up email](#email).            |
-| Webhook | `APPROVAL_WEBHOOK_URL`, `APPROVAL_WEBHOOK_SECRET` | Your own system: Slack, a ticket, a queue. [Set up the webhook](#webhook). |
+| Webhook | `APPROVAL_WEBHOOK_URL`, `APPROVAL_WEBHOOK_SECRET` | Your own system: a chat channel, a ticket, a queue. [Set up the webhook](#webhook). |
 
 Both carry the same facts and are sent under the same rule, below.
 
@@ -26,7 +26,7 @@ sequenceDiagram
     S->>W: POST approval.needed (signed)
     S-->>G: 403 POLICY_DENIED
     W->>W: Verify the signature
-    W->>M: Slack, email, ticket: "Refund INV-1042, 75000, needs you"
+    W->>M: chat, email, ticket: "Refund INV-1042, 75000, needs you"
     M->>M: Sign an approval for INV-1042 up to 75000
     M->>G: The approval
     G->>S: POST /execute (same refund, approval attached)
@@ -118,7 +118,7 @@ same rules as the webhook: one attempt, a failure is logged and never changes th
 <Steps>
   <Step title="Create an endpoint">
     Any HTTPS endpoint that accepts a JSON `POST` and answers `2xx` within 3 seconds: a small
-    function of your own, a Slack workflow webhook behind a relay, or an automation service.
+    function of your own, a chat workflow webhook behind a relay, or an automation service.
   </Step>
   <Step title="Generate a secret">
     ```bash
