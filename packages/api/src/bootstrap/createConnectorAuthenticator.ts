@@ -32,11 +32,6 @@ export function createConnectorAuthenticator(): RequestBoundConnectorAuthenticat
         authenticationMetadata: {},
       },
       {
-        connectorId: "hubspot",
-        publicIdentity: "spiffe://parmana/connectors/hubspot",
-        authenticationMetadata: {},
-      },
-      {
         connectorId: "paytm",
         publicIdentity: "spiffe://parmana/connectors/paytm-refund",
         authenticationMetadata: {},

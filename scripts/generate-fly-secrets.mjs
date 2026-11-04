@@ -73,7 +73,6 @@ const secretsEnvLines = [
   `PARMANA_API_KEYS=${JSON.stringify(apiKeys)}`,
   `SUPABASE_URL=FILL_ME_IN`,
   `SUPABASE_SERVICE_ROLE_KEY=FILL_ME_IN`,
-  `HUBSPOT_PRIVATE_APP_TOKEN=FILL_ME_IN`,
 ];
 
 writeFileSync(SECRETS_FILE, secretsEnvLines.join("\n") + "\n", { mode: 0o600 });
@@ -85,6 +84,5 @@ console.log(`    PARMANA_KEY_MATERIAL_JSON   generated (default + gateway Ed2551
 console.log(`    PARMANA_API_KEYS            generated (callerId "smoke-test")`);
 console.log(`    SUPABASE_URL                FILL_ME_IN`);
 console.log(`    SUPABASE_SERVICE_ROLE_KEY   FILL_ME_IN`);
-console.log(`    HUBSPOT_PRIVATE_APP_TOKEN   FILL_ME_IN`);
 console.log(`  ${SMOKE_KEY_FILE}`);
 console.log(`    plaintext caller key for callerId "smoke-test" (SMOKE_TEST_API_KEY)`);

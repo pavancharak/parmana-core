@@ -5485,7 +5485,7 @@ paths:
         changes until a different person approves it. The endpoint must be `https`, name a domain (not an IP
         address or localhost), carry no user name, password or fragment, and resolve only to public
         addresses; the address is checked again on approval and at every release. Capabilities in a built in
-        namespace (`paytm`, `hubspot`, `github`, `slack`, `test`) are refused. To move a capability, revoke
+        namespace (`paytm`, `github`, `slack`, `test`) are refused. To move a capability, revoke
         it, then register the new endpoint. Needs a human key.
       requestBody:
         required: true

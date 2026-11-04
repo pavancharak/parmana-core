@@ -12,7 +12,7 @@ import type { PolicyReference } from "@parmana/shared";
  * nothing bound a capability to the one policy that authorizes it.
  * boundSignals/SignalStateVerifier protections are declared per-policy
  * and per-action respectively, so a caller could pair a real capability
- * (e.g. hubspot:deal-update) with an unrelated, unprotected policy
+ * (e.g. github:pr-merge) with an unrelated, unprotected policy
  * (e.g. vendor-payment/2.0.0, which declares no boundSignals for it)
  * and bypass those protections entirely, since PolicyEngine.evaluate
  * takes no action parameter and nothing else cross-checks policy
@@ -42,8 +42,8 @@ describe("CapabilityPolicyBinder", () => {
   it("reports no violation when the declared policy matches the canonical binding", async () => {
     const binder = new CapabilityPolicyBinder();
 
-    const violation = await binder.findViolation("hubspot:deal-update", {
-      name: "hubspot-deal-update",
+    const violation = await binder.findViolation("github:pr-merge", {
+      name: "github-pr-approval",
       version: "1.1.0",
       schemaVersion: "1.0.0",
     });
@@ -54,9 +54,10 @@ describe("CapabilityPolicyBinder", () => {
   it("blocks the exact live-shaped exploit: a real capability paired with an unrelated, unprotected policy", async () => {
     const binder = new CapabilityPolicyBinder();
 
-    // The exact attack found during verification: hubspot:deal-update
-    // (a data-mutating capability whose stage/amount protections are
-    // scoped to hubspot-deal-update's own boundSignals) paired
+    // A data-mutating capability paired with an unrelated policy:
+    // github:pr-merge
+    // (a data-mutating capability whose protections are scoped to
+    // github-pr-approval's own policy) paired
     // with vendor-payment/2.0.0, a real, loadable policy that declares
     // no boundSignals for it.
     const declared: PolicyReference = {
@@ -66,14 +67,14 @@ describe("CapabilityPolicyBinder", () => {
     };
 
     const violation = await binder.findViolation(
-      "hubspot:deal-update",
+      "github:pr-merge",
       declared,
     );
 
     expect(violation).toEqual({
-      action: "hubspot:deal-update",
+      action: "github:pr-merge",
       expected: {
-        name: "hubspot-deal-update",
+        name: "github-pr-approval",
         version: "1.1.0",
         schemaVersion: "1.0.0",
       },
@@ -81,18 +82,18 @@ describe("CapabilityPolicyBinder", () => {
     });
   });
 
-  it("blocks the same shape of substitution for hubspot:deal-fetch", async () => {
+  it("blocks the same shape of substitution for github:pr-fetch", async () => {
     const binder = new CapabilityPolicyBinder();
 
-    const violation = await binder.findViolation("hubspot:deal-fetch", {
+    const violation = await binder.findViolation("github:pr-fetch", {
       name: "customer-refund",
       version: "1.0.0",
       schemaVersion: "1.0.0",
     });
 
     expect(violation?.expected).toEqual({
-      name: "hubspot-deal-read",
-      version: "1.0.0",
+      name: "github-pr-read",
+      version: "1.1.0",
       schemaVersion: "1.0.0",
     });
   });
@@ -100,8 +101,8 @@ describe("CapabilityPolicyBinder", () => {
   it("reports a violation for a version mismatch even when the policy name matches", async () => {
     const binder = new CapabilityPolicyBinder();
 
-    const violation = await binder.findViolation("hubspot:deal-update", {
-      name: "hubspot-deal-update",
+    const violation = await binder.findViolation("github:pr-merge", {
+      name: "github-pr-approval",
       version: "9.9.9",
       schemaVersion: "1.0.0",
     });
@@ -160,8 +161,6 @@ describe("CapabilityPolicyBinder", () => {
     //
     expect(boundActions).toEqual(
       new Set([
-        "hubspot:deal-fetch",
-        "hubspot:deal-update",
         "github:pr-fetch",
         "github:pr-merge",
         "paytm:refund",

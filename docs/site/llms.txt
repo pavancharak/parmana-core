@@ -118,9 +118,6 @@ This file is generated from the documentation navigation. Do not edit it by hand
 
 * [@parmana/connector-sdk](https://docs.parmanasystems.com/reference/connector-sdk): Connector authoring contracts and reference implementations: the Connector interface, MockConnector, credential handles, and four enterprise-shaped reference mocks.
 * [Connector SDK (Python)](https://docs.parmanasystems.com/reference/connector-sdk-python): Python connector authoring contracts and reference implementations: the Connector protocol, MockConnector, credential handles, and four enterprise-shaped reference mocks.
-## Connector SDKs: Ready made connectors
-
-* [HubSpot](https://docs.parmanasystems.com/integrations/hubspot): Policy-gated updates to a HubSpot Deal's dealstage and amount. Hermetic by default, proven live against a real HubSpot developer/test account.
 ## REST API: REST API guide
 
 * [REST API Introduction](https://docs.parmanasystems.com/api-reference/introduction): 57 paths and 63 operations, generated from openapi/openapi.yaml into the sidebar under REST API. This page covers what that spec can't express.

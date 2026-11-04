@@ -400,10 +400,6 @@
               "reference/connector-sdk",
               "reference/connector-sdk-python"
             ]
-          },
-          {
-            "group": "Ready made connectors",
-            "pages": ["integrations/hubspot"]
           }
         ]
       },
