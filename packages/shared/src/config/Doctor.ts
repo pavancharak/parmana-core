@@ -70,6 +70,7 @@ export const KNOWN_PARMANA_SETTINGS: readonly string[] = [
   "PARMANA_API_URL",
   "PARMANA_AUTH_DISABLED",
   "PARMANA_CORS_ORIGINS",
+  "PARMANA_DATABASE_CA",
   "PARMANA_DATABASE_CA_FILE",
   "PARMANA_DB_SCHEMA",
   "PARMANA_GATEWAY_ID",
@@ -222,41 +223,68 @@ function checkDatabaseCaFile(
   add: (check: DoctorCheck) => void,
 ): void {
   const path = env.PARMANA_DATABASE_CA_FILE;
-  if (path === undefined || path.trim() === "") return;
+  const text = env.PARMANA_DATABASE_CA;
+  const hasPath = path !== undefined && path.trim() !== "";
+  const hasText = text !== undefined && text.trim() !== "";
+  if (!hasPath && !hasText) return;
 
-  let pem: string;
-  try {
-    pem = readers.readFile(path);
-  } catch {
+  if (hasPath && hasText) {
     add({
-      name: "PARMANA_DATABASE_CA_FILE",
+      name: "PARMANA_DATABASE_CA",
       level: "fail",
-      message: "the CA file cannot be read",
-      fix: "Check the path, and that the service can read the file",
+      message: "both PARMANA_DATABASE_CA_FILE and PARMANA_DATABASE_CA are set",
+      fix: "Keep one of them. The server refuses to start with both",
     });
     return;
   }
+
+  const name = hasText ? "PARMANA_DATABASE_CA" : "PARMANA_DATABASE_CA_FILE";
+  let pem: string;
+  if (hasText) {
+    pem = (text as string).replace(/\\n/g, "\n");
+  } else {
+    try {
+      pem = readers.readFile(path as string);
+    } catch {
+      add({
+        name,
+        level: "fail",
+        message: "the CA file cannot be read",
+        fix: "Check the path, and that the service can read the file",
+      });
+      return;
+    }
+  }
+
   if (!pem.includes("-----BEGIN CERTIFICATE-----")) {
     add({
-      name: "PARMANA_DATABASE_CA_FILE",
+      name,
       level: "fail",
-      message: "the file does not hold a PEM certificate",
-      fix: "Download the database's root certificate again. Do not use a private key file",
+      message: "the CA value does not hold a PEM certificate",
+      fix: "Use the database's root certificate. Do not use a private key",
+    });
+    return;
+  }
+  if (/PRIVATE KEY/.test(pem)) {
+    add({
+      name,
+      level: "fail",
+      message: "the CA value holds a private key",
+      fix: "Use the root certificate only. Treat the private key as compromised",
     });
     return;
   }
   add({
-    name: "PARMANA_DATABASE_CA_FILE",
+    name,
     level: "pass",
     message: "the database certificate is verified against this CA",
   });
-  const sslmode = /[?&]sslmode=/.exec(env.DATABASE_URL ?? "");
-  if (sslmode !== null) {
+  if (/[?&]sslmode=/.test(env.DATABASE_URL ?? "")) {
     add({
       name: "DATABASE_URL",
       level: "warn",
       message:
-        "sslmode in DATABASE_URL is ignored while PARMANA_DATABASE_CA_FILE is set. The CA file decides the TLS settings",
+        "sslmode in DATABASE_URL is ignored while a CA is set. The CA decides the TLS settings",
       fix: "Remove sslmode from DATABASE_URL to avoid confusion",
     });
   }

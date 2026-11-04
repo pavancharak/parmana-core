@@ -6,8 +6,9 @@ import { Pool } from "pg";
 const SCHEMA_NAME = /^[a-z_][a-z0-9_]{0,62}$/;
 
 /**
- * TLS options for the pool, from PARMANA_DATABASE_CA_FILE: the PEM file that
- * holds the CA certificate of the database. With it set, the server verifies
+ * TLS options for the pool. The CA certificate of the database comes from
+ * either PARMANA_DATABASE_CA_FILE (a PEM file) or PARMANA_DATABASE_CA (the PEM
+ * text itself), never both. With it set, the server verifies
  * the database's certificate against that CA, and refuses a connection that
  * does not verify. Unset, the pool uses the sslmode in DATABASE_URL and the
  * system trust store, as before.
@@ -21,20 +22,37 @@ export function databaseSslOptions(
   readFile: (path: string) => string = (path) => readFileSync(path, "utf8"),
 ): { ssl?: { ca: string; rejectUnauthorized: true } } {
   const path = env.PARMANA_DATABASE_CA_FILE;
-  if (path === undefined || path.trim() === "") {
+  const text = env.PARMANA_DATABASE_CA;
+  const hasPath = path !== undefined && path.trim() !== "";
+  const hasText = text !== undefined && text.trim() !== "";
+
+  if (hasPath && hasText) {
+    throw new Error(
+      "Set PARMANA_DATABASE_CA_FILE or PARMANA_DATABASE_CA, not both.",
+    );
+  }
+  if (!hasPath && !hasText) {
     return {};
   }
 
   let pem: string;
-  try {
-    pem = readFile(path);
-  } catch {
-    throw new Error(`PARMANA_DATABASE_CA_FILE cannot be read: ${path}`);
+  if (hasText) {
+    // Hosts that take environment variables only cannot hold a file, so
+    // the certificate text is accepted here. Literal \n become line breaks.
+    pem = (text as string).replace(/\\n/g, "\n");
+  } else {
+    try {
+      pem = readFile(path as string);
+    } catch {
+      throw new Error(`PARMANA_DATABASE_CA_FILE cannot be read: ${path}`);
+    }
   }
 
   if (!pem.includes("-----BEGIN CERTIFICATE-----")) {
     throw new Error(
-      `PARMANA_DATABASE_CA_FILE does not hold a PEM certificate: ${path}`,
+      hasText
+        ? "PARMANA_DATABASE_CA does not hold a PEM certificate"
+        : `PARMANA_DATABASE_CA_FILE does not hold a PEM certificate: ${path}`,
     );
   }
 

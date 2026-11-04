@@ -648,4 +648,48 @@ describe("configuration doctor, production rules", () => {
     ).toBe(true);
     expect(JSON.stringify(checks)).not.toContain("secret-password-value");
   });
+
+  it("passes a CA given as text in PARMANA_DATABASE_CA", () => {
+    const checks = diagnoseConfiguration(
+      env({
+        ...PROD_ENV,
+        PARMANA_DATABASE_CA:
+          "-----BEGIN CERTIFICATE-----\\nx\\n-----END CERTIFICATE-----",
+      }),
+      readers(),
+      PRODUCTION,
+    );
+    expect(check(checks, "PARMANA_DATABASE_CA").level).toBe("pass");
+  });
+
+  it("fails when both CA settings are set", () => {
+    const checks = diagnoseConfiguration(
+      env({
+        ...PROD_ENV,
+        PARMANA_DATABASE_CA:
+          "-----BEGIN CERTIFICATE-----\\nx\\n-----END CERTIFICATE-----",
+        PARMANA_DATABASE_CA_FILE: "/ca.pem",
+      }),
+      readers({
+        files: {
+          "/ca.pem":
+            "-----BEGIN CERTIFICATE-----\nx\n-----END CERTIFICATE-----",
+        },
+      }),
+      PRODUCTION,
+    );
+    expect(check(checks, "PARMANA_DATABASE_CA").level).toBe("fail");
+  });
+
+  it("fails a CA text that holds a private key, and never prints it", () => {
+    const checks = diagnoseConfiguration(
+      env({ ...PROD_ENV, PARMANA_DATABASE_CA: PRIVATE_PEM }),
+      readers(),
+      PRODUCTION,
+    );
+    expect(check(checks, "PARMANA_DATABASE_CA").level).toBe("fail");
+    expect(JSON.stringify(checks)).not.toContain(
+      PRIVATE_PEM.split("\n")[1] ?? "",
+    );
+  });
 });

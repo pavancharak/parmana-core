@@ -66,3 +66,40 @@ describe("withoutSslParams", () => {
     expect(new URL(result).searchParams.toString()).toBe("");
   });
 });
+
+describe("databaseSslOptions, certificate text", () => {
+  it("accepts the certificate text in PARMANA_DATABASE_CA, with literal \\n as line breaks", () => {
+    const options = databaseSslOptions({
+      PARMANA_DATABASE_CA:
+        "-----BEGIN CERTIFICATE-----\\nabc\\n-----END CERTIFICATE-----",
+    });
+    expect(options).toEqual({
+      ssl: {
+        ca: "-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----",
+        rejectUnauthorized: true,
+      },
+    });
+  });
+
+  it("refuses both PARMANA_DATABASE_CA and PARMANA_DATABASE_CA_FILE", () => {
+    expect(() =>
+      databaseSslOptions(
+        { PARMANA_DATABASE_CA: CERT_PEM, PARMANA_DATABASE_CA_FILE: "/ca.pem" },
+        () => CERT_PEM,
+      ),
+    ).toThrow(/not both/);
+  });
+
+  it("refuses a certificate text that holds no certificate, without printing it", () => {
+    const secret =
+      "-----BEGIN PRIVATE KEY-----\nsecret-key-material\n-----END PRIVATE KEY-----";
+    let message = "";
+    try {
+      databaseSslOptions({ PARMANA_DATABASE_CA: secret });
+    } catch (err) {
+      message = (err as Error).message;
+    }
+    expect(message).toContain("does not hold a PEM certificate");
+    expect(message).not.toContain("secret-key-material");
+  });
+});
