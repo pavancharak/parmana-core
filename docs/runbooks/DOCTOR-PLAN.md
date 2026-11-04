@@ -1,6 +1,6 @@
 # Doctor for parmana-core: plan
 
-Status: proposed. Nothing here is built yet.
+Status: stages 1 and 2 are merged (#319, #321). Stage 3 is in review (#322). This plan is kept as the design record. The operator guide, `DOCTOR.md`, describes what each stage does and what has been verified.
 
 ## Decisions
 

@@ -2,12 +2,17 @@
 
 `npm run doctor` checks the configuration the server would start with, and prints every problem at once, with a fix for each one. It never prints a setting's value.
 
-The doctor has two modes:
+The doctor is built in three stages. Each stage adds to the one before, and each is opt-in except stage 1.
 
-- **Local (default):** checks the settings for a local deployment. It makes no network calls.
-- **Production (`--production`):** adds the production rules. These mirror refusals the server already makes when `NODE_ENV=production`, and check the production providers: AWS KMS keys, Postgres or Supabase storage, and the kill switch.
+| Stage               | Adds                                                                                                                                                                           | Command                          | Makes network calls |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------- | ------------------- |
+| 1. Local checks     | The settings for a local deployment: storage, keys, policy folder, API keys, trust profile, numeric settings, and typos                                                        | `npm run doctor`                 | No                  |
+| 2. Production rules | The refusals the server makes when `NODE_ENV=production`, and the production providers: AWS KMS keys, Postgres and Supabase storage, the kill switch, and the secrets provider | `npm run doctor -- --production` | No                  |
+| 3. Online checks    | The database query behind `/ready`, the tables the storage uses, the default KMS key, and the Supabase REST endpoint. Nothing is written                                       | `npm run doctor -- --online`     | Yes                 |
 
-- **Online (`--online`):** also probes the database, the KMS key and the Supabase REST endpoint. Nothing is written. See the section "Online checks" below.
+Stages 2 and 3 combine: `npm run doctor -- --production --online`.
+
+The section for each stage is below: "What each check does" (stage 1), "Production rules" (stage 2), and "Online checks" (stage 3). The status of each stage, and what has been verified, is in "Stage status".
 
 ## Running it
 
@@ -150,3 +155,19 @@ The `execution_intents` table is checked only when the server enforces it. The r
 - **"dist/ is stale" before the tests.** Run `npm run build`, then the tests again. The tests import the packages from `dist/`.
 - **Doctor reports settings you expected to be set.** You are probably running from a subfolder, so `.env` is not found. Run it from the repository root.
 - **Doctor reports nothing for a setting you set in the shell.** Check the spelling. A misspelt name is reported as a typo, so look for that warning.
+
+## Stage status
+
+| Stage               | Pull request      | Status                | Verified against real systems                                                                                                                                                                                                                            |
+| ------------------- | ----------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Local checks     | parmana-core #319 | Merged                | Run against a checkout with no `.env`, and against a test configuration                                                                                                                                                                                  |
+| 2. Production rules | parmana-core #321 | Merged                | Run with `--production` on a checkout. Not run against a production deployment                                                                                                                                                                           |
+| 3. Online checks    | parmana-core #322 | Open, awaiting review | Run against a real PostgreSQL 16 server (with and without migrations, with and without TLS, with a wrong password). Run against real AWS with no credentials, which gives the real error. Run against a nonexistent Supabase host, and a real HTTPS host |
+
+Not yet verified for stage 3:
+
+- A real KMS key. This needs AWS credentials for the key's account, so the success path has only been tested with fakes.
+- A real Supabase project's REST API. The success path has only been tested with fakes.
+- The database user's grants. The table check confirms that tables exist, not that the user can use them.
+
+To verify these on your own system, run the online command against your real `.env`, as described in "Running it". Each check then prints PASS, WARN or FAIL, with the error code if it fails.
