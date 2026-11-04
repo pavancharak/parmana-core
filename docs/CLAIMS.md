@@ -539,46 +539,51 @@ Dated updates for this claim are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
 **Scope:** best effort, one attempt, no retry. Email needs a sending domain verified in Resend.
 
-## 2.47 No AI Agent Action Is Authorized Without a Signed Human Approval, Reads Included (Scoped, 2026-09-30)
+## 2.47 No Action Is Authorized Without a Signed Human Approval, Reads Included
 
-**Claim:** Parmana authorizes no action, of any kind, without a signed approval from a trusted person for that action and that resource. This holds for every policy, not only connector actions, and for reads as well as writes.
+**Claim.** Parmana authorizes no action without a signed approval from a trusted person, for that action and that resource. This holds for every policy, not only connector actions, and for reads as well as writes.
 
-**How it is enforced:**
+**How it is enforced.**
 
-- **At policy load.** `PolicyValidator.validateEveryApprovalNeedsSignedApproval` refuses any policy with an approve rule that does not require a fact declared in `approvalSignals` with `is_true`, as the rule's whole condition or directly inside its top level `all`. An `any`, a nested `all`, or `eq true` does not count. `PolicyRouter` validates every policy it loads, so such a policy refuses every request (`400`), and `POST /policies/:name/:version/pending-changes` validates every proposal, so such a policy cannot be proposed through maker checker.
-- **At decision.** `ApprovalSignalVerifier` (2.42) counts an approval signal as true only with a valid signed approval: trusted and unrevoked approver, Ed25519 signature, action, resource, amount where declared, expiry, single use; again at release in the Execution Gateway. `RuntimeEngine` refuses an approve decision when no signal state verifier is configured (`approval-verifier-not-configured`), so a runtime built without one cannot trust a caller's `true`.
+- **At policy load.** `PolicyValidator.validateEveryApprovalNeedsSignedApproval` refuses any policy with an approve rule that does not require a fact declared in `approvalSignals` with `is_true`. The fact must be the rule's whole condition, or sit directly inside its top-level `all`. An `any`, a nested `all`, or `eq true` does not count. `PolicyRouter` validates every policy it loads, so such a policy refuses every request. The policy-change endpoint validates every proposal, so such a policy cannot pass maker checker either.
+- **At decision.** `ApprovalSignalVerifier` (2.42) counts an approval signal as true only with a valid signed approval. The approval must be from a trusted, unrevoked approver, with a valid Ed25519 signature, and must match the action, the resource, the amount where declared, the expiry, and single use. The Execution Gateway checks it again at release. `RuntimeEngine` refuses an approve decision when no approval verifier is configured (`approval-verifier-not-configured`), so a runtime built without one cannot trust a caller's `true`.
 
-**Policies in the binding table (`CANONICAL_CAPABILITY_POLICY_BINDINGS`):** `paytm:refund` to `customer-refund` 1.2.0 (unchanged), `github:pr-merge` to `github-pr-approval` 1.1.0 (unchanged), `github:pr-fetch` to `github-pr-read` 1.1.0 (new, `readApproved` for the pull request), `hubspot:deal-fetch` to `hubspot-deal-read` 1.0.0 (new policy, `readApproved` for the deal), `hubspot:deal-update` to `hubspot-deal-update` 1.1.0 (new, `dealUpdateApproved` for the deal, every update whatever the amount), `slack:post-message` to `slack-post-message` 1.1.0 (new, `postApproved` for the channel). The reference policies with no connector have new versions that need `humanApproved` for the Intent's `target`, and for the amount in `vendor-payment` 2.1.0, `agent-vendor-payment` 1.1.0 and `expense-reimbursement` 1.1.0.
+**Policies bound to capabilities.** The binding table (`CANONICAL_CAPABILITY_POLICY_BINDINGS`) currently names:
 
-**HubSpot:** under 1.1.0 the one approval for the deal is checked by `ApprovalSignalVerifier`. `HubSpotSignalStateVerifier` still checks the deal's real stage and amount facts, and skips its own pre authorization check when the policy declares `approvalSignals`, so one approval is not spent twice.
+| Capability            | Policy                | Version |
+| --------------------- | --------------------- | ------- |
+| `hubspot:deal-fetch`  | `hubspot-deal-read`   | 1.0.0   |
+| `hubspot:deal-update` | `hubspot-deal-update` | 1.1.0   |
+| `github:pr-fetch`     | `github-pr-read`      | 1.1.0   |
+| `github:pr-merge`     | `github-pr-approval`  | 1.1.0   |
+| `paytm:refund`        | `customer-refund`     | 1.2.0   |
 
-Scope, stated plainly:
+The reference policies with no connector in core also require a signed approval. For example, `vendor-payment` 2.1.0 and `expense-reimbursement` 1.1.0 need `humanApproved` for the Intent's target, and the amount is covered by the approval. The Slack post policy `slack-post-message` 1.1.0 exists in `policies/`, but its capability is no longer bound in core, because the connector has moved out (ADR-0018).
 
-- **In production since 2026-09-30.** Merged (PR #87, `e18ddae`) and deployed on 2026-09-30, after all 13 new policy versions were approved through maker checker (proposed by `charak1987`, approved by `reviewer-charak1987`, two credentials held by one person). Checked after the deploy: `hubspot:deal-fetch` reports `hubspot-deal-read` 1.0.0 in effect, `/ready` is READY, `/execute` without a key returns `401`. Production runs the version most recently approved for each name (2.43).
-- **An approval covers the action and the resource, not every parameter.** A Slack approval does not fix the message text; a HubSpot approval does not fix the new stage or amount. Payment, expense and refund approvals do cover the amount.
-- **Superseded versions stay in `policies/` as history** (for example `github-pr-read` 1.0.0, `hubspot-deal-update` 1.0.0, `slack-post-message` 1.0.0, `customer-refund` 1.0.0 and 1.1.0, `vendor-payment` 2.0.0). Each fails to load.
-- **No automatic path.** An action cannot be authorized by server checks alone. That is the rule, not a missing feature (G-80).
-- **Who approves is still limited to the trusted approver list** (2.42, 2.45). Today that is one approver, `manager-charak1987`, held by the operator (key `manager-charak1987-key-2` since 2026-09-30, added through maker checker), so in practice one person approves every agent action.
-- Holds for actions routed through Parmana (3.1).
+**Scope and limits.**
 
-Verification
+- **An approval covers the action and the resource, not every parameter.** A HubSpot approval does not fix the new stage or amount. Payment, expense and refund approvals do cover the amount.
+- **Superseded versions remain in `policies/` as history.** Each one fails to load.
+- **There is no automatic path.** An action cannot be authorized by server checks alone. This is the rule, not a missing feature (G-80).
+- **Who approves is limited to the trusted approver list** (2.42, 2.45). The list is short, so in practice one person can approve every agent action at present.
+- The claim holds for actions routed through Parmana (3.1).
 
-- `packages/policy/tests/unit/PolicyValidator.test.ts`: the rule accepts an approval signal as the whole condition or in the top level `all`, and refuses `always`, a caller fact, an approval signal only inside an `any`, only inside a nested `all`, compared with `eq`, or not declared in `approvalSignals`; a policy that only rejects loads.
-- `packages/policy/tests/unit/ApprovalBackedPolicies.test.ts` (110): for all 16 current approval backed versions, the policy loads, every approve rule requires the approval fact, the most permissive caller facts are refused without it, approved with it, and a failing caller fact still refuses; the 16 superseded versions are each refused at load.
-- `packages/policy/tests/unit/ReferencePolicies.test.ts`: the newest version of every policy in `policies/` loads; every older version loads or is refused only for approving without a person.
-- `packages/runtime/tests/unit/runtime.test.ts`: a runtime with no approval verifier refuses an approval; the approval signal set true with no signed approval is refused.
-- Through `POST /execute` with the production bootstrap: `slack-post-message.integration.test.ts` (6: a post with an approval lands once; no approval, and an approval for another channel, are refused with zero Slack calls), `hubspot-deal-update.integration.test.ts` (7: an update with an approval lands; no approval, and an untrusted approver, are refused with no PATCH), `github-caller-scoping.integration.test.ts` (a read with an approval), paytm-refund.integration.test.ts (removed 2026-11-02 with the Paytm connector, ADR-0018) (`customer-refund` 1.1.0 is refused at load), `pending-policy-changes-governance.integration.test.ts` (a policy that approves without a person cannot be proposed).
-- Tutorials 120 (the load time rule, every policy in `policies/`, a runtime with no approval verifier), 121 (an approval for a pull request read) and 122 (a Slack post and a HubSpot update and read), each through the real `RuntimeEngine`; all 113 tutorials in `npm run examples` pass.
-- Every other test that expects an approved action now carries a signed approval from a hermetic test approver (`test-support/approvals.ts`, trusted through `vitest.setup.ts`). Full suite: 2512 passed, 0 failed. Python SDK: 135 passed. Docker offline check with no internet route: 14 of 14, including a manager added through maker checker and a refund with that manager's signed approval.
+**Evidence.**
 
-Evidence
+- `packages/policy/src/PolicyValidator.ts` (`validateEveryApprovalNeedsSignedApproval`)
+- `packages/runtime/src/RuntimeEngine.ts` (`approval-verifier-not-configured`)
+- `packages/capability-registry/src/CapabilityPolicyBinding.ts` (the binding table)
+- `packages/policy/tests/unit/PolicyValidator.test.ts` (the load rule, including the forms it refuses)
+- `packages/policy/tests/unit/ApprovalBackedPolicies.test.ts` (each approval-backed policy: the approval fact is required, the most permissive caller facts are refused without it, and a version that approves without a person is refused)
+- `packages/policy/tests/unit/ReferencePolicies.test.ts` (every policy in `policies/` loads, or is refused only for approving without a person)
+- `packages/runtime/tests/unit/runtime.test.ts` (a runtime with no approval verifier refuses an approval)
+- `packages/api/tests/integration/pending-policy-changes-governance.integration.test.ts` (a policy that approves without a person cannot be proposed)
+- `test-support/approvals.ts` (the hermetic test approver used by the test suite)
+- `examples/tutorials/120-no-action-without-approval` and `examples/tutorials/121-approval-for-a-read`
+- `docs/site/concepts/human-approval.mdx`
+- `docs/VERIFICATION-GAPS.md`, G-80
 
-- `packages/policy/src/PolicyValidator.ts` (`validateEveryApprovalNeedsSignedApproval`); `packages/runtime/src/RuntimeEngine.ts` (`approval-verifier-not-configured`)
-- `packages/capability-registry/src/CapabilityPolicyBinding.ts`; `packages/connector-hubspot/src/HubSpotSignalStateVerifier.ts`
-- `policies/github-pr-read/1.1.0`, `policies/hubspot-deal-read/1.0.0`, `policies/hubspot-deal-update/1.1.0`, `policies/slack-post-message/1.1.0`, and the new reference versions
-- `docs/site/concepts/human-approval.mdx`; `docs/VERIFICATION-GAPS.md` G-80
-
----
+Dated updates, the production history of these policies, and the approver records are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
 ## 2.48 The Server Tells an Agent What a Request Must Carry (Scoped, 2026-09-30)
 
