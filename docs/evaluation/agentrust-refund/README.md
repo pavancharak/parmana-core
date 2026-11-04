@@ -1,5 +1,7 @@
 # Refund scenario: a reproducible evaluation package
 
+> **Correction (2026-11-04):** The Paytm connector and its mock were removed from this repository (ADR-0018). This package is kept as a record of the 2026 evaluation. Its fixtures and test describe that run and do not run against the current code.
+
 A test package for one scenario, `paytm:refund` under the policy `customer-refund` 1.2.0, prepared for a proposal
 to the AgenTrust integrations repository. It runs three cases through Parmana's real `POST /execute` path and
 records, for each one, the decision, the signed record and how many times the connector was invoked.

@@ -87,14 +87,14 @@ credential is allowed to do" — that's a different layer entirely (next section
 
 ### Layer responsibilities
 
-| Layer                                   | Responsibility                                                                                                                                                                | Real source                                                                        |
-| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `PolicyEngine.evaluate()`               | Scope/amount/action rules (`PolicyCondition`: `fact`/`operator`/`value`, `all`/`any`/`always`) — decides whether the action is allowed **before** any authorization is signed | `packages/policy/src/PolicyEngine.ts`                                              |
-| `RuntimeEngine` / `AuthorizationSigner` | Signs the approved decision into a `SignedExecutionAuthorization`                                                                                                             | `packages/runtime/src/RuntimeEngine.ts`                                            |
-| `ExecutionGateway`                      | Independently re-verifies the envelope (signature, expiry, TTL, content hash) before releasing to execution-control                                                           | `packages/execution-gateway/src/ExecutionGateway.ts`                               |
-| `SessionCredentialSecureConnector`      | Credential lifecycle only: issue → consume → revoke, single-use, time-bounded                                                                                                 | `packages/execution-control/src/SessionCredentialSecureConnector.ts`               |
-| `SdkConnectorExecutor`                  | Adapts the internal `ExecutableContent`/`ExecutionCredential` shape into the SDK's `ConnectorRequest`/`ConnectorExecutionContext` and calls the connector                     | `packages/execution-gateway/src/connector-execution/SdkConnectorExecutor.ts`       |
-| Connector (`Connector` interface)       | Executes one namespaced capability against the real backend, using an already-resolved `CredentialHandle` it never had to fetch itself                                        | e.g. `packages/execution-gateway/src/connector-execution/GatewayHubSpotAdapter.ts` |
+| Layer                                   | Responsibility                                                                                                                                                                | Real source                                                                     |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `PolicyEngine.evaluate()`               | Scope/amount/action rules (`PolicyCondition`: `fact`/`operator`/`value`, `all`/`any`/`always`) — decides whether the action is allowed **before** any authorization is signed | `packages/policy/src/PolicyEngine.ts`                                           |
+| `RuntimeEngine` / `AuthorizationSigner` | Signs the approved decision into a `SignedExecutionAuthorization`                                                                                                             | `packages/runtime/src/RuntimeEngine.ts`                                         |
+| `ExecutionGateway`                      | Independently re-verifies the envelope (signature, expiry, TTL, content hash) before releasing to execution-control                                                           | `packages/execution-gateway/src/ExecutionGateway.ts`                            |
+| `SessionCredentialSecureConnector`      | Credential lifecycle only: issue → consume → revoke, single-use, time-bounded                                                                                                 | `packages/execution-control/src/SessionCredentialSecureConnector.ts`            |
+| `SdkConnectorExecutor`                  | Adapts the internal `ExecutableContent`/`ExecutionCredential` shape into the SDK's `ConnectorRequest`/`ConnectorExecutionContext` and calls the connector                     | `packages/execution-gateway/src/connector-execution/SdkConnectorExecutor.ts`    |
+| Connector (`Connector` interface)       | Executes one namespaced capability against the real backend, using an already-resolved `CredentialHandle` it never had to fetch itself                                        | e.g. `packages/execution-gateway/src/connector-execution/GatewayHttpAdapter.ts` |
 
 Scope/amount enforcement is upstream of the vault, in `PolicyEngine`, confirmed structurally:
 `RuntimeEngine.execute()` calls `PolicyEngine.evaluate()` and only proceeds to sign an
@@ -205,7 +205,7 @@ an already-resolved credential, and return a deterministic response."_
 **Your job:**
 
 - Implement `Connector.execute(request, context)` correctly for your backend.
-- Declare capabilities (namespaced verbs, e.g. `hubspot:deal-update`) via `ConnectorCapabilities`.
+- Declare capabilities (namespaced verbs, e.g. `erp:invoice-pay`) via `ConnectorCapabilities`.
 - Return an accurate `ConnectorResponse`.
 
 See [BUILDING_A_CONNECTOR.md](../connectors/BUILDING_A_CONNECTOR.md) for the concrete steps, and
