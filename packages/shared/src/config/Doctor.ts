@@ -70,6 +70,7 @@ export const KNOWN_PARMANA_SETTINGS: readonly string[] = [
   "PARMANA_API_URL",
   "PARMANA_AUTH_DISABLED",
   "PARMANA_CORS_ORIGINS",
+  "PARMANA_DATABASE_CA_FILE",
   "PARMANA_DB_SCHEMA",
   "PARMANA_GATEWAY_ID",
   "PARMANA_GATEWAY_KEY_ID",
@@ -110,6 +111,7 @@ export function diagnoseConfiguration(
   const add = (check: DoctorCheck) => checks.push(check);
 
   checkStorage(env, add, production);
+  checkDatabaseCaFile(env, readers, add);
   checkCrypto(env, add, production);
   checkHybrid(env, add);
   const keyProvider = keyProviderOf(env);
@@ -205,6 +207,57 @@ function checkStorage(
       level: "fail",
       message: "PARMANA_DB_SCHEMA must be a plain Postgres name",
       fix: "Use a lowercase name, such as parmana_sandbox",
+    });
+  }
+}
+
+/**
+ * PARMANA_DATABASE_CA_FILE: the CA certificate the database is verified against.
+ * Checked here as the pool checks it: readable, and holds a certificate. When it
+ * is set, an sslmode in DATABASE_URL is ignored, and the doctor says so.
+ */
+function checkDatabaseCaFile(
+  env: Env,
+  readers: DoctorReaders,
+  add: (check: DoctorCheck) => void,
+): void {
+  const path = env.PARMANA_DATABASE_CA_FILE;
+  if (path === undefined || path.trim() === "") return;
+
+  let pem: string;
+  try {
+    pem = readers.readFile(path);
+  } catch {
+    add({
+      name: "PARMANA_DATABASE_CA_FILE",
+      level: "fail",
+      message: "the CA file cannot be read",
+      fix: "Check the path, and that the service can read the file",
+    });
+    return;
+  }
+  if (!pem.includes("-----BEGIN CERTIFICATE-----")) {
+    add({
+      name: "PARMANA_DATABASE_CA_FILE",
+      level: "fail",
+      message: "the file does not hold a PEM certificate",
+      fix: "Download the database's root certificate again. Do not use a private key file",
+    });
+    return;
+  }
+  add({
+    name: "PARMANA_DATABASE_CA_FILE",
+    level: "pass",
+    message: "the database certificate is verified against this CA",
+  });
+  const sslmode = /[?&]sslmode=/.exec(env.DATABASE_URL ?? "");
+  if (sslmode !== null) {
+    add({
+      name: "DATABASE_URL",
+      level: "warn",
+      message:
+        "sslmode in DATABASE_URL is ignored while PARMANA_DATABASE_CA_FILE is set. The CA file decides the TLS settings",
+      fix: "Remove sslmode from DATABASE_URL to avoid confusion",
     });
   }
 }

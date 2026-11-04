@@ -1,7 +1,59 @@
+import { readFileSync } from "node:fs";
+
 import { Pool } from "pg";
 
 /** A plain, unquoted Postgres identifier: lowercase letters, digits and underscores. */
 const SCHEMA_NAME = /^[a-z_][a-z0-9_]{0,62}$/;
+
+/**
+ * TLS options for the pool, from PARMANA_DATABASE_CA_FILE: the PEM file that
+ * holds the CA certificate of the database. With it set, the server verifies
+ * the database's certificate against that CA, and refuses a connection that
+ * does not verify. Unset, the pool uses the sslmode in DATABASE_URL and the
+ * system trust store, as before.
+ *
+ * Fails closed: a file that cannot be read, or that holds no certificate,
+ * stops the pool from being created. The file path is named in the error;
+ * the contents are never printed.
+ */
+export function databaseSslOptions(
+  env: Readonly<Record<string, string | undefined>>,
+  readFile: (path: string) => string = (path) => readFileSync(path, "utf8"),
+): { ssl?: { ca: string; rejectUnauthorized: true } } {
+  const path = env.PARMANA_DATABASE_CA_FILE;
+  if (path === undefined || path.trim() === "") {
+    return {};
+  }
+
+  let pem: string;
+  try {
+    pem = readFile(path);
+  } catch {
+    throw new Error(`PARMANA_DATABASE_CA_FILE cannot be read: ${path}`);
+  }
+
+  if (!pem.includes("-----BEGIN CERTIFICATE-----")) {
+    throw new Error(
+      `PARMANA_DATABASE_CA_FILE does not hold a PEM certificate: ${path}`,
+    );
+  }
+
+  return { ssl: { ca: pem, rejectUnauthorized: true } };
+}
+
+/**
+ * The connection string without its SSL parameters. With PARMANA_DATABASE_CA_FILE
+ * set, these are removed, so a sslmode in DATABASE_URL cannot override the CA
+ * check. Without this, sslmode=disable in the URL would send the connection
+ * unencrypted, and sslmode=require would ignore the CA file.
+ */
+export function withoutSslParams(connectionString: string): string {
+  const url = new URL(connectionString);
+  url.searchParams.delete("sslmode");
+  url.searchParams.delete("sslrootcert");
+  url.searchParams.delete("uselibpqcompat");
+  return url.toString();
+}
 
 /**
  * Lazy, process-wide singleton Postgres connection pool. Connects
@@ -48,8 +100,13 @@ export class PostgresPoolFactory {
       );
     }
 
+    const tls = databaseSslOptions(process.env);
+
     this.pool = new Pool({
-      connectionString,
+      connectionString: tls.ssl
+        ? withoutSslParams(connectionString)
+        : connectionString,
+      ...tls,
       min: 1,
       keepAlive: true,
 
