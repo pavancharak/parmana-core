@@ -88,19 +88,6 @@ export const CANONICAL_CAPABILITY_POLICY_BINDINGS: ReadonlyMap<
   // (PolicyValidator.validateEveryApprovalNeedsSignedApproval). A read
   // keeps its own policy so its approval is scoped to what it reads.
   //
-  [
-    "github:pr-fetch",
-    { name: "github-pr-read", version: "1.1.0", schemaVersion: "1.0.0" },
-  ],
-  [
-    "github:pr-merge",
-    { name: "github-pr-approval", version: "1.1.0", schemaVersion: "1.0.0" },
-  ],
-  [
-    "paytm:refund",
-    // G-75: 1.2.0 needs a signed manager approval for every refund.
-    { name: "customer-refund", version: "1.2.0", schemaVersion: "1.0.0" },
-  ],
 ]);
 
 /**
