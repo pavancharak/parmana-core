@@ -240,7 +240,7 @@ export function createExecuteRouter(
       } catch (error) {
         //
         // Structural rejection audit trail (G-29,
-        // docs/VERIFICATION-GAPS.md): a Business Transaction that fails
+        // docs/internal/VERIFICATION-GAPS.md): a Business Transaction that fails
         // trust-chain/required-field validation, or that reuses an
         // already-accepted businessTransactionId, is rejected correctly
         // (400/409, unchanged, below) but previously left no durable

@@ -2,7 +2,7 @@
 
 ## Objective
 
-Show that a caller-authentication event — accepted or rejected — that fails to be recorded fails the whole request, rather than proceeding unaudited (`docs/CLAIMS.md` §2.19).
+Show that a caller-authentication event — accepted or rejected — that fails to be recorded fails the whole request, rather than proceeding unaudited (`docs/internal/CLAIMS.md` §2.19).
 
 ## What You'll Learn
 

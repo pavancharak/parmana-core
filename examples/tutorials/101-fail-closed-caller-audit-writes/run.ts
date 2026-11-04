@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import type { BusinessTransaction } from "@parmana/shared";
 
 //
-// docs/CLAIMS.md 2.19: a caller-authentication event (accepted or
+// docs/internal/CLAIMS.md 2.19: a caller-authentication event (accepted or
 // rejected) that fails to be recorded fails the request. middleware/
 // caller-auth.ts wraps every CallerAuditSink.record() call via
 // recordCallerAuditEvent -- on success the request proceeds exactly as

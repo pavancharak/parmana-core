@@ -54,7 +54,7 @@ import {
 } from "../../../../test-support/approvals.js";
 
 /**
- * ADR-0012 (docs/VERIFICATION-GAPS.md G-52 and G-53): a signed Execution Intent
+ * ADR-0012 (docs/internal/VERIFICATION-GAPS.md G-52 and G-53): a signed Execution Intent
  * is stored BEFORE an action is released, so an action that was released always
  * has signed evidence behind it, and a missing Trust Record can be rebuilt
  * without calling the connector again.

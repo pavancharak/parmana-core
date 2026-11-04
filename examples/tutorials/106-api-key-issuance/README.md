@@ -4,7 +4,7 @@
 
 Author a brand-new policy from scratch, correctly, under the discipline this repository's
 10 pre-existing policies had to be retrofitted for: fail-closed `boundSignals` coverage
-(`docs/VERIFICATION-GAPS.md` G-33) and zero advisory rule conflicts (G-39). Where Tutorial 14
+(`docs/internal/VERIFICATION-GAPS.md` G-33) and zero advisory rule conflicts (G-39). Where Tutorial 14
 shows how to write _a_ policy, this one is a template for writing a _correct_ one the first
 time — no retrofit needed.
 

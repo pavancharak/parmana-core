@@ -3,8 +3,8 @@
 -- =============================================================================
 --
 -- The Razorpay connector and its `payments:execute`/vendor-payment capability
--- were removed from this codebase entirely on 2026-08-12 (docs/CLAIMS.md,
--- docs/VERIFICATION-GAPS.md G-27) -- it was never a real, production-reachable
+-- were removed from this codebase entirely on 2026-08-12 (docs/internal/CLAIMS.md,
+-- docs/internal/VERIFICATION-GAPS.md G-27) -- it was never a real, production-reachable
 -- capability. The vendor-payment *policy file* and shared test fixtures using
 -- it as generic example data were deliberately retained (no execution risk,
 -- no connector able to back them) -- these three tables were not, and are

@@ -75,7 +75,7 @@ export async function runExecuteExample(
       // registered by any connector in this repository (a NODE_ENV=test
       // -only generic fixture connector plays that zero-external
       // -dependency role instead, see
-      // createTestFixtureConnector.ts and docs/VERIFICATION-GAPS.md
+      // createTestFixtureConnector.ts and docs/internal/VERIFICATION-GAPS.md
       // G-27) -- so this example, never covered by any test or build
       // (excluded from typescript/tsconfig.json's own include list),
       // had never actually been run against a real server before this
@@ -116,7 +116,7 @@ export async function runExecuteExample(
       // vendor-payment@2.1.0 declares boundSignals: vendorId -> target;
       // SignalIntentBinder rejects this transaction unless this signal
       // exactly equals intent.target, checked before policy evaluation
-      // ever runs (docs/VERIFICATION-GAPS.md G-24).
+      // ever runs (docs/internal/VERIFICATION-GAPS.md G-24).
       vendorId: "vendor/vendor-123",
     },
 

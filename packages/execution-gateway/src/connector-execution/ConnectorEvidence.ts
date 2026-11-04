@@ -37,7 +37,7 @@ export interface ConnectorEvidence {
    * vendor itself produced over its own response), as opposed to only
    * what this connector's own HTTP call observed and Parmana hashed.
    * Defaults to false and, as of this field's introduction
-   * (docs/VERIFICATION-GAPS.md G-45's Record-3 half), no connector in
+   * (docs/internal/VERIFICATION-GAPS.md G-45's Record-3 half), no connector in
    * this codebase sets it true -- confirmed for every in-process
    * adapter (HubSpot, GitHub) and, for the one connector that
    * touches real money (Paytm), documented explicitly in

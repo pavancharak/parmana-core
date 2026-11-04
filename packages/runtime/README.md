@@ -41,7 +41,7 @@ import { RuntimeBuilder } from "@parmana/runtime";
   connector dependencies.
 - `RuntimeEngine`: the pipeline itself, for advanced use.
 
-The public exports are listed in [`src/index.ts`](./src/index.ts). Everything
+The public exports are listed in [`src/index.ts`](src/index.ts). Everything
 else is internal.
 
 ## Layout
@@ -72,6 +72,6 @@ root also runs these tests.
 
 ## Related docs
 
-- [`docs/project/CURRENT-STATE.md`](../../docs/project/CURRENT-STATE.md): what is built and verified.
-- [`docs/architecture/system-architecture.md`](../../docs/architecture/system-architecture.md): where the runtime sits in the system.
-- [`docs/adr/ADR-0004-Runtime-Pipeline.md`](../../docs/adr/ADR-0004-Runtime-Pipeline.md): why the pipeline is shaped this way.
+- [`docs/internal/project/CURRENT-STATE.md`](../../docs/internal/project/CURRENT-STATE.md): what is built and verified.
+- [`docs/internal/architecture/system-architecture.md`](../../docs/internal/architecture/system-architecture.md): where the runtime sits in the system.
+- [`docs/internal/adr/ADR-0004-Runtime-Pipeline.md`](../../docs/internal/adr/ADR-0004-Runtime-Pipeline.md): why the pipeline is shaped this way.

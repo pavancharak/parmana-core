@@ -6,7 +6,7 @@ import { isUniqueViolation } from "../errors/PostgresErrorCodes.js";
 
 /**
  * Durable, Supabase-backed NonceStore. Closes G-13
- * (docs/VERIFICATION-GAPS.md): replay-nonce state now survives a
+ * (docs/internal/VERIFICATION-GAPS.md): replay-nonce state now survives a
  * process restart and is shared across every process pointed at the
  * same Supabase project, rather than being scoped to one process's
  * in-memory Map (@parmana/envelope-verifier's MemoryNonceStore,

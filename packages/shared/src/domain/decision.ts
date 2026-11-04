@@ -59,7 +59,7 @@ export interface Decision {
    * never carries this -- it is copied verbatim from
    * PolicyEngine.evaluate()'s PolicyDecision by DecisionBuilder, never
    * computed here. Absent only on a Decision built before this field
-   * existed (docs/VERIFICATION-GAPS.md G-44); every Decision built
+   * existed (docs/internal/VERIFICATION-GAPS.md G-44); every Decision built
    * going forward carries it.
    */
   readonly matchedRuleId?: string;

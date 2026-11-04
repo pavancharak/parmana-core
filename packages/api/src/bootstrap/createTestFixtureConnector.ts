@@ -13,7 +13,7 @@ import {
  * registered capability to execute against when submitted through the
  * real POST /execute route — the same role `createVendorPaymentConnector`
  * used to play, before `payments:execute`/vendor-payment was removed
- * entirely (docs/VERIFICATION-GAPS.md G-27) rather than independently
+ * entirely (docs/internal/VERIFICATION-GAPS.md G-27) rather than independently
  * verified. Deliberately named and capability-scoped away from
  * `payments:execute`/`vendor-payment`: this is not a payment capability
  * of any kind, carries no production implication, is never registered

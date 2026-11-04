@@ -30,7 +30,7 @@ export default [
         __filename: "readonly",
         exports: "readonly",
         // Global since Node 18; this repo requires Node >=24
-        // (docs/VERIFICATION-GAPS.md #16), so it's always available.
+        // (docs/internal/VERIFICATION-GAPS.md #16), so it's always available.
         fetch: "readonly",
       },
     },

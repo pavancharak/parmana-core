@@ -1,6 +1,6 @@
 /**
- * Generates the proof-audit gap status table in docs/REMAINING-WORK.md from the
- * `Status:` sentence of each gap entry in docs/VERIFICATION-GAPS.md.
+ * Generates the proof-audit gap status table in docs/internal/REMAINING-WORK.md from the
+ * `Status:` sentence of each gap entry in docs/internal/VERIFICATION-GAPS.md.
  *
  *   npx tsx scripts/gap-status.ts          rewrite the table
  *   npx tsx scripts/gap-status.ts --check  exit 1 if the table is out of date
@@ -12,8 +12,8 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-export const GAPS_FILE = resolve(root, "docs/VERIFICATION-GAPS.md");
-export const REMAINING_FILE = resolve(root, "docs/REMAINING-WORK.md");
+export const GAPS_FILE = resolve(root, "docs/internal/VERIFICATION-GAPS.md");
+export const REMAINING_FILE = resolve(root, "docs/internal/REMAINING-WORK.md");
 export const START = "<!-- gap-status:start -->";
 export const END = "<!-- gap-status:end -->";
 const FROM = 103;
@@ -70,7 +70,7 @@ export function spliceTable(remaining: string, table: string): string {
   const start = remaining.indexOf(START);
   const end = remaining.indexOf(END);
   if (start < 0 || end < 0 || end < start) {
-    throw new Error(`docs/REMAINING-WORK.md must contain ${START} and ${END}.`);
+    throw new Error(`docs/internal/REMAINING-WORK.md must contain ${START} and ${END}.`);
   }
   return remaining.slice(0, start) + table + remaining.slice(end + END.length);
 }
@@ -84,7 +84,7 @@ function main(): void {
   if (check) {
     if (next !== current) {
       console.error(
-        "docs/REMAINING-WORK.md gap status table is out of date. Run: npx tsx scripts/gap-status.ts",
+        "docs/internal/REMAINING-WORK.md gap status table is out of date. Run: npx tsx scripts/gap-status.ts",
       );
       process.exit(1);
     }

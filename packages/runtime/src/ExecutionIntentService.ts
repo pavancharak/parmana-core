@@ -147,7 +147,7 @@ export class ExecutionIntentService {
 
   /**
    * Closes a PREPARED or ERRORED intent that a verified human reconciled at the
-   * connector (docs/VERIFICATION-GAPS.md G-54). Records what they found and a
+   * connector (docs/internal/VERIFICATION-GAPS.md G-54). Records what they found and a
    * required note, attributed and timestamped, in the intent's unsigned status.
    *
    * Never touches a connector. Idempotent: resolving an intent that is already

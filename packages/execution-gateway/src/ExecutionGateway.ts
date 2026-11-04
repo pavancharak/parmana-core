@@ -172,7 +172,7 @@ export interface ExecutionGatewayOptions {
 
   /**
    * Records each authorization's outcome against its nonce (G-125,
-   * docs/VERIFICATION-GAPS.md). Without it, a retry after a lost response
+   * docs/internal/VERIFICATION-GAPS.md). Without it, a retry after a lost response
    * is refused with no information about the first attempt. The production
    * bootstrap always supplies one.
    */

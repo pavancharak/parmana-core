@@ -55,7 +55,7 @@ COPY typescript ./typescript
 
 # Compile only parmana-api and its dependencies, with TypeScript 7 (the
 # typescript7 alias; the typescript package stays on 6 for tools that need
-# the compiler API, see docs/adr/ADR-0015).
+# the compiler API, see docs/internal/adr/ADR-0015).
 RUN node node_modules/typescript7/bin/tsc --build packages/api
 
 ################################################################################

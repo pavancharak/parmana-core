@@ -98,7 +98,7 @@ describe("execution boundary — exactly one production execution pipeline", () 
       // already-authorized paytm:refund ConnectorRequest to a separate,
       // trusted, out-of-process Paytm connector service over HTTPS,
       // never calling Paytm's own API in-process) — see
-      // docs/connectors/PAYTM_CONNECTOR.md and docs/CLAIMS.md §3.22.
+      // docs/internal/connectors/PAYTM_CONNECTOR.md and docs/internal/CLAIMS.md §3.22.
       // Same Phase 1C shape as HubSpot/GitHub: capability
       // identifiers/DTOs live in @parmana/connector-paytm, only the
       // executable class lives here.
@@ -294,7 +294,7 @@ describe("execution boundary — exactly one production execution pipeline", () 
     // pre-existing rules have likely never caught a real cross-package
     // violation. Rather than wire a silently-non-functional check into CI, this
     // extends the mechanism already proven to work in this file: a direct scan
-    // of import specifiers. See docs/architecture/repository-invariants.md.
+    // of import specifiers. See docs/internal/architecture/repository-invariants.md.
     const controlImportPattern = /from\s+["']@parmana\/execution-control["']/;
     const gatewayImportPattern = /from\s+["']@parmana\/execution-gateway["']/;
 

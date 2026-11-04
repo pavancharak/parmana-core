@@ -1,7 +1,7 @@
 {
   "challengeRecordId": "CR-2026-08-001",
   "status": "resolved",
-  "claimChallenged": "Parmana's core invariant that no unauthorized action executes: policy was evaluated against caller-declared signals that nothing bound to the Intent the gateway actually signs and executes (docs/VERIFICATION-GAPS.md G-24, 04-INCIDENTS-LOG.md INC-6).",
+  "claimChallenged": "Parmana's core invariant that no unauthorized action executes: policy was evaluated against caller-declared signals that nothing bound to the Intent the gateway actually signs and executes (docs/internal/VERIFICATION-GAPS.md G-24, 04-INCIDENTS-LOG.md INC-6).",
   "source": {
     "kind": "adversarial-exercise",
     "attribution": "An external adversarial security exercise against a disposable local clone; the tester is not named in the repository.",
@@ -16,7 +16,7 @@
   ],
   "finding": {
     "outcome": "confirmed",
-    "statement": "A live, reproducible bypass of the no-unauthorized-execution invariant, with signed evidence attesting to an action that never happened as described; the most severe gap in docs/VERIFICATION-GAPS.md."
+    "statement": "A live, reproducible bypass of the no-unauthorized-execution invariant, with signed evidence attesting to an action that never happened as described; the most severe gap in docs/internal/VERIFICATION-GAPS.md."
   },
   "outcome": {
     "changed": true,
@@ -31,7 +31,7 @@
   },
   "disclosure": {
     "disclosedPublicly": true,
-    "location": "docs/VERIFICATION-GAPS.md G-24 and 04-INCIDENTS-LOG.md INC-6, in this public repository"
+    "location": "docs/internal/VERIFICATION-GAPS.md G-24 and 04-INCIDENTS-LOG.md INC-6, in this public repository"
   },
   "createdAt": "2026-10-10T00:00:00.000Z",
   "updatedAt": "2026-10-10T00:00:00.000Z"

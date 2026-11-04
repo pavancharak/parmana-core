@@ -7,7 +7,7 @@ trust record independently](https://docs.parmanasystems.com/guides/verify-indepe
 (`packages/crypto/src/OfflineVerifier.ts`) with zero disk, network, or environment-variable
 access at all — not "the server process happens to be stopped," but "this function was
 never given a `PARMANA_KEY_DIR` in the first place." This closes PQC audit RED-1
-(`docs/VERIFICATION-GAPS.md`): before this capability existed, every verification path in
+(`docs/internal/VERIFICATION-GAPS.md`): before this capability existed, every verification path in
 this codebase — the unauthenticated HTTP routes and both SDKs' `VerificationApi`
 wrappers — required a live call into Parmana's own server.
 

@@ -17,7 +17,7 @@ import {
 } from "../../src/support/MlDsaSupport.js";
 
 /**
- * PQC audit RED-1 (docs/VERIFICATION-GAPS.md): proves offline
+ * PQC audit RED-1 (docs/internal/VERIFICATION-GAPS.md): proves offline
  * verification actually works with zero network/disk/env dependency
  * -- every key here is generated in-memory and passed directly as a
  * PEM string, exactly as an external auditor holding only a signed

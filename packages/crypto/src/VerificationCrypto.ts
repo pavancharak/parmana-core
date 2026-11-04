@@ -145,7 +145,7 @@ export class VerificationCrypto {
   }
 
   /**
-   * Signing readiness probe (docs/VERIFICATION-GAPS.md G-52).
+   * Signing readiness probe (docs/internal/VERIFICATION-GAPS.md G-52).
    *
    * Proves, before an action is released, that the evidence signing path
    * can currently produce a signature that verifies. It signs a synthetic
@@ -224,7 +224,7 @@ export class VerificationCrypto {
    * fails here even if the legacy `signature` alone is valid: never a
    * silent downgrade to single-signature verification.
    *
-   * PQC audit RED-4 (docs/VERIFICATION-GAPS.md): by itself, the
+   * PQC audit RED-4 (docs/internal/VERIFICATION-GAPS.md): by itself, the
    * paragraph above only protects a record that still *carries* its
    * `signatures` array -- nothing stopped `signatures` from being
    * stripped entirely, at which point this method fell back to

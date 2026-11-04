@@ -33,7 +33,7 @@ export interface PolicyReference {
   /**
    * Whether the policy content above is traceable to a completed
    * Policy Governance approval, resolved at decision time
-   * (docs/VERIFICATION-GAPS.md G-45). Same provenance and optionality
+   * (docs/internal/VERIFICATION-GAPS.md G-45). Same provenance and optionality
    * as contentHash: computed by RuntimeEngine, from the real loaded
    * Policy document, merged only into the copy of this reference
    * embedded in ExecutionTrustRecord.transaction.policy -- never

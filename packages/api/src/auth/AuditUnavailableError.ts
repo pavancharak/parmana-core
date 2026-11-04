@@ -8,7 +8,7 @@ import { RuntimeError } from "@parmana/runtime";
  * verifiable execution, so a failed audit write must fail the
  * request rather than let it proceed silently unaudited. The
  * availability cost of this is accepted — see
- * docs/VERIFICATION-GAPS.md's audit-sink decision note.
+ * docs/internal/VERIFICATION-GAPS.md's audit-sink decision note.
  *
  * Extends RuntimeError (not a new hierarchy) so
  * packages/api/src/middleware/error-handler.ts's existing generic

@@ -8,7 +8,7 @@
  * once with `client.publicKey("default")` and keep it.
  *
  * Supports Ed25519, including the large message commitment AWS KMS uses for
- * a canonical form over 4096 bytes (docs/adr/ADR-0010). A record that also
+ * a canonical form over 4096 bytes (docs/internal/adr/ADR-0010). A record that also
  * carries a hybrid `signatures` array (ML-DSA-65) is reported as not valid
  * here, the same as in the Python SDK, because that algorithm is not
  * verified by the SDKs.

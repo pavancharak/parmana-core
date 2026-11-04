@@ -8,7 +8,7 @@ import {
 import type { ExecutionTrustRecord } from "@parmana/shared";
 
 //
-// PQC audit RED-1 (docs/VERIFICATION-GAPS.md): before this capability
+// PQC audit RED-1 (docs/internal/VERIFICATION-GAPS.md): before this capability
 // existed, every verification path in this codebase -- the
 // unauthenticated POST /verify/POST /audit/verify/POST /refusal/verify
 // HTTP routes, and both the TypeScript and Python SDKs' VerificationApi

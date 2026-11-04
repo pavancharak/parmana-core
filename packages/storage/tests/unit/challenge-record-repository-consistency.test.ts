@@ -121,7 +121,7 @@ function buildChallengeRecord(challengeRecordId: string): ChallengeRecord {
   return {
     challengeRecordId,
     status: "open",
-    claimChallenged: "docs/CLAIMS.md § 2 claims durable audit-sink evidence",
+    claimChallenged: "docs/internal/CLAIMS.md § 2 claims durable audit-sink evidence",
     source: {
       kind: "public-comment",
       raisedAt: now,
@@ -196,7 +196,7 @@ describe.each<[string, () => ChallengeRecordRepository]>([
         changed: true,
         description:
           "Shipped a direct-Postgres bypass for the two affected audit sinks.",
-        references: ["docs/rfcs/RFC-0022-Challenge-Record.md"],
+        references: ["docs/internal/rfcs/RFC-0022-Challenge-Record.md"],
       },
     });
 

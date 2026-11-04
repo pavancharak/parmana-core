@@ -10,7 +10,7 @@ import {
 } from "../../shared/helpers/demo-approval.js";
 
 //
-// Strategic-positioning claim (docs/CLAIMS.md 2.24): the authorization
+// Strategic-positioning claim (docs/internal/CLAIMS.md 2.24): the authorization
 // pipeline's outcome depends only on the requested action, the governing
 // policy, and independently-verified facts -- never on what kind of
 // system, model, or entity submitted the request. Mirrors

@@ -33,7 +33,7 @@ const VALID_AUTHENTICATOR: CallerAuthenticator = {
  * Unit coverage for the G-1-adjacent audit fail-closed decision:
  * an audit-write failure must reject the request with a named,
  * typed error rather than let it proceed unaudited or crash as an
- * unhandled rejection. See docs/VERIFICATION-GAPS.md for the
+ * unhandled rejection. See docs/internal/VERIFICATION-GAPS.md for the
  * decision record and packages/api/src/auth/AuditUnavailableError.ts
  * for why this extends RuntimeError.
  */

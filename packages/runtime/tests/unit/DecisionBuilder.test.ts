@@ -37,7 +37,7 @@ function policyDecision(
 }
 
 /**
- * docs/VERIFICATION-GAPS.md G-44: PolicyEngine.evaluate() computes a
+ * docs/internal/VERIFICATION-GAPS.md G-44: PolicyEngine.evaluate() computes a
  * structured rule-match trace (matchedRuleId/evaluatedRules/matchedPath)
  * that DecisionBuilder previously discarded before producing the
  * Decision that actually gets persisted and signed. These tests prove

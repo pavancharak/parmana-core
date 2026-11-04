@@ -11,7 +11,7 @@ import type { KeyMetadata } from "./KeyProvider.js";
  * cannot be implemented honestly against such a
  * backend, since the whole point of those backends is that the
  * private key never leaves them. ADR-0009
- * (docs/adr/ADR-0009-KMS-Secrets-And-Connector-Signature-Hardening.md)
+ * (docs/internal/adr/ADR-0009-KMS-Secrets-And-Connector-Signature-Hardening.md)
  * is the design this interface exists for.
  *
  * Read operations (getPublicKey/getMetadata/hasKey/listKeys) are

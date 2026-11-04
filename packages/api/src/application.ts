@@ -61,7 +61,7 @@ const config = loadConfig();
  * Constructed lazily, on first actual repository use, not as a
  * module-scope side effect -- the same discipline repositories.ts's
  * own lazyRepository() already established (G-15,
- * docs/VERIFICATION-GAPS.md) and for the identical reason: importing
+ * docs/internal/VERIFICATION-GAPS.md) and for the identical reason: importing
  * this module must never itself open a live Postgres connection via
  * PostgresPoolFactory.create(), only an actual load()/save()/listAll()
  * call should. An earlier version of this file got that wrong --

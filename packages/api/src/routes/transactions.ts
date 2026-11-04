@@ -289,7 +289,7 @@ export function createTransactionsRouter(
         return;
       } catch (error) {
         //
-        // Structural rejection audit trail (G-29, docs/VERIFICATION-GAPS.md).
+        // Structural rejection audit trail (G-29, docs/internal/VERIFICATION-GAPS.md).
         // See execute.ts's identical block for the full rationale.
         //
         if (

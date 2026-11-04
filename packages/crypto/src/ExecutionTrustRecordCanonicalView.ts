@@ -13,7 +13,7 @@ import type { ExecutionTrustRecord } from "@parmana/shared";
  * their own right -- exactly the kind of drift a third-party verifier
  * must never have to guess at.
  *
- * PQC audit RED-1 (docs/VERIFICATION-GAPS.md): before this file
+ * PQC audit RED-1 (docs/internal/VERIFICATION-GAPS.md): before this file
  * existed, this mapping lived only as a private method on
  * VerificationCrypto, so a third party had no way to reconstruct it
  * without reading this repository's source directly. A separately

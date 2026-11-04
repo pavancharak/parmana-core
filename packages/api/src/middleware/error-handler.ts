@@ -70,14 +70,14 @@ function isVercelInvalidJsonError(error: unknown): boolean {
 /**
  * Best-effort audit write for a structural rejection that happens
  * before any route handler -- and therefore before any caller identity
- * -- exists (G-29, docs/VERIFICATION-GAPS.md): a malformed or oversized
+ * -- exists (G-29, docs/internal/VERIFICATION-GAPS.md): a malformed or oversized
  * request body, rejected by express.json() itself, ahead of caller-auth
  * middleware. Deliberately fail-open, not fail-closed like every other
  * caller-audit write in this codebase (recordCallerAuditEvent.ts, 2.19):
  * this event has no caller identity to protect the accountability of in
  * the first place (nobody has been authenticated yet), so the
  * fail-closed rationale for 2.19 does not transfer here, and the same
- * reasoning docs/CLAIMS.md 3.11 already applies to RefusalRecord writes
+ * reasoning docs/internal/CLAIMS.md 3.11 already applies to RefusalRecord writes
  * applies just as directly -- a request that should be rejected is
  * already rejected, correctly, by the time this fires; failing the
  * response closed on top of that would trade a correct 400/413 for an

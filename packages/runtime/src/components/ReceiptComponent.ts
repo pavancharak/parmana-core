@@ -15,7 +15,7 @@ import { ReceiptService } from "../services/receipt-service.js";
  * receipt.integration.test.ts / receipt-hybrid.integration.test.ts
  * exercise. This class remains exported from @parmana/runtime's public
  * surface (packages/runtime/src/index.ts) for external composition, but
- * is not itself on the production request path (docs/VERIFICATION-GAPS.md
+ * is not itself on the production request path (docs/internal/VERIFICATION-GAPS.md
  * G-26).
  */
 export class ReceiptComponent implements RuntimeComponent {

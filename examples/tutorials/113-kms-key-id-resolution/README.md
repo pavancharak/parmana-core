@@ -5,7 +5,7 @@
 Show, against the real code (not a reimplementation), that `KmsSigner` correctly maps
 every logical keyId this codebase actually produces into a format AWS KMS accepts —
 and reproduce, in words, exactly what used to happen before this existed. Mirrors
-`docs/VERIFICATION-GAPS.md` G-48 (item 1) and
+`docs/internal/VERIFICATION-GAPS.md` G-48 (item 1) and
 `packages/crypto/tests/unit/kms-signer.test.ts`'s `resolveKmsKeyId` coverage.
 
 ## What You'll Learn

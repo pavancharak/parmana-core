@@ -6,7 +6,7 @@
  * The Execution Gateway is the sole boundary through which
  * Parmana releases approved execution requests to Connectors,
  * within Parmana-mediated execution for systems integrated
- * behind it (see docs/CLAIMS.md for the exact scope of this
+ * behind it (see docs/internal/CLAIMS.md for the exact scope of this
  * claim). It is a new execution boundary built around the
  * existing @parmana/envelope-verifier machinery — it does not
  * modify RuntimeEngine, RuntimePipeline, or any other core

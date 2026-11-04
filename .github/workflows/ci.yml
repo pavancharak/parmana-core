@@ -97,7 +97,7 @@ jobs:
         #     its own retired term and the sweep that replaced it. The
         #     phrase appears quoted, in the past tense, as a historical
         #     fact — never as live vocabulary a reader would adopt.
-        #       - docs/VERIFICATION-GAPS.md: narrates the terminology
+        #       - docs/internal/VERIFICATION-GAPS.md: narrates the terminology
         #         sweep itself.
         #         A per file list is the deliberate choice here, not a
         #         stopgap; expect it to gain entries over time.
@@ -163,7 +163,7 @@ jobs:
     # file edit that bypassed the maker-checker API, or a new policy
     # version not yet approved. A separate job (not a step in
     # build-and-test above) so it has its own pass/fail status: it is a
-    # required status check on main (docs/VERIFICATION-GAPS.md D-6, G-79).
+    # required status check on main (docs/internal/VERIFICATION-GAPS.md D-6, G-79).
     #
     # Checks every policy file on every run (--full-scan), not only the
     # changed ones, so it also catches drift and always proves it can

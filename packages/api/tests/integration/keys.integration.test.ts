@@ -16,7 +16,7 @@ import { InMemoryCallerAuditSink } from "../../src/auth/InMemoryCallerAuditSink.
 
 /**
  * HTTP-level proof of the public-key discovery endpoints (PQC audit
- * RED-2, docs/VERIFICATION-GAPS.md): GET /keys/:keyId and GET
+ * RED-2, docs/internal/VERIFICATION-GAPS.md): GET /keys/:keyId and GET
  * /.well-known/jwks.json, deliberately unauthenticated (same category
  * as /refusal/verify and /audit/verify), and their combination with
  * the offline verifier (RED-1) -- fetching a key over HTTP and

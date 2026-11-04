@@ -2,7 +2,7 @@
 
 ## Objective
 
-Close PQC audit RED-4 (`docs/VERIFICATION-GAPS.md`), the most serious finding: a genuinely
+Close PQC audit RED-4 (`docs/internal/VERIFICATION-GAPS.md`), the most serious finding: a genuinely
 hybrid-signed record's ML-DSA-65 signature could be silently stripped by anyone with mere
 storage/transport access to a copy of it — no private key required — and the record would
 still verify as if it were only ever classically signed. This defeats hybrid mode's entire

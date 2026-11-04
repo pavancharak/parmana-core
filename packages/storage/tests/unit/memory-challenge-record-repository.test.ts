@@ -13,7 +13,7 @@ function buildChallengeRecord(challengeRecordId: string): ChallengeRecord {
   return {
     challengeRecordId,
     status: "open",
-    claimChallenged: "docs/CLAIMS.md § 2 claims durable audit-sink evidence",
+    claimChallenged: "docs/internal/CLAIMS.md § 2 claims durable audit-sink evidence",
     source: {
       kind: "public-comment",
       raisedAt: now,

@@ -10,7 +10,7 @@ extends:
 # changed.
 rules:
   # No route in the API validates any credential, token, or identity —
-  # this is real, current, and documented behavior (see docs/CLAIMS.md,
+  # this is real, current, and documented behavior (see docs/internal/CLAIMS.md,
   # "API-layer authentication and authorization", and the security note
   # at the top of openapi/openapi.yaml's info.description). There is no
   # security scheme to declare because none exists in the deployed

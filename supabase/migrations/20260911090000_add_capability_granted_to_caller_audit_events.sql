@@ -3,7 +3,7 @@
 -- =============================================================================
 --
 -- packages/api/src/routes/execute.ts and transactions.ts (see
--- docs/VERIFICATION-GAPS.md gap 33 / docs/CLAIMS.md NF-004) both write a
+-- docs/internal/VERIFICATION-GAPS.md gap 33 / docs/internal/CLAIMS.md NF-004) both write a
 -- "caller.capability_granted" CallerAuditEvent on every successful,
 -- authenticated capability check -- but no prior migration ever added
 -- that value to this table's type CHECK constraint. The constraint most

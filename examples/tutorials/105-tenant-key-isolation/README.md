@@ -4,8 +4,8 @@
 
 Show that an Execution Authorization signed for one tenant is verifiable only under that
 tenant's own key, once a dedicated `tenant.<tenantId>` key has been provisioned — and show
-exactly what happens when it hasn't. Mirrors `docs/VERIFICATION-GAPS.md` G-32,
-`docs/CLAIMS.md` §2.28 ("Update 2026-09-09"), and
+exactly what happens when it hasn't. Mirrors `docs/internal/VERIFICATION-GAPS.md` G-32,
+`docs/internal/CLAIMS.md` §2.28 ("Update 2026-09-09"), and
 `packages/runtime/tests/unit/execution-authorization-wiring.test.ts`.
 
 ## What You'll Learn
@@ -52,7 +52,7 @@ existing single-tenant behavior when it doesn't.
 
 **Residual, not fixed by this tutorial or by G-32 itself:** per-tenant keys are still
 provisioned by hand, one `generate-keypair` invocation per tenant — there is no automated
-onboarding, rotation, or KMS/HSM-backed provider yet (`docs/VERIFICATION-GAPS.md` G-32,
+onboarding, rotation, or KMS/HSM-backed provider yet (`docs/internal/VERIFICATION-GAPS.md` G-32,
 residual #1). `PolicyEngine` itself also remains one shared, stateless, in-process instance
 across every tenant — not a gap in the same sense, since it holds no key material to isolate
 (residual #2).

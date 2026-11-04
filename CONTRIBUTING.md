@@ -21,14 +21,14 @@ Thank you for helping. Parmana decides whether an automated action may run, and 
    docker compose run --rm migrate
    ```
 
-   [docs/runbooks/LOCAL-DEVELOPMENT.md](docs/runbooks/LOCAL-DEVELOPMENT.md) describes the environment in full. The Supabase suites skip unless you have Supabase credentials.
+   [docs/internal/runbooks/LOCAL-DEVELOPMENT.md](docs/internal/runbooks/LOCAL-DEVELOPMENT.md) describes the environment in full. The Supabase suites skip unless you have Supabase credentials.
 
 5. Check the set-up with `npm run build` and `npm test`. The full suite takes several minutes.
 
 ## Finding work
 
 - Issues labelled `good first issue` are the best place to start.
-- Open work by area is listed in [docs/REMAINING-WORK.md](docs/REMAINING-WORK.md).
+- Open work by area is listed in [docs/internal/REMAINING-WORK.md](docs/internal/REMAINING-WORK.md).
 - Comment on the issue to say you are taking it, so two people do not work on the same change.
 
 ## Making a change
@@ -38,24 +38,24 @@ Thank you for helping. Parmana decides whether an automated action may run, and 
 3. **Run the full check.** The pre-commit hook runs gitleaks, typecheck, lint, format, every test, the build and the runnable examples. CI runs the same. If the hook reports stale build output, run `npm run build` and commit again.
 4. **Commit with a sign-off and a GPG signature.** See [Commit requirements](#commit-requirements).
 5. **Open a pull request** and fill in the template, which asks what changed and why.
-6. **Review.** A second reviewer approves the pull request. Security-critical code gets an in-depth review; [docs/contributing/REVIEWING.md](docs/contributing/REVIEWING.md) is the reviewer's brief.
+6. **Review.** A second reviewer approves the pull request. Security-critical code gets an in-depth review; [docs/internal/contributing/REVIEWING.md](docs/internal/contributing/REVIEWING.md) is the reviewer's brief.
 
 ## Commit requirements
 
 There are two separate requirements. Both are needed.
 
 - **Sign-off (DCO).** Every commit carries a `Signed-off-by` line, certifying the [Developer Certificate of Origin](https://developercertificate.org). Add it with `git commit -s`.
-- **GPG signature.** `main` accepts only signed commits. [docs/runbooks/SIGNING-COMMITS.md](docs/runbooks/SIGNING-COMMITS.md) explains how to set up a signing key.
+- **GPG signature.** `main` accepts only signed commits. [docs/internal/runbooks/SIGNING-COMMITS.md](docs/internal/runbooks/SIGNING-COMMITS.md) explains how to set up a signing key.
 
 A pull request whose commits lack either requirement is not merged until they are fixed.
 
 ## Records to update in the same pull request
 
-- [docs/CLAIMS.md](docs/CLAIMS.md) when what Parmana can claim changes. A claim is written in the present tense only when code and tests back it.
-- [docs/VERIFICATION-GAPS.md](docs/VERIFICATION-GAPS.md) when a gap is found or closed.
-- [docs/REMAINING-WORK.md](docs/REMAINING-WORK.md) when open work changes.
-- An ADR in [docs/adr/](docs/adr/) when an architectural decision is made or reversed.
-- The published docs in [docs/site/](docs/site/) when behaviour a reader relies on changes, and the changelog ([docs/site/changelog.mdx](docs/site/changelog.mdx)).
+- [docs/internal/CLAIMS.md](docs/internal/CLAIMS.md) when what Parmana can claim changes. A claim is written in the present tense only when code and tests back it.
+- [docs/internal/VERIFICATION-GAPS.md](docs/internal/VERIFICATION-GAPS.md) when a gap is found or closed.
+- [docs/internal/REMAINING-WORK.md](docs/internal/REMAINING-WORK.md) when open work changes.
+- An ADR in [docs/internal/adr/](docs/internal/adr) when an architectural decision is made or reversed.
+- The published docs in [docs/site/](docs/site) when behaviour a reader relies on changes, and the changelog ([docs/site/changelog.mdx](docs/site/changelog.mdx)).
 
 ## Principles a change must keep
 
@@ -67,13 +67,13 @@ A pull request whose commits lack either requirement is not merged until they ar
 
 ## Connectors
 
-Read [docs/architecture/CONNECTOR_ISOLATION.md](docs/architecture/CONNECTOR_ISOLATION.md) and [docs/connectors/BUILDING_A_CONNECTOR.md](docs/connectors/BUILDING_A_CONNECTOR.md) before adding one. Every connector is registered through the standard path, so it gets credential isolation. A `legacyInsecure: true` registration outside a test is not acceptable.
+Read [docs/internal/architecture/CONNECTOR_ISOLATION.md](docs/internal/architecture/CONNECTOR_ISOLATION.md) and [docs/internal/connectors/BUILDING_A_CONNECTOR.md](docs/internal/connectors/BUILDING_A_CONNECTOR.md) before adding one. Every connector is registered through the standard path, so it gets credential isolation. A `legacyInsecure: true` registration outside a test is not acceptable.
 
 ## Maintainer guides
 
 These cover work that most contributors will not need:
 
-- [Python reference docs](docs/contributing/python-reference-docs.md)
-- [Dependency updates](docs/contributing/dependency-updates.md)
-- [TypeScript versions](docs/contributing/typescript-versions.md)
-- [Fuzz and mutation testing](docs/contributing/fuzz-and-mutation-testing.md)
+- [Python reference docs](docs/internal/contributing/python-reference-docs.md)
+- [Dependency updates](docs/internal/contributing/dependency-updates.md)
+- [TypeScript versions](docs/internal/contributing/typescript-versions.md)
+- [Fuzz and mutation testing](docs/internal/contributing/fuzz-and-mutation-testing.md)

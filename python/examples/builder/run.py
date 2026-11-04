@@ -87,7 +87,7 @@ def run_builder_example(
             # vendor-payment@2.1.0 declares boundSignals: { "vendorId": "target" }.
             # SignalIntentBinder rejects this transaction unless this signal exactly
             # equals intent.target, checked before policy evaluation ever runs (see
-            # docs/VERIFICATION-GAPS.md G-24).
+            # docs/internal/VERIFICATION-GAPS.md G-24).
             "vendorId": "vendor://payments",
         },
         source_system="python-sdk-builder-example",

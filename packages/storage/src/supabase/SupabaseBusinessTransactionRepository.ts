@@ -23,7 +23,7 @@ export class SupabaseBusinessTransactionRepository implements BusinessTransactio
   /**
    * Persist immutable BusinessTransaction.
    *
-   * Closes G-1 (docs/VERIFICATION-GAPS.md): this table's
+   * Closes G-1 (docs/internal/VERIFICATION-GAPS.md): this table's
    * `business_transaction_id TEXT PRIMARY KEY` constraint
    * (supabase/migrations/20260629013035_initial_schema.sql) already
    * made a duplicate insert atomic at the database — this method

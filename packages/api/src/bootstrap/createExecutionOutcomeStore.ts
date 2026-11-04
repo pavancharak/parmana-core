@@ -9,7 +9,7 @@ import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
 
 /**
  * Creates the ExecutionOutcomeStore used by the ExecutionGateway (G-125,
- * docs/VERIFICATION-GAPS.md). It records what each authorization's execution
+ * docs/internal/VERIFICATION-GAPS.md). It records what each authorization's execution
  * returned, so a retry after a lost response can recover the result instead
  * of being refused with no information.
  *

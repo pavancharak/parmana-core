@@ -77,7 +77,7 @@ const TRUSTED_APPROVAL_ISSUERS: readonly ConfiguredApprovalIssuer[] = [
 
 /**
  * The approver a local test server trusts, so a quickstart can sign
- * the approval every agent action needs (docs/CLAIMS.md 2.47).
+ * the approval every agent action needs (docs/internal/CLAIMS.md 2.47).
  */
 export const LOCAL_TEST_APPROVER = {
   approverId: "local-test-approver",

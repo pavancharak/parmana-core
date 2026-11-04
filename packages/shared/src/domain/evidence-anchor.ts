@@ -4,7 +4,7 @@ import type { PolicyGovernanceAnchorStatus } from "./policy-reference.js";
  * The binding artifact the 2026-09-15 evidence anchor audit's
  * GAP-4 finding named as missing, closing its residual "Record 3 is
  * outside all three [policy-governance] mechanisms" gap
- * (docs/VERIFICATION-GAPS.md G-45's "Remaining, not attempted this
+ * (docs/internal/VERIFICATION-GAPS.md G-45's "Remaining, not attempted this
  * session" note).
  *
  * Not a NEW cryptographic guarantee -- policyContentHash,

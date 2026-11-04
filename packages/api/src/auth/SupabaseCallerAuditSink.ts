@@ -11,7 +11,7 @@ import type { CallerAuditEvent, CallerAuditSink } from "./CallerAuditSink.js";
 
 /**
  * Durable, Supabase-backed CallerAuditSink. Closes G-13
- * (docs/VERIFICATION-GAPS.md) for the caller-authentication audit
+ * (docs/internal/VERIFICATION-GAPS.md) for the caller-authentication audit
  * trail: events now survive a process restart instead of living only
  * in InMemoryCallerAuditSink's process-local array (still the correct
  * choice for tests — see
@@ -34,7 +34,7 @@ import type { CallerAuditEvent, CallerAuditSink } from "./CallerAuditSink.js";
  * elsewhere in this codebase (SupabaseBusinessTransactionRepository,
  * SupabaseExecutionTrustRecordRepository); it is the caller's
  * existing behavior, unmodified by this class, that decides what
- * happens next. See docs/VERIFICATION-GAPS.md G-13 for why this is
+ * happens next. See docs/internal/VERIFICATION-GAPS.md G-13 for why this is
  * documented rather than changed in this session.
  *
  * CallerAuditEvent.capability (caller-capability-scoping milestone,

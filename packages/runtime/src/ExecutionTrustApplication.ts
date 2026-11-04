@@ -324,7 +324,7 @@ export class ExecutionTrustApplication {
 
   /**
    * Close a PREPARED or ERRORED Execution Intent that a verified human
-   * reconciled at the connector (docs/VERIFICATION-GAPS.md G-54). The
+   * reconciled at the connector (docs/internal/VERIFICATION-GAPS.md G-54). The
    * resolution and note are an attributed operator statement in unsigned
    * status, not a signed record. Refused when a signed Trust Record already
    * exists for the transaction, because that intent should be finalized.

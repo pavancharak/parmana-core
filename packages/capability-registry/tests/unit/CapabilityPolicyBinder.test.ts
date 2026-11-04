@@ -20,7 +20,7 @@ import type { PolicyReference } from "@parmana/shared";
  * proving that gap is now closed.
  *
  * Moved here from packages/policy/tests/unit (G-30 architecture follow-up,
- * Option C: docs/VERIFICATION-GAPS.md G-30)
+ * Option C: docs/internal/VERIFICATION-GAPS.md G-30)
  * when CapabilityPolicyBinding.ts itself moved into its own package,
  * @parmana/capability-registry, specifically so a future consumer that
  * needs to know "is this capability bound, and to what" doesn't have to

@@ -13,7 +13,7 @@ import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
  *
  * Production: SupabaseNonceStore, a durable store shared across
  * every process pointed at the same Supabase project. Closes G-13
- * (docs/VERIFICATION-GAPS.md): replay-nonce state no longer resets
+ * (docs/internal/VERIFICATION-GAPS.md): replay-nonce state no longer resets
  * on process restart. Fails closed at startup if DATABASE_URL is not
  * configured — never silently falls back to an in-memory store,
  * since that would silently narrow replay protection to a single

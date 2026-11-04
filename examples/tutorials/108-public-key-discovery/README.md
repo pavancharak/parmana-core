@@ -2,7 +2,7 @@
 
 ## Objective
 
-Close the other half of PQC audit RED-2 (`docs/VERIFICATION-GAPS.md`): even a perfect
+Close the other half of PQC audit RED-2 (`docs/internal/VERIFICATION-GAPS.md`): even a perfect
 offline verifier (Tutorial 107) is useless to a third party with no way to obtain the
 public key it needs. `GET /keys/:keyId` and `GET /.well-known/jwks.json`
 (`packages/api/src/routes/keys.ts`) are mounted unauthenticated, the same category as

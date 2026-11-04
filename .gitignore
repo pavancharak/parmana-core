@@ -7,7 +7,7 @@ PARMANA-*.md
 # itself (ADR-0009) -- never actual secret material. Without this, an
 # entire feature directory silently vanishes from git the moment its
 # name matches *secret*, which already happened once
-# (docs/adr/ADR-0009-...) before this negation was added.
+# (docs/internal/adr/ADR-0009-...) before this negation was added.
 !packages/*/src/**/*[Ss]ecret*
 !packages/*/tests/**/*[Ss]ecret*
 !docs/**/*[Ss]ecret*
@@ -23,7 +23,7 @@ PARMANA-*.md
 keys/
 
 # GPG material: ASCII-armored exports (public or secret), encrypted files and
-# revocation certificates. Never commit them; see docs/runbooks/SIGNING-COMMITS.md.
+# revocation certificates. Never commit them; see docs/internal/runbooks/SIGNING-COMMITS.md.
 *.asc
 *.gpg
 *.rev
@@ -152,10 +152,10 @@ docs/RESUME-CONNECTOR-MIGRATION.md
 docs/REGISTRATIONS-PENDING.md
 =======
 # Operator-only runbooks and notes (local only)
-docs/runbooks/CREDENTIAL-CEREMONY.md
-docs/runbooks/CEREMONY-FIVE-PEOPLE.md
-docs/runbooks/PRODUCTION-KEY-CEREMONY.md
-docs/runbooks/RAZORPAY-STATUS.md
+docs/internal/runbooks/CREDENTIAL-CEREMONY.md
+docs/internal/runbooks/CEREMONY-FIVE-PEOPLE.md
+docs/internal/runbooks/PRODUCTION-KEY-CEREMONY.md
+docs/internal/runbooks/RAZORPAY-STATUS.md
 docs/SIGNING-WORK-SUMMARY.md
 
 

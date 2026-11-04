@@ -5,8 +5,8 @@ description: "A map of the four independent pieces a real business system integr
 
 <Info>
   This page is a map, not a replacement for the guides it links to. For the
-  files a new connector needs, see `docs/connectors/BUILDING_A_CONNECTOR.md` in
-  the repository.
+  files a new connector needs, see
+  `docs/internal/connectors/BUILDING_A_CONNECTOR.md` in the repository.
 </Info>
 
 **A naming trap worth avoiding first:** this codebase has two different things called "connector." [`@parmana/connector-sdk`](/integrations/overview) is a generic library with reference mocks (`SapConnector`, `OracleConnector`, etc.) that never talk to a real system. Parmana ships no built in connector. Any HTTPS endpoint can be connected with no code at all, as an **external connector**: see [Connect any external system](/guides/connect-any-external-system). This page covers that path.

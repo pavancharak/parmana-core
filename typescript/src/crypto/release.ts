@@ -195,7 +195,7 @@ function signatureVerifies(
   }
 
   // Above 4096 bytes, a KMS signed release signs a SHA-512 commitment of
-  // the canonical bytes instead (docs/adr/ADR-0010).
+  // the canonical bytes instead (docs/internal/adr/ADR-0010).
   if (message.length <= KMS_RAW_MESSAGE_LIMIT_BYTES) {
     return false;
   }
