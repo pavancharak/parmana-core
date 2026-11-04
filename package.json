@@ -54,6 +54,7 @@
     "policy-log:check-db": "tsx scripts/policy-approval-log.ts check-db",
     "loadtest": "tsx scripts/load-test.ts",
     "doctor": "tsx scripts/doctor.ts",
+    "doctor:production": "tsx scripts/doctor.ts --production --online",
     "generate:python-models": "tsx python/scripts/generate_models.ts",
     "check:python-models": "tsx python/scripts/generate_models.ts --check",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm run check:python-models && npm run test && npm run build",
