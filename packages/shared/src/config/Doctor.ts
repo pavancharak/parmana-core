@@ -176,6 +176,13 @@ function checkStorage(
           "memory storage is not durable, so it is not a production configuration",
         fix: "Set PARMANA_STORAGE to postgres (or supabase), and set DATABASE_URL",
       });
+    } else if (env.NODE_ENV === "test") {
+      // Tests use in-memory storage on purpose, so this is not a warning there.
+      add({
+        name,
+        level: "pass",
+        message: "memory storage, as the test environment expects",
+      });
     } else {
       add({
         name,
