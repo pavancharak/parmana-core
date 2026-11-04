@@ -28,6 +28,16 @@ Parmana does not decide what the agent should do. It decides whether the agent w
 
 Parmana checks actions that leave through its gateway. It does not check an agent run by a customer or a partner that calls one of your systems directly. That path is not covered yet; see [G-129](docs/VERIFICATION-GAPS.md) and [RFC-0024](docs/rfcs/RFC-0024-Inbound-Agent-Authorization.md).
 
+## Why the claims matter
+
+Every statement about what Parmana does is written down in [docs/CLAIMS.md](docs/CLAIMS.md). Each claim is numbered, states the scope its evidence supports, names the code and tests behind it, and lists what is not yet true. Changes to claims are tracked in [docs/CLAIMS-CHANGELOG.md](docs/CLAIMS-CHANGELOG.md), so a change to a claim appears in review, not silently in a README.
+
+This matters for three reasons:
+
+- **You check a claim instead of trusting a pitch.** Each claim points to its evidence. If the evidence covers only part of the claim, the claim says so.
+- **The limits sit next to the claim.** Where a control has a known gap, the claim names it and links to the gap log, so you see the boundary before you rely on it.
+- **A claim that fails can be challenged.** A challenge is recorded against the claim under [RFC-0022](docs/rfcs/RFC-0022-Challenge-Record.md), so disagreement becomes a tracked item, not an argument in a comment thread.
+
 ## Find your way around
 
 Start with the goal closest to yours. The full documentation is at [docs.parmanasystems.com](https://docs.parmanasystems.com).
