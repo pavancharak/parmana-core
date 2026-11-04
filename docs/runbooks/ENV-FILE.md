@@ -188,7 +188,7 @@ The command prints the raw key once. Save it in your password manager, then put 
 **`PARMANA_KEY_MATERIAL_JSON`**: a one-line JSON object holding the gateway key pair.
 
 ```
-PARMANA_KEY_MATERIAL_JSON={"gateway":{"privateKeyPem":"-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n","publicKeyPem":"-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----\n"}}
+PARMANA_KEY_MATERIAL_JSON={"gateway":{"privateKeyPem":"<private key PEM, with line breaks written as \\n>","publicKeyPem":"<public key PEM, with line breaks written as \\n>"}}
 ```
 
 - The top level is keyed by key ID. The gateway key's ID is `gateway`.
