@@ -80,9 +80,7 @@ against `Config.ts`/`ConfigValidation.ts` for the ones that carry a real enum.
 | `PARMANA_AUTH_DISABLED`                                               | No                                      | `"true"` (strict equality)                                                                                                  | `false`           | Bypasses caller authentication entirely, local development only                                                     |
 | `RATE_LIMIT_EXECUTE_PER_MINUTE`                                       | No                                      | number                                                                                                                      | `30`              | `/execute`, keyed by caller identity                                                                                |
 | `RATE_LIMIT_HEALTH_PER_MINUTE`                                        | No                                      | number                                                                                                                      | `300`             | `/health`, `/ready`, keyed by IP                                                                                    |
-| `HUBSPOT_PRIVATE_APP_TOKEN`                                           | No                                      | HubSpot token                                                                                                               | unset             | HubSpot connector; connector simply isn't registered if unset                                                       |
 | `GITHUB_APP_ID` / `GITHUB_INSTALLATION_ID` / `GITHUB_APP_PRIVATE_KEY` | No, but all-or-nothing                  | ,                                                                                                                           | unset             | GitHub connector                                                                                                    |
-| `PAYTM_CONNECTOR_URL` / `PAYTM_CONNECTOR_SHARED_SECRET`               | No, but all-or-nothing                  | HTTPS URL / string                                                                                                          | unset             | Paytm connector (forwards to a separate trusted service, never calls Paytm directly)                                |
 | `PARMANA_SECRETS_PROVIDER`                                            | No                                      | `env \| aws-secrets-manager`                                                                                                | `env`             | Where connector _bearer_ credentials resolve from                                                                   |
 | `DATABASE_PROVIDER`                                                   | **Never set**                           | ,                                                                                                                           | ,                 | Retired; setting it throws at startup naming `PARMANA_STORAGE` as the replacement                                   |
 
@@ -129,18 +127,16 @@ a private static cache, construction driven entirely by `loadConfig()`.
 3. `await assertKmsSigningKeyReachable()`, for `KEY_PROVIDER=aws-kms` only: constructs a real
    `SignerBootstrap`-backed signer and confirms the configured KMS key actually exists and is
    reachable, before binding the port.
-4. `assertPaytmConnectorConfigured()`, refuses to start with only one of
-   `PAYTM_CONNECTOR_URL`/`PAYTM_CONNECTOR_SHARED_SECRET` set.
-5. `createExecutionSystem()`, `createApplication()`, `createCallerAuthenticator()`,
+4. `createExecutionSystem()`, `createApplication()`, `createCallerAuthenticator()`,
    Chapter 12), the actual application graph.
-6. `assertPolicyGovernanceIntegrityAtStartup()`, awaited before the port binds. It refuses to
+5. `assertPolicyGovernanceIntegrityAtStartup()`, awaited before the port binds. It refuses to
    start if an approved policy's live file does not match its approval record, or if the
    approval records cannot be read (Chapter 7 and Chapter 14).
-7. `app.listen(PORT, HOST)`, the port only binds after every check above has passed.
-8. `schedulePolicyGovernanceIntegrityCheck()`, fired _after_ the port is bound, deliberately
+6. `app.listen(PORT, HOST)`, the port only binds after every check above has passed.
+7. `schedulePolicyGovernanceIntegrityCheck()`, fired _after_ the port is bound, deliberately
    fail-open (Chapter 14). It re-runs the integrity check on a timer and logs. These must never
    delay traffic from being accepted, unlike steps 1-6.
-9. `createGracefulShutdown()` wired to `SIGTERM`/`SIGINT`.
+8. `createGracefulShutdown()` wired to `SIGTERM`/`SIGINT`.
 
 The split between steps 1-6 (fail-closed, before the port binds) and step 8 (fail-open, after)
 is a deliberate, named discipline, not an accident of ordering, durable storage and signing
@@ -163,7 +159,7 @@ exercises `resolveKmsKeyId()`, one concrete function this configuration ultimate
   `KeyProviders.ts`, `SecretsProviders.ts`, `CryptoAlgorithms.ts`, `TrustProfiles.ts`, the
   full config model and its validation.
 - `packages/api/src/bootstrap/assertStorageConfigured.ts`,
-  `assertSigningKeyMaterialConfigured.ts`, `assertPaytmConnectorConfigured.ts`, the
+  `assertSigningKeyMaterialConfigured.ts`, the
   fail-closed startup checks, each with a doc comment explaining exactly what it prevents.
 - `packages/api/src/server.ts`, the real, ordered bootstrap sequence.
 - `packages/crypto/src/CryptoBootstrap.ts`, `KeyBootstrap.ts`, `SignerBootstrap.ts`, the
