@@ -18,13 +18,13 @@ All of the above already run automatically in CI on every push and pull request 
 
 ## Invariant 1 — Connector packages own no production execution
 
-**Rationale:** Phase 1B/1C's whole point was reducing `connector-sdk`/`connector-hubspot` to passive SDKs (capability constants, DTOs, schemas, signal models) with zero executable behavior. A connector package that makes a real HTTP call to a vendor would silently create a second execution path outside `ExecutionGateway`'s authorization/audit chain.
+**Rationale:** Phase 1B/1C's whole point was reducing `connector-sdk` to a passive SDK (capability constants, DTOs, schemas, signal models) with zero executable behavior. A connector package that makes a real HTTP call to a vendor would silently create a second execution path outside `ExecutionGateway`'s authorization/audit chain.
 
 **Enforcement:** `tests/architecture/execution-boundary.test.ts`, describe block `"connector packages own no production execution"`. Scans every `.ts` file under every `packages/connector-*/src/` directory (discovered generically by listing `packages/*` and filtering for a `connector-` prefix — not a fixed package list) and asserts none contain a `fetch(` call.
 
-**Expected failure mode:** Adding any `fetch(...)` call inside `packages/connector-sdk/src/**` or `packages/connector-hubspot/src/**` (or any future `connector-*` package) fails the corresponding `it.each` test with the exact file path in the failure message.
+**Expected failure mode:** Adding any `fetch(...)` call inside `packages/connector-sdk/src/**` (or any future `connector-*` package) fails the corresponding `it.each` test with the exact file path in the failure message.
 
-**Regression example:** A future PR adds a "convenience" method to `HubSpotCapabilities.ts` that calls the HubSpot API directly to check a token before returning capability constants. This test fails immediately, naming that file.
+**Regression example:** A future PR adds a "convenience" method to a capabilities file that calls a vendor API directly to check a token before returning capability constants. This test fails immediately, naming that file.
 
 **Corresponding test:** `tests/architecture/execution-boundary.test.ts` → `describe("connector packages own no production execution")`.
 
@@ -32,7 +32,7 @@ All of the above already run automatically in CI on every push and pull request 
 
 ## Invariant 2 — Only `execution-gateway` may implement `Connector`
 
-**Rationale:** Phase 1C moved every executable vendor adapter (today `GatewayHubSpotAdapter`, `GatewayGitHubAdapter`, `GatewayPaytmAdapter`, `GatewaySlackAdapter` and `GatewayHttpAdapter`) into `execution-gateway`. A second package implementing the `Connector` interface would be a second, unaudited execution surface.
+**Rationale:** Phase 1C moved every executable vendor adapter (today `GatewayHttpAdapter` and `GatewayExternalAdapter`; the built in vendor adapters were removed with their connectors) into `execution-gateway`. A second package implementing the `Connector` interface would be a second, unaudited execution surface.
 
 **Enforcement:** `tests/architecture/execution-boundary.test.ts`, describe block `"adapter ownership: only execution-gateway may implement Connector"`. Scans all `packages/*/src` for `implements Connector` and checks the result against a two-entry allowlist: the four gateway-owned classes, plus the one named `MockConnector` test double in `connector-sdk`.
 
@@ -65,13 +65,13 @@ All of the above already run automatically in CI on every push and pull request 
 
 ## Invariant 4 — `RuntimeEngine` and `ExecutionTrustApplication` cannot bypass `ExecutionGateway`
 
-**Rationale:** These are the two components positioned to reach a connector directly if someone got impatient with the abstraction. Both must depend only on the injected `ExecutionSystem` interface, never on `execution-gateway`, `connector-sdk`, or `connector-hubspot` concretely.
+**Rationale:** These are the two components positioned to reach a connector directly if someone got impatient with the abstraction. Both must depend only on the injected `ExecutionSystem` interface, never on `execution-gateway` or `connector-sdk` concretely.
 
-**Enforcement:** `tests/architecture/execution-boundary.test.ts`, describe blocks `"RuntimeEngine cannot bypass ExecutionGateway"` and `"ExecutionTrustApplication cannot bypass ExecutionGateway"`. Each asserts the named file: exists; imports none of `@parmana/execution-gateway`, `@parmana/connector-sdk`, `@parmana/connector-hubspot`; contains no `new (Gateway|Connector|Http|HubSpot)*(` construction; contains no `fetch(` call.
+**Enforcement:** `tests/architecture/execution-boundary.test.ts`, describe blocks `"RuntimeEngine cannot bypass ExecutionGateway"` and `"ExecutionTrustApplication cannot bypass ExecutionGateway"`. Each asserts the named file: exists; imports none of `@parmana/execution-gateway` or `@parmana/connector-sdk`; contains no `new (Gateway|Connector|Http|HubSpot)*(` construction; contains no `fetch(` call.
 
 **Expected failure mode:** Adding any of those imports/constructions to either file fails the corresponding `it()`.
 
-**Regression example:** A "quick fix" imports `GatewayPaytmAdapter` into `RuntimeEngine.ts` to special case a refund retry inline. Fails on the import-absence assertion.
+**Regression example:** A "quick fix" imports `GatewayHttpAdapter` into `RuntimeEngine.ts` to special case a refund retry inline. Fails on the import-absence assertion.
 
 **Corresponding test:** `tests/architecture/execution-boundary.test.ts` → the two `describe` blocks named above.
 
@@ -88,7 +88,7 @@ All of the above already run automatically in CI on every push and pull request 
 
 **Expected failure mode:** A new route file constructing an adapter, or a bootstrap file calling `.execute(`, fails its respective `it.each`.
 
-**Regression example:** A new `packages/api/src/routes/admin-replay.ts` route is added that directly constructs `createGatewayPaytmConnector()` and calls it to "replay" a refund for debugging. Fails the routes-block assertion.
+**Regression example:** A new `packages/api/src/routes/admin-replay.ts` route is added that directly constructs `createGatewayHttpConnector()` and calls it to "replay" a refund for debugging. Fails the routes-block assertion.
 
 **Corresponding test:** `tests/architecture/execution-boundary.test.ts` → the two describe blocks named above.
 
@@ -118,7 +118,7 @@ All of the above already run automatically in CI on every push and pull request 
 
 ## Invariant 7 — Public API boundary: execution-gateway's implementation classes stay internal
 
-**Rationale:** Phase 1D internalized `GatewayConnectorRegistry`, `GatewayCapabilityConnectorPolicy`, `SdkConnectorExecutor`, `CredentialVaultAdapter`, the vendor adapters and `ConnectorEvidence` behind stable factory functions (today `createGatewayConnectorRegistry`, `createGatewayHubSpotConnector`, `createGatewayGitHubConnector`, `createGatewayGitHubCredentialProvider`, `createGatewayPaytmConnector` and `createGatewaySlackConnector`). If any of these classes leak back into the public package barrel (`packages/execution-gateway/src/index.ts`), external packages regain the ability to construct raw adapters directly, silently reopening Invariant 2/3's bypass surface.
+**Rationale:** Phase 1D internalized `GatewayConnectorRegistry`, `GatewayCapabilityConnectorPolicy`, `SdkConnectorExecutor`, `CredentialVaultAdapter`, the vendor adapters and `ConnectorEvidence` behind stable factory functions (today `createGatewayConnectorRegistry`; the per-connector factories were removed with their connectors). If any of these classes leak back into the public package barrel (`packages/execution-gateway/src/index.ts`), external packages regain the ability to construct raw adapters directly, silently reopening Invariant 2/3's bypass surface.
 
 **Enforcement — two complementary layers:**
 
@@ -135,7 +135,7 @@ All of the above already run automatically in CI on every push and pull request 
 
 ## Invariant 8: No AI agent action is authorized without a signed human approval
 
-**Rationale:** the product rule, stated by the operator on 2026-09-30: no agent can do anything, reads included, without a person's approval. Before it was enforced, human approval was a property of a few policies, and most actions (GitHub reads, HubSpot reads and updates, Slack posts, every reference policy) were authorized on facts the agent declared or on nothing (`docs/VERIFICATION-GAPS.md` G-80).
+**Rationale:** the product rule, stated by the operator on 2026-09-30: no agent can do anything, reads included, without a person's approval. Before it was enforced, human approval was a property of a few policies, and most actions (reads, updates and posts through built in connectors, and every reference policy) were authorized on facts the agent declared or on nothing (`docs/VERIFICATION-GAPS.md` G-80).
 
 **Enforcement:** `PolicyValidator.validateEveryApprovalNeedsSignedApproval` (`packages/policy/src/PolicyValidator.ts`) refuses any policy with an approve rule that does not require a fact declared in `approvalSignals` with `is_true`, as the rule's whole condition or directly inside its top level `all`. `PolicyRouter` runs it on every load and `pending-policy-changes.ts` on every proposal. `ApprovalSignalVerifier` counts that fact as true only with a valid signed approval, and `RuntimeEngine` refuses an approve decision when no signal state verifier is configured.
 
