@@ -1,7 +1,77 @@
+import { readFileSync } from "node:fs";
+
 import { Pool } from "pg";
 
 /** A plain, unquoted Postgres identifier: lowercase letters, digits and underscores. */
 const SCHEMA_NAME = /^[a-z_][a-z0-9_]{0,62}$/;
+
+/**
+ * TLS options for the pool. The CA certificate of the database comes from
+ * either PARMANA_DATABASE_CA_FILE (a PEM file) or PARMANA_DATABASE_CA (the PEM
+ * text itself), never both. With it set, the server verifies
+ * the database's certificate against that CA, and refuses a connection that
+ * does not verify. Unset, the pool uses the sslmode in DATABASE_URL and the
+ * system trust store, as before.
+ *
+ * Fails closed: a file that cannot be read, or that holds no certificate,
+ * stops the pool from being created. The file path is named in the error;
+ * the contents are never printed.
+ */
+export function databaseSslOptions(
+  env: Readonly<Record<string, string | undefined>>,
+  readFile: (path: string) => string = (path) => readFileSync(path, "utf8"),
+): { ssl?: { ca: string; rejectUnauthorized: true } } {
+  const path = env.PARMANA_DATABASE_CA_FILE;
+  const text = env.PARMANA_DATABASE_CA;
+  const hasPath = path !== undefined && path.trim() !== "";
+  const hasText = text !== undefined && text.trim() !== "";
+
+  if (hasPath && hasText) {
+    throw new Error(
+      "Set PARMANA_DATABASE_CA_FILE or PARMANA_DATABASE_CA, not both.",
+    );
+  }
+  if (!hasPath && !hasText) {
+    return {};
+  }
+
+  let pem: string;
+  if (hasText) {
+    // Hosts that take environment variables only cannot hold a file, so
+    // the certificate text is accepted here. Literal \n become line breaks.
+    pem = (text as string).replace(/\\n/g, "\n");
+  } else {
+    try {
+      pem = readFile(path as string);
+    } catch {
+      throw new Error(`PARMANA_DATABASE_CA_FILE cannot be read: ${path}`);
+    }
+  }
+
+  if (!pem.includes("-----BEGIN CERTIFICATE-----")) {
+    throw new Error(
+      hasText
+        ? "PARMANA_DATABASE_CA does not hold a PEM certificate"
+        : `PARMANA_DATABASE_CA_FILE does not hold a PEM certificate: ${path}`,
+    );
+  }
+
+  return { ssl: { ca: pem, rejectUnauthorized: true } };
+}
+
+/**
+ * The connection string without its SSL parameters. With PARMANA_DATABASE_CA_FILE
+ * set, these are removed, so a sslmode in DATABASE_URL cannot override the CA
+ * check. Without this, sslmode=disable in the URL would send the connection
+ * unencrypted, and sslmode=require would ignore the CA file.
+ */
+export function withoutSslParams(connectionString: string): string {
+  const url = new URL(connectionString);
+  url.searchParams.delete("sslmode");
+  url.searchParams.delete("sslrootcert");
+  url.searchParams.delete("uselibpqcompat");
+  return url.toString();
+}
 
 /**
  * Lazy, process-wide singleton Postgres connection pool. Connects
@@ -48,8 +118,13 @@ export class PostgresPoolFactory {
       );
     }
 
+    const tls = databaseSslOptions(process.env);
+
     this.pool = new Pool({
-      connectionString,
+      connectionString: tls.ssl
+        ? withoutSslParams(connectionString)
+        : connectionString,
+      ...tls,
       min: 1,
       keepAlive: true,
 

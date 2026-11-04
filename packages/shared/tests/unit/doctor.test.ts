@@ -596,6 +596,103 @@ describe("configuration doctor, production rules", () => {
     expect(JSON.stringify(checks)).not.toContain("secret-password-value");
   });
 
+  it("passes a CA file that holds a certificate, and checks it without a private key", () => {
+    const checks = diagnoseConfiguration(
+      env({ ...PROD_ENV, PARMANA_DATABASE_CA_FILE: "/ca.pem" }),
+      readers({
+        files: {
+          "/ca.pem":
+            "-----BEGIN CERTIFICATE-----\nx\n-----END CERTIFICATE-----",
+        },
+      }),
+      PRODUCTION,
+    );
+    expect(check(checks, "PARMANA_DATABASE_CA_FILE").level).toBe("pass");
+  });
+
+  it("fails a CA file that holds a private key, and never prints it", () => {
+    const checks = diagnoseConfiguration(
+      env({ ...PROD_ENV, PARMANA_DATABASE_CA_FILE: "/ca.pem" }),
+      readers({ files: { "/ca.pem": PRIVATE_PEM } }),
+      PRODUCTION,
+    );
+    expect(check(checks, "PARMANA_DATABASE_CA_FILE").level).toBe("fail");
+    expect(JSON.stringify(checks)).not.toContain(
+      PRIVATE_PEM.split("\n")[1] ?? "",
+    );
+  });
+
+  it("warns that sslmode in the URL is ignored when a CA file is set", () => {
+    const checks = diagnoseConfiguration(
+      env({
+        ...PROD_ENV,
+        DATABASE_URL:
+          "postgresql://parmana:secret-password-value@db.internal/parmana?sslmode=require",
+        PARMANA_DATABASE_CA_FILE: "/ca.pem",
+      }),
+      readers({
+        files: {
+          "/ca.pem":
+            "-----BEGIN CERTIFICATE-----\nx\n-----END CERTIFICATE-----",
+        },
+      }),
+      PRODUCTION,
+    );
+    expect(
+      checks.some(
+        (item) =>
+          item.name === "DATABASE_URL" &&
+          item.level === "warn" &&
+          item.message.includes("ignored"),
+      ),
+    ).toBe(true);
+    expect(JSON.stringify(checks)).not.toContain("secret-password-value");
+  });
+
+  it("passes a CA given as text in PARMANA_DATABASE_CA", () => {
+    const checks = diagnoseConfiguration(
+      env({
+        ...PROD_ENV,
+        PARMANA_DATABASE_CA:
+          "-----BEGIN CERTIFICATE-----\\nx\\n-----END CERTIFICATE-----",
+      }),
+      readers(),
+      PRODUCTION,
+    );
+    expect(check(checks, "PARMANA_DATABASE_CA").level).toBe("pass");
+  });
+
+  it("fails when both CA settings are set", () => {
+    const checks = diagnoseConfiguration(
+      env({
+        ...PROD_ENV,
+        PARMANA_DATABASE_CA:
+          "-----BEGIN CERTIFICATE-----\\nx\\n-----END CERTIFICATE-----",
+        PARMANA_DATABASE_CA_FILE: "/ca.pem",
+      }),
+      readers({
+        files: {
+          "/ca.pem":
+            "-----BEGIN CERTIFICATE-----\nx\n-----END CERTIFICATE-----",
+        },
+      }),
+      PRODUCTION,
+    );
+    expect(check(checks, "PARMANA_DATABASE_CA").level).toBe("fail");
+  });
+
+  it("fails a CA text that holds a private key, and never prints it", () => {
+    const checks = diagnoseConfiguration(
+      env({ ...PROD_ENV, PARMANA_DATABASE_CA: PRIVATE_PEM }),
+      readers(),
+      PRODUCTION,
+    );
+    expect(check(checks, "PARMANA_DATABASE_CA").level).toBe("fail");
+    expect(JSON.stringify(checks)).not.toContain(
+      PRIVATE_PEM.split("\n")[1] ?? "",
+    );
+  });
+
   it("warns when sslmode=disable, which sends the connection unencrypted", () => {
     const checks = diagnoseConfiguration(
       env({
