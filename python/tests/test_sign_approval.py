@@ -25,7 +25,7 @@ def _base(pem):
         "private_key_pem": pem,
         "approver_id": "manager-priya",
         "key_id": "manager-priya-key-1",
-        "capability": "paytm:refund",
+        "capability": "erp:invoice-pay",
         "resource_id": "ORD-1042",
     }
 
@@ -76,7 +76,11 @@ def test_names_exactly_the_resource_when_no_amount_is_given():
     pem, _ = _key()
 
     approval = sign_approval(
-        **{**_base(pem), "capability": "github:pr-merge", "resource_id": "acme/api#42"}
+        **{
+            **_base(pem),
+            "capability": "erp:record-update",
+            "resource_id": "acme/api#42",
+        }
     )
 
     assert approval["payload"]["scope"] == {

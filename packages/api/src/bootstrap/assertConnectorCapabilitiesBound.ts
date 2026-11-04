@@ -29,7 +29,7 @@ export interface CapabilityBoundConnectorRegistration {
  * knows about — an action with no canonical entry is silently
  * unaffected by it (see CapabilityPolicyBinding.ts's own doc comment in
  * @parmana/capability-registry). Today every capability actually
- * registered in production (hubspot:*, github:*, paytm:refund) already has a binding,
+ * registered in production already has a binding,
  * so this assertion currently never fires outside test-fixture's own
  * exemption below — its purpose is making sure the NEXT connector added
  * can't silently ship the same gap.

@@ -21,7 +21,7 @@ from parmana import (
 BASE_KWARGS = dict(
     principal_id="e2e-test-agent",
     purpose="Unit test",
-    action="paytm:refund",
+    action="erp:invoice-pay",
     target="order-1",
     parameters={"orderId": "order-1", "transactionId": "txn-1", "amount": 5},
     policy=PolicyReference(
@@ -103,7 +103,7 @@ def test_accepts_an_explicit_authority_type_override():
 def test_passes_action_target_parameters_policy_signals_through_unchanged():
     transaction = create_business_transaction(**BASE_KWARGS)
 
-    assert transaction.intent.action == "paytm:refund"
+    assert transaction.intent.action == "erp:invoice-pay"
     assert transaction.intent.target == "order-1"
     assert transaction.intent.parameters == BASE_KWARGS["parameters"]
     assert transaction.policy == BASE_KWARGS["policy"]

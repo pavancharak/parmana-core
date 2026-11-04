@@ -89,9 +89,9 @@ describe("Action without a human approval (HTTP boundary)", () => {
     });
 
     const transaction = await createBusinessTransaction();
-    const artifact = (transaction.signals as Record<string, any>)[
-      APPROVAL_ARTIFACT
-    ];
+    const artifact = (
+      transaction.signals as Record<string, { signature: { value: unknown } }>
+    )[APPROVAL_ARTIFACT];
     // Replace the signature value. The verifier checks it against the
     // approver's public key, so a changed signature must be refused.
     const forged = {

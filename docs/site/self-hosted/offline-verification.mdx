@@ -3,6 +3,15 @@ title: "Offline verification"
 description: "Prove, with one command, that a self hosted deployment authorizes, refuses and signs with no internet connection, and that its records verify offline."
 ---
 
+<Warning>
+  **Correction (2026-11-04):** The offline check harness
+  (`docker/local/offline-check/` and `docker-compose.offline-check.yml`) is not
+  in this repository. It was removed with the Paytm connector on 2026-11-02
+  (ADR-0018). The steps below describe the check as it was run. They cannot be
+  run from this repository as it stands. The verification steps further down
+  apply to any Trust Record and its public keys, however it was produced.
+</Warning>
+
 The offline check runs the whole decision flow on a Docker network that has no route to the internet, then verifies the evidence with only your public keys. Run it before you rely on the deployment, and after every upgrade.
 
 ```bash
@@ -59,7 +68,7 @@ isolated network. The image itself trusts no approver.
 
 ## The stand in for your downstream system
 
-The downstream system in the check is a stand-in for an external endpoint, `docker/local/offline-check/paytm-agent-stand-in.mjs`. It takes the place of that endpoint. It:
+The downstream system in the check was a stand-in for an external endpoint, `paytm-agent-stand-in.mjs`, which was removed with the harness. It took the place of that endpoint. It:
 
 - answers the connector route the way the real endpoint does;
 - refuses any request whose Execution Gateway signature does not verify with the gateway's public key;

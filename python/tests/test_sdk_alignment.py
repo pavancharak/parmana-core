@@ -172,14 +172,14 @@ def test_caller_and_public_key():
         {
             "callerId": "local-operator",
             "allowedPrincipalIds": ["local-operator"],
-            "allowedCapabilities": ["paytm:refund"],
+            "allowedCapabilities": ["erp:invoice-pay"],
             "unrestrictedCapabilities": False,
         }
     )
     caller = client.caller()
     assert transport.calls[0]["path"] == "/callers/me"
     assert isinstance(caller, CallerIdentity)
-    assert caller.allowed_capabilities == ["paytm:refund"]
+    assert caller.allowed_capabilities == ["erp:invoice-pay"]
 
     client, transport = client_with(
         {"keyId": "default", "algorithm": "ed25519", "use": "sig", "pem": "PEM"}
@@ -352,7 +352,7 @@ def test_offline_verifier_accepts_the_sdk_model_as_well_as_raw_json():
 
 def test_policy_in_effect():
     body = {
-        "capability": "paytm:refund",
+        "capability": "erp:invoice-pay",
         "policy": {
             "name": "customer-refund",
             "version": "1.2.0",
@@ -373,10 +373,12 @@ def test_policy_in_effect():
     }
     client, transport = client_with(body)
 
-    result = client.policy_in_effect("paytm:refund")
+    result = client.policy_in_effect("erp:invoice-pay")
 
     assert transport.calls[0]["method"] == "GET"
-    assert transport.calls[0]["path"] == "/policies/in-effect?capability=paytm%3Arefund"
+    assert (
+        transport.calls[0]["path"] == "/policies/in-effect?capability=erp%3Ainvoice-pay"
+    )
     assert isinstance(result, PolicyInEffect)
     assert result.policy.version == "1.2.0"
     assert result.policy.schema_version == "1.0.0"

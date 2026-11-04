@@ -9,7 +9,7 @@ client = ParmanaClient(
     api_key=os.environ["PARMANA_API_KEY"],
 )
 
-in_effect = client.policy_in_effect("paytm:refund")
+in_effect = client.policy_in_effect("erp:invoice-pay")
 
 # The signed approval the approver sent, for this order and up to this amount.
 approval = json.loads(Path("approval.json").read_text())
@@ -17,7 +17,7 @@ approval = json.loads(Path("approval.json").read_text())
 transaction = create_business_transaction(
     principal_id=client.caller().caller_id,
     purpose="Refund order ORD-1042",
-    action="paytm:refund",
+    action="erp:invoice-pay",
     target="ORD-1042",
     parameters={"orderId": "ORD-1042", "transactionId": "TXN-9", "amount": 750},
     policy=in_effect.policy,

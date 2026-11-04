@@ -91,7 +91,7 @@ def sign_approval(
     if not _CAPABILITY.match(capability):
         raise ValueError(
             "capability must be an action such as erp:invoice-pay or "
-            f"github:pr-merge: {capability}"
+            f"erp:record-update: {capability}"
         )
 
     if len(resource_id) == 0:
