@@ -76,8 +76,8 @@ const signer = await SignerBootstrap.create();
 
 const executableContent = {
   businessTransactionId: "tx-114",
-  action: "paytm:refund",
-  target: "paytm://orders/114",
+  action: "erp:invoice-pay",
+  target: "erp://invoices/114",
   parameters: { orderId: "114", amount: 45 },
 };
 

@@ -96,7 +96,7 @@ Tutorial completed successfully.
 
 ## Design Principles
 
-`boundSignals` only closes the _decoupling_ between what a policy evaluates and what actually executes, for the specific fields a policy author declares bound. It does not independently verify that an unbound signal is true — a caller-declared `vendorVerified: true` is still taken on faith unless a policy author separately fetch-verifies it (see `HubSpotSignalStateVerifier` and Tutorial 71 for what that looks like for one real connector).
+`boundSignals` only closes the _decoupling_ between what a policy evaluates and what actually executes, for the specific fields a policy author declares bound. It does not independently verify that an unbound signal is true — a caller-declared `vendorVerified: true` is still taken on faith unless a policy author separately fetch-verifies it (see the capability-specific `SignalStateVerifier` interface for what that looks like for one real connector).
 
 A rejection here is not an error to work around. It is the system correctly refusing to sign an authorization for an action it cannot confirm the approved facts actually describe.
 

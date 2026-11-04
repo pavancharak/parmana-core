@@ -90,7 +90,7 @@ function verificationRequest(
   stage: "authorize" | "release",
 ): SignalStateVerificationRequest {
   return {
-    action: "paytm:refund",
+    action: "erp:invoice-pay",
     businessTransactionId: `tutorial-119-${requestNumber}`,
     intentParameters: { orderId: refund.orderId, amount: refund.amount },
     intentTarget: `orders/${refund.orderId}`,
@@ -152,7 +152,7 @@ async function managerSigns(
   return new ApprovalArtifactSigner().sign(
     {
       ...MANAGER,
-      capability: "paytm:refund",
+      capability: "erp:invoice-pay",
       resourceId: orderId,
       scope: { field: "value", comparator: "lte", value: maxAmount },
       ttlSeconds: 900,

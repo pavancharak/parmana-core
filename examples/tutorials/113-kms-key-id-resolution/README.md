@@ -12,7 +12,7 @@ and reproduce, in words, exactly what used to happen before this existed. Mirror
 
 - Every signing call site in this codebase (`VerificationCrypto`, `RefusalCrypto`,
   `AuditEventCrypto`, `ReceiptCrypto`, `PolicyChangeCrypto`, `ExecutionChainCrypto`,
-  `RuntimeAuthorizationSigner`, `GatewayPaytmAdapter`) passes a _logical_ keyId —
+  `RuntimeAuthorizationSigner`, the connector adapter) passes a _logical_ keyId —
   `"default"` (`KeyProvider.DEFAULT_KEY_ID`) in the common case, `"tenant.<id>"` for a
   provisioned tenant key (Tutorial 105) — never a real AWS identifier.
 - AWS KMS's `Sign`/`GetPublicKey`/`DescribeKey` APIs require their `KeyId` parameter to

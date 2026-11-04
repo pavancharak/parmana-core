@@ -29,7 +29,7 @@ can only refuse a refund now.
 
 So the signal counts as `true` only when `signals.approvalArtifact` holds an approval that
 `ApprovalSignalVerifier` accepts: signed by a trusted, not revoked approver, not expired,
-for `paytm:refund`, for this order, with an amount limit at least the amount in the
+for `erp:invoice-pay`, for this order, with an amount limit at least the amount in the
 request (taken from the request, never from the agent's signals), and never used before.
 
 ## The steps
@@ -66,7 +66,7 @@ and nonces are kept in memory.
    `TRUSTED_APPROVAL_ISSUERS` in `packages/api/src/bootstrap/createApprovalIssuerRegistry.ts`
    and deploys.
 3. For each refund that needs it, the manager signs with `scripts/sign-approval.ts`
-   (`--capability paytm:refund --resource-id <order> --max-amount <amount>`), and the agent
+   (`--capability erp:invoice-pay --resource-id <order> --max-amount <amount>`), and the agent
    sends the result in `signals.approvalArtifact` with `managerApproved: true`.
 
 See the guide `docs/site/guides/policy-lifecycle-and-approvals.mdx`, part 2.
@@ -77,5 +77,4 @@ See the guide `docs/site/guides/policy-lifecycle-and-approvals.mdx`, part 2.
 - `packages/approval/src/ApprovalVerifier.ts`
 - `packages/policy/src/types/Policy.ts` (`approvalSignals`)
 - Tests: `packages/approval/tests/unit/ApprovalSignalVerifier.test.ts`,
-  `packages/policy/tests/unit/CustomerRefundPolicy120.test.ts`,
-  `packages/api/tests/integration/paytm-refund.integration.test.ts`
+  `packages/policy/tests/unit/CustomerRefundPolicy120.test.ts`
