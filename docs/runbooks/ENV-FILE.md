@@ -246,9 +246,6 @@ The kill switch stores its state in the database, so it also needs `DATABASE_URL
 
 Each connector is registered only when its settings are present. Otherwise nothing else fails.
 
-- **Paytm**: `PAYTM_CONNECTOR_URL` and `PAYTM_CONNECTOR_SHARED_SECRET`. Set both or neither. The URL must start with `https://` in production. Details: `docs/runbooks/PAYTM-CONNECTOR.md`.
-- **HubSpot**: `HUBSPOT_PRIVATE_APP_TOKEN`. `HUBSPOT_PRIVATE_APP_TOKEN_ROTATED_AT` is an ISO 8601 date. The server logs a warning when the token is stale (`warnIfHubSpotTokenStale.ts`).
-- **Razorpay**: `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`. The demo endpoint refuses a live key. Details: `docs/runbooks/RAZORPAY-REFUND.md`.
 - **GitHub App**: `GITHUB_APP_ID` and `GITHUB_INSTALLATION_ID` are numbers. `GITHUB_APP_PRIVATE_KEY` is the app's PEM private key as text, not base64. The value is passed unchanged to `crypto.sign` in `GitHubAppJwt.ts`, which needs a PEM key. Base64 text fails there. Use the PEM with `\n` for line breaks, in double quotes.
 
 ---

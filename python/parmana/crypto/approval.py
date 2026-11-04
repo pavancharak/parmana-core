@@ -58,7 +58,7 @@ def sign_approval(
         The approver and key as registered on the server.
 
     capability:
-        The action approved, such as "paytm:refund" or "github:pr-merge".
+        The action approved, such as "erp:invoice-pay" or "erp:record-update".
 
     resource_id:
         The value at the policy's approvalSignals resourceId path: an order
@@ -90,7 +90,7 @@ def sign_approval(
 
     if not _CAPABILITY.match(capability):
         raise ValueError(
-            "capability must be an action such as paytm:refund or "
+            "capability must be an action such as erp:invoice-pay or "
             f"github:pr-merge: {capability}"
         )
 

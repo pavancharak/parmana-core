@@ -115,14 +115,6 @@ A page or section with no tag is a bug in this site, [file it as such](/contribu
     The concepts behind the diagram above: policy, authorization, the gateway,
     trust records.
   </Card>
-  <Card
-    title="End-to-end: agent to Paytm"
-    icon="route"
-    href="/guides/end-to-end-paytm-flow"
-  >
-    The same flow against a real connector and real infrastructure, start to
-    finish.
-  </Card>
   <Card title="SDKs" icon="code" href="/sdks/typescript">
     TypeScript and Python, both published, both with a builder that removes the
     most common integration mistake.
@@ -153,22 +145,21 @@ command or request. If two rows seem to apply, do the earlier one first.
 
 ## What do you want to do?
 
-| Your goal                                                                                        | Start here                                                                                                                   | You need                                                                                       | First step                                                                  |
-| ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| **See Parmana work right now**, with nothing installed                                           | [Quickstart](/quickstart)                                                                                                    | A browser, or cURL or PowerShell                                                               | `GET https://parmana-api-real.vercel.app/callers/me` with the demo key      |
-| Put Parmana in front of an AI agent's actions, from **TypeScript**                               | [TypeScript SDK quickstart](/guides/typescript-sdk-quickstart)                                                               | Node 20 or later, a Parmana API URL, an API key                                                | `npm install @parmana/sdk`                                                  |
-| Put Parmana in front of an AI agent's actions, from **Python**                                   | [Python SDK quickstart](/guides/python-sdk-quickstart)                                                                       | Python 3.10 or later, a Parmana API URL, an API key                                            | `pip install parmana`                                                       |
-| Integrate from **any other language**, or with a plain HTTP client                               | [REST API introduction](/api-reference/introduction) and [Authentication](/api-reference/authentication)                     | Any HTTP client, a Parmana API URL, an API key                                                 | `POST /execute` with a Bearer key                                           |
-| Let Parmana release approved actions to a system you already use (HubSpot, GitHub, Slack, Paytm) | [Connectors overview](/integrations/overview)                                                                                | A running Parmana server with that connector's credentials configured                          | Read the overview, then the connector's page                                |
-| Build a **new connector** for a system Parmana does not support yet                              | [Add a connector](/guides/add-a-connector) then the [Connector development guide](/integrations/connector-development-guide) | Node or Python, and the system's API credentials                                               | `npm install @parmana/connector-sdk` or `pip install parmana-connector-sdk` |
-| **Run Parmana on your own infrastructure**, with its own Postgres, in one command                | [Self hosted quickstart](/self-hosted/quickstart), after the [Self hosted overview](/self-hosted/overview)                   | Docker with Docker Compose v2, a clone of the repository                                       | `docker compose up -d --build --wait`                                       |
-| **Run Parmana from source** on your own machine, for development                                 | [Local deployment](/deployment/local)                                                                                        | Node 24 or later                                                                               | Follow the page top to bottom                                               |
-| **Run Parmana in production**                                                                    | [Production deployment](/deployment/production) and the [Environment variable reference](/deployment/environment-variables)  | A host that runs Node 24 or later or a container, a Postgres database (Supabase), signing keys | Follow the page top to bottom                                               |
-| Decide **what an agent is allowed to do**                                                        | [Write your first policy](/guides/write-your-first-policy)                                                                   | A running Parmana server                                                                       | Copy the example policy and change one rule                                 |
-| **Approve or reject a change** to a policy                                                       | [Policy governance](/guides/policy-governance-maker-checker)                                                                 | A human credential and a step up signing key                                                   | Read the page, then follow the approval steps                               |
-| **Check a record** someone gave you, as an auditor, without trusting Parmana                     | [Verify a trust record independently](/guides/verify-independently)                                                          | The record and Parmana's public key                                                            | Follow the page top to bottom                                               |
-| Understand **why** Parmana works this way before you commit                                      | [How Parmana thinks](/how-parmana-thinks)                                                                                    | Nothing                                                                                        | Read it, it is short                                                        |
-| See one **complete working flow** from agent to a real payment provider                          | [End to end: agent, Parmana, Paytm](/guides/end-to-end-paytm-flow)                                                           | A deployed Parmana and a Paytm staging account                                                 | Follow the page top to bottom                                               |
+| Your goal                                                                                            | Start here                                                                                                                   | You need                                                                                       | First step                                                                  |
+| ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| **See Parmana work right now**, with nothing installed                                               | [Quickstart](/quickstart)                                                                                                    | A browser, or cURL or PowerShell                                                               | `GET https://parmana-api-real.vercel.app/callers/me` with the demo key      |
+| Put Parmana in front of an AI agent's actions, from **TypeScript**                                   | [TypeScript SDK quickstart](/guides/typescript-sdk-quickstart)                                                               | Node 20 or later, a Parmana API URL, an API key                                                | `npm install @parmana/sdk`                                                  |
+| Put Parmana in front of an AI agent's actions, from **Python**                                       | [Python SDK quickstart](/guides/python-sdk-quickstart)                                                                       | Python 3.10 or later, a Parmana API URL, an API key                                            | `pip install parmana`                                                       |
+| Integrate from **any other language**, or with a plain HTTP client                                   | [REST API introduction](/api-reference/introduction) and [Authentication](/api-reference/authentication)                     | Any HTTP client, a Parmana API URL, an API key                                                 | `POST /execute` with a Bearer key                                           |
+| Let Parmana release approved actions to a system you already use (an external endpoint you register) | [Connectors overview](/integrations/overview)                                                                                | A running Parmana server with that connector's credentials configured                          | Read the overview, then the connector's page                                |
+| Build a **new connector** for a system Parmana does not support yet                                  | [Add a connector](/guides/add-a-connector) then the [Connector development guide](/integrations/connector-development-guide) | Node or Python, and the system's API credentials                                               | `npm install @parmana/connector-sdk` or `pip install parmana-connector-sdk` |
+| **Run Parmana on your own infrastructure**, with its own Postgres, in one command                    | [Self hosted quickstart](/self-hosted/quickstart), after the [Self hosted overview](/self-hosted/overview)                   | Docker with Docker Compose v2, a clone of the repository                                       | `docker compose up -d --build --wait`                                       |
+| **Run Parmana from source** on your own machine, for development                                     | [Local deployment](/deployment/local)                                                                                        | Node 24 or later                                                                               | Follow the page top to bottom                                               |
+| **Run Parmana in production**                                                                        | [Production deployment](/deployment/production) and the [Environment variable reference](/deployment/environment-variables)  | A host that runs Node 24 or later or a container, a Postgres database (Supabase), signing keys | Follow the page top to bottom                                               |
+| Decide **what an agent is allowed to do**                                                            | [Write your first policy](/guides/write-your-first-policy)                                                                   | A running Parmana server                                                                       | Copy the example policy and change one rule                                 |
+| **Approve or reject a change** to a policy                                                           | [Policy governance](/guides/policy-governance-maker-checker)                                                                 | A human credential and a step up signing key                                                   | Read the page, then follow the approval steps                               |
+| **Check a record** someone gave you, as an auditor, without trusting Parmana                         | [Verify a trust record independently](/guides/verify-independently)                                                          | The record and Parmana's public key                                                            | Follow the page top to bottom                                               |
+| Understand **why** Parmana works this way before you commit                                          | [How Parmana thinks](/how-parmana-thinks)                                                                                    | Nothing                                                                                        | Read it, it is short                                                        |
 
 ## The three steps every integration does
 
@@ -394,7 +385,7 @@ background to interpret. If your situation is not covered, **stop and ask the op
 | `PARMANA_URL`      | The operator. The base URL of the Parmana server, without a trailing slash.                                                                                                                     | It must start with `https://`, except for a local server, which uses `http://localhost:3000`.                                         |
 | `PARMANA_API_KEY`  | The operator. A secret string issued for you.                                                                                                                                                   | It is non empty. Never print it, log it or put it in a URL.                                                                           |
 | `APPROVAL_SIGNALS` | Step 3: the keys of `signals.approval` in the server's answer. The table in [Every action needs a signed approval](#every-action-needs-a-signed-approval) shows them for the connector actions. | It is never empty. Every action needs one, reads included. If the operator says none, stop: that is not possible on a current server. |
-| `ACTION`           | The operator. The capability name, for example `paytm:refund`.                                                                                                                                  | Step 2 checks your key may use it.                                                                                                    |
+| `ACTION`           | The operator. The capability name, for example `erp:invoice-pay`.                                                                                                                               | Step 2 checks your key may use it.                                                                                                    |
 
 **No server yet? Run one on your own machine.** Follow the [Quickstart](/quickstart). Every step below works the same way against it.
 
@@ -410,22 +401,19 @@ signs an approval for it.
 
 For the actions with a connector, the approval signal and the resource it names are:
 
-| `ACTION`                         | Policy in effect (step 3 confirms) | Approval signal      | Resource the approval names                                   | Other signals the policy reads                                                                                                                                           |
-| -------------------------------- | ---------------------------------- | -------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `paytm:refund`                   | `customer-refund` 1.2.0            | `managerApproved`    | `intent.parameters.orderId`, up to `intent.parameters.amount` | `refundEligible`, `fraudCheckPassed`, `refundAmount` (equal to `intent.parameters.amount`)                                                                               |
-| `github:pr-merge`                | `github-pr-approval` 1.1.0         | `mergeApproved`      | `intent.target`                                               | `branchProtected`, `repositoryAuthorized`, `requiredReviewsCompleted`, `riskScore`, `statusChecksPassed`                                                                 |
-| `github:pr-fetch`                | `github-pr-read` 1.1.0             | `readApproved`       | `intent.target`                                               | none                                                                                                                                                                     |
-| `hubspot:deal-update`            | `hubspot-deal-update` 1.1.0        | `dealUpdateApproved` | `intent.parameters.dealId`                                    | `dealStageChangeRequested`, `dealStageTransitionAllowed`; `proposedDealStage` and `proposedAmount` equal to `intent.parameters.dealstage` and `intent.parameters.amount` |
-| `hubspot:deal-fetch`             | `hubspot-deal-read` 1.0.0          | `readApproved`       | `intent.parameters.dealId`                                    | none                                                                                                                                                                     |
-| `slack:post-message`             | `slack-post-message` 1.1.0         | `postApproved`       | `intent.target` (the channel id)                              | `channelAuthorized`, `contentApproved`; `channelId` equal to `intent.target`                                                                                             |
-| `sandbox:receipt` (sandbox only) | `sandbox-receipt` 1.0.0            | `receiptApproved`    | `intent.target`                                               | none; `note` equal to `intent.parameters.note`, at most 200 characters                                                                                                   |
+| `ACTION`                         | Policy in effect (step 3 confirms) | Approval signal   | Resource the approval names                                   | Other signals the policy reads                                                                           |
+| -------------------------------- | ---------------------------------- | ----------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `erp:invoice-pay`                | `customer-refund` 1.2.0            | `managerApproved` | `intent.parameters.orderId`, up to `intent.parameters.amount` | `refundEligible`, `fraudCheckPassed`, `refundAmount` (equal to `intent.parameters.amount`)               |
+| `github:pr-merge`                | `github-pr-approval` 1.1.0         | `mergeApproved`   | `intent.target`                                               | `branchProtected`, `repositoryAuthorized`, `requiredReviewsCompleted`, `riskScore`, `statusChecksPassed` |
+| `github:pr-fetch`                | `github-pr-read` 1.1.0             | `readApproved`    | `intent.target`                                               | none                                                                                                     |
+| `sandbox:receipt` (sandbox only) | `sandbox-receipt` 1.0.0            | `receiptApproved` | `intent.target`                                               | none; `note` equal to `intent.parameters.note`, at most 200 characters                                   |
 
 For any action, including one not in this table (such as an action an operator registered as an external connector, see [Connect any external system](/guides/connect-any-external-system)), step 3 returns the same information from the server:
 `signals.approval` names the approval signal and where its resource (and amount) are in the request. Use the server's
 answer over this table if they ever differ.
 
 An approval covers the action and the resource, and the amount where the table names one. It does not fix other
-parameters: a Slack approval does not fix the message text, and a HubSpot approval does not fix the new stage.
+parameters: an approval for a message does not fix the message text, and an approval for a record update does not fix the new values.
 
 Every request below carries this header: `Authorization: Bearer <PARMANA_API_KEY>`.
 
@@ -455,7 +443,7 @@ Every request below carries this header: `Authorization: Bearer <PARMANA_API_KEY
 {
   "callerId": "my-agent",
   "allowedPrincipalIds": ["my-agent"],
-  "allowedCapabilities": ["paytm:refund"],
+  "allowedCapabilities": ["erp:invoice-pay"],
   "unrestrictedCapabilities": false
 }
 ```
@@ -478,7 +466,7 @@ Keep `callerId`. Your `authority.principalId` in step 4 must be one of `allowedP
 
 ```json
 {
-  "capability": "paytm:refund",
+  "capability": "erp:invoice-pay",
   "policy": {
     "name": "customer-refund",
     "version": "1.2.0",
@@ -599,7 +587,7 @@ with the current time.
   "intent": {
     "intentId": "3d2c1b0a-9f8e-4d7c-8b6a-5f4e3d2c1b0a",
     "authorizationId": "9c8d7e6f-5a4b-4c3d-8e2f-1a0b9c8d7e6f",
-    "action": "paytm:refund",
+    "action": "erp:invoice-pay",
     "target": "ORDER-1001",
     "parameters": {
       "orderId": "ORDER-1001",
@@ -1085,7 +1073,7 @@ Nothing was sent to the connector, so a retry with a new `businessTransactionId`
 
 ## `POST /execute` returns 503 `CONNECTOR_NOT_REGISTERED`
 
-**Cause:** the request passed authentication, the policy and the approval check, but no connector is registered for its action on this deployment. A connector registers only when its own credentials are configured, for example `PAYTM_CONNECTOR_URL` and `PAYTM_CONNECTOR_SHARED_SECRET` for `paytm:refund`. Nothing was executed. Before this code existed the same case was a bare `500` with no code, so on an older server, look for `No connector registered for capability` in the log.
+**Cause:** the request passed authentication, the policy and the approval check, but no connector is registered for its action on this deployment. A connector registers only when its own credentials are configured, for example a connector's own settings for `erp:invoice-pay`. Nothing was executed. Before this code existed the same case was a bare `500` with no code, so on an older server, look for `No connector registered for capability` in the log.
 
 **Fix:** configure the connector on the server (see the [connector section of the environment reference](/deployment/environment-variables#connectors)), deploy again, then retry with a new `businessTransactionId`, because the original was already accepted.
 
@@ -1110,7 +1098,7 @@ Nothing was sent to the connector, so a retry with a new `businessTransactionId`
    ```bash
    curl -s -X POST "$PARMANA_API_URL/execution-intents/<businessTransactionId>/resolve" \
      -H "Authorization: Bearer $PARMANA_OPERATOR_KEY" -H "Content-Type: application/json" \
-     -d '{"resolution":"NOT_EXECUTED","note":"Agent was unreachable; no refund in Paytm for this order."}'
+     -d '{"resolution":"NOT_EXECUTED","note":"Agent was unreachable; no payment was made for this invoice."}'
    ```
 
 4. Fix the connector before sending new requests. If the action was not executed and is still wanted, send it again with a **new** `businessTransactionId`.
@@ -1253,50 +1241,50 @@ server and restart it. See [credentials, maker, checker and approver](/guides/cr
 
 Source: https://docs.parmanasystems.com/glossary
 
-| Term                                | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Source                                                                                                            |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| **Policy**                          | A named, versioned, ordered list of rules; first match wins, no match rejects                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | [Policies and the decision](/concepts/policies-and-the-decision)                                                  |
-| **`boundSignals`**                  | A policy's optional map from a signal key to an `intent` dot-path (e.g. `{ "vendorId": "target" }`); `SignalIntentBinder` rejects a transaction whose declared signal doesn't exactly equal the bound `intent` field, before any rule evaluates                                                                                                                                                                                                                                                                                                                                                                                                                                       | [Policies and the decision](/concepts/policies-and-the-decision), [Security](/security/overview)                  |
-| **`SignalIntentBinder`**            | Checks every `boundSignals` entry, `packages/policy/src/SignalIntentBinder.ts`; invoked by `RuntimeEngine` immediately before `PolicyEngine.evaluate`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | [Policies and the decision](/concepts/policies-and-the-decision)                                                  |
-| **Fail-closed**                     | The absence of a matching rule, a missing connector, or a failed check always denies, there is no default-allow path anywhere in this system                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | [Policies and the decision](/concepts/policies-and-the-decision)                                                  |
-| **Approval signal**                 | A policy fact declared in `approvalSignals`. Every approve rule must require one with `is_true`; it counts as true only with a valid signed approval for the action and resource. No agent action is authorized without one                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| **Trusted Signal**                  | A business fact Parmana established itself, from the system a policy's `signalSources` names, bound to the business object and the action; the policy is evaluated on it, never on the agent's proposed value                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | [Business validation](/concepts/business-validation)                                                              |
-| **Assessment**                      | The separate authority, business validation and execution statuses on every Decision. `AUTHORIZED` means the action may be decided, not that the action is valid or ran                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | [Business validation](/concepts/business-validation)                                                              |
-| **Business signal source**          | A business system registered under a name through maker checker, which Parmana asks for the facts a policy's `signalSources` names. When registered with an Ed25519 key, its answers must be signed with it                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | [Connect a business signal source](/guides/connect-a-business-signal-source)                                      |
-| **Authority grant**                 | Authority given to one API key for one capability, within limits on the request, until an expiry, through maker checker. A policy with `requireAuthorityGrant` decides a request only when its caller holds one in force                                                                                                                                                                                                                                                                                                                                                                                                                                                              | [Grant an agent authority](/guides/grant-an-agent-authority)                                                      |
-| **Approver key**                    | An Ed25519 public key trusted to sign approvals for policies with `approvalSignals`. Listed in the server code, or added through an approver change                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | [Manage approvers](/guides/manage-approvers)                                                                      |
-| **Approver change**                 | A proposal to add or revoke an approver key; applies only once a different person approves it with a step up authorization                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | [Manage approvers](/guides/manage-approvers)                                                                      |
-| **`approval.needed`**               | The webhook event sent when a request was refused only for want of a signed approval                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | [Approval notifications](/guides/approval-notifications)                                                          |
-| **Authority**                       | The entity empowered to authorize execution within a trust domain                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | `packages/shared/src/domain/authority.ts`                                                                         |
-| **Authorization**                   | A grant, from an Authority, for a specific business purpose                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | `packages/shared/src/domain/authorization.ts`                                                                     |
-| **Intent**                          | The specific action + target + parameters an Authority intends to execute                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | `packages/shared/src/domain/intent.ts`                                                                            |
-| **Business Transaction**            | The immutable input to policy evaluation, combining Authority + Authorization + Intent + a Policy reference                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | `packages/shared/src/domain/business-transaction.ts`                                                              |
-| **Decision**                        | The immutable result of evaluating an Intent against a Policy, `APPROVED` or `REJECTED`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | `packages/shared/src/domain/decision.ts`                                                                          |
-| **Execution**                       | What actually happened after a Decision, status, mode, evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `packages/shared/src/domain/execution.ts`                                                                         |
-| **Execution Trust Record**          | The canonical, append-only, signed aggregate of a Business Transaction's complete history                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | [Execution trust records](/concepts/execution-trust-records)                                                      |
-| **Signed Execution Authorization**  | The v1 envelope: a signed, content-bound, single-use, time-bounded proof that Parmana authorized one specific execution                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | [Execution authorization](/concepts/execution-authorization)                                                      |
-| **Execution Permit**                | Two different things share this name. An earlier prototype (`packages/shared/src/domain/execution-permit.ts`, added and deleted the same day) is gone, do not treat old references to it as shipped behavior. A later `ExecutionPermit` model in `@parmana/execution-control`, used only by a since deleted receipt package and by tutorials 53-56, was also deleted; those tutorials now demonstrate hybrid signing. Today the term means the signed [execution authorization](/concepts/execution-authorization).                                                                                                                                                                   | [@parmana/execution-control](/reference/execution-control)                                                        |
-| **`businessTransactionHash`**       | The canonical content hash bound into a Signed Execution Authorization's payload, the mechanism that closes the check-vs-use (TOCTOU) gap                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | [Content Binding & TOCTOU](/concepts/content-binding-toctou)                                                      |
-| **Execution Gateway**               | The sole boundary that recomputes `businessTransactionHash` and releases verified content to a Connector. Wired into the default server unconditionally as of commit `651497a`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | [The gateway](/concepts/the-gateway)                                                                              |
-| **Gateway Attestation**             | A request-bound signature proving the gateway itself, not just Parmana's policy engine, released one specific request                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | [Gateway attestation](/concepts/gateway-attestation)                                                              |
-| **Connector**                       | An interface for an enterprise execution system (SAP, a bank's payment rail, etc.) integrated behind the Gateway. `HttpConnector` and `MockConnector` are reference implementations; four enterprise-named connectors exist as explicit, unregistered mocks (`SapConnector`, `WorkdayConnector`, `OracleConnector`, `SalesforceConnector`). `hubspot` registers whenever `HUBSPOT_PRIVATE_APP_TOKEN` is configured, see [HubSpot](/integrations/hubspot); `github` registers alongside it for `github:pr-fetch`/`github:pr-merge`. Two other connectors were previously registered here — `razorpay` and `vendor-payment` — and have since been removed from the repository entirely. | `packages/api/src/bootstrap/createConnectorRegistry.ts`                                                           |
-| **Execution Control**               | Gateway-authenticated, session-scoped credential isolation for connectors. Real, tested, and wired into the default server for the one registered connector this is proven for, `hubspot`; not yet a general-purpose claim for arbitrary connectors                                                                                                                                                                                                                                                                                                                                                                                                                                   | [Credential isolation](/concepts/credential-isolation)                                                            |
-| **Session Credential**              | A single-use, time-bounded credential lease issued only after gateway attestation succeeds, consumed exactly once by a connector                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | [Credential isolation](/concepts/credential-isolation)                                                            |
-| **Credential Provider**             | Resolves a connector's credential from a source (environment variable, static map); never returns a raw value a caller upstream can see                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | [Credential isolation](/concepts/credential-isolation)                                                            |
-| **Connector Evidence**              | What a connector's execution leaves on the trust record: connector ID, version, capability, sanitized endpoint, a `connectorEvidenceHash`, never the credential itself                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | [Execution trust records](/concepts/execution-trust-records)                                                      |
-| **Nonce**                           | A single-use value inside an authorization payload; a receiving system must reject a repeat                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | [Execution authorization](/concepts/execution-authorization)                                                      |
-| **Verification**                    | The 3-check process (integrity, signature, authorization binding) confirming an Execution Trust Record's validity                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | [Verification](/verification/overview)                                                                            |
-| **Replay**                          | Two unconnected things share this name: a signature recheck (`POST /replay`) and a disconnected engine (`packages/replay`) that genuinely re-evaluates the recorded policy decision, scoped to one execution, not reachable from the API.                                                                                                                                                                                                                                                                                                                                                                                                                                             | [Replay](/replay/overview)                                                                                        |
-| **Receipt**                         | A signed, independently-verifiable attestation of an Execution Trust Record's state                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | `packages/shared/src/domain/receipt.ts`                                                                           |
-| **TOCTOU**                          | Time-Of-Check-To-Time-Of-Use, the gap between what was authorized and what was actually executed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | [Content Binding & TOCTOU](/concepts/content-binding-toctou)                                                      |
-| **TTL**                             | Time-to-live; the bounded window an authorization is valid for, capped to limit exposure from other gaps (for example, an unshared `NonceStore`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |                                                                                                                   |
-| **Release**                         | Parmana's signed message to a registered external endpoint, saying an approved action may run. The endpoint verifies its signature before it acts.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | [Connect any external system](/guides/connect-any-external-system)                                                |
-| **Endpoint audience**               | The endpoint URL a release names. An endpoint refuses a release whose audience is not its own URL, which stops a release sent to one endpoint being replayed to another.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | [ADR-0013](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0013-Generic-External-Connector.md) |
-| **External connector registration** | A capability bound to an HTTPS endpoint and to the policy that governs it. Active only after a different caller approves it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | [Connect any external system](/guides/connect-any-external-system)                                                |
-| **Approval artifact**               | A signed statement by a trusted issuer that a person approved one action on one resource. Usable once, and it expires.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | [Connect an agent](/guides/connect-an-agent)                                                                      |
-| **Step-up signature**               | A signature from the approver's own key over one exact change, sent with the approval. The server checks it before it accepts the approval.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | [Policy governance, maker and checker](/guides/policy-governance-maker-checker)                                   |
-| **Approval issuer**                 | A person or key trusted to sign approval artifacts. Added through a proposal and a separate approval.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | [Manage approvers](/guides/manage-approvers)                                                                      |
-| **Maker and checker**               | The caller who proposes a change, and a different caller who approves it. The server refuses an approval by the proposer.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | [Policy governance, maker and checker](/guides/policy-governance-maker-checker)                                   |
+| Term                                | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Source                                                                                                            |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **Policy**                          | A named, versioned, ordered list of rules; first match wins, no match rejects                                                                                                                                                                                                                                                                                                                                                                                                                                       | [Policies and the decision](/concepts/policies-and-the-decision)                                                  |
+| **`boundSignals`**                  | A policy's optional map from a signal key to an `intent` dot-path (e.g. `{ "vendorId": "target" }`); `SignalIntentBinder` rejects a transaction whose declared signal doesn't exactly equal the bound `intent` field, before any rule evaluates                                                                                                                                                                                                                                                                     | [Policies and the decision](/concepts/policies-and-the-decision), [Security](/security/overview)                  |
+| **`SignalIntentBinder`**            | Checks every `boundSignals` entry, `packages/policy/src/SignalIntentBinder.ts`; invoked by `RuntimeEngine` immediately before `PolicyEngine.evaluate`                                                                                                                                                                                                                                                                                                                                                               | [Policies and the decision](/concepts/policies-and-the-decision)                                                  |
+| **Fail-closed**                     | The absence of a matching rule, a missing connector, or a failed check always denies, there is no default-allow path anywhere in this system                                                                                                                                                                                                                                                                                                                                                                        | [Policies and the decision](/concepts/policies-and-the-decision)                                                  |
+| **Approval signal**                 | A policy fact declared in `approvalSignals`. Every approve rule must require one with `is_true`; it counts as true only with a valid signed approval for the action and resource. No agent action is authorized without one                                                                                                                                                                                                                                                                                         |
+| **Trusted Signal**                  | A business fact Parmana established itself, from the system a policy's `signalSources` names, bound to the business object and the action; the policy is evaluated on it, never on the agent's proposed value                                                                                                                                                                                                                                                                                                       | [Business validation](/concepts/business-validation)                                                              |
+| **Assessment**                      | The separate authority, business validation and execution statuses on every Decision. `AUTHORIZED` means the action may be decided, not that the action is valid or ran                                                                                                                                                                                                                                                                                                                                             | [Business validation](/concepts/business-validation)                                                              |
+| **Business signal source**          | A business system registered under a name through maker checker, which Parmana asks for the facts a policy's `signalSources` names. When registered with an Ed25519 key, its answers must be signed with it                                                                                                                                                                                                                                                                                                         | [Connect a business signal source](/guides/connect-a-business-signal-source)                                      |
+| **Authority grant**                 | Authority given to one API key for one capability, within limits on the request, until an expiry, through maker checker. A policy with `requireAuthorityGrant` decides a request only when its caller holds one in force                                                                                                                                                                                                                                                                                            | [Grant an agent authority](/guides/grant-an-agent-authority)                                                      |
+| **Approver key**                    | An Ed25519 public key trusted to sign approvals for policies with `approvalSignals`. Listed in the server code, or added through an approver change                                                                                                                                                                                                                                                                                                                                                                 | [Manage approvers](/guides/manage-approvers)                                                                      |
+| **Approver change**                 | A proposal to add or revoke an approver key; applies only once a different person approves it with a step up authorization                                                                                                                                                                                                                                                                                                                                                                                          | [Manage approvers](/guides/manage-approvers)                                                                      |
+| **`approval.needed`**               | The webhook event sent when a request was refused only for want of a signed approval                                                                                                                                                                                                                                                                                                                                                                                                                                | [Approval notifications](/guides/approval-notifications)                                                          |
+| **Authority**                       | The entity empowered to authorize execution within a trust domain                                                                                                                                                                                                                                                                                                                                                                                                                                                   | `packages/shared/src/domain/authority.ts`                                                                         |
+| **Authorization**                   | A grant, from an Authority, for a specific business purpose                                                                                                                                                                                                                                                                                                                                                                                                                                                         | `packages/shared/src/domain/authorization.ts`                                                                     |
+| **Intent**                          | The specific action + target + parameters an Authority intends to execute                                                                                                                                                                                                                                                                                                                                                                                                                                           | `packages/shared/src/domain/intent.ts`                                                                            |
+| **Business Transaction**            | The immutable input to policy evaluation, combining Authority + Authorization + Intent + a Policy reference                                                                                                                                                                                                                                                                                                                                                                                                         | `packages/shared/src/domain/business-transaction.ts`                                                              |
+| **Decision**                        | The immutable result of evaluating an Intent against a Policy, `APPROVED` or `REJECTED`                                                                                                                                                                                                                                                                                                                                                                                                                             | `packages/shared/src/domain/decision.ts`                                                                          |
+| **Execution**                       | What actually happened after a Decision, status, mode, evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                     | `packages/shared/src/domain/execution.ts`                                                                         |
+| **Execution Trust Record**          | The canonical, append-only, signed aggregate of a Business Transaction's complete history                                                                                                                                                                                                                                                                                                                                                                                                                           | [Execution trust records](/concepts/execution-trust-records)                                                      |
+| **Signed Execution Authorization**  | The v1 envelope: a signed, content-bound, single-use, time-bounded proof that Parmana authorized one specific execution                                                                                                                                                                                                                                                                                                                                                                                             | [Execution authorization](/concepts/execution-authorization)                                                      |
+| **Execution Permit**                | Two different things share this name. An earlier prototype (`packages/shared/src/domain/execution-permit.ts`, added and deleted the same day) is gone, do not treat old references to it as shipped behavior. A later `ExecutionPermit` model in `@parmana/execution-control`, used only by a since deleted receipt package and by tutorials 53-56, was also deleted; those tutorials now demonstrate hybrid signing. Today the term means the signed [execution authorization](/concepts/execution-authorization). | [@parmana/execution-control](/reference/execution-control)                                                        |
+| **`businessTransactionHash`**       | The canonical content hash bound into a Signed Execution Authorization's payload, the mechanism that closes the check-vs-use (TOCTOU) gap                                                                                                                                                                                                                                                                                                                                                                           | [Content Binding & TOCTOU](/concepts/content-binding-toctou)                                                      |
+| **Execution Gateway**               | The sole boundary that recomputes `businessTransactionHash` and releases verified content to a Connector. Wired into the default server unconditionally as of commit `651497a`                                                                                                                                                                                                                                                                                                                                      | [The gateway](/concepts/the-gateway)                                                                              |
+| **Gateway Attestation**             | A request-bound signature proving the gateway itself, not just Parmana's policy engine, released one specific request                                                                                                                                                                                                                                                                                                                                                                                               | [Gateway attestation](/concepts/gateway-attestation)                                                              |
+| **Connector**                       | An interface for an enterprise execution system (SAP, a bank's payment rail, etc.) integrated behind the Gateway. `HttpConnector` and `MockConnector` are reference implementations. Parmana ships no built in connector; an external connector is registered through maker and checker, see [Connect any external system](/guides/connect-any-external-system).                                                                                                                                                    | `packages/api/src/bootstrap/createConnectorRegistry.ts`                                                           |
+| **Execution Control**               | Gateway-authenticated, session-scoped credential isolation for connectors. Real and tested. Not yet a general-purpose claim for arbitrary connectors                                                                                                                                                                                                                                                                                                                                                                | [Credential isolation](/concepts/credential-isolation)                                                            |
+| **Session Credential**              | A single-use, time-bounded credential lease issued only after gateway attestation succeeds, consumed exactly once by a connector                                                                                                                                                                                                                                                                                                                                                                                    | [Credential isolation](/concepts/credential-isolation)                                                            |
+| **Credential Provider**             | Resolves a connector's credential from a source (environment variable, static map); never returns a raw value a caller upstream can see                                                                                                                                                                                                                                                                                                                                                                             | [Credential isolation](/concepts/credential-isolation)                                                            |
+| **Connector Evidence**              | What a connector's execution leaves on the trust record: connector ID, version, capability, sanitized endpoint, a `connectorEvidenceHash`, never the credential itself                                                                                                                                                                                                                                                                                                                                              | [Execution trust records](/concepts/execution-trust-records)                                                      |
+| **Nonce**                           | A single-use value inside an authorization payload; a receiving system must reject a repeat                                                                                                                                                                                                                                                                                                                                                                                                                         | [Execution authorization](/concepts/execution-authorization)                                                      |
+| **Verification**                    | The 3-check process (integrity, signature, authorization binding) confirming an Execution Trust Record's validity                                                                                                                                                                                                                                                                                                                                                                                                   | [Verification](/verification/overview)                                                                            |
+| **Replay**                          | Two unconnected things share this name: a signature recheck (`POST /replay`) and a disconnected engine (`packages/replay`) that genuinely re-evaluates the recorded policy decision, scoped to one execution, not reachable from the API.                                                                                                                                                                                                                                                                           | [Replay](/replay/overview)                                                                                        |
+| **Receipt**                         | A signed, independently-verifiable attestation of an Execution Trust Record's state                                                                                                                                                                                                                                                                                                                                                                                                                                 | `packages/shared/src/domain/receipt.ts`                                                                           |
+| **TOCTOU**                          | Time-Of-Check-To-Time-Of-Use, the gap between what was authorized and what was actually executed                                                                                                                                                                                                                                                                                                                                                                                                                    | [Content Binding & TOCTOU](/concepts/content-binding-toctou)                                                      |
+| **TTL**                             | Time-to-live; the bounded window an authorization is valid for, capped to limit exposure from other gaps (for example, an unshared `NonceStore`)                                                                                                                                                                                                                                                                                                                                                                    |                                                                                                                   |
+| **Release**                         | Parmana's signed message to a registered external endpoint, saying an approved action may run. The endpoint verifies its signature before it acts.                                                                                                                                                                                                                                                                                                                                                                  | [Connect any external system](/guides/connect-any-external-system)                                                |
+| **Endpoint audience**               | The endpoint URL a release names. An endpoint refuses a release whose audience is not its own URL, which stops a release sent to one endpoint being replayed to another.                                                                                                                                                                                                                                                                                                                                            | [ADR-0013](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0013-Generic-External-Connector.md) |
+| **External connector registration** | A capability bound to an HTTPS endpoint and to the policy that governs it. Active only after a different caller approves it.                                                                                                                                                                                                                                                                                                                                                                                        | [Connect any external system](/guides/connect-any-external-system)                                                |
+| **Approval artifact**               | A signed statement by a trusted issuer that a person approved one action on one resource. Usable once, and it expires.                                                                                                                                                                                                                                                                                                                                                                                              | [Connect an agent](/guides/connect-an-agent)                                                                      |
+| **Step-up signature**               | A signature from the approver's own key over one exact change, sent with the approval. The server checks it before it accepts the approval.                                                                                                                                                                                                                                                                                                                                                                         | [Policy governance, maker and checker](/guides/policy-governance-maker-checker)                                   |
+| **Approval issuer**                 | A person or key trusted to sign approval artifacts. Added through a proposal and a separate approval.                                                                                                                                                                                                                                                                                                                                                                                                               | [Manage approvers](/guides/manage-approvers)                                                                      |
+| **Maker and checker**               | The caller who proposes a change, and a different caller who approves it. The server refuses an approval by the proposer.                                                                                                                                                                                                                                                                                                                                                                                           | [Policy governance, maker and checker](/guides/policy-governance-maker-checker)                                   |
 
 ---
 
@@ -1319,16 +1307,16 @@ The human readable version, with more explanation, is the [Production deployment
 
 ## Inputs you need before you start
 
-| Input                | Where it comes from                                                        | How to check it                                                               |
-| -------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `REPO`               | A clone of the Parmana repository.                                         | The file `package.json` exists at its root.                                   |
-| `DATABASE_URL`       | The operator. A Postgres connection string.                                | It starts with `postgresql://`. On a serverless host it is the pooler string. |
-| `HOST_KIND`          | The operator: `fly`, `vercel` or `docker`.                                 | It is exactly one of those three words.                                       |
-| `URL`                | The operator, or the host after deploy. The base URL, no trailing slash.   | It starts with `https://`.                                                    |
-| `FIRST_CALLER_ID`    | The operator. The name of the first caller, for example `my-agent`.        | It is non empty and has no spaces.                                            |
-| `FIRST_CAPABILITIES` | The operator. The actions that caller may use, for example `paytm:refund`. | It is non empty. Never use `*` unless the operator says so in words.          |
-| `MAKER_ID`           | The operator. The name of the human maker.                                 | It differs from `FIRST_CALLER_ID` and from `CHECKER_ID`.                      |
-| `CHECKER_ID`         | The operator. The name of the human checker.                               | It differs from `FIRST_CALLER_ID` and from `MAKER_ID`.                        |
+| Input                | Where it comes from                                                           | How to check it                                                               |
+| -------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `REPO`               | A clone of the Parmana repository.                                            | The file `package.json` exists at its root.                                   |
+| `DATABASE_URL`       | The operator. A Postgres connection string.                                   | It starts with `postgresql://`. On a serverless host it is the pooler string. |
+| `HOST_KIND`          | The operator: `fly`, `vercel` or `docker`.                                    | It is exactly one of those three words.                                       |
+| `URL`                | The operator, or the host after deploy. The base URL, no trailing slash.      | It starts with `https://`.                                                    |
+| `FIRST_CALLER_ID`    | The operator. The name of the first caller, for example `my-agent`.           | It is non empty and has no spaces.                                            |
+| `FIRST_CAPABILITIES` | The operator. The actions that caller may use, for example `erp:invoice-pay`. | It is non empty. Never use `*` unless the operator says so in words.          |
+| `MAKER_ID`           | The operator. The name of the human maker.                                    | It differs from `FIRST_CALLER_ID` and from `CHECKER_ID`.                      |
+| `CHECKER_ID`         | The operator. The name of the human checker.                                  | It differs from `FIRST_CALLER_ID` and from `MAKER_ID`.                        |
 
 If any input is missing, stop and ask for it.
 
@@ -1388,7 +1376,7 @@ Set exactly these variables on the host, in the Production environment:
 
 If the host cannot mount the four key files, also set `PARMANA_KEY_MATERIAL_JSON` to `{"default":{"privateKeyPem":"<contents>","publicKeyPem":"<contents>"},"gateway":{"privateKeyPem":"<contents>","publicKeyPem":"<contents>"}}`, with the file contents from step 1.
 
-If the operator wants a connector, also set its variables from the [connector section](/deployment/environment-variables#connectors). For the refund connector set both `PAYTM_CONNECTOR_URL` (it must start with `https://`) and `PAYTM_CONNECTOR_SHARED_SECRET`, or neither.
+If the operator wants a connector, also set its variables from the [connector section](/deployment/environment-variables#connectors).
 
 **Expect:** the host lists all six variables, and does not list `PARMANA_AUTH_DISABLED`.
 
@@ -1855,14 +1843,6 @@ Parmana is licensed under the Apache License 2.0, so running it locally is permi
   >
     Read back or re-run verification against the record you just created.
   </Card>
-  <Card
-    title="End-to-end: agent to Paytm"
-    icon="route"
-    href="/guides/end-to-end-paytm-flow"
-  >
-    The same flow against a real connector and real infrastructure, not the
-    local test fixture.
-  </Card>
 </CardGroup>
 
 ---
@@ -1933,23 +1913,16 @@ Source: https://docs.parmanasystems.com/guides/full-integration-overview
   the repository.
 </Info>
 
-**A naming trap worth avoiding first:** this codebase has two different things called
-"connector." [`@parmana/connector-sdk`](/integrations/overview) is a generic library with
-reference mocks (`SapConnector`, `OracleConnector`, etc.) that never talk to a real system. The
-connectors the default server actually registers and runs in production, HubSpot, GitHub,
-Paytm and Slack, follow a different, simpler pattern documented in the
-[Connector Development Guide](/integrations/connector-development-guide). Any other HTTPS
-endpoint can be connected with no code at all, as an **external connector**: see [Connect any
-external system](/guides/connect-any-external-system). This page covers both real paths.
+**A naming trap worth avoiding first:** this codebase has two different things called "connector." [`@parmana/connector-sdk`](/integrations/overview) is a generic library with reference mocks (`SapConnector`, `OracleConnector`, etc.) that never talk to a real system. Parmana ships no built in connector. Any HTTPS endpoint can be connected with no code at all, as an **external connector**: see [Connect any external system](/guides/connect-any-external-system). This page covers that path.
 
 ## The four pieces
 
-| #   | Piece                                      | Answers                                                       | Exists independently of the others?                                                                                                           |
-| --- | ------------------------------------------ | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **A policy** bound to a capability         | Should this request be allowed?                               | Yes. It decides with no connector or caller wired to it. Every approve rule needs a signed human approval.                                    |
-| 2   | **A caller (agent)** with a scoped API key | Who's allowed to even ask?                                    | Yes. It gets real decisions with no connector registered.                                                                                     |
-| 3   | **A connector** for the capability         | Who performs the real world action once approved?             | Yes. A built in one is testable alone with `MockConnector`; an external one is your own endpoint.                                             |
-| 4   | **A `SignalStateVerifier`**                | Are the caller's claims about real world state actually true? | The human approval is always verified this way. Other facts are checked only where a verifier exists (HubSpot deal state, the Slack channel). |
+| #   | Piece                                      | Answers                                                       | Exists independently of the others?                                                                                                                                            |
+| --- | ------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | **A policy** bound to a capability         | Should this request be allowed?                               | Yes. It decides with no connector or caller wired to it. Every approve rule needs a signed human approval.                                                                     |
+| 2   | **A caller (agent)** with a scoped API key | Who's allowed to even ask?                                    | Yes. It gets real decisions with no connector registered.                                                                                                                      |
+| 3   | **A connector** for the capability         | Who performs the real world action once approved?             | Yes. A built in one is testable alone with `MockConnector`; an external one is your own endpoint.                                                                              |
+| 4   | **A `SignalStateVerifier`**                | Are the caller's claims about real world state actually true? | The human approval is always verified this way. Other facts are checked only where a verifier exists (for example a record's state, checked against the system that holds it). |
 
 They're deliberately decoupled. That's why "got `APPROVED`" and "the action actually
 happened" are two separate, independently verifiable claims (see
@@ -2125,7 +2098,7 @@ signals and policy.
 Source: https://docs.parmanasystems.com/concepts/human-approval
 
 **No action goes ahead without a signed approval from a person. Reads included.** A
-refund, a merge, a Slack post, a HubSpot update, reading a pull request or a deal: each runs
+refund, a payment, a message, a record update, reading a record: each runs
 only when a trusted person has signed an approval for that action, on that resource, and the
 approval has not expired or been used.
 
@@ -2158,16 +2131,9 @@ Two checks enforce this in code, for every policy and every action:
 
 An agent that sets the approval signal to `true` without a signed approval is refused, whatever
 else it declares. Tutorials 119 to 122 in `examples/tutorials/` show it step by step, for a
-refund, the rule itself, a read, a Slack post and a HubSpot update.
+refund, the rule itself, a read, a message and a record update.
 
-| Action                | Policy in the binding       | The approval covers         |
-| --------------------- | --------------------------- | --------------------------- |
-| `paytm:refund`        | `customer-refund` 1.2.0     | the order, up to the amount |
-| `github:pr-merge`     | `github-pr-approval` 1.1.0  | the pull request            |
-| `github:pr-fetch`     | `github-pr-read` 1.1.0      | the pull request            |
-| `hubspot:deal-update` | `hubspot-deal-update` 1.1.0 | the deal                    |
-| `hubspot:deal-fetch`  | `hubspot-deal-read` 1.0.0   | the deal                    |
-| `slack:post-message`  | `slack-post-message` 1.1.0  | the channel                 |
+Each capability is bound to one policy name, and the approval covers the resource that the request names. For example, a refund's approval covers the order and up to the amount.
 
 The reference policies with no connector need one too, for the Intent's `target`:
 `vendor-payment` 2.1.0, `access-control` 1.1.0, `agent-vendor-payment` 1.1.0,
@@ -2211,7 +2177,7 @@ only refuse a refund.
   POLICY_DENIED`. There is no amount below which a refund runs on its own.
 </Note>
 
-The flow for a refund of 75000 on order `ORD-1042`:
+The flow for a refund of 75000 on order `INV-1042`:
 
 <Steps>
   <Step title="The agent's request is refused">
@@ -2230,7 +2196,7 @@ The flow for a refund of 75000 on order `ORD-1042`:
     npx tsx scripts/sign-approval.ts \
       --private-key-file ~/.parmana/approver-example__approver-example-key-1.private.pem \
       --approver-id approver-example --key-id approver-example-key-1 \
-      --capability paytm:refund --resource-id ORD-1042 --max-amount 75000 \
+      --capability erp:invoice-pay --resource-id INV-1042 --max-amount 75000 \
       --out approval.json
     ```
 
@@ -2242,8 +2208,8 @@ The flow for a refund of 75000 on order `ORD-1042`:
       privateKeyPem: readFileSync("approver-example__approver-example-key-1.private.pem", "utf8"),
       approverId: "approver-example",
       keyId: "approver-example-key-1",
-      capability: "paytm:refund",
-      resourceId: "ORD-1042",
+      capability: "erp:invoice-pay",
+      resourceId: "INV-1042",
       maxAmount: 75000,
     });
     writeFileSync("approval.json", JSON.stringify(approval));
@@ -2258,8 +2224,8 @@ The flow for a refund of 75000 on order `ORD-1042`:
         private_key_pem=Path("approver-example__approver-example-key-1.private.pem").read_text(),
         approver_id="approver-example",
         key_id="approver-example-key-1",
-        capability="paytm:refund",
-        resource_id="ORD-1042",
+        capability="erp:invoice-pay",
+        resource_id="INV-1042",
         max_amount=75000,
     )
     Path("approval.json").write_text(json.dumps(approval))
@@ -2289,7 +2255,7 @@ The flow for a refund of 75000 on order `ORD-1042`:
   </Step>
   <Step title="Parmana verifies the approval and executes">
     Before authorizing, Parmana checks that the approval is signed by a trusted approver, has
-    not expired or been revoked, is for `paytm:refund`, for this order (the Intent's
+    not expired or been revoked, is for `erp:invoice-pay`, for this invoice (the Intent's
     `parameters.orderId`), covers this amount (the Intent's `parameters.amount`), and has not
     been used before. The gateway runs the same checks again just before release. Then the
     refund runs. The policy says which order and amount to check, in its `approvalSignals`
@@ -2366,7 +2332,7 @@ A rule then reads the signal like any other, for example `{ "fact": "releaseMana
 the approval then names exactly this pull request, `acme/api#42`:
 
 ```bash
-npx tsx scripts/sign-approval.ts   --private-key-file ~/.parmana/lead-sam__lead-sam-key-1.private.pem   --approver-id lead-sam --key-id lead-sam-key-1   --capability github:pr-merge --resource-id "acme/api#42" --out approval.json
+npx tsx scripts/sign-approval.ts   --private-key-file ~/.parmana/lead-sam__lead-sam-key-1.private.pem   --approver-id lead-sam --key-id lead-sam-key-1   --capability erp:invoice-pay --resource-id "INV-1042" --out approval.json
 ```
 
 The change goes live like any policy change: a new version, proposed and approved through
@@ -2388,21 +2354,6 @@ Rules for a declaration, checked when the policy loads:
 - The key must be read by a rule, and must not also be in `boundSignals`.
 - With more than one approval signal, give each its own `artifact`, the signal that carries its
   approval. The default is `approvalArtifact`.
-
-## Approve a HubSpot update or read
-
-`hubspot-deal-update` 1.1.0 authorizes every deal update only with `dealUpdateApproved: true`
-and a signed approval for that deal in `signals.approvalArtifact`, whatever the amount. Sign it
-with `--capability hubspot:deal-update` and the deal id as `--resource-id`, without
-`--max-amount`. The dealstage transition is still checked against the real deal, and a
-transition that is not allowed is refused even with an approval.
-
-Reading a deal (`hubspot:deal-fetch`) has its own policy, `hubspot-deal-read` 1.0.0. It needs
-`readApproved: true` with an approval for that deal, signed with `--capability
-hubspot:deal-fetch`.
-
-Under 1.0.0 an update within the amount threshold needed no person, and only a larger amount
-change needed `preAuthorizedForAmountChange` with an approval. 1.0.0 now fails to load.
 
 ## Review refused requests
 
@@ -2465,13 +2416,13 @@ refund refused for a failed fraud check, or above the maximum, sends nothing.
   "occurredAt": "2026-09-29T10:15:02.114Z",
   "businessTransactionId": "5f0c...",
   "decisionId": "a91e...",
-  "action": "paytm:refund",
-  "target": "paytm://orders/ORD-1042",
+  "action": "erp:invoice-pay",
+  "target": "erp://invoices/INV-1042",
   "policyId": "customer-refund",
   "policyVersion": "1.2.0",
   "reason": "...",
   "approvals": [
-    { "signal": "managerApproved", "resourceId": "ORD-1042", "value": 75000 }
+    { "signal": "managerApproved", "resourceId": "INV-1042", "value": 75000 }
   ]
 }
 ```
@@ -2518,8 +2469,8 @@ Nothing waits for a person. After a manager signs an approval, the agent sends a
 `fraudCheckPassed` are not checked against another system. They can only refuse; the signed approval authorizes.
 
 **An approval covers the action and the resource, not every parameter.** An approval for a
-Slack channel does not fix the message text, and an approval for a HubSpot deal does not fix the
-new amount or stage. The approver trusts the agent with those details for that one use. An
+message channel does not fix the message text, and an approval for a record does not fix the
+new values. The approver trusts the agent with those details for that one use. An
 approval for a payment, an expense or a refund does cover the amount.
 
 **There is no automatic path.** No action is authorized without a person, by design. Adding one
@@ -2528,16 +2479,11 @@ would need a server side check that reads the facts itself, and a change to this
 ## Why each action is bound to one policy
 
 Each request names the policy that should judge it. If Parmana accepted any approved policy, a
-caller could send a refund and name a policy written for Slack messages, which has no refund
+caller could send a refund and name a policy written for messages, which has no refund
 limit. So each live action is bound to one policy name:
 
 ```text
-paytm:refund         ->  customer-refund
-github:pr-merge      ->  github-pr-approval
-github:pr-fetch      ->  github-pr-read
-hubspot:deal-update  ->  hubspot-deal-update
-hubspot:deal-fetch   ->  hubspot-deal-read
-slack:post-message   ->  slack-post-message
+erp:invoice-pay  ->  example-invoice-pay   (a capability registered as an external connector)
 ```
 
 For a built in connector the name is fixed in code; for an external connector it is the
@@ -2559,8 +2505,7 @@ Source: https://docs.parmanasystems.com/guides/connect-an-agent
   `docs/connectors/CONNECTING_AN_AGENT.md` points here. For what happens after
   approval (gateway, connector, the real business system), see [Connect any
   external system](/guides/connect-any-external-system), the [Connector
-  Development Guide](/integrations/connector-development-guide) and
-  `docs/connectors/PAYTM_CONNECTOR.md`.
+  Development Guide](/integrations/connector-development-guide).
 </Info>
 
 ## The mental model
@@ -2586,7 +2531,7 @@ an approval flag, a fraud-check result, a policy name, the model is broken, even
 | #   | You need                                                      | Why                                                                                                                                                         |
 | --- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | A reachable Parmana deployment                                | Nothing to connect to without one.                                                                                                                          |
-| 2   | A capability name (e.g. `paytm:refund`)                       | Parmana authorizes capabilities, not free-form actions. Exact string matching, `refund` ≠ `paytm:refund`.                                                   |
+| 2   | A capability name (e.g. `erp:invoice-pay`)                    | Parmana authorizes capabilities, not free-form actions. Exact string matching, `refund` ≠ `erp:invoice-pay`.                                                |
 | 3   | A deployed policy bound to that capability                    | Decides APPROVE/REJECT. Missing → `404`; a version other than the one in effect → `403 POLICY_DENIED`.                                                      |
 | 4   | The policy's exact `signalsSchema`/`boundSignals`             | You must send every referenced signal; any `boundSignals` entry must equal the real `intent.parameters` value or the request is rejected before evaluation. |
 | 5   | An API key scoped to exactly that capability                  | Your agent's identity, see below.                                                                                                                           |
@@ -2598,7 +2543,7 @@ an approval flag, a fraud-check result, a policy name, the model is broken, even
 
 **1. Read the policy file directly.** `cat policies/customer-refund/1.2.0/policy.json`; don't guess
 field names from a description. Ask the server which version is in effect:
-`GET /policies/in-effect?capability=paytm:refund`.
+`GET /policies/in-effect?capability=erp:invoice-pay`.
 
 **2. Pick the exact capability string.** Case- and character-exact. This single detail is the most
 common integration failure in practice.
@@ -2608,7 +2553,7 @@ common integration failure in practice.
 ```bash
 npx tsx scripts/generate-api-key.ts \
   --caller-id my-refund-agent \
-  --allowed-capabilities "paytm:refund" \
+  --allowed-capabilities "erp:invoice-pay" \
   --credential-holder-type SERVICE
 ```
 
@@ -2661,13 +2606,13 @@ placeholder to fix later, from day one.
   "authorization": {
     "authorizationId": "<uuid>",
     "authorityId": "<uuid>",
-    "purpose": "Authorize Paytm customer refund",
+    "purpose": "Authorize a customer refund",
     "issuedAt": "<iso8601>"
   },
   "intent": {
     "intentId": "<uuid>",
     "authorizationId": "<uuid>",
-    "action": "paytm:refund",
+    "action": "erp:invoice-pay",
     "target": "<orderId>",
     "parameters": {
       "orderId": "<orderId>",
@@ -2802,7 +2747,7 @@ Follow it literally, as `agents/integrate` is followed. If your situation is not
 | `PARMANA_URL`      | The Parmana server, without a trailing slash.                                                                                                        | Step 1.                                                                                                  |
 | `PROPOSER_KEY`     | The maker's API key, added as a human (`credentialHolderType USER`).                                                                                 | `GET /callers/me` answers `200`.                                                                         |
 | `APPROVER_KEY`     | A second person's API key, added as a human, with a step up public key registered on it, and that person's step up private key on their own machine. | See [Policy lifecycle and approvals](/guides/policy-lifecycle-and-approvals), "Set up the people, once". |
-| `CAPABILITY`       | The action, `namespace:verb`, for example `erp:create-invoice`. Lowercase letters and digits, words joined by `-` or `_`, at most 128 characters.    | Not in a built in namespace: `paytm`, `hubspot`, `github`, `slack`, `test`.                              |
+| `CAPABILITY`       | The action, `namespace:verb`, for example `erp:create-invoice`. Lowercase letters and digits, words joined by `-` or `_`, at most 128 characters.    | Not in a built in namespace (for example `test`).                                                        |
 | `POLICY_NAME`      | The policy that governs `CAPABILITY`, for example `erp-invoice`.                                                                                     | Lowercase letters, digits and `-`.                                                                       |
 | `POLICY_VERSION`   | Its version, for example `1.0.0`.                                                                                                                    |                                                                                                          |
 | `ENDPOINT_URL`     | Where the endpoint will be reached, for example `https://erp.example.com/parmana/release`.                                                           | `https`, a host name with a domain, no IP address, no `localhost`, resolving only to public addresses.   |
@@ -3115,12 +3060,9 @@ nothing was done. The example endpoints take this check as `conditionsHold` (Typ
 Source: https://docs.parmanasystems.com/integrations/connector-development-guide
 
 <Info>
-  **[AVAILABLE] as a library**, `packages/connector-sdk`, **[AVAILABLE] wired
-  into the default server** for HubSpot, GitHub, Paytm, and Slack, each
-  registering only when its own credentials are configured. Adding another
-  connector in code is a code change, see the warning below. To connect a system
-  you run an HTTPS endpoint for, with no code change, register an external
-  connector instead: [Connect any external
+  **[AVAILABLE] as a library**, `packages/connector-sdk`. Parmana ships no
+  built-in connector. To connect a system with no code change, register an
+  external connector instead: [Connect any external
   system](/guides/connect-any-external-system).
 </Info>
 
@@ -3174,15 +3116,6 @@ capability throws at connector construction, not at execution time. By conventio
 `execution-control`'s `DefaultConnectorPolicy` already checks unchanged.
 
 ## Registering a connector
-
-**This step is internal, not something `npm install @parmana/connector-sdk` alone gives you.**
-`@parmana/connector-sdk` lets you build and test a `Connector` in isolation. Wiring a built
-connector into a live Parmana deployment happens through `GatewayConnectorRegistry`
-(`@parmana/execution-gateway`) — a private, unpublished package internal to this repository,
-the same way `packages/api/src/bootstrap/*` registers HubSpot, GitHub, Paytm, and Slack
-today. If you're building a connector against the published `@parmana/connector-sdk` for your
-own deployment, this section shows the shape of that internal step, not an API surface you can
-call from outside this repository.
 
 ```typescript
 import { GatewayConnectorRegistry } from "@parmana/execution-gateway";
@@ -3271,151 +3204,6 @@ ID, redacted request/response summaries, timestamps, and a hash computed by the 
 `TrustRecordHasher`, attached at `ExecutionResult.metadata.connector`. See
 [Execution Trust Record](/concepts/execution-trust-records) for how this reaches the Trust Record
 without any change to its schema or hashing pipeline.
-
-## What reaching the default server actually requires
-
-<Warning>
-This is the part that's easy to assume is configuration and isn't. A capability is only
-reachable on the default server when its connector is registered in
-`createConnectorRegistry.ts`, gated behind that connector's own credentials being
-configured. There is no unconditional or environment-only registration path: a capability
-with a signed `APPROVED` decision but no registered connector fails closed at dispatch, it
-never silently succeeds. The real, current registration pattern, copied verbatim from
-source:
-
-```typescript
-// packages/api/src/bootstrap/createConnectorRegistry.ts (abridged, real source)
-const hubspotCredentialProvider = createHubSpotCredentialProvider();
-if (hubspotCredentialProvider === undefined) {
-  console.warn({
-    event: "hubspot_connector_unavailable",
-    reason: "HUBSPOT_PRIVATE_APP_TOKEN is not configured.",
-  });
-} else {
-  registrations.push({
-    connector: createHubSpotConnector(),
-    metadata: HubSpotMetadata,
-    connectorIdentity: {
-      connectorId: "hubspot",
-      publicIdentity: "spiffe://parmana/connectors/hubspot",
-      authenticationMetadata: {},
-    },
-    credentialProvider: hubspotCredentialProvider,
-    policy: new DefaultConnectorPolicy(authenticator, sessions),
-    gatewayAuthentication,
-    crypto,
-    audit,
-  });
-}
-```
-
-Adding a built in connector to the running server is more than one file. Slack, the most recent,
-
-| Where                                                                                                                            | What                                                                                                                                            |
-| -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/connector-<name>/`                                                                                                     | The client for the target system                                                                                                                |
-| `packages/execution-gateway/src/connector-execution/Gateway<Name>Adapter.ts`, `createGateway<Name>Connector.ts`, both `index.ts` | The gateway side that receives verified, frozen content and calls the client                                                                    |
-| `packages/api/src/bootstrap/create<Name>Connector.ts`, `create<Name>CredentialProvider.ts`                                       | Build the connector; resolve its credential (return `undefined` when it is not configured)                                                      |
-| `packages/api/src/bootstrap/createConnectorRegistry.ts`                                                                          | Register it, following the shape above                                                                                                          |
-| `packages/api/src/bootstrap/createConnectorAuthenticator.ts`                                                                     | Trust its identity                                                                                                                              |
-| `packages/api/src/bootstrap/ConnectorCatalog.ts`, `packages/connector-sdk/src/ConnectorFactory.ts`                               | List it                                                                                                                                         |
-| `packages/capability-registry/src/CapabilityPolicyBinding.ts`                                                                    | Bind its capability to one policy name; `assertConnectorCapabilitiesBound` refuses to start with an unbound one                                 |
-| `policies/<name>/<version>/policy.json`                                                                                          | The policy, with `approvalSignals`, then approved through [policy governance](/guides/policy-lifecycle-and-approvals)                           |
-| `packages/api/src/application.ts` and a `create<Name>...SignalVerifier.ts` (optional)                                            | Check a fact against the target system before release, as Slack does for its channel                                                            |
-| `tests/architecture/execution-boundary.test.ts`, `sandbox-connector-variables.test.ts`                                           | List the new connector class; add its variable prefix, and the variables to the guard in `createSandboxOptions.ts`, so the sandbox refuses them |
-
-**Not** `createConnectorRoute.ts`, despite its name: that file's `route()` function is dead
-code in the current production wiring (`createExecutionGateway.ts` always supplies
-`executionControl.service`, which makes the only branch that calls `route()` unreachable);
-editing it has no effect on which connector actually handles a request. There is no dynamic
-registration path for a built in connector and no environment variable that adds one. To
-connect a system with no code change, register it as an [external
-connector](/guides/connect-any-external-system) instead. HubSpot, GitHub, Paytm and Slack are
-the built in connectors, see [HubSpot](/integrations/hubspot) for that connector specifically.
-
-</Warning>
-
-## The pattern, proven twice: Razorpay and HubSpot
-
-<Note>
-  Razorpay was deliberately removed from the codebase in full. The lessons below
-  are kept as a historical, worked example (a second real connector, built after
-  HubSpot's own lessons already existed to apply), not a claim that Razorpay is
-  still registered anywhere in this codebase today.
-</Note>
-
-Both connectors implemented everything above, but the two builds themselves are the more
-useful lesson: Razorpay learned each point below the hard way, on a running connector,
-after the fact. HubSpot applied all of it from its first version instead. Read this before
-starting a new connector.
-
-**Scope to one narrow action first.** Don't build a connector for a whole external API
-surface. Razorpay started with refund creation only, not payouts, not subscriptions, not
-the rest of the payments API. HubSpot started with one property update on one object type,
-a Deal's `dealstage`, optionally alongside `amount`, not Contacts, not Companies, not
-delete. Widen scope in a later milestone, once the first one is fully proven, see
-[HubSpot](/integrations/hubspot)'s own [ROADMAP] section on its page.
-
-**Two structural guards belong in a connector's first version, not a follow-up fix.**
-
-- _Refuse a placeholder test credential against the real endpoint, before any network
-  call._ Don't rely on the vendor happening to reject it, that's an accident of their
-  behavior, not something this codebase controls. `RazorpayConnector` didn't have this
-  check originally, it survived only because Razorpay's real API happened to reject an
-  unrecognized key — a defense-in-depth fix was added after the fact.
-  The HubSpot connector refuses its own placeholder token against
-  `https://api.hubapi.com` from its first commit, see [HubSpot](/integrations/hubspot) and
-  `packages/execution-gateway/src/connector-execution/GatewayHubSpotAdapter.ts`.
-- _Read the documented test-credential environment variable name directly, never through a
-  bridge variable._ `createRazorpayCredentialProvider.ts`'s test-mode branch originally read
-  a word-order-swapped bridge variable instead of the name `.env.example` actually
-  documented, fixed only after it drifted out of sync.
-  `createHubSpotCredentialProvider.ts` reads `TEST_HUBSPOT_PRIVATE_APP_TOKEN`, the exact
-  documented name, with no bridge to get wrong.
-
-**Apply `boundSignals` hardening from the policy's first version, don't wait for an
-adversarial-testing session to find the gap.** `razorpay-refund/1.0.0` didn't declare
-`boundSignals` until a live demonstration showed a caller could declare small, verified
-signals while `intent` executed something else, closed in an adversarial-testing
-hardening session. `hubspot-deal-update/1.0.0` declares
-`boundSignals` binding `proposedDealStage`/`proposedAmount` to their `intent.parameters`
-fields from its first commit, closing the same class of gap before any live demonstration
-of it existed. See [Policies and the decision](/concepts/policies-and-the-decision).
-
-**Require a signed human approval in every approve rule, reads included.** No AI agent action
-is authorized without one. `PolicyValidator` refuses to load a policy whose approve rule does
-not require a fact from `approvalSignals` with `is_true` at its top level, so a new connector's
-policy must declare one, with `resourceId` naming what the approval covers (the Intent's
-`target`, or a path such as `parameters.dealId`) and, for an amount, `value`. Give a read its
-own policy, like `github-pr-read` and `hubspot-deal-read`, so its approval names only what is
-read. See [Human approval](/concepts/human-approval).
-
-**Test order, every time:**
-
-1. **Hermetic first.** The full authorize → verify → execute → confirm chain against a mock
-   server, zero network calls. Both connectors' unit suites run this way on every
-   `npm test`.
-2. **Policy-denial-makes-zero-calls, proven at two layers.** A direct state check against
-   the mock server (nothing changed), and a `fetch` spy at the HTTP boundary (literally zero
-   calls reached the mock or real endpoint). See [HubSpot](/integrations/hubspot) for what
-   that looks like in a captured response.
-3. **A gated live suite last**, behind an `ALLOW_LIVE_<CONNECTOR>=1` flag checked alongside a
-   real test credential, skipped by default so a routine `npm test` never makes a live call
-   by accident.
-
-**Prefer a non-destructive live-test action where the target system allows one.** Read live,
-apply a small reversible change, verify independently, revert, in the same run. HubSpot's
-live suite nudges a real test deal's `amount` by a small within-threshold delta and reverts
-it before finishing, safe to rerun indefinitely. Razorpay's refund is irreversible by
-construction, its captured test payment's refundable remainder depletes by a fixed amount
-on every live run — a real operational cost of testing against a real endpoint.
-
-**Disclose what actually happened, including when the mechanism catches your own mistake.**
-HubSpot's first live amount-change test run failed with a policy denial the test author
-didn't expect, because the test's own signals payload omitted `proposedAmount`,
-`SignalIntentBinder` correctly rejected the mismatch before the intended amount-threshold
-rule ever ran. That's not a connector defect, it's the binding working exactly as designed,
-against a test's own mistake this time instead of a caller's.
 
 ## Troubleshoot
 
@@ -3709,12 +3497,12 @@ wins, with nothing surfacing that the second rule is partly or wholly shadowed.
   logs a `policy_rule_conflict_detected` warning naming them. It is **advisory,
   not fail-closed** (unlike `boundSignals` coverage): a flagged pair might be a
   genuine bug, or might be an intentional priority ordering between two
-  violation reasons that can legitimately co-occur (this repo's own
-  `hubspot-deal-update` policy has exactly one such case). It also only proves
-  `NO_OVERLAP` for condition shapes it can fully reason about (same-fact
-  `eq`/`neq`/numeric comparisons, and `all` conjunctions where at least one
-  conjunct is provably disjoint from the other side), anything more complex is
-  reported as `NEEDS_REVIEW`, an honest "can't tell," never a guessed answer.
+  violation reasons that can legitimately co-occur (this repo's own reference
+  policies have such a case). It also only proves `NO_OVERLAP` for condition
+  shapes it can fully reason about (same-fact `eq`/`neq`/numeric comparisons,
+  and `all` conjunctions where at least one conjunct is provably disjoint from
+  the other side), anything more complex is reported as `NEEDS_REVIEW`, an
+  honest "can't tell," never a guessed answer.
 </Note>
 
 ## Troubleshoot
@@ -3898,7 +3686,7 @@ On approve, the server does this, in order, and stops at the first failure:
 
 ### 6. It takes effect
 
-For an action bound to a policy (such as `paytm:refund` to `customer-refund`), the version in effect is the one with the most recent approval, so the approval is the release: no deploy. From then on:
+For an action bound to a policy (such as `erp:invoice-pay` to `customer-refund`), the version in effect is the one with the most recent approval, so the approval is the release: no deploy. From then on:
 
 - Agents must name that version. A request naming any other version, including an older one that was approved before, is refused before any rule runs, with a message naming the version in effect.
 - To roll back, approve the older version again. The newest approval wins.
@@ -3982,7 +3770,7 @@ The private key stays on the manager's machine. The public key is trusted throug
 npx tsx scripts/sign-approval.ts \
   --private-key-file ~/.parmana/approver-example__approver-example-key-1.private.pem \
   --approver-id approver-example --key-id approver-example-key-1 \
-  --capability paytm:refund --resource-id ORD-1042 --max-amount 75000 --out approval.json
+  --capability erp:invoice-pay --resource-id INV-1042 --max-amount 75000 --out approval.json
 ```
 
 The agent sends a new request with the approval signal set to `true` and the contents of `approval.json` in `signals.approvalArtifact`. Parmana checks the approver is trusted and not revoked, the Ed25519 signature, the expiry, the action, the resource and the amount taken from the request, never from the agent's signals, and that the approval was not used before. It checks again at the gateway just before release. Without a valid approval the request is refused:
@@ -4482,10 +4270,10 @@ refund that needs a manager, Parmana refuses it and the agent must send a new re
 approval attached. Approval notifications tell the approver right away, with exactly what they
 need to sign, in one or both of two ways:
 
-| Channel | You set                                           | Best for                                                                   |
-| ------- | ------------------------------------------------- | -------------------------------------------------------------------------- |
-| Email   | `APPROVAL_EMAIL_TO`, and the Resend integration   | A person's inbox, with nothing to host. [Set up email](#email).            |
-| Webhook | `APPROVAL_WEBHOOK_URL`, `APPROVAL_WEBHOOK_SECRET` | Your own system: Slack, a ticket, a queue. [Set up the webhook](#webhook). |
+| Channel | You set                                           | Best for                                                                            |
+| ------- | ------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Email   | `APPROVAL_EMAIL_TO`, and the Resend integration   | A person's inbox, with nothing to host. [Set up email](#email).                     |
+| Webhook | `APPROVAL_WEBHOOK_URL`, `APPROVAL_WEBHOOK_SECRET` | Your own system: a chat channel, a ticket, a queue. [Set up the webhook](#webhook). |
 
 Both carry the same facts and are sent under the same rule, below.
 
@@ -4500,8 +4288,8 @@ sequenceDiagram
     S->>W: POST approval.needed (signed)
     S-->>G: 403 POLICY_DENIED
     W->>W: Verify the signature
-    W->>M: Slack, email, ticket: "Refund ORD-1042, 75000, needs you"
-    M->>M: Sign an approval for ORD-1042 up to 75000
+    W->>M: chat, email, ticket: "Refund INV-1042, 75000, needs you"
+    M->>M: Sign an approval for INV-1042 up to 75000
     M->>G: The approval
     G->>S: POST /execute (same refund, approval attached)
     S-->>G: 200, authorized
@@ -4560,20 +4348,20 @@ is not valid stops the server at startup, so a broken setup cannot fail silently
 A notification email looks like this:
 
 ```text
-Subject: Approval needed: paytm:refund ORD-1042 up to 75000
+Subject: Approval needed: erp:invoice-pay INV-1042 up to 75000
 
 A request was refused because it needs a signed approval.
 
-Action:       paytm:refund
-Target:       paytm://orders/ORD-1042
+Action:       erp:invoice-pay
+Target:       erp://invoices/INV-1042
 Policy:       customer-refund 1.2.0
 Transaction:  5f0c2a7e-3d7b-4d0e-9a55-2f6d8b1c4e90
 Refused at:   2026-09-29T10:15:02.114Z
 Sent by:      refund-agent
 
 To approve, sign on your own machine:
-  capability  paytm:refund
-  resourceId  ORD-1042
+  capability  erp:invoice-pay
+  resourceId  INV-1042
   maxAmount   75000
   signal      managerApproved
 
@@ -4592,7 +4380,7 @@ same rules as the webhook: one attempt, a failure is logged and never changes th
 <Steps>
   <Step title="Create an endpoint">
     Any HTTPS endpoint that accepts a JSON `POST` and answers `2xx` within 3 seconds: a small
-    function of your own, a Slack workflow webhook behind a relay, or an automation service.
+    function of your own, a chat workflow webhook behind a relay, or an automation service.
   </Step>
   <Step title="Generate a secret">
     ```bash
@@ -4627,14 +4415,14 @@ same rules as the webhook: one attempt, a failure is logged and never changes th
   "occurredAt": "2026-09-29T10:15:02.114Z",
   "businessTransactionId": "5f0c2a7e-3d7b-4d0e-9a55-2f6d8b1c4e90",
   "decisionId": "a91e6c1d-0b8f-4f3a-8e57-6f2d1c9b7a44",
-  "action": "paytm:refund",
-  "target": "paytm://orders/ORD-1042",
+  "action": "erp:invoice-pay",
+  "target": "erp://invoices/INV-1042",
   "policyId": "customer-refund",
   "policyVersion": "1.2.0",
   "reason": "No rule matched.",
   "submittedBy": "refund-agent",
   "approvals": [
-    { "signal": "managerApproved", "resourceId": "ORD-1042", "value": 75000 }
+    { "signal": "managerApproved", "resourceId": "INV-1042", "value": 75000 }
   ]
 }
 ```
@@ -4656,7 +4444,7 @@ same rules as the webhook: one attempt, a failure is logged and never changes th
 </ResponseField>
 
 <ResponseField name="action" type="string" required>
-  The action that needs approval, such as `paytm:refund`. Sign with this as
+  The action that needs approval, such as `erp:invoice-pay`. Sign with this as
   `capability`.
 </ResponseField>
 
@@ -5123,7 +4911,7 @@ The operator of the server issues keys. There is no API to create one. On a mach
 
 ```bash
 npx tsx scripts/generate-api-key.ts --caller-id refund-agent \
-  --allowed-capabilities paytm:refund
+  --allowed-capabilities erp:invoice-pay
 ```
 
 Other options: `--allowed-principal-ids a,b`, `--credential-holder-type USER`, and `--generate-step-up-key` (with
@@ -5131,7 +4919,7 @@ Other options: `--allowed-principal-ids a,b`, `--credential-holder-type USER`, a
 
 ```text
 Add this entry to PARMANA_API_KEYS (a JSON array):
-{"callerId":"refund-agent","keyHash":"<64 hex characters>","allowedCapabilities":["paytm:refund"]}
+{"callerId":"refund-agent","keyHash":"<64 hex characters>","allowedCapabilities":["erp:invoice-pay"]}
 ```
 
 Give the raw key to the caller over a secure channel, add the entry to `PARMANA_API_KEYS`, and restart or redeploy
@@ -5427,7 +5215,7 @@ Source: https://docs.parmanasystems.com/api-reference/error-catalog
 
 | Status | Code                         | Message                                                                                                                            | Condition                                                              | What to do                                                                                                                |
 | ------ | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| 400    | none                         | `capability is required, for example ?capability=paytm:refund.`                                                                    | The `capability` query parameter is missing or blank                   | Add `?capability=<capability>`.                                                                                           |
+| 400    | none                         | `capability is required, for example ?capability=erp:invoice-pay.`                                                                 | The `capability` query parameter is missing or blank                   | Add `?capability=<capability>`.                                                                                           |
 | 403    | `CAPABILITY_NOT_ALLOWED`     | `Caller is not permitted to invoke this capability.`                                                                               | A non human caller asked about a capability its key may not invoke     | Ask only about capabilities your key may invoke (`GET /callers/me`).                                                      |
 | 404    | `CAPABILITY_NOT_BOUND`       | `No policy is bound to capability "<capability>".`                                                                                 | No policy governs this capability on this deployment                   | Check the capability name. Every request for it would be refused.                                                         |
 | 409    | `NO_APPROVED_POLICY_VERSION` | `Every request for "<capability>" is refused right now: <reason>.`                                                                 | The bound policy has no approved version yet                           | Every request is refused until a version is approved through [policy governance](/guides/policy-lifecycle-and-approvals). |
@@ -5888,7 +5676,7 @@ Added 2026-09-14, ships in v1.1.2, published, available via a plain
 `metadata.businessTransactionId` must equal `businessTransactionId`,
 `authorization.authorityId` must equal `authority.authorityId`, `intent.authorizationId` must
 equal `authorization.authorizationId`. Every "X must match Y" `400` documented in
-[the end-to-end Paytm guide](/guides/end-to-end-paytm-flow) came from hand-building a request
+[the error catalog](/api-reference/error-catalog) came from hand-building a request
 object and getting one of those wrong. `createBusinessTransaction()` derives all three
 automatically:
 
@@ -6025,7 +5813,7 @@ equal a value of the Intent (`signals.bound`), and the signals that need a signe
 resource and amount are in the request (`signals.approval`). It never returns the rules.
 
 ```typescript
-const inEffect = await client.policyInEffect("paytm:refund");
+const inEffect = await client.policyInEffect("erp:invoice-pay");
 
 inEffect.policy; // { name: "customer-refund", version: "1.2.0", schemaVersion: "1.0.0" }
 inEffect.signals.facts; // ["fraudCheckPassed", "managerApproved", "refundAmount", "refundEligible"]
@@ -6092,8 +5880,8 @@ const approval = signApproval({
   ),
   approverId: "approver-example",
   keyId: "approver-example-key-1",
-  capability: "paytm:refund",
-  resourceId: "ORD-1042",
+  capability: "erp:invoice-pay",
+  resourceId: "INV-1042",
   maxAmount: 75000, // leave out when the policy declares no amount
 });
 
@@ -6159,7 +5947,7 @@ const client = new ParmanaClient({
 });
 
 const me = await client.caller();
-// { callerId: "local-operator", allowedPrincipalIds: ["local-operator"], allowedCapabilities: ["paytm:refund"], unrestrictedCapabilities: false }
+// { callerId: "local-operator", allowedPrincipalIds: ["local-operator"], allowedCapabilities: ["erp:invoice-pay"], unrestrictedCapabilities: false }
 
 const key = await client.publicKey("default");
 // key.pem is the SPKI PEM that signs Trust Records, Refusal Records and Execution Intents
@@ -6358,14 +6146,6 @@ for them would describe behavior the real API doesn't have.
 ## Next
 
 <CardGroup cols={2}>
-  <Card
-    title="End-to-end: agent → Parmana → Paytm"
-    icon="route"
-    href="/guides/end-to-end-paytm-flow"
-  >
-    The full, no-ambiguity runbook this SDK builds toward: real infrastructure,
-    every error message, every fix.
-  </Card>
   <Card title="Python SDK" icon="python" href="/sdks/python">
     The other maintained SDK: same bearer-key model, generated (not
     hand-maintained) models.
@@ -6821,14 +6601,6 @@ for exactly which three id pairs the server cross-checks.
     endpoint.
   </Card>
   <Card
-    title="End-to-end: agent → Parmana → Paytm"
-    icon="route"
-    href="/guides/end-to-end-paytm-flow"
-  >
-    The same flow against a real connector and real infrastructure, not the
-    local test fixture.
-  </Card>
-  <Card
     title="Verify independently"
     icon="check-double"
     href="/guides/verify-independently"
@@ -7056,7 +6828,7 @@ Added 2026-09-14, ships in v1.1.2, published, available via a plain
 `metadata.business_transaction_id` must equal `business_transaction_id`,
 `authorization.authority_id` must equal `authority.authority_id`, `intent.authorization_id`
 must equal `authorization.authorization_id`. Every "X must match Y" `400` documented in
-[the end-to-end Paytm guide](/guides/end-to-end-paytm-flow) came from hand-building a request
+[the error catalog](/api-reference/error-catalog) came from hand-building a request
 and getting one of those wrong. `create_business_transaction()` derives all three
 automatically:
 
@@ -7183,7 +6955,7 @@ a `PolicyInEffect`: the policy to declare and what the request must carry. Signa
 are never converted to snake_case.
 
 ```python
-in_effect = client.policy_in_effect("paytm:refund")
+in_effect = client.policy_in_effect("erp:invoice-pay")
 
 in_effect.policy.version          # "1.2.0"
 in_effect.policy.schema_version   # "1.0.0"
@@ -7251,8 +7023,8 @@ approval = sign_approval(
     private_key_pem=Path("approver-example__approver-example-key-1.private.pem").read_text(),
     approver_id="approver-example",
     key_id="approver-example-key-1",
-    capability="paytm:refund",
-    resource_id="ORD-1042",
+    capability="erp:invoice-pay",
+    resource_id="INV-1042",
     max_amount=75000,  # leave out when the policy declares no amount
 )
 
@@ -7316,7 +7088,7 @@ client = ParmanaClient(endpoint="http://127.0.0.1:3000", api_key="pk_local_...")
 
 me = client.caller()
 # CallerIdentity(caller_id='local-operator', allowed_principal_ids=['local-operator'],
-#                allowed_capabilities=['paytm:refund'], unrestricted_capabilities=False)
+#                allowed_capabilities=['erp:invoice-pay'], unrestricted_capabilities=False)
 
 key = client.public_key("default")
 # key.pem is the SPKI PEM that signs Trust Records, Refusal Records and Execution Intents
@@ -7455,14 +7227,6 @@ a step up authorization signed in Python and accepted by the server's own TypeSc
 ## Next
 
 <CardGroup cols={2}>
-  <Card
-    title="End-to-end: agent → Parmana → Paytm"
-    icon="route"
-    href="/guides/end-to-end-paytm-flow"
-  >
-    The full, no-ambiguity runbook this SDK builds toward: real infrastructure,
-    every error message, every fix.
-  </Card>
   <Card title="TypeScript SDK" icon="js" href="/sdks/typescript">
     The other maintained SDK: same bearer-key model, same error taxonomy shape.
   </Card>
@@ -7950,14 +7714,6 @@ of mistake one that cannot arise through it.
   >
     Error handling, audit logging, and a deployment checklist.
   </Card>
-  <Card
-    title="End-to-end: agent → Parmana → Paytm"
-    icon="route"
-    href="/guides/end-to-end-paytm-flow"
-  >
-    The same flow against a real connector and real infrastructure, not the
-    local test fixture.
-  </Card>
 </CardGroup>
 
 ---
@@ -7998,7 +7754,6 @@ PARMANA_GATEWAY_KEY_ID=gateway       # optional, defaults to "gateway"
 TRUST_PROFILE=v1
 LOG_LEVEL=...                # read into config; gates @parmana/shared's createLogger/getLogger, not yet threaded through every console.* call site, see Roadmap
 PARMANA_POLICY_DIR=...
-HUBSPOT_PRIVATE_APP_TOKEN=...  # credential for the hubspot connector, omit to leave it unregistered
 PARMANA_API_KEYS=...         # required, fails closed if unset, see Authentication
 ```
 
@@ -8048,9 +7803,7 @@ skips needing this key.
   fleet-wide. Outside `NODE_ENV=test`, `SupabaseNonceStore` is durable and shared across
   replicas pointed at the same Supabase project, but this deployment shape is still one
   process behind no load balancer.
-- **No connectors registered unless their credentials are configured.** HubSpot, GitHub,
-  Paytm, and Slack each register only when their own environment variable is set
-  (`HUBSPOT_PRIVATE_APP_TOKEN` and similar). See [The gateway](/concepts/the-gateway) for
+- **No built in connectors.** Parmana ships none. See [The gateway](/concepts/the-gateway) for
   what adding a new connector requires.
 
 ## Node version
@@ -8153,7 +7906,7 @@ If a request later fails with `PGRST205` ("Could not find the table"), the schem
 Each caller gets its own key. Generate one for your first caller:
 
 ```bash
-npm run generate:api-key -- --caller-id my-agent --allowed-capabilities paytm:refund
+npm run generate:api-key -- --caller-id my-agent --allowed-capabilities erp:invoice-pay
 ```
 
 The command prints the raw key **once**, and a JSON entry. Give the raw key to the caller and store it nowhere else. Keep the JSON entry for step 5.
@@ -8173,12 +7926,10 @@ The second command prints a bearer key, a step up private key, and a JSON entry.
 
 A connector registers only when its settings are present. If you do not set a connector, the server still starts and every request for that connector's actions fails. For the refund connector set both of these, or neither:
 
-| Variable                        | Value                                              |
-| ------------------------------- | -------------------------------------------------- |
-| `PAYTM_CONNECTOR_URL`           | The `https://` URL of your `example-agent` service |
-| `PAYTM_CONNECTOR_SHARED_SECRET` | The shared secret that service expects             |
+| Variable | Value |
+| -------- | ----- |
 
-The other connectors (HubSpot, Slack, GitHub) are in the [connector section of the environment reference](/deployment/environment-variables#connectors). To keep connector credentials in AWS Secrets Manager set `PARMANA_SECRETS_PROVIDER=aws-secrets-manager`.
+To keep any connector credential in AWS Secrets Manager set `PARMANA_SECRETS_PROVIDER=aws-secrets-manager`.
 
 ## Step 5: Set the environment on your host
 
@@ -8337,7 +8088,7 @@ Parmana checks the actions that go through it. An agent host that can open its o
 Requirements for every host that runs an agent:
 
 1. **Outbound traffic is allowed only to the Parmana endpoint.** Enforce this at the network layer: a firewall rule, a container network policy, or a sandbox with no default route. An application-level setting is not enough, because the agent can change it.
-2. **No connector credential is present on an agent host.** Connector credentials (`HUBSPOT_PRIVATE_APP_TOKEN`, `PAYTM_CONNECTOR_SHARED_SECRET`, GitHub App keys and similar) belong only on the Parmana host. The agent holds its own Parmana caller key and nothing else.
+2. **No connector credential is present on an agent host.** Connector credentials (for example a signing or endpoint secret) belong only on the Parmana host. The agent holds its own Parmana caller key and nothing else.
 3. **Check it.** From the agent host, each of these must fail, and the Parmana endpoint must succeed:
 
 ```bash
@@ -8687,7 +8438,7 @@ Each released action now costs **two** `kms:Sign` calls in the request, one for 
 Not covered by those runs:
 
 1. **The Vercel OIDC role.** The runs used the local AWS credential chain.
-2. **A real Paytm refund.** The agent chain ran with fake Paytm staging credentials, on purpose, so Paytm rejected the call. No refund was sent.
+2. **A real payment provider.** This check did not use one, so no payment was sent.
 3. **Key rotation and other regions.** Neither was tested.
 
 ## Next
@@ -8740,7 +8491,7 @@ else has a safe default.
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `NODE_ENV`           | `production`                                                                                                                                           |
 | `PARMANA_POLICY_DIR` | `./policies`                                                                                                                                           |
-| `PARMANA_API_KEYS`   | `[{"callerId":"my-agent","keyHash":"<64 hex characters>","allowedCapabilities":["paytm:refund"]}]`                                                     |
+| `PARMANA_API_KEYS`   | `[{"callerId":"my-agent","keyHash":"<64 hex characters>","allowedCapabilities":["erp:invoice-pay"]}]`                                                  |
 | `PARMANA_STORAGE`    | `supabase`                                                                                                                                             |
 | `DATABASE_URL`       | `postgresql://postgres.<project>:<password>@<host>:6543/postgres`                                                                                      |
 | `PARMANA_KEY_DIR`    | `./keys` (with `default.private.pem`, `default.public.pem`, `gateway.private.pem` and `gateway.public.pem` inside), or use `PARMANA_KEY_MATERIAL_JSON` |
@@ -8772,7 +8523,7 @@ A JSON array. Each entry is an object:
 | ---------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `callerId`             | Yes      | A non empty string that names the caller.                                                                                                                                                                                                                              |
 | `keyHash`              | Yes      | The SHA 256 hash of the raw key, as 64 lowercase hexadecimal characters. Only the hash is ever stored.                                                                                                                                                                 |
-| `allowedCapabilities`  | No       | The actions (`intent.action`) this key may invoke, for example `["paytm:refund"]`. If unset or empty the key may invoke **nothing**. The single value `"*"` allows every capability.                                                                                   |
+| `allowedCapabilities`  | No       | The actions (`intent.action`) this key may invoke, for example `["erp:invoice-pay"]`. If unset or empty the key may invoke **nothing**. The single value `"*"` allows every capability.                                                                                |
 | `allowedPrincipalIds`  | No       | The `authority.principalId` values this key may assert. If unset the key may only assert its own `callerId`.                                                                                                                                                           |
 | `allowedTenantIds`     | No       | The `metadata.tenantId` values this key may send. The tenant id picks the signing key `tenant.<tenantId>`, so it must come from the key. If unset or empty, a request with a `tenantId` is refused with `403 TENANT_NOT_ALLOWED`; a request without one is unaffected. |
 | `credentialHolderType` | No       | `USER`, `ROLE`, `SERVICE` or `ORGANIZATION`. Only `USER` keys may use the policy governance endpoints. If unset the key is treated as not human.                                                                                                                       |
@@ -8781,7 +8532,7 @@ A JSON array. Each entry is an object:
 Generate an entry and its raw key with:
 
 ```bash
-npm run generate:api-key -- --caller-id my-agent --allowed-capabilities paytm:refund
+npm run generate:api-key -- --caller-id my-agent --allowed-capabilities erp:invoice-pay
 ```
 
 The command prints the raw key **once**, and the JSON entry to put in `PARMANA_API_KEYS`. Give the raw key to the caller
@@ -8799,7 +8550,7 @@ that names `PARMANA_API_KEYS`.
 | `POLICY_EXECUTION_VERIFICATION_ENFORCED`        | No       | Enforced             | `true` only has an effect, and only in `test` and `development` | Requires every policy to have a signed approval record whose hash matches the live policy before it can authorize or release anything. In production, or with `NODE_ENV` unset or any value other than `test` or `development`, it is always on and this variable is ignored. |
 | `PARMANA_ALLOW_UNGOVERNED_POLICY`               | No       | Off                  | `true` only has an effect in `test` and `development`           | Skips the governance approval record check for policies. Ignored in every other `NODE_ENV`, and ignored when `POLICY_EXECUTION_VERIFICATION_ENFORCED=true`. The policy content hash is still required. Never set it in a deployment.                                          |
 | `PARMANA_SKIP_DOTENV`                           | No       | Off                  | `1` only                                                        | Stops the loaders from reading a `.env` file. The test suite sets it, so a developer's local `.env` cannot change test results.                                                                                                                                               |
-| `PARMANA_VERIFIER_KEY_ID`                       | No       | `signal-verifier`    | Any key id that exists in `PARMANA_KEY_DIR` or KMS              | The key the signal verifier signs its read-only HubSpot fetches with. The gateway accepts this key only for `hubspot:deal-fetch`, so a leaked verifier key cannot release a write. The key must be provisioned before a HubSpot deal update can verify its signals.           |
+| `PARMANA_VERIFIER_KEY_ID`                       | No       | `signal-verifier`    | Any key id that exists in `PARMANA_KEY_DIR` or KMS              | The key the signal verifier signs its read-only fetches with. The gateway accepts this key only for read capabilities, so a leaked verifier key cannot release a write.                                                                                                       |
 | `POLICY_GOVERNANCE_INTEGRITY_CHECK_INTERVAL_MS` | No       | `300000` (5 minutes) | Milliseconds                                                    | How often the server re checks that live policy files still match their approval records. A value of zero or less turns the periodic check off and leaves only the startup check. A value that is not a number uses the default.                                              |
 
 ## Storage
@@ -8889,13 +8640,13 @@ is the value multiplied by the number of instances, and the server logs `rate_li
 
 Production sets none of these except, if it wants a browser console, `PARMANA_CORS_ORIGINS`.
 
-| Variable                               | Required                    | Default              | Values or format                                                                  | What it does                                                                                                                                                                                                                                                                                                                                             |
-| -------------------------------------- | --------------------------- | -------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PARMANA_CORS_ORIGINS`                 | No                          | None: no CORS header | Origins separated by commas, each exactly `https://host[:port]`, no path or slash | Lets a browser on these origins call the API. Only a listed origin is named in `Access-Control-Allow-Origin`, never `*`; a preflight from any other origin gets `403`. The key is still required on every request that needs one.                                                                                                                        |
-| `PARMANA_SANDBOX`                      | No                          | Off                  | `true`, `false` or unset                                                          | Sandbox mode: mounts `POST /sandbox/approvals`, the demo approver. Refused at startup when caller authentication is disabled or any connector variable below (Paytm, HubSpot, Slack, GitHub, including `PARMANA_GITHUB_VERCEL_CONNECT_CONNECTOR_ID`) is defined, even empty, so a sandbox can never reach a real system. **Never set it in production.** |
-| `PARMANA_SANDBOX_APPROVER_ID`          | With `PARMANA_SANDBOX=true` | None                 | The approver id, such as `sandbox-demo-approver`                                  | The demo approver. Its public key must be added in the sandbox through an approver change, like any approver. Set without `PARMANA_SANDBOX=true`, the server refuses to start.                                                                                                                                                                           |
-| `PARMANA_SANDBOX_APPROVER_KEY_ID`      | With `PARMANA_SANDBOX=true` | None                 | The key id, such as `sandbox-demo-approver-key-1`                                 | The demo approver's key id.                                                                                                                                                                                                                                                                                                                              |
-| `PARMANA_SANDBOX_APPROVER_PRIVATE_KEY` | With `PARMANA_SANDBOX=true` | None                 | An Ed25519 private key, PEM; one line with literal `\n` is accepted               | Signs the demo approvals. A sandbox key only: it must never be a production approver's key.                                                                                                                                                                                                                                                              |
+| Variable                               | Required                    | Default              | Values or format                                                                  | What it does                                                                                                                                                                                                                                                        |
+| -------------------------------------- | --------------------------- | -------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PARMANA_CORS_ORIGINS`                 | No                          | None: no CORS header | Origins separated by commas, each exactly `https://host[:port]`, no path or slash | Lets a browser on these origins call the API. Only a listed origin is named in `Access-Control-Allow-Origin`, never `*`; a preflight from any other origin gets `403`. The key is still required on every request that needs one.                                   |
+| `PARMANA_SANDBOX`                      | No                          | Off                  | `true`, `false` or unset                                                          | Sandbox mode: mounts `POST /sandbox/approvals`, the demo approver. Refused at startup when caller authentication is disabled or any built in connector variable is defined, even empty, so a sandbox can never reach a real system. **Never set it in production.** |
+| `PARMANA_SANDBOX_APPROVER_ID`          | With `PARMANA_SANDBOX=true` | None                 | The approver id, such as `sandbox-demo-approver`                                  | The demo approver. Its public key must be added in the sandbox through an approver change, like any approver. Set without `PARMANA_SANDBOX=true`, the server refuses to start.                                                                                      |
+| `PARMANA_SANDBOX_APPROVER_KEY_ID`      | With `PARMANA_SANDBOX=true` | None                 | The key id, such as `sandbox-demo-approver-key-1`                                 | The demo approver's key id.                                                                                                                                                                                                                                         |
+| `PARMANA_SANDBOX_APPROVER_PRIVATE_KEY` | With `PARMANA_SANDBOX=true` | None                 | An Ed25519 private key, PEM; one line with literal `\n` is accepted               | Signs the demo approvals. A sandbox key only: it must never be a production approver's key.                                                                                                                                                                         |
 
 ## Local test approver
 
@@ -8907,84 +8658,44 @@ No agent action is authorized without a signed human approval, so a local test s
 
 ## Secrets
 
-| Variable                   | Required | Default | Values or format             | What it does                                                                                                                                                                                                                                                                                                                               |
-| -------------------------- | -------- | ------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `PARMANA_SECRETS_PROVIDER` | No       | `env`   | `env`, `aws-secrets-manager` | How connector credential variables are read. With `env`, the value of a variable such as `HUBSPOT_PRIVATE_APP_TOKEN` **is** the secret. With `aws-secrets-manager`, the value is the **name or ARN of a secret** whose `SecretString` holds the credential, fetched at first use and cached in memory for one hour, never written to disk. |
+| Variable                   | Required | Default | Values or format             | What it does                                                                                                                                                                                                                                                                                             |
+| -------------------------- | -------- | ------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PARMANA_SECRETS_PROVIDER` | No       | `env`   | `env`, `aws-secrets-manager` | How connector credential variables are read. With `env`, the value of the variable **is** the secret. With `aws-secrets-manager`, the value is the **name or ARN of a secret** whose `SecretString` holds the credential, fetched at first use and cached in memory for one hour, never written to disk. |
 
 ## Connectors
 
-A connector registers only when its credentials are present. A missing connector does not stop the server. It logs an
-event such as `slack_connector_unavailable` and requests for that connector's actions fail.
-
-### Paytm refund connector
-
-| Variable                        | Required                             | Default | Values or format                  | What it does                                                                                                                                                    |
-| ------------------------------- | ------------------------------------ | ------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PAYTM_CONNECTOR_URL`           | Both this and the secret, or neither | None    | A URL that starts with `https://` | The URL of the separate `example-agent` service that performs the refund. Outside tests, a URL that does not start with `https://` stops the server at startup. |
-| `PAYTM_CONNECTOR_SHARED_SECRET` | Both this and the URL, or neither    | None    | A string                          | The shared secret Parmana sends to that service. Setting only one of the two stops the server at startup.                                                       |
-| `PAYTM_CONNECTOR_TIMEOUT_MS`    | No                                   | `10000` | Positive number of milliseconds   | How long Parmana waits for that service before failing the call. A value that is not a positive number stops the server.                                        |
-
-### HubSpot connector
-
-| Variable                               | Required                      | Default         | Values or format                                   | What it does                                                                                                                                          |
-| -------------------------------------- | ----------------------------- | --------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `HUBSPOT_PRIVATE_APP_TOKEN`            | For the connector to register | None            | A HubSpot private app token, or a secret reference | The credential. See `PARMANA_SECRETS_PROVIDER`.                                                                                                       |
-| `HUBSPOT_BASE_URL`                     | No                            | The HubSpot API | A URL                                              | Overrides the API base URL, for testing. Must use `https://`. `http://` is accepted only for localhost, and only when `NODE_ENV=test`.                |
-| `HUBSPOT_PRIVATE_APP_TOKEN_ROTATED_AT` | No                            | None            | An ISO 8601 date                                   | When the token was last rotated. The server logs a warning when the token is older than 90 days, or when this is set to something that is not a date. |
-
-### Slack connector
-
-| Variable                    | Required                      | Default                     | Values or format                                               | What it does                                                                                                                           |
-| --------------------------- | ----------------------------- | --------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `SLACK_BOT_TOKEN`           | For the connector to register | None                        | A Slack bot token, or a secret reference                       | The credential. See `PARMANA_SECRETS_PROVIDER`.                                                                                        |
-| `SLACK_BASE_URL`            | No                            | The Slack API               | A URL                                                          | Overrides the API base URL, for testing. Must use `https://`. `http://` is accepted only for localhost, and only when `NODE_ENV=test`. |
-| `SLACK_ALLOWED_CHANNEL_IDS` | For any post to succeed       | None: every post is refused | Comma separated channel ids, such as `C0123456789,C0987654321` | The only channels a message may go to. The caller's `channelAuthorized` is not trusted.                                                |
-
-### GitHub connector
-
-| Variable                                     | Required                                         | Default        | Values or format                         | What it does                                                                                                                                                |
-| -------------------------------------------- | ------------------------------------------------ | -------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GITHUB_APP_ID`                              | For the connector to register, with the next two | None           | A GitHub App id                          | The GitHub App used to act on pull requests.                                                                                                                |
-| `GITHUB_INSTALLATION_ID`                     | With the other two                               | None           | An installation id                       | The installation of that App.                                                                                                                               |
-| `GITHUB_APP_PRIVATE_KEY`                     | With the other two                               | None           | A PEM private key, or a secret reference | The App's private key.                                                                                                                                      |
-| `GITHUB_BASE_URL`                            | No                                               | The GitHub API | A URL                                    | Overrides the API base URL, for GitHub Enterprise or testing. Must use `https://`. `http://` is accepted only for localhost, and only when `NODE_ENV=test`. |
-| `PARMANA_GITHUB_VERCEL_CONNECT_CONNECTOR_ID` | No                                               | None           | A Vercel Connect connector id            | An alternative credential source using Vercel Connect. If it is set, it takes precedence and the three variables above are not used.                        |
+The server registers no built in connector in this version, so no connector credential variable is read. External connectors are registered through maker and checker approval, not environment variables. See [Connect a system](/self-hosted/connectors).
 
 ## Variables that look relevant but the server does not read
 
-| Variable                                                                                                                                                                           | Where you may see it          | Meaning                                                                                                                                                                    |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`                                                                                                                   | `.env.example`, CI, tutorials | The server does **not** read these. It talks to Postgres only through `DATABASE_URL`. They are used by some tests and tutorials. Setting them on the server has no effect. |
-| `TEST_GITHUB_APP_ID`, `TEST_GITHUB_INSTALLATION_ID`, `TEST_GITHUB_APP_PRIVATE_KEY`, `TEST_HUBSPOT_PRIVATE_APP_TOKEN`, `TEST_SLACK_BOT_TOKEN`, `TEST_PAYTM_CONNECTOR_SHARED_SECRET` | Tests                         | Read only when `NODE_ENV` is `test`. Never set them in production.                                                                                                         |
-| `TEST_GITHUB_PULL_NUMBER`, `TEST_GITHUB_REPOSITORY`, `TEST_HUBSPOT_DEAL_ID`                                                                                                        | Tests                         | Test fixtures for live integration tests.                                                                                                                                  |
-| `ALLOW_LIVE_GITHUB`, `ALLOW_LIVE_HUBSPOT`, `ALLOW_LIVE_SUPABASE`                                                                                                                   | Tests                         | Opt in switches for tests that call real services. Never set them in production.                                                                                           |
+| Variable                                                         | Where you may see it          | Meaning                                                                                                                                                                    |
+| ---------------------------------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | `.env.example`, CI, tutorials | The server does **not** read these. It talks to Postgres only through `DATABASE_URL`. They are used by some tests and tutorials. Setting them on the server has no effect. |
 
 ## Startup errors and what to do
 
 The server stops at startup, before it accepts any request, when a required setting is missing or wrong. This is
 deliberate: a misconfigured server never runs half configured.
 
-| The error says                                                                                                                                            | Cause                                                                 | Fix                                                                                                                        |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `PARMANA_POLICY_DIR is not set`                                                                                                                           | No policy directory                                                   | Set `PARMANA_POLICY_DIR` to the directory that holds your policies.                                                        |
-| `No caller authentication keys are configured`                                                                                                            | `PARMANA_API_KEYS` is empty or unset                                  | Generate at least one entry and set it. For local development only, set `PARMANA_AUTH_DISABLED=true`.                      |
-| `PARMANA_API_KEYS is not valid JSON` or `must be a JSON array`                                                                                            | Malformed value                                                       | Fix the JSON. It must be an array of objects with `callerId` and a 64 character lowercase hex `keyHash`.                   |
-| `PARMANA_KEY_DIR is not set`                                                                                                                              | No key directory                                                      | Set `PARMANA_KEY_DIR`.                                                                                                     |
-| `Signing key material for keyId "default" is missing`                                                                                                     | No `default.private.pem` or `default.public.pem` in `PARMANA_KEY_DIR` | Generate the key pair, mount the files, or set `PARMANA_KEY_MATERIAL_JSON`.                                                |
-| `Durable NonceStore requires DATABASE_URL` (or `CallerAuditSink`, `ExecutionAuditSink`, `ApprovalNonceStore`, `PolicyChangeStepUpNonceStore`)             | `DATABASE_URL` is not set and `NODE_ENV` is not `test`                | Set `DATABASE_URL` to a direct Postgres connection string.                                                                 |
-| `PARMANA_STORAGE=supabase requires DATABASE_URL`                                                                                                          | Supabase storage without a connection string                          | Set `DATABASE_URL`.                                                                                                        |
-| `Invalid PARMANA_STORAGE: <value>` (or `CRYPTO_MODE`, `HASH_PROVIDER`, `KEY_PROVIDER`, `PARMANA_SECRETS_PROVIDER`, `TRUST_PROFILE`, `SIGNATURE_PROVIDER`) | A value outside the allowed list                                      | Use one of the values in the tables above.                                                                                 |
-| `DATABASE_PROVIDER is no longer read`                                                                                                                     | The removed variable is set                                           | Delete it and set `PARMANA_STORAGE`.                                                                                       |
-| `<NAME>=<value> is not implemented in this build`                                                                                                         | `azure-key-vault`, `gcp-kms` or `hsm`                                 | Use `local` or `aws-kms`.                                                                                                  |
-| `KEY_PROVIDER=aws-kms is configured, but no KMS key named "default" is reachable`                                                                         | KMS key missing, wrong region or role, or no permission               | Check `AWS_REGION`, `AWS_ROLE_ARN`, the key alias `default`, and that the role can use the key.                            |
-| `PAYTM_CONNECTOR_URL and PAYTM_CONNECTOR_SHARED_SECRET must both be set, or both left unset`                                                              | Only one of the pair is set                                           | Set both, or remove both.                                                                                                  |
-| `Invalid PARMANA_GATEWAY_ID`                                                                                                                              | The id has characters other than letters, digits, `.`, `_` and `-`    | Use only those characters.                                                                                                 |
-| `PARMANA_KEY_MATERIAL_JSON is not valid JSON`                                                                                                             | Malformed value                                                       | Fix the JSON. It must be an object keyed by key id, each with `privateKeyPem` and `publicKeyPem`.                          |
-| `PARMANA_SANDBOX=true refuses to start while a built in connector is configured`                                                                          | A connector variable is defined on a sandbox, even empty              | Delete every Paytm, HubSpot, Slack and GitHub variable from the sandbox, and `PARMANA_GITHUB_VERCEL_CONNECT_CONNECTOR_ID`. |
-| `PARMANA_SANDBOX=true needs the demo approver` or `... refuses to start with PARMANA_AUTH_DISABLED=true`                                                  | Sandbox mode is incomplete                                            | Set the three `PARMANA_SANDBOX_APPROVER_*` variables, and keep caller authentication on.                                   |
-| `PARMANA_SANDBOX_APPROVER_... set without PARMANA_SANDBOX=true`                                                                                           | A demo approver variable outside a sandbox                            | Remove it. The demo approver exists only in a sandbox.                                                                     |
-| `PARMANA_CORS_ORIGINS: "<value>" must be exactly an origin`                                                                                               | A path, a trailing slash or `*`                                       | List bare origins such as `https://docs.parmanasystems.com`.                                                               |
-| `HASH_PROVIDER=<value> is not implemented in this build`                                                                                                  | `HASH_PROVIDER` is `sha3-512` or `blake3`                             | Use `sha256`.                                                                                                              |
+| The error says                                                                                                                                            | Cause                                                                 | Fix                                                                                                      |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `PARMANA_POLICY_DIR is not set`                                                                                                                           | No policy directory                                                   | Set `PARMANA_POLICY_DIR` to the directory that holds your policies.                                      |
+| `No caller authentication keys are configured`                                                                                                            | `PARMANA_API_KEYS` is empty or unset                                  | Generate at least one entry and set it. For local development only, set `PARMANA_AUTH_DISABLED=true`.    |
+| `PARMANA_API_KEYS is not valid JSON` or `must be a JSON array`                                                                                            | Malformed value                                                       | Fix the JSON. It must be an array of objects with `callerId` and a 64 character lowercase hex `keyHash`. |
+| `PARMANA_KEY_DIR is not set`                                                                                                                              | No key directory                                                      | Set `PARMANA_KEY_DIR`.                                                                                   |
+| `Signing key material for keyId "default" is missing`                                                                                                     | No `default.private.pem` or `default.public.pem` in `PARMANA_KEY_DIR` | Generate the key pair, mount the files, or set `PARMANA_KEY_MATERIAL_JSON`.                              |
+| `Durable NonceStore requires DATABASE_URL` (or `CallerAuditSink`, `ExecutionAuditSink`, `ApprovalNonceStore`, `PolicyChangeStepUpNonceStore`)             | `DATABASE_URL` is not set and `NODE_ENV` is not `test`                | Set `DATABASE_URL` to a direct Postgres connection string.                                               |
+| `PARMANA_STORAGE=supabase requires DATABASE_URL`                                                                                                          | Supabase storage without a connection string                          | Set `DATABASE_URL`.                                                                                      |
+| `Invalid PARMANA_STORAGE: <value>` (or `CRYPTO_MODE`, `HASH_PROVIDER`, `KEY_PROVIDER`, `PARMANA_SECRETS_PROVIDER`, `TRUST_PROFILE`, `SIGNATURE_PROVIDER`) | A value outside the allowed list                                      | Use one of the values in the tables above.                                                               |
+| `DATABASE_PROVIDER is no longer read`                                                                                                                     | The removed variable is set                                           | Delete it and set `PARMANA_STORAGE`.                                                                     |
+| `<NAME>=<value> is not implemented in this build`                                                                                                         | `azure-key-vault`, `gcp-kms` or `hsm`                                 | Use `local` or `aws-kms`.                                                                                |
+| `KEY_PROVIDER=aws-kms is configured, but no KMS key named "default" is reachable`                                                                         | KMS key missing, wrong region or role, or no permission               | Check `AWS_REGION`, `AWS_ROLE_ARN`, the key alias `default`, and that the role can use the key.          |
+| `Invalid PARMANA_GATEWAY_ID`                                                                                                                              | The id has characters other than letters, digits, `.`, `_` and `-`    | Use only those characters.                                                                               |
+| `PARMANA_KEY_MATERIAL_JSON is not valid JSON`                                                                                                             | Malformed value                                                       | Fix the JSON. It must be an object keyed by key id, each with `privateKeyPem` and `publicKeyPem`.        |
+| `PARMANA_SANDBOX=true needs the demo approver` or `... refuses to start with PARMANA_AUTH_DISABLED=true`                                                  | Sandbox mode is incomplete                                            | Set the three `PARMANA_SANDBOX_APPROVER_*` variables, and keep caller authentication on.                 |
+| `PARMANA_SANDBOX_APPROVER_... set without PARMANA_SANDBOX=true`                                                                                           | A demo approver variable outside a sandbox                            | Remove it. The demo approver exists only in a sandbox.                                                   |
+| `PARMANA_CORS_ORIGINS: "<value>" must be exactly an origin`                                                                                               | A path, a trailing slash or `*`                                       | List bare origins such as `https://docs.parmanasystems.com`.                                             |
+| `HASH_PROVIDER=<value> is not implemented in this build`                                                                                                  | `HASH_PROVIDER` is `sha3-512` or `blake3`                             | Use `sha256`.                                                                                            |
 
 ## See also
 
@@ -9350,7 +9061,7 @@ Nothing was sent to the connector, so a retry with a new `businessTransactionId`
 
 ## `POST /execute` returns 503 `CONNECTOR_NOT_REGISTERED`
 
-**Cause:** the request passed authentication, the policy and the approval check, but no connector is registered for its action on this deployment. A connector registers only when its own credentials are configured, for example `PAYTM_CONNECTOR_URL` and `PAYTM_CONNECTOR_SHARED_SECRET` for `paytm:refund`. Nothing was executed. Before this code existed the same case was a bare `500` with no code, so on an older server, look for `No connector registered for capability` in the log.
+**Cause:** the request passed authentication, the policy and the approval check, but no connector is registered for its action on this deployment. A connector registers only when its own credentials are configured, for example a connector's own settings for `erp:invoice-pay`. Nothing was executed. Before this code existed the same case was a bare `500` with no code, so on an older server, look for `No connector registered for capability` in the log.
 
 **Fix:** configure the connector on the server (see the [connector section of the environment reference](/deployment/environment-variables#connectors)), deploy again, then retry with a new `businessTransactionId`, because the original was already accepted.
 
@@ -9375,7 +9086,7 @@ Nothing was sent to the connector, so a retry with a new `businessTransactionId`
    ```bash
    curl -s -X POST "$PARMANA_API_URL/execution-intents/<businessTransactionId>/resolve" \
      -H "Authorization: Bearer $PARMANA_OPERATOR_KEY" -H "Content-Type: application/json" \
-     -d '{"resolution":"NOT_EXECUTED","note":"Agent was unreachable; no refund in Paytm for this order."}'
+     -d '{"resolution":"NOT_EXECUTED","note":"Agent was unreachable; no payment was made for this invoice."}'
    ```
 
 4. Fix the connector before sending new requests. If the action was not executed and is still wanted, send it again with a **new** `businessTransactionId`.

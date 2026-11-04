@@ -89,7 +89,6 @@ const examples = [
   "examples/tutorials/79-storage-backend-selection/run.ts",
   "examples/tutorials/80-fail-closed-config-validation/run.ts",
   "examples/tutorials/81-connector-execution-gateway/run.ts",
-  "examples/tutorials/83-capability-policy-binding/run.ts",
   "examples/tutorials/84-caller-authentication/run.ts",
   "examples/tutorials/86-gateway-attestation/run.ts",
   "examples/tutorials/87-key-provider-path-traversal/run.ts",
@@ -122,7 +121,6 @@ const examples = [
   "examples/tutorials/117-maker-checker-one-shot-scripts/run.ts",
   "examples/tutorials/119-human-approval-for-one-action/run.ts",
   "examples/tutorials/120-no-action-without-approval/run.ts",
-  "examples/tutorials/121-approval-for-a-read/run.ts",
   "examples/tutorials/123-external-connector/run.ts",
   "examples/tutorials/124-kill-switch-trip-and-refuse/run.ts",
   "examples/tutorials/125-kill-switch-two-person-reset/run.ts",
@@ -168,7 +166,7 @@ for (const [name, value] of Object.entries(LOCAL_DEFAULTS)) {
 
 //
 // Every key id an example may sign with by default. "signal-verifier" signs
-// the read-only HubSpot fetches (see .env.example).
+// the read-only fetches (see .env.example).
 //
 const EXAMPLE_KEY_IDS = ["default", "gateway", "signal-verifier"];
 

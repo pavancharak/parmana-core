@@ -181,10 +181,7 @@ locally-running instance (see docs/VERIFICATION-GAPS.md G-44).
 **Vendor-confirmation visibility (2026-09-15, docs/VERIFICATION-GAPS.md G-46).**
 `ConnectorEvidence` (packages/execution-gateway/src/connector-execution/ConnectorEvidence.ts)
 gained `vendorConfirmationVerified: boolean`, defaulting to `false` and folded into
-`connectorEvidenceHash`. Confirmed by grep before adding it: none of this codebase's four
-connectors (HubSpot, GitHub, Slack, Paytm) independently verify a vendor-originated
-cryptographic confirmation — for Paytm, that verification lives entirely in the separate
-`parmana-paytm-agent` repository (§3.22 below). This makes that architectural limitation
+`connectorEvidenceHash`. Confirmed by grep before adding it: no connector in this codebase independently verifies a vendor-originated cryptographic confirmation. This makes that architectural limitation
 visible in every piece of evidence itself, not only in prose documentation, and gives a future
 connector that does add real vendor-signature verification somewhere to record it. Found and
 fixed same day by the same audit (GAP-3); verified via
@@ -527,17 +524,7 @@ Dated updates, including the removal of the connector tests that once also cover
 
 **Why it matters.** Policies are loaded by the name and version the request declares. Without the binding, a caller could pair a capability that changes real state with an unrelated policy that does not protect it, and run that capability's parameters under the weaker rules. The binding closes that route.
 
-**Scope.** The table (`CANONICAL_CAPABILITY_POLICY_BINDINGS`) currently binds five capabilities:
-
-| Capability            | Policy name           |
-| --------------------- | --------------------- |
-| `hubspot:deal-fetch`  | `hubspot-deal-read`   |
-| `hubspot:deal-update` | `hubspot-deal-update` |
-| `github:pr-fetch`     | `github-pr-read`      |
-| `github:pr-merge`     | `github-pr-approval`  |
-| `paytm:refund`        | `customer-refund`     |
-
-Reads have their own policy, so that each approval covers only what it reads. The table pins the policy name. Where policy governance is enforced, the version is the one most recently approved for that name (see 2.43).
+**Scope.** The table (`CANONICAL_CAPABILITY_POLICY_BINDINGS`) binds no capability in this version, because every built in connector has moved out of core (ADR-0018). The mechanism applies to any capability added to the table later. Reads have their own policy, so that each approval covers only what it reads. The table pins the policy name. Where policy governance is enforced, the version is the one most recently approved for that name (see 2.43).
 
 **Where it runs.** `CapabilityPolicyBinder` is in `packages/capability-registry`. `RuntimeBuilder` constructs it on every build and passes it to the runtime engine, which runs the check before signal binding and policy evaluation.
 
@@ -601,21 +588,11 @@ Dated updates are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 - **At policy load.** `PolicyValidator.validateEveryApprovalNeedsSignedApproval` refuses any policy with an approve rule that does not require a fact declared in `approvalSignals` with `is_true`. The fact must be the rule's whole condition, or sit directly inside its top-level `all`. An `any`, a nested `all`, or `eq true` does not count. `PolicyRouter` validates every policy it loads, so such a policy refuses every request. The policy-change endpoint validates every proposal, so such a policy cannot pass maker checker either.
 - **At decision.** `ApprovalSignalVerifier` (2.42) counts an approval signal as true only with a valid signed approval. The approval must be from a trusted, unrevoked approver, with a valid Ed25519 signature, and must match the action, the resource, the amount where declared, the expiry, and single use. The Execution Gateway checks it again at release. `RuntimeEngine` refuses an approve decision when no approval verifier is configured (`approval-verifier-not-configured`), so a runtime built without one cannot trust a caller's `true`.
 
-**Policies bound to capabilities.** The binding table (`CANONICAL_CAPABILITY_POLICY_BINDINGS`) currently names:
-
-| Capability            | Policy                | Version |
-| --------------------- | --------------------- | ------- |
-| `hubspot:deal-fetch`  | `hubspot-deal-read`   | 1.0.0   |
-| `hubspot:deal-update` | `hubspot-deal-update` | 1.1.0   |
-| `github:pr-fetch`     | `github-pr-read`      | 1.1.0   |
-| `github:pr-merge`     | `github-pr-approval`  | 1.1.0   |
-| `paytm:refund`        | `customer-refund`     | 1.2.0   |
-
-The reference policies with no connector in core also require a signed approval. For example, `vendor-payment` 2.1.0 and `expense-reimbursement` 1.1.0 need `humanApproved` for the Intent's target, and the amount is covered by the approval. The Slack post policy `slack-post-message` 1.1.0 exists in `policies/`, but its capability is no longer bound in core, because the connector has moved out (ADR-0018).
+**Policies bound to capabilities.** The binding table (`CANONICAL_CAPABILITY_POLICY_BINDINGS`) is empty in this version. The reference policies also require a signed approval. For example, `vendor-payment` 2.1.0 and `expense-reimbursement` 1.1.0 need `humanApproved` for the Intent's target, and the amount is covered by the approval.
 
 **Scope and limits.**
 
-- **An approval covers the action and the resource, not every parameter.** A HubSpot approval does not fix the new stage or amount. Payment, expense and refund approvals do cover the amount.
+- **An approval covers the action and the resource, not every parameter.** Payment, expense and refund approvals do cover the amount.
 - **Superseded versions remain in `policies/` as history.** Each one fails to load.
 - **There is no automatic path.** An action cannot be authorized by server checks alone. This is the rule, not a missing feature (G-80).
 - **Who approves is limited to the trusted approver list** (2.42, 2.45). The list is short, so in practice one person can approve every agent action at present.
@@ -652,7 +629,6 @@ Scope, stated plainly:
 
 Verification
 
-- `packages/api/tests/integration/policy-in-effect.integration.test.ts`: the refund answer equals the facts, schema, bound and approval declarations of `customer-refund`; no rule condition in `signals`; a read (`github:pr-fetch`) names `readApproved` for the target; `503` with no `signals` when the policy cannot be read.
 - `packages/policy/tests/unit/policySignalRequirements.test.ts`: facts collected from nested `all` and `any`, sorted, once; empty objects when a policy declares none.
 - `typescript/test/Alignment.test.ts`, `python/tests/test_sdk_alignment.py`: the SDK methods call the endpoint and return the answer; Python keeps signal names unconverted.
 
@@ -660,54 +636,6 @@ Evidence
 
 - `packages/api/src/routes/policy-in-effect.ts`; `packages/policy/src/policySignalRequirements.ts` (also used by `PolicyValidator`)
 - `openapi/openapi.yaml` (`getPolicyInEffect`); `docs/site/agents/integrate.mdx` step 3
-
-## 2.49 External Connectors Are Registered Through Maker Checker, With No Deploy (Scoped, 2026-09-30)
-
-**Claim:** an operator can bind a capability to an HTTPS endpoint they run, and to the policy that governs it, without a code change or deploy, and only when one human credential proposes it and a different human credential approves it with a step up authorization. Parmana refuses to register an endpoint that is not https, names an IP address or localhost, or resolves to an address that is not public, and checks the address again when the registration is approved. This is step 1 of ADR-0013.
-
-Scope, stated plainly:
-
-- **This claim is about governing registrations, not about releasing actions to them.** Since ADR-0013 step 4 (2026-10-01, `docs/VERIFICATION-GAPS.md` G-81) an approved request for a registered capability is released to its endpoint as a signed release, its policy bound from the registration, and `GET /policies/in-effect` answers for it; that is claimed in 2.50, after the live check of ADR-0013 step 6 on 2026-10-01. The SDK helpers `verifyParmanaRelease` and `verify_parmana_release` are not published yet.
-- **Distinct credentials, not proven distinct people**, as in 2.45. An operator with database access can bypass the API.
-- **Built in namespaces stay code.** A capability in the namespace of a built in connector (paytm, hubspot, github, slack, test) is refused.
-- **The policy name is checked for form only** at registration, not that the policy exists or has an approved version (G-81).
-
-Verification
-
-- `packages/api/tests/integration/external-connectors-governance.integration.test.ts` (through the HTTP boundary, DNS stubbed): no credential `401`, a service credential `403`, the proposer as checker `403`, approval without a step up or with one for the other action `403`; malformed fields and every built in namespace `400`; an endpoint over http, an IP literal, localhost, a private address, any private address among public ones, and a host that does not resolve `400`; a second pending change and revoking an unregistered capability `409`; register, list, one active per capability, revoke without deleting, register again; the address checked again on approval after a DNS change to `169.254.169.254`; reject with a reason.
-- `packages/shared/tests/unit/external-endpoint-address.test.ts`: the URL rules, and the private, loopback, link local, shared, multicast, reserved and documentation ranges in IPv4 and IPv6, including IPv4 mapped IPv6.
-- `packages/storage/tests/integration/supabase-external-connector-repository.integration.test.ts` against real Postgres with every migration applied, in the Docker image workflow (5 tests passed on PR #92): approval applies and resolves in one transaction, one pending change and one active registration per capability, only one of two concurrent approvals applies, maker as checker refused by the database.
-
-Evidence
-
-- `packages/api/src/routes/external-connectors.ts`; `packages/shared/src/network/externalEndpointAddress.ts`; `packages/storage/src/supabase/SupabaseExternalConnectorRepository.ts`
-- Migration `supabase/migrations/20260930120000_add_external_connectors.sql`, applied in production on 2026-09-30 (`npm run db:migrate -- status`: 33 applied, 0 pending); PR #92 deployed; `GET /external-connectors` with the maker key returned `{"connectors":[]}` in production.
-- Checked in production on 2026-10-01: a full propose and approve cycle (the live check in 2.50).
-- `openapi/openapi.yaml` (`listExternalConnectors`, `proposeExternalConnectorChange`, `listExternalConnectorChanges`, `approveExternalConnectorChange`, `rejectExternalConnectorChange`); `docs/adr/ADR-0013-Generic-External-Connector.md`
-
-## 2.50 An Approved Request Is Released, Signed, to a Registered External Endpoint
-
-**Claim.** For a capability registered to an external HTTPS endpoint through maker checker (2.49), Parmana releases an approved request to that endpoint as a release signed with Parmana's own key. The release names the capability, the target, the allowed parameters, the policy at its approved version, the approver, the authorization, and the endpoint as its audience. It expires 60 seconds after it is issued (`EXTERNAL_RELEASE_TTL_MS`). The endpoint can verify it with Parmana's public key alone (`verifyParmanaRelease`). The signed Execution Trust Record of the request carries the endpoint's answer, and verifies offline. A request with no signed approval, or with an approval already used, is refused, and nothing is released.
-
-**Scope and limits.**
-
-- **The endpoint's answer is its own claim.** The record proves what Parmana released and what the endpoint said. It does not prove what the endpoint's own system did (G-82).
-- **Checked live once, against an endpoint that changes nothing.** The check endpoint answers with a receipt. The same code path serves every registered capability, but this check did not exercise a real external system.
-- **Distinct credentials, not proven distinct people.** As in 2.45 and 2.49, the maker, checker and approver keys can be held by one person.
-- **Response time.** In the live check, an approved request took about 24 seconds end to end. The SDK's default timeout is 30 seconds, so callers should set their timeouts with that in mind (G-84).
-- **The SDK helpers are not yet published as packages.** `verifyParmanaRelease` and `verify_parmana_release` are in the repository.
-
-**Evidence.**
-
-- `packages/execution-gateway/src/connector-execution/GatewayExternalAdapter.ts` (the signed release, its audience and its 60-second expiry)
-- `packages/execution-gateway/tests/unit/external-adapter.test.ts` (the release format, the pinned transport, refused parameters, and every rejected answer)
-- `packages/api/tests/integration/external-connector-release.integration.test.ts` (a registered capability released through the HTTP boundary)
-- `packages/api/tests/integration/policy-in-effect-external.integration.test.ts` (`GET /policies/in-effect` for a registered capability)
-- `typescript/test/VerifyParmanaRelease.test.ts` and `python/tests/test_verify_parmana_release.py` (the verification helpers, against releases from the real server)
-- `examples/tutorials/123-external-connector` (register, release, a retried answer, a refused release for another endpoint, and a revoke)
-- `examples/live-checks/external-connector/README.md` (the live check of 2026-10-01, with its records)
-
-Dated updates for this claim are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
 ## 2.51 A Public Sandbox Runs the Same Governance With a Published Demo Key (Scoped)
 
@@ -733,7 +661,7 @@ The demo approver signs only for `sandbox:receipt`, and only the documentation s
 - **The sandbox acts on nothing.** Its one capability releases to an endpoint that returns a receipt. No connector to a real system can be configured while sandbox mode is on.
 - **Anyone can approve in the sandbox.** That is its purpose. It shows how a signed approval is used, not who may give one. In production only registered approvers sign.
 - **The sandbox policy, the deployment scripts and the live check records are not in this repository.** The sandbox policy and its deployment are operated outside this repository, so this claim does not verify them. The code-level enforcement above is verified here.
-- **Distinct credentials, not distinct people.** The sandbox maker and checker keys can be held by one person, as in 2.49 and 2.50.
+- **Distinct credentials, not distinct people.** The sandbox maker and checker keys can be held by one person, as elsewhere in this document.
 - **Retention.** The sandbox's record-retention job is operated outside this repository, and this claim does not verify it.
 
 **Evidence.**
@@ -779,7 +707,7 @@ Scope, stated plainly:
 - **Authority is today's checks, named.** `AUTHORIZED` means the governance verification and capability/policy binding passed (and, at the API, the caller key's capability scope). Per-agent limits and expiry are phase 3, so `AUTHORITY_EXPIRED` is not yet produced.
 - **Policies without sources are unchanged.** Their validation status is `NOT_EVALUATED`, never `VALID`, and they still need a signed human approval to approve (2.47).
 - **The digest proves what Parmana observed, not what the source said.** A source's own proof is carried verbatim in `integrityProof.sourceProof` but not yet verified.
-- **Execution statuses for approved actions** remain the Trust Record's executions; `EXECUTION_UNKNOWN` and conditional execution are phase 4. **Update (2026-10-11):** built, see 2.56.
+- **Execution statuses for approved actions** remain the Trust Record's executions; `EXECUTION_UNKNOWN` and conditional execution are phase 4. **Update (2026-10-11):** built.
 - **Not deployed** until this change is merged and deployed. **Update (2026-10-11):** deployed; production runs `main` at `4fdc2c2` (#100) and answers `GET /health` `UP` and `GET /ready` `READY`.
 
 Verification
@@ -808,7 +736,7 @@ Scope, stated plainly:
 - **Not deployed** until this change is merged and deployed, and **no real business system has been connected.** Every test runs against in-process endpoints, including the example endpoint the docs give operators. **Update (2026-10-11):** deployed; `GET /business-signal-sources` answers in production. Still no real business system connected and no source registered there. **Live check, passed in production 2026-10-11** (`examples/live-checks/business-signal-source`): with the demo source `livecheck-erp` (a deployed endpoint answering from a fixed table, registered with an Ed25519 key) and test policy `livecheck-signal`, a request for a paid invoice was approved on the source's signed answer (`sourceProofVerified: true`, released, verifies offline), an unpaid one was refused by the policy on the source's `false`, the agent's `true` against the source's `false` was refused as `INVALID`, and an unknown invoice as `MISSING_DATA`. Transactions `d736681f-8d86-4e24-bcf3-66debfa6ac23`, `266278b4-7683-43fd-97e7-aa724c6cca9a`, `1fd2274c-65e2-47c4-bda5-4dd57b198277` and `173c6f4f-f9d7-46e0-a712-9d9f39a274cd`. No real business system is connected yet.
 - **Parmana proves the source said it, not that it is right.** A source answers for its own records.
 - **A source registered without a key** is trusted on the pinned HTTPS connection alone; its Trusted Signal has no `sourceProof`. Registering a key is recommended, not required.
-- **Checked once, at decision time.** `validUntil` is not re-checked at release; conditional execution is phase 4. **Update (2026-10-11):** re-checked at release, and carried to external connectors as conditions, since 2.56.
+- **Checked once, at decision time.** `validUntil` is not re-checked at release; conditional execution is phase 4. **Update (2026-10-11):** re-checked at release, and carried to external systems as conditions.
 - **Authority is unchanged** from 2.53: per-agent grants with limits and expiry are phase 3. **Update (2026-10-11):** built, see 2.55.
 - **The SDK methods** (`proposeBusinessSignalSourceChange`, `business_signal_sources.propose_register` and the rest) ship in the next SDK release. **Update (2026-10-11):** published in SDK 1.6.0.
 
@@ -838,7 +766,7 @@ Scope, stated plainly:
 - **Not deployed** until this change is merged and deployed. **Update (2026-10-11):** deployed; `GET /authority-grants` answers in production. No grant has been made there and no production policy requires one. **Live check, passed in production 2026-10-11** (`examples/live-checks/authority-grant`): under test policy `livecheck-grant` with `requireAuthorityGrant`, each request with a valid signed approval, a request before any grant was refused (`authority-not-authorized`), one within grant `4b60507f-adb8-4fe0-82b3-a83c41e09022` (max 100) was approved, released and verified offline with the grant in the signed record, one for 500 was refused as above the granted maximum, and one after the revoke was refused. Transactions `8a75374c-150d-4cea-b57a-abb3a92bcac6`, `da96002b-66ec-44cf-88da-0f29997e4711`, `87770ab4-ac7c-4768-94a9-46df2367782b` and `41ec047d-bf64-48f4-b718-a419c7575e8d`. No production policy for a real action requires a grant yet.
 - **Limits are per request.** Cumulative limits ("100000 per day") are not built.
 - **The grantee is a caller id the server does not check exists.** A grant to a key that does not exist has no effect.
-- **Checked at decision time.** Not re-checked at release (phase 4); the authorization's short TTL bounds the window. **Update (2026-10-11):** re-checked at release since 2.56.
+- **Checked at decision time.** Not re-checked at release (phase 4); the authorization's short TTL bounds the window. **Update (2026-10-11):** re-checked at release.
 - **The SDK methods** ship in the next SDK release. **Update (2026-10-11):** published in SDK 1.6.0.
 
 Verification
@@ -861,34 +789,6 @@ Evidence
 
 ---
 
-## 2.56 What a Decision Rests On Is Re-Checked at Release, and an External System Can Execute Only If It Still Holds (Scoped, 2026-10-11)
-
-**Claim:** the Execution Authorization Parmana signs for an approved request carries what the decision rests on: each Trusted Signal of a `VALID` business validation as a `businessConditions` entry (source, claim, subject, value, `validUntil`), and, when an authority grant authorized it, the grant's id and `validUntil` (`authorityGrant`). The Execution Gateway re-checks both before it releases the action: a condition past its `validUntil`, or a grant that has expired, been revoked or replaced, or cannot be read (or with no grant store configured), refuses the release before any connector is called and without consuming the nonce. When those are the only failed checks the request gets `409 AUTHORIZATION_NO_LONGER_VALID` with `executionStatus: NOT_EXECUTED`; a forged or tampered request stays a generic refusal. A signed release to an external connector carries the conditions, covered by its signature, and expires no later than the earliest `validUntil`; an endpoint that finds a condition no longer holds answers `success: false, conditionsNotMet: true`, recorded in the Trust Record's execution evidence as not acted on. A release whose call fails after it was sent answers `502 EXECUTION_OUTCOME_UNKNOWN` with `executionStatus: EXECUTION_UNKNOWN`, never as failed.
-
-Scope, stated plainly:
-
-- **"Execute only if still valid" at the system is the endpoint's to implement.** Parmana sends the signed conditions; it cannot make an endpoint check them. The SDK verifier covers them with the signature and the example endpoints check them through `conditionsHold`. Built in connectors (Paytm, HubSpot, GitHub, Slack) get the gateway re-check only.
-- **A release refused at release leaves the Execution Intent `ERRORED`**, as a refused connector registration already does; the response says `NOT_EXECUTED`, and the intent is closed as `NOT_EXECUTED`.
-- **The Trust Record format is unchanged.** Execution statuses are how its executions (completed, failed, `conditionsNotMet`) and the intents are read, not a new field.
-- **Not deployed** until this change is merged and deployed. **Update (2026-10-11):** deployed. Not yet exercised in production: no production decision carries conditions or a grant until a policy uses `signalSources` or `requireAuthorityGrant`. **Live check (2026-10-11):** both checks above passed in production; the source check's approved request carried its Trusted Signal into the authorization and the release (`d736681f-8d86-4e24-bcf3-66debfa6ac23`). The receiving endpoint's log line showing the release's `conditions` was not checked.
-
-Verification
-
-- `packages/execution-gateway/tests/unit/release-recheck.test.ts` (12): a current condition releases and is recorded as checked; a condition past `validUntil` refuses, names the fact, calls no connector, consumes no nonce, and is `AUTHORIZATION_NO_LONGER_VALID` / `NOT_EXECUTED`; no new check without conditions or grant; a grant still active releases; a grant revoked, replaced, expired, shortened since the decision, unreadable, or with no registry refuses; a grant with no caller refuses; a forged authorization with an expired condition stays a generic refusal.
-- `packages/execution-gateway/tests/unit/external-adapter-conditions.test.ts` (7): the conditions are signed into the release, which expires at the earliest `validUntil` (and otherwise after 60 seconds); the SDK's `verifyParmanaRelease` accepts it, refuses it after that time, and refuses a changed condition; `conditionsNotMet` is recorded and malformed variants are refused; through the documented endpoint (`typescript/examples/07`), it acts when the conditions hold and does not act when one does not.
-- `python/tests/test_external_connector_endpoint_conditions.py` (2): the Python example endpoint acts only when `conditions_hold` says so, and answers a repeat with its first answer.
-- `packages/runtime/tests/unit/business-validation.test.ts` and `authority-grants-runtime.test.ts`: the engine signs the Trusted Signal and the grant into the authorization.
-- `packages/api/tests/integration/execution-failure.integration.test.ts`: `EXECUTION_OUTCOME_UNKNOWN` answers `executionStatus: EXECUTION_UNKNOWN`.
-
-Evidence
-
-- `packages/shared/src/domain/execution-authorization.ts` (`businessConditions`, `authorityGrant`), `packages/crypto/src/AuthorizationSigner.ts`, `packages/runtime/src/RuntimeEngine.ts`
-- `packages/execution-gateway/src/ExecutionGateway.ts` (`businessConditionsCurrent`, `authorityGrantInForce`), `packages/shared/src/errors/authorization-no-longer-valid-error.ts`, `packages/api/src/bootstrap/createExecutionGateway.ts`
-- `packages/execution-gateway/src/connector-execution/GatewayExternalAdapter.ts` (`conditions`, `conditionsNotMet`), `typescript/src/crypto/release.ts`, `typescript/examples/07-external-connector-endpoint.ts`, `python/examples/13_external_connector_endpoint.py`
-- `docs/rfcs/RFC-0023-Business-Validation.md` (Execution)
-
----
-
 ## 2.57 Proof Audit: Five Authorization Properties Tested by Execution (Scoped, 2026-10-16)
 
 **Claim.** Five properties of Parmana's authorization proofs were tested by running the code
@@ -901,10 +801,10 @@ paths, not by reading them. The tests are in `proof-audit/tests/` and run with
    key files and the network denied, both in-process and in an empty network namespace. Nine field
    changes (decision, amount, action ID, timestamps, policy version, both signatures) each fail. Scope:
    the verifier no longer reads a `.env` file on import (G-112).
-2. **Execution requires a valid, current proof: Verified for the Paytm refund, Slack, GitHub and HubSpot paths.** A missing,
+2. **Execution requires a valid, current proof.** A missing,
    forged, expired, revoked, mismatched or denied-decision proof each reaches the external endpoint zero
-   times. A control with an approved decision reaches it once. The same conditions hold for Slack, GitHub and HubSpot (Tests 7 to 9). Other connectors are not yet covered (G-115).
-3. **A proof authorizes only the parameters it was issued for: Verified for the Paytm refund path.**
+   times. A control with an approved decision reaches it once. Not all paths are covered yet (G-115).
+3. **A proof authorizes only the parameters it was issued for.**
    A changed amount, target, recipient identifier, connector, operation or validity window is rejected.
    Replay is rejected at the gateway and at the API, each with zero extra endpoint calls.
 4. **An old proof verifies against the policy version it cites, and a published version cannot be
@@ -920,15 +820,13 @@ denied decision, and the in-process release path accepted caller-set flags), cla
 version could be overwritten) and claim 5 (tail truncation). The fixes and their residuals are recorded in `docs/VERIFICATION-GAPS.md`, G-103 to G-118.
 The first-run measurements are not published in this repository.
 
-**Coverage after the follow-up fixes.** The same gate conditions now run for Paytm refund, Slack post-message,
-GitHub PR merge and HubSpot deal-update (Tests 2, 7, 8, 9). The Postgres nonce store runs on PostgreSQL semantics
+**Coverage after the follow-up fixes.** The Postgres nonce store runs on PostgreSQL semantics
 (Test 6). The startup governance integrity check runs against a signed approval record (Test 4). Not yet
 covered: KMS signing, a live external connector endpoint, and the caller
 authorization scoping (the API harness disables caller authentication, as the existing integration tests do).
 These are listed as open in `docs/REMAINING-WORK.md` section M.
 
-**Evidence.** test1-independent-verification.test.ts (removed 2026-11-02 with the Paytm connector, ADR-0018) through
-`test10-execution-audit.test.ts`; `packages/api/src/bootstrap/createReleaseVerifier.ts`;
+**Evidence.** `test10-execution-audit.test.ts`; `packages/api/src/bootstrap/createReleaseVerifier.ts`;
 `packages/execution-control/src/ExecutionControlService.ts`; `packages/execution-gateway/src/ExecutionGateway.ts`
 (`decisionApproved`); `packages/policy/src/FilePolicyRepository.ts` (`save`, `PolicyVersionImmutableError`);
 `packages/crypto/src/CallerAuditChainVerifier.ts` (`verifyChain`, the `anchor` argument).
@@ -985,33 +883,6 @@ The gap record is G-122 in `docs/VERIFICATION-GAPS.md`.
 
 Gaps: G-50 (partly fixed) and G-123 (fixed).
 
-## 2.23 Authorization Before Execution for HubSpot Deal Updates
-
-A HubSpot deal update does not run unless Parmana's authorization layer allows it. The core repository enforces this for `hubspot:deal-update`:
-
-- The capability is bound to a specific policy, `hubspot-deal-update` version `1.1.0`, through the canonical binding in 2.22. A request cannot be checked against an unrelated policy.
-- A request that the policy rejects is refused with `403` and `code: "POLICY_DENIED"` (2.21). A policy named in the request cannot authorise the action on its own (2.44).
-- A change to the deal amount needs a signed human approval that names this capability and this action (2.42).
-
-**Where the connector sits.** The HubSpot connector was removed from `parmana-core` in commit `b6463fa` (2026-11-03). It is not in this repository, so the connector-side checks cannot be verified here. These include how the connector handles its credential, and whether the gateway adapter keeps a credential between calls. This claim does not make those checks. The deal-update policy stays in core, and the policy checks above still apply to any connector that runs the capability.
-
-**Earlier review.** A point-in-time independent review, dated 2026-08-09, found no path to unauthorized execution for `hubspot:deal-update` at that time. It also covered the Razorpay refund capability, which has since been removed. The review covered code that no longer exists in this repository, so it is a historical record and not a current certification.
-
-**Scope and limits.**
-
-- The policy and approval checks run in core. Whether the connector performs the update correctly is outside this claim.
-- The authorization checks do not cover `github:pr-merge`, which has its own policy and binding. It was not covered by the 2026-08-09 review.
-
-**Evidence.**
-
-- `packages/capability-registry/src/CapabilityPolicyBinding.ts` (`hubspot:deal-update` bound to `hubspot-deal-update` 1.1.0)
-- `packages/capability-registry/tests/unit/CapabilityPolicyBinder.test.ts` (a request bound to an unrelated policy is refused)
-- `packages/api/tests/unit/connector-policies-not-self-authorizing.test.ts` (a policy that the request names cannot authorise the action by itself)
-- `packages/approval/tests/unit/SignedApprovalGuard.test.ts` and `ApprovalSignalVerifier.test.ts` (the signed approval for `hubspot:deal-update` and its action and capability)
-- `policies/hubspot-deal-update/1.1.0/policy.json`
-
-Dated updates, including the removal of the connector and the 2026-08-09 review, are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
-
 ## 2.24 Authorization Is Caller-Type-Agnostic
 
 The authorization pipeline's outcome depends only on the requested action, the governing policy, and the independently-verified facts bearing on it — never on what kind of system, model, or entity submitted the request. This is the source-code basis for the positioning claim that Parmana protects institutional authority against execution risk from any source (AI agents, humans, applications, automated systems, third-party systems, compromised systems), not only AI: the mechanism does not special-case any of them, including ones it has no name for.
@@ -1020,7 +891,7 @@ Directly validated, not inferred from the absence of AI-specific code: `Business
 
 Independently confirmed by the Strategic Positioning source-code validation audit (2026-08-09, read-only): the caller-authentication layer (`StaticKeyAuthenticator`, `packages/api/src/auth/StaticKeyAuthenticator.ts`) authenticates by opaque API-key hash comparison only, with no concept of caller category either — the same identity mechanism a human operator, a script, an AI agent, or a third-party integration would all use identically.
 
-**Scope, precisely:** this claim covers `hubspot:deal-update` and, since 2026-08-19, `github:pr-merge`/`github:pr-fetch` (§3.17; missed by the 2026-08-24 pass that last touched this paragraph — see 2.23's own 2026-08-25 update) — the capabilities actually production-reachable today (`razorpay:refund-create` was covered when this claim was originally written and validated, but no longer exists as a registered capability, removed 2026-08-12) — and the general-purpose pipeline mechanism itself, which the regression test below exercises independently of any specific capability. The mechanism's caller-agnosticism does not depend on which capability is invoked (2.24's own evidence is about `RuntimeEngine`/`PolicyEngine`/`SignalIntentBinder`/`CapabilityPolicyBinder` never reading caller identity at all, not about per-capability behavior), so this claim's substance is unaffected by G-30 — G-30 is about policy _binding_ coverage, not caller-type discrimination. It does not claim that a non-AI caller has actually been exercised against a live production deployment — only that the mechanism contains no code path that could distinguish one caller kind from another to begin with.
+**Scope, precisely:** this claim covers the general-purpose pipeline mechanism itself, which the regression test below exercises independently of any specific capability. The mechanism's caller-agnosticism does not depend on which capability is invoked (2.24's own evidence is about `RuntimeEngine`/`PolicyEngine`/`SignalIntentBinder`/`CapabilityPolicyBinder` never reading caller identity at all, not about per-capability behavior), so this claim's substance is unaffected by G-30 — G-30 is about policy _binding_ coverage, not caller-type discrimination. It does not claim that a non-AI caller has actually been exercised against a live production deployment — only that the mechanism contains no code path that could distinguish one caller kind from another to begin with.
 
 Evidence
 
@@ -1140,7 +1011,7 @@ A signed Execution Authorization is also bound to the exact runtime signals its 
 
 `ExecutionRequest` carries the same `signals` the authorization was signed under (`packages/execution-system/src/ExecutionRequest.ts`, populated by `ExecutionRequestBuilder` from the persisted `BusinessTransaction.signals`), and `ExecutionGateway` optionally accepts a `SignalStateVerifier` (`ExecutionGatewayOptions.signalStateVerifier` — the same port `@parmana/policy` already defines and `RuntimeEngine` already uses pre-authorization, reused here rather than reimplemented). When supplied, and when the authorization carries a `signalsHash` and the request carries `signals` (older authorizations signed before this check existed carry neither), the gateway recomputes the signals hash and compares it to the signed value — a mismatch sets `signalsStillCurrent: false` and is reported in `GatewayVerificationResult.signalsHashMismatch`. When the hash matches, the gateway independently re-verifies those signals against real-world state via `SignalStateVerifier.findViolations` — any divergence also sets `signalsStillCurrent: false`, reported in `GatewayVerificationResult.signalDivergence`, and fails `verify()` before the connector is ever invoked, in the same ordered check sequence `policyStillCurrent` sits in (`packages/execution-gateway/src/ExecutionGateway.ts`).
 
-This check is opt-in and additive, not a behavior change for existing deployments: omitting `signalStateVerifier`, or verifying an authorization signed before `signalsHash` existed, leaves `signalsStillCurrent` absent (not failed) — the same "absent means skipped" convention `policyStillCurrent` already uses — and `isSoleFailureNonceReplay` treats an absent/undefined check as passing, so it does not spuriously reclassify a stale-signals rejection as a nonce replay. In production, only capabilities with a configured `SignalStateVerifier` (today, `hubspot-deal-update` via `createHubSpotSignalStateVerifier`) get a real re-verification; every other action's `findViolations` call returns an empty array (nothing to check), the same discipline every capability-scoped `SignalStateVerifier` implementation already follows. The check also only has effect when decision and execution are actually separated in time; this codebase's own `RuntimeEngine`/`ExecutionGateway` wiring runs both synchronously in one call today, so its practical value is for a `SignedExecutionAuthorization` handed to a decoupled downstream receiver (e.g. an `HttpExecutionSystem`-based deployment) that verifies and executes independently, potentially much later, up to `maxTtlSeconds` — exactly the use this authorization type's own "receiving systems" doc comment describes as supported.
+This check is opt-in and additive, not a behavior change for existing deployments: omitting `signalStateVerifier`, or verifying an authorization signed before `signalsHash` existed, leaves `signalsStillCurrent` absent (not failed) — the same "absent means skipped" convention `policyStillCurrent` already uses — and `isSoleFailureNonceReplay` treats an absent/undefined check as passing, so it does not spuriously reclassify a stale-signals rejection as a nonce replay. In production, only capabilities with a configured `SignalStateVerifier` get a real re-verification, and none is configured in this version; every action's `findViolations` call returns an empty array (nothing to check), the same discipline every capability-scoped `SignalStateVerifier` implementation already follows. The check also only has effect when decision and execution are actually separated in time; this codebase's own `RuntimeEngine`/`ExecutionGateway` wiring runs both synchronously in one call today, so its practical value is for a `SignedExecutionAuthorization` handed to a decoupled downstream receiver (e.g. an `HttpExecutionSystem`-based deployment) that verifies and executes independently, potentially much later, up to `maxTtlSeconds` — exactly the use this authorization type's own "receiving systems" doc comment describes as supported.
 
 Evidence
 
@@ -1372,7 +1243,7 @@ What changed on 2026-09-20 (`packages/execution-gateway/src/ExecutionGateway.ts`
 Scope, stated plainly:
 
 - This binds execution to the policy a human checker approved. It does not prove the policy is correct or wise, and it does not model per policy or per role approver authority. Any provisioned human checker with a step up key can approve any policy (see G-50 in `docs/VERIFICATION-GAPS.md`).
-- Signals such as `fraudCheckPassed` are caller declared unless a `SignalStateVerifier` covers that capability. The HubSpot verifier and, for any signal a policy declares in `approvalSignals` (such as `managerApproved` on refunds), `ApprovalSignalVerifier` (2.42) are wired; other signals are only as true as the caller says (G-51). Since 2026-09-28 the policies for merges and LLM tool calls need a signed approval, so their caller declared facts cannot authorize on their own (2.44).
+- Signals such as `fraudCheckPassed` are caller declared unless a `SignalStateVerifier` covers that capability. For any signal a policy declares in `approvalSignals`, `ApprovalSignalVerifier` (2.42) is wired; other signals are only as true as the caller says (G-51). Since 2026-09-28 the policies for LLM tool calls need a signed approval, so their caller declared facts cannot authorize on their own (2.44).
 - The claim holds for execution routed through the gateway. A request that never reaches the gateway is not covered (see 3.1).
 - Direct edits to the policy store outside the API are prevented from executing (hash mismatch against the approval record) but are still only detected, not blocked, at the storage layer.
 
@@ -1386,7 +1257,7 @@ Evidence
 
 ## 2.37 Large Message Signing Under AWS KMS (Commitment Scheme)
 
-An Execution Trust Record, an execution authorization, or any other artifact whose canonical form is longer than 4096 bytes can be signed with a KMS held Ed25519 key and verified independently. AWS KMS refuses a raw Ed25519 message over 4096 bytes, which broke `POST /execute` for `paytm:refund` in production on 2026-09-20 (`VerificationCrypto.sign` calling `KmsSigner.sign`, `ValidationException: Member must have length less than or equal to 4096`).
+An Execution Trust Record, an execution authorization, or any other artifact whose canonical form is longer than 4096 bytes can be signed with a KMS held Ed25519 key and verified independently. AWS KMS refuses a raw Ed25519 message over 4096 bytes, so a larger artifact is signed through a fixed-size commitment.
 
 The decision is recorded in `docs/adr/ADR-0010-Large-Message-Signing-Under-KMS.md`:
 
@@ -1399,7 +1270,6 @@ Scope, stated plainly:
 
 - The TypeScript packages and the Python SDK implement the rule. A third party verifier must implement it to verify a large KMS signed artifact. It is fully specified in the ADR and the Python module is a compact reference.
 - This makes signing possible. It does not change the ordering in which a request is processed. The connector can still be called before the trust record is signed, so a signing failure after the connector call leaves an executed action without a signed record (G-52 in `docs/VERIFICATION-GAPS.md`).
-- Verified against the real AWS KMS service in production on 2026-09-20 (commit 333786a): a live `paytm:refund` returned `200` with a 4965 byte trust record that verifies only as the commitment signature, and `verifyExecutionTrustRecordOffline` accepted it against the live public key.
 
 Evidence
 
@@ -1422,7 +1292,7 @@ Scope, stated plainly:
 
 - This does not guarantee that every executed action has a signed trust record. A transient failure between the readiness check and the real signing, or a database failure after release, still leaves an executed action with no signed record. It narrows the window and makes the failure explicit and reconcilable. **Superseded on 2026-09-21 by section 2.39:** a signed Execution Intent is now stored before release, and a missing record can be rebuilt.
 - There was no two phase record and no rebuild path for a missing record (G-53 in `docs/VERIFICATION-GAPS.md`) when this section was written. Section 2.39 adds both, with the limits stated there.
-- Verified in tests, and the success path verified live on 2026-09-20 (production commit 4047536): the startup log shows `signingReadinessConfigured: true` and a live `paytm:refund` returned `200` with `VERIFIED`, which required the readiness probe to pass against the real KMS. The failure responses (`503 SIGNING_UNAVAILABLE`, `500 EXECUTION_RECORD_INCOMPLETE`) are proven in unit tests, not by live fault injection.
+- Verified in tests. The failure responses (`503 SIGNING_UNAVAILABLE`, `500 EXECUTION_RECORD_INCOMPLETE`) are proven in unit tests, not by live fault injection.
 
 Evidence
 
@@ -1487,7 +1357,6 @@ Scope, stated plainly:
 - **A new deployment authorizes nothing until its own people approve the policies they use** through policy governance (2.26, 2.35). `seed` does not approve them. API keys for the proposer and approver are issued inside the image (`docker/local/api-keys.mjs`). Signing the approval no longer needs the repository: the TypeScript SDK 1.3.0, published on npm on 2026-09-25, signs it (2.41, `docs/VERIFICATION-GAPS.md` G-62, closed). The Python SDK 1.3.0, published on PyPI the same day, signs it too.
 - An authorized action whose connector cannot be reached, times out or answers with an error returns `502 EXECUTION_OUTCOME_UNKNOWN` with the transaction's identifiers, matching the Execution Intent's `ERRORED` state (G-63, closed 2026-09-25; before, a bare `500`).
 - Verified on Docker Desktop 29.8.0 on Windows 11 and on Linux in CI run 36113024609 (`.github/workflows/docker-image.yml`, job `self-hosted`, 2026-09-25, on the merge commit `a14bc5c`). CI repeats it on every change to the deployment files, and also runs every command of the quickstart page and compares the output (`docker/local/quickstart-check.sh`).
-- The offline run used a stand in for the downstream system (`parmana-paytm-agent`), not a real one. It covers the Paytm connector only.
 - The images were built while online. The claim is about running, not about building, with no internet.
 - One API instance with one Postgres. No high availability.
 - **No customer runs this deployment.** That remains a future claim in section 4.
@@ -1503,7 +1372,6 @@ Verification
 Evidence
 
 - `docker-compose.yml`, `docker/local/setup.mjs`, `docker/local/migrate.sh`, `docker/local/postgres-roles.sql`, `docker/local/seed-policies.mjs`
-- `docker-compose.offline-check.yml`, `docker/local/offline-check/run.sh`, `check.mjs`, `check-identities.mjs`, paytm-agent-stand-in.mjs (removed 2026-11-02 with the Paytm connector, ADR-0018)
 - `packages/shared/src/config/StorageProviders.ts` (`isPostgresStorage`), `packages/storage/src/StorageFactory.ts`, `packages/api/src/bootstrap/assertStorageConfigured.ts`, `packages/api/src/routes/ready.ts`
 - `packages/storage/tests/unit/storage-factory.test.ts`, `packages/api/tests/unit/bootstrap/assert-storage-configured.test.ts`, `packages/api/tests/unit/routes/ready.test.ts`, `packages/shared/tests/unit/config-validation.test.ts`
 - `.github/workflows/docker-image.yml`, job `self-hosted`
@@ -1591,7 +1459,7 @@ Scope, stated plainly:
 
 - **Merged and deployed** 2026-09-27 (PR #47 into #46, then #46 into `main`, merge `4eebd5f`). Production's `customer-refund` versions in effect were not checked after the deploy.
 - Binding an action to a different policy name, adding a capability, and adding an approver still need a deploy.
-- Agents must send the version in effect. After an approval, requests naming the previous version are refused until agents update. **Added 2026-09-28:** `GET /policies/in-effect?capability=<action>` returns the policy to declare right now, from the same `CapabilityPolicyBinder.policyInEffect` the check uses, so an agent that asks before each request needs no update when a version is approved. It answers a caller whose key may invoke the capability, or a human caller (`packages/api/src/routes/policy-in-effect.ts`; `packages/api/tests/integration/policy-in-effect.integration.test.ts`). The refund agent (`parmana-paytm-agent`) declared 1.0.0 in its code, so every refund it sent to production was refused from the approval of 1.1.0 until its PR #6, deployed 2026-09-28, which makes it ask this endpoint before every refund. Verified in production the same day: a refund through the agent was evaluated under 1.1.0's rules.
+- Agents must send the version in effect. After an approval, requests naming the previous version are refused until agents update. **Added 2026-09-28:** `GET /policies/in-effect?capability=<action>` returns the policy to declare right now, from the same `CapabilityPolicyBinder.policyInEffect` the check uses, so an agent that asks before each request needs no update when a version is approved. It answers a caller whose key may invoke the capability, or a human caller (`packages/api/src/routes/policy-in-effect.ts`).
 - The version is read from the latest approval record without verifying it; the same request then verifies that record's signature and content hash (2.35, 2.36), so a record changed outside the API refuses the request.
 
 Verification
@@ -1609,16 +1477,12 @@ Evidence
 
 ---
 
-## 2.44 An Agent Cannot Authorize a Refund, Merge, Slack Post or Tool Call by Declaring Facts
+## 2.44 An Agent Cannot Authorize an Action by Declaring Facts
 
 **Claim.** An AI agent can be manipulated by content it reads (prompt injection). For the actions below, the agent cannot authorize its own request by declaring facts. Each write needs a signed approval from a trusted person for that specific action, and the facts the agent declares can refuse a request but cannot approve it.
 
 **Per action.**
 
-- **Pull request merge (`github:pr-merge`).** The policy `github-pr-approval` 1.1.0 approves a merge only when `mergeApproved` is true. That fact is backed by a signed approval for the exact pull request (`owner/repo#number`), for this action, that is unexpired and used once. Review, status check, branch protection and risk facts are declared by the caller. They can refuse a merge; they cannot approve one.
-- **Pull request read (`github:pr-fetch`).** Bound to its own policy, `github-pr-read` 1.1.0. Reads also need a signed approval, as with every action.
-- **Refund (`paytm:refund`).** `customer-refund` 1.2.0 approves a refund only when `managerApproved` is true. That fact needs a signed approval for the order and the amount. The policy refuses an amount of zero or less, and an amount above 100000. The caller's eligibility and fraud-check declarations are not trusted to approve.
-- **Slack post (`slack:post-message`).** `slack-post-message` 1.1.0 needs a signed approval for the channel. The caller's own `channelAuthorized` declaration is not trusted. The post is refused unless its channel is the intent's target, and is in the server's `SLACK_ALLOWED_CHANNEL_IDS`. The check runs before authorization and again at release. An empty list refuses every post. The text of an approved post is still declared by the caller, but it can only go to a listed channel.
 - **LLM tool call (`llm-tool-call`).** `llm-tool-call` 1.1.0 approves only when `humanApproval` is true. That fact needs a signed approval for the specific tool.
 
 Every approve rule in these policies requires an approval-backed fact to be true. A test checks the structure, not only examples: with every caller-declared fact at its most permissive value and no approval, each request is refused.
@@ -1632,13 +1496,10 @@ Every approve rule in these policies requires an approval-backed fact to be true
 - **Versions are pinned.** Production runs the policy version most recently approved through maker checker (2.43). A superseded version is refused for every policy, before authorization and at release. This also means an older approved version cannot be named to get weaker rules. Approving an older version again rolls back (G-74).
 - **No connector runs an LLM tool call.** On the hosted API, an approved `llm-tool-call` decision executes nothing.
 - **Connector configuration is outside this claim.** Whether a given deployment has a connector configured does not change the rules above.
-- **GitHub's own branch protection is separate.** Parmana does not read review or check state from GitHub.
 
 **Evidence.**
 
 - `policies/customer-refund/1.2.0/policy.json`
-- `policies/github-pr-approval/1.1.0/policy.json`
-- `policies/github-pr-read/1.1.0/policy.json`
 - `policies/llm-tool-call/1.1.0/policy.json`
 - `packages/capability-registry/src/CapabilityPolicyBinding.ts` (the bindings for these capabilities)
 - `packages/policy/tests/unit/ApprovalBackedPolicies.test.ts`
@@ -1686,124 +1547,13 @@ Evidence
 
 ---
 
-## 3.3 Connector SDK Foundation (Scoped)
-
-@parmana/connector-sdk defines a Connector authoring contract (Connector, ConnectorRequest, ConnectorResponse, ConnectorExecutionContext, ConnectorCapability, ConnectorMetadata, ConnectorVersion, ConnectorHealth, ConnectorFactory) and extends execution-control's ConnectorRegistry, CredentialVault, and ConnectorPolicy seams without modifying them. This claim covers only the foundation: two reference connectors (HttpConnector, MockConnector), a credential-provider seam (StaticCredentialProvider, EnvironmentCredentialProvider), and deterministic connector evidence attached to the existing Execution Trust Record via the existing, unmodified ExecutionEvidence.attributes path and the existing TrustRecordHasher. It does not claim any enterprise-specific connector, any cloud secret-manager integration, or any change to Phase 1's Runtime, Policy Engine, Execution Gateway, Replay, Receipt Generation, Verification, or REST API; all of which remain exactly as evidenced elsewhere in this document.
-
-Evidence
-
-- packages/connector-sdk/src (Connector, CredentialProvider, MockConnector) — ConnectorRegistry itself is not defined here; it lives at packages/execution-control/src/ConnectorRegistry.ts, extended (not duplicated) by connector-sdk, per the seam described above
-
-- packages/connector-sdk/tests/unit (4 files, 32 tests: registry, credential-provider leak checks, MockConnector, reference-policy evaluation)
-
-- policies/connector-capability/1.0.0/policy.json (reference policy: ALLOW crm:read, BLOCK crm:delete, threshold-gated payments:refund, default BLOCK, no approval-workflow outcome)
-
-**Update (2026-08-24 documentation-currency pass):** `HttpConnector`, `SdkConnectorExecutor`, and `CapabilityConnectorPolicy` no longer live in `packages/connector-sdk/src` — all three moved to `packages/execution-gateway` during the Phase 1C execution-ownership refactor (the same refactor §3.10's own "Update (execution-ownership refactor, Phase 1C)" paragraph documents for the HubSpot connector; this section was never given the equivalent update at the time). Current locations: `packages/execution-gateway/src/HttpConnector.ts`, `packages/execution-gateway/src/connector-execution/SdkConnectorExecutor.ts`, `packages/execution-gateway/src/connector-runtime/CapabilityConnectorPolicy.ts`. The previously-cited "45 tests" count was also stale — `packages/connector-sdk/tests/unit` now holds 4 files / 32 tests (re-run and confirmed); the HttpConnector-timeout, end-to-end Gateway integration, and Trust Record hash-boundary regression tests this section originally described moved to `packages/execution-gateway/tests` along with the classes they exercise.
-
----
-
-## 3.8 Deployed Environment: Full Chain via a Permanent Public Endpoint (Scoped) — Historical: Razorpay connector removed 2026-08-12
-
-**This claim was true and independently verifiable when written (2026-07-19, commit `7d27e63`).** The Razorpay connector it documents was deliberately removed from this codebase on 2026-08-12 (see the removal commit). This section is retained as the permanent historical record of what was demonstrated — it is not a claim about current capability, and nothing below should be read as describing present-tense behavior. Parmana does not run a Razorpay connector today. The dated, external record of this proof is `docs/site/trust-and-claims/trl7-verification.mdx` (2026-08-01 verification session) and `docs/site/changelog.mdx`.
-
-Closes the last gap 3.7 (now removed; see this claim's own history in `docs/site/changelog.mdx`) left open: a real Razorpay-initiated webhook delivery had previously been proven only against a temporary `cloudflared` tunnel run locally, with no standing infrastructure. This claim proved the identical full chain — a real refund, a real Razorpay-initiated webhook, signature-verified, correlated, and closed into a signed Settlement Confirmation — against Parmana's actual deployed instance, reachable at a permanent public URL, continuously running, not a one-time local exercise.
-
-**Deployment**: `parmana-api`, a single Docker image (see `docs/site/deployment/production.mdx`), running on Fly.io across two machines in the `lhr` region (`fly.toml` declares `primary_region = 'bom'`; the actually running machines are `lhr` — this claim states the observed region, not the configured one). Durable storage (`PARMANA_STORAGE=supabase`) and the webhook/settlement event stores are Supabase-backed, shared across both machines. The API requires caller authentication at every route except `/health`, `/ready`, `/openapi.yaml`, `/documentation`, `POST /refusal/verify`, and `POST /audit/verify` (2.16): an unauthenticated `POST /execute` was observed returning `401` with `WWW-Authenticate: Bearer realm="Parmana"`, never falling open.
-
-`POST /webhooks/razorpay` is registered permanently — not through a tunnel — at `https://parmana-api.fly.dev/webhooks/razorpay`, in the Razorpay Dashboard's Test Mode, for `refund.processed` and `refund.failed`.
-
-**Procedure**: one authenticated, gated 100-paise refund was created through the full production `POST /execute` chain against the same manually captured test-mode payment 3.4/3.7 use, executed against the deployed instance. Razorpay created the refund (id redacted `rfnd_**********T9Cj`) and, independently, delivered a genuine `refund.processed` webhook to the permanent endpoint above. The deployed instance's webhook route verified its signature against the rotated `RAZORPAY_WEBHOOK_SECRET`, persisted the event, and the deployed settlement poll loop (`scripts/process-razorpay-settlements.ts`, `pollIntervalMs: 15000`) drained it: fetch-verified the refund's real status directly from Razorpay, and appended a signed `SETTLED` Settlement Confirmation (`confirmationId dcb06247-6e7a-4adf-b709-5da407f0b054`, `fetchedRefundStatus: "processed"`) to the Execution Trust Record, surfaced correctly on `GET /verification/{businessTransactionId}`. Elapsed time from `POST /execute` to the signed `SETTLED` confirmation: approximately 48 seconds.
-
-Correlation is proven by construction, not just observation: `RazorpaySettlementProcessor` never queries Razorpay for refunds on its own — `runOnce()` only drains events already sitting in the durable webhook event store, and the only code path that ever writes to that store is the webhook route, only after signature verification succeeds. Since the business transaction id driving this refund was freshly generated for this exercise, a matching event could only have entered the store via a genuinely delivered, correctly signed webhook POST from Razorpay to the permanent endpoint above.
-
-This claim is scoped narrowly: one real delivery, test mode only, against a permanent endpoint. It does not claim live-mode operation, load-bearing traffic, or high availability — the deployment runs two machines for redundancy, not for capacity or failover behavior that has been tested. [FUTURE] live-mode operation remains open (see 3.4/Future Claims).
-
-Evidence
-
-- `fly.toml`, `Dockerfile`, `docker/entrypoint.sh` (deployment shape)
-
-- `packages/api/src/routes/ready.ts` (readiness probe distinguishing Supabase-backed storage from in-memory)
-
-- `packages/api/src/middleware/caller-auth.ts` (401 + `WWW-Authenticate` on missing credential, observed live against the deployed instance)
-
-- `scripts/process-razorpay-settlements.ts` (the deployed settlement poll loop; `RAZORPAY_SETTLEMENT_POLL_INTERVAL_MS`) — **deleted 2026-08-12** along with the rest of the Razorpay connector; cited here as an accurate historical record of what this file did while it existed, not as a currently-resolvable path
-
-- Live smoke test performed against `https://parmana-api.fly.dev` this session: unauthenticated `POST /execute` → `401`; one authenticated 100-paise refund via `POST /execute`; `GET /verification/{businessTransactionId}` polled until `settlement.status: "SETTLED"` (confirmationId `dcb06247-6e7a-4adf-b709-5da407f0b054`, `fetchedRefundStatus: "processed"`, refund id redacted `rfnd_**********T9Cj`)
-
----
-
-## 3.9 Deployed Environment: Live-Mode Full Chain (Scoped) — Historical: Razorpay connector removed 2026-08-12
-
-**This claim was true and independently verifiable when written (2026-07-20, commit `57558d6`).** The Razorpay connector it documents was deliberately removed from this codebase on 2026-08-12. Retained as historical record only — not a current-capability claim. See `docs/site/trust-and-claims/trl7-verification.mdx` and `docs/site/changelog.mdx` for the permanent dated record.
-
-Closes the gap 3.8 (and the now-removed 3.4) left open: every live claim before this one was against Razorpay's test-mode API only. This claim proved the identical full chain — a real refund, a real Razorpay-initiated webhook, signature-verified, correlated, and closed into a signed Settlement Confirmation — in Razorpay **Live Mode**, against a second, separately deployed instance.
-
-**Deployment**: `parmana-api-live`, the same Docker image (see `docs/site/deployment/production.mdx`), running on Fly.io in the `sin` region (`fly.live.toml` declares `primary_region = 'sin'`; the actually running machines are also `sin` — no region mismatch this time, unlike 3.8's `parmana-api`). Durable storage (`PARMANA_STORAGE=supabase`) and the webhook/settlement event stores are Supabase-backed, shared across both machines. `RAZORPAY_KEY_ID`/`RAZORPAY_KEY_SECRET` are a live-mode (`rzp_live_`) key pair, distinct from every other credential used elsewhere in this document. Caller authentication is enforced identically to 3.8: an unauthenticated `POST /execute` was observed returning `401` with `WWW-Authenticate: Bearer realm="Parmana"` against this deployment specifically.
-
-`POST /webhooks/razorpay` is registered permanently at `https://parmana-api-live.fly.dev/webhooks/razorpay`, in the Razorpay Dashboard's **Live Mode** specifically (not Test Mode — see 3.7/3.8 for the debugging cost of getting this wrong), for `refund.processed` and `refund.failed`.
-
-**Procedure**: a real ₹10.00 Payment Link was created and paid with a real card, live, through Razorpay-hosted checkout. One authenticated, policy-gated 100-paise refund was then created through the full production `POST /execute` chain against that payment (`pay_` id redacted below). Razorpay created the refund (id redacted `rfnd_**********WnNG`) and, independently, delivered a genuine `refund.processed` webhook to the permanent endpoint above. The deployed instance's webhook route verified its signature, persisted the event, and the deployed settlement poll loop drained it: fetch-verified the refund's real status directly from Razorpay, and appended a signed `SETTLED` Settlement Confirmation (`confirmationId 6a334df8-190d-4835-9050-b54e6657e05f`, `fetchedRefundStatus: "processed"`), surfaced correctly on `GET /verification/{businessTransactionId}`. Elapsed time from `POST /execute` to the signed `SETTLED` confirmation: approximately 43 seconds.
-
-Correlation is proven by construction, for the same reason 3.8 states: the settlement processor never queries Razorpay on its own initiative — `runOnce()` only drains events already sitting in the durable webhook event store, and the only writer to that store is the webhook route, only after signature verification succeeds. The `businessTransactionId` driving this refund was freshly generated for this exercise, so a matching event could only have entered the store via a genuinely delivered, correctly signed Live Mode webhook POST from Razorpay.
-
-This claim is scoped narrowly and deliberately: **one** real-money refund (₹1.00 / 100 paise), one deployed instance, one live-mode webhook delivery. It does not claim volume, sustained load, high availability, or tested failover behavior — `parmana-api-live` runs the same two-machine shape as `parmana-api` for redundancy, not capacity or failover that has been exercised. It does not claim Razorpay payout creation (RazorpayX remains a distinct, unimplemented item — see Future Claims), and it does not claim any change to Phase 1's Runtime, Policy Engine, Execution Gateway, Replay, Receipt Generation, Verification, or REST API.
-
-Evidence
-
-- `fly.live.toml` (app `parmana-api-live`, `primary_region = 'sin'`) — **deleted 2026-08-12** along with the rest of the Razorpay connector; cited here as an accurate historical record, not as a currently-resolvable path
-
-- `packages/api/src/middleware/caller-auth.ts` (401 + `WWW-Authenticate` on missing credential, observed live against this deployment)
-
-- Live execution performed against `https://parmana-api-live.fly.dev` this session: unauthenticated `POST /execute` → `401`; a real ₹10 Payment Link paid live with a real card; one authenticated 100-paise refund via `POST /execute` against that payment; `GET /verification/{businessTransactionId}` polled until `settlement.status: "SETTLED"` (confirmationId `6a334df8-190d-4835-9050-b54e6657e05f`, `fetchedRefundStatus: "processed"`, refund id redacted `rfnd_**********WnNG`)
-
----
-
-## 3.10 HubSpot Deal Stage and Amount Update (Scoped)
-
-**Claim.** A HubSpot deal's `dealstage` and `amount` can be updated through `hubspot:deal-update` only when a signed approval for that deal has been verified. Core enforces this. The policy `hubspot-deal-update` 1.1.0 is bound to the capability (2.22), and the approval is checked by the signal verifier (2.42).
-
-**Where the connector sits.** The HubSpot connector is not in this repository. It was removed in `b6463fa` (ADR-0018) and lives in `parmana-connectors`. Its controls, including the property allowlist, the placeholder-credential guard and the redaction of its credential, are not verified here.
-
-**Policy 1.1.0 (the bound version).** The policy has three rules, in order:
-
-1. Reject when a requested stage transition is not on an allowed path.
-2. Approve when a verified approval for the deal is present and the transition (if any) is allowed.
-3. Reject every other request.
-
-Each approve rule requires the approval fact `dealUpdateApproved`. That fact is bound to `parameters.dealId` and checked by `ApprovalSignalVerifier`. The approver must be trusted: it is either in the code list or in the `approval_issuers` table, which is read on every approval and fails closed.
-
-Version 1.0.0 approved amount changes above a threshold when the caller declared them pre-authorized. 1.1.0 does not contain that rule. Every amount change now needs the signed approval, the same as a stage change. The 1.0.0 file is kept in the repository and is not the bound version.
-
-**What core verifies and what it does not.**
-
-- Core verifies the approval, and that `proposedDealStage` and `proposedAmount` match `parameters.dealstage` and `parameters.amount` (`boundSignals`, 2.11).
-- Core does not compute or verify `dealStageTransitionAllowed`, `currentDealStage`, `amountChangeRequested` or `amountDeltaAbs`. These are declared signals. Nothing in this repository checks them against the live deal. So the forward-only stage rule depends on a verifier outside this repository, and this claim does not verify it.
-
-**Scope and limits.**
-
-- Covers `dealstage` and `amount` on Deals only. Contacts, companies, deleting or archiving deals, and webhook-driven triggers are out of scope.
-- One capability, `hubspot:deal-update`, authorizes both properties together. An operator cannot grant a stage change without also granting an amount change. Splitting them into two capabilities is not done.
-- The approval-backed policy test (`packages/policy/tests/unit/ApprovalBackedPolicies.test.ts`) covers 1.1.0's approval requirement and its failing cases.
-- No stage order is defined in this repository. Any per-pipeline ordering is the external verifier's responsibility.
-
-**Evidence.**
-
-- `policies/hubspot-deal-update/1.1.0/policy.json` (the bound version; rules and `approvalSignals`)
-- `policies/hubspot-deal-update/1.0.0/policy.json` (superseded; kept in the repository)
-- `packages/capability-registry/src/CapabilityPolicyBinding.ts` (`hubspot:deal-update` bound to `hubspot-deal-update` 1.1.0)
-- `packages/policy/tests/unit/ApprovalBackedPolicies.test.ts` (approval-backed policies, including 1.1.0)
-- `packages/api/tests/unit/connector-policies-not-self-authorizing.test.ts` (a `hubspot:deal-update` request cannot authorize itself through declared facts)
-- `packages/api/src/bootstrap/createApprovalIssuerRegistry.ts` (trusted approvers: code list plus `approval_issuers`, fail closed)
-
-The authorization model for approvals is in 2.42 and 2.47, and the connector split is in 2.23. Dated updates, including the removal of the connector and the policy history, are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
-
 ## 3.11 Durable, Third-Party-Verifiable Refusal and Audit Records (RFC-0021, Scoped)
 
 Every policy `REJECT` decision reachable through `RuntimeEngine.execute` — an ordinary `PolicyEngine.evaluate` rejection or a `SignalIntentBinder` binding-violation rejection — produces a signed, durable **Refusal Record**, independently third-party-verifiable the same way an Execution Trust Record's signature is, without requiring a caller credential or database access to check. This closes what was previously true of this codebase: an approved execution left cryptographic evidence behind (the Execution Trust Record and its signature); a refused one left only an HTTP response and whatever the caller's own logs happened to capture.
 
 `RefusalRecordBuilder` (`packages/runtime/src/RefusalRecordBuilder.ts`) builds the record from the rejected transaction, its `Decision`, the executed intent's target/parameters, and any `SignalIntentBinder` violations; `RefusalCrypto` (`packages/crypto/src/RefusalCrypto.ts`) hashes and signs it with the same `FileKeyProvider`/`DEFAULT_KEY_ID` signing stack every other artifact in this document uses — one root of trust, not a separate one for refusals. `POST /refusal/verify` (`packages/api/src/routes/refusal-verify.ts`) verifies a submitted Refusal Record's signature and returns `{ valid }`; like `POST /audit/verify` below, it is deliberately mounted ahead of caller-auth middleware — no API key, no lookup by id, nothing but the artifact itself and Parmana's public key, which is precisely what makes a refusal independently checkable by whoever received the rejection, not only by Parmana.
 
-Separately, and closing the analogous gap for caller-authentication audit trails (2.16, 2.19): every event a **production** audit sink writes is now signed at write time with `AuditEventCrypto` (`packages/crypto/src/AuditEventCrypto.ts`, the same signing stack again), stored alongside the event as a `signature_json` column. `POST /audit/verify` (`packages/api/src/routes/audit-verify.ts`) verifies any event matching this generic signed-event shape — `CallerAuditEvent` today — through one route, since `AuditEventCrypto.verify()` operates on canonical bytes and a signature alone, never dispatching on the event's own `type`. **Update (2026-08-24 documentation-currency pass):** this route was originally built to verify both `CallerAuditEvent` and the now-removed `RazorpayWebhookAuditEvent` shape (deleted with the rest of the Razorpay connector on 2026-08-12); the route's own code was always fully generic (it never imported or type-checked against either name specifically) and needed no change, but `RazorpayWebhookAuditEvent` no longer exists as a type anywhere in this codebase and no longer describes anything this system produces.
+Separately, and closing the analogous gap for caller-authentication audit trails (2.16, 2.19): every event a **production** audit sink writes is now signed at write time with `AuditEventCrypto` (`packages/crypto/src/AuditEventCrypto.ts`, the same signing stack again), stored alongside the event as a `signature_json` column. `POST /audit/verify` (`packages/api/src/routes/audit-verify.ts`) verifies any event matching this generic signed-event shape — `CallerAuditEvent` today — through one route, since `AuditEventCrypto.verify()` operates on canonical bytes and a signature alone, never dispatching on the event's own `type`.
 
 **Policy content hash (2026-10-06).** A Refusal Record carries `policyContentHash`, the SHA-256 hash of the policy content that decided it, computed by `RuntimeEngine` from the policy that loaded, the same value an Execution Trust Record carries in `transaction.policy.contentHash`. It is inside the signed canonical record (`RefusalCrypto.canonicalRecord`), so changing, removing or adding it fails verification. Refusal Records written before that date have no `policyContentHash`; an absent field is left out of the canonical form, so they hash exactly as before and still verify (pinned in `crypto-verifiers.exact.test.ts`). Stored in `refusal_records.policy_content_hash` (migration `20261006120000_add_refusal_policy_content_hash.sql`, nullable).
 
@@ -1813,7 +1563,7 @@ Separately, and closing the analogous gap for caller-authentication audit trails
 
    **Considered and rejected (2026-08-19): making this write atomic/fail-closed with the rejection response** (write the record synchronously before returning to the caller; a storage failure would surface as `500` instead of `403`). Rejected because it does not strengthen the property that actually matters — the request is already unconditionally denied, correctly, the instant `Decision` is built, regardless of whether the evidentiary write ever runs — and it introduces a new one: a Supabase hiccup would turn a _correct_ policy rejection into an opaque server error, a genuine availability regression (and a storage-pressure denial-of-service vector) for zero corresponding security gain. "Fail-closed" is the right discipline for whether a dangerous action executes; the refusal record is evidence _about_ a decision already enforced, not a gate on it. The existing remedy for a durability gap — logging `refusal_record_write_failed` loudly for an operator to reconcile — is the correct one; blocking the caller's response on it is not.
 
-2. **Only production (Supabase) audit sinks sign.** `SupabaseCallerAuditSink` signs every event; `InMemoryCallerAuditSink` (test wiring, `NODE_ENV=test`) does not. This claim is therefore about the production deployment path specifically, not every configuration this codebase can run in. Existing rows written before this capability shipped remain unsigned; `signature_json` is nullable and additive, honestly reflecting that history rather than backfilling a signature that was never actually produced at write time. (At the time this capability shipped, the same split also applied to `SupabaseRazorpayWebhookAuditSink`/`InMemoryRazorpayWebhookAuditSink`; both were deleted along with the rest of the Razorpay connector on 2026-08-12 and no longer exist.)
+2. **Only production (Supabase) audit sinks sign.** `SupabaseCallerAuditSink` signs every event; `InMemoryCallerAuditSink` (test wiring, `NODE_ENV=test`) does not. This claim is therefore about the production deployment path specifically, not every configuration this codebase can run in. Existing rows written before this capability shipped remain unsigned; `signature_json` is nullable and additive, honestly reflecting that history rather than backfilling a signature that was never actually produced at write time.
 
 A third, narrower operational note, not a scope caveat on the claim itself: `SupabaseCallerAuditSink` currently writes via a direct Postgres connection rather than PostgREST. This originated as a narrow workaround for a PostgREST schema-cache issue with one new column (Supabase support ticket SU-437429), but a production-readiness audit (2026-09-09) found the pattern has since been extended deliberately, repo-wide: **8 of the 9** `Supabase*` storage classes now write via `PostgresPoolFactory` rather than PostgREST/supabase-js, per `SupabaseExecutionTrustRecordRepository.ts`'s own comment — "part of removing PostgREST from every Supabase-backed table's failure modes, not just the audit sinks that broke first." This is no longer a single revertible patch pending one support ticket; it is the storage layer's current architecture. `SupabaseClientFactory` (the supabase-js/PostgREST client class this workaround originally planned to revert to) had zero remaining call sites as of that audit and was deleted the same day, along with its now-unused `@supabase/supabase-js` dependency (`docs/VERIFICATION-GAPS.md` G-34) — a revert, if SU-437429 is ever resolved, would mean reintroducing a PostgREST client, not restoring one that still exists.
 
@@ -1920,7 +1670,7 @@ Evidence (update)
 
 ## 3.15 SDK Dogfooding: Documented Quickstarts Now Proven to Actually Run (Scoped)
 
-**Scope, precisely:** this claim covers the two documented "quickstart" example scripts — `python/examples/quickstart/run.py` and its closest TypeScript equivalent, `typescript/examples/02-execute.ts` — now being proven to actually work by an automated test, plus the real bugs found while proving that. It does **not** cover the other 11 numbered example scripts in `python/examples/`, the other 4 in `typescript/examples/`, or either SDK's full API surface; those remain unexercised by any test, same as before this pass. It is a narrower, complementary claim to 3.10's HubSpot-live-suite-through-the-SDK update above, not a restatement of it — that one is about a _test suite_ driving requests through an SDK; this one is about _documentation examples_ being provably correct, not just plausible-looking code that happens to parse.
+**Scope, precisely:** this claim covers the two documented "quickstart" example scripts — `python/examples/quickstart/run.py` and its closest TypeScript equivalent, `typescript/examples/02-execute.ts` — now being proven to actually work by an automated test, plus the real bugs found while proving that. It does **not** cover the other 11 numbered example scripts in `python/examples/`, the other 4 in `typescript/examples/`, or either SDK's full API surface; those remain unexercised by any test, same as before this pass.
 
 Before this pass, both quickstart scripts already imported their respective SDK (`parmana` / `@parmana/sdk`) rather than raw HTTP — that part did not need rewriting. What neither had was anything that actually _ran_ them: `typescript/examples/` is explicitly excluded from `typescript/tsconfig.json`'s own `include` list, so nothing in this repository has ever built, type-checked, or executed it, and no test imported `python/examples/quickstart/run.py` either. Both were, until now, hand-written code that had never been mechanically proven to still work as the surrounding schema evolved.
 
@@ -1948,9 +1698,9 @@ Evidence
 
 ## 3.16 Caller-to-Capability Scoping (Scoped)
 
-Extends `ApiKeyEntry` with an optional `allowedCapabilities` field: the set of capabilities (`Intent.action` values, e.g. `hubspot:deal-update`) a given key may invoke. Checked in `execute.ts`/`transactions.ts` before the transaction ever reaches `application.execute()` — i.e. before `CapabilityPolicyBinder`/`PolicyEngine.evaluate` are reached, neither of which is caller-aware by design (2.24, 2.16's own G-28 note). A caller attempting a capability outside its grant is rejected `403 CAPABILITY_NOT_ALLOWED` and the denial is audited (`caller.capability_denied`, `CallerAuditSink`), never silently. The default is fail-closed and deliberately the opposite of `allowedPrincipalIds`' own default: an unset or empty `allowedCapabilities` denies every capability — there is no "may invoke its own capability" fallback the way there is a "may only assert itself" fallback for principals. The literal string `"*"` is an explicit, auditable wildcard grant, never an implicit default. `GET /callers/me` returns an authenticated caller's own resolved identity and scope (`callerId`, `allowedPrincipalIds`, `allowedCapabilities`, `unrestrictedCapabilities`) — self-lookup only, no key material — as the proof artifact a security review can point to.
+Extends `ApiKeyEntry` with an optional `allowedCapabilities` field: the set of capabilities (`Intent.action` values, e.g. `test:fixture-execute`) a given key may invoke. Checked in `execute.ts`/`transactions.ts` before the transaction ever reaches `application.execute()` — i.e. before `CapabilityPolicyBinder`/`PolicyEngine.evaluate` are reached, neither of which is caller-aware by design (2.24, 2.16's own G-28 note). A caller attempting a capability outside its grant is rejected `403 CAPABILITY_NOT_ALLOWED` and the denial is audited (`caller.capability_denied`, `CallerAuditSink`), never silently. The default is fail-closed and deliberately the opposite of `allowedPrincipalIds`' own default: an unset or empty `allowedCapabilities` denies every capability — there is no "may invoke its own capability" fallback the way there is a "may only assert itself" fallback for principals. The literal string `"*"` is an explicit, auditable wildcard grant, never an implicit default. `GET /callers/me` returns an authenticated caller's own resolved identity and scope (`callerId`, `allowedPrincipalIds`, `allowedCapabilities`, `unrestrictedCapabilities`) — self-lookup only, no key material — as the proof artifact a security review can point to.
 
-**Scope, precisely — this is the load-bearing caveat for this claim:** this mechanism is implemented, tested, and enforced for every caller that authenticates through a caller-auth-enabled path. It does **not** currently apply to the capability actually reachable in production. **Update (2026-08-12): the Razorpay connector was deliberately removed from this codebase** (see the removal commit and CLAIMS.md's historical §3.8/§3.9) — `razorpay:refund-create` and the other Razorpay capabilities no longer exist here at all, not merely "unscoped." `hubspot:deal-fetch` and `hubspot:deal-update` remain the only production-reachable capabilities, and neither is scoped by caller yet: `hubspot-deal-update.integration.test.ts`/`hubspot-live.integration.test.ts` still construct their app with `callerAuth: "disabled"` — no `ApiKeyEntry` exists for that connector path at all, so there is no caller identity for `allowedCapabilities` to scope in the first place. Concretely: **do not read this claim as "Parmana's live CRM-moving (HubSpot) capabilities are now scope-restricted" — they are not, yet.** Today this protects only callers that go through caller-auth-enabled paths, which at present are test and tutorial callers scoped to the single generic `test:fixture-execute` capability (`NODE_ENV=test`-only). Enabling caller-auth on the HubSpot connector integration path itself is the follow-on work that would make this mechanism meaningful for the one capability that actually moves CRM state; that work has not been started (see Future Claims, §4).
+**Scope, precisely:** this mechanism is implemented, tested, and enforced for every caller that authenticates through a caller-auth-enabled path. No built in connector is in core in this version, so no production capability is scoped by it yet.
 
 Evidence
 
@@ -1962,60 +1712,22 @@ Evidence
 - `packages/api/src/routes/callers-me.ts` (`GET /callers/me`, resolved identity/scope, no key material)
 - `supabase/migrations/20260812120000_add_capability_to_caller_audit_events.sql` (additive `capability` column, widened `type` CHECK constraint; not yet applied to any live project)
 - `packages/api/tests/unit/isCapabilityAllowed.test.ts`, `packages/api/tests/integration/caller-capability-scoping.integration.test.ts` (allow/deny/fail-closed-default/wildcard, denial precedes policy evaluation, audit content, `/callers/me` self-lookup and resolved-defaults)
-- Repo-wide check confirming zero caller-auth-enabled test or production wiring exists for `hubspot:deal-update`: `hubspot-deal-update.integration.test.ts`, `hubspot-live.integration.test.ts` both construct their app with `callerAuth: "disabled"`. The Razorpay connector this section previously cited the same way no longer exists in this codebase at all (removed 2026-08-12).
-
----
-
-## 3.17 GitHub Pull Request Merge Connector (Scoped)
-
-`@parmana/connector-github` is a new, standalone workspace package, structurally parallel to `@parmana/connector-hubspot` (3.10): capability identifiers, schemas, and metadata live in the connector package; the executable adapter and credential provider are Gateway-owned (`packages/execution-gateway/src/connector-execution/`), imported back by the connector package's own comments as the reason nothing execution-shaped lives there. It authorizes two GitHub REST API actions this milestone: fetching a pull request's state (`github:pr-fetch`, read-only, used to learn mergeable/head-SHA state) and merging a pull request (`github:pr-merge`, the guarded execution). Anything else GitHub's API surface offers — review submission, comments, other object types, any webhook/event-driven trigger — is out of scope this milestone.
-
-**Credential model, structurally different from every other connector this codebase has had (Razorpay, historical; HubSpot, current): ephemeral, not static.** `GitHubAppCredentialProvider` (GitHubAppCredentialProvider.ts (removed 2026-11-03 with the GitHub connector, ADR-0018)) holds a GitHub App's private key, appId, and installationId at construction, and on every `resolve()` call signs a fresh RS256 JWT (`signGitHubAppJwt`, GitHubAppJwt.ts (removed 2026-11-03 with the GitHub connector, ADR-0018) — pure JWT construction with no network call, deliberately the one piece of this connector that stays in the connector package rather than the Gateway, since it makes no execution-shaped call itself) and exchanges it for a short-lived (~1 hour) GitHub App installation access token via a real network call to GitHub's `access_tokens` endpoint. The private key itself never leaves `GitHubAppCredentialProvider`, is never logged, and never appears in any thrown error; only the resulting installation token is returned, and only for the single `execute()` call that requested it — `CredentialProvider.resolve()` is called fresh by the Execution Gateway immediately before each execution, never cached or reused upstream, so "mint a new short-lived token per execution, never store it" required no new mechanism, only an implementation of the same `CredentialProvider` interface HubSpot's static-token model already uses. That is itself evidence the credential-isolation pattern (3.10's own "Pattern: Universal Across Credential Models") generalizes across credential _models_, not merely across connectors that happen to share one.
-
-`GatewayGitHubAdapter` (GatewayGitHubAdapter.ts (removed 2026-11-03 with the GitHub connector, ADR-0018)) is deny-by-default and fail-closed with the same discipline as `GatewayHubSpotAdapter`, deliberately: a merge naming any method outside `GITHUB_ALLOWED_MERGE_METHODS` (`merge`/`squash`/`rebase`) is refused before any network call; a non-2xx GitHub response fails closed rather than returning a partial success; and — mirroring 3.10's own "placeholder-credential guard, from day one" lesson learned from the Razorpay incidents — this connector refuses, before any network call, to send `GITHUB_TEST_MODE_PLACEHOLDER_TOKEN` to GitHub's real API (`https://api.github.com`) unless `baseUrl` is explicitly overridden to a mock server, present from this connector's first version. `expectedHeadSha`, when the caller supplies it, is forwarded as GitHub's own `sha` merge parameter — GitHub itself refuses the merge (422) if the PR's actual head has moved since policy evaluated it, closing the same class of stale-decision gap `SignalIntentBinder` closes for amount/target fields elsewhere in this codebase.
-
-`MockGitHubServer` (MockGitHubServer.ts (removed 2026-11-03 with the GitHub connector, ADR-0018)) is a hermetic, in-memory stand-in for the three GitHub REST endpoints this connector uses (`POST /app/installations/:id/access_tokens`, `GET`/`PUT /repos/:owner/:repo/pulls/:number[/merge]`), used by every default test run; it never makes or receives real network traffic beyond localhost. It does not verify the App JWT's signature (only that a non-empty Bearer token was presented) — signature correctness is covered separately, in isolation from any network call, by `GitHubAppJwt.test.ts`.
-
-**Policy** (`policies/github-pr-approval/1.0.0/policy.json`, evaluated by the same unmodified `PolicyEngine`): approves when `repositoryAuthorized`, `requiredReviewsCompleted`, `statusChecksPassed`, and `branchProtected` are all true and `riskScore` is at or below 20; denies otherwise, with dedicated rules for a too high risk score, failed status checks, and an unprotected branch, falling through to a generic deny by default rule. Reused across both `github:pr-fetch` and `github:pr-merge` the same way `hubspot-deal-update/1.0.0` is reused for both HubSpot capabilities in that connector's own integration tests (3.10): policy content and capability identity are independent concepts in this architecture (`packages/api/tests/fixtures/business-transaction.ts`'s own comment). **Update (2026-09-28, G-73):** `github:pr-merge` is bound to `github-pr-approval` 1.1.0, which authorizes a merge only with a signed approval for that pull request, and `github:pr-fetch` to its own `github-pr-read` 1.0.0. The facts above are caller declared and can only refuse a merge now (2.44).
-
-**Wiring gap this milestone closed, not anticipated by the original scaffolding commit:** `createGatewayGitHubConnector` and the GitHub credential-provider factory existed only in `execution-gateway`'s internal `connector-execution/index.ts` barrel after the initial scaffolding commit — never re-exported from the package's public `index.ts` the way `createGatewayHubSpotConnector` already was, so `packages/api` had no legal way to reach them. `createGatewayGitHubCredentialProvider.ts` (new) mirrors `createGatewayGitHubConnector.ts`'s existing factory-wrapper shape; both are now exported from `packages/execution-gateway/src/index.ts` and added to `tests/architecture/execution-boundary.test.ts`'s own generically-enforced allowlist of legitimate public factory files (the same test that would have caught a genuine implementation-class leak). createGitHubConnector.ts (removed 2026-11-03 with the GitHub connector, ADR-0018)/`createGitHubCredentialProvider.ts` mirror `createHubSpotConnector.ts`/`createHubSpotCredentialProvider.ts` exactly, registered into `createConnectorRegistry.ts` conditionally on all three of `GITHUB_APP_ID`/`GITHUB_INSTALLATION_ID`/`GITHUB_APP_PRIVATE_KEY` being set (fails closed to "connector not registered," never a partially-configured provider or a startup crash, matching 3.10's own HubSpot precedent). `github`'s SPIFFE identity was also added to `createConnectorAuthenticator.ts`'s trusted-connector-identity list — required, not optional: omitting it surfaces as `DefaultConnectorPolicy`'s own `"Connector identity is not trusted."` rejection at execution time, not a wiring-time error.
-
-**Test posture, in the order specified for this milestone:**
-
-- **Hermetic first.** 22 unit tests, all passing, no network calls beyond localhost: GitHubAppJwt.test.ts (removed 2026-11-03 with the GitHub connector, ADR-0018) (4 — RS256 signature correctness against real keypairs, `iat`/`exp` clock-drift backdating); github-connector.test.ts (removed 2026-11-03 with the GitHub connector, ADR-0018) (12 — fetch, merge, stale-head rejection via GitHub's own 422, deny-by-default unsupported merge method before any network call, non-2xx/timeout fail-closed, bad-credential-shape rejection, token never leaked into a thrown error, token never placed in response metadata beyond a one-way fingerprint, placeholder-credential guard against the real endpoint, no credential-shaped instance field at construction, and — the credential-lifecycle property 3.10 needed a dedicated `credential-non-exposure.test.ts` to add after the fact — a test asserting a prior call's credential is never reused across two sequential `execute()` calls with two different tokens, present here from this connector's first version); github-app-credential-provider.test.ts (removed 2026-11-03 with the GitHub connector, ADR-0018) (6 — real JWT-authenticated token mint against the mock server, handle branding, a fresh token minted on every `resolve()` call with no caching, private key never leaked into a thrown error, private key/token never placed in the resolved handle's identifiers, malformed access-token response fails closed without a raw parse error).
-- **Policy-denial-makes-zero-calls.** Proven at the HTTP boundary (github-pr-merge.integration.test.ts (removed 2026-11-03 with the GitHub connector, ADR-0018), 4 tests, all passing): a real merge through the production-wired `POST /execute` landing on `MockGitHubServer` (the strongest proof — the PR actually merges on the mock server, not just a `200` response); two policy `REJECTED` decisions (failed status checks, excessive risk score) each caught in `ExecutionGate.enforce` before `ExecutionComponent` ever dispatches to the connector — `response.status === 403`, `response.body.code === "POLICY_DENIED"`, and a `fetch` spy asserting literally zero calls reached the mock server's base URL, for _either_ the merge endpoint or the credential-mint (`access_tokens`) exchange; and a credential-isolation check confirming neither the installation token nor any PEM-shaped fragment appears anywhere in the `/execute` response body.
-- **Gated live suite, written this milestone, not yet run live.** github-pr-merge-live.integration.test.ts (removed 2026-11-03 with the GitHub connector, ADR-0018) (2 tests) and `packages/api/tests/helpers/github-live-availability.ts` (the gating logic, mirroring `hubspot-live-availability.ts`), gated behind `ALLOW_LIVE_GITHUB=1` + a real `TEST_GITHUB_APP_ID`/`TEST_GITHUB_INSTALLATION_ID`/`TEST_GITHUB_APP_PRIVATE_KEY` triple. Confirmed this session only that the suite type-checks, lints, and skips cleanly with no import or construction error when these are unset (which is how it actually ran in this environment — the separate `TEST_GITHUB_APP_ID`/`TEST_GITHUB_INSTALLATION_ID`/`TEST_GITHUB_APP_PRIVATE_KEY` triple that actually gates this suite, distinct from the production `GITHUB_*` variables, is unset in this environment's `.env`, so no live credentials were usable regardless of what the production variables happen to contain). It was **not** run live against a real GitHub App installation this session — that is open work for whoever next configures a real `TEST_GITHUB_*` triple. Its design deliberately covers only two, non-destructive cases when it does run: (1) reachability — driving `github:pr-merge` through the real SDK against a real repository but a pull request number guaranteed not to exist, proving the full ephemeral-credential-mint → connector-dispatch chain reaches GitHub's real API without ever being able to merge anything; (2) policy denial making zero real GitHub calls against the production (non-mock) connector. **Deliberately has no mutating (merge) case**, unlike 3.10's own HubSpot live suite's nudge-then-revert amount case: a HubSpot deal's `amount` is a numeric field, safe to nudge and revert to its exact original value, but a GitHub PR merge has no equivalent — the merge commit is already in the base branch's history the instant the merge succeeds, and there is no general, safe "revert a merge" operation to automate (force-pushing the head branch ref back to its pre-merge SHA does not undo the merge commit already on the base branch, and risks destroying unrelated commits if the ref moved since). Proving the real merge path end to end against a real, disposable test PR is left to a deliberate manual live run, not something this suite performs unattended.
-
-Evidence
-
-- GatewayGitHubAdapter.ts (removed 2026-11-03 with the GitHub connector, ADR-0018), `createGatewayGitHubConnector.ts`, `GitHubAppCredentialProvider.ts`, `createGatewayGitHubCredentialProvider.ts` (the executable connector and ephemeral credential provider; Bearer-auth GitHub REST calls, the deny-by-default merge-method allowlist check, the placeholder-credential guard, and the JWT-mint → installation-token exchange)
-- `packages/connector-github/src` (`GitHubCapabilities`, `GitHubMetadata`, `GitHubTypes`, `GitHubAppJwt`, `MockGitHubServer`)
-- GitHubAppJwt.test.ts (removed 2026-11-03 with the GitHub connector, ADR-0018) (4), github-connector.test.ts (removed 2026-11-03 with the GitHub connector, ADR-0018) (12), github-app-credential-provider.test.ts (removed 2026-11-03 with the GitHub connector, ADR-0018) (6) — 22 hermetic unit tests total
-- `policies/github-pr-approval/1.0.0/policy.json`
-- createGitHubConnector.ts (removed 2026-11-03 with the GitHub connector, ADR-0018) (delegates to `createGatewayGitHubConnector`), `createGitHubCredentialProvider.ts` (production registration; fails closed, the connector is never registered, when any of `GITHUB_APP_ID`/`GITHUB_INSTALLATION_ID`/`GITHUB_APP_PRIVATE_KEY` is unset outside test mode), `createConnectorRegistry.ts` (conditional registration), `createConnectorAuthenticator.ts` (`github` added to the trusted connector identity list)
-- github-pr-merge.integration.test.ts (removed 2026-11-03 with the GitHub connector, ADR-0018) (4 tests): an approved merge through a real `POST /execute` request against the production bootstrap chain (`createExecutionSystem`), landing on `MockGitHubServer`; two policy-denied cases, each making zero calls to the mock server (`fetch`-spy asserted); a credential-isolation check on the response body
-- github-pr-merge-live.integration.test.ts (removed 2026-11-03 with the GitHub connector, ADR-0018) (2 tests, gated behind `ALLOW_LIVE_GITHUB=1` + `TEST_GITHUB_APP_ID`/`TEST_GITHUB_INSTALLATION_ID`/`TEST_GITHUB_APP_PRIVATE_KEY`; skipped by default) and `packages/api/tests/helpers/github-live-availability.ts` (the gating logic, mirroring `hubspot-live-availability.ts`). Confirmed this session only to skip cleanly with no live credentials configured — not yet run live against a real GitHub App installation (see test posture above).
-- `tests/architecture/execution-boundary.test.ts` (Phase 1D public API boundary check, allowlist extended to cover `createGatewayGitHubConnector`/`createGatewayGitHubCredentialProvider`)
-- `.env.example` (`GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY`, `TEST_GITHUB_APP_ID`, `TEST_GITHUB_INSTALLATION_ID`, `TEST_GITHUB_APP_PRIVATE_KEY`, `ALLOW_LIVE_GITHUB`, `TEST_GITHUB_REPOSITORY`, `TEST_GITHUB_PULL_NUMBER`, `GITHUB_BASE_URL`)
-- Full monorepo suite run this session (`npx vitest run`, no live GitHub credentials configured so the live suite skipped as designed): 1227 passed, 37 skipped, 0 failed. `npx tsc -b` and `eslint .` both clean. Commit: `e0ba416` (wiring + hermetic tests), this session (live-test file + this document update).
-
-**Pattern, stated precisely: credential isolation is now demonstrated across two structurally different credential models, not merely two connectors sharing one.** HubSpot's static, caller-independent, long-lived Private App token and GitHub's ephemeral, per-execution-minted installation token both flow through the same `CredentialProvider`/`execute()`-scoped-local discipline, both redact to a one-way fingerprint before reaching any response or audit record, and both make zero external API calls on policy denial. No actor — AI, human, application, or attacker — ever holds a working execution credential directly for either connector; only Parmana's own systems execute after authorization clears. What remains unvalidated for GitHub specifically, honestly stated: the live round trip against a real GitHub App installation (the mechanism is proven hermetically; the real-network exercise is open work, see above).
 
 ---
 
 ## 3.18 Deployment Infrastructure Requirements (Scoped)
 
-**Claim:** running Parmana in production requires new infrastructure of its own — a container process, signing key material, and (for anything beyond a single ephemeral instance) a Postgres database via Supabase. Parmana does not read, write, or replace an integrated system's own database, and every connector it can call out to (HubSpot, GitHub — see 3.10/3.17; Paytm — see 3.22) is additive and individually optional: unset its credentials and the connector is simply not registered, with no effect on Parmana's own boot or on the external system itself.
+**Claim:** running Parmana in production requires new infrastructure of its own — a container process, signing key material, and (for anything beyond a single ephemeral instance) a Postgres database via Supabase. Parmana does not read, write, or replace an integrated system's own database, and every connector it can call out to is additive and individually optional: unset its credentials and the connector is simply not registered, with no effect on Parmana's own boot or on the external system itself.
 
 **New, required to run Parmana at all (`docs/site/deployment/production.mdx`, `Dockerfile`):**
 
-- **A container process.** One Docker image (`Dockerfile`), one process per container, running `packages/api/dist/server.js`, deployable to any Docker-based platform — validated with a bare `docker build`/`docker run`, not tied to a specific PaaS's proprietary build system (3.8/3.9's own `fly.io` deployments are one instance of this, not the only supported target).
+- **A container process.** One Docker image (`Dockerfile`), one process per container, running `packages/api/dist/server.js`, deployable to any Docker-based platform — validated with a bare `docker build`/`docker run`, not tied to a specific PaaS's proprietary build system.
 - **Signing key material.** Two key pairs (`default`, the authorization-signing key; `gateway`, the Execution Gateway's attestation-signing key — deliberately separate, `PARMANA_GATEWAY_KEY_ID` overridable) are required in `PARMANA_KEY_DIR`. Neither is generated automatically, and the image's `keys/` directory ships empty on purpose — key material must never be baked into the image (`Dockerfile`'s own comment). Supplied either as mounted `.pem` files or via `PARMANA_KEY_MATERIAL_JSON`. `assertSigningKeyMaterialConfigured.ts` (`packages/api/src/bootstrap/`) fails closed at boot — before the port binds — if neither is present.
 - **A Postgres database, via Supabase, for anything other than a disposable single instance.** `PARMANA_STORAGE=memory` (the default) needs no external database for business-transaction/execution-trust-record data — but the caller-authentication audit trail (`CallerAuditSink`) and the envelope-verifier's replay-protection store (`NonceStore`) are **always** Supabase-backed in any non-test deployment, never falling back to in-memory regardless of `PARMANA_STORAGE`, and both fail closed at boot if `DATABASE_URL` is not configured — via `assertDatabaseUrlConfigured.ts`, called unconditionally from `createCallerAuditSink.ts`/`createNonceStore.ts` (not `assertStorageConfigured.ts`, which validates only business-transaction/execution-trust-record storage, gated on `PARMANA_STORAGE=supabase` or `postgres`; see that file's own doc comment). `SUPABASE_URL` itself is not read by this check — `DATABASE_URL` is the only variable that satisfies it, a documented, temporary substitute pending resolution of Supabase ticket SU-437429. In practice, precisely stated: a real deployment always needs Supabase for the audit trail and nonce store; `PARMANA_STORAGE=supabase` additionally routes business-transaction/execution-trust-record storage through the same database rather than memory. There is no configuration under which a real (non-test) deployment runs with zero external database.
 - **The schema applied to that database, manually.** `supabase/migrations/` must be applied to the target Supabase project before a real deployment can serve traffic — either `supabase db push` (Supabase CLI, if linked) or `scripts/apply-all-migrations.sql` (a concatenation of every migration file) via the Dashboard SQL Editor, on an empty database. **Corrected 2026-09-25:** this section used to call the bundle idempotent and safe to run again. It is not safe to run again on a database that holds data (`docs/VERIFICATION-GAPS.md` G-61). The container itself does not migrate at boot. The Docker Compose deployment of 2.40 runs the migrations for it, each once, and since 2026-09-25 `npm run db:migrate` does the same for any Postgres, with `baseline` for a database set up with the bundle (G-61, closed).
 - **Caller authentication configuration.** `PARMANA_API_KEYS` (a JSON array of `{callerId, keyHash}` entries) is required; the process refuses to start without it, unless `PARMANA_AUTH_DISABLED=true` is explicitly set for local development only (logs a loud warning on every boot — never set in a real deployment).
 
-**Not new, not replaced:** an integrated business's own operational database, its own audit/SIEM infrastructure, and every external system a connector calls (HubSpot's CRM, GitHub's API, and — one level removed — Paytm's own API, which Parmana never calls directly at all; see 3.22) are untouched by any of the above. Parmana holds no credential for and makes no call to a connector's external system unless that connector is explicitly configured (3.10/3.17's own "fails closed to connector-not-registered, never a partially-configured provider" pattern) — an unconfigured connector has zero footprint against the system it would have integrated with. Parmana's own database (Supabase) stores only Parmana's authorization/audit/execution-trust-record data, never an integrated business's operational records; callers provide business context to Parmana via signals in each request, not the reverse.
+**Not new, not replaced:** an integrated business's own operational database, its own audit/SIEM infrastructure, and every external system a connector calls are untouched by any of the above. Parmana holds no credential for and makes no call to a connector's external system unless that connector is explicitly configured — an unconfigured connector has zero footprint against the system it would have integrated with. Parmana's own database (Supabase) stores only Parmana's authorization/audit/execution-trust-record data, never an integrated business's operational records; callers provide business context to Parmana via signals in each request, not the reverse.
 
 **What this claim does not assert:** deployment footprint, cost, or scaling characteristics beyond what `docs/site/deployment/production.mdx` documents (this is a correctness/completeness claim about _what infrastructure is required_, not a capacity or performance claim); a packaged one-command installer, database-schema auto-migration at boot, or a signing-key-generation tool — none of these exist in this repository today (schema application and key generation are both manual operator steps, described above and in `docs/site/deployment/production.mdx`, not automated by anything Parmana ships). **Update 2026-09-25:** for the self hosted Docker Compose deployment, all three now exist and are claimed, scoped, in 2.40: one command start, migrations applied by the `migrate` service, and key and API key generation by the `setup` service. For the image run on its own, this paragraph still holds.
 
@@ -2031,8 +1743,7 @@ Evidence
 - `packages/api/src/bootstrap/assertDatabaseUrlConfigured.ts`, called unconditionally from `createCallerAuditSink.ts`/`createNonceStore.ts` (the actual fail-closed check for CallerAuditSink/NonceStore described above; checks DATABASE_URL only)
 - `packages/shared/src/config/StorageProviders.ts` (`memory`/`postgres`/`supabase`), `packages/shared/src/config/Config.ts` (the sole `process.env` read site for application config)
 - `supabase/migrations/` (schema source), `scripts/apply-all-migrations.sql` (manual application path with no CLI link)
-- `fly.toml` (3.8's own currently-deployed instance — one concrete instantiation of this deployment shape, not evidence that Fly.io specifically is required). `fly.live.toml` (3.9's own instance) was deleted 2026-08-12 along with the rest of the Razorpay connector it deployed; §3.9 is now historical, so this section cites only the still-current `fly.toml`.
-- `createConnectorRegistry.ts` (3.10/3.17: HubSpot/GitHub each registered conditionally on their own credentials; absent, the connector is simply not registered — no partial-configuration state, no effect on Parmana's own boot)
+- `fly.toml` (one concrete instantiation of this deployment shape, not evidence that Fly.io specifically is required).
 
 ---
 
@@ -2095,65 +1806,6 @@ Evidence
 
 ---
 
-## 3.22 Paytm Refund Connector: Remote, Out-of-Process Execution (Scoped)
-
-`@parmana/connector-paytm` is a new, standalone workspace package, structurally parallel to `@parmana/connector-hubspot`/`@parmana/connector-github` (3.10/3.17) with one deliberate architectural difference from both: it is a **remote** connector. `GatewayHubSpotAdapter`/`GatewayGitHubAdapter` call the vendor's real API in-process, from inside this codebase; `GatewayPaytmAdapter` (GatewayPaytmAdapter.ts (removed 2026-11-02 with the Paytm connector, ADR-0018)) never calls Paytm's own API at all — it forwards an already Parmana-authorized `paytm:refund` `ConnectorRequest` over HTTPS to a separate, trusted, out-of-process service (`parmana-paytm-agent`, `PAYTM_CONNECTOR_URL`), which is the only thing that ever holds a real Paytm merchant key or speaks Paytm's own checksum-authenticated wire protocol. This codebase never has access to, and never needs, that repository's source.
-
-**Path enforced, both directions:**
-
-```
-AI Agent -> POST /execute -> customer-refund@1.0.0 policy -> APPROVED
-  -> Execution Gateway -> GatewayPaytmAdapter -> HTTPS -> PAYTM_CONNECTOR_URL/connector/paytm-refund
-  -> (parmana-paytm-agent, out of this repo's scope) -> Paytm /refund/apply
-
-AI Agent -> POST /execute -> customer-refund@1.0.0 policy -> DENIED -> STOP
-  (Paytm connector invocation count: 0)
-```
-
-The connector endpoint the remote service exposes is never `/execute` and never re-enters Parmana's own authorization path — there is no recursive-authorization loop by construction, since `GatewayPaytmAdapter` only ever originates one outbound HTTPS call per `execute()` invocation, to one fixed path.
-
-**Two authentication layers, deliberately distinct, matching this milestone's own requirement not to conflate them:** (1) **Parmana authorization** — the existing, unmodified policy engine, `SignalIntentBinder` (`boundSignals: { "refundAmount": "parameters.amount" }`, `policies/customer-refund/1.0.0/policy.json`, pre-existing, unmodified by this milestone), `CapabilityPolicyBinder` (new binding, see below), and `SignedTokenConnectorAuthenticator`/`ExecutionControlService`'s existing session-credential machinery — decides whether a refund executes at all; nothing about Paytm's own API changes any of it. (2) **Transport authentication to the connector service** — `PAYTM_CONNECTOR_SHARED_SECRET`, sent as a Bearer token on the one HTTPS call `GatewayPaytmAdapter` makes, resolved through a dedicated `PaytmEnvironmentCredentialProvider` (createPaytmCredentialProvider.ts (removed 2026-11-02 with the Paytm connector, ADR-0018)) exactly like every other connector's credential. It authenticates Parmana's gateway to its own connector service; it is never Paytm's merchant key/checksum (which this codebase never holds) and never substitutes for (1). A caller cannot invoke Paytm directly under any authentication outcome of (2) alone — (1) always gates first, at `POST /execute`, before `GatewayPaytmAdapter` is ever reached.
-
-**`GatewayPaytmAdapter`** is deny-by-default and fail-closed with the same discipline as 3.10/3.17: a request naming any parameter outside `PAYTM_ALLOWED_REFUND_PARAMETERS` (`orderId`, `transactionId`, `amount`, `refundReason`) is refused before any network call; HTTPS is required for `PAYTM_CONNECTOR_URL` outside `NODE_ENV=test`, enforced at construction (fails to even register, not merely at first request); the built-in test-mode placeholder secret (`PAYTM_CONNECTOR_TEST_MODE_PLACEHOLDER_SECRET`) is refused outright against any non-local endpoint, present from this connector's first version (3.10's own "placeholder-credential guard, from day one" lesson); a non-2xx response or a timeout both fail closed. **Response-validation, novel to this connector because it is remote:** every identifying field the connector service echoes back (`businessTransactionId`, `capability`, `orderId`, `transactionId`) must match exactly what was sent, or the response is refused as a binding-validation failure — this connector never accepts a response at face value as proof it corresponds to the request that produced it, closing the "malformed connector response" / "misrouted or forged response" case this milestone's own review explicitly asked for.
-
-**Correction (same session, after gaining access to the real `parmana-paytm-agent` repository):** this section originally described an invented `{businessTransactionId, capability, action, target, parameters}` wire request and a `completed`/`ambiguous`/`failed` response status enum, neither of which the real connector service implements. Verified against that repository's actual `POST /connector/paytm-refund` handler (`src/server/index.ts`, `executeAuthorizedConnectorRequest`), the real contract is a `{transaction: {businessTransactionId, intent: {action: "paytm-refund", target, parameters: {orderId, txnId, refId, amount}}}, authorization: {payload: {businessTransactionId, grantedCapability}}}` request envelope and a `{businessTransactionId, action, target, parameters, success, executedAt, metadata}` response — no status enum, only a boolean `success`. `GatewayPaytmAdapter`, PaytmTypes.ts (removed 2026-11-02 with the Paytm connector, ADR-0018) (`connector-paytm`), `MockPaytmConnectorServer`, and all three Paytm test files were corrected to match this real contract before this document was updated; the earlier, incorrect version was never deployed or exercised against the real service. Parmana's own internal capability id stays the namespaced `paytm:refund` everywhere except the one outbound wire body, which uses the real service's hyphenated `"paytm-refund"` (`PAYTM_AGENT_WIRE_ACTION`).
-
-**Idempotency, no second authoritative store introduced, and no ambiguous-status enum to lean on:** the real connector service does not derive `refId` itself and has no server-side idempotency store wired into this route (a `RefundIdempotencyStore` exists in that codebase but is unused there) — it is the _caller's_ responsibility to supply a stable `refId`. `GatewayPaytmAdapter` closes that gap: `deriveDeterministicPaytmRefId(orderId, transactionId)` (PaytmTypes.ts (removed 2026-11-02 with the Paytm connector, ADR-0018)) is a pure SHA-256-based hash, no `Date.now()`/`Math.random()`, so a retried request for the same `(orderId, transactionId)` always derives and sends the identical `refId`, regardless of Parmana's own `businessTransactionId` (which differs across distinct authorization attempts for the same logical refund). A non-success response (`success: false`, covering both a definite Paytm decline and anything less certain) is returned as a clean, non-throwing `ConnectorResponse` — never an exception, which upstream code could otherwise treat as transient and retry with a fresh `refId`. Replay protection for the Parmana side of a retry is the existing, unmodified nonce/trust-record machinery every other capability already relies on; this milestone adds no parallel transaction store.
-
-**Capability and policy binding:** exactly one capability, `paytm:refund` (`PAYTM_REFUND_CAPABILITY`, PaytmCapabilities.ts (removed 2026-11-02 with the Paytm connector, ADR-0018)) — no `paytm:*` wildcard, no other Paytm action. Bound in `CANONICAL_CAPABILITY_POLICY_BINDINGS` (`packages/capability-registry/src/CapabilityPolicyBinding.ts`) to `customer-refund@1.0.0` — a pre-existing policy this milestone did not need to modify (`policies/customer-refund/1.0.0/policy.json`: approves when `refundEligible`/`managerApproved`/`fraudCheckPassed` are all true and `refundAmount` (bound to `parameters.amount`) is at or below 10000; rejects an excessive amount, a failed fraud check, or anything else via an unconditional `reject-default` fallback). Not added to `INTENTIONALLY_UNBOUND_CAPABILITIES` — this milestone's own explicit instruction — so `assertConnectorCapabilitiesBound.ts`'s fail-closed startup guardrail actively protects it, exactly like `hubspot:*`/`github:*`.
-
-**Trusted connector identity:** `paytm` / `spiffe://parmana/connectors/paytm-refund`, added to `createConnectorAuthenticator.ts`'s trusted-identity list passed into the existing, unmodified `SignedTokenConnectorAuthenticator` — the Paytm connector is subject to the exact same gateway-issued, signed-attestation authentication as every other connector; nothing about this milestone weakens or bypasses it.
-
-**Startup configuration, fail-closed on partial configuration specifically (new failure mode this connector introduces, absent from 3.10/3.17 since HubSpot/GitHub's required variables have no analogous "must both be set or both unset" pairing):** assertPaytmConnectorConfigured.ts (removed 2026-11-02 with the Paytm connector, ADR-0018), called from `server.ts` alongside `assertStorageConfigured`/`assertSigningKeyMaterialConfigured`, refuses to start if exactly one of `PAYTM_CONNECTOR_URL`/`PAYTM_CONNECTOR_SHARED_SECRET` is set (never registers a connector that can authenticate but has nowhere to reach, or reaches somewhere but cannot authenticate), and refuses a non-HTTPS `PAYTM_CONNECTOR_URL` outside `NODE_ENV=test`. Neither set: the connector is simply not registered — the same fail-closed-absence shape 3.10/3.17 already established, never a startup crash for an unrelated deployment that has no Paytm integration at all.
-
-**Test posture, in the order specified for this milestone:**
-
-- **Hermetic first.** 51 unit tests, all passing, no network calls beyond localhost: paytm-types.test.ts (removed 2026-11-02 with the Paytm connector, ADR-0018) (32 — credential-shape guard, one-way secret redaction never containing a literal substring, the deny-by-default parameter allowlist, `deriveDeterministicPaytmRefId`'s determinism/independence-from-businessTransactionId, `PaytmAgentRefundExecutionResult`'s shape guard across the real response fields and every malformed variant); paytm-connector.test.ts (removed 2026-11-02 with the Paytm connector, ADR-0018) (19 — approved forward with the mock's own Paytm-invocation counter at exactly 1, the real wire contract's exact field names/action string, deny-by-default before any network call, capability mismatch, bad-credential-shape rejection, invalid connector authentication (401) with the mock's Paytm-invocation counter at exactly 0, non-2xx/timeout fail-closed, malformed-response rejection, response-binding-mismatch cases (top-level `businessTransactionId`/`action` and nested `parameters.orderId`/`parameters.txnId`), non-throwing `success: false` handling with the raw Paytm result code surfaced and no internal retry, same-`refId`-on-retry idempotency, secret redaction in both response metadata and thrown-error messages, the placeholder-credential guard, and the HTTPS-required-outside-test guard).
-- **Policy-denial-makes-zero-calls, proven at the HTTP boundary**, mirroring 3.10/3.17's own "reads the mock server's/mock connector's state directly afterward" discipline exactly: paytm-refund.integration.test.ts (removed 2026-11-02 with the Paytm connector, ADR-0018) (6 tests) — Scenario B (an approved refund, `amount: 500`/`managerApproved: true`/`refundEligible: true`/`fraudCheckPassed: true`) reaches `POST /connector/paytm-refund` on the mock connector service exactly once; Scenario A (`amount: 50000`/`managerApproved: false`) is rejected with `403`/`POLICY_DENIED` with a `fetch`-spy-confirmed zero calls to the mock connector's base URL and the mock's own Paytm-invocation counter at `0`; an excessive-amount case and a failed-fraud-check case, both zero-call; the authorized-amount-vs-executed-amount binding-tamper case (`refundAmount: 500` declared against `parameters.amount: 50000` actually in the Intent) caught by the pre-existing, unmodified `SignalIntentBinder` before `PolicyEngine.evaluate` ever runs, zero-call; and the capability/policy substitution case (`paytm:refund` paired with `hubspot-deal-update/1.0.0`, a real, loadable policy with no `boundSignals` for it) caught by `CapabilityPolicyBinder`, zero-call. All six use the identical `customer-refund@1.0.0` policy reference — the different outcomes come entirely from the payload/signals, per this milestone's own explicit requirement.
-- **No gated live suite exists this milestone**, honestly stated rather than glossed over: unlike 3.10/3.17's `ALLOW_LIVE_HUBSPOT`/`ALLOW_LIVE_GITHUB` suites, there is no `ALLOW_LIVE_PAYTM` suite, because this milestone has no reachable `parmana-paytm-agent` deployment to run it against. Building and running a live suite against a real deployment of that service is open work for whoever next has one reachable. **This does not mean that repository is unmaintained or unaudited — see the 2026-09-14 correction below.**
-
-**Correction (2026-09-14, GAP-3 remediation — see `GAPS.md` and `docs/VERIFICATION-GAPS.md` G-43):** two claims above are now out of date, not because anything in this milestone's own scope was wrong, but because a real gap was found and closed in `parmana-paytm-agent` itself. Line-1913's "This codebase never has access to, and never needs, that repository's source" and line-1946's "that repository is out of this codebase's scope entirely" were both true as _architectural_ statements (this repository still never holds a Paytm merchant key and never calls Paytm's API directly) but were read, incorrectly, as implying that repository's own audit posture was permanently someone else's problem. An independent audit (GAPS.md, GAP-3) found `parmana-paytm-agent`'s `executeAuthorizedConnectorRequest` (`src/server/handler.ts`) recorded nothing — not even a console log — for either a successful or a rejected refund on its side of the trust boundary, despite already correctly verifying the Ed25519 authorization signature (ADR-0009 Phase 2B) before ever calling Paytm. Closed directly in that repository: `src/parmana/audit.ts` (new; `pg` is that repository's first-ever runtime dependency) now records `authorization.verified` immediately after signature verification succeeds, then `execution.completed`/`execution.rejected` after the Paytm call resolves — two rows, not one, so a crash between verification and execution remains visible rather than silently unrecorded. These rows land in the _same_ `execution_audit_events` table this codebase's own `SupabaseExecutionAuditSink` writes to (`packages/storage/src/supabase/SupabaseExecutionAuditSink.ts`, new — see §2.16 for the analogous durability fix already made to `CallerAuditSink`, and `docs/VERIFICATION-GAPS.md` G-42 for this side's own writeup), correlated by `businessTransactionId` — the one identifier both services actually share, since Parmana's own `authorizationId` is never forwarded across this wire boundary (see the correction two paragraphs above). `parmana-paytm-agent`'s rows are deliberately unsigned and unchained (`signature_json`/`chain_hash`/`chain_position` NULL): that service holds Parmana's public key only, never a private signing key. Verified: `parmana-paytm-agent`'s own test suite, 40/40 passing including 3 new cases asserting the exact event sequence and reasons recorded (success, verification-failure, and Paytm-decline paths); this repository's monorepo suite, 592/592 passing from repo root.
-
-Evidence
-
-- `packages/connector-paytm/src` (`PaytmCapabilities`, `PaytmMetadata`, `PaytmTypes`, `MockPaytmConnectorServer`) — passive capability/schema definitions and the hermetic connector-service stand-in
-- GatewayPaytmAdapter.ts (removed 2026-11-02 with the Paytm connector, ADR-0018), createGatewayPaytmConnector.ts (removed 2026-11-02 with the Paytm connector, ADR-0018) — the executable, remote-forwarding connector; added to `tests/unit/public-api-boundary.test.ts`'s "must not be exported from the public package entry" list alongside `GatewayHubSpotAdapter`/`GatewayHttpAdapter`
-- paytm-types.test.ts (removed 2026-11-02 with the Paytm connector, ADR-0018) (32), paytm-connector.test.ts (removed 2026-11-02 with the Paytm connector, ADR-0018) (19) — 51 hermetic unit tests total
-- `policies/customer-refund/1.0.0/policy.json` (pre-existing, unmodified)
-- `packages/capability-registry/src/CapabilityPolicyBinding.ts` (`paytm:refund` -> `customer-refund@1.0.0`), `packages/capability-registry/tests/unit/CapabilityPolicyBinder.test.ts` (hand-maintained bound-capability set updated to include `paytm:refund`)
-- createPaytmConnector.ts (removed 2026-11-02 with the Paytm connector, ADR-0018), createPaytmCredentialProvider.ts (removed 2026-11-02 with the Paytm connector, ADR-0018), assertPaytmConnectorConfigured.ts (removed 2026-11-02 with the Paytm connector, ADR-0018) (fail-closed partial-configuration guard, called from `server.ts`), `createConnectorRegistry.ts` (conditional registration, `PAYTM_CONNECTOR_TIMEOUT_MS`-derived per-registration timeout), `createConnectorAuthenticator.ts` (`paytm` / `spiffe://parmana/connectors/paytm-refund` added to the trusted connector identity list)
-- paytm-refund.integration.test.ts (removed 2026-11-02 with the Paytm connector, ADR-0018) (6 tests): Scenario A/B, excessive-amount, failed-fraud-check, binding-tamper, and capability/policy-substitution cases, each zero-call-on-denial proven by both a `fetch` spy and the mock connector service's own call/invocation counters
-- `docs/connectors/PAYTM_CONNECTOR.md` (architecture, environment variables, the two-authentication-layer distinction, denied/approved flow, replay/idempotency and ambiguous-status handling, audit trail, staging -> production setup)
-- `.env.example` (`PAYTM_CONNECTOR_URL`, `PAYTM_CONNECTOR_SHARED_SECRET`, `PAYTM_CONNECTOR_TIMEOUT_MS`, `TEST_PAYTM_CONNECTOR_SHARED_SECRET`)
-- **2026-09-14 audit-trail correction (GAP-1/GAP-3):** `packages/storage/src/supabase/SupabaseExecutionAuditSink.ts` (new), `supabase/migrations/20260914120000_add_execution_audit_events.sql`, `20260914130000_add_business_transaction_correlation_to_execution_audit_events.sql`, `20260914140000_add_authorization_verified_to_execution_audit_events.sql` (new), `packages/api/src/bootstrap/createExecutionAuditSink.ts` (updated), `packages/execution-control/src/types.ts`/`ExecutionControlService.ts` (`businessTransactionId` + `authorization.verified` type added) — this repository's side; `parmana-paytm-agent`'s own `src/parmana/audit.ts` (new) and `tests/unit/execute-authorized-connector-request.test.ts` (3 new cases) — that repository's side, out of this repo but directly modified and verified this session
-- Full monorepo suite run this session (`npx vitest run`): all new tests passing; `npx tsc -b` clean.
-
-**Scope, precisely:** one capability (`paytm:refund`) forwarding to one fixed remote endpoint (`POST /connector/paytm-refund`) on the configured connector service. Not in scope: any other Paytm API (charge, payout, settlement query), a webhook/event-driven confirmation path analogous to the historical Razorpay connector's (§3.8/§3.9), a `PaytmSignalStateVerifier` independently re-deriving `refundEligible`/`managerApproved`/`fraudCheckPassed` (`customer-refund/1.0.0`'s own `unboundSignalReasons` already document these as independent-system facts the Intent cannot express — no analogous "read capability" exists to re-verify them against, unlike HubSpot's deal-fetch), and — stated plainly, not glossed over — the actual `parmana-paytm-agent` service and its own idempotent-`refId`/checksum-verification implementation, which live entirely outside this repository and were not built, run, or verified by this milestone. What this milestone verifies is Parmana's side of the contract: it authorizes correctly, forwards exactly what was authorized and nothing else, validates what comes back before trusting it, and never calls anything when denied.
-
-**Update (2026-09-27):** `paytm:refund` is now bound to `customer-refund` 1.1.0, and `managerApproved` is verified against a signed approval (2.42). The scenarios above that used 1.0.0 were moved to 1.1.0 in the same test file. `refundEligible` and `fraudCheckPassed` are still not re-derived.
-
-**Correction (2026-09-28, G-70):** this section's claim holds for Parmana's side, and it does not make "Parmana calls Paytm once" true end to end. `parmana-paytm-agent` also exposes `/agent/refunds`, where an agent asks that service, which asks Parmana `POST /execute`. When Parmana approved, it released the refund through the path above, and then `/agent/refunds` called Paytm itself as well, with a different refId, so an approved refund could be paid twice. Possible before 2026-09-27 wherever `PAYTM_CONNECTOR_URL` pointed at the agent; dormant after, because the agent declared 1.0.0 and every refund was refused. Fixed in `parmana-paytm-agent` PR #6: `/agent/refunds` has no Paytm client and returns the Paytm result from the Trust Record's execution evidence. PR #6 was merged and deployed on 2026-09-28 (`8504b57`), and a refusal through the agent was verified in production. **Not claimed yet:** an approved refund observed live making exactly one Paytm call; that is covered by the agent's tests only. Also found (G-71): one refund per Paytm transaction can go through Parmana (the refId is derived from `orderId` and `transactionId` only), and `refundReason`, although allowed, is not sent to the connector service. **Fixed and deployed (G-71, 2026-09-28, Parmana #59 and agent #7; the agent sends its `refId` as the reference):** an optional `refundReference` Intent parameter makes the refId per refund (`deriveDeterministicPaytmRefId(orderId, transactionId, refundReference)`), with the old derivation unchanged when it is absent, and `refundReason` is sent to the connector service as `reason`, which passes it to Paytm. Verified by tests through `POST /execute` against the mock connector service; how Paytm itself answers a second refund of one transaction was not checked.
-
 ## 3.23 Listed as a TRACE External Evidence Source in the AgenTrust Integrations Repository (Scoped, 2026-10-12)
 
 Parmana's signed records can be mapped to TRACE, AgenTrust's format for evidence about an agent execution, and that
@@ -2198,9 +1850,6 @@ caller, and no conformance level is claimed. The earlier `community` entries abo
 - Fixture: [`fixtures/03-replay.refusal-record.json` line 46](https://github.com/agentrust-io/integrations/blob/6de4cb9/integrations/parmana-server/fixtures/03-replay.refusal-record.json#L46), `matchedRuleId`.
 - Test: [`tests/test_parmana_evidence.py` line 131](https://github.com/agentrust-io/integrations/blob/6de4cb9/integrations/parmana-server/tests/test_parmana_evidence.py#L131), `replay` has zero connector invocations. Run with `pip install -e ".[test]"` and `python -m pytest tests` in `integrations/parmana-server`.
 - Its README row for this file says "refused, already used" ([line 30](https://github.com/agentrust-io/integrations/blob/6de4cb9/integrations/parmana-server/README.md#L30)). That wording is not the rule the fixture records, so it is not used here.
-- In this repository: `evaluations/agentrust-refund/fixtures/03-replay.refusal-record.json` (line 46) and `report.json`, case `replay`. That report is from the Paytm scenario at commit `ac22a7e` (2026-10-10), not the Razorpay demo.
-- Test here: agentrust-refund-evaluation.integration.test.ts (removed 2026-11-02 with the Paytm connector, ADR-0018), lines 294 to 297 and 314 to 316. Run with `npx vitest run packages/api/tests/integration/agentrust-refund-evaluation.integration.test.ts`.
-- Live demo: `examples/razorpay-refund/send.ts --case replay` (README, request 4). It is not a hermetic test, and it needs the production key.
 
 ---
 
@@ -2208,9 +1857,7 @@ caller, and no conformance level is claimed. The earlier `community` entries abo
 
 This is the repo owner's own maturity assessment, layered on the evidence already cited above. It is not a new technical claim in the sense sections 2 and 3 use that word, and it does not carry its own separate test evidence — it is an interpretation of evidence that does.
 
-**Historical**: Parmana reached **Technology Readiness Level 7** (system prototype demonstration in an operational environment) as of 2026-07-20, on the strength of §3.8/§3.9 — a real refund, a real Razorpay-initiated webhook delivery to a standing public endpoint, settled end to end, in both Razorpay test mode and live mode. That evidence is now historical (§3.8/§3.9 above, both marked "Historical: Razorpay connector removed 2026-08-12"; `docs/site/trust-and-claims/trl7-verification.mdx`; `docs/site/changelog.mdx`) — the connector was deliberately removed 2026-08-12, and TRL 7's defining element here (an external party closing the loop against a standing public deployment) has no current equivalent in this codebase.
-
-**Current assessment, without relying on removed evidence: Technology Readiness Level 6** (system/subsystem model or prototype demonstration in a relevant environment). Basis: §3.10's HubSpot connector is proven correct against a real, relevant external system — HubSpot's actual production API, including a real, non-destructive read-nudge-revert mutation on a real account (§3.10's live suite, most recently confirmed 3/3 passing in an earlier session; not re-confirmed live in the most recent SDK-dogfooding pass — see that section's own caveat). What's missing relative to TRL 7: HubSpot's live proof runs through a locally-booted test server, not Parmana's actual public Fly deployment (no HubSpot deployment was ever documented in the deployment runbook), and HubSpot has no webhook — there is no case, current or historical, of an external party initiating a delivery against a standing Parmana public endpoint for HubSpot the way Razorpay's webhook did.
+**Current assessment, without relying on removed evidence: Technology Readiness Level 6** (system/subsystem model or prototype demonstration in a relevant environment). Basis: the claims still in this document. The connector evidence that supported this level has been removed with the connectors, so the level has not been re-assessed against the current code. The owner should decide whether it still holds.
 
 Not claimed by this assessment: sustained volume, load-bearing traffic, high availability, multi-tenant production operation, or any current standing-public-endpoint proof for any capability.
 
@@ -2220,21 +1867,7 @@ Not claimed by this assessment: sustained volume, load-bearing traffic, high ava
 
 The following claims are planned but are intentionally withheld until supported by implementation, testing, audit, and documented proof.
 
-- [FUTURE] HubSpot Contacts and Companies objects: no implementation exists. The HubSpot connector (3.10) covers Deal `dealstage`/`amount` update only.
-
-- [FUTURE] HubSpot deal delete/archive: no implementation exists; deny-by-default this milestone touches only `dealstage`/`amount` on existing deals.
-
-- [FUTURE] HubSpot webhook/event-driven trigger: no implementation exists. This milestone is request-response only (`POST /execute` → connector PATCH); there is no asynchronous confirmation loop analogous to the webhook-receipt/settlement-closure mechanism the now-removed Razorpay connector had (see historical §3.8/§3.9; that mechanism took several scoped milestones to build for Razorpay while the connector existed, and none of that has been started for HubSpot, nor would it be, for a connector that no longer exists — the corrected pointer, replacing this item's own previously-broken `(3.5)`/`(3.6/3.7)` section references, which named sections that do not exist anywhere in this document).
-
-- [FUTURE] Caller-auth enabled on the HubSpot and GitHub connector integration paths: not started for either. 3.16's caller-to-capability scoping mechanism is implemented and tested, but both connectors' integration tests construct their app with `callerAuth: "disabled"` and no `ApiKeyEntry` (`github-pr-merge.integration.test.ts`, `github-pr-merge-live.integration.test.ts`, same as HubSpot's), so neither `hubspot:deal-update` nor `github:pr-merge` — the capabilities actually reachable in production today (2.23's 2026-08-25 update) — is scoped by caller yet. This is the specific follow-on work that would make 3.16 meaningful for real CRM-moving and PR-merging traffic, not merely test fixtures. (Corrected 2026-08-25: this item previously named `hubspot:deal-update` as "the only capability actually reachable in production," missing `github:pr-merge`'s addition on 2026-08-19 — the same miscount §2.25's 2026-08-25 update and `docs/VERIFICATION-GAPS.md` G-30 trace in full.)
-
-- [FUTURE] HubSpot multi-object transactions: no implementation exists; each `hubspot:deal-update` call is a single Deal PATCH, not a coordinated multi-object write.
-
-- [FUTURE] HubSpot per-pipeline stage-transition configuration: `HUBSPOT_DEFAULT_STAGE_ORDER` (3.10) is one global stage order; `isHubSpotStageTransitionAllowed` accepts a `stageOrder` override but nothing wires it to a deal's actual `pipeline` property yet — see 3.10's "open decisions" for what this would take.
-
 - [FUTURE] Stripe connector: no implementation exists; would implement @parmana/connector-sdk's Connector interface.
-
-- [FUTURE] GitHub connector live verification: superseded by §3.17 — the connector itself is implemented, hermetically tested (22 unit + 4 integration tests), and wired into production. What remains open is a live run against a real GitHub App installation (the gated suite is written and confirmed to skip cleanly, but has not yet been run with real credentials in any session), and any capability beyond `github:pr-fetch`/`github:pr-merge` (review submission, comments, other object types, webhooks).
 
 - [FUTURE] Salesforce connector: no implementation exists.
 
@@ -2243,8 +1876,6 @@ The following claims are planned but are intentionally withheld until supported 
 - [FUTURE] ServiceNow connector: no implementation exists.
 
 - [FUTURE] Workday connector: no implementation exists.
-
-- [FUTURE] Slack connector: **superseded (2026-10-11):** a Slack connector exists and is claimed in 2.44 and 2.47. What stays future: its use configured and observed in production.
 
 - [FUTURE] Jira connector: no implementation exists.
 
@@ -2264,15 +1895,15 @@ The following claims are planned but are intentionally withheld until supported 
 
 - Every guarantee includes complete independent verification evidence.
 
-- A general, named credential-brokering _mechanism_ — a formal product capability letting an arbitrary future connector class (e.g. third-party cloud credentials via AWS STS, per the July roadmap, removed 2026-09-28) prove "AI never possesses execution credentials" without bespoke per-connector work — does not exist; only the `CredentialProvider`/session-credential-vault pattern each connector individually implements does. **Narrowed by Phase 3D (2.22/2.23):** for the connectors covered by that certification (Razorpay, HubSpot, at the time it was performed — Razorpay was removed from this codebase 2026-08-12, HubSpot remains the one production-reachable connector today), the underlying property this future item describes — the AI-facing `/execute` request path never comes into possession of the raw connector credential, which is resolved only after authorization is fully decided, confined to the connector-execution layer — was independently traced end-to-end and verified true (§3 of the Phase 3D independent authorization certification, in git history). What remains genuinely future is only the generalized, connector-class-agnostic mechanism, not the property itself for these two connectors. (Certification's own disclosed caveat, 2.23: a short, non-functional fingerprint of the credential, not the credential itself, reaches the caller-visible response — see 3.4/3.10.)
+- A general, named credential-brokering _mechanism_ — a formal product capability letting an arbitrary future connector class (e.g. third-party cloud credentials via AWS STS, per the July roadmap, removed 2026-09-28) prove "AI never possesses execution credentials" without bespoke per-connector work — does not exist; only the `CredentialProvider`/session-credential-vault pattern each connector individually implements does.
 
-- Enterprise-grade key custody: current key storage is local PEM files read by FileKeyProvider; no KMS, HSM, or cloud key vault integration exists. **Narrowed (2026-09-15):** AWS KMS integration now exists and is verified end-to-end for the gateway signing key (see the 2026-09-15 update on the G-40 entry in this document, §3.22, and `docs/adr/ADR-0009-KMS-Secrets-And-Connector-Signature-Hardening.md`) — but it is not the default (`KEY_PROVIDER=local` remains the default; a deployment must explicitly opt into `KEY_PROVIDER=aws-kms`), production Vercel→AWS OIDC federation is not yet provisioned, and HSM/Azure Key Vault/GCP KMS remain entirely unimplemented. The "no KMS integration exists" framing above is accurate only for a default, unconfigured deployment.
+- Enterprise-grade key custody: current key storage is local PEM files read by FileKeyProvider; no KMS, HSM, or cloud key vault integration exists. **Narrowed (2026-09-15):** AWS KMS integration now exists and is verified end-to-end for the gateway signing key (see the 2026-09-15 update on the G-40 entry in this document, and `docs/adr/ADR-0009-KMS-Secrets-And-Connector-Signature-Hardening.md`) — but it is not the default (`KEY_PROVIDER=local` remains the default; a deployment must explicitly opt into `KEY_PROVIDER=aws-kms`), production Vercel→AWS OIDC federation is not yet provisioned, and HSM/Azure Key Vault/GCP KMS remain entirely unimplemented. The "no KMS integration exists" framing above is accurate only for a default, unconfigured deployment.
 
 - Authority, Intent, and Evidence verification checks in verification-service.ts. Only integrity, signature, and authorization binding are implemented today (2.15). The prior six-stage pipeline package (@parmana/verification) was retired in Session 5; it had no real implementation and no real test coverage; its stage architecture is not being resurrected. Authority/Intent/Evidence checks, if built, will be added directly to verification-service.ts. Tracked for Session 6.
 
 - Algorithm migration: re-keying from one signature provider to another (for example Ed25519 to ML-DSA-65) while retaining the ability to verify previously-signed records. AuthorizationVerifier does not dispatch verification based on the envelope's algorithm field; a verifying process supports exactly one configured SIGNATURE_PROVIDER at a time.
 
-- [FUTURE] `CRYPTO_MODE=hybrid` running anywhere in staging or production: the capability described in 3.13 is built and tested but not wired into any deployed environment. `PRIMARY_SIGNATURE_PROVIDER=ed25519` alone remains the configuration everywhere this codebase currently runs, including `parmana-api-live.fly.dev` (3.9).
+- [FUTURE] `CRYPTO_MODE=hybrid` running anywhere in staging or production: the capability described in 3.13 is built and tested but not wired into any deployed environment. `PRIMARY_SIGNATURE_PROVIDER=ed25519` alone remains the configuration everywhere this codebase currently runs.
 
 These claims will be promoted to the Supported Technical Claims section only after the required evidence is complete.
 
@@ -2384,12 +2015,12 @@ This discipline ensures that Parmana's public positioning remains aligned with i
 
 **Claim.** Two checks that already held on the other entry points now hold on every entry point:
 
-1. The Vercel serverless entry (`api/index.ts`) refuses to serve when the Policy Governance integrity check finds a mismatch or cannot run, as `packages/api/src/server.ts` does, and it runs the Paytm connector HTTPS and consistency guard at startup. Previously it ran the periodic check fail-open and skipped the Paytm guard.
+1. The Vercel serverless entry (`api/index.ts`) refuses to serve when the Policy Governance integrity check finds a mismatch or cannot run, as `packages/api/src/server.ts` does. Previously it ran the periodic check fail-open.
 2. `POST /transactions` refuses a `metadata.tenantId` that the caller's key does not list, with `TENANT_NOT_ALLOWED`, as `POST /execute` already did. The tenant id selects the signing key (`tenant.<id>`), so an unchecked id let a caller have an authorization signed under another tenant's key.
 
 **Evidence.**
 
-- api/index.ts: `buildApp()` awaits `assertPolicyGovernanceIntegrityAtStartup()` before building the app. `assertPaytmConnectorConfigured()` runs at module load.
+- api/index.ts: `buildApp()` awaits `assertPolicyGovernanceIntegrityAtStartup()` before building the app.
 - packages/api/src/routes/transactions.ts: tenant check placed with the principal and capability checks, before `application.execute()`.
 - packages/api/tests/integration/caller-capability-scoping.integration.test.ts: "POST /transactions" refuses a tenantId the key does not list.
 - `packages/api` test suite: 698 passed, 36 skipped.
@@ -2399,41 +2030,6 @@ This discipline ensures that Parmana's public positioning remains aligned with i
 - In a serverless function a process exit is not available. A mismatch makes every request fail with a 500 rather than refusing the process. The failed build is retried on the next request, so each request re-runs the check until the mismatch is fixed.
 - The entry imported `runPolicyGovernanceIntegrityCheckAtStartup` from `packages/api/dist`, a module with no source in `packages/api/src`. The import now points at the module the source builds.
 - Status: fixed on branch `fix/policy-scan-and-governance-url`. See G-98 and G-99 in `docs/VERIFICATION-GAPS.md`.
-
-## 3.26 Audit Follow-up: Connector Endpoints, Client Guards, Strict Results and Smaller Leaks (Scoped, 2026-10-15)
-
-**Claim.** The following hold on the current branch. Each was reported by the 2026-10-15 read-only audit and checked against the code before it was fixed.
-
-1. Connector base-URL overrides (`HUBSPOT_BASE_URL`, `GITHUB_BASE_URL`, `SLACK_BASE_URL`) must use `https://`. `http://` is accepted only for loopback (`localhost`, `127.0.0.1`, `[::1]`) and only when `NODE_ENV` is `test`, where the hermetic mock-server seams run. Embedded credentials are refused. The GitHub credential provider applies the same rule.
-
-   **Update (2026-10-27, G-126):** before this date the loopback exception applied in every environment, so a production override of `http://localhost` would have sent a connector credential in clear text. The exception is now limited to `NODE_ENV=test`. Fixed (commit `2b00dc5`), merged to `main` in PR #169 on 2026-10-28. Tests: `packages/api/tests/unit/bootstrap/read-connector-base-url.test.ts` (six cases: https outside tests, loopback refused outside tests, remote http refused in every environment, loopback accepted under `NODE_ENV=test`, embedded credentials refused, unset returns undefined).
-
-2. A GitHub or HubSpot response with a 2xx status and a body that is not JSON fails the action. It is no longer recorded as success with empty evidence.
-3. A step-up envelope whose `authorizedAt` is more than 60 seconds in the future is not valid. Previously only the expiry was checked.
-4. The TypeScript SDK refuses an endpoint that is not `https://` (or loopback `http://`) and refuses embedded credentials, as the Python SDK already did. Its client no longer prints the API key in `console.log` or `JSON.stringify`.
-5. The TypeScript and Python SDKs percent-encode the business transaction id in every path segment, so `../` or `?` cannot re-route a request made with the caller's key.
-6. The TypeScript and Python SDKs return the server's `valid` only when it is the boolean `true`. A string `"false"` is not accepted.
-7. The Python connector SDK `CredentialHandle` omits its value from `repr`.
-8. `GET /ready` returns "storage unavailable" to the public. The database error text goes to the server log only.
-9. The governance UI's API calls time out after 10 seconds.
-10. `scripts/verify-policy-changes-approved.ts` scans the directory `PARMANA_POLICY_DIR` names, as CI sets it, and walks symlinked directories, since the runtime follows them.
-11. Scripts with a `main()` entry point run it unless vitest is running (`VITEST` set). They no longer depend on `NODE_ENV`, so a `NODE_ENV=test` line in a committed `.env` cannot switch the policy gate off.
-12. `scripts/rotate-caller-key.mjs` validates `--caller-id` with the key-id allowlist, so `../` cannot write outside the secrets directory.
-13. `scripts/generate-fly-secrets.mjs` refuses to run when `secrets.env` exists unless `--force` is passed, since a re-run would replace the signing keys.
-14. `rate_limit_counters` has row level security enabled with no policy, so the Supabase Data API's anon and authenticated roles get no access. The application connects as the table owner and is unaffected.
-15. The Razorpay example's error path no longer says "endpoint misconfigured" for a failure that can come after Razorpay created the refund. It reports the outcome as unknown.
-16. The runtime's `replay()` is documented as an integrity re-verification, not a re-run of the decision.
-
-**Evidence.**
-
-- Connector guard: `packages/api/src/bootstrap/readConnectorBaseUrl.ts`, used by the three connector factories and the GitHub credential provider.
-- Non-JSON 2xx: `packages/execution-gateway/src/connector-execution/GatewayHubSpotAdapter.ts`, `GatewayGitHubAdapter.ts`.
-- Step-up: `packages/crypto/src/PolicyChangeStepUpAuthorizationCrypto.ts`, `STEP_UP_CLOCK_SKEW_MS`.
-- TypeScript SDK: `typescript/src/config/assertSafeEndpoint.ts`, `typescript/test/EndpointGuard.test.ts`; `typescript/src/client/ParmanaClient.ts`.
-- Path encoding and `valid`: `typescript/src/client/*.ts`, `python/parmana/api/*.py`.
-- Test results: `packages/api` 698 passed; `packages/crypto`, `packages/execution-gateway`, `packages/runtime`, `packages/shared`, `packages/storage`, `packages/policy`, `packages/approval`, connector packages and root `tests` all passed, except the two generated-file checks, which were regenerated; the Python SDK 190 passed; the Python connector SDK 34 passed; the TypeScript SDK's new endpoint test passed. Eight TypeScript SDK test files fail to load with "No test suite found" both with and without these changes; that is a pre-existing problem with the SDK's test setup, not this change.
-
-**Limits.** Items that change the signed evidence format, add a policy flag, or need an outside check are not in this claim. They are listed in `docs/REMAINING-WORK.md` section N.
 
 ## 3.27 The Server Distrusts eMudhra's emSign Roots at Startup (Scoped, 2026-10-23)
 
@@ -2455,17 +2051,15 @@ This discipline ensures that Parmana's public positioning remains aligned with i
 
 ## 3.28 Three Evaluation Questions Checked Against the Source (Scoped, 2026-10-26)
 
-**Claim.** When a policy rejects a transaction, the Paytm connector is never called. The envelope verifier does not accept a record whose authorization is missing, expired, or reused. Signal types are checked against the policy's declared schema before any rule runs.
+**Claim.** When a policy rejects a transaction, no connector is called. The envelope verifier does not accept a record whose authorization is missing, expired, or reused. Signal types are checked against the policy's declared schema before any rule runs.
 
 **Evidence.**
 
-- Rejected transaction: paytm-refund.integration.test.ts (removed 2026-11-02 with the Paytm connector, ADR-0018). Its `expectNoPaytmCall` helper asserts zero calls on the fetch spy and on the mock connector server. Scenario A and the other policy-rejection cases use it. Run on 2026-10-26: 18 of 18 pass.
 - Envelope verifier: `packages/envelope-verifier/tests/unit/envelope-verifier.test.ts` and `envelope-verifier.dilithium3.test.ts`. They check `notExpired` and `nonceUnseen`, and "rejects a second use of the same nonce". Run on 2026-10-26: 22 pass, 5 skipped.
 - Signal types: `packages/policy/src/PolicyEngine.ts`, `evaluate`, calls `findSignalTypeViolations` (line 42) before the rule loop (line 93). The check is in `packages/policy/src/signalTypes.ts`, with `packages/policy/tests/unit/signalTypes.test.ts`. Run on 2026-10-26: 21 pass.
 
 **Limits.**
 
-- The Paytm test covers the Paytm connector only. It does not show the same for the other connectors.
 - The envelope verifier checks the record it is given. Refusing a release is the execution gateway's job, and this section does not claim the gateway's behavior.
 - The five skipped envelope tests need ML-DSA-65, which needs Node 24. The run used Node 22.22.0, so the post-quantum path is not checked by this run.
 - The signal-type check covers only signals the schema declares. A signal absent from the payload is not a type violation, and the rules decide it. This is the design, not a gap in the check.
@@ -2478,7 +2072,7 @@ This discipline ensures that Parmana's public positioning remains aligned with i
 **Evidence.**
 
 - Kill switch refusal: `packages/api/tests/integration/kill-switch.integration.test.ts` and `kill-switch-release-window.integration.test.ts`. The refusal is a 503 with `KILL_SWITCH_ACTIVE`. On branch `test/kill-switch-no-connector` (commit `8a857f2`, not yet merged), the release-window test also asserts that the executor is never called on refusal, and is called once in the control case. That assertion is not yet on `main`.
-- Approval binding: `approval-issuers-governance.integration.test.ts`, `business-signal-sources-governance.integration.test.ts` and `external-connectors-governance.integration.test.ts` refuse an approval with no step-up, or a step-up for the other action. paytm-refund.integration.test.ts (removed 2026-11-02 with the Paytm connector, ADR-0018) rejects a declared amount that does not match the authorized amount.
+- Approval binding: `approval-issuers-governance.integration.test.ts`, `business-signal-sources-governance.integration.test.ts` and `external-connectors-governance.integration.test.ts` refuse an approval with no step-up, or a step-up for the other action.
 - Audit tamper: `audit-verify.integration.test.ts` reports a tampered event as invalid. `execution-intents.integration.test.ts` returns `{ valid: false }` for a tampered intent.
 
 Run on 2026-10-26, Node 22.22.0: the eight files above pass, 88 of 88.

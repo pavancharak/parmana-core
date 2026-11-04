@@ -36,7 +36,7 @@ no real partner key. It is not approved for production. Each step below was run 
 | `INBOUND_AUDIENCE`          | `billing.example`                                                                              | Mounts the inbound routes. Without it, `/v1/inbound/*` returns 404. |
 
 Every variable above is needed. Other settings in `.env.example` keep their defaults. Do not set
-HubSpot, GitHub or Paytm values on this service.
+connector values on this service.
 
 ## Keys
 

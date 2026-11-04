@@ -41,15 +41,13 @@ Mistakes we or the template made:
 
 ## 4. Optional
 
-| Variable                                                               | Notes                                                                                  |
-| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `KILL_SWITCH_ENABLED`                                                  | `true` turns on the operator kill switch. Probe it with `POST /kill-switch/probes`.    |
-| `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR`                              | `true` requires a second operator to reset the kill switch.                            |
-| `PAYTM_CONNECTOR_URL` and `PAYTM_CONNECTOR_SHARED_SECRET`              | Set both or neither. Setting only one stops startup.                                   |
-| `HUBSPOT_PRIVATE_APP_TOKEN` and `HUBSPOT_PRIVATE_APP_TOKEN_ROTATED_AT` | The rotated-at date (ISO 8601) lets the server warn when the token is stale.           |
-| `GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY`    | GitHub App credentials, if the GitHub connector is used.                               |
-| `PARMANA_GATEWAY_ID`, `PARMANA_GATEWAY_KEY_ID`                         | Gateway identity. `PARMANA_GATEWAY_KEY_ID` defaults to `gateway` for our key material. |
-| `LOG_LEVEL`                                                            | `debug`, `info`, `warn` or `error`. Defaults to `info`.                                |
+| Variable                                                            | Notes                                                                                  |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `KILL_SWITCH_ENABLED`                                               | `true` turns on the operator kill switch. Probe it with `POST /kill-switch/probes`.    |
+| `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR`                           | `true` requires a second operator to reset the kill switch.                            |
+| `GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY` | GitHub App credentials, if the GitHub connector is used.                               |
+| `PARMANA_GATEWAY_ID`, `PARMANA_GATEWAY_KEY_ID`                      | Gateway identity. `PARMANA_GATEWAY_KEY_ID` defaults to `gateway` for our key material. |
+| `LOG_LEVEL`                                                         | `debug`, `info`, `warn` or `error`. Defaults to `info`.                                |
 
 ## 5. Must never be set in production
 

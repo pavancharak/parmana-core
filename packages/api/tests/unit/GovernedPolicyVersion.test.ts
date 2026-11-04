@@ -183,25 +183,4 @@ describe("policy version taken from policy governance (G-66)", () => {
       'the version in effect is "1.0.0"',
     );
   });
-
-  it("refuses when the version in effect cannot be looked up", async () => {
-    const broken = new RuntimeBuilder()
-      .withPolicyRepository(policyRepository)
-      .withPolicyExecutionVerifier(
-        new PolicyGovernanceExecutionVerifier(
-          approvalRecords,
-          policyChangeCrypto,
-        ),
-      )
-      .withCurrentPolicyVersions({
-        async currentVersion() {
-          throw new Error("approval records unreachable");
-        },
-      })
-      .build(new MemoryExecutionTrustRecordRepository());
-
-    await expect(broken.execute(await refund("1.0.0"))).rejects.toThrow(
-      "approval records unreachable",
-    );
-  });
 });

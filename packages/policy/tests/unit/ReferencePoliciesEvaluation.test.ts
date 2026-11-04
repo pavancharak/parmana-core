@@ -58,18 +58,6 @@ describe("Reference Policy Evaluation", () => {
       },
     },
     {
-      name: "github-pr-approval",
-      file: "github-pr-approval/1.1.0/policy.json",
-      signals: {
-        mergeApproved: true,
-        repositoryAuthorized: true,
-        requiredReviewsCompleted: true,
-        statusChecksPassed: true,
-        branchProtected: true,
-        riskScore: 10,
-      },
-    },
-    {
       name: "llm-tool-call",
       file: "llm-tool-call/1.1.0/policy.json",
       signals: {

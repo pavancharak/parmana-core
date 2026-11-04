@@ -29,9 +29,7 @@ examples/
 ## Tutorials
 
 Tutorials introduce Parmana one concept at a time, in `examples/tutorials/`. Numbering has a
-few intentional gaps (61, 63–68, 85) from tutorials that were removed or never built when the
-Razorpay connector was deliberately removed from the codebase (see `docs/CLAIMS.md`,
-"Key Compromise Notice" section and the connector-removal history) — the sequence below is the
+few intentional gaps (61, 63–68, 85) from tutorials that were removed or never built. The sequence below is the
 authoritative, current list (also the exact list `npm run examples` executes, in
 `scripts/run-examples.ts`).
 
@@ -104,10 +102,6 @@ automatically alongside every change.
 | 59  | Secure Connectors                                        |
 | 60  | End-to-End Enterprise Execution                          |
 | 62  | Signal/Intent Binding                                    |
-| 69  | HubSpot Deal Update Connector                            |
-| 70  | HubSpot Policy Denial                                    |
-| 71  | HubSpot Signal-State Verification                        |
-| 72  | HubSpot Approval Artifact                                |
 | 73  | Refusal Records                                          |
 | 74  | Refusal Record Fail-Open                                 |
 | 75  | Signed Audit Events                                      |
@@ -118,7 +112,6 @@ automatically alongside every change.
 | 80  | Fail-Closed Config Validation                            |
 | 81  | Connector Execution Gateway                              |
 | 82  | Composite Signal-State Verification                      |
-| 83  | Capability/Policy Binding (TD-22)                        |
 | 84  | Caller Authentication                                    |
 | 86  | Gateway Attestation                                      |
 | 87  | Key Provider Path Traversal                              |
@@ -146,7 +139,6 @@ automatically alongside every change.
 | 109 | Durable-Evidence Key Rotation                            |
 | 110 | Hybrid-Signature Downgrade Protection                    |
 | 111 | Connect an Agent to Parmana                              |
-| 112 | Slack Connector                                          |
 
 ---
 

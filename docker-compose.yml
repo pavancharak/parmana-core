@@ -22,7 +22,7 @@
 #   PARMANA_BIND         host address the API is published on (127.0.0.1).
 #   PARMANA_PORT         host port (3000).
 #   PARMANA_LOCAL_ALLOWED_CAPABILITIES  capabilities the generated API key
-#                        may use, comma separated (paytm:refund). Only read
+#                        may use, comma separated (erp:invoice-pay). Only read
 #                        the first time, when the key is made.
 
 name: parmana
@@ -49,7 +49,7 @@ services:
     entrypoint: ["node", "/app/docker/local/setup.mjs"]
     environment:
       <<: *api-environment
-      PARMANA_LOCAL_ALLOWED_CAPABILITIES: ${PARMANA_LOCAL_ALLOWED_CAPABILITIES:-paytm:refund}
+      PARMANA_LOCAL_ALLOWED_CAPABILITIES: ${PARMANA_LOCAL_ALLOWED_CAPABILITIES:-erp:invoice-pay}
     volumes:
       - ./docker/local:/app/docker/local:ro
       - ./parmana-local:/app/parmana-local

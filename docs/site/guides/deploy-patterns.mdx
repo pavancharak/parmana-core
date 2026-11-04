@@ -77,7 +77,7 @@ if you sign with the wrong one for a configured provider.
 ### 3. Generate a caller API key for every system that will call this API
 
 ```bash
-npm run generate:api-key -- --caller-id orchestrator-1 --allowed-capabilities "paytm:refund"
+npm run generate:api-key -- --caller-id orchestrator-1 --allowed-capabilities "erp:invoice-pay"
 ```
 
 Prints a raw key once, and the entry to add to `PARMANA_API_KEYS`. A key with no
@@ -96,10 +96,9 @@ PARMANA_STORAGE=memory                        # or: supabase / postgres, with DA
 PARMANA_POLICY_DIR=/absolute/path/to/policies
 PARMANA_KEY_DIR=/absolute/path/to/keys
 PARMANA_GATEWAY_KEY_ID=gateway                 # optional, defaults to "gateway"
-HUBSPOT_PRIVATE_APP_TOKEN=...                  # credential for the hubspot connector, omit to leave it unregistered
 PRIMARY_SIGNATURE_PROVIDER=ed25519             # or: dilithium3, needs Node >= 24
 HASH_PROVIDER=sha256
-PARMANA_API_KEYS=[{"callerId":"orchestrator-1","keyHash":"...","allowedCapabilities":["paytm:refund"]}]  # from step 3
+PARMANA_API_KEYS=[{"callerId":"orchestrator-1","keyHash":"...","allowedCapabilities":["erp:invoice-pay"]}]  # from step 3
 ```
 
 This is the minimum for a local start. Every variable, including `KEY_PROVIDER=aws-kms`,
@@ -243,12 +242,7 @@ environment-variable toggle for this today, it's a code change.
 - **No high availability setup.** Several instances on one database are safe for replay: authorization and approval nonces are kept in Postgres
   (`consumed_nonces`, `consumed_approval_nonces`), so several instances on the same database still
   accept each one once. Only the test suite (`NODE_ENV=test`) keeps them in memory.
-- **Connectors register only when their own credentials are configured.** HubSpot, GitHub,
-  Paytm, and Slack each check for their own credential environment variable at startup and
-  register only if it's present; with none configured, every capability fails closed with
-  `503 CONNECTOR_NOT_REGISTERED`. Any other HTTPS endpoint can be registered with no code
-  as an [external connector](/guides/connect-any-external-system); a new built in connector is
-  a code change, see the [Connector Development Guide](/integrations/connector-development-guide).
+- **No built in connectors.** Parmana ships none. Any HTTPS endpoint can be registered with no code as an [external connector](/guides/connect-any-external-system).
 
 ## Troubleshoot
 

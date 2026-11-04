@@ -28,11 +28,9 @@ The server refused to start. Its reason is in the log:
 docker compose logs api | tail -30
 ```
 
-| The log says                                                                                                                                  | Fix                                                                                                                                         |
-| --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PAYTM_CONNECTOR_URL must use HTTPS in production; received "http://..."`                                                                     | Use an `https://` URL. See [Connect a system](/self-hosted/connectors).                                                                     |
-| `Partial Paytm connector configuration detected: PAYTM_CONNECTOR_URL and PAYTM_CONNECTOR_SHARED_SECRET must both be set, or both left unset.` | Set both, or neither.                                                                                                                       |
-| `PARMANA_API_KEYS...`                                                                                                                         | `parmana-local/api-keys.json` was edited by hand and is not valid. Restore it, and use [`api-keys.mjs`](/self-hosted/api-keys) from now on. |
+| The log says          | Fix                                                                                                                                         |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PARMANA_API_KEYS...` | `parmana-local/api-keys.json` was edited by hand and is not valid. Restore it, and use [`api-keys.mjs`](/self-hosted/api-keys) from now on. |
 
 Any other startup error is listed with its fix in the [Environment variable reference](/deployment/environment-variables#startup-errors-and-what-to-do).
 

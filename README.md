@@ -111,7 +111,6 @@ Authority --> Authorization --> Intent --> Business Transaction
 | `@parmana/approval`            | Verifies signed approvals issued by a business authority, independent of the caller and of Parmana's runtime                             |
 | `@parmana/capability-registry` | Binds each capability to the policy that governs it, and refuses a request that names another                                            |
 | `@parmana/execution-system`    | The interface approved requests are forwarded through, with an HTTP implementation                                                       |
-| `@parmana/connector-*`         | Connectors: HubSpot, GitHub, Slack and Paytm                                                                                             |
 | `@parmana/governance-ui`       | Internal UI to propose and review policy changes; approval stays on the approver's machine                                               |
 | `@parmana/replay`              | Deterministic reconstruction of a past policy decision                                                                                   |
 | `@parmana/storage`             | Append-only persistence, in memory or Supabase-backed                                                                                    |
@@ -154,11 +153,11 @@ These rules hold at every step:
 - Parmana core does not hold the credentials for a business system that an external connector serves.
 - A connector runs only an action that Parmana has approved and signed for it, and it runs that action once. A repeated release with the same transaction id is refused.
 
-**Current state.** HubSpot, GitHub, Slack and Paytm still run inside this repository. The plan is to move each one to a connector service outside it; see [ADR-0018](docs/adr/ADR-0018-Connectors-Outside-Core.md), which is proposed and not yet accepted. New connectors are built outside this repository and are registered through the flow described below.
+**Current state.** Built-in connectors are not in this repository. They moved to connector services outside it; see [ADR-0018](docs/adr/ADR-0018-Connectors-Outside-Core.md). New connectors are built outside this repository and are registered through the flow described below.
 
 ## Connecting a system you run
 
-Built-in connectors cover HubSpot, GitHub, Slack and Paytm. For any other system, an operator registers an **external connector**: a capability, the HTTPS endpoint that serves it, and the policy that governs it. One person proposes the registration, and a different person approves it with a step-up signature. Once active, Parmana sends each approved action to the endpoint as a signed release. The endpoint checks the release's signature and audience, and it needs no shared secret.
+An operator registers an **external connector**: a capability, the HTTPS endpoint that serves it, and the policy that governs it. One person proposes the registration, and a different person approves it with a step-up signature. Once active, Parmana sends each approved action to the endpoint as a signed release. The endpoint checks the release's signature and audience, and it needs no shared secret.
 
 - [Connect any external system](https://docs.parmanasystems.com/guides/connect-any-external-system): the full order of steps.
 - [The parmana-connect service](https://docs.parmanasystems.com/connectors/parmana-connect): a ready-made endpoint that verifies releases and runs a manifest's HTTP call. Its source is in [pavancharak/parmana-connect](https://github.com/pavancharak/parmana-connect).
@@ -201,9 +200,7 @@ Every report is listed once, here. Start with the question you have.
 
 Assessed at Technology Readiness Level 6 (prototype demonstrated in a relevant environment) on the evidence in [docs/CLAIMS.md](docs/CLAIMS.md). Not claimed: sustained volume, load-bearing production traffic, high availability, or multi-tenant production operation.
 
-The claims file also tracks what has no implementation yet. Vendor connectors no longer live in this repository. They moved to `parmana-connectors` under [ADR-0018](docs/adr/ADR-0018-Connectors-Outside-Core.md). Zerodha, Slack, Paytm, GitHub and HubSpot have been removed from core. Their registrations are still open. See the operator's status notes and registration notes, kept outside this repository. An external connector is registered through maker and checker approval, with no deploy, as [ADR-0013](docs/adr/ADR-0013-Generic-External-Connector.md) describes. A connector built into the source is described in [docs/connectors/BUILDING_A_CONNECTOR.md](docs/connectors/BUILDING_A_CONNECTOR.md).
-
-Before its removal from core, the HubSpot connector was run against HubSpot's production API: a deal stage and amount were changed under policy through the signed gateway, then read back and reverted ([CLAIMS.md 3.10](docs/CLAIMS.md)). That code now lives in `parmana-connectors`.
+The claims file also tracks what has no implementation yet. Vendor connectors no longer live in this repository. They moved to connector services outside it under [ADR-0018](docs/adr/ADR-0018-Connectors-Outside-Core.md). An external connector is registered through maker and checker approval, with no deploy, as [ADR-0013](docs/adr/ADR-0013-Generic-External-Connector.md) describes. A connector built into the source is described in [docs/connectors/BUILDING_A_CONNECTOR.md](docs/connectors/BUILDING_A_CONNECTOR.md).
 
 ## Packages
 
@@ -227,7 +224,7 @@ The verifier lives in its own repository, [pavancharak/parmana-verifier](https:/
 - **The hosted instance:** [Live API and demos](https://docs.parmanasystems.com/guides/live-api-and-demos) covers authentication, the request shape, the deployed policies and offline verification.
 - **Connecting an agent:** [docs/connectors/CONNECTING_AN_AGENT.md](docs/connectors/CONNECTING_AN_AGENT.md).
 
-Integration tests against HubSpot's real API are opt-in and skipped by default, so `npm test` never needs live credentials. The environment variables that enable them are named in the test files. A separate throughput script measures `POST /execute`:
+Integration tests against live external APIs are opt-in and skipped by default, so `npm test` never needs live credentials. The environment variables that enable them are named in the test files. A separate throughput script measures `POST /execute`:
 
 ```bash
 npm run loadtest -- --connections 20 --duration 15

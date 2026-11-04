@@ -26,7 +26,7 @@ The full procedure and the raw output are in [`examples/live-checks/external-con
 ## What it does not show
 
 - **It does not show an effect on a business system.** The endpoint returns a receipt and changes nothing. What the endpoint answers is its own claim. The signed record proves what Parmana released and what the endpoint said. It does not prove what the endpoint's system did.
-- **It does not show a payment connector.** The Razorpay refund path is not yet proven end to end. See the open items in the GTM repository.
+- **It does not show a connector.** No connector is in this repository, so the check covers the core path only.
 - **The maker, checker, and approver keys were held by one person.** Credentials were distinct, but the check did not prove separate people. A check with separate people has not been run.
 - **It is slow.** The approved request took about 24 to 32 seconds end to end. Plan for timeouts above 30 seconds.
 - **The SDK helpers are not published yet.** `verifyParmanaRelease` and `verify_parmana_release` are in the repository. The endpoint uses them from there.

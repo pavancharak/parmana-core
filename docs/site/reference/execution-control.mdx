@@ -62,7 +62,7 @@ const vault = new InMemorySessionCredentialVault({
   idGenerator: new RandomIdGenerator(),
   lifetimeMs: 30_000,
 });
-const session = await vault.issue("hubspot", authorizationId);
+const session = await vault.issue("erp", authorizationId);
 const credential = await vault.consume(session.sessionCredentialId); // only once
 ```
 

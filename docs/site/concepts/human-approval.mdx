@@ -4,7 +4,7 @@ description: "No action goes ahead without a signed approval from a person, read
 ---
 
 **No action goes ahead without a signed approval from a person. Reads included.** A
-refund, a merge, a Slack post, a HubSpot update, reading a pull request or a deal: each runs
+refund, a payment, a message, a record update, reading a record: each runs
 only when a trusted person has signed an approval for that action, on that resource, and the
 approval has not expired or been used.
 
@@ -37,16 +37,9 @@ Two checks enforce this in code, for every policy and every action:
 
 An agent that sets the approval signal to `true` without a signed approval is refused, whatever
 else it declares. Tutorials 119 to 122 in `examples/tutorials/` show it step by step, for a
-refund, the rule itself, a read, a Slack post and a HubSpot update.
+refund, the rule itself, a read, a message and a record update.
 
-| Action                | Policy in the binding       | The approval covers         |
-| --------------------- | --------------------------- | --------------------------- |
-| `paytm:refund`        | `customer-refund` 1.2.0     | the order, up to the amount |
-| `github:pr-merge`     | `github-pr-approval` 1.1.0  | the pull request            |
-| `github:pr-fetch`     | `github-pr-read` 1.1.0      | the pull request            |
-| `hubspot:deal-update` | `hubspot-deal-update` 1.1.0 | the deal                    |
-| `hubspot:deal-fetch`  | `hubspot-deal-read` 1.0.0   | the deal                    |
-| `slack:post-message`  | `slack-post-message` 1.1.0  | the channel                 |
+Each capability is bound to one policy name, and the approval covers the resource that the request names. For example, a refund's approval covers the order and up to the amount.
 
 The reference policies with no connector need one too, for the Intent's `target`:
 `vendor-payment` 2.1.0, `access-control` 1.1.0, `agent-vendor-payment` 1.1.0,
@@ -90,7 +83,7 @@ only refuse a refund.
   POLICY_DENIED`. There is no amount below which a refund runs on its own.
 </Note>
 
-The flow for a refund of 75000 on order `ORD-1042`:
+The flow for a refund of 75000 on order `INV-1042`:
 
 <Steps>
   <Step title="The agent's request is refused">
@@ -109,7 +102,7 @@ The flow for a refund of 75000 on order `ORD-1042`:
     npx tsx scripts/sign-approval.ts \
       --private-key-file ~/.parmana/approver-example__approver-example-key-1.private.pem \
       --approver-id approver-example --key-id approver-example-key-1 \
-      --capability paytm:refund --resource-id ORD-1042 --max-amount 75000 \
+      --capability erp:invoice-pay --resource-id INV-1042 --max-amount 75000 \
       --out approval.json
     ```
 
@@ -121,8 +114,8 @@ The flow for a refund of 75000 on order `ORD-1042`:
       privateKeyPem: readFileSync("approver-example__approver-example-key-1.private.pem", "utf8"),
       approverId: "approver-example",
       keyId: "approver-example-key-1",
-      capability: "paytm:refund",
-      resourceId: "ORD-1042",
+      capability: "erp:invoice-pay",
+      resourceId: "INV-1042",
       maxAmount: 75000,
     });
     writeFileSync("approval.json", JSON.stringify(approval));
@@ -137,8 +130,8 @@ The flow for a refund of 75000 on order `ORD-1042`:
         private_key_pem=Path("approver-example__approver-example-key-1.private.pem").read_text(),
         approver_id="approver-example",
         key_id="approver-example-key-1",
-        capability="paytm:refund",
-        resource_id="ORD-1042",
+        capability="erp:invoice-pay",
+        resource_id="INV-1042",
         max_amount=75000,
     )
     Path("approval.json").write_text(json.dumps(approval))
@@ -168,7 +161,7 @@ The flow for a refund of 75000 on order `ORD-1042`:
   </Step>
   <Step title="Parmana verifies the approval and executes">
     Before authorizing, Parmana checks that the approval is signed by a trusted approver, has
-    not expired or been revoked, is for `paytm:refund`, for this order (the Intent's
+    not expired or been revoked, is for `erp:invoice-pay`, for this invoice (the Intent's
     `parameters.orderId`), covers this amount (the Intent's `parameters.amount`), and has not
     been used before. The gateway runs the same checks again just before release. Then the
     refund runs. The policy says which order and amount to check, in its `approvalSignals`
@@ -245,7 +238,7 @@ A rule then reads the signal like any other, for example `{ "fact": "releaseMana
 the approval then names exactly this pull request, `acme/api#42`:
 
 ```bash
-npx tsx scripts/sign-approval.ts   --private-key-file ~/.parmana/lead-sam__lead-sam-key-1.private.pem   --approver-id lead-sam --key-id lead-sam-key-1   --capability github:pr-merge --resource-id "acme/api#42" --out approval.json
+npx tsx scripts/sign-approval.ts   --private-key-file ~/.parmana/lead-sam__lead-sam-key-1.private.pem   --approver-id lead-sam --key-id lead-sam-key-1   --capability erp:invoice-pay --resource-id "INV-1042" --out approval.json
 ```
 
 The change goes live like any policy change: a new version, proposed and approved through
@@ -267,21 +260,6 @@ Rules for a declaration, checked when the policy loads:
 - The key must be read by a rule, and must not also be in `boundSignals`.
 - With more than one approval signal, give each its own `artifact`, the signal that carries its
   approval. The default is `approvalArtifact`.
-
-## Approve a HubSpot update or read
-
-`hubspot-deal-update` 1.1.0 authorizes every deal update only with `dealUpdateApproved: true`
-and a signed approval for that deal in `signals.approvalArtifact`, whatever the amount. Sign it
-with `--capability hubspot:deal-update` and the deal id as `--resource-id`, without
-`--max-amount`. The dealstage transition is still checked against the real deal, and a
-transition that is not allowed is refused even with an approval.
-
-Reading a deal (`hubspot:deal-fetch`) has its own policy, `hubspot-deal-read` 1.0.0. It needs
-`readApproved: true` with an approval for that deal, signed with `--capability
-hubspot:deal-fetch`.
-
-Under 1.0.0 an update within the amount threshold needed no person, and only a larger amount
-change needed `preAuthorizedForAmountChange` with an approval. 1.0.0 now fails to load.
 
 ## Review refused requests
 
@@ -344,13 +322,13 @@ refund refused for a failed fraud check, or above the maximum, sends nothing.
   "occurredAt": "2026-09-29T10:15:02.114Z",
   "businessTransactionId": "5f0c...",
   "decisionId": "a91e...",
-  "action": "paytm:refund",
-  "target": "paytm://orders/ORD-1042",
+  "action": "erp:invoice-pay",
+  "target": "erp://invoices/INV-1042",
   "policyId": "customer-refund",
   "policyVersion": "1.2.0",
   "reason": "...",
   "approvals": [
-    { "signal": "managerApproved", "resourceId": "ORD-1042", "value": 75000 }
+    { "signal": "managerApproved", "resourceId": "INV-1042", "value": 75000 }
   ]
 }
 ```
@@ -397,8 +375,8 @@ Nothing waits for a person. After a manager signs an approval, the agent sends a
 `fraudCheckPassed` are not checked against another system. They can only refuse; the signed approval authorizes.
 
 **An approval covers the action and the resource, not every parameter.** An approval for a
-Slack channel does not fix the message text, and an approval for a HubSpot deal does not fix the
-new amount or stage. The approver trusts the agent with those details for that one use. An
+message channel does not fix the message text, and an approval for a record does not fix the
+new values. The approver trusts the agent with those details for that one use. An
 approval for a payment, an expense or a refund does cover the amount.
 
 **There is no automatic path.** No action is authorized without a person, by design. Adding one
@@ -407,16 +385,11 @@ would need a server side check that reads the facts itself, and a change to this
 ## Why each action is bound to one policy
 
 Each request names the policy that should judge it. If Parmana accepted any approved policy, a
-caller could send a refund and name a policy written for Slack messages, which has no refund
+caller could send a refund and name a policy written for messages, which has no refund
 limit. So each live action is bound to one policy name:
 
 ```text
-paytm:refund         ->  customer-refund
-github:pr-merge      ->  github-pr-approval
-github:pr-fetch      ->  github-pr-read
-hubspot:deal-update  ->  hubspot-deal-update
-hubspot:deal-fetch   ->  hubspot-deal-read
-slack:post-message   ->  slack-post-message
+erp:invoice-pay  ->  example-invoice-pay   (a capability registered as an external connector)
 ```
 
 For a built in connector the name is fixed in code; for an external connector it is the

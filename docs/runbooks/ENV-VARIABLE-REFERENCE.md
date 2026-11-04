@@ -306,49 +306,15 @@ Every claim is taken from the code, unless marked **(not tested)**. Read [ENV-FI
 
 ---
 
-## Optional connectors
-
-A connector is registered only when its settings are present. An unset connector does not stop the server. The CI log shows the messages, for example `paytm_connector_unavailable: PAYTM_CONNECTOR_URL / PAYTM_CONNECTOR_SHARED_SECRET are not configured`.
-
-### PAYTM_CONNECTOR_URL and PAYTM_CONNECTOR_SHARED_SECRET
-
-- **Required:** both or neither. Setting one alone is refused at module load: "Partial Paytm connector configuration detected".
-- **Used:** to call the Paytm connector service.
-- **Values:** the URL must start with `https://` in production. The secret is read from the environment and never printed.
-
-### PAYTM_CONNECTOR_TIMEOUT_MS
-
-- **Required:** no.
-- **Used:** the timeout for Paytm calls.
-- **Values:** a positive number of milliseconds. Zero, negative or non-numeric values are refused at module load.
-
-### HUBSPOT_PRIVATE_APP_TOKEN and HUBSPOT_PRIVATE_APP_TOKEN_ROTATED_AT
-
-- **HUBSPOT_PRIVATE_APP_TOKEN:** unset means the HubSpot connector is not registered.
-- **HUBSPOT_PRIVATE_APP_TOKEN_ROTATED_AT:** an ISO 8601 date. When the token is older than the expected rotation, the server logs a warning (`warnIfHubSpotTokenStale.ts`). Not required.
-
-### GITHUB_APP_ID, GITHUB_INSTALLATION_ID and GITHUB_APP_PRIVATE_KEY
-
-- **Required:** all three, or the GitHub connector is not registered (`createGitHubCredentialProvider.ts`).
-- **GITHUB_APP_PRIVATE_KEY:** the app's PEM private key as text. It is passed unchanged to `crypto.sign`, so base64 text is refused. Use the PEM with `\n` line breaks, in double quotes.
-
-### SLACK_BOT_TOKEN
-
-- **Required:** no. Unset means the Slack connector is not registered. The CI log shows `slack_connector_unavailable: SLACK_BOT_TOKEN is not configured`.
-
----
-
 ## Not read by the API server
 
 These names may appear in a development file. The API server does not read them.
 
-| Name                                                                                                              | Where it is read                                                                                                                 |
-| ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_TEST_KEY_ID`, `RAZORPAY_TEST_KEY_SECRET`, `RAZORPAY_BASE_URL` | The Razorpay demo in `examples/razorpay-refund/`                                                                                 |
-| `KMS_REGION`, `KMS_KEY_ALIAS`                                                                                     | Nothing in the repository. Use `AWS_REGION` and the key settings in the KMS code                                                 |
-| `ALLOW_LIVE_SUPABASE`, `ALLOW_LIVE_RAZORPAY`, `ALLOW_LIVE_HUBSPOT`                                                | Scripts, to stop a test script from touching a live system                                                                       |
-| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`                                                  | Scripts only (`scripts/generate-fly-secrets.mjs`, `scripts/policy-approval-log.ts`, `scripts/verify-policy-changes-approved.ts`) |
-| `TEST_*`                                                                                                          | Tests only                                                                                                                       |
+| Name                                                             | Where it is read                                                                                                                 |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `KMS_REGION`, `KMS_KEY_ALIAS`                                    | Nothing in the repository. Use `AWS_REGION` and the key settings in the KMS code                                                 |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY` | Scripts only (`scripts/generate-fly-secrets.mjs`, `scripts/policy-approval-log.ts`, `scripts/verify-policy-changes-approved.ts`) |
+| `TEST_*`                                                         | Tests only                                                                                                                       |
 
 ---
 

@@ -22,7 +22,7 @@ background to interpret. If your situation is not covered, **stop and ask the op
 | `PARMANA_URL`      | The operator. The base URL of the Parmana server, without a trailing slash.                                                                                                                     | It must start with `https://`, except for a local server, which uses `http://localhost:3000`.                                         |
 | `PARMANA_API_KEY`  | The operator. A secret string issued for you.                                                                                                                                                   | It is non empty. Never print it, log it or put it in a URL.                                                                           |
 | `APPROVAL_SIGNALS` | Step 3: the keys of `signals.approval` in the server's answer. The table in [Every action needs a signed approval](#every-action-needs-a-signed-approval) shows them for the connector actions. | It is never empty. Every action needs one, reads included. If the operator says none, stop: that is not possible on a current server. |
-| `ACTION`           | The operator. The capability name, for example `paytm:refund`.                                                                                                                                  | Step 2 checks your key may use it.                                                                                                    |
+| `ACTION`           | The operator. The capability name, for example `erp:invoice-pay`.                                                                                                                               | Step 2 checks your key may use it.                                                                                                    |
 
 **No server yet? Run one on your own machine.** Follow the [Quickstart](/quickstart). Every step below works the same way against it.
 
@@ -38,22 +38,19 @@ signs an approval for it.
 
 For the actions with a connector, the approval signal and the resource it names are:
 
-| `ACTION`                         | Policy in effect (step 3 confirms) | Approval signal      | Resource the approval names                                   | Other signals the policy reads                                                                                                                                           |
-| -------------------------------- | ---------------------------------- | -------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `paytm:refund`                   | `customer-refund` 1.2.0            | `managerApproved`    | `intent.parameters.orderId`, up to `intent.parameters.amount` | `refundEligible`, `fraudCheckPassed`, `refundAmount` (equal to `intent.parameters.amount`)                                                                               |
-| `github:pr-merge`                | `github-pr-approval` 1.1.0         | `mergeApproved`      | `intent.target`                                               | `branchProtected`, `repositoryAuthorized`, `requiredReviewsCompleted`, `riskScore`, `statusChecksPassed`                                                                 |
-| `github:pr-fetch`                | `github-pr-read` 1.1.0             | `readApproved`       | `intent.target`                                               | none                                                                                                                                                                     |
-| `hubspot:deal-update`            | `hubspot-deal-update` 1.1.0        | `dealUpdateApproved` | `intent.parameters.dealId`                                    | `dealStageChangeRequested`, `dealStageTransitionAllowed`; `proposedDealStage` and `proposedAmount` equal to `intent.parameters.dealstage` and `intent.parameters.amount` |
-| `hubspot:deal-fetch`             | `hubspot-deal-read` 1.0.0          | `readApproved`       | `intent.parameters.dealId`                                    | none                                                                                                                                                                     |
-| `slack:post-message`             | `slack-post-message` 1.1.0         | `postApproved`       | `intent.target` (the channel id)                              | `channelAuthorized`, `contentApproved`; `channelId` equal to `intent.target`                                                                                             |
-| `sandbox:receipt` (sandbox only) | `sandbox-receipt` 1.0.0            | `receiptApproved`    | `intent.target`                                               | none; `note` equal to `intent.parameters.note`, at most 200 characters                                                                                                   |
+| `ACTION`                         | Policy in effect (step 3 confirms) | Approval signal   | Resource the approval names                                   | Other signals the policy reads                                                                           |
+| -------------------------------- | ---------------------------------- | ----------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `erp:invoice-pay`                | `customer-refund` 1.2.0            | `managerApproved` | `intent.parameters.orderId`, up to `intent.parameters.amount` | `refundEligible`, `fraudCheckPassed`, `refundAmount` (equal to `intent.parameters.amount`)               |
+| `github:pr-merge`                | `github-pr-approval` 1.1.0         | `mergeApproved`   | `intent.target`                                               | `branchProtected`, `repositoryAuthorized`, `requiredReviewsCompleted`, `riskScore`, `statusChecksPassed` |
+| `github:pr-fetch`                | `github-pr-read` 1.1.0             | `readApproved`    | `intent.target`                                               | none                                                                                                     |
+| `sandbox:receipt` (sandbox only) | `sandbox-receipt` 1.0.0            | `receiptApproved` | `intent.target`                                               | none; `note` equal to `intent.parameters.note`, at most 200 characters                                   |
 
 For any action, including one not in this table (such as an action an operator registered as an external connector, see [Connect any external system](/guides/connect-any-external-system)), step 3 returns the same information from the server:
 `signals.approval` names the approval signal and where its resource (and amount) are in the request. Use the server's
 answer over this table if they ever differ.
 
 An approval covers the action and the resource, and the amount where the table names one. It does not fix other
-parameters: a Slack approval does not fix the message text, and a HubSpot approval does not fix the new stage.
+parameters: an approval for a message does not fix the message text, and an approval for a record update does not fix the new values.
 
 Every request below carries this header: `Authorization: Bearer <PARMANA_API_KEY>`.
 
@@ -83,7 +80,7 @@ Every request below carries this header: `Authorization: Bearer <PARMANA_API_KEY
 {
   "callerId": "my-agent",
   "allowedPrincipalIds": ["my-agent"],
-  "allowedCapabilities": ["paytm:refund"],
+  "allowedCapabilities": ["erp:invoice-pay"],
   "unrestrictedCapabilities": false
 }
 ```
@@ -106,7 +103,7 @@ Keep `callerId`. Your `authority.principalId` in step 4 must be one of `allowedP
 
 ```json
 {
-  "capability": "paytm:refund",
+  "capability": "erp:invoice-pay",
   "policy": {
     "name": "customer-refund",
     "version": "1.2.0",
@@ -227,7 +224,7 @@ with the current time.
   "intent": {
     "intentId": "3d2c1b0a-9f8e-4d7c-8b6a-5f4e3d2c1b0a",
     "authorizationId": "9c8d7e6f-5a4b-4c3d-8e2f-1a0b9c8d7e6f",
-    "action": "paytm:refund",
+    "action": "erp:invoice-pay",
     "target": "ORDER-1001",
     "parameters": {
       "orderId": "ORDER-1001",

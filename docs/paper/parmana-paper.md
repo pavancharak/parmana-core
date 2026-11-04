@@ -94,8 +94,7 @@ may be steered and limits what a steered agent can make happen.
 The full model is published as THREAT-MODEL.md. In summary:
 
 **System.** The API, the runtime that evaluates policy and signs authorizations, the execution
-gateway and execution control, built in connectors (HubSpot, GitHub, Slack, Paytm), release to
-registered external endpoints, governance, and the signed records. Out of scope: downstream
+gateway and execution control, release to registered external endpoints, governance, and the signed records. Out of scope: downstream
 systems, the agent and its model, the hosting platform, and the people who approve.
 
 **Trust boundaries.** Seven boundaries (Figure 1): caller to API (B1), approver to server (B2),
@@ -131,7 +130,7 @@ T9, a code path reaches a connector without the gateway; T12, a signed record is
 
 ### 4.1 The request
 
-A caller submits a business transaction: the intent (an action such as `paytm:refund`, a
+A caller submits a business transaction: the intent (an action such as `erp:invoice-pay`, a
 target, parameters), the facts it declares (signals), and optionally signed approvals. The
 caller's API key is limited to named capabilities, principals and tenant (E1).
 
@@ -265,7 +264,7 @@ declares are not checked against another system (G-51).
   that holds other credentials can act outside it.
 - **No text inspection.** Parmana does not detect prompt injection, harmful output or leakage.
 - **Approval granularity.** An approval fixes the action, the resource and the amount, not every
-  parameter: a Slack approval does not fix the message text.
+  parameter: an approval for a message does not fix the message text.
 - **People.** A person can be persuaded to approve. In the current production deployment one
   person holds both maker and checker credentials and the only approver key; the server cannot
   tell two credentials belong to two people.

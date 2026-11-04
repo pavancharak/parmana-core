@@ -6,7 +6,7 @@
 # `npm install`, no manual setup step for contributors.
 #
 # Step 1, secret-scanning (added 2026-07-21 after an incident review
-# found real Supabase and Razorpay test-mode credentials in a local,
+# found real Supabase and payment-provider test-mode credentials in a local,
 # gitignored .env file -- that specific file was never committed
 # (verified against full git history on every ref), but the review
 # found no automated guard that would have caught it if it had been

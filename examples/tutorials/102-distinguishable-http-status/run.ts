@@ -110,7 +110,7 @@ console.log(
 console.log("--------------------------------------------------");
 
 // Required before bootstrapping: without it, createConnectorRegistry
-// tries to reach real backing infrastructure (Supabase, HubSpot) instead
+// tries to reach real backing infrastructure (Supabase, an external system) instead
 // of falling back to in-memory/test doubles, leaving sockets stuck
 // "connecting" forever and the process never exiting.
 process.env.NODE_ENV = "test";

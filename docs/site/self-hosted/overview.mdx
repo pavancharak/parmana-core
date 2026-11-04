@@ -44,7 +44,7 @@ The `api` service starts only after the other four have finished without error. 
 - **Records.** Trust Records, Refusal Records, Execution Intents, the caller audit trail and policy approvals are stored in your Postgres.
 - **Verification.** A record verifies with only your public keys, on any machine, with no network call.
 
-The server makes an outbound call only to a system you configure: a connector such as your Paytm agent, or AWS KMS if you choose it for signing. With none configured it makes none. The [offline check](/self-hosted/offline-verification) proves this by running the whole flow on a Docker network that has no route to the internet.
+The server makes an outbound call only to a system you configure: a connector such as an endpoint you register, or AWS KMS if you choose it for signing. With none configured it makes none. The [offline check](/self-hosted/offline-verification) proves this by running the whole flow on a Docker network that has no route to the internet.
 
 ## Production rules are not relaxed
 

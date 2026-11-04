@@ -65,13 +65,13 @@ from parmana import PolicyReference, create_business_transaction
 # The manager's signed approval for this order and amount (every refund
 # needs one; see Human approval). It arrives from your approval flow,
 # for example the approval email.
-approval = pending_approvals["ORD-1042"]
+approval = pending_approvals["INV-1042"]
 transaction = create_business_transaction(
     principal_id="ai-customer-service-001",  # must match your API key's allowed_principal_ids
     purpose="Customer-requested refund",
-    action="paytm:refund",
-    target="paytm://orders/ORD-1042",
-    parameters={"orderId": "ORD-1042", "amount": 50000},
+    action="erp:invoice-pay",
+    target="erp://invoices/INV-1042",
+    parameters={"orderId": "INV-1042", "amount": 50000},
     policy=PolicyReference(name="customer-refund", version="1.2.0", schema_version="1.0.0"),
     signals={
         "refundEligible": True,
@@ -85,7 +85,7 @@ transaction = create_business_transaction(
 
 - `principal_id`, who's proposing this (an agent id, service name, or user id); checked against
   your API key's own `allowed_principal_ids` server-side before anything else runs.
-- `action`, the capability being invoked, e.g. `"paytm:refund"`.
+- `action`, the capability being invoked, e.g. `"erp:invoice-pay"`.
 - `parameters`, the business data for the action itself (amount, currency, whatever the
   connector needs).
 - `policy`, which named, versioned policy evaluates this transaction.
@@ -190,13 +190,13 @@ client = ParmanaClient(endpoint="http://localhost:3000", api_key="my-secret-api-
 # The manager's signed approval for this order and amount (every refund
 # needs one; see Human approval). It arrives from your approval flow,
 # for example the approval email.
-approval = pending_approvals["ORD-1042"]
+approval = pending_approvals["INV-1042"]
 transaction = create_business_transaction(
     principal_id="ai-customer-service",
     purpose="Customer requested a refund after a duplicate charge",
-    action="paytm:refund",
-    target="paytm://orders/ORD-1042",
-    parameters={"orderId": "ORD-1042", "amount": 50000},
+    action="erp:invoice-pay",
+    target="erp://invoices/INV-1042",
+    parameters={"orderId": "INV-1042", "amount": 50000},
     policy=PolicyReference(name="customer-refund", version="1.2.0", schema_version="1.0.0"),
     signals={
         "refundEligible": True,
@@ -214,7 +214,7 @@ except ExecutionRejectedError as exc:
     print(f"Denied: {exc}")
 ```
 
-No separate credential ever reaches the agent, the `paytm:refund` connector holds its own
+No separate credential ever reaches the agent, the `erp:invoice-pay` connector holds its own
 credentials, resolved server-side; see [Credential isolation](/concepts/credential-isolation).
 
 ## What Parmana guarantees

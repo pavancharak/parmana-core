@@ -84,7 +84,6 @@ This file is generated from the documentation navigation. Do not edit it by hand
 ## Guides: Worked examples
 
 * [Live API and Demos](https://docs.parmanasystems.com/guides/live-api-and-demos): Call the real, deployed Parmana API directly: authentication, the request shape, every deployed policy, how to deploy a new one, and offline verification.
-* [Walkthrough: an agent, Parmana and an external system](https://docs.parmanasystems.com/guides/end-to-end-paytm-flow): How an agent's request passes through Parmana to an external system, step by step, and where to find the exact request and response formats.
 * [Tutorials](https://docs.parmanasystems.com/tutorials/index): Numbered examples in examples/tutorials/, grouped by what they demonstrate. This page links to them, it does not duplicate their content.
 ## TypeScript SDK: Get started
 
@@ -108,19 +107,16 @@ This file is generated from the documentation navigation. Do not edit it by hand
 * [Python SDK Production Guide](https://docs.parmanasystems.com/guides/python-sdk-production): Deploy the Python SDK to production: real error handling, audit logging, and a deployment checklist.
 ## Connector SDKs: Overview
 
-* [Integrations](https://docs.parmanasystems.com/integrations/overview): The Connector SDK foundation is real. Four enterprise-named connectors exist as explicit mocks, and no real enterprise integration is built yet.
+* [Integrations](https://docs.parmanasystems.com/integrations/overview): How Parmana connects to the systems it releases approved actions to. Parmana ships no built-in connectors; an operator registers an external connector.
 * [Other Languages](https://docs.parmanasystems.com/sdks/other-languages): [ROADMAP], no Go, Java, or.NET SDK exists in this repository today.
 ## Connector SDKs: Build a connector
 
 * [Add a Connector with the Connector SDK](https://docs.parmanasystems.com/guides/add-a-connector): This guide moved. The full walkthrough now lives on the Connector Development Guide.
-* [Connector Development Guide](https://docs.parmanasystems.com/integrations/connector-development-guide): How to implement a Connector against @parmana/connector-sdk, every example uses MockConnector, no enterprise-specific example.
+* [Connector Development Guide](https://docs.parmanasystems.com/integrations/connector-development-guide): How to implement a Connector against @parmana/connector-sdk. Every example uses MockConnector.
 ## Connector SDKs: Connector SDK references
 
 * [@parmana/connector-sdk](https://docs.parmanasystems.com/reference/connector-sdk): Connector authoring contracts and reference implementations: the Connector interface, MockConnector, credential handles, and four enterprise-shaped reference mocks.
 * [Connector SDK (Python)](https://docs.parmanasystems.com/reference/connector-sdk-python): Python connector authoring contracts and reference implementations: the Connector protocol, MockConnector, credential handles, and four enterprise-shaped reference mocks.
-## Connector SDKs: Ready made connectors
-
-* [HubSpot](https://docs.parmanasystems.com/integrations/hubspot): Policy-gated updates to a HubSpot Deal's dealstage and amount. Hermetic by default, proven live against a real HubSpot developer/test account.
 ## REST API: REST API guide
 
 * [REST API Introduction](https://docs.parmanasystems.com/api-reference/introduction): 57 paths and 63 operations, generated from openapi/openapi.yaml into the sidebar under REST API. This page covers what that spec can't express.
@@ -236,7 +232,7 @@ This file is generated from the documentation navigation. Do not edit it by hand
 * [Self hosted quickstart](https://docs.parmanasystems.com/self-hosted/quickstart): Start Parmana on your own machine with one command, approve a policy, and get your first signed decision. About 15 minutes.
 * [Approve a policy](https://docs.parmanasystems.com/self-hosted/policy-approval): Make a policy take effect on a self hosted deployment: one person proposes it, a different person approves it with a signed step up authorization.
 * [Manage API keys](https://docs.parmanasystems.com/self-hosted/api-keys): List, add, rotate and remove the API keys of a self hosted deployment.
-* [Connect a system](https://docs.parmanasystems.com/self-hosted/connectors): Configure the connector a self hosted deployment releases authorized actions to, including one that uses your own certificate authority.
+* [Connect a system](https://docs.parmanasystems.com/self-hosted/connectors): How a self hosted deployment releases authorized actions to an external connector. Parmana ships no built-in connectors.
 * [Offline verification](https://docs.parmanasystems.com/self-hosted/offline-verification): Prove, with one command, that a self hosted deployment authorizes, refuses and signs with no internet connection, and that its records verify offline.
 * [Operate a self hosted deployment](https://docs.parmanasystems.com/self-hosted/operations): Start, stop, upgrade, back up, restore, read logs and change the database password of a self hosted deployment.
 * [Self hosted configuration reference](https://docs.parmanasystems.com/self-hosted/configuration): Every setting, file, service, volume and port of the self hosted deployment, with defaults and exact behavior.

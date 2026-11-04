@@ -113,10 +113,6 @@ Source: `npm audit` on the lockfile, 2026-10-24.
 
 ## 5. Git history
 
-- The two internal working notes `examples/razorpay-agent-studio/CONTEXT.md`
-  and `PROGRESS.md` were removed from the tree in
-  [#67](https://github.com/pavancharak/parmana-core/pull/67). They still
-  exist in earlier commits of `main`.
 - A copy of `main` with those files removed from every commit was prepared
   with `git filter-repo`. Pushing it was refused by the permission system,
   so `main` still has the old history. Other branches also still contain the

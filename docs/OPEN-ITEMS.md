@@ -29,7 +29,9 @@ The ceremony replaces the live `PARMANA_API_KEYS` list and removes two callers: 
 - [ ] Run the steps in `docs/runbooks/CEREMONY-FIVE-PEOPLE.md`, sections 5 to 11.
 - [ ] Record the removals and the drill decision in the ceremony log (section 15).
 
-## Razorpay
+## Razorpay (superseded)
+
+The Razorpay connector was removed from this repository on 2026-08-12. The items below are kept as history. Any future registration of a Razorpay endpoint would go through the external connector path (ADR-0013), not through core.
 
 - [ ] **Confirm the registration mechanism with Mamta.** Ask whether a registration is the policy approval in `docs/runbooks/POLICY-CHANGE-APPROVAL.md`, or a different process through `/external-connectors/changes`. Nothing else starts until she agrees.
 - [ ] **Decide who registers Razorpay.** The runbook lists this as open.
@@ -41,8 +43,8 @@ The ceremony replaces the live `PARMANA_API_KEYS` list and removes two callers: 
 GitHub, HubSpot and Slack have been removed from parmana-core, but their registrations were never approved. Before any of them is proposed for registration, decide whether it should run at all.
 
 - [ ] **GitHub:** decide whether it should run. Repeated merges fail at GitHub rather than merging twice.
-- [ ] **HubSpot:** decide whether it should run.
-- [ ] **Slack:** decide whether it should run. Slack gives no receipt, so a repeated release posts again.
+- [ ] **HubSpot:** decide whether it should run, as an external connector.
+- [ ] **Slack:** decide whether it should run, as an external connector. Slack gives no receipt, so a repeated release posts again.
 
 Live money stays off for every connector until its own approval.
 

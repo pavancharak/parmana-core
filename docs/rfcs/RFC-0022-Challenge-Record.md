@@ -1,5 +1,7 @@
 # RFC-0022 — Challenge Record: a durable, checkable trace from "an assumption was questioned" to "what changed"
 
+> **Correction (2026-11-04):** The built-in connectors (HubSpot, GitHub, Paytm, Slack and Razorpay) are no longer in this repository. They moved out under ADR-0018 and were removed with the connector code, policies and claims. Where this record describes a built-in connector as present, it describes the state when it was written. That state is not the current one. The decision recorded here is unchanged unless the text says otherwise.
+
 Status: Draft
 
 Author: (session investigation + design, pending Pavan review)

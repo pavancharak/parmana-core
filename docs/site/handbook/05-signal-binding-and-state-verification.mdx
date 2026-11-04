@@ -75,18 +75,6 @@ returns the first non-empty result (`CompositeSignalStateVerifier.ts:23-35`). Th
 capability-specific verifiers as production needs, each responsible for only the action(s) it
 knows how to check.
 
-**A concrete production implementation:** `createHubSpotSignalStateVerifier`
-(`packages/api/src/bootstrap/createHubSpotSignalStateVerifier.ts`) builds a
-`HubSpotSignalStateVerifier` (from `@parmana/connector-hubspot`) wired with
-`SignerBootstrap.create()` (called for each instance, not memoized) and `verifierKeyId()`, the
-real execution gateway, and an `ApprovalVerifier` for independently checking
-`preAuthorizedForAmountChange`, a signal that, without this, would be nothing but a caller's
-unverified claim. Since 2026-09-30 `hubspot-deal-update` 1.1.0 needs one signed approval for
-every update (`dealUpdateApproved`), checked by `ApprovalSignalVerifier`, and the HubSpot verifier
-skips its own pre authorization check whenever the policy declares `approvalSignals`, so one
-approval is not spent twice. Its own doc comment notes `approvalVerifier` is always supplied in
-production, never omitted; only direct unit tests construct the verifier without it.
-
 ### Where both run
 
 Both checks run inside the runtime pipeline (Chapter 8 covers the full order) before
@@ -99,8 +87,6 @@ Intent, or don't match independently verified reality.
 - **Tutorial 62** (`examples/tutorials/62-signal-intent-binding/run.ts`) exercises
   `SignalIntentBinder` directly, including a deliberate mismatch between declared signals and
   real Intent parameters.
-- **Tutorial 71** (`examples/tutorials/71-hubspot-signal-state-verification/run.ts`) exercises
-  the real `HubSpotSignalStateVerifier` implementation described above.
 - **Tutorial 82** (`examples/tutorials/82-composite-signal-state-verification/run.ts`)
   demonstrates `CompositeSignalStateVerifier` combining multiple capability-scoped verifiers.
 - **Tutorial 98** (`examples/tutorials/98-signal-freshness-enforcement/run.ts`) covers a related
@@ -113,15 +99,9 @@ Intent, or don't match independently verified reality.
   `packages/policy/tests/unit/SignalIntentBinder.test.ts`.
 - `packages/policy/src/types/SignalStateVerifier.ts` and
   `packages/policy/src/CompositeSignalStateVerifier.ts` for the port and its composition.
-- `packages/api/src/bootstrap/createHubSpotSignalStateVerifier.ts` for a real, wired production
-  implementation, and its corresponding package under `packages/connector-hubspot/` (or
-  wherever `@parmana/connector-hubspot` actually lives in this checkout) for the verifier's own
-  logic.
 
 ## Integration requirements
 
 `SignalIntentBinder` needs nothing beyond the policy and the real Intent, both already present
-in any request. A capability-specific `SignalStateVerifier` (like the HubSpot one) needs
-whatever real credentials that connector needs to make its own independent verification calls
-(a HubSpot private app token, in that case), see the connectors chapter for the full
-credential list per connector.
+in any request. A capability-specific `SignalStateVerifier` needs whatever real credentials its own
+independent verification calls need. See the connectors chapter for the credentials each connector needs.

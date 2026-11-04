@@ -35,7 +35,7 @@ export function signApprovalWebhook(
 
 /**
  * POSTs each approval.needed event as JSON to a URL the operator
- * configures: a Slack workflow, an email relay, or any endpoint that
+ * configures: a chat workflow, an email relay, or any endpoint that
  * alerts the approver. The event names the transaction, the action,
  * and what the approval must cover, so the approver can sign one with
  * scripts/sign-approval.ts or the SDK's signApproval().

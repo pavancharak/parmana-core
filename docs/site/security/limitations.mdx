@@ -12,8 +12,8 @@ threat, what's actually tested versus what's an honest gap.
 Every agent action needs a signed human approval ([Human approval](/concepts/human-approval)).
 Its limits, stated plainly:
 
-- **It names the action and the resource, not every parameter.** A Slack approval does not fix
-  the message text, and a HubSpot approval does not fix the new stage or amount. Payment,
+- **It names the action and the resource, not every parameter.** An approval for a message does not fix
+  the message text, and an approval for a record does not fix the new values. Payment,
   expense and refund approvals do cover the amount.
 - **It trusts the approver.** Parmana checks that a trusted, unrevoked key signed it; it cannot
   check that the person read the request. Today one approver key is trusted in production.
@@ -49,9 +49,7 @@ not claim them:
   server keeps authorization and approval nonces in Postgres, so every instance on one database
   accepts each once. A system you build with its own per instance store gets once per instance,
   not once fleet wide.
-- **Credential isolation is proven for the built in connectors** (HubSpot, GitHub, Paytm,
-  Slack, each registering only when its own credentials are configured), not automatically for
-  a new built in one you add. An external connector holds no credential at all. The mechanism is generic and tested, but wiring a new
+- **Credential isolation is not proven for a built in connector in this version**, because none is in the repository. An external connector holds no credential at all. The mechanism is generic and tested, but wiring a new
   connector into it is a deliberate step, not something the architecture does for you; see
   [Credential isolation](/concepts/credential-isolation).
 - **Key custody is local files or AWS KMS, nothing else.** `KEY_PROVIDER=local` reads PEM
@@ -88,7 +86,7 @@ not claim them:
 
 ## Open issues
 
-Each has an entry inrefundEligible`, Slack `contentApproved`) are not checked against another system. They can only make a rule refuse. | Rely on the signed approval, which is what authorizes. |
+Each has an entry in the policy, for example `refundEligible` or `contentApproved`) are not checked against another system. They can only make a rule refuse. | Rely on the signed approval, which is what authorizes. |
 | Register sources with a key, keep amount limits in policy rules and rely on the signed approval. |
 | Require grants in the policies that matter, keep cumulative caps in the business system. |
 | Check `conditions`in your endpoint, in the same transaction as the action. |
@@ -166,8 +164,8 @@ adapter fails closed on a non-2xx response or a timeout, never a partial success
 authorization and execution round trip takes a few milliseconds (roughly 0.1 ms to sign); in
 production on Vercel an approved request took 24 to 32 seconds end to end, most of it in
 sequential database and KMS round trips, not yet broken down
-Connector calls have timeouts (Paytm 10 s by default, an external connector its
-registered `timeoutMs`); the pipeline as a whole has none of its own, so a client should wait
+Connector calls have timeouts (an external connector sets its own
+`timeoutMs`); the pipeline as a whole has none of its own, so a client should wait
 120 seconds and, after a timeout, read the record before sending again.
 
 ## Your responsibilities as an operator

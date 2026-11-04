@@ -29,7 +29,7 @@ const client = new ParmanaClient({
 
 const me = await client.caller();
 // { callerId: "my-agent", allowedPrincipalIds: ["my-agent"],
-//   allowedCapabilities: ["paytm:refund"], unrestrictedCapabilities: false }
+//   allowedCapabilities: ["erp:invoice-pay"], unrestrictedCapabilities: false }
 ```
 
 ```python Python
@@ -56,7 +56,7 @@ refused.
 <CodeGroup>
 
 ```typescript TypeScript
-const inEffect = await client.policyInEffect("paytm:refund");
+const inEffect = await client.policyInEffect("erp:invoice-pay");
 
 inEffect.policy; // { name: "customer-refund", version: "1.2.0", schemaVersion: "1.0.0" }
 inEffect.signals.facts; // ["fraudCheckPassed", "managerApproved", "refundAmount", "refundEligible"]
@@ -64,7 +64,7 @@ inEffect.signals.approval; // { managerApproved: { resourceId: "parameters.order
 ```
 
 ```python Python
-in_effect = client.policy_in_effect("paytm:refund")
+in_effect = client.policy_in_effect("erp:invoice-pay")
 
 in_effect.policy.version        # "1.2.0"
 in_effect.signals.facts         # ["fraudCheckPassed", "managerApproved", "refundAmount", "refundEligible"]
@@ -89,10 +89,10 @@ import { createBusinessTransaction } from "@parmana/sdk";
 
 const transaction = createBusinessTransaction({
   principalId: me.callerId,
-  purpose: "Refund order ORD-1042",
-  action: "paytm:refund",
-  target: "ORD-1042",
-  parameters: { orderId: "ORD-1042", transactionId: "TXN-9", amount: 750 },
+  purpose: "Refund order INV-1042",
+  action: "erp:invoice-pay",
+  target: "INV-1042",
+  parameters: { orderId: "INV-1042", transactionId: "TXN-9", amount: 750 },
   policy: inEffect.policy,
   signals: {
     refundEligible: true,
@@ -108,10 +108,10 @@ from parmana import create_business_transaction
 
 transaction = create_business_transaction(
     principal_id=me.caller_id,
-    purpose="Refund order ORD-1042",
-    action="paytm:refund",
-    target="ORD-1042",
-    parameters={"orderId": "ORD-1042", "transactionId": "TXN-9", "amount": 750},
+    purpose="Refund order INV-1042",
+    action="erp:invoice-pay",
+    target="INV-1042",
+    parameters={"orderId": "INV-1042", "transactionId": "TXN-9", "amount": 750},
     policy=in_effect.policy,
     signals={
         "refundEligible": True,

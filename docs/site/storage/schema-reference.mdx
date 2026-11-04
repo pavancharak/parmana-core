@@ -47,13 +47,6 @@ psql "$DATABASE_URL"
 | `rate_limit_counters`                   | Fleet wide rate limits, the only table without RLS                      | `PostgresRateLimitStore`                       |
 | `handbook_download_leads`               | Email captured before a handbook PDF download                           | `SupabaseHandbookDownloadLeadRepository`       |
 
-<Warning>
-  Three Razorpay tables (`razorpay_webhook_events`,
-  `razorpay_webhook_audit_events`, `razorpay_daily_refund_reservations`) were
-  dropped on 2026-09-16 by `20260916120000_drop_razorpay_tables.sql`. The
-  Razorpay connector itself was removed on 2026-08-12.
-</Warning>
-
 Not covered here: `supabase_migrations.schema_migrations`, the Supabase CLI's own tracking
 table in a different schema (see the migration sync query below).
 

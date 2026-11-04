@@ -99,12 +99,8 @@ policy](/guides/write-your-first-policy) for what a rejection actually does).
   verify that an *unbound* signal is actually true. `vendorVerified`,
   `paymentApproved`, `riskScore`, and similar remain caller-declared
   attestations with no independent verification. Closing that gap for real means
-  fetch-verifying those signals from an independent source, the way
-  `HubSpotSignalStateVerifier` already does for `currentDealStage` and a few
-  other `hubspot-deal-update` signals, real and valuable, though not yet
-  extended to policy signals generally. See [HubSpot](/integrations/hubspot) for
-  the one connector where fetch-verification of *some* signals is real today,
-  and its exact scope.
+  fetch-verifying those signals from an independent source. No signal is
+  fetch-verified in this version.
 </Warning>
 
 ## Requiring a signed human approval

@@ -164,7 +164,7 @@ Expected: `200`, with `outcome: "reset"`.
 
 ```powershell
 $env:PARMANA_API_KEY = <the agent's key, from the encrypted store>
-npx tsx examples/razorpay-refund/send.ts --case no-approval --payment pay_TrPtgJ3RVnzzFi --amount 100 --out record-recheck.json
+# Run the refund example against the endpoint you registered, with the same settings as before.
 ```
 
 If the result is still `KILL_SWITCH_ACTIVE`, do not allow approvals; tell Operator 1 and the founder.
@@ -193,19 +193,19 @@ Keep one log for each trip. Keep it outside the repository, on an operator's mac
 
 Record:
 
-| Field                                      | Example                                          |
-| ------------------------------------------ | ------------------------------------------------ |
-| Incident id                                | INC-2026-10-23-01                                |
-| Trip time (local, with time zone)          | 2026-10-23 16:40 IST                             |
-| Trip by                                    | Operator 1                                       |
-| Trip reason                                | Suspected unauthorised refund                    |
-| Status `version` before and after the trip | 0 then 1                                         |
-| Affected callers and transactions          | `razorpay-demo-agent`, `<businessTransactionId>` |
-| Checks done                                | Trust records read; external refunds compared    |
-| Reset requested by                         | Operator 1 at (time), `202`                      |
-| Reset completed by                         | Operator 2 at (time), `200`                      |
-| Final status                               | `active:false`, `version`                        |
-| Follow-up                                  | Keys rotated? Policy changed?                    |
+| Field                                      | Example                                       |
+| ------------------------------------------ | --------------------------------------------- |
+| Incident id                                | INC-2026-10-23-01                             |
+| Trip time (local, with time zone)          | 2026-10-23 16:40 IST                          |
+| Trip by                                    | Operator 1                                    |
+| Trip reason                                | Suspected unauthorised refund                 |
+| Status `version` before and after the trip | 0 then 1                                      |
+| Affected callers and transactions          | `demo-agent`, `<businessTransactionId>`       |
+| Checks done                                | Trust records read; external refunds compared |
+| Reset requested by                         | Operator 1 at (time), `202`                   |
+| Reset completed by                         | Operator 2 at (time), `200`                   |
+| Final status                               | `active:false`, `version`                     |
+| Follow-up                                  | Keys rotated? Policy changed?                 |
 
 Never write a key in the log.
 
@@ -227,7 +227,7 @@ Read the refusal record for a refused transaction:
 curl.exe -s "$env:PARMANA_URL/refusal/<businessTransactionId>" -H "Authorization: Bearer $k"
 ```
 
-Save the output to a file in the incident folder. Do not delete anything. The external system (for example the Razorpay dashboard) is the final evidence of what happened to money.
+Save the output to a file in the incident folder. Do not delete anything. The external system (for example the payment provider dashboard) is the final evidence of what happened to money.
 
 Note: the trust record for a transaction the operator did not start can only be read with that caller's key, so the caller's holder must run the read, or the caller's key must be handed over for the read (both only for the incident, and recorded in the log).
 
