@@ -1,5 +1,7 @@
 # RFC-0025 — Inbound decision issuance: Parmana issues the decision before an inbound refund
 
+> **Correction (2026-11-04):** The built-in connectors (HubSpot, GitHub, Paytm, Slack and Razorpay) are no longer in this repository. They moved out under ADR-0018 and were removed with the connector code, policies and claims. Where this record describes a built-in connector as present, it describes the state when it was written. That state is not the current one. The decision recorded here is unchanged unless the text says otherwise.
+
 Status: Accepted for the test service. Implemented in steps 1 to 3 and the outcome endpoint; deployed to a test service. Not yet approved for production.
 
 Created: 2026-11-02

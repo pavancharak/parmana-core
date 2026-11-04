@@ -1,5 +1,7 @@
 # ADR-0014: Public sandbox and docs playground
 
+> **Correction (2026-11-04):** The built-in connectors (HubSpot, GitHub, Paytm, Slack and Razorpay) are no longer in this repository. They moved out under ADR-0018 and were removed with the connector code, policies and claims. Where this record describes a built-in connector as present, it describes the state when it was written. That state is not the current one. The decision recorded here is unchanged unless the text says otherwise.
+
 **Status:** Accepted by the operator on 2026-10-01 (PR #103 merged), with the proposed answers to the three open questions. Step 1 (code) built on 2026-10-01. Steps 2 and 3 done on 2026-10-02: the sandbox is live at `https://parmana-sandbox.vercel.app` and its live check passed (`docs/CLAIMS.md` 2.51). Step 4 (docs) built on 2026-10-02. Retention (open question 3) built on 2026-10-02: `deploy/sandbox/retention.sql`, installed by the kit stage `Retention`. See the order of work.
 
 **Date:** Proposed 2026-10-01.

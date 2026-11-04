@@ -1,5 +1,7 @@
 # ADR-0013: Generic External Connector
 
+> **Correction (2026-11-04):** The built-in connectors (HubSpot, GitHub, Paytm, Slack and Razorpay) are no longer in this repository. They moved out under ADR-0018 and were removed with the connector code, policies and claims. Where this record describes a built-in connector as present, it describes the state when it was written. That state is not the current one. The decision recorded here is unchanged unless the text says otherwise.
+
 **Status:** Accepted by the operator on 2026-09-30, with the proposed answers to the three open questions. Being built in the order below. Step 1 (registrations through maker checker, PR #92) is merged, its migration applied in production and live since 2026-09-30. Step 2 (the signed release adapter, PR #93) and step 3 (the SDK helpers, PR #94) are merged and deployed. Step 4 (a registered capability released to its endpoint, its policy bound from the registration) is merged and deployed (PR #97). Step 5 (examples, tutorial and the guide "Connect any external system") is merged (PRs #98 and #99). Step 6 (the live check) passed in production on 2026-10-01 against `https://parmana-release-check.vercel.app/api/release` (`examples/live-checks/external-connector/README.md`, `docs/CLAIMS.md` 2.50). All six steps are done; the SDK helpers ship with the next SDK release.
 
 **Date:** Proposed and accepted 2026-09-30.

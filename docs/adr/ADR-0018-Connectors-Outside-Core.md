@@ -1,5 +1,7 @@
 # ADR-0018: Connectors Outside Core
 
+> **Correction (2026-11-04):** The built-in connectors (HubSpot, GitHub, Paytm, Slack and Razorpay) are no longer in this repository. They moved out under ADR-0018 and were removed with the connector code, policies and claims. Where this record describes a built-in connector as present, it describes the state when it was written. That state is not the current one. The decision recorded here is unchanged unless the text says otherwise.
+
 **Status:** Accepted by the operator on 2026-11-02. The migration below is the plan. No connector has been removed from core yet; each step starts only when its external version is ready.
 
 **Date:** Proposed 2026-10-29. Corrected 2026-11-02: the production statements below were wrong and have been removed.

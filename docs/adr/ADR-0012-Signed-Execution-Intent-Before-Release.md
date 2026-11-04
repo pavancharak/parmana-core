@@ -1,5 +1,7 @@
 # ADR-0012: Signed Execution Intent Before Release
 
+> **Correction (2026-11-04):** The built-in connectors (HubSpot, GitHub, Paytm, Slack and Razorpay) are no longer in this repository. They moved out under ADR-0018 and were removed with the connector code, policies and claims. Where this record describes a built-in connector as present, it describes the state when it was written. That state is not the current one. The decision recorded here is unchanged unless the text says otherwise.
+
 **Status:** Accepted and implemented on 2026-09-21. Verified live the same day. Two limits found while building it, G-54 and G-55, were both closed in the source the same day. The SDK methods are not published.
 
 **Date:** Proposed 2026-09-20. Decided and built 2026-09-21.

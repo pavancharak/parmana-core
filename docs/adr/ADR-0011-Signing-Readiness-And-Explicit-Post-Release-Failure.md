@@ -1,5 +1,7 @@
 # ADR-0011: Signing Readiness Before Release and Explicit Failure After Release
 
+> **Correction (2026-11-04):** The built-in connectors (HubSpot, GitHub, Paytm, Slack and Razorpay) are no longer in this repository. They moved out under ADR-0018 and were removed with the connector code, policies and claims. Where this record describes a built-in connector as present, it describes the state when it was written. That state is not the current one. The decision recorded here is unchanged unless the text says otherwise.
+
 **Status:** Accepted, implemented, and the success path verified live against production (2026-09-20). The failure paths are verified in tests only, see "Verification status" below.
 
 **Date:** 2026-09-20
