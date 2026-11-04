@@ -52,9 +52,8 @@ body:
       label: Priority
       description: How urgent this is. Every issue needs one.
       options:
-        - "P0: critical (security, data loss or a broken production path)"
-        - "P1: high (a documented behaviour is wrong or blocked)"
-        - "P2: medium (should be fixed in the next few releases)"
-        - "P3: low (nice to have)"
+        - "high (security, data loss, or a documented behaviour that is wrong or blocked)"
+        - "medium (should be fixed in the next few releases)"
+        - "low (nice to have)"
     validations:
       required: true
