@@ -961,33 +961,21 @@ Evidence
 
 ---
 
-## 2.25 Strategic Positioning — Independently Validated, YES (Pass 4)
+## 2.25 Only Authorized Actions Take Effect: Status of the Internal Review
 
-_"Only what you authorize should become real"_ — the specific invariant underlying the "We Are Not in the AI Race" positioning — was independently, repeatedly source-code-validated across four passes (the strategic positioning validation record, in git history). The first three passes reached **PARTIALLY SUPPORTED**: the authorization mechanism itself was fully validated for every capability actually reachable in production, but `payments:execute` (vendor-payment) existed in committed code with unverified caller-declared signals, gated only by `NODE_ENV`, not by any authorization-strength property — a capability that would have violated the claim had it ever been enabled as it then existed.
+**Claim.** Parmana authorizes an action only when the conditions in 2.47 are met: a signed approval from a trusted person for that action and resource, checked at policy load and at decision. This section records how that claim was reviewed, and what the review did and did not cover.
 
-**The fourth pass, run fresh with no reliance on the first three passes' conclusions, upgraded the verdict to SUPPORTED BY IMPLEMENTATION — YES.** The structural change: `payments:execute` was removed from the repository entirely (`docs/VERIFICATION-GAPS.md` G-27), not gated more tightly. `createConnectorRegistry.ts`, at the time of this pass, registered exactly three connectors in production wiring — `test-fixture` (a `NODE_ENV=test`-only, unbound, no-production-implication connector introduced solely to keep shared test infrastructure executable), `razorpay`, `hubspot` — and `payments:execute` had no connector to resolve to in any environment, independently confirmed by a dedicated regression test asserting this across `test`, `production`, and `development` `NODE_ENV` values. The fourth pass separately, freshly re-scrutinized the replacement test-only connector itself for new bypass risk (rather than assuming it safe by association with the removal) and found none: it is fail-closed by the identical mechanism every other connector in this registry uses, and unbound from `CapabilityPolicyBinding.ts`'s governance entirely.
+**Review.** The project team reviewed the source four times, each pass run fresh, without relying on the earlier passes' conclusions. The first three passes found one capability that would have violated the claim if it had ever been enabled: `payments:execute` (vendor payment), which had no connector gated by its own authorization. The fourth pass found that capability had been removed from the repository (`docs/VERIFICATION-GAPS.md`, G-27), and found no capability in the current repository that could execute without an approval.
 
-**Update (2026-08-24 documentation-currency pass):** the connector count above ("exactly three... test-fixture, razorpay, hubspot") described `createConnectorRegistry.ts` as it stood at pass 4's time, before the Razorpay connector was deliberately removed on 2026-08-12 (see §3.16's own update). `createConnectorRegistry.ts` now registers exactly **two** connectors — `test-fixture`, `hubspot` — with zero references to `razorpay` anywhere in the file, confirmed by direct reading and by `create-connector-registry.test.ts`'s own current content, which is entirely HubSpot-scoped. This does not change the YES verdict above (the removal only shrinks the set of registered connectors further; `payments:execute` still has no connector to resolve to, and no new capability was added that would need re-validating) — it corrects a count that is now one connector out of date.
-
-**Update (2026-08-25 audit-fix pass):** the "exactly two" count directly above was itself already wrong the day it was written. `createConnectorRegistry.ts` conditionally registers a third connector, `github` (`createGitHubConnector`, `github:pr-fetch`/`github:pr-merge`, §3.17), wired in on 2026-08-19 — five days before the 2026-08-24 pass re-counted the file and still reported two. Confirmed directly by re-reading `createConnectorRegistry.ts` itself, which conditionally registers `test-fixture`, `hubspot`, and `github`. This does not change the YES verdict — GitHub's authorization mechanism is the same caller-agnostic pipeline, and `payments:execute` still has no connector — but it is the second time in this section's history a connector count was asserted without actually re-deriving it from the file, and the miscount stood for a full day of otherwise-careful documentation-currency work. `docs/VERIFICATION-GAPS.md` G-30 has the fuller account of what else this same miscount caused to be missed (§2.22's binding-coverage claim).
-
-**Honesty constraint, carried from the fourth pass's own report, not rounded away here:** that pass re-executed only 2 of the 10 negative tests cited across this validation's history fresh (`authority-type-agnostic-execution.integration.test.ts`; `create-connector-registry.test.ts`'s new absence case) — §6 of the other 8 were cited from code paths confirmed structurally unchanged by the removal, not individually re-run in that session. Multi-tenant/cross-institution authority isolation and the direct-database-write bypass finding were explicitly left as "unchanged, not re-traced," not re-asserted clean. The YES verdict means the specific invariant is now supported without a known exception for every capability this repository currently exposes — it is not a claim that every adjacent property was re-proven from scratch in the same session. Full precision on this distinction: the strategic positioning validation record (in git history) ("Final Answer").
+**What the review did not cover.** The reviews were internal, not by an independent third party. The last pass re-ran two of the ten negative tests cited across the reviews; the others were checked by reading code paths that the removal did not change. Multi-tenant authority isolation, and the case where an operator with direct database access bypasses the API, were not re-traced in that pass.
 
 Evidence
 
-- the strategic positioning validation record, in git history (full four-pass history, claim-by-claim matrices, execution control path, bypass analysis, negative-test evidence for each pass)
+- `packages/api/tests/integration/action-without-human-approval.integration.test.ts` (the invariant, through the HTTP API)
+- No current test asserts that `payments:execute` has no connector. The earlier test that did was removed with the connector migration, so this point rests on the removal recorded in G-27.
+- `docs/VERIFICATION-GAPS.md`, G-27
 
-- docs/VERIFICATION-GAPS.md G-27 (the removal this upgrade rests on)
-
-- packages/api/tests/unit/bootstrap/create-connector-registry.test.ts ("payments:execute has no connector to resolve to in any environment")
-
-- packages/api/tests/integration/authority-type-agnostic-execution.integration.test.ts (re-run fresh in pass 4, 2/2 passing, confirming no regression)
-
-- packages/api/src/bootstrap/createConnectorRegistry.ts, createTestFixtureConnector.ts (the exact production registration state pass 4 verified)
-
----
-
-**Update (2026-10-03):** "independently" in this section means each pass was run fresh, without relying on the earlier passes' conclusions. All four passes were internal reviews within Parmana's own development process, not an audit by a third party.
+Dated updates for this claim, and the detail of each review pass, are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
 ## 2.26 Policy Governance (Maker-Checker)
 
