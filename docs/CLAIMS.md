@@ -709,39 +709,43 @@ Evidence
 
 Dated updates for this claim are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
-## 2.51 A Public Sandbox Runs the Same Governance With a Published Demo Key (Scoped, 2026-10-02)
+## 2.51 A Public Sandbox Runs the Same Governance With a Published Demo Key (Scoped)
 
-**Claim:** `https://parmana-sandbox.vercel.app` runs the same code as production with `PARMANA_SANDBOX=true`, its own Supabase database, its own signing keys and its own approver. With only the demo key `sandbox-visitor`, which may ask for `sandbox:receipt` alone, a visitor gets the same governance as production: a request with no signed approval is refused, a demo approval from `POST /sandbox/approvals` lets one request be released, signed, to the sandbox receipt endpoint, the signed record verifies offline, the same approval reused is refused, and the policy's own rule refuses a long note. The demo approver signs only for `sandbox:receipt`, and only the docs site may call the API from a browser. This is ADR-0014 steps 2 and 3.
+**Claim.** The public sandbox runs the same code as production with `PARMANA_SANDBOX=true`. It has its own database, its own signing keys and its own approver. A visitor with the published demo key, which is allowed only `sandbox:receipt`, gets the same governance as production:
 
-Scope, stated plainly:
+- A request with no signed approval is refused.
+- A demo approval from `POST /sandbox/approvals` lets one request be released to the sandbox receipt endpoint, where it is signed.
+- The signed record verifies offline.
+- The same approval, reused, is refused.
+- The sandbox policy refuses an overlong note.
 
-- **The sandbox acts on nothing.** Its one capability is released to an endpoint that answers with a receipt; no connector to a real system can be configured while `PARMANA_SANDBOX=true` (the server refuses to start).
-- **Anyone can approve in the sandbox.** That is its purpose: the demo approval shows how a signed approval is used, not who may give one. In production only registered approvers sign.
-- **The demo key is not published yet.** ADR-0014 step 4 puts it in the docs playground. Until then only the live check has used it. **Update (2026-10-23):** the rebuilt sandbox's demo key is published in the [Playground](https://docs.parmanasystems.com/playground), written in by `deploy/sandbox/publish-demo-key.ps1` after the sandbox confirmed it is `sandbox-visitor`, allowed only `sandbox:receipt`. It is the same key as before 2026-10-20: the rebuild reused the sandbox key folder, so the key withdrawn from the docs that day is published again.
-- **No retention yet.** ADR-0014 accepted deleting sandbox records older than 7 days, daily; that job is not built. **Update (2026-10-23):** built (`deploy/sandbox/retention.sql`, hardened after G-86) and installed in the rebuilt sandbox: `parmana-sandbox-retention`, daily at 03:30 UTC, 7 days. Its first run's log row has not been read yet (G-86).
-- **Distinct credentials, not proven distinct people**, as in 2.49 and 2.50: the sandbox maker and checker keys are held by one person.
-- **Checked live twice**, on 2026-10-02 and, after the sandbox was rebuilt, on 2026-10-23. The approved request took 14.1 s both times (G-84 applies here too).
+The demo approver signs only for `sandbox:receipt`, and only the documentation site may call the API from a browser. This is ADR-0014.
 
-Verification
+**What the code enforces.**
 
-- `packages/api/tests/unit/createSandboxOptions.test.ts` and `tests/architecture/sandbox-connector-variables.test.ts`: sandbox mode refuses every connector variable, even empty, and the approver variables outside it.
-- `packages/api/tests/integration/sandbox.integration.test.ts`: `POST /sandbox/approvals` behind the key, for `sandbox:receipt` only, expiring in 300 s.
-- The sandbox-policy test, removed with the sandbox: its `deploy/sandbox/policy.json` is gone too.
+- With `PARMANA_SANDBOX=true`, the server refuses to start if any built-in connector variable is set, even an empty one. The demo approver's variables are refused outside sandbox mode.
+- `PARMANA_SANDBOX=true` is refused when `NODE_ENV=production`.
+- `POST /sandbox/approvals` exists only in sandbox mode. It is behind caller authentication, signs only `sandbox:receipt`, and each approval expires after 300 seconds.
+- Browser access is limited to the origins listed in `PARMANA_CORS_ORIGINS`. Other origins receive no CORS header.
 
-Evidence: the live check, 2026-10-02 (`deploy/sandbox/README.md`, stage `Check`)
+**Scope and limits.**
 
-- Supabase project `zkrfrfyokkpfwghoohne` (not production's `ltjadvsjlpcygborxzet`): 33 migrations applied to an empty database. Vercel project `parmana-sandbox`: `GET /ready` `READY` with authentication on, `GET /keys/default` an ed25519 key. Production stayed `READY` throughout.
-- Receipt endpoint `https://parmana-sandbox-receipt.vercel.app/api/release` (Vercel project `parmana-sandbox-receipt`): `401` to an unsigned body, answered by the endpoint itself.
-- Through maker checker in the sandbox, each proposed by `sandbox-maker` and approved by the sandbox checker: the demo approver `sandbox-demo-approver` (`sandbox-demo-approver-key-1`, change `0143b0a5-ba0f-437a-945d-abeb73d9cdb4`, the public key identical to the key folder's); policy `sandbox-receipt` 1.0.0 (change `4ac16068-0f1b-46ee-b298-c3c0c9ce63e4`, identical to `deploy/sandbox/policy.json`); the registration of `sandbox:receipt` (change `752bea44-40c8-4c88-ba40-b5035c8420c7`, parameter `note` only, 10 s timeout).
-- The nine checks, with `sandbox-visitor` only: the key's scope; `sandbox-receipt` 1.0.0 in effect; no approval, refused with the policy's reason; a demo approval, `201`; with it, transaction `18ce9222-ca2e-434c-a47e-0a6f72fdd387` `APPROVED` in 14.1 s, receipt `RC-18ce9222`, the record verifying offline; the same approval again, refused (`receiptApproved=true != verified receiptApproved=false`); a note over 200 characters, refused; a demo approval for another capability, `400 INVALID_SANDBOX_APPROVAL_REQUEST`; a browser preflight from `https://docs.parmanasystems.com` `204`, from another site `403` with no allow origin header. Record: `deploy/sandbox/evidence/check-record.json` (trust record `4df9cdac-6e4a-4c19-b8cd-7b8f79724c8c`, policy governance anchor `VERIFIED`).
+- **The sandbox acts on nothing.** Its one capability releases to an endpoint that returns a receipt. No connector to a real system can be configured while sandbox mode is on.
+- **Anyone can approve in the sandbox.** That is its purpose. It shows how a signed approval is used, not who may give one. In production only registered approvers sign.
+- **The sandbox policy, the deployment scripts and the live check records are not in this repository.** The sandbox policy and its deployment are operated outside this repository, so this claim does not verify them. The code-level enforcement above is verified here.
+- **Distinct credentials, not distinct people.** The sandbox maker and checker keys can be held by one person, as in 2.49 and 2.50.
+- **Retention.** The sandbox's record-retention job is operated outside this repository, and this claim does not verify it.
 
-**Update (2026-10-23): rebuilt and checked again.** The 2026-10-02 database and the Vercel project were removed, and the sandbox was rebuilt from `pavancharak/parmana-core` with `deploy/sandbox/setup-sandbox.ps1`. The evidence above is for the first build; the rebuild's is:
+**Evidence.**
 
-- Supabase project `bemukyaqfszmkoztugtv` (ap-northeast-2, not production's `ltjadvsjlpcygborxzet`): 40 migrations applied to an empty database. Vercel project `parmana-sandbox`, imported from `parmana-core`: `GET /ready` `READY` with authentication on. The startup log shows `"distrustedRootsRemoved":4` (3.27).
-- Two settings the first build did not need: `NODE_ENV=staging`, because the server now refuses `PARMANA_SANDBOX=true` with `NODE_ENV=production`; and `POLICY_CHANGE_CHECKERS={"sandbox-receipt":["sandbox-checker"]}`, without which the policy approval was refused with `403 CHECKER_NOT_IN_SCOPE` (G-50, G-123). The setup script now sets both.
-- Receipt endpoint redeployed: `401` to an unsigned body.
-- Through maker checker, proposed by `sandbox-maker` and approved by `sandbox-checker`: the demo approver (change `a267d1f3-b66d-4fbe-9711-467475acaa8b`), policy `sandbox-receipt` 1.0.0 (change `a158db5c-08bd-4fc5-87af-5659807ae075`) and the registration of `sandbox:receipt` (change `84160a13-33cf-4b21-bf93-456f5cdfb822`). The first attempt to approve the policy got no HTTP response and changed nothing (the change stayed `PENDING_APPROVAL`); the second was approved. The cause of the first was not found.
-- The nine checks behaved as on 2026-10-02: with the demo approval, transaction `0f406356-0e17-4b54-adba-8d06aad5c491` `APPROVED` in 14.1 s, receipt `RC-0f406356`, the record verifying offline; the same approval reused, refused; the other seven as listed above. Record: `deploy/sandbox/evidence/check-record.json`, which now holds this check's record (trust record `3ff8186a-81de-4870-9b51-124b69765201`, policy governance anchor `VERIFIED`, approval record `58dc15e6-1f4d-4c98-a894-27cf9f1bf3b3`); the 2026-10-02 record is in the file's git history.
+- `packages/api/src/bootstrap/createSandboxOptions.ts` (the sandbox-mode checks, the connector-variable refusal, the `NODE_ENV=production` refusal)
+- `packages/api/src/routes/sandbox-approvals.ts` (`POST /sandbox/approvals`, the `sandbox:receipt` restriction, the 300-second expiry)
+- `packages/api/src/app.ts` (the route is mounted only in sandbox mode)
+- `packages/api/src/middleware/cors.ts` (`PARMANA_CORS_ORIGINS`)
+- `packages/api/tests/unit/createSandboxOptions.test.ts` (the sandbox-mode checks)
+- `packages/api/tests/integration/sandbox.integration.test.ts` (the approval route behind the key; the CORS behaviour; the route does not exist outside sandbox mode; the approval is accepted once and only for its resource)
+
+Dated operational records for the sandbox are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
 ## 2.52 A Request Whose Signals Do Not Have the Declared Types Is Refused (Scoped, 2026-10-05)
 
