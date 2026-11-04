@@ -1576,38 +1576,42 @@ Evidence
 - `typescript/test/Alignment.test.ts`, `python/tests/test_sdk_alignment.py`
 - `docs/site/sdks/api-coverage.mdx`, `docs/site/sdks/typescript.mdx`, `docs/site/sdks/python.mdx`; `docs/VERIFICATION-GAPS.md` G-62 and G-64
 
-## 2.42 Signed Human Approval Declared by Policy, First Used for Large Refunds (Scoped, 2026-09-27)
+## 2.42 A Signed Human Approval Is Required Where a Policy Declares It
 
-A `paytm:refund` above 10000 executes only with a signed approval from a trusted approver, for that order, covering that amount, used once. A refund whose signals say `managerApproved: true` without one is refused, at any amount.
+**Claim.** A policy can require a signed approval from a trusted approver before an action runs. Such an approval is for one order or resource, covers one amount, and is used once. A request whose declared facts say an approval was given, but with no signed approval behind that statement, is refused at any amount.
 
-- **Policy:** `customer-refund` 1.1.0, bound to `paytm:refund`. Up to 10000: authorized automatically after the eligibility and fraud checks. Above 10000 and up to 100000: only with `managerApproved: true`. Above 100000: refused. Refusals that need a manager have their own rule id, `reject-manager-approval-required`.
-- **Verification, for any action:** a policy declares which signals need a signed approval in `approvalSignals`, with dot paths to the resource (or the Intent's `target`) and, optionally, the value in the Intent (`customer-refund` 1.1.0: `managerApproved`, `parameters.orderId`, `parameters.amount`). `ApprovalSignalVerifier` enforces every declaration, with no per action code. It runs when policy would approve, before the authorization is signed, and again in the Execution Gateway just before release, against the policy the gateway loaded and hash checked. It checks the approver is trusted and not revoked, the Ed25519 signature, the expiry, the action, the resource and the value (read from the Intent, never from the caller's signals), checks every approval before using any, and uses each once, at authorization. `PolicyValidator` rejects a declaration no rule reads, a resource path other than `target` or one into the Intent's parameters, a key that is also bound, or two declarations sharing an approval.
-- **Approvers** sign on their own machine with `scripts/sign-approval.ts`, from a key made by `scripts/generate-approver-key.ts`. Approver keys are Ed25519 whatever the server's own signing algorithm is.
+**How it works.**
 
-Scope, stated plainly:
+- A policy lists the facts that need a signed approval, in `approvalSignals`, with dot paths to the resource (or the Intent's `target`) and, optionally, the value in the Intent. No code is needed per action.
+- `ApprovalSignalVerifier` enforces every declaration. It runs when the policy would approve, before the authorization is signed, and again in the Execution Gateway just before release. At release it checks the policy the gateway loaded and hash-checked.
+- It checks that the approver is trusted and not revoked, the Ed25519 signature, the expiry, the action, the resource, and the value. The value is read from the Intent, never from the caller's declared facts. It checks every approval before it uses any, and it uses each approval once.
+- An approval's `scope.field` must be `value` when the declaration gives a value path, and `resourceId` otherwise. An approval signed with another field name is refused.
+- `PolicyValidator` rejects a declaration that no rule reads, a resource path other than `target` or a path into the Intent's parameters, a declared key that is also bound, and two declarations that share an approval.
+- Approvers sign on their own machine, with `scripts/sign-approval.ts`, using a key made by `scripts/generate-approver-key.ts`. Approver keys are Ed25519, whatever signing algorithm the server uses.
 
-- **One approver is configured.** `TRUSTED_APPROVAL_ISSUERS` lists one approver, `manager-charak1987` (added 2026-09-28, held by the operator, who also holds the maker and checker credentials); an approval from anyone else is refused. It takes effect in production when its change is deployed. The success path is proven in tests with a test approver; an approval signed by `manager-charak1987` being accepted in production has not been checked yet. **Update (2026-09-30):** key `manager-charak1987-key-1` is revoked in code; the manager now signs with `manager-charak1987-key-2`, added through maker checker (`/approval-issuers/changes`) during the credential rotation.
-- **Approved in production, 2026-09-27 18:53:40 UTC** (pending change `008f504d-0efd-4bec-b33a-2991bb84099f`), so refunds in production run under 1.1.0. With no approver configured, every production refund above 10000 is refused. The approval was made with two distinct credentials held by one person, not by two people (2.43).
-- A refused request is not held for a person, and nobody is notified. The agent sends a new request with the approval.
-- **The refund agent** (`parmana-paytm-agent`) forwards a signed approval (`approvalArtifact` in its `/agent/refunds` body) since its PR #6, deployed 2026-09-28; before that it had no way to send one. A signed approval through the agent has not been tested in production yet.
-- `refundEligible` and `fraudCheckPassed` are still caller declared (G-51). **Update (2026-09-28, G-75):** under 1.1.0 they alone authorize a refund up to 10000. `customer-refund` 1.2.0, now named in the binding, needs a signed approval for every refund, so they can only refuse; production moves to it when it is approved (2.44).
-- Holds for refunds routed through Parmana (3.1).
+**Refunds.** The refund policy, `customer-refund`, now requires a signed approval for every refund (1.2.0, see 2.44). Earlier versions used amount tiers. Under the earlier tiers, a refund above 10000 needed a signed approval, and a refund above 100000 was refused.
 
-Verification
+**Scope and limits.**
 
-- paytm-refund.integration.test.ts (removed 2026-11-02 with the Paytm connector, ADR-0018) (15 tests, the real production bootstrap with a test approver): a 75000 refund with a valid approval executes exactly once; no approval, another order, a smaller approved amount, an untrusted key, a changed payload, another capability, and a reused approval are each refused with zero connector calls; above 100000 is refused with an approval; `customer-refund` 1.0.0 is refused by the binding.
-- `packages/approval/tests/unit/ApprovalSignalVerifier.test.ts` (24: a refund with an amount, a merge whose resource is the Intent's target with no amount, a numeric resource, two approvals in one policy, nested paths, single use across both checks, and a request with no policy), `packages/policy/tests/unit/PolicyValidator-approvalSignals.test.ts` (14), `packages/policy/tests/unit/CustomerRefundPolicy110.test.ts` (11), `packages/crypto/tests/unit/approval-artifact-signer.test.ts` (6), `scripts/tests/approver-scripts.test.ts` (14).
-- With `ApprovalSignalVerifier` removed from the app, 7 of the 15 refund integration tests fail; with the gateway not passing the policy at release, the valid approval is refused there (fails closed).
-- Building it found and closed G-67: an approval could never pass the gateway's second check, for HubSpot too.
+- **The approver list is short.** Only the approvers in `TRUSTED_APPROVAL_ISSUERS` can sign, and an approval from anyone else is refused (2.45).
+- **A refused request is not held for a person, and nobody is notified.** The agent sends a new request with the approval. Notification is covered by 2.46.
+- **Caller-declared facts cannot approve.** Facts such as `refundEligible` and `fraudCheckPassed` can refuse a refund but cannot authorize one (G-51, and 2.44).
+- **The agent path is new.** The refund agent forwards a signed approval, in the `approvalArtifact` field of its request. That path has not been run in production.
 
-Evidence
+**Evidence.**
 
-- `policies/customer-refund/1.1.0/policy.json`; `packages/capability-registry/src/CapabilityPolicyBinding.ts`
-- `packages/approval/src/ApprovalSignalVerifier.ts`; `packages/policy/src/types/Policy.ts` (`approvalSignals`), `PolicyValidator.ts`; `packages/api/src/bootstrap/createApprovalVerifier.ts`, `createApprovalSignalVerifier.ts`; `packages/api/src/application.ts`; `packages/execution-gateway/src/ExecutionGateway.ts` (passes the verified policy at release)
-- `packages/crypto/src/ApprovalArtifactCrypto.ts`; `packages/approval/src/ApprovalVerifier.ts` (`consumeNonce`); `packages/policy/src/types/SignalStateVerifier.ts` (`stage`)
-- `scripts/generate-approver-key.ts`, `scripts/sign-approval.ts`; `docs/site/concepts/human-approval.mdx`; `docs/VERIFICATION-GAPS.md` G-65, G-67
+- `packages/approval/src/ApprovalSignalVerifier.ts`
+- `packages/policy/src/types/Policy.ts` (`approvalSignals`) and `packages/policy/src/PolicyValidator.ts`
+- `packages/execution-gateway/src/ExecutionGateway.ts` (passes the verified policy at release)
+- `packages/crypto/src/ApprovalArtifactCrypto.ts`
+- `scripts/generate-approver-key.ts` and `scripts/sign-approval.ts`
+- `docs/site/concepts/human-approval.mdx`
+- `packages/approval/tests/unit/ApprovalSignalVerifier.test.ts`
+- `packages/policy/tests/unit/PolicyValidator-approvalSignals.test.ts`
+- `packages/crypto/tests/unit/approval-artifact-signer.test.ts`
+- `packages/approval/tests/unit/ApprovalVerifier.test.ts`
 
-**Update (2026-10-03, follow up):** an approval's `scope.field` was never compared, so an approval scoped to one fact was accepted for another whenever its bound happened to compare true. `ApprovalSignalVerifier` now requires `scope.field` to be `value` when the declaration gives a `value`, and `resourceId` when it does not, the names the TypeScript and Python SDKs and `scripts/sign-approval.ts` already write. `ApprovalVerifier` takes an optional `scopeField`; the HubSpot verifier requires `amountDeltaAbs`. An approval signed with another field name, such as `amount`, is now refused. Evidence: `packages/approval/tests/unit/ApprovalSignalVerifier.test.ts` (4 new), `packages/approval/tests/unit/ApprovalVerifier.test.ts` (1 new).
+Dated updates for this claim are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
 ## 2.43 A Live Action's Policy Version Is Decided by Policy Governance, Not by a Deploy (Scoped, 2026-09-27)
 
