@@ -132,6 +132,15 @@ export class CapabilityPolicyBinder {
      * currentVersions, every request for one is refused.
      */
     private readonly externalBindings?: ExternalPolicyBindingSource,
+    /**
+     * The canonical table. Defaults to CANONICAL_CAPABILITY_POLICY_BINDINGS;
+     * tests inject their own fixture table, since the production table is
+     * empty in this version.
+     */
+    private readonly canonicalBindings: ReadonlyMap<
+      string,
+      PolicyReference
+    > = CANONICAL_CAPABILITY_POLICY_BINDINGS,
   ) {}
 
   /**
@@ -175,7 +184,7 @@ export class CapabilityPolicyBinder {
   public async policyInEffect(
     action: string,
   ): Promise<PolicyInEffect | undefined> {
-    const canonical = CANONICAL_CAPABILITY_POLICY_BINDINGS.get(action);
+    const canonical = this.canonicalBindings.get(action);
 
     if (canonical === undefined) {
       return this.externalPolicyInEffect(action);

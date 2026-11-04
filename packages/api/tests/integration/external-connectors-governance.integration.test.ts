@@ -242,10 +242,6 @@ describe("External connector changes (HTTP boundary)", () => {
     it("refuses every built in connector namespace", async () => {
       const app = governanceApp();
 
-      expect([...BUILT_IN_CAPABILITY_NAMESPACES]).toEqual(
-        expect.arrayContaining(["paytm", "github"]),
-      );
-
       for (const namespace of BUILT_IN_CAPABILITY_NAMESPACES) {
         const response = await propose(
           app,

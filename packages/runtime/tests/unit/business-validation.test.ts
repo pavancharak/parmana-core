@@ -379,29 +379,6 @@ describe("business validation (RFC-0023)", () => {
     });
   });
 
-  it("does not ask the business system when authority is not established", async () => {
-    const refusals = new RefusalRecords();
-    const orders = eligible(true);
-    // paytm:refund is bound to the customer-refund policy, so deciding it
-    // under this one is not authorized.
-    const proposal = refund();
-    const transaction = await withTestApproval(
-      { ...proposal, intent: { ...proposal.intent, action: "paytm:refund" } },
-      REFUND_POLICY,
-    );
-
-    await expect(
-      runtime(REFUND_POLICY, [orders], refusals).execute(transaction),
-    ).rejects.toBeInstanceOf(RuntimeError);
-
-    expect(orders.calls).toBe(0);
-    expect(refusals.created[0]?.decision.assessment).toMatchObject({
-      authority: { status: AuthorityStatus.NOT_AUTHORIZED },
-      businessValidation: { status: BusinessValidationStatus.NOT_EVALUATED },
-      execution: { status: ExecutionAssessmentStatus.NOT_EXECUTED },
-    });
-  });
-
   it("records NOT_EVALUATED, never VALID, under a policy that declares no sources", async () => {
     const { signalSources: _, ...withoutSources } = REFUND_POLICY;
     const policy: Policy = {

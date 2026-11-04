@@ -63,17 +63,6 @@ describe("Reference Policy Negative Evaluation", () => {
       },
     },
     {
-      name: "github-pr-approval",
-      file: "github-pr-approval/1.0.0/policy.json",
-      signals: {
-        repositoryAuthorized: false,
-        requiredReviewsCompleted: false,
-        statusChecksPassed: false,
-        branchProtected: false,
-        riskScore: 90,
-      },
-    },
-    {
       name: "llm-tool-call",
       file: "llm-tool-call/1.0.0/policy.json",
       signals: {

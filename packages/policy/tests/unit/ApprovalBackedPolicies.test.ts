@@ -75,20 +75,6 @@ interface Case {
 
 const CASES: readonly Case[] = [
   {
-    name: "github-pr-approval",
-    version: "1.1.0",
-    approvalFact: "mergeApproved",
-    resourceId: "target",
-    permissive: {
-      repositoryAuthorized: true,
-      requiredReviewsCompleted: true,
-      statusChecksPassed: true,
-      branchProtected: true,
-      riskScore: 0,
-    },
-    failing: { riskScore: 99 },
-  },
-  {
     name: "llm-tool-call",
     version: "1.1.0",
     approvalFact: "humanApproval",
@@ -112,13 +98,6 @@ const CASES: readonly Case[] = [
       refundAmount: 1,
     },
     failing: { fraudCheckPassed: false },
-  },
-  {
-    name: "github-pr-read",
-    version: "1.1.0",
-    approvalFact: "readApproved",
-    resourceId: "target",
-    permissive: {},
   },
   {
     name: "slack-post-message",
@@ -337,8 +316,6 @@ describe.each([
   ["customer-refund", "1.1.0"],
   ["database-change", "3.0.0"],
   ["expense-reimbursement", "1.0.0"],
-  ["github-pr-approval", "1.0.0"],
-  ["github-pr-read", "1.0.0"],
   ["llm-tool-call", "1.0.0"],
   ["production-deployment", "1.0.0"],
   ["rag-document-access", "1.0.0"],

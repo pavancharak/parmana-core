@@ -632,7 +632,6 @@ Scope, stated plainly:
 
 Verification
 
-- `packages/api/tests/integration/policy-in-effect.integration.test.ts`: the refund answer equals the facts, schema, bound and approval declarations of `customer-refund`; no rule condition in `signals`; a read (`github:pr-fetch`) names `readApproved` for the target; `503` with no `signals` when the policy cannot be read.
 - `packages/policy/tests/unit/policySignalRequirements.test.ts`: facts collected from nested `all` and `any`, sorted, once; empty objects when a policy declares none.
 - `typescript/test/Alignment.test.ts`, `python/tests/test_sdk_alignment.py`: the SDK methods call the endpoint and return the answer; Python keeps signal names unconverted.
 
@@ -1468,7 +1467,7 @@ Scope, stated plainly:
 
 - **Merged and deployed** 2026-09-27 (PR #47 into #46, then #46 into `main`, merge `4eebd5f`). Production's `customer-refund` versions in effect were not checked after the deploy.
 - Binding an action to a different policy name, adding a capability, and adding an approver still need a deploy.
-- Agents must send the version in effect. After an approval, requests naming the previous version are refused until agents update. **Added 2026-09-28:** `GET /policies/in-effect?capability=<action>` returns the policy to declare right now, from the same `CapabilityPolicyBinder.policyInEffect` the check uses, so an agent that asks before each request needs no update when a version is approved. It answers a caller whose key may invoke the capability, or a human caller (`packages/api/src/routes/policy-in-effect.ts`; `packages/api/tests/integration/policy-in-effect.integration.test.ts`). The refund agent (`parmana-paytm-agent`) declared 1.0.0 in its code, so every refund it sent to production was refused from the approval of 1.1.0 until its PR #6, deployed 2026-09-28, which makes it ask this endpoint before every refund. Verified in production the same day: a refund through the agent was evaluated under 1.1.0's rules.
+- Agents must send the version in effect. After an approval, requests naming the previous version are refused until agents update. **Added 2026-09-28:** `GET /policies/in-effect?capability=<action>` returns the policy to declare right now, from the same `CapabilityPolicyBinder.policyInEffect` the check uses, so an agent that asks before each request needs no update when a version is approved. It answers a caller whose key may invoke the capability, or a human caller (`packages/api/src/routes/policy-in-effect.ts`).
 - The version is read from the latest approval record without verifying it; the same request then verifies that record's signature and content hash (2.35, 2.36), so a record changed outside the API refuses the request.
 
 Verification

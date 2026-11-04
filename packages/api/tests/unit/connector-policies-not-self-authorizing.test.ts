@@ -103,10 +103,7 @@ describe("connector policies cannot be satisfied by caller declared facts alone 
       (capability) => !READ_CAPABILITIES.has(capability),
     );
 
-    expect(writes.sort()).toEqual([
-      "github:pr-merge",
-      "paytm:refund",
-    ]);
+    expect(writes.sort()).toEqual([]);
   });
 
   for (const [capability, reference] of CANONICAL_CAPABILITY_POLICY_BINDINGS) {
@@ -120,20 +117,4 @@ describe("connector policies cannot be satisfied by caller declared facts alone 
       expect(selfAuthorizingRules(policy, capability)).toEqual([]);
     });
   }
-
-  it("has teeth: it flags the versions before the 2026-09-28 fixes", () => {
-    expect(
-      selfAuthorizingRules(
-        loadPolicy("customer-refund", "1.1.0"),
-        "paytm:refund",
-      ),
-    ).toEqual(["approve-refund-automatic"]);
-
-    expect(
-      selfAuthorizingRules(
-        loadPolicy("github-pr-approval", "1.0.0"),
-        "github:pr-merge",
-      ),
-    ).toEqual(["approve-pull-request"]);
-  });
 });

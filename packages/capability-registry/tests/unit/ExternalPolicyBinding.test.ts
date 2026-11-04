@@ -121,12 +121,18 @@ describe("CapabilityPolicyBinder with external connector registrations", () => {
   it("keeps the canonical binding for a built in capability, whatever a registration says", async () => {
     const binder = new CapabilityPolicyBinder(
       governance,
-      registrations({ "paytm:refund": "erp-invoice" }),
+      registrations({ "fixture:write": "erp-invoice" }),
+      new Map([
+        [
+          "fixture:write",
+          { name: "fixture-write", version: "1.2.0", schemaVersion: "1.0.0" },
+        ],
+      ]),
     );
 
-    expect(await binder.policyInEffect("paytm:refund")).toMatchObject({
+    expect(await binder.policyInEffect("fixture:write")).toMatchObject({
       kind: "unavailable",
-      bound: { name: "customer-refund" },
+      bound: { name: "fixture-write" },
     });
   });
 

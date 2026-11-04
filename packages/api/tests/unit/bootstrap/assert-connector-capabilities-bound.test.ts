@@ -23,13 +23,8 @@ describe("assertConnectorCapabilitiesBound", () => {
     vi.restoreAllMocks();
   });
 
-  it("passes silently for capabilities with a canonical binding", () => {
-    expect(() =>
-      assertConnectorCapabilitiesBound([
-        registration("paytm", ["paytm:refund"]),
-        registration("github", ["github:pr-fetch", "github:pr-merge"]),
-      ]),
-    ).not.toThrow();
+  it("passes silently when no connector registers a capability", () => {
+    expect(() => assertConnectorCapabilitiesBound([])).not.toThrow();
   });
 
   it("passes, with a warning, for an allowlisted-but-unbound capability", () => {
