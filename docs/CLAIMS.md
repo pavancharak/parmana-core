@@ -1742,7 +1742,7 @@ Version 1.0.0 approved amount changes above a threshold when the caller declared
 
 - Covers `dealstage` and `amount` on Deals only. Contacts, companies, deleting or archiving deals, and webhook-driven triggers are out of scope.
 - One capability, `hubspot:deal-update`, authorizes both properties together. An operator cannot grant a stage change without also granting an amount change. Splitting them into two capabilities is not done.
-- The approval-backed policy test (`packages/policy/tests/unit/ApprovalBackedPolicies.test.ts`) loads 1.0.0, not 1.1.0. The claim about 1.1.0's approve rules therefore rests on the policy file and the rule design, and is not yet covered by that test.
+- The approval-backed policy test (`packages/policy/tests/unit/ApprovalBackedPolicies.test.ts`) covers 1.1.0's approval requirement and its failing cases.
 - No stage order is defined in this repository. Any per-pipeline ordering is the external verifier's responsibility.
 
 **Evidence.**
@@ -1750,7 +1750,7 @@ Version 1.0.0 approved amount changes above a threshold when the caller declared
 - `policies/hubspot-deal-update/1.1.0/policy.json` (the bound version; rules and `approvalSignals`)
 - `policies/hubspot-deal-update/1.0.0/policy.json` (superseded; kept in the repository)
 - `packages/capability-registry/src/CapabilityPolicyBinding.ts` (`hubspot:deal-update` bound to `hubspot-deal-update` 1.1.0)
-- `packages/policy/tests/unit/ApprovalBackedPolicies.test.ts` (approval-backed policies, including 1.0.0)
+- `packages/policy/tests/unit/ApprovalBackedPolicies.test.ts` (approval-backed policies, including 1.1.0)
 - `packages/api/tests/unit/connector-policies-not-self-authorizing.test.ts` (a `hubspot:deal-update` request cannot authorize itself through declared facts)
 - `packages/api/src/bootstrap/createApprovalIssuerRegistry.ts` (trusted approvers: code list plus `approval_issuers`, fail closed)
 
