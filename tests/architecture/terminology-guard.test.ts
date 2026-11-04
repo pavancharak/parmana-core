@@ -116,7 +116,10 @@ describe("CI terminology guard (Phase 2C regression coverage)", () => {
   });
 
   it("historical self-narration files are excluded and legitimately contain the phrase", () => {
-    const historical = ["docs/internal/VERIFICATION-GAPS.md", "docs/site/changelog.mdx"];
+    const historical = [
+      "docs/internal/VERIFICATION-GAPS.md",
+      "docs/site/changelog.mdx",
+    ];
 
     for (const doc of historical) {
       const basename = doc.split("/").pop()!;

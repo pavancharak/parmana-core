@@ -70,7 +70,9 @@ export function spliceTable(remaining: string, table: string): string {
   const start = remaining.indexOf(START);
   const end = remaining.indexOf(END);
   if (start < 0 || end < 0 || end < start) {
-    throw new Error(`docs/internal/REMAINING-WORK.md must contain ${START} and ${END}.`);
+    throw new Error(
+      `docs/internal/REMAINING-WORK.md must contain ${START} and ${END}.`,
+    );
   }
   return remaining.slice(0, start) + table + remaining.slice(end + END.length);
 }
