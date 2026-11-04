@@ -759,8 +759,8 @@ function checkProduction(
       name: "NODE_ENV",
       level: "warn",
       message:
-        "NODE_ENV is not production. Production refusals apply only when NODE_ENV=production",
-      fix: "Set NODE_ENV=production for the production deployment",
+        "NODE_ENV is not production in this environment. The server applies its production refusals only when NODE_ENV=production, so the production deployment must set it",
+      fix: "Set NODE_ENV=production in the production environment. Do not set it in your shell for installs or builds",
     });
   } else {
     add({ name: "NODE_ENV", level: "pass", message: "NODE_ENV is production" });

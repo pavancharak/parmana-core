@@ -16,6 +16,16 @@ The section for each stage is below: "What each check does" (stage 1), "Producti
 
 ## Running it
 
+**The production check, in one command:**
+
+```bash
+npm run doctor:production
+```
+
+It runs the production rules and the online checks. It doesn't depend on `NODE_ENV` in your shell.
+
+**Do not set `NODE_ENV=production` in your shell.** npm then skips development dependencies, so `npm ci` and `npm run build` fail with "typescript not found". Set `NODE_ENV` only inside the command that needs it, or use `npm run doctor:production`.
+
 From the repository root:
 
 ```bash
@@ -70,7 +80,7 @@ These apply only with `--production`. Each one mirrors a refusal the server make
 
 | Check                                     | Fails when                                                                                               | Warns when                                                                                                                |
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `NODE_ENV`                                | —                                                                                                        | It is not `production`. The server's production refusals depend on it                                                     |
+| `NODE_ENV`                                | —                                                                                                        | It is not `production` in this environment. Set it in the production environment, not your shell                          |
 | `production: PARMANA_AUTH_DISABLED`       | It is `true`. The server refuses to run with authentication disabled in production                       | —                                                                                                                         |
 | `PARMANA_SANDBOX`                         | It is `true`. The sandbox is refused in production                                                       | —                                                                                                                         |
 | `KILL_SWITCH_ENABLED`                     | It is set to a value other than `true` or `false`                                                        | It is off. Production sets it to `true` (ADR-0017)                                                                        |
