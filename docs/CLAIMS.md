@@ -527,17 +527,7 @@ Dated updates, including the removal of the connector tests that once also cover
 
 **Why it matters.** Policies are loaded by the name and version the request declares. Without the binding, a caller could pair a capability that changes real state with an unrelated policy that does not protect it, and run that capability's parameters under the weaker rules. The binding closes that route.
 
-**Scope.** The table (`CANONICAL_CAPABILITY_POLICY_BINDINGS`) currently binds five capabilities:
-
-| Capability            | Policy name           |
-| --------------------- | --------------------- |
-| `hubspot:deal-fetch`  | `hubspot-deal-read`   |
-| `hubspot:deal-update` | `hubspot-deal-update` |
-| `github:pr-fetch`     | `github-pr-read`      |
-| `github:pr-merge`     | `github-pr-approval`  |
-| `paytm:refund`        | `customer-refund`     |
-
-Reads have their own policy, so that each approval covers only what it reads. The table pins the policy name. Where policy governance is enforced, the version is the one most recently approved for that name (see 2.43).
+**Scope.** The table (`CANONICAL_CAPABILITY_POLICY_BINDINGS`) binds no capability in this version, because every built in connector has moved out of core (ADR-0018). The mechanism applies to any capability added to the table later. Reads have their own policy, so that each approval covers only what it reads. The table pins the policy name. Where policy governance is enforced, the version is the one most recently approved for that name (see 2.43).
 
 **Where it runs.** `CapabilityPolicyBinder` is in `packages/capability-registry`. `RuntimeBuilder` constructs it on every build and passes it to the runtime engine, which runs the check before signal binding and policy evaluation.
 
@@ -601,21 +591,11 @@ Dated updates are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 - **At policy load.** `PolicyValidator.validateEveryApprovalNeedsSignedApproval` refuses any policy with an approve rule that does not require a fact declared in `approvalSignals` with `is_true`. The fact must be the rule's whole condition, or sit directly inside its top-level `all`. An `any`, a nested `all`, or `eq true` does not count. `PolicyRouter` validates every policy it loads, so such a policy refuses every request. The policy-change endpoint validates every proposal, so such a policy cannot pass maker checker either.
 - **At decision.** `ApprovalSignalVerifier` (2.42) counts an approval signal as true only with a valid signed approval. The approval must be from a trusted, unrevoked approver, with a valid Ed25519 signature, and must match the action, the resource, the amount where declared, the expiry, and single use. The Execution Gateway checks it again at release. `RuntimeEngine` refuses an approve decision when no approval verifier is configured (`approval-verifier-not-configured`), so a runtime built without one cannot trust a caller's `true`.
 
-**Policies bound to capabilities.** The binding table (`CANONICAL_CAPABILITY_POLICY_BINDINGS`) currently names:
-
-| Capability            | Policy                | Version |
-| --------------------- | --------------------- | ------- |
-| `hubspot:deal-fetch`  | `hubspot-deal-read`   | 1.0.0   |
-| `hubspot:deal-update` | `hubspot-deal-update` | 1.1.0   |
-| `github:pr-fetch`     | `github-pr-read`      | 1.1.0   |
-| `github:pr-merge`     | `github-pr-approval`  | 1.1.0   |
-| `paytm:refund`        | `customer-refund`     | 1.2.0   |
-
-The reference policies with no connector in core also require a signed approval. For example, `vendor-payment` 2.1.0 and `expense-reimbursement` 1.1.0 need `humanApproved` for the Intent's target, and the amount is covered by the approval. The Slack post policy `slack-post-message` 1.1.0 exists in `policies/`, but its capability is no longer bound in core, because the connector has moved out (ADR-0018).
+**Policies bound to capabilities.** The binding table (`CANONICAL_CAPABILITY_POLICY_BINDINGS`) is empty in this version. The reference policies also require a signed approval. For example, `vendor-payment` 2.1.0 and `expense-reimbursement` 1.1.0 need `humanApproved` for the Intent's target, and the amount is covered by the approval.
 
 **Scope and limits.**
 
-- **An approval covers the action and the resource, not every parameter.** A HubSpot approval does not fix the new stage or amount. Payment, expense and refund approvals do cover the amount.
+- **An approval covers the action and the resource, not every parameter.** Payment, expense and refund approvals do cover the amount.
 - **Superseded versions remain in `policies/` as history.** Each one fails to load.
 - **There is no automatic path.** An action cannot be authorized by server checks alone. This is the rule, not a missing feature (G-80).
 - **Who approves is limited to the trusted approver list** (2.42, 2.45). The list is short, so in practice one person can approve every agent action at present.
