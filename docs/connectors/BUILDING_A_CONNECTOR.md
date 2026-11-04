@@ -3,7 +3,7 @@
 The one guide for adding a connector, and for the other extension points around it. It replaces
 the old connector build guide, the extending guide, the code review checklist, the connector FAQ,
 the integration overview and the Slack connector page (all in git history). Every path below was
-checked against the source on 2026-09-28. Read
+checked against the source on 2026-09-28. Built in connectors were removed from this repository after that date (ADR-0018); the paths below that name them are historical. Read
 [Connector Credential Isolation](../architecture/CONNECTOR_ISOLATION.md) first; this guide assumes
 that architecture.
 
@@ -14,18 +14,18 @@ connector.
 
 **Two things are called "connector".** `@parmana/connector-sdk` also ships generic reference mocks
 (`SapConnector`, `OracleConnector` and others) that talk to no real system. The connectors the
-default server registers in production (HubSpot, GitHub, Paytm, Slack) follow the pattern in this
+default server registered in production (the built in connectors, since removed) followed the pattern in this
 guide: a passive `packages/connector-<name>/` package plus an executable adapter inside
 `packages/execution-gateway/src/connector-execution/`.
 
 ## 1. The four pieces of an integration, and the order to build them
 
-| Piece                                  | Answers                                            | Needed?                                                   |
-| -------------------------------------- | -------------------------------------------------- | --------------------------------------------------------- |
-| A policy bound to the capability       | Should this request be allowed?                    | Always                                                    |
-| A caller (agent) with a scoped API key | Who may ask?                                       | Always                                                    |
-| A connector for the capability         | Who performs the real action once approved?        | Always, for the action to happen                          |
-| A `SignalStateVerifier`                | Are the caller's claims about the real world true? | Only when a false signal is a real risk (HubSpot has one) |
+| Piece                                  | Answers                                            | Needed?                                 |
+| -------------------------------------- | -------------------------------------------------- | --------------------------------------- |
+| A policy bound to the capability       | Should this request be allowed?                    | Always                                  |
+| A caller (agent) with a scoped API key | Who may ask?                                       | Always                                  |
+| A connector for the capability         | Who performs the real action once approved?        | Always, for the action to happen        |
+| A `SignalStateVerifier`                | Are the caller's claims about the real world true? | Only when a false signal is a real risk |
 
 The pieces are decoupled on purpose, which is why "the agent got `APPROVED`" and "the action
 happened" are separate, separately checkable facts. Build them in this order:
@@ -51,25 +51,25 @@ What you see when a piece is missing:
 
 ## 2. The passive package: `packages/connector-<name>/`
 
-Start narrow: one action on one object. HubSpot began with one deal update, not the whole API.
+Start narrow: one action on one object, not the whole API.
 
-Every connector gets its own workspace package, like `@parmana/connector-hubspot`. Do not spread a
+Every connector gets its own workspace package, like `@parmana/connector-<vendor>`. Do not spread a
 connector across `packages/connector-sdk` and loose bootstrap files; a package boundary keeps a
-removal or a breaking change inside one folder. Copy `packages/connector-hubspot/package.json` and
+removal or a breaking change inside one folder. Copy `packages/connector-sdk/package.json` and
 `tsconfig.json` (name `@parmana/connector-<name>`, `private: true`, `type: module`, `main` and
 `types` pointing at `./dist/`). Dependencies: `@parmana/connector-sdk`, `@parmana/crypto`,
 `@parmana/shared`, `@parmana/policy`, plus `@parmana/approval`, `@parmana/envelope-verifier` or
 `@parmana/execution-system` only if the state verifier needs them.
 
-One file per responsibility in `src/`, using HubSpot's files as the reference:
+One file per responsibility in `src/`, using the SDK's `MockConnector` files as the reference:
 
 - [ ] **`<Name>Capabilities.ts`**: capability constants named `"<name>:<verb>"` (for example
-      `HUBSPOT_DEAL_UPDATE_CAPABILITY = "hubspot:deal-update"`, checked by
+      `RECORD_UPDATE_CAPABILITY = "erp:record-update"`, checked by
       `isNamespacedCapability`), the connector `Options` interface (`connectorId`, `capabilities`,
       optional `baseUrl` test seam) and parameter types. Metadata only, no execution.
 - [ ] **`<Name>Types.ts`**: the vendor's wire types (only the fields you read or write), plus:
   - [ ] a **deny by default allowlist** of every field the action may write (for example
-        `HUBSPOT_ALLOWED_DEAL_UPDATE_PROPERTIES`), the single source of truth for the guard and the
+        the allowed-properties list), the single source of truth for the guard and the
         request body;
   - [ ] a **test mode placeholder credential** constant, shaped like a real one with an obviously
         fake segment, so the adapter can refuse to send it to the real API;
@@ -126,10 +126,9 @@ package that implements `Connector` fails Invariant 2 of
      answer, a network error or a timeout, and put only the redacted fingerprint in the response
      metadata.
 
-  Check the vendor's real error shape: Slack's `chat.postMessage` answers HTTP 200 even on
-  failure, with `ok: false` in the body, so `GatewaySlackAdapter` parses the body and fails closed
-  on `ok: false`. Outside `NODE_ENV=test`, require HTTPS at construction, as
-  `GatewayPaytmAdapter` and `GatewaySlackAdapter` do.
+  Check the vendor's real error shape: some vendors answer HTTP 200 even on failure, with an
+  error flag in the body, so the adapter must parse the body and fail closed on it. Outside
+  `NODE_ENV=test`, require HTTPS at construction.
 
 - [ ] **`createGateway<Name>Connector.ts`**: a thin factory returning the `Connector` interface,
       never the class.
@@ -143,12 +142,12 @@ package that implements `Connector` fails Invariant 2 of
 
 - [ ] **`create<Name>CredentialProvider.ts`** returns `CredentialProvider | undefined`. Under
       `NODE_ENV=test`, read the test variable by its exact `.env.example` name (for example
-      `TEST_HUBSPOT_PRIVATE_APP_TOKEN`), falling back to the placeholder; never add a second alias
+      `TEST_<VENDOR>_TOKEN`), falling back to the placeholder; never add a second alias
       variable. In production, read the real variable; if it is unset, return `undefined` (no
       crash, no mock fallback).
 - [ ] **`create<Name>Connector.ts`** delegates to `createGateway<Name>Connector`, with
       `<NAME>_BASE_URL` as a test seam that is never set in production.
-- [ ] **`createConnectorRegistry.ts`**: mirror the HubSpot block. If the credential provider is
+- [ ] **`createConnectorRegistry.ts`**: mirror the block of an existing connector (built in connectors were removed; see ADR-0018). If the credential provider is
       `undefined`, `console.warn({ event: "<name>_connector_unavailable", reason: "..." })` and skip;
       otherwise push
       `{ connector, metadata, connectorIdentity: { connectorId: "<name>", publicIdentity: "spiffe://parmana/connectors/<name>", authenticationMetadata: {} }, credentialProvider, policy: new DefaultConnectorPolicy(authenticator, sessions), gatewayAuthentication, crypto, audit }`.
@@ -161,12 +160,12 @@ package that implements `Connector` fails Invariant 2 of
       with the key source `KEY_PROVIDER` selects (`SignerBootstrap.create()`, as
       `createExecutionGateway.ts` does), not `new FileKeyProvider()`: a verifier that always signs
       with the local file key disagrees with a gateway that verifies against KMS (G-72 in
-      `docs/VERIFICATION-GAPS.md`). Copy `createHubSpotSignalStateVerifier.ts`: it passes
+      `docs/VERIFICATION-GAPS.md`). Copy a capability specific verifier: it passes
       `resolveSigner: lazySignerBootstrap()`, which resolves that `Signer` on first use.
 - [ ] **`.env.example`**: a headed block for every new variable (production credential, test
       credential and its format, `ALLOW_LIVE_<NAME>=1`, `TEST_<NAME>_*` fixtures, the base URL
       seam). For a long lived static token, add a rotation date variable and a startup reminder
-      like `warnIfHubSpotTokenStale.ts` (`HUBSPOT_PRIVATE_APP_TOKEN_ROTATED_AT`).
+      like a stale-token warning (`<VENDOR>_TOKEN_ROTATED_AT`).
 
 ## 5. Policy, binding and independent checks
 
@@ -175,13 +174,12 @@ package that implements `Connector` fails Invariant 2 of
       the first version; every signal the rules read bound, declared in `approvalSignals`, or
       explained in `unboundSignalReasons` (the validator refuses the policy otherwise); and a last
       rule that rejects unconditionally (`"condition": { "always": true }`). Reference:
-      `policies/hubspot-deal-update/1.1.0/policy.json`.
+      `policies/customer-refund/1.2.0/policy.json`.
 - [ ] **Every approve rule requires a signed human approval, reads included.** Declare one signal
       in `approvalSignals` (`resourceId`: `"target"` or a `parameters.*` path, and `value` for an
       amount) and require it with `is_true` as the rule's whole condition or directly inside its
       top level `all`. `PolicyValidator` refuses any other approve rule on load and on proposal
-      (`docs/CLAIMS.md` 2.47, G-80). Give a read its own policy, like `github-pr-read` and
-      `hubspot-deal-read`, so its approval names only what is read.
+      (`docs/CLAIMS.md` 2.47, G-80). Give a read its own policy, so its approval names only what is read.
 - [ ] **Bind the capability** in `CANONICAL_CAPABILITY_POLICY_BINDINGS`
       (`packages/capability-registry/src/CapabilityPolicyBinding.ts`). The binding fixes the policy
       **name**; where policy governance is enforced, the version in effect is the most recently
@@ -213,14 +211,14 @@ package that implements `Connector` fails Invariant 2 of
    - in `packages/execution-gateway/tests/unit/`: the adapter itself (success, each guard before
      any network call, non 2xx and timeout failing closed, the credential never in an error or
      metadata, the placeholder guard). Reference:
-     `packages/execution-gateway/tests/unit/hubspot-connector.test.ts`.
+     a connector unit test file of your own.
 2. **A denial makes zero calls**, proven twice: at the adapter layer by checking the mock
    server's state is unchanged, and at the HTTP boundary in
    `packages/api/tests/integration/<name>-<action>.integration.test.ts` (status `403`, code
    `POLICY_DENIED`, and a `fetch` spy showing no call reached the mock). Reference:
-   `packages/api/tests/integration/hubspot-deal-update.integration.test.ts`.
+   an integration test through `POST /execute`.
 3. **A gated live suite last**: `packages/api/tests/integration/<name>-live.integration.test.ts`
-   with a helper like `packages/api/tests/helpers/hubspot-live-availability.ts`, skipped unless
+   with a helper like the live-availability helpers, skipped unless
    `ALLOW_LIVE_<NAME>=1` and a format checked test credential are set. Prefer a reversible live
    action (read, nudge, verify, revert) so the suite can be rerun.
 
@@ -229,7 +227,7 @@ Do not re-test credential isolation: `SessionCredentialSecureConnector`'s own su
 
 ## 7. Migrations, only when needed
 
-Most connectors need none; HubSpot has none. If you need durable state:
+Most connectors need none. If you need durable state:
 
 - `supabase/migrations/<YYYYMMDDHHMMSS>_<description>.sql`, a real UTC timestamp.
 - Idempotent: `CREATE TABLE IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`; to widen a `CHECK`, drop it
@@ -238,19 +236,12 @@ Most connectors need none; HubSpot has none. If you need durable state:
 - Run `npm run generate:migration-bundle` in the same commit: `scripts/apply-all-migrations.sql`
   is generated, and a test checks it is current.
 
-No connector has webhooks today. The Razorpay webhook handling that did was removed on 2026-08-12
+No connector in this repository has webhooks today. The webhook handling that once did was removed on 2026-08-12
 with the rest of that connector and is in git history.
 
-## 8. The out of process pattern (Paytm)
+## 8. The out of process pattern
 
-When a vendor credential must never be reachable from Parmana's own process, the adapter forwards
-to a separate service that holds the credential, as `GatewayPaytmAdapter` does for
-`parmana-paytm-agent`. A shared secret alone is not enough on that wire: it proves the caller is
-the gateway, not which parameters were approved, and the remote service is a public endpoint.
-Sign a canonical string of the exact parameters with the gateway's key and have the remote
-service verify it against `GET /keys/:keyId` before acting. See
-PaytmTypes.ts (removed 2026-11-02 with the Paytm connector, ADR-0018) (`canonicalPaytmAuthorizationString`,
-`PAYTM_AUTHORIZATION_SIGNATURE_TTL_MS`).
+When a vendor credential must never be reachable from Parmana's own process, the adapter forwards to a separate service that holds the credential. A shared secret alone is not enough on that wire: it proves the caller is the gateway, not which parameters were approved, and the remote service is a public endpoint. Sign a canonical string of the exact parameters with the gateway's key and have the remote service verify it against `GET /keys/:keyId` before acting. The built in Paytm adapter that did this was removed with its connector (ADR-0018).
 
 ## 9. Review checklist
 
@@ -296,7 +287,7 @@ Never change these directly; each is protected by a test in
 
 | Component                                                    | Rule                                                                                           |
 | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| `RuntimeEngine` and `ExecutionTrustApplication` imports      | Never import `execution-gateway`, `connector-sdk` or `connector-hubspot` (Invariant 4)         |
+| `RuntimeEngine` and `ExecutionTrustApplication` imports      | Never import `execution-gateway` or `connector-sdk` (Invariant 4)                              |
 | `ExecutionGateway.execute()` verification order              | Side effect free checks first, the nonce consumed last and only if all pass                    |
 | `packages/api/src/routes/` and `packages/api/src/bootstrap/` | Routes call the application only; bootstrap composes and never calls `.execute(` (Invariant 5) |
 | `packages/execution-gateway/src/index.ts`                    | Exports factories and interfaces only, never adapter or registry classes (Invariant 7)         |
@@ -314,21 +305,7 @@ suite was not run. This guide itself is never a claim.
 
 ## Reference implementations
 
-- **HubSpot** (in process, has a state verifier): `packages/connector-hubspot/src/`,
-  `GatewayHubSpotAdapter.ts`, `createHubSpotConnector.ts`, `createHubSpotCredentialProvider.ts`,
-  `createHubSpotSignalStateVerifier.ts`.
-- **GitHub** (in process, per execution installation token): `packages/connector-github/src/`,
-  `GatewayGitHubAdapter.ts`, `createGitHubConnector.ts`, `createGitHubCredentialProvider.ts`.
-- **Slack** (in process, a from scratch worked example, not a production capability):
-  `packages/connector-slack/src/`, `GatewaySlackAdapter.ts`, `createSlackConnector.ts`,
-  `createSlackCredentialProvider.ts`, policy `slack-post-message@1.1.0` (bound signal
-  `channelId == intent.target`, a signed approval for the channel in `postApproved`, plus
-  `contentApproved` and `channelAuthorized`),
-  variables `SLACK_BOT_TOKEN`, `SLACK_BASE_URL` (test seam) and `TEST_SLACK_BOT_TOKEN`. It sends
-  only `channel` and `text`, one message per approved transaction, and has no live suite. Since
-  G-76 the server checks the channel itself: `SlackChannelSignalVerifier`
-  (`createSlackChannelSignalVerifier.ts`) refuses a post unless `parameters.channel` equals the
-  target and is in `SLACK_ALLOWED_CHANNEL_IDS`, and the adapter refuses a channel that is not the
-  target. This is the pattern for a fact the server can check from its own configuration.
-  Tutorials 111 (the caller side) and 112 (the connector end to end).
-- **Paytm** (out of process): `packages/connector-paytm/src/`, GatewayPaytmAdapter.ts (removed 2026-11-02 with the Paytm connector, ADR-0018),.
+No built in connector is in this repository (ADR-0018). The HubSpot, GitHub, Paytm and Slack connectors and their examples were removed with their code, so their file names are not listed here.
+
+- **In process, reference shape:** `MockConnector` in `packages/connector-sdk/src/`. It shows the `Connector` contract and runs hermetically in tests.
+- **Connected by approval, no code change:** an external connector, described in [Connect any external system](/guides/connect-any-external-system) and ADR-0013.
