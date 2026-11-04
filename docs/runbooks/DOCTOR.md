@@ -2,14 +2,20 @@
 
 `npm run doctor` checks the configuration the server would start with, and prints every problem at once, with a fix for each one. It never prints a setting's value.
 
-Stage 1 covers the **local deployment**: memory storage, local key files, and a configuration with no production providers. Production settings (AWS KMS keys, Postgres or Supabase storage) and online checks against the database or the network are not yet covered. They are reported as "not yet checked" where they apply, so a clean run is not a claim that production is ready.
+The doctor has two modes:
+
+- **Local (default):** checks the settings for a local deployment. It makes no network calls.
+- **Production (`--production`):** adds the production rules. These mirror refusals the server already makes when `NODE_ENV=production`, and check the production providers: AWS KMS keys, Postgres or Supabase storage, and the kill switch.
+
+Online checks against the database, storage or the key provider (`--online`) are not yet available. A clean run does not prove that the database or KMS is reachable, so confirm those by starting the server against them.
 
 ## Running it
 
 From the repository root:
 
 ```bash
-npm run doctor
+npm run doctor                    # local rules
+npm run doctor -- --production    # local rules and production rules
 ```
 
 The script reads `.env` from the directory you run it in, then the environment. It is the same file the server reads when started from the repository root. The server itself searches upward for `.env`, so run doctor from the root, not from a subfolder. Set `PARMANA_SKIP_DOTENV=1` to skip the file, as the tests do.
@@ -34,9 +40,9 @@ The last line counts failures and warnings.
 | Check                                                                                        | Fails when                                                               | Warns when                                                                                                                                           |
 | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `DATABASE_PROVIDER`                                                                          | It is set. The server no longer reads it                                 | —                                                                                                                                                    |
-| `PARMANA_STORAGE`                                                                            | The value is not memory, postgres or supabase                            | It is memory (state is lost on restart), or postgres or supabase (not yet checked)                                                                   |
+| `PARMANA_STORAGE`                                                                            | The value is not memory, postgres or supabase                            | It is memory (state is lost on restart). With `--production`, memory fails instead. For postgres or supabase, `DATABASE_URL` is checked too          |
 | `CRYPTO_MODE`, `HASH_PROVIDER`, `PRIMARY_SIGNATURE_PROVIDER`, `SECONDARY_SIGNATURE_PROVIDER` | The value is not one the build implements                                | —                                                                                                                                                    |
-| `KEY_PROVIDER`                                                                               | The value is not implemented (only `local` and `aws-kms` are)            | `aws-kms` (not yet checked)                                                                                                                          |
+| `KEY_PROVIDER`                                                                               | The value is not implemented (only `local` and `aws-kms` are)            | `aws-kms` without `--production` (run with `--production` to check it)                                                                               |
 | `HYBRID_SCHEMA_VERSION`                                                                      | Not 2 or 3, or 3 without `HYBRID_SCHEMA_V3_ACKNOWLEDGED=true`            | —                                                                                                                                                    |
 | `HYBRID_REQUIRED_FROM`                                                                       | Set, but not an ISO-8601 UTC timestamp ending in `Z`                     | —                                                                                                                                                    |
 | `HYBRID_SIGNATURE_REQUIRED`                                                                  | —                                                                        | It is `true` but `CRYPTO_MODE` is not `hybrid`, so it has no effect                                                                                  |
@@ -52,6 +58,28 @@ The last line counts failures and warnings.
 | Unknown `PARMANA_` name                                                                      | —                                                                        | The name is not read by any part of the repository. The closest real name is suggested                                                               |
 
 The server's own parsers produce these results, so a check that passes here passes at startup. The doctor does not reuse their error text, because some of it echoes the value it rejected.
+
+## Production rules (`--production`)
+
+These apply only with `--production`. Each one mirrors a refusal the server makes, or a setting production needs.
+
+| Check                                     | Fails when                                                                                               | Warns when                                                                                                                |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`                                | —                                                                                                        | It is not `production`. The server's production refusals depend on it                                                     |
+| `production: PARMANA_AUTH_DISABLED`       | It is `true`. The server refuses to run with authentication disabled in production                       | —                                                                                                                         |
+| `PARMANA_SANDBOX`                         | It is `true`. The sandbox is refused in production                                                       | —                                                                                                                         |
+| `KILL_SWITCH_ENABLED`                     | It is set to a value other than `true` or `false`                                                        | It is off. Production sets it to `true` (ADR-0017)                                                                        |
+| `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` | The kill switch is on, and this is not stated as `true` or `false`                                       | —                                                                                                                         |
+| `AWS_REGION`                              | `KEY_PROVIDER=aws-kms` and it is not set                                                                 | —                                                                                                                         |
+| `KEY_PROVIDER`                            | `aws-kms` with `CRYPTO_MODE=hybrid`. The server refuses that combination in any mode                     | —                                                                                                                         |
+| `DATABASE_URL`                            | Postgres or Supabase storage, and it is missing, or does not start with `postgres://` or `postgresql://` | It has no `sslmode`. Confirm the connection is encrypted                                                                  |
+| `PARMANA_SECRETS_PROVIDER`                | `aws-secrets-manager` without `AWS_REGION`, or an unsupported value                                      | —                                                                                                                         |
+| `production: PARMANA_KEY_MATERIAL_JSON`   | —                                                                                                        | It is set. Keys are then written at startup from an environment variable, a fallback for platforms without a secret mount |
+| `production: KEY_PROVIDER`                | —                                                                                                        | It is `local`. Production is designed for `aws-kms`                                                                       |
+
+With `KEY_PROVIDER=aws-kms`, the default key stays in KMS, so the doctor does not look for local key files. It checks that the key folder is set, and reports that KMS reachability is checked with `--online` once that is available.
+
+The database URL is never printed. The doctor reads its scheme and whether `sslmode` is set, and nothing else.
 
 ## Fixing the common failures
 
@@ -69,8 +97,9 @@ The server's own parsers produce these results, so a check that passes here pass
 
 ## What the doctor does not check
 
-- Production settings: `KEY_PROVIDER=aws-kms` keys, and Postgres or Supabase storage, including whether `DATABASE_URL` is set and reachable. These come in stage 2.
-- Anything over the network: the database, storage, and the key provider. These come in stage 3, opt-in with `--online`.
+- Whether the database, storage or KMS is reachable, or whether the KMS key exists. These need the network, and come with `--online`.
+- Whether the database has the tables the server needs, or the right grants. The server checks these at startup.
+- The production rules beyond the list above. The server enforces its other production settings at startup.
 - Whether the server starts. Use the server's own startup for that.
 - Hybrid key pairs beyond the default pair. The server checks them at startup.
 

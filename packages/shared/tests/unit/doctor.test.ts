@@ -142,7 +142,7 @@ describe("configuration doctor, local deployment", () => {
       "KEY_PROVIDER",
     );
     expect(result.level).toBe("warn");
-    expect(result.message).toContain("not yet");
+    expect(result.message).toContain("--production");
   });
 
   it("fails a missing key folder setting", () => {
@@ -367,5 +367,232 @@ describe("configuration doctor, local deployment", () => {
     expect(
       closestSetting("PARMANA_COMPLETELY_UNRELATED_THING"),
     ).toBeUndefined();
+  });
+});
+
+const PRODUCTION = { production: true } as const;
+const PROD_ENV = {
+  NODE_ENV: "production",
+  PARMANA_STORAGE: "postgres",
+  DATABASE_URL:
+    "postgresql://parmana:secret-password-value@db.internal:5432/parmana?sslmode=require",
+  KEY_PROVIDER: "aws-kms",
+  AWS_REGION: "ap-south-1",
+  KILL_SWITCH_ENABLED: "true",
+  KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR: "true",
+};
+
+describe("configuration doctor, production rules", () => {
+  it("passes a complete production environment with no failures", () => {
+    const checks = diagnoseConfiguration(env(PROD_ENV), readers(), PRODUCTION);
+    expect(failures(checks)).toEqual([]);
+  });
+
+  it("fails memory storage in production, because nothing is durable", () => {
+    const result = check(
+      diagnoseConfiguration(
+        env({ ...PROD_ENV, PARMANA_STORAGE: "memory" }),
+        readers(),
+        PRODUCTION,
+      ),
+      "PARMANA_STORAGE",
+    );
+    expect(result.level).toBe("fail");
+  });
+
+  it("fails postgres storage without DATABASE_URL, and never echoes a URL", () => {
+    const checks = diagnoseConfiguration(
+      env({ ...PROD_ENV, DATABASE_URL: undefined }),
+      readers(),
+      PRODUCTION,
+    );
+    expect(check(checks, "DATABASE_URL").level).toBe("fail");
+  });
+
+  it("fails a DATABASE_URL with the wrong scheme, without printing it", () => {
+    const wrong = "mysql://parmana:secret-password-value@db.internal/parmana";
+    const checks = diagnoseConfiguration(
+      env({ ...PROD_ENV, DATABASE_URL: wrong }),
+      readers(),
+      PRODUCTION,
+    );
+    expect(check(checks, "DATABASE_URL").level).toBe("fail");
+    expect(JSON.stringify(checks)).not.toContain("secret-password-value");
+    expect(JSON.stringify(checks)).not.toContain("db.internal");
+  });
+
+  it("warns on a DATABASE_URL without sslmode, and does not print it", () => {
+    const checks = diagnoseConfiguration(
+      env({
+        ...PROD_ENV,
+        DATABASE_URL:
+          "postgresql://parmana:secret-password-value@db.internal/parmana",
+      }),
+      readers(),
+      PRODUCTION,
+    );
+    expect(check(checks, "DATABASE_URL").level).toBe("warn");
+    expect(JSON.stringify(checks)).not.toContain("secret-password-value");
+  });
+
+  it("fails aws-kms without AWS_REGION", () => {
+    const result = check(
+      diagnoseConfiguration(
+        env({ ...PROD_ENV, AWS_REGION: undefined }),
+        readers(),
+        PRODUCTION,
+      ),
+      "AWS_REGION",
+    );
+    expect(result.level).toBe("fail");
+  });
+
+  it("does not need local key files with aws-kms, because the key stays in KMS", () => {
+    const noFiles = readers({ listDirectory: () => [] });
+    const checks = diagnoseConfiguration(env(PROD_ENV), noFiles, PRODUCTION);
+    expect(
+      failures(checks).some((item) => item.name === "default key pair"),
+    ).toBe(false);
+  });
+
+  it("fails hybrid signing with aws-kms, in both local and production modes", () => {
+    expect(
+      check(
+        diagnoseConfiguration(
+          env({ ...PROD_ENV, CRYPTO_MODE: "hybrid" }),
+          readers(),
+          PRODUCTION,
+        ),
+        "KEY_PROVIDER",
+      ).level,
+    ).toBe("fail");
+    expect(
+      check(
+        diagnoseConfiguration(
+          env({ KEY_PROVIDER: "aws-kms", CRYPTO_MODE: "hybrid" }),
+          readers(),
+        ),
+        "KEY_PROVIDER",
+      ).level,
+    ).toBe("fail");
+  });
+
+  it("fails authentication disabled in production", () => {
+    const checks = diagnoseConfiguration(
+      env({ ...PROD_ENV, PARMANA_AUTH_DISABLED: "true" }),
+      readers(),
+      PRODUCTION,
+    );
+    expect(check(checks, "production: PARMANA_AUTH_DISABLED").level).toBe(
+      "fail",
+    );
+  });
+
+  it("fails the sandbox in production", () => {
+    expect(
+      check(
+        diagnoseConfiguration(
+          env({ ...PROD_ENV, PARMANA_SANDBOX: "true" }),
+          readers(),
+          PRODUCTION,
+        ),
+        "PARMANA_SANDBOX",
+      ).level,
+    ).toBe("fail");
+  });
+
+  it("warns that the kill switch is off in production", () => {
+    expect(
+      check(
+        diagnoseConfiguration(
+          env({ ...PROD_ENV, KILL_SWITCH_ENABLED: undefined }),
+          readers(),
+          PRODUCTION,
+        ),
+        "KILL_SWITCH_ENABLED",
+      ).level,
+    ).toBe("warn");
+  });
+
+  it("fails an enabled kill switch that does not state its reset rule", () => {
+    const checks = diagnoseConfiguration(
+      env({ ...PROD_ENV, KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR: undefined }),
+      readers(),
+      PRODUCTION,
+    );
+    expect(check(checks, "KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR").level).toBe(
+      "fail",
+    );
+  });
+
+  it("fails aws-secrets-manager without AWS_REGION", () => {
+    const checks = diagnoseConfiguration(
+      env({
+        ...PROD_ENV,
+        AWS_REGION: undefined,
+        PARMANA_SECRETS_PROVIDER: "aws-secrets-manager",
+      }),
+      readers(),
+      PRODUCTION,
+    );
+    expect(check(checks, "PARMANA_SECRETS_PROVIDER").level).toBe("fail");
+  });
+
+  it("warns when NODE_ENV is not production, because the refusals depend on it", () => {
+    expect(
+      check(
+        diagnoseConfiguration(
+          env({ ...PROD_ENV, NODE_ENV: "development" }),
+          readers(),
+          PRODUCTION,
+        ),
+        "NODE_ENV",
+      ).level,
+    ).toBe("warn");
+  });
+
+  it("fails an invalid PARMANA_DB_SCHEMA", () => {
+    expect(
+      check(
+        diagnoseConfiguration(
+          env({ ...PROD_ENV, PARMANA_DB_SCHEMA: "Bad-Schema" }),
+          readers(),
+          PRODUCTION,
+        ),
+        "PARMANA_DB_SCHEMA",
+      ).level,
+    ).toBe("fail");
+    const valid = diagnoseConfiguration(
+      env({ ...PROD_ENV, PARMANA_DB_SCHEMA: "parmana_sandbox" }),
+      readers(),
+      PRODUCTION,
+    );
+    expect(valid.some((item) => item.name === "PARMANA_DB_SCHEMA")).toBe(false);
+  });
+
+  it("warns about key material written from an environment variable in production", () => {
+    expect(
+      check(
+        diagnoseConfiguration(
+          env({ ...PROD_ENV, PARMANA_KEY_MATERIAL_JSON: "{}" }),
+          readers(),
+          PRODUCTION,
+        ),
+        "production: PARMANA_KEY_MATERIAL_JSON",
+      ).level,
+    ).toBe("warn");
+  });
+
+  it("never prints the database password, however the check fails", () => {
+    const checks = diagnoseConfiguration(
+      env({
+        ...PROD_ENV,
+        PARMANA_STORAGE: "bogus",
+        DATABASE_URL: "ftp://parmana:secret-password-value@x",
+      }),
+      readers(),
+      PRODUCTION,
+    );
+    expect(JSON.stringify(checks)).not.toContain("secret-password-value");
   });
 });
