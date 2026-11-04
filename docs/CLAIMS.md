@@ -1363,7 +1363,6 @@ Scope, stated plainly:
 - **A new deployment authorizes nothing until its own people approve the policies they use** through policy governance (2.26, 2.35). `seed` does not approve them. API keys for the proposer and approver are issued inside the image (`docker/local/api-keys.mjs`). Signing the approval no longer needs the repository: the TypeScript SDK 1.3.0, published on npm on 2026-09-25, signs it (2.41, `docs/VERIFICATION-GAPS.md` G-62, closed). The Python SDK 1.3.0, published on PyPI the same day, signs it too.
 - An authorized action whose connector cannot be reached, times out or answers with an error returns `502 EXECUTION_OUTCOME_UNKNOWN` with the transaction's identifiers, matching the Execution Intent's `ERRORED` state (G-63, closed 2026-09-25; before, a bare `500`).
 - Verified on Docker Desktop 29.8.0 on Windows 11 and on Linux in CI run 36113024609 (`.github/workflows/docker-image.yml`, job `self-hosted`, 2026-09-25, on the merge commit `a14bc5c`). CI repeats it on every change to the deployment files, and also runs every command of the quickstart page and compares the output (`docker/local/quickstart-check.sh`).
-- The offline run used a stand in for the downstream system (`parmana-paytm-agent`), not a real one. It covers the Paytm connector only.
 - The images were built while online. The claim is about running, not about building, with no internet.
 - One API instance with one Postgres. No high availability.
 - **No customer runs this deployment.** That remains a future claim in section 4.
@@ -1379,7 +1378,6 @@ Verification
 Evidence
 
 - `docker-compose.yml`, `docker/local/setup.mjs`, `docker/local/migrate.sh`, `docker/local/postgres-roles.sql`, `docker/local/seed-policies.mjs`
-- `docker-compose.offline-check.yml`, `docker/local/offline-check/run.sh`, `check.mjs`, `check-identities.mjs`, paytm-agent-stand-in.mjs (removed 2026-11-02 with the Paytm connector, ADR-0018)
 - `packages/shared/src/config/StorageProviders.ts` (`isPostgresStorage`), `packages/storage/src/StorageFactory.ts`, `packages/api/src/bootstrap/assertStorageConfigured.ts`, `packages/api/src/routes/ready.ts`
 - `packages/storage/tests/unit/storage-factory.test.ts`, `packages/api/tests/unit/bootstrap/assert-storage-configured.test.ts`, `packages/api/tests/unit/routes/ready.test.ts`, `packages/shared/tests/unit/config-validation.test.ts`
 - `.github/workflows/docker-image.yml`, job `self-hosted`
@@ -1491,10 +1489,6 @@ Evidence
 
 **Per action.**
 
-- **Pull request merge (`github:pr-merge`).** The policy `github-pr-approval` 1.1.0 approves a merge only when `mergeApproved` is true. That fact is backed by a signed approval for the exact pull request (`owner/repo#number`), for this action, that is unexpired and used once. Review, status check, branch protection and risk facts are declared by the caller. They can refuse a merge; they cannot approve one.
-- **Pull request read (`github:pr-fetch`).** Bound to its own policy, `github-pr-read` 1.1.0. Reads also need a signed approval, as with every action.
-- **Refund (`paytm:refund`).** `customer-refund` 1.2.0 approves a refund only when `managerApproved` is true. That fact needs a signed approval for the order and the amount. The policy refuses an amount of zero or less, and an amount above 100000. The caller's eligibility and fraud-check declarations are not trusted to approve.
-- **Slack post (`slack:post-message`).** `slack-post-message` 1.1.0 needs a signed approval for the channel. The caller's own `channelAuthorized` declaration is not trusted. The post is refused unless its channel is the intent's target, and is in the server's `SLACK_ALLOWED_CHANNEL_IDS`. The check runs before authorization and again at release. An empty list refuses every post. The text of an approved post is still declared by the caller, but it can only go to a listed channel.
 - **LLM tool call (`llm-tool-call`).** `llm-tool-call` 1.1.0 approves only when `humanApproval` is true. That fact needs a signed approval for the specific tool.
 
 Every approve rule in these policies requires an approval-backed fact to be true. A test checks the structure, not only examples: with every caller-declared fact at its most permissive value and no approval, each request is refused.
@@ -1508,13 +1502,10 @@ Every approve rule in these policies requires an approval-backed fact to be true
 - **Versions are pinned.** Production runs the policy version most recently approved through maker checker (2.43). A superseded version is refused for every policy, before authorization and at release. This also means an older approved version cannot be named to get weaker rules. Approving an older version again rolls back (G-74).
 - **No connector runs an LLM tool call.** On the hosted API, an approved `llm-tool-call` decision executes nothing.
 - **Connector configuration is outside this claim.** Whether a given deployment has a connector configured does not change the rules above.
-- **GitHub's own branch protection is separate.** Parmana does not read review or check state from GitHub.
 
 **Evidence.**
 
 - `policies/customer-refund/1.2.0/policy.json`
-- `policies/github-pr-approval/1.1.0/policy.json`
-- `policies/github-pr-read/1.1.0/policy.json`
 - `policies/llm-tool-call/1.1.0/policy.json`
 - `packages/capability-registry/src/CapabilityPolicyBinding.ts` (the bindings for these capabilities)
 - `packages/policy/tests/unit/ApprovalBackedPolicies.test.ts`
@@ -1559,62 +1550,6 @@ Evidence
 - packages/storage/tests/integration/supabase-nonce-store.integration.test.ts: "a nonce consumed through one store instance is still consumed by a fresh instance against the same backing" (the fleet-sharing / restart-survival proof) and "two simultaneous checkAndRecord calls for the same nonce: exactly one succeeds" (a real concurrent-INSERT race against Postgres, not a simulated one)
 
 - packages/envelope-verifier/README.md ("Claims", "PRODUCTION WARNING: MemoryNonceStore")
-
----
-
-## 3.8 Deployed Environment: Full Chain via a Permanent Public Endpoint (Scoped) — Historical: Razorpay connector removed 2026-08-12
-
-**This claim was true and independently verifiable when written (2026-07-19, commit `7d27e63`).** The Razorpay connector it documents was deliberately removed from this codebase on 2026-08-12 (see the removal commit). This section is retained as the permanent historical record of what was demonstrated — it is not a claim about current capability, and nothing below should be read as describing present-tense behavior. Parmana does not run a Razorpay connector today. The dated, external record of this proof is `docs/site/trust-and-claims/trl7-verification.mdx` (2026-08-01 verification session) and `docs/site/changelog.mdx`.
-
-Closes the last gap 3.7 (now removed; see this claim's own history in `docs/site/changelog.mdx`) left open: a real Razorpay-initiated webhook delivery had previously been proven only against a temporary `cloudflared` tunnel run locally, with no standing infrastructure. This claim proved the identical full chain — a real refund, a real Razorpay-initiated webhook, signature-verified, correlated, and closed into a signed Settlement Confirmation — against Parmana's actual deployed instance, reachable at a permanent public URL, continuously running, not a one-time local exercise.
-
-**Deployment**: `parmana-api`, a single Docker image (see `docs/site/deployment/production.mdx`), running on Fly.io across two machines in the `lhr` region (`fly.toml` declares `primary_region = 'bom'`; the actually running machines are `lhr` — this claim states the observed region, not the configured one). Durable storage (`PARMANA_STORAGE=supabase`) and the webhook/settlement event stores are Supabase-backed, shared across both machines. The API requires caller authentication at every route except `/health`, `/ready`, `/openapi.yaml`, `/documentation`, `POST /refusal/verify`, and `POST /audit/verify` (2.16): an unauthenticated `POST /execute` was observed returning `401` with `WWW-Authenticate: Bearer realm="Parmana"`, never falling open.
-
-`POST /webhooks/razorpay` is registered permanently — not through a tunnel — at `https://parmana-api.fly.dev/webhooks/razorpay`, in the Razorpay Dashboard's Test Mode, for `refund.processed` and `refund.failed`.
-
-**Procedure**: one authenticated, gated 100-paise refund was created through the full production `POST /execute` chain against the same manually captured test-mode payment 3.4/3.7 use, executed against the deployed instance. Razorpay created the refund (id redacted `rfnd_**********T9Cj`) and, independently, delivered a genuine `refund.processed` webhook to the permanent endpoint above. The deployed instance's webhook route verified its signature against the rotated `RAZORPAY_WEBHOOK_SECRET`, persisted the event, and the deployed settlement poll loop (`scripts/process-razorpay-settlements.ts`, `pollIntervalMs: 15000`) drained it: fetch-verified the refund's real status directly from Razorpay, and appended a signed `SETTLED` Settlement Confirmation (`confirmationId dcb06247-6e7a-4adf-b709-5da407f0b054`, `fetchedRefundStatus: "processed"`) to the Execution Trust Record, surfaced correctly on `GET /verification/{businessTransactionId}`. Elapsed time from `POST /execute` to the signed `SETTLED` confirmation: approximately 48 seconds.
-
-Correlation is proven by construction, not just observation: `RazorpaySettlementProcessor` never queries Razorpay for refunds on its own — `runOnce()` only drains events already sitting in the durable webhook event store, and the only code path that ever writes to that store is the webhook route, only after signature verification succeeds. Since the business transaction id driving this refund was freshly generated for this exercise, a matching event could only have entered the store via a genuinely delivered, correctly signed webhook POST from Razorpay to the permanent endpoint above.
-
-This claim is scoped narrowly: one real delivery, test mode only, against a permanent endpoint. It does not claim live-mode operation, load-bearing traffic, or high availability — the deployment runs two machines for redundancy, not for capacity or failover behavior that has been tested. [FUTURE] live-mode operation remains open (see 3.4/Future Claims).
-
-Evidence
-
-- `fly.toml`, `Dockerfile`, `docker/entrypoint.sh` (deployment shape)
-
-- `packages/api/src/routes/ready.ts` (readiness probe distinguishing Supabase-backed storage from in-memory)
-
-- `packages/api/src/middleware/caller-auth.ts` (401 + `WWW-Authenticate` on missing credential, observed live against the deployed instance)
-
-- `scripts/process-razorpay-settlements.ts` (the deployed settlement poll loop; `RAZORPAY_SETTLEMENT_POLL_INTERVAL_MS`) — **deleted 2026-08-12** along with the rest of the Razorpay connector; cited here as an accurate historical record of what this file did while it existed, not as a currently-resolvable path
-
-- Live smoke test performed against `https://parmana-api.fly.dev` this session: unauthenticated `POST /execute` → `401`; one authenticated 100-paise refund via `POST /execute`; `GET /verification/{businessTransactionId}` polled until `settlement.status: "SETTLED"` (confirmationId `dcb06247-6e7a-4adf-b709-5da407f0b054`, `fetchedRefundStatus: "processed"`, refund id redacted `rfnd_**********T9Cj`)
-
----
-
-## 3.9 Deployed Environment: Live-Mode Full Chain (Scoped) — Historical: Razorpay connector removed 2026-08-12
-
-**This claim was true and independently verifiable when written (2026-07-20, commit `57558d6`).** The Razorpay connector it documents was deliberately removed from this codebase on 2026-08-12. Retained as historical record only — not a current-capability claim. See `docs/site/trust-and-claims/trl7-verification.mdx` and `docs/site/changelog.mdx` for the permanent dated record.
-
-Closes the gap 3.8 (and the now-removed 3.4) left open: every live claim before this one was against Razorpay's test-mode API only. This claim proved the identical full chain — a real refund, a real Razorpay-initiated webhook, signature-verified, correlated, and closed into a signed Settlement Confirmation — in Razorpay **Live Mode**, against a second, separately deployed instance.
-
-**Deployment**: `parmana-api-live`, the same Docker image (see `docs/site/deployment/production.mdx`), running on Fly.io in the `sin` region (`fly.live.toml` declares `primary_region = 'sin'`; the actually running machines are also `sin` — no region mismatch this time, unlike 3.8's `parmana-api`). Durable storage (`PARMANA_STORAGE=supabase`) and the webhook/settlement event stores are Supabase-backed, shared across both machines. `RAZORPAY_KEY_ID`/`RAZORPAY_KEY_SECRET` are a live-mode (`rzp_live_`) key pair, distinct from every other credential used elsewhere in this document. Caller authentication is enforced identically to 3.8: an unauthenticated `POST /execute` was observed returning `401` with `WWW-Authenticate: Bearer realm="Parmana"` against this deployment specifically.
-
-`POST /webhooks/razorpay` is registered permanently at `https://parmana-api-live.fly.dev/webhooks/razorpay`, in the Razorpay Dashboard's **Live Mode** specifically (not Test Mode — see 3.7/3.8 for the debugging cost of getting this wrong), for `refund.processed` and `refund.failed`.
-
-**Procedure**: a real ₹10.00 Payment Link was created and paid with a real card, live, through Razorpay-hosted checkout. One authenticated, policy-gated 100-paise refund was then created through the full production `POST /execute` chain against that payment (`pay_` id redacted below). Razorpay created the refund (id redacted `rfnd_**********WnNG`) and, independently, delivered a genuine `refund.processed` webhook to the permanent endpoint above. The deployed instance's webhook route verified its signature, persisted the event, and the deployed settlement poll loop drained it: fetch-verified the refund's real status directly from Razorpay, and appended a signed `SETTLED` Settlement Confirmation (`confirmationId 6a334df8-190d-4835-9050-b54e6657e05f`, `fetchedRefundStatus: "processed"`), surfaced correctly on `GET /verification/{businessTransactionId}`. Elapsed time from `POST /execute` to the signed `SETTLED` confirmation: approximately 43 seconds.
-
-Correlation is proven by construction, for the same reason 3.8 states: the settlement processor never queries Razorpay on its own initiative — `runOnce()` only drains events already sitting in the durable webhook event store, and the only writer to that store is the webhook route, only after signature verification succeeds. The `businessTransactionId` driving this refund was freshly generated for this exercise, so a matching event could only have entered the store via a genuinely delivered, correctly signed Live Mode webhook POST from Razorpay.
-
-This claim is scoped narrowly and deliberately: **one** real-money refund (₹1.00 / 100 paise), one deployed instance, one live-mode webhook delivery. It does not claim volume, sustained load, high availability, or tested failover behavior — `parmana-api-live` runs the same two-machine shape as `parmana-api` for redundancy, not capacity or failover that has been exercised. It does not claim Razorpay payout creation (RazorpayX remains a distinct, unimplemented item — see Future Claims), and it does not claim any change to Phase 1's Runtime, Policy Engine, Execution Gateway, Replay, Receipt Generation, Verification, or REST API.
-
-Evidence
-
-- `fly.live.toml` (app `parmana-api-live`, `primary_region = 'sin'`) — **deleted 2026-08-12** along with the rest of the Razorpay connector; cited here as an accurate historical record, not as a currently-resolvable path
-
-- `packages/api/src/middleware/caller-auth.ts` (401 + `WWW-Authenticate` on missing credential, observed live against this deployment)
-
-- Live execution performed against `https://parmana-api-live.fly.dev` this session: unauthenticated `POST /execute` → `401`; a real ₹10 Payment Link paid live with a real card; one authenticated 100-paise refund via `POST /execute` against that payment; `GET /verification/{businessTransactionId}` polled until `settlement.status: "SETTLED"` (confirmationId `6a334df8-190d-4835-9050-b54e6657e05f`, `fetchedRefundStatus: "processed"`, refund id redacted `rfnd_**********WnNG`)
 
 ---
 
@@ -1769,9 +1704,9 @@ Evidence
 
 ## 3.16 Caller-to-Capability Scoping (Scoped)
 
-Extends `ApiKeyEntry` with an optional `allowedCapabilities` field: the set of capabilities (`Intent.action` values, e.g. `hubspot:deal-update`) a given key may invoke. Checked in `execute.ts`/`transactions.ts` before the transaction ever reaches `application.execute()` — i.e. before `CapabilityPolicyBinder`/`PolicyEngine.evaluate` are reached, neither of which is caller-aware by design (2.24, 2.16's own G-28 note). A caller attempting a capability outside its grant is rejected `403 CAPABILITY_NOT_ALLOWED` and the denial is audited (`caller.capability_denied`, `CallerAuditSink`), never silently. The default is fail-closed and deliberately the opposite of `allowedPrincipalIds`' own default: an unset or empty `allowedCapabilities` denies every capability — there is no "may invoke its own capability" fallback the way there is a "may only assert itself" fallback for principals. The literal string `"*"` is an explicit, auditable wildcard grant, never an implicit default. `GET /callers/me` returns an authenticated caller's own resolved identity and scope (`callerId`, `allowedPrincipalIds`, `allowedCapabilities`, `unrestrictedCapabilities`) — self-lookup only, no key material — as the proof artifact a security review can point to.
+Extends `ApiKeyEntry` with an optional `allowedCapabilities` field: the set of capabilities (`Intent.action` values, e.g. `test:fixture-execute`) a given key may invoke. Checked in `execute.ts`/`transactions.ts` before the transaction ever reaches `application.execute()` — i.e. before `CapabilityPolicyBinder`/`PolicyEngine.evaluate` are reached, neither of which is caller-aware by design (2.24, 2.16's own G-28 note). A caller attempting a capability outside its grant is rejected `403 CAPABILITY_NOT_ALLOWED` and the denial is audited (`caller.capability_denied`, `CallerAuditSink`), never silently. The default is fail-closed and deliberately the opposite of `allowedPrincipalIds`' own default: an unset or empty `allowedCapabilities` denies every capability — there is no "may invoke its own capability" fallback the way there is a "may only assert itself" fallback for principals. The literal string `"*"` is an explicit, auditable wildcard grant, never an implicit default. `GET /callers/me` returns an authenticated caller's own resolved identity and scope (`callerId`, `allowedPrincipalIds`, `allowedCapabilities`, `unrestrictedCapabilities`) — self-lookup only, no key material — as the proof artifact a security review can point to.
 
-**Scope, precisely — this is the load-bearing caveat for this claim:** this mechanism is implemented, tested, and enforced for every caller that authenticates through a caller-auth-enabled path. It does **not** currently apply to the capability actually reachable in production. **Update (2026-08-12): the Razorpay connector was deliberately removed from this codebase** (see the removal commit and CLAIMS.md's historical §3.8/§3.9) — `razorpay:refund-create` and the other Razorpay capabilities no longer exist here at all, not merely "unscoped." `hubspot:deal-fetch` and `hubspot:deal-update` remain the only production-reachable capabilities, and neither is scoped by caller yet: `hubspot-deal-update.integration.test.ts`/`hubspot-live.integration.test.ts` still construct their app with `callerAuth: "disabled"` — no `ApiKeyEntry` exists for that connector path at all, so there is no caller identity for `allowedCapabilities` to scope in the first place. Concretely: **do not read this claim as "Parmana's live CRM-moving (HubSpot) capabilities are now scope-restricted" — they are not, yet.** Today this protects only callers that go through caller-auth-enabled paths, which at present are test and tutorial callers scoped to the single generic `test:fixture-execute` capability (`NODE_ENV=test`-only). Enabling caller-auth on the HubSpot connector integration path itself is the follow-on work that would make this mechanism meaningful for the one capability that actually moves CRM state; that work has not been started (see Future Claims, §4).
+**Scope, precisely:** this mechanism is implemented, tested, and enforced for every caller that authenticates through a caller-auth-enabled path. No built in connector is in core in this version, so no production capability is scoped by it yet.
 
 Evidence
 
@@ -1783,7 +1718,6 @@ Evidence
 - `packages/api/src/routes/callers-me.ts` (`GET /callers/me`, resolved identity/scope, no key material)
 - `supabase/migrations/20260812120000_add_capability_to_caller_audit_events.sql` (additive `capability` column, widened `type` CHECK constraint; not yet applied to any live project)
 - `packages/api/tests/unit/isCapabilityAllowed.test.ts`, `packages/api/tests/integration/caller-capability-scoping.integration.test.ts` (allow/deny/fail-closed-default/wildcard, denial precedes policy evaluation, audit content, `/callers/me` self-lookup and resolved-defaults)
-- Repo-wide check confirming zero caller-auth-enabled test or production wiring exists for `hubspot:deal-update`: `hubspot-deal-update.integration.test.ts`, `hubspot-live.integration.test.ts` both construct their app with `callerAuth: "disabled"`. The Razorpay connector this section previously cited the same way no longer exists in this codebase at all (removed 2026-08-12).
 
 ---
 
@@ -1793,7 +1727,7 @@ Evidence
 
 **New, required to run Parmana at all (`docs/site/deployment/production.mdx`, `Dockerfile`):**
 
-- **A container process.** One Docker image (`Dockerfile`), one process per container, running `packages/api/dist/server.js`, deployable to any Docker-based platform — validated with a bare `docker build`/`docker run`, not tied to a specific PaaS's proprietary build system (3.8/3.9's own `fly.io` deployments are one instance of this, not the only supported target).
+- **A container process.** One Docker image (`Dockerfile`), one process per container, running `packages/api/dist/server.js`, deployable to any Docker-based platform — validated with a bare `docker build`/`docker run`, not tied to a specific PaaS's proprietary build system.
 - **Signing key material.** Two key pairs (`default`, the authorization-signing key; `gateway`, the Execution Gateway's attestation-signing key — deliberately separate, `PARMANA_GATEWAY_KEY_ID` overridable) are required in `PARMANA_KEY_DIR`. Neither is generated automatically, and the image's `keys/` directory ships empty on purpose — key material must never be baked into the image (`Dockerfile`'s own comment). Supplied either as mounted `.pem` files or via `PARMANA_KEY_MATERIAL_JSON`. `assertSigningKeyMaterialConfigured.ts` (`packages/api/src/bootstrap/`) fails closed at boot — before the port binds — if neither is present.
 - **A Postgres database, via Supabase, for anything other than a disposable single instance.** `PARMANA_STORAGE=memory` (the default) needs no external database for business-transaction/execution-trust-record data — but the caller-authentication audit trail (`CallerAuditSink`) and the envelope-verifier's replay-protection store (`NonceStore`) are **always** Supabase-backed in any non-test deployment, never falling back to in-memory regardless of `PARMANA_STORAGE`, and both fail closed at boot if `DATABASE_URL` is not configured — via `assertDatabaseUrlConfigured.ts`, called unconditionally from `createCallerAuditSink.ts`/`createNonceStore.ts` (not `assertStorageConfigured.ts`, which validates only business-transaction/execution-trust-record storage, gated on `PARMANA_STORAGE=supabase` or `postgres`; see that file's own doc comment). `SUPABASE_URL` itself is not read by this check — `DATABASE_URL` is the only variable that satisfies it, a documented, temporary substitute pending resolution of Supabase ticket SU-437429. In practice, precisely stated: a real deployment always needs Supabase for the audit trail and nonce store; `PARMANA_STORAGE=supabase` additionally routes business-transaction/execution-trust-record storage through the same database rather than memory. There is no configuration under which a real (non-test) deployment runs with zero external database.
 - **The schema applied to that database, manually.** `supabase/migrations/` must be applied to the target Supabase project before a real deployment can serve traffic — either `supabase db push` (Supabase CLI, if linked) or `scripts/apply-all-migrations.sql` (a concatenation of every migration file) via the Dashboard SQL Editor, on an empty database. **Corrected 2026-09-25:** this section used to call the bundle idempotent and safe to run again. It is not safe to run again on a database that holds data (`docs/VERIFICATION-GAPS.md` G-61). The container itself does not migrate at boot. The Docker Compose deployment of 2.40 runs the migrations for it, each once, and since 2026-09-25 `npm run db:migrate` does the same for any Postgres, with `baseline` for a database set up with the bundle (G-61, closed).
@@ -1815,7 +1749,7 @@ Evidence
 - `packages/api/src/bootstrap/assertDatabaseUrlConfigured.ts`, called unconditionally from `createCallerAuditSink.ts`/`createNonceStore.ts` (the actual fail-closed check for CallerAuditSink/NonceStore described above; checks DATABASE_URL only)
 - `packages/shared/src/config/StorageProviders.ts` (`memory`/`postgres`/`supabase`), `packages/shared/src/config/Config.ts` (the sole `process.env` read site for application config)
 - `supabase/migrations/` (schema source), `scripts/apply-all-migrations.sql` (manual application path with no CLI link)
-- `fly.toml` (3.8's own currently-deployed instance — one concrete instantiation of this deployment shape, not evidence that Fly.io specifically is required). `fly.live.toml` (3.9's own instance) was deleted 2026-08-12 along with the rest of the Razorpay connector it deployed; §3.9 is now historical, so this section cites only the still-current `fly.toml`.
+- `fly.toml` (one concrete instantiation of this deployment shape, not evidence that Fly.io specifically is required).
 - `createConnectorRegistry.ts` (3.10/3.17: HubSpot/GitHub each registered conditionally on their own credentials; absent, the connector is simply not registered — no partial-configuration state, no effect on Parmana's own boot)
 
 ---
@@ -1923,9 +1857,6 @@ caller, and no conformance level is claimed. The earlier `community` entries abo
 - Fixture: [`fixtures/03-replay.refusal-record.json` line 46](https://github.com/agentrust-io/integrations/blob/6de4cb9/integrations/parmana-server/fixtures/03-replay.refusal-record.json#L46), `matchedRuleId`.
 - Test: [`tests/test_parmana_evidence.py` line 131](https://github.com/agentrust-io/integrations/blob/6de4cb9/integrations/parmana-server/tests/test_parmana_evidence.py#L131), `replay` has zero connector invocations. Run with `pip install -e ".[test]"` and `python -m pytest tests` in `integrations/parmana-server`.
 - Its README row for this file says "refused, already used" ([line 30](https://github.com/agentrust-io/integrations/blob/6de4cb9/integrations/parmana-server/README.md#L30)). That wording is not the rule the fixture records, so it is not used here.
-- In this repository: `evaluations/agentrust-refund/fixtures/03-replay.refusal-record.json` (line 46) and `report.json`, case `replay`. That report is from the Paytm scenario at commit `ac22a7e` (2026-10-10), not the Razorpay demo.
-- Test here: agentrust-refund-evaluation.integration.test.ts (removed 2026-11-02 with the Paytm connector, ADR-0018), lines 294 to 297 and 314 to 316. Run with `npx vitest run packages/api/tests/integration/agentrust-refund-evaluation.integration.test.ts`.
-- Live demo: `examples/razorpay-refund/send.ts --case replay` (README, request 4). It is not a hermetic test, and it needs the production key.
 
 ---
 
@@ -1933,9 +1864,7 @@ caller, and no conformance level is claimed. The earlier `community` entries abo
 
 This is the repo owner's own maturity assessment, layered on the evidence already cited above. It is not a new technical claim in the sense sections 2 and 3 use that word, and it does not carry its own separate test evidence — it is an interpretation of evidence that does.
 
-**Historical**: Parmana reached **Technology Readiness Level 7** (system prototype demonstration in an operational environment) as of 2026-07-20, on the strength of §3.8/§3.9 — a real refund, a real Razorpay-initiated webhook delivery to a standing public endpoint, settled end to end, in both Razorpay test mode and live mode. That evidence is now historical (§3.8/§3.9 above, both marked "Historical: Razorpay connector removed 2026-08-12"; `docs/site/trust-and-claims/trl7-verification.mdx`; `docs/site/changelog.mdx`) — the connector was deliberately removed 2026-08-12, and TRL 7's defining element here (an external party closing the loop against a standing public deployment) has no current equivalent in this codebase.
-
-**Current assessment, without relying on removed evidence: Technology Readiness Level 6** (system/subsystem model or prototype demonstration in a relevant environment). Basis: §3.10's HubSpot connector is proven correct against a real, relevant external system — HubSpot's actual production API, including a real, non-destructive read-nudge-revert mutation on a real account (§3.10's live suite, most recently confirmed 3/3 passing in an earlier session; not re-confirmed live in the most recent SDK-dogfooding pass — see that section's own caveat). What's missing relative to TRL 7: HubSpot's live proof runs through a locally-booted test server, not Parmana's actual public Fly deployment (no HubSpot deployment was ever documented in the deployment runbook), and HubSpot has no webhook — there is no case, current or historical, of an external party initiating a delivery against a standing Parmana public endpoint for HubSpot the way Razorpay's webhook did.
+**Current assessment, without relying on removed evidence: Technology Readiness Level 6** (system/subsystem model or prototype demonstration in a relevant environment). Basis: the claims still in this document. The connector evidence that supported this level has been removed with the connectors, so the level has not been re-assessed against the current code. The owner should decide whether it still holds.
 
 Not claimed by this assessment: sustained volume, load-bearing traffic, high availability, multi-tenant production operation, or any current standing-public-endpoint proof for any capability.
 
@@ -1945,21 +1874,7 @@ Not claimed by this assessment: sustained volume, load-bearing traffic, high ava
 
 The following claims are planned but are intentionally withheld until supported by implementation, testing, audit, and documented proof.
 
-- [FUTURE] HubSpot Contacts and Companies objects: no implementation exists. The HubSpot connector (3.10) covers Deal `dealstage`/`amount` update only.
-
-- [FUTURE] HubSpot deal delete/archive: no implementation exists; deny-by-default this milestone touches only `dealstage`/`amount` on existing deals.
-
-- [FUTURE] HubSpot webhook/event-driven trigger: no implementation exists. This milestone is request-response only (`POST /execute` → connector PATCH); there is no asynchronous confirmation loop analogous to the webhook-receipt/settlement-closure mechanism the now-removed Razorpay connector had (see historical §3.8/§3.9; that mechanism took several scoped milestones to build for Razorpay while the connector existed, and none of that has been started for HubSpot, nor would it be, for a connector that no longer exists — the corrected pointer, replacing this item's own previously-broken `(3.5)`/`(3.6/3.7)` section references, which named sections that do not exist anywhere in this document).
-
-- [FUTURE] Caller-auth enabled on the HubSpot and GitHub connector integration paths: not started for either. 3.16's caller-to-capability scoping mechanism is implemented and tested, but both connectors' integration tests construct their app with `callerAuth: "disabled"` and no `ApiKeyEntry` (`github-pr-merge.integration.test.ts`, `github-pr-merge-live.integration.test.ts`, same as HubSpot's), so neither `hubspot:deal-update` nor `github:pr-merge` — the capabilities actually reachable in production today (2.23's 2026-08-25 update) — is scoped by caller yet. This is the specific follow-on work that would make 3.16 meaningful for real CRM-moving and PR-merging traffic, not merely test fixtures. (Corrected 2026-08-25: this item previously named `hubspot:deal-update` as "the only capability actually reachable in production," missing `github:pr-merge`'s addition on 2026-08-19 — the same miscount §2.25's 2026-08-25 update and `docs/VERIFICATION-GAPS.md` G-30 trace in full.)
-
-- [FUTURE] HubSpot multi-object transactions: no implementation exists; each `hubspot:deal-update` call is a single Deal PATCH, not a coordinated multi-object write.
-
-- [FUTURE] HubSpot per-pipeline stage-transition configuration: `HUBSPOT_DEFAULT_STAGE_ORDER` (3.10) is one global stage order; `isHubSpotStageTransitionAllowed` accepts a `stageOrder` override but nothing wires it to a deal's actual `pipeline` property yet — see 3.10's "open decisions" for what this would take.
-
 - [FUTURE] Stripe connector: no implementation exists; would implement @parmana/connector-sdk's Connector interface.
-
-- [FUTURE] GitHub connector live verification: superseded by §3.17 — the connector itself is implemented, hermetically tested (22 unit + 4 integration tests), and wired into production. What remains open is a live run against a real GitHub App installation (the gated suite is written and confirmed to skip cleanly, but has not yet been run with real credentials in any session), and any capability beyond `github:pr-fetch`/`github:pr-merge` (review submission, comments, other object types, webhooks).
 
 - [FUTURE] Salesforce connector: no implementation exists.
 
@@ -1968,8 +1883,6 @@ The following claims are planned but are intentionally withheld until supported 
 - [FUTURE] ServiceNow connector: no implementation exists.
 
 - [FUTURE] Workday connector: no implementation exists.
-
-- [FUTURE] Slack connector: **superseded (2026-10-11):** a Slack connector exists and is claimed in 2.44 and 2.47. What stays future: its use configured and observed in production.
 
 - [FUTURE] Jira connector: no implementation exists.
 
@@ -1997,7 +1910,7 @@ The following claims are planned but are intentionally withheld until supported 
 
 - Algorithm migration: re-keying from one signature provider to another (for example Ed25519 to ML-DSA-65) while retaining the ability to verify previously-signed records. AuthorizationVerifier does not dispatch verification based on the envelope's algorithm field; a verifying process supports exactly one configured SIGNATURE_PROVIDER at a time.
 
-- [FUTURE] `CRYPTO_MODE=hybrid` running anywhere in staging or production: the capability described in 3.13 is built and tested but not wired into any deployed environment. `PRIMARY_SIGNATURE_PROVIDER=ed25519` alone remains the configuration everywhere this codebase currently runs, including `parmana-api-live.fly.dev` (3.9).
+- [FUTURE] `CRYPTO_MODE=hybrid` running anywhere in staging or production: the capability described in 3.13 is built and tested but not wired into any deployed environment. `PRIMARY_SIGNATURE_PROVIDER=ed25519` alone remains the configuration everywhere this codebase currently runs.
 
 These claims will be promoted to the Supported Technical Claims section only after the required evidence is complete.
 
@@ -2155,7 +2068,6 @@ This discipline ensures that Parmana's public positioning remains aligned with i
 
 **Limits.**
 
-- The Paytm test covers the Paytm connector only. It does not show the same for the other connectors.
 - The envelope verifier checks the record it is given. Refusing a release is the execution gateway's job, and this section does not claim the gateway's behavior.
 - The five skipped envelope tests need ML-DSA-65, which needs Node 24. The run used Node 22.22.0, so the post-quantum path is not checked by this run.
 - The signal-type check covers only signals the schema declares. A signal absent from the payload is not a type violation, and the rules decide it. This is the design, not a gap in the check.
