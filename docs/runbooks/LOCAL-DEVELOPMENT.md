@@ -111,6 +111,33 @@ npx vitest run
 - The Supabase suites (they call the Supabase REST API) still skip. They need a live Supabase project and its own credentials, which a local Postgres does not provide.
 - Do not point `DATABASE_URL` at production. These suites write to the database.
 
+## 5b. Live Supabase suites and TLS
+
+The `(live)` suites are opt-in. They run only when both `ALLOW_LIVE_SUPABASE=1` and `DATABASE_URL` are set, and they write to whatever database `DATABASE_URL` points at.
+
+The local Docker Postgres on `127.0.0.1:55432` doesn't offer TLS. Two settings can turn TLS on by mistake and fail with `The server does not support SSL connections`:
+
+- `PARMANA_DATABASE_CA_FILE` or `PARMANA_DATABASE_CA` in `.env`. The test setup loads `.env` into the process, and when either is set the pool factory requests TLS with that certificate.
+- `sslmode=require` in `DATABASE_URL`.
+
+`.env` holds production Supabase values, so the test settings belong in `.env.test`, which loads first and takes precedence. Set the local CA value to empty:
+
+```
+PARMANA_DATABASE_CA_FILE=
+```
+
+An empty value counts as unset, so no certificate is used for the local run. Keep the value in `.env`, because production needs it.
+
+To run a live suite locally, set the opt-in for the current shell only, then clear it:
+
+```powershell
+$env:ALLOW_LIVE_SUPABASE = "1"
+npx vitest run <suite path>
+Remove-Item Env:ALLOW_LIVE_SUPABASE
+```
+
+Do not set `ALLOW_LIVE_SUPABASE` in `.env` or `.env.test` when you want the suites to skip.
+
 ## 6. Lint
 
 ```powershell
