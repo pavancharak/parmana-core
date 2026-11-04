@@ -96,7 +96,12 @@ export function withoutSslParams(connectionString: string): string {
 export function isLoopbackUrl(connectionString: string): boolean {
   try {
     const host = new URL(connectionString).hostname;
-    return host === "localhost" || host === "127.0.0.1" || host === "::1" || host === "[::1]";
+    return (
+      host === "localhost" ||
+      host === "127.0.0.1" ||
+      host === "::1" ||
+      host === "[::1]"
+    );
   } catch {
     return false;
   }
