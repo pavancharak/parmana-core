@@ -34,7 +34,7 @@ describe("databaseSslOptions", () => {
 
   it("fails closed when the file holds no certificate, and does not print its contents", () => {
     const notCert =
-      "-----BEGIN PRIVATE KEY-----\nsecret-key-material\n-----END PRIVATE KEY-----";
+      "-----BEGIN PUBLIC KEY-----\nnot-a-certificate-body\n-----END PUBLIC KEY-----";
     let message = "";
     try {
       databaseSslOptions(
@@ -45,7 +45,7 @@ describe("databaseSslOptions", () => {
       message = (err as Error).message;
     }
     expect(message).toContain("does not hold a PEM certificate");
-    expect(message).not.toContain("secret-key-material");
+    expect(message).not.toContain("not-a-certificate-body");
   });
 });
 
@@ -100,6 +100,6 @@ describe("databaseSslOptions, certificate text", () => {
       message = (err as Error).message;
     }
     expect(message).toContain("does not hold a PEM certificate");
-    expect(message).not.toContain("secret-key-material");
+    expect(message).not.toContain("not-a-certificate-body");
   });
 });
