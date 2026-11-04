@@ -306,31 +306,27 @@ Evidence
 
 ## 2.14 Configurable Post-Quantum Signing (ML-DSA-65)
 
-Post-quantum signing (ML-DSA-65, FIPS 204, historically referred to in this codebase as "dilithium3") is selectable via SIGNATURE_PROVIDER, using the same PEM-based persistent key mechanism as the default Ed25519 provider (FileKeyProvider, keyId "default"). Requires Node >= 24 for native node:crypto ml-dsa-65 support. Selecting it with missing or mismatched key material fails closed rather than silently regenerating or substituting different keys.
+**Claim.** The signing algorithm can be set to ML-DSA-65 (FIPS 204) as an alternative to Ed25519, through `PRIMARY_SIGNATURE_PROVIDER` (and `SECONDARY_SIGNATURE_PROVIDER` for hybrid signing). The `ml-dsa-65` name is accepted as an alias for the internal identifier `dilithium3`, which is kept unchanged for existing deployments.
 
-**Update (2026-09-09):** `SIGNATURE_PROVIDER`/`PRIMARY_SIGNATURE_PROVIDER`/`SECONDARY_SIGNATURE_PROVIDER` now also accept `ml-dsa-65` as an input alias for `dilithium3` (`parseSignatureAlgorithm`, `packages/shared/src/config/ConfigValidation.ts`), resolved to the same canonical `dilithium3` identifier before validation. Additive only: an existing `dilithium3`-configured deployment is completely unaffected — the internal identifier is not renamed, only a second accepted spelling was added, so a new deployment can use the accurate NIST/FIPS 204 name without anyone reverting or migrating anything. The two `scripts/generate-keypair.ts` CLIs (`--algorithm`) accept the same alias, normalized to `dilithium3` before generating a key, for the identical reason. A production-readiness audit on 2026-09-09 had concluded a literal rename would be a regression (breaking existing `dilithium3`-configured deployments for no externally-visible benefit, since the docs already disclose the naming history) — this alias is the corrected, non-breaking version of that request.
+**Scope.** Selecting ML-DSA-65 uses the same PEM key mechanism as the default Ed25519 provider (`FileKeyProvider`, key ID `default`). It requires Node.js 24 or later, for native `ml-dsa-65` support in `node:crypto`. Missing or mismatched key material fails closed: the process does not generate a replacement key or substitute another one.
 
-**Crypto-agility, demonstrated independently of hybrid signing (3.13):** the same canonical record (via `CanonicalSerializer`, the same serialization every Parmana signing path uses) can be signed and verified by Ed25519 and by ML-DSA-65 as two entirely separate, single-algorithm operations — each against its own freshly generated key pair, with no `CRYPTO_MODE` or hybrid envelope involved. This is a standalone runnable proof (`packages/crypto/examples/crypto-agility-proof.ts`, run via `npx tsx packages/crypto/examples/crypto-agility-proof.ts`), not a unit test, written to make the claim directly checkable by hand. Measured 2026-08-25: `dilithium3-signature-provider.test.ts` 4/4 passing (6/6 including the related `dilithium3-cross-instance.test.ts`); full repository suite 1274 passed, 37 skipped, 0 failed. (Run of 2026-08-25; its record is in git history.)
+**Crypto agility.** The same canonical record can be signed and verified by Ed25519 and by ML-DSA-65 as two separate single-algorithm operations, each with its own key pair, and with no hybrid envelope involved. `packages/crypto/examples/crypto-agility-proof.ts` runs this check by hand (`npx tsx packages/crypto/examples/crypto-agility-proof.ts`).
+
+**Independent verification.** An offline verifier for the signed records is in `packages/crypto/src/OfflineVerifier.ts`, with a Python counterpart. The public keys are served at `GET /keys/:keyId` and `GET /.well-known/jwks.json`. Key IDs for verification can be rotated with `PARMANA_VERIFICATION_KEY_ID` and `PARMANA_VERIFICATION_SECONDARY_KEY_ID`. With `HYBRID_SIGNATURE_REQUIRED=true`, a hybrid record whose ML-DSA-65 signature is missing is refused rather than accepted as Ed25519-only.
+
+**Limits.** As of 2026-10-20, production runs `CRYPTO_MODE=single`, so its records carry only the Ed25519 signature. No deployment was running hybrid signing on that date, and no live hybrid record had been verified through the API. Enabling hybrid signing in production is an operator decision that depends on key material (G-119 in `docs/VERIFICATION-GAPS.md`). The statements above describe what is built and tested, not what runs in production.
 
 Evidence
 
-- Dilithium3SignatureProvider
+- `Dilithium3SignatureProvider`
+- `FileKeyProvider`
+- `scripts/generate-keypair.ts` (`--algorithm dilithium3` or `ml-dsa-65`)
+- `packages/crypto/tests/unit/dilithium3-signature-provider.test.ts`
+- `packages/crypto/tests/unit/dilithium3-cross-instance.test.ts`
+- `packages/crypto/examples/crypto-agility-proof.ts`
+- `packages/crypto/src/OfflineVerifier.ts`
 
-- FileKeyProvider
-
-- generate-keypair.ts (--algorithm dilithium3)
-
-- packages/crypto/tests/unit/dilithium3-signature-provider.test.ts
-
-- packages/crypto/tests/unit/dilithium3-cross-instance.test.ts
-
-- packages/crypto/examples/crypto-agility-proof.ts
-
-**Update (2026-09-11, PQC production-readiness audit remediation):** a same-day audit scoped specifically to whether this cryptographic evidence is independently verifiable by third parties (regulators, auditors) found and closed four real gaps, none of which change anything described above -- this claim's own content is unaffected. Summarized here; full detail in `docs/VERIFICATION-GAPS.md`'s "Gaps closed in the 2026-09-11 PQC production-readiness audit remediation" table (gaps 51-54): (1) no standalone offline verifier existed anywhere in this repository -- new `packages/crypto/src/OfflineVerifier.ts` and a Python counterpart, cross-language determinism proven by spawning the real TypeScript signer and verifying its output independently in Python; (2) no public-key discovery endpoint existed -- new `GET /keys/:keyId` and `GET /.well-known/jwks.json`; (3) `VerificationCrypto`/`RefusalCrypto`/`AuditEventCrypto` had no way to rotate their signing keyId without breaking every previously-issued signature -- new `PARMANA_VERIFICATION_KEY_ID`/`PARMANA_VERIFICATION_SECONDARY_KEY_ID`, mirroring the existing `PARMANA_GATEWAY_KEY_ID` precedent; (4) a genuinely hybrid-signed record's ML-DSA-65 signature could be silently stripped with no detection -- new opt-in `HYBRID_SIGNATURE_REQUIRED` policy flag. All four fixes are additive; not one already-issued signature is affected by any of them.
-
----
-
-**Update (2026-10-20): not live in production.** Production runs `CRYPTO_MODE=single`, so its records carry only the Ed25519 signature. No deployment runs hybrid signing: the test project once configured for it was removed on 2026-10-23, and no live hybrid record was ever verified through an API. Enabling it in production is an operator decision with a key-material prerequisite. See G-119 in `docs/VERIFICATION-GAPS.md`. Until then, the statements in this section describe what is built and tested, not what runs in production.
+Dated updates for this claim are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
 ## 2.15 Authorization-Binding Verification
 
