@@ -949,7 +949,7 @@
                 "changes"
               ]
             },
-            "description": "Real captured request\n\noperationId: proposeExternalConnectorChange\n\nProposes connecting your own system to Parmana with no Parmana code change: `register` names a\ncapability, the HTTPS endpoint to release it to, the policy that governs it, the parameters to\nforward and optionally a timeout; `revoke` ends the active registration for a capability. Nothing\nchanges until a different person approves it. The endpoint must be `https`, name a domain (not an IP\naddress or localhost), carry no user name, password or fragment, and resolve only to public\naddresses; the address is checked again on approval and at every release. Capabilities in a built in\nnamespace (`paytm`, `hubspot`, `github`, `slack`, `test`) are refused. To move a capability, revoke\nit, then register the new endpoint. Needs a human key."
+            "description": "Real captured request\n\noperationId: proposeExternalConnectorChange\n\nProposes connecting your own system to Parmana with no Parmana code change: `register` names a\ncapability, the HTTPS endpoint to release it to, the policy that governs it, the parameters to\nforward and optionally a timeout; `revoke` ends the active registration for a capability. Nothing\nchanges until a different person approves it. The endpoint must be `https`, name a domain (not an IP\naddress or localhost), carry no user name, password or fragment, and resolve only to public\naddresses; the address is checked again on approval and at every release. Capabilities in a built in\nnamespace (`paytm`, `github`, `slack`, `test`) are refused. To move a capability, revoke\nit, then register the new endpoint. Needs a human key."
           }
         },
         {
@@ -981,7 +981,7 @@
                 "changes"
               ]
             },
-            "description": "Real captured request\n\noperationId: proposeExternalConnectorChange\n\nProposes connecting your own system to Parmana with no Parmana code change: `register` names a\ncapability, the HTTPS endpoint to release it to, the policy that governs it, the parameters to\nforward and optionally a timeout; `revoke` ends the active registration for a capability. Nothing\nchanges until a different person approves it. The endpoint must be `https`, name a domain (not an IP\naddress or localhost), carry no user name, password or fragment, and resolve only to public\naddresses; the address is checked again on approval and at every release. Capabilities in a built in\nnamespace (`paytm`, `hubspot`, `github`, `slack`, `test`) are refused. To move a capability, revoke\nit, then register the new endpoint. Needs a human key."
+            "description": "Real captured request\n\noperationId: proposeExternalConnectorChange\n\nProposes connecting your own system to Parmana with no Parmana code change: `register` names a\ncapability, the HTTPS endpoint to release it to, the policy that governs it, the parameters to\nforward and optionally a timeout; `revoke` ends the active registration for a capability. Nothing\nchanges until a different person approves it. The endpoint must be `https`, name a domain (not an IP\naddress or localhost), carry no user name, password or fragment, and resolve only to public\naddresses; the address is checked again on approval and at every release. Capabilities in a built in\nnamespace (`paytm`, `github`, `slack`, `test`) are refused. To move a capability, revoke\nit, then register the new endpoint. Needs a human key."
           }
         },
         {

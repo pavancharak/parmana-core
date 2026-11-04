@@ -7941,8 +7941,8 @@ paths:
         addresses; the address is checked again on approval and at every
         release. Capabilities in a built in
 
-        namespace (`paytm`, `hubspot`, `github`, `slack`, `test`) are refused.
-        To move a capability, revoke
+        namespace (`paytm`, `github`, `slack`, `test`) are refused. To move a
+        capability, revoke
 
         it, then register the new endpoint. Needs a human key.
       requestBody:

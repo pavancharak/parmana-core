@@ -34,7 +34,7 @@ independent offline verification, and audit trails.
 `example-agent` service, which itself calls Paytm's staging API. An approved
 `erp:invoice-pay` request reaches Paytm's real staging API and returns a real result, with a
 full cross-service audit trail correlated by `businessTransactionId`. Full runbook:
-[End to end: agent to Parmana to Paytm](/guides/end-to-end-paytm-flow).
+the [error catalog](/api-reference/error-catalog).
 
 token, GitHub App credentials or Slack bot token is configured, and it isn't running in test
 mode either. An approved request for one of these answers `503 CONNECTOR_NOT_REGISTERED`, which

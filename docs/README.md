@@ -31,8 +31,6 @@ project is held to, and the engineering references that code or tests cite.
   connector.
 - **[connectors/CONNECTING_AN_AGENT.md](connectors/CONNECTING_AN_AGENT.md)**: connecting an
   external agent or caller, with every response and error cited to source.
-- **[connectors/PAYTM_CONNECTOR.md](connectors/PAYTM_CONNECTOR.md)**: the out of process Paytm
-  refund connector and its wire contract.
 - **[related-work/](related-work/)**: notes on outside research kept for future reference, and
   what each paper means for Parmana.
 

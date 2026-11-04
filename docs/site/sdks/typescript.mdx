@@ -223,7 +223,7 @@ Added 2026-09-14, ships in v1.1.2, published, available via a plain
 `metadata.businessTransactionId` must equal `businessTransactionId`,
 `authorization.authorityId` must equal `authority.authorityId`, `intent.authorizationId` must
 equal `authorization.authorizationId`. Every "X must match Y" `400` documented in
-[the end-to-end Paytm guide](/guides/end-to-end-paytm-flow) came from hand-building a request
+[the error catalog](/api-reference/error-catalog) came from hand-building a request
 object and getting one of those wrong. `createBusinessTransaction()` derives all three
 automatically:
 
@@ -693,14 +693,6 @@ for them would describe behavior the real API doesn't have.
 ## Next
 
 <CardGroup cols={2}>
-  <Card
-    title="End-to-end: agent → Parmana → Paytm"
-    icon="route"
-    href="/guides/end-to-end-paytm-flow"
-  >
-    The full, no-ambiguity runbook this SDK builds toward: real infrastructure,
-    every error message, every fix.
-  </Card>
   <Card title="Python SDK" icon="python" href="/sdks/python">
     The other maintained SDK: same bearer-key model, generated (not
     hand-maintained) models.

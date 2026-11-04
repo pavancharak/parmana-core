@@ -7941,8 +7941,8 @@ paths:
         addresses; the address is checked again on approval and at every
         release. Capabilities in a built in
 
-        namespace (`paytm`, `github`, `slack`, `test`) are refused.
-        To move a capability, revoke
+        namespace (`paytm`, `github`, `slack`, `test`) are refused. To move a
+        capability, revoke
 
         it, then register the new endpoint. Needs a human key.
       requestBody:
@@ -13491,7 +13491,7 @@ components:
           pattern: ^[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*:[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*$
           maxLength: 128
           description: namespace:verb. Never in a built in connector's namespace (paytm,
-            github, slack, test).
+            hubspot, github, slack, test).
         endpointUrl:
           type: string
           description: "register only. The endpoint as the server stored it, normalized by

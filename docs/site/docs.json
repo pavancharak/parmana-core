@@ -121,8 +121,7 @@
             "group": "Worked examples",
             "pages": [
               "guides/live-api-and-demos",
-              "guides/end-to-end-paytm-flow",
-              "tutorials/index"
+                            "tutorials/index"
             ]
           }
         ]
