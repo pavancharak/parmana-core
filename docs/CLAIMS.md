@@ -985,33 +985,6 @@ The gap record is G-122 in `docs/VERIFICATION-GAPS.md`.
 
 Gaps: G-50 (partly fixed) and G-123 (fixed).
 
-## 2.23 Authorization Before Execution for HubSpot Deal Updates
-
-A HubSpot deal update does not run unless Parmana's authorization layer allows it. The core repository enforces this for `hubspot:deal-update`:
-
-- The capability is bound to a specific policy, `hubspot-deal-update` version `1.1.0`, through the canonical binding in 2.22. A request cannot be checked against an unrelated policy.
-- A request that the policy rejects is refused with `403` and `code: "POLICY_DENIED"` (2.21). A policy named in the request cannot authorise the action on its own (2.44).
-- A change to the deal amount needs a signed human approval that names this capability and this action (2.42).
-
-**Where the connector sits.** The HubSpot connector was removed from `parmana-core` in commit `b6463fa` (2026-11-03). It is not in this repository, so the connector-side checks cannot be verified here. These include how the connector handles its credential, and whether the gateway adapter keeps a credential between calls. This claim does not make those checks. The deal-update policy stays in core, and the policy checks above still apply to any connector that runs the capability.
-
-**Earlier review.** A point-in-time independent review, dated 2026-08-09, found no path to unauthorized execution for `hubspot:deal-update` at that time. It also covered the Razorpay refund capability, which has since been removed. The review covered code that no longer exists in this repository, so it is a historical record and not a current certification.
-
-**Scope and limits.**
-
-- The policy and approval checks run in core. Whether the connector performs the update correctly is outside this claim.
-- The authorization checks do not cover `github:pr-merge`, which has its own policy and binding. It was not covered by the 2026-08-09 review.
-
-**Evidence.**
-
-- `packages/capability-registry/src/CapabilityPolicyBinding.ts` (`hubspot:deal-update` bound to `hubspot-deal-update` 1.1.0)
-- `packages/capability-registry/tests/unit/CapabilityPolicyBinder.test.ts` (a request bound to an unrelated policy is refused)
-- `packages/api/tests/unit/connector-policies-not-self-authorizing.test.ts` (a policy that the request names cannot authorise the action by itself)
-- `packages/approval/tests/unit/SignedApprovalGuard.test.ts` and `ApprovalSignalVerifier.test.ts` (the signed approval for `hubspot:deal-update` and its action and capability)
-- `policies/hubspot-deal-update/1.1.0/policy.json`
-
-Dated updates, including the removal of the connector and the 2026-08-09 review, are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
-
 ## 2.24 Authorization Is Caller-Type-Agnostic
 
 The authorization pipeline's outcome depends only on the requested action, the governing policy, and the independently-verified facts bearing on it — never on what kind of system, model, or entity submitted the request. This is the source-code basis for the positioning claim that Parmana protects institutional authority against execution risk from any source (AI agents, humans, applications, automated systems, third-party systems, compromised systems), not only AI: the mechanism does not special-case any of them, including ones it has no name for.
@@ -1757,45 +1730,6 @@ Evidence
 - Live execution performed against `https://parmana-api-live.fly.dev` this session: unauthenticated `POST /execute` → `401`; a real ₹10 Payment Link paid live with a real card; one authenticated 100-paise refund via `POST /execute` against that payment; `GET /verification/{businessTransactionId}` polled until `settlement.status: "SETTLED"` (confirmationId `6a334df8-190d-4835-9050-b54e6657e05f`, `fetchedRefundStatus: "processed"`, refund id redacted `rfnd_**********WnNG`)
 
 ---
-
-## 3.10 HubSpot Deal Stage and Amount Update (Scoped)
-
-**Claim.** A HubSpot deal's `dealstage` and `amount` can be updated through `hubspot:deal-update` only when a signed approval for that deal has been verified. Core enforces this. The policy `hubspot-deal-update` 1.1.0 is bound to the capability (2.22), and the approval is checked by the signal verifier (2.42).
-
-**Where the connector sits.** The HubSpot connector is not in this repository. It was removed in `b6463fa` (ADR-0018) and lives in `parmana-connectors`. Its controls, including the property allowlist, the placeholder-credential guard and the redaction of its credential, are not verified here.
-
-**Policy 1.1.0 (the bound version).** The policy has three rules, in order:
-
-1. Reject when a requested stage transition is not on an allowed path.
-2. Approve when a verified approval for the deal is present and the transition (if any) is allowed.
-3. Reject every other request.
-
-Each approve rule requires the approval fact `dealUpdateApproved`. That fact is bound to `parameters.dealId` and checked by `ApprovalSignalVerifier`. The approver must be trusted: it is either in the code list or in the `approval_issuers` table, which is read on every approval and fails closed.
-
-Version 1.0.0 approved amount changes above a threshold when the caller declared them pre-authorized. 1.1.0 does not contain that rule. Every amount change now needs the signed approval, the same as a stage change. The 1.0.0 file is kept in the repository and is not the bound version.
-
-**What core verifies and what it does not.**
-
-- Core verifies the approval, and that `proposedDealStage` and `proposedAmount` match `parameters.dealstage` and `parameters.amount` (`boundSignals`, 2.11).
-- Core does not compute or verify `dealStageTransitionAllowed`, `currentDealStage`, `amountChangeRequested` or `amountDeltaAbs`. These are declared signals. Nothing in this repository checks them against the live deal. So the forward-only stage rule depends on a verifier outside this repository, and this claim does not verify it.
-
-**Scope and limits.**
-
-- Covers `dealstage` and `amount` on Deals only. Contacts, companies, deleting or archiving deals, and webhook-driven triggers are out of scope.
-- One capability, `hubspot:deal-update`, authorizes both properties together. An operator cannot grant a stage change without also granting an amount change. Splitting them into two capabilities is not done.
-- The approval-backed policy test (`packages/policy/tests/unit/ApprovalBackedPolicies.test.ts`) covers 1.1.0's approval requirement and its failing cases.
-- No stage order is defined in this repository. Any per-pipeline ordering is the external verifier's responsibility.
-
-**Evidence.**
-
-- `policies/hubspot-deal-update/1.1.0/policy.json` (the bound version; rules and `approvalSignals`)
-- `policies/hubspot-deal-update/1.0.0/policy.json` (superseded; kept in the repository)
-- `packages/capability-registry/src/CapabilityPolicyBinding.ts` (`hubspot:deal-update` bound to `hubspot-deal-update` 1.1.0)
-- `packages/policy/tests/unit/ApprovalBackedPolicies.test.ts` (approval-backed policies, including 1.1.0)
-- `packages/api/tests/unit/connector-policies-not-self-authorizing.test.ts` (a `hubspot:deal-update` request cannot authorize itself through declared facts)
-- `packages/api/src/bootstrap/createApprovalIssuerRegistry.ts` (trusted approvers: code list plus `approval_issuers`, fail closed)
-
-The authorization model for approvals is in 2.42 and 2.47, and the connector split is in 2.23. Dated updates, including the removal of the connector and the policy history, are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
 ## 3.11 Durable, Third-Party-Verifiable Refusal and Audit Records (RFC-0021, Scoped)
 
