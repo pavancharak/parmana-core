@@ -207,11 +207,7 @@ describe("parseAllowedCapabilities", () => {
       parseAllowedCapabilities(
         " erp:invoice-pay , erp:record-read ,,erp:record-update",
       ),
-    ).toEqual([
-      "erp:invoice-pay",
-      "erp:record-read",
-      "erp:record-update",
-    ]);
+    ).toEqual(["erp:invoice-pay", "erp:record-read", "erp:record-update"]);
   });
 
   it('accepts the "*" wildcard as an ordinary value', () => {
