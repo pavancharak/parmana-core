@@ -144,5 +144,6 @@ Every gap in `VERIFICATION-GAPS.md`, with its title and the status its entry sta
 | [G-148](../VERIFICATION-GAPS.md) | Decisions do not name the comparison method or version behind the verdict (R3)                                 | closed: method and version recorded (PR #459, awaiting merge)               |
 | [G-149](../VERIFICATION-GAPS.md) | Authorizations with no signals hash skip the release-time signal and approval checks                           | closed: refused at release                                                  |
 | [G-150](../VERIFICATION-GAPS.md) | CLAIMS.md section 5 says nothing notifies anyone on refusal, but the approval notifier does                    | closed: claim corrected                                                     |
+| [G-156](../VERIFICATION-GAPS.md) | The manifest's read or write label is not enforced, so a capability marked "read" can send a write             | fixed in parmana-connect, not yet merged                                    |
 
-Gaps indexed: 140.
+Gaps indexed: 141.

@@ -366,6 +366,7 @@ Do not edit it by hand: run `npx tsx scripts/gap-status.ts`. `npm test` fails wh
 | G-148 | Decisions do not name the comparison method or version behind the verdict (R3).                     | closed                                                                                                                                                         |
 | G-149 | Authorizations with no signals hash skip the release-time signal and approval checks.               | closed                                                                                                                                                         |
 | G-150 | CLAIMS.md section 5 says nothing notifies anyone on refusal, but the approval notifier does.        | closed                                                                                                                                                         |
+| G-156 | The manifest's read or write label is not enforced, so a capability marked "read" can send a write. | fixed in parmana-connect on branch claude/gracious-newton-s2lu87 (commit 056e8ac), not yet merged to main                                                      |
 
 <!-- gap-status:end -->
 
