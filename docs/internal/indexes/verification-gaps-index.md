@@ -144,5 +144,10 @@ Every gap in `VERIFICATION-GAPS.md`, with its title and the status its entry sta
 | [G-148](../VERIFICATION-GAPS.md) | Decisions do not name the comparison method or version behind the verdict (R3)                                 | closed: method and version recorded (PR #459, awaiting merge)               |
 | [G-149](../VERIFICATION-GAPS.md) | Authorizations with no signals hash skip the release-time signal and approval checks                           | closed: refused at release                                                  |
 | [G-150](../VERIFICATION-GAPS.md) | CLAIMS.md section 5 says nothing notifies anyone on refusal, but the approval notifier does                    | closed: claim corrected                                                     |
+| [G-151](../VERIFICATION-GAPS.md) | No approved inventory of tool and MCP connections for agents                                                   | open                                                                        |
+| [G-152](../VERIFICATION-GAPS.md) | Log retention of 180 days is not defined or enforced                                                           | open                                                                        |
+| [G-153](../VERIFICATION-GAPS.md) | No agent rollback, and no guard against automatic restart after an emergency stop                              | open                                                                        |
+| [G-154](../VERIFICATION-GAPS.md) | No AI bill of materials (AIBOM) or model-artifact integrity check                                              | open                                                                        |
+| [G-155](../VERIFICATION-GAPS.md) | No review-and-challenge flow for AI decisions (contestability)                                                 | open                                                                        |
 
-Gaps indexed: 140.
+Gaps indexed: 145.

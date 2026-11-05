@@ -366,6 +366,11 @@ Do not edit it by hand: run `npx tsx scripts/gap-status.ts`. `npm test` fails wh
 | G-148 | Decisions do not name the comparison method or version behind the verdict (R3).                     | closed                                                                                                                                                         |
 | G-149 | Authorizations with no signals hash skip the release-time signal and approval checks.               | closed                                                                                                                                                         |
 | G-150 | CLAIMS.md section 5 says nothing notifies anyone on refusal, but the approval notifier does.        | closed                                                                                                                                                         |
+| G-151 | No approved inventory of tool and MCP connections for agents.                                       | open                                                                                                                                                           |
+| G-152 | Log retention of 180 days is not defined or enforced.                                               | open                                                                                                                                                           |
+| G-153 | No agent rollback, and no guard against automatic restart after an emergency stop.                  | open                                                                                                                                                           |
+| G-154 | No AI bill of materials (AIBOM) or model-artifact integrity check.                                  | open                                                                                                                                                           |
+| G-155 | No review-and-challenge flow for AI decisions (contestability).                                     | open                                                                                                                                                           |
 
 <!-- gap-status:end -->
 
