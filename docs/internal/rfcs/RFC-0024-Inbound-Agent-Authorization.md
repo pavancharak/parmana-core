@@ -62,7 +62,14 @@ enforced on it.
 - **Refusal and approval records (question 3).** Parmana records inbound requests, including refusals
   and approvals, as signed records, the same way it records outbound refusals (RFC-0021). A business
   gets the same evidence for a partner's call as for its own agent's call.
-- Still open: question 4 (bypass), 5 (reversibility tier), and 6 (scope of the record).
+- **No bypass (decided by the user).** A partner's agent must not be able to reach a business system
+  without Parmana's check. Option C does not meet this, so it is not the end state.
+- **Same rules inbound as outbound (decided by the user).** An inbound request is subject to the same
+  policies, approvals and signed records as an outbound one. Nothing separate is invented for partners.
+- **Option A chosen (decided by the user).** Each business system that accepts external agent requests
+  calls Parmana to check the request before it acts. Implementation is not started.
+- Still open: question 4 (how the no-bypass rule is verified, and what is recorded if it fails),
+  5 (reversibility tier per action type), and 6 (scope of the record).
 
 # Questions to settle before building
 
