@@ -52,32 +52,40 @@ enforced on it.
 
 # Decisions so far
 
-- **2026-11-05, option C now.** The limit is documented on the public limitations page, under
-  "Inbound agents that reach your systems directly". No engineering is started.
-- **2026-11-05, identity (question 1), interim.** An external agent is identified by the partner's
-  API key. This gives no per-agent grant or single-agent revocation, so it is a stopgap for the
-  documentation-only phase. Options A or B will need a per-agent identity.
-- **2026-11-05, authority (question 2).** An external agent may only propose an action. The business
-  decides whether it runs. A proposal is not authority to act, whatever the partner's key allows to be asked.
-- **Refusal and approval records (question 3).** Parmana records inbound requests, including refusals
-  and approvals, as signed records, the same way it records outbound refusals (RFC-0021). A business
-  gets the same evidence for a partner's call as for its own agent's call.
-- **No bypass (decided by the user).** A partner's agent must not be able to reach a business system
-  without Parmana's check. Option C does not meet this, so it is not the end state.
-- **Same rules inbound as outbound (decided by the user).** An inbound request is subject to the same
-  policies, approvals and signed records as an outbound one. Nothing separate is invented for partners.
-- **Option A chosen (decided by the user).** Each business system that accepts external agent requests
-  calls Parmana to check the request before it acts. Implementation is not started.
-- **Verifying no bypass (question 4).** The business system refuses any request that does not carry a
-  valid Parmana approval, so the check happens in the system, not only in Parmana. Option A implies this.
-  To check that it holds, a scheduled probe sends a direct request with no approval and expects a refusal,
-  in the same pattern as the kill-switch probe. A probe that gets through is recorded as a signed record and
-  raised as an alert. A bypass the probe does not see cannot be known to Parmana, so the record must say
-  "not verified" rather than imply coverage.
-- **Which actions need a human (question 5).** Set per action in the policy. Each action's policy
-  states whether it needs a human approval, and the record shows the approval used. The same policy
-  applies to an outside agent's request as to one of the business's own agents.
-- Still open: question 6 (scope of the record).
+Status as of 2026-11-05. Every answer below was decided by the project owner and is recorded in merged
+pull requests (#436, #437, #438, #439) or on the branch for the next pull request. Nothing below is built yet.
+
+1. **Approach.** The limit is documented now (option C). The chosen design to build is option A: each
+   business system that accepts external agent requests calls Parmana before it acts.
+2. **No bypass.** A partner's agent must not be able to reach a business system without Parmana's check.
+   Option C alone does not meet this.
+3. **Identity (question 1), interim.** An external agent is identified by the partner's API key. This
+   allows no per-agent grant and no revocation of a single agent, so it is a stopgap until option A is built.
+4. **Authority (question 2).** An external agent may only propose an action. The business decides
+   whether it runs. A proposal is never permission to act.
+5. **Records of refusals and approvals (question 3).** Inbound requests, including refusals and
+   approvals, are recorded as signed records, the same way outbound refusals are (RFC-0021).
+6. **Verifying no bypass (question 4).** The business system refuses any request that does not carry a
+   valid Parmana approval. A scheduled probe sends a direct request with no approval and expects a
+   refusal, in the same pattern as the kill-switch probe. A probe that gets through is recorded as a
+   signed record and raised as an alert. A bypass the probe does not see cannot be known to Parmana, so
+   the record must say "not verified" rather than imply coverage.
+7. **Which actions need a human (question 5).** Set per action in the policy. Each action's policy states
+   whether a human approval is needed, and the record shows the approval used. The same policy applies to
+   an outside agent's request as to one of the business's own agents.
+8. **What the record of an outside request contains (question 6).** Every record of an outside request
+   contains:
+   - who asked: the partner's key identifier;
+   - what was proposed: the action, the resource it touches, and the amount where there is one;
+   - which rule applied: the policy and its version;
+   - the decision: approved, refused, or waiting for a person;
+   - who approved it, if a person did, and when;
+   - whether the check was in place: "verified" or "not verified".
+     The record does not contain the partner's internal reasoning, which the business cannot see. Personal
+     details are kept to the minimum needed.
+
+Questions 1 to 6 are all answered. Option A is not built, and the probe that checks no-bypass does not
+exist yet.
 
 # Questions to settle before building
 
