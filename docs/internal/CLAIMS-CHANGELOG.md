@@ -386,3 +386,9 @@ _Added to `CLAIMS.md` on 2026-11-05. These are new claims, not updates to earlie
 - 3.31 The inbound decision record holds any action, and the extension is applied (scoped).
 - 3.32 The runtime decides without executing, with unchanged behaviour (scoped).
 - 3.33 A failed kill switch probe opens a P1 issue (scoped).
+
+## Not-claimed list: refusal notification (G-150, 2026-11-05)
+
+_Originally at the not-claimed list in `CLAIMS.md`, the bullet about refusal escalation._
+
+**Update (2026-11-05):** the bullet said "nothing notifies anyone". That is wrong when an approval would cure a refusal and the approval notifier is configured. The bullet now describes the notifier, its configuration (`APPROVAL_WEBHOOK_URL`, `APPROVAL_EMAIL_TO`), its best-effort delivery and its lack of retry (claim 2.46).

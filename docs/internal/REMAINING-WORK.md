@@ -365,7 +365,7 @@ Do not edit it by hand: run `npx tsx scripts/gap-status.ts`. `npm test` fails wh
 | G-147 | A policy decision has no insufficient-evidence outcome: missing signals evaluate as false (R5).     | open                                                                                                                                                           |
 | G-148 | Decisions do not name the comparison method or version behind the verdict (R3).                     | open                                                                                                                                                           |
 | G-149 | Authorizations with no signals hash skip the release-time signal and approval checks.               | closed                                                                                                                                                         |
-| G-150 | CLAIMS.md section 5 says nothing notifies anyone on refusal, but the approval notifier does.        | open                                                                                                                                                           |
+| G-150 | CLAIMS.md section 5 says nothing notifies anyone on refusal, but the approval notifier does.        | closed                                                                                                                                                         |
 
 <!-- gap-status:end -->
 
