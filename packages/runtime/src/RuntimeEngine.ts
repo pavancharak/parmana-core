@@ -280,11 +280,13 @@ export class RuntimeEngine {
     });
   }
 
-  public async execute(transaction: BusinessTransaction): Promise<{
-    transaction: BusinessTransaction;
-    context: RuntimeContext;
-    trustRecord: ExecutionTrustRecord;
-  }> {
+  /**
+   * Decides a transaction without executing it: loads the policy, runs every check, and
+   * writes the decision, with a refusal record when it is refused. Nothing is authorized or
+   * sent to a connector here. execute() calls this, then authorizes and executes an APPROVED
+   * decision; callers that need only the decision call this directly.
+   */
+  public async decide(transaction: BusinessTransaction) {
     //
     // Runtime signals
     //
@@ -752,6 +754,33 @@ export class RuntimeEngine {
         await this.notifyApprovalNeeded(transaction, decision, policy, signals);
       }
     }
+
+    return {
+      decision,
+      policy,
+      policyContentHash,
+      policyGovernanceAnchor,
+      signals,
+      policyDecision,
+      authority,
+      businessValidation,
+    };
+  }
+
+  public async execute(transaction: BusinessTransaction): Promise<{
+    transaction: BusinessTransaction;
+    context: RuntimeContext;
+    trustRecord: ExecutionTrustRecord;
+  }> {
+    const {
+      decision,
+      policyContentHash,
+      policyGovernanceAnchor,
+      signals,
+      policyDecision,
+      authority,
+      businessValidation,
+    } = await this.decide(transaction);
 
     //
     // Enforce
