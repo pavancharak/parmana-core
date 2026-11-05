@@ -57,6 +57,10 @@ export const inboundDecisionRepository = lazyRepository(
   (provider) => provider.inboundDecisions,
 );
 
+export const inboundCheckRepository = lazyRepository(
+  (provider) => provider.inboundChecks,
+);
+
 export const inboundOutcomeRepository = lazyRepository(
   (provider) => provider.inboundOutcomes,
 );

@@ -23,6 +23,7 @@ import type { EndpointAddressLookup } from "@parmana/shared";
 import type { ExecutionTrustApplication } from "@parmana/runtime";
 
 import { createExecuteRouter } from "./routes/execute.js";
+import { createInboundCheckRouter } from "./routes/inbound-checks.js";
 import { createKillSwitchRouter } from "./routes/kill-switch.js";
 import { killSwitchGuard } from "./killSwitch/killSwitchGuard.js";
 import type { KillSwitchService } from "./killSwitch/KillSwitchService.js";
@@ -46,6 +47,7 @@ import { createInboundDecisionRouter } from "./routes/inbound-decisions.js";
 import { createInboundOutcomeRouter } from "./routes/inbound-outcomes.js";
 import {
   authorityGrantRepository,
+  inboundCheckRepository,
   inboundDecisionRepository,
   inboundOutcomeRepository,
 } from "./repositories.js";
@@ -490,6 +492,22 @@ export function createApp(
         },
         findGrant: (partnerId) =>
           authorityGrantRepository.findActive(partnerId, "inbound:refund"),
+      }),
+    );
+    app.use(
+      "/v1/inbound/checks",
+      createInboundCheckRouter({
+        audience: options.inboundDecisions.audience,
+        sign: options.inboundDecisions.sign,
+        findGrant: (callerId, capability) =>
+          authorityGrantRepository.findActive(callerId, capability),
+        store: {
+          append: (record) =>
+            inboundCheckRepository.append({
+              ...record,
+              issuedAt: new Date(),
+            }),
+        },
       }),
     );
   }
