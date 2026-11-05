@@ -135,8 +135,8 @@ Every gap in `VERIFICATION-GAPS.md`, with its title and the status its entry sta
 | [G-139](../VERIFICATION-GAPS.md) | No export is designed for a six-hour incident reporting window                                                 | open                                       |
 | [G-140](../VERIFICATION-GAPS.md) | Memory and reasoning are not recorded                                                                          | open                                       |
 | [G-141](../VERIFICATION-GAPS.md) | Content the agent reads can carry instructions                                                                 | open                                       |
-| [G-142](../VERIFICATION-GAPS.md) | The inbound check does not evaluate the capability's policy                                                    | open                                       |
-| [G-143](../VERIFICATION-GAPS.md) | Inbound records do not carry the policy name or version, or the approver                                       | open                                       |
+| [G-142](../VERIFICATION-GAPS.md) | The inbound check does not evaluate the capability's policy                                                    | resolved in #448 (awaiting merge)          |
+| [G-143](../VERIFICATION-GAPS.md) | Inbound records do not carry the policy name or version, or the approver                                       | partly closed: approver not recorded       |
 | [G-144](../VERIFICATION-GAPS.md) | Inbound approvals rest only on grant limits, not on facts the business confirms                                | open                                       |
 | [G-145](../VERIFICATION-GAPS.md) | The probe key is rotated by hand, and the server does not check it at startup                                  | open                                       |
 | [G-146](../VERIFICATION-GAPS.md) | No business system calls the inbound check, and no probe checks that a direct call is refused                  | open                                       |

@@ -382,7 +382,7 @@ Before this update, the paragraph read:
 
 _Added to `CLAIMS.md` on 2026-11-05. These are new claims, not updates to earlier ones._
 
-- 3.30 The inbound check refuses without a current grant and signs every decision (scoped).
+- 3.30 The inbound check approves only when the bound policy and the grant both allow (scoped).
 - 3.31 The inbound decision record holds any action, and the extension is applied (scoped).
 - 3.32 The runtime decides without executing, with unchanged behaviour (scoped).
 - 3.33 A failed kill switch probe opens a P1 issue (scoped).
