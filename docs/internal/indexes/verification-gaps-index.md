@@ -141,7 +141,7 @@ Every gap in `VERIFICATION-GAPS.md`, with its title and the status its entry sta
 | [G-145](../VERIFICATION-GAPS.md) | The probe key is rotated by hand, and the server does not check it at startup                                  | partly closed: startup check and key check added; rotation not scheduled |
 | [G-146](../VERIFICATION-GAPS.md) | No business system calls the inbound check, and no probe checks that a direct call is refused                  | open                                                                     |
 | [G-147](../VERIFICATION-GAPS.md) | A policy decision has no insufficient-evidence outcome: missing signals evaluate as false (R5)                 | open                                                                     |
-| [G-148](../VERIFICATION-GAPS.md) | Decisions do not name the comparison method or version behind the verdict (R3)                                 | open                                                                     |
+| [G-148](../VERIFICATION-GAPS.md) | Decisions do not name the comparison method or version behind the verdict (R3)                                 | closed: method and version recorded                                      |
 | [G-149](../VERIFICATION-GAPS.md) | Authorizations with no signals hash skip the release-time signal and approval checks                           | closed: refused at release                                               |
 | [G-150](../VERIFICATION-GAPS.md) | CLAIMS.md section 5 says nothing notifies anyone on refusal, but the approval notifier does                    | closed: claim corrected                                                  |
 

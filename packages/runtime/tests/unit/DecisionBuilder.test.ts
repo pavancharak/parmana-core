@@ -44,6 +44,18 @@ function policyDecision(
  * the trace now survives into the built Decision, verbatim.
  */
 describe("DecisionBuilder", () => {
+  it("names the evaluation method and version that produced the verdict (G-148)", () => {
+    const decision = new DecisionBuilder().build(
+      transaction(),
+      policyDecision(),
+    );
+
+    expect(decision.evaluationMethod).toEqual({
+      id: "deterministic-rules",
+      version: "1",
+    });
+  });
+
   it("carries matchedRuleId, evaluatedRules, and matchedPath through from the PolicyDecision", () => {
     const decision = new DecisionBuilder().build(
       transaction(),

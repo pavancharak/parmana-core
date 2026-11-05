@@ -5,7 +5,11 @@ import type { DecisionAssessment, JsonValue } from "@parmana/shared";
 
 import { Decision, DecisionOutcome } from "@parmana/shared";
 
-import { PolicyDecision, PolicyOutcome } from "@parmana/policy";
+import {
+  POLICY_EVALUATION_METHOD,
+  PolicyDecision,
+  PolicyOutcome,
+} from "@parmana/policy";
 
 /**
  * Builds the canonical Decision artifact.
@@ -33,6 +37,10 @@ export class DecisionBuilder {
   ): Decision {
     return {
       decisionId: crypto.randomUUID(),
+      evaluationMethod: {
+        id: POLICY_EVALUATION_METHOD.id,
+        version: POLICY_EVALUATION_METHOD.version,
+      },
 
       intentId: transaction.intent.intentId,
 
