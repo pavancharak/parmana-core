@@ -2,126 +2,138 @@
 
 Every gap in `VERIFICATION-GAPS.md`, with its title and the status its entry states. Links go to the gap log; the entries are bold lines, so the links open the file rather than the exact entry.
 
-| Gap                              | Title                                                                                                          | Status                        |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------- |
-| [G-1](../VERIFICATION-GAPS.md)   | Duplicate Business Transaction ID: real, deterministic data-loss race in                                       | resolved (in entry)           |
-| [G-2](../VERIFICATION-GAPS.md)   | No CI runs the main test suite                                                                                 | closed                        |
-| [G-3](../VERIFICATION-GAPS.md)   | Live external credentials are used by default, unlabeled, on every local test run.                             | resolved (in entry)           |
-| [G-4](../VERIFICATION-GAPS.md)   | Hybrid/post-quantum signing was dead configuration in production                                               | pre-production                |
-| [G-5](../VERIFICATION-GAPS.md)   | OverrideService has zero test coverage and no HTTP route.                                                      | not stated                    |
-| [G-6](../VERIFICATION-GAPS.md)   | packages/receipt has zero test files                                                                           | not stated                    |
-| [G-7](../VERIFICATION-GAPS.md)   | execution-failure.integration.test.ts is permanently describe.skipped, not                                     | closed (in entry)             |
-| [G-8](../VERIFICATION-GAPS.md)   | Several error branches remain untested, all reachable only via direct library use,                             | not stated                    |
-| [G-9](../VERIFICATION-GAPS.md)   | ExecutionControlService and SessionCredentialSecureConnector each independently                                | cosmetic                      |
-| [G-10](../VERIFICATION-GAPS.md)  | CLAIMS.md citations that are vague or indirect rather than pointing at a specific                              | not stated                    |
-| [G-11](../VERIFICATION-GAPS.md)  | PARTIALLY CLOSED in the 2026-07-17 session                                                                     | closed                        |
-| [G-13](../VERIFICATION-GAPS.md)  | MemoryNonceStore and InMemoryCallerAuditSink both lose all state on process                                    | resolved (in entry)           |
-| [G-14](../VERIFICATION-GAPS.md)  | The test that proves G-13 closed could silently not run at all, with a green                                   | resolved (in entry)           |
-| [G-15](../VERIFICATION-GAPS.md)  | A default npm test on a machine with live Supabase credentials configured either                               | resolved (in entry)           |
-| [G-19](../VERIFICATION-GAPS.md)  | POST /execute returns HTTP 500 for an expected policy rejection, and neither the                               | closed (in entry)             |
-| [G-24](../VERIFICATION-GAPS.md)  | Policy-evaluation signals were never bound to the executed Intent: the most                                    | closed (in entry)             |
-| [G-25](../VERIFICATION-GAPS.md)  | Truncated credential fragments reached the caller-visible POST /execute response.                              | resolved (in entry)           |
-| [G-26](../VERIFICATION-GAPS.md)  | External audit of docs/internal/CLAIMS.md 2.5/2.6 ("Execution Evidence / Receipt") reported                    | resolved (in entry)           |
-| [G-27](../VERIFICATION-GAPS.md)  | payments:execute (vendor-payment) was a gap-in-waiting against the public                                      | resolved (in entry)           |
-| [G-28](../VERIFICATION-GAPS.md)  | PARMANA_AUTH_DISABLED=true's exact scope, precisely documented (previously                                     | not stated                    |
-| [G-29](../VERIFICATION-GAPS.md)  | Structural/admission-time rejections — malformed input, missing required fields,                               | resolved (in entry)           |
-| [G-30](../VERIFICATION-GAPS.md)  | github:pr-fetch/github:pr-merge were wired into production                                                     | resolved (in entry)           |
-| [G-31](../VERIFICATION-GAPS.md)  | Runtime signals were verified once, before authorization, but never re-checked at                              | closed (in entry)             |
-| [G-32](../VERIFICATION-GAPS.md)  | Signing key for Execution Authorizations was shared across every tenant in a                                   | resolved (in entry)           |
-| [G-33](../VERIFICATION-GAPS.md)  | boundSignals coverage on rule-referenced facts was advisory (a console.warn at                                 | resolved (in entry)           |
-| [G-34](../VERIFICATION-GAPS.md)  | SupabaseClientFactory (the supabase-js/PostgREST client class) had zero remaining                              | resolved (in entry)           |
-| [G-35](../VERIFICATION-GAPS.md)  | dilithium3 (the internal signature-algorithm identifier) had no way for a new                                  | resolved (in entry)           |
-| [G-36](../VERIFICATION-GAPS.md)  | @supabase/supabase-js follow-on dependency-hygiene pass (flagged, not required, by                             | resolved (in entry)           |
-| [G-37](../VERIFICATION-GAPS.md)  | G-33's fail-closed boundSignals change (PolicyValidator.validate() now throws for                              | resolved (in entry)           |
-| [G-38](../VERIFICATION-GAPS.md)  | PolicyOutcome/PolicyAction carried a third value, REQUIRE_OVERRIDE, that no real                               | resolved (in entry)           |
-| [G-39](../VERIFICATION-GAPS.md)  | No detection existed for two policy rules whose conditions could both be true for the                          | resolved (in entry)           |
-| [G-42](../VERIFICATION-GAPS.md)  | ExecutionAuditSink was in-memory only (MemoryExecutionAuditSink) in production,                                | resolved (in entry)           |
-| [G-43](../VERIFICATION-GAPS.md)  | parmana-paytm-agent (a separate repository this codebase forwards Paytm refund                                 | resolved (in entry)           |
-| [G-44](../VERIFICATION-GAPS.md)  | PolicyEngine.evaluate()'s structured rule-match trace was computed, then discarded                             | resolved (in entry)           |
-| [G-45](../VERIFICATION-GAPS.md)  | The policy-governance evidence-anchor chain (G-24 / §2.27 /                                                    | resolved (in entry)           |
-| [G-46](../VERIFICATION-GAPS.md)  | No evidence recorded whether a connector's response included an independent,                                   | resolved (in entry)           |
-| [G-47](../VERIFICATION-GAPS.md)  | PolicyGovernanceExecutionVerifier treats a signature-tamper signal                                             | not stated                    |
-| [G-48](../VERIFICATION-GAPS.md)  | createExecutionGateway.ts passed an unconditional new FileKeyProvider() as                                     | resolved (in entry)           |
-| [G-49](../VERIFICATION-GAPS.md)  | express-rate-limit v8's ERR_ERL_STORE_REUSE violated the library's documented                                  | resolved (in entry)           |
-| [G-50](../VERIFICATION-GAPS.md)  | Policy approver authority is not scoped                                                                        | pre-production                |
-| [G-51](../VERIFICATION-GAPS.md)  | Only the HubSpot capability has an independent signal state verifier, so most policy signals are               | not stated                    |
-| [G-52](../VERIFICATION-GAPS.md)  | The connector can be called before the Execution Trust Record can be signed, so a signing                      | closed (in entry)             |
-| [G-53](../VERIFICATION-GAPS.md)  | There is no way to rebuild a missing Execution Trust Record for an action that was                             | pre-production                |
-| [G-54](../VERIFICATION-GAPS.md)  | There is no operation to close an Execution Intent that was reconciled by hand                                 | resolved (in entry)           |
-| [G-55](../VERIFICATION-GAPS.md)  | The SDKs cannot verify or manage Execution Intents                                                             | closed (in entry)             |
-| [G-56](../VERIFICATION-GAPS.md)  | There was no one command local deployment                                                                      | closed                        |
-| [G-57](../VERIFICATION-GAPS.md)  | The storage provider names did not match what the code does                                                    | closed                        |
-| [G-58](../VERIFICATION-GAPS.md)  | Migrations were not applied at start, and one migration assumes Supabase roles.                                | closed (in entry)             |
-| [G-59](../VERIFICATION-GAPS.md)  | "Console sync" named in the 2026-09-25 plan did not exist                                                      | closed (in entry)             |
-| [G-60](../VERIFICATION-GAPS.md)  | Running with no outbound network had not been tested                                                           | closed                        |
-| [G-61](../VERIFICATION-GAPS.md)  | The migration bundle is not safe to run again on a database that holds data                                    | closed (in entry)             |
-| [G-62](../VERIFICATION-GAPS.md)  | Approving policies on a self hosted deployment needed the repository's signing script                          | closed (in entry)             |
-| [G-63](../VERIFICATION-GAPS.md)  | An authorized action whose connector cannot be reached returned a bare 500. CLOSED 2026-09-25,                 | closed (in entry)             |
-| [G-64](../VERIFICATION-GAPS.md)  | The two SDKs did not cover the same API, and neither covered policy governance                                 | closed (in entry)             |
-| [G-65](../VERIFICATION-GAPS.md)  | A refused request cannot be escalated to a person and then approved                                            | pre-production                |
-| [G-66](../VERIFICATION-GAPS.md)  | The policy version for each action is fixed in code, so a policy change needs a                                | pre-production                |
-| [G-67](../VERIFICATION-GAPS.md)  | A valid Approval Artifact could never pass the Execution Gateway, so an approved HubSpot                       | closed (in entry)             |
-| [G-68](../VERIFICATION-GAPS.md)  | An approver could not be provisioned on Vercel                                                                 | closed (in entry)             |
-| [G-69](../VERIFICATION-GAPS.md)  | On Vercel, a malformed JSON body returned 500 instead of 400. FOUND and CLOSED                                 | closed (in entry)             |
-| [G-70](../VERIFICATION-GAPS.md)  | The refund agent paid an approved refund twice: once through Parmana's connector, then                         | fixed (in entry)              |
-| [G-71](../VERIFICATION-GAPS.md)  | Only one refund per Paytm transaction can go through Parmana, and the refund reason never                      | fixed (in entry)              |
-| [G-72](../VERIFICATION-GAPS.md)  | The HubSpot state check signed its own deal fetch with the local key file, so under                            | fixed (in entry)              |
-| [G-73](../VERIFICATION-GAPS.md)  | An agent could authorize a pull request merge by declaring GitHub facts true                                   | fixed (in entry)              |
-| [G-74](../VERIFICATION-GAPS.md)  | llm-tool-call approves a tool call when the caller declares humanApproval: true                                | closed (in entry)             |
-| [G-75](../VERIFICATION-GAPS.md)  | An agent could authorize a refund up to 10000 by declaring the order eligible and the fraud                    | closed (in entry)             |
-| [G-76](../VERIFICATION-GAPS.md)  | An agent could post any text to any Slack channel the bot is in, by declaring the channel                      | fixed (in entry)              |
-| [G-77](../VERIFICATION-GAPS.md)  | A refusal reason tells an agent which caller declared fact to flip                                             | closed (in entry)             |
-| [G-78](../VERIFICATION-GAPS.md)  | The unauthenticated routes that check signatures or write data had no rate limit                               | fixed (in entry)              |
-| [G-79](../VERIFICATION-GAPS.md)  | CI's policy approval check never checked anything                                                              | closed (in entry)             |
-| [G-80](../VERIFICATION-GAPS.md)  | Most actions were authorized with no human approval at all                                                     | closed (in entry)             |
-| [G-81](../VERIFICATION-GAPS.md)  | A registered external connector receives no release, and its policy is not bound yet                           | fixed (in entry)              |
-| [G-82](../VERIFICATION-GAPS.md)  | What an external endpoint answers is its claim, not proof                                                      | pre-production                |
-| [G-83](../VERIFICATION-GAPS.md)  | The release transport connects to the first checked address only                                               | closed (in entry)             |
-| [G-84](../VERIFICATION-GAPS.md)  | An approved request takes 24 to 32 seconds in production                                                       | pre-production                |
-| [G-85](../VERIFICATION-GAPS.md)  | The Python SDK cannot verify its own decoded record when previousChainHash is null.                            | fixed (in entry)              |
-| [G-86](../VERIFICATION-GAPS.md)  | All visitor data in the public sandbox was deleted around the retention job's first run, cause not             | pre-production (sandbox only) |
-| [G-87](../VERIFICATION-GAPS.md)  | A POST /execute or POST /transactions body without metadata, intent or policy returns a bare                   | closed (in entry)             |
-| [G-88](../VERIFICATION-GAPS.md)  | A policy named .. let FilePolicyRepository read and write outside the policy directory                         | closed (in entry)             |
-| [G-89](../VERIFICATION-GAPS.md)  | An edited Execution with its chainSignature removed passed the execution chain check                           | closed (in entry)             |
-| [G-90](../VERIFICATION-GAPS.md)  | PolicyValidator threw a TypeError instead of refusing a malformed policy                                       | closed (in entry)             |
-| [G-91](../VERIFICATION-GAPS.md)  | The offline verifier threw on a malformed signatures field                                                     | closed (in entry)             |
-| [G-92](../VERIFICATION-GAPS.md)  | Business validation (RFC-0023): sources can be registered and are verified, but none is connected.             | not stated                    |
-| [G-93](../VERIFICATION-GAPS.md)  | Per-agent authority grants (RFC-0023 phase 3) are opt in, and their limits are per request.                    | pre-production                |
-| [G-94](../VERIFICATION-GAPS.md)  | What a decision rests on is re-checked at release, but "execute only if still valid" at the system is the      | pre-production                |
-| [G-95](../VERIFICATION-GAPS.md)  | The Policy Governance integrity check at startup could not stop a server from starting on a mismatch           | not stated                    |
-| [G-96](../VERIFICATION-GAPS.md)  | The full policy approval scan could report success having checked nothing                                      | not stated                    |
-| [G-97](../VERIFICATION-GAPS.md)  | The governance UI would send its API key in clear text to any configured base URL. loadGovernanceUiConfig() in | not stated                    |
-| [G-98](../VERIFICATION-GAPS.md)  | The Vercel serverless entry did not refuse startup on a Policy Governance integrity mismatch, and skipped the  | not stated                    |
-| [G-99](../VERIFICATION-GAPS.md)  | POST /transactions did not check metadata.tenantId against the caller's allowed tenants                        | not stated                    |
-| [G-100](../VERIFICATION-GAPS.md) | Connector credentials could be sent to an unchecked base URL, and a 2xx non-JSON merge or update counted as su | not stated                    |
-| [G-101](../VERIFICATION-GAPS.md) | The TypeScript SDK accepted any endpoint and printed its API key, and the SDKs trusted a non-boolean valid and | not stated                    |
-| [G-102](../VERIFICATION-GAPS.md) | Smaller leaks and gaps found by the audit                                                                      | not stated                    |
-| [G-103](../VERIFICATION-GAPS.md) | A signed authorization released for a denied decision                                                          | not stated                    |
-| [G-104](../VERIFICATION-GAPS.md) | The in-process release service trusted the caller's verification flags                                         | not stated                    |
-| [G-105](../VERIFICATION-GAPS.md) | Test and development environments skipped policy governance by default                                         | not stated                    |
-| [G-106](../VERIFICATION-GAPS.md) | A published policy version could be overwritten in place                                                       | not stated                    |
-| [G-107](../VERIFICATION-GAPS.md) | The HubSpot verification fetch carried no policy hash                                                          | not stated                    |
-| [G-108](../VERIFICATION-GAPS.md) | The caller audit chain cannot detect deleting its newest row                                                   | not stated                    |
-| [G-109](../VERIFICATION-GAPS.md) | Caller authentication could be disabled and the demo approver enabled in production                            | not stated                    |
-| [G-110](../VERIFICATION-GAPS.md) | There is no revocation of a single authorization                                                               | not stated                    |
-| [G-111](../VERIFICATION-GAPS.md) | The HubSpot verification helper approves its own fetch                                                         | not stated                    |
-| [G-112](../VERIFICATION-GAPS.md) | The offline verifier loads the repository .env                                                                 | not stated                    |
-| [G-113](../VERIFICATION-GAPS.md) | The execution-boundary signal check fails open during bootstrap                                                | not stated                    |
-| [G-114](../VERIFICATION-GAPS.md) | The legacyInsecure connector option skips the session credential and audit requirement                         | not stated                    |
-| [G-115](../VERIFICATION-GAPS.md) | End-to-end proof audit covered only the Paytm refund path                                                      | not stated                    |
-| [G-116](../VERIFICATION-GAPS.md) | The startup governance integrity check was not exercised by the proof audit                                    | not stated                    |
-| [G-117](../VERIFICATION-GAPS.md) | The production stores and signing backends were not exercised by the proof audit                               | not stated                    |
-| [G-118](../VERIFICATION-GAPS.md) | The attestation key that authorizes the in-process release path lives in the process that calls it             | not stated                    |
-| [G-119](../VERIFICATION-GAPS.md) | Hybrid signing is not live on any deployment                                                                   | pre-production                |
-| [G-120](../VERIFICATION-GAPS.md) | A schema version 2 record can be downgraded by anyone who can write to storage                                 | pre-production                |
-| [G-121](../VERIFICATION-GAPS.md) | Verifiers outside this repository read only schema version 2. The public verifier 0.3.0 reads schema version 3 | pre-production                |
-| [G-122](../VERIFICATION-GAPS.md) | Parmana has no operator kill switch, and no fresh check that a stop is in force                                | not stated                    |
-| [G-123](../VERIFICATION-GAPS.md) | Production policy approvals were refused: the Vercel entry did not pass the checker scope                      | not stated                    |
-| [G-124](../VERIFICATION-GAPS.md) | The server trusted certificates from eMudhra's compromised intermediate CA keys                                | not stated                    |
-| [G-125](../VERIFICATION-GAPS.md) | A retry after a lost response cannot recover the outcome of a mutating call                                    | not stated                    |
-| [G-126](../VERIFICATION-GAPS.md) | A loopback http:// connector base URL was accepted in production                                               | not stated                    |
-| [G-127](../VERIFICATION-GAPS.md) | A revoked caller API key stayed valid until the server restarted                                               | not stated                    |
-| [G-128](../VERIFICATION-GAPS.md) | Connector credentials are readable by code on the same host                                                    | not stated                    |
-| [G-129](../VERIFICATION-GAPS.md) | Agents that reach your systems directly are not checked or recorded by Parmana                                 | pre-production                |
+| Gap                              | Title                                                                                                          | Status                                 |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| [G-1](../VERIFICATION-GAPS.md)   | Duplicate Business Transaction ID: real, deterministic data-loss race in                                       | resolved (in entry)                    |
+| [G-2](../VERIFICATION-GAPS.md)   | No CI runs the main test suite                                                                                 | closed                                 |
+| [G-3](../VERIFICATION-GAPS.md)   | Live external credentials are used by default, unlabeled, on every local test run.                             | resolved (in entry)                    |
+| [G-4](../VERIFICATION-GAPS.md)   | Hybrid/post-quantum signing was dead configuration in production                                               | pre-production                         |
+| [G-5](../VERIFICATION-GAPS.md)   | OverrideService has zero test coverage and no HTTP route.                                                      | not stated                             |
+| [G-6](../VERIFICATION-GAPS.md)   | packages/receipt has zero test files                                                                           | not stated                             |
+| [G-7](../VERIFICATION-GAPS.md)   | execution-failure.integration.test.ts is permanently describe.skipped, not                                     | closed (in entry)                      |
+| [G-8](../VERIFICATION-GAPS.md)   | Several error branches remain untested, all reachable only via direct library use,                             | not stated                             |
+| [G-9](../VERIFICATION-GAPS.md)   | ExecutionControlService and SessionCredentialSecureConnector each independently                                | cosmetic                               |
+| [G-10](../VERIFICATION-GAPS.md)  | CLAIMS.md citations that are vague or indirect rather than pointing at a specific                              | not stated                             |
+| [G-11](../VERIFICATION-GAPS.md)  | PARTIALLY CLOSED in the 2026-07-17 session                                                                     | closed                                 |
+| [G-13](../VERIFICATION-GAPS.md)  | MemoryNonceStore and InMemoryCallerAuditSink both lose all state on process                                    | resolved (in entry)                    |
+| [G-14](../VERIFICATION-GAPS.md)  | The test that proves G-13 closed could silently not run at all, with a green                                   | resolved (in entry)                    |
+| [G-15](../VERIFICATION-GAPS.md)  | A default npm test on a machine with live Supabase credentials configured either                               | resolved (in entry)                    |
+| [G-19](../VERIFICATION-GAPS.md)  | POST /execute returns HTTP 500 for an expected policy rejection, and neither the                               | closed (in entry)                      |
+| [G-24](../VERIFICATION-GAPS.md)  | Policy-evaluation signals were never bound to the executed Intent: the most                                    | closed (in entry)                      |
+| [G-25](../VERIFICATION-GAPS.md)  | Truncated credential fragments reached the caller-visible POST /execute response.                              | resolved (in entry)                    |
+| [G-26](../VERIFICATION-GAPS.md)  | External audit of docs/internal/CLAIMS.md 2.5/2.6 ("Execution Evidence / Receipt") reported                    | resolved (in entry)                    |
+| [G-27](../VERIFICATION-GAPS.md)  | payments:execute (vendor-payment) was a gap-in-waiting against the public                                      | resolved (in entry)                    |
+| [G-28](../VERIFICATION-GAPS.md)  | PARMANA_AUTH_DISABLED=true's exact scope, precisely documented (previously                                     | not stated                             |
+| [G-29](../VERIFICATION-GAPS.md)  | Structural/admission-time rejections — malformed input, missing required fields,                               | resolved (in entry)                    |
+| [G-30](../VERIFICATION-GAPS.md)  | github:pr-fetch/github:pr-merge were wired into production                                                     | resolved (in entry)                    |
+| [G-31](../VERIFICATION-GAPS.md)  | Runtime signals were verified once, before authorization, but never re-checked at                              | closed (in entry)                      |
+| [G-32](../VERIFICATION-GAPS.md)  | Signing key for Execution Authorizations was shared across every tenant in a                                   | resolved (in entry)                    |
+| [G-33](../VERIFICATION-GAPS.md)  | boundSignals coverage on rule-referenced facts was advisory (a console.warn at                                 | resolved (in entry)                    |
+| [G-34](../VERIFICATION-GAPS.md)  | SupabaseClientFactory (the supabase-js/PostgREST client class) had zero remaining                              | resolved (in entry)                    |
+| [G-35](../VERIFICATION-GAPS.md)  | dilithium3 (the internal signature-algorithm identifier) had no way for a new                                  | resolved (in entry)                    |
+| [G-36](../VERIFICATION-GAPS.md)  | @supabase/supabase-js follow-on dependency-hygiene pass (flagged, not required, by                             | resolved (in entry)                    |
+| [G-37](../VERIFICATION-GAPS.md)  | G-33's fail-closed boundSignals change (PolicyValidator.validate() now throws for                              | resolved (in entry)                    |
+| [G-38](../VERIFICATION-GAPS.md)  | PolicyOutcome/PolicyAction carried a third value, REQUIRE_OVERRIDE, that no real                               | resolved (in entry)                    |
+| [G-39](../VERIFICATION-GAPS.md)  | No detection existed for two policy rules whose conditions could both be true for the                          | resolved (in entry)                    |
+| [G-42](../VERIFICATION-GAPS.md)  | ExecutionAuditSink was in-memory only (MemoryExecutionAuditSink) in production,                                | resolved (in entry)                    |
+| [G-43](../VERIFICATION-GAPS.md)  | parmana-paytm-agent (a separate repository this codebase forwards Paytm refund                                 | resolved (in entry)                    |
+| [G-44](../VERIFICATION-GAPS.md)  | PolicyEngine.evaluate()'s structured rule-match trace was computed, then discarded                             | resolved (in entry)                    |
+| [G-45](../VERIFICATION-GAPS.md)  | The policy-governance evidence-anchor chain (G-24 / §2.27 /                                                    | resolved (in entry)                    |
+| [G-46](../VERIFICATION-GAPS.md)  | No evidence recorded whether a connector's response included an independent,                                   | resolved (in entry)                    |
+| [G-47](../VERIFICATION-GAPS.md)  | PolicyGovernanceExecutionVerifier treats a signature-tamper signal                                             | not stated                             |
+| [G-48](../VERIFICATION-GAPS.md)  | createExecutionGateway.ts passed an unconditional new FileKeyProvider() as                                     | resolved (in entry)                    |
+| [G-49](../VERIFICATION-GAPS.md)  | express-rate-limit v8's ERR_ERL_STORE_REUSE violated the library's documented                                  | resolved (in entry)                    |
+| [G-50](../VERIFICATION-GAPS.md)  | Policy approver authority is not scoped                                                                        | pre-production                         |
+| [G-51](../VERIFICATION-GAPS.md)  | Only the HubSpot capability has an independent signal state verifier, so most policy signals are               | not stated                             |
+| [G-52](../VERIFICATION-GAPS.md)  | The connector can be called before the Execution Trust Record can be signed, so a signing                      | closed (in entry)                      |
+| [G-53](../VERIFICATION-GAPS.md)  | There is no way to rebuild a missing Execution Trust Record for an action that was                             | pre-production                         |
+| [G-54](../VERIFICATION-GAPS.md)  | There is no operation to close an Execution Intent that was reconciled by hand                                 | resolved (in entry)                    |
+| [G-55](../VERIFICATION-GAPS.md)  | The SDKs cannot verify or manage Execution Intents                                                             | closed (in entry)                      |
+| [G-56](../VERIFICATION-GAPS.md)  | There was no one command local deployment                                                                      | closed                                 |
+| [G-57](../VERIFICATION-GAPS.md)  | The storage provider names did not match what the code does                                                    | closed                                 |
+| [G-58](../VERIFICATION-GAPS.md)  | Migrations were not applied at start, and one migration assumes Supabase roles.                                | closed (in entry)                      |
+| [G-59](../VERIFICATION-GAPS.md)  | "Console sync" named in the 2026-09-25 plan did not exist                                                      | closed (in entry)                      |
+| [G-60](../VERIFICATION-GAPS.md)  | Running with no outbound network had not been tested                                                           | closed                                 |
+| [G-61](../VERIFICATION-GAPS.md)  | The migration bundle is not safe to run again on a database that holds data                                    | closed (in entry)                      |
+| [G-62](../VERIFICATION-GAPS.md)  | Approving policies on a self hosted deployment needed the repository's signing script                          | closed (in entry)                      |
+| [G-63](../VERIFICATION-GAPS.md)  | An authorized action whose connector cannot be reached returned a bare 500. CLOSED 2026-09-25,                 | closed (in entry)                      |
+| [G-64](../VERIFICATION-GAPS.md)  | The two SDKs did not cover the same API, and neither covered policy governance                                 | closed (in entry)                      |
+| [G-65](../VERIFICATION-GAPS.md)  | A refused request cannot be escalated to a person and then approved                                            | pre-production                         |
+| [G-66](../VERIFICATION-GAPS.md)  | The policy version for each action is fixed in code, so a policy change needs a                                | pre-production                         |
+| [G-67](../VERIFICATION-GAPS.md)  | A valid Approval Artifact could never pass the Execution Gateway, so an approved HubSpot                       | closed (in entry)                      |
+| [G-68](../VERIFICATION-GAPS.md)  | An approver could not be provisioned on Vercel                                                                 | closed (in entry)                      |
+| [G-69](../VERIFICATION-GAPS.md)  | On Vercel, a malformed JSON body returned 500 instead of 400. FOUND and CLOSED                                 | closed (in entry)                      |
+| [G-70](../VERIFICATION-GAPS.md)  | The refund agent paid an approved refund twice: once through Parmana's connector, then                         | fixed (in entry)                       |
+| [G-71](../VERIFICATION-GAPS.md)  | Only one refund per Paytm transaction can go through Parmana, and the refund reason never                      | fixed (in entry)                       |
+| [G-72](../VERIFICATION-GAPS.md)  | The HubSpot state check signed its own deal fetch with the local key file, so under                            | fixed (in entry)                       |
+| [G-73](../VERIFICATION-GAPS.md)  | An agent could authorize a pull request merge by declaring GitHub facts true                                   | fixed (in entry)                       |
+| [G-74](../VERIFICATION-GAPS.md)  | llm-tool-call approves a tool call when the caller declares humanApproval: true                                | closed (in entry)                      |
+| [G-75](../VERIFICATION-GAPS.md)  | An agent could authorize a refund up to 10000 by declaring the order eligible and the fraud                    | closed (in entry)                      |
+| [G-76](../VERIFICATION-GAPS.md)  | An agent could post any text to any Slack channel the bot is in, by declaring the channel                      | fixed (in entry)                       |
+| [G-77](../VERIFICATION-GAPS.md)  | A refusal reason tells an agent which caller declared fact to flip                                             | closed (in entry)                      |
+| [G-78](../VERIFICATION-GAPS.md)  | The unauthenticated routes that check signatures or write data had no rate limit                               | fixed (in entry)                       |
+| [G-79](../VERIFICATION-GAPS.md)  | CI's policy approval check never checked anything                                                              | closed (in entry)                      |
+| [G-80](../VERIFICATION-GAPS.md)  | Most actions were authorized with no human approval at all                                                     | closed (in entry)                      |
+| [G-81](../VERIFICATION-GAPS.md)  | A registered external connector receives no release, and its policy is not bound yet                           | fixed (in entry)                       |
+| [G-82](../VERIFICATION-GAPS.md)  | What an external endpoint answers is its claim, not proof                                                      | pre-production                         |
+| [G-83](../VERIFICATION-GAPS.md)  | The release transport connects to the first checked address only                                               | closed (in entry)                      |
+| [G-84](../VERIFICATION-GAPS.md)  | An approved request takes 24 to 32 seconds in production                                                       | pre-production                         |
+| [G-85](../VERIFICATION-GAPS.md)  | The Python SDK cannot verify its own decoded record when previousChainHash is null.                            | fixed (in entry)                       |
+| [G-86](../VERIFICATION-GAPS.md)  | All visitor data in the public sandbox was deleted around the retention job's first run, cause not             | pre-production (sandbox only)          |
+| [G-87](../VERIFICATION-GAPS.md)  | A POST /execute or POST /transactions body without metadata, intent or policy returns a bare                   | closed (in entry)                      |
+| [G-88](../VERIFICATION-GAPS.md)  | A policy named .. let FilePolicyRepository read and write outside the policy directory                         | closed (in entry)                      |
+| [G-89](../VERIFICATION-GAPS.md)  | An edited Execution with its chainSignature removed passed the execution chain check                           | closed (in entry)                      |
+| [G-90](../VERIFICATION-GAPS.md)  | PolicyValidator threw a TypeError instead of refusing a malformed policy                                       | closed (in entry)                      |
+| [G-91](../VERIFICATION-GAPS.md)  | The offline verifier threw on a malformed signatures field                                                     | closed (in entry)                      |
+| [G-92](../VERIFICATION-GAPS.md)  | Business validation (RFC-0023): sources can be registered and are verified, but none is connected.             | not stated                             |
+| [G-93](../VERIFICATION-GAPS.md)  | Per-agent authority grants (RFC-0023 phase 3) are opt in, and their limits are per request.                    | pre-production                         |
+| [G-94](../VERIFICATION-GAPS.md)  | What a decision rests on is re-checked at release, but "execute only if still valid" at the system is the      | pre-production                         |
+| [G-95](../VERIFICATION-GAPS.md)  | The Policy Governance integrity check at startup could not stop a server from starting on a mismatch           | not stated                             |
+| [G-96](../VERIFICATION-GAPS.md)  | The full policy approval scan could report success having checked nothing                                      | not stated                             |
+| [G-97](../VERIFICATION-GAPS.md)  | The governance UI would send its API key in clear text to any configured base URL. loadGovernanceUiConfig() in | not stated                             |
+| [G-98](../VERIFICATION-GAPS.md)  | The Vercel serverless entry did not refuse startup on a Policy Governance integrity mismatch, and skipped the  | not stated                             |
+| [G-99](../VERIFICATION-GAPS.md)  | POST /transactions did not check metadata.tenantId against the caller's allowed tenants                        | not stated                             |
+| [G-100](../VERIFICATION-GAPS.md) | Connector credentials could be sent to an unchecked base URL, and a 2xx non-JSON merge or update counted as su | not stated                             |
+| [G-101](../VERIFICATION-GAPS.md) | The TypeScript SDK accepted any endpoint and printed its API key, and the SDKs trusted a non-boolean valid and | not stated                             |
+| [G-102](../VERIFICATION-GAPS.md) | Smaller leaks and gaps found by the audit                                                                      | not stated                             |
+| [G-103](../VERIFICATION-GAPS.md) | A signed authorization released for a denied decision                                                          | not stated                             |
+| [G-104](../VERIFICATION-GAPS.md) | The in-process release service trusted the caller's verification flags                                         | not stated                             |
+| [G-105](../VERIFICATION-GAPS.md) | Test and development environments skipped policy governance by default                                         | not stated                             |
+| [G-106](../VERIFICATION-GAPS.md) | A published policy version could be overwritten in place                                                       | not stated                             |
+| [G-107](../VERIFICATION-GAPS.md) | The HubSpot verification fetch carried no policy hash                                                          | not stated                             |
+| [G-108](../VERIFICATION-GAPS.md) | The caller audit chain cannot detect deleting its newest row                                                   | not stated                             |
+| [G-109](../VERIFICATION-GAPS.md) | Caller authentication could be disabled and the demo approver enabled in production                            | not stated                             |
+| [G-110](../VERIFICATION-GAPS.md) | There is no revocation of a single authorization                                                               | not stated                             |
+| [G-111](../VERIFICATION-GAPS.md) | The HubSpot verification helper approves its own fetch                                                         | not stated                             |
+| [G-112](../VERIFICATION-GAPS.md) | The offline verifier loads the repository .env                                                                 | not stated                             |
+| [G-113](../VERIFICATION-GAPS.md) | The execution-boundary signal check fails open during bootstrap                                                | not stated                             |
+| [G-114](../VERIFICATION-GAPS.md) | The legacyInsecure connector option skips the session credential and audit requirement                         | not stated                             |
+| [G-115](../VERIFICATION-GAPS.md) | End-to-end proof audit covered only the Paytm refund path                                                      | not stated                             |
+| [G-116](../VERIFICATION-GAPS.md) | The startup governance integrity check was not exercised by the proof audit                                    | not stated                             |
+| [G-117](../VERIFICATION-GAPS.md) | The production stores and signing backends were not exercised by the proof audit                               | not stated                             |
+| [G-118](../VERIFICATION-GAPS.md) | The attestation key that authorizes the in-process release path lives in the process that calls it             | not stated                             |
+| [G-119](../VERIFICATION-GAPS.md) | Hybrid signing is not live on any deployment                                                                   | pre-production                         |
+| [G-120](../VERIFICATION-GAPS.md) | A schema version 2 record can be downgraded by anyone who can write to storage                                 | pre-production                         |
+| [G-121](../VERIFICATION-GAPS.md) | Verifiers outside this repository read only schema version 2. The public verifier 0.3.0 reads schema version 3 | pre-production                         |
+| [G-122](../VERIFICATION-GAPS.md) | Parmana has no operator kill switch, and no fresh check that a stop is in force                                | not stated                             |
+| [G-123](../VERIFICATION-GAPS.md) | Production policy approvals were refused: the Vercel entry did not pass the checker scope                      | not stated                             |
+| [G-124](../VERIFICATION-GAPS.md) | The server trusted certificates from eMudhra's compromised intermediate CA keys                                | not stated                             |
+| [G-125](../VERIFICATION-GAPS.md) | A retry after a lost response cannot recover the outcome of a mutating call                                    | not stated                             |
+| [G-126](../VERIFICATION-GAPS.md) | A loopback http:// connector base URL was accepted in production                                               | not stated                             |
+| [G-127](../VERIFICATION-GAPS.md) | A revoked caller API key stayed valid until the server restarted                                               | not stated                             |
+| [G-128](../VERIFICATION-GAPS.md) | Connector credentials are readable by code on the same host                                                    | not stated                             |
+| [G-129](../VERIFICATION-GAPS.md) | Agents that reach your systems directly are not checked or recorded by Parmana                                 | pre-production                         |
+| [G-130](../VERIFICATION-GAPS.md) | The bearer path to the connector is open unless PARMANA_RELEASE_ONLY is set                                    | fixed in parmana-connect; not deployed |
+| [G-131](../VERIFICATION-GAPS.md) | Releases above 4096 bytes were refused                                                                         | fixed and merged in parmana-connect    |
+| [G-132](../VERIFICATION-GAPS.md) | A repeated release was refused with 403, not answered with its first result                                    | fixed and merged in parmana-connect    |
+| [G-133](../VERIFICATION-GAPS.md) | No live run between parmana-core and parmana-connect                                                           | open                                   |
+| [G-134](../VERIFICATION-GAPS.md) | The connector's production public key is not installed or pinned                                               | open                                   |
+| [G-135](../VERIFICATION-GAPS.md) | Approvals can be rubber-stamped under volume                                                                   | open                                   |
+| [G-136](../VERIFICATION-GAPS.md) | The kill switch has no safe pause state                                                                        | open                                   |
+| [G-137](../VERIFICATION-GAPS.md) | No risk class is assigned to AI systems or their policies                                                      | open                                   |
+| [G-138](../VERIFICATION-GAPS.md) | No alerting or export on approvals, refusals and kill switch trips                                             | open                                   |
+| [G-139](../VERIFICATION-GAPS.md) | No export is designed for a six-hour incident reporting window                                                 | open                                   |
+| [G-140](../VERIFICATION-GAPS.md) | Memory and reasoning are not recorded                                                                          | open                                   |
+| [G-141](../VERIFICATION-GAPS.md) | Content the agent reads can carry instructions                                                                 | open                                   |
 
-Gaps indexed: 119.
+Gaps indexed: 131.
