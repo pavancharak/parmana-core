@@ -165,6 +165,12 @@ These rules hold at every step:
 
 **Current state.** Built-in connectors are not in this repository. They moved to connector services outside it; see [ADR-0018](docs/internal/adr/ADR-0018-Connectors-Outside-Core.md). New connectors are built outside this repository and are registered through the flow described below.
 
+## Reads, writes and executions
+
+Parmana gates every kind of action the same way. A read, a write, or an execution runs only after a signed human approval, and reads included: a policy rule that approves an action must require that approval.
+
+The action is carried out by an external connector, not by this repository. Parmana releases the approved action to the connector's endpoint as a signed release, and the connector performs the HTTP call its manifest declares. A capability marked `effect: read` must use `GET`. That rule is in [parmana-connect](https://github.com/pavancharak/parmana-connect), and it is not yet merged to its `main` branch (G-156). The external path has not yet been run against a deployed Parmana (G-133).
+
 ## Connecting a system you run
 
 An operator registers an **external connector**: a capability, the HTTPS endpoint that serves it, and the policy that governs it. One person proposes the registration, and a different person approves it with a step-up signature. Once active, Parmana sends each approved action to the endpoint as a signed release. The endpoint checks the release's signature and audience, and it needs no shared secret.
