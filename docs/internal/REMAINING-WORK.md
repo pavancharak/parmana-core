@@ -362,6 +362,10 @@ Do not edit it by hand: run `npx tsx scripts/gap-status.ts`. `npm test` fails wh
 | G-144 | Inbound approvals rest only on grant limits, not on facts the business confirms.                    | open; the design is in RFC-0026 (draft), whose five open questions must be answered first                                                                      |
 | G-145 | The probe key is rotated by hand, and the server does not check it at startup.                      | partly closed                                                                                                                                                  |
 | G-146 | No business system calls the inbound check, and no probe checks that a direct call is refused.      | open, and it is the working part of G-129                                                                                                                      |
+| G-147 | A policy decision has no insufficient-evidence outcome: missing signals evaluate as false (R5).     | open                                                                                                                                                           |
+| G-148 | Decisions do not name the comparison method or version behind the verdict (R3).                     | open                                                                                                                                                           |
+| G-149 | Authorizations with no signals hash skip the release-time signal and approval checks.               | open                                                                                                                                                           |
+| G-150 | CLAIMS.md section 5 says nothing notifies anyone on refusal, but the approval notifier does.        | open                                                                                                                                                           |
 
 <!-- gap-status:end -->
 
