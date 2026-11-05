@@ -37,6 +37,10 @@ not claim them:
 - That an AI agent cannot act at all without an approval. Parmana governs the actions routed
   through it. An agent that holds its own credentials to a system, or anyone who controls the
   host or image Parmana runs from, is outside that boundary.
+- That agents run by customers or partners are checked or recorded when they call your systems
+  directly. Parmana sees only the actions routed through its gateway. Such a call runs against
+  your business system with no Parmana policy decision, approval or Trust Record. See
+  [Inbound agents](#inbound-agents-that-reach-your-systems-directly) below.
 - Deterministic signature output for ML-DSA-65 (those signatures are randomized by design,
   only verification is deterministic; see
   [Choose a signature provider](/guides/choose-a-signature-provider)).
@@ -83,6 +87,18 @@ not claim them:
 - **Mocks are labeled as mocks.** `SapConnector`, `OracleConnector`, `WorkdayConnector`, and
   `SalesforceConnector` are explicit, self-documented reference mocks. None calls a real
   system, and none is wired into the default server.
+
+## Inbound agents that reach your systems directly
+
+Parmana does not yet check requests from agents that you do not run, such as a customer's agent or a
+supplier's agent, when they call your business system directly. Until that is built (tracked as G-129),
+the business system is the only control on that path. For each system that external agents can reach:
+
+- Decide and enforce the authorization for external callers in the business system itself.
+- Keep partner API keys scoped to the actions each partner needs, and revoke them when a partner leaves.
+- Keep the business system's own logs of external calls, since no Trust Record covers them.
+
+This is the current position, not a design choice Parmana has made for you.
 
 ## Open issues
 
