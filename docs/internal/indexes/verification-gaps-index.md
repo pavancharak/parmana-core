@@ -140,5 +140,10 @@ Every gap in `VERIFICATION-GAPS.md`, with its title and the status its entry sta
 | [G-144](../VERIFICATION-GAPS.md) | Inbound approvals rest only on grant limits, not on facts the business confirms                                | open                                       |
 | [G-145](../VERIFICATION-GAPS.md) | The probe key is rotated by hand, and the server does not check it at startup                                  | open                                       |
 | [G-146](../VERIFICATION-GAPS.md) | No business system calls the inbound check, and no probe checks that a direct call is refused                  | open                                       |
+| [G-147](../VERIFICATION-GAPS.md) | A policy decision has no insufficient-evidence outcome: missing signals evaluate as false                      | open                                       |
+| [G-148](../VERIFICATION-GAPS.md) | Decisions do not name the comparison method or version behind the verdict                                      | open                                       |
+| [G-149](../VERIFICATION-GAPS.md) | Authorizations with no signals hash skip the release-time signal and approval checks                           | open                                       |
+| [G-150](../VERIFICATION-GAPS.md) | CLAIMS.md section 5 says nothing notifies anyone on refusal, but the approval notifier does                    | open                                       |
+| [G-156](../VERIFICATION-GAPS.md) | The manifest's read or write label is not enforced, so a capability marked "read" can send a write             | open                                       |
 
-Gaps indexed: 136.
+Gaps indexed: 141.
