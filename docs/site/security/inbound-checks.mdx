@@ -1,6 +1,6 @@
 ---
 title: "Inbound checks"
-description: "How a business system asks Parmana to check a request from a customer's or partner's agent before it acts, what the check does today, and what it does not do yet."
+description: "How a business system asks Parmana to check a request from a customer's or partner's agent before it acts: the policy that decides it, what is recorded, and what is not recorded yet."
 ---
 
 Some agents reach your systems from outside your business: a customer's agent asking for a refund, or a
@@ -14,9 +14,12 @@ This page describes the check as it is built today. Read the last section before
 
 1. An outside agent asks your business system for an action, for example a refund for an order.
 2. Your business system calls `POST /v1/inbound/checks` on Parmana, with the partner's API key.
-3. Parmana returns a decision, approved or rejected, signed with Parmana's key.
-4. Your business system checks the signature and acts only if the decision is `approved` and has not
-   expired.
+3. Parmana runs the policy bound to the action, the same policy that governs the action when it comes
+   from Parmana's own agents. The policy decides using the values the request declares. Nothing is
+   executed.
+4. Parmana also checks the partner's grant for the action and its limits. An approval needs both.
+5. Parmana returns a decision, approved or rejected, signed with Parmana's key.
+6. Your business system checks the signature and the expiry, and acts only on an approved decision.
 
 ## The request
 
@@ -62,25 +65,34 @@ limit on the partner's grant. The rejected decision is still signed and stored.
 | 403    | `no_active_grant`         | The partner has no current grant for the capability.                          |
 | 403    | `grant_limit_incomplete`  | A limit on the grant has no maximum. Refused, because nothing can be checked. |
 
-## What the check does today
+## What the check decides
 
-- It checks that the partner holds a current grant for the capability, and that the grant is active and
-  inside its validity window.
-- It checks every limit on the grant against the value at its path in the request, and rejects a request
-  above a limit.
-- It signs every decision and stores it, approved or rejected.
+An approval needs both of these:
+
+- **The policy approves.** The policy bound to the action runs on the request, with the declared
+  signals, and approves or rejects. A rejection gives the policy's reason.
+- **The grant allows it.** The partner holds a current grant for the action, and every limit on the
+  grant holds for the value at its path in the request. A value above a limit gives a rejection with
+  reason `approval_required`.
+
+A rejection is still signed and stored. A grant with no limits does not limit the request, but the
+policy still decides it.
+
+## What is recorded
+
+Every decision, approved or rejected, is signed with Parmana's key and stored. The record includes the
+partner, the action, the target and amount where there is one, the **policy name and version that
+decided it**, the outcome and any reason, and an expiry.
 
 ## What the check does not do yet
 
 Be clear about these before you rely on an approval:
 
-- **It does not run the capability's policy.** An approval means the partner's grant covers the request.
-  It does not mean a policy evaluated the request. Running the policy is planned.
-- **It does not record the policy name or version,** or who approved the request. The fields exist in the
-  record, but nothing fills them yet.
-- **It does not read the facts a policy would need.** Declared values are not checked against your
-  records. The planned answer is for each fact to come from your own system, through a business
-  validation source.
+- **The approver is not recorded.** The record shows which policy decided the request, but not which
+  person, if any, approved it. The field exists and is not yet filled.
+- **Declared facts are not checked against your records.** The policy decides on the values the request
+  declares, verified as `/execute` verifies them. Facts from your own systems are planned, through a
+  business validation source.
 - **Nothing calls it yet.** Parmana does not see an inbound request unless your business system asks it
   first, and no probe yet checks that a direct call is refused.
 

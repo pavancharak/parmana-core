@@ -2083,21 +2083,23 @@ Run on 2026-10-26, Node 22.22.0: the eight files above pass, 88 of 88.
 - The approval tests cover the governance-approval flows. They do not show the same binding for every connector.
 - The audit-tamper tests cover the caller audit event and the execution intent. They do not cover every record the system writes.
 
-## 3.30 Inbound Check Refuses Without a Current Grant and Signs Every Decision (Scoped, 2026-11-05)
+## 3.30 Inbound Check Approves Only When the Bound Policy and the Grant Both Allow (Scoped, 2026-11-05)
 
-**Claim.** `POST /v1/inbound/checks` refuses a request from a caller with no current grant for the requested capability (403 `no_active_grant`), refuses a grant with an incomplete limit (403 `grant_limit_incomplete`), and checks every limit on the grant against the value at its path in the request. A value above its limit gives a rejected decision with reason `approval_required`. Every decision, approved or rejected, is signed with Parmana's key and stored.
+**Claim.** `POST /v1/inbound/checks` approves a request only when both hold: the policy bound to the requested capability approves it, and the partner holds a current grant whose limits hold for the request. The policy is run by the runtime's `decide()` step, with the same verification and binding checks as `/execute`, without executing anything. A capability with no bound policy is refused (403 `no_policy_bound`), as is one whose policy cannot be determined (403 `policy_unavailable`). Every decision, approved or rejected, is signed and stored with the policy name and version that decided it.
 
 **Evidence.**
 
-- `packages/api/tests/unit/routes/inbound-checks.test.ts`: ten tests covering approval within limit, rejection above limit, a grant with no limits, unauthenticated caller, no grant, revoked grant, expired grant, a limited request that omits the checked value, a capability that is not `namespace:verb`, and another audience. The signature test verifies the Ed25519 signature over the canonical bytes.
-- Run on 2026-11-05 with the existing refund decision tests: 18 of 18 pass.
+- `packages/api/src/routes/inbound-checks.ts`: the flow above.
+- `packages/api/tests/unit/routes/inbound-checks.test.ts`: 16 tests, covering approval, policy rejection, a limit above the grant (rejected with `approval_required` even when the policy approves), the request the policy receives (partner as submitter, declared signals, no authority or authorization), no bound policy, an unavailable policy, a grant with an incomplete limit, and the grant cases.
+- `packages/runtime/src/RuntimeEngine.ts`: `decide()` takes a `DecisionRequest`, which leaves out `authority` and `authorization`. Deciding does not read them.
+- Run on 2026-11-05: the 16 check tests and the 8 refund tests pass, and the runtime suite (217 tests, 33 files) passes.
 
 **Limits.**
 
-- The check does not evaluate the capability's policy. It applies the grant's limits only, so a decision here does not mean a policy approved the request. This is the open gap G-142.
-- The decision does not record the policy name or version. The columns exist; nothing fills them (G-143).
-- No business system calls the endpoint yet, and no probe checks that a direct request is refused (G-146, G-129).
-- Declared signals are not read. An approval rests only on the grant limits and the request values (G-144 for the permanent source of facts).
+- The approver is not recorded (`approved_by` and `approved_at` are not written; G-143).
+- Declared facts are verified as `/execute` verifies them. Facts confirmed by the business's own records are not yet used (G-144, RFC-0026).
+- No business system calls the check, and no probe checks that a direct call is refused (G-146, G-129).
+- This change is on a branch stacked on the open pull request #448, and is not on `main` until #448 merges.
 
 ## 3.31 The Inbound Decision Record Holds Any Action, and the Extension Is Applied (Scoped, 2026-11-05)
 
