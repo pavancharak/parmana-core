@@ -822,7 +822,7 @@ The first-run measurements are not published in this repository.
 
 **Coverage after the follow-up fixes.** The Postgres nonce store runs on PostgreSQL semantics
 (Test 6). The startup governance integrity check runs against a signed approval record (Test 4). Not yet
-covered: KMS signing, a live external connector endpoint, and the caller
+covered: KMS signing, a live external connector endpoint (G-133), and the caller
 authorization scoping (the API harness disables caller authentication, as the existing integration tests do).
 These are listed as open in `docs/internal/REMAINING-WORK.md` section M.
 

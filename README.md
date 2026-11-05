@@ -161,7 +161,7 @@ These rules hold at every step:
 
 - A business system never calls Parmana, and a caller never calls a connector or a business system directly.
 - Parmana core does not hold the credentials for a business system that an external connector serves.
-- A connector runs only an action that Parmana has approved and signed for it, and it runs that action once. A repeated release with the same transaction id is refused.
+- A connector runs only an action that Parmana has approved and signed for it, and it runs that action once. A repeated release with the same transaction id gets the first answer back, and the action does not run again.
 
 **Current state.** Built-in connectors are not in this repository. They moved to connector services outside it; see [ADR-0018](docs/internal/adr/ADR-0018-Connectors-Outside-Core.md). New connectors are built outside this repository and are registered through the flow described below.
 
