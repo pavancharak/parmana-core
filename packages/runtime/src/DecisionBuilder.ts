@@ -1,12 +1,9 @@
+import type { DecisionRequest } from "./RuntimeEngine.js";
 import crypto from "node:crypto";
 
 import type { DecisionAssessment, JsonValue } from "@parmana/shared";
 
-import {
-  BusinessTransaction,
-  Decision,
-  DecisionOutcome,
-} from "@parmana/shared";
+import { Decision, DecisionOutcome } from "@parmana/shared";
 
 import { PolicyDecision, PolicyOutcome } from "@parmana/policy";
 
@@ -30,7 +27,7 @@ export class DecisionBuilder {
    * Builds an immutable Decision from a PolicyDecision.
    */
   public build(
-    transaction: BusinessTransaction,
+    transaction: DecisionRequest,
     policyDecision: PolicyDecision,
     assessment?: DecisionAssessment,
   ): Decision {

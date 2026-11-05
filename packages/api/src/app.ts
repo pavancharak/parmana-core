@@ -19,7 +19,10 @@ import { createApprovalIssuersRouter } from "./routes/approval-issuers.js";
 import { createExternalConnectorsRouter } from "./routes/external-connectors.js";
 import { createBusinessSignalSourcesRouter } from "./routes/business-signal-sources.js";
 import { createAuthorityGrantsRouter } from "./routes/authority-grants.js";
-import type { EndpointAddressLookup } from "@parmana/shared";
+import { DecisionOutcome, type EndpointAddressLookup } from "@parmana/shared";
+import { CapabilityPolicyBinder } from "@parmana/policy";
+import { createCurrentPolicyVersionSource } from "./bootstrap/createCurrentPolicyVersionSource.js";
+import { createExternalPolicyBindingSource } from "./bootstrap/createExternalPolicyBindingSource.js";
 import type { ExecutionTrustApplication } from "@parmana/runtime";
 
 import { createExecuteRouter } from "./routes/execute.js";
@@ -494,6 +497,11 @@ export function createApp(
           authorityGrantRepository.findActive(partnerId, "inbound:refund"),
       }),
     );
+    // The policy bound to each capability: the same binder the policy-in-effect route uses.
+    const inboundPolicyBinder = new CapabilityPolicyBinder(
+      createCurrentPolicyVersionSource(),
+      createExternalPolicyBindingSource(),
+    );
     app.use(
       "/v1/inbound/checks",
       createInboundCheckRouter({
@@ -501,6 +509,17 @@ export function createApp(
         sign: options.inboundDecisions.sign,
         findGrant: (callerId, capability) =>
           authorityGrantRepository.findActive(callerId, capability),
+        policyInEffect: (capability) =>
+          inboundPolicyBinder.policyInEffect(capability),
+        decide: async (request) => {
+          const result = await application.decideInbound(request);
+          return {
+            approved: result.decision.outcome === DecisionOutcome.APPROVED,
+            ...(result.decision.reason !== undefined
+              ? { reason: result.decision.reason }
+              : {}),
+          };
+        },
         store: {
           append: (record) =>
             inboundCheckRepository.append({

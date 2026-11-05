@@ -25,6 +25,7 @@ import type {
 } from "./ExecutionIntentService.js";
 import { ExecutionIntentNotResolvableError } from "./errors/ExecutionIntentNotResolvableError.js";
 import { Runtime } from "./Runtime.js";
+import type { DecisionRequest } from "./RuntimeEngine.js";
 import { RuntimeError } from "./errors/RuntimeError.js";
 
 import { VerificationFailedError } from "./errors/VerificationFailedError.js";
@@ -83,6 +84,14 @@ export class ExecutionTrustApplication {
    * Execute Business Transaction through the
    * complete Execution Trust pipeline.
    */
+  /**
+   * Decides an inbound request (RFC-0024) without executing it. Runs the same policy, verification
+   * and binding checks as execute(), and returns the decision.
+   */
+  async decideInbound(request: DecisionRequest) {
+    return this.runtime.decide(request);
+  }
+
   async execute(
     transaction: BusinessTransaction,
   ): Promise<ExecutionTrustRecord> {

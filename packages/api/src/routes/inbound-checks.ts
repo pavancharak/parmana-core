@@ -1,19 +1,29 @@
 import { randomUUID } from "node:crypto";
 import { Router } from "express";
-import type { AuthorityGrant } from "@parmana/shared";
+import type { DecisionRequest } from "@parmana/runtime";
+import {
+  BusinessTransactionStatus,
+  type AuthorityGrant,
+  type PolicyReference,
+} from "@parmana/shared";
 import type { NextFunction, Request, Response } from "express";
 
 /**
  * POST /v1/inbound/checks (RFC-0024, option A)
  *
- * A business system asks Parmana to check an inbound request from a partner's agent before it
- * acts. The partner is the authenticated caller. The request names a capability (namespace:verb),
- * an optional target, and optional parameters. The partner must hold a current grant for that
- * capability. Every limit on the grant is checked against the value at its path in the request.
- * If any value exceeds its limit, the decision is rejected with reason approval_required. A grant
- * with no limits approves any request for its capability.
+ * A business system asks Parmana to check an inbound request from a partner's agent before it acts.
+ * The partner is the authenticated caller. The request names a capability (namespace:verb), an
+ * optional target, optional parameters, and optional declared signals.
  *
- * The decision is signed and stored, approved or rejected, so it can be verified offline.
+ * A decision is approved only when both hold:
+ *   1. The partner holds a current grant for the capability, and every limit on the grant holds for
+ *      the value at its path in the request. A grant with no limits does not limit the request.
+ *   2. The policy bound to the capability approves the request. The policy is run by the runtime's
+ *      decide step, with the same verification and binding checks as /execute, and without executing
+ *      anything.
+ *
+ * The decision is signed and stored, approved or rejected, with the policy name and version that
+ * decided it. A capability with no bound policy is refused, so nothing is approved on grant limits alone.
  */
 
 const CAPABILITY_PATTERN = /^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$/;
@@ -27,9 +37,16 @@ export interface InboundCheckFields {
   readonly capability: string;
   readonly target?: string;
   readonly amount?: number;
+  readonly policyName?: string;
+  readonly policyVersion?: string;
   readonly expiresAt: string;
   readonly audience: string;
 }
+
+/** The policy bound to a capability, or why none can decide it. */
+export type InboundPolicyLookup =
+  | { readonly kind: "in-effect"; readonly policy: PolicyReference }
+  | { readonly kind: "unavailable"; readonly reason: string };
 
 export interface InboundCheckDependencies {
   /** The partner's grant for a capability, or null. */
@@ -37,6 +54,14 @@ export interface InboundCheckDependencies {
     callerId: string,
     capability: string,
   ) => Promise<AuthorityGrant | null>;
+  /** The policy bound to a capability, or undefined when the capability has no binding. */
+  readonly policyInEffect: (
+    capability: string,
+  ) => Promise<InboundPolicyLookup | undefined>;
+  /** Decides a request without executing it, through the runtime's decide step. */
+  readonly decide: (
+    request: DecisionRequest,
+  ) => Promise<{ readonly approved: boolean; readonly reason?: string }>;
   /** Signs the canonical bytes of a decision, returning a base64 signature. */
   readonly sign: (canonicalBytes: Buffer) => Promise<string>;
   /** Appends every issued decision. */
@@ -93,6 +118,7 @@ export function createInboundCheckRouter(
           capability?: unknown;
           target?: unknown;
           parameters?: unknown;
+          signals?: unknown;
           audience?: unknown;
         };
         if (
@@ -128,17 +154,23 @@ export function createInboundCheckRouter(
           res.status(400).json({ error: "parameters must be an object" });
           return;
         }
+        if (
+          body.signals !== undefined &&
+          (body.signals === null || typeof body.signals !== "object")
+        ) {
+          res.status(400).json({ error: "signals must be an object" });
+          return;
+        }
 
+        // Grant limits. Fail closed: a limit with no maximum cannot be checked.
         const limits: Array<[string, number]> = [];
         for (const [path, limit] of Object.entries(grant.limits ?? {})) {
-          // Fail closed: a limit with no maximum cannot be checked, so nothing is approved.
           if (typeof limit.max !== "number") {
             res.status(403).json({ error: "grant_limit_incomplete" });
             return;
           }
           limits.push([path, limit.max]);
         }
-
         const root = { target: body.target, parameters: body.parameters };
         let exceeded = false;
         let amount: number | undefined;
@@ -152,14 +184,61 @@ export function createInboundCheckRouter(
           if (value > max) exceeded = true;
         }
 
+        // The policy bound to the capability. No binding means nothing can approve the request.
+        const lookup = await deps.policyInEffect(capability);
+        if (lookup === undefined) {
+          res.status(403).json({ error: "no_policy_bound" });
+          return;
+        }
+        if (lookup.kind !== "in-effect") {
+          res.status(403).json({
+            error: "policy_unavailable",
+            reason: lookup.reason,
+          });
+          return;
+        }
+
+        // The policy decides. Nothing is executed: the runtime's decide step only decides.
+        const checkId = `chk-${randomUUID()}`;
+        const decision = await deps.decide({
+          businessTransactionId: checkId,
+          metadata: {
+            businessTransactionId: checkId,
+            submittedBy: partnerId,
+            submittedAt: issuedAt,
+          },
+          // A check issues no authorization; decide() never reads one.
+          intent: {
+            intentId: `${checkId}-intent`,
+            authorizationId: "",
+            action: capability,
+            target: typeof body.target === "string" ? body.target : "",
+            parameters: (body.parameters ?? {}) as Record<string, unknown>,
+            createdAt: issuedAt,
+          },
+          policy: lookup.policy,
+          signals: (body.signals ?? {}) as Record<string, unknown>,
+          status: BusinessTransactionStatus.RECEIVED,
+          createdAt: issuedAt,
+        });
+
+        const approved = !exceeded && decision.approved;
+        const reason = exceeded
+          ? "approval_required"
+          : approved
+            ? undefined
+            : (decision.reason ?? "policy_rejected");
+
         const fields: InboundCheckFields = {
-          decisionId: `chk-${randomUUID()}`,
-          outcome: exceeded ? "rejected" : "approved",
-          ...(exceeded ? { reason: "approval_required" } : {}),
+          decisionId: checkId,
+          outcome: approved ? "approved" : "rejected",
+          ...(reason !== undefined ? { reason } : {}),
           partnerId,
           capability,
           ...(typeof body.target === "string" ? { target: body.target } : {}),
           ...(amount !== undefined ? { amount } : {}),
+          policyName: lookup.policy.name,
+          policyVersion: lookup.policy.version,
           expiresAt: new Date(issuedAt.getTime() + CHECK_TTL_MS).toISOString(),
           audience: deps.audience,
         };
