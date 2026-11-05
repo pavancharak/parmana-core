@@ -392,3 +392,11 @@ _Added to `CLAIMS.md` on 2026-11-05. These are new claims, not updates to earlie
 _Originally at the not-claimed list in `CLAIMS.md`, the bullet about refusal escalation._
 
 **Update (2026-11-05):** the bullet said "nothing notifies anyone". That is wrong when an approval would cure a refusal and the approval notifier is configured. The bullet now describes the notifier, its configuration (`APPROVAL_WEBHOOK_URL`, `APPROVAL_EMAIL_TO`), its best-effort delivery and its lack of retry (claim 2.46).
+
+## Updates to 2.3, 2.42, 2.47 and 3.33 (2026-11-05)
+
+_Recorded in `CLAIMS.md` on 2026-11-05._
+
+- 2.3 Deterministic Policy Evaluation: decisions name the evaluation method and version (G-148).
+- 2.42 and 2.47: an authorization with no `signalsHash` is refused at release when the signal verifier is configured (G-149).
+- 3.33: the probe key is checked at startup and by the workflow before each run (G-145, PR #450).
