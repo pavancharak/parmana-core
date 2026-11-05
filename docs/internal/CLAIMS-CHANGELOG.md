@@ -367,3 +367,14 @@ _Originally at line 2289 of `CLAIMS.md`._
 `integrations/parmana-server/integration.yaml`, read on 2026-10-29. The integration's README scopes that tier to the
 offline fixture path: every connector result is a mock, `refundEligible` and `fraudCheckPassed` are declared by the
 caller, and no conformance level is claimed. The earlier `community` entries above are the record at their dates.
+
+## 2.57 Proof Audit: Five Authorization Properties Tested by Execution (Scoped, 2026-10-16)
+
+_Originally at line 825 of `CLAIMS.md`._
+
+Before this update, the paragraph read:
+
+> **Coverage after the follow-up fixes.** The Postgres nonce store runs on PostgreSQL semantics (Test 6). The startup governance integrity check runs against a signed approval record (Test 4). Not yet covered: KMS signing, a live external connector endpoint, and the caller authorization scoping (the API harness disables caller authentication, as the existing integration tests do). These are listed as open in `docs/internal/REMAINING-WORK.md` section M.
+
+**Update (2026-11-05):** the coverage sentence now points at G-133. The live external connector endpoint is still not covered: no run between parmana-core and parmana-connect has been made, because registration needs a public HTTPS host.
+
