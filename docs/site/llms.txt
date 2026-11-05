@@ -250,6 +250,7 @@ This file is generated from the documentation navigation. Do not edit it by hand
 * [Limitations](https://docs.parmanasystems.com/security/limitations): What Parmana does not claim, the specific threats its tests actually cover, and what you're responsible for.
 * [OWASP mapping](https://docs.parmanasystems.com/security/owasp-mapping): Each risk in the OWASP Top 10 for LLM Applications (2026) and the OWASP Top 10 for Agentic Applications (2026): what Parmana does about it, and the evidence.
 * [Regulation mapping](https://docs.parmanasystems.com/security/regulation-mapping): How Parmana supports human oversight and record keeping under the EU AI Act (Articles 12, 14 and 26), the NIST AI RMF, ISO/IEC 42001 and RBI guidance.
+* [CERT-In AI security audit guidelines mapping](https://docs.parmanasystems.com/security/cert-in-mapping): How Parmana maps to the draft Artificial Intelligence Security Auditing Guidelines proposed by CERT-In, India's cybersecurity agency, with what is covered, what is partly covered and what is not.
 * [Operator kill switch](https://docs.parmanasystems.com/security/operator-kill-switch): How an operator stops every new execution and approval in a Parmana deployment, how two people reset it, how to check it, and what it does not stop.
 ## Deploy and operate: Operate
 
