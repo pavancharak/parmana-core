@@ -10,6 +10,7 @@ import {
 } from "../killSwitch/PostgresKillSwitchStore.js";
 
 import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
+import { assertProbeKeyEntryFromEnv } from "./assertProbeKeyEntry.js";
 
 /**
  * Creates the operator kill switch (ADR-0017), or returns undefined when it
@@ -43,6 +44,8 @@ export function createKillSwitch(): KillSwitchService | undefined {
   }
 
   assertDatabaseUrlConfigured("KillSwitch");
+  // The probe checks the kill switch with its own key. Refuse to start without that key in the list.
+  assertProbeKeyEntryFromEnv();
 
   const pool = PostgresPoolFactory.create();
   const options: KillSwitchOptions = {

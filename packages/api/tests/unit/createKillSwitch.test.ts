@@ -11,6 +11,7 @@ describe("createKillSwitch (ADR-0017)", () => {
     enabled: process.env.KILL_SWITCH_ENABLED,
     twoPerson: process.env.KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR,
     databaseUrl: process.env.DATABASE_URL,
+    apiKeys: process.env.PARMANA_API_KEYS,
   };
 
   beforeEach(() => {
@@ -24,6 +25,7 @@ describe("createKillSwitch (ADR-0017)", () => {
       ["KILL_SWITCH_ENABLED", saved.enabled],
       ["KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR", saved.twoPerson],
       ["DATABASE_URL", saved.databaseUrl],
+      ["PARMANA_API_KEYS", saved.apiKeys],
     ] as const) {
       if (value === undefined) {
         delete process.env[key];
@@ -64,9 +66,26 @@ describe("createKillSwitch (ADR-0017)", () => {
     );
   });
 
-  it("creates a durable switch when enabled with the reset rule and a database", () => {
+  it("refuses to enable without the probe key in PARMANA_API_KEYS", () => {
     process.env.KILL_SWITCH_ENABLED = "true";
     process.env.KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR = "true";
+    process.env.PARMANA_API_KEYS = "[]";
+
+    expect(() => createKillSwitch()).toThrow(
+      'has no "kill-switch-probe" entry',
+    );
+  });
+
+  it("creates a durable switch when enabled with the reset rule, a database and the probe key", () => {
+    process.env.KILL_SWITCH_ENABLED = "true";
+    process.env.KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR = "true";
+    process.env.PARMANA_API_KEYS = JSON.stringify([
+      {
+        callerId: "kill-switch-probe",
+        keyHash: "a".repeat(64),
+        allowedCapabilities: ["kill-switch:probe"],
+      },
+    ]);
 
     expect(createKillSwitch()).toBeDefined();
   });
