@@ -74,7 +74,10 @@ enforced on it.
   in the same pattern as the kill-switch probe. A probe that gets through is recorded as a signed record and
   raised as an alert. A bypass the probe does not see cannot be known to Parmana, so the record must say
   "not verified" rather than imply coverage.
-- Still open: question 5 (reversibility tier per action type), and 6 (scope of the record).
+- **Which actions need a human (question 5).** Set per action in the policy. Each action's policy
+  states whether it needs a human approval, and the record shows the approval used. The same policy
+  applies to an outside agent's request as to one of the business's own agents.
+- Still open: question 6 (scope of the record).
 
 # Questions to settle before building
 
