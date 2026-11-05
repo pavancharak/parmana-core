@@ -8,7 +8,7 @@
 // Engine
 // -----------------------------------------------------------------------------
 
-export { PolicyEngine } from "./PolicyEngine.js";
+export { PolicyEngine, POLICY_EVALUATION_METHOD } from "./PolicyEngine.js";
 export { SignalIntentBinder } from "./SignalIntentBinder.js";
 export type {
   IntentSnapshot,

@@ -267,7 +267,7 @@ describe("ExecutionGateway signal-freshness check (G-31)", () => {
     expect(result.checks.signalsStillCurrent).toBeUndefined();
   });
 
-  it("skips the check (not fails) when the authorization carries no signalsHash", async () => {
+  it("refuses at release when the authorization carries no signalsHash (G-149)", async () => {
     const { privateKey, publicKey } = generateKeyPair();
     const signed = await signAuthorization(privateKey, undefined);
 
@@ -284,8 +284,8 @@ describe("ExecutionGateway signal-freshness check (G-31)", () => {
       buildRequest(signed, ORIGINAL_SIGNALS),
     );
 
-    expect(result.valid).toBe(true);
-    expect(result.checks.signalsStillCurrent).toBeUndefined();
+    expect(result.valid).toBe(false);
+    expect(result.checks.signalsStillCurrent).toBe(false);
   });
 
   it("fails with a named hash mismatch when the authorization was signed over signals and the request omits them", async () => {

@@ -158,14 +158,14 @@ describe("ExecutionGateway release approvals", () => {
     ]);
   });
 
-  it("lists none when the signals were not checked: no signalsHash in the authorization", async () => {
-    const release = await run({
-      signalsHash: "none",
-      signals: SIGNALS,
-      verifier: new FixedSignalStateVerifier([]),
-    });
-
-    expect(release.approvals).toEqual([]);
+  it("refuses the release when the signals were not checked: no signalsHash in the authorization (G-149)", async () => {
+    await expect(
+      run({
+        signalsHash: "none",
+        signals: SIGNALS,
+        verifier: new FixedSignalStateVerifier([]),
+      }),
+    ).rejects.toThrow("signalsStillCurrent");
   });
 
   it("lists none when no signal verifier is configured, so nothing checked the signals", async () => {

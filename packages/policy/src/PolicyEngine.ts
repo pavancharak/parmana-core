@@ -27,6 +27,16 @@ import { PolicyOutcome } from "./types/PolicyOutcome.js";
  * - perform replay
  * - generate timestamps
  */
+/**
+ * The method that produces a policy verdict, and its version (G-148). Recorded with every decision
+ * so a third party knows which rules of evaluation produced it. Bump the version when the evaluation
+ * changes, not when a policy's rules change.
+ */
+export const POLICY_EVALUATION_METHOD = {
+  id: "deterministic-rules",
+  version: "1",
+} as const;
+
 export class PolicyEngine {
   private readonly operatorEvaluator = new OperatorEvaluator();
 

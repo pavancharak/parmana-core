@@ -78,6 +78,14 @@ export interface Decision {
    * Same provenance and optionality as matchedRuleId above.
    */
   readonly matchedPath?: readonly string[];
+  /**
+   * The method that produced the verdict and its version (G-148). Absent on decisions recorded before
+   * this field existed.
+   */
+  readonly evaluationMethod?: {
+    readonly id: string;
+    readonly version: string;
+  };
 
   /**
    * UTC timestamp when evaluation completed.
