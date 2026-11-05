@@ -706,7 +706,7 @@ Scope, stated plainly:
 - **No business source is registered in the server yet.** A policy that declares one is refused as `SOURCE_UNAVAILABLE`, failing closed. No shipped policy declares one, so production decisions are unchanged except that they now record `assessment`. Registering sources is RFC-0023 phase 2.
 - **Authority is today's checks, named.** `AUTHORIZED` means the governance verification and capability/policy binding passed (and, at the API, the caller key's capability scope). Per-agent limits and expiry are phase 3, so `AUTHORITY_EXPIRED` is not yet produced.
 - **Policies without sources are unchanged.** Their validation status is `NOT_EVALUATED`, never `VALID`, and they still need a signed human approval to approve (2.47).
-- **The digest proves what Parmana observed, not what the source said.** A source's own proof is carried verbatim in `integrityProof.sourceProof` but not yet verified.
+- **The digest proves what Parmana observed, not what the source said.** A source's own proof is carried verbatim in `integrityProof.sourceProof` and verified for a source registered with a key (2.54, `sourceProofVerified`). A source registered without a key has no proof.
 - **Execution statuses for approved actions** remain the Trust Record's executions; `EXECUTION_UNKNOWN` and conditional execution are phase 4. **Update (2026-10-11):** built.
 - **Not deployed** until this change is merged and deployed. **Update (2026-10-11):** deployed; production runs `main` at `4fdc2c2` (#100) and answers `GET /health` `UP` and `GET /ready` `READY`.
 
