@@ -92,16 +92,27 @@ exist yet.
 1. **Identity.** What identifies an external agent: a Parmana caller key (G-93 covers per-agent
    grants for internal callers), a signed agent certificate, or the partner's API key? Who issues
    it, and how is it revoked?
+   Answered: see Decisions so far, item 3.
+
 2. **Authority.** Who decides what an external agent may do: the business, the partner, or both?
    Where is that written down, and who signs it?
+   Answered: see Decisions so far, item 4.
+
 3. **Refusals and approvals.** Refused inbound requests need a record the same way refusals do
    (RFC-0021). Does a request that needs approval wait in the business system, or in Parmana?
+   Answered: see Decisions so far, item 5.
+
 4. **Bypass.** Option A and B only work if the business system cannot be reached without them.
    How is that checked, and what does the record show when it is not true?
+   Answered: see Decisions so far, item 6.
+
 5. **Reversibility.** The DSCI guidance orders controls from design out, to constrain, to
    confirm, to observe, to halt. Which tier applies to each inbound action type?
+   Answered: see Decisions so far, item 7.
+
 6. **Scope of the record.** The record would show what was asked, decided and done. It would not
    show the external agent's internal reasoning, which the business cannot see.
+   Answered: see Decisions so far, item 8.
 
 # Non-goals
 
