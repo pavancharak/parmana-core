@@ -144,6 +144,6 @@ Every gap in `VERIFICATION-GAPS.md`, with its title and the status its entry sta
 | [G-148](../VERIFICATION-GAPS.md) | Decisions do not name the comparison method or version behind the verdict                                      | open                                       |
 | [G-149](../VERIFICATION-GAPS.md) | Authorizations with no signals hash skip the release-time signal and approval checks                           | open                                       |
 | [G-150](../VERIFICATION-GAPS.md) | CLAIMS.md section 5 says nothing notifies anyone on refusal, but the approval notifier does                    | open                                       |
-| [G-156](../VERIFICATION-GAPS.md) | The manifest's read or write label is not enforced, so a capability marked "read" can send a write             | open                                       |
+| [G-156](../VERIFICATION-GAPS.md) | The manifest's read or write label is not enforced, so a capability marked "read" can send a write             | fixed in parmana-connect, not yet merged   |
 
 Gaps indexed: 141.
