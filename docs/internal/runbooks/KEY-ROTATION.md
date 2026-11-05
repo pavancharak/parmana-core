@@ -154,6 +154,10 @@ The probe runs from GitHub Actions and reads its key from the secret `PARMANA_PR
 2. **Actions → kill-switch-probe → Run workflow.** Expect a green run.
 3. A red run with `401` means the secret does not match production. Re-check section 5.
 
+The workflow checks the key with Parmana before the probe runs. If Parmana rejects it, the run stops at the step "Check Parmana accepts the probe key" and says the secret does not match production. That is the same mismatch as step 3, reported earlier.
+
+Parmana also refuses to start with the kill switch on unless `PARMANA_API_KEYS` has a `kill-switch-probe` entry holding exactly `kill-switch:probe`. If a deploy fails at startup with that message, add or correct the entry in section 3 before redeploying.
+
 ---
 
 ## 7. Test the checker and maker without changing production
