@@ -38,6 +38,21 @@ jobs:
             exit 1
           fi
 
+      - name: Check Parmana accepts the probe key
+        run: |
+          set -uo pipefail
+          code=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer $PARMANA_PROBE_KEY" \
+            "$PARMANA_URL/kill-switch/status?nonce=probe-key-check")
+          if [ "$code" = "401" ] || [ "$code" = "403" ]; then
+            echo "Parmana rejected the probe key (HTTP $code). The repository secret PARMANA_PROBE_KEY does not match the probe key in production. Rotate it: see docs/internal/runbooks/KEY-ROTATION.md, section 6." >&2
+            exit 1
+          fi
+          if [ "$code" != "200" ]; then
+            echo "Could not check the probe key with Parmana (HTTP $code)." >&2
+            exit 1
+          fi
+
       - name: Send the probe request to /execute
         run: |
           set -uo pipefail

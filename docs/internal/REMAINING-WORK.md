@@ -360,7 +360,7 @@ Do not edit it by hand: run `npx tsx scripts/gap-status.ts`. `npm test` fails wh
 | G-142 | The inbound check does not evaluate the capability's policy.                                        | resolved in pull request #448 (awaiting review and merge)                                                                                                      |
 | G-143 | Inbound records do not carry the policy name or version, or the approver.                           | partly closed                                                                                                                                                  |
 | G-144 | Inbound approvals rest only on grant limits, not on facts the business confirms.                    | open; the design is in RFC-0026 (draft), whose five open questions must be answered first                                                                      |
-| G-145 | The probe key is rotated by hand, and the server does not check it at startup.                      | open                                                                                                                                                           |
+| G-145 | The probe key is rotated by hand, and the server does not check it at startup.                      | partly closed                                                                                                                                                  |
 | G-146 | No business system calls the inbound check, and no probe checks that a direct call is refused.      | open, and it is the working part of G-129                                                                                                                      |
 
 <!-- gap-status:end -->
