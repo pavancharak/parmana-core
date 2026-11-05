@@ -1,5 +1,5 @@
+import type { DecisionRequest } from "../RuntimeEngine.js";
 import {
-  BusinessTransaction,
   SignedExecutionAuthorization,
   ExecutionTrustRecord,
 } from "@parmana/shared";
@@ -21,24 +21,21 @@ export interface RuntimeHook {
   // Policy loading
   //
 
-  beforePolicyLoad?(transaction: BusinessTransaction): Promise<void>;
+  beforePolicyLoad?(transaction: DecisionRequest): Promise<void>;
 
-  afterPolicyLoad?(
-    transaction: BusinessTransaction,
-    policy: Policy,
-  ): Promise<void>;
+  afterPolicyLoad?(transaction: DecisionRequest, policy: Policy): Promise<void>;
 
   //
   // Policy evaluation
   //
 
   beforePolicyEvaluation?(
-    transaction: BusinessTransaction,
+    transaction: DecisionRequest,
     policy: Policy,
   ): Promise<void>;
 
   afterPolicyEvaluation?(
-    transaction: BusinessTransaction,
+    transaction: DecisionRequest,
     policy: Policy,
     decision: PolicyDecision,
   ): Promise<void>;
@@ -48,7 +45,7 @@ export interface RuntimeHook {
   //
 
   beforeDecision?(
-    transaction: BusinessTransaction,
+    transaction: DecisionRequest,
     decision: PolicyDecision,
   ): Promise<void>;
 
@@ -59,12 +56,12 @@ export interface RuntimeHook {
   //
 
   beforeAuthorization?(
-    transaction: BusinessTransaction,
+    transaction: DecisionRequest,
     decision: PolicyDecision,
   ): Promise<void>;
 
   afterAuthorization?(
-    transaction: BusinessTransaction,
+    transaction: DecisionRequest,
     decision: PolicyDecision,
     authorization: SignedExecutionAuthorization,
   ): Promise<void>;

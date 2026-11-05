@@ -38,6 +38,9 @@ export interface InboundCheckRecord {
   readonly capability: string;
   readonly target?: string;
   readonly amount?: number;
+  /** The policy that decided the request, and its version. Absent when no policy was run. */
+  readonly policyName?: string;
+  readonly policyVersion?: string;
   readonly expiresAt: string;
   readonly audience: string;
   readonly signature: string;

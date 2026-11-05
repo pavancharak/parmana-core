@@ -25,6 +25,8 @@ export class SupabaseInboundCheckRepository implements InboundCheckRepository {
       record.capability,
       record.target ?? null,
       record.amount ?? null,
+      record.policyName ?? null,
+      record.policyVersion ?? null,
     ]);
   }
 
@@ -40,6 +42,8 @@ export class SupabaseInboundCheckRepository implements InboundCheckRepository {
       capability: row.capability,
       ...(row.target ? { target: row.target } : {}),
       ...(row.amount !== null ? { amount: Number(row.amount) } : {}),
+      ...(row.policy_name ? { policyName: row.policy_name } : {}),
+      ...(row.policy_version ? { policyVersion: row.policy_version } : {}),
       expiresAt: new Date(row.expires_at).toISOString(),
       audience: row.audience,
       signature: row.signature,
@@ -56,6 +60,8 @@ interface Row {
   capability: string;
   target: string | null;
   amount: string | number | null;
+  policy_name: string | null;
+  policy_version: string | null;
   expires_at: string | Date;
   audience: string;
   signature: string;
@@ -65,13 +71,13 @@ interface Row {
 const INSERT_SQL = `
   INSERT INTO inbound_decisions (
     decision_id, outcome, reason, partner_id, expires_at, audience, signature,
-    issued_at, capability, target, amount, check_status
-  ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'verified')
+    issued_at, capability, target, amount, policy_name, policy_version, check_status
+  ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'verified')
 `;
 
 const SELECT_SQL = `
   SELECT decision_id, outcome, reason, partner_id, capability, target, amount,
-         expires_at, audience, signature, issued_at
+         expires_at, audience, signature, issued_at, policy_name, policy_version
   FROM inbound_decisions
   WHERE decision_id = $1 AND capability IS NOT NULL
 `;

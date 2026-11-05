@@ -1,5 +1,5 @@
+import type { DecisionRequest } from "../RuntimeEngine.js";
 import {
-  BusinessTransaction,
   SignedExecutionAuthorization,
   ExecutionTrustRecord,
 } from "@parmana/shared";
@@ -23,16 +23,14 @@ export class RuntimeHookRunner {
   // Policy loading
   //
 
-  public async beforePolicyLoad(
-    transaction: BusinessTransaction,
-  ): Promise<void> {
+  public async beforePolicyLoad(transaction: DecisionRequest): Promise<void> {
     for (const hook of this.hooks) {
       await hook.beforePolicyLoad?.(transaction);
     }
   }
 
   public async afterPolicyLoad(
-    transaction: BusinessTransaction,
+    transaction: DecisionRequest,
     policy: Policy,
   ): Promise<void> {
     for (const hook of this.hooks) {
@@ -45,7 +43,7 @@ export class RuntimeHookRunner {
   //
 
   public async beforePolicyEvaluation(
-    transaction: BusinessTransaction,
+    transaction: DecisionRequest,
     policy: Policy,
   ): Promise<void> {
     for (const hook of this.hooks) {
@@ -54,7 +52,7 @@ export class RuntimeHookRunner {
   }
 
   public async afterPolicyEvaluation(
-    transaction: BusinessTransaction,
+    transaction: DecisionRequest,
     policy: Policy,
     decision: PolicyDecision,
   ): Promise<void> {
@@ -68,7 +66,7 @@ export class RuntimeHookRunner {
   //
 
   public async beforeDecision(
-    transaction: BusinessTransaction,
+    transaction: DecisionRequest,
     decision: PolicyDecision,
   ): Promise<void> {
     for (const hook of this.hooks) {
@@ -87,7 +85,7 @@ export class RuntimeHookRunner {
   //
 
   public async beforeAuthorization(
-    transaction: BusinessTransaction,
+    transaction: DecisionRequest,
     decision: PolicyDecision,
   ): Promise<void> {
     for (const hook of this.hooks) {
@@ -96,7 +94,7 @@ export class RuntimeHookRunner {
   }
 
   public async afterAuthorization(
-    transaction: BusinessTransaction,
+    transaction: DecisionRequest,
     decision: PolicyDecision,
     authorization: SignedExecutionAuthorization,
   ): Promise<void> {
