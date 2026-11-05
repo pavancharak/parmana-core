@@ -50,6 +50,18 @@ Recommendation for discussion: C now, with A or B scoped as a later phase. A pha
 records and does not refuse would let the business see the inbound traffic before any rule is
 enforced on it.
 
+# Decisions so far
+
+- **2026-11-05, option C now.** The limit is documented on the public limitations page, under
+  "Inbound agents that reach your systems directly". No engineering is started.
+- **2026-11-05, identity (question 1), interim.** An external agent is identified by the partner's
+  API key. This gives no per-agent grant or single-agent revocation, so it is a stopgap for the
+  documentation-only phase. Options A or B will need a per-agent identity.
+- **2026-11-05, authority (question 2).** An external agent may only propose an action. The business
+  decides whether it runs. A proposal is not authority to act, whatever the partner's key allows to be asked.
+- Still open: question 3 (refusal and approval records), 4 (bypass), 5 (reversibility
+  tier), and 6 (scope of the record). A and B are not yet chosen.
+
 # Questions to settle before building
 
 1. **Identity.** What identifies an external agent: a Parmana caller key (G-93 covers per-agent
