@@ -57,7 +57,9 @@ enforced on it.
 - **2026-11-05, identity (question 1), interim.** An external agent is identified by the partner's
   API key. This gives no per-agent grant or single-agent revocation, so it is a stopgap for the
   documentation-only phase. Options A or B will need a per-agent identity.
-- Still open: question 2 (authority), 3 (refusal and approval records), 4 (bypass), 5 (reversibility
+- **2026-11-05, authority (question 2).** An external agent may only propose an action. The business
+  decides whether it runs. A proposal is not authority to act, whatever the partner's key allows to be asked.
+- Still open: question 3 (refusal and approval records), 4 (bypass), 5 (reversibility
   tier), and 6 (scope of the record). A and B are not yet chosen.
 
 # Questions to settle before building
