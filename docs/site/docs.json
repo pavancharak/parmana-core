@@ -599,6 +599,7 @@
               "security/limitations",
               "security/owasp-mapping",
               "security/regulation-mapping",
+              "security/cert-in-mapping",
               "security/operator-kill-switch"
             ]
           },
