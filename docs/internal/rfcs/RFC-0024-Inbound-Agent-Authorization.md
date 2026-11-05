@@ -59,8 +59,10 @@ enforced on it.
   documentation-only phase. Options A or B will need a per-agent identity.
 - **2026-11-05, authority (question 2).** An external agent may only propose an action. The business
   decides whether it runs. A proposal is not authority to act, whatever the partner's key allows to be asked.
-- Still open: question 3 (refusal and approval records), 4 (bypass), 5 (reversibility
-  tier), and 6 (scope of the record). A and B are not yet chosen.
+- **Refusal and approval records (question 3).** Parmana records inbound requests, including refusals
+  and approvals, as signed records, the same way it records outbound refusals (RFC-0021). A business
+  gets the same evidence for a partner's call as for its own agent's call.
+- Still open: question 4 (bypass), 5 (reversibility tier), and 6 (scope of the record).
 
 # Questions to settle before building
 
