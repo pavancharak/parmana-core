@@ -483,7 +483,15 @@ export class ExecutionGateway implements ExecutionSystem {
 
     const { signalsHash } = request.authorization.payload;
 
-    if (
+    //
+    // G-149: an authorization with no signalsHash cannot show that the signals it was decided on
+    // are still current, so it is refused at release when the signal verifier is wired. RuntimeEngine
+    // signs a hash for every authorization it issues now, so only an authorization issued before that
+    // check existed has none. An absent check must never be a pass.
+    //
+    if (signalsHash === undefined && this.signalStateVerifier !== undefined) {
+      signalsStillCurrent = false;
+    } else if (
       passed &&
       businessTransactionHashMatches &&
       policyStillCurrent !== false &&
