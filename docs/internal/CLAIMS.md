@@ -108,6 +108,8 @@ Evidence
 
 ## 2.3 Deterministic Policy Evaluation
 
+**Update (2026-11-05, G-148).** Every decision now names the method that produced its verdict and that method's version: `evaluationMethod: { id: "deterministic-rules", version: "1" }`, set from `POLICY_EVALUATION_METHOD` in `packages/policy`. The inputs are recorded with the verdict as `signals`. Decisions recorded before this change have no `evaluationMethod`.
+
 Parmana deterministically evaluates business policies using sequential rule evaluation with first-match semantics.
 
 Evaluation records include:
@@ -580,6 +582,8 @@ Dated updates for this claim are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 Dated updates are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
 ## 2.47 No Action Is Authorized Without a Signed Human Approval, Reads Included
+
+**Update (2026-11-05, G-149).** An authorization with no `signalsHash` is refused at release when the signal state verifier is configured, so its approval is no longer accepted without a check at release.
 
 **Claim.** Parmana authorizes no action without a signed approval from a trusted person, for that action and that resource. This holds for every policy, not only connector actions, and for reads as well as writes.
 
@@ -1412,6 +1416,8 @@ Evidence
 
 ## 2.42 A Signed Human Approval Is Required Where a Policy Declares It
 
+**Update (2026-11-05, G-149).** At release, the execution gateway refuses an authorization that has no `signalsHash` when the signal state verifier is configured. Before this change such an authorization skipped the release-time signal check and counted as a pass. Only authorizations issued before the hash was added are refused.
+
 **Claim.** A policy can require a signed approval from a trusted approver before an action runs. Such an approval is for one order or resource, covers one amount, and is used once. A request whose declared facts say an approval was given, but with no signed approval behind that statement, is refused at any amount.
 
 **How it works.**
@@ -2138,10 +2144,10 @@ Run on 2026-10-26, Node 22.22.0: the eight files above pass, 88 of 88.
 **Evidence.**
 
 - `.github/workflows/kill-switch-probe.yml`: the final step runs only on failure, searches open issues for the title, and creates the issue with the `P1` label. The workflow has `issues: write`.
-- The workflow file parses as YAML.
+- The workflow file parses as YAML. The startup check is covered by six unit tests and the kill switch startup tests (`packages/api/tests/unit/createKillSwitch.test.ts`).
 
 **Limits.**
 
 - The alert has not yet been seen firing on a real failure. It is verified by reading the workflow, not by a failed run.
 - The duplicate check is a text search. It can match another open issue with similar words, and then the new failure is not reported.
-- The probe key is still not rotated on a schedule, and the server does not check the probe key at startup (G-145).
+- The probe key is still not rotated on a schedule (G-145). The server refuses to start with the kill switch on and no `kill-switch-probe` entry holding exactly `kill-switch:probe` (`packages/api/src/bootstrap/assertProbeKeyEntry.ts`). The server cannot read the repository secret, so the probe workflow checks its key with Parmana before each run and reports a rejected key as a key mismatch (PR #450).
