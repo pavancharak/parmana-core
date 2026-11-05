@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 concurrency:
   group: kill-switch-probe
@@ -73,3 +74,19 @@ jobs:
             echo "Probe FAILED: the switch state and the refusal do not match. See the recorded result." >&2
             exit 1
           fi
+
+      - name: Open a P1 issue when the probe fails
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -uo pipefail
+          title="Kill switch probe failing: the kill switch cannot be verified"
+          existing=$(gh issue list --state open --search "in:title $title" --json number --jq 'length')
+          if [ "$existing" != "0" ]; then
+            echo "An open issue already tracks this failure. Not opening another."
+            exit 0
+          fi
+          body="The scheduled kill switch probe failed, so the kill switch cannot be shown to be working. Run: $RUN_URL . The probe key is the most likely cause: see docs/internal/runbooks/KEY-ROTATION.md section 6 and docs/internal/runbooks/KILL-SWITCH-OPERATIONS.md before rotating it. Close this issue only after a manual run of the probe passes."
+          gh issue create --title "$title" --label P1 --body "$body"
