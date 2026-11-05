@@ -2082,3 +2082,64 @@ Run on 2026-10-26, Node 22.22.0: the eight files above pass, 88 of 88.
 - The kill-switch no-connector assertion is on a branch and is not part of `main` until that branch merges.
 - The approval tests cover the governance-approval flows. They do not show the same binding for every connector.
 - The audit-tamper tests cover the caller audit event and the execution intent. They do not cover every record the system writes.
+
+## 3.30 Inbound Check Refuses Without a Current Grant and Signs Every Decision (Scoped, 2026-11-05)
+
+**Claim.** `POST /v1/inbound/checks` refuses a request from a caller with no current grant for the requested capability (403 `no_active_grant`), refuses a grant with an incomplete limit (403 `grant_limit_incomplete`), and checks every limit on the grant against the value at its path in the request. A value above its limit gives a rejected decision with reason `approval_required`. Every decision, approved or rejected, is signed with Parmana's key and stored.
+
+**Evidence.**
+
+- `packages/api/tests/unit/routes/inbound-checks.test.ts`: ten tests covering approval within limit, rejection above limit, a grant with no limits, unauthenticated caller, no grant, revoked grant, expired grant, a limited request that omits the checked value, a capability that is not `namespace:verb`, and another audience. The signature test verifies the Ed25519 signature over the canonical bytes.
+- Run on 2026-11-05 with the existing refund decision tests: 18 of 18 pass.
+
+**Limits.**
+
+- The check does not evaluate the capability's policy. It applies the grant's limits only, so a decision here does not mean a policy approved the request. This is the open gap G-142.
+- The decision does not record the policy name or version. The columns exist; nothing fills them (G-143).
+- No business system calls the endpoint yet, and no probe checks that a direct request is refused (G-146, G-129).
+- Declared signals are not read. An approval rests only on the grant limits and the request values (G-144 for the permanent source of facts).
+
+## 3.31 The Inbound Decision Record Holds Any Action, and the Extension Is Applied (Scoped, 2026-11-05)
+
+**Claim.** The `inbound_decisions` table holds a decision for any capability. `payment_id` and `limit_inr` are no longer required, and nullable columns record the proposed action (`capability`, `target`, `amount`), the policy (`policy_name`, `policy_version`), the approver (`approved_by`, `approved_at`), and whether the check was in place (`check_status`, `verified` or `not_verified`). Existing refund rows are unchanged. The migration was applied to the production database on 2026-11-05.
+
+**Evidence.**
+
+- `supabase/migrations/20261105140000_extend_inbound_decisions.sql`: additive; no column is dropped and no row is changed. The rollback is written in the file, with its conditions.
+- `scripts/apply-all-migrations.sql` regenerated, so the migration-bundle test passes.
+- The migration tool's status and apply output, run against production on 2026-11-05: the migration was pending, then applied, and the apply dry run listed it.
+
+**Limits.**
+
+- The check repository writes `capability`, `target`, `amount` and `check_status` (always `verified`). No code writes `policy_name`, `policy_version`, `approved_by` or `approved_at` yet (G-143).
+- The rollback is valid only while no row uses the new columns and every old row still has a value in the two relaxed columns. It is not automated.
+- The check repository has no test. Its SQL has not been run against a database by any test, so its writes are not verified by a test in this change. The migration itself was applied to production, and the application's routes are tested with an in-memory store.
+
+## 3.32 The Runtime Decides Without Executing, With Unchanged Behaviour (Scoped, 2026-11-05)
+
+**Claim.** `RuntimeEngine.decide()` runs every decision step of `execute()` (policy load, governance and binding checks, authority, business validation, policy evaluation, the refusal record and the enforcement gate) and returns the decision without authorizing it or sending anything to a connector. `execute()` calls `decide()` and then does what it did before. The split moved code without changing its order.
+
+**Evidence.**
+
+- `packages/runtime/src/RuntimeEngine.ts`: `decide()` and `execute()`.
+- Run on 2026-11-05: the runtime package's 217 tests in 33 files pass, including the tests that cover `execute()` end to end.
+
+**Limits.**
+
+- No test calls `decide()` directly yet. Its behaviour is covered only through `execute()`.
+- The inbound check does not call `decide()` yet, so the policy is still not evaluated for inbound requests (G-142).
+
+## 3.33 A Failed Kill Switch Probe Opens a P1 Issue (Scoped, 2026-11-05)
+
+**Claim.** When the scheduled kill switch probe fails, the workflow opens one P1 issue that links to the failed run. It does not open another while an open issue with the same title exists.
+
+**Evidence.**
+
+- `.github/workflows/kill-switch-probe.yml`: the final step runs only on failure, searches open issues for the title, and creates the issue with the `P1` label. The workflow has `issues: write`.
+- The workflow file parses as YAML.
+
+**Limits.**
+
+- The alert has not yet been seen firing on a real failure. It is verified by reading the workflow, not by a failed run.
+- The duplicate check is a text search. It can match another open issue with similar words, and then the new failure is not reported.
+- The probe key is still not rotated on a schedule, and the server does not check the probe key at startup (G-145).

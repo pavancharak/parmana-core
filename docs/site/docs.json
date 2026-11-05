@@ -600,6 +600,7 @@
               "security/owasp-mapping",
               "security/regulation-mapping",
               "security/cert-in-mapping",
+              "security/inbound-checks",
               "security/operator-kill-switch"
             ]
           },

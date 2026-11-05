@@ -377,3 +377,12 @@ Before this update, the paragraph read:
 > **Coverage after the follow-up fixes.** The Postgres nonce store runs on PostgreSQL semantics (Test 6). The startup governance integrity check runs against a signed approval record (Test 4). Not yet covered: KMS signing, a live external connector endpoint, and the caller authorization scoping (the API harness disables caller authentication, as the existing integration tests do). These are listed as open in `docs/internal/REMAINING-WORK.md` section M.
 
 **Update (2026-11-05):** the coverage sentence now points at G-133. The live external connector endpoint is still not covered: no run between parmana-core and parmana-connect has been made, because registration needs a public HTTPS host.
+
+## 3.30 to 3.33 added (2026-11-05)
+
+_Added to `CLAIMS.md` on 2026-11-05. These are new claims, not updates to earlier ones._
+
+- 3.30 The inbound check refuses without a current grant and signs every decision (scoped).
+- 3.31 The inbound decision record holds any action, and the extension is applied (scoped).
+- 3.32 The runtime decides without executing, with unchanged behaviour (scoped).
+- 3.33 A failed kill switch probe opens a P1 issue (scoped).
