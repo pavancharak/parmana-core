@@ -68,8 +68,13 @@ enforced on it.
   policies, approvals and signed records as an outbound one. Nothing separate is invented for partners.
 - **Option A chosen (decided by the user).** Each business system that accepts external agent requests
   calls Parmana to check the request before it acts. Implementation is not started.
-- Still open: question 4 (how the no-bypass rule is verified, and what is recorded if it fails),
-  5 (reversibility tier per action type), and 6 (scope of the record).
+- **Verifying no bypass (question 4).** The business system refuses any request that does not carry a
+  valid Parmana approval, so the check happens in the system, not only in Parmana. Option A implies this.
+  To check that it holds, a scheduled probe sends a direct request with no approval and expects a refusal,
+  in the same pattern as the kill-switch probe. A probe that gets through is recorded as a signed record and
+  raised as an alert. A bypass the probe does not see cannot be known to Parmana, so the record must say
+  "not verified" rather than imply coverage.
+- Still open: question 5 (reversibility tier per action type), and 6 (scope of the record).
 
 # Questions to settle before building
 
