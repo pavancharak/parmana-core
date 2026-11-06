@@ -3,10 +3,7 @@ import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { StaticApprovalIssuerRegistry } from "@parmana/approval";
-import {
-  APPROVAL_ARTIFACT_CRYPTO_PROVIDER,
-  ApprovalArtifactSigner,
-} from "@parmana/crypto";
+import { ApprovalArtifactSigner } from "@parmana/crypto";
 
 import {
   REFUND_ACTION,
