@@ -46,6 +46,31 @@ interface VerificationResult {
 Each check is reported independently, a caller can distinguish "forged" from "expired"
 rather than getting one opaque `false`, verified live in [Detect tampering](/guides/detect-tampering).
 
+## What each time check enforces
+
+| Check             | Passes when                                                                                                  |
+| ----------------- | ------------------------------------------------------------------------------------------------------------ |
+| `notExpired`      | The verifier's clock (`now`, default the current time) is before `expiresAt`.                                |
+| `ttlWithinPolicy` | All three conditions below hold. The name is kept for compatibility, and the check covers more than the TTL. |
+
+`ttlWithinPolicy` requires all of the following:
+
+1. **A positive lifetime.** `expiresAt` is after `authorizedAt`. An envelope whose expiry precedes its issue time is refused, even when its signature verifies.
+2. **A lifetime within the policy maximum.** `expiresAt - authorizedAt` is at most `maxTtlSeconds`. The constructor option defaults to 300 seconds, so a compromised signer cannot mint long-lived envelopes.
+3. **No future-dated issue time.** `authorizedAt` is no more than 60 seconds after the verifier's clock. The 60-second allowance is fixed and is the same as the policy-change step-up verifier's. An envelope issued by a signer whose clock runs further ahead is refused until the clocks agree.
+
+`maxTtlSeconds` is the only time setting you can change. The 60-second skew is a constant in the package. If your signer and verifier clocks drift by more than 60 seconds, correct the clocks rather than the verifier.
+
+Refused envelopes return `valid: false`. The check that failed is reported in `checks`: `notExpired` for an expired envelope, `ttlWithinPolicy` for any of the three conditions above.
+
+```typescript
+const verifier = new EnvelopeVerifier({
+  publicKey,
+  nonceStore: new MemoryNonceStore(),
+  maxTtlSeconds: 120, // refuse envelopes valid for more than two minutes
+});
+```
+
 ## Minimal example
 
 ```typescript
