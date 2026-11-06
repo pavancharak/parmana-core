@@ -7,7 +7,9 @@ report privately rather than through a public issue.
 
 ## Reporting a vulnerability
 
-Email **founder@parmanasystems.com** with:
+Report it privately through GitHub: open this repository's **Security** tab and choose **Report a vulnerability**. GitHub keeps the report private between you and the maintainers. If that route is unavailable, email **founder@parmanasystems.com** instead.
+
+Include:
 
 - A description of the issue and its impact.
 - Steps to reproduce, or a proof of concept if you have one.
