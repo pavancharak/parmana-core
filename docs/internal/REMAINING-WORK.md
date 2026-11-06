@@ -1,5 +1,15 @@
 # Remaining work
 
+## Update 2026-11-06
+
+- **Release lifetime rule is on `main` in parmana-connect and parmana-connectors** (connect PR #41, connectors PR #36). A release is refused when its `issuedAt` is more than 30 s in the future, when `expiresAt` is not after `issuedAt`, or when the lifetime is over 60 s. Core's fixture generator (PR #475) and its documentation (PR #476) are merged.
+- **Verifier ML-DSA-65 checks are on `main`** (verifier PR #31). Issue #28 is done. Issue #27 (reading schema v3 records) stays open until parmana-core #291 provides server-built fixtures.
+- **parmana-connect:** MCP HTTP mode merged (PR #42).
+- **parmana-connectors:** Paytm connector module merged (PR #37).
+- **Core:** verifier fix merged (PR #471, documentation PR #472). Policy PR #473 and contact PR #474 merged.
+- **Production:** `standard-org-baseline` 1.0.0 went through maker and checker. The pending change `0eca3146-8021-44af-b19f-9c1606ac62bc` was approved by `mamta-checker` at 2026-11-06 05:48:35 UTC.
+- **Open:** 81 gap issues in parmana-core. Issue `#467` (G-156) is fixed in code and should be closed.
+
 ## Update 2026-10-28
 
 - **The full list is kept by the operator, outside this repository.** It has 50 items, with priority, owner, and whether the sandbox can work on each. Update it when an item closes or a new gap appears. This page keeps the detail behind each item.
@@ -366,7 +376,7 @@ Do not edit it by hand: run `npx tsx scripts/gap-status.ts`. `npm test` fails wh
 | G-148 | Decisions do not name the comparison method or version behind the verdict (R3).                     | closed                                                                                                                                                         |
 | G-149 | Authorizations with no signals hash skip the release-time signal and approval checks.               | closed                                                                                                                                                         |
 | G-150 | CLAIMS.md section 5 says nothing notifies anyone on refusal, but the approval notifier does.        | closed                                                                                                                                                         |
-| G-156 | The manifest's read or write label is not enforced, so a capability marked "read" can send a write. | fixed in parmana-connect on branch claude/gracious-newton-s2lu87 (commit 056e8ac), not yet merged to main                                                      |
+| G-156 | The manifest's read or write label is not enforced, so a capability marked "read" can send a write. | fixed in parmana-connect and merged to its main through PR #36 (commit 056e8ac)                                                                                |
 | G-151 | No approved inventory of tool and MCP connections for agents.                                       | open                                                                                                                                                           |
 | G-152 | Log retention of 180 days is not defined or enforced.                                               | open                                                                                                                                                           |
 | G-153 | No agent rollback, and no guard against automatic restart after an emergency stop.                  | open                                                                                                                                                           |
