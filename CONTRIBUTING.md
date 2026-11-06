@@ -4,7 +4,7 @@ Thank you for helping. Parmana decides whether an automated action may run, and 
 
 ## Before you start
 
-- For anything larger than a small fix, open an issue or a discussion first, so the design is agreed before the code is written. Questions and feedback belong in [GitHub Discussions](https://github.com/pavancharak/parmana-core/discussions) or in an issue.
+- For anything larger than a small fix, open an issue or a discussion first, so the design is agreed before the code is written. Questions and feedback belong in [GitHub Discussions](https://github.com/pavancharak/parmana-core/discussions) or in an issue. For a private question about the project, write to developer@parmanasystems.com.
 - Report security issues privately, as described in [SECURITY.md](SECURITY.md). Do not open a public issue for them.
 - Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md).
 - The project is licensed under the Apache License 2.0 ([LICENSE](LICENSE)).
