@@ -65,10 +65,10 @@ dependencies = [
 # parmana.crypto. Without this declaration the module imported an undeclared
 # package and mypy failed in CI.
 verify = [
-    "cryptography>=42.0.0",
+    "cryptography>=47.0.0",
 ]
 dev = [
-    "cryptography>=42.0.0",
+    "cryptography>=47.0.0",
     "pytest>=8.0.0",
     "responses>=0.25.0",
     "ruff>=0.6.0",

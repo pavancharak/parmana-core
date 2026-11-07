@@ -8,10 +8,10 @@
  * once with `client.publicKey("default")` and keep it.
  *
  * Supports Ed25519, including the large message commitment AWS KMS uses for
- * a canonical form over 4096 bytes (docs/internal/adr/ADR-0010). A record that also
- * carries a hybrid `signatures` array (ML-DSA-65) is reported as not valid
- * here, the same as in the Python SDK, because that algorithm is not
- * verified by the SDKs.
+ * a canonical form over 4096 bytes (docs/internal/adr/ADR-0010). A hybrid
+ * record (a `signatures` array with one Ed25519 and one ML-DSA-65 entry) is
+ * verified in full, including the schema version 3 whole-record message.
+ * Needs Node 24 or later with OpenSSL 3.5 or later for ML-DSA-65.
  */
 
 import { createHash, createPublicKey, verify } from "node:crypto";
@@ -32,9 +32,22 @@ const COMMITMENT_PREFIX = Buffer.from(
  */
 export interface OfflineVerificationResult {
   /**
-   * True only when the hash matches and the signature verifies.
+   * True only when the hash matches, the legacy signature verifies, and any
+   * hybrid `signatures` array verifies.
    */
   readonly valid: boolean;
+
+  /**
+   * "full" when a schema version 3 hybrid record verifies, otherwise "legacy".
+   * Set for trust records only.
+   */
+  readonly coverage?: "full" | "legacy" | undefined;
+
+  /**
+   * Whether the hybrid `signatures` array verifies. Undefined when the record
+   * has none. Set for trust records only.
+   */
+  readonly hybridSignaturesValid?: boolean | undefined;
 
   /**
    * The record's own hash matches a fresh SHA-256 of its canonical form.
@@ -129,6 +142,138 @@ function verifyEd25519(
   return verify(null, commitment, publicKey, signature);
 }
 
+const DEFAULT_SCHEMA_VERSION = 2;
+const WHOLE_RECORD_SCHEMA_VERSION = 3;
+const SUPPORTED_SCHEMA_VERSIONS = new Set<number>([2, 3]);
+
+// Top-level fields a schema version 3 message does not cover.
+const WHOLE_RECORD_EXCLUDED_FIELDS = new Set<string>([
+  "signature",
+  "signatures",
+  "schemaVersion",
+  "verifications",
+  "receipts",
+]);
+
+/**
+ * The message a hybrid `signatures` entry signs, mirroring
+ * hybridSignedCanonicalView() in packages/crypto. Version 3 covers every
+ * top-level field except the excluded ones; other versions cover the fixed
+ * canonical fields. The schema version is always part of the message.
+ */
+function hybridMessage(record: JsonObject, schemaVersion: number): Uint8Array {
+  if (schemaVersion === WHOLE_RECORD_SCHEMA_VERSION) {
+    const covered: Record<string, unknown> = {};
+
+    for (const [key, value] of Object.entries(record)) {
+      if (!WHOLE_RECORD_EXCLUDED_FIELDS.has(key)) {
+        covered[key] = value;
+      }
+    }
+
+    return canonicalSerialize({ ...covered, schemaVersion });
+  }
+
+  return canonicalSerialize({
+    ...pick(record, TRUST_RECORD_FIELDS),
+    schemaVersion,
+  });
+}
+
+/**
+ * Verifies a hybrid `signatures` array. Fail-closed: exactly two entries, one
+ * Ed25519 and one ML-DSA-65 (dilithium3), each verifying over `message` with
+ * the key its keyId names. Any other shape is a failure.
+ */
+function verifyHybridEntries(
+  entries: unknown,
+  message: Uint8Array,
+  publicKeys: PublicKeys,
+  algorithmsChecked: string[],
+  errors: string[],
+): boolean {
+  if (
+    !Array.isArray(entries) ||
+    !entries.every((e) => typeof e === "object" && e !== null)
+  ) {
+    errors.push("malformed signatures: expected a list of entries.");
+    return false;
+  }
+
+  const names = entries.map((e) => String((e as JsonObject).algorithm));
+
+  if (
+    entries.length !== 2 ||
+    [...names].sort().join(",") !== "dilithium3,ed25519"
+  ) {
+    errors.push(
+      `signatures must be exactly one ed25519 and one dilithium3 entry, got [${names.join(", ")}].`,
+    );
+    return false;
+  }
+
+  let allValid = true;
+
+  for (const entry of entries as readonly JsonObject[]) {
+    const algorithm = String(entry.algorithm);
+    const keyId = entry.keyId;
+    const value = entry.signature ?? entry.value;
+
+    algorithmsChecked.push(algorithm);
+
+    if (typeof keyId !== "string" || !(keyId in publicKeys)) {
+      errors.push(`no public key supplied for keyId "${String(keyId)}".`);
+      allValid = false;
+      continue;
+    }
+
+    try {
+      if (typeof value !== "string") {
+        throw new Error("signature value is missing or not a string");
+      }
+
+      const signature = Buffer.from(value, "base64");
+      const pem = publicKeys[keyId] as string;
+
+      const ok =
+        algorithm === "ed25519"
+          ? verifyEd25519(pem, signature, message)
+          : verifyMlDsa65(pem, signature, message);
+
+      if (!ok) {
+        errors.push(
+          `signature verification failed for keyId "${keyId}" (${algorithm}).`,
+        );
+        allValid = false;
+      }
+    } catch (error) {
+      errors.push(
+        `error verifying keyId "${keyId}" (${algorithm}): ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+      allValid = false;
+    }
+  }
+
+  return allValid;
+}
+
+/** ML-DSA-65 verification. Needs Node 24+ with OpenSSL 3.5+. */
+function verifyMlDsa65(
+  publicKeyPem: string,
+  signature: Buffer,
+  message: Uint8Array,
+): boolean {
+  const publicKey = createPublicKey(publicKeyPem);
+
+  if (publicKey.asymmetricKeyType !== "ml-dsa-65") {
+    throw new Error("supplied public key is not an ML-DSA-65 key");
+  }
+
+  return verify(null, message, publicKey, signature);
+}
+
 function verifySigned(
   artifact: JsonObject,
   fields: readonly string[],
@@ -214,23 +359,44 @@ export function verifyExecutionTrustRecordOffline(
     publicKeys,
   );
 
-  const hybrid =
-    Array.isArray(record.signatures) && record.signatures.length > 0;
+  const schemaVersion =
+    typeof record.schemaVersion === "number"
+      ? record.schemaVersion
+      : DEFAULT_SCHEMA_VERSION;
 
-  if (hybrid) {
+  let hybridValid: boolean | undefined;
+
+  if (!SUPPORTED_SCHEMA_VERSIONS.has(schemaVersion)) {
     result.errors.push(
-      "this record carries a hybrid `signatures` array; ML-DSA-65 " +
-        "verification is not available in the SDKs. Verify it with the " +
-        "server's reference implementation (scripts/verify-trust-record.ts).",
+      `unsupported schemaVersion ${String(schemaVersion)}: expected 2 or 3.`,
     );
+    hybridValid = false;
+  } else if (record.signatures !== undefined && record.signatures !== null) {
+    hybridValid = verifyHybridEntries(
+      record.signatures,
+      hybridMessage(record, schemaVersion),
+      publicKeys,
+      result.algorithmsChecked,
+      result.errors,
+    );
+  } else if (schemaVersion === WHOLE_RECORD_SCHEMA_VERSION) {
+    result.errors.push(
+      "schemaVersion 3 record has no signatures array: a whole-record signature is required.",
+    );
+    hybridValid = false;
   }
 
   return {
-    valid: result.hashValid && result.signatureValid && !hybrid,
+    valid: result.hashValid && result.signatureValid && hybridValid !== false,
     hashValid: result.hashValid,
     legacySignatureValid: result.signatureValid,
     algorithmsChecked: result.algorithmsChecked,
     errors: result.errors,
+    coverage:
+      schemaVersion === WHOLE_RECORD_SCHEMA_VERSION && hybridValid === true
+        ? "full"
+        : "legacy",
+    hybridSignaturesValid: hybridValid,
   };
 }
 

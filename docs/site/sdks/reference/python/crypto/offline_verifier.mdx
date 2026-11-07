@@ -20,13 +20,11 @@ any record, and additionally accepts the commitment form for a record
 over that limit (see docs/internal/adr/ADR-0010). A commitment signature over a
 record at or below the limit is rejected.
 
-ML-DSA-65 (Dilithium3) verification is intentionally out of scope
-here: the `cryptography` package version this SDK currently depends
-on does not yet expose `cryptography.hazmat.primitives.asymmetric.
-ml_dsa`. A hybrid-signed record's `signatures` array cannot be
-independently checked from Python until that support lands upstream
-and this module is updated to use it -- stated plainly rather than
-silently skipped or faked.
+A hybrid-signed record's `signatures` array (one Ed25519 entry and one
+ML-DSA-65 entry, `dilithium3`) is verified over the message for its schema
+version. Version 3 (whole-record) covers every top-level field except the
+signatures, the schema version, `verifications` and `receipts`. Verifying
+ML-DSA-65 needs `cryptography` 47.0.0 or later.
 
 #### verify_execution_trust_record_offline
 
