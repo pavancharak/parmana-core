@@ -1516,6 +1516,30 @@ Every approve rule in these policies requires an approval-backed fact to be true
 
 Dated updates and the production approval history for these policies are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md). The text this section had before this rewrite is in the git history of `main`.
 
+## 2.58 Signing Keys Are Loaded From a Secret Manager at Startup, Not From an Environment Variable (Scoped, 2026-11-07)
+
+**Claim.** When `PARMANA_KEY_MATERIAL_SECRET` is set, the server reads its signing keys at startup from one AWS Secrets Manager secret, using the platform's own identity. The environment holds a reference to the secret, not the key. The server writes any missing key file and never overwrites one that exists. It refuses to start the reference path unless `PARMANA_SECRETS_PROVIDER` is `aws-secrets-manager`.
+
+**Scope.** Tested with a fake secrets provider (`packages/api/tests/unit/bootstrap/load-key-material-secrets-manager.test.ts`). Not yet run against AWS Secrets Manager. Production still reads its keys from `PARMANA_KEY_MATERIAL_JSON` until the move on 10 November 2026, so this claim does not yet hold for production. The Vercel identity that reads the secret is not yet verified. See `docs/internal/runbooks/SECRETS-MANAGER-KEYS.md` and G-161.
+
+**Evidence.**
+
+- `packages/api/src/bootstrap/loadKeyMaterialFromSecretsManager.ts`
+- `packages/api/src/bootstrap/assertSigningKeyMaterialConfigured.ts` (`writeKeyMaterialJson`)
+
+## 2.59 Schema Version 3 Hybrid Records Verify in the SDKs, Including the Whole-Record Message (Scoped, 2026-11-07)
+
+**Claim.** The Python and TypeScript SDKs verify a hybrid Execution Trust Record: one Ed25519 entry and one ML-DSA-65 entry. For schema version 3, the signed message covers every top-level field except `signature`, `signatures`, `schemaVersion`, `verifications` and `receipts`. A field added or a covered value changed after signing makes the record invalid. The result reports `coverage: "full"` when this holds.
+
+**Scope.** The server still issues schema version 2. Turning schema version 3 on is a separate step, not yet taken (parmana-core #291). ML-DSA-65 needs `cryptography` 47 or later in Python and Node 24 or later in TypeScript. The TypeScript SDK no longer supports Node 20 or 22.
+
+**Evidence.**
+
+- `python/parmana/crypto/offline_verifier.py` (`_verify_hybrid_entries`, `_hybrid_message`)
+- `typescript/src/crypto/offline-verifier.ts` (`verifyHybridEntries`, `hybridMessage`)
+- `typescript/test/whole-record-v3-offline.test.ts`, `python/tests/test_whole_record_v3_offline.py`
+- The fixture is written by the server's own signing code: `scripts/generate-whole-record-v3-fixture.ts`
+
 # 3. Conditional Claims
 
 The following claims are true only under an explicitly stated scope. The scope clause is load-bearing: removing it makes the claim false.
