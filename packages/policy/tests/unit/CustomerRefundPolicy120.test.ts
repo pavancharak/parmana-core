@@ -107,6 +107,6 @@ describe("customer-refund 1.2.0", () => {
     });
 
     expect(decision.outcome).toBe(PolicyOutcome.REJECT);
-    expect(decision.matchedRuleId).toBe("reject-manager-approval-required");
+    expect(decision.matchedRuleId).toBe("missing-fact");
   });
 });

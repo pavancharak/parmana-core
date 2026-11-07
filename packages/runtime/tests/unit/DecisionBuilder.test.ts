@@ -52,7 +52,7 @@ describe("DecisionBuilder", () => {
 
     expect(decision.evaluationMethod).toEqual({
       id: "deterministic-rules",
-      version: "1",
+      version: "2",
     });
   });
 
