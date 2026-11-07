@@ -227,8 +227,8 @@ export function createApp(
   const app = express();
 
   /**
-   * Trust exactly one proxy hop: Fly.io's edge (fly.toml sets
-   * force_https there), the only reverse proxy in front of this app.
+   * Trust exactly one proxy hop: the platform's edge, the only reverse
+   * proxy in front of this app.
    * Without this, Express ignores X-Forwarded-For and ignores
    * X-Forwarded-Proto, so req.ip and req.protocol/req.secure both
    * reflect the proxy's own connection to this process rather than the

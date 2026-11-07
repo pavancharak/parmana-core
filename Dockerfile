@@ -3,7 +3,7 @@
 # Multi-stage build for @parmana/api. Platform-agnostic (Dockerfile-first):
 # builds a single container image that runs the HTTP API (docker/entrypoint.sh
 # starts it and forwards termination signals to it).
-# Works unmodified on any Docker-based PaaS (Railway, Render, Fly, a bare
+# Works unmodified on any Docker-based PaaS (Railway, Render, a bare
 # `docker run`, ...).
 #
 # The list of packages/*/package.json COPY lines below is intentionally

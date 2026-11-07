@@ -24,7 +24,7 @@ You need:
 | A clone of the repository         | The scripts below run from the repository root.                                                      |
 | Node and npm                      | The image uses Node 24. Run `npm install` once in the clone, then scripts run with `npx tsx`.        |
 | A Postgres database               | Production storage. A Supabase project works. Note its **transaction pooler** connection string.     |
-| A host for the container          | Fly.io, any Docker platform, or Vercel.                                                              |
+| A host for the container          | Any Docker platform, or Vercel.                                                                      |
 | Two people, each with a human key | One proposes policy changes (the maker) and a different one approves them (the checker). See step 7. |
 
 Production requires a real database, real signing keys and caller authentication. The server refuses to start without them, and it never falls back to something weaker.
@@ -241,17 +241,6 @@ Set up these before you send real traffic:
 | Log level                                                                                                                       | Set `LOG_LEVEL=info`. Use `debug` only while investigating.                                                                                                                                                                                                                             |
 
 ## Host specific steps
-
-### Fly.io
-
-`fly.toml` sets the app name, the primary region and a health check on `GET /ready` every 30 seconds.
-
-1. Generate the secrets file without printing it: `node scripts/generate-fly-secrets.mjs`. It writes `.flysecrets/secrets.env` with `PARMANA_KEY_MATERIAL_JSON` and `PARMANA_API_KEYS`, and leaves the database values for you to fill in. Add `DATABASE_URL`, `NODE_ENV` and `PARMANA_STORAGE` to it.
-2. Apply them: `fly secrets import <.flysecrets/secrets.env`.
-3. Deploy: `fly deploy`.
-4. Confirm with `fly status`. Every machine should show a recent update and a passing check. Machine placement is Fly's choice, so confirm the region there and do not assume the configured one.
-
-Changing any secret restarts every machine. Treat the new value as live only after `fly status` shows passing checks.
 
 ### Vercel
 

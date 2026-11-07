@@ -96,7 +96,7 @@ export function createExecuteRateLimiter(
  * express-rate-limit v8). Deliberately far more permissive than the
  * /execute limiter — these are cheap (no signing, /health touches
  * nothing external) and legitimately polled on a fixed interval by
- * PaaS health-check infrastructure (fly.toml's own check runs every
+ * PaaS health-check infrastructure (the platform's own check runs every
  * 30s per machine; this limiter must never be tight enough to throttle
  * that).
  */

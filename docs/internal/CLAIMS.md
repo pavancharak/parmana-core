@@ -1750,7 +1750,6 @@ Evidence
 - `packages/api/src/bootstrap/assertDatabaseUrlConfigured.ts`, called unconditionally from `createCallerAuditSink.ts`/`createNonceStore.ts` (the actual fail-closed check for CallerAuditSink/NonceStore described above; checks DATABASE_URL only)
 - `packages/shared/src/config/StorageProviders.ts` (`memory`/`postgres`/`supabase`), `packages/shared/src/config/Config.ts` (the sole `process.env` read site for application config)
 - `supabase/migrations/` (schema source), `scripts/apply-all-migrations.sql` (manual application path with no CLI link)
-- `fly.toml` (one concrete instantiation of this deployment shape, not evidence that Fly.io specifically is required).
 
 ---
 

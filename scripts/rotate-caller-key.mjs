@@ -3,7 +3,7 @@ import { randomBytes, createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync, copyFileSync } from "node:fs";
 import { join } from "node:path";
 
-// Rotates a single caller's API key in an existing .flysecrets*-style
+// Rotates a single caller's API key in an existing secrets file
 // directory. Never prints a value -- only file paths and the caller id.
 //
 // The previous raw key is preserved alongside the new one (as

@@ -18,7 +18,7 @@ npx tsx examples/tutorials/89-readiness-probe/run.ts
 
 ## Why This Matters
 
-An orchestrator (Kubernetes, Fly.io, etc.) uses readiness probes to decide whether to route traffic to an instance. A probe that always reports `READY` regardless of real backend health defeats the entire purpose — traffic gets routed to an instance that can't actually serve it. This tutorial mirrors `packages/api/tests/unit/routes/ready.test.ts`'s three real scenarios against a real listening server.
+An orchestrator (Kubernetes, a PaaS, etc.) uses readiness probes to decide whether to route traffic to an instance. A probe that always reports `READY` regardless of real backend health defeats the entire purpose — traffic gets routed to an instance that can't actually serve it. This tutorial mirrors `packages/api/tests/unit/routes/ready.test.ts`'s three real scenarios against a real listening server.
 
 ## Next Tutorial
 
