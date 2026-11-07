@@ -356,7 +356,7 @@ describe("offline verification", () => {
     expect(result.errors[0]).toMatch(/not an Ed25519 key/);
   });
 
-  it("verifies a Trust Record signed the way the server signs one, and rejects a hybrid record", async () => {
+  it("verifies a Trust Record signed the way the server signs one, and refuses a malformed hybrid record", async () => {
     const { privateKey, publicKey } = generateKeyPairSync("ed25519");
 
     const body = {
@@ -395,12 +395,15 @@ describe("offline verification", () => {
     );
     expect(reference.valid).toBe(true);
 
+    // A lone ML-DSA-65 entry is not a hybrid record: refused, not treated as valid.
     const hybrid = verifyExecutionTrustRecordOffline(
       { ...record, signatures: [{ algorithm: "dilithium3" }] },
       { default: pem },
     );
     expect(hybrid.valid).toBe(false);
-    expect(hybrid.errors.join(" ")).toMatch(/ML-DSA-65/);
+    expect(hybrid.errors.join(" ")).toMatch(
+      /exactly one ed25519 and one dilithium3/,
+    );
     expect(createPublicKey(pem).asymmetricKeyType).toBe("ed25519");
   });
 });

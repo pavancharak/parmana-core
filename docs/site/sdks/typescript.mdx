@@ -527,7 +527,7 @@ const view = await client.executionIntent(
 verifyExecutionIntentOffline(view.intent, { default: pem });
 ```
 
-No network call and no database: only the record and the public key. The result has the same fields as the Python SDK's, in camelCase. A record that also carries a hybrid ML-DSA-65 `signatures` array is reported as not valid, with an error that says why, because the SDKs do not verify ML-DSA-65.
+No network call and no database: only the record and the public key. The result has the same fields as the Python SDK's, in camelCase. A hybrid record, with one Ed25519 and one ML-DSA-65 entry in its `signatures` array, is verified in full, including the schema version 3 whole-record message. The result then reports `coverage: "full"`. ML-DSA-65 needs Node 24 or later with OpenSSL 3.5 or later; on an earlier Node a hybrid record is reported as not valid, with an error that says why. A malformed `signatures` array is refused.
 
 ### Check a release at an external connector endpoint (1.5.0)
 
