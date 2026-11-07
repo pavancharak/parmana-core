@@ -1,6 +1,6 @@
 # Parmana: current status, pending work and where to resume
 
-Status as of 2026-11-05. Repository: `pavancharak/parmana-core`.
+Status as of 2026-11-07. Repository: `pavancharak/parmana-core`.
 
 ## 1. Summary
 
@@ -10,8 +10,11 @@ kill-switch probe have been closed today. Open work is listed in section 5.
 
 ## 2. Open pull requests
 
-- **#459** (G-148): every decision names the evaluation method and version it was made with. Needs an
-  approving review.
+- **#483** (G-157): a request that omits a fact a decision depends on is refused, naming the facts. Also sets the
+  method version to `"2"`. Opened from `claude/new-session-ml5hdm`; not yet merged.
+
+**#459** (G-148) is on `main`: `evaluationMethod` is set in `DecisionBuilder`. Earlier versions of this file listed it
+as open; that was stale.
 
 Everything else from today is merged. See section 3.
 
@@ -43,24 +46,30 @@ Everything else from today is merged. See section 3.
 
 ## 4. Gap status
 
-| Gap   | Status                        | Notes                                                                                                                                 |
-| ----- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| G-122 | open                          | Kill switch: third-party check not built; two-person reset not exercised with real keys; signing waits on G-118.                      |
-| G-129 | open                          | Option A chosen. The check exists and is tested, but no business system calls it. Issue #421, P1.                                     |
-| G-142 | closed                        | Inbound check runs the bound policy (#448).                                                                                           |
-| G-143 | partly closed                 | Policy name and version are recorded. The approver is not (`approved_by`, `approved_at`). Issue #397 is related to approver scope.    |
-| G-144 | open                          | Facts should come from the business's records. RFC-0026 is a draft with five open questions.                                          |
-| G-145 | partly closed                 | Startup check and workflow key check (#450). Rotation script and schedule still open.                                                 |
-| G-146 | open                          | No business system calls the check, and no probe checks that a direct call is refused.                                                |
-| G-147 | open                          | Missing signals evaluate as false, so absent evidence looks like a refusal. Needs a new outcome; a design decision first. Issue #451. |
-| G-148 | closed (#459, awaiting merge) | Decisions name the evaluation method and version. Issue #452.                                                                         |
-| G-149 | closed                        | Release refuses authorizations with no signals hash (#457). Issue #453 closed.                                                        |
-| G-150 | closed                        | Refusal-notification claim corrected (#458). Issue #454.                                                                              |
+| Gap   | Status                 | Notes                                                                                                                                    |
+| ----- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| G-122 | open                   | Kill switch: third-party check not built; two-person reset not exercised with real keys; signing waits on G-118.                         |
+| G-129 | open                   | Option A chosen. The check exists and is tested, but no business system calls it. Issue #421, P1.                                        |
+| G-142 | closed                 | Inbound check runs the bound policy (#448).                                                                                              |
+| G-143 | partly closed          | Policy name and version are recorded. The approver is not (`approved_by`, `approved_at`). Issue #397 is related to approver scope.       |
+| G-144 | open                   | Facts should come from the business's records. RFC-0026 is a draft with five open questions.                                             |
+| G-145 | partly closed          | Startup check and workflow key check (#450). Rotation script and schedule still open.                                                    |
+| G-146 | open                   | No business system calls the check, and no probe checks that a direct call is refused.                                                   |
+| G-147 | partly closed          | Missing facts are refused and named (#483, G-157). The outcome is still REJECT, not a distinct insufficient-evidence result. Issue #451. |
+| G-148 | closed (#459, on main) | Decisions name the evaluation method and version. Issue #452.                                                                            |
+| G-157 | closed (#483, open)    | A request that omits a fact a decision depends on is refused, naming the facts. Tests in `PolicyEngine.missing-fact.test.ts`.            |
+| G-158 | closed                 | Commit `66c1e50` bypassed the preflight on owner approval. Recorded in the commit and REMAINING-WORK.md.                                 |
+| G-159 | open                   | Three distrust-root tests depend on the Node build's certificate store. Pin Node in CI; security follow-up tracked privately.            |
+| G-160 | open                   | Decisions at method version `"1"` can replay to a different verdict. Needs a replay note and a decision on re-verifying them.            |
+| G-149 | closed                 | Release refuses authorizations with no signals hash (#457). Issue #453 closed.                                                           |
+| G-150 | closed                 | Refusal-notification claim corrected (#458). Issue #454.                                                                                 |
 
 ## 5. What is pending, in priority order
 
-1. **Review and merge #459** (G-148).
-2. **Decide the G-147 outcome.** Missing signals should produce "insufficient evidence," not a refusal. This changes what clients see, so confirm the wording first.
+1. **Review and merge #483** (G-157). Read the replay note in G-160 first, since version `"1"` verdicts can differ on replay.
+2. **Decide the G-147 outcome.** Missing facts are now refused with a reason that names them (G-157). Decide whether that should be a distinct "insufficient evidence" outcome. This changes what clients see, so confirm the wording first.
+   2a. **Decide G-160:** whether approvals recorded at method version `"1"` are re-verified or kept as recorded.
+   2b. **Pin Node 24.22.1 in CI** and complete the security follow-up tracked outside this repository (G-159).
 3. **Confirm production's probe entry** holds exactly `kill-switch:probe`, then run the kill-switch probe by hand and check it passes (PR #450 is merged, so the server now refuses to start without that entry).
 4. **Answer the five RFC-0026 questions** (which source owns each fact; how a source is authenticated and replaced; timeouts; how old a fact may be; which capabilities need a source before approval). These block G-144.
 5. **Decide how the approver is recorded** for inbound requests (G-143). The check has no approval step yet.
@@ -81,7 +90,7 @@ Everything else from today is merged. See section 3.
   - `packages/api/src/routes/inbound-checks.ts` and `packages/api/src/app.ts`: the inbound check and its wiring.
   - `packages/runtime/src/RuntimeEngine.ts`: `decide()`, the decide step.
   - `packages/execution-gateway/src/ExecutionGateway.ts`: the release-time checks, including the refusal of unhashed authorizations (G-149).
-  - `packages/policy/src/PolicyEngine.ts`: `POLICY_EVALUATION_METHOD` (G-148).
+  - `packages/policy/src/PolicyEngine.ts`: `POLICY_EVALUATION_METHOD` (G-148) and the missing-fact check (G-157).
   - `packages/api/src/bootstrap/assertProbeKeyEntry.ts` and `createKillSwitch.ts`: the startup check (G-145).
   - `.github/workflows/kill-switch-probe.yml`: the probe, its key check, and its alert.
 - **Issues:** #421 (G-129, P1), #427 to #433 (G-135 to G-141), #451 (G-147), #397 (G-50, approver scope).

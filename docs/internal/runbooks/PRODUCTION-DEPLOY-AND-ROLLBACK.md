@@ -157,11 +157,12 @@ The app throws while starting, so every request returns 500.
 
 When you change a deploy step, update this file on the same branch. The troubleshooting guide (`docs/internal/runbooks/PRODUCTION-TROUBLESHOOTING.md`) and the approval runbook (`docs/internal/runbooks/POLICY-CHANGE-APPROVAL.md`) link here.
 
-## 9. Changes that refuse requests that used to pass (2026-11-05)
+## 9. Changes that refuse requests that used to pass (2026-11-05 and 2026-11-07)
 
 Check these before the deploy that carries them. Each one can turn a working request into a refusal.
 
 - **Probe key entry required (PR #450).** With the kill switch on, the server will not start unless `PARMANA_API_KEYS` has a `kill-switch-probe` entry holding exactly `kill-switch:probe`. Confirm production's entry first (section 6 of `KEY-ROTATION.md`).
 - **Unhashed authorizations refused at release (PR #457, G-149).** An authorization issued before `signalsHash` existed is refused at release when the signal verifier is configured. Confirm no such authorization is still needed. Any that are must be re-issued.
 - **Decisions name their method (PR #459, G-148).** Decisions recorded before this change have no `evaluationMethod`. Anything that reads the field must treat its absence as a decision recorded before the method was named, not as an error.
+- **Missing facts are refused (PR #483, G-157).** A request that omits a fact a rule's outcome depends on is now REJECT with `matchedRuleId: "missing-fact"`, and the reason names the facts. Requests that used to pass because a later rule matched will be refused. Check which clients send partial signals before the deploy. The method version is now `"2"`; a `"1"` decision for a request that omitted a fact can replay to a different verdict (G-160).
 - **Inbound check runs the bound policy (PR #448, G-142).** `POST /v1/inbound/checks` refuses a capability with no bound policy (`no_policy_bound`) and approves only when the policy and the grant both allow.

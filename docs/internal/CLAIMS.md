@@ -108,7 +108,7 @@ Evidence
 
 ## 2.3 Deterministic Policy Evaluation
 
-**Update (2026-11-05, G-148).** Every decision now names the method that produced its verdict and that method's version: `evaluationMethod: { id: "deterministic-rules", version: "1" }`, set from `POLICY_EVALUATION_METHOD` in `packages/policy`. The inputs are recorded with the verdict as `signals`. Decisions recorded before this change have no `evaluationMethod`.
+**Update (2026-11-07, G-157).** A request must send every fact the policy's rules depend on. If a rule's outcome depends on a fact the request did not send, the decision is REJECT with `matchedRuleId: "missing-fact"`, and its reason names the missing facts. A rule that matches, or that does not read the missing fact, is decided as before. Every decision names the method that produced its verdict and that method's version: `evaluationMethod: { id: "deterministic-rules", version: "2" }`, set from `POLICY_EVALUATION_METHOD` in `packages/policy`. The version is `"2"` from this change; it was `"1"` from 2026-11-05 (G-148). The inputs are recorded with the verdict as `signals`. Decisions recorded before 2026-11-05 have no `evaluationMethod`. Decisions recorded at `"1"` for requests that omitted a fact may replay to a different verdict (G-160).
 
 Parmana deterministically evaluates business policies using sequential rule evaluation with first-match semantics.
 
@@ -123,6 +123,7 @@ Evaluation records include:
 Evidence
 
 - PolicyEngine (`packages/policy/src/PolicyEngine.ts`)
+- Missing-fact tests (`packages/policy/tests/unit/PolicyEngine.missing-fact.test.ts`)
 
 ---
 
