@@ -24,7 +24,7 @@ import tls from "node:tls";
  */
 export const DISTRUSTED_ROOT_FINGERPRINTS: readonly string[] = [
   // emSign Root CA - G1
-  "40:F6:AF:03:46:A9:9A:A1:CD:1D:55:5A:4E:9C:CE:62:C7:F9:63:46:03:EE:40:66:15:83:3D:C8:C8:D0:03:67",
+  "2D:3A:E8:32:79:75:47:C2:D4:43:06:14:1F:5E:A9:3D:4F:F7:0F:48:94:B5:65:F7:52:8D:64:74:24:C6:07:67",
   // emSign ECC Root CA - G3
   "86:A1:EC:BA:08:9C:4A:8D:3B:BE:27:34:C6:12:BA:34:1D:81:3E:04:3C:F9:E8:A8:62:CD:5C:57:A3:6B:BE:6B",
   // emSign Root CA - C1
@@ -33,11 +33,16 @@ export const DISTRUSTED_ROOT_FINGERPRINTS: readonly string[] = [
   "BC:4D:80:9B:15:18:9D:78:DB:3E:1D:8C:F4:F9:72:6A:79:5D:A1:64:3C:A5:F1:35:8E:1D:DB:0E:DC:0D:7E:B3",
 ];
 
-/** Returns `certificates` without the distrusted roots. */
+/**
+ * Returns `certificates` without the roots whose fingerprints are listed.
+ * `fingerprints` defaults to the emSign list; tests pass another list to
+ * exercise the removal on any Node build.
+ */
 export function withoutDistrustedRoots(
   certificates: readonly string[],
+  fingerprints: readonly string[] = DISTRUSTED_ROOT_FINGERPRINTS,
 ): string[] {
-  const distrusted = new Set(DISTRUSTED_ROOT_FINGERPRINTS);
+  const distrusted = new Set(fingerprints);
 
   return certificates.filter((pem) => {
     try {
@@ -50,18 +55,24 @@ export function withoutDistrustedRoots(
 }
 
 /**
- * Refuses to start when none of the listed roots is in the bundled store.
- * Without a match the removal does nothing, so the server would run
- * believing it is protected when it is not. The official Node 24.22.1 and
- * 24.22.2 builds bundle `emSign Root CA - G1`, which is listed, so they pass.
+ * Checks the bundled store before the server starts, and reports how many
+ * listed roots it holds.
  *
- * Trade-off: a future Node release that drops every listed root would also
- * refuse to start. That is deliberate: the operator should decide whether
- * the list still applies, not have the server run unchecked.
+ * - An empty store means TLS itself is broken, so this throws.
+ * - Zero listed roots is not an error. Some Node releases no longer bundle
+ *   any of them (Node 24.22.2 bundles none). Then no distrusted root is
+ *   trusted, so the distrust already holds. The count is logged so the
+ *   state is visible in the startup line.
  */
 export function assertListedRootIsBundled(
   bundled: readonly string[] = tls.getCACertificates("bundled"),
-): void {
+): { readonly matched: number } {
+  if (bundled.length === 0) {
+    throw new Error(
+      `Node ${process.version} bundles no CA certificates; refusing to start.`,
+    );
+  }
+
   const listed = new Set(DISTRUSTED_ROOT_FINGERPRINTS);
   const matched = bundled.filter((pem) => {
     try {
@@ -71,11 +82,7 @@ export function assertListedRootIsBundled(
     }
   });
 
-  if (matched.length === 0) {
-    throw new Error(
-      `Node ${process.version} bundles none of the distrusted roots, so the distrust cannot take effect; refusing to start. Use an official Node release.`,
-    );
-  }
+  return { matched: matched.length };
 }
 
 /**

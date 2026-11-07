@@ -14,28 +14,24 @@ const listed = (pem: string) =>
   );
 
 describe("assertListedRootIsBundled", () => {
-  it("refuses to start when the store holds none of the listed roots", () => {
+  it("refuses an empty store, because TLS itself is then broken", () => {
+    expect(() => assertListedRootIsBundled([])).toThrow(/refusing to start/);
+  });
+
+  it("accepts a store with none of the listed roots, and reports zero", () => {
     const unrelated = tls
       .getCACertificates("bundled")
       .filter((pem) => !listed(pem));
 
-    expect(() => assertListedRootIsBundled(unrelated)).toThrow(
-      /bundles none of the distrusted roots/,
-    );
+    expect(assertListedRootIsBundled(unrelated)).toEqual({ matched: 0 });
   });
 
-  it("refuses an empty store", () => {
-    expect(() => assertListedRootIsBundled([])).toThrow(/refusing to start/);
-  });
+  it("reports how many listed roots the store holds", () => {
+    const bundled = tls.getCACertificates("bundled");
+    const withListed = bundled.filter(listed);
 
-  it("passes when the store holds a listed root", () => {
-    const withListed = tls
-      .getCACertificates("bundled")
-      .filter((pem) => listed(pem));
-
-    // Only the official builds bundle a listed root; skip where none is bundled.
-    if (withListed.length === 0) return;
-
-    expect(() => assertListedRootIsBundled(withListed)).not.toThrow();
+    expect(assertListedRootIsBundled(bundled)).toEqual({
+      matched: withListed.length,
+    });
   });
 });

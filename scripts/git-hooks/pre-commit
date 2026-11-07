@@ -31,6 +31,17 @@ set -euo pipefail
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 CONFIG="$REPO_ROOT/.gitleaks.toml"
 
+# Node 24 check, before any slow step. On another major version the build
+# passes but the tests fail for reasons unrelated to the change (see
+# CONTRIBUTING.md, "Install Node.js 24"). Failing here gives one clear message.
+node_major="$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo none)"
+if [ "$node_major" != "24" ]; then
+  echo ""
+  echo "pre-commit: Node 24 is required (found: $(node -v 2>/dev/null || echo none))."
+  echo "Switch to Node 24.x (see .nvmrc), run 'npm rebuild re2', then retry. Commit blocked."
+  echo ""
+  exit 1
+fi
 run_gitleaks() {
   if command -v gitleaks >/dev/null 2>&1; then
     gitleaks protect --staged --config "$CONFIG" --redact

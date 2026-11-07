@@ -45,12 +45,13 @@ import {
  * /health, and only fail on its first real request.
  */
 // Before any outbound TLS connection: see distrustCompromisedRoots.ts.
-assertListedRootIsBundled();
+const listedRoots = assertListedRootIsBundled();
 const distrusted = distrustCompromisedRoots();
 console.log(
   JSON.stringify({
     event: "runtime",
     node: process.version,
+    distrustedRootsBundled: listedRoots.matched,
     distrustedRootsRemoved: distrusted.removed,
   }),
 );
