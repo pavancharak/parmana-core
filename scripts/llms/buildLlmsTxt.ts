@@ -147,20 +147,17 @@ function url(path: string): string {
   return path === "index" ? SITE : `${SITE}/${path}`;
 }
 
-function sdkVersions(): { typescript: string; python: string } {
-  const typescript = (
-    JSON.parse(
-      readFileSync(join(repoRoot, "typescript", "package.json"), "utf8"),
-    ) as { version: string }
-  ).version;
-
-  const pyproject = readFileSync(
-    join(repoRoot, "python", "pyproject.toml"),
-    "utf8",
-  );
-  const python = pyproject.match(/^version\s*=\s*"([^"]+)"/m)?.[1] ?? "unknown";
-
-  return { typescript, python };
+/**
+ * The SDK versions the docs call current. These are the versions on npm and
+ * PyPI, not the workspace versions: a version bump in package.json does not
+ * publish anything. Update publishedSdkVersions.json when a release is
+ * published. tests/architecture/sdk-versions-published.test.ts checks every
+ * docs page against this file.
+ */
+export function sdkVersions(): { typescript: string; python: string } {
+  return JSON.parse(
+    readFileSync(join(repoRoot, "scripts", "llms", "publishedSdkVersions.json"), "utf8"),
+  ) as { typescript: string; python: string };
 }
 
 const SUMMARY =
