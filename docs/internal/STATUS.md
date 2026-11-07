@@ -1,100 +1,130 @@
-# Parmana: current status, pending work and where to resume
+# Parmana: status, remaining work and how to finish it
 
-Status as of 2026-11-07. Repository: `pavancharak/parmana-core`.
+Status as of 2026-11-07. Repository: `pavancharak/parmana-core`. Companion repositories: `parmana-verifier` and `parmana-connect`.
 
-## 1. Summary
+This page replaces the 2026-11-05 version. The gap table now lives in `VERIFICATION-GAPS.md` and `REMAINING-WORK.md`.
 
-The inbound-agent design is decided and recorded (RFC-0024). The inbound check exists, runs the policy
-bound to each capability, and is tested. Nothing calls it yet. Several evidence-review gaps and the
-kill-switch probe have been closed today. Open work is listed in section 5.
+## 1. Where things stand
 
-## 2. Open pull requests
+### Merged to `main` on 2026-11-07
 
-- **#483** (G-157): a request that omits a fact a decision depends on is refused, naming the facts. Also sets the
-  method version to `"2"`. Opened from `claude/new-session-ml5hdm`; not yet merged.
+| PR               | What it does                                                                                                                                                                                   |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #483             | A request that omits a fact the decision depends on is refused. The evaluation method version is now `"2"`.                                                                                    |
+| #484, #486, #488 | Docs: claims, gaps, runbooks, the Node 24.22.2 pin and the startup check.                                                                                                                      |
+| #485             | CI pinned to Node 24.22.2, the version the Docker production images run.                                                                                                                       |
+| #487             | The server refuses to start when its bundled certificate store holds none of the four listed distrusted roots.                                                                                 |
+| #489             | `engines.node` is `24.x`. A test fails if the Node major version disagrees across `package.json`, CI and the Dockerfile.                                                                       |
+| #490             | Generator for schema v3 verifier fixtures, signed by the server's own signing code.                                                                                                            |
+| #491             | The Python and TypeScript SDKs verify schema v3 hybrid records (Ed25519 and ML-DSA-65). Python needs `cryptography` 47 or later; TypeScript needs Node 24 or later. Schema v3 rollout runbook. |
+| #492             | Key-delivery design, and the gate on the schema v3 Preview test.                                                                                                                               |
 
-**#459** (G-148) is on `main`: `evaluationMethod` is set in `DecisionBuilder`. Earlier versions of this file listed it
-as open; that was stale.
+### Open
 
-Everything else from today is merged. See section 3.
+- **parmana-core #493:** option A, which loads key material from Secrets Manager at startup, and the removal of Fly. Ready for review. The preflight passed on Node 24.22.1 (3,560 tests).
 
-## 3. Merged to main today
+### Verifier and connect
 
-| PR   | What it does                                                                             |
-| ---- | ---------------------------------------------------------------------------------------- |
-| #426 | CERT-In AI security audit guidelines mapping (public page)                               |
-| #434 | Gap log entries G-135 to G-141, with tracking issues #427 to #433                        |
-| #435 | Gap index updated for G-130 to G-141                                                     |
-| #436 | G-129 documented limit: direct agent calls are not checked (public limitations page)     |
-| #437 | RFC-0024 question 3: inbound refusals and approvals are recorded                         |
-| #438 | RFC-0024 decisions: no bypass, same rules inbound as outbound, option A chosen           |
-| #439 | RFC-0024 question 4: how no-bypass is verified                                           |
-| #440 | RFC-0024 questions 5 and 6: per-action policy; what an outside request's record contains |
-| #441 | RFC-0024 question list marked answered                                                   |
-| #442 | RFC-0024 rewritten to the decided design                                                 |
-| #443 | Migration: `inbound_decisions` holds any action (applied to production, 2026-11-05)      |
-| #445 | Runtime: `execute` split into `decide` and `execute`, behaviour unchanged                |
-| #446 | Probe alert: a failed kill-switch probe opens a P1 issue; RFC-0026 drafted               |
-| #447 | Docs: inbound checks page, claims 3.30 to 3.33, gaps G-142 to G-146                      |
-| #448 | Inbound check runs the bound policy (closes G-142)                                       |
-| #449 | Docs updated for #448                                                                    |
-| #450 | Probe startup check and workflow key check (G-145, partly closed)                        |
-| #455 | This status document, first version                                                      |
-| #456 | Gap log entries G-147 to G-150, with issues #451 to #454                                 |
-| #457 | Release refuses authorizations with no signals hash (closes G-149, issue #453)           |
-| #458 | Refusal-notification claim corrected (closes G-150, issue #454)                          |
+- `parmana-verifier`: PRs #33 and #34 are merged. Two commits are on the branch but not in `main`: a server-signed schema v3 vector with its test, and Python tests for the server-signed hybrid record. They need a new PR.
+- `parmana-connect`: PR #48 is merged.
 
-## 4. Gap status
+### Closed on 2026-11-07
 
-| Gap   | Status                 | Notes                                                                                                                                    |
-| ----- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| G-122 | open                   | Kill switch: third-party check not built; two-person reset not exercised with real keys; signing waits on G-118.                         |
-| G-129 | open                   | Option A chosen. The check exists and is tested, but no business system calls it. Issue #421, P1.                                        |
-| G-142 | closed                 | Inbound check runs the bound policy (#448).                                                                                              |
-| G-143 | partly closed          | Policy name and version are recorded. The approver is not (`approved_by`, `approved_at`). Issue #397 is related to approver scope.       |
-| G-144 | open                   | Facts should come from the business's records. RFC-0026 is a draft with five open questions.                                             |
-| G-145 | partly closed          | Startup check and workflow key check (#450). Rotation script and schedule still open.                                                    |
-| G-146 | open                   | No business system calls the check, and no probe checks that a direct call is refused.                                                   |
-| G-147 | partly closed          | Missing facts are refused and named (#483, G-157). The outcome is still REJECT, not a distinct insufficient-evidence result. Issue #451. |
-| G-148 | closed (#459, on main) | Decisions name the evaluation method and version. Issue #452.                                                                            |
-| G-157 | closed (#483, open)    | A request that omits a fact a decision depends on is refused, naming the facts. Tests in `PolicyEngine.missing-fact.test.ts`.            |
-| G-158 | closed                 | Commit `66c1e50` bypassed the preflight on owner approval. Recorded in the commit and REMAINING-WORK.md.                                 |
-| G-159 | open                   | Three distrust-root tests depend on the Node build's certificate store. Pin Node in CI; security follow-up tracked privately.            |
-| G-160 | open                   | Decisions at method version `"1"` can replay to a different verdict. Needs a replay note and a decision on re-verifying them.            |
-| G-149 | closed                 | Release refuses authorizations with no signals hash (#457). Issue #453 closed.                                                           |
-| G-150 | closed                 | Refusal-notification claim corrected (#458). Issue #454.                                                                                 |
+- parmana-core #451 (decided: refusal names the missing facts, no separate outcome) and #279 (duplicate of #421).
+- parmana-verifier #28 (ML-DSA-65 checks, merged in PR #31).
 
-## 5. What is pending, in priority order
+### Still open on purpose
 
-1. **Review and merge #483** (G-157). Read the replay note in G-160 first, since version `"1"` verdicts can differ on replay.
-2. **Decide the G-147 outcome.** Missing facts are now refused with a reason that names them (G-157). Decide whether that should be a distinct "insufficient evidence" outcome. This changes what clients see, so confirm the wording first.
-   2a. **Decide G-160:** whether approvals recorded at method version `"1"` are re-verified or kept as recorded.
-   2b. **Pin Node 24.22.1 in CI** and complete the security follow-up tracked outside this repository (G-159).
-3. **Confirm production's probe entry** holds exactly `kill-switch:probe`, then run the kill-switch probe by hand and check it passes (PR #450 is merged, so the server now refuses to start without that entry).
-4. **Answer the five RFC-0026 questions** (which source owns each fact; how a source is authenticated and replaced; timeouts; how old a fact may be; which capabilities need a source before approval). These block G-144.
-5. **Decide how the approver is recorded** for inbound requests (G-143). The check has no approval step yet.
-6. **Pick a pilot business system** that calls the check (G-146). Nothing in these repositories can do it.
-7. **Write the rotation script and name a rotation owner and schedule** (G-145, the remaining part).
-8. **Decide what to do with the designated branch** `ccr-be3c70c8-snx5at`, which still holds old merged history. Replacing it needs a force-push, which needs your approval.
-9. **Optional:** a response to the DSCI consultation (policy@dsci.in); the blog and pitch work.
-10. **Known gap in the claims index:** the "gap mentions" and "distinct gaps" counts were not recomputed.
+- parmana-core #291: turn schema v3 on in the server. The SDK readers are done.
+- parmana-verifier #27: waits on #291.
 
-## 6. Where to resume
+## 2. Decisions
 
-- **Read first:** `docs/internal/rfcs/RFC-0024-Inbound-Agent-Authorization.md` and `docs/internal/VERIFICATION-GAPS.md`, entries G-122, G-129 and G-142 to G-150.
-- **Claims:** `docs/internal/CLAIMS.md`, claims 2.3, 2.42, 2.47 and 3.30 to 3.33. Updates from today are dated in each section.
-- **Runbooks:**
-  - `docs/internal/runbooks/KEY-ROTATION.md`, section 6: the probe key, the startup check and the workflow check.
-  - `docs/internal/runbooks/PRODUCTION-DEPLOY-AND-ROLLBACK.md`, section 9: changes that refuse requests that used to pass. Check these before the next deploy.
-- **Code:**
-  - `packages/api/src/routes/inbound-checks.ts` and `packages/api/src/app.ts`: the inbound check and its wiring.
-  - `packages/runtime/src/RuntimeEngine.ts`: `decide()`, the decide step.
-  - `packages/execution-gateway/src/ExecutionGateway.ts`: the release-time checks, including the refusal of unhashed authorizations (G-149).
-  - `packages/policy/src/PolicyEngine.ts`: `POLICY_EVALUATION_METHOD` (G-148) and the missing-fact check (G-157).
-  - `packages/api/src/bootstrap/assertProbeKeyEntry.ts` and `createKillSwitch.ts`: the startup check (G-145).
-  - `.github/workflows/kill-switch-probe.yml`: the probe, its key check, and its alert.
-- **Issues:** #421 (G-129, P1), #427 to #433 (G-135 to G-141), #451 (G-147), #397 (G-50, approver scope).
+- **Production moves its signing keys to option A on 10 November 2026.** Recorded in `runbooks/KEY-DELIVERY.md`.
+- **Secret manager for option A: AWS Secrets Manager.**
+- **Production runs on Vercel.** Fly is removed.
+- **Node version: 24.x everywhere.** The Vercel project currently shows 26.x through a dashboard override, which must be changed.
+- **Schema v3 is turned on Preview first, production later, as separate decisions.** The gate is in `runbooks/SCHEMA-V3-ROLLOUT.md`.
+- **No ML-DSA-65 private key goes into an environment variable** for the schema v3 Preview test, unless the owner accepts that exposure in writing.
 
-To resume a piece of work: fetch `origin/main`, create a branch from it, and read the gap entry above. For
-G-147, start with the outcome wording in `docs/internal/VERIFICATION-GAPS.md`. For G-146, the caller is
-outside these repositories, so start by choosing the pilot system.
+## 3. What remains, in order
+
+### 3.1 Merge the open pull requests (owner)
+
+1. Review and merge parmana-core #493.
+2. Open and merge a PR for the two verifier commits on `claude/new-session-ml5hdm`.
+
+### 3.2 Set Vercel's Node version to 24.x (owner, dashboard)
+
+1. In the Vercel dashboard, open the production project, then Settings, then Build and Deployment, then Node.js Version.
+2. Select `24.x` and click Save.
+3. Redeploy `main`. The Hobby plan's daily deploy limit may block this until it resets.
+4. Check the new production deployment's Runtime Settings, and confirm `/health` responds.
+5. Check that the build log's first lines show `Using Node.js 24.x.y`.
+
+### 3.3 Let Vercel read the key secret (owner, then verify)
+
+Option A authenticates with the server's Vercel OIDC identity. This is not set up yet.
+
+1. In AWS, create an IAM role that trusts Vercel's OIDC provider for this project. Allow `secretsmanager:GetSecretValue` on one secret only.
+2. On the Vercel project's environment, set `AWS_REGION` and `AWS_ROLE_ARN`. These are not secrets.
+3. Create the secret in Secrets Manager, with the JSON shape that `PARMANA_KEY_MATERIAL_JSON` uses: `{ "<keyId>": { "privateKeyPem": "...", "publicKeyPem": "..." } }`.
+4. On Preview only, set `PARMANA_KEY_MATERIAL_SECRET` to the secret's name or ARN, and `PARMANA_SECRETS_PROVIDER` to `aws-secrets-manager`. Redeploy Preview. Check that `/health` responds. Never read the secret's value into a chat or a log.
+
+### 3.4 Option A: Preview, then production by 10 November 2026 (owner decides, then verify)
+
+1. Preview: the steps in 3.3 step 4. Check that the server starts, writes the key files, and signs.
+2. Production, by 10 November 2026: set the same two variables on Production, redeploy `main`, and check `/health`.
+3. After the secret path has run cleanly on Production, remove `PARMANA_KEY_MATERIAL_JSON` from Production.
+4. Rotate the keys, since they have been in an environment variable. Follow the steps in `runbooks/KEY-DELIVERY.md`.
+
+### 3.5 Schema v3 on Preview (owner sets the values, then verify records)
+
+This starts only after 3.3 and 3.4 have run on Preview, or once the owner has accepted the exposure in writing. See the gate in `runbooks/SCHEMA-V3-ROLLOUT.md`.
+
+1. Load the ML-DSA-65 key through option A, not an environment variable.
+2. On Preview only, set `CRYPTO_MODE=hybrid`, `PRIMARY_SIGNATURE_PROVIDER=ed25519`, `SECONDARY_SIGNATURE_PROVIDER=ml-dsa-65`, `PARMANA_VERIFICATION_SECONDARY_KEY_ID`, `HYBRID_SCHEMA_VERSION=3` and `HYBRID_SCHEMA_V3_ACKNOWLEDGED=true`.
+3. Redeploy Preview. Create one trust record. Check that it has `schemaVersion: 3` and two signatures.
+4. Verify it with the TypeScript and Python SDKs. Expect `valid: true` and `coverage: "full"`. Add a field to a copy: both must report `valid: false`.
+5. Watch Preview's logs for signing errors over a day.
+
+### 3.6 Schema v3 on Production (separate decision, owner)
+
+Only after 3.5 has run cleanly. Follow the Production steps in `runbooks/SCHEMA-V3-ROLLOUT.md`.
+
+Rollback: unset `HYBRID_SCHEMA_VERSION` and `CRYPTO_MODE`, then redeploy.
+
+### 3.7 Older review decisions (owner)
+
+These are tracked outside this repository. Each needs an owner decision:
+
+- The periodic policy-integrity check logs a mismatch but lets execution continue. Recommended: fail closed.
+- Row-level security is enabled on many tables, but most have no policy. Recommended: first confirm where the service credential is held, then write policies.
+- The leads table stores email with no stated retention. Needs the retention period and purpose.
+- One shared bearer token is used for all MCP clients. Recommended: per-client tokens.
+- The signed authorization does not name the connector. Recommended: a planned, coordinated upgrade.
+
+### 3.8 Outside these repositories
+
+- Security reports are with the maintainers.
+- G-133: there has been no live run between parmana-core and parmana-connect. Needs a public HTTPS endpoint for the connector.
+- G-134: the production connector key is not pinned. Needs its fingerprint confirmed through a second channel.
+
+## 4. Checking the repository
+
+```bash
+npm ci
+npm run build
+npx vitest run
+```
+
+- Run the tests under the official Node 24.22.x build, with it first on `PATH`. After switching Node versions, rebuild native modules: `npm rebuild re2`.
+- Python SDK, from `python/`: `pytest` (skip the live-server tests unless a server is running), `ruff check .`, `black --check .`, `mypy`.
+- Before each commit, the pre-commit hook runs the full preflight. If it fails, fix the cause. Do not bypass the hook.
+
+## 5. Known limits
+
+- The Python live-server tests and the quickstart example need a running server, so they are not run here.
+- Three TypeScript test files are empty placeholders (`HealthApi`, `ParmanaClient`, `PolicyApi`). This predates today's work.
+- Option A is tested with a fake secrets provider. It has not been run against AWS Secrets Manager.
+- Whether Vercel's OIDC role can read the secret is not yet verified.
