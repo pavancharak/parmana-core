@@ -36,7 +36,9 @@ function claims(text: string, pattern: RegExp): string[] {
 
 function packageJsonVersion(path: string): string {
   return (
-    JSON.parse(readFileSync(join(repoRoot, path), "utf8")) as { version: string }
+    JSON.parse(readFileSync(join(repoRoot, path), "utf8")) as {
+      version: string;
+    }
   ).version;
 }
 
@@ -95,8 +97,14 @@ describe("SDK versions in the docs are the published ones", () => {
 
   it("the SDK install table names the published versions", () => {
     const text = readFileSync(join(docsRoot, "choose-your-path.mdx"), "utf8");
-    const npmRow = text.split("\n").find((line) => line.includes("[`@parmana/sdk`](/sdks/typescript) on npm"));
-    const pypiRow = text.split("\n").find((line) => line.includes("[`parmana`](/sdks/python) on PyPI"));
+    const npmRow = text
+      .split("\n")
+      .find((line) =>
+        line.includes("[`@parmana/sdk`](/sdks/typescript) on npm"),
+      );
+    const pypiRow = text
+      .split("\n")
+      .find((line) => line.includes("[`parmana`](/sdks/python) on PyPI"));
 
     expect(npmRow, "npm row in choose-your-path.mdx").toBeDefined();
     expect(pypiRow, "PyPI row in choose-your-path.mdx").toBeDefined();

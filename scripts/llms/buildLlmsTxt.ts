@@ -156,7 +156,10 @@ function url(path: string): string {
  */
 export function sdkVersions(): { typescript: string; python: string } {
   return JSON.parse(
-    readFileSync(join(repoRoot, "scripts", "llms", "publishedSdkVersions.json"), "utf8"),
+    readFileSync(
+      join(repoRoot, "scripts", "llms", "publishedSdkVersions.json"),
+      "utf8",
+    ),
   ) as { typescript: string; python: string };
 }
 

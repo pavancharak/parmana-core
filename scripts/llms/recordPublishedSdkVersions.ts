@@ -43,9 +43,7 @@ function npmServes(pkg: string, version: string): boolean {
 }
 
 async function pypiServes(pkg: string, version: string): Promise<boolean> {
-  const response = await fetch(
-    `https://pypi.org/pypi/${pkg}/${version}/json`,
-  );
+  const response = await fetch(`https://pypi.org/pypi/${pkg}/${version}/json`);
   return response.status === 200;
 }
 
@@ -59,9 +57,7 @@ async function main(): Promise<void> {
   ];
   const missing = checks.filter(([, ok]) => !ok).map(([name]) => name);
   if (missing.length > 0) {
-    throw new Error(
-      `not published, nothing recorded: ${missing.join(", ")}`,
-    );
+    throw new Error(`not published, nothing recorded: ${missing.join(", ")}`);
   }
 
   writeFileSync(target, `${JSON.stringify({ typescript, python }, null, 2)}\n`);
