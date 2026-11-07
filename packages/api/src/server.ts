@@ -23,7 +23,10 @@ import { createRateLimitStore } from "./bootstrap/createRateLimitStore.js";
 import { createSandboxOptions } from "./bootstrap/createSandboxOptions.js";
 import { createKillSwitch } from "./bootstrap/createKillSwitch.js";
 import { createApp } from "./app.js";
-import { distrustCompromisedRoots } from "./bootstrap/distrustCompromisedRoots.js";
+import {
+  assertListedRootIsBundled,
+  distrustCompromisedRoots,
+} from "./bootstrap/distrustCompromisedRoots.js";
 
 /**
  * Fail-closed startup validation, before any other bootstrap runs and
@@ -41,6 +44,7 @@ import { distrustCompromisedRoots } from "./bootstrap/distrustCompromisedRoots.j
  * /health, and only fail on its first real request.
  */
 // Before any outbound TLS connection: see distrustCompromisedRoots.ts.
+assertListedRootIsBundled();
 const distrusted = distrustCompromisedRoots();
 console.log(
   JSON.stringify({

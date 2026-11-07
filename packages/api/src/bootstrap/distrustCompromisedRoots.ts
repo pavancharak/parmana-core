@@ -50,6 +50,35 @@ export function withoutDistrustedRoots(
 }
 
 /**
+ * Refuses to start when none of the listed roots is in the bundled store.
+ * Without a match the removal does nothing, so the server would run
+ * believing it is protected when it is not. The official Node 24.22.1 and
+ * 24.22.2 builds bundle `emSign Root CA - G1`, which is listed, so they pass.
+ *
+ * Trade-off: a future Node release that drops every listed root would also
+ * refuse to start. That is deliberate: the operator should decide whether
+ * the list still applies, not have the server run unchecked.
+ */
+export function assertListedRootIsBundled(
+  bundled: readonly string[] = tls.getCACertificates("bundled"),
+): void {
+  const listed = new Set(DISTRUSTED_ROOT_FINGERPRINTS);
+  const matched = bundled.filter((pem) => {
+    try {
+      return listed.has(new X509Certificate(pem).fingerprint256);
+    } catch {
+      return false;
+    }
+  });
+
+  if (matched.length === 0) {
+    throw new Error(
+      `Node ${process.version} bundles none of the distrusted roots, so the distrust cannot take effect; refusing to start. Use an official Node release.`,
+    );
+  }
+}
+
+/**
  * Applies the removal to this process and reports what it did. Throws if
  * the Node version cannot set the default CA list (older than 22.19 / 24.5),
  * so a server never starts believing it is protected when it is not.
