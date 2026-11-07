@@ -11,7 +11,10 @@ description: "Check an Execution Trust Record yourself: no network calls, no tru
   [`@parmana/verifier`](https://www.npmjs.com/package/@parmana/verifier). A
   Python version, for Python 3.11 or later, is published on PyPI as
   [`parmana-verifier`](https://pypi.org/project/parmana-verifier/). Both are
-  version 1.6.3, published 2026-11-01 from release `verifier-v1.6.3`.
+  version 2.0.0, published 2026-11-07. This is a breaking release: a record with
+  no `schemaVersion`, or with schema version 2, is refused unless the trust file
+  sets `"allowLegacyV2": true` (Python: `allow_legacy_v2`). To migrate, re-issue
+  the record as schema version 3.
 </Info>
 
 It recomputes an Execution Trust Record's hash and checks its signatures against the keys you

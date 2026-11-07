@@ -198,9 +198,9 @@ The full list, with the exact messages, is the [error catalog](/api-reference/er
 
 | You use                                | Package                                     | Current version | Install                                                       |
 | -------------------------------------- | ------------------------------------------- | --------------- | ------------------------------------------------------------- |
-| TypeScript or JavaScript               | [`@parmana/sdk`](/sdks/typescript) on npm   | 1.6.3           | `npm install @parmana/sdk`                                    |
-| Python                                 | [`parmana`](/sdks/python) on PyPI           | 1.6.3           | `pip install parmana`                                         |
-| Python, and you verify records offline | `parmana` with the `verify` extra           | 1.6.3           | `pip install "parmana[verify]"`                               |
+| TypeScript or JavaScript               | [`@parmana/sdk`](/sdks/typescript) on npm   | 2.0.0           | `npm install @parmana/sdk`                                    |
+| Python                                 | [`parmana`](/sdks/python) on PyPI           | 2.0.0           | `pip install parmana`                                         |
+| Python, and you verify records offline | `parmana` with the `verify` extra           | 2.0.0           | `pip install "parmana[verify]"`                               |
 | Another language                       | The [REST API](/api-reference/introduction) | Not applicable  | Any HTTP client, see [Other languages](/sdks/other-languages) |
 
 Both SDKs never retry `POST /execute` for you. They only retry idempotent `GET` requests, so an SDK can never turn a
@@ -1896,8 +1896,8 @@ Reference: [every endpoint](/build-book/reference-endpoints), [every SDK method]
 
 ## Versions
 
-The published SDKs are 1.6.3 (`@parmana/sdk` on npm,
-`parmana` on PyPI), published 2026-10-28. Methods marked **1.5.0** need that version or later:
+The published SDKs are 2.0.0 (`@parmana/sdk` on npm,
+`parmana` on PyPI), published 2026-11-07. Methods marked **1.5.0** need that version or later:
 `policyInEffect` and `policy_in_effect`, `verifyParmanaRelease` and `verify_parmana_release`.
 
 ---
@@ -5464,23 +5464,28 @@ Source: https://docs.parmanasystems.com/sdks/typescript
   Bearer-key authentication, a real thrown error taxonomy, and full test
   coverage are all in place, along with corrected model types (see below),
   `client.verify()`/`client.version()`, and `client.createTransaction()`.
-  v1.6.3, published 2026-11-01, is the current version. It changes no SDK code:
-  it only changes documentation, formatting and tests. v1.6.1, published
-  2026-10-22, removed the links to a private repository from the package
-  metadata. v1.6.0, published 2026-10-11, added the business signal source and
-  authority grant methods, and `conditions` on a release: see [New in
-  1.6.0](#new-in-160). v1.5.0, published 2026-10-04, added the external
-  connector methods, `policyInEffect()` and `verifyParmanaRelease()`, and the
-  Apache License 2.0: see [New in 1.5.0](#new-in-150). v1.4.0, published
-  2026-09-29, added `signApproval()` and the approver methods: see [New in
-  1.4.0](#new-in-140). v1.3.0, published 2026-09-25, added policy governance
-  with step up signing, offline verification, `caller()`, `publicKey()`,
-  `trustRecords()`, `latestReceipt()` and `statusCode` on errors: see [New in
-  1.3.0](#new-in-130). v1.2.0, published 2026-09-21, added the Execution Intent
-  methods. v1.1.6, published 2026-09-20, builds a default `HttpTransport` when
-  you omit `transport`, and sends `userAgent`. v1.1.3 added `serverCode` on
-  `InternalServerError` (see below). v1.1.2, published 2026-09-14, added
-  `createBusinessTransaction()`. See the fix history at the bottom of this page.
+  v2.0.0, published 2026-11-07, is the current version. Its offline verifier now
+  verifies hybrid records in full: a `signatures` array with one Ed25519 and one
+  ML-DSA-65 entry, including the whole-record message of schema version 3. Its
+  results report `coverage` (`"full"` or `"legacy"`) and
+  `hybridSignaturesValid`. ML-DSA-65 needs Node 24 or later with OpenSSL 3.5 or
+  later. v1.6.3, published 2026-11-01, changed only documentation, formatting
+  and tests. v1.6.1, published 2026-10-22, removed the links to a private
+  repository from the package metadata. v1.6.0, published 2026-10-11, added the
+  business signal source and authority grant methods, and `conditions` on a
+  release: see [New in 1.6.0](#new-in-160). v1.5.0, published 2026-10-04, added
+  the external connector methods, `policyInEffect()` and
+  `verifyParmanaRelease()`, and the Apache License 2.0: see [New in
+  1.5.0](#new-in-150). v1.4.0, published 2026-09-29, added `signApproval()` and
+  the approver methods: see [New in 1.4.0](#new-in-140). v1.3.0, published
+  2026-09-25, added policy governance with step up signing, offline
+  verification, `caller()`, `publicKey()`, `trustRecords()`, `latestReceipt()`
+  and `statusCode` on errors: see [New in 1.3.0](#new-in-130). v1.2.0, published
+  2026-09-21, added the Execution Intent methods. v1.1.6, published 2026-09-20,
+  builds a default `HttpTransport` when you omit `transport`, and sends
+  `userAgent`. v1.1.3 added `serverCode` on `InternalServerError` (see below).
+  v1.1.2, published 2026-09-14, added `createBusinessTransaction()`. See the fix
+  history at the bottom of this page.
 </Info>
 
 <Note>
@@ -6631,11 +6636,16 @@ Source: https://docs.parmanasystems.com/sdks/python
   and the `offline_verifier.py` fix. Two quick follow-up releases, v1.1.3 and
   v1.1.4, corrected the published package metadata (repo name, docs domain,
   added a `Website` URL); v1.1.5 and v1.1.6, both published 2026-09-20, follow;
-  v1.6.3, published 2026-11-01, is the current version. It changes no SDK code:
-  it only changes documentation, formatting and tests. v1.6.1, published
-  2026-10-22, removed the links to a private repository from the package
-  metadata. v1.6.0, published 2026-10-11, added the business signal source and
-  authority grant methods, and `conditions` on a release: see [New in
+  v2.0.0, published 2026-11-07, is the current version. Its offline verifier now
+  verifies hybrid records in full: a `signatures` array with one Ed25519 and one
+  ML-DSA-65 entry, including the whole-record message of schema version 3. Its
+  results report `coverage` (`"full"` or `"legacy"`) and
+  `hybrid_signatures_valid`. ML-DSA-65 needs `cryptography` 47.0.0 or later.
+  Execution models accept an optional `evaluation_method`. v1.6.3, published
+  2026-11-01, changed only documentation, formatting and tests. v1.6.1,
+  published 2026-10-22, removed the links to a private repository from the
+  package metadata. v1.6.0, published 2026-10-11, added the business signal
+  source and authority grant methods, and `conditions` on a release: see [New in
   1.6.0](#new-in-160). v1.5.0, published 2026-10-04, added the external
   connector methods, `policy_in_effect()` and `verify_parmana_release()`, fixed
   offline verification of a decoded record, and moved to the Apache License 2.0:
