@@ -7,7 +7,10 @@ Status as of 2026-11-07. Owner: the maintainer. This is a design and a decision 
 - **Do not place an ML-DSA-65 private key in an environment variable for the schema v3 test**, in Preview or Production, unless the owner accepts that exposure in writing.
 - **Build option A first:** load key material at startup from a secret manager, using the server's own identity. It also covers the production keys that are already in `PARMANA_KEY_MATERIAL_JSON`.
 - **Long-term target:** option B, a KMS or HSM that signs ML-DSA-65 so the key never leaves the device.
-- **Owner decisions still open:** which secret manager to use for option A, and whether production moves to option A on a fixed date.
+- **Owner decisions:**
+  - Secret manager for option A: AWS Secrets Manager (decided 2026-11-07).
+  - **Production moves to option A on 10 November 2026** (decided by the owner, recorded 2026-11-07). Production's keys are in `PARMANA_KEY_MATERIAL_JSON` today, so that date is the deadline for moving them.
+  - **Risk to the date:** production runs on Fly, and it is not yet verified that Fly can give the server an identity that reads Secrets Manager. That check comes first. If it fails, the date needs to be revisited with the owner, not worked around by keeping keys in the variable.
 
 ## The problem
 

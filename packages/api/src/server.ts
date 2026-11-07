@@ -10,6 +10,7 @@ import {
   assertKmsSigningKeyReachable,
   assertSigningKeyMaterialConfigured,
 } from "./bootstrap/assertSigningKeyMaterialConfigured.js";
+import { loadKeyMaterialFromSecretsManager } from "./bootstrap/loadKeyMaterialFromSecretsManager.js";
 import { createGracefulShutdown } from "./bootstrap/createGracefulShutdown.js";
 import { createExecutionSystem } from "./bootstrap/createExecutionSystem.js";
 import { createApplication, policyRepository } from "./application.js";
@@ -55,6 +56,7 @@ console.log(
 );
 
 assertStorageConfigured();
+await loadKeyMaterialFromSecretsManager(loadConfig().keys.keyDirectory);
 assertSigningKeyMaterialConfigured();
 await assertKmsSigningKeyReachable();
 
