@@ -55,7 +55,8 @@ def _as_json(value: Any) -> dict[str, Any]:
 
 
 # Algorithms the legacy (single) signature and the intent verifier accept. ML-DSA-65
-# is accepted only inside a hybrid `signatures` array, checked by _verify_hybrid_entries.
+# is accepted only inside a hybrid `signatures` array, checked by
+# _verify_hybrid_entries.
 _SUPPORTED_ALGORITHMS = {"ed25519"}
 
 # Schema versions, mirroring packages/crypto/src/ExecutionTrustRecordCanonicalView.ts.
@@ -65,7 +66,13 @@ _SUPPORTED_SCHEMA_VERSIONS = (2, 3)
 
 # Top-level fields a schema version 3 message does not cover (attached after
 # signing, or the signatures themselves).
-_WHOLE_RECORD_EXCLUDED_FIELDS = ("signature", "signatures", "schemaVersion", "verifications", "receipts")
+_WHOLE_RECORD_EXCLUDED_FIELDS = (
+    "signature",
+    "signatures",
+    "schemaVersion",
+    "verifications",
+    "receipts",
+)
 
 # Large message commitment (v1), mirroring packages/crypto/src/
 # SignatureCommitment.ts. AWS KMS caps a raw Ed25519 message at 4096
@@ -109,7 +116,9 @@ def _hybrid_message(record: dict[str, Any], schema_version: int) -> bytes:
     """
 
     if schema_version == _WHOLE_RECORD_SCHEMA_VERSION:
-        covered = {k: v for k, v in record.items() if k not in _WHOLE_RECORD_EXCLUDED_FIELDS}
+        covered = {
+            k: v for k, v in record.items() if k not in _WHOLE_RECORD_EXCLUDED_FIELDS
+        }
         return canonical_serialize({**covered, "schemaVersion": schema_version})
 
     return canonical_serialize(
@@ -226,11 +235,17 @@ def verify_execution_trust_record_offline(
         hybrid_valid = False
     elif entries is not None:
         hybrid_valid = _verify_hybrid_entries(
-            entries, _hybrid_message(trust_record, schema_version), public_keys,
-            algorithms_checked, errors,
+            entries,
+            _hybrid_message(trust_record, schema_version),
+            public_keys,
+            algorithms_checked,
+            errors,
         )
     elif schema_version == _WHOLE_RECORD_SCHEMA_VERSION:
-        errors.append("schemaVersion 3 record has no signatures array: a whole-record signature is required.")
+        errors.append(
+            "schemaVersion 3 record has no signatures array: a whole-record "
+            "signature is required."
+        )
         hybrid_valid = False
 
     coverage = (
@@ -271,12 +286,17 @@ def _verify_hybrid_entries(
         return False
 
     if len(entries) != 2:
-        errors.append(f"signatures array has {len(entries)} entries, need exactly 2 for a hybrid record.")
+        errors.append(
+            f"signatures array has {len(entries)} entries, need exactly 2 for a "
+            "hybrid record."
+        )
         return False
 
     names = [entry.get("algorithm") for entry in entries]
     if sorted(map(str, names)) != ["dilithium3", "ed25519"]:
-        errors.append(f"signatures must be one ed25519 and one dilithium3 entry, got {names}.")
+        errors.append(
+            f"signatures must be one ed25519 and one dilithium3 entry, got {names}."
+        )
         return False
 
     all_valid = True
@@ -306,7 +326,9 @@ def _verify_hybrid_entries(
                     raise ValueError("supplied public key is not an ML-DSA-65 key")
                 public_key.verify(signature_bytes, message)
         except InvalidSignature:
-            errors.append(f'signature verification failed for keyId "{key_id}" ({algorithm}).')
+            errors.append(
+                f'signature verification failed for keyId "{key_id}" ({algorithm}).'
+            )
             all_valid = False
         except Exception as error:  # noqa: BLE001 -- reported, not swallowed
             errors.append(f'error verifying keyId "{key_id}" ({algorithm}): {error}')
