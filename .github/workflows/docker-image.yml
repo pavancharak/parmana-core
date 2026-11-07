@@ -110,7 +110,7 @@ jobs:
       - name: Set up Node for the repository tests
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24
+          node-version: "24.22.2"
           cache: npm
 
       - name: Run the Postgres repository tests against these migrations
@@ -182,7 +182,7 @@ jobs:
       - name: Set up Node for the quickstart's signing step
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24
+          node-version: "24.22.2"
           cache: npm
 
       - name: Build the scripts the quickstart runs
