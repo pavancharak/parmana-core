@@ -120,13 +120,14 @@ The app throws while starting, so every request returns 500.
 2. **Restore service first.** Promote the last deployment that returned 401 (section 4).
 3. **Match the message to a fix:**
 
-| Message contains                                                | Fix                                                                                           |
-| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `No caller authentication keys are configured`                  | `PARMANA_API_KEYS` is missing or empty. Upload it (see the troubleshooting guide, section 3). |
-| `PARMANA_API_KEYS ... not valid JSON` or `must be a JSON array` | The value is malformed. Re-upload the one-line version.                                       |
-| `POLICY_CHANGE_CHECKERS ... not valid JSON`                     | The value must be an object (see the approval runbook, section 8).                            |
-| `ENOENT` or `read-only` on the key directory                    | `PARMANA_KEY_DIR` must be `/tmp/parmana-keys` on Vercel.                                      |
-| Key material error                                              | `PARMANA_KEY_MATERIAL_JSON` has the wrong shape.                                              |
+| Message contains                                                | Fix                                                                                                                                                                                           |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `No caller authentication keys are configured`                  | `PARMANA_API_KEYS` is missing or empty. Upload it (see the troubleshooting guide, section 3).                                                                                                 |
+| `PARMANA_API_KEYS ... not valid JSON` or `must be a JSON array` | The value is malformed. Re-upload the one-line version.                                                                                                                                       |
+| `POLICY_CHANGE_CHECKERS ... not valid JSON`                     | The value must be an object (see the approval runbook, section 8).                                                                                                                            |
+| `ENOENT` or `read-only` on the key directory                    | `PARMANA_KEY_DIR` must be `/tmp/parmana-keys` on Vercel.                                                                                                                                      |
+| Key material error                                              | `PARMANA_KEY_MATERIAL_JSON` has the wrong shape.                                                                                                                                              |
+| `bundles none of the distrusted roots`                          | The Node build in this deployment has no listed emSign root. Use the official Node 24.22.x release (production runs v24.22.2). Do not disable the check (troubleshooting guide, section 5.3). |
 
 ---
 
@@ -165,4 +166,5 @@ Check these before the deploy that carries them. Each one can turn a working req
 - **Unhashed authorizations refused at release (PR #457, G-149).** An authorization issued before `signalsHash` existed is refused at release when the signal verifier is configured. Confirm no such authorization is still needed. Any that are must be re-issued.
 - **Decisions name their method (PR #459, G-148).** Decisions recorded before this change have no `evaluationMethod`. Anything that reads the field must treat its absence as a decision recorded before the method was named, not as an error.
 - **Missing facts are refused (PR #483, G-157).** A request that omits a fact a rule's outcome depends on is now REJECT with `matchedRuleId: "missing-fact"`, and the reason names the facts. Requests that used to pass because a later rule matched will be refused. Check which clients send partial signals before the deploy. The method version is now `"2"`; a `"1"` decision for a request that omitted a fact can replay to a different verdict (G-160).
+- **Refuses to start without a listed distrusted root (PR #487).** The server checks that its Node build's bundled certificate store holds at least one of the four listed emSign roots, and refuses to start if none is there. The official Node 24.22.x builds, including the production images, bundle `emSign Root CA - G1`, so they pass. A build that bundles none of them now fails at startup. Check the Node version before any deploy that changes it (troubleshooting guide, section 5.3).
 - **Inbound check runs the bound policy (PR #448, G-142).** `POST /v1/inbound/checks` refuses a capability with no bound policy (`no_policy_bound`) and approves only when the policy and the grant both allow.

@@ -281,6 +281,17 @@ Expected: `{"status":"UP"}` and `READY`. If `/health` answers but `/ready` does 
 
 ---
 
+### 5.3 `Node v24.x.y bundles none of the distrusted roots, so the distrust cannot take effect; refusing to start.`
+
+The server refuses to start (PR #487). Its Node build's bundled certificate store holds none of the four emSign roots in `DISTRUSTED_ROOT_FINGERPRINTS`, so the startup removal would do nothing.
+
+- **Cause:** the Node binary is not an official release, or a release that no longer bundles any listed root.
+- **Fix:** deploy on an official Node 24.22.x release. Production runs v24.22.2, pinned by digest in the Dockerfile. Confirm the version with `node -p "process.version"` in the image.
+- **Do not** remove the check to get the server up. Refusing to start is the intended behaviour: an unchecked server would run believing it was protected.
+- **Check the list too:** if an official release really drops every listed root, that is a decision for the owner, not an operator fix. Escalate.
+
+---
+
 ## 6. Governed changes (maker and checker)
 
 ### 6.1 `A PENDING_APPROVAL change already exists for policy '<name>' version '<v>'`
