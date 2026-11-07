@@ -108,6 +108,6 @@ describe("customer-refund 1.1.0", () => {
     const decision = engine.evaluate(policy, { refundAmount: 500 });
 
     expect(decision.outcome).toBe(PolicyOutcome.REJECT);
-    expect(decision.matchedRuleId).toBe("reject-default");
+    expect(decision.matchedRuleId).toBe("missing-fact");
   });
 });

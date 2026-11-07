@@ -29,7 +29,7 @@ function typeOf(value: unknown): string {
  * Without this check a numeric signal sent as text ("150000") makes every
  * numeric operator false, so a rule written as "reject if amount gt X"
  * would not fire for it. A signal that is absent is not a type violation:
- * a missing fact already never satisfies a condition. A signal the schema
+ * PolicyEngine refuses a request that omits a fact the policy reads. A signal the schema
  * does not declare is not checked. A declared type outside SIGNAL_TYPES
  * is a violation, so a policy with a mistyped schema refuses rather than
  * evaluates unchecked (PolicyValidator rejects such a policy earlier).

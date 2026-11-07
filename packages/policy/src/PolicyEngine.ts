@@ -1,7 +1,7 @@
 import { OperatorEvaluator } from "./OperatorEvaluator.js";
 import { findSignalTypeViolations } from "./signalTypes.js";
 
-import type { Policy, PolicyCondition, PolicyRule } from "./types/Policy.js";
+import type { Policy, PolicyCondition } from "./types/Policy.js";
 
 import type { PolicySignals } from "./types/PolicySignals.js";
 
@@ -34,8 +34,13 @@ import { PolicyOutcome } from "./types/PolicyOutcome.js";
  */
 export const POLICY_EVALUATION_METHOD = {
   id: "deterministic-rules",
-  version: "1",
+  version: "2",
 } as const;
+
+/** A condition result that cannot be decided because a fact is missing. */
+const UNKNOWN = "unknown" as const;
+
+type Truth = boolean | typeof UNKNOWN;
 
 export class PolicyEngine {
   private readonly operatorEvaluator = new OperatorEvaluator();
@@ -73,18 +78,62 @@ export class PolicyEngine {
 
     const trace: string[] = [];
 
-    const rule = this.findFirstMatch(policy.rules, signals, trace);
+    for (const rule of policy.rules) {
+      trace.push(rule.id);
+
+      const missing: string[] = [];
+      const truth = this.truthOf(rule.condition, signals, missing);
+
+      //
+      // A rule whose result depends on a fact the request did not send
+      // cannot be decided, so the request is refused rather than letting
+      // a later rule match (PC-004). A rule that matches, or that does not
+      // read the absent fact, is decided as before.
+      //
+      if (truth === UNKNOWN) {
+        return {
+          policyId: policy.policyId,
+          policyVersion: policy.policyVersion,
+          outcome: PolicyOutcome.REJECT,
+          reason:
+            "Rejected: signal(s) the decision depends on were not sent (" +
+            Array.from(new Set(missing)).sort().join(", ") +
+            ").",
+          matchedRuleId: "missing-fact",
+          evaluatedRules: trace.length,
+          matchedPath: trace,
+        };
+      }
+
+      if (truth) {
+        return {
+          policyId: policy.policyId,
+
+          policyVersion: policy.policyVersion,
+
+          outcome: this.toOutcome(rule.outcome.action),
+
+          reason: rule.outcome.reason,
+
+          matchedRuleId: rule.id,
+
+          evaluatedRules: trace.length,
+
+          matchedPath: trace,
+        };
+      }
+    }
 
     return {
       policyId: policy.policyId,
 
       policyVersion: policy.policyVersion,
 
-      outcome: this.toOutcome(rule?.outcome.action),
+      outcome: this.toOutcome(undefined),
 
-      reason: rule?.outcome.reason ?? "no_rule_matched",
+      reason: "no_rule_matched",
 
-      matchedRuleId: rule?.id ?? "none",
+      matchedRuleId: "none",
 
       evaluatedRules: trace.length,
 
@@ -93,43 +142,25 @@ export class PolicyEngine {
   }
 
   /**
-   * Deterministic first-match-wins evaluation.
+   * Three-valued evaluation of a condition (Kleene logic). A condition that
+   * reads a missing fact is UNKNOWN unless other parts of it already decide
+   * the result: an AND with a false part is false, and an OR with a true
+   * part is true. The facts read while UNKNOWN are added to `missing`.
    */
-  private findFirstMatch(
-    rules: PolicyRule[],
-    signals: PolicySignals,
-    trace: string[],
-  ): PolicyRule | null {
-    for (const rule of rules) {
-      trace.push(rule.id);
-
-      if (this.evaluateCondition(rule.condition, signals)) {
-        return rule;
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * Recursively evaluates a policy condition.
-   */
-  private evaluateCondition(
+  private truthOf(
     condition: PolicyCondition,
     signals: PolicySignals,
-  ): boolean {
+    missing: string[],
+  ): Truth {
     //
     // Leaf condition
     //
     if ("fact" in condition) {
       const signal = signals[condition.fact];
 
-      //
-      // Missing facts never satisfy
-      // a policy condition.
-      //
       if (signal === undefined) {
-        return false;
+        missing.push(condition.fact);
+        return UNKNOWN;
       }
 
       return this.operatorEvaluator.evaluate(
@@ -150,18 +181,26 @@ export class PolicyEngine {
     // Logical AND
     //
     if ("all" in condition) {
-      return condition.all.every((child) =>
-        this.evaluateCondition(child, signals),
+      const parts = condition.all.map((child) =>
+        this.truthOf(child, signals, missing),
       );
+
+      if (parts.includes(false)) return false;
+      if (parts.includes(UNKNOWN)) return UNKNOWN;
+      return true;
     }
 
     //
     // Logical OR
     //
     if ("any" in condition) {
-      return condition.any.some((child) =>
-        this.evaluateCondition(child, signals),
+      const parts = condition.any.map((child) =>
+        this.truthOf(child, signals, missing),
       );
+
+      if (parts.includes(true)) return true;
+      if (parts.includes(UNKNOWN)) return UNKNOWN;
+      return false;
     }
 
     return false;

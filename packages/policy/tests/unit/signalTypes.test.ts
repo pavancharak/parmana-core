@@ -96,11 +96,12 @@ describe("signal types are enforced before rules run", () => {
     ).toMatchObject({ outcome: "APPROVE", matchedRuleId: "approve-rest" });
   });
 
-  it("an absent signal is not a type violation: the rules decide", () => {
-    expect(decide({}).matchedRuleId).toBe("approve-rest");
-    expect(decide({ refundAmount: undefined }).matchedRuleId).toBe(
-      "approve-rest",
-    );
+  it("an absent signal is not a type violation: it is refused as a missing fact", () => {
+    for (const signals of [{}, { refundAmount: undefined }]) {
+      const decision = decide(signals);
+      expect(decision.matchedRuleId).toBe("missing-fact");
+      expect(decision.reason).not.toMatch(/do not have the type/);
+    }
   });
 
   it("a signal the schema does not declare is not checked", () => {
