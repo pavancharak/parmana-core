@@ -1,5 +1,20 @@
 # Remaining work
 
+## Update 2026-11-07
+
+- **Gap log updated.** G-147 is partly closed and G-148 is closed on `main`. New entries G-157 to G-160 are in `VERIFICATION-GAPS.md`. Open decisions: the G-147 outcome, the G-160 replay question, and pinning Node in CI for G-159.
+- **Missing facts are refused (PR #483, open).** A request that omits a fact a rule depends on is refused with `matchedRuleId: "missing-fact"`, and the reason names the facts. Before, a missing fact only made its own condition false, so a reject rule that read it could be skipped and a later approve rule could match. A rule that matches, or that does not read the absent fact, is still decided as before, so requests need not send facts that cannot change the outcome. `POLICY_EVALUATION_METHOD.version` is now `"2"`.
+  - Why not "refuse any omitted fact": the shipped `connector-capability` 1.1.0 policy would refuse `crm:read` requests that do not send `paymentAmount`, which that rule never reads.
+  - Replay: a decision recorded under version `"1"` for a request that omitted a fact can replay to a different verdict. Verifiers should read the recorded `evaluationMethod.version`.
+- **Distrust list verified.** The four fingerprints in `DISTRUSTED_ROOT_FINGERPRINTS` (`packages/api/src/bootstrap/distrustCompromisedRoots.ts`) match eMudhra's published root files for emSign Root CA - G1 and C1 and emSign ECC Root CA - G3 and C3. No change is needed to the list. `packages/api/tests/unit/distrustCompromisedRoots.test.ts` passes on the official Node 24.22.1 release.
+- **Commit 66c1e50 bypassed the preflight.** It was committed with `--no-verify` on the owner's approval. The only failing preflight tests were the three `distrustCompromisedRoots` tests above, which pass on the official Node 24.22.1 release. Run the full suite on that release to confirm.
+- **Node version.** The project requires Node 24 or later. Use an official Node 24 release for the test run, since the distrust tests depend on the certificate store that build ships. A native module (`re2`) built under another Node version needs `npm rebuild re2` after switching.
+- **Security items.** Security-related follow-up is tracked privately and is not described in this repository.
+- **Still open, by decision:**
+  - Connector identity in the signed authorization. The authorization is signed before the gateway picks a connector, so core may not know the connector identity when it signs. This needs a code reading of the signing path and a coordinated upgrade before any change.
+  - Three open policy decisions, pending owner input: retention period, owner for the retention item, and per-client tokens for the MCP server.
+- **Merged this cycle:** the strict timestamp parser in parmana-verifier, the corrected nonce-consumption comment in parmana-core (#482), and the default-on release-only mode in parmana-connect (#47).
+
 ## Update 2026-11-06
 
 - **Release lifetime rule is on `main` in parmana-connect and parmana-connectors** (connect PR #41, connectors PR #36). A release is refused when its `issuedAt` is more than 30 s in the future, when `expiresAt` is not after `issuedAt`, or when the lifetime is over 60 s. Core's fixture generator (PR #475) and its documentation (PR #476) are merged.
@@ -372,8 +387,8 @@ Do not edit it by hand: run `npx tsx scripts/gap-status.ts`. `npm test` fails wh
 | G-144 | Inbound approvals rest only on grant limits, not on facts the business confirms.                    | open; the design is in RFC-0026 (draft), whose five open questions must be answered first                                                                      |
 | G-145 | The probe key is rotated by hand, and the server does not check it at startup.                      | partly closed                                                                                                                                                  |
 | G-146 | No business system calls the inbound check, and no probe checks that a direct call is refused.      | partly closed                                                                                                                                                  |
-| G-147 | A policy decision has no insufficient-evidence outcome: missing signals evaluate as false (R5).     | open                                                                                                                                                           |
-| G-148 | Decisions do not name the comparison method or version behind the verdict (R3).                     | closed                                                                                                                                                         |
+| G-147 | A policy decision has no insufficient-evidence outcome: missing signals evaluate as false (R5).     | partly closed                                                                                                                                                  |
+| G-148 | Decisions do not name the comparison method or version behind the verdict (R3).                     | closed (on main; method version 2 in PR #483)                                                                                                                  |
 | G-149 | Authorizations with no signals hash skip the release-time signal and approval checks.               | closed                                                                                                                                                         |
 | G-150 | CLAIMS.md section 5 says nothing notifies anyone on refusal, but the approval notifier does.        | closed                                                                                                                                                         |
 | G-156 | The manifest's read or write label is not enforced, so a capability marked "read" can send a write. | fixed in parmana-connect and merged to its main through PR #36 (commit 056e8ac)                                                                                |
@@ -382,6 +397,10 @@ Do not edit it by hand: run `npx tsx scripts/gap-status.ts`. `npm test` fails wh
 | G-153 | No agent rollback, and no guard against automatic restart after an emergency stop.                  | open                                                                                                                                                           |
 | G-154 | No AI bill of materials (AIBOM) or model-artifact integrity check.                                  | open                                                                                                                                                           |
 | G-155 | No review-and-challenge flow for AI decisions (contestability).                                     | open                                                                                                                                                           |
+| G-157 | A request that omitted a fact could be approved by a later rule (partly closes G-147).              | fixed in parmana-core PR #483 (open)                                                                                                                           |
+| G-158 | A commit bypassed the preflight.                                                                    | recorded in the commit message and in `REMAINING-WORK.md`                                                                                                      |
+| G-159 | Three tests depend on the Node build's certificate store.                                           | open                                                                                                                                                           |
+| G-160 | Decisions recorded at method version `"1"` can replay to a different verdict.                       | open                                                                                                                                                           |
 
 <!-- gap-status:end -->
 

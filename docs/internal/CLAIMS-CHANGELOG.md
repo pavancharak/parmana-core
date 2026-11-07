@@ -400,3 +400,9 @@ _Recorded in `CLAIMS.md` on 2026-11-05._
 - 2.3 Deterministic Policy Evaluation: decisions name the evaluation method and version (G-148).
 - 2.42 and 2.47: an authorization with no `signalsHash` is refused at release when the signal verifier is configured (G-149).
 - 3.33: the probe key is checked at startup and by the workflow before each run (G-145, PR #450).
+
+## 2.3 Deterministic Policy Evaluation
+
+_Originally at line 111 of `CLAIMS.md`._
+
+**Update (2026-11-05, G-148).** Every decision now names the method that produced its verdict and that method's version: `evaluationMethod: { id: "deterministic-rules", version: "1" }`, set from `POLICY_EVALUATION_METHOD` in `packages/policy`. The inputs are recorded with the verdict as `signals`. Decisions recorded before this change have no `evaluationMethod`.
