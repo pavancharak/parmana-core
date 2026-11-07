@@ -19,7 +19,7 @@ npx tsx examples/tutorials/91-graceful-shutdown/run.ts
 
 ## Why This Matters
 
-This is the standard "drain, don't drop" shape a PaaS orchestrator (Fly.io, Kubernetes) expects before it force-kills a container. Getting it wrong in either direction is costly: exiting too eagerly drops in-flight requests, while never force-exiting on a hung close leaves the process relying entirely on the platform's own (usually longer) kill timeout. This tutorial mirrors `packages/api/tests/unit/bootstrap/create-graceful-shutdown.test.ts`'s scenarios using real (short) timers instead of a test framework's fake ones.
+This is the standard "drain, don't drop" shape a PaaS orchestrator (a PaaS, Kubernetes) expects before it force-kills a container. Getting it wrong in either direction is costly: exiting too eagerly drops in-flight requests, while never force-exiting on a hung close leaves the process relying entirely on the platform's own (usually longer) kill timeout. This tutorial mirrors `packages/api/tests/unit/bootstrap/create-graceful-shutdown.test.ts`'s scenarios using real (short) timers instead of a test framework's fake ones.
 
 ## Next Tutorial
 

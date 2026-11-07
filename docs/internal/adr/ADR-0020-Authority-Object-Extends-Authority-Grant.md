@@ -68,6 +68,6 @@ The decision link is not implemented. It is blocked by the signed record format:
 - Schema v3 signs every top-level field of the record, except the signatures, the schema version, and the verifications and receipts attached after signing (`packages/crypto/src/ExecutionTrustRecordCanonicalView.ts`, `wholeRecordCanonicalView`). Schema v2 signs a fixed set of fields. A link written on a v2 record would be unsigned, so it cannot ship on v2.
 - Issuing v3 is refused unless `HYBRID_SCHEMA_V3_ACKNOWLEDGED=true` is also set (`packages/shared/src/config/Config.ts`). The default is v2, and `.env.example` sets v2.
 - `Config.ts` records that v3 records are not readable by the SDKs or by the published third-party verifier until those are updated.
-- Production (the Vercel project's Production environment, with system environment variables enabled): neither `HYBRID_SCHEMA_VERSION` nor `HYBRID_SCHEMA_V3_ACKNOWLEDGED` is set, so production issues v2. Not checked: Preview environments, and the Fly deployment named in `fly.toml`.
+- Production (the Vercel project's Production environment, with system environment variables enabled): neither `HYBRID_SCHEMA_VERSION` nor `HYBRID_SCHEMA_V3_ACKNOWLEDGED` is set, so production issues v2. Not checked: Preview environments, and any other deployment.
 
 Next step, not started: update the SDKs and the offline verifier (in `parmana-verifier`) to read v3 records. Enabling v3 and implementing the link both wait for that work. Until then, decision 1 of this ADR cannot be met in production.

@@ -34,7 +34,7 @@ for a request this middleware rejects.
 
 `createHealthReadyRateLimiter()` (`:103-115`) keys by IP (the package default, IPv6-safe in
 `express-rate-limit` v8), and is deliberately far more permissive, these routes are cheap and
-legitimately polled on a fixed interval by PaaS health-check infrastructure (`fly.toml`'s own
+legitimately polled on a fixed interval by PaaS health-check infrastructure (the platform's own
 check runs every 30 seconds per machine); this limiter must never be tight enough to throttle
 that.
 
@@ -85,8 +85,7 @@ with different prefixes as legitimately distinct.
 
 The "no `DATABASE_URL`" case is deliberately not fail-closed the way this codebase's nonce
 store (`createNonceStore.ts`) is: an in-process rate limiter is a real, working control on a
-single instance (this deployment's actual current shape, `fly.toml` pins
-`min_machines_running = 1`), just not fleet-wide accurate the moment a second machine joins.
+single instance (this deployment's actual current shape), just not fleet-wide accurate the moment a second machine joins.
 A missing nonce store means replay protection silently vanishes, a security bypass; a missing
 shared rate-limit store means the ceiling is merely looser than configured, not absent.
 Refusing to start over that would break every single-instance and local deployment that works

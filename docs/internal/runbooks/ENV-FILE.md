@@ -169,7 +169,7 @@ The command prints the raw key once. Save it in your password manager, then put 
 - On serverless hosts, use the transaction pooler string.
 - The password is a secret. Store it in the password manager.
 
-**`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`**: the server's runtime code does not read them. The runtime uses `DATABASE_URL` (`createNonceStore.ts`, `StorageFactory.ts`). Scripts name them: `scripts/generate-fly-secrets.mjs`, `scripts/policy-approval-log.ts`, `scripts/verify-policy-changes-approved.ts`. Don't set them on a production server.
+**`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`**: the server's runtime code does not read them. The runtime uses `DATABASE_URL` (`createNonceStore.ts`, `StorageFactory.ts`). Scripts name them: `scripts/policy-approval-log.ts`, `scripts/verify-policy-changes-approved.ts`. Don't set them on a production server.
 
 ### Keys and signing
 

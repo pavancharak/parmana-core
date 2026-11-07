@@ -24,7 +24,7 @@ npx tsx examples/tutorials/56-complete-execution-flow/run.ts
 
 Each of Tutorials 52–55 demonstrates one piece of hybrid signing in isolation. This tutorial exists to prove those pieces actually compose: the same Trust Record produced by execution is the one verification checks, the same Receipt is hybrid-signed alongside it, and tampering with either is caught, not just described.
 
-**Not yet true, stated plainly:** `CRYPTO_MODE=hybrid` is opt-in config, not the default — every deployed Parmana environment today, including `parmana-api-live.fly.dev`, signs Ed25519 alone. This tutorial sets the environment variable itself so it's self-contained.
+**Not yet true, stated plainly:** `CRYPTO_MODE=hybrid` is opt-in config, not the default — every deployed Parmana environment today, including the live deployment, signs Ed25519 alone. This tutorial sets the environment variable itself so it's self-contained.
 
 ## Next Tutorial
 

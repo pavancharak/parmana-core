@@ -6,14 +6,14 @@ description: "This codebase ships with real configuration for two deployment tar
 ## What it is
 
 This codebase ships with real configuration for two deployment targets: Vercel
-(`vercel.json`, serverless Functions) and Fly.io (`fly.toml`, `Dockerfile`, a long-running
+(`vercel.json`, serverless Functions) and a container (`Dockerfile`, a long-running
 process). Both run the identical application code; what differs is the execution model, and
 detail.
 
 ## Why it was built this way
 
 Two genuinely different deployment shapes were supported deliberately: Vercel for
-zero-maintenance serverless hosting with automatic scaling, Fly.io for a conventional
+zero-maintenance serverless hosting with automatic scaling, a container for a conventional
 always-on process with a persistent filesystem and predictable warm state. Neither is
 presented as strictly better in this codebase; they trade off differently, and the
 `PARMANA_STORAGE`/repository-selection logic (Chapter 13) is written to work correctly under
@@ -46,35 +46,11 @@ notable: it explicitly bundles `policies/**` into the deployed Function, since t
 filesystem is otherwise whatever the build produced, nothing more. This is also the exact
 filesystem that turned out to be **read only** at runtime, which is the deployment-specific
 
-### Fly.io
-
-`fly.toml`:
-
-```toml
-app = 'parmana-api'
-primary_region = 'bom'
-
-[http_service]
-  internal_port = 3000
-  auto_stop_machines = false
-  min_machines_running = 1
-
-  [[http_service.checks]]
-    interval = "30s"
-    method = "GET"
-    path = "/ready"
-```
-
-A conventional container (built from the repo's `Dockerfile`), always running at least one
-machine, with Fly's own health check hitting `GET /ready` every 30 seconds, the same readiness
-probe covered in Chapter 19. Unlike Vercel, this filesystem is genuinely persistent and
-writable for the life of the machine.
-
 ### A read-only filesystem
 
 `PolicyChangeApprovalService.approve()` (Chapter 7) writes the newly approved policy content via
 `PolicyRepository.save()`. The original implementation, `FilePolicyRepository`, writes to the
-local filesystem, this works perfectly on Fly.io (writable, persistent) and in local
+local filesystem, this works perfectly on a writable, persistent container filesystem and in local
 development, but Vercel's serverless Functions run on a **read only** filesystem outside
 `/tmp`. The very first real production approval attempt against the deployed Vercel instance
 failed immediately with `EROFS`. The fix, `SupabasePolicyRepository` (added 2026-09-16, see
@@ -121,7 +97,7 @@ walk through the real, current deployment steps for each target.
 
 ## How to validate this yourself
 
-- `vercel.json`, `fly.toml`, `Dockerfile` (repo root) for the two real platform configs.
+- `vercel.json` and `Dockerfile` (repo root) for the two real platform configs.
 - `packages/crypto/src/providers/signer/KmsSigner.ts` for the exact AWS env vars actually read.
 - `the policies table migration` for the schema the fix depends on.
 - [AWS KMS signing](/deployment/aws-kms-signing) for the setup steps.
@@ -136,11 +112,3 @@ walk through the real, current deployment steps for each target.
 - `PARMANA_STORAGE=supabase` with `DATABASE_URL` set, since the filesystem cannot be relied on
   for anything written at runtime, including approved policy content.
 - Every other env var from Chapter 20's requirements table.
-
-**Fly.io deployment:**
-
-- The same core env vars, `PARMANA_STORAGE=memory` is viable here if you genuinely want no
-  external database (the filesystem is real and persistent), but `supabase` remains the
-  production-realistic choice for durability across machine restarts.
-- `fly.toml`'s health check expects `GET /ready` to respond within its configured timeout (5s);
-  see Chapter 19 for what that route actually checks.

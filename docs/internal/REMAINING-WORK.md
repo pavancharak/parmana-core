@@ -138,7 +138,7 @@ Done on 2026-09-20 after the first version of this page:
 
 Closed by decision on 2026-09-29:
 
-1. **The container image is not deployed anywhere, on purpose.** Production runs on Vercel, and Fly.io is not used. CI proves the image builds and boots in production mode. `fly.toml` and the Fly section of the runbook are kept for anyone who wants a container host, and have not been exercised since the Dockerfile was fixed. Closed by decision 2026-09-29: production is Vercel only.
+1. **The container image is not deployed anywhere, on purpose.** Production runs on Vercel. CI proves the image builds and boots in production mode. The Dockerfile is kept for anyone who wants a container host, and has not been exercised since it was fixed. Closed by decision 2026-09-29: production is Vercel only.
 
 - **Operator kill switch:** open items are listed in section A2 above, with their owners.
 

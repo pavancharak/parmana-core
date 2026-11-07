@@ -32,8 +32,7 @@ export interface RateLimitStoreLike {
  * rather than the configured fleet-wide limit. See
  * packages/api/src/bootstrap/createRateLimitStore.ts for why this is
  * only used when DATABASE_URL is configured -- a single-instance or
- * local deployment (today's actual deployment shape, per fly.toml's
- * `min_machines_running = 1`) keeps working with the in-memory default,
+ * local deployment (today's actual deployment shape: one instance) keeps working with the in-memory default,
  * no database required.
  *
  * Atomicity: increment() is a single INSERT ... ON CONFLICT DO UPDATE,

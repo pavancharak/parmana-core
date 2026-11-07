@@ -15,7 +15,7 @@ Copyright holder for all new material: Parmana Systems Private Limited.
 - Real secrets: API keys, tokens, passwords, webhook secrets, private keys, PEM blocks, connection strings with credentials
 - Real `.env` files or `.env` files with real values
 - Customer names, customer data, transaction data, or internal dashboards
-- Production configuration: Vercel, Fly, Docker production settings, deployment secrets
+- Production configuration: Vercel, Docker production settings, deployment secrets
 - Patent drafts or any file describing a mechanism in the patent-drafts list (section 2.3)
 - Planning, strategy, pricing, investor, or positioning documents
 - Any file containing a forbidden claim phrase (section 2.4)

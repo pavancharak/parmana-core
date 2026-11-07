@@ -22,7 +22,7 @@ The human readable version, with more explanation, is the [Production deployment
 | -------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | `REPO`               | A clone of the Parmana repository.                                            | The file `package.json` exists at its root.                                   |
 | `DATABASE_URL`       | The operator. A Postgres connection string.                                   | It starts with `postgresql://`. On a serverless host it is the pooler string. |
-| `HOST_KIND`          | The operator: `fly`, `vercel` or `docker`.                                    | It is exactly one of those three words.                                       |
+| `HOST_KIND`          | The operator: `vercel` or `docker`.                                           | It is exactly one of those two words.                                         |
 | `URL`                | The operator, or the host after deploy. The base URL, no trailing slash.      | It starts with `https://`.                                                    |
 | `FIRST_CALLER_ID`    | The operator. The name of the first caller, for example `my-agent`.           | It is non empty and has no spaces.                                            |
 | `FIRST_CAPABILITIES` | The operator. The actions that caller may use, for example `erp:invoice-pay`. | It is non empty. Never use `*` unless the operator says so in words.          |
@@ -99,7 +99,6 @@ Rule 5 applies. If the operator has not told you to write to the host, print the
 
 | `HOST_KIND` | Command                                                                                       |
 | ----------- | --------------------------------------------------------------------------------------------- |
-| `fly`       | `fly deploy`                                                                                  |
 | `vercel`    | `vercel deploy --prod`                                                                        |
 | `docker`    | `docker build -t parmana-api.` then run the image with the variables from step 4, port `3000` |
 

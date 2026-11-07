@@ -10,7 +10,7 @@ reading a variable that is not documented here, so this list cannot silently fal
 
 1. The server reads the process environment. It also loads a `.env` file, found by walking up from the package directory,
    but a variable already set in the process environment always wins over the file.
-2. In production, set variables in your platform (Vercel, Fly.io, your container runtime) and do not ship a `.env` file.
+2. In production, set variables in your platform (Vercel, or your container runtime) and do not ship a `.env` file.
 3. Values are read once at startup. Change a variable, then restart or redeploy.
 4. A wrong value fails **at startup** with a message that names the variable. It does not fail later under traffic.
 

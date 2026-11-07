@@ -144,7 +144,7 @@ const app = createApp(application, {
   corsOrigins: sandbox.corsOrigins,
 });
 
-// PaaS platforms (Railway, Render, Fly, etc.) commonly inject PORT
+// PaaS platforms (Railway, Render, etc.) commonly inject PORT
 // dynamically at deploy time and expect the process to bind to
 // whatever value they provide, not a hardcoded default — Config.ts's
 // api.port already reads process.env.PORT with a 3000 fallback for
