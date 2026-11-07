@@ -24,6 +24,15 @@ v3 records are hybrid-signed: one Ed25519 entry and one ML-DSA-65 entry (`dilith
 
 Do not proceed if any precondition is missing. The server refuses `HYBRID_SCHEMA_VERSION=3` without `HYBRID_SCHEMA_V3_ACKNOWLEDGED=true`, and refuses hybrid mode with `KEY_PROVIDER=aws-kms`.
 
+## Gate: no ML-DSA-65 key in an environment variable
+
+Do not start Step 1 by putting the ML-DSA-65 private key in `PARMANA_KEY_MATERIAL_JSON` or any other environment variable. That exposes the key to everyone with project access, and to the platform's stored configuration. Step 1 can start only when one of these is true:
+
+1. **Option A is built** (`KEY-DELIVERY.md`): the key is loaded at startup from a secret manager, using the server's own identity.
+2. **The owner accepts the exposure in writing** for the Preview test, with a rotation of the key straight after the test (`KEY-DELIVERY.md`, steps to rotate).
+
+Until one of these holds, schema v3 stays off in every environment.
+
 ## Step 1: Preview only
 
 Set these on the Vercel **Preview** environment only. Production must not have them.
