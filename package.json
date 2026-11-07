@@ -1,6 +1,6 @@
 {
   "name": "parmana",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "workspaces": [
@@ -27,6 +27,7 @@
     "db:migrate": "tsx scripts/migrate-database.ts",
     "verify:kms": "tsx scripts/verify-kms-signing.ts",
     "generate:llms-txt": "tsx scripts/generate-llms-txt.ts",
+    "record:published-sdk": "tsx scripts/llms/recordPublishedSdkVersions.ts",
     "generate:postman": "tsx scripts/generate-postman-collection.ts",
     "check:sdk-docs": "tsx scripts/check-sdk-docs.ts",
     "generate:endpoint-pages": "tsx scripts/generate-endpoint-pages.ts",

@@ -1,6 +1,6 @@
 {
   "name": "@parmana/execution-gateway",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "description": "The sole boundary through which Parmana releases approved execution requests to connectors, binding each release to the exact authorized content",
   "type": "module",
   "main": "./dist/index.js",
@@ -22,13 +22,13 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@parmana/connector-sdk": "1.6.3",
-    "@parmana/crypto": "0.1.1",
-    "@parmana/envelope-verifier": "0.1.0",
-    "@parmana/execution-control": "0.1.0",
-    "@parmana/execution-system": "0.1.0",
-    "@parmana/policy": "0.1.1",
-    "@parmana/shared": "0.1.0"
+    "@parmana/connector-sdk": "2.0.0",
+    "@parmana/crypto": "2.0.0",
+    "@parmana/envelope-verifier": "2.0.0",
+    "@parmana/execution-control": "2.0.0",
+    "@parmana/execution-system": "2.0.0",
+    "@parmana/policy": "2.0.0",
+    "@parmana/shared": "2.0.0"
   },
   "devDependencies": {
     "typescript": "^6.0.3",
