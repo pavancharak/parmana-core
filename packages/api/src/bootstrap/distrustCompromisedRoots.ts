@@ -23,8 +23,11 @@ import tls from "node:tls";
  * Matched by SHA-256 fingerprint, so nothing else can be removed by mistake.
  */
 export const DISTRUSTED_ROOT_FINGERPRINTS: readonly string[] = [
-  // emSign Root CA - G1
+  // emSign Root CA - G1, the certificate Node bundles (SHA-256 checked against the bundle).
   "2D:3A:E8:32:79:75:47:C2:D4:43:06:14:1F:5E:A9:3D:4F:F7:0F:48:94:B5:65:F7:52:8D:64:74:24:C6:07:67",
+  // emSign Root CA - G1, the CA ID Cloudflare Radar lists for G1. Not bundled by the Node builds
+  // checked; kept so a store that holds this certificate is covered. Not verified against eMudhra.
+  "40:F6:AF:03:46:A9:9A:A1:CD:1D:55:5A:4E:9C:CE:62:C7:F9:63:46:03:EE:40:66:15:83:3D:C8:C8:D0:03:67",
   // emSign ECC Root CA - G3
   "86:A1:EC:BA:08:9C:4A:8D:3B:BE:27:34:C6:12:BA:34:1D:81:3E:04:3C:F9:E8:A8:62:CD:5C:57:A3:6B:BE:6B",
   // emSign Root CA - C1

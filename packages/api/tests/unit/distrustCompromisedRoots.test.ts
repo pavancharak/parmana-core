@@ -14,6 +14,18 @@ const subject = (pem: string) => new X509Certificate(pem).subject;
 const listed = (pem: string) =>
   DISTRUSTED_ROOT_FINGERPRINTS.includes(fingerprint(pem));
 
+describe("DISTRUSTED_ROOT_FINGERPRINTS", () => {
+  it("is well-formed SHA-256 fingerprints with no duplicates", () => {
+    const shape = /^([0-9A-F]{2}:){31}[0-9A-F]{2}$/;
+    for (const fp of DISTRUSTED_ROOT_FINGERPRINTS) {
+      expect(fp).toMatch(shape);
+    }
+    expect(new Set(DISTRUSTED_ROOT_FINGERPRINTS).size).toBe(
+      DISTRUSTED_ROOT_FINGERPRINTS.length,
+    );
+  });
+});
+
 describe("distrustCompromisedRoots", () => {
   it("every listed root a Node build bundles is an emSign root", () => {
     // Which listed roots a build bundles varies by release (Node 24.22.2
