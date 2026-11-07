@@ -2,6 +2,13 @@
 
 Status as of 2026-11-07. Owner: the maintainer. This is a design and a decision record. Nothing here is built yet.
 
+## Decision summary
+
+- **Do not place an ML-DSA-65 private key in an environment variable for the schema v3 test**, in Preview or Production, unless the owner accepts that exposure in writing.
+- **Build option A first:** load key material at startup from a secret manager, using the server's own identity. It also covers the production keys that are already in `PARMANA_KEY_MATERIAL_JSON`.
+- **Long-term target:** option B, a KMS or HSM that signs ML-DSA-65 so the key never leaves the device.
+- **Owner decisions still open:** which secret manager to use for option A, and whether production moves to option A on a fixed date.
+
 ## The problem
 
 The server needs private signing keys to start. Today they reach it in one of two ways:
