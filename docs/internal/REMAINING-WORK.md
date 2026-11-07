@@ -1,5 +1,17 @@
 # Remaining work
 
+## Update 2026-11-07
+
+- **Missing facts are refused (PR #483, open).** A request that omits a fact a rule depends on is refused with `matchedRuleId: "missing-fact"`, and the reason names the facts. Before, a missing fact only made its own condition false, so a reject rule that read it could be skipped and a later approve rule could match. A rule that matches, or that does not read the absent fact, is still decided as before, so requests need not send facts that cannot change the outcome. `POLICY_EVALUATION_METHOD.version` is now `"2"`.
+  - Why not "refuse any omitted fact": the shipped `connector-capability` 1.1.0 policy would refuse `crm:read` requests that do not send `paymentAmount`, which that rule never reads.
+  - Replay: a decision recorded under version `"1"` for a request that omitted a fact can replay to a different verdict. Verifiers should read the recorded `evaluationMethod.version`.
+- **Known failing test, not caused by #483.** `packages/api/tests/unit/distrustCompromisedRoots.test.ts` (3 tests) fails on the Node build in use. The change was merged past it on the owner's approval. Tracked outside this repository.
+- **Node version.** The project requires Node 24 or later. Run the suite under Node 24. A native module (`re2`) built under another Node version needs `npm rebuild re2` after switching.
+- **Still open, by decision:**
+  - Connector identity in the signed authorization. The authorization is signed before the gateway picks a connector, so core may not know the connector identity when it signs. This needs a code reading of the signing path and a coordinated upgrade before any change.
+  - Three open policy decisions, pending owner input: retention period, owner for the retention item, and per-client tokens for the MCP server.
+- **Merged this cycle:** the strict timestamp parser in parmana-verifier, the corrected nonce-consumption comment in parmana-core (#482), and the default-on release-only mode in parmana-connect (#47).
+
 ## Update 2026-11-06
 
 - **Release lifetime rule is on `main` in parmana-connect and parmana-connectors** (connect PR #41, connectors PR #36). A release is refused when its `issuedAt` is more than 30 s in the future, when `expiresAt` is not after `issuedAt`, or when the lifetime is over 60 s. Core's fixture generator (PR #475) and its documentation (PR #476) are merged.
