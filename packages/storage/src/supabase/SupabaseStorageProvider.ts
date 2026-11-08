@@ -1,6 +1,7 @@
 import type {
   ApprovalIssuerRepository,
   CallerKeyRevocationRepository,
+  AgentRegistryRepository,
   ExternalConnectorRepository,
   BusinessSignalSourceRepository,
   AuthorityGrantRepository,
@@ -38,6 +39,7 @@ import { SupabaseHandbookDownloadLeadRepository } from "./SupabaseHandbookDownlo
 
 import { SupabaseApprovalIssuerRepository } from "./SupabaseApprovalIssuerRepository.js";
 import { SupabaseCallerKeyRevocationRepository } from "./SupabaseCallerKeyRevocationRepository.js";
+import { SupabaseAgentRegistryRepository } from "./SupabaseAgentRegistryRepository.js";
 import { SupabaseExternalConnectorRepository } from "./SupabaseExternalConnectorRepository.js";
 import { SupabaseBusinessSignalSourceRepository } from "./SupabaseBusinessSignalSourceRepository.js";
 import { SupabaseAuthorityGrantRepository } from "./SupabaseAuthorityGrantRepository.js";
@@ -66,6 +68,7 @@ export class SupabaseStorageProvider implements StorageProvider {
   readonly handbookDownloadLeads: HandbookDownloadLeadRepository;
   readonly approvalIssuers: ApprovalIssuerRepository;
   readonly callerKeyRevocations: CallerKeyRevocationRepository;
+  readonly agentRegistry: AgentRegistryRepository;
   readonly externalConnectors: ExternalConnectorRepository;
   readonly businessSignalSources: BusinessSignalSourceRepository;
   readonly authorityGrants: AuthorityGrantRepository;
@@ -95,6 +98,7 @@ export class SupabaseStorageProvider implements StorageProvider {
 
     this.approvalIssuers = new SupabaseApprovalIssuerRepository(pool);
     this.callerKeyRevocations = new SupabaseCallerKeyRevocationRepository(pool);
+    this.agentRegistry = new SupabaseAgentRegistryRepository(pool);
 
     this.externalConnectors = new SupabaseExternalConnectorRepository(pool);
     this.businessSignalSources = new SupabaseBusinessSignalSourceRepository(

@@ -1,6 +1,7 @@
 import type {
   ApprovalIssuerRepository,
   CallerKeyRevocationRepository,
+  AgentRegistryRepository,
   ExternalConnectorRepository,
   BusinessSignalSourceRepository,
   AuthorityGrantRepository,
@@ -36,6 +37,7 @@ import { MemoryHandbookDownloadLeadRepository } from "./MemoryHandbookDownloadLe
 
 import { MemoryApprovalIssuerRepository } from "./MemoryApprovalIssuerRepository.js";
 import { MemoryCallerKeyRevocationRepository } from "./MemoryCallerKeyRevocationRepository.js";
+import { MemoryAgentRegistryRepository } from "./MemoryAgentRegistryRepository.js";
 import { MemoryExternalConnectorRepository } from "./MemoryExternalConnectorRepository.js";
 import { MemoryBusinessSignalSourceRepository } from "./MemoryBusinessSignalSourceRepository.js";
 import { MemoryAuthorityGrantRepository } from "./MemoryAuthorityGrantRepository.js";
@@ -66,6 +68,7 @@ export class MemoryStorageProvider implements StorageProvider {
 
   readonly approvalIssuers: ApprovalIssuerRepository;
   readonly callerKeyRevocations: CallerKeyRevocationRepository;
+  readonly agentRegistry: AgentRegistryRepository;
 
   readonly externalConnectors: ExternalConnectorRepository;
   readonly businessSignalSources: BusinessSignalSourceRepository;
@@ -92,6 +95,7 @@ export class MemoryStorageProvider implements StorageProvider {
 
     this.approvalIssuers = new MemoryApprovalIssuerRepository();
     this.callerKeyRevocations = new MemoryCallerKeyRevocationRepository();
+    this.agentRegistry = new MemoryAgentRegistryRepository();
 
     this.externalConnectors = new MemoryExternalConnectorRepository();
     this.businessSignalSources = new MemoryBusinessSignalSourceRepository();
