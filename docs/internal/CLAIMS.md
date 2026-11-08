@@ -1504,8 +1504,11 @@ Every approve rule in these policies requires an approval-backed fact to be true
 - **No connector runs an LLM tool call.** On the hosted API, an approved `llm-tool-call` decision executes nothing.
 - **Connector configuration is outside this claim.** Whether a given deployment has a connector configured does not change the rules above.
 
+- **Injected content still reaches the agent.** Parmana does not stop the agent from reading injected instructions, so an agent can still ask for the wrong write. The claim is that the write cannot be approved without a human signature, not that the request is never made. An approval that is forged, widened after signing, redirected to another order, or replayed is refused. Tested in `packages/approval/tests/unit/injected-instruction-cannot-approve.test.ts` (G-141, issue #433). Refused requests are recorded and signed.
+
 **Evidence.**
 
+- `packages/approval/tests/unit/injected-instruction-cannot-approve.test.ts`
 - `policies/customer-refund/1.2.0/policy.json`
 - `policies/llm-tool-call/1.1.0/policy.json`
 - `packages/capability-registry/src/CapabilityPolicyBinding.ts` (the bindings for these capabilities)
