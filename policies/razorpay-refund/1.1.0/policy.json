@@ -1,6 +1,6 @@
 {
   "policyId": "razorpay-refund",
-  "policyVersion": "1.0.0",
+  "policyVersion": "1.1.0",
   "schemaVersion": "1.0.0",
   "description": "Authorizes a refund on a Razorpay payment. Razorpay itself confirms the payment is captured, not fully refunded, and has the requested amount left. A signed manager approval for that payment and amount is also required. The caller cannot declare either fact.",
   "signalsSchema": {
