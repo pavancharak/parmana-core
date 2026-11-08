@@ -108,11 +108,15 @@ TEST_DATABASE_URL="postgresql://<user>@<host>:<port>/<test database>" \
   npx vitest run packages/storage/tests/integration/supabase-inbound-check-consumption.integration.test.ts
 ```
 
-The test creates its own schema, creates the two tables it needs, runs, and drops the schema. No other schema is touched.
+The test runs against a database where the real migrations have been applied, using the bundle
+`scripts/apply-all-migrations.sql`. Every row it writes carries a run tag and is deleted afterwards.
 
-**Limitation of the test.** Its two tables are created by the test, with the columns the repository writes. They are not
-created by the real migrations. If a migration changes those columns, the test must be updated to match. A check
-against the applied migrations would close this.
+To prepare such a database: create an empty database, then run the bundle against it with `psql -f scripts/apply-all-migrations.sql`.
+Running it on Supabase works without changes. On a plain PostgreSQL server, it reports "role anon does not exist" for two
+Supabase grants; those errors are harmless for this test.
+
+The test was run this way against a local PostgreSQL 16 server, with the bundle applied: 4 of 4 pass, and no test rows
+remain afterwards.
 
 ## 8. Still open
 
@@ -122,13 +126,14 @@ against the applied migrations would close this.
   removed. No cleanup job exists yet.
 - **External verifier.** `parmana-verifier` must read the four fields before an approved decision that used an
   approval is issued in production.
-- **Migration against a real database.** The migration is written but has not been applied to a Supabase project.
+- **Migration against Supabase.** The migration has been applied to a local PostgreSQL 16 database, through the real
+  bundle, and the integration test passes against it. It has not been applied to a Supabase project.
 - **Claims and gap record.** `CLAIMS.md` and `VERIFICATION-GAPS.md` are not yet updated. G-143 should stay open until
   O3, the external verifier, and the migration are done.
 
 ## 9. Order to finish
 
-1. Apply `20261108170000` to the staging database. Run the integration test against it.
+1. Apply `20261108170000` to the staging database (through the bundle). Run the integration test against it.
 2. Update `parmana-verifier` to read the four fields. Release it.
 3. Decide O3. If several approvals are in scope, build the child table before any production use.
 4. Add nonce cleanup.

@@ -10,15 +10,12 @@ import {
 import { SupabaseInboundCheckRepository } from "../../src/supabase/SupabaseInboundCheckRepository.js";
 
 /**
- * G-143, O1, against a real Postgres database: the decision record and the consumption of its approvals are
- * written in one transaction. Each run uses its own schema, which is dropped afterwards, so no table in any
- * other schema is touched.
+ * G-143, O1, against a real Postgres database with the real migrations applied (scripts/apply-all-migrations.sql,
+ * which creates inbound_decisions and consumed_approval_nonces in the public schema). Every row this test writes
+ * carries a run tag and is deleted afterwards.
  *
- * Reads TEST_DATABASE_URL only, never DATABASE_URL. Skipped when TEST_DATABASE_URL is not set. Refuses to run
- * if TEST_DATABASE_URL is the same as DATABASE_URL.
- *
- * The two tables are created here with the columns the repository writes. Keep them in step with
- * supabase/migrations (extend_inbound_decisions, add_inbound_approval_identity, and the approval nonce table).
+ * Reads TEST_DATABASE_URL only, never DATABASE_URL. Skipped when TEST_DATABASE_URL is not set. Refuses to run if
+ * TEST_DATABASE_URL is the same as DATABASE_URL.
  */
 const url = process.env.TEST_DATABASE_URL?.trim();
 if (url && url === process.env.DATABASE_URL) {
@@ -32,58 +29,33 @@ const suite = url ? describe : describe.skip;
 suite(
   "SupabaseInboundCheckRepository.appendConsumingApprovals (G-143, O1)",
   () => {
-    const schema = `inbound_it_${randomUUID().replace(/-/g, "")}`;
+    const run = randomUUID().replace(/-/g, "");
     let pool: pg.Pool;
     let repo: SupabaseInboundCheckRepository;
 
-    beforeAll(async () => {
-      // Every connection in this pool uses the test schema, so the repository's unqualified table names resolve there.
-      pool = new pg.Pool({
-        connectionString: url,
-        options: `-c search_path=${schema}`,
-        max: 4,
-      });
-      await pool.query(`CREATE SCHEMA ${schema}`);
-      await pool.query(`
-      CREATE TABLE ${schema}.inbound_decisions (
-        decision_id TEXT PRIMARY KEY,
-        outcome TEXT NOT NULL,
-        reason TEXT,
-        partner_id TEXT NOT NULL,
-        expires_at TIMESTAMPTZ NOT NULL,
-        audience TEXT NOT NULL,
-        signature TEXT NOT NULL,
-        issued_at TIMESTAMPTZ NOT NULL,
-        capability TEXT,
-        target TEXT,
-        amount NUMERIC,
-        policy_name TEXT,
-        policy_version TEXT,
-        approved_by TEXT,
-        approved_key_id TEXT,
-        approval_id TEXT,
-        approved_at TIMESTAMPTZ,
-        check_status TEXT
-      )`);
-      await pool.query(`
-      CREATE TABLE ${schema}.consumed_approval_nonces (
-        nonce TEXT PRIMARY KEY,
-        expires_at TIMESTAMPTZ NOT NULL
-      )`);
+    beforeAll(() => {
+      pool = new pg.Pool({ connectionString: url, max: 4 });
       repo = new SupabaseInboundCheckRepository(pool);
     });
 
     afterAll(async () => {
-      if (pool) {
-        await pool.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);
-        await pool.end();
-      }
+      if (!pool) return;
+      await pool.query(
+        "DELETE FROM inbound_decisions WHERE decision_id LIKE $1",
+        [`it-${run}-%`],
+      );
+      await pool.query(
+        "DELETE FROM consumed_approval_nonces WHERE nonce LIKE $1",
+        [`it-${run}-%`],
+      );
+      await pool.end();
     });
 
-    function record(
-      decisionId: string,
-      overrides: Partial<InboundCheckRecord> = {},
-    ): InboundCheckRecord {
+    function id(label: string): string {
+      return `it-${run}-${label}-${randomUUID()}`;
+    }
+
+    function record(decisionId: string): InboundCheckRecord {
       return {
         decisionId,
         outcome: "approved",
@@ -101,7 +73,6 @@ suite(
         approvedKeyId: "manager-pavan-key-1",
         approvalId: `appr-${decisionId}`,
         approvedAt: "2026-11-02T09:55:00.000Z",
-        ...overrides,
       };
     }
 
@@ -109,31 +80,31 @@ suite(
 
     async function consumedCount(nonce: string): Promise<number> {
       const { rows } = await pool.query(
-        `SELECT count(*)::int AS n FROM ${schema}.consumed_approval_nonces WHERE nonce = $1`,
+        "SELECT count(*)::int AS n FROM consumed_approval_nonces WHERE nonce = $1",
         [nonce],
       );
       return rows[0].n as number;
     }
 
     it("records the decision and consumes its approval, and the approval fields round-trip", async () => {
-      const id = `chk-${randomUUID()}`;
-      const nonce = `n-${randomUUID()}`;
-      await repo.appendConsumingApprovals(record(id), [
+      const decision = id("ok");
+      const nonce = id("n");
+      await repo.appendConsumingApprovals(record(decision), [
         { nonce, expiresAt: LATER },
       ]);
 
-      const stored = await repo.findById(id);
+      const stored = await repo.findById(decision);
       expect(stored?.approvedBy).toBe("manager-pavan");
       expect(stored?.approvedKeyId).toBe("manager-pavan-key-1");
-      expect(stored?.approvalId).toBe(`appr-${id}`);
+      expect(stored?.approvalId).toBe(`appr-${decision}`);
       expect(stored?.approvedAt).toBe("2026-11-02T09:55:00.000Z");
       expect(await consumedCount(nonce)).toBe(1);
     });
 
     it("refuses a second use of an approval, and records no decision for that second request", async () => {
-      const nonce = `n-${randomUUID()}`;
-      const first = `chk-${randomUUID()}`;
-      const second = `chk-${randomUUID()}`;
+      const nonce = id("n");
+      const first = id("first");
+      const second = id("second");
       await repo.appendConsumingApprovals(record(first), [
         { nonce, expiresAt: LATER },
       ]);
@@ -150,13 +121,13 @@ suite(
     });
 
     it("consumes nothing when any approval in the batch was already used", async () => {
-      const used = `n-${randomUUID()}`;
-      const fresh = `n-${randomUUID()}`;
-      await repo.appendConsumingApprovals(record(`chk-${randomUUID()}`), [
+      const used = id("n-used");
+      const fresh = id("n-fresh");
+      await repo.appendConsumingApprovals(record(id("seed")), [
         { nonce: used, expiresAt: LATER },
       ]);
 
-      const refused = `chk-${randomUUID()}`;
+      const refused = id("refused");
       await expect(
         repo.appendConsumingApprovals(record(refused), [
           { nonce: fresh, expiresAt: LATER },
@@ -169,21 +140,20 @@ suite(
     });
 
     it("rolls back the consumption when the decision itself cannot be written", async () => {
-      const id = `chk-${randomUUID()}`;
-      await repo.append(record(id));
+      const decision = id("dup");
+      await repo.append(record(decision));
 
-      const nonce = `n-${randomUUID()}`;
-      // The same decision id again: the decision insert fails, after the approval's nonce was inserted.
+      const nonce = id("n-rollback");
+      // The same decision id again: the decision insert fails after the nonce was inserted.
       await expect(
-        repo.appendConsumingApprovals(record(id), [
+        repo.appendConsumingApprovals(record(decision), [
           { nonce, expiresAt: LATER },
         ]),
       ).rejects.not.toBeInstanceOf(ApprovalAlreadyUsedError);
 
-      // The nonce was rolled back, so the approval is still usable.
       expect(await consumedCount(nonce)).toBe(0);
       await expect(
-        repo.appendConsumingApprovals(record(`chk-${randomUUID()}`), [
+        repo.appendConsumingApprovals(record(id("after")), [
           { nonce, expiresAt: LATER },
         ]),
       ).resolves.toBeUndefined();
