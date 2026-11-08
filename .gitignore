@@ -7,7 +7,7 @@ PARMANA-*.md
 # itself (ADR-0009) -- never actual secret material. Without this, an
 # entire feature directory silently vanishes from git the moment its
 # name matches *secret*, which already happened once
-# (docs/adr/ADR-0009-...) before this negation was added.
+# (docs/internal/adr/ADR-0009-...) before this negation was added.
 !packages/*/src/**/*[Ss]ecret*
 !packages/*/tests/**/*[Ss]ecret*
 !docs/**/*[Ss]ecret*
@@ -23,7 +23,7 @@ PARMANA-*.md
 keys/
 
 # GPG material: ASCII-armored exports (public or secret), encrypted files and
-# revocation certificates. Never commit them; see docs/runbooks/SIGNING-COMMITS.md.
+# revocation certificates. Never commit them; see docs/internal/runbooks/SIGNING-COMMITS.md.
 *.asc
 *.gpg
 *.rev
@@ -114,9 +114,6 @@ stryker.log
 # repository on purpose. Lives on the operator's machine.
 PARMANA-CREDENTIAL-RECOVERY.md
 *-RECOVERY.local.md
-examples/live-checks/**/evidence/*-record.json
-examples/live-checks/**/record-*.json
-examples/razorpay-refund/record-*.json
 
 # Internal proof audit report: kept local, not published (contains bypass details)
 proof-audit/REPORT.md
@@ -142,7 +139,26 @@ PARMANA_API_KEYS*.json
 
 # Operator context notes (local only, never commit)
 PARMANA-OPS-CONTEXT.md
+CLAUDE.md
+docs/status/
+docs/BACKLOG.md
 
 # Local credential runbook: never commit
 nbfc-credentials-runbook.md
-.env.local
+
+# Operator status and registration notes (local only)
+docs/RESUME-STATUS.md
+docs/RESUME-CONNECTOR-MIGRATION.md
+docs/REGISTRATIONS-PENDING.md
+=======
+# Operator-only runbooks and notes (local only)
+docs/internal/runbooks/CREDENTIAL-CEREMONY.md
+docs/internal/runbooks/CEREMONY-FIVE-PEOPLE.md
+docs/internal/runbooks/PRODUCTION-KEY-CEREMONY.md
+docs/internal/runbooks/RAZORPAY-STATUS.md
+docs/SIGNING-WORK-SUMMARY.md
+
+
+=======
+docs/OPEN-SOURCE-WORK.md
+
