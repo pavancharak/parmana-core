@@ -239,7 +239,7 @@ npx prettier --check .
 
 ## 12. Security and limits
 
-- **Test mode only.** The refund endpoint refuses live keys. Nothing in this repository moved live money.
+- **Test mode only.** The removed demo endpoint refused live keys. The current connector refuses `rzp_live_` keys unless `PARMANA_ALLOW_LIVE_KEYS=true`. Nothing in these repositories has moved live money.
 - **No secrets in this book or the repository.** Keys are set as environment variables on the endpoint, or in a password manager for the agent. They are never written into a file or pasted into a chat.
 - **Approval is what releases money.** A refund needs a signed human approval for the payment and amount. The agent cannot approve its own request.
 - **The daily limit is not enforced now** (section 7).
