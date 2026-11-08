@@ -28,7 +28,7 @@
     "@parmana/crypto": "2.0.0",
     "@parmana/envelope-verifier": "2.0.0",
     "@parmana/shared": "2.0.0",
-    "@supabase/supabase-js": "^2.118.0",
+    "@supabase/supabase-js": "^2.119.0",
     "express": "^5.3.0",
     "pg": "^8.23.1",
     "vitest": "^5.0.3"
@@ -39,7 +39,7 @@
     "@types/node": "^24.19.2",
     "@types/pg": "^8.23.1",
     "dotenv": "^18.0.9",
-    "eslint": "^10.13.0",
+    "eslint": "^10.14.0",
     "eslint-config-prettier": "^10.1.8",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
