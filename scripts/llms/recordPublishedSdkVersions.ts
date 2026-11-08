@@ -11,7 +11,7 @@
  * publishes nothing, which is why this check reads the registries, not the
  * workspace.
  */
-import { execFileSync } from "node:child_process";
+import { execSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -31,8 +31,11 @@ function arg(name: string): string {
 }
 
 function npmServes(pkg: string, version: string): boolean {
+  // Windows runs npm as npm.cmd, which cannot be started without a shell, so
+  // execFileSync("npm") fails there and every version looks unpublished. pkg is
+  // a constant and version has passed SEMVER, so the command string is safe.
   try {
-    const out = execFileSync("npm", ["view", `${pkg}@${version}`, "version"], {
+    const out = execSync(`npm view ${pkg}@${version} version`, {
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"],
     });
