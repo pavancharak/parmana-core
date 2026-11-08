@@ -294,6 +294,18 @@ describe("GatewayExternalAdapter: condition evidence (F28-7, step 3)", () => {
     ).rejects.toThrow("evidence is not an object of plain values");
   });
 
+  it("refuses evidence with a credential-shaped key, however its value looks", async () => {
+    const send = transport({
+      success: true,
+      conditionsChecked: [
+        { ...notHolding, evidence: { apiToken: "not-a-secret-looking-value" } },
+      ],
+    });
+    await expect(
+      adapter(send).execute(request, context([CONDITION])),
+    ).rejects.toThrow('credential-shaped key "apiToken"');
+  });
+
   it("refuses evidence larger than the limit", async () => {
     const big = { blob: "x".repeat(3 * 1024) };
     const send = transport({

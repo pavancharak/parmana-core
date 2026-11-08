@@ -43,6 +43,10 @@ export const CONDITIONS_CHECKED_LIMIT = 64;
 /** Largest evidence an endpoint may attach to one checked condition, in bytes. */
 export const CONDITION_EVIDENCE_LIMIT_BYTES = 2 * 1024;
 
+/** Key names that look like credentials. Evidence is recorded in the Trust Record, so these are refused. */
+const CREDENTIAL_SHAPED_KEY =
+  /credential|secret|token|apikey|api_key|password|authorization/i;
+
 const CONDITION_ATOMICITY = [
   "atomic",
   "check-then-act",
@@ -520,6 +524,16 @@ function parseConditionsChecked(
         !Object.values(evidence).every(isPlainEvidenceValue)
       ) {
         problems.push(`${at}.evidence is not an object of plain values`);
+        return;
+      }
+      // Values are plain, and key names are checked too: a credential-shaped key is refused, not recorded.
+      const credentialKey = Object.keys(evidence).find((key) =>
+        CREDENTIAL_SHAPED_KEY.test(key),
+      );
+      if (credentialKey !== undefined) {
+        problems.push(
+          `${at}.evidence has a credential-shaped key "${credentialKey}"`,
+        );
         return;
       }
       if (
