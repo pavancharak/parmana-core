@@ -55,6 +55,8 @@ export interface BusinessSignalQueryMessage {
   readonly businessTransactionId: string;
   /** Unique per query; the answer must echo it. */
   readonly nonce: string;
+  /** The Intent parameters the policy declared for this source, and no others. Absent when none. */
+  readonly parameters?: Readonly<Record<string, unknown>>;
   readonly issuedAt: string;
   readonly expiresAt: string;
 }
@@ -165,6 +167,7 @@ export class HttpBusinessSignalSource implements BusinessSignalSource {
       action: query.action,
       businessTransactionId: query.businessTransactionId,
       nonce: crypto.randomUUID(),
+      ...(query.parameters !== undefined && { parameters: query.parameters }),
       issuedAt: now.toISOString(),
       expiresAt: new Date(
         now.getTime() + BUSINESS_SIGNAL_QUERY_TTL_MS,

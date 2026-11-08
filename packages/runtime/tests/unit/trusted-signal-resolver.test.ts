@@ -130,6 +130,40 @@ describe("TrustedSignalResolver", () => {
     expect(result.trustedValues).toEqual({ refundEligible: true });
   });
 
+  it("sends a source only the parameters its declaration names, never the rest of the Intent", async () => {
+    const orders = source(observed(true));
+    const declared: Policy = {
+      ...POLICY,
+      signalSources: {
+        refundEligible: {
+          ...POLICY.signalSources!.refundEligible!,
+          parameters: ["amount"],
+        },
+      },
+    };
+    await resolver([orders]).resolve(
+      request({
+        policy: declared,
+        parameters: {
+          orderId: "ORD-1",
+          amount: 500,
+          cardNumber: "4111-1111-1111-1111",
+        },
+      }),
+    );
+
+    expect(orders.calls).toMatchObject([{ parameters: { amount: 500 } }]);
+    expect(JSON.stringify(orders.calls)).not.toContain("cardNumber");
+  });
+
+  it("sends no parameters at all when the declaration names none", async () => {
+    const orders = source(observed(true));
+    await resolver([orders]).resolve(request());
+
+    expect(orders.calls).toHaveLength(1);
+    expect(orders.calls[0]).not.toHaveProperty("parameters");
+  });
+
   it("records a trusted signal bound to the object and action, with a recomputable digest", async () => {
     const result = await resolver([
       source(observed(true, { sourceProof: "sig-from-source" })),

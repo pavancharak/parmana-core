@@ -189,6 +189,11 @@ export class TrustedSignalResolver {
       );
     }
 
+    const disclosed = disclosedParameters(
+      request.intent.parameters,
+      declaration.parameters,
+    );
+
     let answer: BusinessSignalSourceAnswer;
 
     try {
@@ -200,6 +205,7 @@ export class TrustedSignalResolver {
           subjectPath: declaration.subject,
           action: request.action,
           businessTransactionId: request.businessTransactionId,
+          ...(disclosed !== undefined && { parameters: disclosed }),
         }),
         declaration.source,
       );
@@ -404,4 +410,25 @@ function describeType(value: JsonValue): string {
   if (value === null) return "null";
   if (Array.isArray(value)) return "an array";
   return `a ${typeof value}`;
+}
+
+/**
+ * The Intent parameters a source is allowed to see: only the names its declaration lists, and only those
+ * present. Undefined when the declaration lists none, so the query carries no parameters at all.
+ */
+function disclosedParameters(
+  intentParameters: Readonly<Record<string, unknown>> | undefined,
+  names: readonly string[] | undefined,
+): Readonly<Record<string, unknown>> | undefined {
+  if (names === undefined || names.length === 0) return undefined;
+  const disclosed: Record<string, unknown> = {};
+  for (const name of names) {
+    if (
+      intentParameters !== undefined &&
+      Object.prototype.hasOwnProperty.call(intentParameters, name)
+    ) {
+      disclosed[name] = intentParameters[name];
+    }
+  }
+  return disclosed;
 }
