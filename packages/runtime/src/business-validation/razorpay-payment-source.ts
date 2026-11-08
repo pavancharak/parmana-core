@@ -61,7 +61,7 @@ export function createRazorpayPaymentSource(
           reason: "the subject is not a Razorpay payment id",
         };
       }
-      const requested = query.intentParameters?.amount;
+      const requested = query.parameters?.amount;
       if (
         typeof requested !== "number" ||
         !Number.isInteger(requested) ||

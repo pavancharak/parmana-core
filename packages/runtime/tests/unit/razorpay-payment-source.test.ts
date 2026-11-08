@@ -22,7 +22,7 @@ function query(
     subjectPath: "parameters.paymentId",
     action: "razorpay:refund",
     businessTransactionId: "bt-7",
-    intentParameters: { amount: 1000 },
+    parameters: { amount: 1000 },
     ...overrides,
   };
 }
@@ -99,10 +99,10 @@ describe("Razorpay payment source (payment.refundable)", () => {
       refund_status: "partial",
     });
     expect(
-      await source(fetch).resolve(query({ intentParameters: { amount: 500 } })),
+      await source(fetch).resolve(query({ parameters: { amount: 500 } })),
     ).toMatchObject({ value: false });
     expect(
-      await source(fetch).resolve(query({ intentParameters: { amount: 400 } })),
+      await source(fetch).resolve(query({ parameters: { amount: 400 } })),
     ).toMatchObject({ value: true });
   });
 
@@ -155,10 +155,10 @@ describe("Razorpay payment source (payment.refundable)", () => {
   it("throws when the refund amount is missing or not a positive whole number of paise", async () => {
     const { fetch, calls } = razorpay(captured);
     await expect(
-      source(fetch).resolve(query({ intentParameters: {} })),
+      source(fetch).resolve(query({ parameters: {} })),
     ).rejects.toThrow("positive whole number of paise");
     await expect(
-      source(fetch).resolve(query({ intentParameters: { amount: 10.5 } })),
+      source(fetch).resolve(query({ parameters: { amount: 10.5 } })),
     ).rejects.toThrow("positive whole number");
     expect(calls).toHaveLength(0);
   });
