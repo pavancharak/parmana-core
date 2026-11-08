@@ -39,6 +39,42 @@ export function createTrustRecordsRouter(
     "/",
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       try {
+        const hasWindow =
+          req.query.since !== undefined || req.query.until !== undefined;
+
+        if (hasWindow) {
+          // A dated window is an export: scan the whole window before
+          // paging, and refuse rather than return a partial result.
+          const since = readIsoDate(req.query.since);
+          const until = readIsoDate(req.query.until);
+
+          if (since === "invalid" || until === "invalid") {
+            res.status(400).json({
+              error: "since and until must be ISO 8601 timestamps.",
+            });
+            return;
+          }
+
+          const callerId = req.callerId;
+          const exported = await application.exportTrustRecordsInWindow(
+            { since, until },
+            callerId === undefined
+              ? undefined
+              : (transaction) => transaction.metadata?.submittedBy === callerId,
+          );
+
+          if (exported.truncated) {
+            res.status(422).json({
+              error:
+                "The window matches more transactions than one export can cover. Narrow since/until and export again.",
+            });
+            return;
+          }
+
+          res.json(exported.records);
+          return;
+        }
+
         const pagination = parsePagination(req.query);
 
         if (!pagination.ok) {
@@ -59,31 +95,7 @@ export function createTrustRecordsRouter(
                   record.transaction.metadata?.submittedBy === req.callerId,
               );
 
-        const since =
-          typeof req.query.since === "string"
-            ? Date.parse(req.query.since)
-            : undefined;
-        const until =
-          typeof req.query.until === "string"
-            ? Date.parse(req.query.until)
-            : undefined;
-
-        const filtered = scoped.filter((record) => {
-          // Declared as Date on BusinessTransaction, but a durable-
-          // storage round trip (Supabase's JSONB column) can hand back
-          // a plain ISO string despite the compile-time type — new
-          // Date(...) accepts either.
-          const createdAt = new Date(record.transaction.createdAt).getTime();
-
-          if (since !== undefined && !Number.isNaN(since) && createdAt < since)
-            return false;
-          if (until !== undefined && !Number.isNaN(until) && createdAt > until)
-            return false;
-
-          return true;
-        });
-
-        res.json(filtered);
+        res.json(scoped);
       } catch (error) {
         next(error);
       }
@@ -136,4 +148,23 @@ export function createTrustRecordsRouter(
   );
 
   return router;
+}
+
+/**
+ * Reads an optional ISO 8601 timestamp query value. Returns undefined
+ * when absent, the parsed Date when valid, and "invalid" otherwise, so
+ * a malformed bound is refused instead of silently ignored.
+ */
+function readIsoDate(value: unknown): Date | undefined | "invalid" {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value !== "string") {
+    return "invalid";
+  }
+
+  const parsed = new Date(value);
+
+  return Number.isNaN(parsed.getTime()) ? "invalid" : parsed;
 }
