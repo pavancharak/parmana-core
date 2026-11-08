@@ -116,7 +116,8 @@ describe("TrustedSignalResolver", () => {
     const orders = source(observed(true));
     const result = await resolver([orders]).resolve(request());
 
-    expect(orders.calls).toEqual([
+    // A subset match: the query also carries the Intent's parameters, which a source may check.
+    expect(orders.calls).toMatchObject([
       {
         signalKey: "refundEligible",
         claim: "refund.eligible",
