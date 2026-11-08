@@ -273,3 +273,9 @@ If something is not listed here, run `npm run doctor` in `parmana-core`, or `npm
 - [`parmana-connectors/RUNBOOK.md`](https://github.com/pavancharak/parmana-connectors/blob/main/RUNBOOK.md): deployment steps and recovery.
 - [`docs/internal/CLAIMS.md`](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/CLAIMS.md): what Parmana claims, and the evidence for each claim.
 - [`docs/internal/VERIFICATION-GAPS.md`](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/VERIFICATION-GAPS.md): what is not yet verified.
+
+## See also (parmana-guide)
+
+- [Run locally](https://github.com/pavancharak/parmana-guide/blob/main/docs/03-run-locally.md)
+- [Troubleshooting](https://github.com/pavancharak/parmana-guide/blob/main/docs/06-troubleshooting.md)
+- [Developer role](https://github.com/pavancharak/parmana-guide/blob/main/roles/developer/README.md)

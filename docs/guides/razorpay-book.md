@@ -271,3 +271,8 @@ npx prettier --check .
 - **Webhook handling in depth.** The webhook tables were dropped, and the handler's code was not reviewed for this book.
 - **Live-mode operation.** Nothing in this repository runs live Razorpay refunds, and this book does not describe how that would be set up.
 - **The status of the removed runbooks** ([`docs/internal/runbooks/`](https://github.com/pavancharak/parmana-core/tree/main/docs/internal/runbooks) at earlier commits). Their content is referenced here only by commit.
+
+## See also (parmana-guide)
+
+- [Integration](https://github.com/pavancharak/parmana-guide/blob/main/docs/05-integration.md)
+- [Troubleshooting](https://github.com/pavancharak/parmana-guide/blob/main/docs/06-troubleshooting.md)

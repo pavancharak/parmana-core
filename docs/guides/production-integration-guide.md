@@ -173,3 +173,11 @@ Keep Parmana's public key with the records. A verifier needs that key, not the s
 - **Kill switch scope.** A trip stops new requests. An action already past the guard can still complete (G-122).
 - **Replay ledger.** A release recorded but not confirmed cannot be resent. The operator must check the business system by hand (connectors [`RUNBOOK.md`](https://github.com/pavancharak/parmana-connectors/blob/main/RUNBOOK.md)).
 - **Vercel and self-hosted differ** unless the startup options are kept in step (B3).
+
+## See also (parmana-guide)
+
+- [Integration](https://github.com/pavancharak/parmana-guide/blob/main/docs/05-integration.md)
+- [Deploy connectors](https://github.com/pavancharak/parmana-guide/blob/main/docs/04-deploy-connectors.md)
+- [Inbound agent checks](https://github.com/pavancharak/parmana-guide/blob/main/docs/08-inbound-agent-checks.md)
+- [Operations and SRE role](https://github.com/pavancharak/parmana-guide/blob/main/roles/operations-sre/README.md)
+- [Compliance auditor role](https://github.com/pavancharak/parmana-guide/blob/main/roles/compliance-auditor/README.md)

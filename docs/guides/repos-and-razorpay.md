@@ -175,3 +175,8 @@ The service records a release before it runs the connector. A recorded release c
 - **Chapter 10 (Troubleshooting).** The error codes in section 3.6 replace the demo's messages.
 
 Items not verified in this document: the status of Zoho and the other connectors, and the content of `parmana-docs`.
+
+## See also (parmana-guide)
+
+- [Repositories](https://github.com/pavancharak/parmana-guide/blob/main/docs/02-repositories.md)
+- [Deploy connectors](https://github.com/pavancharak/parmana-guide/blob/main/docs/04-deploy-connectors.md)

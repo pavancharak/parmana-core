@@ -177,3 +177,8 @@ Claim 2.42 notes that approvers are not limited per action (gap G-50). Any liste
 - The approval-issuer routes in detail. Read [`packages/api/src/routes/approval-issuers.ts`](https://github.com/pavancharak/parmana-core/blob/main/packages/api/src/routes/approval-issuers.ts).
 - The external-connector route bodies. Read [`packages/api/src/routes/external-connectors.ts`](https://github.com/pavancharak/parmana-core/blob/main/packages/api/src/routes/external-connectors.ts).
 - How to generate and store step-up keys and approver keys. These are operational. Keep them in the password manager and the credential runbook, not in documents.
+
+## See also (parmana-guide)
+
+- [Compliance auditor role](https://github.com/pavancharak/parmana-guide/blob/main/roles/compliance-auditor/README.md)
+- [Change management](https://github.com/pavancharak/parmana-guide/blob/main/docs/onboarding/change-management.md)

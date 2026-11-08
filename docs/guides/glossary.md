@@ -246,3 +246,8 @@ Read: [PRODUCTION-DEPLOY-AND-ROLLBACK.md](https://github.com/pavancharak/parmana
 | A setting is missing or wrong | [environment-variables.mdx](https://github.com/pavancharak/parmana-core/blob/main/docs/site/deployment/environment-variables.mdx), or `npm run doctor`                                                                                                                                      |
 | An incident needs records     | [INCIDENT-EXPORT.md](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/runbooks/INCIDENT-EXPORT.md)                                                                                                                                                                       |
 | Security concern              | [SECURITY.md](https://github.com/pavancharak/parmana-core/blob/main/SECURITY.md). Report privately, not as a public issue                                                                                                                                                                   |
+
+## See also (parmana-guide)
+
+- [Concepts, in plain language](https://github.com/pavancharak/parmana-guide/blob/main/docs/01-concepts.md)
+- [Reference index](https://github.com/pavancharak/parmana-guide/blob/main/docs/reference-index.md)
