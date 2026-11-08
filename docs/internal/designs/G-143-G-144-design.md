@@ -1,226 +1,170 @@
 # Design: inbound approvals and business-confirmed facts (G-143, G-144)
 
-Status: **proposed, for decision.** No code is written. This document records the recommended decisions, the
-design that follows from them, the failure cases, and the tests required before any code is merged.
+**Status:** partly decided. Section 2 says which decisions are made and which are open. No code is written.
 
-Gaps: `docs/internal/VERIFICATION-GAPS.md` G-143 and G-144. Parent gap: G-129 (issue #421). Source questions:
-`docs/internal/rfcs/RFC-0026-Inbound-Facts-From-Business-Sources.md`. Earlier proposals: PR #517 (G-143 design),
-PR #518 (G-144 answers).
+**Gaps:** G-143 and G-144 in `docs/internal/VERIFICATION-GAPS.md`. **Parent:** G-129 (issue #421).
+**Source:** RFC-0026. **Earlier proposals:** PR #517 (G-143), PR #518 (G-144).
 
 ---
 
-## 1. Summary
+## 1. Problem
 
-An inbound decision (`POST /v1/inbound/checks`) approves a partner's request only when the policy approves it. Two
-gaps remain:
+An inbound decision (`POST /v1/inbound/checks`) approves a partner's request when the policy approves it. Two gaps:
 
-- **G-143.** The decision record does not say who approved the request or when, so an auditor cannot tell whether a
-  person approved it.
-- **G-144.** The facts a policy relies on may come from the partner's own declaration. A declaration should be able to
-  refuse a request but never to approve one.
-
-This document recommends how both are closed in the long term, and what must be true before code is written.
+- **G-143.** The decision record does not say who approved the request, or when. An auditor cannot tell whether a person approved it.
+- **G-144.** The facts a policy relies on may come from the partner's own declaration. A declaration should be able to refuse a request, but never approve one.
 
 ## 2. Decisions
 
-### G-143: approval record
+| #   | Topic                     | Decision                                                                                                                                                                | Status                                                                  |
+| --- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| G1  | Sign the approval fields  | Sign them. An unsigned field can be edited after the fact.                                                                                                              | Recommended. Pending owner confirmation                                 |
+| G2  | Record the key ID         | Record it, with the approver ID. Keys are rotated and revoked.                                                                                                          | Recommended. Pending owner confirmation                                 |
+| G3  | Single use of an approval | Single use, tied to the approval ID.                                                                                                                                    | Recommended. Already enforced at authorization; timing is open (see O1) |
+| F1  | Who registers a source    | Registered through maker-checker, from a key the business controls.                                                                                                     | Recommended. Pending owner confirmation                                 |
+| F2  | Source key replacement    | Bounded overlap with an explicit end time. Default 24 hours, cap 7 days.                                                                                                | Recommended. Pending owner confirmation                                 |
+| F3  | Read timeout              | Per capability, set at registration. Default 10 seconds. Any failure refuses.                                                                                           | Recommended. Pending owner confirmation                                 |
+| F4  | Staleness                 | The source's own timestamp, a maximum age per fact in the policy, and a 30-second clock allowance.                                                                      | Recommended. Pending owner confirmation                                 |
+| F5  | Coverage                  | Enforced when a policy is approved, not at request time.                                                                                                                | Recommended. Pending owner confirmation                                 |
+| F6  | Re-approval of a source   | **6 months** for a source that can move money or change an external system. **12 months** for a read-only source. Re-approval needs the business and a Parmana checker. | **Decided by the owner.**                                               |
 
-| #   | Decision                                        | Recommendation                                                                                            |
-| --- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| 1   | Sign the approval fields, or only store them    | **Sign them.** A stored, unsigned field can be edited after the fact and proves nothing.                  |
-| 2   | Record the approver ID only, or also the key ID | **Record both.** Keys are rotated and revoked; a record must show which key signed.                       |
-| 3   | Allow an approval to be reused                  | **No. Single-use, tied to the approval ID.** A reusable approval is a standing permission nobody reviews. |
+Each "Recommended" item becomes a decision when the owner confirms it.
 
-### G-144: facts from the business
+## 3. Current state, from the code
 
-| #   | Decision                                           | Recommendation                                                                                                                                                                                         |
-| --- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | Who registers a source, and how is ownership shown | Registered through maker-checker, **and** the registration is signed with a key the business controls. A Parmana checker does not decide ownership alone. Sources are re-approved on a fixed schedule. |
-| 2   | Source trust and replacement                       | Each source has a registered public key, and every answer is signed and verified. Replacement uses a **bounded overlap**: the old key is accepted until an explicit end time, then refused.            |
-| 3   | Read timeout                                       | **Per capability, set in the source registration.** Default 10 seconds, the same as the existing Razorpay read. Any failure, timeout or unverified answer **refuses**.                                 |
-| 4   | Staleness                                          | Use the **source's own timestamp**, with a **maximum age per fact** in the policy. Reject timestamps more than a small clock allowance in the future.                                                  |
-| 5   | A capability with no source for a declared fact    | **Enforced when the policy is approved, not at request time.** A policy that declares a sourced fact with no registered source cannot be approved.                                                     |
-
-## 3. Background: what exists today
-
-Facts established by reading the code on `main`:
-
-- **Approval verification.** `ApprovalVerifier` reads the approver from `artifact.payload.issuer.approverId` and the
-  issue time from `payload.issuedAt`. It checks the approver is trusted and not revoked, the signature, the expiry, the
-  action, the resource and the value. A nonce is consumed when the approval is used (the approval is single-use within
-  the same nonce store). Source: `packages/approval/src/ApprovalVerifier.ts`.
-- **Decision step.** `decide()` returns `{ approved, reason }` only. The approver and issue time are not returned to the
-  inbound check, so they are discarded. Source: `packages/api/src/routes/inbound-checks.ts`.
-- **Inbound record.** `InboundCheckRecord` carries `policyName` and `policyVersion`, but no approver or approval time.
-  The check signs the canonical bytes of the record (`canonicalCheckBytes`). Source:
-  `packages/shared/src/repositories/inbound-decision-repository.ts`, `packages/api/src/routes/inbound-checks.ts`.
-- **Business signal sources.** Registered through maker-checker at `/business-signal-sources/changes`, with a registered
-  Ed25519 key. Answers are verified against that key (claim 2.54). Source:
-  `packages/api/src/routes/business-signal-sources.ts`, `packages/runtime/src/business-validation/`.
-- **Freshness.** The Razorpay source uses `validUntil` and a policy `maxAgeSeconds` (60 seconds), and a 10-second read
-  timeout (`READ_TIMEOUT_MS`). Source: `packages/runtime/src/business-validation/razorpay-payment-source.ts` (on branch
-  `feat/razorpay-payment-signal`; not on `main`).
-- **Coverage today.** A capability with no bound policy is refused (`no_policy_bound`). The check does not yet refuse a
-  capability for a declared fact with no source; that is G-144's gap.
+- **Approval verification.** `ApprovalVerifier` reads the approver from `payload.issuer.approverId` and the issue time
+  from `payload.issuedAt`. It checks trust, revocation, signature, expiry, action, resource and value
+  (`packages/approval/src/ApprovalVerifier.ts`).
+- **Single use already exists.** `ApprovalSignalVerifier` consumes an approval's nonce when a request is authorized,
+  and `decide()` runs that authorization (`packages/approval/src/ApprovalSignalVerifier.ts`,
+  `packages/runtime/src/RuntimeEngine.ts`). Approvals cannot be reused today.
+- **`decide()` returns only `{ approved, reason }`**, so the approver and time are discarded before the inbound check sees
+  them.
+- **Inbound records** carry `policyName` and `policyVersion`, but no approver, key or time. They have no schema version.
+  Their signed bytes are the sorted set of fields present on the record (`canonicalCheckBytes`,
+  `packages/api/src/routes/inbound-checks.ts`). Records with no new fields keep their current bytes.
+- **Business signal sources** store the endpoint, timeout, public key, key ID, status and revocation
+  (`packages/shared/src/domain/`). They have no overlap window and no re-approval date. The maximum fact age lives in the
+  policy's `signalSources`.
+- **Coverage today.** A capability with no bound policy is refused. A declared fact with no source is not refused yet.
 
 ## 4. Design
 
 ### 4.1 Approval record (G-143)
 
-**Fields added to every inbound decision that approved on a human approval:**
+When a decision is **approved** and `decide()` reports a verified approval was used, the record gets four fields:
 
-| Field           | Value                            | Source                               |
-| --------------- | -------------------------------- | ------------------------------------ |
-| `approvedBy`    | The approver's ID                | `approval.payload.issuer.approverId` |
-| `approvedKeyId` | The key that signed the approval | `approval.payload.issuer.keyId`      |
-| `approvalId`    | The approval's ID                | `approval.payload.approvalId`        |
-| `approvedAt`    | When the approval was issued     | `approval.payload.issuedAt`          |
+| Field           | From                        |
+| --------------- | --------------------------- |
+| `approvedBy`    | `payload.issuer.approverId` |
+| `approvedKeyId` | `payload.issuer.keyId`      |
+| `approvalId`    | `payload.approvalId`        |
+| `approvedAt`    | `payload.issuedAt`          |
 
-**Rules.**
-
-- The fields are set **only** when the decision is `approved` **and** the decision step reports it used a verified
-  approval. Otherwise all four are absent.
-- The values come from the verified approval object, never from the partner's request.
-- All four fields are included in the canonical bytes that Parmana signs.
-- A decision is `approved` on a single approval. If a policy needs several approvals, every one used is recorded; that
-  case is not required now and is listed under open items.
-
-**Decision step change.** `decide()` returns the approval it used, when it used one:
-
-```
-{ approved, reason, approval?: { approvalId, approverId, keyId, issuedAt } }
-```
-
-Its approval-free behaviour is unchanged.
-
-**Single use (G-143 decision 3).** An approval is consumed by its `approvalId` in the approval nonce store, and a second
-use is refused with a reason such as `approval_already_used`. The check must consume the approval **only** after the
-decision is approved and recorded, so that a refused request does not burn an approval the business still needs.
-
-**Schema version.** The new fields change the canonical bytes. Records written after the change carry a schema version
-that says so. Records written before keep their existing canonical form, and keep verifying. _To confirm in the code:_
-whether inbound records carry a schema version today (see section 8).
+- The fields are set only on an approved decision that used a verified approval. Otherwise all four are absent.
+- The values come from the verified approval, never from the partner's request.
+- The fields are part of the signed bytes.
+- `decide()` returns the approval it used, as `approval: { approvalId, approverId, keyId, issuedAt }`, and is otherwise unchanged.
+- Records without the fields keep their current bytes and still verify. The external verifier must be updated to read the
+  new fields before any new record is issued.
 
 ### 4.2 Business-confirmed facts (G-144)
 
-**Source registration.**
+**Registering a source**
 
-1. A business operator proposes a source (maker). The proposal includes the source's endpoint, its public key, the facts
-   it answers for, the capability it serves, its read timeout, and its maximum fact age.
-2. The proposal is **signed with a key the business controls**. The signature shows the proposal came from the business,
-   not from someone who only has Parmana access.
-3. A Parmana checker reviews it and approves it with a step-up signature (existing maker-checker flow).
-4. The source is active from approval. It is **re-approved on a schedule set by its risk tier**; a source past its
-   re-approval date is refused until re-approved. **Decided by the owner:**
-   - **6 months** for a source that can move money or change an external system.
-   - **12 months** for a source that only confirms read-only facts.
-     Re-approval needs both the business and a Parmana checker, as the first approval does.
+1. A business operator proposes the source: endpoint, public key, the facts it answers, the capability, the timeout, and
+   the maximum fact age.
+2. The proposal is signed with a key the business controls.
+3. A Parmana checker approves it with a step-up signature.
+4. The source is active from approval, and must be **re-approved on its schedule** (F6).
 
-**Source trust and replacement.**
+**Re-approval schedule (F6, decided)**
 
-- Every answer from a source is signed with the source's key, and Parmana verifies the signature before use.
-- Replacement is a new registration with a new key, through the same flow.
-- The old key remains valid for an **overlap window** that ends at an explicit timestamp, set at replacement time. After
-  that timestamp the old key is refused. The window is capped (proposed: 7 days) so two keys cannot stay valid
-  indefinitely.
+- **6 months:** a source that can move money or change an external system.
+- **12 months:** a read-only source.
+- A source past its date is refused until re-approved. Re-approval needs the business and a Parmana checker.
 
-**The check's use of a source (per fact, per request).**
+**Key replacement (F2)**
 
-1. Look up the fact's source for the capability. No source → refuse (see 4.2, coverage).
-2. Ask the source about the exact business object in the request, with the source's timeout.
+- A replacement is a new registration with a new key, through the same flow.
+- The old key stays valid until an explicit end time, with a default of 24 hours and a cap of 7 days.
+- After that time the old key is refused.
+
+**Each fact, each request**
+
+1. Find the source for the fact and capability. None: refuse (`no_source_for_fact`).
+2. Ask the source about the exact business object, with the source's timeout.
 3. Verify the answer's signature against a currently valid source key.
-4. Check the answer's timestamp: reject if it is more than the clock allowance in the future, or older than the fact's
-   maximum age. Proposed clock allowance: 30 seconds.
-5. Compare the source's value with the partner's declared value, if the partner declared one. A mismatch refuses, with
-   reason `declared_fact_mismatch`.
-6. Pass the source's value, not the partner's, to the policy.
+4. Check the timestamp: refuse if it is older than the fact's maximum age, or more than 30 seconds in the future.
+5. If the partner declared a value, compare it with the source's. A mismatch refuses (`declared_fact_mismatch`).
+6. Give the policy the source's value, never the partner's.
 
-**Failure behaviour (fail closed).** Every row below refuses the request.
+**Failures refuse.** Each reason is recorded in the signed decision.
 
-| Condition                                                     | Reason recorded          |
-| ------------------------------------------------------------- | ------------------------ |
-| Source does not answer within the timeout                     | `source_timeout`         |
-| Source answer fails signature check                           | `source_unverified`      |
-| Source key expired or unknown                                 | `source_key_not_valid`   |
-| Answer older than the maximum age, or timestamp in the future | `source_stale`           |
-| Source reports the business object does not exist             | `source_not_found`       |
-| Declared value differs from source value                      | `declared_fact_mismatch` |
-| No source registered for a declared fact                      | `no_source_for_fact`     |
+| Condition                                             | Reason                   |
+| ----------------------------------------------------- | ------------------------ |
+| No answer within the timeout                          | `source_timeout`         |
+| Signature does not verify                             | `source_unverified`      |
+| Key expired, revoked or unknown                       | `source_key_not_valid`   |
+| Answer older than the maximum age, or from the future | `source_stale`           |
+| Business object not found                             | `source_not_found`       |
+| Declared value differs from the source                | `declared_fact_mismatch` |
+| No source registered for a declared fact              | `no_source_for_fact`     |
 
-Each refusal is recorded in the signed decision record. No request is retried in a way that could approve a stale answer.
+**Coverage at policy approval (F5).** When a policy is proposed, its governance check lists every fact it declares as
+sourced, and confirms each has a registered, unexpired source for the capability. A policy with a gap cannot be approved.
 
-**Coverage at policy approval (G-144 decision 5).** When a policy version is proposed, the governance check lists every
-fact the policy declares as sourced. For each, it confirms a registered, unexpired source exists for the capability.
-If any does not, the policy **cannot be approved**. The check runs at approval, so the list of uncovered capabilities
-is visible to the checker before the policy is live.
+## 5. Open decisions
 
-## 5. Compatibility
+**O1. When an approval is consumed.** Today it is consumed during `decide()`, before the decision is recorded. If recording
+fails, the approval is lost. The recommendation is to write the record and consume the approval in **one database
+transaction**. If the two stores cannot share a transaction, use a reservation that expires, and make it permanent only
+when the record is written. This changes the release path, so it needs the owner's confirmation.
 
-- **Existing records** keep their canonical form. They still verify. They do not gain the approval fields.
-- **Existing inbound checks** that approve on declared facts only will, after this change, be refused for any fact that
-  has no source. This is intended, and it must be a planned change: list the affected capabilities before enabling.
-- **External verifiers** must be updated to read the new schema version before any new record is issued. This is a
-  release dependency, the same kind as the existing G-121 gap.
+**O2. Clock allowance.** 30 seconds, as proposed in F4. Confirm.
 
-## 6. Security considerations
+**O3. Several approvals on one decision.** Out of scope for now. Each approval used would need its own four fields. Confirm.
 
-- **A partner cannot cause approval** by declaring a fact. The source's signed answer is the only input that can approve.
-- **A compromised source** can approve only the facts it answers for, only within its registered capability, and only
-  until its key is revoked. Revocation is a maker-checker change, effective at approval.
-- **A replayed approval** is refused by its `approvalId` consumption.
-- **A replayed source answer** is refused by its timestamp and maximum fact age.
-- **Keys are never sent in requests.** Only signatures and public-key identifiers appear in records.
+## 6. Compatibility
 
-## 7. Tests required before merge
+- Existing records keep their bytes and keep verifying. They gain no approval fields.
+- Inbound checks that approve on declared facts alone will be refused for any fact without a source, after this change. List
+  the affected capabilities before enabling it.
+- External verifiers must read the new fields before any new record is issued. This is a release dependency, like G-121.
 
-1. Approval record: an approved decision that used a verified approval records all four fields; the signature covers
-   them (changing any field breaks verification).
-2. Approval record: an approved decision that used no approval records none of the four fields.
-3. Approval record: a refused decision with an attached approval that fails verification records none of them.
-4. Single use: a second request presenting the same approval is refused with `approval_already_used`, and the first
-   approval is consumed only after it is recorded.
-5. Partner declaration alone cannot approve: a fact declared true, with no source answer, refuses (`no_source_for_fact`
-   or `source_timeout`).
-6. Source answer signed by an unknown key refuses (`source_unverified`).
-7. Source answer older than the maximum age refuses (`source_stale`); a timestamp beyond the clock allowance refuses.
-8. Source timeout refuses (`source_timeout`) and records the reason.
-9. Mismatch between declared and source value refuses (`declared_fact_mismatch`).
-10. Replacement: during the overlap window both keys verify; after the end time the old key refuses.
-11. A source past its re-approval date refuses. Test both tiers: a money-moving source at 6 months, and a read-only source at 12 months.
-12. Policy approval: a policy declaring a sourced fact with no registered source cannot be approved.
+## 7. Security
 
-## 8. Open items to confirm in the code before building
+- A partner cannot cause an approval by declaring a fact. Only a verified source answer can approve.
+- A compromised source can answer only for its own facts and capability, and only until its key is revoked. Revocation
+  takes effect when the change is approved.
+- A replayed approval is refused, because it has already been consumed.
+- A replayed source answer is refused by its timestamp and maximum age.
+- Keys never appear in requests or records. Records carry only public identifiers and signatures.
 
-These are facts this design relies on that were not verified while writing it:
+## 8. Tests required before merge
 
-- Whether inbound decision records carry a schema version, and how verifiers select a canonical form.
-- Whether the approval nonce store is shared by the check and by `/execute`, and whether consuming an approval in the check
-  would affect a later use in another path.
-- Whether the business-signal-source registration flow can carry the fields listed in 4.2 (maximum fact age, per-fact
-  mapping, timeout), or whether it needs extending.
-- The exact per-capability fact list, which decides how many capabilities the coverage rule refuses on day one.
+1. An approved decision that used a verified approval records all four fields, and the signature covers them.
+2. An approved decision with no approval records none of them.
+3. A refused decision with a failed approval records none of them.
+4. A second use of an approval is refused with `approval_already_used`.
+5. A declared fact with no source refuses (`no_source_for_fact` or `source_timeout`).
+6. An answer signed by an unknown key refuses (`source_unverified`).
+7. An answer older than the maximum age refuses (`source_stale`), and one from the future beyond the allowance refuses.
+8. A timeout refuses (`source_timeout`).
+9. A declared value that differs from the source refuses (`declared_fact_mismatch`).
+10. During the overlap window both keys verify. After the end time the old key refuses.
+11. A money-moving source past 6 months refuses. A read-only source past 12 months refuses. Both pass before their date.
+12. A policy declaring a sourced fact with no source cannot be approved.
 
-## 9. Owner decisions still needed
+## 9. Before code
 
-- **Decided:** re-approval is 6 months for money-moving or externally acting sources, and 12 months for read-only sources (4.2).
-- Confirm or change the 7-day overlap cap (4.2) and the 30-second clock allowance (4.2).
-- Confirm the rule that an approval is consumed only after the decision is recorded (4.1).
-- Confirm that a policy requiring several approvals is out of scope for this change (4.1).
+1. Confirm the recommended items in section 2 and O1 to O3, or change them.
+2. Record the answers here.
+3. Then build, in this order: G-143 (fields, signing, `decide()` change), then G-144 (registration, per-fact checks,
+   coverage at approval), then the tests in section 8.
+4. Update the external verifier, CLAIMS, VERIFICATION-GAPS and the public inbound page in the same change.
 
-## 10. Order of work, once decided
+## 10. Done when
 
-1. Decide section 9. Answer the open items in section 8 by reading the code, and record the answers in this document.
-2. Extend `decide()` to return the approval used; add the four fields to the record and the canonical bytes; add the
-   schema version (G-143).
-3. Add single-use consumption of approvals in the check (G-143).
-4. Extend the source registration fields and the signed registration (G-144).
-5. Implement the per-fact checks and failure reasons (G-144).
-6. Add the coverage check to policy approval (G-144).
-7. Run the tests in section 7. Update external verifiers (release dependency).
-8. Update CLAIMS, VERIFICATION-GAPS and the public inbound page in the same change.
-
-## 11. Acceptance
-
-G-143 and G-144 close when: every test in section 7 passes, the owner decisions in section 9 are recorded, the answers to
-section 8 are recorded, the claims and gap records are updated, and at least one capability runs end to end with a
-registered, signed business source.
+All tests in section 8 pass, every open item in sections 2 and 5 is decided, at least one capability runs end to end
+with a registered, signed business source, and the claims and gap records are updated.
