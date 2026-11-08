@@ -18,6 +18,8 @@ export type {
 export type {
   SignalStateVerificationRequest,
   SignalStateVerifier,
+  UsedApproval,
+  UsedApprovalCollector,
   SignalStateViolation,
 } from "./types/SignalStateVerifier.js";
 

@@ -41,6 +41,7 @@ import {
   type SignalIntentBindingViolation,
   type SignalStateVerifier,
   type SignalStateViolation,
+  type UsedApproval,
 } from "@parmana/policy";
 
 import type { RuntimeContext } from "./context/RuntimeContext.js";
@@ -83,6 +84,12 @@ export type DecisionRequest = Omit<
   BusinessTransaction,
   "authority" | "authorization"
 >;
+
+/** Options for decide(). Defaults keep the behaviour execute() relies on. */
+export interface DecideOptions {
+  /** Inbound checks consume approvals with their decision record, not here (G-143, O1). */
+  readonly deferApprovalConsumption?: boolean;
+}
 
 export class RuntimeEngine {
   private readonly hookRunner: RuntimeHookRunner;
@@ -296,7 +303,10 @@ export class RuntimeEngine {
    * sent to a connector here. execute() calls this, then authorizes and executes an APPROVED
    * decision; callers that need only the decision call this directly.
    */
-  public async decide(transaction: DecisionRequest) {
+  public async decide(
+    transaction: DecisionRequest,
+    options: DecideOptions = {},
+  ) {
     //
     // Runtime signals
     //
@@ -639,6 +649,9 @@ export class RuntimeEngine {
     // caller-declared signal that verified state contradicts.
     //
 
+    // Approvals the verifier accepts during this check, for the caller to record (G-143).
+    const usedApprovals: UsedApproval[] = [];
+
     const stateViolations: readonly SignalStateViolation[] =
       provisionalDecision.outcome === PolicyOutcome.APPROVE &&
       this.signalStateVerifier
@@ -650,6 +663,11 @@ export class RuntimeEngine {
               intentTarget: transaction.intent.target,
               stage: "authorize",
               policy,
+              usedApprovals: {
+                add: (approval) => usedApprovals.push(approval),
+              },
+              deferApprovalConsumption:
+                options.deferApprovalConsumption === true,
             },
             evaluatedSignals,
           )
@@ -774,6 +792,7 @@ export class RuntimeEngine {
       policyDecision,
       authority,
       businessValidation,
+      usedApprovals,
     };
   }
 

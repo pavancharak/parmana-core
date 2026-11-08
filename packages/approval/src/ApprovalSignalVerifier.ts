@@ -128,11 +128,23 @@ export class ApprovalSignalVerifier implements SignalStateVerifier {
     for (const approval of pending) {
       const result = await this.approvalVerifier.verify(approval.artifact, {
         ...approval.request,
-        consumeNonce: true,
+        // An inbound check consumes its approvals with the decision record (G-143, O1). Otherwise, consume now.
+        consumeNonce: request.deferApprovalConsumption !== true,
       });
 
       if (!result.valid) {
         violations.push(refused(approval.signalKey));
+      } else {
+        // Record who approved, for the caller. Only an approval that verified and was consumed is recorded.
+        request.usedApprovals?.add({
+          signalKey: approval.signalKey,
+          approvalId: approval.artifact.payload.approvalId,
+          approverId: approval.artifact.payload.issuer.approverId,
+          keyId: approval.artifact.payload.issuer.keyId,
+          issuedAt: approval.artifact.payload.issuedAt,
+          nonce: approval.artifact.payload.nonce,
+          expiresAt: approval.artifact.payload.expiresAt,
+        });
       }
     }
 

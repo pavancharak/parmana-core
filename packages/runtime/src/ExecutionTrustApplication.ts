@@ -93,7 +93,8 @@ export class ExecutionTrustApplication {
    * and binding checks as execute(), and returns the decision.
    */
   async decideInbound(request: DecisionRequest) {
-    return this.runtime.decide(request);
+    // Approvals are consumed with the decision record, in one transaction (G-143, O1).
+    return this.runtime.decide(request, { deferApprovalConsumption: true });
   }
 
   async execute(

@@ -2,8 +2,10 @@ import { randomUUID } from "node:crypto";
 import { Router } from "express";
 import type { DecisionRequest } from "@parmana/runtime";
 import {
+  ApprovalAlreadyUsedError,
   BusinessTransactionStatus,
   type AuthorityGrant,
+  type ConsumedApprovalNonce,
   type PolicyReference,
 } from "@parmana/shared";
 import type { NextFunction, Request, Response } from "express";
@@ -41,6 +43,38 @@ export interface InboundCheckFields {
   readonly policyVersion?: string;
   readonly expiresAt: string;
   readonly audience: string;
+  /** Who approved the request, when a verified human approval decided it (G-143). Absent otherwise. */
+  readonly approvedBy?: string;
+  readonly approvedKeyId?: string;
+  readonly approvalId?: string;
+  readonly approvedAt?: string;
+}
+
+/** A verified human approval that decided a request (G-143). */
+export interface InboundApprovalUse {
+  readonly approvalId: string;
+  readonly approverId: string;
+  readonly keyId: string;
+  readonly issuedAt: string;
+  /** The approval's single-use nonce and expiry, consumed with the decision record (G-143, O1). */
+  readonly nonce: string;
+  readonly expiresAt: string;
+}
+
+/** The same decision, refused because an approval it needed was already used. No approval is recorded. */
+function refusedBecauseUsed(fields: InboundCheckFields): InboundCheckFields {
+  const refused: {
+    -readonly [K in keyof InboundCheckFields]: InboundCheckFields[K];
+  } = {
+    ...fields,
+    outcome: "rejected",
+    reason: "approval_already_used",
+  };
+  delete refused.approvedBy;
+  delete refused.approvedKeyId;
+  delete refused.approvalId;
+  delete refused.approvedAt;
+  return refused;
 }
 
 /** The policy bound to a capability, or why none can decide it. */
@@ -59,14 +93,25 @@ export interface InboundCheckDependencies {
     capability: string,
   ) => Promise<InboundPolicyLookup | undefined>;
   /** Decides a request without executing it, through the runtime's decide step. */
-  readonly decide: (
-    request: DecisionRequest,
-  ) => Promise<{ readonly approved: boolean; readonly reason?: string }>;
+  readonly decide: (request: DecisionRequest) => Promise<{
+    readonly approved: boolean;
+    readonly reason?: string;
+    /** The verified approvals that decided the request, if any. */
+    readonly approvals?: readonly InboundApprovalUse[];
+  }>;
   /** Signs the canonical bytes of a decision, returning a base64 signature. */
   readonly sign: (canonicalBytes: Buffer) => Promise<string>;
   /** Appends every issued decision. */
   readonly store: {
     append(record: InboundCheckFields & { signature: string }): Promise<void>;
+    /**
+     * Writes the decision and consumes the approvals it used, in one unit (G-143, O1). Required whenever a
+     * decision used an approval. Without it, such a decision fails closed.
+     */
+    appendConsumingApprovals?(
+      record: InboundCheckFields & { signature: string },
+      approvals: readonly ConsumedApprovalNonce[],
+    ): Promise<void>;
   };
   readonly now?: () => Date;
   readonly audience: string;
@@ -229,10 +274,27 @@ export function createInboundCheckRouter(
             ? undefined
             : (decision.reason ?? "policy_rejected");
 
+        // G-143: record the approval only when the decision is approved and exactly one approval decided it.
+        // Several approvals on one decision is open decision O3; in that case no approval fields are written.
+        const onlyApproval =
+          decision.approvals !== undefined && decision.approvals.length === 1
+            ? decision.approvals[0]
+            : undefined;
+        const approvalFields: Partial<InboundCheckFields> =
+          approved && onlyApproval !== undefined
+            ? {
+                approvedBy: onlyApproval.approverId,
+                approvedKeyId: onlyApproval.keyId,
+                approvalId: onlyApproval.approvalId,
+                approvedAt: onlyApproval.issuedAt,
+              }
+            : {};
+
         const fields: InboundCheckFields = {
           decisionId: checkId,
           outcome: approved ? "approved" : "rejected",
           ...(reason !== undefined ? { reason } : {}),
+          ...approvalFields,
           partnerId,
           capability,
           ...(typeof body.target === "string" ? { target: body.target } : {}),
@@ -242,10 +304,36 @@ export function createInboundCheckRouter(
           expiresAt: new Date(issuedAt.getTime() + CHECK_TTL_MS).toISOString(),
           audience: deps.audience,
         };
-        const signature = await deps.sign(canonicalCheckBytes(fields));
-        await deps.store.append({ ...fields, signature });
+        // The decision and the consumption of its approvals are written as one unit (G-143, O1). If an approval
+        // was already used, nothing is consumed or recorded as approved: the request is recorded as refused.
+        const consumed = approved ? (decision.approvals ?? []) : [];
+        let recorded = fields;
+        let signature = await deps.sign(canonicalCheckBytes(recorded));
+        try {
+          if (consumed.length > 0) {
+            if (deps.store.appendConsumingApprovals === undefined) {
+              throw new Error(
+                "A decision used an approval, but the store cannot consume it with the decision.",
+              );
+            }
+            await deps.store.appendConsumingApprovals(
+              { ...recorded, signature },
+              consumed.map((use) => ({
+                nonce: use.nonce,
+                expiresAt: use.expiresAt,
+              })),
+            );
+          } else {
+            await deps.store.append({ ...recorded, signature });
+          }
+        } catch (error) {
+          if (!(error instanceof ApprovalAlreadyUsedError)) throw error;
+          recorded = refusedBecauseUsed(fields);
+          signature = await deps.sign(canonicalCheckBytes(recorded));
+          await deps.store.append({ ...recorded, signature });
+        }
 
-        res.status(201).json({ ...fields, signature });
+        res.status(201).json({ ...recorded, signature });
       } catch (error) {
         next(error);
       }

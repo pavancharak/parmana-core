@@ -45,12 +45,40 @@ export interface InboundCheckRecord {
   readonly audience: string;
   readonly signature: string;
   readonly issuedAt: Date;
+  /** Who approved the request, when a verified human approval decided it (G-143). */
+  readonly approvedBy?: string;
+  readonly approvedKeyId?: string;
+  readonly approvalId?: string;
+  readonly approvedAt?: string;
+}
+
+/** An approval nonce to consume with a decision (G-143, O1). */
+export interface ConsumedApprovalNonce {
+  readonly nonce: string;
+  readonly expiresAt: string;
+}
+
+/** A decision tried to use an approval that was already used. Nothing was recorded. */
+export class ApprovalAlreadyUsedError extends Error {
+  constructor(public readonly nonce: string) {
+    super("This approval has already been used.");
+    this.name = "ApprovalAlreadyUsedError";
+  }
 }
 
 /** Repository for inbound checks (RFC-0024). Append-only: a decision is written once. */
 export interface InboundCheckRepository {
   /** Throws if a decision with the same decisionId already exists. */
   append(record: InboundCheckRecord): Promise<void>;
+
+  /**
+   * Writes the decision and consumes the approvals it used, as one unit (G-143, O1). If any approval was
+   * already used, nothing is written and ApprovalAlreadyUsedError is thrown.
+   */
+  appendConsumingApprovals(
+    record: InboundCheckRecord,
+    approvals: readonly ConsumedApprovalNonce[],
+  ): Promise<void>;
 
   findById(decisionId: string): Promise<InboundCheckRecord | null>;
 }

@@ -39,6 +39,34 @@ export interface SignalStateVerificationRequest {
    * without a policy repository, which production does not allow.
    */
   readonly policy?: Policy;
+  /**
+   * Receives each approval a verifier accepts at this check, so the caller can record who approved. Additive and
+   * optional: a verifier that does not use it is unaffected. Only approvals that verified and were consumed are added.
+   */
+  readonly usedApprovals?: UsedApprovalCollector;
+  /**
+   * When true, approvals are verified but their nonces are not consumed here. The caller consumes them
+   * itself, in the same transaction that writes the decision (G-143, O1). Used by inbound checks only.
+   * The database uniqueness of the nonce is then the guard against a second use.
+   */
+  readonly deferApprovalConsumption?: boolean;
+}
+
+/** An approval a verifier accepted: who approved, with which key, and when. */
+export interface UsedApproval {
+  readonly signalKey: string;
+  readonly approvalId: string;
+  readonly approverId: string;
+  readonly keyId: string;
+  readonly issuedAt: string;
+  /** The approval's single-use nonce, and when it expires. The caller consumes them when it records the decision. */
+  readonly nonce: string;
+  readonly expiresAt: string;
+}
+
+/** Collects the approvals a verifier accepted during one check. */
+export interface UsedApprovalCollector {
+  add(approval: UsedApproval): void;
 }
 
 /**
