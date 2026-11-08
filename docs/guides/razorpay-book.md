@@ -4,9 +4,12 @@ A working book about how Razorpay is connected to Parmana: what was built, what 
 
 **Status as of 2026-11-08.** Read this first.
 
-- **Removed from `main`.** The Razorpay refund connector was removed on 2026-08-12. Its database tables were dropped on 2026-09-16.
-- **In review.** A read-only Razorpay payment signal source and a draft refund policy are on the branch `feat/razorpay-payment-signal`, in pull request #512. It is not merged, and its required checks are failing.
-- **Never live.** Every Razorpay refund in this repository ran in test mode. The refund endpoint refuses live keys.
+- **Removed from `parmana-core`.** The Razorpay refund demo and its database tables were removed from core on 2026-08-12 and 2026-09-16.
+- **Lives in `parmana-connectors`.** The current `razorpay:refund` connector is in that repository, at `src/connectors/razorpay/`. It was built and tested against a fake Razorpay, and run in Razorpay's test mode on 29 October 2026 (4 of 4 checks passed). It has not been run with live keys.
+- **In review in `parmana-core`.** A read-only Razorpay payment signal source and draft refund policies are on the branch `feat/razorpay-payment-signal`, in pull request #512. It is not merged, and its required checks are failing.
+- **Never live.** No Razorpay refund in these repositories has moved live money. The connector refuses `rzp_live_` keys unless `PARMANA_ALLOW_LIVE_KEYS=true`.
+
+For the current connector in detail, read `repos-and-razorpay.md`, section 3. Chapters 5, 9 and 10 below describe the removed demo, and point to the current material where it applies.
 
 Facts in this book come from the repository at the commits and files named in each chapter. Where a statement is general Razorpay knowledge rather than something checked in this repository, the chapter says so.
 
@@ -43,7 +46,8 @@ Parmana never holds a Razorpay credential in the decision path. The connector ho
 |---|---|---|
 | 2026-07-18 | Razorpay webhook tables added (signature-verified event receipt and an audit trail) | `supabase/migrations/20260718182238_add_razorpay_webhook_tables.sql` |
 | 2026-08-05 | Daily cumulative refund reservation ledger added | `supabase/migrations/20260805170000_add_razorpay_daily_refund_reservations.sql` |
-| 2026-08-12 | Razorpay connector and its payment capability removed from the codebase | Migration header for the table drop; verification gap G-27 |
+| 2026-08-12 | Razorpay demo connector and its payment capability removed from `parmana-core` | Migration header for the table drop; verification gap G-27 |
+| 2026-11-03 | Connector migration out of `parmana-core` (ADR-0018). The Razorpay connector, with Paytm, Slack, GitHub, HubSpot and Zoho, is in `parmana-connectors`. Zerodha is paper only | `parmana-connectors` README, "Migration out of parmana-core" status row; ADR-0018 |
 | 2026-09-16 | Three orphaned Razorpay tables dropped; seven historical audit rows backed up outside the repository | `supabase/migrations/20260916120000_drop_razorpay_tables.sql` |
 | 2026-11-04 | Remaining connector-only examples removed or renamed | Commit `5aeae62` |
 | 2026-11-08 | Draft policies and the read-only payment signal source added on the feature branch | Pull request #512; commits `589bbaf`, `b47b851`, `99285b7`, `36fe631` |
@@ -73,9 +77,9 @@ Before the removal there were many Razorpay pull requests, from #59 (the refund 
 ## 4. Architecture
 
 ```
-Agent ──request──▶ Parmana ──decision & signed release──▶ Refund endpoint ──▶ Razorpay (test mode)
-                      ▲                                          │
-                      └────────── endpoint's answer, recorded ───┘
+Agent ──request──▶ Parmana core ──decision & signed release──▶ Connector service (parmana-connectors) ──▶ Razorpay (test mode)
+                      ▲                                                  │
+                      └──────────── connector's answer, recorded ─────────┘
 
 Policy needs "payment.refundable"  ──▶ Razorpay payment signal source (read-only) ──▶ Razorpay GET /v1/payments/{id}
 ```
@@ -87,7 +91,9 @@ Policy needs "payment.refundable"  ──▶ Razorpay payment signal source (rea
 
 ## 5. The refund connector, step by step
 
-This connector was removed from `main` on 2026-08-12. The description below is the design as it was built, from `examples/razorpay-refund/` as it existed at commit `5aeae62^`. Use it as reference, not as a description of the current code.
+**This chapter describes the removed demo.** It was in `parmana-core` at `examples/razorpay-refund/`, as it existed at commit `5aeae62^`, and was removed on 2026-08-12. Use it for history.
+
+**The current connector is in `parmana-connectors`.** It works differently: it checks for an earlier refund by calling Razorpay's refund-list endpoint, not by a stored receipt table. For the current steps, the answer format, the error codes, and the test-mode run, read `repos-and-razorpay.md`, section 3.
 
 1. **The agent asks for a refund.** The agent checks the payment id against `pay_` plus 6 to 40 letters or digits, and the amount against a positive whole number of paise. A bad input is refused before any call.
 2. **Parmana evaluates the policy.** It refuses the request unless a manager's signed approval covers this payment and this amount.
@@ -152,7 +158,7 @@ The 1.0.0 demo differed in one key way: it required an authority grant (`require
 
 This chapter does not reproduce the whole JSON. Read the file directly for exact wording.
 
-**The daily refund limit.** The original 1.0.0 demo capped the daily total of refunds. Before a database-backed counter existed, that total came from a caller-declared value, so a caller could declare any total it liked. The 2026-08-05 migration added an atomic per-day counter, `razorpay_daily_refund_reservations`, to close that gap (Phase 3B). It stored one running total per UTC day and nothing about individual refunds. The counter is gone now, because the table was dropped. The daily limit is therefore not enforced by any current code. Verification gap G-107 and the open items in `docs/internal/OPEN-ITEMS.md` describe the open work.
+**The daily refund limit.** The original 1.0.0 demo capped the daily total of refunds. Before a database-backed counter existed, that total came from a caller-declared value, so a caller could declare any total it liked. The 2026-08-05 migration added an atomic per-day counter, `razorpay_daily_refund_reservations`, to close that gap (Phase 3B). It stored one running total per UTC day and nothing about individual refunds. The counter is gone now, because the table was dropped. The daily limit is therefore not enforced by any current code. The open work is recorded in `docs/internal/VERIFICATION-GAPS.md` (search for "daily") and `docs/internal/OPEN-ITEMS.md`. I did not confirm a single gap ID for this item, so search for it rather than relying on one.
 
 ## 8. Database tables
 
@@ -166,7 +172,9 @@ The migration that dropped them states that no other table references them.
 
 ## 9. Setup and commands
 
-These commands come from `examples/razorpay-refund-agent/README.md` and the code. They use test mode only. They have not been run against a live account in this session.
+**Current commands for the connector** are in `parmana-connectors`: the test-mode run (`src/connectors/razorpay/test-run.mjs`), the build, and the tests. Section 7 of `repos-and-razorpay.md` and the developer guide list them.
+
+**The commands below are for the removed demo.** They come from `examples/razorpay-refund-agent/README.md` and the code. They use test mode only. They have not been run against a live account in this session.
 
 **Set up Parmana's side first.** Create the policy, the capability, the grant, and the agent's key, as described in `examples/razorpay-refund/README.md`, steps 1 to 5. That README was removed with the connector, so use `git show 5aeae62^:examples/razorpay-refund/README.md` to read it.
 
@@ -203,6 +211,8 @@ npx prettier --check .
 
 ## 10. Troubleshooting
 
+**Note.** This table covers the removed demo and the signal source. For the current connector, the error codes are `invalid_input`, `credential_invalid`, `unknown_capability`, `upstream_error` and `timeout`, with what to check for each. They are listed in `repos-and-razorpay.md`, section 3.6, and in `parmana-connectors`' `src/connectors/razorpay/README.md`.
+
 | Message or symptom | Likely cause | What to do |
 |---|---|---|
 | "The payment must be a Razorpay payment id (pay_...)." | The id does not match `pay_` plus 6 to 40 letters or digits | Copy the id from the Razorpay Test Mode dashboard |
@@ -235,7 +245,7 @@ npx prettier --check .
 - **The daily limit is not enforced now** (section 7).
 - **The payment signal source is read-only.** It cannot refund anything.
 - **Caller-declared facts are not trusted for money.** The draft 1.1.0 policy requires `payment.refundable` from Razorpay, and a human approval.
-- **Open verification gaps.** See `docs/internal/VERIFICATION-GAPS.md`, especially G-27 (the removed capability) and G-107 (the daily limit). The grant-limit and approval-fatigue gaps also apply to any future refund flow.
+- **Open verification gaps.** See `docs/internal/VERIFICATION-GAPS.md`, especially G-27 (the removed capability). The daily-limit gap has no ID confirmed here. Search `VERIFICATION-GAPS.md` for "daily". The grant-limit and approval-fatigue gaps also apply to any future refund flow.
 
 ## 13. Where to find each file
 
@@ -249,6 +259,9 @@ npx prettier --check .
 | Draft policies (feature branch) | `policies/razorpay-refund/1.0.0/` and `1.1.0/` |
 | Table drops and history | `supabase/migrations/20260916120000_drop_razorpay_tables.sql` |
 | Verification gaps | `docs/internal/VERIFICATION-GAPS.md` |
+| Current Razorpay connector | `parmana-connectors`: `src/connectors/razorpay/razorpay-connector.ts`, its README, and `test-run.mjs` |
+| Current connector tests | `parmana-connectors`: `tests/connectors/razorpay/razorpay-connector.test.ts` |
+| Connector setup and settings | `parmana-connectors`: `README.md`, `.env.example`, `RUNBOOK.md` |
 | Open items | `docs/internal/OPEN-ITEMS.md` |
 
 ## 14. What this book does not cover
