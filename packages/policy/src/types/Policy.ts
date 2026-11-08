@@ -383,6 +383,13 @@ export interface SignalSourceDeclaration {
    * Defaults to 300 seconds; at most 86400.
    */
   readonly maxAgeSeconds?: number;
+
+  /**
+   * The Intent parameters the source needs to answer, by name, such as
+   * ["amount"]. Only these are sent to the source, never the whole Intent.
+   * Up to 16 names.
+   */
+  readonly parameters?: readonly string[];
 }
 
 /**

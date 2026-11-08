@@ -107,6 +107,46 @@ describe("PolicyValidator signalSources", () => {
     );
   });
 
+  it("loads a declaration that names the parameters the source may see", () => {
+    expect(() =>
+      validator.validate(
+        policy({
+          signalSources: {
+            refundEligible: { ...SOURCE, parameters: ["amount", "currency"] },
+          },
+        }),
+      ),
+    ).not.toThrow();
+  });
+
+  it.each([
+    ["not a list", "amount", /must be a list of at most 16/],
+    [
+      "more than 16 names",
+      Array.from({ length: 17 }, (_, i) => `p${i}`),
+      /must be a list of at most 16/,
+    ],
+    [
+      "a name that is not a parameter name",
+      ["order.id"],
+      /letters, digits and underscores/,
+    ],
+    ["a repeated name", ["amount", "amount"], /names 'amount' twice/],
+  ])(
+    "refuses a parameters declaration with %s",
+    (_label, parameters, message) => {
+      const invalid = policy({
+        signalSources: {
+          refundEligible: {
+            ...SOURCE,
+            parameters: parameters as unknown as string[],
+          },
+        },
+      });
+      expect(() => validator.validate(invalid)).toThrow(message);
+    },
+  );
+
   it("refuses a fact that is both sourced and approval backed", () => {
     const invalid = policy({
       approvalSignals: { refundEligible: { resourceId: "parameters.orderId" } },
