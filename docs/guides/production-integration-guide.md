@@ -21,18 +21,18 @@ Each item is a gate. Do not move a real business action through Parmana until th
 
 ### B1. Gaps the repositories list as open P1
 
-| Gap | Issue | Why it blocks live use | State |
-|---|---|---|---|
-| G-51: most signals are caller-declared | #368 | A caller can declare a fact that a policy trusts | Partly closed. `managerApproved` is verified. Other signals are not |
-| G-93: grants are opt-in, limits per request | #366 | An agent's total spend is not capped across requests | Open. Cumulative limits are not built |
-| G-118: attestation key in the calling process | #385 | Code in the API process can sign a release without going through the gateway | Open. Needs a separate process or hardware-backed signer |
-| G-121: external verifiers read only schema v2 | #387 | Outside verifiers cannot check schema v3 records | Open. Needs releases in the external verifier |
-| G-92: no real business system connected | #365 | Only a demo source has been verified | Open |
-| G-81: external connector not checked live | #364 | The connector path is verified in code, not against a live endpoint | Open. Needs a live check |
-| G-108: audit chain tail truncation | #381 | Deleting the newest audit rows is not detectable from the database alone | Code exists. The chain head must be published outside the database. Operator step |
-| G-122: kill switch gap | #388 | A trip that lands between the guard and the connector call can still release one action | Partly closed. Two-person reset not yet tested with two real keys |
-| G-65: refused requests cannot be escalated | #363 | No path from refusal to a person's approval | Built for refunds. Needs deployment with a real approver |
-| G-141: injected instructions | #433 | Limit documented and tested | Closed on `main` via PR #513 |
+| Gap                                           | Issue | Why it blocks live use                                                                  | State                                                                             |
+| --------------------------------------------- | ----- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| G-51: most signals are caller-declared        | #368  | A caller can declare a fact that a policy trusts                                        | Partly closed. `managerApproved` is verified. Other signals are not               |
+| G-93: grants are opt-in, limits per request   | #366  | An agent's total spend is not capped across requests                                    | Open. Cumulative limits are not built                                             |
+| G-118: attestation key in the calling process | #385  | Code in the API process can sign a release without going through the gateway            | Open. Needs a separate process or hardware-backed signer                          |
+| G-121: external verifiers read only schema v2 | #387  | Outside verifiers cannot check schema v3 records                                        | Open. Needs releases in the external verifier                                     |
+| G-92: no real business system connected       | #365  | Only a demo source has been verified                                                    | Open                                                                              |
+| G-81: external connector not checked live     | #364  | The connector path is verified in code, not against a live endpoint                     | Open. Needs a live check                                                          |
+| G-108: audit chain tail truncation            | #381  | Deleting the newest audit rows is not detectable from the database alone                | Code exists. The chain head must be published outside the database. Operator step |
+| G-122: kill switch gap                        | #388  | A trip that lands between the guard and the connector call can still release one action | Partly closed. Two-person reset not yet tested with two real keys                 |
+| G-65: refused requests cannot be escalated    | #363  | No path from refusal to a person's approval                                             | Built for refunds. Needs deployment with a real approver                          |
+| G-141: injected instructions                  | #433  | Limit documented and tested                                                             | Closed on `main` via PR #513                                                      |
 
 ### B2. Key and approver setup (the key-list ceremony)
 
@@ -47,16 +47,16 @@ These are not optional. The repository's OPEN-ITEMS document has a "Key-list cer
 
 ### B3. Infrastructure
 
-| Requirement | Where it is set | Check |
-|---|---|---|
-| Node.js 24 | `engines` in `package.json`, CI, Dockerfile | `node -v` shows 24.x |
-| A production database | `PARMANA_STORAGE=postgres` (`supabase` selects the same Postgres storage) | `npm run db:migrate` completes |
-| Signing keys | `PARMANA_KEY_DIR` or KMS | `npm run verify:kms` passes, when KMS is used |
-| Caller API keys | `PARMANA_API_KEYS` (hashed, with a `keyHash` per caller) | `npm run generate:api-key` makes the entries |
-| Kill switch | `KILL_SWITCH_ENABLED=true`, `DATABASE_URL`, `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` | The probe runs and reports `active: false` |
-| Alerts | `ALERT_WEBHOOK_URL` (https) and `ALERT_WEBHOOK_SECRET` | A test alert reaches the receiver |
-| Policy governance | `POLICY_CHANGE_CHECKERS` | An approval by an in-scope checker succeeds |
-| Startup checks | `npm run doctor -- --production --online` | Every line passes, with none marked "to review" |
+| Requirement           | Where it is set                                                                       | Check                                           |
+| --------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Node.js 24            | `engines` in `package.json`, CI, Dockerfile                                           | `node -v` shows 24.x                            |
+| A production database | `PARMANA_STORAGE=postgres` (`supabase` selects the same Postgres storage)             | `npm run db:migrate` completes                  |
+| Signing keys          | `PARMANA_KEY_DIR` or KMS                                                              | `npm run verify:kms` passes, when KMS is used   |
+| Caller API keys       | `PARMANA_API_KEYS` (hashed, with a `keyHash` per caller)                              | `npm run generate:api-key` makes the entries    |
+| Kill switch           | `KILL_SWITCH_ENABLED=true`, `DATABASE_URL`, `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` | The probe runs and reports `active: false`      |
+| Alerts                | `ALERT_WEBHOOK_URL` (https) and `ALERT_WEBHOOK_SECRET`                                | A test alert reaches the receiver               |
+| Policy governance     | `POLICY_CHANGE_CHECKERS`                                                              | An approval by an in-scope checker succeeds     |
+| Startup checks        | `npm run doctor -- --production --online`                                             | Every line passes, with none marked "to review" |
 
 **Two deployment entry points, one rule.** The Vercel entry (`api/index.ts`) and the self-hosted entry (`packages/api/src/server.ts`) must take the same startup options. The repository has been bitten twice when one was missed. After any change to either, run:
 
@@ -97,15 +97,15 @@ Parmana sits between an agent or application and the business system. The applic
 
 ### C1. The pieces
 
-| Piece | What you provide | Where it lives |
-|---|---|---|
-| Policy | Rules: which capability, which signals, which approvals | `policies/<name>/<version>/policy.json`, approved through maker-checker |
-| Capability | A name (for example `razorpay:refund`) bound to an endpoint and a policy | Registered through maker-checker |
-| Connector | The code that performs the action | A separate service (for example `parmana-connectors`), with its own credential |
-| Signal source | An outside system that establishes facts a policy needs | Registered through maker-checker |
-| Caller | The application or agent, with its API key | `PARMANA_API_KEYS`, one entry per caller |
-| Grant | Permission for a caller to use a capability, with a limit and an expiry | Proposed and approved through maker-checker |
-| Approver | A human whose signature covers one action | `TRUSTED_APPROVAL_ISSUERS` |
+| Piece         | What you provide                                                         | Where it lives                                                                 |
+| ------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| Policy        | Rules: which capability, which signals, which approvals                  | `policies/<name>/<version>/policy.json`, approved through maker-checker        |
+| Capability    | A name (for example `razorpay:refund`) bound to an endpoint and a policy | Registered through maker-checker                                               |
+| Connector     | The code that performs the action                                        | A separate service (for example `parmana-connectors`), with its own credential |
+| Signal source | An outside system that establishes facts a policy needs                  | Registered through maker-checker                                               |
+| Caller        | The application or agent, with its API key                               | `PARMANA_API_KEYS`, one entry per caller                                       |
+| Grant         | Permission for a caller to use a capability, with a limit and an expiry  | Proposed and approved through maker-checker                                    |
+| Approver      | A human whose signature covers one action                                | `TRUSTED_APPROVAL_ISSUERS`                                                     |
 
 ### C2. Integration steps, in order
 

@@ -23,12 +23,12 @@ A **maker** proposes a change. A **checker** reviews it and approves it. The two
 
 ## 3. The four kinds of change
 
-| Kind | What it changes | Propose | Approve |
-|---|---|---|---|
-| `policy` | A policy version used for decisions | `POST /policies/:name/:version/pending-changes` | `POST /policies/pending-changes/:id/approve` |
-| `connector` | A capability and its endpoint | `POST /external-connectors/changes` | `POST /external-connectors/changes/:id/approve` |
-| `source` | A signal source and its public key | `POST /business-signal-sources/changes` | `POST /business-signal-sources/changes/:id/approve` |
-| `grant` | An agent's authority to use a capability | `POST /authority-grants/changes` | `POST /authority-grants/changes/:id/approve` |
+| Kind        | What it changes                          | Propose                                         | Approve                                             |
+| ----------- | ---------------------------------------- | ----------------------------------------------- | --------------------------------------------------- |
+| `policy`    | A policy version used for decisions      | `POST /policies/:name/:version/pending-changes` | `POST /policies/pending-changes/:id/approve`        |
+| `connector` | A capability and its endpoint            | `POST /external-connectors/changes`             | `POST /external-connectors/changes/:id/approve`     |
+| `source`    | A signal source and its public key       | `POST /business-signal-sources/changes`         | `POST /business-signal-sources/changes/:id/approve` |
+| `grant`     | An agent's authority to use a capability | `POST /authority-grants/changes`                | `POST /authority-grants/changes/:id/approve`        |
 
 The router mounts for these four kinds are `/policies`, `/external-connectors`, `/business-signal-sources` and `/authority-grants` (`packages/api/src/app.ts`). The `approve` and `reject` paths in the table are the policy routes I read in `pending-policy-changes.ts`. For the other three kinds, I confirmed the mount point, not the sub-paths. Check the route files, or `openapi/openapi.yaml`, for the exact paths and bodies before using them.
 
@@ -146,29 +146,29 @@ Claim 2.42 notes that approvers are not limited per action (gap G-50). Any liste
 
 ## 10. Checks you can run
 
-| Check | Command or place | What a pass looks like |
-|---|---|---|
-| The change is pending | Read the pending-changes route for the id | `PENDING_APPROVAL` |
-| The checker is in scope | `POLICY_CHANGE_CHECKERS` on the server | The checker's caller id appears under the policy's name |
-| Maker is not checker | Compare `proposedBy` with the checker's caller id | They differ |
-| The step-up is valid | Approval succeeds | HTTP 200 and the change becomes `APPROVED` |
-| The live version is correct | Read the policy in effect | The approved version, and no older one |
-| The approval record exists | The approval-record repository, for that change | One record for the change |
+| Check                       | Command or place                                  | What a pass looks like                                  |
+| --------------------------- | ------------------------------------------------- | ------------------------------------------------------- |
+| The change is pending       | Read the pending-changes route for the id         | `PENDING_APPROVAL`                                      |
+| The checker is in scope     | `POLICY_CHANGE_CHECKERS` on the server            | The checker's caller id appears under the policy's name |
+| Maker is not checker        | Compare `proposedBy` with the checker's caller id | They differ                                             |
+| The step-up is valid        | Approval succeeds                                 | HTTP 200 and the change becomes `APPROVED`              |
+| The live version is correct | Read the policy in effect                         | The approved version, and no older one                  |
+| The approval record exists  | The approval-record repository, for that change   | One record for the change                               |
 
 ## 11. Troubleshooting
 
-| Response or message | Meaning | What to do |
-|---|---|---|
-| `SameActorCannotApproveOwnChangeError` | The checker is the maker | A different person must approve |
-| HTTP 403 `CHECKER_NOT_IN_SCOPE` | The caller is not listed for this policy | Add the caller to `POLICY_CHANGE_CHECKERS`, or use a listed checker. The variable is read at startup, so redeploy after changing it |
-| HTTP 409 on approve | The change is not pending, or another approver already approved it | Read the change's state. Nothing needs to be redone if it is already approved |
-| Step-up refused: expired | The envelope lived more than 120 seconds, or it was used after it expired | Sign a new one and approve immediately |
-| Step-up refused: nonce | The envelope was already used | Sign a new one |
-| Step-up refused: action or change id mismatch | The envelope names a different change or action | Sign for this change id and the action `approve` |
-| HTTP 400 on propose | The name or version contains characters outside letters, digits, `.`, `_`, `-` | Use a name that matches the pattern |
-| `POLICY_CHANGE_CHECKERS is not valid JSON` at startup | The variable is malformed | Fix it to an object of policy name to array of caller ids |
-| Approval fails after the write | The file write or the record failed | The change stays `PENDING_APPROVAL`. The same approver can retry, and the service reuses the record |
-| Policy refused after approval: older version | An older approved version is in use | Approve the version you want, which rolls back to it (claim 2.43) |
+| Response or message                                   | Meaning                                                                        | What to do                                                                                                                          |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `SameActorCannotApproveOwnChangeError`                | The checker is the maker                                                       | A different person must approve                                                                                                     |
+| HTTP 403 `CHECKER_NOT_IN_SCOPE`                       | The caller is not listed for this policy                                       | Add the caller to `POLICY_CHANGE_CHECKERS`, or use a listed checker. The variable is read at startup, so redeploy after changing it |
+| HTTP 409 on approve                                   | The change is not pending, or another approver already approved it             | Read the change's state. Nothing needs to be redone if it is already approved                                                       |
+| Step-up refused: expired                              | The envelope lived more than 120 seconds, or it was used after it expired      | Sign a new one and approve immediately                                                                                              |
+| Step-up refused: nonce                                | The envelope was already used                                                  | Sign a new one                                                                                                                      |
+| Step-up refused: action or change id mismatch         | The envelope names a different change or action                                | Sign for this change id and the action `approve`                                                                                    |
+| HTTP 400 on propose                                   | The name or version contains characters outside letters, digits, `.`, `_`, `-` | Use a name that matches the pattern                                                                                                 |
+| `POLICY_CHANGE_CHECKERS is not valid JSON` at startup | The variable is malformed                                                      | Fix it to an object of policy name to array of caller ids                                                                           |
+| Approval fails after the write                        | The file write or the record failed                                            | The change stays `PENDING_APPROVAL`. The same approver can retry, and the service reuses the record                                 |
+| Policy refused after approval: older version          | An older approved version is in use                                            | Approve the version you want, which rolls back to it (claim 2.43)                                                                   |
 
 ## 12. Not covered in this chapter
 

@@ -3,6 +3,7 @@
 Each term links to the file that defines or implements it. Links point to `main` in the repository named, unless the link says it points to a branch. A link to a branch file exists only while that branch exists.
 
 Repository shorthand used below:
+
 - **core** = [`parmana-core`](https://github.com/pavancharak/parmana-core)
 - **connectors** = [`parmana-connectors`](https://github.com/pavancharak/parmana-connectors)
 
@@ -232,16 +233,16 @@ Read: [PRODUCTION-DEPLOY-AND-ROLLBACK.md](https://github.com/pavancharak/parmana
 
 ## I. Where to look when stuck
 
-| Problem | Start here |
-|---|---|
-| A command fails | The developer guide sent earlier (its troubleshooting table, section 9). Also [CONTRIBUTING.md](https://github.com/pavancharak/parmana-core/blob/main/CONTRIBUTING.md) |
-| A change is refused | [pending-policy-changes.ts](https://github.com/pavancharak/parmana-core/blob/main/packages/api/src/routes/pending-policy-changes.ts) for approval refusals, and [connectors README, "Errors"](https://github.com/pavancharak/parmana-connectors/blob/main/README.md) for connector refusals |
-| A connector failed | [connectors RUNBOOK.md](https://github.com/pavancharak/parmana-connectors/blob/main/RUNBOOK.md), "Recovering a release that was recorded but not confirmed" |
-| Production deploy | [PRODUCTION-DEPLOY-AND-ROLLBACK.md](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/runbooks/PRODUCTION-DEPLOY-AND-ROLLBACK.md) |
-| Whether a feature is built | [CURRENT-STATE.md](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/project/CURRENT-STATE.md) |
-| Whether a claim is true | [CLAIMS.md](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/CLAIMS.md), then its evidence |
-| What is still open | [VERIFICATION-GAPS.md](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/VERIFICATION-GAPS.md) and [OPEN-ITEMS.md](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/OPEN-ITEMS.md) |
-| Why a decision was made | [DECISIONS.md](https://github.com/pavancharak/parmana-core/blob/main/DECISIONS.md) and [docs/internal/adr/](https://github.com/pavancharak/parmana-core/tree/main/docs/internal/adr) |
-| A setting is missing or wrong | [environment-variables.mdx](https://github.com/pavancharak/parmana-core/blob/main/docs/site/deployment/environment-variables.mdx), or `npm run doctor` |
-| An incident needs records | [INCIDENT-EXPORT.md](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/runbooks/INCIDENT-EXPORT.md) |
-| Security concern | [SECURITY.md](https://github.com/pavancharak/parmana-core/blob/main/SECURITY.md). Report privately, not as a public issue |
+| Problem                       | Start here                                                                                                                                                                                                                                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A command fails               | The developer guide sent earlier (its troubleshooting table, section 9). Also [CONTRIBUTING.md](https://github.com/pavancharak/parmana-core/blob/main/CONTRIBUTING.md)                                                                                                                      |
+| A change is refused           | [pending-policy-changes.ts](https://github.com/pavancharak/parmana-core/blob/main/packages/api/src/routes/pending-policy-changes.ts) for approval refusals, and [connectors README, "Errors"](https://github.com/pavancharak/parmana-connectors/blob/main/README.md) for connector refusals |
+| A connector failed            | [connectors RUNBOOK.md](https://github.com/pavancharak/parmana-connectors/blob/main/RUNBOOK.md), "Recovering a release that was recorded but not confirmed"                                                                                                                                 |
+| Production deploy             | [PRODUCTION-DEPLOY-AND-ROLLBACK.md](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/runbooks/PRODUCTION-DEPLOY-AND-ROLLBACK.md)                                                                                                                                         |
+| Whether a feature is built    | [CURRENT-STATE.md](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/project/CURRENT-STATE.md)                                                                                                                                                                            |
+| Whether a claim is true       | [CLAIMS.md](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/CLAIMS.md), then its evidence                                                                                                                                                                               |
+| What is still open            | [VERIFICATION-GAPS.md](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/VERIFICATION-GAPS.md) and [OPEN-ITEMS.md](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/OPEN-ITEMS.md)                                                                     |
+| Why a decision was made       | [DECISIONS.md](https://github.com/pavancharak/parmana-core/blob/main/DECISIONS.md) and [docs/internal/adr/](https://github.com/pavancharak/parmana-core/tree/main/docs/internal/adr)                                                                                                        |
+| A setting is missing or wrong | [environment-variables.mdx](https://github.com/pavancharak/parmana-core/blob/main/docs/site/deployment/environment-variables.mdx), or `npm run doctor`                                                                                                                                      |
+| An incident needs records     | [INCIDENT-EXPORT.md](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/runbooks/INCIDENT-EXPORT.md)                                                                                                                                                                       |
+| Security concern              | [SECURITY.md](https://github.com/pavancharak/parmana-core/blob/main/SECURITY.md). Report privately, not as a public issue                                                                                                                                                                   |

@@ -42,15 +42,15 @@ Parmana never holds a Razorpay credential in the decision path. The connector ho
 
 ## 2. Timeline
 
-| Date | Event | Where to read it |
-|---|---|---|
-| 2026-07-18 | Razorpay webhook tables added (signature-verified event receipt and an audit trail) | `supabase/migrations/20260718182238_add_razorpay_webhook_tables.sql` |
-| 2026-08-05 | Daily cumulative refund reservation ledger added | `supabase/migrations/20260805170000_add_razorpay_daily_refund_reservations.sql` |
-| 2026-08-12 | Razorpay demo connector and its payment capability removed from `parmana-core` | Migration header for the table drop; verification gap G-27 |
+| Date       | Event                                                                                                                                                                        | Where to read it                                                                  |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| 2026-07-18 | Razorpay webhook tables added (signature-verified event receipt and an audit trail)                                                                                          | `supabase/migrations/20260718182238_add_razorpay_webhook_tables.sql`              |
+| 2026-08-05 | Daily cumulative refund reservation ledger added                                                                                                                             | `supabase/migrations/20260805170000_add_razorpay_daily_refund_reservations.sql`   |
+| 2026-08-12 | Razorpay demo connector and its payment capability removed from `parmana-core`                                                                                               | Migration header for the table drop; verification gap G-27                        |
 | 2026-11-03 | Connector migration out of `parmana-core` (ADR-0018). The Razorpay connector, with Paytm, Slack, GitHub, HubSpot and Zoho, is in `parmana-connectors`. Zerodha is paper only | `parmana-connectors` README, "Migration out of parmana-core" status row; ADR-0018 |
-| 2026-09-16 | Three orphaned Razorpay tables dropped; seven historical audit rows backed up outside the repository | `supabase/migrations/20260916120000_drop_razorpay_tables.sql` |
-| 2026-11-04 | Remaining connector-only examples removed or renamed | Commit `5aeae62` |
-| 2026-11-08 | Draft policies and the read-only payment signal source added on the feature branch | Pull request #512; commits `589bbaf`, `b47b851`, `99285b7`, `36fe631` |
+| 2026-09-16 | Three orphaned Razorpay tables dropped; seven historical audit rows backed up outside the repository                                                                         | `supabase/migrations/20260916120000_drop_razorpay_tables.sql`                     |
+| 2026-11-04 | Remaining connector-only examples removed or renamed                                                                                                                         | Commit `5aeae62`                                                                  |
+| 2026-11-08 | Draft policies and the read-only payment signal source added on the feature branch                                                                                           | Pull request #512; commits `589bbaf`, `b47b851`, `99285b7`, `36fe631`             |
 
 Before the removal there were many Razorpay pull requests, from #59 (the refund agent) through #175 (the status runbook). Examples include #59, #135 (Windows setup script), and #175. This book does not summarise each one.
 
@@ -107,12 +107,12 @@ The endpoint refuses any key that does not start with `rzp_test_`, and it refuse
 
 **The four demo cases (from the removed README).** The demo ran these four requests, in order, and expected these results:
 
-| # | Request | Expected result |
-|---|---|---|
-| 1 | No manager approval | Refused by the policy. Razorpay is never called |
-| 2 | Approval for this payment and ₹1 (100 paise), within the agent's grant | Approved. Refunded once in Razorpay. The record verifies offline |
-| 3 | Approval for ₹8 (800 paise), but the agent's grant allows up to ₹5 (500 paise) | Refused with `NOT_AUTHORIZED`. A manager's signature cannot lift the agent's limit |
-| 4 | The approval from request 2, sent again | Refused. An approval is used once |
+| #   | Request                                                                        | Expected result                                                                    |
+| --- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| 1   | No manager approval                                                            | Refused by the policy. Razorpay is never called                                    |
+| 2   | Approval for this payment and ₹1 (100 paise), within the agent's grant         | Approved. Refunded once in Razorpay. The record verifies offline                   |
+| 3   | Approval for ₹8 (800 paise), but the agent's grant allows up to ₹5 (500 paise) | Refused with `NOT_AUTHORIZED`. A manager's signature cannot lift the agent's limit |
+| 4   | The approval from request 2, sent again                                        | Refused. An approval is used once                                                  |
 
 **The demo's setup, in order (from the removed README, paraphrased).**
 
@@ -162,11 +162,11 @@ This chapter does not reproduce the whole JSON. Read the file directly for exact
 
 ## 8. Database tables
 
-| Table | Created | Purpose | Status |
-|---|---|---|---|
-| `razorpay_webhook_events` | 2026-07-18 | Records each webhook event once. The primary key on the event id makes a duplicate delivery fail at the database. Rows are written only after the webhook's HMAC signature is verified. | Dropped 2026-09-16 (zero rows) |
-| `razorpay_webhook_audit_events` | 2026-07-18 | Audit trail for webhook receipt | Dropped 2026-09-16 (seven rows, backed up outside the repository) |
-| `razorpay_daily_refund_reservations` | 2026-08-05 | One running total per UTC day | Dropped 2026-09-16 (zero rows) |
+| Table                                | Created    | Purpose                                                                                                                                                                                 | Status                                                            |
+| ------------------------------------ | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `razorpay_webhook_events`            | 2026-07-18 | Records each webhook event once. The primary key on the event id makes a duplicate delivery fail at the database. Rows are written only after the webhook's HMAC signature is verified. | Dropped 2026-09-16 (zero rows)                                    |
+| `razorpay_webhook_audit_events`      | 2026-07-18 | Audit trail for webhook receipt                                                                                                                                                         | Dropped 2026-09-16 (seven rows, backed up outside the repository) |
+| `razorpay_daily_refund_reservations` | 2026-08-05 | One running total per UTC day                                                                                                                                                           | Dropped 2026-09-16 (zero rows)                                    |
 
 The migration that dropped them states that no other table references them.
 
@@ -213,22 +213,22 @@ npx prettier --check .
 
 **Note.** This table covers the removed demo and the signal source. For the current connector, the error codes are `invalid_input`, `credential_invalid`, `unknown_capability`, `upstream_error` and `timeout`, with what to check for each. They are listed in `repos-and-razorpay.md`, section 3.6, and in `parmana-connectors`' `src/connectors/razorpay/README.md`.
 
-| Message or symptom | Likely cause | What to do |
-|---|---|---|
-| "The payment must be a Razorpay payment id (pay_...)." | The id does not match `pay_` plus 6 to 40 letters or digits | Copy the id from the Razorpay Test Mode dashboard |
-| "The amount must be a positive whole number of paise." | Zero, negative, or fractional amount | Use whole paise, for example `100` for ₹1 |
-| "This demo refunds only in Razorpay test mode: RAZORPAY_KEY_ID must start with rzp_test_." | A live key is configured | Use a `rzp_test_` key. Never put a live key in this demo |
-| "RAZORPAY_KEY_SECRET is not set." | The endpoint's secret is empty | Set it in the endpoint's environment, not in the agent |
-| Endpoint returns 401 with signature or audience errors | The release is not signed by Parmana's key, or it names a different endpoint URL | Rebuild the endpoint with `build-endpoint.ts`, so the public key and URL match the deployment |
-| Endpoint returns 401 "this endpoint serves only razorpay:refund" | The release carries a different capability | Check the capability name in the policy |
-| Parmana refuses and Razorpay is not called | No valid manager approval for this payment and amount | Obtain a signed approval that names this payment and amount |
-| Refund reports `alreadyRefunded: true` | A refund with this receipt already exists | Expected. The same release cannot refund twice |
-| Signal source: "does not establish the claim" | A policy asked for a fact this source does not provide | Check the claim name in the policy |
-| Signal source: HTTP 404 or "not found" | The payment id is not in this Razorpay account, or the key is in the other mode | Check the account and the mode of the key |
-| Signal source: "answered HTTP 401" or another status | The read credential is wrong or lacks access | Check the key id and secret |
-| Signal source: timeout | Razorpay did not answer within 10 seconds | Retry. Until a read succeeds, the runtime records the source as unavailable |
-| PR #512: `build-and-test` fails at Prettier | `policies/razorpay-refund/1.0.0/policy.json` is not formatted | Run the Prettier commands in section 9 |
-| PR #512: `verify-policy-approvals` fails | The draft policy has no approved content hash | Formatting will not fix this. Approve the policy through maker-checker, or remove it from the PR |
+| Message or symptom                                                                         | Likely cause                                                                     | What to do                                                                                       |
+| ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| "The payment must be a Razorpay payment id (pay_...)."                                     | The id does not match `pay_` plus 6 to 40 letters or digits                      | Copy the id from the Razorpay Test Mode dashboard                                                |
+| "The amount must be a positive whole number of paise."                                     | Zero, negative, or fractional amount                                             | Use whole paise, for example `100` for ₹1                                                        |
+| "This demo refunds only in Razorpay test mode: RAZORPAY_KEY_ID must start with rzp_test_." | A live key is configured                                                         | Use a `rzp_test_` key. Never put a live key in this demo                                         |
+| "RAZORPAY_KEY_SECRET is not set."                                                          | The endpoint's secret is empty                                                   | Set it in the endpoint's environment, not in the agent                                           |
+| Endpoint returns 401 with signature or audience errors                                     | The release is not signed by Parmana's key, or it names a different endpoint URL | Rebuild the endpoint with `build-endpoint.ts`, so the public key and URL match the deployment    |
+| Endpoint returns 401 "this endpoint serves only razorpay:refund"                           | The release carries a different capability                                       | Check the capability name in the policy                                                          |
+| Parmana refuses and Razorpay is not called                                                 | No valid manager approval for this payment and amount                            | Obtain a signed approval that names this payment and amount                                      |
+| Refund reports `alreadyRefunded: true`                                                     | A refund with this receipt already exists                                        | Expected. The same release cannot refund twice                                                   |
+| Signal source: "does not establish the claim"                                              | A policy asked for a fact this source does not provide                           | Check the claim name in the policy                                                               |
+| Signal source: HTTP 404 or "not found"                                                     | The payment id is not in this Razorpay account, or the key is in the other mode  | Check the account and the mode of the key                                                        |
+| Signal source: "answered HTTP 401" or another status                                       | The read credential is wrong or lacks access                                     | Check the key id and secret                                                                      |
+| Signal source: timeout                                                                     | Razorpay did not answer within 10 seconds                                        | Retry. Until a read succeeds, the runtime records the source as unavailable                      |
+| PR #512: `build-and-test` fails at Prettier                                                | `policies/razorpay-refund/1.0.0/policy.json` is not formatted                    | Run the Prettier commands in section 9                                                           |
+| PR #512: `verify-policy-approvals` fails                                                   | The draft policy has no approved content hash                                    | Formatting will not fix this. Approve the policy through maker-checker, or remove it from the PR |
 
 ## 11. Tests and continuous integration
 
@@ -249,20 +249,20 @@ npx prettier --check .
 
 ## 13. Where to find each file
 
-| What | Where |
-|---|---|
-| Removed refund endpoint and client | `git show 5aeae62^:examples/razorpay-refund/` |
-| Refund agent (current examples) | `examples/razorpay-refund-agent/` on `5aeae62^` |
-| Agent Studio MCP server | `examples/razorpay-agent-studio/` on commit `1acbb5a` |
-| Payment signal source (feature branch) | `packages/runtime/src/business-validation/razorpay-payment-source.ts` |
-| Signal source tests (feature branch) | `packages/runtime/tests/unit/razorpay-payment-source.test.ts` |
-| Draft policies (feature branch) | `policies/razorpay-refund/1.0.0/` and `1.1.0/` |
-| Table drops and history | `supabase/migrations/20260916120000_drop_razorpay_tables.sql` |
-| Verification gaps | `docs/internal/VERIFICATION-GAPS.md` |
-| Current Razorpay connector | `parmana-connectors`: `src/connectors/razorpay/razorpay-connector.ts`, its README, and `test-run.mjs` |
-| Current connector tests | `parmana-connectors`: `tests/connectors/razorpay/razorpay-connector.test.ts` |
-| Connector setup and settings | `parmana-connectors`: `README.md`, `.env.example`, `RUNBOOK.md` |
-| Open items | `docs/internal/OPEN-ITEMS.md` |
+| What                                   | Where                                                                                                 |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Removed refund endpoint and client     | `git show 5aeae62^:examples/razorpay-refund/`                                                         |
+| Refund agent (current examples)        | `examples/razorpay-refund-agent/` on `5aeae62^`                                                       |
+| Agent Studio MCP server                | `examples/razorpay-agent-studio/` on commit `1acbb5a`                                                 |
+| Payment signal source (feature branch) | `packages/runtime/src/business-validation/razorpay-payment-source.ts`                                 |
+| Signal source tests (feature branch)   | `packages/runtime/tests/unit/razorpay-payment-source.test.ts`                                         |
+| Draft policies (feature branch)        | `policies/razorpay-refund/1.0.0/` and `1.1.0/`                                                        |
+| Table drops and history                | `supabase/migrations/20260916120000_drop_razorpay_tables.sql`                                         |
+| Verification gaps                      | `docs/internal/VERIFICATION-GAPS.md`                                                                  |
+| Current Razorpay connector             | `parmana-connectors`: `src/connectors/razorpay/razorpay-connector.ts`, its README, and `test-run.mjs` |
+| Current connector tests                | `parmana-connectors`: `tests/connectors/razorpay/razorpay-connector.test.ts`                          |
+| Connector setup and settings           | `parmana-connectors`: `README.md`, `.env.example`, `RUNBOOK.md`                                       |
+| Open items                             | `docs/internal/OPEN-ITEMS.md`                                                                         |
 
 ## 14. What this book does not cover
 
