@@ -1,7 +1,6 @@
 import type {
   ApprovalIssuerRepository,
   CallerKeyRevocationRepository,
-  AgentRegistryRepository,
   ExternalConnectorRepository,
   BusinessSignalSourceRepository,
   AuthorityGrantRepository,
@@ -75,7 +74,6 @@ export interface StorageProvider {
   readonly approvalIssuers: ApprovalIssuerRepository;
 
   readonly callerKeyRevocations: CallerKeyRevocationRepository;
-  readonly agentRegistry: AgentRegistryRepository;
 
   /**
    * External connectors registered through maker checker (ADR-0013).

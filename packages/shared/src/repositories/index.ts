@@ -14,4 +14,3 @@ export * from "./policy-change-approval-record-repository.js";
 export * from "./handbook-download-lead-repository.js";
 export * from "./inbound-decision-repository.js";
 export * from "./inbound-outcome-repository.js";
-export * from "./agent-registry-repository.js";
