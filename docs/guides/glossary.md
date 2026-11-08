@@ -14,7 +14,7 @@ Repository shorthand used below:
 **Action.** Something an agent wants done in a business system, such as a refund. Parmana decides whether it may run.
 Read: [CONTRIBUTING.md](https://github.com/pavancharak/parmana-core/blob/main/CONTRIBUTING.md) (the project's purpose and principles).
 
-**Agent.** An AI system that asks Parmana for actions. It holds no business credential and no approval key. Example: [the demo refund agent](https://github.com/pavancharak/parmana-core/blob/main/examples/razorpay-refund-agent/agent.ts) (on the commit before its removal).
+**Agent.** An AI system that asks Parmana for actions. It holds no business credential and no approval key. Example: [the demo refund agent](https://github.com/pavancharak/parmana-core/blob/a4df45341381c500ffb6ab9554b56622cc8e622d/examples/razorpay-refund-agent/agent.ts) (on the commit before its removal).
 
 **Decision.** Parmana's answer to a request: approved or refused, with a reason. Each decision is recorded.
 Read: [RuntimeEngine.ts](https://github.com/pavancharak/parmana-core/blob/main/packages/runtime/src/RuntimeEngine.ts) (`execute`).

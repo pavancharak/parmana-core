@@ -2,7 +2,7 @@
 
 This chapter explains how a change to Parmana's governed setup is proposed, reviewed, and approved. It covers four kinds of change: policies, capabilities (external connectors), signal sources, and authority grants. Each step names the code or claim that enforces it.
 
-**Sources.** Route and service code in `packages/api/src/routes/pending-policy-changes.ts`, `packages/api/src/governance/`, and `packages/api/src/auth/PolicyChangeStepUpVerifier.ts`. Claims 2.42, 2.43, 2.54 and 2.55 in `docs/internal/CLAIMS.md`. The command-line helper is `examples/live-checks/governance.ts`.
+**Sources.** Route and service code in [`packages/api/src/routes/pending-policy-changes.ts`](https://github.com/pavancharak/parmana-core/blob/main/packages/api/src/routes/pending-policy-changes.ts), [`packages/api/src/governance/`](https://github.com/pavancharak/parmana-core/tree/main/packages/api/src/governance), and [`packages/api/src/auth/PolicyChangeStepUpVerifier.ts`](https://github.com/pavancharak/parmana-core/blob/main/packages/api/src/auth/PolicyChangeStepUpVerifier.ts). Claims 2.42, 2.43, 2.54 and 2.55 in [`docs/internal/CLAIMS.md`](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/CLAIMS.md). The command-line helper is [`examples/live-checks/governance.ts`](https://github.com/pavancharak/parmana-core/blob/main/examples/live-checks/governance.ts).
 
 ---
 
@@ -30,7 +30,7 @@ A **maker** proposes a change. A **checker** reviews it and approves it. The two
 | `source`    | A signal source and its public key       | `POST /business-signal-sources/changes`         | `POST /business-signal-sources/changes/:id/approve` |
 | `grant`     | An agent's authority to use a capability | `POST /authority-grants/changes`                | `POST /authority-grants/changes/:id/approve`        |
 
-The router mounts for these four kinds are `/policies`, `/external-connectors`, `/business-signal-sources` and `/authority-grants` (`packages/api/src/app.ts`). The `approve` and `reject` paths in the table are the policy routes I read in `pending-policy-changes.ts`. For the other three kinds, I confirmed the mount point, not the sub-paths. Check the route files, or `openapi/openapi.yaml`, for the exact paths and bodies before using them.
+The router mounts for these four kinds are `/policies`, `/external-connectors`, `/business-signal-sources` and `/authority-grants` ([`packages/api/src/app.ts`](https://github.com/pavancharak/parmana-core/blob/main/packages/api/src/app.ts)). The `approve` and `reject` paths in the table are the policy routes I read in `pending-policy-changes.ts`. For the other three kinds, I confirmed the mount point, not the sub-paths. Check the route files, or [`openapi/openapi.yaml`](https://github.com/pavancharak/parmana-core/blob/main/openapi/openapi.yaml), for the exact paths and bodies before using them.
 
 ## 4. Step by step: a policy change
 
@@ -172,8 +172,8 @@ Claim 2.42 notes that approvers are not limited per action (gap G-50). Any liste
 
 ## 12. Not covered in this chapter
 
-- The exact request and response bodies. Use `openapi/openapi.yaml`.
+- The exact request and response bodies. Use [`openapi/openapi.yaml`](https://github.com/pavancharak/parmana-core/blob/main/openapi/openapi.yaml).
 - The reject routes, and the rules for revoking a grant or a source. They follow the same shape as approval.
-- The approval-issuer routes in detail. Read `packages/api/src/routes/approval-issuers.ts`.
-- The external-connector route bodies. Read `packages/api/src/routes/external-connectors.ts`.
+- The approval-issuer routes in detail. Read [`packages/api/src/routes/approval-issuers.ts`](https://github.com/pavancharak/parmana-core/blob/main/packages/api/src/routes/approval-issuers.ts).
+- The external-connector route bodies. Read [`packages/api/src/routes/external-connectors.ts`](https://github.com/pavancharak/parmana-core/blob/main/packages/api/src/routes/external-connectors.ts).
 - How to generate and store step-up keys and approver keys. These are operational. Keep them in the password manager and the credential runbook, not in documents.

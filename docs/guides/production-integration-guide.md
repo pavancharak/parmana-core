@@ -1,6 +1,6 @@
 # Taking Parmana to a real system: what is required, and how to integrate it
 
-Status as of 2026-11-08. Sources are the repositories' runbooks, `docs/internal/project/CURRENT-STATE.md`, `docs/internal/OPEN-ITEMS.md`, `docs/internal/VERIFICATION-GAPS.md`, and the code the sections name.
+Status as of 2026-11-08. Sources are the repositories' runbooks, [`docs/internal/project/CURRENT-STATE.md`](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/project/CURRENT-STATE.md), [`docs/internal/OPEN-ITEMS.md`](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/OPEN-ITEMS.md), [`docs/internal/VERIFICATION-GAPS.md`](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/VERIFICATION-GAPS.md), and the code the sections name.
 
 ---
 
@@ -39,7 +39,7 @@ Each item is a gate. Do not move a real business action through Parmana until th
 These are not optional. The repository's OPEN-ITEMS document has a "Key-list ceremony" section.
 
 - **Named, individual operators.** Each operator has their own key. The kill switch's two-person reset only works if the two operators are different people, so do not share keys.
-- **Approver keys.** Each approver generates an Ed25519 key with `scripts/generate-approver-key.ts`, keeps the private key on their own machine, and registers the public key through the approval-issuer flow (`propose-issuer`, then `approve-issuer`). Only issuers in `TRUSTED_APPROVAL_ISSUERS` can sign.
+- **Approver keys.** Each approver generates an Ed25519 key with [`scripts/generate-approver-key.ts`](https://github.com/pavancharak/parmana-core/blob/main/scripts/generate-approver-key.ts), keeps the private key on their own machine, and registers the public key through the approval-issuer flow (`propose-issuer`, then `approve-issuer`). Only issuers in `TRUSTED_APPROVAL_ISSUERS` can sign.
 - **Checker scope.** `POLICY_CHANGE_CHECKERS` lists, per policy, the callers allowed to approve it. An unset value lists no one, so approval is refused until it is configured.
 - **Step-up keys.** Each checker has a step-up key, held on their machine. The step-up envelope expires in at most 120 seconds.
 - **The kill switch's second operator.** Production sets `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR=true`, so a reset needs two different operators. Right now a stand-in entry exists for `operator-b`. Replace it with a real operator's key before relying on the second-operator reset (gap G-122).
@@ -47,28 +47,28 @@ These are not optional. The repository's OPEN-ITEMS document has a "Key-list cer
 
 ### B3. Infrastructure
 
-| Requirement           | Where it is set                                                                       | Check                                           |
-| --------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| Node.js 24            | `engines` in `package.json`, CI, Dockerfile                                           | `node -v` shows 24.x                            |
-| A production database | `PARMANA_STORAGE=postgres` (`supabase` selects the same Postgres storage)             | `npm run db:migrate` completes                  |
-| Signing keys          | `PARMANA_KEY_DIR` or KMS                                                              | `npm run verify:kms` passes, when KMS is used   |
-| Caller API keys       | `PARMANA_API_KEYS` (hashed, with a `keyHash` per caller)                              | `npm run generate:api-key` makes the entries    |
-| Kill switch           | `KILL_SWITCH_ENABLED=true`, `DATABASE_URL`, `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR` | The probe runs and reports `active: false`      |
-| Alerts                | `ALERT_WEBHOOK_URL` (https) and `ALERT_WEBHOOK_SECRET`                                | A test alert reaches the receiver               |
-| Policy governance     | `POLICY_CHANGE_CHECKERS`                                                              | An approval by an in-scope checker succeeds     |
-| Startup checks        | `npm run doctor -- --production --online`                                             | Every line passes, with none marked "to review" |
+| Requirement           | Where it is set                                                                                                   | Check                                           |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Node.js 24            | `engines` in [`package.json`](https://github.com/pavancharak/parmana-core/blob/main/package.json), CI, Dockerfile | `node -v` shows 24.x                            |
+| A production database | `PARMANA_STORAGE=postgres` (`supabase` selects the same Postgres storage)                                         | `npm run db:migrate` completes                  |
+| Signing keys          | `PARMANA_KEY_DIR` or KMS                                                                                          | `npm run verify:kms` passes, when KMS is used   |
+| Caller API keys       | `PARMANA_API_KEYS` (hashed, with a `keyHash` per caller)                                                          | `npm run generate:api-key` makes the entries    |
+| Kill switch           | `KILL_SWITCH_ENABLED=true`, `DATABASE_URL`, `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR`                             | The probe runs and reports `active: false`      |
+| Alerts                | `ALERT_WEBHOOK_URL` (https) and `ALERT_WEBHOOK_SECRET`                                                            | A test alert reaches the receiver               |
+| Policy governance     | `POLICY_CHANGE_CHECKERS`                                                                                          | An approval by an in-scope checker succeeds     |
+| Startup checks        | `npm run doctor -- --production --online`                                                                         | Every line passes, with none marked "to review" |
 
-**Two deployment entry points, one rule.** The Vercel entry (`api/index.ts`) and the self-hosted entry (`packages/api/src/server.ts`) must take the same startup options. The repository has been bitten twice when one was missed. After any change to either, run:
+**Two deployment entry points, one rule.** The Vercel entry ([`api/index.ts`](https://github.com/pavancharak/parmana-core/blob/main/api/index.ts)) and the self-hosted entry ([`packages/api/src/server.ts`](https://github.com/pavancharak/parmana-core/blob/main/packages/api/src/server.ts)) must take the same startup options. The repository has been bitten twice when one was missed. After any change to either, run:
 
 ```bash
 npx vitest run tests/architecture/vercel-entry-policy-checkers.test.ts
 ```
 
-**Node version on Vercel.** The Vercel project setting can override `engines`. At the time of the Node version runbook, production ran on Node 26.x while the repository pins 24.x. Decide the version deliberately and record it. See `docs/internal/runbooks/NODE-VERSION.md`.
+**Node version on Vercel.** The Vercel project setting can override `engines`. At the time of the Node version runbook, production ran on Node 26.x while the repository pins 24.x. Decide the version deliberately and record it. See [`docs/internal/runbooks/NODE-VERSION.md`](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/runbooks/NODE-VERSION.md).
 
 ### B4. Deployment and rollback
 
-Follow `docs/internal/runbooks/PRODUCTION-DEPLOY-AND-ROLLBACK.md`.
+Follow [`docs/internal/runbooks/PRODUCTION-DEPLOY-AND-ROLLBACK.md`](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/runbooks/PRODUCTION-DEPLOY-AND-ROLLBACK.md).
 
 - Production deploys from `main`. Do not deploy from a laptop.
 - To apply new environment values to the current build, use `vercel redeploy`, not a fresh build. Environment changes apply only to new deployments.
@@ -84,12 +84,12 @@ Follow `docs/internal/runbooks/PRODUCTION-DEPLOY-AND-ROLLBACK.md`.
 
 ### B6. Governance, legal and operations
 
-- **Records.** Each change is a pull request that updates the claims, gaps and remaining-work documents (see `CONTRIBUTING.md`).
+- **Records.** Each change is a pull request that updates the claims, gaps and remaining-work documents (see [`CONTRIBUTING.md`](https://github.com/pavancharak/parmana-core/blob/main/CONTRIBUTING.md)).
 - **Monitoring.** Alerts (B3) cover decisions and kill switch trips. They are best effort with no queue, so monitor the receiver too.
-- **Incident response.** The incident export (`docs/internal/runbooks/INCIDENT-EXPORT.md`) pulls signed records for a time window. Run its timed drill before you depend on it.
+- **Incident response.** The incident export ([`docs/internal/runbooks/INCIDENT-EXPORT.md`](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/runbooks/INCIDENT-EXPORT.md)) pulls signed records for a time window. Run its timed drill before you depend on it.
 - **Multi-tenant use.** Not supported. One deployment serves one organization.
 - **Load.** No load-test results exist. Run `npm run loadtest` against your own configuration, and record the numbers yourself before any capacity claim.
-- **Regulatory.** The repositories map against draft CERT-In AI security guidelines (`docs/site/security/cert-in-mapping.mdx`). Those are drafts. Get your own legal and compliance review.
+- **Regulatory.** The repositories map against draft CERT-In AI security guidelines ([`docs/site/security/cert-in-mapping.mdx`](https://github.com/pavancharak/parmana-core/blob/main/docs/site/security/cert-in-mapping.mdx)). Those are drafts. Get your own legal and compliance review.
 
 ## Part C. How to integrate Parmana into an application
 
@@ -134,8 +134,8 @@ The TypeScript SDK exposes the client used there (`ParmanaClient`, with `caller`
 
 **Step 9. Verify the record offline.** Each approved or refused decision has a signed record. Verify it without calling the server, using the SDK's offline verifier:
 
-- TypeScript: `verifyExecutionTrustRecordOffline` in `typescript/src/crypto/offline-verifier.ts`.
-- Python: `verify_execution_trust_record_offline` in `python/parmana/crypto/offline_verifier.py`.
+- TypeScript: `verifyExecutionTrustRecordOffline` in [`typescript/src/crypto/offline-verifier.ts`](https://github.com/pavancharak/parmana-core/blob/main/typescript/src/crypto/offline-verifier.ts).
+- Python: `verify_execution_trust_record_offline` in [`python/parmana/crypto/offline_verifier.py`](https://github.com/pavancharak/parmana-core/blob/main/python/parmana/crypto/offline_verifier.py).
 
 Keep Parmana's public key with the records. A verifier needs that key, not the server.
 
@@ -171,5 +171,5 @@ Keep Parmana's public key with the records. A verifier needs that key, not the s
 - **Caller-declared signals.** Only the signals named as verified are trusted. Check each policy's `signalSources` and `approvalSignals`.
 - **Approval fatigue.** A reviewer can approve many requests without reading each one. The repository lists this as an open gap (G-135).
 - **Kill switch scope.** A trip stops new requests. An action already past the guard can still complete (G-122).
-- **Replay ledger.** A release recorded but not confirmed cannot be resent. The operator must check the business system by hand (connectors `RUNBOOK.md`).
+- **Replay ledger.** A release recorded but not confirmed cannot be resent. The operator must check the business system by hand (connectors [`RUNBOOK.md`](https://github.com/pavancharak/parmana-connectors/blob/main/RUNBOOK.md)).
 - **Vercel and self-hosted differ** unless the startup options are kept in step (B3).
