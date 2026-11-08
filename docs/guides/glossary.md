@@ -14,7 +14,7 @@ Repository shorthand used below:
 **Action.** Something an agent wants done in a business system, such as a refund. Parmana decides whether it may run.
 Read: [CONTRIBUTING.md](https://github.com/pavancharak/parmana-core/blob/main/CONTRIBUTING.md) (the project's purpose and principles).
 
-**Agent.** An AI system that asks Parmana for actions. It holds no business credential and no approval key. Example: [the demo refund agent](https://github.com/pavancharak/parmana-core/blob/main/examples/razorpay-refund-agent/agent.ts) (on the commit before its removal).
+**Agent.** An AI system that asks Parmana for actions. It holds no business credential and no approval key. Example: [the demo refund agent](https://github.com/pavancharak/parmana-core/blob/a4df45341381c500ffb6ab9554b56622cc8e622d/examples/razorpay-refund-agent/agent.ts) (on the commit before its removal).
 
 **Decision.** Parmana's answer to a request: approved or refused, with a reason. Each decision is recorded.
 Read: [RuntimeEngine.ts](https://github.com/pavancharak/parmana-core/blob/main/packages/runtime/src/RuntimeEngine.ts) (`execute`).
@@ -246,3 +246,8 @@ Read: [PRODUCTION-DEPLOY-AND-ROLLBACK.md](https://github.com/pavancharak/parmana
 | A setting is missing or wrong | [environment-variables.mdx](https://github.com/pavancharak/parmana-core/blob/main/docs/site/deployment/environment-variables.mdx), or `npm run doctor`                                                                                                                                      |
 | An incident needs records     | [INCIDENT-EXPORT.md](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/runbooks/INCIDENT-EXPORT.md)                                                                                                                                                                       |
 | Security concern              | [SECURITY.md](https://github.com/pavancharak/parmana-core/blob/main/SECURITY.md). Report privately, not as a public issue                                                                                                                                                                   |
+
+## See also (parmana-guide)
+
+- [Concepts, in plain language](https://github.com/pavancharak/parmana-guide/blob/main/docs/01-concepts.md)
+- [Reference index](https://github.com/pavancharak/parmana-guide/blob/main/docs/reference-index.md)

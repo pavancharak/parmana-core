@@ -20,16 +20,16 @@ Status as of 2026-11-08. This document replaces the earlier statement that the R
 
 ### `parmana-core`
 
-Documented in `.env.example`, `.env.test.example`, and `docs/site/deployment/environment-variables.mdx`. Two groups are relevant here:
+Documented in [`.env.example`](https://github.com/pavancharak/parmana-core/blob/main/.env.example), [`.env.test.example`](https://github.com/pavancharak/parmana-core/blob/main/.env.test.example), and [`docs/site/deployment/environment-variables.mdx`](https://github.com/pavancharak/parmana-core/blob/main/docs/site/deployment/environment-variables.mdx). Two groups are relevant here:
 
 - **Alerts (added in PR #513).** `ALERT_WEBHOOK_URL` turns on alerts for decisions and kill switch trips. It must be `https://`. `ALERT_WEBHOOK_SECRET` signs each alert body.
 - **Kill switch.** `KILL_SWITCH_ENABLED` and `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR`.
 
-The file `.env.example` also contains a comment that the built-in connectors were removed. That comment is correct for `parmana-core`.
+The file [`.env.example`](https://github.com/pavancharak/parmana-core/blob/main/.env.example) also contains a comment that the built-in connectors were removed. That comment is correct for `parmana-core`.
 
 ### `parmana-connectors`
 
-Documented in `.env.example` and in the README's "Running the service" table. The settings, and what each one does:
+Documented in [`.env.example`](https://github.com/pavancharak/parmana-core/blob/main/.env.example) and in the README's "Running the service" table. The settings, and what each one does:
 
 | Setting                                           | Required                     | Default     | Purpose                                                                                                          |
 | ------------------------------------------------- | ---------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------- |
@@ -52,7 +52,7 @@ The other connectors' settings (`PAYTM_MERCHANT_CREDENTIAL`, `GITHUB_APP_CREDENT
 
 ## 3. The Razorpay connector, in detail
 
-The connector is in `src/connectors/razorpay/razorpay-connector.ts`. Its tests are in `tests/connectors/razorpay/razorpay-connector.test.ts`. It runs one capability: `razorpay:refund`.
+The connector is in [`src/connectors/razorpay/razorpay-connector.ts`](https://github.com/pavancharak/parmana-connectors/blob/main/src/connectors/razorpay/razorpay-connector.ts). Its tests are in [`tests/connectors/razorpay/razorpay-connector.test.ts`](https://github.com/pavancharak/parmana-connectors/blob/main/tests/connectors/razorpay/razorpay-connector.test.ts). It runs one capability: `razorpay:refund`.
 
 ### 3.1 What a release must contain
 
@@ -127,7 +127,7 @@ The service refuses to run the same release twice, because the replay record alr
 
 ### 3.7 Test-mode run
 
-`src/connectors/razorpay/test-run.mjs` runs the connector against Razorpay's test API from your own machine:
+[`src/connectors/razorpay/test-run.mjs`](https://github.com/pavancharak/parmana-connectors/blob/main/src/connectors/razorpay/test-run.mjs) runs the connector against Razorpay's test API from your own machine:
 
 ```bash
 export RAZORPAY_KEY_PAIR="rzp_test_...:<secret>"
@@ -156,7 +156,7 @@ The service records a release before it runs the connector. A recorded release c
 - Do not delete rows from `parmana_connectors_release_ledger` or its archive to make a release run again. That is an owner's decision.
 - Do not paste keys, connection strings, or other secrets into chat.
 
-**Steps** (from `RUNBOOK.md`, "Recovering a release that was recorded but not confirmed")
+**Steps** (from [`RUNBOOK.md`](https://github.com/pavancharak/parmana-connectors/blob/main/RUNBOOK.md), "Recovering a release that was recorded but not confirmed")
 
 1. **Find the transaction id.** Search the runtime log for the `connector_failed` or `release_answered` line. It shows the `businessTransactionId`, the error code, and the connector's message. Get the payment id from `parmana-core`'s record of the action. The log does not show it.
 2. **Read the ledger.** In the Supabase project for `parmana-connectors`, run a read-only query for the transaction id. Do not use the sandbox project.
@@ -175,3 +175,8 @@ The service records a release before it runs the connector. A recorded release c
 - **Chapter 10 (Troubleshooting).** The error codes in section 3.6 replace the demo's messages.
 
 Items not verified in this document: the status of Zoho and the other connectors, and the content of `parmana-docs`.
+
+## See also (parmana-guide)
+
+- [Repositories](https://github.com/pavancharak/parmana-guide/blob/main/docs/02-repositories.md)
+- [Deploy connectors](https://github.com/pavancharak/parmana-guide/blob/main/docs/04-deploy-connectors.md)
