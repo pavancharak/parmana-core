@@ -100,22 +100,22 @@ Full runbook: [BYPASS-PROBE.md](https://github.com/pavancharak/parmana-core/blob
 - [RFC-0024, inbound agent authorization](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/rfcs/RFC-0024-Inbound-Agent-Authorization.md), the decisions
 - [RFC-0025, inbound decisions](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/rfcs/RFC-0025-Inbound-Decision-Issuance.md)
 - [RFC-0026, facts from the business](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/rfcs/RFC-0026-Inbound-Facts-From-Business-Sources.md), draft
-- [Design, G-143](https://github.com/pavancharak/parmana-core/blob/docs/g143-design/docs/internal/designs/G-143-inbound-approval-record.md) (PR #517)
-- [Proposed answers, G-144](https://github.com/pavancharak/parmana-core/blob/docs/g144-answers/docs/internal/designs/G-144-rfc-0026-answers.md) (PR #518)
+- [Design, G-143](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/designs/G-143-inbound-approval-record.md) (PR #517)
+- [Proposed answers, G-144](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/designs/G-144-rfc-0026-answers.md) (PR #518)
 
 **Code**
 
 - [Inbound check route](https://github.com/pavancharak/parmana-core/blob/main/packages/api/src/routes/inbound-checks.ts)
 - [No-bypass probe](https://github.com/pavancharak/parmana-core/blob/main/packages/api/src/inbound/bypass-probe.ts)
-- [Probe runner (PR #519)](https://github.com/pavancharak/parmana-core/blob/feat/g146-bypass-probe-runner/packages/api/src/inbound/bypassProbeFromEnv.ts)
-- [Probe script (PR #519)](https://github.com/pavancharak/parmana-core/blob/feat/g146-bypass-probe-runner/scripts/run-bypass-probe.ts)
-- [Scheduled workflow (PR #519)](https://github.com/pavancharak/parmana-core/blob/feat/g146-bypass-probe-runner/.github/workflows/bypass-probe.yml)
+- [Probe runner (PR #519)](https://github.com/pavancharak/parmana-core/blob/main/packages/api/src/inbound/bypassProbeFromEnv.ts)
+- [Probe script (PR #519)](https://github.com/pavancharak/parmana-core/blob/main/scripts/run-bypass-probe.ts)
+- [Scheduled workflow (PR #519)](https://github.com/pavancharak/parmana-core/blob/main/.github/workflows/bypass-probe.yml)
 
 **Records and runbooks**
 
 - [VERIFICATION-GAPS.md](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/VERIFICATION-GAPS.md), G-129, G-142, G-143, G-144, G-146
 - [CLAIMS.md](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/CLAIMS.md), claims 3.30 to 3.32 (inbound check, records, decide step)
-- [BYPASS-PROBE.md](https://github.com/pavancharak/parmana-core/blob/feat/g146-bypass-probe-runner/docs/internal/runbooks/BYPASS-PROBE.md) (PR #519)
+- [BYPASS-PROBE.md](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/runbooks/BYPASS-PROBE.md) (PR #519)
 - [Inbound checks, public page](https://github.com/pavancharak/parmana-core/blob/main/docs/site/security/inbound-checks.mdx)
 - [Inbound guide](https://github.com/pavancharak/parmana-core/blob/main/docs/guides/inbound-agent-checks.md)
 

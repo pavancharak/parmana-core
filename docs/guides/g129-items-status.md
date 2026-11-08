@@ -93,6 +93,4 @@ On Windows PowerShell, set the variables with `$env:BYPASS_PROBE_TARGET_URL = "h
 - G-143 and G-144 stay open until the decisions above are made and the code is written.
 - G-146 stays open until a business owner names a route, and the probe has run against it.
 - G-129 stays open until a business system calls the inbound check, and the probe confirms direct calls are refused.
-- The commits in these PRs are signed off but not GPG-signed. `main` requires GPG signatures, so each PR needs a
-  signed re-commit before merge.
-- Each PR needs an approving review from someone other than the last pusher.
+- The three PRs (#517, #518, #519) are merged. Their commits carry a sign-off but no GPG signature, which `CONTRIBUTING.md` requires on `main`. The owner merged them.
