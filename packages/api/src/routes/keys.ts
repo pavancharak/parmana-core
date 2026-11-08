@@ -4,7 +4,7 @@ import type { NextFunction, Request, Response } from "express";
 import { SignerBootstrap } from "@parmana/crypto";
 
 /**
- * Public-key discovery (PQC audit RED-2, docs/VERIFICATION-GAPS.md).
+ * Public-key discovery (PQC audit RED-2, docs/internal/VERIFICATION-GAPS.md).
  *
  * Deliberately mounted before this app's caller-auth middleware (see
  * app.ts), alongside /refusal/verify and /audit/verify -- a third

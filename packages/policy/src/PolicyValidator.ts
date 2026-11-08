@@ -16,6 +16,7 @@ import { collectReferencedFacts } from "./policySignalRequirements.js";
 export const DEFAULT_APPROVAL_ARTIFACT_SIGNAL = "approvalArtifact";
 
 const PARAMETER_PATH = /^parameters(\.[A-Za-z0-9_]+)+$/;
+const PARAMETER_NAME = /^[A-Za-z][A-Za-z0-9_]{0,63}$/;
 
 const SIGNAL_NAME = /^[A-Za-z0-9_]+$/;
 
@@ -706,6 +707,29 @@ export class PolicyValidator {
         throw new PolicyValidationError(
           `${label}.maxAgeSeconds must be a whole number of seconds from 1 to 86400.`,
         );
+      }
+
+      if (declaration.parameters !== undefined) {
+        const names = declaration.parameters;
+        if (!Array.isArray(names) || names.length > 16) {
+          throw new PolicyValidationError(
+            `${label}.parameters must be a list of at most 16 Intent parameter names.`,
+          );
+        }
+        const seen = new Set<string>();
+        for (const name of names) {
+          if (typeof name !== "string" || !PARAMETER_NAME.test(name)) {
+            throw new PolicyValidationError(
+              `${label}.parameters must name Intent parameters with letters, digits and underscores, such as "amount".`,
+            );
+          }
+          if (seen.has(name)) {
+            throw new PolicyValidationError(
+              `${label}.parameters names '${name}' twice.`,
+            );
+          }
+          seen.add(name);
+        }
       }
     }
   }

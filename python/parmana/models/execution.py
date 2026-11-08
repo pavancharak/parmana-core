@@ -46,6 +46,8 @@ class Decision:
 
     matched_path: list[str] | None = None
 
+    evaluation_method: Any | None = None
+
     assessment: DecisionAssessment | None = None
 
 

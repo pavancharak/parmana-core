@@ -14,7 +14,7 @@ export interface BusinessTransactionRepository {
    * (@parmana/shared), rather than silently overwriting it or
    * relying on a separate exists()-then-create() check at the call
    * site, which cannot be atomic (see G-1,
-   * docs/VERIFICATION-GAPS.md). Every implementation must surface
+   * docs/internal/VERIFICATION-GAPS.md). Every implementation must surface
    * the same error type for a duplicate, so callers cannot behave
    * differently depending on the backing store.
    */

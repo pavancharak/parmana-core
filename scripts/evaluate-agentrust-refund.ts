@@ -5,7 +5,7 @@
  * evaluations/agentrust-refund/report.json, writes the full signed records,
  * the signed approval and both public keys to
  * evaluations/agentrust-refund/fixtures/ and prints one line per case.
- * Exits 1 if the test fails. See docs/evaluation/agentrust-refund/README.md.
+ * Exits 1 if the test fails. See docs/internal/evaluation/agentrust-refund/README.md.
  */
 
 import { execSync, spawnSync } from "node:child_process";

@@ -23,7 +23,7 @@ import type { StorageProvider } from "@parmana/storage";
  * content unchanged.
  *
  * Deliberately excludes any (policyName, policyVersion) that already
- * has a real PENDING_APPROVAL proposal -- see docs/CLAIMS.md's own
+ * has a real PENDING_APPROVAL proposal -- see docs/internal/CLAIMS.md's own
  * "Legacy-policy backfill" entry: as of 2026-08-19 every one of this
  * system's real production policies already has a genuine,
  * human-proposed PendingPolicyChange awaiting a distinct human

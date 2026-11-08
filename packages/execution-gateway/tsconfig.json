@@ -20,11 +20,6 @@
     { "path": "../execution-control" },
     { "path": "../policy" },
     { "path": "../execution-system" },
-    { "path": "../connector-sdk" },
-    { "path": "../connector-hubspot" },
-    { "path": "../connector-github" },
-    { "path": "../connector-paytm" },
-    { "path": "../connector-zerodha" },
-    { "path": "../connector-slack" }
+    { "path": "../connector-sdk" }
   ]
 }

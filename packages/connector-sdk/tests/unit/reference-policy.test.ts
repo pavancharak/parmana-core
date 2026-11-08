@@ -14,7 +14,7 @@ import { describe, expect, it } from "vitest";
  * Connector SDK connectors (Deliverable: REFERENCE POLICY). Outcomes are
  * strictly "approve" (ALLOW) or "reject" (BLOCK) -- PolicyAction has only
  * those two values (REQUIRE_OVERRIDE, a reserved-but-unused third value,
- * was removed as dead code; see docs/VERIFICATION-GAPS.md G-38).
+ * was removed as dead code; see docs/internal/VERIFICATION-GAPS.md G-38).
  */
 const policy = JSON.parse(
   readFileSync(

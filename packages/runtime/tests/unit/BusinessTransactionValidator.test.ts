@@ -6,7 +6,7 @@ import { BusinessTransactionValidationError } from "../../src/errors/BusinessTra
 import { BusinessTransactionValidator } from "../../src/validators/BusinessTransactionValidator.js";
 
 /**
- * G-87 (docs/VERIFICATION-GAPS.md): a request body is untyped JSON, so
+ * G-87 (docs/internal/VERIFICATION-GAPS.md): a request body is untyped JSON, so
  * every object and field the validator reads is checked first and a
  * missing or malformed one is refused naming it, never left to throw a
  * TypeError that the API answers as a bare 500.

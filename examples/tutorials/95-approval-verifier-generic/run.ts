@@ -10,13 +10,13 @@ import type { ApprovalPayload, SignedApproval } from "@parmana/shared";
 
 //
 // Tutorial 72 exercises ApprovalVerifier wired through the
-// HubSpot-specific pipeline (HubSpotSignalStateVerifier). This
+// record-specific pipeline. This
 // tutorial exercises ApprovalVerifier itself, generically, connector-
 // agnostic -- the deterministic verification algorithm frozen in
 // the Phase 3A approval artifact design (in git history), with
 // its full per-check breakdown (`result.checks`), independent
 // verifier instances, and durable cross-process replay protection. A
-// regression that breaks the shared component for a non-HubSpot shape
+// regression that breaks the shared component for a non-record shape
 // could pass Tutorial 72 while failing here.
 //
 const crypto = CryptoBootstrap.create();
@@ -49,7 +49,7 @@ function buildPayload(
     issuer: { approverId: "manager-jane", keyId: "manager-jane-key-1" },
     issuedAt: now.toISOString(),
     expiresAt: later.toISOString(),
-    capability: "hubspot:deal-update",
+    capability: "erp:record-update",
     resourceId: "9005",
     scope: { field: "amountDeltaAbs", comparator: "lte", value: 50_000 },
     nonce: `nonce-${Math.random().toString(36).slice(2)}`,
@@ -92,7 +92,7 @@ console.log("--------------------------------------------------");
   const result = await verifier.verify(
     artifact,
     {
-      action: "hubspot:deal-update",
+      action: "erp:record-update",
       resourceId: "9005",
       requestedValue: 40_000,
     },
@@ -129,7 +129,7 @@ console.log("--------------------------------------------------");
     privateKey,
   );
   const result = await verifier.verify(artifact, {
-    action: "hubspot:deal-update",
+    action: "erp:record-update",
     resourceId: "9005",
     requestedValue: 40_000,
   });
@@ -148,7 +148,7 @@ console.log("--------------------------------------------------");
   });
   const artifact = await signPayload(buildPayload(), privateKey);
   const result = await verifier.verify(artifact, {
-    action: "hubspot:deal-update",
+    action: "erp:record-update",
     resourceId: "9005",
     requestedValue: 40_000,
   });
@@ -176,7 +176,7 @@ console.log("--------------------------------------------------");
   const result = await verifier.verify(
     artifact,
     {
-      action: "hubspot:deal-update",
+      action: "erp:record-update",
       resourceId: "9005",
       requestedValue: 40_000,
     },
@@ -215,7 +215,7 @@ console.log("--------------------------------------------------");
   const result = await verifier.verify(
     tampered,
     {
-      action: "hubspot:deal-update",
+      action: "erp:record-update",
       resourceId: "9005",
       requestedValue: 40_000,
     },
@@ -246,7 +246,7 @@ console.log("--------------------------------------------------");
   const result = await verifier.verify(
     forged,
     {
-      action: "hubspot:deal-update",
+      action: "erp:record-update",
       resourceId: "9005",
       requestedValue: 40_000,
     },
@@ -287,7 +287,7 @@ console.log("--------------------------------------------------");
   const result = await verifier.verify(
     artifact,
     {
-      action: "hubspot:deal-update",
+      action: "erp:record-update",
       resourceId: "9005",
       requestedValue: 40_000,
     },
@@ -317,7 +317,7 @@ console.log("--------------------------------------------------");
   const result = await verifier.verify(
     artifact,
     {
-      action: "razorpay:refund-create",
+      action: "erp:invoice-pay",
       resourceId: "9005",
       requestedValue: 40_000,
     },
@@ -347,7 +347,7 @@ console.log("--------------------------------------------------");
   const result = await verifier.verify(
     artifact,
     {
-      action: "hubspot:deal-update",
+      action: "erp:record-update",
       resourceId: "SOME-OTHER-DEAL",
       requestedValue: 40_000,
     },
@@ -386,7 +386,7 @@ console.log("--------------------------------------------------");
   const result = await verifier.verify(
     artifact,
     {
-      action: "hubspot:deal-update",
+      action: "erp:record-update",
       resourceId: "9005",
       requestedValue: 40_000,
     },
@@ -420,7 +420,7 @@ console.log("--------------------------------------------------");
   });
   const artifact = await signPayload(buildPayload(), privateKey);
   const request = {
-    action: "hubspot:deal-update",
+    action: "erp:record-update",
     resourceId: "9005",
     requestedValue: 40_000,
   };
@@ -454,7 +454,7 @@ console.log("--------------------------------------------------");
   const rejected = await verifier.verify(
     artifact,
     {
-      action: "hubspot:deal-update",
+      action: "erp:record-update",
       resourceId: "WRONG-DEAL",
       requestedValue: 40_000,
     },
@@ -463,7 +463,7 @@ console.log("--------------------------------------------------");
   const corrected = await verifier.verify(
     artifact,
     {
-      action: "hubspot:deal-update",
+      action: "erp:record-update",
       resourceId: "9005",
       requestedValue: 40_000,
     },
@@ -487,7 +487,7 @@ console.log("--------------------------------------------------");
   const sharedNonceStore = new MemoryNonceStore();
   const artifact = await signPayload(buildPayload(), privateKey);
   const request = {
-    action: "hubspot:deal-update",
+    action: "erp:record-update",
     resourceId: "9005",
     requestedValue: 40_000,
   };

@@ -2,7 +2,7 @@
 
 ADR-0013 lets an operator put any system behind Parmana by registering an HTTPS endpoint for a capability, through
 maker checker, with no change to Parmana's code. Steps 1 to 5 are built, tested and documented. This check proves the
-last part against the real production server, before `docs/CLAIMS.md` may claim it: an approved request is released,
+last part against the real production server, before `docs/internal/CLAIMS.md` may claim it: an approved request is released,
 signed, to a registered endpoint on the public internet, and the record verifies offline.
 
 Nothing in this check acts on a real system. The endpoint answers with a receipt and changes nothing.
@@ -18,8 +18,8 @@ Nothing in this check acts on a real system. The endpoint answers with a receipt
 The endpoint logged exactly one `release_acted` per approved transaction. The first attempt
 (`ec2f6c00-1009-43f0-9faf-1aeb84917860`) completed on the server, but its agent stopped waiting at the SDK's
 default 30 seconds; its record, fetched with `-Stage Verify`, is `APPROVED` and verifies offline. That is
-`docs/VERIFICATION-GAPS.md` G-84; `send.ts` now waits up to 120 seconds. Both records are in `evidence/`. The claim
-is `docs/CLAIMS.md` 2.50.
+`docs/internal/VERIFICATION-GAPS.md` G-84; `send.ts` now waits up to 120 seconds. Both records are in `evidence/`. The claim
+is `docs/internal/CLAIMS.md` 2.50.
 
 ## What is deployed
 
@@ -116,7 +116,7 @@ powershell -ExecutionPolicy Bypass -File $s -Stage Send -ApproverKeyFile D:\key\
 
 ## Afterwards
 
-- Keep `live-check-record.json` (no secret) and the endpoint's log line as the evidence for the `docs/CLAIMS.md` entry.
+- Keep `live-check-record.json` (no secret) and the endpoint's log line as the evidence for the `docs/internal/CLAIMS.md` entry.
 - Revoke the registration (`ProposeRevoke`, then `ApproveRevoke`), and remove `livecheck-agent` from
   `PARMANA_API_KEYS` (restore `PARMANA_API_KEYS.json.before-livecheck`, set it, redeploy), unless the check is to stay
   available. The endpoint can stay: it refuses everything not signed by Parmana for its own address, and acts on

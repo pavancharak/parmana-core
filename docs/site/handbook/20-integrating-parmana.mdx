@@ -21,7 +21,7 @@ equal `authorization.authorizationId`). Getting any of these wrong produces a 40
 `BusinessTransactionValidator`. The SDKs exist specifically so that class of mistake cannot arise
 through them, not merely documented. `typescript/src/builders/createBusinessTransaction.ts`
 says this directly in its own doc comment: this exact mismatch is "the class of mistake that
-produced every 'X must match Y' 400 response documented in the end to end Paytm guide."
+produced every 'X must match Y' 400 response listed in the error catalog."
 
 ## How it works
 
@@ -110,8 +110,7 @@ code samples were checked against the actual SDK source above, not copied blind.
   `python/parmana/builders.py`, `python/tests/`.
 - `packages/runtime/src/validators/BusinessTransactionValidator.ts` for the exact
   cross-consistency checks a hand built transaction must satisfy.
-- [End to end: agent to Parmana to Paytm](/guides/end-to-end-paytm-flow) for the error catalog of what happens when these
-  checks fail.
+- The [error catalog](/api-reference/error-catalog) lists what happens when these checks fail.
 
 ## Requirements checklist
 
@@ -127,20 +126,19 @@ code samples were checked against the actual SDK source above, not copied blind.
 
 **On the server/instance side, verified against `.env.example` and `packages/shared/src/config/Config.ts`:**
 
-| Variable                                                                                                                                              | Purpose                                                                                                                                                            |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `PARMANA_POLICY_DIR`                                                                                                                                  | Local policy file directory (used when storage is not Supabase backed).                                                                                            |
-| `PARMANA_KEY_DIR` / `PARMANA_KEY_MATERIAL_JSON`                                                                                                       | Local Ed25519 key material (`KEY_PROVIDER=local`).                                                                                                                 |
-| `PARMANA_STORAGE`                                                                                                                                     | `memory` or `supabase`. `supabase` requires `DATABASE_URL`.                                                                                                        |
-| `DATABASE_URL`                                                                                                                                        | Direct Postgres connection string (Supabase or otherwise), used by `pg`, not PostgREST.                                                                            |
-| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_ANON_KEY`                                                                                    | Only needed for the handful of code paths that still use the Supabase client directly (e.g. CI's read-only policy verification script), not the main request path. |
-| `CRYPTO_MODE`, `PRIMARY_SIGNATURE_PROVIDER`, `SECONDARY_SIGNATURE_PROVIDER`, `HASH_PROVIDER`                                                          | Signature/hash algorithm selection (see Chapter 3).                                                                                                                |
-| `KEY_PROVIDER`                                                                                                                                        | `local` is the only implemented value as of this writing; anything else throws explicitly (`KeyBootstrap.create()`).                                               |
-| `AWS_REGION`, `AWS_ROLE_ARN`                                                                                                                          | Required only when using real AWS KMS signing (`KmsSigner.ts`), via Vercel OIDC, no static AWS credentials needed.                                                 |
-| `EXECUTION_AUTHORIZATION_TTL_SECONDS`                                                                                                                 | Default 120.                                                                                                                                                       |
-| `PARMANA_API_KEYS`                                                                                                                                    | JSON array of caller entries, the live authentication table.                                                                                                       |
-| `RATE_LIMIT_EXECUTE_PER_MINUTE`, `RATE_LIMIT_HEALTH_PER_MINUTE`                                                                                       | Rate limiting (Chapter 16).                                                                                                                                        |
-| `HUBSPOT_PRIVATE_APP_TOKEN`, `GITHUB_APP_ID`/`GITHUB_INSTALLATION_ID`/`GITHUB_APP_PRIVATE_KEY`, `PAYTM_CONNECTOR_URL`/`PAYTM_CONNECTOR_SHARED_SECRET` | Only needed if you intend to exercise the corresponding connector (Chapter 12); a connector is simply not registered if its config is unset, nothing else fails.   |
+| Variable                                                                                     | Purpose                                                                                                                                                            |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PARMANA_POLICY_DIR`                                                                         | Local policy file directory (used when storage is not Supabase backed).                                                                                            |
+| `PARMANA_KEY_DIR` / `PARMANA_KEY_MATERIAL_JSON`                                              | Local Ed25519 key material (`KEY_PROVIDER=local`).                                                                                                                 |
+| `PARMANA_STORAGE`                                                                            | `memory` or `supabase`. `supabase` requires `DATABASE_URL`.                                                                                                        |
+| `DATABASE_URL`                                                                               | Direct Postgres connection string (Supabase or otherwise), used by `pg`, not PostgREST.                                                                            |
+| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_ANON_KEY`                           | Only needed for the handful of code paths that still use the Supabase client directly (e.g. CI's read-only policy verification script), not the main request path. |
+| `CRYPTO_MODE`, `PRIMARY_SIGNATURE_PROVIDER`, `SECONDARY_SIGNATURE_PROVIDER`, `HASH_PROVIDER` | Signature/hash algorithm selection (see Chapter 3).                                                                                                                |
+| `KEY_PROVIDER`                                                                               | `local` is the only implemented value as of this writing; anything else throws explicitly (`KeyBootstrap.create()`).                                               |
+| `AWS_REGION`, `AWS_ROLE_ARN`                                                                 | Required only when using real AWS KMS signing (`KmsSigner.ts`), via Vercel OIDC, no static AWS credentials needed.                                                 |
+| `EXECUTION_AUTHORIZATION_TTL_SECONDS`                                                        | Default 120.                                                                                                                                                       |
+| `PARMANA_API_KEYS`                                                                           | JSON array of caller entries, the live authentication table.                                                                                                       |
+| `RATE_LIMIT_EXECUTE_PER_MINUTE`, `RATE_LIMIT_HEALTH_PER_MINUTE`                              | Rate limiting (Chapter 16).                                                                                                                                        |
 
 ## Common first-integration mistakes
 
@@ -148,8 +146,7 @@ code samples were checked against the actual SDK source above, not copied blind.
 - Hand-building the three id-consistency fields instead of using `createBusinessTransaction()`,
   and getting one wrong.
 - Forgetting that `businessTransactionId` is an idempotency key: resubmitting the same id with
-  different content is rejected as a duplicate before execution, not silently overwritten (see
-  `docs/site/guides/end-to-end-paytm-flow.mdx`).
+  different content is rejected as a duplicate before execution, not silently overwritten .
 - Referencing a policy `(name, version)` that exists on disk but has never been approved, on a
   production instance (Chapter 7). Enforcement is on by default there, so the request is
   rejected as an ordinary policy REJECT before any rule runs, and an authorization that somehow

@@ -45,7 +45,7 @@ export function createBusinessTransaction(): Promise<BusinessTransaction> {
       authorizationId,
 
       // test:fixture-execute (not payments:execute/vendor-payment, removed
-      // per docs/VERIFICATION-GAPS.md G-27) -- a generic, test-only
+      // per docs/internal/VERIFICATION-GAPS.md G-27) -- a generic, test-only
       // capability with no production implication, unbound in
       // CANONICAL_CAPABILITY_POLICY_BINDINGS, existing solely so this
       // shared fixture has a real connector to execute against. Still

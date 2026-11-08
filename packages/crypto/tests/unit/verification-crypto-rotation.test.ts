@@ -9,7 +9,7 @@ import type { ExecutionTrustRecord } from "@parmana/shared";
 import { VerificationCrypto } from "../../src/VerificationCrypto.js";
 
 /**
- * PQC audit RED-3 (docs/VERIFICATION-GAPS.md): proves the fix for
+ * PQC audit RED-3 (docs/internal/VERIFICATION-GAPS.md): proves the fix for
  * durable-evidence key rotation end to end -- a Trust Record signed
  * under one keyId keeps verifying after PARMANA_VERIFICATION_KEY_ID
  * points future signing at a different one, mirroring exactly the

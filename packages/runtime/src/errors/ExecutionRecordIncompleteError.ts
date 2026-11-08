@@ -3,7 +3,7 @@ import { RuntimeError } from "./RuntimeError.js";
 /**
  * Thrown when the action was already released to the execution system but
  * the signed Execution Trust Record could not be produced or persisted
- * afterwards (docs/VERIFICATION-GAPS.md G-52).
+ * afterwards (docs/internal/VERIFICATION-GAPS.md G-52).
  *
  * This is deliberately NOT a generic 500. A generic failure tells a
  * caller nothing happened and invites a blind retry. This error says the

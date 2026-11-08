@@ -18,16 +18,16 @@ The human readable version, with more explanation, is the [Production deployment
 
 ## Inputs you need before you start
 
-| Input                | Where it comes from                                                        | How to check it                                                               |
-| -------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `REPO`               | A clone of the Parmana repository.                                         | The file `package.json` exists at its root.                                   |
-| `DATABASE_URL`       | The operator. A Postgres connection string.                                | It starts with `postgresql://`. On a serverless host it is the pooler string. |
-| `HOST_KIND`          | The operator: `fly`, `vercel` or `docker`.                                 | It is exactly one of those three words.                                       |
-| `URL`                | The operator, or the host after deploy. The base URL, no trailing slash.   | It starts with `https://`.                                                    |
-| `FIRST_CALLER_ID`    | The operator. The name of the first caller, for example `my-agent`.        | It is non empty and has no spaces.                                            |
-| `FIRST_CAPABILITIES` | The operator. The actions that caller may use, for example `paytm:refund`. | It is non empty. Never use `*` unless the operator says so in words.          |
-| `MAKER_ID`           | The operator. The name of the human maker.                                 | It differs from `FIRST_CALLER_ID` and from `CHECKER_ID`.                      |
-| `CHECKER_ID`         | The operator. The name of the human checker.                               | It differs from `FIRST_CALLER_ID` and from `MAKER_ID`.                        |
+| Input                | Where it comes from                                                           | How to check it                                                               |
+| -------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `REPO`               | A clone of the Parmana repository.                                            | The file `package.json` exists at its root.                                   |
+| `DATABASE_URL`       | The operator. A Postgres connection string.                                   | It starts with `postgresql://`. On a serverless host it is the pooler string. |
+| `HOST_KIND`          | The operator: `vercel` or `docker`.                                           | It is exactly one of those two words.                                         |
+| `URL`                | The operator, or the host after deploy. The base URL, no trailing slash.      | It starts with `https://`.                                                    |
+| `FIRST_CALLER_ID`    | The operator. The name of the first caller, for example `my-agent`.           | It is non empty and has no spaces.                                            |
+| `FIRST_CAPABILITIES` | The operator. The actions that caller may use, for example `erp:invoice-pay`. | It is non empty. Never use `*` unless the operator says so in words.          |
+| `MAKER_ID`           | The operator. The name of the human maker.                                    | It differs from `FIRST_CALLER_ID` and from `CHECKER_ID`.                      |
+| `CHECKER_ID`         | The operator. The name of the human checker.                                  | It differs from `FIRST_CALLER_ID` and from `MAKER_ID`.                        |
 
 If any input is missing, stop and ask for it.
 
@@ -87,7 +87,7 @@ Set exactly these variables on the host, in the Production environment:
 
 If the host cannot mount the four key files, also set `PARMANA_KEY_MATERIAL_JSON` to `{"default":{"privateKeyPem":"<contents>","publicKeyPem":"<contents>"},"gateway":{"privateKeyPem":"<contents>","publicKeyPem":"<contents>"}}`, with the file contents from step 1.
 
-If the operator wants a connector, also set its variables from the [connector section](/deployment/environment-variables#connectors). For the refund connector set both `PAYTM_CONNECTOR_URL` (it must start with `https://`) and `PAYTM_CONNECTOR_SHARED_SECRET`, or neither.
+If the operator wants a connector, also set its variables from the [connector section](/deployment/environment-variables#connectors).
 
 **Expect:** the host lists all six variables, and does not list `PARMANA_AUTH_DISABLED`.
 
@@ -99,7 +99,6 @@ Rule 5 applies. If the operator has not told you to write to the host, print the
 
 | `HOST_KIND` | Command                                                                                       |
 | ----------- | --------------------------------------------------------------------------------------------- |
-| `fly`       | `fly deploy`                                                                                  |
 | `vercel`    | `vercel deploy --prod`                                                                        |
 | `docker`    | `docker build -t parmana-api.` then run the image with the variables from step 4, port `3000` |
 

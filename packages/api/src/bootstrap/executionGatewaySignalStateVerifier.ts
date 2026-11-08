@@ -11,7 +11,7 @@ import type {
  * createExecutionGateway() and createApplication() (application.ts) have a
  * real circular dependency: the Gateway needs a SignalStateVerifier at
  * construction time to wire its execution-boundary signal-freshness check,
- * but the concrete verifier (createHubSpotSignalStateVerifier) needs the
+ * but a concrete verifier needs the
  * already-constructed Gateway (as its ExecutionSystem) to make its own
  * independent verification calls. This singleton breaks the cycle: the
  * Gateway is constructed against this fixed instance, and

@@ -10,7 +10,7 @@ import { SigningUnavailableError } from "./errors/SigningUnavailableError.js";
  * a signing and verification key mismatch) is found BEFORE the connector
  * is called, not after. It cannot remove a transient failure that happens
  * between the check and the real signing, that residual window is recorded
- * in docs/VERIFICATION-GAPS.md G-52.
+ * in docs/internal/VERIFICATION-GAPS.md G-52.
  */
 export interface SigningReadiness {
   assertReady(): Promise<void>;

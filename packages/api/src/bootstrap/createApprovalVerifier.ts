@@ -6,7 +6,7 @@ import { createApprovalNonceStore } from "./createApprovalNonceStore.js";
 
 /**
  * The ApprovalVerifier every capability scoped SignalStateVerifier
- * shares (hubspot:deal-update amount changes, paytm:refund manager
+ * shares (a record update that changes an amount, a refund manager
  * approvals). One trusted issuer list and one nonce store, so an
  * approval is single use across all of them.
  *

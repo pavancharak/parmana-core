@@ -19,10 +19,14 @@ import { createApprovalIssuersRouter } from "./routes/approval-issuers.js";
 import { createExternalConnectorsRouter } from "./routes/external-connectors.js";
 import { createBusinessSignalSourcesRouter } from "./routes/business-signal-sources.js";
 import { createAuthorityGrantsRouter } from "./routes/authority-grants.js";
-import type { EndpointAddressLookup } from "@parmana/shared";
+import { DecisionOutcome, type EndpointAddressLookup } from "@parmana/shared";
+import { CapabilityPolicyBinder } from "@parmana/policy";
+import { createCurrentPolicyVersionSource } from "./bootstrap/createCurrentPolicyVersionSource.js";
+import { createExternalPolicyBindingSource } from "./bootstrap/createExternalPolicyBindingSource.js";
 import type { ExecutionTrustApplication } from "@parmana/runtime";
 
 import { createExecuteRouter } from "./routes/execute.js";
+import { createInboundCheckRouter } from "./routes/inbound-checks.js";
 import { createKillSwitchRouter } from "./routes/kill-switch.js";
 import { killSwitchGuard } from "./killSwitch/killSwitchGuard.js";
 import type { KillSwitchService } from "./killSwitch/KillSwitchService.js";
@@ -46,6 +50,7 @@ import { createInboundDecisionRouter } from "./routes/inbound-decisions.js";
 import { createInboundOutcomeRouter } from "./routes/inbound-outcomes.js";
 import {
   authorityGrantRepository,
+  inboundCheckRepository,
   inboundDecisionRepository,
   inboundOutcomeRepository,
 } from "./repositories.js";
@@ -77,7 +82,7 @@ import type { PolicyChangeCheckerScope } from "./governance/policyChangeCheckers
  * string "disabled" to mount the app with no caller-auth
  * middleware at all. There is no default: silently omitting
  * this option is exactly the failure mode this type exists to
- * rule out (see docs/CLAIMS.md and the July 2026 audit closeout).
+ * rule out (see docs/internal/CLAIMS.md and the July 2026 audit closeout).
  */
 export type CallerAuthOption =
   | "disabled"
@@ -222,8 +227,8 @@ export function createApp(
   const app = express();
 
   /**
-   * Trust exactly one proxy hop: Fly.io's edge (fly.toml sets
-   * force_https there), the only reverse proxy in front of this app.
+   * Trust exactly one proxy hop: the platform's edge, the only reverse
+   * proxy in front of this app.
    * Without this, Express ignores X-Forwarded-For and ignores
    * X-Forwarded-Proto, so req.ip and req.protocol/req.secure both
    * reflect the proxy's own connection to this process rather than the
@@ -316,7 +321,7 @@ export function createApp(
   app.use("/audit/verify", publicRateLimiter, createAuditVerifyRouter());
 
   /**
-   * PQC audit RED-2 (docs/VERIFICATION-GAPS.md): public-key discovery,
+   * PQC audit RED-2 (docs/internal/VERIFICATION-GAPS.md): public-key discovery,
    * the same unauthenticated-by-necessity category as
    * /refusal/verify and /audit/verify above -- a third party fetching
    * the key it needs to independently verify a signature cannot be
@@ -492,6 +497,38 @@ export function createApp(
           authorityGrantRepository.findActive(partnerId, "inbound:refund"),
       }),
     );
+    // The policy bound to each capability: the same binder the policy-in-effect route uses.
+    const inboundPolicyBinder = new CapabilityPolicyBinder(
+      createCurrentPolicyVersionSource(),
+      createExternalPolicyBindingSource(),
+    );
+    app.use(
+      "/v1/inbound/checks",
+      createInboundCheckRouter({
+        audience: options.inboundDecisions.audience,
+        sign: options.inboundDecisions.sign,
+        findGrant: (callerId, capability) =>
+          authorityGrantRepository.findActive(callerId, capability),
+        policyInEffect: (capability) =>
+          inboundPolicyBinder.policyInEffect(capability),
+        decide: async (request) => {
+          const result = await application.decideInbound(request);
+          return {
+            approved: result.decision.outcome === DecisionOutcome.APPROVED,
+            ...(result.decision.reason !== undefined
+              ? { reason: result.decision.reason }
+              : {}),
+          };
+        },
+        store: {
+          append: (record) =>
+            inboundCheckRepository.append({
+              ...record,
+              issuedAt: new Date(),
+            }),
+        },
+      }),
+    );
   }
   app.use("/receipt", createReceiptRouter(application));
   app.use("/receipt/latest", createReceiptGetRouter(application));
@@ -615,7 +652,7 @@ export function createApp(
    *
    * Must be registered after all routes. Threaded with the same
    * auditSink every other caller-facing route uses (G-29,
-   * docs/VERIFICATION-GAPS.md) so the one rejection category this file
+   * docs/internal/VERIFICATION-GAPS.md) so the one rejection category this file
    * itself fully handles -- a malformed/oversized request body, rejected
    * by express.json() before caller-auth middleware or any route handler
    * ever runs -- gets a best-effort audit record too, not only the

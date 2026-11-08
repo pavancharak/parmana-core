@@ -17,7 +17,7 @@ import type { ApprovalScope, SignedApproval } from "@parmana/shared";
  * set to true.
  *
  * Usage, approving a refund of up to 75000 on order ORD-1042:
- *   npx tsx scripts/sign-approval.ts  *     --private-key-file ~/.parmana/manager-priya__manager-priya-key-1.private.pem  *     --approver-id manager-priya  *     --key-id manager-priya-key-1  *     --capability paytm:refund  *     --resource-id ORD-1042  *     --max-amount 75000  *     --out approval.json
+ *   npx tsx scripts/sign-approval.ts  *     --private-key-file ~/.parmana/manager-priya__manager-priya-key-1.private.pem  *     --approver-id manager-priya  *     --key-id manager-priya-key-1  *     --capability erp:invoice-pay  *     --resource-id ORD-1042  *     --max-amount 75000  *     --out approval.json
  *
  * --resource-id is the value at the policy's approvalSignals resourceId
  * path: an order id, or for "target" the Intent's target, such as
@@ -59,7 +59,7 @@ export function parseSignApprovalArguments(
 
   if (!CAPABILITY.test(capability)) {
     throw new Error(
-      `--capability must be an action such as paytm:refund or github:pr-merge: ${capability}`,
+      `--capability must be an action such as erp:invoice-pay or erp:record-update: ${capability}`,
     );
   }
 

@@ -59,7 +59,7 @@ If you see anything else, go to [Troubleshooting](/self-hosted/troubleshooting).
 
 ## Step 2: Read your API key
 
-The first start made one API key, for the caller ID `local-operator`, allowed to use the capability `paytm:refund`. Print it:
+The first start made one API key, for the caller ID `local-operator`, allowed to use the capability `erp:invoice-pay`. Print it:
 
 ```bash
 docker compose run --rm --no-deps --entrypoint cat setup /app/parmana-local/api-key.txt
@@ -80,7 +80,7 @@ curl -s http://127.0.0.1:3000/callers/me -H "Authorization: Bearer $OPERATOR_KEY
 Expected output:
 
 ```text
-{"callerId":"local-operator","allowedPrincipalIds":["local-operator"],"allowedCapabilities":["paytm:refund"],"unrestrictedCapabilities":false}
+{"callerId":"local-operator","allowedPrincipalIds":["local-operator"],"allowedCapabilities":["erp:invoice-pay"],"unrestrictedCapabilities":false}
 ```
 
 ## Step 3: Add the two people who approve policies
@@ -135,7 +135,7 @@ docker compose run --rm --no-deps --entrypoint node setup /app/docker/local/api-
 Expected output:
 
 ```text
-callerId=local-operator  credentialHolderType=(none)  allowedCapabilities=paytm:refund  allowedPrincipalIds=(own caller ID only)  stepUpKey=no
+callerId=local-operator  credentialHolderType=(none)  allowedCapabilities=erp:invoice-pay  allowedPrincipalIds=(own caller ID only)  stepUpKey=no
 callerId=alice  credentialHolderType=USER  allowedCapabilities=(none)  allowedPrincipalIds=(own caller ID only)  stepUpKey=no
 callerId=bob  credentialHolderType=USER  allowedCapabilities=(none)  allowedPrincipalIds=(own caller ID only)  stepUpKey=yes
 [api-keys] 3 key(s)

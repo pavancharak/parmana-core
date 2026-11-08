@@ -23,7 +23,7 @@ import { TrustRecordHasher } from "./TrustRecordHasher.js";
 
 /**
  * Standalone, offline verification of an Execution Trust Record
- * (PQC audit RED-1, docs/VERIFICATION-GAPS.md).
+ * (PQC audit RED-1, docs/internal/VERIFICATION-GAPS.md).
  *
  * Zero network calls, zero disk reads, zero environment variables.
  * Callers supply the exact public key material for every keyId a
@@ -50,7 +50,7 @@ import { TrustRecordHasher } from "./TrustRecordHasher.js";
  * SignatureRegistry (CryptoBootstrap.ts) registers -- "ecdsa-p256",
  * "dilithium5", and "sphincs-plus" are declared as valid
  * PRIMARY_SIGNATURE_PROVIDER config values elsewhere in this codebase
- * but have no real implementation anywhere (see docs/REMAINING-WORK.md, section D);
+ * but have no real implementation anywhere (see docs/internal/REMAINING-WORK.md, section D);
  * an offline verifier claiming to support them would be worse than
  * refusing outright.
  */

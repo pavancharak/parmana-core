@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/pavancharak/parmana-core/actions/workflows/ci.yml/badge.svg)](https://github.com/pavancharak/parmana-core/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/pavancharak/parmana-core/actions/workflows/codeql.yml/badge.svg)](https://github.com/pavancharak/parmana-core/actions/workflows/codeql.yml)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](./LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D24-brightgreen)](package.json)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/pavancharak/parmana-core/badge)](https://scorecard.dev/viewer/?uri=github.com/pavancharak/parmana-core)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15846/badge)](https://www.bestpractices.dev/projects/15846)
@@ -20,13 +20,23 @@ Companies want AI agents to issue refunds, pay vendors, update CRM deals, merge 
 
 Parmana sits between an AI agent and the systems it calls.
 
-- **Before an action:** the request is checked against an explicit, versioned policy, and it needs a signed approval from a person you trust. No approval, no action, reads included ([CLAIMS.md 2.47](docs/CLAIMS.md)).
-- **When it runs:** on the supported paths, the gateway resolves connector credentials, and an agent calling the HTTP API never receives them. Code on the same host that can read the server's environment can still read those credentials ([G-128](docs/VERIFICATION-GAPS.md)). The gateway releases one approved action, once, through a connector.
+- **Before an action:** the request is checked against an explicit, versioned policy, and it needs a signed approval from a person you trust. No approval, no action, reads included ([CLAIMS.md 2.47](docs/internal/CLAIMS.md)).
+- **When it runs:** on the supported paths, the gateway resolves connector credentials, and an agent calling the HTTP API never receives them. Code on the same host that can read the server's environment can still read those credentials ([G-128](docs/internal/VERIFICATION-GAPS.md)). The gateway releases one approved action, once, through a connector.
 - **After it runs:** a signed record of what was authorized and what happened. Anyone can verify it offline, using only the public key they choose to trust. The verifier cannot prove that the key belongs to Parmana.
 
 Parmana does not decide what the agent should do. It decides whether the agent was allowed to do it, and it records that decision in a signed record that anyone can check with the verifier.
 
-Parmana checks actions that leave through its gateway. It does not check an agent run by a customer or a partner that calls one of your systems directly. That path is not covered yet; see [G-129](docs/VERIFICATION-GAPS.md) and [RFC-0024](docs/rfcs/RFC-0024-Inbound-Agent-Authorization.md).
+Parmana checks actions that leave through its gateway. It does not check an agent run by a customer or a partner that calls one of your systems directly. That path is not covered yet; see [G-129](docs/internal/VERIFICATION-GAPS.md) and [RFC-0024](docs/internal/rfcs/RFC-0024-Inbound-Agent-Authorization.md).
+
+## Why the claims matter
+
+Every statement about what Parmana does is written down in [docs/internal/CLAIMS.md](docs/internal/CLAIMS.md). Each claim is numbered, states the scope its evidence supports, names the code and tests behind it, and lists what is not yet true. Changes to claims are tracked in [docs/internal/CLAIMS-CHANGELOG.md](docs/internal/CLAIMS-CHANGELOG.md), so a change to a claim appears in review, not silently in a README.
+
+This matters for three reasons:
+
+- **You check a claim instead of trusting a pitch.** Each claim points to its evidence. If the evidence covers only part of the claim, the claim says so.
+- **The limits sit next to the claim.** Where a control has a known gap, the claim names it and links to the gap log, so you see the boundary before you rely on it.
+- **A claim that fails can be challenged.** A challenge is recorded against the claim under [RFC-0022](docs/internal/rfcs/RFC-0022-Challenge-Record.md), so disagreement becomes a tracked item, not an argument in a comment thread.
 
 ## Find your way around
 
@@ -111,7 +121,6 @@ Authority --> Authorization --> Intent --> Business Transaction
 | `@parmana/approval`            | Verifies signed approvals issued by a business authority, independent of the caller and of Parmana's runtime                             |
 | `@parmana/capability-registry` | Binds each capability to the policy that governs it, and refuses a request that names another                                            |
 | `@parmana/execution-system`    | The interface approved requests are forwarded through, with an HTTP implementation                                                       |
-| `@parmana/connector-*`         | Connectors: HubSpot, GitHub, Slack and Paytm                                                                                             |
 | `@parmana/governance-ui`       | Internal UI to propose and review policy changes; approval stays on the approver's machine                                               |
 | `@parmana/replay`              | Deterministic reconstruction of a past policy decision                                                                                   |
 | `@parmana/storage`             | Append-only persistence, in memory or Supabase-backed                                                                                    |
@@ -152,17 +161,23 @@ These rules hold at every step:
 
 - A business system never calls Parmana, and a caller never calls a connector or a business system directly.
 - Parmana core does not hold the credentials for a business system that an external connector serves.
-- A connector runs only an action that Parmana has approved and signed for it, and it runs that action once. A repeated release with the same transaction id is refused.
+- A connector runs only an action that Parmana has approved and signed for it, and it runs that action once. A repeated release with the same transaction id gets the first answer back, and the action does not run again.
 
-**Current state.** HubSpot, GitHub, Slack and Paytm still run inside this repository. The plan is to move each one to a connector service outside it; see [ADR-0018](docs/adr/ADR-0018-Connectors-Outside-Core.md), which is proposed and not yet accepted. New connectors are built outside this repository and are registered through the flow described below.
+**Current state.** Built-in connectors are not in this repository. They moved to connector services outside it; see [ADR-0018](docs/internal/adr/ADR-0018-Connectors-Outside-Core.md). New connectors are built outside this repository and are registered through the flow described below.
+
+## Reads, writes and executions
+
+Parmana gates every kind of action the same way. A read, a write, or an execution runs only after a signed human approval, and reads included: a policy rule that approves an action must require that approval.
+
+The action is carried out by an external connector, not by this repository. Parmana releases the approved action to the connector's endpoint as a signed release, and the connector performs the HTTP call its manifest declares. A capability marked `effect: read` must use `GET`. That rule is in [parmana-connect](https://github.com/pavancharak/parmana-connect), and it is not yet merged to its `main` branch (G-156). The external path has not yet been run against a deployed Parmana (G-133).
 
 ## Connecting a system you run
 
-Built-in connectors cover HubSpot, GitHub, Slack and Paytm. For any other system, an operator registers an **external connector**: a capability, the HTTPS endpoint that serves it, and the policy that governs it. One person proposes the registration, and a different person approves it with a step-up signature. Once active, Parmana sends each approved action to the endpoint as a signed release. The endpoint checks the release's signature and audience, and it needs no shared secret.
+An operator registers an **external connector**: a capability, the HTTPS endpoint that serves it, and the policy that governs it. One person proposes the registration, and a different person approves it with a step-up signature. Once active, Parmana sends each approved action to the endpoint as a signed release. The endpoint checks the release's signature and audience, and it needs no shared secret.
 
 - [Connect any external system](https://docs.parmanasystems.com/guides/connect-any-external-system): the full order of steps.
 - [The parmana-connect service](https://docs.parmanasystems.com/connectors/parmana-connect): a ready-made endpoint that verifies releases and runs a manifest's HTTP call. Its source is in [pavancharak/parmana-connect](https://github.com/pavancharak/parmana-connect).
-- [ADR-0013](docs/adr/ADR-0013-Generic-External-Connector.md): the decision record, with its alternatives and limits.
+- [ADR-0013](docs/internal/adr/ADR-0013-Generic-External-Connector.md): the decision record, with its alternatives and limits.
 
 ## Reports and evidence
 
@@ -172,18 +187,17 @@ Every report is listed once, here. Start with the question you have.
 
 - **Live CI runs:** every push runs the build, lint, typecheck and test suite. Results for each run are on the [CI workflow page](https://github.com/pavancharak/parmana-core/actions/workflows/ci.yml). To reproduce them, see [Quick start](#quick-start).
 - **Evaluation scenarios:** the 16 attack scenarios are in [evaluations/scenarios.json](evaluations/scenarios.json). [EVALUATION.md](EVALUATION.md) explains the result.
-- **Mutation testing:** [docs/MUTATION-TESTING.md](docs/MUTATION-TESTING.md) breaks the security code on purpose and checks that the tests notice. Fuzz tests send damaged and arbitrary requests, policies and records, and require a clear refusal, never a crash.
+- **Mutation testing:** [docs/internal/testing/MUTATION-TESTING.md](docs/internal/testing/MUTATION-TESTING.md) breaks the security code on purpose and checks that the tests notice. Fuzz tests send damaged and arbitrary requests, policies and records, and require a clear refusal, never a crash.
 
 **Security**
 
 - **Threat model:** [THREAT-MODEL.md](THREAT-MODEL.md) gives each threat its control, the attack that tests it, and the risk that remains.
 - **Security challenge:** [SECURITY-CHALLENGE.md](SECURITY-CHALLENGE.md) describes what counts as breaking Parmana on a copy you run yourself, and credits every confirmed break.
-- **Open issues and past incidents:** [docs/VERIFICATION-GAPS.md](docs/VERIFICATION-GAPS.md) lists every gap still open, with its evidence and what to do meanwhile. Past incidents and their fixes are recorded there too; see G-24 for an authorization bypass that was found and fixed. The full incident log is in [04-INCIDENTS-LOG.md](04-INCIDENTS-LOG.md).
-- **Open work and priorities:** [docs/BACKLOG.md](docs/BACKLOG.md) lists every open item (gaps, decisions, and operator steps) with its priority, owner, and whether it can be worked on from a development environment.
-- **Claims you can check:** [docs/CLAIMS.md](docs/CLAIMS.md) states each claim at the scope its evidence supports, with the code and tests behind it, and lists what is not yet true.
+- **Open issues and past incidents:** [docs/internal/VERIFICATION-GAPS.md](docs/internal/VERIFICATION-GAPS.md) lists every gap still open, with its evidence and what to do meanwhile. Past incidents and their fixes are recorded there too; see G-24 for an authorization bypass that was found and fixed. The full incident log is in [04-INCIDENTS-LOG.md](04-INCIDENTS-LOG.md).
+- **Claims you can check:** [docs/internal/CLAIMS.md](docs/internal/CLAIMS.md) states each claim at the scope its evidence supports, with the code and tests behind it, and lists what is not yet true.
 - **Mapped to standards:** the [OWASP mapping](https://docs.parmanasystems.com/security/owasp-mapping) covers the OWASP Top 10 for LLM Applications and for Agentic Applications (2026). The [regulation mapping](https://docs.parmanasystems.com/security/regulation-mapping) covers the EU AI Act, the NIST AI RMF, ISO/IEC 42001 and RBI guidance.
 - **Supply chain:** [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/pavancharak/parmana-core), CodeQL on every change, and signed build provenance for SDK releases and the server image.
-- **Reviewed internally:** four internal passes traced the execution path for every registered capability, looking for any action that could run without authorization. The fourth pass found none for the capabilities in production, with the caveats in [CLAIMS.md 2.25](docs/CLAIMS.md). These were internal reviews, not an independent audit.
+- **Reviewed internally:** four internal passes traced the execution path for every registered capability, looking for any action that could run without authorization. The fourth pass found none for the capabilities in production, with the caveats in [CLAIMS.md 2.25](docs/internal/CLAIMS.md). These were internal reviews, not an independent audit.
 
 **Governance**
 
@@ -191,20 +205,18 @@ Every report is listed once, here. Start with the question you have.
 
 **Third-party listing**
 
-- **AgenTrust:** the `parmana-server` integration is listed in the AgenTrust integrations repository at tier `verified` (read 2026-10-29). That tier covers the offline fixture path only: the connector results are mocks, and no conformance level is claimed. See [CLAIMS.md 3.23](docs/CLAIMS.md) and the [AgenTrust refund evaluation](docs/evaluation/agentrust-refund/README.md).
+- **AgenTrust:** the `parmana-server` integration is listed in the AgenTrust integrations repository at tier `verified` (read 2026-10-29). That tier covers the offline fixture path only: the connector results are mocks, and no conformance level is claimed. See [CLAIMS.md 3.23](docs/internal/CLAIMS.md) and the [AgenTrust refund evaluation](docs/internal/evaluation/agentrust-refund/README.md).
 
 **Paper and comparison**
 
-- **Technical paper:** design, threat model, evaluation and limitations, in [docs/paper/parmana-paper.pdf](docs/paper/parmana-paper.pdf).
+- **Technical paper:** design, threat model, evaluation and limitations, in [docs/internal/paper/parmana-paper.pdf](docs/internal/paper/parmana-paper.pdf).
 - **Compared honestly:** [How Parmana compares](https://docs.parmanasystems.com/how-parmana-compares) sets Parmana beside IAM, API gateways and LLM guardrails, including where it is weaker.
 
 ## Status and scope
 
-Assessed at Technology Readiness Level 6 (prototype demonstrated in a relevant environment) on the evidence in [docs/CLAIMS.md](docs/CLAIMS.md). Not claimed: sustained volume, load-bearing production traffic, high availability, or multi-tenant production operation.
+Assessed at Technology Readiness Level 6 (prototype demonstrated in a relevant environment) on the evidence in [docs/internal/CLAIMS.md](docs/internal/CLAIMS.md). Not claimed: sustained volume, load-bearing production traffic, high availability, or multi-tenant production operation.
 
-The claims file also tracks what has no implementation yet. Built-in connectors are source changes; see [docs/connectors/BUILDING_A_CONNECTOR.md](docs/connectors/BUILDING_A_CONNECTOR.md). An external connector is different: an operator registers it through maker and checker approval, with no deploy, as [ADR-0013](docs/adr/ADR-0013-Generic-External-Connector.md) describes.
-
-The HubSpot connector has been run against HubSpot's production API: a deal stage and amount were changed under policy through the signed gateway, then read back and reverted ([CLAIMS.md 3.10](docs/CLAIMS.md)).
+The claims file also tracks what has no implementation yet. Vendor connectors no longer live in this repository. They moved to connector services outside it under [ADR-0018](docs/internal/adr/ADR-0018-Connectors-Outside-Core.md). An external connector is registered through maker and checker approval, with no deploy, as [ADR-0013](docs/internal/adr/ADR-0013-Generic-External-Connector.md) describes. A connector built into the source is described in [docs/internal/connectors/BUILDING_A_CONNECTOR.md](docs/internal/connectors/BUILDING_A_CONNECTOR.md).
 
 ## Packages
 
@@ -226,9 +238,9 @@ The verifier lives in its own repository, [pavancharak/parmana-verifier](https:/
 - **Production:** [Deploy to production](https://docs.parmanasystems.com/deployment/production) covers the required configuration, the fail-closed startup checks, and how to confirm a deployment.
 - **Your own infrastructure:** [Self hosted](https://docs.parmanasystems.com/self-hosted/overview) covers running it with Docker Compose.
 - **The hosted instance:** [Live API and demos](https://docs.parmanasystems.com/guides/live-api-and-demos) covers authentication, the request shape, the deployed policies and offline verification.
-- **Connecting an agent:** [docs/connectors/CONNECTING_AN_AGENT.md](docs/connectors/CONNECTING_AN_AGENT.md).
+- **Connecting an agent:** [docs/internal/connectors/CONNECTING_AN_AGENT.md](docs/internal/connectors/CONNECTING_AN_AGENT.md).
 
-Integration tests against HubSpot's real API are opt-in and skipped by default, so `npm test` never needs live credentials. The environment variables that enable them are named in the test files. A separate throughput script measures `POST /execute`:
+Integration tests against live external APIs are opt-in and skipped by default, so `npm test` never needs live credentials. The environment variables that enable them are named in the test files. A separate throughput script measures `POST /execute`:
 
 ```bash
 npm run loadtest -- --connections 20 --duration 15
@@ -249,7 +261,7 @@ Email **founder@parmanasystems.com** with a line about your use case. The websit
 
 ## License
 
-Parmana is licensed under the [Apache License, Version 2.0](./LICENSE). The trademark terms are in [NOTICE](./NOTICE). To cite Parmana, use [CITATION.cff](CITATION.cff), or **Cite this repository** on GitHub.
+Parmana is licensed under the [Apache License, Version 2.0](LICENSE). The trademark terms are in [NOTICE](NOTICE). To cite Parmana, use [CITATION.cff](CITATION.cff), or **Cite this repository** on GitHub.
 
 Copyright (c) 2026 Parmana Systems Private Limited.
 
@@ -267,6 +279,17 @@ New posts are published regularly, so check the blog for updates.
 
 ## Documentation
 
-**New here? Start with [The Parmana Handbook](https://docs.parmanasystems.com/handbook/overview).** It covers every capability in this codebase in 23 chapters, and is also available as a [PDF](https://docs.parmanasystems.com/handbook/download).
+**New here? Start with [The Parmana Handbook](https://docs.parmanasystems.com/handbook/overview).** It covers every capability in this codebase in 22 chapters, and is also available as a [PDF](https://docs.parmanasystems.com/handbook/download).
 
-[docs/README.md](docs/README.md) indexes the rest of the repository documentation: the claims register, the gap log, what is left to do, and the architecture decisions. To add a connector, start with [CONNECTOR_ISOLATION.md](docs/architecture/CONNECTOR_ISOLATION.md) and [BUILDING_A_CONNECTOR.md](docs/connectors/BUILDING_A_CONNECTOR.md).
+The documentation lives in two places:
+
+- **[docs/site/](docs/site/)** is the public documentation: guides, concepts, the SDK reference and the handbook. It is published at [docs.parmanasystems.com](https://docs.parmanasystems.com).
+- **[docs/internal/](docs/internal/)** holds the maintainer records: the claims register, the gap log, the architecture decisions (ADRs), the design proposals (RFCs), the operator runbooks and the test notes. [docs/README.md](docs/README.md) is the index to these.
+
+Three indexes in [docs/internal/indexes/](docs/internal/indexes/) answer common questions in one table each:
+
+- **[verification-gaps-index.md](docs/internal/indexes/verification-gaps-index.md)**: every gap in the gap log, with its status.
+- **[claims-index.md](docs/internal/indexes/claims-index.md)**: every claim in the claims register, with the gaps each one mentions.
+- **[adr-rfc-index.md](docs/internal/indexes/adr-rfc-index.md)**: every decision record and proposal, with its status.
+
+To add a connector, start with [CONNECTOR_ISOLATION.md](docs/internal/architecture/CONNECTOR_ISOLATION.md) and [BUILDING_A_CONNECTOR.md](docs/internal/connectors/BUILDING_A_CONNECTOR.md).

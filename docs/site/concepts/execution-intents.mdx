@@ -55,20 +55,20 @@ An Execution Intent closes that window. Before the connector is called, the runt
 
 The intent contains only facts that exist before release. It never contains the execution result, and never contains the raw intent parameters.
 
-| Field                              | Meaning                                                                                                                                                                   |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `intentId`                         | Unique id of this intent.                                                                                                                                                 |
-| `businessTransactionId`            | The transaction it belongs to. At most one intent exists per transaction.                                                                                                 |
-| `decisionId`                       | The decision that approved the action.                                                                                                                                    |
-| `authorizationId`                  | The signed execution authorization. Equals `authorization.payload.authorizationId` in the Trust Record.                                                                   |
-| `policyName`, `policyVersion`      | The policy that approved it.                                                                                                                                              |
-| `policyContentHash`                | Hash of the exact policy content in force. Copied from the signed authorization. Present when the authorization has one.                                                  |
-| `signalsHash`                      | Hash of the signals that were evaluated. Copied from the signed authorization. Present when the authorization has one.                                                    |
-| `businessTransactionHash`          | Hash of the executable content (action, target and parameters). Copied from the signed authorization. It binds the intent to the exact parameters without repeating them. |
-| `action`, `target`                 | What is about to be released, for example `paytm:refund` and the order id. Together with `businessTransactionId` this is what an operator searches for at the connector.  |
-| `submittedBy`, `grantedCapability` | The authenticated caller and granted capability, when recorded.                                                                                                           |
-| `createdAt`                        | When the intent was created, before release.                                                                                                                              |
-| `intentHash`, `signature`          | Canonical hash and signature, made with the deployment's signing key (local, or AWS KMS in production).                                                                   |
+| Field                              | Meaning                                                                                                                                                                       |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `intentId`                         | Unique id of this intent.                                                                                                                                                     |
+| `businessTransactionId`            | The transaction it belongs to. At most one intent exists per transaction.                                                                                                     |
+| `decisionId`                       | The decision that approved the action.                                                                                                                                        |
+| `authorizationId`                  | The signed execution authorization. Equals `authorization.payload.authorizationId` in the Trust Record.                                                                       |
+| `policyName`, `policyVersion`      | The policy that approved it.                                                                                                                                                  |
+| `policyContentHash`                | Hash of the exact policy content in force. Copied from the signed authorization. Present when the authorization has one.                                                      |
+| `signalsHash`                      | Hash of the signals that were evaluated. Copied from the signed authorization. Present when the authorization has one.                                                        |
+| `businessTransactionHash`          | Hash of the executable content (action, target and parameters). Copied from the signed authorization. It binds the intent to the exact parameters without repeating them.     |
+| `action`, `target`                 | What is about to be released, for example `erp:invoice-pay` and the invoice id. Together with `businessTransactionId` this is what an operator searches for at the connector. |
+| `submittedBy`, `grantedCapability` | The authenticated caller and granted capability, when recorded.                                                                                                               |
+| `createdAt`                        | When the intent was created, before release.                                                                                                                                  |
+| `intentHash`, `signature`          | Canonical hash and signature, made with the deployment's signing key (local, or AWS KMS in production).                                                                       |
 
 A real captured intent is in [Get an Execution Intent](/api-reference/endpoints/get-execution-intent).
 
@@ -213,11 +213,11 @@ Do this only **after** you have checked the connector, using `businessTransactio
 curl -s -X POST "$PARMANA_API_URL/execution-intents/<businessTransactionId>/resolve" \
   -H "Authorization: Bearer $PARMANA_OPERATOR_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"resolution":"NOT_EXECUTED","note":"Checked the Paytm dashboard for order 1001. No refund exists."}'
+  -d '{"resolution":"NOT_EXECUTED","note":"Checked the ERP for invoice INV-1001. No payment exists."}'
 ```
 
 ```powershell PowerShell
-$body = @{ resolution = "NOT_EXECUTED"; note = "Checked the Paytm dashboard for order 1001. No refund exists." } | ConvertTo-Json
+$body = @{ resolution = "NOT_EXECUTED"; note = "Checked the ERP for invoice INV-1001. No payment exists." } | ConvertTo-Json
 Invoke-RestMethod -Method Post "$env:PARMANA_API_URL/execution-intents/<businessTransactionId>/resolve" `
   -Headers @{ Authorization = "Bearer $env:PARMANA_OPERATOR_KEY" } `
   -ContentType "application/json" -Body $body
@@ -361,7 +361,7 @@ To close an intent after you checked the connector, pass what you found and a no
 ```typescript typescript
 await operator.resolveExecutionIntent(businessTransactionId, {
   resolution: "NOT_EXECUTED",
-  note: "Checked the Paytm dashboard for order 1001. No refund exists.",
+  note: "Checked the ERP for invoice INV-1001. No payment exists.",
 });
 ```
 
@@ -369,7 +369,7 @@ await operator.resolveExecutionIntent(businessTransactionId, {
 operator.resolve_execution_intent(
     business_transaction_id,
     resolution="NOT_EXECUTED",
-    note="Checked the Paytm dashboard for order 1001. No refund exists.",
+    note="Checked the ERP for invoice INV-1001. No payment exists.",
 )
 ```
 
@@ -442,16 +442,4 @@ One more signing operation and one more database write happen before every relea
 
 ## What was verified
 
-On 2026-09-21, against the real stack: the production Docker image built from this code, a real Postgres with every migration applied, and the real AWS KMS key `alias/default` in `ap-south-1` (`ECC_NIST_EDWARDS25519`), using the limited IAM user `parmana-kms-operator`. The full refund chain ran through the real `example-agent` with fake Paytm staging credentials, because what was under test is the intent lifecycle and not Paytm. 23 of 23 checks passed:
-
-| Scenario                                        | Result                                                                                                                                                                                                                                                                                                                                     |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| A normal request                                | Released exactly once. Intent ended `FINALIZED` with `finalizationMode: INLINE`. The intent verified through the API and offline with only the public key. The Trust Record verified offline with only the public key.                                                                                                                     |
-| The Trust Record cannot be stored after release | `500 EXECUTION_RECORD_INCOMPLETE`. A signed intent survived in `RELEASED`. The list showed it, and refused a non human credential with `403`. Finalize rebuilt the record with the connector called exactly once in total, verified it, issued a receipt, and the record verified offline. A second finalize returned `ALREADY_FINALIZED`. |
-| The intent cannot be stored                     | `503 EXECUTION_INTENT_UNAVAILABLE` with the text "Nothing was executed". The connector was not called and no intent row was written.                                                                                                                                                                                                       |
-
-A separate repeat run produced an intent in state `ERRORED` with the reason `PaytmConnector "paytm" request to capability "paytm:refund" timed out after 10000ms`. That was a real connector timeout on a slow Paytm staging call, and it is the designed behavior: the release stage raised an error, so the intent recorded that the outcome is unknown and did not claim nothing happened.
-
-**Closing an intent by hand (resolve) was verified later the same day, first with local signing keys and then under real AWS KMS.** With the same production image and a real Postgres, the connector was made unreachable, so the release raised a real error (`fetch failed`) and left the intent in `ERRORED`. Finalize refused it with `409`. A resolve with no note was refused with `400`, and a non human credential with `403`. A verified human then closed it: `RESOLVED`, `NOT_EXECUTED`, the note and the author recorded, and the intent left the unfinalized list. A second resolve changed nothing (`ALREADY_RESOLVED`), and resolving a `FINALIZED` intent was refused with `409`. 35 of 35 checks passed with local keys, and the final run under KMS, which has one more check, passed 37 of 37. An earlier attempt under KMS had one scenario fail because the agent's own call to Paytm staging failed on the network (`fetch failed`): the intent correctly ended `ERRORED` and the scenario never reached the state it tests. The check no longer depends on the internet: the rig now answers the agent's one call to Paytm staging with a local stand in (the response shape real staging returned for a bad merchant id), and it passed 37 of 37 three times in a row under KMS. The 23 of 23 run above called real Paytm staging with fake credentials. A later run also failed once because the temporary AWS credentials handed to the container had expired after about 15 minutes, so the rig now records their expiry and stops early with an instruction. The resolve SQL was also run against a real Postgres (12 checks, including both database constraints).
-
-Not verified: the failure paths (finalize, resolve) on Vercel, or a real Paytm refund. The automated tests cover the lifecycle at unit, storage and HTTP level, and the storage queries were also run against a real Postgres.
+The intent lifecycle is covered by automated tests at unit, storage and HTTP level, and the storage queries were run against a real Postgres. A dated live check, run against a production build with a real KMS key, is recorded in [the claims changelog](https://github.com/pavancharak/parmana-core/blob/main/docs/CLAIMS-CHANGELOG.md). Its connector and staging details are not repeated here.

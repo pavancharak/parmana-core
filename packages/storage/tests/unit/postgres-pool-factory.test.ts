@@ -23,11 +23,15 @@ function createPoolMock(connect: () => Promise<{ release: () => void }>) {
 describe("PostgresPoolFactory", () => {
   const originalDatabaseUrl = process.env.DATABASE_URL;
   const originalSchema = process.env.PARMANA_DB_SCHEMA;
+  const originalCa = process.env.PARMANA_DATABASE_CA;
+  const originalCaFile = process.env.PARMANA_DATABASE_CA_FILE;
 
   beforeEach(() => {
-    // The pool reads PARMANA_DB_SCHEMA from the environment. A value set in a
-    // developer's .env must not change these expectations.
+    // The pool reads these from the environment. A value set in a developer's
+    // .env (a CA file adds TLS options) must not change these expectations.
     delete process.env.PARMANA_DB_SCHEMA;
+    delete process.env.PARMANA_DATABASE_CA;
+    delete process.env.PARMANA_DATABASE_CA_FILE;
   });
 
   afterEach(() => {
@@ -41,6 +45,18 @@ describe("PostgresPoolFactory", () => {
       delete process.env.PARMANA_DB_SCHEMA;
     } else {
       process.env.PARMANA_DB_SCHEMA = originalSchema;
+    }
+
+    if (originalCa === undefined) {
+      delete process.env.PARMANA_DATABASE_CA;
+    } else {
+      process.env.PARMANA_DATABASE_CA = originalCa;
+    }
+
+    if (originalCaFile === undefined) {
+      delete process.env.PARMANA_DATABASE_CA_FILE;
+    } else {
+      process.env.PARMANA_DATABASE_CA_FILE = originalCaFile;
     }
 
     vi.doUnmock("pg");

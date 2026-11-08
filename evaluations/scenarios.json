@@ -1,5 +1,5 @@
 {
-  "$comment": "Security evaluation scenarios run by `npm run evaluate`. Each scenario names what an attacker controls, the attack, the invariant that must hold, and the test files that fail if it does not. A scenario is BLOCKED when every test in its files passes. Claim numbers refer to docs/CLAIMS.md. See EVALUATION.md, section 3.",
+  "$comment": "Security evaluation scenarios run by `npm run evaluate`. Each scenario names what an attacker controls, the attack, the invariant that must hold, and the test files that fail if it does not. A scenario is BLOCKED when every test in its files passes. Claim numbers refer to docs/internal/CLAIMS.md. See EVALUATION.md, section 3.",
   "scenarios": [
     {
       "id": "EV-01",
@@ -50,7 +50,7 @@
       "claims": ["2.42", "2.44", "2.47"],
       "tests": [
         "packages/approval/tests/unit/ApprovalSignalVerifier.test.ts",
-        "packages/api/tests/integration/paytm-refund.integration.test.ts",
+        "packages/api/tests/integration/action-without-human-approval.integration.test.ts",
         "packages/api/tests/unit/connector-policies-not-self-authorizing.test.ts"
       ]
     },
@@ -126,7 +126,7 @@
       "invariant": "A connector's credential never reaches the caller, the decision or the evidence.",
       "claims": ["2.23", "3.10", "3.17"],
       "tests": [
-        "packages/execution-gateway/tests/unit/credential-non-exposure.test.ts",
+        "packages/api/tests/integration/credential-non-exposure.integration.test.ts",
         "packages/api/tests/integration/credential-isolation.integration.test.ts"
       ]
     },

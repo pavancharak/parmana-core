@@ -40,14 +40,14 @@ released to the system. Every decision, approved or refused, leaves a signed rec
 
 ## The words used in this book
 
-| Word                 | Meaning                                                                                                                      |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Capability, action   | What the agent wants done, `namespace:verb`, for example `paytm:refund`.                                                     |
-| Business Transaction | One request to act, with its identifiers, intent, policy and signals.                                                        |
-| Signal               | A fact in the request that a policy reads, such as `refundAmount` or `managerApproved`.                                      |
-| Approval signal      | A signal that counts as true only with a signed approval (`signals.approvalArtifact`).                                       |
-| Policy in effect     | The version of the policy bound to an action that was most recently approved.                                                |
-| Maker, checker       | The person who proposes a change, and the different person who approves it.                                                  |
-| Connector            | The part that performs an approved action on a system: built in (HubSpot, GitHub, Paytm, Slack) or external (your endpoint). |
+| Word                 | Meaning                                                                                   |
+| -------------------- | ----------------------------------------------------------------------------------------- |
+| Capability, action   | What the agent wants done, `namespace:verb`, for example `erp:invoice-pay`.               |
+| Business Transaction | One request to act, with its identifiers, intent, policy and signals.                     |
+| Signal               | A fact in the request that a policy reads, such as `refundAmount` or `managerApproved`.   |
+| Approval signal      | A signal that counts as true only with a signed approval (`signals.approvalArtifact`).    |
+| Policy in effect     | The version of the policy bound to an action that was most recently approved.             |
+| Maker, checker       | The person who proposes a change, and the different person who approves it.               |
+| Connector            | The part that performs an approved action on a system: an external endpoint you register. |
 
 More in the [glossary](/glossary).

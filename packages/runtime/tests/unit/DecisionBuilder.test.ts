@@ -37,13 +37,25 @@ function policyDecision(
 }
 
 /**
- * docs/VERIFICATION-GAPS.md G-44: PolicyEngine.evaluate() computes a
+ * docs/internal/VERIFICATION-GAPS.md G-44: PolicyEngine.evaluate() computes a
  * structured rule-match trace (matchedRuleId/evaluatedRules/matchedPath)
  * that DecisionBuilder previously discarded before producing the
  * Decision that actually gets persisted and signed. These tests prove
  * the trace now survives into the built Decision, verbatim.
  */
 describe("DecisionBuilder", () => {
+  it("names the evaluation method and version that produced the verdict (G-148)", () => {
+    const decision = new DecisionBuilder().build(
+      transaction(),
+      policyDecision(),
+    );
+
+    expect(decision.evaluationMethod).toEqual({
+      id: "deterministic-rules",
+      version: "2",
+    });
+  });
+
   it("carries matchedRuleId, evaluatedRules, and matchedPath through from the PolicyDecision", () => {
     const decision = new DecisionBuilder().build(
       transaction(),

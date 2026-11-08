@@ -151,7 +151,7 @@ On approve, the server does this, in order, and stops at the first failure:
 
 ### 6. It takes effect
 
-For an action bound to a policy (such as `paytm:refund` to `customer-refund`), the version in effect is the one with the most recent approval, so the approval is the release: no deploy. From then on:
+For an action bound to a policy (such as `erp:invoice-pay` to `customer-refund`), the version in effect is the one with the most recent approval, so the approval is the release: no deploy. From then on:
 
 - Agents must name that version. A request naming any other version, including an older one that was approved before, is refused before any rule runs, with a message naming the version in effect.
 - To roll back, approve the older version again. The newest approval wins.
@@ -235,7 +235,7 @@ The private key stays on the manager's machine. The public key is trusted throug
 npx tsx scripts/sign-approval.ts \
   --private-key-file ~/.parmana/approver-example__approver-example-key-1.private.pem \
   --approver-id approver-example --key-id approver-example-key-1 \
-  --capability paytm:refund --resource-id ORD-1042 --max-amount 75000 --out approval.json
+  --capability erp:invoice-pay --resource-id INV-1042 --max-amount 75000 --out approval.json
 ```
 
 The agent sends a new request with the approval signal set to `true` and the contents of `approval.json` in `signals.approvalArtifact`. Parmana checks the approver is trusted and not revoked, the Ed25519 signature, the expiry, the action, the resource and the amount taken from the request, never from the agent's signals, and that the approval was not used before. It checks again at the gateway just before release. Without a valid approval the request is refused:

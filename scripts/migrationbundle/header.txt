@@ -8,7 +8,7 @@
 -- for when and why this is needed.
 --
 -- Safe to run once against an empty project. NOT safe to run again against a
--- project that already holds data (G-61, docs/VERIFICATION-GAPS.md, found on
+-- project that already holds data (G-61, docs/internal/VERIFICATION-GAPS.md, found on
 -- 2026-09-25): several migrations drop and add back the same CHECK constraint
 -- with a longer list of allowed values each time, so a second run adds back an
 -- older, narrower constraint over rows written under a newer one, and fails

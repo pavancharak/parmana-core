@@ -19,6 +19,11 @@ export interface BusinessSignalQuery {
   /** The action and transaction the fact is needed for. */
   readonly action: string;
   readonly businessTransactionId: string;
+  /**
+   * Only the Intent parameters the policy declares for this source (its `parameters` list). Never the
+   * whole Intent. Absent when the policy declares none.
+   */
+  readonly parameters?: Readonly<Record<string, unknown>>;
 }
 
 /**

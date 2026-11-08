@@ -116,8 +116,7 @@ Every route module lives in `packages/api/src/routes/`:
 ### `trust proxy`
 
 `app.set("trust proxy", 1)` (`packages/api/src/app.ts:216`) trusts exactly one proxy hop, which
-matches this codebase's actual deployment fronting (Fly.io's edge, per `fly.toml`'s
-`force_https`). Without this, `req.ip` and `req.protocol`/`req.secure` reflect the proxy's
+matches this codebase's actual deployment fronting (a single managed edge that forces HTTPS). Without this, `req.ip` and `req.protocol`/`req.secure` reflect the proxy's
 own connection to the process, not the original client's.
 
 ## How It Enables Things, With a Concrete Example

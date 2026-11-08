@@ -9,8 +9,7 @@
  *
  * Deliberately narrower than a generic KV store: get-by-reference
  * only, no listing, no writing. Every existing connector credential
- * provider (createHubSpotCredentialProvider.ts,
- * createPaytmCredentialProvider.ts) already reads exactly one named
+ * provider (a per-connector credential provider) already reads exactly one named
  * secret per connector, so a single getSecret() call is all any
  * caller needs.
  */

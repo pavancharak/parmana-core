@@ -51,7 +51,7 @@ The approver signs on their own machine, for one action, one resource and, where
 npx tsx scripts/sign-approval.ts \
   --private-key-file ~/.parmana/approver-example__approver-example-key-1.private.pem \
   --approver-id approver-example --key-id approver-example-key-1 \
-  --capability paytm:refund --resource-id ORD-1042 --max-amount 75000 --out approval.json
+  --capability erp:invoice-pay --resource-id INV-1042 --max-amount 75000 --out approval.json
 ```
 
 ```typescript TypeScript
@@ -65,8 +65,8 @@ const approval = signApproval({
   ),
   approverId: "approver-example",
   keyId: "approver-example-key-1",
-  capability: "paytm:refund",
-  resourceId: "ORD-1042",
+  capability: "erp:invoice-pay",
+  resourceId: "INV-1042",
   maxAmount: 75000,
 });
 ```
@@ -80,8 +80,8 @@ approval = sign_approval(
     private_key_pem=Path("approver-example__approver-example-key-1.private.pem").read_text(),
     approver_id="approver-example",
     key_id="approver-example-key-1",
-    capability="paytm:refund",
-    resource_id="ORD-1042",
+    capability="erp:invoice-pay",
+    resource_id="INV-1042",
     max_amount=75000,
 )
 ```
@@ -161,7 +161,7 @@ The Refusal Records stay the complete list. Setup and receiver code: [Approval n
 - **A refused request is never approved later.** Nothing waits. After the approver signs, the agent sends a new
   request.
 - **An approval covers the action and the resource, and the amount where the policy names one.** It does not fix
-  other parameters: an approval for a Slack channel does not fix the message text. The approver trusts the agent with
+  other parameters: an approval for a message channel does not fix the message text. The approver trusts the agent with
   those details for that one use.
 - **Facts the agent declares stay its word.** A policy should use them only to refuse.
 - **There is no automatic path.** No policy can approve without a person; the validator refuses to load one that
@@ -216,5 +216,5 @@ chat or a ticket.
 ## See it run
 
 - Tutorial 119: an approval accepted, then refused when reused, stretched and moved.
-- Tutorials 120 to 122 in `examples/tutorials/`: approvals for the rule itself, a read, a Slack post and a HubSpot
+- Tutorials 120 to 122 in `examples/tutorials/`: approvals for the rule itself, a read, a message and a record
   update.

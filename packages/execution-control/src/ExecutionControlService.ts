@@ -15,8 +15,10 @@ import type {
 
 /**
  * Re-verifies a release before any connector runs. Throws on failure.
- * Must not consume nonces: the gateway already consumes the nonce on the
- * normal path, and a second consumption would refuse every release.
+ * Must not consume nonces. The single consumption on the release path is in
+ * the release verifier (createReleaseVerifier), which runs once per release
+ * when execution control is wired. The gateway skips its own consumption in
+ * that case, so a second consumption here would refuse every release.
  */
 export type ReleaseVerifier = (release: ExecutionRelease) => Promise<void>;
 

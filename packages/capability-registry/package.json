@@ -1,6 +1,6 @@
 {
   "name": "@parmana/capability-registry",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -21,12 +21,12 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@parmana/shared": "0.1.0",
+    "@parmana/shared": "2.0.0",
     "vitest": "^5.0.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "eslint": "^10.13.0",
+    "eslint": "^10.14.0",
     "eslint-config-prettier": "^10.1.8",
     "tsx": "^4.23.15",
     "typescript-eslint": "^8.72.1"

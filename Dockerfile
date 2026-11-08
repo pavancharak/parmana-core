@@ -3,7 +3,7 @@
 # Multi-stage build for @parmana/api. Platform-agnostic (Dockerfile-first):
 # builds a single container image that runs the HTTP API (docker/entrypoint.sh
 # starts it and forwards termination signals to it).
-# Works unmodified on any Docker-based PaaS (Railway, Render, Fly, a bare
+# Works unmodified on any Docker-based PaaS (Railway, Render, a bare
 # `docker run`, ...).
 #
 # The list of packages/*/package.json COPY lines below is intentionally
@@ -23,11 +23,7 @@ COPY package.json package-lock.json ./
 COPY packages/api/package.json packages/api/package.json
 COPY packages/approval/package.json packages/approval/package.json
 COPY packages/capability-registry/package.json packages/capability-registry/package.json
-COPY packages/connector-github/package.json packages/connector-github/package.json
-COPY packages/connector-hubspot/package.json packages/connector-hubspot/package.json
-COPY packages/connector-paytm/package.json packages/connector-paytm/package.json
 COPY packages/connector-sdk/package.json packages/connector-sdk/package.json
-COPY packages/connector-slack/package.json packages/connector-slack/package.json
 COPY packages/crypto/package.json packages/crypto/package.json
 COPY packages/envelope-verifier/package.json packages/envelope-verifier/package.json
 COPY packages/execution-control/package.json packages/execution-control/package.json
@@ -59,7 +55,7 @@ COPY typescript ./typescript
 
 # Compile only parmana-api and its dependencies, with TypeScript 7 (the
 # typescript7 alias; the typescript package stays on 6 for tools that need
-# the compiler API, see docs/adr/ADR-0015).
+# the compiler API, see docs/internal/adr/ADR-0015).
 RUN node node_modules/typescript7/bin/tsc --build packages/api
 
 ################################################################################
@@ -76,11 +72,7 @@ COPY package.json package-lock.json ./
 COPY packages/api/package.json packages/api/package.json
 COPY packages/approval/package.json packages/approval/package.json
 COPY packages/capability-registry/package.json packages/capability-registry/package.json
-COPY packages/connector-github/package.json packages/connector-github/package.json
-COPY packages/connector-hubspot/package.json packages/connector-hubspot/package.json
-COPY packages/connector-paytm/package.json packages/connector-paytm/package.json
 COPY packages/connector-sdk/package.json packages/connector-sdk/package.json
-COPY packages/connector-slack/package.json packages/connector-slack/package.json
 COPY packages/crypto/package.json packages/crypto/package.json
 COPY packages/envelope-verifier/package.json packages/envelope-verifier/package.json
 COPY packages/execution-control/package.json packages/execution-control/package.json

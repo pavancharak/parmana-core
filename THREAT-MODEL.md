@@ -6,7 +6,7 @@ risk. The evidence is one of:
 
 - an attack scenario you can run with `npm run evaluate -- EV-xx` (see
   [evaluations/scenarios.json](evaluations/scenarios.json));
-- a claim in [docs/CLAIMS.md](docs/CLAIMS.md), cited by section number.
+- a claim in [docs/internal/CLAIMS.md](docs/internal/CLAIMS.md), cited by section number.
 
 Reviewed on 2026-10-10 against `main`. When a claim, an enforcement point or an attacker
 capability changes, this file changes in the same pull request.
@@ -185,7 +185,7 @@ agent can achieve:
 - The full test suite and the architecture tests run on every pull request.
 - [SECURITY-CHALLENGE.md](SECURITY-CHALLENGE.md) invites anyone to break T1 to T13 on a copy
   they run themselves.
-- Gaps found and closed are recorded in [docs/VERIFICATION-GAPS.md](docs/VERIFICATION-GAPS.md);
+- Gaps found and closed are recorded in [docs/internal/VERIFICATION-GAPS.md](docs/internal/VERIFICATION-GAPS.md);
   security incidents in [04-INCIDENTS-LOG.md](04-INCIDENTS-LOG.md).
 
 The reviews so far, including four passes over the authorization path (2.25), were internal.

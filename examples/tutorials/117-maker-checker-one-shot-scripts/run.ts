@@ -25,7 +25,7 @@ import { MemoryPolicyChangeApprovalRecordRepository } from "@parmana/storage";
 // submit, one process) and refresh-approved-policy-content.ts
 // (propose + sign + submit, one process), the exact scripts used to
 // approve all 14 real production policies the night of 2026-09-16 --
-// see docs/CLAIMS.md §2.26. Same server-bootstrap pattern Tutorial
+// see docs/internal/CLAIMS.md §2.26. Same server-bootstrap pattern Tutorial
 // 103 already established, reused here rather than reinvented.
 //
 process.env.NODE_ENV = "test";
@@ -313,9 +313,6 @@ try {
 
   console.log();
   console.log("Tutorial Complete");
-  console.log(
-    "Next: Tutorial 118 - The HubSpot State Check Signs With the Configured Key",
-  );
 } finally {
   console.log = originalLog;
   console.error = originalError;

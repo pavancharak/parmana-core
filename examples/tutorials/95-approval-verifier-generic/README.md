@@ -20,7 +20,7 @@ npx tsx examples/tutorials/95-approval-verifier-generic/run.ts
 
 ## Why This Matters
 
-Tutorial 72 proves the Approval Artifact mechanism works for HubSpot specifically. This tutorial proves the underlying, connector-agnostic component itself holds every one of its documented guarantees — a regression that broke `ApprovalVerifier` for a non-HubSpot shape (a different capability, a different scope field) could pass Tutorial 72 while failing here.
+Tutorial 72 (removed with its connector) proved the Approval Artifact mechanism works for one record update. This tutorial proves the underlying, connector-agnostic component itself holds every one of its documented guarantees — a regression that broke `ApprovalVerifier` for a non-record shape (a different capability, a different scope field) could pass Tutorial 72 while failing here.
 
 ## Final Tutorial
 

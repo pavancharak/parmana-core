@@ -8,7 +8,7 @@
 -- for when and why this is needed.
 --
 -- Safe to run once against an empty project. NOT safe to run again against a
--- project that already holds data (G-61, docs/VERIFICATION-GAPS.md, found on
+-- project that already holds data (G-61, docs/internal/VERIFICATION-GAPS.md, found on
 -- 2026-09-25): several migrations drop and add back the same CHECK constraint
 -- with a longer list of allowed values each time, so a second run adds back an
 -- older, narrower constraint over rows written under a newer one, and fails
@@ -300,7 +300,7 @@ ADD COLUMN IF NOT EXISTS seq BIGSERIAL;
 -- Durable replay protection and caller-audit trail (G-13)
 -- =============================================================================
 --
--- Closes G-13 (docs/VERIFICATION-GAPS.md): the production-default NonceStore
+-- Closes G-13 (docs/internal/VERIFICATION-GAPS.md): the production-default NonceStore
 -- and CallerAuditSink were in-memory and reset on process restart. These two
 -- tables back their durable, Supabase-backed replacements
 -- (packages/storage/src/supabase/SupabaseNonceStore.ts,
@@ -392,7 +392,7 @@ ALTER TABLE caller_audit_events ENABLE ROW LEVEL SECURITY;
 --
 -- Backs the durable, Supabase-backed webhook infrastructure introduced this
 -- session (packages/api/src/webhooks/SupabaseRazorpayWebhookEventStore.ts,
--- SupabaseRazorpayWebhookAuditSink.ts). See docs/CLAIMS.md for the scope of
+-- SupabaseRazorpayWebhookAuditSink.ts). See docs/internal/CLAIMS.md for the scope of
 -- what this closes: signature-verified, deduplicated event receipt only.
 -- Nothing in this session reads razorpay_webhook_events back to act on a
 -- settlement/refund lifecycle change — that is M4b.
@@ -1432,7 +1432,7 @@ create index if not exists rate_limit_counters_reset_time_idx
 -- =============================================================================
 --
 -- packages/api/src/routes/execute.ts and transactions.ts (see
--- docs/VERIFICATION-GAPS.md gap 33 / docs/CLAIMS.md NF-004) both write a
+-- docs/internal/VERIFICATION-GAPS.md gap 33 / docs/internal/CLAIMS.md NF-004) both write a
 -- "caller.capability_granted" CallerAuditEvent on every successful,
 -- authenticated capability check -- but no prior migration ever added
 -- that value to this table's type CHECK constraint. The constraint most
@@ -1688,8 +1688,8 @@ ALTER TABLE policies ENABLE ROW LEVEL SECURITY;
 -- =============================================================================
 --
 -- The Razorpay connector and its `payments:execute`/vendor-payment capability
--- were removed from this codebase entirely on 2026-08-12 (docs/CLAIMS.md,
--- docs/VERIFICATION-GAPS.md G-27) -- it was never a real, production-reachable
+-- were removed from this codebase entirely on 2026-08-12 (docs/internal/CLAIMS.md,
+-- docs/internal/VERIFICATION-GAPS.md G-27) -- it was never a real, production-reachable
 -- capability. The vendor-payment *policy file* and shared test fixtures using
 -- it as generic example data were deliberately retained (no execution risk,
 -- no connector able to back them) -- these three tables were not, and are
@@ -1761,7 +1761,7 @@ ALTER TABLE handbook_download_leads ENABLE ROW LEVEL SECURITY;
 --
 -- Why this exists: the Execution Trust Record contains the execution result, so
 -- it can only be built after release. If it cannot be built or stored, an
--- executed action has no signed record (docs/VERIFICATION-GAPS.md G-52 and
+-- executed action has no signed record (docs/internal/VERIFICATION-GAPS.md G-52 and
 -- G-53). The intent is signed and stored first, so an action that was released
 -- always has signed evidence behind it.
 --
@@ -2485,7 +2485,7 @@ alter table kill_switch_probe enable row level security;
 -- =============================================================================
 -- Source: supabase/migrations/20261027120000_add_execution_outcomes.sql
 -- =============================================================================
--- Execution outcome record (G-125, docs/VERIFICATION-GAPS.md)
+-- Execution outcome record (G-125, docs/internal/VERIFICATION-GAPS.md)
 -- =============================================================================
 --
 -- Backs SupabaseExecutionOutcomeStore. One row per authorization nonce,
@@ -2656,3 +2656,44 @@ CREATE TABLE IF NOT EXISTS inbound_outcomes (
 );
 
 ALTER TABLE inbound_outcomes ENABLE ROW LEVEL SECURITY;
+
+
+-- =============================================================================
+-- Source: supabase/migrations/20261105140000_extend_inbound_decisions.sql
+-- =============================================================================
+-- Inbound decisions for any action, not only refunds (RFC-0024, RFC-0025)
+-- =============================================================================
+--
+-- Lets inbound_decisions record a decision for any capability and carry the
+-- fields RFC-0024 question 6 requires. Additive: no existing row is changed,
+-- and no column is dropped.
+--
+-- Changes:
+--   * payment_id and limit_inr stop being required. Refund rows keep both;
+--     other actions have neither.
+--   * New nullable columns hold the proposed action (capability, target,
+--     amount), the policy and version that applied, and who approved it.
+--
+-- Rollback (only if no row uses the new columns or a null in the old ones):
+--   ALTER TABLE inbound_decisions
+--     DROP COLUMN capability, DROP COLUMN target, DROP COLUMN amount,
+--     DROP COLUMN policy_name, DROP COLUMN policy_version,
+--     DROP COLUMN approved_by, DROP COLUMN approved_at,
+--     DROP COLUMN check_status;
+--   ALTER TABLE inbound_decisions ALTER COLUMN payment_id SET NOT NULL,
+--     ALTER COLUMN limit_inr SET NOT NULL;
+
+ALTER TABLE inbound_decisions
+    ALTER COLUMN payment_id DROP NOT NULL,
+    ALTER COLUMN limit_inr DROP NOT NULL;
+
+ALTER TABLE inbound_decisions
+    ADD COLUMN IF NOT EXISTS capability TEXT,
+    ADD COLUMN IF NOT EXISTS target TEXT,
+    ADD COLUMN IF NOT EXISTS amount NUMERIC,
+    ADD COLUMN IF NOT EXISTS policy_name TEXT,
+    ADD COLUMN IF NOT EXISTS policy_version TEXT,
+    ADD COLUMN IF NOT EXISTS approved_by TEXT,
+    ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS check_status TEXT
+        CHECK (check_status IN ('verified', 'not_verified'));

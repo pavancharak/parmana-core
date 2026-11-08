@@ -1,9 +1,9 @@
 # Live check: a business signal source in production
 
 RFC-0023 phase 2 lets an operator register any business system as a source of facts, so Parmana asks it, never the
-agent (`docs/CLAIMS.md` 2.54); phase 4 carries what the decision rests on to the system that acts, as signed
+agent (`docs/internal/CLAIMS.md` 2.54); phase 4 carries what the decision rests on to the system that acts, as signed
 `conditions` (2.56). Both are built, tested and deployed, but no source has answered a production decision
-(`docs/VERIFICATION-GAPS.md` G-92). This check proves it against the real server, with a demo source and an action
+(`docs/internal/VERIFICATION-GAPS.md` G-92). This check proves it against the real server, with a demo source and an action
 that change nothing anywhere:
 
 | #   | Request (each with a valid signed approval)                   | Required                                                                                                                                                 |

@@ -6,7 +6,7 @@ authors:
   - family-names: Charak
     given-names: Pavan Dev Singh
   - name: Parmana Systems
-repository-code: "https://github.com/pavancharak/parmana"
+repository-code: "https://github.com/pavancharak/parmana-core"
 url: "https://docs.parmanasystems.com"
 abstract: >-
   Parmana evaluates each action an AI agent or other system requests against a

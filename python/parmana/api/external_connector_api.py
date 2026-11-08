@@ -66,7 +66,7 @@ class ExternalConnectorApi:
 
         Maps to POST /external-connectors/changes with action "register".
         `capability` is namespace:action, outside the built in namespaces
-        (paytm, hubspot, github, slack, test). `endpoint_url` is https with
+        (such as test). `endpoint_url` is https with
         a public host name. `allowed_parameters` may be empty.
         `timeout_ms` is 1000 to 30000; the server defaults it to 10000.
         Nothing changes until a different person approves it.

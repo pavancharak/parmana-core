@@ -4,7 +4,7 @@ import type { StorageProvider } from "@parmana/storage";
 /**
  * Shared storage provider, constructed lazily on first repository use
  * rather than as a module-scope side effect (G-15,
- * docs/VERIFICATION-GAPS.md). Importing this module — which every
+ * docs/internal/VERIFICATION-GAPS.md). Importing this module — which every
  * packages/api test file transitively does via ../src/application.js —
  * must never itself construct a live Supabase client; only an actual
  * repository call should.
@@ -55,6 +55,10 @@ export const refusalRecordRepository = lazyRepository(
 
 export const inboundDecisionRepository = lazyRepository(
   (provider) => provider.inboundDecisions,
+);
+
+export const inboundCheckRepository = lazyRepository(
+  (provider) => provider.inboundChecks,
 );
 
 export const inboundOutcomeRepository = lazyRepository(

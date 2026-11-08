@@ -74,8 +74,8 @@ def refund_payment(payment_id: str, amount: int, reason: str) -> str:
     transaction = create_business_transaction(
         principal_id="langchain-agent",
         purpose=reason,
-        action="paytm:refund",
-        target=f"paytm://orders/{payment_id}",
+        action="erp:invoice-pay",
+        target=f"erp://invoices/{payment_id}",
         parameters={"orderId": payment_id, "amount": amount},
         policy=PolicyReference(name="customer-refund", version="1.2.0", schema_version="1.0.0"),
         signals={
@@ -126,8 +126,8 @@ def authorize_and_execute_refund(payment_id: str, amount: int, reason: str) -> s
     transaction = create_business_transaction(
         principal_id="crewai-customer-service",
         purpose=reason,
-        action="paytm:refund",
-        target=f"paytm://orders/{payment_id}",
+        action="erp:invoice-pay",
+        target=f"erp://invoices/{payment_id}",
         parameters={"orderId": payment_id, "amount": amount},
         policy=PolicyReference(name="customer-refund", version="1.2.0", schema_version="1.0.0"),
         signals={
@@ -199,8 +199,8 @@ async def refund_endpoint(request: RefundRequest):
     transaction = create_business_transaction(
         principal_id="ai-agent",
         purpose=request.reason,
-        action="paytm:refund",
-        target=f"paytm://orders/{request.payment_id}",
+        action="erp:invoice-pay",
+        target=f"erp://invoices/{request.payment_id}",
         parameters={"orderId": request.payment_id, "amount": request.amount},
         policy=PolicyReference(name="customer-refund", version="1.2.0", schema_version="1.0.0"),
         signals={
@@ -252,8 +252,8 @@ async def refund_payment_async(payment_id: str, amount: int, reason: str) -> dic
     transaction = create_business_transaction(
         principal_id="async-agent",
         purpose=reason,
-        action="paytm:refund",
-        target=f"paytm://orders/{payment_id}",
+        action="erp:invoice-pay",
+        target=f"erp://invoices/{payment_id}",
         parameters={"orderId": payment_id, "amount": amount},
         policy=PolicyReference(name="customer-refund", version="1.2.0", schema_version="1.0.0"),
         signals={
@@ -278,7 +278,7 @@ async def refund_payment_async(payment_id: str, amount: int, reason: str) -> dic
 If your workflow needs to react to what the connector does _after_ Parmana's own response,
 settlement confirmation arriving later, for instance, that's a property of the specific
 connector, not the SDK; see [Session credentials](/guides/session-credentials) and the connector's
-own docs (e.g. [HubSpot](/integrations/hubspot)) for what each one actually confirms and when.
+own docs for what each one actually confirms and when.
 
 ## Real example: a CustomerServiceAgent class
 
@@ -307,8 +307,8 @@ class CustomerServiceAgent:
         transaction = create_business_transaction(
             principal_id=self.agent_id,
             purpose=reason,
-            action="paytm:refund",
-            target=f"paytm://orders/{payment_id}",
+            action="erp:invoice-pay",
+            target=f"erp://invoices/{payment_id}",
             parameters={"orderId": payment_id, "amount": amount},
             policy=PolicyReference(name="customer-refund", version="1.2.0", schema_version="1.0.0"),
             signals={
@@ -364,14 +364,6 @@ class CustomerServiceAgent:
   >
     Define the policy these examples reference instead of reusing
     `customer-refund`.
-  </Card>
-  <Card
-    title="End-to-end: agent → Parmana → Paytm"
-    icon="route"
-    href="/guides/end-to-end-paytm-flow"
-  >
-    The same shape, against real infrastructure, with every real error message
-    documented.
   </Card>
   <Card title="Python SDK reference" icon="python" href="/sdks/python">
     The complete, verified API surface backing every example on this page.

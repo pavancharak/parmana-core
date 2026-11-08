@@ -75,10 +75,10 @@ const full = await signed({
   policyContentHash: "policy-content-hash",
   signalsHash: "signals-hash",
   businessTransactionHash: "business-transaction-hash",
-  action: "paytm:refund",
+  action: "erp:invoice-pay",
   target: "order-café-1001",
   submittedBy: "caller-1",
-  grantedCapability: "paytm:refund",
+  grantedCapability: "erp:invoice-pay",
   createdAt: at,
 });
 
@@ -90,7 +90,7 @@ const minimal = await signed({
   policyName: "customer-refund",
   policyVersion: "1.0.0",
   businessTransactionHash: "business-transaction-hash",
-  action: "paytm:refund",
+  action: "erp:invoice-pay",
   target: "order-1002",
   createdAt: at,
 });

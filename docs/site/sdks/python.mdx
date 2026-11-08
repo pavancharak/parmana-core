@@ -213,7 +213,7 @@ Added 2026-09-14, ships in v1.1.2, published, available via a plain
 `metadata.business_transaction_id` must equal `business_transaction_id`,
 `authorization.authority_id` must equal `authority.authority_id`, `intent.authorization_id`
 must equal `authorization.authorization_id`. Every "X must match Y" `400` documented in
-[the end-to-end Paytm guide](/guides/end-to-end-paytm-flow) came from hand-building a request
+[the error catalog](/api-reference/error-catalog) came from hand-building a request
 and getting one of those wrong. `create_business_transaction()` derives all three
 automatically:
 
@@ -340,7 +340,7 @@ a `PolicyInEffect`: the policy to declare and what the request must carry. Signa
 are never converted to snake_case.
 
 ```python
-in_effect = client.policy_in_effect("paytm:refund")
+in_effect = client.policy_in_effect("erp:invoice-pay")
 
 in_effect.policy.version          # "1.2.0"
 in_effect.policy.schema_version   # "1.0.0"
@@ -408,8 +408,8 @@ approval = sign_approval(
     private_key_pem=Path("approver-example__approver-example-key-1.private.pem").read_text(),
     approver_id="approver-example",
     key_id="approver-example-key-1",
-    capability="paytm:refund",
-    resource_id="ORD-1042",
+    capability="erp:invoice-pay",
+    resource_id="INV-1042",
     max_amount=75000,  # leave out when the policy declares no amount
 )
 
@@ -473,7 +473,7 @@ client = ParmanaClient(endpoint="http://127.0.0.1:3000", api_key="pk_local_...")
 
 me = client.caller()
 # CallerIdentity(caller_id='local-operator', allowed_principal_ids=['local-operator'],
-#                allowed_capabilities=['paytm:refund'], unrestricted_capabilities=False)
+#                allowed_capabilities=['erp:invoice-pay'], unrestricted_capabilities=False)
 
 key = client.public_key("default")
 # key.pem is the SPKI PEM that signs Trust Records, Refusal Records and Execution Intents
@@ -612,14 +612,6 @@ a step up authorization signed in Python and accepted by the server's own TypeSc
 ## Next
 
 <CardGroup cols={2}>
-  <Card
-    title="End-to-end: agent → Parmana → Paytm"
-    icon="route"
-    href="/guides/end-to-end-paytm-flow"
-  >
-    The full, no-ambiguity runbook this SDK builds toward: real infrastructure,
-    every error message, every fix.
-  </Card>
   <Card title="TypeScript SDK" icon="js" href="/sdks/typescript">
     The other maintained SDK: same bearer-key model, same error taxonomy shape.
   </Card>

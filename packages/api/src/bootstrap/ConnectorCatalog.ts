@@ -64,20 +64,8 @@ export const ConnectorCatalog: readonly ConnectorDefinition[] = Object.freeze([
   }),
 
   Object.freeze({
-    id: "slack",
-    displayName: "Slack",
-    enabled: false,
-  }),
-
-  Object.freeze({
     id: "jira",
     displayName: "Jira",
-    enabled: false,
-  }),
-
-  Object.freeze({
-    id: "github",
-    displayName: "GitHub",
     enabled: false,
   }),
 ]);

@@ -45,7 +45,7 @@ function signArgs(privateKeyFile: string, extra: string[] = []): string[] {
     "--key-id",
     "manager-priya-key-1",
     "--capability",
-    "paytm:refund",
+    "erp:invoice-pay",
     "--resource-id",
     "ORD-1042",
     "--max-amount",
@@ -119,7 +119,7 @@ describe("sign-approval", () => {
     });
 
     const request = {
-      action: "paytm:refund",
+      action: "erp:invoice-pay",
       resourceId: "ORD-1042",
       requestedValue: 75_000,
     };
@@ -156,7 +156,7 @@ describe("sign-approval", () => {
       "manager-priya-key-1",
     );
     const args = signArgs(files.privateKeyPath);
-    args[args.indexOf("paytm:refund")] = "github:pr-merge";
+    args[args.indexOf("erp:invoice-pay")] = "erp:record-update";
     args[args.indexOf("ORD-1042")] = "42";
     args.splice(args.indexOf("--max-amount"), 2);
 
@@ -164,7 +164,7 @@ describe("sign-approval", () => {
     const approval = await signApproval(parsed);
 
     expect(parsed.maxAmount).toBeUndefined();
-    expect(approval.payload.capability).toBe("github:pr-merge");
+    expect(approval.payload.capability).toBe("erp:record-update");
     expect(approval.payload.scope).toEqual({
       field: "resourceId",
       comparator: "eq",
@@ -187,7 +187,7 @@ describe("sign-approval", () => {
     expect(
       (
         await verifier.verify(JSON.parse(JSON.stringify(approval)), {
-          action: "github:pr-merge",
+          action: "erp:record-update",
           resourceId: "42",
           requestedValue: "42",
         })
@@ -197,7 +197,7 @@ describe("sign-approval", () => {
 
   it.each([
     [["--capability", "refund"], "--capability"],
-    [["--capability", "paytm refund"], "--capability"],
+    [["--capability", "erp refund"], "--capability"],
     [["--max-amount", "0"], "--max-amount"],
     [["--max-amount", "abc"], "--max-amount"],
     [["--ttl-seconds", "0"], "--ttl-seconds"],

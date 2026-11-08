@@ -52,7 +52,7 @@ def run_builder_example(
     # runs against any local server with no external connector
     # configured. To see this reach a real business system (Paytm,
     # staging), swap action/target/parameters/policy for the real
-    # paytm:refund shape -- see
+    # erp:invoice-pay shape -- see
     # docs/site/guides/end-to-end-paytm-flow.mdx
     # (repo root) for the complete, verified-live version of exactly
     # that.
@@ -87,7 +87,7 @@ def run_builder_example(
             # vendor-payment@2.1.0 declares boundSignals: { "vendorId": "target" }.
             # SignalIntentBinder rejects this transaction unless this signal exactly
             # equals intent.target, checked before policy evaluation ever runs (see
-            # docs/VERIFICATION-GAPS.md G-24).
+            # docs/internal/VERIFICATION-GAPS.md G-24).
             "vendorId": "vendor://payments",
         },
         source_system="python-sdk-builder-example",

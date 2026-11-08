@@ -6,7 +6,7 @@ import { VerificationCrypto } from "@parmana/crypto";
 import type { ExecutionTrustRecord } from "@parmana/shared";
 
 //
-// PQC audit RED-3 (docs/VERIFICATION-GAPS.md): VerificationCrypto,
+// PQC audit RED-3 (docs/internal/VERIFICATION-GAPS.md): VerificationCrypto,
 // RefusalCrypto, and AuditEventCrypto -- the signers for Trust
 // Records, Refusal Records, and Audit Events, the durable evidence an
 // auditor actually queries months or years later -- all hardcoded the

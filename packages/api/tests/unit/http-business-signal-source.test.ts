@@ -209,6 +209,20 @@ describe("HttpBusinessSignalSource", () => {
     });
   });
 
+  it("puts the disclosed parameters in the signed query, and only when there are some", async () => {
+    const { source: http, system } = source((query) => ({
+      body: { answer: answerTo(query) },
+    }));
+
+    await http.resolve({ ...QUERY, parameters: { amount: 500 } });
+    await http.resolve(QUERY);
+
+    expect(system.received[0]?.signed.query).toMatchObject({
+      parameters: { amount: 500 },
+    });
+    expect(system.received[1]?.signed.query).not.toHaveProperty("parameters");
+  });
+
   it("uses a fresh nonce for every query", async () => {
     const { source: http, system } = source((query) => ({
       body: { answer: answerTo(query) },

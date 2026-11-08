@@ -6,7 +6,7 @@ import { Signature } from "./signature.js";
  * A signed statement, made and persisted BEFORE an action is released to a
  * connector, of exactly what is about to be released. It exists so that an
  * action that was released always has signed evidence behind it, even when the
- * Execution Trust Record cannot be produced afterwards (docs/VERIFICATION-GAPS.md
+ * Execution Trust Record cannot be produced afterwards (docs/internal/VERIFICATION-GAPS.md
  * G-52 and G-53).
  *
  * What is signed is deliberately limited to facts that exist before release:

@@ -3,14 +3,11 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { HUBSPOT_VERIFIED_SIGNAL_KEYS } from "@parmana/connector-hubspot";
 import {
   CANONICAL_CAPABILITY_POLICY_BINDINGS,
   type Policy,
   type PolicyCondition,
 } from "@parmana/policy";
-
-import { SLACK_VERIFIED_SIGNAL_KEYS } from "../../src/bootstrap/createSlackChannelSignalVerifier.js";
 
 /**
  * G-77: no connector action that changes something can be authorized by
@@ -34,21 +31,12 @@ import { SLACK_VERIFIED_SIGNAL_KEYS } from "../../src/bootstrap/createSlackChann
  * Capabilities that only read. A read changes nothing, so its policy may
  * approve on the caller's grant alone.
  */
-const READ_CAPABILITIES = new Set(["hubspot:deal-fetch", "github:pr-fetch"]);
+const READ_CAPABILITIES = new Set(["github:pr-fetch"]);
 
 /**
  * Facts a server side verifier checks itself, per write capability.
  */
-const SERVER_VERIFIED_FACTS: Readonly<Record<string, readonly string[]>> = {
-  // HubSpotSignalStateVerifier: deal state from a real deal fetch, and
-  // preAuthorizedForAmountChange from a signed approval.
-  "hubspot:deal-update": [
-    ...HUBSPOT_VERIFIED_SIGNAL_KEYS,
-    "preAuthorizedForAmountChange",
-  ],
-  // SlackChannelSignalVerifier: the channel allowlist.
-  "slack:post-message": SLACK_VERIFIED_SIGNAL_KEYS,
-};
+const SERVER_VERIFIED_FACTS: Readonly<Record<string, readonly string[]>> = {};
 
 function loadPolicy(name: string, version: string): Policy {
   return JSON.parse(
@@ -115,12 +103,7 @@ describe("connector policies cannot be satisfied by caller declared facts alone 
       (capability) => !READ_CAPABILITIES.has(capability),
     );
 
-    expect(writes.sort()).toEqual([
-      "github:pr-merge",
-      "hubspot:deal-update",
-      "paytm:refund",
-      "slack:post-message",
-    ]);
+    expect(writes.sort()).toEqual([]);
   });
 
   for (const [capability, reference] of CANONICAL_CAPABILITY_POLICY_BINDINGS) {
@@ -134,35 +117,4 @@ describe("connector policies cannot be satisfied by caller declared facts alone 
       expect(selfAuthorizingRules(policy, capability)).toEqual([]);
     });
   }
-
-  it("has teeth: it flags the versions before the 2026-09-28 fixes", () => {
-    expect(
-      selfAuthorizingRules(
-        loadPolicy("customer-refund", "1.1.0"),
-        "paytm:refund",
-      ),
-    ).toEqual(["approve-refund-automatic"]);
-
-    expect(
-      selfAuthorizingRules(
-        loadPolicy("github-pr-approval", "1.0.0"),
-        "github:pr-merge",
-      ),
-    ).toEqual(["approve-pull-request"]);
-
-    // Without the server's channel check, the Slack policy would be flagged.
-    const slack = loadPolicy("slack-post-message", "1.0.0");
-    expect(
-      slack.rules
-        .filter((rule) => rule.outcome.action === "approve")
-        .filter(
-          (rule) =>
-            !requiresTrustedFact(
-              rule.condition,
-              new Set(Object.keys(slack.approvalSignals ?? {})),
-            ),
-        )
-        .map((rule) => rule.id),
-    ).toEqual(["approve-post"]);
-  });
 });

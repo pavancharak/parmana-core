@@ -15,11 +15,6 @@
     { "path": "./packages/execution-control" },
     { "path": "./packages/execution-gateway" },
     { "path": "./packages/connector-sdk" },
-    { "path": "./packages/connector-hubspot" },
-    { "path": "./packages/connector-github" },
-    { "path": "./packages/connector-paytm" },
-    { "path": "./packages/connector-zerodha" },
-    { "path": "./packages/connector-slack" },
     { "path": "./packages/approval" }
   ],
   "compilerOptions": {

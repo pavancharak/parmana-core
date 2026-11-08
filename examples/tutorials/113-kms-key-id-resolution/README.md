@@ -5,14 +5,14 @@
 Show, against the real code (not a reimplementation), that `KmsSigner` correctly maps
 every logical keyId this codebase actually produces into a format AWS KMS accepts —
 and reproduce, in words, exactly what used to happen before this existed. Mirrors
-`docs/VERIFICATION-GAPS.md` G-48 (item 1) and
+`docs/internal/VERIFICATION-GAPS.md` G-48 (item 1) and
 `packages/crypto/tests/unit/kms-signer.test.ts`'s `resolveKmsKeyId` coverage.
 
 ## What You'll Learn
 
 - Every signing call site in this codebase (`VerificationCrypto`, `RefusalCrypto`,
   `AuditEventCrypto`, `ReceiptCrypto`, `PolicyChangeCrypto`, `ExecutionChainCrypto`,
-  `RuntimeAuthorizationSigner`, `GatewayPaytmAdapter`) passes a _logical_ keyId —
+  `RuntimeAuthorizationSigner`, the connector adapter) passes a _logical_ keyId —
   `"default"` (`KeyProvider.DEFAULT_KEY_ID`) in the common case, `"tenant.<id>"` for a
   provisioned tenant key (Tutorial 105) — never a real AWS identifier.
 - AWS KMS's `Sign`/`GetPublicKey`/`DescribeKey` APIs require their `KeyId` parameter to

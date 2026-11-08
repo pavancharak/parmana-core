@@ -80,10 +80,6 @@ const examples = [
   "examples/tutorials/59-secure-connectors/run.ts",
   "examples/tutorials/60-end-to-end-enterprise-execution/run.ts",
   "examples/tutorials/62-signal-intent-binding/run.ts",
-  "examples/tutorials/69-hubspot-deal-update-connector/run.ts",
-  "examples/tutorials/70-hubspot-policy-denial/run.ts",
-  "examples/tutorials/71-hubspot-signal-state-verification/run.ts",
-  "examples/tutorials/72-hubspot-approval-artifact/run.ts",
   "examples/tutorials/73-refusal-records/run.ts",
   "examples/tutorials/74-refusal-record-fail-open/run.ts",
   "examples/tutorials/75-signed-audit-events/run.ts",
@@ -93,8 +89,6 @@ const examples = [
   "examples/tutorials/79-storage-backend-selection/run.ts",
   "examples/tutorials/80-fail-closed-config-validation/run.ts",
   "examples/tutorials/81-connector-execution-gateway/run.ts",
-  "examples/tutorials/82-composite-signal-state-verification/run.ts",
-  "examples/tutorials/83-capability-policy-binding/run.ts",
   "examples/tutorials/84-caller-authentication/run.ts",
   "examples/tutorials/86-gateway-attestation/run.ts",
   "examples/tutorials/87-key-provider-path-traversal/run.ts",
@@ -106,7 +100,6 @@ const examples = [
   "examples/tutorials/93-trust-record-ordering/run.ts",
   "examples/tutorials/94-sdk-http-transport/run.ts",
   "examples/tutorials/95-approval-verifier-generic/run.ts",
-  "examples/tutorials/96-github-pr-merge-connector/run.ts",
   "examples/tutorials/97-execution-chain-integrity/run.ts",
   "examples/tutorials/98-signal-freshness-enforcement/run.ts",
   "examples/tutorials/99-key-algorithm-binding-guard/run.ts",
@@ -121,18 +114,13 @@ const examples = [
   "examples/tutorials/108-public-key-discovery/run.ts",
   "examples/tutorials/109-durable-evidence-key-rotation/run.ts",
   "examples/tutorials/110-hybrid-signature-downgrade-protection/run.ts",
-  "examples/tutorials/111-connect-an-agent/run.ts",
-  "examples/tutorials/112-slack-connector/run.ts",
   "examples/tutorials/113-kms-key-id-resolution/run.ts",
   "examples/tutorials/114-signing-verification-key-agreement/run.ts",
   "examples/tutorials/115-per-limiter-rate-limit-stores/run.ts",
   "examples/tutorials/116-supabase-policy-repository/run.ts",
   "examples/tutorials/117-maker-checker-one-shot-scripts/run.ts",
-  "examples/tutorials/118-hubspot-verifier-signer/run.ts",
   "examples/tutorials/119-human-approval-for-one-action/run.ts",
   "examples/tutorials/120-no-action-without-approval/run.ts",
-  "examples/tutorials/121-approval-for-a-read/run.ts",
-  "examples/tutorials/122-approval-for-a-post-and-an-update/run.ts",
   "examples/tutorials/123-external-connector/run.ts",
   "examples/tutorials/124-kill-switch-trip-and-refuse/run.ts",
   "examples/tutorials/125-kill-switch-two-person-reset/run.ts",
@@ -178,7 +166,7 @@ for (const [name, value] of Object.entries(LOCAL_DEFAULTS)) {
 
 //
 // Every key id an example may sign with by default. "signal-verifier" signs
-// the read-only HubSpot fetches (see .env.example).
+// the read-only fetches (see .env.example).
 //
 const EXAMPLE_KEY_IDS = ["default", "gateway", "signal-verifier"];
 

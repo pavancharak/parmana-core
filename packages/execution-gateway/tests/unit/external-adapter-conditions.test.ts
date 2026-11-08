@@ -242,3 +242,78 @@ describe("GatewayExternalAdapter: conditions (RFC-0023 phase 4)", () => {
     });
   });
 });
+
+describe("GatewayExternalAdapter: condition evidence (F28-7, step 3)", () => {
+  const notHolding = {
+    signalKey: "invoicePaid",
+    atomicity: "check-then-act",
+    outcome: "not-holding",
+    evidence: {
+      status: "unpaid",
+      amount: 1000,
+      observedAt: "2026-10-11T10:00:05.000Z",
+    },
+  };
+
+  it("keeps a validated conditionsChecked list in the response, with its evidence", async () => {
+    const send = transport({
+      success: false,
+      conditionsNotMet: true,
+      conditionsChecked: [notHolding],
+    });
+    const response = await adapter(send).execute(request, context([CONDITION]));
+    expect(response.metadata?.conditionsChecked).toEqual([notHolding]);
+    expect(response.metadata?.conditionsNotMet).toBe(true);
+  });
+
+  it("leaves the response without conditionsChecked when the endpoint sends none", async () => {
+    const send = transport({ success: true });
+    const response = await adapter(send).execute(request, context([CONDITION]));
+    expect(response.metadata).not.toHaveProperty("conditionsChecked");
+  });
+
+  it("refuses an entry whose outcome is not one of the three defined values", async () => {
+    const send = transport({
+      success: true,
+      conditionsChecked: [{ ...notHolding, outcome: "maybe" }],
+    });
+    await expect(
+      adapter(send).execute(request, context([CONDITION])),
+    ).rejects.toThrow("conditionsChecked[0].outcome");
+  });
+
+  it("refuses evidence that is not a flat object of plain values", async () => {
+    const send = transport({
+      success: true,
+      conditionsChecked: [
+        { ...notHolding, evidence: { nested: { deep: true } } },
+      ],
+    });
+    await expect(
+      adapter(send).execute(request, context([CONDITION])),
+    ).rejects.toThrow("evidence is not an object of plain values");
+  });
+
+  it("refuses evidence with a credential-shaped key, however its value looks", async () => {
+    const send = transport({
+      success: true,
+      conditionsChecked: [
+        { ...notHolding, evidence: { apiToken: "not-a-secret-looking-value" } },
+      ],
+    });
+    await expect(
+      adapter(send).execute(request, context([CONDITION])),
+    ).rejects.toThrow('credential-shaped key "apiToken"');
+  });
+
+  it("refuses evidence larger than the limit", async () => {
+    const big = { blob: "x".repeat(3 * 1024) };
+    const send = transport({
+      success: true,
+      conditionsChecked: [{ ...notHolding, evidence: big }],
+    });
+    await expect(
+      adapter(send).execute(request, context([CONDITION])),
+    ).rejects.toThrow("larger than");
+  });
+});

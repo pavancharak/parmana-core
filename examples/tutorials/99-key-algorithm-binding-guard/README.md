@@ -2,7 +2,7 @@
 
 ## Objective
 
-Show that signing or verifying with key material of the wrong type — an Ed25519 key handed to the ML-DSA-65 (Dilithium3) provider, or vice versa — fails closed with a clear error naming both the expected and actual key type, rather than silently dispatching on the key's own type (`docs/CLAIMS.md` §2.13).
+Show that signing or verifying with key material of the wrong type — an Ed25519 key handed to the ML-DSA-65 (Dilithium3) provider, or vice versa — fails closed with a clear error naming both the expected and actual key type, rather than silently dispatching on the key's own type (`docs/internal/CLAIMS.md` §2.13).
 
 ## What You'll Learn
 

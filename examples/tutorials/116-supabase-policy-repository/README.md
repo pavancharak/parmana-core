@@ -7,7 +7,7 @@ its fix: `PolicyChangeApprovalService.approve()` writes the live `policy.json` c
 `PolicyRepository.save()`. `FilePolicyRepository` does that by writing to the local
 filesystem — which works for local development and tests, but Vercel's serverless
 Functions run on a **read-only** filesystem, so the very first real production approval
-attempt failed with `EROFS`. See `docs/CLAIMS.md` §2.26's "Legacy-policy backfill" entry
+attempt failed with `EROFS`. See `docs/internal/CLAIMS.md` §2.26's "Legacy-policy backfill" entry
 for the full account, including a second, related bug this same incident surfaced (the
 fix in Tutorial 116's own predecessor work — see "Related Tutorials" below).
 

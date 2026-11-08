@@ -112,7 +112,7 @@ console.log();
 // key-expiry.json beside the PEM key files, so EnvelopeVerifier can
 // fail closed on an expired or explicitly revoked key -- the exact
 // mechanism that would have let Parmana revoke a compromised key
-// immediately rather than only by rotating it (see docs/CLAIMS.md's
+// immediately rather than only by rotating it (see docs/internal/CLAIMS.md's
 // "Key Compromise Notice").
 //
 // Uses an isolated temp key directory rather than the repository's

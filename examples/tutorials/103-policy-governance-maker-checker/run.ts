@@ -16,7 +16,7 @@ import { MemoryNonceStore } from "@parmana/envelope-verifier";
 import { MemoryPolicyChangeApprovalRecordRepository } from "@parmana/storage";
 
 //
-// docs/CLAIMS.md 2.26: policy content changes go through a human-only,
+// docs/internal/CLAIMS.md 2.26: policy content changes go through a human-only,
 // maker-checker approval flow before taking effect. Four endpoints
 // (packages/api/src/routes/pending-policy-changes.ts): propose, list,
 // approve, reject. Every one calls requireHumanCaller() first. Approve/

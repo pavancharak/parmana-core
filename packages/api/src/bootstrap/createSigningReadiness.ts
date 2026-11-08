@@ -11,7 +11,7 @@ import {
 const SIGNING_READINESS_TTL_MS = 60_000;
 
 /**
- * Signing readiness (docs/VERIFICATION-GAPS.md G-52) is ON by default and
+ * Signing readiness (docs/internal/VERIFICATION-GAPS.md G-52) is ON by default and
  * fails closed: before an action is released to a connector, the evidence
  * signing path must prove it can produce a signature that verifies, or the
  * request is refused with 503 SIGNING_UNAVAILABLE and nothing is executed.

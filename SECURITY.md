@@ -7,7 +7,9 @@ report privately rather than through a public issue.
 
 ## Reporting a vulnerability
 
-Email **founder@parmanasystems.com** with:
+Report it privately through GitHub: open this repository's **Security** tab and choose **Report a vulnerability**. GitHub keeps the report private between you and the maintainers. If that route is unavailable, email **founder@parmanasystems.com** instead.
+
+Include:
 
 - A description of the issue and its impact.
 - Steps to reproduce, or a proof of concept if you have one.
@@ -22,7 +24,7 @@ reasonable window to fix and deploy before any public disclosure.
 In scope: the runtime, policy engine, execution gateway, cryptographic
 signing and verification, the connector SDK and the HubSpot, GitHub,
 Slack and Paytm connectors, the REST API and its authentication, and the
-envelope verifier. See [docs/CLAIMS.md](docs/CLAIMS.md) for exactly what each of
+envelope verifier. See [docs/internal/CLAIMS.md](docs/internal/CLAIMS.md) for exactly what each of
 these claims to do today.
 
 Out of scope: findings that require a compromised signing key or
@@ -41,7 +43,7 @@ residual risk.
 Fixed vulnerabilities with security impact are published as GitHub Security Advisories:
 [github.com/pavancharak/parmana-core/security/advisories](https://github.com/pavancharak/parmana-core/security/advisories).
 Every gap found and fixed, including those without an advisory, is recorded in
-[docs/VERIFICATION-GAPS.md](docs/VERIFICATION-GAPS.md).
+[docs/internal/VERIFICATION-GAPS.md](docs/internal/VERIFICATION-GAPS.md).
 
 ## Security challenge
 
@@ -51,7 +53,7 @@ covers local copies only, never the hosted API or the sandbox.
 
 ## Open security items
 
-We list the items that are still open, so you can judge the current state for yourself. They are deferred, not forgotten. The full status, with owners and next steps, is in [docs/runbooks/KILL-SWITCH-OPERATIONS.md](docs/runbooks/KILL-SWITCH-OPERATIONS.md#still-open). Status as of 2026-10-26.
+We list the items that are still open, so you can judge the current state for yourself. They are deferred, not forgotten. The full status, with owners and next steps, is in [docs/internal/runbooks/KILL-SWITCH-OPERATIONS.md](docs/internal/runbooks/KILL-SWITCH-OPERATIONS.md#still-open). Status as of 2026-10-26.
 
 - **Two-person reset control.** The reset has been tested with two keys held by one person. That proves the mechanics, not the control. The control needs two named operators, each with their own key.
 - **Third-party check of the kill switch (ADR-0017).** Not done. An independent party has to run the check and keep the evidence.

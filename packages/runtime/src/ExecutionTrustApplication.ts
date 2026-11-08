@@ -25,6 +25,7 @@ import type {
 } from "./ExecutionIntentService.js";
 import { ExecutionIntentNotResolvableError } from "./errors/ExecutionIntentNotResolvableError.js";
 import { Runtime } from "./Runtime.js";
+import type { DecisionRequest } from "./RuntimeEngine.js";
 import { RuntimeError } from "./errors/RuntimeError.js";
 
 import { VerificationFailedError } from "./errors/VerificationFailedError.js";
@@ -83,6 +84,14 @@ export class ExecutionTrustApplication {
    * Execute Business Transaction through the
    * complete Execution Trust pipeline.
    */
+  /**
+   * Decides an inbound request (RFC-0024) without executing it. Runs the same policy, verification
+   * and binding checks as execute(), and returns the decision.
+   */
+  async decideInbound(request: DecisionRequest) {
+    return this.runtime.decide(request);
+  }
+
   async execute(
     transaction: BusinessTransaction,
   ): Promise<ExecutionTrustRecord> {
@@ -324,7 +333,7 @@ export class ExecutionTrustApplication {
 
   /**
    * Close a PREPARED or ERRORED Execution Intent that a verified human
-   * reconciled at the connector (docs/VERIFICATION-GAPS.md G-54). The
+   * reconciled at the connector (docs/internal/VERIFICATION-GAPS.md G-54). The
    * resolution and note are an attributed operator statement in unsigned
    * status, not a signed record. Refused when a signed Trust Record already
    * exists for the transaction, because that intent should be finalized.

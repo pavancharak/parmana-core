@@ -59,7 +59,7 @@ export interface Decision {
    * never carries this -- it is copied verbatim from
    * PolicyEngine.evaluate()'s PolicyDecision by DecisionBuilder, never
    * computed here. Absent only on a Decision built before this field
-   * existed (docs/VERIFICATION-GAPS.md G-44); every Decision built
+   * existed (docs/internal/VERIFICATION-GAPS.md G-44); every Decision built
    * going forward carries it.
    */
   readonly matchedRuleId?: string;
@@ -78,6 +78,14 @@ export interface Decision {
    * Same provenance and optionality as matchedRuleId above.
    */
   readonly matchedPath?: readonly string[];
+  /**
+   * The method that produced the verdict and its version (G-148). Absent on decisions recorded before
+   * this field existed.
+   */
+  readonly evaluationMethod?: {
+    readonly id: string;
+    readonly version: string;
+  };
 
   /**
    * UTC timestamp when evaluation completed.

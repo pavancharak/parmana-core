@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 //
-// docs/VERIFICATION-GAPS.md G-48, and item 7 of the 2026-09-15 KMS migration
+// docs/internal/VERIFICATION-GAPS.md G-48, and item 7 of the 2026-09-15 KMS migration
 // troubleshooting guide (in git history) -- the most significant bug found migrating the gateway signing
 // key to AWS KMS, and the one that produced the classic "ambiguous
 // outcome" failure: a real, legitimate authorization failed
@@ -76,8 +76,8 @@ const signer = await SignerBootstrap.create();
 
 const executableContent = {
   businessTransactionId: "tx-114",
-  action: "paytm:refund",
-  target: "paytm://orders/114",
+  action: "erp:invoice-pay",
+  target: "erp://invoices/114",
   parameters: { orderId: "114", amount: 45 },
 };
 

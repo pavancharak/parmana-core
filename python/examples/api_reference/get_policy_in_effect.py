@@ -7,6 +7,6 @@ client = ParmanaClient(
     api_key=os.environ["PARMANA_API_KEY"],
 )
 
-in_effect = client.policy_in_effect("paytm:refund")
+in_effect = client.policy_in_effect("erp:invoice-pay")
 
 print(in_effect.policy, in_effect.signals.approval)

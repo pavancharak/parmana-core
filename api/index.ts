@@ -16,7 +16,6 @@ import {
   policyRepository,
 } from "../packages/api/dist/application.js";
 import { policyChangeApprovalRecordRepository } from "../packages/api/dist/repositories.js";
-import { assertPaytmConnectorConfigured } from "../packages/api/dist/bootstrap/assertPaytmConnectorConfigured.js";
 import { createCallerAuthenticator } from "../packages/api/dist/bootstrap/createCallerAuthenticator.js";
 import { createPolicyChangeStepUpVerifier } from "../packages/api/dist/bootstrap/createPolicyChangeStepUpVerifier.js";
 import { createPolicyChangeApprovalService } from "../packages/api/dist/bootstrap/createPolicyChangeApprovalService.js";
@@ -75,7 +74,6 @@ console.log(
 
 assertStorageConfigured();
 assertSigningKeyMaterialConfigured();
-assertPaytmConnectorConfigured();
 
 // ADR-0014: PARMANA_CORS_ORIGINS and sandbox mode, refused at startup
 // when unsafe (see createSandboxOptions).

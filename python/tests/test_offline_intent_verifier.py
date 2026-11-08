@@ -62,7 +62,7 @@ def test_a_real_server_signed_intent_verifies_with_only_the_public_key():
 @pytest.mark.parametrize(
     "field,value",
     [
-        ("action", "paytm:cancel"),
+        ("action", "erp:cancel"),
         ("target", "ATTACKER-CONTROLLED-ACCOUNT"),
         ("authorizationId", "another-authorization"),
         ("businessTransactionHash", "0" * 64),

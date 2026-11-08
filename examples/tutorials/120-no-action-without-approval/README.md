@@ -4,7 +4,7 @@
 
 Show the rule every policy and every action follow: no AI agent action is authorized without a
 signed approval from a trusted person, reads included. See
-`docs/site/concepts/human-approval.mdx`, `docs/CLAIMS.md` 2.47 and `docs/VERIFICATION-GAPS.md` G-80.
+`docs/site/concepts/human-approval.mdx`, `docs/internal/CLAIMS.md` 2.47 and `docs/internal/VERIFICATION-GAPS.md` G-80.
 
 ## How it is enforced
 

@@ -258,12 +258,12 @@ wins, with nothing surfacing that the second rule is partly or wholly shadowed.
   logs a `policy_rule_conflict_detected` warning naming them. It is **advisory,
   not fail-closed** (unlike `boundSignals` coverage): a flagged pair might be a
   genuine bug, or might be an intentional priority ordering between two
-  violation reasons that can legitimately co-occur (this repo's own
-  `hubspot-deal-update` policy has exactly one such case). It also only proves
-  `NO_OVERLAP` for condition shapes it can fully reason about (same-fact
-  `eq`/`neq`/numeric comparisons, and `all` conjunctions where at least one
-  conjunct is provably disjoint from the other side), anything more complex is
-  reported as `NEEDS_REVIEW`, an honest "can't tell," never a guessed answer.
+  violation reasons that can legitimately co-occur (this repo's own reference
+  policies have such a case). It also only proves `NO_OVERLAP` for condition
+  shapes it can fully reason about (same-fact `eq`/`neq`/numeric comparisons,
+  and `all` conjunctions where at least one conjunct is provably disjoint from
+  the other side), anything more complex is reported as `NEEDS_REVIEW`, an
+  honest "can't tell," never a guessed answer.
 </Note>
 
 ## Troubleshoot

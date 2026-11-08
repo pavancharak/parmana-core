@@ -2,7 +2,7 @@
 Standalone, offline verification of an Execution Trust Record.
 
 Python counterpart to packages/crypto/src/OfflineVerifier.ts (PQC
-audit RED-1, docs/VERIFICATION-GAPS.md) -- proves the canonical
+audit RED-1, docs/internal/VERIFICATION-GAPS.md) -- proves the canonical
 serialization algorithm and Ed25519 verification are independently
 reproducible in a second language, not just documented as "should be
 portable." Zero network calls, zero disk reads (beyond files the
@@ -12,16 +12,14 @@ Large records (over 4096 bytes of canonical content) may have been
 signed by AWS KMS as a fixed size commitment, because KMS caps a raw
 Ed25519 message at 4096 bytes. This module accepts a raw signature for
 any record, and additionally accepts the commitment form for a record
-over that limit (see docs/adr/ADR-0010). A commitment signature over a
+over that limit (see docs/internal/adr/ADR-0010). A commitment signature over a
 record at or below the limit is rejected.
 
-ML-DSA-65 (Dilithium3) verification is intentionally out of scope
-here: the `cryptography` package version this SDK currently depends
-on does not yet expose `cryptography.hazmat.primitives.asymmetric.
-ml_dsa`. A hybrid-signed record's `signatures` array cannot be
-independently checked from Python until that support lands upstream
-and this module is updated to use it -- stated plainly rather than
-silently skipped or faked.
+A hybrid-signed record's `signatures` array (one Ed25519 entry and one
+ML-DSA-65 entry, `dilithium3`) is verified over the message for its schema
+version. Version 3 (whole-record) covers every top-level field except the
+signatures, the schema version, `verifications` and `receipts`. Verifying
+ML-DSA-65 needs `cryptography` 47.0.0 or later.
 """
 
 from __future__ import annotations
@@ -32,6 +30,7 @@ from typing import Any, cast
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+from cryptography.hazmat.primitives.asymmetric.mldsa import MLDSA65PublicKey
 from cryptography.hazmat.primitives.hashes import SHA256, Hash
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
 
@@ -55,7 +54,25 @@ def _as_json(value: Any) -> dict[str, Any]:
     return cast("dict[str, Any]", value)
 
 
+# Algorithms the legacy (single) signature and the intent verifier accept. ML-DSA-65
+# is accepted only inside a hybrid `signatures` array, checked by
+# _verify_hybrid_entries.
 _SUPPORTED_ALGORITHMS = {"ed25519"}
+
+# Schema versions, mirroring packages/crypto/src/ExecutionTrustRecordCanonicalView.ts.
+_DEFAULT_SCHEMA_VERSION = 2
+_WHOLE_RECORD_SCHEMA_VERSION = 3
+_SUPPORTED_SCHEMA_VERSIONS = (2, 3)
+
+# Top-level fields a schema version 3 message does not cover (attached after
+# signing, or the signatures themselves).
+_WHOLE_RECORD_EXCLUDED_FIELDS = (
+    "signature",
+    "signatures",
+    "schemaVersion",
+    "verifications",
+    "receipts",
+)
 
 # Large message commitment (v1), mirroring packages/crypto/src/
 # SignatureCommitment.ts. AWS KMS caps a raw Ed25519 message at 4096
@@ -89,6 +106,26 @@ def _verify_ed25519_with_commitment(
     public_key.verify(signature, _commitment_message(message))
 
 
+def _hybrid_message(record: dict[str, Any], schema_version: int) -> bytes:
+    """
+    The message a hybrid `signatures` entry signs, mirroring
+    hybridSignedCanonicalView() in ExecutionTrustRecordCanonicalView.ts:
+    version 3 covers every top-level field except the excluded ones, and
+    any other version covers the fixed canonical fields. The schema version
+    is always part of the message.
+    """
+
+    if schema_version == _WHOLE_RECORD_SCHEMA_VERSION:
+        covered = {
+            k: v for k, v in record.items() if k not in _WHOLE_RECORD_EXCLUDED_FIELDS
+        }
+        return canonical_serialize({**covered, "schemaVersion": schema_version})
+
+    return canonical_serialize(
+        {**_canonical_execution_trust_record(record), "schemaVersion": schema_version}
+    )
+
+
 def _canonical_execution_trust_record(record: dict[str, Any]) -> dict[str, Any]:
     """
     Mirrors ExecutionTrustRecordCanonicalView.ts's
@@ -118,6 +155,9 @@ class OfflineVerificationResult:
     legacy_signature_valid: bool
     algorithms_checked: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
+    # "full" when a schema version 3 hybrid record verifies, otherwise "legacy".
+    coverage: str = "legacy"
+    hybrid_signatures_valid: bool | None = None
 
 
 def verify_execution_trust_record_offline(
@@ -186,16 +226,35 @@ def verify_execution_trust_record_offline(
         except Exception as error:  # noqa: BLE001 -- reported, not swallowed
             errors.append(f'error verifying keyId "{key_id}" ({algorithm}): {error}')
 
-    if trust_record.get("signatures"):
-        errors.append(
-            "this record carries a hybrid `signatures` array; ML-DSA-65 "
-            "verification is not yet available from Python (see this "
-            "module's own docstring) -- verify with the TypeScript "
-            "reference implementation (packages/crypto/src/"
-            "OfflineVerifier.ts) for a complete hybrid check."
-        )
+    schema_version = trust_record.get("schemaVersion", _DEFAULT_SCHEMA_VERSION)
+    entries = trust_record.get("signatures")
+    hybrid_valid: bool | None = None
 
-    valid = hash_valid and legacy_signature_valid and not trust_record.get("signatures")
+    if schema_version not in _SUPPORTED_SCHEMA_VERSIONS:
+        errors.append(f"unsupported schemaVersion {schema_version}: expected 2 or 3.")
+        hybrid_valid = False
+    elif entries is not None:
+        hybrid_valid = _verify_hybrid_entries(
+            entries,
+            _hybrid_message(trust_record, schema_version),
+            public_keys,
+            algorithms_checked,
+            errors,
+        )
+    elif schema_version == _WHOLE_RECORD_SCHEMA_VERSION:
+        errors.append(
+            "schemaVersion 3 record has no signatures array: a whole-record "
+            "signature is required."
+        )
+        hybrid_valid = False
+
+    coverage = (
+        "full"
+        if schema_version == _WHOLE_RECORD_SCHEMA_VERSION and hybrid_valid is True
+        else "legacy"
+    )
+
+    valid = hash_valid and legacy_signature_valid and (hybrid_valid is not False)
 
     return OfflineVerificationResult(
         valid=valid,
@@ -203,7 +262,79 @@ def verify_execution_trust_record_offline(
         legacy_signature_valid=legacy_signature_valid,
         algorithms_checked=algorithms_checked,
         errors=errors,
+        coverage=coverage,
+        hybrid_signatures_valid=hybrid_valid,
     )
+
+
+def _verify_hybrid_entries(
+    entries: Any,
+    message: bytes,
+    public_keys: dict[str, str],
+    algorithms_checked: list[str],
+    errors: list[str],
+) -> bool:
+    """
+    Verifies a hybrid `signatures` array. Fail-closed, as the TypeScript
+    verifier is: exactly two entries, one Ed25519 and one ML-DSA-65 (dilithium3),
+    each verifying over `message` with the key its keyId names. Any other
+    shape, duplicate algorithm, or unknown algorithm is a failure.
+    """
+
+    if not isinstance(entries, list) or not all(isinstance(e, dict) for e in entries):
+        errors.append("malformed signatures: expected a list of entries.")
+        return False
+
+    if len(entries) != 2:
+        errors.append(
+            f"signatures array has {len(entries)} entries, need exactly 2 for a "
+            "hybrid record."
+        )
+        return False
+
+    names = [entry.get("algorithm") for entry in entries]
+    if sorted(map(str, names)) != ["dilithium3", "ed25519"]:
+        errors.append(
+            f"signatures must be one ed25519 and one dilithium3 entry, got {names}."
+        )
+        return False
+
+    all_valid = True
+    for entry in entries:
+        algorithm = entry.get("algorithm")
+        key_id = entry.get("keyId")
+        value = entry.get("signature", entry.get("value"))
+        algorithms_checked.append(str(algorithm))
+
+        if key_id not in public_keys:
+            errors.append(f'no public key supplied for keyId "{key_id}".')
+            all_valid = False
+            continue
+
+        try:
+            import base64
+
+            public_key = load_pem_public_key(public_keys[key_id].encode("utf-8"))
+            signature_bytes = base64.b64decode(value)
+
+            if algorithm == "ed25519":
+                if not isinstance(public_key, Ed25519PublicKey):
+                    raise ValueError("supplied public key is not an Ed25519 key")
+                _verify_ed25519_with_commitment(public_key, signature_bytes, message)
+            else:
+                if not isinstance(public_key, MLDSA65PublicKey):
+                    raise ValueError("supplied public key is not an ML-DSA-65 key")
+                public_key.verify(signature_bytes, message)
+        except InvalidSignature:
+            errors.append(
+                f'signature verification failed for keyId "{key_id}" ({algorithm}).'
+            )
+            all_valid = False
+        except Exception as error:  # noqa: BLE001 -- reported, not swallowed
+            errors.append(f'error verifying keyId "{key_id}" ({algorithm}): {error}')
+            all_valid = False
+
+    return all_valid
 
 
 def _canonical_execution_intent(intent: dict[str, Any]) -> dict[str, Any]:

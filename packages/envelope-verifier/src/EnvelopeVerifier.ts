@@ -13,6 +13,9 @@ import type { NonceStore } from "./NonceStore.js";
 
 const DEFAULT_MAX_TTL_SECONDS = 300;
 
+/** Allowed clock drift between the issuer and this verifier. Matches the step-up path. */
+const CLOCK_SKEW_MS = 60_000;
+
 /**
  * Result of the side-effect-free envelope checks:
  * payload version, signature, expiry, and TTL
@@ -221,8 +224,19 @@ export class EnvelopeVerifier {
         Date.parse(authorization.payload.authorizedAt)) /
       1000;
 
+    // ttlWithinPolicy also requires a positive lifetime (expiresAt after
+    // authorizedAt) and rejects authorizedAt beyond the allowed clock skew,
+    // so a future-dated or inverted envelope cannot pass the TTL check.
+    const authorizedAtMs = Date.parse(authorization.payload.authorizedAt);
+    const authorizedAtInPast =
+      Number.isFinite(authorizedAtMs) &&
+      authorizedAtMs <= now.getTime() + CLOCK_SKEW_MS;
+
     const ttlWithinPolicy =
-      Number.isFinite(ttlSeconds) && ttlSeconds <= this.maxTtlSeconds;
+      Number.isFinite(ttlSeconds) &&
+      ttlSeconds > 0 &&
+      ttlSeconds <= this.maxTtlSeconds &&
+      authorizedAtInPast;
 
     return {
       passed:

@@ -1,14 +1,15 @@
+import type { DecisionRequest } from "./RuntimeEngine.js";
 import crypto from "node:crypto";
 
 import type { DecisionAssessment, JsonValue } from "@parmana/shared";
 
-import {
-  BusinessTransaction,
-  Decision,
-  DecisionOutcome,
-} from "@parmana/shared";
+import { Decision, DecisionOutcome } from "@parmana/shared";
 
-import { PolicyDecision, PolicyOutcome } from "@parmana/policy";
+import {
+  POLICY_EVALUATION_METHOD,
+  PolicyDecision,
+  PolicyOutcome,
+} from "@parmana/policy";
 
 /**
  * Builds the canonical Decision artifact.
@@ -30,12 +31,16 @@ export class DecisionBuilder {
    * Builds an immutable Decision from a PolicyDecision.
    */
   public build(
-    transaction: BusinessTransaction,
+    transaction: DecisionRequest,
     policyDecision: PolicyDecision,
     assessment?: DecisionAssessment,
   ): Decision {
     return {
       decisionId: crypto.randomUUID(),
+      evaluationMethod: {
+        id: POLICY_EVALUATION_METHOD.id,
+        version: POLICY_EVALUATION_METHOD.version,
+      },
 
       intentId: transaction.intent.intentId,
 
@@ -48,7 +53,7 @@ export class DecisionBuilder {
       reason: policyDecision.reason,
 
       // Copied verbatim from PolicyEngine's own output, never
-      // recomputed here (docs/VERIFICATION-GAPS.md G-44): these three
+      // recomputed here (docs/internal/VERIFICATION-GAPS.md G-44): these three
       // previously existed only transiently in memory and were
       // dropped before anything durable was written.
       matchedRuleId: policyDecision.matchedRuleId,

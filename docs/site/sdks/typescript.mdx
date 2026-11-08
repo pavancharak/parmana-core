@@ -223,7 +223,7 @@ Added 2026-09-14, ships in v1.1.2, published, available via a plain
 `metadata.businessTransactionId` must equal `businessTransactionId`,
 `authorization.authorityId` must equal `authority.authorityId`, `intent.authorizationId` must
 equal `authorization.authorizationId`. Every "X must match Y" `400` documented in
-[the end-to-end Paytm guide](/guides/end-to-end-paytm-flow) came from hand-building a request
+[the error catalog](/api-reference/error-catalog) came from hand-building a request
 object and getting one of those wrong. `createBusinessTransaction()` derives all three
 automatically:
 
@@ -360,7 +360,7 @@ equal a value of the Intent (`signals.bound`), and the signals that need a signe
 resource and amount are in the request (`signals.approval`). It never returns the rules.
 
 ```typescript
-const inEffect = await client.policyInEffect("paytm:refund");
+const inEffect = await client.policyInEffect("erp:invoice-pay");
 
 inEffect.policy; // { name: "customer-refund", version: "1.2.0", schemaVersion: "1.0.0" }
 inEffect.signals.facts; // ["fraudCheckPassed", "managerApproved", "refundAmount", "refundEligible"]
@@ -427,8 +427,8 @@ const approval = signApproval({
   ),
   approverId: "approver-example",
   keyId: "approver-example-key-1",
-  capability: "paytm:refund",
-  resourceId: "ORD-1042",
+  capability: "erp:invoice-pay",
+  resourceId: "INV-1042",
   maxAmount: 75000, // leave out when the policy declares no amount
 });
 
@@ -494,7 +494,7 @@ const client = new ParmanaClient({
 });
 
 const me = await client.caller();
-// { callerId: "local-operator", allowedPrincipalIds: ["local-operator"], allowedCapabilities: ["paytm:refund"], unrestrictedCapabilities: false }
+// { callerId: "local-operator", allowedPrincipalIds: ["local-operator"], allowedCapabilities: ["erp:invoice-pay"], unrestrictedCapabilities: false }
 
 const key = await client.publicKey("default");
 // key.pem is the SPKI PEM that signs Trust Records, Refusal Records and Execution Intents
@@ -527,7 +527,7 @@ const view = await client.executionIntent(
 verifyExecutionIntentOffline(view.intent, { default: pem });
 ```
 
-No network call and no database: only the record and the public key. The result has the same fields as the Python SDK's, in camelCase. A record that also carries a hybrid ML-DSA-65 `signatures` array is reported as not valid, with an error that says why, because the SDKs do not verify ML-DSA-65.
+No network call and no database: only the record and the public key. The result has the same fields as the Python SDK's, in camelCase. A hybrid record, with one Ed25519 and one ML-DSA-65 entry in its `signatures` array, is verified in full, including the schema version 3 whole-record message. The result then reports `coverage: "full"`. ML-DSA-65 needs Node 24 or later with OpenSSL 3.5 or later; on an earlier Node a hybrid record is reported as not valid, with an error that says why. A malformed `signatures` array is refused.
 
 ### Check a release at an external connector endpoint (1.5.0)
 
@@ -693,14 +693,6 @@ for them would describe behavior the real API doesn't have.
 ## Next
 
 <CardGroup cols={2}>
-  <Card
-    title="End-to-end: agent → Parmana → Paytm"
-    icon="route"
-    href="/guides/end-to-end-paytm-flow"
-  >
-    The full, no-ambiguity runbook this SDK builds toward: real infrastructure,
-    every error message, every fix.
-  </Card>
   <Card title="Python SDK" icon="python" href="/sdks/python">
     The other maintained SDK: same bearer-key model, generated (not
     hand-maintained) models.

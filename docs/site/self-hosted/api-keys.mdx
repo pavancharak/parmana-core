@@ -22,7 +22,7 @@ docker compose run --rm --no-deps --entrypoint node setup \
 Example output:
 
 ```text
-callerId=local-operator  credentialHolderType=(none)  allowedCapabilities=paytm:refund  allowedPrincipalIds=(own caller ID only)  stepUpKey=no
+callerId=local-operator  credentialHolderType=(none)  allowedCapabilities=erp:invoice-pay  allowedPrincipalIds=(own caller ID only)  stepUpKey=no
 callerId=alice  credentialHolderType=USER  allowedCapabilities=(none)  allowedPrincipalIds=(own caller ID only)  stepUpKey=no
 callerId=bob  credentialHolderType=USER  allowedCapabilities=(none)  allowedPrincipalIds=(own caller ID only)  stepUpKey=yes
 [api-keys] 3 key(s)
@@ -40,7 +40,7 @@ docker compose run --rm --no-deps --entrypoint node setup \
 | Option                            | Required | Meaning                                                                                                                                                                                                           |
 | --------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--caller-id <id>`                | Yes      | Who the key belongs to. Appears in every audit event and record the key produces.                                                                                                                                 |
-| `--allowed-capabilities <a,b>`    | No       | Capabilities the key may request in `POST /execute`, for example `paytm:refund`. `*` allows every capability. **Without this option the key may request none.**                                                   |
+| `--allowed-capabilities <a,b>`    | No       | Capabilities the key may request in `POST /execute`, for example `erp:invoice-pay`. `*` allows every capability. **Without this option the key may request none.**                                                |
 | `--allowed-principal-ids <a,b>`   | No       | Principal IDs the key may act for in a request's `authority.principalId`. **Without this option the key may act only for its own caller ID.**                                                                     |
 | `--credential-holder-type <type>` | No       | `USER`, `ROLE`, `SERVICE` or `ORGANIZATION`. Only `USER` marks the holder as a verified human, which proposing and approving policies requires.                                                                   |
 | `--step-up-public-key-stdin`      | No       | Reads the holder's Ed25519 step up public key, in PEM form, from standard input. Needed to approve or reject policy changes. Requires `--credential-holder-type USER`, and `-T` right after `docker compose run`. |
@@ -62,7 +62,7 @@ A service that sends refund requests:
 ```bash
 docker compose run --rm --no-deps --entrypoint node setup \
   /app/docker/local/api-keys.mjs add --caller-id refund-service \
-  --allowed-capabilities paytm:refund --credential-holder-type SERVICE
+  --allowed-capabilities erp:invoice-pay --credential-holder-type SERVICE
 ```
 
 A person who proposes policy changes:
@@ -87,7 +87,7 @@ docker compose run --rm -T --no-deps --entrypoint node setup \
    ```bash
    docker compose run --rm --no-deps --entrypoint node setup \
      /app/docker/local/api-keys.mjs add --caller-id refund-service \
-     --allowed-capabilities paytm:refund --credential-holder-type SERVICE
+     --allowed-capabilities erp:invoice-pay --credential-holder-type SERVICE
    docker compose restart api
    ```
 

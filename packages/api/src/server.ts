@@ -10,7 +10,7 @@ import {
   assertKmsSigningKeyReachable,
   assertSigningKeyMaterialConfigured,
 } from "./bootstrap/assertSigningKeyMaterialConfigured.js";
-import { assertPaytmConnectorConfigured } from "./bootstrap/assertPaytmConnectorConfigured.js";
+import { loadKeyMaterialFromSecretsManager } from "./bootstrap/loadKeyMaterialFromSecretsManager.js";
 import { createGracefulShutdown } from "./bootstrap/createGracefulShutdown.js";
 import { createExecutionSystem } from "./bootstrap/createExecutionSystem.js";
 import { createApplication, policyRepository } from "./application.js";
@@ -24,7 +24,10 @@ import { createRateLimitStore } from "./bootstrap/createRateLimitStore.js";
 import { createSandboxOptions } from "./bootstrap/createSandboxOptions.js";
 import { createKillSwitch } from "./bootstrap/createKillSwitch.js";
 import { createApp } from "./app.js";
-import { distrustCompromisedRoots } from "./bootstrap/distrustCompromisedRoots.js";
+import {
+  assertListedRootIsBundled,
+  distrustCompromisedRoots,
+} from "./bootstrap/distrustCompromisedRoots.js";
 
 /**
  * Fail-closed startup validation, before any other bootstrap runs and
@@ -38,31 +41,25 @@ import { distrustCompromisedRoots } from "./bootstrap/distrustCompromisedRoots.j
  * client — see assertStorageConfigured.ts), and signing key material
  * is normally validated lazily too (FileKeyProvider, only on the first
  * sign/verify call — see assertSigningKeyMaterialConfigured.ts).
- * assertPaytmConnectorConfigured() closes a narrower gap: not "is the
- * Paytm connector configured at all" (it's optional, like HubSpot/
- * GitHub — createConnectorRegistry.ts simply doesn't register it when
- * unset), but "is it configured consistently" — refusing to start with
- * only one of PAYTM_CONNECTOR_URL/PAYTM_CONNECTOR_SHARED_SECRET set,
- * which would otherwise surface later as a connector that "registered"
- * but can never authenticate to or reach the remote Paytm connector
- * service.
  * Without these, a misconfigured process could bind the port, pass
  * /health, and only fail on its first real request.
  */
 // Before any outbound TLS connection: see distrustCompromisedRoots.ts.
+const listedRoots = assertListedRootIsBundled();
 const distrusted = distrustCompromisedRoots();
 console.log(
   JSON.stringify({
     event: "runtime",
     node: process.version,
+    distrustedRootsBundled: listedRoots.matched,
     distrustedRootsRemoved: distrusted.removed,
   }),
 );
 
 assertStorageConfigured();
+await loadKeyMaterialFromSecretsManager(loadConfig().keys.keyDirectory);
 assertSigningKeyMaterialConfigured();
 await assertKmsSigningKeyReachable();
-assertPaytmConnectorConfigured();
 
 // ADR-0014: PARMANA_CORS_ORIGINS and sandbox mode, refused at startup
 // when unsafe (see createSandboxOptions).
@@ -148,7 +145,7 @@ const app = createApp(application, {
   corsOrigins: sandbox.corsOrigins,
 });
 
-// PaaS platforms (Railway, Render, Fly, etc.) commonly inject PORT
+// PaaS platforms (Railway, Render, etc.) commonly inject PORT
 // dynamically at deploy time and expect the process to bind to
 // whatever value they provide, not a hardcoded default — Config.ts's
 // api.port already reads process.env.PORT with a 3000 fallback for

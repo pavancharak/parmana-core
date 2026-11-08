@@ -16,7 +16,7 @@ import {
  * Rotates the signing key used by VerificationCrypto/RefusalCrypto/
  * AuditEventCrypto -- Trust Records, Refusal Records, and Audit
  * Events -- for NEW signatures going forward (PQC audit RED-3,
- * docs/VERIFICATION-GAPS.md).
+ * docs/internal/VERIFICATION-GAPS.md).
  *
  * This does not touch, delete, or overwrite any existing key file.
  * It generates a new key pair under a fresh, timestamped keyId, and

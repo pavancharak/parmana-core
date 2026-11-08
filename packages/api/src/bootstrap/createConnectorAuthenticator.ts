@@ -31,26 +31,6 @@ export function createConnectorAuthenticator(): RequestBoundConnectorAuthenticat
         publicIdentity: "spiffe://parmana/connectors/test-fixture",
         authenticationMetadata: {},
       },
-      {
-        connectorId: "hubspot",
-        publicIdentity: "spiffe://parmana/connectors/hubspot",
-        authenticationMetadata: {},
-      },
-      {
-        connectorId: "github",
-        publicIdentity: "spiffe://parmana/connectors/github",
-        authenticationMetadata: {},
-      },
-      {
-        connectorId: "paytm",
-        publicIdentity: "spiffe://parmana/connectors/paytm-refund",
-        authenticationMetadata: {},
-      },
-      {
-        connectorId: "slack",
-        publicIdentity: "spiffe://parmana/connectors/slack",
-        authenticationMetadata: {},
-      },
     ],
     // External connectors (ADR-0013) are built by the server for approved
     // registrations, so their identities are not known at startup.

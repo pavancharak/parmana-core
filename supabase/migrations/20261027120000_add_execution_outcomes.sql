@@ -1,5 +1,5 @@
 -- =============================================================================
--- Execution outcome record (G-125, docs/VERIFICATION-GAPS.md)
+-- Execution outcome record (G-125, docs/internal/VERIFICATION-GAPS.md)
 -- =============================================================================
 --
 -- Backs SupabaseExecutionOutcomeStore. One row per authorization nonce,

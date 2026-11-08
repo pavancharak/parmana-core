@@ -10,7 +10,7 @@ import {
 import type { ExecutionTrustRecord } from "@parmana/shared";
 
 //
-// PQC audit RED-4 (docs/VERIFICATION-GAPS.md): schemaVersion and
+// PQC audit RED-4 (docs/internal/VERIFICATION-GAPS.md): schemaVersion and
 // signatures[] are deliberately excluded from the hashed content (so
 // the legacy signature keeps verifying pre-hybrid-era records
 // unchanged), but that also meant VerificationCrypto.verifySignature()

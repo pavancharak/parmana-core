@@ -75,20 +75,6 @@ interface Case {
 
 const CASES: readonly Case[] = [
   {
-    name: "github-pr-approval",
-    version: "1.1.0",
-    approvalFact: "mergeApproved",
-    resourceId: "target",
-    permissive: {
-      repositoryAuthorized: true,
-      requiredReviewsCompleted: true,
-      statusChecksPassed: true,
-      branchProtected: true,
-      riskScore: 0,
-    },
-    failing: { riskScore: 99 },
-  },
-  {
     name: "llm-tool-call",
     version: "1.1.0",
     approvalFact: "humanApproval",
@@ -112,39 +98,6 @@ const CASES: readonly Case[] = [
       refundAmount: 1,
     },
     failing: { fraudCheckPassed: false },
-  },
-  {
-    name: "github-pr-read",
-    version: "1.1.0",
-    approvalFact: "readApproved",
-    resourceId: "target",
-    permissive: {},
-  },
-  {
-    name: "hubspot-deal-read",
-    version: "1.0.0",
-    approvalFact: "readApproved",
-    resourceId: "parameters.dealId",
-    permissive: {},
-  },
-  {
-    name: "hubspot-deal-update",
-    version: "1.1.0",
-    approvalFact: "dealUpdateApproved",
-    resourceId: "parameters.dealId",
-    permissive: {
-      dealStageChangeRequested: true,
-      dealStageTransitionAllowed: true,
-    },
-    failing: { dealStageTransitionAllowed: false },
-  },
-  {
-    name: "slack-post-message",
-    version: "1.1.0",
-    approvalFact: "postApproved",
-    resourceId: "target",
-    permissive: { contentApproved: true, channelAuthorized: true },
-    failing: { contentApproved: false },
   },
   {
     name: "access-control",
@@ -355,13 +308,9 @@ describe.each([
   ["customer-refund", "1.1.0"],
   ["database-change", "3.0.0"],
   ["expense-reimbursement", "1.0.0"],
-  ["github-pr-approval", "1.0.0"],
-  ["github-pr-read", "1.0.0"],
-  ["hubspot-deal-update", "1.0.0"],
   ["llm-tool-call", "1.0.0"],
   ["production-deployment", "1.0.0"],
   ["rag-document-access", "1.0.0"],
-  ["slack-post-message", "1.0.0"],
   ["vendor-payment", "2.0.0"],
 ])("%s %s", (name, version) => {
   it("is refused because it approves without a signed human approval", () => {

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 /**
- * G-15 (docs/VERIFICATION-GAPS.md): repositories.ts used to call
+ * G-15 (docs/internal/VERIFICATION-GAPS.md): repositories.ts used to call
  * StorageFactory.createFromEnvironment() as a module-scope side effect,
  * so merely importing it — which every packages/api test file does
  * transitively via ../src/application.js — constructed whatever

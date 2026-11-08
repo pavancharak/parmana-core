@@ -46,3 +46,14 @@ body:
       options:
         - label: I searched the existing issues and discussions.
           required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How urgent this is. Every issue needs one.
+      options:
+        - "high (security, data loss, or a documented behaviour that is wrong or blocked)"
+        - "medium (should be fixed in the next few releases)"
+        - "low (nice to have)"
+    validations:
+      required: true

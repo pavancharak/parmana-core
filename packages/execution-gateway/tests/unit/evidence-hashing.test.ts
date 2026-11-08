@@ -116,7 +116,7 @@ describe("ConnectorEvidence", () => {
     expect(JSON.stringify(evidence)).not.toContain("fake_key_leaked");
   });
 
-  // docs/VERIFICATION-GAPS.md G-45 (Record 3): every connector in this
+  // docs/internal/VERIFICATION-GAPS.md G-45 (Record 3): every connector in this
   // codebase today only observes and hashes its own HTTP response, none
   // independently verifies a vendor-originated cryptographic
   // confirmation -- this should be visible in the evidence itself, not

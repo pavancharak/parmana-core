@@ -222,7 +222,7 @@ def _transaction(
             intent_id=intent_id,
             authorization_id=authorization_id,
             # test:fixture-execute (not payments:execute/vendor-payment,
-            # removed per docs/VERIFICATION-GAPS.md G-27) -- mirrors
+            # removed per docs/internal/VERIFICATION-GAPS.md G-27) -- mirrors
             # typescript/test/integration/parmana-client.integration.test.ts's
             # identical fixture update.
             action="test:fixture-execute",

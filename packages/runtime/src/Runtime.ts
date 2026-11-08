@@ -4,7 +4,7 @@ import {
   ExecutionTrustRecordRepository,
 } from "@parmana/shared";
 
-import { RuntimeEngine } from "./RuntimeEngine.js";
+import { DecisionRequest, RuntimeEngine } from "./RuntimeEngine.js";
 import type { ExecutionIntentService } from "./ExecutionIntentService.js";
 import { ExecutionRecordIncompleteError } from "./errors/ExecutionRecordIncompleteError.js";
 
@@ -36,6 +36,11 @@ export class Runtime {
   /**
    * Execute a Business Transaction.
    */
+  /** Decides a request without executing it. See RuntimeEngine.decide. */
+  public async decide(request: DecisionRequest) {
+    return this.engine.decide(request);
+  }
+
   public async execute(
     transaction: BusinessTransaction,
   ): Promise<RuntimeResult> {

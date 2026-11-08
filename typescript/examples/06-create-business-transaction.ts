@@ -66,7 +66,7 @@ export async function runCreateBusinessTransactionExample(
       // vendor-payment@2.1.0 declares boundSignals: vendorId -> target;
       // SignalIntentBinder rejects this transaction unless this signal
       // exactly equals `target` above, checked before policy evaluation
-      // ever runs (docs/VERIFICATION-GAPS.md G-24).
+      // ever runs (docs/internal/VERIFICATION-GAPS.md G-24).
       vendorId: "vendor/vendor-123",
     },
     sourceSystem: "typescript-sdk-example",

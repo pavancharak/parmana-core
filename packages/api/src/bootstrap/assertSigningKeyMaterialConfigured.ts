@@ -174,20 +174,32 @@ function materializeFromEnvIfConfigured(keyDirectory: string): void {
   const raw = process.env.PARMANA_KEY_MATERIAL_JSON;
   if (raw === undefined || raw.trim() === "") return;
 
+  writeKeyMaterialJson(raw, keyDirectory, "PARMANA_KEY_MATERIAL_JSON");
+}
+
+/**
+ * Writes key files from a key-material JSON document, the shape that
+ * PARMANA_KEY_MATERIAL_JSON and the Secrets Manager secret both hold. A file
+ * that already exists is never overwritten. Exported so the Secrets Manager
+ * loader uses the same parsing and the same rules.
+ */
+export function writeKeyMaterialJson(
+  raw: string,
+  keyDirectory: string,
+  sourceName: string,
+): void {
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
   } catch {
     throw new Error(
-      "PARMANA_KEY_MATERIAL_JSON is not valid JSON. Expected " +
+      `${sourceName} is not valid JSON. Expected ` +
         '{ "<keyId>": { "privateKeyPem": string, "publicKeyPem": string } }.',
     );
   }
 
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    throw new Error(
-      "PARMANA_KEY_MATERIAL_JSON must be a JSON object keyed by keyId.",
-    );
+    throw new Error(`${sourceName} must be a JSON object keyed by keyId.`);
   }
 
   mkdirSync(keyDirectory, { recursive: true });
@@ -202,7 +214,7 @@ function materializeFromEnvIfConfigured(keyDirectory: string): void {
       typeof entry.publicKeyPem !== "string"
     ) {
       throw new Error(
-        `PARMANA_KEY_MATERIAL_JSON["${keyId}"] must have string "privateKeyPem" ` +
+        `${sourceName}["${keyId}"] must have string "privateKeyPem" ` +
           'and "publicKeyPem" fields.',
       );
     }

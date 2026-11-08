@@ -12,7 +12,7 @@ import type { ExecutableContent } from "@parmana/shared";
  * registered under the legacy channel path, so this always throws; it
  * exists only to satisfy ExecutionControlOptions.route's required shape.
  * A prior "payments:execute" -> "vendor-payment" mapping was removed here
- * since that connector was never registered (docs/VERIFICATION-GAPS.md
+ * since that connector was never registered (docs/internal/VERIFICATION-GAPS.md
  * G-27) and would have thrown at execution time regardless.
  */
 export function createConnectorRoute() {

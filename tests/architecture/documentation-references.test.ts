@@ -18,10 +18,10 @@ import { describe, expect, it } from "vitest";
 const repoRoot = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 
 const docsToCheck = [
-  "docs/architecture/system-architecture.md",
-  "docs/connectors/BUILDING_A_CONNECTOR.md",
-  "docs/architecture/repository-invariants.md",
-  "docs/CLAIMS.md",
+  "docs/internal/architecture/system-architecture.md",
+  "docs/internal/connectors/BUILDING_A_CONNECTOR.md",
+  "docs/internal/architecture/repository-invariants.md",
+  "docs/internal/CLAIMS.md",
 ];
 
 /**
@@ -42,7 +42,7 @@ const PATH_PATTERN =
  * hypotheticals are excluded.
  */
 const HYPOTHETICAL_EXAMPLE_PATHS = new Set([
-  // docs/CLAIMS.md §2.35: a prior implementation runbook assumed this
+  // docs/internal/CLAIMS.md §2.35: a prior implementation runbook assumed this
   // was the real execution-gateway choke point; it never existed --
   // the section cites it specifically to record and correct that
   // mistaken assumption (the real one is RuntimeEngine.execute()),
@@ -63,18 +63,18 @@ const HYPOTHETICAL_EXAMPLE_PATHS = new Set([
  * fixed. The doc's own narrative is the historical record of what was
  * true at the time and why it changed — rewriting the citation itself
  * would falsify that record. `payments:execute`/vendor-payment was
- * removed outright, not independently verified (docs/VERIFICATION-GAPS.md
+ * removed outright, not independently verified (docs/internal/VERIFICATION-GAPS.md
  * G-27) — `createVendorPaymentConnector.ts` and its dedicated credential
  * provider no longer exist anywhere in this repository. The same applies
  * to the Razorpay connector, deliberately removed in full (see the
- * removal commit and docs/CLAIMS.md's historical §3.4-3.9/3.8/3.9).
+ * removal commit and docs/internal/CLAIMS.md's historical §3.4-3.9/3.8/3.9).
  */
 const HISTORICALLY_REAL_NOW_REMOVED_PATHS = new Set([
   "packages/api/src/bootstrap/createVendorPaymentConnector.ts",
   "packages/api/src/webhooks/RazorpaySettlementProcessor.ts",
   "packages/api/src/bootstrap/createRazorpaySignalStateVerifier.ts",
   "packages/connector-sdk/src/connectors/razorpay/RazorpayCapabilities.ts",
-  // Surfaced when docs/CLAIMS.md and a wider PATH_PATTERN were added to
+  // Surfaced when docs/internal/CLAIMS.md and a wider PATH_PATTERN were added to
   // this check (G-31 docs pass) -- each is explicitly self-caveated in
   // its own doc as a historical citation, not a currently-resolvable path.
   "packages/api/tests/integration/razorpay-refund.integration.test.ts",
@@ -84,7 +84,20 @@ const HISTORICALLY_REAL_NOW_REMOVED_PATHS = new Set([
   // this logic lives today" -- moved/refactored during Phase 1C, not
   // deleted, but no longer resolvable at this original path.
   "packages/connector-hubspot/src/HubSpotConnector.ts",
-  // docs/CLAIMS.md §2.34: unexported, unimported dead code, deleted as
+  // HubSpot connector removed from core (ADR-0018). Cited by docs as history.
+  "packages/api/src/bootstrap/createHubSpotConnector.ts",
+  "packages/api/src/bootstrap/createHubSpotSignalStateVerifier.ts",
+  "packages/api/src/bootstrap/createHubSpotCredentialProvider.ts",
+  "packages/api/tests/helpers/hubspot-live-availability.ts",
+  "packages/execution-gateway/tests/unit/credential-non-exposure.test.ts",
+  "packages/api/tests/integration/hubspot-deal-update.integration.test.ts",
+  "packages/api/tests/integration/hubspot-live.integration.test.ts",
+  "packages/execution-gateway/src/connector-execution/GatewayHubSpotAdapter.ts",
+  "packages/execution-gateway/tests/unit/hubspot-connector.test.ts",
+  "packages/connector-hubspot/src/HubSpotSignalStateVerifier.ts",
+  "packages/connector-hubspot/src/MockHubSpotServer.ts",
+  "packages/connector-hubspot/tests/unit/hubspot-deal-update-policy.test.ts",
+  // docs/internal/CLAIMS.md §2.34: unexported, unimported dead code, deleted as
   // part of the same fix the section documents (commit 437f5ec).
   "packages/policy/src/types/LedgerEntry.ts",
 ]);
@@ -130,7 +143,7 @@ describe("documentation file references resolve to real files", () => {
 /**
  * Extension of the same check above, for a different citation shape: prose
  * naming a CLAIMS.md section number (`CLAIMS.md 3.8`, `` `CLAIMS.md` §3.4 ``,
- * `[CLAIMS.md 3.6](docs/CLAIMS.md)`, `CLAIMS.md 3.6 through 3.9`, etc. — no
+ * `[CLAIMS.md 3.6](docs/internal/CLAIMS.md)`, `CLAIMS.md 3.6 through 3.9`, etc. — no
  * single exact phrase covers every citation style actually in use, so this
  * matches on proximity: any `N.M` token found shortly after the literal
  * string "CLAIMS.md" on the same line) rather than a file path. Two real
@@ -138,14 +151,14 @@ describe("documentation file references resolve to real files", () => {
  * (2026-08-12): a citation to `3.4` and an implied `3.6 through 3.9` range,
  * both pointing at sections deleted outright (not renumbered) alongside the
  * connector. A follow-up scan of the whole repo found two more — including
- * docs/CLAIMS.md citing its own deleted §3.4 — confirming this rots
+ * docs/internal/CLAIMS.md citing its own deleted §3.4 — confirming this rots
  * silently and is worth guarding, same as the path check above.
  *
  * Scope is deliberately the living, currently-accurate documentation
- * surface only: docs/CLAIMS.md itself, the customer/investor-facing docs
+ * surface only: docs/internal/CLAIMS.md itself, the customer/investor-facing docs
  * site (docs/site/**\/*.mdx), and the root-level docs that track the same
  * present-tense state (README.md, SECURITY.md). The
- * audit-trail (docs/VERIFICATION-GAPS.md, docs/architecture/phase*.md,
+ * audit-trail (docs/internal/VERIFICATION-GAPS.md, docs/internal/architecture/phase*.md,
  * etc.) is deliberately excluded, for the same reason
  * docsToCheck above never included them: those are dated investigation
  * logs that correctly cite a section number as it existed at the time of
@@ -160,7 +173,7 @@ describe("documentation file references resolve to real files", () => {
  * precedent above rather than building something new.
  */
 
-const CLAIMS_MD_PATH = "docs/CLAIMS.md";
+const CLAIMS_MD_PATH = "docs/internal/CLAIMS.md";
 
 /** Every .mdx file under a directory, recursively, as repo-relative forward-slash paths. */
 function collectMdxFiles(relDir: string): string[] {
@@ -219,7 +232,7 @@ function extractSectionCitations(content: string): SectionCitation[] {
   return citations;
 }
 
-/** Every `## N.M` / `### N.M` header currently in docs/CLAIMS.md — read live, not a hardcoded copy that could itself drift. */
+/** Every `## N.M` / `### N.M` header currently in docs/internal/CLAIMS.md — read live, not a hardcoded copy that could itself drift. */
 function currentClaimsMdSectionNumbers(): Set<string> {
   const content = readFileSync(join(repoRoot, CLAIMS_MD_PATH), "utf8");
   const numbers = new Set<string>();
@@ -234,7 +247,7 @@ function currentClaimsMdSectionNumbers(): Set<string> {
 describe("CLAIMS.md section citations resolve to real headers", () => {
   const claimsSections = currentClaimsMdSectionNumbers();
 
-  it("docs/CLAIMS.md has at least one numbered section (sanity check the scan isn't vacuous)", () => {
+  it("docs/internal/CLAIMS.md has at least one numbered section (sanity check the scan isn't vacuous)", () => {
     expect(claimsSections.size).toBeGreaterThan(0);
   });
 

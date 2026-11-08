@@ -24,7 +24,6 @@ const internalSymbols = [
   "GatewayCapabilityConnectorPolicy",
   "SdkConnectorExecutor",
   "CredentialVaultAdapter",
-  "GatewayHubSpotAdapter",
   "GatewayHttpAdapter",
   "buildConnectorEvidence",
   "redactSensitiveKeys",
@@ -54,16 +53,12 @@ console.log(
 console.log(
   `createGatewayConnectorRegistry     -> ${typeof publicApi.createGatewayConnectorRegistry}`,
 );
-console.log(
-  `createGatewayHubSpotConnector       -> ${typeof publicApi.createGatewayHubSpotConnector}`,
-);
 console.log();
 
 const allPassed =
   leaked.length === 0 &&
   typeof publicApi.ExecutionGateway === "function" &&
-  typeof publicApi.createGatewayConnectorRegistry === "function" &&
-  typeof publicApi.createGatewayHubSpotConnector === "function";
+  typeof publicApi.createGatewayConnectorRegistry === "function";
 
 if (allPassed) {
   console.log(

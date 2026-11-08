@@ -62,17 +62,6 @@ describe("Reference Policy Determinism", () => {
       },
     },
     {
-      name: "github-pr-approval",
-      file: "github-pr-approval/1.0.0/policy.json",
-      signals: {
-        repositoryAuthorized: true,
-        requiredReviewsCompleted: true,
-        statusChecksPassed: true,
-        branchProtected: true,
-        riskScore: 10,
-      },
-    },
-    {
       name: "llm-tool-call",
       file: "llm-tool-call/1.0.0/policy.json",
       signals: {

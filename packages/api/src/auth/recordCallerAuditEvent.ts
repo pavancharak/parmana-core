@@ -11,7 +11,7 @@ import { AuditUnavailableError } from "./AuditUnavailableError.js";
  * (whichever the success path would have done). An action that
  * executes without an audit record contradicts the product's core
  * claim — see AuditUnavailableError's own comment and
- * docs/VERIFICATION-GAPS.md.
+ * docs/internal/VERIFICATION-GAPS.md.
  *
  * Shared between middleware/caller-auth.ts (missing/invalid
  * credential) and any route that authorizes a caller against

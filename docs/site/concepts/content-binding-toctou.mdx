@@ -150,10 +150,6 @@ again at release (`stage: "release"`):
   verify for this action, resource and value. It is used (its nonce recorded) at authorization;
   the release check repeats every other check, such as expiry and whether the approver's key is
   still trusted. See [Human approval](/concepts/human-approval).
-- **HubSpot deal state**, for `hubspot-deal-update` (`HubSpotSignalStateVerifier`), fetched
-  live from HubSpot.
-- **The Slack channel**, for Slack actions, against the server's allowlist
-  (`SLACK_ALLOWED_CHANNEL_IDS`).
 
 In the default server decision and release happen in the same request, seconds apart, so the
 release check catches what changed in those seconds, such as an approval that just expired or

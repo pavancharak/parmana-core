@@ -11,7 +11,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
  * untyped JSON, so each is confirmed present, and of the right kind,
  * before it is read: a missing or malformed one is refused naming it,
  * never left to throw a TypeError that surfaces as a bare 500
- * (docs/VERIFICATION-GAPS.md G-87).
+ * (docs/internal/VERIFICATION-GAPS.md G-87).
  */
 function assertShape(transaction: unknown): void {
   if (!isObject(transaction)) {

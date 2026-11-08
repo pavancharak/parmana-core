@@ -8,7 +8,7 @@ import {
 } from "../../shared/helpers/demo-approval.js";
 
 //
-// docs/VERIFICATION-GAPS.md G-32 / docs/CLAIMS.md 2.28: RuntimeAuthorizationSigner
+// docs/internal/VERIFICATION-GAPS.md G-32 / docs/internal/CLAIMS.md 2.28: RuntimeAuthorizationSigner
 // used to sign every Execution Authorization under the single shared "default"
 // key, regardless of tenant. It now resolves a dedicated "tenant.<tenantId>" key
 // via TenantKeyResolver when one has been provisioned, falling back to "default"

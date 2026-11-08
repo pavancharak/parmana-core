@@ -3,7 +3,7 @@ import { RuntimeError } from "./RuntimeError.js";
 /**
  * Thrown BEFORE anything is released to a connector when the evidence
  * signing path cannot currently produce a signed Execution Trust Record
- * (docs/VERIFICATION-GAPS.md G-52).
+ * (docs/internal/VERIFICATION-GAPS.md G-52).
  *
  * Fail closed on purpose: releasing an action that cannot be recorded
  * leaves an executed action with no signed trust record. Refusing here

@@ -26,7 +26,7 @@ import { PostgresPoolFactory, PostgresRateLimitStore } from "@parmana/storage";
  * with a loud startup warning. Deliberately NOT fail-closed the way
  * createNonceStore.ts's assertDatabaseUrlConfigured is: an in-process
  * rate limiter is a real, working control on a single instance (today's
- * actual deployment shape -- fly.toml pins `min_machines_running = 1`),
+ * actual deployment shape -- a single instance),
  * just not fleet-wide accurate the moment a second machine joins. A
  * missing nonce store means replay protection silently vanishes
  * (a security bypass); a missing shared rate-limit store means the

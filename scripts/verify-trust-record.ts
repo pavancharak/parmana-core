@@ -5,7 +5,7 @@ import { verifyExecutionTrustRecordOffline } from "@parmana/crypto";
 
 /**
  * Offline reference verifier CLI (PQC audit RED-1,
- * docs/VERIFICATION-GAPS.md). No network call, no database, no
+ * docs/internal/VERIFICATION-GAPS.md). No network call, no database, no
  * PARMANA_KEY_DIR -- everything it needs is the two files below.
  *
  * Usage:

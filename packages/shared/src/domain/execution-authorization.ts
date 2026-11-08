@@ -30,7 +30,7 @@ export interface ExecutionAuthorizationPayload {
    * signature verification. There are no external
    * consumers of the prior unversioned format, so
    * this is a breaking change made once, not a
-   * migrated one — see docs/CLAIMS.md.
+   * migrated one — see docs/internal/CLAIMS.md.
    */
   readonly version: 1;
 

@@ -2,7 +2,7 @@
 
 ## Objective
 
-Prove, directly and executably, that the authorization pipeline's outcome depends only on the requested action, the governing policy, and independently-verified facts — never on what kind of system, model, or entity submitted the request (`docs/CLAIMS.md` §2.24). Mirrors `packages/api/tests/integration/authority-type-agnostic-execution.integration.test.ts` at the library level.
+Prove, directly and executably, that the authorization pipeline's outcome depends only on the requested action, the governing policy, and independently-verified facts — never on what kind of system, model, or entity submitted the request (`docs/internal/CLAIMS.md` §2.24). Mirrors `packages/api/tests/integration/authority-type-agnostic-execution.integration.test.ts` at the library level.
 
 ## What You'll Learn
 

@@ -98,28 +98,16 @@ describe("execution boundary — exactly one production execution pipeline", () 
       // already-authorized paytm:refund ConnectorRequest to a separate,
       // trusted, out-of-process Paytm connector service over HTTPS,
       // never calling Paytm's own API in-process) — see
-      // docs/connectors/PAYTM_CONNECTOR.md and docs/CLAIMS.md §3.22.
+      // docs/internal/connectors/PAYTM_CONNECTOR.md and docs/internal/CLAIMS.md §3.22.
       // Same Phase 1C shape as HubSpot/GitHub: capability
       // identifiers/DTOs live in @parmana/connector-paytm, only the
       // executable class lives here.
       "packages/execution-gateway/src/connector-execution/GatewayPaytmAdapter.ts",
-      // Slack connector: posts a message via Slack's real chat.postMessage
-      // Web API, in-process (like HubSpot/GitHub, not a remote-proxy
-      // pattern like Paytm). Same Phase 1C shape: capability
-      // identifiers/DTOs live in @parmana/connector-slack, only the
-      // executable class lives here.
-      "packages/execution-gateway/src/connector-execution/GatewaySlackAdapter.ts",
       // External connector (ADR-0013): releases an approved request to an
       // operator's registered HTTPS endpoint as a signed release, the
       // remote pattern Paytm uses, made general. It lives here with the
       // other adapters and runs only through the Gateway pipeline.
       "packages/execution-gateway/src/connector-execution/GatewayExternalAdapter.ts",
-      // Zerodha Kite connector (paper and approval-gated live modes). Lives in
-      // execution-gateway with the other adapters; live mode refuses to
-      // construct without a recorded ZerodhaLiveApproval, and the connector is
-      // not registered with the gateway. Capability identifiers and the Kite
-      // client live in @parmana/connector-zerodha.
-      "packages/execution-gateway/src/connector-execution/GatewayZerodhaAdapter.ts",
       // Explicit, intentional test double — never executes a real vendor
       // call. Constructed by production bootstrap (createVendorPaymentConnector.ts,
       // via createConnectorRegistry.ts) ONLY when NODE_ENV=test; outside test
@@ -261,8 +249,10 @@ describe("execution boundary — exactly one production execution pipeline", () 
       name.startsWith("connector-"),
     );
 
-    it("found at least the known connector packages", () => {
-      expect(connectorPackages.length).toBeGreaterThanOrEqual(2);
+    // Vendor connectors left core (ADR-0018). connector-sdk is the one left,
+    // so this checks only that the scan finds at least one connector package.
+    it("found at least one connector package", () => {
+      expect(connectorPackages.length).toBeGreaterThanOrEqual(1);
     });
 
     for (const pkg of connectorPackages) {
@@ -304,7 +294,7 @@ describe("execution boundary — exactly one production execution pipeline", () 
     // pre-existing rules have likely never caught a real cross-package
     // violation. Rather than wire a silently-non-functional check into CI, this
     // extends the mechanism already proven to work in this file: a direct scan
-    // of import specifiers. See docs/architecture/repository-invariants.md.
+    // of import specifiers. See docs/internal/architecture/repository-invariants.md.
     const controlImportPattern = /from\s+["']@parmana\/execution-control["']/;
     const gatewayImportPattern = /from\s+["']@parmana\/execution-gateway["']/;
 

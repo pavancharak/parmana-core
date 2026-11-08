@@ -69,7 +69,7 @@ export function createPolicyInEffectRouter(
         if (typeof capability !== "string" || capability.trim() === "") {
           res.status(400).json({
             error:
-              "capability is required, for example ?capability=paytm:refund.",
+              "capability is required, for example ?capability=erp:invoice-pay.",
           });
           return;
         }

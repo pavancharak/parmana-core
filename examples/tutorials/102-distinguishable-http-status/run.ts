@@ -18,7 +18,7 @@ import {
 } from "../../shared/helpers/demo-approval.js";
 
 //
-// docs/CLAIMS.md 2.21: a policy REJECTED decision surfaces as HTTP 403
+// docs/internal/CLAIMS.md 2.21: a policy REJECTED decision surfaces as HTTP 403
 // with code POLICY_DENIED. An execution request whose authorization has
 // already been consumed -- every other Gateway check passed, only nonce
 // consumption failed -- surfaces as HTTP 409 with code
@@ -110,7 +110,7 @@ console.log(
 console.log("--------------------------------------------------");
 
 // Required before bootstrapping: without it, createConnectorRegistry
-// tries to reach real backing infrastructure (Supabase, HubSpot) instead
+// tries to reach real backing infrastructure (Supabase, an external system) instead
 // of falling back to in-memory/test doubles, leaving sockets stuck
 // "connecting" forever and the process never exiting.
 process.env.NODE_ENV = "test";

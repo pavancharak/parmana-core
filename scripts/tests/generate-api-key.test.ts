@@ -67,13 +67,13 @@ describe("generateApiKey", () => {
   it("includes allowedCapabilities only when provided", () => {
     const withCapabilities = generateApiKey({
       callerId: "caller-1",
-      allowedCapabilities: ["razorpay:refund-create", "razorpay:refund-fetch"],
+      allowedCapabilities: ["erp:invoice-pay", "erp:record-read"],
     });
     const withoutCapabilities = generateApiKey({ callerId: "caller-1" });
 
     expect(withCapabilities.entry.allowedCapabilities).toEqual([
-      "razorpay:refund-create",
-      "razorpay:refund-fetch",
+      "erp:invoice-pay",
+      "erp:record-read",
     ]);
     expect(withoutCapabilities.entry.allowedCapabilities).toBeUndefined();
   });
@@ -205,13 +205,9 @@ describe("parseAllowedCapabilities", () => {
   it("splits, trims, and drops empty values", () => {
     expect(
       parseAllowedCapabilities(
-        " razorpay:refund-create , razorpay:refund-fetch ,,hubspot:deal-update",
+        " erp:invoice-pay , erp:record-read ,,erp:record-update",
       ),
-    ).toEqual([
-      "razorpay:refund-create",
-      "razorpay:refund-fetch",
-      "hubspot:deal-update",
-    ]);
+    ).toEqual(["erp:invoice-pay", "erp:record-read", "erp:record-update"]);
   });
 
   it('accepts the "*" wildcard as an ordinary value', () => {

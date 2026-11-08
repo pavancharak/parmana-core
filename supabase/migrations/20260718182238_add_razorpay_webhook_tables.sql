@@ -4,7 +4,7 @@
 --
 -- Backs the durable, Supabase-backed webhook infrastructure introduced this
 -- session (packages/api/src/webhooks/SupabaseRazorpayWebhookEventStore.ts,
--- SupabaseRazorpayWebhookAuditSink.ts). See docs/CLAIMS.md for the scope of
+-- SupabaseRazorpayWebhookAuditSink.ts). See docs/internal/CLAIMS.md for the scope of
 -- what this closes: signature-verified, deduplicated event receipt only.
 -- Nothing in this session reads razorpay_webhook_events back to act on a
 -- settlement/refund lifecycle change — that is M4b.

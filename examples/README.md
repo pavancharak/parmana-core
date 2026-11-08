@@ -22,7 +22,6 @@ examples/
 ├── 05-inbound-decision/    RFC-0025: Parmana decides an inbound refund request (approve, reject, no grant)
 ├── 06-inbound-outcome/     RFC-0025: the partner reports the outcome; each decision takes one
 ├── 07-inbound-refund-flow/ RFC-0025: the whole inbound refund, end to end (refund is simulated)
-└── archive/                superseded examples, kept for history only
 ```
 
 ---
@@ -30,13 +29,11 @@ examples/
 ## Tutorials
 
 Tutorials introduce Parmana one concept at a time, in `examples/tutorials/`. Numbering has a
-few intentional gaps (61, 63–68, 85) from tutorials that were removed or never built when the
-Razorpay connector was deliberately removed from the codebase (see `docs/CLAIMS.md`,
-"Key Compromise Notice" section and the connector-removal history) — the sequence below is the
+few intentional gaps (61, 63–68, 85) from tutorials that were removed or never built. The sequence below is the
 authoritative, current list (also the exact list `npm run examples` executes, in
 `scripts/run-examples.ts`).
 
-Tutorial coverage is not exhaustive: not every `docs/CLAIMS.md`-documented capability has a
+Tutorial coverage is not exhaustive: not every `docs/internal/CLAIMS.md`-documented capability has a
 dedicated tutorial (for example, §2.27's `policyStillCurrent` policy-freshness check has none as
 of this writing). New tutorials get added when a capability's own narrative — "here's the
 exact before/after that makes this concrete" — earns the cost of a new numbered entry, not
@@ -105,10 +102,6 @@ automatically alongside every change.
 | 59  | Secure Connectors                                        |
 | 60  | End-to-End Enterprise Execution                          |
 | 62  | Signal/Intent Binding                                    |
-| 69  | HubSpot Deal Update Connector                            |
-| 70  | HubSpot Policy Denial                                    |
-| 71  | HubSpot Signal-State Verification                        |
-| 72  | HubSpot Approval Artifact                                |
 | 73  | Refusal Records                                          |
 | 74  | Refusal Record Fail-Open                                 |
 | 75  | Signed Audit Events                                      |
@@ -119,7 +112,6 @@ automatically alongside every change.
 | 80  | Fail-Closed Config Validation                            |
 | 81  | Connector Execution Gateway                              |
 | 82  | Composite Signal-State Verification                      |
-| 83  | Capability/Policy Binding (TD-22)                        |
 | 84  | Caller Authentication                                    |
 | 86  | Gateway Attestation                                      |
 | 87  | Key Provider Path Traversal                              |
@@ -147,7 +139,6 @@ automatically alongside every change.
 | 109 | Durable-Evidence Key Rotation                            |
 | 110 | Hybrid-Signature Downgrade Protection                    |
 | 111 | Connect an Agent to Parmana                              |
-| 112 | Slack Connector                                          |
 
 ---
 
@@ -224,4 +215,4 @@ npx tsx examples/scenarios/expense-approval/run.ts
 
 See the Parmana documentation (`docs/`) for architecture, policy authoring, runtime,
 verification, replay, storage, and API reference. For building a new connector specifically,
-start with `docs/architecture/CONNECTOR_ISOLATION.md` and `docs/connectors/BUILDING_A_CONNECTOR.md`.
+start with `docs/internal/architecture/CONNECTOR_ISOLATION.md` and `docs/internal/connectors/BUILDING_A_CONNECTOR.md`.

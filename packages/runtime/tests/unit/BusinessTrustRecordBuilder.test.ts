@@ -70,7 +70,7 @@ function execution(connectorEvidenceHash?: string): Execution {
 }
 
 /**
- * docs/VERIFICATION-GAPS.md G-45's residual "Record 3 is outside all
+ * docs/internal/VERIFICATION-GAPS.md G-45's residual "Record 3 is outside all
  * three [policy-governance] mechanisms" gap: nothing linked
  * transaction.policy.contentHash/governanceAnchor to what a connector
  * actually did. These tests prove the new evidenceAnchor field closes

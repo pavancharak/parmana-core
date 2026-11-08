@@ -62,8 +62,8 @@ export const refundTool = tool(
     const transaction = createBusinessTransaction({
       principalId: "langchain-customer-service-agent",
       purpose: reason,
-      action: "paytm:refund",
-      target: `paytm://orders/${orderId}`,
+      action: "erp:invoice-pay",
+      target: `erp://invoices/${orderId}`,
       parameters: { orderId, amount, refundReason: reason },
       policy: {
         name: "customer-refund",
@@ -139,8 +139,8 @@ const issueRefund = tool({
     const transaction = createBusinessTransaction({
       principalId: "ai-sdk-customer-service-agent",
       purpose: reason,
-      action: "paytm:refund",
-      target: `paytm://orders/${orderId}`,
+      action: "erp:invoice-pay",
+      target: `erp://invoices/${orderId}`,
       parameters: { orderId, amount, refundReason: reason },
       policy: {
         name: "customer-refund",
@@ -213,8 +213,8 @@ app.post("/agent/refund", async (req, res) => {
   const transaction = createBusinessTransaction({
     principalId: agentId,
     purpose: reason,
-    action: "paytm:refund",
-    target: `paytm://orders/${orderId}`,
+    action: "erp:invoice-pay",
+    target: `erp://invoices/${orderId}`,
     parameters: { orderId, amount, refundReason: reason },
     policy: {
       name: "customer-refund",
@@ -263,8 +263,8 @@ async function proposeAndNotify(
   const transaction = createBusinessTransaction({
     principalId: "async-refund-worker",
     purpose: input.reason,
-    action: "paytm:refund",
-    target: `paytm://orders/${input.orderId}`,
+    action: "erp:invoice-pay",
+    target: `erp://invoices/${input.orderId}`,
     parameters: {
       orderId: input.orderId,
       amount: input.amount,
@@ -352,8 +352,8 @@ export class CustomerServiceAgent {
     const transaction = createBusinessTransaction({
       principalId: this.principalId,
       purpose: request.reason,
-      action: "paytm:refund",
-      target: `paytm://orders/${request.orderId}`,
+      action: "erp:invoice-pay",
+      target: `erp://invoices/${request.orderId}`,
       parameters: {
         orderId: request.orderId,
         amount: request.amount,
@@ -450,12 +450,5 @@ if (result.approved) {
   </Card>
   <Card title="Connect an agent" icon="plug" href="/guides/connect-an-agent">
     The framework-agnostic version of this page's four patterns.
-  </Card>
-  <Card
-    title="End-to-end: agent → Parmana → Paytm"
-    icon="route"
-    href="/guides/end-to-end-paytm-flow"
-  >
-    This exact `paytm:refund` action, run against real, live infrastructure.
   </Card>
 </CardGroup>

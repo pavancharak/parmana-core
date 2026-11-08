@@ -16,8 +16,8 @@
  * question (was the investigation honest) unaddressed. Trustworthy
  * instead through citation discipline (every investigation step and
  * finding should cite something independently checkable) and, where
- * applicable, public disclosure — the same discipline docs/CLAIMS.md
- * and docs/VERIFICATION-GAPS.md already rely on with no cryptography.
+ * applicable, public disclosure — the same discipline docs/internal/CLAIMS.md
+ * and docs/internal/VERIFICATION-GAPS.md already rely on with no cryptography.
  *
  * Append-only, per ADR-0005-Evidence-Is-Append-Only.md, but unlike
  * RefusalRecord (a single terminal event with nothing to append to),
@@ -46,7 +46,7 @@ export interface ChallengeRecord {
    * that raised it can tell exactly what's being checked. Where
    * possible, cites the exact claim (a CLAIMS.md line, a doc page, a
    * piece of code, a specific public statement) — the same citation
-   * discipline docs/CLAIMS.md already applies to its own claims.
+   * discipline docs/internal/CLAIMS.md already applies to its own claims.
    */
   readonly claimChallenged: string;
 
@@ -142,7 +142,7 @@ export interface ChallengeRecordSource {
 /**
  * One discrete investigative step: what was actually examined, not
  * only what was concluded. Mirrors the "cites a file, a line, or a
- * specific test" discipline docs/VERIFICATION-GAPS.md's own Purpose
+ * specific test" discipline docs/internal/VERIFICATION-GAPS.md's own Purpose
  * section already states.
  */
 export interface ChallengeRecordInvestigationStep {

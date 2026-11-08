@@ -1,0 +1,99 @@
+---
+title: "Inbound checks"
+description: "How a business system asks Parmana to check a request from a customer's or partner's agent before it acts: the policy that decides it, what is recorded, and what is not recorded yet."
+---
+
+Some agents reach your systems from outside your business: a customer's agent asking for a refund, or a
+supplier's agent changing a purchase order. Parmana does not see those calls unless your system asks it
+first. An **inbound check** is that question: your system describes the request, and Parmana answers with a
+signed decision. Your system then acts only on an approval.
+
+This page describes the check as it is built today. Read the last section before you rely on it.
+
+## How it works
+
+1. An outside agent asks your business system for an action, for example a refund for an order.
+2. Your business system calls `POST /v1/inbound/checks` on Parmana, with the partner's API key.
+3. Parmana runs the policy bound to the action, the same policy that governs the action when it comes
+   from Parmana's own agents. The policy decides using the values the request declares. Nothing is
+   executed.
+4. Parmana also checks the partner's grant for the action and its limits. An approval needs both.
+5. Parmana returns a decision, approved or rejected, signed with Parmana's key.
+6. Your business system checks the signature and the expiry, and acts only on an approved decision.
+
+## The request
+
+| Field        | Required | Meaning                                                                             |
+| ------------ | -------- | ----------------------------------------------------------------------------------- |
+| `capability` | yes      | The action, as `namespace:verb` in lower case, for example `erp:release-goods`.     |
+| `target`     | no       | The business object the action touches, for example an order ID.                    |
+| `parameters` | no       | The values the action needs. A grant's limits are checked against these, by path.   |
+| `audience`   | yes      | The name your business system was given. A request for another audience is refused. |
+
+The caller is the partner, identified by its API key. The partner must hold a current grant for the
+capability.
+
+## The response
+
+A decision looks like this:
+
+```json
+{
+  "decisionId": "chk-…",
+  "outcome": "approved",
+  "partnerId": "partner-a",
+  "capability": "erp:release-goods",
+  "target": "order-42",
+  "amount": 800,
+  "expiresAt": "…",
+  "audience": "erp.example",
+  "signature": "…"
+}
+```
+
+When the outcome is `rejected`, the `reason` is `approval_required`: a value in the request is above a
+limit on the partner's grant. The rejected decision is still signed and stored.
+
+## When a request is refused outright
+
+| Status | Error                     | Meaning                                                                       |
+| ------ | ------------------------- | ----------------------------------------------------------------------------- |
+| 401    | `unauthenticated`         | The request has no partner API key.                                           |
+| 400    | `capability must be …`    | The capability is not `namespace:verb` in lower case.                         |
+| 400    | `audience does not match` | The audience is not the one this business system was given.                   |
+| 400    | `<path> must be a number` | A limit on the grant checks a value the request does not supply as a number.  |
+| 403    | `no_active_grant`         | The partner has no current grant for the capability.                          |
+| 403    | `grant_limit_incomplete`  | A limit on the grant has no maximum. Refused, because nothing can be checked. |
+
+## What the check decides
+
+An approval needs both of these:
+
+- **The policy approves.** The policy bound to the action runs on the request, with the declared
+  signals, and approves or rejects. A rejection gives the policy's reason.
+- **The grant allows it.** The partner holds a current grant for the action, and every limit on the
+  grant holds for the value at its path in the request. A value above a limit gives a rejection with
+  reason `approval_required`.
+
+A rejection is still signed and stored. A grant with no limits does not limit the request, but the
+policy still decides it.
+
+## What is recorded
+
+Every decision, approved or rejected, is signed with Parmana's key and stored. The record includes the
+partner, the action, the target and amount where there is one, the **policy name and version that
+decided it**, the outcome and any reason, and an expiry.
+
+## What the check does not do yet
+
+Be clear about these before you rely on an approval:
+
+- **The approver is not recorded.** The record shows which policy decided the request, but not which
+  person, if any, approved it. The field exists and is not yet filled.
+- **Declared facts are not checked against your records.** The policy decides on the values the request
+  declares, verified as `/execute` verifies them. Facts from your own systems are planned, through a
+  business validation source.
+- **Nothing calls it yet.** Parmana does not see an inbound request unless your business system asks it
+  first, and no probe yet checks that a direct call is refused.
+
+For the limit on direct calls, see [Limitations](/security/limitations#inbound-agents-that-reach-your-systems-directly).

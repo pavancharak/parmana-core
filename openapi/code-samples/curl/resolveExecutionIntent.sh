@@ -7,7 +7,7 @@ curl -X POST https://parmana-api-real.vercel.app/execution-intents/$TXN_ID/resol
   -d "$(cat <<JSON
 {
     "resolution": "NOT_EXECUTED",
-    "note": "Checked the Paytm dashboard for order ORD-1042. No refund exists."
+    "note": "Checked the ERP for invoice INV-1042. No payment exists."
 }
 JSON
 )"

@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         For a question or an open-ended idea, use Discussions instead. A feature that changes a
-        contract or a security property needs an RFC: see docs/REMAINING-WORK.md.
+        contract or a security property needs an RFC: see docs/internal/REMAINING-WORK.md.
   - type: textarea
     id: problem
     attributes:
@@ -24,3 +24,14 @@ body:
     id: alternatives
     attributes:
       label: Alternatives you considered
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How urgent this is. Every issue needs one.
+      options:
+        - "high (security, data loss, or a documented behaviour that is wrong or blocked)"
+        - "medium (should be fixed in the next few releases)"
+        - "low (nice to have)"
+    validations:
+      required: true

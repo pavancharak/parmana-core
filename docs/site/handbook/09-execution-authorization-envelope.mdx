@@ -56,7 +56,9 @@ evaluation approved the request.
 Verification happens twice, in two different places, checking different things:
 
 1. **`@parmana/envelope-verifier`'s `EnvelopeVerifier`**, used by `ExecutionGateway`
-   (Chapter 10), checks the envelope itself: version, signature, expiry, TTL policy, then the
+   (Chapter 10), checks the envelope itself: version, signature, expiry, TTL policy (a positive
+   lifetime, at most `maxTtlSeconds`, and an `authorizedAt` no more than 60 seconds in the
+   future; see [the verifier reference](/reference/envelope-verifier#what-each-time-check-enforces)), then the
    `businessTransactionHash` recompute-and-compare, then (if wired) the policy-freshness and
    signal-freshness checks, then nonce consumption last (the only side-effecting check, run
    only once everything else has passed).

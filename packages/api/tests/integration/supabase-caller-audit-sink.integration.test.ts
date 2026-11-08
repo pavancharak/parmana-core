@@ -18,7 +18,7 @@ const SELECT_CALLER_AUDIT_EVENT_BY_ROUTE_SQL = `
 `;
 
 /**
- * Closes G-13 (docs/VERIFICATION-GAPS.md): proves the caller-audit
+ * Closes G-13 (docs/internal/VERIFICATION-GAPS.md): proves the caller-audit
  * trail is durable against a real database. CallerAuditSink's own
  * interface is write-only (record(): Promise<void>, no read method),
  * so persistence is verified here by querying caller_audit_events

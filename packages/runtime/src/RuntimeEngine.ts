@@ -74,6 +74,16 @@ import type { RuntimeHook } from "./hooks/RuntimeHook.js";
  * - Execute the Runtime Pipeline.
  * - Produce the Execution Trust Record.
  */
+/**
+ * What decide() needs: a Business Transaction without authority or authorization. Deciding never
+ * reads those two fields; they are used only after a decision, when an approved action is authorized
+ * and executed. A caller that only needs a decision (the inbound check, RFC-0024) passes this shape.
+ */
+export type DecisionRequest = Omit<
+  BusinessTransaction,
+  "authority" | "authorization"
+>;
+
 export class RuntimeEngine {
   private readonly hookRunner: RuntimeHookRunner;
 
@@ -175,7 +185,7 @@ export class RuntimeEngine {
     private readonly policyExecutionVerifier?: PolicyExecutionVerifier,
     /**
      * Evidentiary counterpart to policyExecutionVerifier
-     * (docs/VERIFICATION-GAPS.md G-45): never blocks execution, only
+     * (docs/internal/VERIFICATION-GAPS.md G-45): never blocks execution, only
      * records what it found. Optional and trailing for the same
      * backward-compatibility reason as every other optional dependency
      * above. When omitted, no governance anchor is resolved --
@@ -280,11 +290,13 @@ export class RuntimeEngine {
     });
   }
 
-  public async execute(transaction: BusinessTransaction): Promise<{
-    transaction: BusinessTransaction;
-    context: RuntimeContext;
-    trustRecord: ExecutionTrustRecord;
-  }> {
+  /**
+   * Decides a transaction without executing it: loads the policy, runs every check, and
+   * writes the decision, with a refusal record when it is refused. Nothing is authorized or
+   * sent to a connector here. execute() calls this, then authorizes and executes an APPROVED
+   * decision; callers that need only the decision call this directly.
+   */
+  public async decide(transaction: DecisionRequest) {
     //
     // Runtime signals
     //
@@ -753,6 +765,33 @@ export class RuntimeEngine {
       }
     }
 
+    return {
+      decision,
+      policy,
+      policyContentHash,
+      policyGovernanceAnchor,
+      signals,
+      policyDecision,
+      authority,
+      businessValidation,
+    };
+  }
+
+  public async execute(transaction: BusinessTransaction): Promise<{
+    transaction: BusinessTransaction;
+    context: RuntimeContext;
+    trustRecord: ExecutionTrustRecord;
+  }> {
+    const {
+      decision,
+      policyContentHash,
+      policyGovernanceAnchor,
+      signals,
+      policyDecision,
+      authority,
+      businessValidation,
+    } = await this.decide(transaction);
+
     //
     // Enforce
     //
@@ -1034,7 +1073,7 @@ export class RuntimeEngine {
    * evidentiary write failures.
    */
   private async writeRefusalRecord(
-    transaction: BusinessTransaction,
+    transaction: DecisionRequest,
     decision: Decision,
     bindingViolations: SignalIntentBindingViolation[],
     policyContentHash: string,
@@ -1074,7 +1113,7 @@ export class RuntimeEngine {
    * and the wait is bounded, so the refusal never depends on it.
    */
   private async notifyApprovalNeeded(
-    transaction: BusinessTransaction,
+    transaction: DecisionRequest,
     decision: Decision,
     policy: Policy,
     signals: PolicySignals,

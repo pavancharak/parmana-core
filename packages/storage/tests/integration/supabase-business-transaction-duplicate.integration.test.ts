@@ -16,7 +16,7 @@ const databaseConfigured = resolveDatabaseGate(
 );
 
 /**
- * Closes G-1 (docs/VERIFICATION-GAPS.md): proves the unique-constraint
+ * Closes G-1 (docs/internal/VERIFICATION-GAPS.md): proves the unique-constraint
  * path against a real database, not just the mocked-storage unit
  * tests (packages/storage/tests/unit/
  * supabase-business-transaction-repository.test.ts). The

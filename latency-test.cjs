@@ -2,7 +2,11 @@
 if (!API_KEY) {
   throw new Error("Set PARMANA_LATENCY_TEST_KEY before running this script.");
 }
-const URL = "https://parmana-api.fly.dev/execute";
+const URL = process.env.PARMANA_EXECUTE_URL;
+if (!URL) {
+  console.error("Set PARMANA_EXECUTE_URL to the /execute URL to test.");
+  process.exit(2);
+}
 const REQUEST_COUNT = 20;
 
 async function timedRequest(i) {

@@ -10,7 +10,7 @@
  * content that decision was made under is traceable to a governance
  * approval, and if not, exactly why not.
  *
- * docs/VERIFICATION-GAPS.md G-45: the policy-governance chain
+ * docs/internal/VERIFICATION-GAPS.md G-45: the policy-governance chain
  * (G-24/§2.27/PolicyGovernanceExecutionVerifier) already binds Record
  * 1 (governance approval) to Record 2 (the decision) as an
  * enforcement gate, but a passing check left no artifact of its own
