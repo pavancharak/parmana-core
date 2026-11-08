@@ -45,6 +45,11 @@ export interface InboundCheckRecord {
   readonly audience: string;
   readonly signature: string;
   readonly issuedAt: Date;
+  /** Who approved the request, when a verified human approval decided it (G-143). */
+  readonly approvedBy?: string;
+  readonly approvedKeyId?: string;
+  readonly approvalId?: string;
+  readonly approvedAt?: string;
 }
 
 /** Repository for inbound checks (RFC-0024). Append-only: a decision is written once. */

@@ -518,6 +518,13 @@ export function createApp(
             ...(result.decision.reason !== undefined
               ? { reason: result.decision.reason }
               : {}),
+            // G-143: the verified approvals that decided this request, for the record.
+            approvals: result.usedApprovals.map((use) => ({
+              approvalId: use.approvalId,
+              approverId: use.approverId,
+              keyId: use.keyId,
+              issuedAt: use.issuedAt,
+            })),
           };
         },
         store: {

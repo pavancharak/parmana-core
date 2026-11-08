@@ -41,6 +41,19 @@ export interface InboundCheckFields {
   readonly policyVersion?: string;
   readonly expiresAt: string;
   readonly audience: string;
+  /** Who approved the request, when a verified human approval decided it (G-143). Absent otherwise. */
+  readonly approvedBy?: string;
+  readonly approvedKeyId?: string;
+  readonly approvalId?: string;
+  readonly approvedAt?: string;
+}
+
+/** A verified human approval that decided a request (G-143). */
+export interface InboundApprovalUse {
+  readonly approvalId: string;
+  readonly approverId: string;
+  readonly keyId: string;
+  readonly issuedAt: string;
 }
 
 /** The policy bound to a capability, or why none can decide it. */
@@ -59,9 +72,12 @@ export interface InboundCheckDependencies {
     capability: string,
   ) => Promise<InboundPolicyLookup | undefined>;
   /** Decides a request without executing it, through the runtime's decide step. */
-  readonly decide: (
-    request: DecisionRequest,
-  ) => Promise<{ readonly approved: boolean; readonly reason?: string }>;
+  readonly decide: (request: DecisionRequest) => Promise<{
+    readonly approved: boolean;
+    readonly reason?: string;
+    /** The verified approvals that decided the request, if any. */
+    readonly approvals?: readonly InboundApprovalUse[];
+  }>;
   /** Signs the canonical bytes of a decision, returning a base64 signature. */
   readonly sign: (canonicalBytes: Buffer) => Promise<string>;
   /** Appends every issued decision. */
@@ -229,10 +245,27 @@ export function createInboundCheckRouter(
             ? undefined
             : (decision.reason ?? "policy_rejected");
 
+        // G-143: record the approval only when the decision is approved and exactly one approval decided it.
+        // Several approvals on one decision is open decision O3; in that case no approval fields are written.
+        const onlyApproval =
+          decision.approvals !== undefined && decision.approvals.length === 1
+            ? decision.approvals[0]
+            : undefined;
+        const approvalFields: Partial<InboundCheckFields> =
+          approved && onlyApproval !== undefined
+            ? {
+                approvedBy: onlyApproval.approverId,
+                approvedKeyId: onlyApproval.keyId,
+                approvalId: onlyApproval.approvalId,
+                approvedAt: onlyApproval.issuedAt,
+              }
+            : {};
+
         const fields: InboundCheckFields = {
           decisionId: checkId,
           outcome: approved ? "approved" : "rejected",
           ...(reason !== undefined ? { reason } : {}),
+          ...approvalFields,
           partnerId,
           capability,
           ...(typeof body.target === "string" ? { target: body.target } : {}),

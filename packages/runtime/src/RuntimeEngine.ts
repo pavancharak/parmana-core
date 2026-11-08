@@ -41,6 +41,7 @@ import {
   type SignalIntentBindingViolation,
   type SignalStateVerifier,
   type SignalStateViolation,
+  type UsedApproval,
 } from "@parmana/policy";
 
 import type { RuntimeContext } from "./context/RuntimeContext.js";
@@ -639,6 +640,9 @@ export class RuntimeEngine {
     // caller-declared signal that verified state contradicts.
     //
 
+    // Approvals the verifier accepts during this check, for the caller to record (G-143).
+    const usedApprovals: UsedApproval[] = [];
+
     const stateViolations: readonly SignalStateViolation[] =
       provisionalDecision.outcome === PolicyOutcome.APPROVE &&
       this.signalStateVerifier
@@ -650,6 +654,9 @@ export class RuntimeEngine {
               intentTarget: transaction.intent.target,
               stage: "authorize",
               policy,
+              usedApprovals: {
+                add: (approval) => usedApprovals.push(approval),
+              },
             },
             evaluatedSignals,
           )
@@ -774,6 +781,7 @@ export class RuntimeEngine {
       policyDecision,
       authority,
       businessValidation,
+      usedApprovals,
     };
   }
 

@@ -133,6 +133,15 @@ export class ApprovalSignalVerifier implements SignalStateVerifier {
 
       if (!result.valid) {
         violations.push(refused(approval.signalKey));
+      } else {
+        // Record who approved, for the caller. Only an approval that verified and was consumed is recorded.
+        request.usedApprovals?.add({
+          signalKey: approval.signalKey,
+          approvalId: approval.artifact.payload.approvalId,
+          approverId: approval.artifact.payload.issuer.approverId,
+          keyId: approval.artifact.payload.issuer.keyId,
+          issuedAt: approval.artifact.payload.issuedAt,
+        });
       }
     }
 

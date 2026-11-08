@@ -39,6 +39,25 @@ export interface SignalStateVerificationRequest {
    * without a policy repository, which production does not allow.
    */
   readonly policy?: Policy;
+  /**
+   * Receives each approval a verifier accepts at this check, so the caller can record who approved. Additive and
+   * optional: a verifier that does not use it is unaffected. Only approvals that verified and were consumed are added.
+   */
+  readonly usedApprovals?: UsedApprovalCollector;
+}
+
+/** An approval a verifier accepted: who approved, with which key, and when. */
+export interface UsedApproval {
+  readonly signalKey: string;
+  readonly approvalId: string;
+  readonly approverId: string;
+  readonly keyId: string;
+  readonly issuedAt: string;
+}
+
+/** Collects the approvals a verifier accepted during one check. */
+export interface UsedApprovalCollector {
+  add(approval: UsedApproval): void;
 }
 
 /**
