@@ -37,6 +37,32 @@ export const EXTERNAL_RELEASE_TTL_MS = 60_000;
 export const EXTERNAL_ANSWER_MAX_BYTES = 64 * 1024;
 export const EXTERNAL_RESULT_MAX_BYTES = 16 * 1024;
 
+/** Most conditions an endpoint may report as checked in one answer. */
+export const CONDITIONS_CHECKED_LIMIT = 64;
+
+/** Largest evidence an endpoint may attach to one checked condition, in bytes. */
+export const CONDITION_EVIDENCE_LIMIT_BYTES = 2 * 1024;
+
+const CONDITION_ATOMICITY = [
+  "atomic",
+  "check-then-act",
+  "not-evaluated",
+] as const;
+const CONDITION_OUTCOME = ["holds", "not-holding", "unverified"] as const;
+
+/**
+ * One condition as an endpoint reports it checking. Core keeps these with the execution, so the
+ * evidence an endpoint observed is not lost at the boundary. Values are plain, and bounded in size.
+ */
+export interface CheckedCondition {
+  readonly signalKey: string;
+  readonly atomicity: (typeof CONDITION_ATOMICITY)[number];
+  readonly outcome: (typeof CONDITION_OUTCOME)[number];
+  readonly evidence?: Readonly<
+    Record<string, string | number | boolean | null>
+  >;
+}
+
 /**
  * One registered external connector, as the adapter needs it.
  */
@@ -388,6 +414,11 @@ export class GatewayExternalAdapter implements Connector {
       );
     }
 
+    const conditionsChecked = parseConditionsChecked(
+      body.conditionsChecked,
+      problems,
+    );
+
     if (problems.length > 0) {
       throw new Error(
         `External connector "${this.connectorId}" refuses the endpoint's answer: ${problems.join("; ")}.`,
@@ -406,6 +437,8 @@ export class GatewayExternalAdapter implements Connector {
         // RFC-0023 phase 4: the endpoint did not act, because a condition
         // the release rests on no longer held in its records.
         ...(body.conditionsNotMet === true ? { conditionsNotMet: true } : {}),
+        // Core reads the endpoint's condition evidence and keeps it; the answer is validated above.
+        ...(conditionsChecked !== undefined ? { conditionsChecked } : {}),
         // ADR-0013, open question 3: the endpoint may sign its answer.
         // Recorded as sent, not verified in version 1.
         ...(isPlainObject(body.signature)
@@ -418,6 +451,96 @@ export class GatewayExternalAdapter implements Connector {
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isPlainEvidenceValue(
+  value: unknown,
+): value is string | number | boolean | null {
+  return (
+    value === null ||
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  );
+}
+
+/**
+ * Validates an endpoint's conditionsChecked list. Every field is checked, unknown fields are dropped,
+ * and an invalid entry is a problem: the answer is refused rather than partly trusted.
+ */
+function parseConditionsChecked(
+  value: unknown,
+  problems: string[],
+): CheckedCondition[] | undefined {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value)) {
+    problems.push("conditionsChecked is not a list");
+    return undefined;
+  }
+  if (value.length > CONDITIONS_CHECKED_LIMIT) {
+    problems.push(
+      `conditionsChecked has more than ${CONDITIONS_CHECKED_LIMIT} entries`,
+    );
+    return undefined;
+  }
+  const checked: CheckedCondition[] = [];
+  value.forEach((entry: unknown, index: number) => {
+    const at = `conditionsChecked[${index}]`;
+    if (!isPlainObject(entry)) {
+      problems.push(`${at} is not an object`);
+      return;
+    }
+    const { signalKey, atomicity, outcome, evidence } = entry;
+    if (
+      typeof signalKey !== "string" ||
+      signalKey.length === 0 ||
+      signalKey.length > 200
+    ) {
+      problems.push(
+        `${at}.signalKey is not a non-empty string of at most 200 characters`,
+      );
+      return;
+    }
+    if (!(CONDITION_ATOMICITY as readonly unknown[]).includes(atomicity)) {
+      problems.push(
+        `${at}.atomicity is not one of ${CONDITION_ATOMICITY.join(", ")}`,
+      );
+      return;
+    }
+    if (!(CONDITION_OUTCOME as readonly unknown[]).includes(outcome)) {
+      problems.push(
+        `${at}.outcome is not one of ${CONDITION_OUTCOME.join(", ")}`,
+      );
+      return;
+    }
+    let kept: CheckedCondition["evidence"];
+    if (evidence !== undefined) {
+      if (
+        !isPlainObject(evidence) ||
+        !Object.values(evidence).every(isPlainEvidenceValue)
+      ) {
+        problems.push(`${at}.evidence is not an object of plain values`);
+        return;
+      }
+      if (
+        Buffer.byteLength(JSON.stringify(evidence), "utf8") >
+        CONDITION_EVIDENCE_LIMIT_BYTES
+      ) {
+        problems.push(
+          `${at}.evidence is larger than ${CONDITION_EVIDENCE_LIMIT_BYTES} bytes`,
+        );
+        return;
+      }
+      kept = evidence as CheckedCondition["evidence"];
+    }
+    checked.push({
+      signalKey,
+      atomicity: atomicity as CheckedCondition["atomicity"],
+      outcome: outcome as CheckedCondition["outcome"],
+      ...(kept !== undefined ? { evidence: kept } : {}),
+    });
+  });
+  return checked;
 }
 
 export interface PinnedHttpsTransportOptions {
