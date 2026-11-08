@@ -110,8 +110,11 @@ whether inbound records carry a schema version today (see section 8).
 2. The proposal is **signed with a key the business controls**. The signature shows the proposal came from the business,
    not from someone who only has Parmana access.
 3. A Parmana checker reviews it and approves it with a step-up signature (existing maker-checker flow).
-4. The source is active from approval. It is **re-approved every 12 months**; a source past its re-approval date is
-   refused until re-approved. _The 12-month period is a proposal; the owner should confirm it._
+4. The source is active from approval. It is **re-approved on a schedule set by its risk tier**; a source past its
+   re-approval date is refused until re-approved. **Decided by the owner:**
+   - **6 months** for a source that can move money or change an external system.
+   - **12 months** for a source that only confirms read-only facts.
+     Re-approval needs both the business and a Parmana checker, as the first approval does.
 
 **Source trust and replacement.**
 
@@ -183,7 +186,7 @@ is visible to the checker before the policy is live.
 8. Source timeout refuses (`source_timeout`) and records the reason.
 9. Mismatch between declared and source value refuses (`declared_fact_mismatch`).
 10. Replacement: during the overlap window both keys verify; after the end time the old key refuses.
-11. Source past its 12-month re-approval date refuses.
+11. A source past its re-approval date refuses. Test both tiers: a money-moving source at 6 months, and a read-only source at 12 months.
 12. Policy approval: a policy declaring a sourced fact with no registered source cannot be approved.
 
 ## 8. Open items to confirm in the code before building
@@ -199,7 +202,7 @@ These are facts this design relies on that were not verified while writing it:
 
 ## 9. Owner decisions still needed
 
-- Confirm or change the 12-month re-approval period (4.2).
+- **Decided:** re-approval is 6 months for money-moving or externally acting sources, and 12 months for read-only sources (4.2).
 - Confirm or change the 7-day overlap cap (4.2) and the 30-second clock allowance (4.2).
 - Confirm the rule that an approval is consumed only after the decision is recorded (4.1).
 - Confirm that a policy requiring several approvals is out of scope for this change (4.1).
