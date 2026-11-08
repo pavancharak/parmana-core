@@ -1,0 +1,44 @@
+name: Bypass probe
+
+# RFC-0024 decision 6, gap G-146. Sends one request with no approval to each business-system route that is
+# configured, and fails the run if the route accepts it. Until the secret BYPASS_PROBE_TARGET_URL is set, every
+# run does nothing and reports that.
+#
+# Secrets: BYPASS_PROBE_TARGET_URL (https route to test), BYPASS_PROBE_SIGNING_KEY_PEM (Ed25519 private key that
+# signs each record). Neither is a Parmana credential, and the probe sends none.
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bypass-probe
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      BYPASS_PROBE_TARGET_URL: ${{ secrets.BYPASS_PROBE_TARGET_URL }}
+      BYPASS_PROBE_TARGET_NAME: ${{ vars.BYPASS_PROBE_TARGET_NAME }}
+      BYPASS_PROBE_METHOD: ${{ vars.BYPASS_PROBE_METHOD }}
+      BYPASS_PROBE_SIGNING_KEY_PEM: ${{ secrets.BYPASS_PROBE_SIGNING_KEY_PEM }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: 24.22.2
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run the probe
+        run: npx tsx scripts/run-bypass-probe.ts
