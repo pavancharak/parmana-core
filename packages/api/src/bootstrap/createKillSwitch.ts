@@ -1,5 +1,7 @@
 import { PostgresPoolFactory } from "@parmana/storage";
 
+import { createAlertSink } from "./createAlertSink.js";
+
 import {
   KillSwitchService,
   type KillSwitchOptions,
@@ -51,6 +53,7 @@ export function createKillSwitch(): KillSwitchService | undefined {
   const options: KillSwitchOptions = {
     resetNeedsSecondOperator: twoPerson === "true",
     probes: new PostgresKillSwitchProbeLog(pool),
+    alerts: createAlertSink(),
   };
 
   return new KillSwitchService(new PostgresKillSwitchStore(pool), options);

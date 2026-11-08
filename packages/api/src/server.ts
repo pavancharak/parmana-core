@@ -23,6 +23,7 @@ import { schedulePolicyGovernanceIntegrityCheck } from "./bootstrap/schedulePoli
 import { createRateLimitStore } from "./bootstrap/createRateLimitStore.js";
 import { createSandboxOptions } from "./bootstrap/createSandboxOptions.js";
 import { createKillSwitch } from "./bootstrap/createKillSwitch.js";
+import { createAlertSink } from "./bootstrap/createAlertSink.js";
 import { createApp } from "./app.js";
 import {
   assertListedRootIsBundled,
@@ -70,7 +71,12 @@ const executionSystem = await createExecutionSystem();
 // ADR-0017: the kill switch is off unless KILL_SWITCH_ENABLED=true.
 const killSwitch = createKillSwitch();
 
-const application = createApplication(executionSystem, undefined, killSwitch);
+const application = createApplication(
+  executionSystem,
+  undefined,
+  killSwitch,
+  createAlertSink(),
+);
 
 const callerAuth = createCallerAuthenticator();
 

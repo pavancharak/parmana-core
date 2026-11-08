@@ -1,3 +1,5 @@
+import type { AlertSink } from "@parmana/runtime";
+
 /**
  * Operator kill switch (ADR-0017).
  *
@@ -55,6 +57,8 @@ export interface KillSwitchOptions {
   /** Production: a reset takes two different operators (ADR-0017 decision 1). */
   readonly resetNeedsSecondOperator: boolean;
   readonly probes: KillSwitchProbeLog;
+  /** Optional. Receives an alert when the switch is tripped (G-138). Never blocks a trip. */
+  readonly alerts?: AlertSink | undefined;
 }
 
 export type KillSwitchResetOutcome = "pending" | "reset";
@@ -123,6 +127,26 @@ export class KillSwitchService {
     callerId: string,
     reason: string,
     at: Date = new Date(),
+  ): Promise<KillSwitchState> {
+    const state = await this.tripState(callerId, reason, at);
+
+    this.options.alerts
+      ?.emit({
+        type: "killswitch.tripped",
+        occurredAt: at.toISOString(),
+        trippedBy: callerId,
+        reason,
+        switchVersion: state.version,
+      })
+      .catch(() => undefined);
+
+    return state;
+  }
+
+  private async tripState(
+    callerId: string,
+    reason: string,
+    at: Date,
   ): Promise<KillSwitchState> {
     return this.write((current) => ({
       active: true,
