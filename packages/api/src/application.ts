@@ -19,6 +19,7 @@ import {
 import { PostgresPoolFactory } from "@parmana/storage";
 
 import { RuntimeFactory } from "@parmana/runtime";
+import { DecisionAlertHook, type AlertSink } from "@parmana/runtime";
 import { killSwitchReleaseHook } from "./killSwitch/killSwitchReleaseHook.js";
 import type { KillSwitchService } from "./killSwitch/KillSwitchService.js";
 
@@ -103,6 +104,7 @@ export function createApplication(
   executionSystem: ExecutionSystem,
   approvalVerifier: ApprovalVerifier = createApprovalVerifier(),
   killSwitch?: KillSwitchService,
+  alertSink?: AlertSink,
 ) {
   const signalStateVerifier = new CompositeSignalStateVerifier([
     createApprovalSignalVerifier(approvalVerifier),
@@ -139,6 +141,10 @@ export function createApplication(
     authorityGrantRepository,
     // ADR-0017: refuse a release made after a trip, not just a request that
     // arrives after one. See killSwitchReleaseHook.
-    killSwitch === undefined ? [] : [killSwitchReleaseHook(killSwitch)],
+    [
+      ...(killSwitch === undefined ? [] : [killSwitchReleaseHook(killSwitch)]),
+      // G-138: one alert per decision, sent without waiting for delivery.
+      ...(alertSink === undefined ? [] : [new DecisionAlertHook(alertSink)]),
+    ],
   );
 }

@@ -73,4 +73,28 @@ describe("GET /trust-records (bulk export)", () => {
       ),
     ).toBe(true);
   });
+
+  it("refuses a malformed since bound instead of ignoring it", async () => {
+    const response = await request(app).get("/trust-records?since=not-a-date");
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/ISO 8601/);
+  });
+
+  it("exports a dated window in full, not just the first page", async () => {
+    const transaction = await createBusinessTransaction();
+    await request(app).post("/execute").send(transaction);
+
+    const response = await request(app).get(
+      `/trust-records?since=${encodeURIComponent(new Date(Date.now() - 86_400_000).toISOString())}&until=${encodeURIComponent(new Date(Date.now() + 86_400_000).toISOString())}`,
+    );
+
+    expect(response.status).toBe(200);
+    expect(
+      response.body.some(
+        (r: { businessTransactionId: string }) =>
+          r.businessTransactionId === transaction.businessTransactionId,
+      ),
+    ).toBe(true);
+  });
 });

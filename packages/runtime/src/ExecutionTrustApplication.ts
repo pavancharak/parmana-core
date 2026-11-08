@@ -18,6 +18,10 @@ import {
 } from "@parmana/shared";
 
 import type { ExecutionIntentFinalizer } from "./ExecutionIntentFinalizer.js";
+import {
+  exportTrustRecordsInWindow,
+  type WindowExportResult,
+} from "./services/trust-record-window-export.js";
 import type {
   ExecutionIntentService,
   ResolveExecutionIntentInput,
@@ -215,6 +219,36 @@ export class ExecutionTrustApplication {
 
     return records.filter(
       (record): record is ExecutionTrustRecord => record !== null,
+    );
+  }
+
+  /**
+   * Complete export of Trust Records created inside [since, until].
+   * Unlike listTrustRecords, the window is applied before paging, so
+   * no matching record is lost to a page boundary (G-139). The result
+   * is marked truncated when the scan limit was reached with more
+   * transactions possibly remaining; callers must refuse it then.
+   */
+  async exportTrustRecordsInWindow(
+    window: {
+      readonly since?: Date | undefined;
+      readonly until?: Date | undefined;
+    },
+    include?: ((transaction: BusinessTransaction) => boolean) | undefined,
+  ): Promise<WindowExportResult<ExecutionTrustRecord>> {
+    return exportTrustRecordsInWindow<
+      BusinessTransaction,
+      ExecutionTrustRecord
+    >(
+      {
+        listPage: (page, pageSize) => this.transactions.list(page, pageSize),
+        include,
+        resolve: (transaction) =>
+          this.trustRecords.findByTransactionId(
+            transaction.businessTransactionId,
+          ),
+      },
+      window,
     );
   }
 

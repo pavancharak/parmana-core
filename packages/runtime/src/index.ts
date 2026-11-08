@@ -55,3 +55,6 @@ export * from "./services/verification-service.js";
 // -----------------------------------------------------------------------------
 
 export * from "./errors/index.js";
+export * from "./services/trust-record-window-export.js";
+export * from "./alerts/AlertSink.js";
+export * from "./alerts/DecisionAlertHook.js";
