@@ -47,7 +47,23 @@ export class SupabaseApprovalNonceStore implements NonceStore {
       throw error;
     }
   }
+
+  /**
+   * Removes nonce rows whose approval has expired before `now`. An expired approval fails verification on its
+   * own, so its nonce no longer protects anything and can be removed. Returns how many rows were removed.
+   */
+  async deleteExpired(now: Date): Promise<number> {
+    const result = await this.pool.query(DELETE_EXPIRED_APPROVAL_NONCES_SQL, [
+      now.toISOString(),
+    ]);
+    return result.rowCount ?? 0;
+  }
 }
+
+const DELETE_EXPIRED_APPROVAL_NONCES_SQL = `
+  DELETE FROM consumed_approval_nonces
+  WHERE expires_at < $1
+`;
 
 const INSERT_CONSUMED_APPROVAL_NONCE_SQL = `
   INSERT INTO consumed_approval_nonces (nonce, expires_at)
