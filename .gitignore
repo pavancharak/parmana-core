@@ -114,6 +114,9 @@ stryker.log
 # repository on purpose. Lives on the operator's machine.
 PARMANA-CREDENTIAL-RECOVERY.md
 *-RECOVERY.local.md
+examples/live-checks/**/evidence/*-record.json
+examples/live-checks/**/record-*.json
+examples/razorpay-refund/record-*.json
 
 # Internal proof audit report: kept local, not published (contains bypass details)
 proof-audit/REPORT.md
