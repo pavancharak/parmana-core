@@ -1,9 +1,13 @@
 import type { Pool } from "pg";
 
-import type {
-  InboundCheckRecord,
-  InboundCheckRepository,
+import {
+  ApprovalAlreadyUsedError,
+  type ConsumedApprovalNonce,
+  type InboundCheckRecord,
+  type InboundCheckRepository,
 } from "@parmana/shared";
+
+import { isUniqueViolation } from "../errors/PostgresErrorCodes.js";
 
 /**
  * Postgres-backed inbound check repository (RFC-0024). Writes the columns added by the
@@ -13,53 +17,96 @@ export class SupabaseInboundCheckRepository implements InboundCheckRepository {
   constructor(private readonly pool: Pool) {}
 
   async append(record: InboundCheckRecord): Promise<void> {
-    await this.pool.query(INSERT_SQL, [
-      record.decisionId,
-      record.outcome,
-      record.reason ?? null,
-      record.partnerId,
-      record.expiresAt,
-      record.audience,
-      record.signature,
-      record.issuedAt.toISOString(),
-      record.capability,
-      record.target ?? null,
-      record.amount ?? null,
-      record.policyName ?? null,
-      record.policyVersion ?? null,
-      record.approvedBy ?? null,
-      record.approvedKeyId ?? null,
-      record.approvalId ?? null,
-      record.approvedAt ?? null,
-    ]);
+    await this.pool.query(INSERT_SQL, insertParams(record));
+  }
+
+  /**
+   * Consumes the approvals and writes the decision in one transaction (G-143, O1). A second use of any
+   * approval rolls the whole write back and throws ApprovalAlreadyUsedError: nothing is consumed, and no
+   * decision is recorded.
+   */
+  async appendConsumingApprovals(
+    record: InboundCheckRecord,
+    approvals: readonly ConsumedApprovalNonce[],
+  ): Promise<void> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN");
+      for (const approval of approvals) {
+        try {
+          await client.query(INSERT_CONSUMED_APPROVAL_NONCE_SQL, [
+            approval.nonce,
+            approval.expiresAt,
+          ]);
+        } catch (error) {
+          if (isUniqueViolation(error)) {
+            throw new ApprovalAlreadyUsedError(approval.nonce);
+          }
+          throw error;
+        }
+      }
+      await client.query(INSERT_SQL, insertParams(record));
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => undefined);
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async findById(decisionId: string): Promise<InboundCheckRecord | null> {
     const { rows } = await this.pool.query(SELECT_SQL, [decisionId]);
     const row = rows[0] as Row | undefined;
     if (!row) return null;
-    return {
-      decisionId: row.decision_id,
-      outcome: row.outcome,
-      ...(row.reason ? { reason: row.reason } : {}),
-      partnerId: row.partner_id,
-      capability: row.capability,
-      ...(row.target ? { target: row.target } : {}),
-      ...(row.amount !== null ? { amount: Number(row.amount) } : {}),
-      ...(row.policy_name ? { policyName: row.policy_name } : {}),
-      ...(row.policy_version ? { policyVersion: row.policy_version } : {}),
-      ...(row.approved_by ? { approvedBy: row.approved_by } : {}),
-      ...(row.approved_key_id ? { approvedKeyId: row.approved_key_id } : {}),
-      ...(row.approval_id ? { approvalId: row.approval_id } : {}),
-      ...(row.approved_at
-        ? { approvedAt: new Date(row.approved_at).toISOString() }
-        : {}),
-      expiresAt: new Date(row.expires_at).toISOString(),
-      audience: row.audience,
-      signature: row.signature,
-      issuedAt: new Date(row.issued_at),
-    };
+    return rowToRecord(row);
   }
+}
+
+function insertParams(record: InboundCheckRecord): unknown[] {
+  return [
+    record.decisionId,
+    record.outcome,
+    record.reason ?? null,
+    record.partnerId,
+    record.expiresAt,
+    record.audience,
+    record.signature,
+    record.issuedAt.toISOString(),
+    record.capability,
+    record.target ?? null,
+    record.amount ?? null,
+    record.policyName ?? null,
+    record.policyVersion ?? null,
+    record.approvedBy ?? null,
+    record.approvedKeyId ?? null,
+    record.approvalId ?? null,
+    record.approvedAt ?? null,
+  ];
+}
+
+function rowToRecord(row: Row): InboundCheckRecord {
+  return {
+    decisionId: row.decision_id,
+    outcome: row.outcome,
+    ...(row.reason ? { reason: row.reason } : {}),
+    partnerId: row.partner_id,
+    capability: row.capability,
+    ...(row.target ? { target: row.target } : {}),
+    ...(row.amount !== null ? { amount: Number(row.amount) } : {}),
+    ...(row.policy_name ? { policyName: row.policy_name } : {}),
+    ...(row.policy_version ? { policyVersion: row.policy_version } : {}),
+    ...(row.approved_by ? { approvedBy: row.approved_by } : {}),
+    ...(row.approved_key_id ? { approvedKeyId: row.approved_key_id } : {}),
+    ...(row.approval_id ? { approvalId: row.approval_id } : {}),
+    ...(row.approved_at
+      ? { approvedAt: new Date(row.approved_at).toISOString() }
+      : {}),
+    expiresAt: new Date(row.expires_at).toISOString(),
+    audience: row.audience,
+    signature: row.signature,
+    issuedAt: new Date(row.issued_at),
+  };
 }
 
 interface Row {
@@ -81,6 +128,11 @@ interface Row {
   signature: string;
   issued_at: string | Date;
 }
+
+const INSERT_CONSUMED_APPROVAL_NONCE_SQL = `
+  INSERT INTO consumed_approval_nonces (nonce, expires_at)
+  VALUES ($1, $2)
+`;
 
 const INSERT_SQL = `
   INSERT INTO inbound_decisions (

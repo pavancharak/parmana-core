@@ -105,6 +105,8 @@ describe("ApprovalSignalVerifier reports the approval it accepted (G-143)", () =
       approverId: "approver-1",
       keyId: "approver-1-key-1",
       issuedAt: artifact.payload.issuedAt,
+      nonce: artifact.payload.nonce,
+      expiresAt: artifact.payload.expiresAt,
     });
   });
 
@@ -141,5 +143,55 @@ describe("ApprovalSignalVerifier reports the approval it accepted (G-143)", () =
       } as PolicySignals,
     );
     expect(violations).toEqual([]);
+  });
+});
+
+describe("ApprovalSignalVerifier with deferred consumption (G-143, O1)", () => {
+  it("does not consume the nonce when consumption is deferred, and reports it for the caller", async () => {
+    const verifier = setup();
+    const artifact = await sign({
+      field: "value",
+      comparator: "lte",
+      value: 75_000,
+    });
+    const signals = {
+      managerApproved: true,
+      approvalArtifact: JSON.parse(JSON.stringify(artifact)),
+    } as PolicySignals;
+
+    const first: UsedApproval[] = [];
+    expect(
+      await verifier.findViolations(
+        { ...request(first), deferApprovalConsumption: true },
+        signals,
+      ),
+    ).toEqual([]);
+    expect(first[0]?.nonce).toBe(artifact.payload.nonce);
+    expect(first[0]?.expiresAt).toBe(artifact.payload.expiresAt);
+
+    // Still unconsumed: the same approval verifies again while consumption is deferred.
+    const second: UsedApproval[] = [];
+    expect(
+      await verifier.findViolations(
+        { ...request(second), deferApprovalConsumption: true },
+        signals,
+      ),
+    ).toEqual([]);
+  });
+
+  it("still consumes the nonce when consumption is not deferred (the execute path)", async () => {
+    const verifier = setup();
+    const artifact = await sign({
+      field: "value",
+      comparator: "lte",
+      value: 75_000,
+    });
+    const signals = {
+      managerApproved: true,
+      approvalArtifact: JSON.parse(JSON.stringify(artifact)),
+    } as PolicySignals;
+
+    expect(await verifier.findViolations(request([]), signals)).toEqual([]);
+    expect(await verifier.findViolations(request([]), signals)).toHaveLength(1);
   });
 });

@@ -8,7 +8,7 @@ import {
   type InboundApprovalUse,
   type InboundCheckFields,
 } from "../../../src/routes/inbound-checks.js";
-import type { AuthorityGrant } from "@parmana/shared";
+import { ApprovalAlreadyUsedError, type AuthorityGrant } from "@parmana/shared";
 
 /** G-143: the approval that decided an inbound check is recorded, and signed with it. */
 
@@ -34,14 +34,20 @@ const APPROVAL: InboundApprovalUse = {
   approverId: "manager-pavan",
   keyId: "manager-pavan-key-1",
   issuedAt: "2026-11-02T09:55:00.000Z",
+  nonce: "nonce-appr-7",
+  expiresAt: "2026-11-02T10:10:00.000Z",
 };
 
-function buildApp(decision: {
-  approved: boolean;
-  reason?: string;
-  approvals?: readonly InboundApprovalUse[];
-}) {
+function buildApp(
+  decision: {
+    approved: boolean;
+    reason?: string;
+    approvals?: readonly InboundApprovalUse[];
+  },
+  options: { alreadyUsed?: boolean } = {},
+) {
   const appended: InboundCheckFields[] = [];
+  const consumed: Array<{ record: InboundCheckFields; nonces: string[] }> = [];
   const app = express();
   app.use(express.json());
   app.use((req, _res, next) => {
@@ -60,11 +66,20 @@ function buildApp(decision: {
       store: {
         append: async (record) =>
           void appended.push(record as InboundCheckFields),
+        appendConsumingApprovals: async (record, approvals) => {
+          if (options.alreadyUsed === true) {
+            throw new ApprovalAlreadyUsedError(approvals[0]?.nonce ?? "");
+          }
+          consumed.push({
+            record: record as InboundCheckFields,
+            nonces: approvals.map((approval) => approval.nonce),
+          });
+        },
       },
       now: () => NOW,
     }),
   );
-  return { app, appended };
+  return { app, appended, consumed };
 }
 
 const body = {
@@ -89,7 +104,7 @@ function signatureVerifies(res: { body: Record<string, unknown> }): boolean {
 
 describe("inbound check: the approval that decided it (G-143)", () => {
   it("records the approver, key, approval and time when one verified approval decided an approved request, and signs them", async () => {
-    const { app, appended } = buildApp({
+    const { app, consumed } = buildApp({
       approved: true,
       approvals: [APPROVAL],
     });
@@ -100,7 +115,7 @@ describe("inbound check: the approval that decided it (G-143)", () => {
     expect(res.body.approvedKeyId).toBe("manager-pavan-key-1");
     expect(res.body.approvalId).toBe("appr-7");
     expect(res.body.approvedAt).toBe("2026-11-02T09:55:00.000Z");
-    expect(appended[0]?.approvedBy).toBe("manager-pavan");
+    expect(consumed[0]?.record.approvedBy).toBe("manager-pavan");
     expect(signatureVerifies(res)).toBe(true);
   });
 
@@ -156,5 +171,65 @@ describe("inbound check: the approval that decided it (G-143)", () => {
       .send({ ...body, approvedBy: "manager-pavan", approvalId: "appr-x" });
     expect(res.body).not.toHaveProperty("approvedBy");
     expect(res.body).not.toHaveProperty("approvalId");
+  });
+
+  it("consumes the approval with the decision record, in the same write", async () => {
+    const { app, appended, consumed } = buildApp({
+      approved: true,
+      approvals: [APPROVAL],
+    });
+    const res = await request(app).post("/v1/inbound/checks").send(body);
+    expect(res.body.outcome).toBe("approved");
+    expect(consumed).toHaveLength(1);
+    expect(consumed[0]?.nonces).toEqual(["nonce-appr-7"]);
+    expect(consumed[0]?.record.decisionId).toBe(res.body.decisionId);
+    expect(appended).toHaveLength(0);
+  });
+
+  it("refuses a repeat use: recorded as refused, with no approval fields, and nothing is consumed", async () => {
+    const { app, appended, consumed } = buildApp(
+      { approved: true, approvals: [APPROVAL] },
+      { alreadyUsed: true },
+    );
+    const res = await request(app).post("/v1/inbound/checks").send(body);
+    expect(res.status).toBe(201);
+    expect(res.body.outcome).toBe("rejected");
+    expect(res.body.reason).toBe("approval_already_used");
+    for (const key of [
+      "approvedBy",
+      "approvedKeyId",
+      "approvalId",
+      "approvedAt",
+    ]) {
+      expect(res.body).not.toHaveProperty(key);
+    }
+    expect(consumed).toHaveLength(0);
+    expect(appended).toHaveLength(1);
+    expect(appended[0]?.outcome).toBe("rejected");
+    expect(signatureVerifies(res)).toBe(true);
+  });
+
+  it("fails closed when a decision used an approval but the store cannot consume it", async () => {
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+      req.callerId = "partner-a";
+      next();
+    });
+    app.use(
+      "/v1/inbound/checks",
+      createInboundCheckRouter({
+        audience: AUDIENCE,
+        findGrant: async () => GRANT,
+        policyInEffect: async () => ({ kind: "in-effect", policy: POLICY }),
+        decide: async () => ({ approved: true, approvals: [APPROVAL] }),
+        sign: async (bytes) =>
+          sign(null, bytes, parmana.privateKey).toString("base64"),
+        store: { append: async () => undefined },
+        now: () => NOW,
+      }),
+    );
+    const res = await request(app).post("/v1/inbound/checks").send(body);
+    expect(res.status).toBe(500);
   });
 });

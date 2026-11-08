@@ -85,6 +85,12 @@ export type DecisionRequest = Omit<
   "authority" | "authorization"
 >;
 
+/** Options for decide(). Defaults keep the behaviour execute() relies on. */
+export interface DecideOptions {
+  /** Inbound checks consume approvals with their decision record, not here (G-143, O1). */
+  readonly deferApprovalConsumption?: boolean;
+}
+
 export class RuntimeEngine {
   private readonly hookRunner: RuntimeHookRunner;
 
@@ -297,7 +303,10 @@ export class RuntimeEngine {
    * sent to a connector here. execute() calls this, then authorizes and executes an APPROVED
    * decision; callers that need only the decision call this directly.
    */
-  public async decide(transaction: DecisionRequest) {
+  public async decide(
+    transaction: DecisionRequest,
+    options: DecideOptions = {},
+  ) {
     //
     // Runtime signals
     //
@@ -657,6 +666,8 @@ export class RuntimeEngine {
               usedApprovals: {
                 add: (approval) => usedApprovals.push(approval),
               },
+              deferApprovalConsumption:
+                options.deferApprovalConsumption === true,
             },
             evaluatedSignals,
           )

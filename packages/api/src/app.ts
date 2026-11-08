@@ -524,6 +524,8 @@ export function createApp(
               approverId: use.approverId,
               keyId: use.keyId,
               issuedAt: use.issuedAt,
+              nonce: use.nonce,
+              expiresAt: use.expiresAt,
             })),
           };
         },
@@ -533,6 +535,11 @@ export function createApp(
               ...record,
               issuedAt: new Date(),
             }),
+          appendConsumingApprovals: (record, approvals) =>
+            inboundCheckRepository.appendConsumingApprovals(
+              { ...record, issuedAt: new Date() },
+              approvals,
+            ),
         },
       }),
     );
