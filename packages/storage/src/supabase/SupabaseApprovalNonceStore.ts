@@ -5,7 +5,7 @@ import type { NonceStore } from "@parmana/envelope-verifier";
 import { isUniqueViolation } from "../errors/PostgresErrorCodes.js";
 
 /**
- * Durable, Supabase-backed NonceStore for Approval Artifact nonces
+ * Durable, PostgreSQL-backed NonceStore for Approval Artifact nonces
  * (TD-23 closure, Phase 3C).
  *
  * Deliberately backed by its own table (consumed_approval_nonces),

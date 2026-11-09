@@ -131,7 +131,7 @@ describe.skipIf(!databaseConfigured)("Supabase Workflow Integration", () => {
     expect(reloaded?.overrides[0]?.overrideId).toBe(override.overrideId);
 
     //
-    // Verify against the same real Supabase-backed repository this
+    // Verify against the same real PostgreSQL-backed repository this
     // test wrote to directly (storage.trustRecords), not through
     // request(app) — app's own repositories are always in-memory
     // under NODE_ENV=test (G-15, docs/internal/VERIFICATION-GAPS.md), so an

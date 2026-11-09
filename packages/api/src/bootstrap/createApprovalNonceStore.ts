@@ -21,7 +21,7 @@ import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
  * createNonceStore.ts's own production/test split exactly.
  *
  * Production: SupabaseApprovalNonceStore, a durable store shared
- * across every process pointed at the same Supabase project. Fails
+ * across every process pointed at the same PostgreSQL database. Fails
  * closed at startup if DATABASE_URL is not configured -- never
  * silently falls back to an in-memory store, which would silently
  * narrow Approval Artifact replay protection to a single process's

@@ -9,7 +9,7 @@ import {
 import type { ExecutionAuditEvent, ExecutionAuditSink } from "@parmana/shared";
 
 /**
- * Durable, Supabase-backed ExecutionAuditSink. Closes GAP-1 (GAPS.md
+ * Durable, PostgreSQL-backed ExecutionAuditSink. Closes GAP-1 (GAPS.md
  * 2026-09-14): execution.rejected/execution.completed/session.created
  * events now survive a process restart instead of living only in
  * MemoryExecutionAuditSink's process-local array (still the correct
@@ -22,7 +22,7 @@ import type { ExecutionAuditEvent, ExecutionAuditSink } from "@parmana/shared";
  * writes via a direct Postgres connection (PostgresPoolFactory), not
  * supabase-js/PostgREST — same PostgREST schema-cache workaround
  * (Supabase ticket SU-437429) documented on that class, now the
- * storage layer's deliberate architecture across Supabase-backed
+ * storage layer's deliberate architecture across PostgreSQL-backed
  * tables generally, not a narrow one-table fix.
  *
  * Chained per authorizationId, not globally and not per-caller:
@@ -83,7 +83,7 @@ interface LastChainLinkRow {
 /**
  * Regulator-facing lookup: "show me everything that happened for this
  * authorization / this connector / in this date range." Deliberately
- * a capability of this Supabase-backed class specifically, not part
+ * a capability of this PostgreSQL-backed class specifically, not part
  * of the core ExecutionAuditSink interface — MemoryExecutionAuditSink
  * (execution-control, execution-gateway) has no durable store to
  * query, and every filter here is a plain WHERE clause over exactly

@@ -56,7 +56,7 @@ describe.skipIf(!databaseConfigured)("SupabaseNonceStore (live)", () => {
 
   it("(restart simulation — proves G-13 closed) a nonce consumed through one store instance is still consumed by a fresh instance against the same backing", async () => {
     // Two independently constructed clients and store instances,
-    // sharing nothing except the Supabase project they both point
+    // sharing nothing except the database they both point
     // at — standing in for "process A consumes the nonce, process A
     // restarts (or process B, a second gateway instance, checks the
     // same nonce)". MemoryNonceStore cannot pass this test at all:

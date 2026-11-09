@@ -10,7 +10,7 @@ import {
 import { isUniqueViolation } from "../errors/PostgresErrorCodes.js";
 
 /**
- * Durable, Supabase-backed ExecutionOutcomeStore. Closes the recording half
+ * Durable, PostgreSQL-backed ExecutionOutcomeStore. Closes the recording half
  * of G-125 (docs/internal/VERIFICATION-GAPS.md): each authorization's outcome is kept
  * against its nonce, so a retry after a lost response can return the result
  * or report the outcome as unknown, instead of being refused with no

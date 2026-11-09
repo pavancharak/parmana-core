@@ -4,7 +4,7 @@
 // configured storage backend is reachable, not just whether the
 // process is running. Under NODE_ENV=test, or with memory-backed
 // storage, it reports READY without ever touching a real database --
-// there's nothing external to check. With Supabase-backed storage
+// there's nothing external to check. With PostgreSQL-backed storage
 // that's unreachable, it reports NOT_READY (503) with a reason.
 //
 const { createExecutionSystem } =

@@ -13,7 +13,7 @@ import { isUniqueViolation } from "../errors/PostgresErrorCodes.js";
  *
  * Writes via a direct Postgres connection (PostgresPoolFactory), not
  * supabase-js/PostgREST -- part of removing PostgREST from every
- * Supabase-backed table's failure modes, not just the audit sinks
+ * PostgreSQL-backed table's failure modes, not just the audit sinks
  * that broke first (see PostgresCallerAuditSink for the originating
  * incident).
  */

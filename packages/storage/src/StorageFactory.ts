@@ -13,7 +13,7 @@ import type { StorageConfiguration } from "./StorageConfiguration.js";
  * SupabaseStorageProvider's three repositories now write via
  * PostgresPoolFactory (DATABASE_URL), not a supabase-js/PostgREST
  * client (SUPABASE_URL) — see SupabaseExecutionTrustRecordRepository
- * for why (removing PostgREST from every Supabase-backed table's
+ * for why (removing PostgREST from every PostgreSQL-backed table's
  * failure modes, not just the audit sinks that broke first).
  */
 function hasDatabaseUrlConfig(): boolean {
@@ -69,7 +69,7 @@ export class StorageFactory {
    * regardless of PARMANA_STORAGE — mirrors the production/test split
    * createNonceStore.ts and createCallerAuditSink.ts already established
    * (G-13). Closes G-15 (docs/internal/VERIFICATION-GAPS.md): this method used to
-   * construct whatever PARMANA_STORAGE named — a live Supabase client
+   * construct whatever PARMANA_STORAGE named — a live database client
    * included — purely as an import-time side effect
    * (packages/api/src/repositories.ts), crashing test collection with
    * supabase-js's generic "supabaseUrl is required." the moment

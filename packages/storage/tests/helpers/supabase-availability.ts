@@ -2,7 +2,7 @@
  * Whether real Supabase credentials are configured in the
  * environment.
  *
- * Supabase-backed integration tests need a live project to talk
+ * PostgreSQL-backed integration tests need a live project to talk
  * to and cannot run hermetically from a bare clone. Tests gate on
  * this instead of failing or hanging when the config is absent.
  *

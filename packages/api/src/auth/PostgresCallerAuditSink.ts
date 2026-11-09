@@ -10,7 +10,7 @@ import type { Signature } from "@parmana/shared";
 import type { CallerAuditEvent, CallerAuditSink } from "./CallerAuditSink.js";
 
 /**
- * Durable, Supabase-backed CallerAuditSink. Closes G-13
+ * Durable, PostgreSQL-backed CallerAuditSink. Closes G-13
  * (docs/internal/VERIFICATION-GAPS.md) for the caller-authentication audit
  * trail: events now survive a process restart instead of living only
  * in InMemoryCallerAuditSink's process-local array (still the correct

@@ -6,7 +6,7 @@ import type { StorageProvider } from "@parmana/storage";
  * rather than as a module-scope side effect (G-15,
  * docs/internal/VERIFICATION-GAPS.md). Importing this module — which every
  * packages/api test file transitively does via ../src/application.js —
- * must never itself construct a live Supabase client; only an actual
+ * must never itself construct a live database client; only an actual
  * repository call should.
  */
 let storage: StorageProvider | undefined;

@@ -24,7 +24,7 @@ import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
  * test split exactly.
  *
  * Production: SupabasePolicyChangeStepUpNonceStore, a durable store
- * shared across every process pointed at the same Supabase project.
+ * shared across every process pointed at the same PostgreSQL database.
  * Fails closed at startup if DATABASE_URL is not configured -- never
  * silently falls back to an in-memory store, which would silently
  * narrow step-up replay protection to a single process's uptime with

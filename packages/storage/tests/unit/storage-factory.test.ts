@@ -8,7 +8,7 @@ const ENV_KEYS = ["NODE_ENV", "PARMANA_STORAGE", "DATABASE_URL"] as const;
 
 /**
  * Unit coverage for the G-15 test-safety fix: createFromEnvironment must
- * never construct a live Supabase client under NODE_ENV=test, and must
+ * never construct a live database client under NODE_ENV=test, and must
  * fail with a named, actionable error rather than supabase-js's generic
  * "supabaseUrl is required." when misconfigured outside test.
  */

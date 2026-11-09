@@ -7,7 +7,7 @@ import { AuditEventCrypto } from "../../src/AuditEventCrypto.js";
  * tests: AuditEventCrypto (signs/verifies CallerAuditEvent, the caller-
  * authentication audit trail) had no dedicated test file at all --
  * only indirect coverage via an API-layer integration test that needs
- * a running server and a Supabase-backed sink. This proves the same
+ * a running server and a PostgreSQL-backed sink. This proves the same
  * "independently verifiable, no server, no network, no database"
  * property packages/crypto/tests/unit/authorization-envelope.test.ts
  * already proves for ExecutionAuthorizationPayload, and

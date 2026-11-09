@@ -6,7 +6,7 @@ import {
 
 //
 // G-15: StorageFactory.createFromEnvironment() decides between an
-// in-memory backend and a real Supabase-backed one purely from
+// in-memory backend and a real PostgreSQL-backed one purely from
 // environment variables -- and, critically, must NEVER construct a
 // live Supabase client under NODE_ENV=test, no matter what
 // PARMANA_STORAGE says. This tutorial exercises the real decision

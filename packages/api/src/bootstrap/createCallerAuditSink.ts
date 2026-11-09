@@ -23,7 +23,7 @@ import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
  * why (originally a workaround for PostgREST schema-cache issue
  * SU-437429). No longer a narrow, easily-reverted workaround: this
  * same pattern is now the storage layer's deliberate architecture
- * across most Supabase-backed tables (docs/internal/CLAIMS.md 3.11's own
+ * across most PostgreSQL-backed tables (docs/internal/CLAIMS.md 3.11's own
  * update), and the supabase-js-based SupabaseClientFactory this
  * comment used to name as the revert target was deleted 2026-09-09
  * (docs/internal/VERIFICATION-GAPS.md G-34) after confirming it had zero

@@ -5,7 +5,7 @@ import type { NonceStore } from "@parmana/envelope-verifier";
 import { isUniqueViolation } from "../errors/PostgresErrorCodes.js";
 
 /**
- * Durable, Supabase-backed NonceStore for Policy Change Step-Up
+ * Durable, PostgreSQL-backed NonceStore for Policy Change Step-Up
  * Authorization nonces (Policy Governance, maker-checker, Layer 4).
  *
  * Deliberately backed by its own table (consumed_policy_change_step_up_

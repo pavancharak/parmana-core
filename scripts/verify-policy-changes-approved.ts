@@ -73,7 +73,7 @@ export interface ApprovalLookup {
 }
 
 /**
- * Real Supabase-backed lookup, via the low-privilege `anon` role and
+ * Real lookup over the Supabase REST API (supabase-js), via the low-privilege `anon` role and
  * SUPABASE_ANON_KEY (see 20260818150000_add_ci_read_only_policy_for_approval_records.sql)
  * -- deliberately not the app's own DATABASE_URL/SUPABASE_SERVICE_ROLE_KEY,
  * which bypass RLS and grant read+write on every table, not read-only

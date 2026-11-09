@@ -5,10 +5,10 @@ import type { NonceStore } from "@parmana/envelope-verifier";
 import { isUniqueViolation } from "../errors/PostgresErrorCodes.js";
 
 /**
- * Durable, Supabase-backed NonceStore. Closes G-13
+ * Durable, PostgreSQL-backed NonceStore. Closes G-13
  * (docs/internal/VERIFICATION-GAPS.md): replay-nonce state now survives a
  * process restart and is shared across every process pointed at the
- * same Supabase project, rather than being scoped to one process's
+ * same PostgreSQL database, rather than being scoped to one process's
  * in-memory Map (@parmana/envelope-verifier's MemoryNonceStore,
  * still the correct choice for tests — see
  * packages/api/src/bootstrap/createNonceStore.ts).
@@ -36,12 +36,12 @@ import { isUniqueViolation } from "../errors/PostgresErrorCodes.js";
  *
  * Writes via a direct Postgres connection (PostgresPoolFactory), not
  * supabase-js/PostgREST — this codebase depended on PostgREST for
- * every Supabase-backed table until a stuck PostgREST schema cache on
+ * every PostgreSQL-backed table until a stuck PostgREST schema cache on
  * a different table caused a full authenticated-API outage (see
  * PostgresCallerAuditSink for the original incident). This migration
  * removes that entire class of
  * failure mode (schema cache, role config, exposed-schema settings)
- * from every remaining Supabase-backed table, not just the two that
+ * from every remaining PostgreSQL-backed table, not just the two that
  * broke first.
  */
 export class SupabaseNonceStore implements NonceStore {
