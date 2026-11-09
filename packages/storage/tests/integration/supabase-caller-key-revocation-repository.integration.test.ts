@@ -15,7 +15,7 @@ import { resolveDatabaseGate } from "../helpers/database-availability.js";
  * because this suite writes rows to it.
  */
 function isLocalOrDeclaredDisposable(): boolean {
-  const url = process.env.DATABASE_URL;
+  const url = process.env.TEST_DATABASE_URL;
 
   if (url === undefined) return false;
 

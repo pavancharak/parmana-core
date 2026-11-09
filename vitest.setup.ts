@@ -54,18 +54,15 @@ vi.mock(
 );
 
 /**
- * Deterministic, once-per-worker .env load (G-14).
+ * Once-per-worker test settings (G-14).
  *
- * Every vitest worker gets its own snapshot of process.env, so whether a
- * given test file "sees" SUPABASE_URL used to depend on whether that
- * file's own import graph happened to transitively trigger the
- * dotenv.config() side effect inside packages/shared/src/config/Config.ts
- * — a coincidence of import order, not a real gate decision. Loading here
- * instead, in the one file every worker always runs first, makes env
- * visibility identical across all workers regardless of which test files
- * they happen to execute. override:false matches Config.ts's own
- * dotenv.config() call, so neither load can clobber the other or an
- * already-set shell env var.
+ * Every vitest worker gets its own snapshot of process.env. Loading the
+ * test settings here, in the one file every worker runs first, makes env
+ * visibility identical across all workers. override:false means a value
+ * already set in the shell wins over .env.test.
+ *
+ * Only .env.test is read. .env holds the production settings and is never
+ * loaded by a test run (docs/internal/designs/TEST-DATABASE-CONFIG.md, D2).
  */
 const repoRoot = dirname(fileURLToPath(import.meta.url));
 
@@ -85,6 +82,12 @@ for (const name of ["TEST_DATABASE_URL", "DATABASE_URL"] as const) {
   resolveDatabaseUrlTarget(process.env[name] ?? "", process.env);
 }
 const databaseTarget = resolveDatabaseTarget(process.env);
+if (databaseTarget.kind !== "none") {
+  // Suites read TEST_DATABASE_URL, and PostgresPoolFactory reads DATABASE_URL. Both are set to the one
+  // validated target, so no suite can reach a different database.
+  process.env.TEST_DATABASE_URL = databaseTarget.url;
+  process.env.DATABASE_URL = databaseTarget.url;
+}
 if (databaseTarget.kind === "hosted") {
   console.info(`[test-database] hosted project ${databaseTarget.projectRef}`);
 } else if (databaseTarget.kind === "local") {

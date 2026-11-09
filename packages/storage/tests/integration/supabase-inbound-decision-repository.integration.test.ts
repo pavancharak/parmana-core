@@ -10,17 +10,11 @@ import { SupabaseInboundDecisionRepository } from "../../src/supabase/SupabaseIn
  * Runs against a real Postgres database with the inbound_decisions migration applied. Each test
  * runs inside a transaction that is rolled back, so nothing is left in the database.
  *
- * Reads TEST_DATABASE_URL only, never DATABASE_URL. Skipped when TEST_DATABASE_URL is not set.
- * Refuses to run if TEST_DATABASE_URL is the same as DATABASE_URL, so production cannot be used
- * by mistake.
+ * Reads TEST_DATABASE_URL only. Skipped when TEST_DATABASE_URL is not set. The target is validated
+ * by vitest.setup.ts before this file runs, so a production project cannot be used by mistake.
  */
 // Trimmed: a stray space or carriage return from a Windows-edited .env would break the database name.
 const url = process.env.TEST_DATABASE_URL?.trim();
-if (url && url === process.env.DATABASE_URL) {
-  throw new Error(
-    "TEST_DATABASE_URL equals DATABASE_URL. Point TEST_DATABASE_URL at a separate test database.",
-  );
-}
 
 function record(
   overrides: Partial<InboundDecisionRecord> = {},

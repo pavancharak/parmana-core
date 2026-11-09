@@ -6,14 +6,10 @@ import { SupabaseApprovalNonceStore } from "../../src/supabase/SupabaseApprovalN
 
 /**
  * G-143: removing expired approval nonces. Runs against a real database with the migrations applied. Rows carry a
- * run tag and are deleted afterwards. Reads TEST_DATABASE_URL only; skipped when it is not set.
+ * run tag and are deleted afterwards. Reads TEST_DATABASE_URL only; skipped when it is not set. The
+ * target is validated by vitest.setup.ts before this file runs.
  */
 const url = process.env.TEST_DATABASE_URL?.trim();
-if (url && url === process.env.DATABASE_URL) {
-  throw new Error(
-    "TEST_DATABASE_URL equals DATABASE_URL. Point TEST_DATABASE_URL at a separate test database.",
-  );
-}
 
 const suite = url ? describe : describe.skip;
 

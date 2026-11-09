@@ -4,6 +4,7 @@ import { join } from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import { resolveDatabaseTarget } from "../../test-support/database-target.js";
 import {
   applyPendingMigrations,
   baselineMigrations,
@@ -214,10 +215,12 @@ describe("migration lock (concurrent runners)", () => {
  * tracking insert or on the table it tries to create. With it, the second
  * waits, sees the migration recorded, and applies nothing.
  *
- * Runs only when PARMANA_TEST_DATABASE_URL is set, and drops and recreates
- * the tables it uses, so point it at an empty throwaway database.
+ * Runs only against a local database, because it drops and recreates the tables it uses. A hosted
+ * project is never used here, even when it is validated for other suites. The target comes from
+ * TEST_DATABASE_URL (docs/internal/designs/TEST-DATABASE-CONFIG.md).
  */
-const realUrl = process.env.PARMANA_TEST_DATABASE_URL;
+const realTarget = resolveDatabaseTarget(process.env);
+const realUrl = realTarget.kind === "local" ? realTarget.url : undefined;
 
 describe.skipIf(!realUrl)("migration lock against real PostgreSQL", () => {
   it("applies a migration once when two runners start together", async () => {
