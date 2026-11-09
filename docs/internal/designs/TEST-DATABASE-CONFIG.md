@@ -1,12 +1,12 @@
 # Design: test database configuration
 
-Status: **implemented** in PR #532 (steps 1 and 2) and PR #533 (steps 5 to 8). Four tests from section 5 are not yet
-run or automated (9, 10, 11 for the log line, and 13). Two owner questions remain open (section 8). This document records
-the problem, the state before the change, the decisions and what was built, the tests and what they show, and what is
-still open.
+Status: **implemented** in PR #532 (steps 1 and 2), PR #533 (steps 5 to 8) and PR #535 (tests 9, 10, 11 and 13, and a CI
+fix). Every test in section 5 is now automated or run, except test 13 with the real production project ID, which the owner
+has not run. Two owner questions remain open (section 8). This document records the problem, the state before the change,
+the decisions and what was built, the tests and what they show, and what is still open.
 
 Related: `docs/internal/runbooks/INTEGRATION-TESTS.md`, sections 2 and 3a; `docs/internal/handovers/G-143-sandbox-2026-11.md`;
-PR #526 (sandbox test setup), PR #531 (this design), PR #532 and PR #533 (implementation).
+PR #526 (sandbox test setup), PR #531 (this design), PR #532, PR #533 and PR #535 (implementation), PR #534 (status).
 
 Project IDs are written as placeholders in this document: `<production project ID>` and `<sandbox project ID>`. The real
 values are in the Supabase dashboard, not in the repository.
@@ -50,12 +50,12 @@ Checked on `main` at `ceeaada`, before PR #532:
 | #   | Decision                                                                                                            | Status                                                                                            |
 | --- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | D1  | Tests read one variable: `TEST_DATABASE_URL`.                                                                       | Done (PR #533). `DATABASE_URL` is also set to the same validated value for `PostgresPoolFactory`. |
-| D2  | `.env` never supplies a test database URL. Setup loads `.env.test` only.                                            | Done (PR #532).                                                                                   |
+| D2  | `.env` never supplies a test database URL. Setup loads `.env.test` only.                                            | Done (PR #532). Tested (PR #535).                                                                 |
 | D3  | A project allowlist (`PARMANA_TEST_PROJECT_REFS`). An empty list refuses every hosted target.                       | Done (PR #532).                                                                                   |
-| D4  | A project on `PARMANA_PRODUCTION_PROJECT_REFS` is refused even if it is also allowed.                               | Done (PR #532).                                                                                   |
-| D5  | The setup logs the target's project ID, never the connection string. A hosted target needs `ALLOW_LIVE_SUPABASE=1`. | Done (PR #532).                                                                                   |
+| D4  | A project on `PARMANA_PRODUCTION_PROJECT_REFS` is refused even if it is also allowed.                               | Done (PR #532). Run end to end with a made-up ID (PR #535).                                       |
+| D5  | The setup logs the target's project ID, never the connection string. A hosted target needs `ALLOW_LIVE_SUPABASE=1`. | Done (PR #532). Log line tested (PR #535).                                                        |
 | D6  | With no `TEST_DATABASE_URL`, database suites skip, with one visible summary line.                                   | Done (PR #532).                                                                                   |
-| D7  | A suite that needs a database fails when the opt-in is set but the URL is missing.                                  | Existing behaviour of `resolveDatabaseGate`. Not re-tested.                                       |
+| D7  | A suite that needs a database fails when the opt-in is set but the URL is missing.                                  | Done. Tested (PR #535).                                                                           |
 | D8  | One template, `.env.test.example`, with a local option (default) and a hosted option.                               | Done (PR #533).                                                                                   |
 | D9  | `PARMANA_TEST_DATABASE_URL` removed from `Doctor.ts`.                                                               | Done (PR #533).                                                                                   |
 
@@ -63,8 +63,8 @@ Checked on `main` at `ceeaada`, before PR #532:
 
 | Step | What                                                                                                                                               | Where                                                        | Status |
 | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | ------ |
-| 1    | Target helper: `resolveDatabaseTarget`, `resolveDatabaseUrlTarget`, `projectRefOf`                                                                 | PR #532                                                      | Done   |
-| 2    | `vitest.setup.ts` loads `.env.test` only, validates every database variable, logs the target                                                       | PR #532                                                      | Done   |
+| 1    | Target helper: `resolveDatabaseTarget`, `resolveDatabaseUrlTarget`, `projectRefOf`, `describeDatabaseTarget`                                       | PR #532, PR #535                                             | Done   |
+| 2    | `vitest.setup.ts` loads `.env.test` only (via `loadTestEnvironment`), validates every database variable, logs the target                           | PR #532, PR #535                                             | Done   |
 | 3    | Gate helpers read `TEST_DATABASE_URL`                                                                                                              | PR #533                                                      | Done   |
 | 4    | Consumption suite reads `TEST_DATABASE_URL`; equality guard removed                                                                                | PR #533                                                      | Done   |
 | 5    | Other database suites read `TEST_DATABASE_URL`: outcome repository, nonce cleanup, inbound decision repository, kill switch, caller key revocation | PR #533                                                      | Done   |
@@ -72,6 +72,7 @@ Checked on `main` at `ceeaada`, before PR #532:
 | 7    | Runbook sections 2 and 3a, developer guide                                                                                                         | PR #533                                                      | Done   |
 | 8    | `PARMANA_TEST_DATABASE_URL` removed from `Doctor.ts`; the migrations test uses the target and runs only locally                                    | PR #533                                                      | Done   |
 | 9    | Regenerate generated documents                                                                                                                     | Not needed: no generated document includes the changed files | Done   |
+| 10   | CI: the job variable renamed to `TEST_DATABASE_URL`; the four database suites gate on the opt-in, so CI skips them and runs the migrations test    | PR #535                                                      | Done   |
 
 Unchanged on purpose: unit tests that set `DATABASE_URL` to exercise bootstrap code (for example `create-nonce-store`),
 and production code that reads `DATABASE_URL` at runtime (`Config`, the application's bootstrap).
@@ -89,23 +90,25 @@ Unit tests for the target rules (PR #532, `tests/unit/database-target.test.ts`, 
 7. Empty `PARMANA_TEST_PROJECT_REFS` with a hosted URL → throws. **Done.**
 8. Malformed URL, or a hosted URL naming no project → throws, and the message does not contain the password. **Done.**
 
-Setup and gate tests:
+Setup and gate tests (PR #535):
 
-9. A `DATABASE_URL` set only in `.env` does not reach any test. **Not automated.** Checked by reading the setup file: it no
-   longer loads `.env`. An automated check would need a child process that runs setup with a sentinel value in `.env`.
-10. `ALLOW_LIVE_SUPABASE=1` with `TEST_DATABASE_URL` missing → the suite fails, not skips. **Existing behaviour, not
-    re-tested.**
-11. The run log names the project ID and does not print the password. **Partly.** Error messages are tested (test 8).
-    The success log line is not tested.
+9. A `DATABASE_URL` set only in `.env` does not reach any test. **Done.** `tests/unit/load-test-environment.test.ts` (3 cases):
+   the loader does not read `.env`, reads `.env.test`, and does not let `.env.test` override a shell value.
+10. `ALLOW_LIVE_SUPABASE=1` with `TEST_DATABASE_URL` missing → the suite fails, not skips. **Done.**
+    `packages/storage/tests/unit/database-availability.test.ts` (4 cases) covers the four combinations of URL and opt-in.
+11. The run log names the project ID and does not print the password. **Done.** `tests/unit/describe-database-target.test.ts`
+    (3 cases) checks the log line. Error messages are covered by test 8.
 
-End-to-end, by hand (runbook section 3a):
+End-to-end:
 
 12. `.env.test` with the sandbox entry → the consumption suite passes, 4 of 4. **Done** on Windows, after PR #532 merged. The
     log showed `[test-database] hosted project <sandbox project ID>`.
-13. `.env.test` with the production project ID in `TEST_DATABASE_URL` → the run refuses before any query. **Not run.**
-    Test 5 covers the same rule in unit tests.
+13. `.env.test` with the production project ID in `TEST_DATABASE_URL` → the run refuses before any query. **Done with a
+    made-up project ID** (PR #535): with the project listed both as allowed and as production, the run exited 1 before any
+    suite started; with the project allowed only, it exited 0. **Not run with the real production ID.** The owner can run it
+    with `PARMANA_PRODUCTION_PROJECT_REFS` and `TEST_DATABASE_URL` set to the production project, in a shell only.
 
-Full suite under Node 24 after PR #533: 364 files passed, 23 skipped; 3672 tests passed, 87 skipped.
+Full suite under Node 24 after PR #535: 367 files passed, 23 skipped; 3682 tests passed, 87 skipped.
 
 ## 6. Compatibility
 
@@ -113,15 +116,19 @@ Full suite under Node 24 after PR #533: 364 files passed, 23 skipped; 3672 tests
   contents.
 - A hosted run needs `PARMANA_TEST_PROJECT_REFS` in `.env.test`. Without it, the run refuses.
 - `PARMANA_TEST_DATABASE_URL` no longer works. Rename it to `TEST_DATABASE_URL`.
-- Any CI job that sets `DATABASE_URL` for tests should set `TEST_DATABASE_URL` instead. **Not checked:** the CI workflow
-  files have not been searched for this.
+- CI: the job sets `TEST_DATABASE_URL` for the whole job (checked, PR #535). The database suites that read it gate on
+  `ALLOW_LIVE_SUPABASE=1`, which CI does not set, so they skip. The migrations test runs, because it needs only a local
+  target. This was checked after a failed CI run, which showed the suites running against an empty database before the
+  gate was added.
 - Production runtime is unchanged. `Config` still reads `DATABASE_URL` for the running application.
 
 ## 7. Security notes
 
 - Connection strings do not appear in logs, test names, or committed files. The helper's errors and log line show the
   project ID only.
-- The production project ID is not committed. It is held in the developer's `.env.test` or shell.
+- The production project ID is not committed. It is held in the developer's `.env.test` or shell. **Checked:** a search of
+  the tracked files found the production ID once, in `docs/internal/sandbox-retirement-report.md`, an older incident
+  record. It is replaced with the placeholder. No tracked file now contains either real project ID.
 - The allowlist is fail-closed. An empty or missing list refuses hosted targets.
 - Hosted runs cannot drop tables: the migrations test runs only against a local target.
 - This design does not replace database permissions. The sandbox should still use a role that cannot reach production data.
@@ -142,15 +149,15 @@ Full suite under Node 24 after PR #533: 364 files passed, 23 skipped; 3672 tests
 
 ## 9. Related item: signed commits
 
-`main` requires signed commits, but every recent merge was unsigned (PRs #526 to #533). This is not a configuration
+`main` requires signed commits, but every recent merge was unsigned (PRs #526 to #535). This is not a configuration
 problem. It needs a branch-protection check, and a decision about whether to rewrite history. It is out of scope here, and
 it is recorded in the handover.
 
 ## 10. Done when
 
-- Tests 1 to 8 pass. **Yes.**
-- Tests 9 to 11 pass, and test 13 has been run. **No.** Tests 9, 10 and 13 are open. Test 11 is partly done.
-- No file read by tests contains a production connection string. **Not verified by search.**
+- Tests 1 to 11 pass. **Yes.**
+- Test 13 has been run. **Yes, with a made-up ID.** The run with the real production ID is the owner's to do.
+- No file read by tests contains a production connection string. **Yes.** Checked by search (section 7).
 - The runbook describes one procedure, and the handover links to it. **Yes.** The handover still lists the verifier and
   production items; see the handover for their state.
 - The owner decisions in section 8 are recorded in this document. **Partly.** Items 1 and 3 are recorded. Items 2 and 4 are
