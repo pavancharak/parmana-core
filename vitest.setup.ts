@@ -10,6 +10,11 @@ import { fileURLToPath } from "node:url";
 
 import dotenv from "dotenv";
 
+import {
+  resolveDatabaseTarget,
+  resolveDatabaseUrlTarget,
+} from "./test-support/database-target.js";
+
 import { afterAll, vi } from "vitest";
 
 /**
@@ -64,19 +69,29 @@ vi.mock(
  */
 const repoRoot = dirname(fileURLToPath(import.meta.url));
 
-// Test-only settings (gitignored, copied from .env.test.example). Loaded
-// first, so a value here wins over the same name in .env. Pointing the tests
-// at a local test database is done here, never by .env, which holds the
-// production settings.
+// Test-only settings (gitignored, copied from .env.test.example). The only
+// file a test run reads for database settings. .env is deliberately NOT loaded
+// here: it holds the production settings, and a test run must never see them
+// (docs/internal/designs/TEST-DATABASE-CONFIG.md, decision D2).
 dotenv.config({
   path: join(repoRoot, ".env.test"),
   override: false,
 });
 
-dotenv.config({
-  path: join(repoRoot, ".env"),
-  override: false,
-});
+// Refuse the run before any suite starts if a database variable names a target
+// the rules do not allow (decisions D3 and D4). Every variable is checked, not only
+// the one a run uses. Logs the target without its connection string.
+for (const name of ["TEST_DATABASE_URL", "DATABASE_URL"] as const) {
+  resolveDatabaseUrlTarget(process.env[name] ?? "", process.env);
+}
+const databaseTarget = resolveDatabaseTarget(process.env);
+if (databaseTarget.kind === "hosted") {
+  console.info(`[test-database] hosted project ${databaseTarget.projectRef}`);
+} else if (databaseTarget.kind === "local") {
+  console.info("[test-database] local database");
+} else {
+  console.info("[test-database] no database configured; database suites skip");
+}
 
 /**
  * Local defaults, so `npm test` works on a fresh clone with no .env.
