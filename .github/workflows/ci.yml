@@ -37,7 +37,7 @@ jobs:
 
     env:
       NODE_ENV: test
-      PARMANA_TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+      TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
       # Required at startup by packages/shared/src/config/Config.ts —
       # points at the repo's own committed reference policies, not a
       # separate fixtures directory.
