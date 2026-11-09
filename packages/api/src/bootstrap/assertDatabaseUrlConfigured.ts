@@ -1,7 +1,7 @@
 /**
  * Fail-closed precondition for the audit sink that currently bypasses
  * supabase-js and writes via a direct Postgres connection
- * (SupabaseCallerAuditSink — see that file for why: PostgREST's
+ * (PostgresCallerAuditSink — see that file for why: PostgREST's
  * schema cache is stuck, Supabase ticket SU-437429). Mirrors
  * assertSupabaseConfigured.ts's shape:
  * throws a clear, actionable error naming the missing environment

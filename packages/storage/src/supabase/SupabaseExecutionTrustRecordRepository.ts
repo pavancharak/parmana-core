@@ -19,7 +19,7 @@ import type { Pool } from "pg";
  * Writes via a direct Postgres connection (PostgresPoolFactory), not
  * supabase-js/PostgREST -- part of removing PostgREST from every
  * Supabase-backed table's failure modes, not just the audit sinks
- * that broke first (see SupabaseCallerAuditSink for the originating
+ * that broke first (see PostgresCallerAuditSink for the originating
  * incident). ORDER BY <timestamp> ASC, seq ASC on every sub-collection
  * select reproduces exactly the ordering fix already proven by
  * packages/storage/tests/integration/

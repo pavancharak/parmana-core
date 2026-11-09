@@ -70,7 +70,7 @@ export type { RuleConflictWarning } from "./PolicyValidator.js";
 
 export type { PolicyRepository } from "./PolicyRepository.js";
 export { FilePolicyRepository } from "./FilePolicyRepository.js";
-export { SupabasePolicyRepository } from "./SupabasePolicyRepository.js";
+export { PostgresPolicyRepository } from "./PostgresPolicyRepository.js";
 
 // -----------------------------------------------------------------------------
 // Types

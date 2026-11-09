@@ -1,4 +1,4 @@
-# Tutorial 116 — SupabasePolicyRepository (the EROFS fix)
+# Tutorial 116 — PostgresPolicyRepository (the EROFS fix)
 
 ## Objective
 
@@ -19,12 +19,12 @@ fix in Tutorial 116's own predecessor work — see "Related Tutorials" below).
   this scenario reports itself as skipped rather than failing the tutorial — it reflects
   the OS's own permission model, not something this codebase controls. The real `EROFS`
   only reproduces on Vercel's actual read-only filesystem.
-- **Scenario 2** exercises the real fix: `SupabasePolicyRepository`
-  (`packages/policy/src/SupabasePolicyRepository.ts`), backed by a minimal fake `pg.Pool`
+- **Scenario 2** exercises the real fix: `PostgresPolicyRepository`
+  (`packages/policy/src/PostgresPolicyRepository.ts`), backed by a minimal fake `pg.Pool`
   standing in for a real database connection — the same "fake the one method actually
   called" discipline Tutorial 115 already established for `PostgresRateLimitStore`. No
   network access needed.
-- `SupabasePolicyRepository` implements the exact same `PolicyRepository` interface
+- `PostgresPolicyRepository` implements the exact same `PolicyRepository` interface
   `FilePolicyRepository` does (`load`/`save`/`listAll`), so
   `PolicyChangeApprovalService.approve()` needed zero changes to its own logic — only
   `packages/api/src/application.ts`'s repository selection changed, and even that is
@@ -39,7 +39,7 @@ fix in Tutorial 116's own predecessor work — see "Related Tutorials" below).
 npx tsx examples/tutorials/116-supabase-policy-repository/run.ts
 ```
 
-Entirely hermetic on the `SupabasePolicyRepository` half (Scenario 2); Scenario 1 uses a
+Entirely hermetic on the `PostgresPolicyRepository` half (Scenario 2); Scenario 1 uses a
 real temp directory and real filesystem permissions, cleaned up automatically, with no
 external state left behind either way.
 

@@ -5,7 +5,7 @@ import path from "node:path";
 
 import {
   FilePolicyRepository,
-  SupabasePolicyRepository,
+  PostgresPolicyRepository,
 } from "@parmana/policy";
 import { PostgresPoolFactory } from "@parmana/storage";
 
@@ -18,7 +18,7 @@ const MIGRATION_FILE = path.resolve(
  * One-time cutover for the `policies` table (migration 20260916060000):
  * creates the table, then copies every policy currently on disk
  * (under PARMANA_POLICY_DIR) into it. Run once, before/at the same
- * time as deploying the SupabasePolicyRepository switch in
+ * time as deploying the PostgresPolicyRepository switch in
  * application.ts -- application.ts's own doc comment explains why a
  * single shared repository backs both governance writes and live
  * runtime policy evaluation, so a gap here (any policy present as a
@@ -37,7 +37,7 @@ async function main(): Promise<void> {
   const fileRepo = new FilePolicyRepository(
     process.env.PARMANA_POLICY_DIR ?? "./policies",
   );
-  const dbRepo = new SupabasePolicyRepository(pool);
+  const dbRepo = new PostgresPolicyRepository(pool);
 
   const policies = await fileRepo.listAll();
   console.log(`Found ${policies.length} policies on disk. Backfilling...\n`);

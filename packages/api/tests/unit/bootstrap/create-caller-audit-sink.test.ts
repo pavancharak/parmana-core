@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { SupabaseCallerAuditSink } from "../../../src/auth/SupabaseCallerAuditSink.js";
+import { PostgresCallerAuditSink } from "../../../src/auth/PostgresCallerAuditSink.js";
 import { InMemoryCallerAuditSink } from "../../../src/auth/InMemoryCallerAuditSink.js";
 
 import { createCallerAuditSink } from "../../../src/bootstrap/createCallerAuditSink.js";
@@ -58,11 +58,11 @@ describe("createCallerAuditSink", () => {
     expect(result).toBeUndefined();
   });
 
-  it("returns SupabaseCallerAuditSink when NODE_ENV is not test and DATABASE_URL is configured", () => {
+  it("returns PostgresCallerAuditSink when NODE_ENV is not test and DATABASE_URL is configured", () => {
     process.env.NODE_ENV = "production";
     process.env.DATABASE_URL =
       "postgresql://user:pass@example.supabase.co:5432/postgres";
 
-    expect(createCallerAuditSink()).toBeInstanceOf(SupabaseCallerAuditSink);
+    expect(createCallerAuditSink()).toBeInstanceOf(PostgresCallerAuditSink);
   });
 });

@@ -24,7 +24,7 @@ const SELECT_EXECUTION_AUDIT_EVENT_BY_SESSION_SQL = `
  * is durable against a real database, and that a regulator/operator
  * lookup ("show me everything for this authorization") retrieves the
  * complete, correctly-ordered chain back out — not just that a row
- * landed. Mirrors supabase-caller-audit-sink.integration.test.ts's own
+ * landed. Mirrors postgres-caller-audit-sink.integration.test.ts's own
  * shape and live/opt-in gating exactly.
  *
  * Requires the execution_audit_events table from

@@ -51,7 +51,7 @@ import { SupabaseAuthorityGrantRepository } from "./SupabaseAuthorityGrantReposi
  * failure modes of every table this provider touches (business
  * transactions, execution trust records and their sub-collections,
  * refusal records), not just the audit sinks that broke first (see
- * SupabaseCallerAuditSink for the originating incident).
+ * PostgresCallerAuditSink for the originating incident).
  */
 export class SupabaseStorageProvider implements StorageProvider {
   readonly businessTransactions: BusinessTransactionRepository;

@@ -1,6 +1,6 @@
 //
 // TEST 5: audit log tamper evidence.
-// The real SupabaseCallerAuditSink.record() writes rows through a pg-shaped pool.
+// The real PostgresCallerAuditSink.record() writes rows through a pg-shaped pool.
 // The pool is backed by PGlite (real PostgreSQL compiled to WASM), so the SQL,
 // advisory locks and BIGSERIAL ids are real. Rows are read back and checked with
 // CallerAuditChainVerifier, the same code a verifier uses.
@@ -19,7 +19,7 @@ import {
   TrustRecordHasher,
   type ChainedCallerAuditEventRow,
 } from "@parmana/crypto";
-import { SupabaseCallerAuditSink } from "../../packages/api/src/auth/SupabaseCallerAuditSink.js";
+import { PostgresCallerAuditSink } from "../../packages/api/src/auth/PostgresCallerAuditSink.js";
 import { evidencePath } from "./evidence.js";
 
 const cases: Record<string, unknown>[] = [];
@@ -61,7 +61,7 @@ function poolOver(db: PGlite): any {
 async function freshChain(): Promise<PGlite> {
   const db = new PGlite();
   await db.exec(DDL);
-  const sink = new SupabaseCallerAuditSink(poolOver(db));
+  const sink = new PostgresCallerAuditSink(poolOver(db));
   for (let i = 1; i <= N; i++) {
     await sink.record({
       type: i % 3 === 0 ? "caller.rejected" : "caller.authenticated",

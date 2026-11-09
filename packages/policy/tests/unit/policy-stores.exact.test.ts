@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { FilePolicyRepository } from "../../src/FilePolicyRepository.js";
 import { PolicyRegistry } from "../../src/PolicyRegistry.js";
 import { PolicyRouter } from "../../src/PolicyRouter.js";
-import { SupabasePolicyRepository } from "../../src/SupabasePolicyRepository.js";
+import { PostgresPolicyRepository } from "../../src/PostgresPolicyRepository.js";
 import {
   PolicyError,
   PolicyNotFoundError,
@@ -20,7 +20,7 @@ import type { Policy } from "../../src/types/Policy.js";
 
 /**
  * Mutation testing found the production policy store
- * (SupabasePolicyRepository) with no test in this package, the file
+ * (PostgresPolicyRepository) with no test in this package, the file
  * store's listing untested, the router's conflict warnings unchecked,
  * and the error classes' names and messages free to change. Each is
  * pinned here.
@@ -44,11 +44,11 @@ function fakePool(rows: unknown[] = []) {
   return { pool: { query } as unknown as Pool, query };
 }
 
-describe("SupabasePolicyRepository", () => {
+describe("PostgresPolicyRepository", () => {
   it("loads the stored content for exactly that name and version", async () => {
     const { pool, query } = fakePool([{ content_json: POLICY }]);
     await expect(
-      new SupabasePolicyRepository(pool).load("customer-refund", "1.2.0"),
+      new PostgresPolicyRepository(pool).load("customer-refund", "1.2.0"),
     ).resolves.toBe(POLICY);
     expect(query.mock.calls[0]![0]).toMatch(
       /SELECT content_json FROM policies WHERE policy_name = \$1 AND policy_version = \$2/,
@@ -59,7 +59,7 @@ describe("SupabasePolicyRepository", () => {
   it("reports a policy that is not stored as not found", async () => {
     const { pool } = fakePool([]);
     await expect(
-      new SupabasePolicyRepository(pool).load("p", "1.0.0"),
+      new PostgresPolicyRepository(pool).load("p", "1.0.0"),
     ).rejects.toThrow("Policy 'p' version '1.0.0' was not found.");
   });
 
@@ -74,7 +74,7 @@ describe("SupabasePolicyRepository", () => {
     "refuses the name %j and version %j without querying, for load and save",
     async (name, version) => {
       const { pool, query } = fakePool([{ content_json: POLICY }]);
-      const repository = new SupabasePolicyRepository(pool);
+      const repository = new PostgresPolicyRepository(pool);
       await expect(repository.load(name, version)).rejects.toBeInstanceOf(
         PolicyNotFoundError,
       );
@@ -87,7 +87,7 @@ describe("SupabasePolicyRepository", () => {
 
   it("saves the content as JSON under that name and version, as an upsert", async () => {
     const { pool, query } = fakePool();
-    await new SupabasePolicyRepository(pool).save("p", "1.0.0", POLICY);
+    await new PostgresPolicyRepository(pool).save("p", "1.0.0", POLICY);
     const [sql, params] = query.mock.calls[0]!;
     expect(sql).toMatch(/INSERT INTO policies/);
     expect(sql).toMatch(/ON CONFLICT \(policy_name, policy_version\)/);
@@ -99,7 +99,7 @@ describe("SupabasePolicyRepository", () => {
       { policy_name: "a", policy_version: "1" },
       { policy_name: "b", policy_version: "2" },
     ]);
-    await expect(new SupabasePolicyRepository(pool).listAll()).resolves.toEqual(
+    await expect(new PostgresPolicyRepository(pool).listAll()).resolves.toEqual(
       [
         { name: "a", version: "1" },
         { name: "b", version: "2" },

@@ -110,7 +110,7 @@ interface LastChainLinkRow {
   readonly chain_position: string | null;
 }
 
-export class SupabaseCallerAuditSink implements CallerAuditSink {
+export class PostgresCallerAuditSink implements CallerAuditSink {
   private readonly crypto = new AuditEventCrypto();
 
   private readonly chainHasher = new TrustRecordHasher(

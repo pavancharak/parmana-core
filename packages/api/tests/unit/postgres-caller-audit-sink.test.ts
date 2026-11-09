@@ -9,7 +9,7 @@ import type { Pool } from "pg";
 
 import { AuditEventCrypto } from "@parmana/crypto";
 
-import { SupabaseCallerAuditSink } from "../../src/auth/SupabaseCallerAuditSink.js";
+import { PostgresCallerAuditSink } from "../../src/auth/PostgresCallerAuditSink.js";
 import type { CallerAuditEvent } from "../../src/auth/CallerAuditSink.js";
 
 //
@@ -56,7 +56,7 @@ interface FakeStoredRow {
 
 /**
  * A fake Pool/PoolClient minimally simulating the three statement
- * shapes SupabaseCallerAuditSink.record() issues: the transaction
+ * shapes PostgresCallerAuditSink.record() issues: the transaction
  * control statements (BEGIN/COMMIT/ROLLBACK), the advisory lock, the
  * last-chain-link lookup (SELECT chain_hash, chain_position ...), and
  * the INSERT itself. Maintains real in-memory rows so multi-call
@@ -134,7 +134,7 @@ function createFakePool(options?: {
 }
 
 /**
- * Maps the positional $1.. values SupabaseCallerAuditSink passes to
+ * Maps the positional $1.. values PostgresCallerAuditSink passes to
  * the INSERT statement back to named columns, in the same order as
  * INSERT_CALLER_AUDIT_EVENT_SQL, for readable assertions.
  */
@@ -224,9 +224,9 @@ const NON_HUMAN_DENIED_EVENT: CallerAuditEvent = {
   severity: "flagged",
 };
 
-describe("SupabaseCallerAuditSink", () => {
+describe("PostgresCallerAuditSink", () => {
   it("resolves on a successful insert", async () => {
-    const sink = new SupabaseCallerAuditSink(createFakePool());
+    const sink = new PostgresCallerAuditSink(createFakePool());
 
     await expect(sink.record(AUTHENTICATED_EVENT)).resolves.toBeUndefined();
   });
@@ -234,7 +234,7 @@ describe("SupabaseCallerAuditSink", () => {
   it("maps CallerAuditEvent fields to query params, nulling absent optional fields, and starts a new caller's chain at position 1", async () => {
     let capturedRow: Record<string, unknown> | undefined;
 
-    const sink = new SupabaseCallerAuditSink(
+    const sink = new PostgresCallerAuditSink(
       createFakePool({
         onInsert: (values) => {
           capturedRow = toRow(values);
@@ -269,7 +269,7 @@ describe("SupabaseCallerAuditSink", () => {
   it("maps a rejected event's reason, nulling the absent callerId and every chain field (no caller to chain against)", async () => {
     let capturedRow: Record<string, unknown> | undefined;
 
-    const sink = new SupabaseCallerAuditSink(
+    const sink = new PostgresCallerAuditSink(
       createFakePool({
         onInsert: (values) => {
           capturedRow = toRow(values);
@@ -304,7 +304,7 @@ describe("SupabaseCallerAuditSink", () => {
   it("maps a capability_denied event's capability and reason", async () => {
     let capturedRow: Record<string, unknown> | undefined;
 
-    const sink = new SupabaseCallerAuditSink(
+    const sink = new PostgresCallerAuditSink(
       createFakePool({
         onInsert: (values) => {
           capturedRow = toRow(values);
@@ -339,7 +339,7 @@ describe("SupabaseCallerAuditSink", () => {
   it("maps a principal_denied event's principalId and reason", async () => {
     let capturedRow: Record<string, unknown> | undefined;
 
-    const sink = new SupabaseCallerAuditSink(
+    const sink = new PostgresCallerAuditSink(
       createFakePool({
         onInsert: (values) => {
           capturedRow = toRow(values);
@@ -374,7 +374,7 @@ describe("SupabaseCallerAuditSink", () => {
   it("maps a non_human_denied event's severity, nulling capability and principal_id", async () => {
     let capturedRow: Record<string, unknown> | undefined;
 
-    const sink = new SupabaseCallerAuditSink(
+    const sink = new PostgresCallerAuditSink(
       createFakePool({
         onInsert: (values) => {
           capturedRow = toRow(values);
@@ -410,7 +410,7 @@ describe("SupabaseCallerAuditSink", () => {
   it("maps a structural_rejected event's businessTransactionId and reason (G-29)", async () => {
     let capturedRow: Record<string, unknown> | undefined;
 
-    const sink = new SupabaseCallerAuditSink(
+    const sink = new PostgresCallerAuditSink(
       createFakePool({
         onInsert: (values) => {
           capturedRow = toRow(values);
@@ -446,7 +446,7 @@ describe("SupabaseCallerAuditSink", () => {
   it("maps a structural_rejected event with no known caller (malformed body, ahead of caller-auth), nulling caller_id and every chain field", async () => {
     let capturedRow: Record<string, unknown> | undefined;
 
-    const sink = new SupabaseCallerAuditSink(
+    const sink = new PostgresCallerAuditSink(
       createFakePool({
         onInsert: (values) => {
           capturedRow = toRow(values);
@@ -484,7 +484,7 @@ describe("SupabaseCallerAuditSink", () => {
   });
 
   it("preserves existing failure semantics: a storage error rejects the returned promise, unchanged from InMemoryCallerAuditSink's contract", async () => {
-    const sink = new SupabaseCallerAuditSink(
+    const sink = new PostgresCallerAuditSink(
       createFakePool({
         insertError: { code: "08006", message: "connection failure" },
       }),
@@ -498,7 +498,7 @@ describe("SupabaseCallerAuditSink", () => {
   it("signs each chained event so it verifies against its own canonical bytes (including the chain link fields), and a tampered event fails verification", async () => {
     let capturedRow: Record<string, unknown> | undefined;
 
-    const sink = new SupabaseCallerAuditSink(
+    const sink = new PostgresCallerAuditSink(
       createFakePool({
         onInsert: (values) => {
           capturedRow = toRow(values);
@@ -542,7 +542,7 @@ describe("SupabaseCallerAuditSink", () => {
   it("chains a second event from the same caller to the first, incrementing chain_position", async () => {
     const capturedRows: Record<string, unknown>[] = [];
 
-    const sink = new SupabaseCallerAuditSink(
+    const sink = new PostgresCallerAuditSink(
       createFakePool({
         onInsert: (values) => {
           capturedRows.push(toRow(values));
@@ -566,7 +566,7 @@ describe("SupabaseCallerAuditSink", () => {
   it("gives two different callers independent chains, each starting at position 1", async () => {
     const capturedRows: Record<string, unknown>[] = [];
 
-    const sink = new SupabaseCallerAuditSink(
+    const sink = new PostgresCallerAuditSink(
       createFakePool({
         onInsert: (values) => {
           capturedRows.push(toRow(values));
@@ -593,7 +593,7 @@ describe("SupabaseCallerAuditSink", () => {
       insertError: { code: "08006", message: "connection failure" },
     });
 
-    const sink = new SupabaseCallerAuditSink(pool);
+    const sink = new PostgresCallerAuditSink(pool);
 
     await expect(sink.record(AUTHENTICATED_EVENT)).rejects.toMatchObject({
       code: "08006",

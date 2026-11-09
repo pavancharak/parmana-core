@@ -174,11 +174,11 @@ leaves behind, since there is no live effect to sign evidence about.
   `policy.json` to local disk at `<basePath>/<name>/<version>/policy.json`, via a
   temp-file-then-atomic-rename pattern. Used for local development and tests, where the
   filesystem is always writable.
-- **`SupabasePolicyRepository`** (`packages/policy/src/SupabasePolicyRepository.ts`): stores
+- **`PostgresPolicyRepository`** (`packages/policy/src/PostgresPolicyRepository.ts`): stores
   `(policy_name, policy_version) -> content_json` rows in a `policies` table via a direct
   Postgres connection.
 
-Serverless functions run on a **read-only filesystem**, so policy content cannot be written to local files in a deployment. `application.ts` chooses the policy repository from `config.storage.provider`: memory or test configurations get `FilePolicyRepository`, and any real database configuration gets `SupabasePolicyRepository`.
+Serverless functions run on a **read-only filesystem**, so policy content cannot be written to local files in a deployment. `application.ts` chooses the policy repository from `config.storage.provider`: memory or test configurations get `FilePolicyRepository`, and any real database configuration gets `PostgresPolicyRepository`.
 
 ### Deploy-time and periodic integrity checking
 
@@ -220,7 +220,7 @@ to `policies/{name}/{version}/policy.json` that skips the pending-change API ent
   `policy.json` file gets written and a signed approval record gets persisted only once
   every layer has passed.
 - **`examples/tutorials/116-supabase-policy-repository/run.ts`**: proves
-  `SupabasePolicyRepository` satisfies the exact same `PolicyRepository` contract as
+  `PostgresPolicyRepository` satisfies the exact same `PolicyRepository` contract as
   `FilePolicyRepository`, hermetically, against a minimal fake `pg.Pool` (no real network
   or database). Also reproduces the real `EROFS` failure directly, against a genuinely
   read-only temp directory, on platforms where the OS actually enforces it.
@@ -275,7 +275,7 @@ to `policies/{name}/{version}/policy.json` that skips the pending-change API ent
   ```
 - **`PARMANA_STORAGE`** determines which `PolicyRepository` implementation is live:
   anything other than `memory` (and `NODE_ENV !== "test"`) selects
-  `SupabasePolicyRepository`, which additionally requires `DATABASE_URL`.
+  `PostgresPolicyRepository`, which additionally requires `DATABASE_URL`.
 - **`packages/governance-ui`** is an optional, small, server-rendered Express app covering
   list and diff-review only. It deliberately has **no** approve or reject
   routes: its diff page instructs a checker to run `scripts/sign-policy-change-step-up.ts`

@@ -29,7 +29,7 @@ const VALID_NAME_OR_VERSION = /^[A-Za-z0-9._-]+$/;
  * `policies` table (migration 20260916060000) instead of the
  * filesystem.
  */
-export class SupabasePolicyRepository implements PolicyRepository {
+export class PostgresPolicyRepository implements PolicyRepository {
   constructor(private readonly pool: Pool) {}
 
   async load(name: string, version: string): Promise<Policy> {

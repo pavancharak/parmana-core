@@ -14,7 +14,7 @@ import { SupabaseExecutionAuditSink } from "../../src/supabase/SupabaseExecution
 
 //
 // Hermetic key material -- mirrors
-// packages/api/tests/unit/supabase-caller-audit-sink.test.ts's own
+// packages/api/tests/unit/postgres-caller-audit-sink.test.ts's own
 // convention.
 //
 let keyDir: string;

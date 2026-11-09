@@ -66,12 +66,12 @@ method call on a repository triggers `StorageFactory.createFromEnvironment()`.
 
 The first
 version of `packages/api/src/application.ts`'s new `policyRepository` export constructed
-`SupabasePolicyRepository(PostgresPoolFactory.create())` directly at module scope:
+`PostgresPolicyRepository(PostgresPoolFactory.create())` directly at module scope:
 
 ```ts
 export const policyRepository: PolicyRepository =
   process.env.NODE_ENV !== "test" && config.storage.provider !== "memory"
-    ? new SupabasePolicyRepository(PostgresPoolFactory.create())
+    ? new PostgresPolicyRepository(PostgresPoolFactory.create())
     : new FilePolicyRepository(config.policy.directory);
 ```
 
@@ -91,7 +91,7 @@ already uses, deferring construction to the first real `load()`/`save()`/`listAl
 process-wide singleton `pg.Pool`. Every Supabase-backed repository in this codebase connects
 through it directly, not through `supabase-js`'s REST-based client (PostgREST). The class
 replaced it everywhere it was still used. This removes an entire layer (PostgREST) from the
-own history names explicitly (see `SupabaseCallerAuditSink`'s own comments for the
+own history names explicitly (see `PostgresCallerAuditSink`'s own comments for the
 originating case).
 
 As of 2026-09-16, `PostgresPoolFactory.create()`'s `Pool` is constructed with
@@ -138,8 +138,8 @@ CREATE TABLE IF NOT EXISTS policies (
 );
 ```
 
-Note this table is read and written by `SupabasePolicyRepository`
-(`packages/policy/src/SupabasePolicyRepository.ts`), which lives in the `@parmana/policy`
+Note this table is read and written by `PostgresPolicyRepository`
+(`packages/policy/src/PostgresPolicyRepository.ts`), which lives in the `@parmana/policy`
 package, not `@parmana/storage`, it is constructed directly in `application.ts`, not
 exposed through `StorageProvider`. This is a real architectural asymmetry: every other
 Postgres-backed repository in this codebase goes through the `StorageProvider` facade;
@@ -154,7 +154,7 @@ any other table you need to rely on.
 
 ## How It Enables Things, With a Concrete Example
 
-`examples/tutorials/116-supabase-policy-repository/run.ts` exercises `SupabasePolicyRepository`
+`examples/tutorials/116-supabase-policy-repository/run.ts` exercises `PostgresPolicyRepository`
 directly against a minimal fake `pg.Pool` (no real network), proving `save()` then `load()`
 round-trips exactly, `load()` on a missing entry throws `PolicyNotFoundError`, and `listAll()`
 reports what was saved, the same contract `FilePolicyRepository` upholds, just backed by a

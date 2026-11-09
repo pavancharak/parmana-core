@@ -5,7 +5,7 @@ description: "Every caller-authentication event (success, denial, or structural 
 
 <Info>
   **[AVAILABLE]**. `packages/api/src/auth/CallerAuditSink.ts`,
-  `SupabaseCallerAuditSink.ts`, `packages/crypto/src/AuditEventCrypto.ts`,
+  `PostgresCallerAuditSink.ts`, `packages/crypto/src/AuditEventCrypto.ts`,
   `CallerAuditChainVerifier.ts`. See [Limitations](/security/limitations)
   ("Insider threat / audit tampering") for the full evidence list this page
   draws from.
@@ -51,7 +51,7 @@ export interface CallerAuditSink {
 ## Two implementations, one deliberate split
 
 - **`InMemoryCallerAuditSink`**, `NODE_ENV=test` only. Process-local, unsigned, unchained.
-- **`SupabaseCallerAuditSink`**, every other environment. Fails closed at startup
+- **`PostgresCallerAuditSink`**, every other environment. Fails closed at startup
   (`assertDatabaseUrlConfigured`) if `DATABASE_URL` isn't configured, there is no silent
   fallback to the in-memory sink outside tests. Every event is signed
   (`AuditEventCrypto`, with the same signer and key as every other artifact this
@@ -75,7 +75,7 @@ Caller Alice:                          Caller Bob (independent):
   event 3: previousChainHash = hash(2)
 ```
 
-`SupabaseCallerAuditSink.record()`, when the event carries a `callerId`, opens a transaction
+`PostgresCallerAuditSink.record()`, when the event carries a `callerId`, opens a transaction
 and takes a Postgres advisory lock scoped to `hashtext(callerId)`, this serializes only that
 caller's own concurrent writes, never a different caller's. It reads that caller's most recent
 `chain_hash`/`chain_position` (`ORDER BY id DESC LIMIT 1`), folds `previousChainHash`/

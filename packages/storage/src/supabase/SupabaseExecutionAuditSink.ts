@@ -16,7 +16,7 @@ import type { ExecutionAuditEvent, ExecutionAuditSink } from "@parmana/shared";
  * choice for tests — see
  * packages/api/src/bootstrap/createExecutionAuditSink.ts).
  *
- * Mirrors packages/api/src/auth/SupabaseCallerAuditSink.ts's own
+ * Mirrors packages/api/src/auth/PostgresCallerAuditSink.ts's own
  * discipline exactly: signed at write time (so a plain durable row
  * can't be silently altered by anyone with database access), and
  * writes via a direct Postgres connection (PostgresPoolFactory), not

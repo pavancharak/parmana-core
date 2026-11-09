@@ -4,7 +4,7 @@ import path from "node:path";
 
 import {
   FilePolicyRepository,
-  SupabasePolicyRepository,
+  PostgresPolicyRepository,
   PolicyNotFoundError,
   type Policy,
 } from "@parmana/policy";
@@ -18,14 +18,14 @@ import {
 // with EROFS. This tutorial reproduces both halves hermetically: the
 // real failure mode (Scenario 1, a genuinely read-only directory --
 // skipped automatically on platforms where chmod can't enforce this,
-// e.g. Windows) and the real fix (Scenario 2, SupabasePolicyRepository
+// e.g. Windows) and the real fix (Scenario 2, PostgresPolicyRepository
 // against a minimal fake pg.Pool -- no network needed, same pattern
 // Tutorial 115 already established for PostgresRateLimitStore).
 //
 
 console.log();
 console.log("==================================================");
-console.log("Tutorial 116 - SupabasePolicyRepository (the EROFS fix)");
+console.log("Tutorial 116 - PostgresPolicyRepository (the EROFS fix)");
 console.log("==================================================");
 console.log();
 
@@ -93,7 +93,7 @@ try {
 
 console.log();
 console.log(
-  "Scenario 2: SupabasePolicyRepository against a fake pg.Pool -- the real fix, hermetic",
+  "Scenario 2: PostgresPolicyRepository against a fake pg.Pool -- the real fix, hermetic",
 );
 console.log("--------------------------------------------------");
 
@@ -134,7 +134,7 @@ class FakePool {
   }
 }
 
-const dbRepo = new SupabasePolicyRepository(new FakePool() as never);
+const dbRepo = new PostgresPolicyRepository(new FakePool() as never);
 
 let notFoundBeforeSave = false;
 try {
@@ -176,11 +176,11 @@ const allPassed =
 if (allPassed) {
   console.log(
     "✓ Same PolicyRepository interface, same PolicyChangeApprovalService.approve() call site -- " +
-      "SupabasePolicyRepository just doesn't need a writable filesystem to satisfy it.",
+      "PostgresPolicyRepository just doesn't need a writable filesystem to satisfy it.",
   );
 } else {
   console.log(
-    "✗ Expected SupabasePolicyRepository to round-trip content with no filesystem access.",
+    "✗ Expected PostgresPolicyRepository to round-trip content with no filesystem access.",
   );
 }
 

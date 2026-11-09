@@ -12,7 +12,7 @@ import { loadConfig } from "@parmana/shared";
 import {
   CompositeSignalStateVerifier,
   FilePolicyRepository,
-  SupabasePolicyRepository,
+  PostgresPolicyRepository,
   type PolicyRepository,
 } from "@parmana/policy";
 
@@ -52,7 +52,7 @@ const config = loadConfig();
 /**
  * FilePolicyRepository in tests and local dev (memory storage) --
  * writable disk in both cases, and preserves existing test fixtures'
- * assumption of file-backed policy content. SupabasePolicyRepository
+ * assumption of file-backed policy content. PostgresPolicyRepository
  * whenever a real database is configured: Vercel's serverless
  * Functions run on a read-only filesystem, so
  * PolicyChangeApprovalService.approve()'s live-policy write fails
@@ -66,7 +66,7 @@ const config = loadConfig();
  * this module must never itself open a live Postgres connection via
  * PostgresPoolFactory.create(), only an actual load()/save()/listAll()
  * call should. An earlier version of this file got that wrong --
- * constructing SupabasePolicyRepository eagerly here meant
+ * constructing PostgresPolicyRepository eagerly here meant
  * PostgresPoolFactory's singleton pool was created (against whatever
  * DATABASE_URL happened to be set at import time) before any caller
  * had a chance to configure it differently, which is exactly the
@@ -78,7 +78,7 @@ let policyRepositoryInstance: PolicyRepository | undefined;
 function getPolicyRepository(): PolicyRepository {
   policyRepositoryInstance ??=
     process.env.NODE_ENV !== "test" && config.storage.provider !== "memory"
-      ? new SupabasePolicyRepository(PostgresPoolFactory.create())
+      ? new PostgresPolicyRepository(PostgresPoolFactory.create())
       : new FilePolicyRepository(config.policy.directory);
 
   return policyRepositoryInstance;

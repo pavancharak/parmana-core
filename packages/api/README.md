@@ -42,8 +42,8 @@ credentials is still a hard failure, not a skip — see G-14.) Set both
 - `tests/integration/receipt-negative.integration.test.ts`
 - `tests/integration/receipt-signature.integration.test.ts`
 - `tests/integration/replay.integration.test.ts`
-- `tests/integration/supabase-caller-audit-sink.integration.test.ts` (added
-  when the durable `SupabaseCallerAuditSink` closed G-13)
+- `tests/integration/postgres-caller-audit-sink.integration.test.ts` (added
+  when the durable `PostgresCallerAuditSink` closed G-13)
 
 The skip check lives in `tests/helpers/supabase-availability.ts`.
 

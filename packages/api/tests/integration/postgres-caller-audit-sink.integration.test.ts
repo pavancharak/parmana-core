@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { PostgresPoolFactory } from "@parmana/storage";
 
-import { SupabaseCallerAuditSink } from "../../src/auth/SupabaseCallerAuditSink.js";
+import { PostgresCallerAuditSink } from "../../src/auth/PostgresCallerAuditSink.js";
 import type { CallerAuditEvent } from "../../src/auth/CallerAuditSink.js";
 
 import { resolveDatabaseGate } from "../helpers/database-availability.js";
@@ -29,7 +29,7 @@ const SELECT_CALLER_AUDIT_EVENT_BY_ROUTE_SQL = `
  * tables.sql to have been applied to the target project.
  *
  * Reads via PostgresPoolFactory (DATABASE_URL) now, not a
- * supabase-js/PostgREST client (SUPABASE_URL) — see SupabaseCallerAuditSink
+ * supabase-js/PostgREST client (SUPABASE_URL) — see PostgresCallerAuditSink
  * for why the writer moved off supabase-js (PostgREST schema-cache
  * workaround, Supabase ticket SU-437429).
  *
@@ -44,7 +44,7 @@ const SELECT_CALLER_AUDIT_EVENT_BY_ROUTE_SQL = `
  * applied — the "records a principal_denied event whose principalId
  * survives the round trip" case below is that migration's own proof.
  */
-describe.skipIf(!databaseConfigured)("SupabaseCallerAuditSink (live)", () => {
+describe.skipIf(!databaseConfigured)("PostgresCallerAuditSink (live)", () => {
   it("records an event that a fresh pool against the same backing can read back", async () => {
     const route = `/test-${crypto.randomUUID()}`;
 
@@ -55,7 +55,7 @@ describe.skipIf(!databaseConfigured)("SupabaseCallerAuditSink (live)", () => {
       callerId: "integration-test-caller",
     };
 
-    const sink = new SupabaseCallerAuditSink(PostgresPoolFactory.create());
+    const sink = new PostgresCallerAuditSink(PostgresPoolFactory.create());
 
     await sink.record(event);
 
@@ -96,7 +96,7 @@ describe.skipIf(!databaseConfigured)("SupabaseCallerAuditSink (live)", () => {
     const routeTwo = `/test-${crypto.randomUUID()}`;
     const callerId = `integration-test-caller-chain-${crypto.randomUUID()}`;
 
-    const sink = new SupabaseCallerAuditSink(PostgresPoolFactory.create());
+    const sink = new PostgresCallerAuditSink(PostgresPoolFactory.create());
 
     await sink.record({
       type: "caller.authenticated",
@@ -140,7 +140,7 @@ describe.skipIf(!databaseConfigured)("SupabaseCallerAuditSink (live)", () => {
       reason: "missing credential",
     };
 
-    const sink = new SupabaseCallerAuditSink(PostgresPoolFactory.create());
+    const sink = new PostgresCallerAuditSink(PostgresPoolFactory.create());
 
     await sink.record(event);
 
@@ -170,7 +170,7 @@ describe.skipIf(!databaseConfigured)("SupabaseCallerAuditSink (live)", () => {
       reason: "capability not allowed",
     };
 
-    const sink = new SupabaseCallerAuditSink(PostgresPoolFactory.create());
+    const sink = new PostgresCallerAuditSink(PostgresPoolFactory.create());
 
     await sink.record(event);
 
@@ -200,7 +200,7 @@ describe.skipIf(!databaseConfigured)("SupabaseCallerAuditSink (live)", () => {
       reason: "principal not allowed",
     };
 
-    const sink = new SupabaseCallerAuditSink(PostgresPoolFactory.create());
+    const sink = new PostgresCallerAuditSink(PostgresPoolFactory.create());
 
     await sink.record(event);
 

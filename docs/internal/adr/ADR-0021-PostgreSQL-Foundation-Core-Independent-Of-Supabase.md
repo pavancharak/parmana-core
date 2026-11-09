@@ -68,6 +68,16 @@ The contract found two behaviour differences that it does not yet pin:
 - `trustRecords.create()`: the memory provider stores whatever children it is given. The PostgreSQL provider writes only the header, and executions must be appended with `appendExecution()`. Production uses the append order, so the contract tests that order. A caller that passes children to `create()` on the PostgreSQL provider loses them without an error. The memory provider should be changed to match, in a follow-up.
 - `trustRecords.appendExecution()` for an unknown transaction: the memory provider does nothing. The PostgreSQL provider inserts the row. The contract does not test this case yet.
 
+**Step 2 (2026-11-09): done.** `SupabaseCallerAuditSink` is now `PostgresCallerAuditSink` (`packages/api/src/auth/PostgresCallerAuditSink.ts`), and `SupabasePolicyRepository` is now `PostgresPolicyRepository` (`packages/policy/src/PostgresPolicyRepository.ts`). The change is a rename only. Code, tests, examples and docs now use the new names.
+
+The old names remain in four places, which were deliberately not edited:
+
+- Committed migration files under `supabase/migrations/` (four comments), and the consolidated `scripts/apply-all-migrations.sql` generated from them. Migrations are applied as history and are not rewritten.
+- `04-INCIDENTS-LOG.md`, the incident record.
+- This ADR.
+
+`PostgresPolicyRepository` is an exported name of `@parmana/policy`. The package is a workspace package, and this repository has no publish workflow, so no alias was kept. An external consumer of that export would need to update its import.
+
 ## Open questions for the operator
 
 1. Should the Supabase storage adapter be kept as a supported deployment option, or removed once step 3 is done?

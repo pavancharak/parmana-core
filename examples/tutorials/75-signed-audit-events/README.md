@@ -18,7 +18,7 @@ npx tsx examples/tutorials/75-signed-audit-events/run.ts
 
 ## Why This Matters
 
-An audit trail that can be silently rewritten after the fact isn't really an audit trail. This tutorial exercises `AuditEventCrypto` directly — the same class `SupabaseCallerAuditSink` calls internally before writing a row — proving genuine events verify true and any post-signing tampering is caught, not trusted.
+An audit trail that can be silently rewritten after the fact isn't really an audit trail. This tutorial exercises `AuditEventCrypto` directly — the same class `PostgresCallerAuditSink` calls internally before writing a row — proving genuine events verify true and any post-signing tampering is caught, not trusted.
 
 ## Next Tutorial
 

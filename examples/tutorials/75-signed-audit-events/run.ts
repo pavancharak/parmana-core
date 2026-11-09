@@ -11,7 +11,7 @@ import { AuditEventCrypto } from "@parmana/crypto";
 // root of trust as every other Parmana artifact (Trust Records,
 // Receipts, Refusal Records: DEFAULT_KEY_ID). This tutorial exercises
 // AuditEventCrypto directly, the same class production's
-// SupabaseCallerAuditSink calls internally before ever writing a row.
+// PostgresCallerAuditSink calls internally before ever writing a row.
 //
 console.log();
 console.log("==================================================");

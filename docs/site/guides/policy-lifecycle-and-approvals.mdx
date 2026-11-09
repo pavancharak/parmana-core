@@ -276,7 +276,7 @@ To see the whole flow run, without a server or AWS, run tutorial 119: `npx tsx e
 
 - A decision is final. A change moves from `PENDING_APPROVAL` to `APPROVED` or `REJECTED` once and never back; to change your mind, propose again.
 - The step up private key is never sent. Only the signed authorization it produces is.
-- With a database configured, approved content is written to the `policies` table through `SupabasePolicyRepository`, and requests read it from there. With `PARMANA_STORAGE=memory` it is written to the local file.
+- With a database configured, approved content is written to the `policies` table through `PostgresPolicyRepository`, and requests read it from there. With `PARMANA_STORAGE=memory` it is written to the local file.
 - `packages/governance-ui` can propose, list and show a diff, but cannot approve or reject: a web page that collected a step up private key would break the rule that the key never leaves its owner's machine.
 - The code for this flow is small: `packages/api/src/routes/pending-policy-changes.ts`, `packages/api/src/governance/PolicyChangeApprovalService.ts` and `packages/api/src/auth/PolicyChangeStepUpVerifier.ts`.
 

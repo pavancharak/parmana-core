@@ -31,9 +31,9 @@ psql "$DATABASE_URL"
 | `overrides`                             | `OverrideService` backing table, deliberately unreachable, expect empty | `SupabaseExecutionTrustRecordRepository`       |
 | `refusal_records`                       | Signed record of a refused decision                                     | `SupabaseRefusalRecordRepository`              |
 | `execution_intents`                     | Signed intent stored before an action is released                       | `SupabaseExecutionIntentRepository`            |
-| `caller_audit_events`                   | Every caller authentication decision, the highest write volume          | `SupabaseCallerAuditSink`                      |
+| `caller_audit_events`                   | Every caller authentication decision, the highest write volume          | `PostgresCallerAuditSink`                      |
 | `execution_audit_events`                | Execution lifecycle events, **shared with `example-agent`**             | `SupabaseExecutionAuditSink`                   |
-| `policies`                              | Policy content written on approval (Vercel has a read only filesystem)  | `SupabasePolicyRepository`                     |
+| `policies`                              | Policy content written on approval (Vercel has a read only filesystem)  | `PostgresPolicyRepository`                     |
 | `approval_issuers`                      | Approver keys added through maker checker                               | `SupabaseApprovalIssuerRepository`             |
 | `approval_issuer_changes`               | Proposals to add or revoke an approver key                              | `SupabaseApprovalIssuerRepository`             |
 | `external_connectors`                   | External connectors registered through maker checker                    | `SupabaseExternalConnectorRepository`          |
@@ -205,7 +205,7 @@ Columns: `id BIGSERIAL` primary key, `type` (`session.created`, `execution.compl
 Policy content keyed by `(policy_name, policy_version)`, with `content_json JSONB NOT NULL`
 and `updated_at`. Created by `20260916060000_add_policies_table.sql`. It exists because
 Vercel functions run on a read only filesystem, so approving a pending policy change there
-cannot write a file; `SupabasePolicyRepository` stores the approved content here instead.
+cannot write a file; `PostgresPolicyRepository` stores the approved content here instead.
 RLS enabled.
 
 ### `pending_policy_changes`

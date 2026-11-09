@@ -19,7 +19,7 @@ npx tsx examples/tutorials/101-fail-closed-caller-audit-writes/run.ts
 
 ## Why This Matters
 
-Most systems treat audit logging as best-effort: if the log write fails, the request still succeeds and the failure is just an ops alert somewhere. Parmana inverts that for caller-authentication events specifically — since every claim this system makes rests on being independently verifiable, an authenticated (or rejected) request with no corresponding audit record would be a silent gap in exactly the evidence the rest of the system is built to produce. This tutorial simulates the underlying storage outage `SupabaseCallerAuditSink` (or any other `CallerAuditSink` implementation) would surface in production, and shows the guard reacts identically regardless of which caller-auth outcome triggered it.
+Most systems treat audit logging as best-effort: if the log write fails, the request still succeeds and the failure is just an ops alert somewhere. Parmana inverts that for caller-authentication events specifically — since every claim this system makes rests on being independently verifiable, an authenticated (or rejected) request with no corresponding audit record would be a silent gap in exactly the evidence the rest of the system is built to produce. This tutorial simulates the underlying storage outage `PostgresCallerAuditSink` (or any other `CallerAuditSink` implementation) would surface in production, and shows the guard reacts identically regardless of which caller-auth outcome triggered it.
 
 ## Next Tutorial
 

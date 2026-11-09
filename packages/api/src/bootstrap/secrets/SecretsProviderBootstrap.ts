@@ -12,7 +12,7 @@ import { AwsSecretsManagerProvider } from "./AwsSecretsManagerProvider.js";
  *
  * Deliberately NOT memoized: @parmana/crypto's SignerBootstrap
  * originally cached its result in a static field and that caused a
- * real CI failure (packages/api/tests/unit/supabase-caller-audit-sink.test.ts) --
+ * real CI failure (packages/api/tests/unit/postgres-caller-audit-sink.test.ts) --
  * a test that changed PARMANA_KEY_DIR between cases got a
  * permanently-poisoned signer still pointing at an already-deleted
  * temp directory from whichever test ran first. AwsSecretsManagerProvider

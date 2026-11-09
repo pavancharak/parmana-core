@@ -28,7 +28,7 @@ import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
  * Wired to PostgresPoolFactory (DATABASE_URL), not a supabase-js/
  * PostgREST client (SUPABASE_URL) — same convention as every other
  * Supabase-backed audit sink in this codebase (see
- * SupabaseCallerAuditSink's own comment for why).
+ * PostgresCallerAuditSink's own comment for why).
  */
 export function createExecutionAuditSink(): ExecutionAuditSink {
   if (process.env.NODE_ENV === "test") {

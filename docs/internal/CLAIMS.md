@@ -386,7 +386,7 @@ Every other route, including `/` and `/version`, sits behind caller authenticati
 - `packages/api/src/auth/InMemoryCallerAuditSink.ts`
 - `packages/api/src/routes/ready.ts` (the `authDisabled` field and warning)
 - `packages/api/tests/integration/caller-auth.integration.test.ts` (valid, missing and invalid credentials, scoping, revocation, audit content never holds the raw key, the route inventory)
-- `packages/api/tests/integration/supabase-caller-audit-sink.integration.test.ts` (a recorded event is read back through a second client)
+- `packages/api/tests/integration/postgres-caller-audit-sink.integration.test.ts` (a recorded event is read back through a second client)
 - `packages/api/tests/unit/bootstrap/create-caller-authenticator.test.ts`
 - `packages/api/tests/unit/routes/ready.test.ts` (`authDisabled` true with a warning, and false without one)
 
@@ -463,7 +463,7 @@ Evidence
 
 - packages/api/tests/unit/middleware/caller-auth.test.ts: both success paths unchanged; both failure paths rejected with `AuditUnavailableError` (503/AUDIT_UNAVAILABLE), not a 401 and not a silent pass-through; the structured log entry's exact shape; the sink is called exactly once (no retry)
 
-- packages/api/tests/unit/supabase-caller-audit-sink.test.ts: `SupabaseCallerAuditSink` propagates storage errors rather than swallowing them, which is what makes this guard reachable in production wiring
+- packages/api/tests/unit/postgres-caller-audit-sink.test.ts: `PostgresCallerAuditSink` propagates storage errors rather than swallowing them, which is what makes this guard reachable in production wiring
 
 - examples/tutorials/101-fail-closed-caller-audit-writes/run.ts (runnable narrative, real HTTP server: a rejected credential and an accepted one each independently fail closed at 503 when the audit write itself fails)
 
@@ -1115,18 +1115,18 @@ Dated updates, including the parity fix for `POST /transactions` and the audit c
 
 **Why not a single global chain.** `caller.authenticated` fires on every authenticated request to every route — `caller_audit_events` is the highest-write-volume table in this system. A global hash chain needs each new row to know its immediate predecessor's hash before writing, which ordinarily means a lock serializing every write through one predecessor lookup — putting that lock on the busiest table would risk a real production bottleneck.
 
-**What was built instead: a chain per caller, not a chain per table.** `SupabaseCallerAuditSink.record()` (`packages/api/src/auth/SupabaseCallerAuditSink.ts`), when the event carries a `callerId`, opens a transaction and takes a Postgres advisory lock scoped to `hashtext(callerId)` — this serializes only that caller's own concurrent writes, never a different caller's. It then reads that caller's most recent `chain_hash`/`chain_position` (`ORDER BY id DESC LIMIT 1`), folds `previousChainHash`/`chainPosition` into the exact object `AuditEventCrypto.sign()` already signs (the existing `signature_json` column now covers the chain link too — no second signature column), computes `chainHash` via `TrustRecordHasher` (the same idiom `RuntimeEngine` already uses for `policyContentHash`/`signalsHash`), and commits. Events with no `callerId` (the earliest possible rejection — malformed JSON/oversized body, before caller-auth middleware or any route handler runs — and `caller.rejected`) get `NULL` chain fields: there is no per-caller chain to link them into, the same "absent means not covered" discipline every other optional column on this table already follows.
+**What was built instead: a chain per caller, not a chain per table.** `PostgresCallerAuditSink.record()` (`packages/api/src/auth/PostgresCallerAuditSink.ts`), when the event carries a `callerId`, opens a transaction and takes a Postgres advisory lock scoped to `hashtext(callerId)` — this serializes only that caller's own concurrent writes, never a different caller's. It then reads that caller's most recent `chain_hash`/`chain_position` (`ORDER BY id DESC LIMIT 1`), folds `previousChainHash`/`chainPosition` into the exact object `AuditEventCrypto.sign()` already signs (the existing `signature_json` column now covers the chain link too — no second signature column), computes `chainHash` via `TrustRecordHasher` (the same idiom `RuntimeEngine` already uses for `policyContentHash`/`signalsHash`), and commits. Events with no `callerId` (the earliest possible rejection — malformed JSON/oversized body, before caller-auth middleware or any route handler runs — and `caller.rejected`) get `NULL` chain fields: there is no per-caller chain to link them into, the same "absent means not covered" discipline every other optional column on this table already follows.
 
 **What this catches, and what it doesn't.** Deleting any row for a caller who has other rows before or after it breaks the chain: the surviving next row's `previousChainHash` still points at the deleted row's `chainHash`, which no longer matches the row now immediately before it in that caller's sequence — `CallerAuditChainVerifier.verifyChain()` (`packages/crypto/src/CallerAuditChainVerifier.ts`) detects this with no network call, no database, and no running Parmana process — the same standalone discipline the "Verify a trust record independently" guide demonstrates for `ExecutionTrustRecord`. It does not catch deleting an entire caller's history at once (nothing remains to show a gap), and it does not detect reordering or deletion across different callers' independent chains — both are honest, stated limits, not oversights.
 
 Evidence
 
 - `supabase/migrations/20260906120000_add_per_caller_chain_to_caller_audit_events.sql` (`chain_hash`, `previous_chain_hash`, `chain_position` columns, nullable and additive; synced into `scripts/apply-all-migrations.sql`)
-- `packages/api/src/auth/SupabaseCallerAuditSink.ts` (`record()`'s per-caller advisory-lock transaction, chain-link computation)
+- `packages/api/src/auth/PostgresCallerAuditSink.ts` (`record()`'s per-caller advisory-lock transaction, chain-link computation)
 - `packages/crypto/src/CallerAuditChainVerifier.ts` (new, standalone chain verification)
-- `packages/api/tests/unit/supabase-caller-audit-sink.test.ts` (13 cases, including: a new caller starts at `chain_position: 1` with `previous_chain_hash: null`; a second event from the same caller chains to the first with an incremented position; two different callers get independent chains, both starting at position 1; an insert failure mid-transaction rejects the promise with no row persisted; a chained event's signature covers the folded-in `previousChainHash`/`chainPosition`, and a tampered chained event fails verification)
+- `packages/api/tests/unit/postgres-caller-audit-sink.test.ts` (13 cases, including: a new caller starts at `chain_position: 1` with `previous_chain_hash: null`; a second event from the same caller chains to the first with an incremented position; two different callers get independent chains, both starting at position 1; an insert failure mid-transaction rejects the promise with no row persisted; a chained event's signature covers the folded-in `previousChainHash`/`chainPosition`, and a tampered chained event fails verification)
 - `packages/crypto/tests/unit/caller-audit-chain-verifier.test.ts` (5 cases: an unbroken three-event chain verifies; a deleted middle row is caught via the resulting `previousChainHash` mismatch; a modified event is caught via its own signature failing; unchained rows verify on signature alone with no linkage required; an empty chain is valid)
-- `packages/api/tests/integration/supabase-caller-audit-sink.integration.test.ts` (extended: chain fields present and correctly linked against a real Postgres advisory lock, not just the unit-level fake pool)
+- `packages/api/tests/integration/postgres-caller-audit-sink.integration.test.ts` (extended: chain fields present and correctly linked against a real Postgres advisory lock, not just the unit-level fake pool)
 - docs/site's "Caller Audit Trail" concept page, for the reader-facing writeup this evidence supports
 - Full repo `npx tsc -b`, `npx eslint . --ext .ts`, and `npm test` (`vitest run`) all clean: 1493 passed, 38 pre-existing skips, 0 failed — no regressions
 
@@ -1597,9 +1597,9 @@ Separately, and closing the analogous gap for caller-authentication audit trails
 
    **Considered and rejected (2026-08-19): making this write atomic/fail-closed with the rejection response** (write the record synchronously before returning to the caller; a storage failure would surface as `500` instead of `403`). Rejected because it does not strengthen the property that actually matters — the request is already unconditionally denied, correctly, the instant `Decision` is built, regardless of whether the evidentiary write ever runs — and it introduces a new one: a Supabase hiccup would turn a _correct_ policy rejection into an opaque server error, a genuine availability regression (and a storage-pressure denial-of-service vector) for zero corresponding security gain. "Fail-closed" is the right discipline for whether a dangerous action executes; the refusal record is evidence _about_ a decision already enforced, not a gate on it. The existing remedy for a durability gap — logging `refusal_record_write_failed` loudly for an operator to reconcile — is the correct one; blocking the caller's response on it is not.
 
-2. **Only production (Supabase) audit sinks sign.** `SupabaseCallerAuditSink` signs every event; `InMemoryCallerAuditSink` (test wiring, `NODE_ENV=test`) does not. This claim is therefore about the production deployment path specifically, not every configuration this codebase can run in. Existing rows written before this capability shipped remain unsigned; `signature_json` is nullable and additive, honestly reflecting that history rather than backfilling a signature that was never actually produced at write time.
+2. **Only production (Supabase) audit sinks sign.** `PostgresCallerAuditSink` signs every event; `InMemoryCallerAuditSink` (test wiring, `NODE_ENV=test`) does not. This claim is therefore about the production deployment path specifically, not every configuration this codebase can run in. Existing rows written before this capability shipped remain unsigned; `signature_json` is nullable and additive, honestly reflecting that history rather than backfilling a signature that was never actually produced at write time.
 
-A third, narrower operational note, not a scope caveat on the claim itself: `SupabaseCallerAuditSink` currently writes via a direct Postgres connection rather than PostgREST. This originated as a narrow workaround for a PostgREST schema-cache issue with one new column (Supabase support ticket SU-437429), but a production-readiness audit (2026-09-09) found the pattern has since been extended deliberately, repo-wide: **8 of the 9** `Supabase*` storage classes now write via `PostgresPoolFactory` rather than PostgREST/supabase-js, per `SupabaseExecutionTrustRecordRepository.ts`'s own comment — "part of removing PostgREST from every Supabase-backed table's failure modes, not just the audit sinks that broke first." This is no longer a single revertible patch pending one support ticket; it is the storage layer's current architecture. `SupabaseClientFactory` (the supabase-js/PostgREST client class this workaround originally planned to revert to) had zero remaining call sites as of that audit and was deleted the same day, along with its now-unused `@supabase/supabase-js` dependency (`docs/internal/VERIFICATION-GAPS.md` G-34) — a revert, if SU-437429 is ever resolved, would mean reintroducing a PostgREST client, not restoring one that still exists.
+A third, narrower operational note, not a scope caveat on the claim itself: `PostgresCallerAuditSink` currently writes via a direct Postgres connection rather than PostgREST. This originated as a narrow workaround for a PostgREST schema-cache issue with one new column (Supabase support ticket SU-437429), but a production-readiness audit (2026-09-09) found the pattern has since been extended deliberately, repo-wide: **8 of the 9** `Supabase*` storage classes now write via `PostgresPoolFactory` rather than PostgREST/supabase-js, per `SupabaseExecutionTrustRecordRepository.ts`'s own comment — "part of removing PostgREST from every Supabase-backed table's failure modes, not just the audit sinks that broke first." This is no longer a single revertible patch pending one support ticket; it is the storage layer's current architecture. `SupabaseClientFactory` (the supabase-js/PostgREST client class this workaround originally planned to revert to) had zero remaining call sites as of that audit and was deleted the same day, along with its now-unused `@supabase/supabase-js` dependency (`docs/internal/VERIFICATION-GAPS.md` G-34) — a revert, if SU-437429 is ever resolved, would mean reintroducing a PostgREST client, not restoring one that still exists.
 
 Evidence
 
@@ -1613,7 +1613,7 @@ Evidence
 
 - `packages/api/src/routes/refusal-verify.ts`, `refusal-get.ts`, `audit-verify.ts`
 
-- `packages/api/src/auth/SupabaseCallerAuditSink.ts`, `InMemoryCallerAuditSink.ts` (signs / does not sign, respectively)
+- `packages/api/src/auth/PostgresCallerAuditSink.ts`, `InMemoryCallerAuditSink.ts` (signs / does not sign, respectively)
 
 - `04-INCIDENTS-LOG.md`, INC-7 ("Audit-sink events were durable but unsigned") — the incident this capability closes, including the PostgREST workaround noted above
 
@@ -1790,10 +1790,10 @@ Evidence
 
 - `packages/api/src/auth/CallerAuditSink.ts` (`caller.principal_denied` variant, `principalId` field — "the `authority.principalId` a caller attempted to assert but was not permitted to")
 - `packages/api/src/routes/execute.ts`, `transactions.ts` (both call sites: `recordCallerAuditEvent` before the `403` response, immediately after `isPrincipalAllowed` returns `false`)
-- `packages/api/src/auth/SupabaseCallerAuditSink.ts` (persists the new `principal` column)
+- `packages/api/src/auth/PostgresCallerAuditSink.ts` (persists the new `principal` column)
 - `supabase/migrations/20260816120000_add_principal_to_caller_audit_events.sql` (additive `principal` column; synced into `scripts/apply-all-migrations.sql`)
 - `packages/api/tests/integration/caller-principal-scoping.integration.test.ts` (new, 6 tests): a scoped-in principal is allowed and no `caller.principal_denied` event is recorded; an out-of-scope principal is blocked with `403` before `application.execute()` is reached and a `caller.principal_denied` event is recorded carrying the asserted `principalId`/`callerId` and never the raw key; both `POST /execute` and `POST /transactions` covered identically
-- `packages/api/tests/unit/supabase-caller-audit-sink.test.ts`, `packages/api/tests/integration/supabase-caller-audit-sink.integration.test.ts` (extended for the new column/event shape)
+- `packages/api/tests/unit/postgres-caller-audit-sink.test.ts`, `packages/api/tests/integration/postgres-caller-audit-sink.integration.test.ts` (extended for the new column/event shape)
 
 ---
 
@@ -1811,13 +1811,13 @@ Closes `docs/internal/VERIFICATION-GAPS.md` G-29: before this capability, four a
 Evidence
 
 - `packages/api/src/auth/CallerAuditSink.ts` (`caller.structural_rejected` variant, `businessTransactionId` field)
-- `packages/api/src/auth/SupabaseCallerAuditSink.ts` (persists the new `business_transaction_id` column)
+- `packages/api/src/auth/PostgresCallerAuditSink.ts` (persists the new `business_transaction_id` column)
 - `packages/api/src/routes/execute.ts`, `transactions.ts` (UUID-format check: fail-closed audit before `400`; `catch` block around `application.execute()`: fail-closed audit for `BusinessTransactionValidationError`/`DuplicateBusinessTransactionError` before `next(error)`)
 - `packages/api/src/middleware/error-handler.ts` (`createErrorHandler(auditSink?)`, `auditStructuralRejectionBestEffort` — fail-open, logs and swallows its own failure)
 - `packages/api/src/app.ts` (threads `options.callerAuth.auditSink` into `createErrorHandler`, mirroring how `execute.ts`/`transactions.ts` are already threaded)
 - `supabase/migrations/20260824090000_add_structural_rejected_to_caller_audit_events.sql` (widened `type` CHECK constraint; additive `business_transaction_id` column; synced into `scripts/apply-all-migrations.sql`)
 - `packages/api/tests/integration/structural-validation-audit.integration.test.ts` (new, 9 tests): malformed `businessTransactionId` audited with the declared value and `callerId`, both `POST /execute` and `POST /transactions`; a non-string `businessTransactionId` leaves the field absent, not a garbage value; a mismatched `metadata.businessTransactionId` (`BusinessTransactionValidationError`) audited with its reason; a resubmitted `businessTransactionId` (`DuplicateBusinessTransactionError`) audited on the second call only, not the first, successful one; malformed JSON and an oversized body each audited with no `callerId` and no `businessTransactionId`; malformed JSON with caller-auth disabled still returns a correct `400` with nothing to assert on the audit side (no sink exists to write to); the valid path records no `caller.structural_rejected` event at all
-- `packages/api/tests/unit/supabase-caller-audit-sink.test.ts` (extended, 2 new cases: the new column maps correctly with and without a known caller/businessTransactionId)
+- `packages/api/tests/unit/postgres-caller-audit-sink.test.ts` (extended, 2 new cases: the new column maps correctly with and without a known caller/businessTransactionId)
 - Full repo `npx tsc -b`, `npx eslint . --ext .ts`, and `npm test` (`vitest run`) all clean: 1243 passed, 37 pre-existing skips, 0 failed — no regressions
 
 ---
