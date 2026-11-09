@@ -111,6 +111,16 @@ export function resolveDatabaseUrlTarget(
 }
 
 /**
+ * The one line a run logs about its database. Shows the project ID for a hosted target, and never the connection string.
+ */
+export function describeDatabaseTarget(target: DatabaseTarget): string {
+  if (target.kind === "hosted")
+    return `[test-database] hosted project ${target.projectRef}`;
+  if (target.kind === "local") return "[test-database] local database";
+  return "[test-database] no database configured; database suites skip";
+}
+
+/**
  * The target a run will use: TEST_DATABASE_URL when it is non-empty, otherwise DATABASE_URL.
  * An empty string counts as unset, so the template's blank TEST_DATABASE_URL falls through.
  */
