@@ -105,6 +105,12 @@ for (const [name, value] of Object.entries(LOCAL_TEST_DEFAULTS)) {
   process.env[name] ??= value;
 }
 
+// Hybrid mode (CRYPTO_MODE=hybrid) needs a second signature algorithm, or the API refuses to sign. Set only for hybrid
+// runs, so default runs are unchanged. The secondary key pair is created above.
+if (process.env.CRYPTO_MODE === "hybrid") {
+  process.env.SECONDARY_SIGNATURE_PROVIDER ??= "dilithium3";
+}
+
 /**
  * Global hermetic key material.
  *
@@ -166,6 +172,23 @@ writeFileSync(
 writeFileSync(
   join(keyDir, "signal-verifier.public.pem"),
   verifierKeys.publicKey.export({ format: "pem", type: "spki" }),
+);
+
+/**
+ * Secondary signing key for hybrid mode (CRYPTO_MODE=hybrid). FileKeyProvider
+ * resolves it by the keyId "default-secondary" (DEFAULT_SECONDARY_KEY_ID), and
+ * the API refuses to start in hybrid mode without it. The same algorithm
+ * scripts/generate-keypair.ts uses for `npm run generate:hybrid-secondary-key`
+ * (ML-DSA-65, which needs Node 24).
+ */
+const secondaryKeys = generateKeyPairSync("ml-dsa-65");
+writeFileSync(
+  join(keyDir, "default-secondary.private.pem"),
+  secondaryKeys.privateKey.export({ format: "pem", type: "pkcs8" }),
+);
+writeFileSync(
+  join(keyDir, "default-secondary.public.pem"),
+  secondaryKeys.publicKey.export({ format: "pem", type: "spki" }),
 );
 
 /**

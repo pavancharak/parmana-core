@@ -37,6 +37,9 @@ import {
   testApprovalSignalVerifier,
   withTestApproval,
 } from "../../../../test-support/approvals.js";
+import { useSingleSignatureMode } from "../../../../test-support/single-signature-mode.js";
+
+useSingleSignatureMode();
 
 //
 // RFC-0023: an agent's proposal is never a business fact. These tests

@@ -2,7 +2,15 @@ import { generateKeyPairSync } from "node:crypto";
 import { existsSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from "vitest";
 
 import {
   DecisionOutcome,
@@ -30,6 +38,9 @@ import {
   ML_DSA_65_SKIP_REASON,
   type ChainedCallerAuditEventRow,
 } from "../../src/index.js";
+import { useSingleSignatureMode } from "../../../../test-support/single-signature-mode.js";
+
+useSingleSignatureMode();
 
 /**
  * Mutation testing found these verification and key checks tested only
@@ -508,6 +519,12 @@ describe.skipIf(!isMlDsa65Supported())(
   `VerificationCrypto in hybrid mode${isMlDsa65Supported() ? "" : ` [SKIPPED: ${ML_DSA_65_SKIP_REASON}]`}`,
   () => {
     const saved = { ...process.env };
+
+    // Set before every test: the shared single-mode helper clears these before each test.
+    beforeEach(() => {
+      process.env.CRYPTO_MODE = "hybrid";
+      process.env.SECONDARY_SIGNATURE_PROVIDER = "dilithium3";
+    });
 
     beforeAll(() => {
       process.env.CRYPTO_MODE = "hybrid";

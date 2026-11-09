@@ -35,6 +35,9 @@ import {
   testApprovalSignalVerifier,
   withTestApproval,
 } from "../../../../test-support/approvals.js";
+import { useSingleSignatureMode } from "../../../../test-support/single-signature-mode.js";
+
+useSingleSignatureMode();
 
 /**
  * RFC-0023 phase 2, end to end below HTTP: a business system registered
