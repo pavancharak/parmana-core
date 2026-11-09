@@ -78,3 +78,47 @@ decisions in the design for G-144 (sections 2 and 5). They are not needed for th
    PR, followed by the hybrid run again.
 2. Write one HTTP-level inbound test against the sandbox, covering an approved decision with an approval, and check the
    four approval fields and the signature.
+
+## 7. Follow-up: the three items from section 6
+
+This section supersedes sections 3, 4 and 6 where they differ.
+
+**1. Hybrid key in the test setup.** The setup now creates the `default-secondary` key (ML-DSA-65), and sets
+`SECONDARY_SIGNATURE_PROVIDER=dilithium3` for hybrid runs only. Six test files that assume single-signature behaviour
+clear the hybrid settings before each test, through `test-support/single-signature-mode.ts`. The hybrid group in the
+crypto test sets hybrid itself, before each test.
+
+Result: `CRYPTO_MODE=hybrid npm test` went from 133 failing tests in 43 files to none. Final run under Node 24.22.1:
+367 files passed, 24 skipped; 3682 tests passed, 89 skipped. The default run gives the same counts.
+
+**2. Post-quantum mode (`CRYPTO_MODE=pq`).** Not implemented in this build. Config validation refuses it at startup with
+"CRYPTO_MODE=pq is not implemented in this build". That refusal is asserted by
+`packages/shared/tests/unit/config-validation.test.ts` (49 of 49 pass). Running the full suite in this mode fails at
+startup in 153 files, with 326 test failures, which is the expected result. There is nothing to validate in pq mode until
+it is implemented.
+
+**3. An HTTP-level inbound test.** `packages/api/tests/integration/inbound-checks-http.integration.test.ts` sends requests
+through the real `POST /v1/inbound/checks` route, with the Postgres repository behind it. It checks that an approved
+decision records the four approval fields, that the signature covers them, and that a second use of the same approval is
+refused as `approval_already_used` with no second approved record. Each run uses a unique partner, capability and nonce,
+and deletes its rows afterwards.
+
+Result: 2 of 2 pass against a throwaway local PostgreSQL 16 with the migration bundle applied (`scripts/apply-all-migrations.sql`,
+after the roles and auth stubs CI creates). No rows remained afterwards. The test skips when no database is configured.
+
+**Not yet run against the sandbox.** This environment has no sandbox connection string. To run it there, set
+`TEST_DATABASE_URL` to the sandbox in `.env.test` (as in runbook section 3a), keep `ALLOW_LIVE_SUPABASE=1`, and run:
+
+```bash
+npx vitest run packages/api/tests/integration/inbound-checks-http.integration.test.ts
+```
+
+It writes rows to the sandbox, and it deletes them afterwards. Check the rows afterwards, as in section 6 of the
+handover.
+
+## 8. Still not validated
+
+- A business system refusing direct calls. The probe was tested only against local stand-ins.
+- Post-quantum mode. Not implemented.
+- Hybrid signatures in production. The tests cover hybrid signing, not any deployment.
+- Any verifier reading inbound decisions. None exists (G-143).
