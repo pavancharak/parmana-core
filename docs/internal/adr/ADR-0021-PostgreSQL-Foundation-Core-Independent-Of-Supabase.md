@@ -98,6 +98,10 @@ Open:
 - `CI_DATABASE_URL` must be created in production: the read-only role, its password, and the secret. Until then the drift job fails on every run, by design.
 - `scripts/verify-policy-changes-approved.ts` still uses `supabase-js` with the anon key, because the deploy-time check and the refresh and backfill scripts depend on it. That is the last reason the root keeps `@supabase/supabase-js`.
 
+**Export hardening (2026-11-09).** `policy-log:export` now refuses to write if any approval it would append does not match a policy file in this repository. The check compares the file's content hash with the record's `contentHashAfter`, and it runs before anything is written. `--policy <name>` appends only that policy's missing records. Tests cover the match check and the filter.
+
+Still open from the plan: a per-policy registry of the repo that owns each policy (part 2), export through a reviewed pull request (part 3), and recording the commit at approval time (part 4). The `razorpay-refund` approval is held until its owner says which repository holds its policy.
+
 ## Open questions for the operator
 
 1. Should the Supabase storage adapter be kept as a supported deployment option, or removed once step 3 is done?
