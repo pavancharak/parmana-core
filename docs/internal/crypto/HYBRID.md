@@ -5,6 +5,8 @@ and ML-DSA-65. It is one of three documents: `ED25519.md`, `HYBRID.md` and `ML-D
 
 ## 1. What hybrid is in this product
 
+The configuration values are `CRYPTO_MODE=single` (default) and `CRYPTO_MODE=hybrid`. The reserved `pq` value is removed (PR #544).
+
 With `CRYPTO_MODE=hybrid`, every signed record carries two signatures, from two providers:
 
 - `PRIMARY_SIGNATURE_PROVIDER` (default `ed25519`).
@@ -55,4 +57,5 @@ unless `allowLegacyV2` is set in the trust file.
 
 - Ed25519 alone (see `ED25519.md`).
 - ML-DSA-65 alone, which is a different configuration: `CRYPTO_MODE=single` with `PRIMARY_SIGNATURE_PROVIDER=ml-dsa-65` (see
+- The hybrid suite passes on `main` only after PR #541 (the test-harness fixes) is merged.
   `ML-DSA-65.md`).
