@@ -91,6 +91,13 @@ Removed from `packages/*`: `packages/storage/scripts/migrate.ts`, the legacy `su
 
 Moving either of them to direct Postgres changes the credentials the CI job needs, from an anon key to `DATABASE_URL`. That is a change to a security gate, so it is left for a decision. Until then the ADR's `grep` criterion holds for `packages/*` only.
 
+**Step 4 (2026-11-09): partly done.** The pull request policy gate no longer holds a credential. `verify-policy-approvals` runs `policy-log:verify --require-coverage` offline, against the signed log in `governance/policy-approvals.jsonl`. A scheduled job, `policy-log-drift.yml`, compares the log with the database. It reads through the read-only role named in `CI_DATABASE_URL`, using `pg` directly, so the policy log script no longer imports `supabase-js`. `pg` and `@types/pg` are now declared at the root.
+
+Open:
+- The offline gate fails today on `policies/standard-org-baseline/1.0.0/policy.json`, which has no logged approval. It must be resolved before the gate can pass. Either the approval is exported from the database, or the policy was added without approval.
+- `CI_DATABASE_URL` must be created in production: the read-only role, its password, and the secret. Until then the drift job fails on every run, by design.
+- `scripts/verify-policy-changes-approved.ts` still uses `supabase-js` with the anon key, because the deploy-time check and the refresh and backfill scripts depend on it. That is the last reason the root keeps `@supabase/supabase-js`.
+
 ## Open questions for the operator
 
 1. Should the Supabase storage adapter be kept as a supported deployment option, or removed once step 3 is done?

@@ -78,6 +78,23 @@ export function entryHashOf(
 }
 
 /** A database row (as returned by Supabase) to a logged record. */
+/**
+ * A direct Postgres read returns timestamptz columns as Date objects. The
+ * log stores ISO strings with milliseconds, and String(Date) drops the
+ * milliseconds, so the values are converted explicitly here before
+ * recordFromRow sees them.
+ */
+export function normalizeDbRow(
+  row: Record<string, unknown>,
+): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(row).map(([key, value]) => [
+      key,
+      value instanceof Date ? value.toISOString() : value,
+    ]),
+  );
+}
+
 export function recordFromRow(
   row: Record<string, unknown>,
 ): LoggedApprovalRecord {

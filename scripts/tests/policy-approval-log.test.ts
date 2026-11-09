@@ -12,6 +12,7 @@ import {
   checkPolicyCoverage,
   checkSignatures,
   isAppendOnly,
+  normalizeDbRow,
   parseLog,
   recordFromRow,
   serializeLog,
@@ -94,6 +95,30 @@ beforeAll(async () => {
 
 const clone = (entries: readonly LogEntry[]) =>
   JSON.parse(JSON.stringify(entries)) as LogEntry[];
+
+describe("reading approval rows from PostgreSQL", () => {
+  it("keeps milliseconds when a Date becomes the log's ISO timestamp", () => {
+    const row = {
+      policy_change_approval_record_id: "r1",
+      pending_policy_change_id: "p1",
+      policy_name: "n",
+      policy_version: "1.0.0",
+      proposed_by: "a",
+      approved_by: "b",
+      proposed_at: new Date("2026-11-01T10:00:00.123Z"),
+      approved_at: new Date("2026-11-01T10:05:00.456Z"),
+      content_hash_before: null,
+      content_hash_after: "abc",
+      previous_record_hash: null,
+      signature_json: { algorithm: "ed25519", keyId: "k", value: "v" },
+    };
+
+    const record = recordFromRow(normalizeDbRow(row));
+
+    expect(record.approvedAt).toBe("2026-11-01T10:05:00.456Z");
+    expect(record.proposedAt).toBe("2026-11-01T10:00:00.123Z");
+  });
+});
 
 describe("the policy approval log", () => {
   it("builds a chain whose every record verifies with the server's key", () => {
