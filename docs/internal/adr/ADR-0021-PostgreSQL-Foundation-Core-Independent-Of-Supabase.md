@@ -48,14 +48,14 @@ The codebase already mixes both. `packages/api` and `packages/storage` use the `
 
 ## Migration
 
-| Step | Change                                                                                                                                                       | Done when                                                                                |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| 1    | Add a storage contract test suite that runs against the PostgreSQL adapter.                                                                                  | Suite passes on a clean PostgreSQL instance from the repository migrations.              |
-| 2    | Rename `SupabaseCallerAuditSink` and `SupabasePolicyRepository` to Postgres names, with no behaviour change.                                                 | Renames merged; no references to the old names remain.                                   |
-| 3    | Move `SupabaseExecutionAuditSink` behind the storage interface as one adapter among others; remove `supabase-js` imports from core packages.                | `grep` for `supabase-js` in core packages returns nothing.                               |
-| 4    | Enforce append-only evidence and hash chaining in the PostgreSQL migrations, with the application role lacking `UPDATE` and `DELETE`.                        | Migration tests show a rejected update and delete and a broken chain detected by replay. |
-| 5    | Document the external anchoring procedure in `docs/internal/runbooks/`.                                                                                      | Runbook reviewed by the operator.                                                        |
-| 6    | Update `routes/ready.ts` and deployment documentation to describe PostgreSQL requirements only.                                                              | Readiness probe passes against a self-managed PostgreSQL instance.                       |
+| Step | Change                                                                                                                                       | Done when                                                                                |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| 1    | Add a storage contract test suite that runs against the PostgreSQL adapter.                                                                  | Suite passes on a clean PostgreSQL instance from the repository migrations.              |
+| 2    | Rename `SupabaseCallerAuditSink` and `SupabasePolicyRepository` to Postgres names, with no behaviour change.                                 | Renames merged; no references to the old names remain.                                   |
+| 3    | Move `SupabaseExecutionAuditSink` behind the storage interface as one adapter among others; remove `supabase-js` imports from core packages. | `grep` for `supabase-js` in core packages returns nothing.                               |
+| 4    | Enforce append-only evidence and hash chaining in the PostgreSQL migrations, with the application role lacking `UPDATE` and `DELETE`.        | Migration tests show a rejected update and delete and a broken chain detected by replay. |
+| 5    | Document the external anchoring procedure in `docs/internal/runbooks/`.                                                                      | Runbook reviewed by the operator.                                                        |
+| 6    | Update `routes/ready.ts` and deployment documentation to describe PostgreSQL requirements only.                                              | Readiness probe passes against a self-managed PostgreSQL instance.                       |
 
 Each step is one pull request. Step 3 must not merge while any caller still uses the old path.
 
@@ -94,6 +94,7 @@ Moving either of them to direct Postgres changes the credentials the CI job need
 **Step 4 (2026-11-09): partly done.** The pull request policy gate no longer holds a credential. `verify-policy-approvals` runs `policy-log:verify --require-coverage` offline, against the signed log in `governance/policy-approvals.jsonl`. A scheduled job, `policy-log-drift.yml`, compares the log with the database. It reads through the read-only role named in `CI_DATABASE_URL`, using `pg` directly, so the policy log script no longer imports `supabase-js`. `pg` and `@types/pg` are now declared at the root.
 
 Open:
+
 - The offline gate fails today on `policies/standard-org-baseline/1.0.0/policy.json`, which has no logged approval. It must be resolved before the gate can pass. Either the approval is exported from the database, or the policy was added without approval.
 - `CI_DATABASE_URL` must be created in production: the read-only role, its password, and the secret. Until then the drift job fails on every run, by design.
 - `scripts/verify-policy-changes-approved.ts` still uses `supabase-js` with the anon key, because the deploy-time check and the refresh and backfill scripts depend on it. That is the last reason the root keeps `@supabase/supabase-js`.
