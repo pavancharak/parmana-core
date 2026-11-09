@@ -52,9 +52,7 @@
       "claim": "payment.refundable",
       "source": "razorpay",
       "subject": "target",
-      "parameters": [
-        "amount"
-      ],
+      "parameters": ["amount"],
       "maxAgeSeconds": 60
     }
   },
