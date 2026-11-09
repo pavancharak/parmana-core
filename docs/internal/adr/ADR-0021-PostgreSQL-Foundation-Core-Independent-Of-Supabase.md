@@ -78,6 +78,19 @@ The old names remain in four places, which were deliberately not edited:
 
 `PostgresPolicyRepository` is an exported name of `@parmana/policy`. The package is a workspace package, and this repository has no publish workflow, so no alias was kept. An external consumer of that export would need to update its import.
 
+**Step 3 (2026-11-09): done for `packages/*`.** The execution audit sink is part of the storage interface. `StorageProvider` has an `executionAuditSink` field. The PostgreSQL provider supplies `PostgresExecutionAuditSink` (renamed from `SupabaseExecutionAuditSink`, moved to `packages/storage/src/postgres/`). The memory provider supplies `MemoryExecutionAuditSink`, defined in storage so that storage does not depend on `@parmana/execution-control`.
+
+Production wiring stays fail-closed. `createExecutionAuditSink` takes the sink from a provider pinned to `"postgres"`, not from `PARMANA_STORAGE`. Setting `PARMANA_STORAGE=memory` in production therefore still gives the durable trail, and a test covers it.
+
+Removed from `packages/*`: `packages/storage/scripts/migrate.ts`, the legacy `supabase-js` script that called an `exec_sql` RPC, its `npm run migrate` script, and the `@supabase/supabase-js` dependency of `@parmana/storage`. The `packages/storage/schemas/` SQL files are left in place, unreferenced, for a decision on their removal.
+
+**Not done, and needs a decision:** two root-level scripts still import `@supabase/supabase-js` through PostgREST with an anon key, so the root `devDependency` stays.
+
+- `scripts/verify-policy-changes-approved.ts` is the fail-closed CI gate for the `verify-policy-approvals` job.
+- `scripts/policy-approval-log.ts` reads the policy approval log.
+
+Moving either of them to direct Postgres changes the credentials the CI job needs, from an anon key to `DATABASE_URL`. That is a change to a security gate, so it is left for a decision. Until then the ADR's `grep` criterion holds for `packages/*` only.
+
 ## Open questions for the operator
 
 1. Should the Supabase storage adapter be kept as a supported deployment option, or removed once step 3 is done?

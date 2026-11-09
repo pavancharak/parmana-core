@@ -20,15 +20,13 @@
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "migrate": "tsx scripts/migrate.ts"
+    "test": "vitest run"
   },
   "dependencies": {
     "@parmana/connector-sdk": "2.0.0",
     "@parmana/crypto": "2.0.0",
     "@parmana/envelope-verifier": "2.0.0",
     "@parmana/shared": "2.0.0",
-    "@supabase/supabase-js": "^2.119.0",
     "express": "^5.3.0",
     "pg": "^8.23.1",
     "vitest": "^5.0.3"

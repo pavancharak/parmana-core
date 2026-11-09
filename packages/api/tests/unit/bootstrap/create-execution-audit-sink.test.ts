@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { MemoryExecutionAuditSink } from "@parmana/execution-control";
-import { SupabaseExecutionAuditSink } from "@parmana/storage";
+import { PostgresExecutionAuditSink } from "@parmana/storage";
 
 import { createExecutionAuditSink } from "../../../src/bootstrap/createExecutionAuditSink.js";
 
@@ -51,13 +51,28 @@ describe("createExecutionAuditSink", () => {
     expect(result).toBeUndefined();
   });
 
-  it("returns SupabaseExecutionAuditSink when NODE_ENV is not test and DATABASE_URL is configured", () => {
+  it("stays on PostgresExecutionAuditSink when PARMANA_STORAGE=memory, so a memory setting cannot silently drop the durable trail", () => {
+    process.env.NODE_ENV = "production";
+    process.env.PARMANA_STORAGE = "memory";
+    process.env.DATABASE_URL =
+      "postgresql://user:pass@example.supabase.co:5432/postgres";
+
+    try {
+      expect(createExecutionAuditSink()).toBeInstanceOf(
+        PostgresExecutionAuditSink,
+      );
+    } finally {
+      delete process.env.PARMANA_STORAGE;
+    }
+  });
+
+  it("returns PostgresExecutionAuditSink when NODE_ENV is not test and DATABASE_URL is configured", () => {
     process.env.NODE_ENV = "production";
     process.env.DATABASE_URL =
       "postgresql://user:pass@example.supabase.co:5432/postgres";
 
     expect(createExecutionAuditSink()).toBeInstanceOf(
-      SupabaseExecutionAuditSink,
+      PostgresExecutionAuditSink,
     );
   });
 });

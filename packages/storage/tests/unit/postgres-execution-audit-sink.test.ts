@@ -10,7 +10,7 @@ import type { Pool } from "pg";
 import { AuditEventCrypto } from "@parmana/crypto";
 import type { ExecutionAuditEvent } from "@parmana/shared";
 
-import { SupabaseExecutionAuditSink } from "../../src/supabase/SupabaseExecutionAuditSink.js";
+import { PostgresExecutionAuditSink } from "../../src/postgres/PostgresExecutionAuditSink.js";
 
 //
 // Hermetic key material -- mirrors
@@ -58,7 +58,7 @@ interface FakeStoredRow {
 
 /**
  * A fake Pool/PoolClient minimally simulating the statement shapes
- * SupabaseExecutionAuditSink issues: transaction control
+ * PostgresExecutionAuditSink issues: transaction control
  * (BEGIN/COMMIT/ROLLBACK), the advisory lock, the last-chain-link
  * lookup, the INSERT, and the plain SELECT query() issues (via
  * pool.query, no transaction). Maintains real in-memory rows so
@@ -132,7 +132,7 @@ function createFakePool(options?: {
     if (trimmed.startsWith("SELECT type, occurred_at")) {
       // query(): apply the same WHERE semantics inline against the fake
       // in-memory rows, rather than parsing SQL -- good enough to
-      // exercise SupabaseExecutionAuditSink.query()'s own filter
+      // exercise PostgresExecutionAuditSink.query()'s own filter
       // construction and result mapping.
       let filtered = [...rows];
       let cursor = 0;
@@ -288,9 +288,9 @@ const SESSION_CREATED_WITH_BTX_EVENT: ExecutionAuditEvent = {
   businessTransactionId: "btx-1",
 };
 
-describe("SupabaseExecutionAuditSink", () => {
+describe("PostgresExecutionAuditSink", () => {
   it("resolves on a successful insert", async () => {
-    const sink = new SupabaseExecutionAuditSink(createFakePool());
+    const sink = new PostgresExecutionAuditSink(createFakePool());
 
     await expect(sink.record(SESSION_CREATED_EVENT)).resolves.toBeUndefined();
   });
@@ -298,7 +298,7 @@ describe("SupabaseExecutionAuditSink", () => {
   it("maps ExecutionAuditEvent fields to query params, nulling absent optional fields, and starts a new authorization's chain at position 1", async () => {
     let capturedRow: Record<string, unknown> | undefined;
 
-    const sink = new SupabaseExecutionAuditSink(
+    const sink = new PostgresExecutionAuditSink(
       createFakePool({
         onInsert: (values) => {
           capturedRow = toRow(values);
@@ -334,7 +334,7 @@ describe("SupabaseExecutionAuditSink", () => {
   it("maps an execution.rejected event's reason", async () => {
     let capturedRow: Record<string, unknown> | undefined;
 
-    const sink = new SupabaseExecutionAuditSink(
+    const sink = new PostgresExecutionAuditSink(
       createFakePool({
         onInsert: (values) => {
           capturedRow = toRow(values);
@@ -354,7 +354,7 @@ describe("SupabaseExecutionAuditSink", () => {
   it("chains session.created -> execution.completed for the same authorization, incrementing chain_position", async () => {
     const capturedRows: Record<string, unknown>[] = [];
 
-    const sink = new SupabaseExecutionAuditSink(
+    const sink = new PostgresExecutionAuditSink(
       createFakePool({
         onInsert: (values) => {
           capturedRows.push(toRow(values));
@@ -378,7 +378,7 @@ describe("SupabaseExecutionAuditSink", () => {
   it("gives two different authorizations independent chains, each starting at position 1", async () => {
     const capturedRows: Record<string, unknown>[] = [];
 
-    const sink = new SupabaseExecutionAuditSink(
+    const sink = new PostgresExecutionAuditSink(
       createFakePool({
         onInsert: (values) => {
           capturedRows.push(toRow(values));
@@ -403,7 +403,7 @@ describe("SupabaseExecutionAuditSink", () => {
   it("signs each chained event so it verifies against its own canonical bytes, and a tampered event fails verification", async () => {
     let capturedRow: Record<string, unknown> | undefined;
 
-    const sink = new SupabaseExecutionAuditSink(
+    const sink = new PostgresExecutionAuditSink(
       createFakePool({
         onInsert: (values) => {
           capturedRow = toRow(values);
@@ -440,7 +440,7 @@ describe("SupabaseExecutionAuditSink", () => {
   });
 
   it("preserves existing failure semantics: a storage error rejects the returned promise", async () => {
-    const sink = new SupabaseExecutionAuditSink(
+    const sink = new PostgresExecutionAuditSink(
       createFakePool({
         insertError: { code: "08006", message: "connection failure" },
       }),
@@ -453,7 +453,7 @@ describe("SupabaseExecutionAuditSink", () => {
 
   it("query() with no filter returns every recorded event, newest first", async () => {
     const pool = createFakePool();
-    const sink = new SupabaseExecutionAuditSink(pool);
+    const sink = new PostgresExecutionAuditSink(pool);
 
     await sink.record(SESSION_CREATED_EVENT);
     await sink.record(EXECUTION_COMPLETED_EVENT);
@@ -467,7 +467,7 @@ describe("SupabaseExecutionAuditSink", () => {
 
   it("query() filters by authorizationId, retrieving one authorization's complete chain", async () => {
     const pool = createFakePool();
-    const sink = new SupabaseExecutionAuditSink(pool);
+    const sink = new PostgresExecutionAuditSink(pool);
 
     await sink.record(SESSION_CREATED_EVENT);
     await sink.record(EXECUTION_REJECTED_EVENT);
@@ -486,7 +486,7 @@ describe("SupabaseExecutionAuditSink", () => {
 
   it("query() filters by type", async () => {
     const pool = createFakePool();
-    const sink = new SupabaseExecutionAuditSink(pool);
+    const sink = new PostgresExecutionAuditSink(pool);
 
     await sink.record(SESSION_CREATED_EVENT);
     await sink.record(EXECUTION_REJECTED_EVENT);
@@ -501,7 +501,7 @@ describe("SupabaseExecutionAuditSink", () => {
 
   it("records and queries by businessTransactionId (GAP-3): the cross-service correlation key a remote connector service can also supply", async () => {
     const pool = createFakePool();
-    const sink = new SupabaseExecutionAuditSink(pool);
+    const sink = new PostgresExecutionAuditSink(pool);
 
     await sink.record(SESSION_CREATED_WITH_BTX_EVENT);
     await sink.record(SESSION_CREATED_EVENT);
@@ -515,7 +515,7 @@ describe("SupabaseExecutionAuditSink", () => {
 
   it("leaves businessTransactionId absent (not null) on query() results for events recorded without one", async () => {
     const pool = createFakePool();
-    const sink = new SupabaseExecutionAuditSink(pool);
+    const sink = new PostgresExecutionAuditSink(pool);
 
     await sink.record(SESSION_CREATED_EVENT);
 

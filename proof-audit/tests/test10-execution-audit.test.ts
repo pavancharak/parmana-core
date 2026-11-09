@@ -1,6 +1,6 @@
 //
 // TEST 10: the Postgres execution audit sink (G-117).
-// The real SupabaseExecutionAuditSink writes through a pg-shaped pool backed by PGlite
+// The real PostgresExecutionAuditSink writes through a pg-shaped pool backed by PGlite
 // (PostgreSQL compiled to WASM). The table is created by running the repository's own
 // migrations for execution_audit_events. Rows are read back in chain order and checked
 // with CallerAuditChainVerifier. The sink signs the same shape (event + previousChainHash
@@ -20,7 +20,7 @@ import {
   CallerAuditChainVerifier,
   type ChainedCallerAuditEventRow,
 } from "@parmana/crypto";
-import { SupabaseExecutionAuditSink } from "@parmana/storage";
+import { PostgresExecutionAuditSink } from "@parmana/storage";
 import { evidencePath } from "./evidence.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
@@ -78,7 +78,7 @@ function poolOver(db: PGlite): any {
 }
 
 async function write(db: PGlite, n: number) {
-  const sink = new SupabaseExecutionAuditSink(poolOver(db));
+  const sink = new PostgresExecutionAuditSink(poolOver(db));
   for (let i = 1; i <= n; i++) {
     await sink.record({
       type: i === 1 ? "session.created" : "execution.completed",
@@ -225,7 +225,7 @@ describe("TEST 10: execution audit sink on PostgreSQL semantics", () => {
 
   it("a burst of 10 writes to one authorization yields one consistent chain", async () => {
     const db = await freshDb();
-    const sink = new SupabaseExecutionAuditSink(poolOver(db));
+    const sink = new PostgresExecutionAuditSink(poolOver(db));
     await Promise.all(
       Array.from({ length: 10 }, (_, i) =>
         sink.record({

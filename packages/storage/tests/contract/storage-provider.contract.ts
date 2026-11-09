@@ -127,6 +127,23 @@ export function runStorageProviderContract(
       });
     });
 
+    describe("execution audit sink", () => {
+      it("accepts an execution audit event through record()", async () => {
+        const provider = createProvider();
+
+        await expect(
+          provider.executionAuditSink.record({
+            type: "session.created",
+            occurredAt: new Date().toISOString(),
+            connectorId: "contract-connector",
+            authorizationId: `contract-auth-${crypto.randomUUID()}`,
+            sessionId: `contract-session-${crypto.randomUUID()}`,
+            action: "contract:action",
+          }),
+        ).resolves.toBeUndefined();
+      });
+    });
+
     describe("execution trust records", () => {
       it("reads back the executions appended after the header is created", async () => {
         const provider = createProvider();

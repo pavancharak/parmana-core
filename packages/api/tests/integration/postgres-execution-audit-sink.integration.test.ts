@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   PostgresPoolFactory,
-  SupabaseExecutionAuditSink,
+  PostgresExecutionAuditSink,
 } from "@parmana/storage";
 import type { ExecutionAuditEvent } from "@parmana/execution-control";
 
@@ -32,7 +32,7 @@ const SELECT_EXECUTION_AUDIT_EVENT_BY_SESSION_SQL = `
  * have been applied to the target project.
  */
 describe.skipIf(!databaseConfigured)(
-  "SupabaseExecutionAuditSink (live)",
+  "PostgresExecutionAuditSink (live)",
   () => {
     it("records an event that a fresh pool against the same backing can read back", async () => {
       const sessionId = `session-${crypto.randomUUID()}`;
@@ -47,7 +47,7 @@ describe.skipIf(!databaseConfigured)(
         action: "paytm:refund",
       };
 
-      const sink = new SupabaseExecutionAuditSink(PostgresPoolFactory.create());
+      const sink = new PostgresExecutionAuditSink(PostgresPoolFactory.create());
 
       await sink.record(event);
 
@@ -74,7 +74,7 @@ describe.skipIf(!databaseConfigured)(
       const authorizationId = `auth-${crypto.randomUUID()}`;
       const sessionId = `session-${crypto.randomUUID()}`;
 
-      const sink = new SupabaseExecutionAuditSink(PostgresPoolFactory.create());
+      const sink = new PostgresExecutionAuditSink(PostgresPoolFactory.create());
 
       await sink.record({
         type: "session.created",
@@ -97,7 +97,7 @@ describe.skipIf(!databaseConfigured)(
       // A regulator/operator asking "show me everything that happened
       // for this authorization" -- the exact query GAP-1 exists to make
       // possible -- via a fresh sink instance and a fresh pool.
-      const queryingSink = new SupabaseExecutionAuditSink(
+      const queryingSink = new PostgresExecutionAuditSink(
         PostgresPoolFactory.create(),
       );
 
@@ -124,7 +124,7 @@ describe.skipIf(!databaseConfigured)(
       const authorizationId = `auth-${crypto.randomUUID()}`;
       const sessionId = `session-${crypto.randomUUID()}`;
 
-      const sink = new SupabaseExecutionAuditSink(PostgresPoolFactory.create());
+      const sink = new PostgresExecutionAuditSink(PostgresPoolFactory.create());
 
       await sink.record({
         type: "session.created",
@@ -169,7 +169,7 @@ describe.skipIf(!databaseConfigured)(
       const sessionOne = `session-${crypto.randomUUID()}`;
       const sessionTwo = `session-${crypto.randomUUID()}`;
 
-      const sink = new SupabaseExecutionAuditSink(PostgresPoolFactory.create());
+      const sink = new PostgresExecutionAuditSink(PostgresPoolFactory.create());
 
       await sink.record({
         type: "session.created",

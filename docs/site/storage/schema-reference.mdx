@@ -32,7 +32,7 @@ psql "$DATABASE_URL"
 | `refusal_records`                       | Signed record of a refused decision                                     | `SupabaseRefusalRecordRepository`              |
 | `execution_intents`                     | Signed intent stored before an action is released                       | `SupabaseExecutionIntentRepository`            |
 | `caller_audit_events`                   | Every caller authentication decision, the highest write volume          | `PostgresCallerAuditSink`                      |
-| `execution_audit_events`                | Execution lifecycle events, **shared with `example-agent`**             | `SupabaseExecutionAuditSink`                   |
+| `execution_audit_events`                | Execution lifecycle events, **shared with `example-agent`**             | `PostgresExecutionAuditSink`                   |
 | `policies`                              | Policy content written on approval (Vercel has a read only filesystem)  | `PostgresPolicyRepository`                     |
 | `approval_issuers`                      | Approver keys added through maker checker                               | `SupabaseApprovalIssuerRepository`             |
 | `approval_issuer_changes`               | Proposals to add or revoke an approver key                              | `SupabaseApprovalIssuerRepository`             |

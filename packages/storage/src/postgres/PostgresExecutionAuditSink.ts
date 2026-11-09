@@ -134,7 +134,7 @@ interface ExecutionAuditEventRow {
 
 const DEFAULT_QUERY_LIMIT = 100;
 
-export class SupabaseExecutionAuditSink implements ExecutionAuditSink {
+export class PostgresExecutionAuditSink implements ExecutionAuditSink {
   private readonly crypto = new AuditEventCrypto();
 
   private readonly chainHasher = new TrustRecordHasher(

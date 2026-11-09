@@ -17,6 +17,7 @@ export * from "./StorageConfiguration.js";
 // -----------------------------------------------------------------------------
 
 export * from "./memory/MemoryStorageProvider.js";
+export * from "./memory/MemoryExecutionAuditSink.js";
 
 export * from "./memory/MemoryBusinessTransactionRepository.js";
 export * from "./memory/MemoryExecutionTrustRecordRepository.js";
@@ -63,7 +64,7 @@ export * from "./supabase/SupabaseNonceStore.js";
 export * from "./supabase/SupabaseExecutionOutcomeStore.js";
 export * from "./supabase/SupabaseApprovalNonceStore.js";
 export * from "./supabase/SupabasePolicyChangeStepUpNonceStore.js";
-export * from "./supabase/SupabaseExecutionAuditSink.js";
+export * from "./postgres/PostgresExecutionAuditSink.js";
 
 // -----------------------------------------------------------------------------
 // Postgres (direct connection, bypassing PostgREST)

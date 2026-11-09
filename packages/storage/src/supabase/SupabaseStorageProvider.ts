@@ -14,11 +14,14 @@ import type {
   InboundCheckRepository,
   InboundDecisionRepository,
   InboundOutcomeRepository,
+  ExecutionAuditSink,
 } from "@parmana/shared";
 
 import type { StorageProvider } from "../StorageProvider.js";
 
 import { PostgresPoolFactory } from "../postgres/PostgresPoolFactory.js";
+
+import { PostgresExecutionAuditSink } from "../postgres/PostgresExecutionAuditSink.js";
 
 import { SupabaseBusinessTransactionRepository } from "./SupabaseBusinessTransactionRepository.js";
 
@@ -69,9 +72,12 @@ export class SupabaseStorageProvider implements StorageProvider {
   readonly externalConnectors: ExternalConnectorRepository;
   readonly businessSignalSources: BusinessSignalSourceRepository;
   readonly authorityGrants: AuthorityGrantRepository;
+  readonly executionAuditSink: ExecutionAuditSink;
 
   constructor() {
     const pool = PostgresPoolFactory.create();
+
+    this.executionAuditSink = new PostgresExecutionAuditSink(pool);
 
     this.businessTransactions = new SupabaseBusinessTransactionRepository(pool);
 
