@@ -308,4 +308,4 @@ suite was not run. This guide itself is never a claim.
 No built in connector is in this repository (ADR-0018). The HubSpot, GitHub, Paytm and Slack connectors and their examples were removed with their code, so their file names are not listed here.
 
 - **In process, reference shape:** `MockConnector` in `packages/connector-sdk/src/`. It shows the `Connector` contract and runs hermetically in tests.
-- **Connected by approval, no code change:** an external connector, described in [Connect any external system](/guides/connect-any-external-system) and ADR-0013.
+- **Connected by approval, no code change:** an external connector, described in [Connect any external system](../../site/guides/connect-any-external-system.mdx) and ADR-0013.
