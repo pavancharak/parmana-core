@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { KeyProviders, loadConfig } from "@parmana/shared";
+import { KeyProviders, SignatureAlgorithms, loadConfig } from "@parmana/shared";
 import {
   DEFAULT_KEY_ID,
   DEFAULT_SECONDARY_KEY_ID,
@@ -38,6 +38,20 @@ export function assertSigningKeyMaterialConfigured(): void {
   if (process.env.NODE_ENV === "test") return;
 
   const config = loadConfig();
+
+  // The KMS signer supports Ed25519 only (KmsSigner.ts). An ML-DSA-65 (or any other) primary algorithm under
+  // KEY_PROVIDER=aws-kms would fail on the first release, after the action had already run. Refused at startup
+  // instead. This check is lifted when KmsSigner supports the ML-DSA key spec (docs/internal/crypto/ML-DSA-65.md, L2).
+  if (
+    config.keys.provider === KeyProviders.AWS_KMS &&
+    config.crypto.primarySignatureProvider !== SignatureAlgorithms.ED25519
+  ) {
+    throw new Error(
+      `PRIMARY_SIGNATURE_PROVIDER=${config.crypto.primarySignatureProvider} is not supported with KEY_PROVIDER=aws-kms: ` +
+        "the KMS signer supports ed25519 only. Refusing to start. Use KEY_PROVIDER=local for this algorithm, " +
+        "or PRIMARY_SIGNATURE_PROVIDER=ed25519 with KMS.",
+    );
+  }
 
   const keyDirectory = config.keys.keyDirectory;
 
