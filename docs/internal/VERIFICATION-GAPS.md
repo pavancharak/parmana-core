@@ -4611,6 +4611,28 @@ These gaps came from checking the approval-to-execution claims against the code,
 
 **G-162. Schema version 3 (whole-record) records cannot be verified by the SDKs.** Schema version 3 signs every top-level field, but the SDKs refused any record with a hybrid `signatures` array. Status: closed on `main` (PR #491). The Python and TypeScript SDKs verify the Ed25519 and ML-DSA-65 entries over the whole-record message, and the verifier reads v3 (PR #34 and PR #35 in parmana-verifier). The server still issues v2. Turning v3 on is a separate step, not closed by this entry: it needs hybrid signing on a deployment, the ML-DSA-65 key held through option A, and the rollout in `runbooks/SCHEMA-V3-ROLLOUT.md`. Tracked by parmana-core #291.
 
-## Security review, 2026-11 (findings repository)
+## Security review, 2026-11 (findings repository): open items
 
-The open items from the external security review, with their status, are summarized in `governance/security-reviews/README.md`. The review uses its own IDs (F1, F28-4, and so on), so its items are not numbered here. Items that belong to `parmana-connect`, `parmana-connectors` and `parmana-verifier` are tracked in those repositories.
+The external security review is summarized in `governance/security-reviews/README.md`, with its raw logs beside it. Its IDs are used here, not new G-numbers. Items that belong to another repository are listed as such, and are tracked there.
+
+**In parmana-core**
+
+- **Customer-refund payment check (high, open).** Customer-refund 1.2.0 takes `refundEligible` and `fraudCheckPassed` from the caller, and nothing checks them against the payment. The agreed fix is policy 1.3.0, which needs the signal service and maker-checker approval. Pull request #549 is the first step.
+- **F9.** Trace the gateway attestation and direct `ExecutionControlService.execute()` calls. Open.
+- **F8.** Decide retry or reconcile for a `begin()` failure. Open.
+- **F10.** Confirm that a session is consumed only by the instance that issued it. Open, pending confirmation.
+- **F11.** Separate repository errors from "policy not found" in gateway diagnostics. Open.
+- **F12.** The verifier accepts schema version 2 records by default. Open.
+- **Trust Record end-to-end test** in the runtime package. Not started.
+- **Example endpoint** does not yet send `conditionsChecked`. Open.
+- **CI on `main` for merge commit `3bbd4c9`** (the F28-7 merge). Its test step was still running when the review last checked it. Confirm it finished green.
+
+**In other repositories (tracked there)**
+
+- **F28-4.** Target binding is not enforced by the generic connector or Paytm refunds. Open.
+- **F28-6.** The `parmana-connect` release path omits `target`, `businessTransactionId` and `connectorId`. Re-verify first. Open.
+- **F26-5 and F26-8.** Paytm duplicate-refId behaviour and endpoint paths, from Paytm's documentation. Live Paytm refunds stay off until confirmed. Open.
+- **F26-6 and F26-7.** Design notes for Zoho create and Zerodha paper orders. Open.
+- **Cross-service end-to-end test.** No test yet sends a Core-signed release through the connectors service and checks the resulting Trust Record. Open.
+- **Review coverage.** The connector adapters, `parmana-verifier` and `parmana-connect` need a further security review. Open.
+- **eMudhra roots.** Chrome and Mozilla were still evaluating the remaining roots. This matters only if one is added to the distrusted list.
