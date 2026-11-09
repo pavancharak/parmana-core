@@ -22,3 +22,9 @@ reports/
 # would change the evidence, so they are excluded.
 proof-audit/artifacts/
 proof-audit/results/
+
+# Security review logs copied from the findings repository, kept byte for byte
+# (see governance/security-reviews/README.md).
+governance/security-reviews/FINAL-REPORT.md
+governance/security-reviews/FINDINGS.md
+governance/security-reviews/FINDINGS-2.md
