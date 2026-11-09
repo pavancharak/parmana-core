@@ -67,9 +67,10 @@ The execute path is unchanged. `decide()` still consumes approvals at the author
 
 - **Existing records** have none of the four fields. Their signed bytes are unchanged, because the signed bytes include
   only the fields present on a record. They still verify.
-- **New records** that carry approval fields have different signed bytes. The external verifier (`parmana-verifier`)
-  must be updated to read these fields **before** any approved decision that used an approval is issued by a
-  production deployment. This is a release dependency, similar to G-121.
+- **New records** that carry approval fields have different signed bytes. No verifier outside `parmana-core` reads
+  inbound records today. `parmana-verifier` reads Execution Trust Records only, and this repo has no inbound signature
+  check. A future external consumer of inbound records must read these fields. Whether one is needed is an owner
+  decision (section 8).
 - **Requests with no approval** are unaffected.
 - **The database** needs migration `20261108170000` applied before the new code runs. Without it, the Postgres insert
   fails, and the request fails with a 500 rather than recording an incomplete decision.
@@ -124,8 +125,8 @@ remain afterwards.
   table, one row per approval, is the planned fix (design section 5).
 - **Nonce cleanup.** `consumed_approval_nonces` grows with every approval used. Rows past their `expires_at` can be
   removed. No cleanup job exists yet.
-- **External verifier.** `parmana-verifier` must read the four fields before an approved decision that used an
-  approval is issued in production.
+- **External consumer.** No consumer of inbound records exists outside `parmana-core`. Whether one is needed is an owner
+  decision. If it is, it is a new feature with its own design, not an update to `parmana-verifier`.
 - **Migration against Supabase.** The migration has been applied to a local PostgreSQL 16 database, through the real
   bundle, and the integration test passes against it. It has not been applied to a Supabase project.
 - **Claims and gap record.** `CLAIMS.md` and `VERIFICATION-GAPS.md` are not yet updated. G-143 should stay open until
@@ -134,7 +135,7 @@ remain afterwards.
 ## 9. Order to finish
 
 1. Apply `20261108170000` to the staging database (through the bundle). Run the integration test against it.
-2. Update `parmana-verifier` to read the four fields. Release it.
+2. Decide whether an external consumer of inbound records is needed. If yes, design it as a new feature.
 3. Decide O3. If several approvals are in scope, build the child table before any production use.
 4. Add nonce cleanup.
 5. Update the claim (3.31) and the gap record, then close G-143.
