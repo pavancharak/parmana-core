@@ -173,7 +173,9 @@ jobs:
         env:
           DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
           ALLOW_LIVE_SUPABASE: "1"
-        run: npx vitest run packages/storage/tests/contract
+        # The append-only test (ADR-0021, step 4) checks that the database
+        # rejects UPDATE, DELETE and TRUNCATE on the evidence tables.
+        run: npx vitest run packages/storage/tests/contract packages/api/tests/integration/evidence-append-only.integration.test.ts
 
       - name: Verify the policy approval log
         # governance/policy-approvals.jsonl: the chain, every signature,

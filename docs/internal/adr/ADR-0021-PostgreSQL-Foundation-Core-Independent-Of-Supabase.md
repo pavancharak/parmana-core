@@ -103,6 +103,14 @@ Open:
 
 Still open from the plan: a per-policy registry of the repo that owns each policy (part 2), export through a reviewed pull request (part 3), and recording the commit at approval time (part 4). The `razorpay-refund` approval is held until its owner says which repository holds its policy.
 
+**Step 4 (2026-11-09): partly done.** Migration `20261110120000_enforce_append_only_evidence.sql` adds a trigger to four evidence tables (`caller_audit_events`, `execution_audit_events`, `policy_change_approval_records`, `refusal_records`). The trigger rejects UPDATE and DELETE on each row, and refuses TRUNCATE. The migration also revokes those privileges from `anon`, `authenticated` and `PUBLIC` where the roles exist. `packages/api/tests/integration/evidence-append-only.integration.test.ts` checks each rule against a migrated database. With the triggers disabled, the three mutation tests fail.
+
+Not done:
+
+- **Chain uniqueness.** The database does not reject two rows with the same `(caller_id, chain_position)` or `(authorization_id, chain_position)`, so a forked chain is accepted. A unique index needs a production check for existing duplicates first.
+- **Separate application role.** The triggers apply to every role except one that disables them, and the table owner can disable them. The ADR asks for an application role without UPDATE or DELETE. That needs a deployment change to `DATABASE_URL`.
+- **Trust record tables.** `execution_trust_records` and `executions` are not covered. Their repository updates them (`touch()` and the deprecated `replaceExecution()`).
+
 ## Open questions for the operator
 
 1. Should the Supabase storage adapter be kept as a supported deployment option, or removed once step 3 is done?
