@@ -23,7 +23,7 @@ The checks live in the shared configuration package (`packages/shared/src/config
 
 **Stage 2: production configuration, offline.**
 
-- The same checks, applied to a production-shaped configuration: Supabase storage, AWS key provider, and the secrets provider.
+- The same checks, applied to a production-shaped configuration: PostgreSQL storage, AWS key provider, and the secrets provider.
 - Refuse live settings unless the operator has enabled them explicitly.
 
 **Stage 3: online checks, opt-in.**

@@ -37,7 +37,6 @@ function healthyDatabase(
 function deps(overrides: Partial<OnlineDeps> = {}): OnlineDeps {
   return {
     query: healthyDatabase(),
-    fetch: async () => new Response("", { status: 401 }),
     defaultKeyId: "default",
     ...overrides,
   };
@@ -228,61 +227,6 @@ describe("online checks, KMS", () => {
     );
     expect(called).toBe(false);
     expect(checks.some((item) => item.name === "KMS key")).toBe(false);
-  });
-});
-
-describe("online checks, Supabase REST endpoint", () => {
-  const supabaseEnv = {
-    PARMANA_STORAGE: "supabase",
-    DATABASE_URL: "postgresql://x?sslmode=require",
-    SUPABASE_URL: "https://project.supabase.co",
-  };
-
-  it("passes when the endpoint answers below HTTP 500, since a keyless request is expected to be refused", async () => {
-    const checks = await runOnlineChecks(
-      supabaseEnv,
-      deps({ fetch: async () => new Response("", { status: 401 }) }),
-    );
-    expect(find(checks, "SUPABASE_URL").level).toBe("pass");
-  });
-
-  it("fails an endpoint that answers HTTP 500 or more", async () => {
-    const checks = await runOnlineChecks(
-      supabaseEnv,
-      deps({ fetch: async () => new Response("", { status: 503 }) }),
-    );
-    expect(find(checks, "SUPABASE_URL").level).toBe("fail");
-  });
-
-  it("refuses an SUPABASE_URL that is not https, without a request", async () => {
-    let called = false;
-    const checks = await runOnlineChecks(
-      { ...supabaseEnv, SUPABASE_URL: "http://project.supabase.co" },
-      deps({
-        fetch: async () => {
-          called = true;
-          return new Response("");
-        },
-      }),
-    );
-    expect(called).toBe(false);
-    expect(find(checks, "SUPABASE_URL").level).toBe("fail");
-  });
-
-  it("reports a network failure by code only", async () => {
-    const checks = await runOnlineChecks(
-      supabaseEnv,
-      deps({
-        fetch: async () => {
-          throw Object.assign(new TypeError("fetch failed"), {
-            cause: { code: "ENOTFOUND" },
-          });
-        },
-      }),
-    );
-    const result = find(checks, "SUPABASE_URL");
-    expect(result.level).toBe("fail");
-    expect(result.message).toContain("ENOTFOUND");
   });
 });
 

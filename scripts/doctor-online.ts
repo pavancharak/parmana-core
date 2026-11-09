@@ -2,8 +2,8 @@
  * Online checks for the configuration doctor (stage 3). Run with --online.
  *
  * Each check uses the same probe the server uses at readiness or startup:
- * the database query behind GET /ready, the key lookup behind
- * assertKmsSigningKeyReachable, and the Supabase REST endpoint. Nothing is
+ * the database query behind GET /ready, and the key lookup behind
+ * assertKmsSigningKeyReachable. Nothing is
  * written. Dependencies are passed in, so the checks can be tested without a
  * database, a KMS key or a network.
  *
@@ -28,10 +28,6 @@ export interface OnlineDeps {
   readonly query?: DatabaseQuery;
   /** The KMS signer, or undefined when KEY_PROVIDER is not aws-kms. */
   readonly kms?: () => Promise<KeyLookup>;
-  readonly fetch: (
-    url: string,
-    init?: { signal?: AbortSignal },
-  ) => Promise<Response>;
   readonly defaultKeyId: string;
 }
 
@@ -58,7 +54,6 @@ export async function runOnlineChecks(
   const checks: DoctorCheck[] = [];
   await checkDatabase(env, deps, checks);
   await checkKms(env, deps, checks);
-  await checkSupabase(env, deps, checks);
   return checks;
 }
 
@@ -193,66 +188,6 @@ async function checkKms(
       level: "fail",
       message: `cannot reach KMS (error ${errorCode(err)})`,
       fix: "Check AWS_REGION, AWS_ROLE_ARN, and that this machine has AWS credentials for the key",
-    });
-  }
-}
-
-async function checkSupabase(
-  env: Env,
-  deps: OnlineDeps,
-  checks: DoctorCheck[],
-): Promise<void> {
-  if ((env.PARMANA_STORAGE ?? "") !== "supabase") return;
-  const base = env.SUPABASE_URL;
-  if (base === undefined || base === "") return;
-
-  let url: URL;
-  try {
-    url = new URL(base);
-  } catch {
-    checks.push({
-      name: "SUPABASE_URL",
-      level: "fail",
-      message: "SUPABASE_URL is not an absolute URL",
-      fix: "Set it to the project URL, for example https://<project>.supabase.co",
-    });
-    return;
-  }
-  if (url.protocol !== "https:") {
-    checks.push({
-      name: "SUPABASE_URL",
-      level: "fail",
-      message: "SUPABASE_URL does not use https",
-      fix: "Change it to https://",
-    });
-    return;
-  }
-
-  try {
-    const response = await deps.fetch(`${url.origin}/rest/v1/`, {
-      signal: AbortSignal.timeout(10_000),
-    });
-    if (response.status >= 500) {
-      checks.push({
-        name: "SUPABASE_URL",
-        level: "fail",
-        message: `Supabase answered with HTTP ${response.status}`,
-        fix: "Check the project status in the Supabase dashboard",
-      });
-    } else {
-      // Any status below 500 shows the host answers. The request carries no key, so 401 is expected.
-      checks.push({
-        name: "SUPABASE_URL",
-        level: "pass",
-        message: `the Supabase REST endpoint answers (HTTP ${response.status})`,
-      });
-    }
-  } catch (err) {
-    checks.push({
-      name: "SUPABASE_URL",
-      level: "fail",
-      message: `cannot reach the Supabase REST endpoint (error ${errorCode(err)})`,
-      fix: "Check SUPABASE_URL and this machine's network access",
     });
   }
 }

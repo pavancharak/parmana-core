@@ -26,7 +26,7 @@ behavior and fails loudly the moment that behavior regresses.
 Rather than mocking at the framework level, unit tests in this codebase commonly construct a
 minimal fake object implementing just the one method actually called. `packages/storage/tests/unit/`
 has several real examples (`business-transaction-repository-duplicate-consistency.test.ts`,
-`postgres-rate-limit-store.test.ts`, `supabase-business-transaction-repository.test.ts`, among
+`postgres-rate-limit-store.test.ts`, `postgres-business-transaction-repository.test.ts`, among
 others) that build a `FakePool`-shaped object standing in for `pg.Pool`, exposing only
 `.query(sql, params)` against an in-memory data structure, no real network socket ever opens.
 This same pattern is used in the example tutorials that exercise real Postgres-backed classes
