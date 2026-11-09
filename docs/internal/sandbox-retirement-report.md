@@ -58,7 +58,7 @@ Four separate causes, each hidden behind the same `500 FUNCTION_INVOCATION_FAILE
 
 1. **Deleted database.** `DATABASE_URL` pointed at a Supabase project removed on 23 October (`tenant/user postgres.bemukyaqfszmkoztugtv not found`).
 2. **Wrong host.** The value resolved to host `base` (`getaddrinfo ENOTFOUND base`). The pasted value was malformed.
-3. **Production's database.** The value pointed at `ltjadvsjlpcygborxzet`, which is production's project, and it began with the literal text `DATABASE_URL=`.
+3. **Production's database.** The value pointed at `<production project ID>`, which is production's project, and it began with the literal text `DATABASE_URL=`.
 4. **Wrong password** for the connectors project (`password authentication failed for user "postgres"`).
 5. **Readiness hard-coded the schema.** `/ready` asked for `public.execution_intents`, so it reported the table missing even though it existed in `parmana_sandbox`.
 
@@ -80,7 +80,7 @@ Four separate causes, each hidden behind the same `500 FUNCTION_INVOCATION_FAILE
 
 ## 4. What we learned
 
-1. **Names lie.** A Supabase project called `parmana-sandbox` was production. Check the project ID (`ltjadvsjlpcygborxzet` here), not the name.
+1. **Names lie.** A Supabase project called `parmana-sandbox` was production. Check the project ID (`<production project ID>` here), not the name.
 2. **Environment changes need a new deploy.** Vercel applies changed variables on the next deployment, and "Redeploy" reuses old code.
 3. **Read the cause line, not the summary.** The top line of every error here said "could not run". The `[cause]` line held the real problem: `ENOTFOUND base`, `password authentication failed`, `relation does not exist`.
 4. **Shape of a connection string matters.** The part after `@` is the host. `DATABASE_URL=` is the variable name, not part of the value. Pooler type matters too: transaction (6543) for serverless production, session (5432) when `search_path` is needed.
