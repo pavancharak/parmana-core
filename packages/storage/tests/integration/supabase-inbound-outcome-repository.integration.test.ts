@@ -12,15 +12,10 @@ import { SupabaseInboundOutcomeRepository } from "../../src/supabase/SupabaseInb
 
 /**
  * Runs against a real Postgres database with the inbound migrations applied. Every test runs inside
- * a transaction that is rolled back. Reads TEST_DATABASE_URL only; skipped when it is unset; refuses
- * to run if it equals DATABASE_URL.
+ * a transaction that is rolled back. Reads TEST_DATABASE_URL only; skipped when it is unset. The
+ * target is validated by vitest.setup.ts before this file runs.
  */
 const url = process.env.TEST_DATABASE_URL?.trim();
-if (url && url === process.env.DATABASE_URL) {
-  throw new Error(
-    "TEST_DATABASE_URL equals DATABASE_URL. Point TEST_DATABASE_URL at a separate test database.",
-  );
-}
 
 function decision(decisionId: string): InboundDecisionRecord {
   return {

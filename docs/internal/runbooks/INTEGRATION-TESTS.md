@@ -12,16 +12,18 @@ database, what was run and what passed, and what is not yet covered.
 
 ## 2. The gates
 
-| Setting                                                    | What it enables                               | Notes                                                                             |
-| ---------------------------------------------------------- | --------------------------------------------- | --------------------------------------------------------------------------------- |
-| `TEST_DATABASE_URL`                                        | Tests that write to a test database           | Must differ from `DATABASE_URL`, or the test refuses to run                       |
-| `DATABASE_URL`                                             | Suites that use the application's database    | Without `ALLOW_LIVE_SUPABASE=1`, these suites are skipped on purpose              |
-| `ALLOW_LIVE_SUPABASE=1`                                    | Runs the suites gated on `DATABASE_URL`       | Only for a database you intend the suite to use. Do not set it against production |
-| `TEST_DATABASE_IS_DISPOSABLE=1`                            | Allows destructive tests on a hosted database | Not needed for a local database                                                   |
-| `PARMANA_STORAGE=postgres`                                 | Uses Postgres storage                         | Required by several suites                                                        |
-| `PARMANA_KEY_DIR`                                          | Directory of key files                        | Set by `vitest.setup.ts` for the test run; see section 6                          |
-| `CRYPTO_MODE`                                              | `single` or `hybrid`                          | `pq` is not implemented in this build (section 7)                                 |
-| `KEY_PROVIDER=local`, `PRIMARY_SIGNATURE_PROVIDER=ed25519` | Local key provider and primary algorithm      | Set in the test environment                                                       |
+| Setting                                                    | What it enables                               | Notes                                                                                      |
+| ---------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `TEST_DATABASE_URL`                                        | The database every database-backed suite uses | Set by `vitest.setup.ts` from the validated target. Set it in `.env.test`, not `.env`      |
+| `DATABASE_URL`                                             | Read by `PostgresPoolFactory` in tests        | Set by `vitest.setup.ts` to the same validated target. Do not set it for a test run        |
+| `PARMANA_TEST_PROJECT_REFS`                                | Hosted test projects a run may use            | Comma-separated project IDs. Empty refuses every hosted target                             |
+| `PARMANA_PRODUCTION_PROJECT_REFS`                          | Production project IDs a run must refuse      | Set in your shell, never committed. A listed project is refused even if it is also allowed |
+| `ALLOW_LIVE_SUPABASE=1`                                    | Runs the suites gated on the test database    | Required for any hosted target. Not needed for a local database                            |
+| `TEST_DATABASE_IS_DISPOSABLE=1`                            | Allows destructive tests on a hosted database | Not needed for a local database                                                            |
+| `PARMANA_STORAGE=postgres`                                 | Uses Postgres storage                         | Required by several suites                                                                 |
+| `PARMANA_KEY_DIR`                                          | Directory of key files                        | Set by `vitest.setup.ts` for the test run; see section 6                                   |
+| `CRYPTO_MODE`                                              | `single` or `hybrid`                          | `pq` is not implemented in this build (section 7)                                          |
+| `KEY_PROVIDER=local`, `PRIMARY_SIGNATURE_PROVIDER=ed25519` | Local key provider and primary algorithm      | Set in the test environment                                                                |
 
 `CRYPTO_MODE=classical` is not a valid value. The valid values are `single`, `hybrid` and `pq`.
 
@@ -46,21 +48,28 @@ Do not point these settings at production. The sandbox project is the only hoste
 
 ## 3a. Sandbox settings, set once in `.env.test`
 
-Put the sandbox connection in `.env.test`, which is gitignored. `vitest.setup.ts` loads it before `.env`, so its
-`DATABASE_URL` replaces the production value in `.env` for the test run. No shell variables are needed.
+The template is `.env.test.example`. Copy it to `.env.test` (gitignored), then use option B in the template: the hosted
+test project's `TEST_DATABASE_URL`, `PARMANA_TEST_PROJECT_REFS` and `ALLOW_LIVE_SUPABASE=1`, with the local option removed.
 
 ```bash
 # .env.test (on your machine only; never commit it)
-DATABASE_URL=<sandbox connection string from the Supabase dashboard>
+TEST_DATABASE_URL=<connection string for the test project>
+PARMANA_TEST_PROJECT_REFS=<test project ID>
 ALLOW_LIVE_SUPABASE=1
 PARMANA_DATABASE_CA_FILE=
 ```
 
-Leave `TEST_DATABASE_URL` unset. The consumption suite then uses `DATABASE_URL`, but only because
-`ALLOW_LIVE_SUPABASE=1` is set. If `TEST_DATABASE_URL` is set and equals `DATABASE_URL`, the suite refuses to run.
+Tests read only `.env.test`. `.env` is never loaded by a test run, so production values in `.env` cannot reach a test.
 
-Check the target before a run: the project ID in the connection string must be the sandbox project's ID, not the
-production project's ID. Do not set `ALLOW_LIVE_SUPABASE=1` in `.env` itself, because `.env` holds production values.
+Every run checks the target before any suite starts. It refuses if the project is not in `PARMANA_TEST_PROJECT_REFS`,
+if the project is in `PARMANA_PRODUCTION_PROJECT_REFS`, or if `ALLOW_LIVE_SUPABASE=1` is missing. The run logs
+`[test-database] hosted project <project ID>` so you can see the target.
+
+Set `PARMANA_PRODUCTION_PROJECT_REFS` in your shell, for example `$env:PARMANA_PRODUCTION_PROJECT_REFS = "<production project ID>"`
+in PowerShell, so the production project is refused even if someone adds it to `.env.test` by mistake.
+
+Scripts that run migrations (`scripts/migrate-database.ts`, `scripts/record-challenge.ts`) are not test suites. They
+read `DATABASE_URL` from the shell or `.env` and are not affected by this change.
 
 ## 4. Running the tests
 

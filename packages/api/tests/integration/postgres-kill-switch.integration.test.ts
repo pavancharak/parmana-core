@@ -17,7 +17,7 @@ import { resolveDatabaseGate } from "../helpers/database-availability.js";
 const databaseConfigured = resolveDatabaseGate("Postgres kill switch");
 
 describe.skipIf(!databaseConfigured)("PostgresKillSwitchStore (live)", () => {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
   const ONE_OPERATOR = {
     resetNeedsSecondOperator: false,
     probes: new PostgresKillSwitchProbeLog(pool),
@@ -78,7 +78,7 @@ describe.skipIf(!databaseConfigured)("PostgresKillSwitchStore (live)", () => {
     ).trip("operator-a", "before restart");
 
     const afterRestart = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: process.env.TEST_DATABASE_URL,
     });
 
     try {
@@ -131,7 +131,7 @@ describe.skipIf(!databaseConfigured)("PostgresKillSwitchStore (live)", () => {
     ).reset("operator-b", "first");
 
     const afterRestart = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: process.env.TEST_DATABASE_URL,
     });
 
     try {

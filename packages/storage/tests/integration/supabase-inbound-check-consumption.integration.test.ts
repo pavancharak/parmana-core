@@ -14,23 +14,10 @@ import { SupabaseInboundCheckRepository } from "../../src/supabase/SupabaseInbou
  * which creates inbound_decisions and consumed_approval_nonces in the public schema). Every row this test writes
  * carries a run tag and is deleted afterwards.
  *
- * Database choice:
- *   - TEST_DATABASE_URL, when set. Refuses to run if it equals DATABASE_URL.
- *   - Otherwise DATABASE_URL, but only with ALLOW_LIVE_SUPABASE=1, the same opt-in the other live suites require.
- *     This lets .env.test point DATABASE_URL at the sandbox for every suite, with no per-run setting.
- *   - Otherwise skipped.
+ * Reads TEST_DATABASE_URL. Skipped when it is unset. The target is validated by vitest.setup.ts
+ * before this file runs (PARMANA_TEST_PROJECT_REFS, production refusal, ALLOW_LIVE_SUPABASE=1 for hosted).
  */
-const explicitTestUrl = process.env.TEST_DATABASE_URL?.trim();
-if (explicitTestUrl && explicitTestUrl === process.env.DATABASE_URL?.trim()) {
-  throw new Error(
-    "TEST_DATABASE_URL equals DATABASE_URL. Unset TEST_DATABASE_URL to use DATABASE_URL, or point it at a separate test database.",
-  );
-}
-const url =
-  explicitTestUrl ||
-  (process.env.ALLOW_LIVE_SUPABASE === "1"
-    ? process.env.DATABASE_URL?.trim()
-    : undefined);
+const url = process.env.TEST_DATABASE_URL?.trim();
 
 const suite = url ? describe : describe.skip;
 

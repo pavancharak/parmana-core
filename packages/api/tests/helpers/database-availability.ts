@@ -1,21 +1,21 @@
 /**
- * Whether a real, direct Postgres connection string is configured in
- * the environment. Mirrors supabase-availability.ts's shape exactly,
- * but gates the two audit-sink integration tests that now write via
- * PostgresPoolFactory (DATABASE_URL) instead of a supabase-js/PostgREST
- * client (SUPABASE_URL) — see SupabaseCallerAuditSink /
- * SupabaseRazorpayWebhookAuditSink for why (temporary PostgREST
- * schema-cache workaround, Supabase ticket SU-437429).
+ * Whether a validated test database is configured. Mirrors supabase-availability.ts's shape
+ * exactly, but gates the two audit-sink integration tests that now write via PostgresPoolFactory
+ * instead of a supabase-js/PostgREST client (SUPABASE_URL) — see SupabaseCallerAuditSink /
+ * SupabaseRazorpayWebhookAuditSink for why (temporary PostgREST schema-cache workaround,
+ * Supabase ticket SU-437429).
+ *
+ * Reads TEST_DATABASE_URL. vitest.setup.ts validates the target before any suite runs, and
+ * sets TEST_DATABASE_URL to it (docs/internal/designs/TEST-DATABASE-CONFIG.md, step 5).
  */
 export function hasDatabaseUrlConfig(): boolean {
-  return Boolean(process.env.DATABASE_URL);
+  return Boolean(process.env.TEST_DATABASE_URL?.trim());
 }
 
 /**
- * Resolves whether a DATABASE_URL-gated suite should run, reusing the
- * same ALLOW_LIVE_SUPABASE=1 opt-in as resolveSupabaseGate — both gate
- * "writes against a real, live project," just via different
- * connections (REST vs. direct Postgres) to the same database.
+ * Resolves whether a database-gated suite should run, reusing the same ALLOW_LIVE_SUPABASE=1
+ * opt-in as resolveSupabaseGate — both gate "writes against a real, live project," just via
+ * different connections (REST vs. direct Postgres) to the same database.
  */
 export function resolveDatabaseGate(suiteLabel: string): boolean {
   const configured = hasDatabaseUrlConfig();
@@ -23,7 +23,7 @@ export function resolveDatabaseGate(suiteLabel: string): boolean {
 
   if (configured && !optedIn) {
     console.log(
-      `${suiteLabel}: DATABASE_URL configured but ALLOW_LIVE_SUPABASE=1 ` +
+      `${suiteLabel}: TEST_DATABASE_URL configured but ALLOW_LIVE_SUPABASE=1 ` +
         "not set — skipping live suite. Set ALLOW_LIVE_SUPABASE=1 to run it.",
     );
     return false;
@@ -32,16 +32,16 @@ export function resolveDatabaseGate(suiteLabel: string): boolean {
   if (optedIn && !configured) {
     throw new Error(
       `${suiteLabel}: ALLOW_LIVE_SUPABASE=1 is set — a live run was ` +
-        "explicitly requested — but DATABASE_URL is not visible to this " +
-        "worker — env loading is broken. DATABASE_URL should have been " +
-        "loaded by vitest.setup.ts; refusing to silently skip a suite " +
+        "explicitly requested — but TEST_DATABASE_URL is not visible to this " +
+        "worker — env loading is broken. TEST_DATABASE_URL should have been " +
+        "set by vitest.setup.ts; refusing to silently skip a suite " +
         "that was explicitly asked to run live.",
     );
   }
 
   if (!configured) {
     console.log(
-      `[SKIP] ${suiteLabel}: DATABASE_URL not set. See ` +
+      `[SKIP] ${suiteLabel}: TEST_DATABASE_URL not set. See ` +
         "packages/api/README.md to enable this suite.",
     );
     return false;
