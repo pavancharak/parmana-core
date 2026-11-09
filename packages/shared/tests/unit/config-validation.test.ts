@@ -85,10 +85,9 @@ describe("parseCryptoMode", () => {
     expect(parseCryptoMode("hybrid")).toBe("hybrid");
   });
 
-  it("refuses CRYPTO_MODE=pq at startup, since no production code reads it (#222)", () => {
-    expect(() => parseCryptoMode("pq")).toThrow(
-      "CRYPTO_MODE=pq is not implemented in this build",
-    );
+  it("refuses the retired CRYPTO_MODE=pq value as unknown (POST-QUANTUM-MODE.md, decision 2)", () => {
+    expect(() => parseCryptoMode("pq")).toThrow(/CRYPTO_MODE/);
+    expect(() => parseCryptoMode("pq")).not.toThrow(/not implemented/);
   });
 
   it("defaults to single when CRYPTO_MODE is unset", () => {

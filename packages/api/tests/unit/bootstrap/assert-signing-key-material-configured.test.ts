@@ -17,6 +17,7 @@ const ENV_KEYS = [
   "KEY_PROVIDER",
   "CRYPTO_MODE",
   "SECONDARY_SIGNATURE_PROVIDER",
+  "PRIMARY_SIGNATURE_PROVIDER",
 ] as const;
 
 describe("assertSigningKeyMaterialConfigured", () => {
@@ -215,6 +216,18 @@ describe("assertSigningKeyMaterialConfigured", () => {
 
     expect(() => assertSigningKeyMaterialConfigured()).toThrow(
       /CRYPTO_MODE=hybrid is not supported with KEY_PROVIDER=aws-kms/,
+    );
+  });
+
+  it("refuses an ML-DSA-65 primary algorithm with KEY_PROVIDER=aws-kms, whose signer supports Ed25519 only", () => {
+    process.env.NODE_ENV = "production";
+    process.env.KEY_PROVIDER = "aws-kms";
+    process.env.PRIMARY_SIGNATURE_PROVIDER = "ml-dsa-65";
+    process.env.PARMANA_KEY_DIR = tempDir;
+    delete process.env.PARMANA_KEY_MATERIAL_JSON;
+
+    expect(() => assertSigningKeyMaterialConfigured()).toThrow(
+      /PRIMARY_SIGNATURE_PROVIDER=dilithium3 is not supported with KEY_PROVIDER=aws-kms/,
     );
   });
 
