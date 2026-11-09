@@ -3,32 +3,23 @@ import {
   type ExecutionAuditSink,
 } from "@parmana/execution-control";
 
-import {
-  PostgresPoolFactory,
-  SupabaseExecutionAuditSink,
-} from "@parmana/storage";
+import { StorageFactory } from "@parmana/storage";
 
 import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
 
 /**
  * Creates the Execution Audit sink.
  *
- * Test wiring (NODE_ENV=test): MemoryExecutionAuditSink — mirrors
- * createCallerAuditSink.ts's own production/test split for the same
- * reason.
+ * Test wiring (NODE_ENV=test): MemoryExecutionAuditSink, as before.
  *
- * Production: SupabaseExecutionAuditSink, a durable, signed,
- * per-authorization-chained audit trail. Closes GAP-1 (GAPS.md
- * 2026-09-14): session.created/execution.completed/execution.rejected
- * events no longer reset on process restart, and are queryable
- * (SupabaseExecutionAuditSink.query()) instead of living only in this
- * process's memory. Fails closed at startup if DATABASE_URL is not
- * configured — never silently falls back to an in-memory sink.
+ * Production: the audit sink of the PostgreSQL storage provider. It is a
+ * durable, signed, per-authorization-chained trail (GAP-1): events survive
+ * restarts and are queryable through PostgresExecutionAuditSink.query().
  *
- * Wired to PostgresPoolFactory (DATABASE_URL), not a supabase-js/
- * PostgREST client (SUPABASE_URL) — same convention as every other
- * Supabase-backed audit sink in this codebase (see
- * SupabaseCallerAuditSink's own comment for why).
+ * The provider is pinned to "postgres", not read from PARMANA_STORAGE. A
+ * process configured with PARMANA_STORAGE=memory must still fail closed
+ * here rather than keep its audit trail in memory (ADR-0021, step 3).
+ * Fails at startup if DATABASE_URL is not configured.
  */
 export function createExecutionAuditSink(): ExecutionAuditSink {
   if (process.env.NODE_ENV === "test") {
@@ -37,5 +28,5 @@ export function createExecutionAuditSink(): ExecutionAuditSink {
 
   assertDatabaseUrlConfigured("ExecutionAuditSink");
 
-  return new SupabaseExecutionAuditSink(PostgresPoolFactory.create());
+  return StorageFactory.create({ provider: "postgres" }).executionAuditSink;
 }

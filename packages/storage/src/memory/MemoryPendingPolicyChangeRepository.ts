@@ -12,7 +12,7 @@ import {
  * In-memory Pending Policy Change repository (Policy Governance,
  * maker-checker). Mirrors MemoryChallengeRecordRepository's shape:
  * routes every mutation through the shared package's pure
- * enforcement functions so this backend and SupabasePendingPolicyChangeRepository
+ * enforcement functions so this backend and PostgresPendingPolicyChangeRepository
  * (a later addition) apply identical invariants.
  */
 export class MemoryPendingPolicyChangeRepository implements PendingPolicyChangeRepository {

@@ -7,7 +7,7 @@ import { TrustRecordHasher } from "./TrustRecordHasher.js";
 /**
  * One caller_audit_events row, in the shape a verifier reads it back:
  * the original CallerAuditEvent-shaped fields (occurredAt, callerId,
- * etc, exactly as SupabaseCallerAuditSink.record() received them —
+ * etc, exactly as PostgresCallerAuditSink.record() received them —
  * never including storage-only fields like a database row id), plus
  * the signature and chain columns that sit alongside it.
  */
@@ -26,7 +26,7 @@ export interface CallerAuditChainVerificationResult {
 }
 
 /**
- * Verifies one caller's full audit chain (SupabaseCallerAuditSink's
+ * Verifies one caller's full audit chain (PostgresCallerAuditSink's
  * per-caller chaining): each row's signature against its own
  * recomputed content -- including the previousChainHash/chainPosition
  * fields folded into what was actually signed -- and that each row's

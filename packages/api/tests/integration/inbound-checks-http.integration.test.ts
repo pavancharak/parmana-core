@@ -5,7 +5,7 @@ import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import type { InboundCheckRecord } from "@parmana/shared";
-import { SupabaseInboundCheckRepository } from "@parmana/storage";
+import { PostgresInboundCheckRepository } from "@parmana/storage";
 
 import {
   canonicalCheckBytes,
@@ -65,7 +65,7 @@ suite(
         connectionString: process.env.TEST_DATABASE_URL,
         max: 2,
       });
-      const repo = new SupabaseInboundCheckRepository(pool);
+      const repo = new PostgresInboundCheckRepository(pool);
       app = express();
       app.use(express.json());
       app.use((req, _res, next) => {

@@ -19,7 +19,7 @@ import {
  *
  * Writes via a direct Postgres connection (PostgresPoolFactory / a
  * caller-supplied pg.Pool), not supabase-js/PostgREST — the same
- * choice made for SupabaseCallerAuditSink (see that file), extended
+ * choice made for PostgresCallerAuditSink (see that file), extended
  * here deliberately for a brand-new table rather than introducing a
  * new PostgREST dependency this codebase is already working to
  * reduce. Unlike that class, this one was never PostgREST-backed to
@@ -147,7 +147,7 @@ interface ChallengeRecordRow {
  * Date-typed field back from Postgres's returned representation
  * (a string inside JSONB, a Date or string for a native timestamptz
  * column depending on driver configuration) -- required here (unlike
- * SupabaseRefusalRecordRepository's decision_json, which round-trips
+ * PostgresRefusalRecordRepository's decision_json, which round-trips
  * its own nested Date fields as strings without complaint) because
  * ChallengeRecordInvestigationStep.performedAt and friends are read
  * back individually, not only ever passed through opaquely.

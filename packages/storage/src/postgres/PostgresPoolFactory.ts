@@ -82,7 +82,7 @@ export function withoutSslParams(connectionString: string): string {
  * had already replaced it everywhere it was still used.
  *
  * Introduced as the stopgap direct-Postgres path for
- * SupabaseCallerAuditSink (see that file for why) — not itself tied
+ * PostgresCallerAuditSink (see that file for why) — not itself tied
  * to that workaround, so any other call site needing a raw Postgres
  * connection to the same
  * database should reuse this factory rather than opening its own

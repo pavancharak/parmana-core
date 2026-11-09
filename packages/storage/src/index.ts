@@ -17,6 +17,7 @@ export * from "./StorageConfiguration.js";
 // -----------------------------------------------------------------------------
 
 export * from "./memory/MemoryStorageProvider.js";
+export * from "./memory/MemoryExecutionAuditSink.js";
 
 export * from "./memory/MemoryBusinessTransactionRepository.js";
 export * from "./memory/MemoryExecutionTrustRecordRepository.js";
@@ -43,27 +44,27 @@ export * from "./memory/MemoryAuthorityGrantRepository.js";
 export * from "./errors/StorageError.js";
 export * from "./errors/PostgresErrorCodes.js";
 
-export * from "./supabase/SupabaseStorageProvider.js";
-export * from "./supabase/SupabaseBusinessTransactionRepository.js";
-export * from "./supabase/SupabaseExecutionTrustRecordRepository.js";
-export * from "./supabase/SupabaseExecutionIntentRepository.js";
-export * from "./supabase/SupabaseRefusalRecordRepository.js";
-export * from "./supabase/SupabaseInboundDecisionRepository.js";
-export * from "./supabase/SupabaseInboundCheckRepository.js";
-export * from "./supabase/SupabaseInboundOutcomeRepository.js";
-export * from "./supabase/SupabasePendingPolicyChangeRepository.js";
-export * from "./supabase/SupabasePolicyChangeApprovalRecordRepository.js";
-export * from "./supabase/SupabaseHandbookDownloadLeadRepository.js";
-export * from "./supabase/SupabaseApprovalIssuerRepository.js";
-export * from "./supabase/SupabaseCallerKeyRevocationRepository.js";
-export * from "./supabase/SupabaseExternalConnectorRepository.js";
-export * from "./supabase/SupabaseBusinessSignalSourceRepository.js";
-export * from "./supabase/SupabaseAuthorityGrantRepository.js";
-export * from "./supabase/SupabaseNonceStore.js";
-export * from "./supabase/SupabaseExecutionOutcomeStore.js";
-export * from "./supabase/SupabaseApprovalNonceStore.js";
-export * from "./supabase/SupabasePolicyChangeStepUpNonceStore.js";
-export * from "./supabase/SupabaseExecutionAuditSink.js";
+export * from "./postgres/PostgresStorageProvider.js";
+export * from "./postgres/PostgresBusinessTransactionRepository.js";
+export * from "./postgres/PostgresExecutionTrustRecordRepository.js";
+export * from "./postgres/PostgresExecutionIntentRepository.js";
+export * from "./postgres/PostgresRefusalRecordRepository.js";
+export * from "./postgres/PostgresInboundDecisionRepository.js";
+export * from "./postgres/PostgresInboundCheckRepository.js";
+export * from "./postgres/PostgresInboundOutcomeRepository.js";
+export * from "./postgres/PostgresPendingPolicyChangeRepository.js";
+export * from "./postgres/PostgresPolicyChangeApprovalRecordRepository.js";
+export * from "./postgres/PostgresHandbookDownloadLeadRepository.js";
+export * from "./postgres/PostgresApprovalIssuerRepository.js";
+export * from "./postgres/PostgresCallerKeyRevocationRepository.js";
+export * from "./postgres/PostgresExternalConnectorRepository.js";
+export * from "./postgres/PostgresBusinessSignalSourceRepository.js";
+export * from "./postgres/PostgresAuthorityGrantRepository.js";
+export * from "./postgres/PostgresNonceStore.js";
+export * from "./postgres/PostgresExecutionOutcomeStore.js";
+export * from "./postgres/PostgresApprovalNonceStore.js";
+export * from "./postgres/PostgresPolicyChangeStepUpNonceStore.js";
+export * from "./postgres/PostgresExecutionAuditSink.js";
 
 // -----------------------------------------------------------------------------
 // Postgres (direct connection, bypassing PostgREST)

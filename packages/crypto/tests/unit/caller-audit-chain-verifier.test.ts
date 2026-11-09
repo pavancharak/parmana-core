@@ -10,7 +10,7 @@ import {
 
 /**
  * CallerAuditChainVerifier proves the per-caller audit chain
- * (SupabaseCallerAuditSink) is actually tamper-evident: a deleted row
+ * (PostgresCallerAuditSink) is actually tamper-evident: a deleted row
  * breaks the previousChainHash linkage for whatever comes after it,
  * and a modified row fails its own recomputed signature/hash. No
  * database, no network -- rows are passed in directly, the same

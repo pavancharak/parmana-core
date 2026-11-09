@@ -3,7 +3,7 @@
  *
  * Defined in `@parmana/shared`, not `@parmana/execution-control` (where
  * `ExecutionControlService` actually produces these), because
- * `packages/storage`'s `SupabaseExecutionAuditSink` also needs this
+ * `packages/storage`'s `PostgresExecutionAuditSink` also needs this
  * shape and `tests/architecture/execution-boundary.test.ts` enforces a
  * closed dependent set for `@parmana/execution-control` imports
  * (`execution-control`, `execution-gateway`, and `api` only) —
@@ -22,7 +22,7 @@ export interface ExecutionAuditEvent {
    * `ExecutionControlService.execute()` is ever reached at all, so a
    * separate "verified" event on this side would be redundant. It
    * exists in this union solely so a reader of
-   * `SupabaseExecutionAuditSink.query()` has a fully-typed result for
+   * `PostgresExecutionAuditSink.query()` has a fully-typed result for
    * rows a different writer sharing this table records — see
    * `parmana-paytm-agent`'s own audit writer (`src/parmana/audit.ts`
    * in that repository), which records it right after independently
@@ -52,7 +52,7 @@ export interface ExecutionAuditEvent {
    * unlike authorizationId, which is Parmana's own internal
    * authorization identity and never forwarded across that trust
    * boundary (see GatewayPaytmAdapter's own wire contract). Querying
-   * SupabaseExecutionAuditSink by businessTransactionId is therefore
+   * PostgresExecutionAuditSink by businessTransactionId is therefore
    * the way to retrieve one refund's complete story across both
    * services, not authorizationId, which only chains events written
    * on this side.

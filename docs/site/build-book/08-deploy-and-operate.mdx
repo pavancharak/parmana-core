@@ -11,7 +11,7 @@ every command and every failure, is [Production deployment](/deployment/producti
 
 One Node.js process: the API, the policy engine and the gateway together. The same code runs as a container
 (`Dockerfile`, `docker/entrypoint.sh`) or as a Vercel function (`api/index.ts`, `vercel.json`). It needs a Postgres
-database (Supabase works). Production refuses to start without a real database, signing keys and caller
+database (any PostgreSQL 16 works, including a Supabase-hosted one). Production refuses to start without a real database, signing keys and caller
 authentication, and never falls back to something weaker.
 
 ## The procedure
@@ -22,7 +22,7 @@ authentication, and never falls back to something weaker.
 | 2   | Database schema  | `npm run db:migrate -- status`, then `apply`                                                                                                                                                | `status` ends with `0 pending`.                                                                           |
 | 3   | Caller keys      | `npm run generate:api-key -- --caller-id <id>...` for each agent, a maker (`--credential-holder-type USER`) and a checker (also `--generate-step-up-key`)                                   | Each raw key given to its owner only; the JSON entries combined into one array.                           |
 | 4   | Connectors       | Set the variables of each built in connector you use ([Chapter 6](/build-book/06-connect-your-systems))                                                                                     | Both or neither of each pair is set.                                                                      |
-| 5   | Environment      | `NODE_ENV=production`, `PARMANA_API_KEYS`, `PARMANA_STORAGE=supabase`, `DATABASE_URL` (the transaction pooler on serverless), keys through `PARMANA_KEY_DIR` or `PARMANA_KEY_MATERIAL_JSON` | `PARMANA_AUTH_DISABLED` is not set; `NODE_ENV` is not `test` or `development`.                            |
+| 5   | Environment      | `NODE_ENV=production`, `PARMANA_API_KEYS`, `PARMANA_STORAGE=postgres`, `DATABASE_URL` (the transaction pooler on serverless), keys through `PARMANA_KEY_DIR` or `PARMANA_KEY_MATERIAL_JSON` | `PARMANA_AUTH_DISABLED` is not set; `NODE_ENV` is not `test` or `development`.                            |
 | 6   | Deploy           | Build and start, or deploy on Vercel                                                                                                                                                        | `/health` `200`; `/ready` `200` with `"authDisabled":false`; `POST /execute` with no key `401`.           |
 | 7   | Policies         | Copy them into the database once (`scripts/apply-policies-table-and-backfill.ts`), then approve each one through maker checker ([Chapter 4](/build-book/04-policies))                       | `npx tsx scripts/verify-policy-changes-approved.ts --full-scan` passes.                                   |
 | 8   | Approvers        | Trust at least one approver per action through maker checker ([Chapter 5](/build-book/05-human-approvals))                                                                                  | `GET /approval-issuers` lists them, `"revoked": false`.                                                   |

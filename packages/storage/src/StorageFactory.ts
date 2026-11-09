@@ -2,7 +2,7 @@ import { parseStorageProvider } from "@parmana/shared";
 
 import { MemoryStorageProvider } from "./memory/MemoryStorageProvider.js";
 
-import { SupabaseStorageProvider } from "./supabase/SupabaseStorageProvider.js";
+import { PostgresStorageProvider } from "./postgres/PostgresStorageProvider.js";
 
 import type { StorageProvider } from "./StorageProvider.js";
 
@@ -10,10 +10,10 @@ import type { StorageConfiguration } from "./StorageConfiguration.js";
 
 /**
  * Whether a direct Postgres connection string is configured.
- * SupabaseStorageProvider's three repositories now write via
+ * PostgresStorageProvider's three repositories now write via
  * PostgresPoolFactory (DATABASE_URL), not a supabase-js/PostgREST
- * client (SUPABASE_URL) — see SupabaseExecutionTrustRecordRepository
- * for why (removing PostgREST from every Supabase-backed table's
+ * client (SUPABASE_URL) — see PostgresExecutionTrustRecordRepository
+ * for why (removing PostgREST from every PostgreSQL-backed table's
  * failure modes, not just the audit sinks that broke first).
  */
 function hasDatabaseUrlConfig(): boolean {
@@ -41,7 +41,7 @@ export class StorageFactory {
         // only fails on first use.
         //
         // G-57: `postgres` selects the same implementation as
-        // `supabase`. Despite its name, SupabaseStorageProvider only
+        // `supabase`. Despite its name, PostgresStorageProvider only
         // needs a Postgres connection string, so a self hosted
         // Postgres works under either name.
         if (!hasDatabaseUrlConfig()) {
@@ -55,7 +55,7 @@ export class StorageFactory {
           );
         }
 
-        return new SupabaseStorageProvider();
+        return new PostgresStorageProvider();
 
       case "sqlite":
         throw new Error("SQLite storage provider not implemented.");
@@ -69,7 +69,7 @@ export class StorageFactory {
    * regardless of PARMANA_STORAGE — mirrors the production/test split
    * createNonceStore.ts and createCallerAuditSink.ts already established
    * (G-13). Closes G-15 (docs/internal/VERIFICATION-GAPS.md): this method used to
-   * construct whatever PARMANA_STORAGE named — a live Supabase client
+   * construct whatever PARMANA_STORAGE named — a live database client
    * included — purely as an import-time side effect
    * (packages/api/src/repositories.ts), crashing test collection with
    * supabase-js's generic "supabaseUrl is required." the moment

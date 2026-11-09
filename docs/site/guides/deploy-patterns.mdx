@@ -1,6 +1,6 @@
 ---
 title: "Deploy Patterns"
-description: "In-memory vs Supabase storage, the full environment variable checklist, and how key management works."
+description: "In-memory vs PostgreSQL storage, the full environment variable checklist, and how key management works."
 ---
 
 <Info>
@@ -32,14 +32,14 @@ switch (configuration.provider) {
   case "supabase":
   case "postgres":
     // both need DATABASE_URL, and refuse to start without it
-    return new SupabaseStorageProvider();
+    return new PostgresStorageProvider();
   case "sqlite":
     throw new Error("SQLite storage provider not implemented.");
 }
 ```
 
 `memory` keeps everything in the process and loses it on restart. `supabase` and `postgres`
-are the same implementation: despite its name, `SupabaseStorageProvider` needs only a Postgres
+are the same implementation: despite its name, `PostgresStorageProvider` needs only a Postgres
 connection string, so a self hosted Postgres works under either name. Both refuse to
 start without `DATABASE_URL`. `sqlite` is declared and throws at startup, by design: it fails
 closed rather than silently falling back to something else.
@@ -47,7 +47,7 @@ closed rather than silently falling back to something else.
 ```bash
 PARMANA_STORAGE=memory     # in process, non persistent, no external dependency
 # or
-PARMANA_STORAGE=supabase   # or postgres; needs DATABASE_URL and every migration applied
+PARMANA_STORAGE=postgres   # or supabase, an alias; needs DATABASE_URL and every migration applied
 DATABASE_URL=postgresql://user:password@host:5432/parmana
 ```
 
@@ -92,7 +92,7 @@ key, see [Rotating a caller's key](#rotating-a-callers-key) below.
 ### 4. Set the full environment checklist
 
 ```bash
-PARMANA_STORAGE=memory                        # or: supabase / postgres, with DATABASE_URL
+PARMANA_STORAGE=memory                        # or: postgres (supabase is an alias), with DATABASE_URL
 PARMANA_POLICY_DIR=/absolute/path/to/policies
 PARMANA_KEY_DIR=/absolute/path/to/keys
 PARMANA_GATEWAY_KEY_ID=gateway                 # optional, defaults to "gateway"

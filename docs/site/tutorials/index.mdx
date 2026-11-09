@@ -176,7 +176,7 @@ now run the real pipeline with `CRYPTO_MODE=hybrid` (Ed25519 and ML-DSA-65).
 | --- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 84  | Caller Authentication      | The real Express caller-authentication middleware over a real listening server: valid/missing/invalid credentials, per-caller scoping, key rotation and revocation |
 | 88  | Malformed Request Handling | Malformed JSON and oversized request bodies returning specific `400`/`413` errors, not a generic `500`                                                             |
-| 89  | Readiness Probe            | `GET /ready`, distinct from `GET /health`, across memory-backed and (genuinely unreachable) Supabase-backed storage                                                |
+| 89  | Readiness Probe            | `GET /ready`, distinct from `GET /health`, across memory-backed and (genuinely unreachable) PostgreSQL-backed storage                                              |
 | 90  | OpenAPI Self-Description   | `GET /openapi.yaml` serving a valid, unauthenticated, fully-dereferenced OpenAPI 3.1 document, no unresolved `$ref`s                                               |
 | 91  | Graceful Shutdown          | The `SIGTERM`/`SIGINT` handler draining in-flight requests before exit, force-exiting on a hung close after a bounded timeout                                      |
 

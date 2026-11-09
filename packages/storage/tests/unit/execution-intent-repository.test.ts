@@ -5,7 +5,7 @@ import type { Pool } from "pg";
 import type { ExecutionIntent } from "@parmana/shared";
 
 import { MemoryExecutionIntentRepository } from "../../src/memory/MemoryExecutionIntentRepository.js";
-import { SupabaseExecutionIntentRepository } from "../../src/supabase/SupabaseExecutionIntentRepository.js";
+import { PostgresExecutionIntentRepository } from "../../src/postgres/PostgresExecutionIntentRepository.js";
 
 function intent(
   businessTransactionId: string,
@@ -241,7 +241,7 @@ describe("MemoryExecutionIntentRepository", () => {
   });
 });
 
-describe("SupabaseExecutionIntentRepository", () => {
+describe("PostgresExecutionIntentRepository", () => {
   function recordingPool(rows: Record<string, unknown>[] = [], rowCount = 1) {
     const calls: { sql: string; values: readonly unknown[] }[] = [];
 
@@ -259,7 +259,7 @@ describe("SupabaseExecutionIntentRepository", () => {
   it("writes every signed field, and sends the signature as JSON", async () => {
     const { pool, calls } = recordingPool();
 
-    await new SupabaseExecutionIntentRepository(pool).create(intent("tx-1"));
+    await new PostgresExecutionIntentRepository(pool).create(intent("tx-1"));
 
     expect(calls).toHaveLength(1);
     expect(calls[0]?.sql).toContain("INSERT INTO execution_intents");
@@ -293,7 +293,7 @@ describe("SupabaseExecutionIntentRepository", () => {
       ...required
     } = intent("tx-1");
 
-    await new SupabaseExecutionIntentRepository(pool).create(required);
+    await new PostgresExecutionIntentRepository(pool).create(required);
 
     const values = calls[0]?.values ?? [];
 
@@ -337,7 +337,7 @@ describe("SupabaseExecutionIntentRepository", () => {
       },
     ]);
 
-    const stored = await new SupabaseExecutionIntentRepository(
+    const stored = await new PostgresExecutionIntentRepository(
       pool,
     ).findByTransactionId("tx-1");
 
@@ -370,7 +370,7 @@ describe("SupabaseExecutionIntentRepository", () => {
     const { pool } = recordingPool([]);
 
     expect(
-      await new SupabaseExecutionIntentRepository(pool).findByTransactionId(
+      await new PostgresExecutionIntentRepository(pool).findByTransactionId(
         "missing",
       ),
     ).toBeNull();
@@ -378,7 +378,7 @@ describe("SupabaseExecutionIntentRepository", () => {
 
   it("enforces the state transitions in SQL, so they hold under concurrency", async () => {
     const { pool, calls } = recordingPool();
-    const repository = new SupabaseExecutionIntentRepository(pool);
+    const repository = new PostgresExecutionIntentRepository(pool);
 
     await repository.markReleased("tx-1", { saved: true }, new Date());
     await repository.markErrored("tx-1", "boom");
@@ -395,7 +395,7 @@ describe("SupabaseExecutionIntentRepository", () => {
   it("lists unfinalized intents oldest first with a limit", async () => {
     const { pool, calls } = recordingPool([]);
 
-    await new SupabaseExecutionIntentRepository(pool).listUnfinalized(25);
+    await new PostgresExecutionIntentRepository(pool).listUnfinalized(25);
 
     expect(calls[0]?.sql).toContain("state NOT IN ('FINALIZED', 'RESOLVED')");
     expect(calls[0]?.sql).toContain("ORDER BY created_at ASC");
@@ -413,7 +413,7 @@ describe("SupabaseExecutionIntentRepository", () => {
     it("only moves a PREPARED or ERRORED row, in SQL", async () => {
       const { pool, calls } = recordingPool();
 
-      await new SupabaseExecutionIntentRepository(pool).markResolved(
+      await new PostgresExecutionIntentRepository(pool).markResolved(
         "tx-1",
         input,
       );
@@ -432,7 +432,7 @@ describe("SupabaseExecutionIntentRepository", () => {
       const { pool, calls } = recordingPool();
       const { resolvedBy: _by, ...withoutBy } = input;
 
-      await new SupabaseExecutionIntentRepository(pool).markResolved(
+      await new PostgresExecutionIntentRepository(pool).markResolved(
         "tx-1",
         withoutBy,
       );
@@ -445,13 +445,13 @@ describe("SupabaseExecutionIntentRepository", () => {
       const notMoved = recordingPool([], 0);
 
       expect(
-        await new SupabaseExecutionIntentRepository(moved.pool).markResolved(
+        await new PostgresExecutionIntentRepository(moved.pool).markResolved(
           "tx-1",
           input,
         ),
       ).toBe(true);
       expect(
-        await new SupabaseExecutionIntentRepository(notMoved.pool).markResolved(
+        await new PostgresExecutionIntentRepository(notMoved.pool).markResolved(
           "tx-1",
           input,
         ),
@@ -492,7 +492,7 @@ describe("SupabaseExecutionIntentRepository", () => {
         },
       ]);
 
-      const stored = await new SupabaseExecutionIntentRepository(
+      const stored = await new PostgresExecutionIntentRepository(
         pool,
       ).findByTransactionId("tx-1");
 

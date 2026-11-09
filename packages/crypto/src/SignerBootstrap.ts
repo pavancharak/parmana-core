@@ -28,7 +28,7 @@ import { LocalFileSigner } from "./providers/signer/LocalFileSigner.js";
  * `loadConfig().keys.keyDirectory` (and so the current
  * PARMANA_KEY_DIR) fresh every time. A static singleton here broke
  * that -- caught by a real CI failure
- * (packages/api/tests/unit/supabase-caller-audit-sink.test.ts), where
+ * (packages/api/tests/unit/postgres-caller-audit-sink.test.ts), where
  * each test sets PARMANA_KEY_DIR to its own temp directory and tears
  * it down in afterEach: the first test to run would permanently poison
  * a process-wide cached signer pointing at a directory every

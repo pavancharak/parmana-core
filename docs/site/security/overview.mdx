@@ -24,7 +24,7 @@ is registered through maker checker with no code change, and Parmana signs each 
 
 **Fleet wide single use requires a shared NonceStore (3.2).** Single use enforcement is
 scoped to whichever `NonceStore` instance performs the check. Parmana's own server shares one
-in Postgres (`SupabaseNonceStore`, and the same for approvals), so every instance on one
+in Postgres (`PostgresNonceStore`, and the same for approvals), so every instance on one
 database accepts an authorization once, and it fails closed at startup without one. A
 receiving system that runs `@parmana/envelope-verifier` with its own per instance store can
 accept the same authorization once per instance; `MemoryNonceStore`, for tests, loses all
@@ -46,7 +46,7 @@ Parmana's public key. Production caller-authentication audit events
 are signed the same way, verifiable at `POST /audit/verify`. Two scope caveats: Refusal
 Record writing is evidentiary and fails open by design (a rejection is never blocked or
 delayed by it; only the durable record can go silently missing, never the correctness of
-the rejection itself), and only production (Supabase) audit sinks sign; the in-memory
+the rejection itself), and only production (PostgreSQL) audit sinks sign; the in-memory
 test sinks don't.
 
 **Hybrid (Ed25519 + ML-DSA-65) signing capability, not yet deployed (3.13).** Trust

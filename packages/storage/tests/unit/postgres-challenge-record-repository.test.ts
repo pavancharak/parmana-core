@@ -134,7 +134,7 @@ function buildChallengeRecord(challengeRecordId: string): ChallengeRecord {
     investigationSteps: [
       {
         performedAt: now,
-        method: "read packages/api/src/auth/SupabaseCallerAuditSink.ts",
+        method: "read packages/api/src/auth/PostgresCallerAuditSink.ts",
         observation:
           "confirmed the insert path now bypasses PostgREST entirely",
       },

@@ -106,7 +106,7 @@ something an operator's own monitoring can assert and alert on directly.
 ## How It Enables Things, With a Concrete Example
 
 `examples/tutorials/101-fail-closed-caller-audit-writes/run.ts` proves the audit-write
-fail-closed guarantee directly: it simulates the storage outage `SupabaseCallerAuditSink`
+fail-closed guarantee directly: it simulates the storage outage `PostgresCallerAuditSink`
 would surface, and shows both `caller.rejected` and `caller.authenticated` outcomes react
 identically (503, not their otherwise-normal status) when the audit write itself fails. There
 is no retry, buffering, or queueing, a failure fails closed immediately, once, per request.

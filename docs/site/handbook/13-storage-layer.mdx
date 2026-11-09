@@ -43,35 +43,35 @@ export interface StorageProvider {
 `StorageFactory.create({ provider })` (`packages/storage/src/StorageFactory.ts`) switches on
 the configured provider:
 
-| Provider value | Class returned                                                                           | Notes                                                                                                                      |
-| -------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `"memory"`     | `MemoryStorageProvider`                                                                  | Five in-memory repository classes, nothing external touched.                                                               |
-| `"supabase"`   | `SupabaseStorageProvider`                                                                | Requires `DATABASE_URL`; throws immediately if missing, rather than constructing a pool that would only fail on first use. |
-| `"postgres"`   | returns `SupabaseStorageProvider` and requires `DATABASE_URL`, the same as `"supabase"`. | Works.                                                                                                                     |
-| `"sqlite"`     | throws `"SQLite storage provider not implemented."`                                      | Reserved name, not built.                                                                                                  |
+| Provider value | Class returned                                                                  | Notes                                                                                                                                              |
+| -------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `"memory"`     | `MemoryStorageProvider`                                                         | Five in-memory repository classes, nothing external touched.                                                                                       |
+| `"supabase"`   | `PostgresStorageProvider`                                                       | Alias for `"postgres"`. Requires `DATABASE_URL`; throws immediately if missing, rather than constructing a pool that would only fail on first use. |
+| `"postgres"`   | returns `PostgresStorageProvider` and requires `DATABASE_URL`. The name to use. | Works.                                                                                                                                             |
+| `"sqlite"`     | throws `"SQLite storage provider not implemented."`                             | Reserved name, not built.                                                                                                                          |
 
 `StorageFactory.createFromEnvironment()` is the real entry point every caller actually uses.
 It has one hardcoded override: under `NODE_ENV=test`, it always returns
 `MemoryStorageProvider`, regardless of what `PARMANA_STORAGE` is set to. This exists because
 whatever `PARMANA_STORAGE` named as a pure import-time side effect, which crashed test
-collection with supabase-js's generic `"supabaseUrl is required."` the moment `SUPABASE_*`
-was unset, regardless of what any individual test actually needed.
+collection with a generic missing-credential error the moment the `SUPABASE_*` variables were
+unset, regardless of what any individual test actually needed.
 
 ### Lazy construction, everywhere that matters
 
 `packages/api/src/repositories.ts` wraps every repository export in a `Proxy` via a local
 `lazyRepository()` helper, so importing `repositories.ts` (which every route file
-transitively does) never itself constructs a live Supabase client. Only the first actual
+transitively does) never itself opens a database connection. Only the first actual
 method call on a repository triggers `StorageFactory.createFromEnvironment()`.
 
 The first
 version of `packages/api/src/application.ts`'s new `policyRepository` export constructed
-`SupabasePolicyRepository(PostgresPoolFactory.create())` directly at module scope:
+`PostgresPolicyRepository(PostgresPoolFactory.create())` directly at module scope:
 
 ```ts
 export const policyRepository: PolicyRepository =
   process.env.NODE_ENV !== "test" && config.storage.provider !== "memory"
-    ? new SupabasePolicyRepository(PostgresPoolFactory.create())
+    ? new PostgresPolicyRepository(PostgresPoolFactory.create())
     : new FilePolicyRepository(config.policy.directory);
 ```
 
@@ -85,13 +85,14 @@ have reported `NOT_READY`. The fix (`packages/api/src/application.ts`, current v
 wraps `policyRepository` in the identical `Proxy`-based lazy pattern `repositories.ts`
 already uses, deferring construction to the first real `load()`/`save()`/`listAll()` call.
 
-### Direct Postgres, not PostgREST
+### Direct Postgres, not a REST layer
 
 `PostgresPoolFactory` (`packages/storage/src/postgres/PostgresPoolFactory.ts`) is a lazy,
-process-wide singleton `pg.Pool`. Every Supabase-backed repository in this codebase connects
-through it directly, not through `supabase-js`'s REST-based client (PostgREST). The class
+process-wide singleton `pg.Pool`. Every PostgreSQL-backed repository in this codebase connects
+through it directly, with the `pg` driver, not through a REST client such as `supabase-js`
+(PostgREST). The class
 replaced it everywhere it was still used. This removes an entire layer (PostgREST) from the
-own history names explicitly (see `SupabaseCallerAuditSink`'s own comments for the
+own history names explicitly (see `PostgresCallerAuditSink`'s own comments for the
 originating case).
 
 As of 2026-09-16, `PostgresPoolFactory.create()`'s `Pool` is constructed with
@@ -138,8 +139,8 @@ CREATE TABLE IF NOT EXISTS policies (
 );
 ```
 
-Note this table is read and written by `SupabasePolicyRepository`
-(`packages/policy/src/SupabasePolicyRepository.ts`), which lives in the `@parmana/policy`
+Note this table is read and written by `PostgresPolicyRepository`
+(`packages/policy/src/PostgresPolicyRepository.ts`), which lives in the `@parmana/policy`
 package, not `@parmana/storage`, it is constructed directly in `application.ts`, not
 exposed through `StorageProvider`. This is a real architectural asymmetry: every other
 Postgres-backed repository in this codebase goes through the `StorageProvider` facade;
@@ -154,7 +155,7 @@ any other table you need to rely on.
 
 ## How It Enables Things, With a Concrete Example
 
-`examples/tutorials/116-supabase-policy-repository/run.ts` exercises `SupabasePolicyRepository`
+`examples/tutorials/116-supabase-policy-repository/run.ts` exercises `PostgresPolicyRepository`
 directly against a minimal fake `pg.Pool` (no real network), proving `save()` then `load()`
 round-trips exactly, `load()` on a missing entry throws `PolicyNotFoundError`, and `listAll()`
 reports what was saved, the same contract `FilePolicyRepository` upholds, just backed by a
@@ -168,7 +169,7 @@ fix (Chapter 16 covers this fully).
 
 - `packages/storage/src/StorageProvider.ts`, `StorageFactory.ts`, the interface and the
   selection logic.
-- `packages/storage/src/memory/MemoryStorageProvider.ts`, `packages/storage/src/supabase/SupabaseStorageProvider.ts`, the two real implementations.
+- `packages/storage/src/memory/MemoryStorageProvider.ts`, `packages/storage/src/postgres/PostgresStorageProvider.ts`, the two real implementations.
 - `packages/storage/src/postgres/PostgresPoolFactory.ts`, the shared connection pool, its
 - `packages/api/src/repositories.ts` and `packages/api/src/application.ts`, the lazy
   construction pattern, and the place it was once violated.
@@ -182,8 +183,8 @@ fix (Chapter 16 covers this fully).
 
 ## Integration Requirements
 
-| Variable          | Required when                 | Effect                                                                                                                                                                                                          |
-| ----------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PARMANA_STORAGE` | Always (defaults to `memory`) | `memory` or `supabase`; selects the `StorageProvider`.                                                                                                                                                          |
-| `DATABASE_URL`    | `PARMANA_STORAGE=supabase`    | Direct Postgres connection string. `StorageFactory.create()` throws immediately if this is missing under `supabase`, naming both knobs, rather than deferring to a confusing `PostgresPoolFactory` error later. |
-| `NODE_ENV=test`   | Test runs                     | Forces `MemoryStorageProvider` regardless of `PARMANA_STORAGE`.                                                                                                                                                 |
+| Variable          | Required when                 | Effect                                                                                                                                                                                         |
+| ----------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PARMANA_STORAGE` | Always (defaults to `memory`) | `memory` or `postgres` (`supabase` is an alias); selects the `StorageProvider`.                                                                                                                |
+| `DATABASE_URL`    | `PARMANA_STORAGE=postgres`    | Direct Postgres connection string. `StorageFactory.create()` throws immediately if this is missing, naming both knobs, rather than deferring to a confusing `PostgresPoolFactory` error later. |
+| `NODE_ENV=test`   | Test runs                     | Forces `MemoryStorageProvider` regardless of `PARMANA_STORAGE`.                                                                                                                                |

@@ -17,7 +17,7 @@ import {
 // silently reorders items on the round trip (e.g. loading them back
 // via a query with no explicit ORDER BY) would recompute to a
 // different hash than what was actually signed -- a real bug this
-// suite regression-tests (the Supabase-backed repository needed an
+// suite regression-tests (the PostgreSQL-backed repository needed an
 // explicit ORDER BY / sequence fix for exactly this reason). This
 // tutorial proves the in-memory repository preserves insertion order
 // for every collection, and that the reloaded record's hash and

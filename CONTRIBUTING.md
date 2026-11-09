@@ -21,7 +21,7 @@ Thank you for helping. Parmana decides whether an automated action may run, and 
    docker compose run --rm migrate
    ```
 
-   [docs/internal/runbooks/LOCAL-DEVELOPMENT.md](docs/internal/runbooks/LOCAL-DEVELOPMENT.md) describes the environment in full. The Supabase suites skip unless you have Supabase credentials.
+   [docs/internal/runbooks/LOCAL-DEVELOPMENT.md](docs/internal/runbooks/LOCAL-DEVELOPMENT.md) describes the environment in full. The database-backed suites skip unless `TEST_DATABASE_URL` and `ALLOW_LIVE_SUPABASE=1` are set.
 
 5. Check the set-up with `npm run build` and `npm test`. The full suite takes several minutes.
 

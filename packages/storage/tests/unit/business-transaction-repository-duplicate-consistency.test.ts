@@ -8,7 +8,7 @@ import {
 } from "@parmana/shared";
 
 import { MemoryBusinessTransactionRepository } from "../../src/memory/MemoryBusinessTransactionRepository.js";
-import { SupabaseBusinessTransactionRepository } from "../../src/supabase/SupabaseBusinessTransactionRepository.js";
+import { PostgresBusinessTransactionRepository } from "../../src/postgres/PostgresBusinessTransactionRepository.js";
 
 import { buildBusinessTransaction } from "../fixtures/multi-item-trust-record.js";
 
@@ -49,8 +49,8 @@ describe.each<[string, () => BusinessTransactionRepository]>([
     () => new MemoryBusinessTransactionRepository(),
   ],
   [
-    "SupabaseBusinessTransactionRepository",
-    () => new SupabaseBusinessTransactionRepository(createFakePool()),
+    "PostgresBusinessTransactionRepository",
+    () => new PostgresBusinessTransactionRepository(createFakePool()),
   ],
 ])("%s", (_name, createRepository) => {
   it("throws DuplicateBusinessTransactionError, with the same message format, for a duplicate businessTransactionId", async () => {

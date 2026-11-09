@@ -14,6 +14,7 @@ import type {
   InboundCheckRepository,
   InboundDecisionRepository,
   InboundOutcomeRepository,
+  ExecutionAuditSink,
 } from "@parmana/shared";
 
 /**
@@ -84,4 +85,11 @@ export interface StorageProvider {
 
   /** Authority grants (RFC-0023 phase 3). */
   readonly authorityGrants: AuthorityGrantRepository;
+
+  /**
+   * Execution audit trail (GAP-1). Durable in the PostgreSQL provider;
+   * process-local in the memory provider. Callers that require a durable
+   * trail must check the provider they were given (ADR-0021, step 3).
+   */
+  readonly executionAuditSink: ExecutionAuditSink;
 }

@@ -1,6 +1,6 @@
 //
 // TEST 6: the production nonce store on real PostgreSQL semantics.
-// SupabaseNonceStore issues one INSERT against consumed_nonces, whose primary key
+// PostgresNonceStore issues one INSERT against consumed_nonces, whose primary key
 // is the nonce, and reads a unique violation as "already consumed". Here that SQL
 // runs on PGlite (PostgreSQL compiled to WASM), so the primary key and error code
 // are real. A restart is modelled by a new store instance on the same database.
@@ -13,7 +13,7 @@ import { afterAll, describe, expect, it, vi } from "vitest";
 vi.setConfig({ testTimeout: 120_000, hookTimeout: 120_000 });
 
 import { PGlite } from "@electric-sql/pglite";
-import { SupabaseNonceStore } from "@parmana/storage";
+import { PostgresNonceStore } from "@parmana/storage";
 import { evidencePath } from "./evidence.js";
 
 const cases: Record<string, unknown>[] = [];
@@ -40,7 +40,7 @@ describe("TEST 6: production nonce store on PostgreSQL semantics", () => {
   it("first use is accepted; a replay is refused", async () => {
     const db = new PGlite();
     await db.exec(DDL);
-    const store = new SupabaseNonceStore(poolOver(db));
+    const store = new PostgresNonceStore(poolOver(db));
     const exp = new Date(Date.now() + 120_000).toISOString();
     const first = await store.checkAndRecord("n-1", exp);
     const replay = await store.checkAndRecord("n-1", exp);
@@ -58,7 +58,7 @@ describe("TEST 6: production nonce store on PostgreSQL semantics", () => {
   it("20 concurrent attempts with the same nonce: exactly one succeeds", async () => {
     const db = new PGlite();
     await db.exec(DDL);
-    const store = new SupabaseNonceStore(poolOver(db));
+    const store = new PostgresNonceStore(poolOver(db));
     const exp = new Date(Date.now() + 120_000).toISOString();
     const results = await Promise.all(
       Array.from({ length: 20 }, () => store.checkAndRecord("n-race", exp)),
@@ -77,8 +77,8 @@ describe("TEST 6: production nonce store on PostgreSQL semantics", () => {
     const db = new PGlite();
     await db.exec(DDL);
     const exp = new Date(Date.now() + 120_000).toISOString();
-    await new SupabaseNonceStore(poolOver(db)).checkAndRecord("n-restart", exp);
-    const afterRestart = await new SupabaseNonceStore(
+    await new PostgresNonceStore(poolOver(db)).checkAndRecord("n-restart", exp);
+    const afterRestart = await new PostgresNonceStore(
       poolOver(db),
     ).checkAndRecord("n-restart", exp);
     cases.push({
@@ -92,7 +92,7 @@ describe("TEST 6: production nonce store on PostgreSQL semantics", () => {
 
   it("a database error is not read as a replay (it propagates)", async () => {
     const db = new PGlite();
-    const store = new SupabaseNonceStore(poolOver(db)); // table not created
+    const store = new PostgresNonceStore(poolOver(db)); // table not created
     let threw = false;
     try {
       await store.checkAndRecord("n-x", new Date().toISOString());

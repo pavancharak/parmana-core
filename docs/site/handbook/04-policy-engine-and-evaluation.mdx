@@ -132,7 +132,7 @@ close that gap completely; this is a deliberate, bounded improvement over no che
 
 - `FilePolicyRepository`, reads/writes `policies/{name}/{version}/policy.json` on the local
   filesystem. Used in local development and in tests.
-- `SupabasePolicyRepository` (`packages/policy/src/SupabasePolicyRepository.ts`), reads/writes
+- `PostgresPolicyRepository` (`packages/policy/src/PostgresPolicyRepository.ts`), reads/writes
   a `policies` table via a direct Postgres connection. Serverless functions run on a read-only
   filesystem, so a live policy write to local files cannot succeed. Deployments therefore store
   policies in Postgres.
@@ -151,7 +151,7 @@ tracks what's available.
 - **Tutorial 17** (`examples/tutorials/17-multi-policy-routing/run.ts`) demonstrates routing
   across multiple distinct policies by name/version.
 - **Tutorial 116** (`examples/tutorials/116-supabase-policy-repository/run.ts`, 2026-09-16)
-  demonstrates `SupabasePolicyRepository` directly, including the `EROFS` failure it fixes.
+  demonstrates `PostgresPolicyRepository` directly, including the `EROFS` failure it fixes.
 
 ## How to validate this yourself
 
@@ -170,6 +170,6 @@ tracks what's available.
 ## Integration requirements
 
 None beyond what's already required to run the API at all: `PARMANA_POLICY_DIR` (for
-`FilePolicyRepository`, required, with no default) or `PARMANA_STORAGE=supabase` plus
-`DATABASE_URL` (for `SupabasePolicyRepository` in a real deployment). No policy-engine-specific
+`FilePolicyRepository`, required, with no default) or `PARMANA_STORAGE=postgres` plus
+`DATABASE_URL` (for `PostgresPolicyRepository` in a real deployment). No policy-engine-specific
 configuration exists, a policy's own content is the only per-policy configuration surface.

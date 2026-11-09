@@ -78,6 +78,23 @@ export function entryHashOf(
 }
 
 /** A database row (as returned by Supabase) to a logged record. */
+/**
+ * A direct Postgres read returns timestamptz columns as Date objects. The
+ * log stores ISO strings with milliseconds, and String(Date) drops the
+ * milliseconds, so the values are converted explicitly here before
+ * recordFromRow sees them.
+ */
+export function normalizeDbRow(
+  row: Record<string, unknown>,
+): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(row).map(([key, value]) => [
+      key,
+      value instanceof Date ? value.toISOString() : value,
+    ]),
+  );
+}
+
 export function recordFromRow(
   row: Record<string, unknown>,
 ): LoggedApprovalRecord {
@@ -254,6 +271,34 @@ export function checkPolicyCoverage(
 }
 
 /**
+ * Each record about to be appended must match a policy file in this
+ * repository: a file at policies/{name}/{version}/policy.json whose content
+ * hashes to the record's contentHashAfter. Returns one problem per record
+ * that does not match, so the export can refuse before it writes anything.
+ * `files` maps "name/version" to the parsed policy file.
+ */
+export function unmatchedRecords(
+  records: readonly LoggedApprovalRecord[],
+  files: ReadonlyMap<string, unknown>,
+): string[] {
+  const problems: string[] = [];
+  for (const record of records) {
+    const key = `${record.policyName}/${record.policyVersion}`;
+    const id = record.policyChangeApprovalRecordId;
+    if (!files.has(key)) {
+      problems.push(
+        `record ${id} (${key}) matches no policy file in this repository.`,
+      );
+    } else if (sha256Hex(files.get(key)) !== record.contentHashAfter) {
+      problems.push(
+        `record ${id} (${key}): the approved content differs from policies/${key}/policy.json.`,
+      );
+    }
+  }
+  return problems;
+}
+
+/**
  * The log extended with the database's records it does not yet hold,
  * in approval order. Fails if a record already in the log is missing
  * from the database or differs from it: the log is the earlier copy, so
@@ -262,6 +307,7 @@ export function checkPolicyCoverage(
 export function appendFromDatabase(
   entries: readonly LogEntry[],
   databaseRecords: readonly LoggedApprovalRecord[],
+  include: (record: LoggedApprovalRecord) => boolean = () => true,
 ): { entries: LogEntry[]; added: number; problems: string[] } {
   const byId = new Map(
     databaseRecords.map((record) => [
@@ -287,7 +333,10 @@ export function appendFromDatabase(
     entries.map((entry) => entry.record.policyChangeApprovalRecordId),
   );
   const fresh = databaseRecords
-    .filter((record) => !logged.has(record.policyChangeApprovalRecordId))
+    .filter(
+      (record) =>
+        !logged.has(record.policyChangeApprovalRecordId) && include(record),
+    )
     .sort(
       (a, b) =>
         a.approvedAt.localeCompare(b.approvedAt) ||

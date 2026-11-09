@@ -21,7 +21,7 @@ import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
  * trust-record/business-transaction storage those factories don't
  * cover.
  *
- * Wired to DATABASE_URL, not SUPABASE_URL — SupabaseStorageProvider's
+ * Wired to DATABASE_URL, not SUPABASE_URL — PostgresStorageProvider's
  * three repositories now write via a direct Postgres connection
  * (PostgresPoolFactory), removing PostgREST from this storage path's
  * failure modes entirely.

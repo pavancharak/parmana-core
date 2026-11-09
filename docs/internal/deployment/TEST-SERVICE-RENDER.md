@@ -27,7 +27,7 @@ no real partner key. It is not approved for production. Each step below was run 
 | --------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | `NODE_ENV`                  | `production`                                                                                   | Turns off test-mode bypasses.                                       |
 | `HOST`                      | `0.0.0.0`                                                                                      | Set by the container.                                               |
-| `PARMANA_STORAGE`           | `supabase`                                                                                     | Without it, grant changes live in memory and are lost on restart.   |
+| `PARMANA_STORAGE`           | `postgres`                                                                                     | Without it, grant changes live in memory and are lost on restart.   |
 | `DATABASE_URL`              | the Supabase connection string                                                                 | Secret. Copy from the project's Connect panel.                      |
 | `PARMANA_POLICY_DIR`        | `./policies`                                                                                   | Committed.                                                          |
 | `PARMANA_KEY_MATERIAL_JSON` | JSON with `default` and `gateway` entries, each with `privateKeyPem` and `publicKeyPem`        | Secret. Startup fails without a `default` key.                      |
@@ -64,7 +64,7 @@ connector values on this service.
 6. **`/authority-grants` returns 404 under `/v1`**. The grant routes are mounted at
    `/authority-grants`, without `/v1`.
 7. **A pending grant change disappeared after a redeploy.** The store was in memory. Set
-   `PARMANA_STORAGE=supabase`.
+   `PARMANA_STORAGE=postgres`.
 
 ## Verify
 

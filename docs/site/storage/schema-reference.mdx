@@ -4,16 +4,16 @@ description: "Every live table: what it is for, its columns, which migration bui
 ---
 
 <Info>
-  Checked against all 31 `supabase/migrations/*.sql` files, read in order.
-  Several tables were altered by later migrations, so the shapes below are the
-  final, cumulative schema, not only what the first `CREATE TABLE` said. See
+  Checked against every `supabase/migrations/*.sql` file, read in order. Several
+  tables were altered by later migrations, so the shapes below are the final,
+  cumulative schema, not only what the first `CREATE TABLE` said. See
   [Storage](/storage/overview) first for the conceptual model.
 </Info>
 
-**Connecting:** the application connects directly to Postgres (`DATABASE_URL`), not through
-PostgREST. A direct connection bypasses Row Level Security the same way a table owner does,
-so RLS below matters for what a different credential (for example Supabase's `anon` role)
-could see, not for what the application's own connection can.
+**Connecting:** the application connects directly to PostgreSQL (`DATABASE_URL`) with the `pg`
+driver. It does not use a REST layer. A direct connection bypasses Row Level Security the same
+way a table owner does, so RLS below matters for what a different, less privileged role could
+see, not for what the application's own connection can.
 
 ```bash
 psql "$DATABASE_URL"
@@ -23,32 +23,33 @@ psql "$DATABASE_URL"
 
 | Table                                   | Purpose                                                                 | Owning code                                    |
 | --------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------- |
-| `business_transactions`                 | The received request, as submitted                                      | `SupabaseBusinessTransactionRepository`        |
-| `executions`                            | Append only log of execution attempts                                   | `SupabaseExecutionTrustRecordRepository`       |
-| `execution_trust_records`               | The signed, final trust record                                          | `SupabaseExecutionTrustRecordRepository`       |
-| `verifications`                         | Log of independent verification calls                                   | `SupabaseExecutionTrustRecordRepository`       |
-| `receipts`                              | Signed receipts                                                         | `SupabaseExecutionTrustRecordRepository`       |
-| `overrides`                             | `OverrideService` backing table, deliberately unreachable, expect empty | `SupabaseExecutionTrustRecordRepository`       |
-| `refusal_records`                       | Signed record of a refused decision                                     | `SupabaseRefusalRecordRepository`              |
-| `execution_intents`                     | Signed intent stored before an action is released                       | `SupabaseExecutionIntentRepository`            |
-| `caller_audit_events`                   | Every caller authentication decision, the highest write volume          | `SupabaseCallerAuditSink`                      |
-| `execution_audit_events`                | Execution lifecycle events, **shared with `example-agent`**             | `SupabaseExecutionAuditSink`                   |
-| `policies`                              | Policy content written on approval (Vercel has a read only filesystem)  | `SupabasePolicyRepository`                     |
-| `approval_issuers`                      | Approver keys added through maker checker                               | `SupabaseApprovalIssuerRepository`             |
-| `approval_issuer_changes`               | Proposals to add or revoke an approver key                              | `SupabaseApprovalIssuerRepository`             |
-| `external_connectors`                   | External connectors registered through maker checker                    | `SupabaseExternalConnectorRepository`          |
-| `external_connector_changes`            | Proposals to register or revoke an external connector                   | `SupabaseExternalConnectorRepository`          |
-| `pending_policy_changes`                | Maker and checker: a proposed change awaiting approval                  | `SupabasePendingPolicyChangeRepository`        |
-| `policy_change_approval_records`        | Maker and checker: signed approval or rejection                         | `SupabasePolicyChangeApprovalRecordRepository` |
-| `consumed_nonces`                       | Replay protection: gateway authorization envelopes                      | `SupabaseNonceStore`                           |
-| `consumed_approval_nonces`              | Replay protection: approval artifacts (separate namespace)              | `SupabaseApprovalNonceStore`                   |
-| `consumed_policy_change_step_up_nonces` | Replay protection: the checker's step up key (separate namespace)       | `SupabasePolicyChangeStepUpNonceStore`         |
+| `business_transactions`                 | The received request, as submitted                                      | `PostgresBusinessTransactionRepository`        |
+| `executions`                            | Append only log of execution attempts                                   | `PostgresExecutionTrustRecordRepository`       |
+| `execution_trust_records`               | The signed, final trust record                                          | `PostgresExecutionTrustRecordRepository`       |
+| `verifications`                         | Log of independent verification calls                                   | `PostgresExecutionTrustRecordRepository`       |
+| `receipts`                              | Signed receipts                                                         | `PostgresExecutionTrustRecordRepository`       |
+| `overrides`                             | `OverrideService` backing table, deliberately unreachable, expect empty | `PostgresExecutionTrustRecordRepository`       |
+| `refusal_records`                       | Signed record of a refused decision                                     | `PostgresRefusalRecordRepository`              |
+| `execution_intents`                     | Signed intent stored before an action is released                       | `PostgresExecutionIntentRepository`            |
+| `caller_audit_events`                   | Every caller authentication decision, the highest write volume          | `PostgresCallerAuditSink`                      |
+| `execution_audit_events`                | Execution lifecycle events, **shared with `example-agent`**             | `PostgresExecutionAuditSink`                   |
+| `policies`                              | Policy content written on approval (Vercel has a read only filesystem)  | `PostgresPolicyRepository`                     |
+| `approval_issuers`                      | Approver keys added through maker checker                               | `PostgresApprovalIssuerRepository`             |
+| `approval_issuer_changes`               | Proposals to add or revoke an approver key                              | `PostgresApprovalIssuerRepository`             |
+| `external_connectors`                   | External connectors registered through maker checker                    | `PostgresExternalConnectorRepository`          |
+| `external_connector_changes`            | Proposals to register or revoke an external connector                   | `PostgresExternalConnectorRepository`          |
+| `pending_policy_changes`                | Maker and checker: a proposed change awaiting approval                  | `PostgresPendingPolicyChangeRepository`        |
+| `policy_change_approval_records`        | Maker and checker: signed approval or rejection                         | `PostgresPolicyChangeApprovalRecordRepository` |
+| `consumed_nonces`                       | Replay protection: gateway authorization envelopes                      | `PostgresNonceStore`                           |
+| `consumed_approval_nonces`              | Replay protection: approval artifacts (separate namespace)              | `PostgresApprovalNonceStore`                   |
+| `consumed_policy_change_step_up_nonces` | Replay protection: the checker's step up key (separate namespace)       | `PostgresPolicyChangeStepUpNonceStore`         |
 | `challenge_records`                     | Investigation records, the only mutable table                           | `PostgresChallengeRecordRepository`            |
 | `rate_limit_counters`                   | Fleet wide rate limits, the only table without RLS                      | `PostgresRateLimitStore`                       |
-| `handbook_download_leads`               | Email captured before a handbook PDF download                           | `SupabaseHandbookDownloadLeadRepository`       |
+| `handbook_download_leads`               | Email captured before a handbook PDF download                           | `PostgresHandbookDownloadLeadRepository`       |
 
-Not covered here: `supabase_migrations.schema_migrations`, the Supabase CLI's own tracking
-table in a different schema (see the migration sync query below).
+Not covered here: the migration tracking table of the Supabase CLI, `supabase_migrations.schema_migrations`,
+which this repository does not use. The tracked migration runner records each applied file in
+`parmana_schema_migrations` (see the migration sync query below).
 
 ## Table by table
 
@@ -205,7 +206,7 @@ Columns: `id BIGSERIAL` primary key, `type` (`session.created`, `execution.compl
 Policy content keyed by `(policy_name, policy_version)`, with `content_json JSONB NOT NULL`
 and `updated_at`. Created by `20260916060000_add_policies_table.sql`. It exists because
 Vercel functions run on a read only filesystem, so approving a pending policy change there
-cannot write a file; `SupabasePolicyRepository` stores the approved content here instead.
+cannot write a file; `PostgresPolicyRepository` stores the approved content here instead.
 RLS enabled.
 
 ### `pending_policy_changes`
@@ -290,8 +291,10 @@ The signed record of a checker's decision on a pending change. Created with
 which chains the approval history itself; `content_hash_after` only proves the live policy
 matches what was approved. Indexed on `(policy_name, policy_version, approved_at DESC)`.
 
-This is the only table with a real RLS policy: `20260818150000` grants the `anon` role read
-only `SELECT` here, for the CI job that checks policy approvals with `SUPABASE_ANON_KEY`.
+This is the only table with a real RLS policy. Migration `20260818150000` grants a read-only
+role `SELECT` here. Nothing in the approval workflow uses that grant any more. The pull request gate
+and the deploy-time check both verify the signed log offline, and the scheduled drift check reads through
+Migration `20261110130000` removed the `anon` grant and the anon policy. Reads now go through the `parmana_policy_reader` group role.
 Never write rows here by hand.
 
 ### `consumed_nonces`, `consumed_approval_nonces`, `consumed_policy_change_step_up_nonces`
@@ -484,10 +487,10 @@ require("dotenv").config();
 const fs = require("fs");
 const { Pool } = require("pg");
 const pool = new Pool({ connectionString: process.env.DATABASE_URL, min: 1 });
-const fileVersions = fs.readdirSync("supabase/migrations").filter(f => f.endsWith(".sql")).map(f => f.split("_")[0]).sort();
+const fileVersions = fs.readdirSync("supabase/migrations").filter(f => f.endsWith(".sql")).sort();
 (async () => {
-  const { rows } = await pool.query("SELECT version FROM supabase_migrations.schema_migrations ORDER BY version");
-  const dbVersions = rows.map(r => r.version).sort();
+  const { rows } = await pool.query("SELECT name FROM parmana_schema_migrations ORDER BY name");
+  const dbVersions = rows.map(r => r.name).sort();
   console.log("Files:", fileVersions.length, "Tracked:", dbVersions.length);
   console.log("In files, not tracked:", fileVersions.filter(v => !dbVersions.includes(v)));
   console.log("Tracked, no file:", dbVersions.filter(v => !fileVersions.includes(v)));

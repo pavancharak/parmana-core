@@ -1,15 +1,30 @@
 import "dotenv/config";
 
+import { existsSync, readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { readdir } from "node:fs/promises";
 import path from "node:path";
-
-import { createClient } from "@supabase/supabase-js";
+import { fileURLToPath } from "node:url";
 
 import { PolicyChangeCrypto } from "@parmana/crypto";
 
+import {
+  checkChain,
+  checkSignatures,
+  latestApprovedHashes,
+  parseLog,
+  type LogEntry,
+  type PublicKeys,
+} from "./policy-approval-log/policyApprovalLog.js";
+
 /**
- * Preventive CI/deploy-time gate (Policy Governance, maker-checker):
+ * Preventive deploy-time gate (Policy Governance, maker-checker). It holds
+ * no database or API credential: it reads the signed approval log in
+ * governance/policy-approvals.jsonl, which is committed to the repository.
+ * The log must verify first (hash chain and every signature against the
+ * committed public keys). Then each policy file must match its latest
+ * logged approval.
+ *
  * confirms every policies/{name}/{version}/policy.json this run is
  * asked to check has a real, matching PolicyChangeApprovalRecord --
  * closing the gap the independent audit found, that a direct file
@@ -18,9 +33,12 @@ import { PolicyChangeCrypto } from "@parmana/crypto";
  * detection-after-the-fact log that must never block the running
  * server), this is fail-CLOSED by design: it is meant to block a PR
  * merge or a deploy, and any failure to complete the check --
- * Supabase unreachable, a malformed response, anything -- is treated
+ * the log unreadable or unverifiable, a malformed file, anything -- is treated
  * exactly the same as finding a real unapproved file. There is no
  * "couldn't check, let it through" path here.
+ *
+ * The log is written by policy-log:export, from the database's approval
+ * records, and the drift check (policy-log-drift.yml) reconciles the two.
  *
  * Invoked with a list of changed files, or with --full-scan to check
  * every policy file in the tree. CI's verify-policy-approvals job runs
@@ -73,40 +91,21 @@ export interface ApprovalLookup {
 }
 
 /**
- * Real Supabase-backed lookup, via the low-privilege `anon` role and
- * SUPABASE_ANON_KEY (see 20260818150000_add_ci_read_only_policy_for_approval_records.sql)
- * -- deliberately not the app's own DATABASE_URL/SUPABASE_SERVICE_ROLE_KEY,
- * which bypass RLS and grant read+write on every table, not read-only
- * access to this one.
+ * Looks approvals up in the signed log that has already been verified. It needs
+ * no database or REST credential.
  */
-export function createSupabaseApprovalLookup(
-  supabaseUrl: string,
-  supabaseAnonKey: string,
+export function createLogApprovalLookup(
+  entries: readonly LogEntry[],
 ): ApprovalLookup {
-  const client = createClient(supabaseUrl, supabaseAnonKey);
+  // latestApprovedHashes keeps the last logged approval for each name/version,
+  // which is the same "most recent wins" rule the rest of the codebase uses.
+  const latest = latestApprovedHashes(entries);
 
   return {
     async findMostRecentApproval(policyName, policyVersion) {
-      const { data, error } = await client
-        .from("policy_change_approval_records")
-        .select("content_hash_after")
-        .eq("policy_name", policyName)
-        .eq("policy_version", policyVersion)
-        .order("approved_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const contentHashAfter = latest.get(`${policyName}/${policyVersion}`);
 
-      if (error) {
-        throw new Error(
-          `Supabase query failed for ${policyName}@${policyVersion}: ${error.message}`,
-        );
-      }
-
-      if (data === null) {
-        return null;
-      }
-
-      return { contentHashAfter: data.content_hash_after as string };
+      return contentHashAfter === undefined ? null : { contentHashAfter };
     },
   };
 }
@@ -267,17 +266,32 @@ export async function verifyPolicyChangesApproved(
   return { ok: true, checked: filePaths.length };
 }
 
-function requiredEnv(name: string): string {
-  const value = process.env[name];
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const LOG_PATH = path.join(root, "governance", "policy-approvals.jsonl");
+const KEYS_PATH = path.join(root, "governance", "policy-approval-keys.json");
 
-  if (value === undefined || value.trim() === "") {
-    throw new Error(
-      `${name} is not set. Refusing to run without it -- this check is ` +
-        "fail-closed, and cannot verify anything without Supabase access.",
-    );
+/**
+ * Reads the committed approval log and checks it offline: the hash chain, and
+ * every record's signature against the committed public keys. Returns the
+ * entries, or the problems that stop them from being trusted.
+ */
+function loadApprovalLog(): { entries: LogEntry[]; problems: string[] } {
+  if (!existsSync(LOG_PATH) || !existsSync(KEYS_PATH)) {
+    return {
+      entries: [],
+      problems: [
+        "The signed approval log or its public keys are missing from the repository.",
+      ],
+    };
   }
 
-  return value;
+  const entries = parseLog(readFileSync(LOG_PATH, "utf8"));
+  const keys = JSON.parse(readFileSync(KEYS_PATH, "utf8")) as PublicKeys;
+
+  return {
+    entries,
+    problems: [...checkChain(entries), ...checkSignatures(entries, keys)],
+  };
 }
 
 function parseArgs(args: string[]): {
@@ -311,8 +325,16 @@ async function main(argv = process.argv.slice(2)): Promise<void> {
     return;
   }
 
-  const supabaseUrl = requiredEnv("SUPABASE_URL");
-  const supabaseAnonKey = requiredEnv("SUPABASE_ANON_KEY");
+  const { entries, problems } = loadApprovalLog();
+
+  if (problems.length > 0) {
+    console.error(
+      "::error::The signed approval log does not verify. Nothing is trusted until it does:",
+    );
+    for (const problem of problems) console.error(`  - ${problem}`);
+    process.exitCode = 1;
+    return;
+  }
 
   const filePaths = fullScan
     ? await findAllPolicyFiles(policiesDir)
@@ -329,7 +351,7 @@ async function main(argv = process.argv.slice(2)): Promise<void> {
 
   const result = await verifyPolicyChangesApproved(filePaths, {
     policiesDir,
-    approvalLookup: createSupabaseApprovalLookup(supabaseUrl, supabaseAnonKey),
+    approvalLookup: createLogApprovalLookup(entries),
   });
 
   if (result.ok) {

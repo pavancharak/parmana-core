@@ -42,9 +42,9 @@ jobs:
       # points at the repo's own committed reference policies, not a
       # separate fixtures directory.
       PARMANA_POLICY_DIR: ./policies
-      # Explicit default; keeps Supabase-gated integration tests
-      # (packages/api/tests/helpers/supabase-availability.ts) skipped
-      # rather than silently reaching for SUPABASE_* vars that aren't set.
+      # Explicit default; keeps the live-database integration tests
+      # (packages/api/tests/helpers/database-availability.ts) skipped
+      # unless TEST_DATABASE_URL and ALLOW_LIVE_SUPABASE=1 are both set.
       PARMANA_STORAGE: memory
       KEY_PROVIDER: local
       PRIMARY_SIGNATURE_PROVIDER: ed25519
@@ -166,6 +166,17 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f scripts/apply-all-migrations.sql
           npx vitest run packages/api/tests/integration/replay.integration.test.ts
 
+      - name: Storage provider contract against a migrated database
+        # ADR-0021, migration step 1. The same contract runs against the memory
+        # provider and the PostgreSQL provider. The database was migrated in the
+        # step above, so this step only runs the contract.
+        env:
+          DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+          ALLOW_LIVE_SUPABASE: "1"
+        # The append-only test (ADR-0021, step 4) checks that the database
+        # rejects UPDATE, DELETE and TRUNCATE on the evidence tables.
+        run: npx vitest run packages/storage/tests/contract packages/api/tests/integration/evidence-append-only.integration.test.ts packages/api/tests/integration/policy-approval-read-grants.integration.test.ts
+
       - name: Verify the policy approval log
         # governance/policy-approvals.jsonl: the chain, every signature,
         # and that a change only appends to it (compared with the base).
@@ -180,30 +191,27 @@ jobs:
           fi
 
   verify-policy-approvals:
-    # Preventive Policy Governance gate (maker-checker): fails the run if
-    # any policies/{name}/{version}/policy.json in the tree has no
-    # matching PolicyChangeApprovalRecord for its exact content -- i.e. a
-    # file edit that bypassed the maker-checker API, or a new policy
-    # version not yet approved. A separate job (not a step in
-    # build-and-test above) so it has its own pass/fail status: it is a
-    # required status check on main (docs/internal/VERIFICATION-GAPS.md D-6, G-79).
+    # Preventive Policy Governance gate (maker-checker). Fails the run if any
+    # policies/{name}/{version}/policy.json in the tree has no logged approval
+    # for its exact content, or if the signed approval log in
+    # governance/policy-approvals.jsonl fails any check: hash chain, signatures
+    # against the committed public keys, or append-only growth against the
+    # base commit. A separate job so it has its own status: it is a required
+    # check on main (docs/internal/VERIFICATION-GAPS.md D-6, G-79).
     #
-    # Checks every policy file on every run (--full-scan), not only the
-    # changed ones, so it also catches drift and always proves it can
-    # reach the approval records. A pull request that adds a policy
-    # version passes only after that version is approved in production.
+    # Offline by design (ADR-0021): the job holds no database or API credential.
+    # Anyone can rerun it from the repository. A separate scheduled job
+    # (policy-log-drift.yml) compares the log with the database, using a
+    # read-only role.
     #
-    # Fail-CLOSED by design, the opposite discipline of
-    # verifyPolicyGovernanceIntegrityAtStartup.ts's own fail-open startup
-    # check: scripts/verify-policy-changes-approved.ts exits non-zero on
-    # an unapproved file AND on any failure to complete the check at all
-    # (Supabase unreachable, missing secrets, malformed response, ...) --
-    # there is no "couldn't check, let it pass" path here. Pull requests
-    # from forks get no secrets, so they fail this check.
+    # Fail-CLOSED: any failure exits non-zero. There is no "couldn't check, let
+    # it pass" path. Forks get no secrets, and none are needed here.
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -215,18 +223,18 @@ jobs:
       - name: Build (needed for @parmana/crypto's compiled hashing code)
         run: npm run build
 
-      - name: Verify every policy file is approved
+      - name: Verify the policy approval log and coverage
         env:
-          # Scoped, read-only credential -- see
-          # supabase/migrations/20260818150000_add_ci_read_only_policy_for_approval_records.sql.
-          # Deliberately not DATABASE_URL / SUPABASE_SERVICE_ROLE_KEY,
-          # which bypass RLS and grant read+write on every table.
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          # loadConfig() refuses to start without it; the same value
-          # build-and-test sets at job level.
+          # loadConfig() refuses to start without it.
           PARMANA_POLICY_DIR: ./policies
-        run: npx tsx scripts/verify-policy-changes-approved.ts --full-scan
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -n "$BASE_SHA" ] && [ "$BASE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            git fetch --no-tags --depth=1 origin "$BASE_SHA"
+            npm run policy-log:verify -- --require-coverage --base "$BASE_SHA"
+          else
+            npm run policy-log:verify -- --require-coverage
+          fi
 
   # Regenerates the Python SDK reference and fails if the committed docs
   # differ. Catches a generator change that drops a hand-kept description,

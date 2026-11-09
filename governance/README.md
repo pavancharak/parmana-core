@@ -76,28 +76,30 @@ It prints the number of approvals in the log, then lists any problem under **Cha
 - `The log verifies: the chain is intact and every signature checks out.` Exit code 0.
 - `N problem(s).` Exit code 1.
 
-Policy files whose content is not their latest logged approval are listed under **Policy files
-(not enforced yet)**. They do not fail the check unless you add `-- --require-coverage`. Add
-`-- --base <commit>` to also check that the log only grew since that commit.
+Policy files whose content is not their latest logged approval are listed under **Policy files**.
+They fail the check only with `-- --require-coverage`, which the pull request gate uses (`ci.yml`,
+job `verify-policy-approvals`). Add `-- --base <commit>` to also check that the log only grew since
+that commit.
 
 ## Update it (maintainers)
 
-Run this after every policy change approved in production, and once now to fill the log for the
-first time. It reads the production database with the read only role, so it changes nothing
-there.
+Run this after every policy change approved in production. It appends the approvals the log does
+not hold yet. It reads the production database through the read only role described below, so it
+changes nothing there. The export writes only to `governance/policy-approvals.jsonl` and
+`governance/policy-approval-keys.json`.
+
+Commit the two files through a pull request. Do not edit them by hand.
 
 ### What you need
 
-| What                                                                     | Where to find it                                                                                                                                                                      |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A clone of the repository on an up to date `main`, Node.js 24.6 or later | `git checkout main`, then `git pull`                                                                                                                                                  |
-| `SUPABASE_URL`                                                           | Supabase dashboard, production project, **Project Settings**, **Data API**: **Project URL**, for example `https://abcdefghijkl.supabase.co`                                           |
-| `SUPABASE_ANON_KEY`                                                      | Same project, **Project Settings**, **API Keys**: the **Publishable key** (starts with `sb_publishable_`), or the legacy **anon public** key. Never the secret or `service_role` key. |
+| What                                                                     | Where to find it                                                                                                                                                                                                                                      |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A clone of the repository on an up to date `main`, Node.js 24.6 or later | `git checkout main`, then `git pull`                                                                                                                                                                                                                  |
+| `CI_DATABASE_URL`                                                        | A PostgreSQL connection string for the read only role `parmana_ci_reader`, which has `SELECT` on `policy_change_approval_records` and nothing else. Ask the operator for it. Do not use the application's `DATABASE_URL`, which can change any table. |
 
-These are the same two values stored as the `SUPABASE_URL` and `SUPABASE_ANON_KEY` secrets the
-`verify-policy-approvals` CI job uses. GitHub does not show stored secrets again, so copy them
-from the Supabase dashboard. The anon key can only read the approval records table
-(`supabase/migrations/20260818150000_add_ci_read_only_policy_for_approval_records.sql`).
+The string is a secret. Keep it out of the repository, out of commit messages, and out of chat. The
+drift check (`.github/workflows/policy-log-drift.yml`) reads the same value from the `CI_DATABASE_URL`
+repository secret.
 
 ### Steps on Windows (PowerShell)
 
@@ -109,12 +111,17 @@ git pull
 git checkout -b policy-log-update
 npm ci
 npm run build
-$env:SUPABASE_URL = "https://YOUR-PROJECT.supabase.co"
-$env:SUPABASE_ANON_KEY = "sb_publishable_YOUR-KEY"
+$env:CI_DATABASE_URL = '<read-only connection string>'
 npm run policy-log:export
 ```
 
-The two `$env:` values last only for this PowerShell window. Nothing is saved to disk.
+The `$env:` value lasts only for this PowerShell window. Nothing is saved to disk.
+
+To export one policy only, add `-- --policy <name>` after the command:
+
+```powershell
+npm run policy-log:export -- --policy customer-refund
+```
 
 ### Steps on macOS or Linux (bash)
 
@@ -124,71 +131,32 @@ git pull
 git checkout -b policy-log-update
 npm ci
 npm run build
-export SUPABASE_URL="https://YOUR-PROJECT.supabase.co"
-export SUPABASE_ANON_KEY="sb_publishable_YOUR-KEY"
+export CI_DATABASE_URL='<read-only connection string>'
 npm run policy-log:export
 ```
 
 ### What a successful run prints
 
 ```text
-Appended 14 approval(s); the log now holds 14.
-governance/policy-approvals.jsonl: 14 approvals.
+Appended 1 approval(s); the log now holds 52.
+governance/policy-approvals.jsonl: 52 approvals.
 ...
 The log verifies: the chain is intact and every signature checks out.
 ```
 
-The numbers depend on how many approvals exist. A list under **Policy files (not enforced yet)**
-does not stop the update; it shows policy files whose content differs from their latest
-approval, and is worth reading. Running `export` again straight away appends nothing:
-`Appended 0 approval(s)`.
+The numbers depend on how many approvals exist. Running `export` again straight away appends nothing:
+`Appended 0 approval(s)`. Before writing, `export` checks that every approval it is about to append
+matches a policy file in this repository (the same name and version, with the same content hash). If
+one does not, it stops and writes nothing. Resolve that case before you export again.
 
 ### If it fails
 
-| Message                                        | Meaning and what to do                                                                                                                                                                                     |
-| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Set SUPABASE_URL and SUPABASE_ANON_KEY`       | One of the two values is not set in this window. Set both again, then rerun.                                                                                                                               |
-| `Reading approval records failed: ...`         | The URL or key is wrong, or the key is not the anon or publishable one. Copy both again from the dashboard.                                                                                                |
-| `Cannot find module` or `ERR_MODULE_NOT_FOUND` | The packages are not built. Run `npm run build`, then rerun.                                                                                                                                               |
-| `Fetching key "default" failed: ...`           | The production API did not return its public key. Check that `https://parmana-api-real.vercel.app/keys/default` opens in a browser, then rerun. `PARMANA_API_URL` points it at another deployment.         |
-| `The database disagrees with the log`          | A record already published in the log changed or disappeared in the database. Stop: do not edit the log by hand and do not commit. Treat it as a security incident and record it in `04-INCIDENTS-LOG.md`. |
-| `Signatures: ... does not verify`              | A record does not verify with the key in `policy-approval-keys.json`. Do not commit. Compare that key with `/keys/default` on the production API.                                                          |
-
-### Review and commit
-
-1. Check what changed:
-
-   ```bash
-   git status
-   git diff --stat
-   ```
-
-   Only `governance/policy-approvals.jsonl` should change, and on the first run also
-   `governance/policy-approval-keys.json`. Existing lines in the log must not change; new lines
-   are added at the end.
-
-2. On the first run, or whenever `policy-approval-keys.json` changes, compare the key with the
-   one the production API serves. On Windows: `curl.exe -s https://parmana-api-real.vercel.app/keys/default`.
-   The `pem` value it returns must be the same text as in `policy-approval-keys.json`.
-
-3. Commit and open a pull request:
-
-   ```bash
-   git add governance/policy-approvals.jsonl governance/policy-approval-keys.json
-   git commit -m "Update the policy approval log"
-   git push -u origin policy-log-update
-   ```
-
-   Open the pull request on GitHub. The **Verify the policy approval log** step in CI checks the
-   chain, the signatures and that the log only grew. Merge when CI passes.
-
-### Check that the log is up to date
-
-With the same two values set:
-
-```bash
-npm run policy-log:check-db
-```
-
-It prints `The log matches the database (N approvals).` and exits 0, or says how many
-approvals the log is behind and exits 1. It writes nothing.
+| Message                                                           | Meaning and what to do                                                                                                                                                                                                      |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Set CI_DATABASE_URL to the read only policy reader role`         | The variable is not set in this window. Set it again, then rerun.                                                                                                                                                           |
+| `Reading approval records failed: ...`                            | The connection string is wrong, or the role cannot read the table. Check the password, and the host and user name, against the Supabase **Connect** dialog.                                                                 |
+| `Database approvals that this repository's policies do not match` | A record to be appended names a policy this repository does not hold, or its approved content differs from the file. Stop. Do not commit. Find out which repository holds that policy, and whether the approval is correct. |
+| `Cannot find module` or `ERR_MODULE_NOT_FOUND`                    | The packages are not built. Run `npm run build`, then rerun.                                                                                                                                                                |
+| `Fetching key "default" failed: ...`                              | The production API did not return its public key. Check that `https://parmana-api-real.vercel.app/keys/default` opens in a browser, then rerun. `PARMANA_API_URL` points it at another deployment.                          |
+| `The database disagrees with the log`                             | A record already published in the log changed or disappeared in the database. Stop: do not edit the log by hand and do not commit. Treat it as a security incident and record it in `04-INCIDENTS-LOG.md`.                  |
+| `Signatures: ... does not verify`                                 | A record does not verify with the key in `policy-approval-keys.json`. Do not commit. Compare that key with `/keys/default` on the production API.                                                                           |

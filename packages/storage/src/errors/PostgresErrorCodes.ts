@@ -6,7 +6,7 @@
  * No such mapping existed anywhere in this codebase before this file
  * (see docs/internal/VERIFICATION-GAPS.md D-1: the Supabase repositories rethrow
  * every insert error unmapped). Built here because
- * SupabaseNonceStore's atomic-consumption guarantee requires
+ * PostgresNonceStore's atomic-consumption guarantee requires
  * distinguishing "this nonce already exists" from every other failure
  * mode, which are handled oppositely (reject vs. fail closed).
  */

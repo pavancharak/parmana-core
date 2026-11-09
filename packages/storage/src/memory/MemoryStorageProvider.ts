@@ -14,12 +14,14 @@ import type {
   InboundCheckRepository,
   InboundDecisionRepository,
   InboundOutcomeRepository,
+  ExecutionAuditSink,
 } from "@parmana/shared";
 
 import type { StorageProvider } from "../StorageProvider.js";
 
 import { MemoryBusinessTransactionRepository } from "./MemoryBusinessTransactionRepository.js";
 
+import { MemoryExecutionAuditSink } from "./MemoryExecutionAuditSink.js";
 import { MemoryExecutionTrustRecordRepository } from "./MemoryExecutionTrustRecordRepository.js";
 
 import { MemoryExecutionIntentRepository } from "./MemoryExecutionIntentRepository.js";
@@ -70,8 +72,11 @@ export class MemoryStorageProvider implements StorageProvider {
   readonly externalConnectors: ExternalConnectorRepository;
   readonly businessSignalSources: BusinessSignalSourceRepository;
   readonly authorityGrants: AuthorityGrantRepository;
+  readonly executionAuditSink: ExecutionAuditSink;
 
   constructor() {
+    this.executionAuditSink = new MemoryExecutionAuditSink();
+
     this.businessTransactions = new MemoryBusinessTransactionRepository();
 
     this.trustRecords = new MemoryExecutionTrustRecordRepository();

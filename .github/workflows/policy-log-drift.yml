@@ -1,0 +1,46 @@
+name: Policy approval log drift
+
+# Compares the signed policy approval log in governance/policy-approvals.jsonl
+# with the approval records in the database, using the read-only policy reader
+# role. The check fails if the log is behind the database, or if the two
+# disagree. The pull request gate (ci.yml, verify-policy-approvals) is offline
+# and needs no credential. This job is the one place that does.
+#
+# Needs the repository secret CI_DATABASE_URL, a connection string for the
+# read-only role described in
+# supabase/migrations/20260818150000_add_ci_read_only_policy_for_approval_records.sql.
+# Until that secret exists, this job fails on every run, by design.
+# It never runs on pull requests, so forks never see the secret.
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: policy-log-drift
+  cancel-in-progress: false
+
+jobs:
+  check-db:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24.22.2"
+
+      - name: Install workspace
+        run: npm ci
+
+      - name: Build (needed for @parmana/crypto's compiled hashing code)
+        run: npm run build
+
+      - name: Compare the log with the database
+        env:
+          CI_DATABASE_URL: ${{ secrets.CI_DATABASE_URL }}
+        run: npm run policy-log:check-db

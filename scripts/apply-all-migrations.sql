@@ -2715,3 +2715,138 @@ ALTER TABLE inbound_decisions
 ALTER TABLE inbound_decisions
   ADD COLUMN IF NOT EXISTS approval_id TEXT,
   ADD COLUMN IF NOT EXISTS approved_key_id TEXT;
+
+
+-- =============================================================================
+-- Source: supabase/migrations/20261110120000_enforce_append_only_evidence.sql
+-- =============================================================================
+-- Evidence tables are append-only, enforced by the database (ADR-0021, step 4)
+-- =============================================================================
+--
+-- Until now "append-only" was a convention, stated in comments and kept by the
+-- application code. Nothing stopped a row from being updated or deleted through
+-- SQL. This migration makes it a rule the database enforces:
+--
+--   1. A BEFORE UPDATE OR DELETE trigger raises an exception on each row, and a
+--      BEFORE TRUNCATE trigger refuses the statement. The rule applies to every
+--      role that does not disable the trigger, including the table owner.
+--   2. UPDATE, DELETE and TRUNCATE are revoked from the public API roles
+--      (anon, authenticated, PUBLIC) where those roles exist, so a request
+--      through a platform API cannot reach these tables at all.
+--
+-- What this does not stop: a superuser, or the table owner, can run
+-- ALTER TABLE ... DISABLE TRIGGER and then change rows. The hash chain is what
+-- makes that visible. A chain edit or deletion breaks verification, and the
+-- chain head is anchored outside the database (ADR-0021, step 5). The database
+-- rule and the chain cover different adversaries, and both are needed.
+--
+-- Tables covered: the chained audit trails and the refusal record. Each is only
+-- ever inserted by its sink (PostgresCallerAuditSink, PostgresExecutionAuditSink,
+-- PostgresPolicyChangeApprovalRecordRepository, PostgresRefusalRecordRepository).
+-- Trust record headers and their executions are not covered yet: their
+-- repositories update them (touch(), and the deprecated replaceExecution()).
+--
+-- Safe to re-run: triggers are dropped and created again, and REVOKE is
+-- idempotent.
+
+CREATE OR REPLACE FUNCTION parmana_reject_evidence_mutation()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RAISE EXCEPTION '% is append-only: % is not allowed on it', TG_TABLE_NAME, TG_OP
+        USING ERRCODE = 'insufficient_privilege';
+END;
+$$;
+
+DO $$
+DECLARE
+    evidence_table TEXT;
+BEGIN
+    FOREACH evidence_table IN ARRAY ARRAY[
+        'caller_audit_events',
+        'execution_audit_events',
+        'policy_change_approval_records',
+        'refusal_records'
+    ]
+    LOOP
+        IF to_regclass(evidence_table) IS NULL THEN
+            CONTINUE;
+        END IF;
+
+        EXECUTE format(
+            'DROP TRIGGER IF EXISTS %I ON %I',
+            evidence_table || '_append_only_row', evidence_table
+        );
+        EXECUTE format(
+            'CREATE TRIGGER %I BEFORE UPDATE OR DELETE ON %I
+               FOR EACH ROW EXECUTE FUNCTION parmana_reject_evidence_mutation()',
+            evidence_table || '_append_only_row', evidence_table
+        );
+
+        EXECUTE format(
+            'DROP TRIGGER IF EXISTS %I ON %I',
+            evidence_table || '_append_only_truncate', evidence_table
+        );
+        EXECUTE format(
+            'CREATE TRIGGER %I BEFORE TRUNCATE ON %I
+               FOR EACH STATEMENT EXECUTE FUNCTION parmana_reject_evidence_mutation()',
+            evidence_table || '_append_only_truncate', evidence_table
+        );
+
+        -- Public API roles, where the platform defines them (Supabase does;
+        -- plain PostgreSQL usually does not).
+        IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+            EXECUTE format('REVOKE UPDATE, DELETE, TRUNCATE ON %I FROM anon', evidence_table);
+        END IF;
+        IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+            EXECUTE format('REVOKE UPDATE, DELETE, TRUNCATE ON %I FROM authenticated', evidence_table);
+        END IF;
+        EXECUTE format('REVOKE UPDATE, DELETE, TRUNCATE ON %I FROM PUBLIC', evidence_table);
+    END LOOP;
+END;
+$$;
+
+
+-- =============================================================================
+-- Source: supabase/migrations/20261110130000_policy_approval_reads_for_reader_role_only.sql
+-- =============================================================================
+-- Policy approval records: read by the policy reader role only (ADR-0021)
+-- =============================================================================
+--
+-- Until now the public anon role could read policy_change_approval_records, through
+-- the policy created in 20260818150000 and the grant in the same file. The
+-- deploy-time approval check verified the approval log offline, and the export and
+-- drift check read the table through the read only role named in CI_DATABASE_URL.
+-- Nothing reads the table through the anon role any more, so that access is removed.
+--
+-- This migration:
+--   1. creates a group role, parmana_policy_reader, with no login. It is the only
+--      role with a read policy on this table.
+--   2. replaces the anon policy with one for that group role.
+--   3. revokes the anon grant.
+--
+-- A login role, such as the one in CI_DATABASE_URL, gets read access by being made
+-- a member of the group role:  GRANT parmana_policy_reader TO <login role>;
+-- That grant is an operator step, not part of this migration, because it names a
+-- login role and a password is never written in a migration.
+--
+-- Safe to re-run.
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'parmana_policy_reader') THEN
+        CREATE ROLE parmana_policy_reader NOLOGIN;
+    END IF;
+END;
+$$;
+
+GRANT USAGE ON SCHEMA public TO parmana_policy_reader;
+GRANT SELECT ON policy_change_approval_records TO parmana_policy_reader;
+
+DROP POLICY IF EXISTS "ci_read_only_select" ON policy_change_approval_records;
+DROP POLICY IF EXISTS "policy_reader_select" ON policy_change_approval_records;
+CREATE POLICY "policy_reader_select" ON policy_change_approval_records
+    FOR SELECT TO parmana_policy_reader USING (true);
+
+REVOKE SELECT ON policy_change_approval_records FROM anon;

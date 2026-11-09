@@ -38,7 +38,7 @@ export interface RateLimitStoreLike {
  * Atomicity: increment() is a single INSERT ... ON CONFLICT DO UPDATE,
  * so two concurrent increments for the same key never race outside the
  * database -- Postgres serializes the row-level update itself, the
- * same guarantee SupabaseNonceStore relies on for its INSERT-only
+ * same guarantee PostgresNonceStore relies on for its INSERT-only
  * uniqueness check, applied here via an upsert instead because a rate
  * limit counter (unlike a nonce) is legitimately written more than
  * once per key.

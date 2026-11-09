@@ -110,7 +110,7 @@ an `ExecutionChannel.release(...)` call for the deprecated channel-based path).
 - A public key (or `KeyProvider`) matching whatever signed the authorizations this gateway
   will verify.
 - A `NonceStore` implementation, `MemoryNonceStore` for tests/tutorials,
-  `SupabaseNonceStore` (via the storage layer, Chapter 13) for a real deployment, so replay
+  `PostgresNonceStore` (via the storage layer, Chapter 13) for a real deployment, so replay
   protection survives a process restart.
 - To enable policy-freshness checking: a `PolicyRepository` (Chapter 4/13) pointed at the same
   policy content the signing side used.

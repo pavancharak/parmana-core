@@ -12,7 +12,9 @@ import {
   checkPolicyCoverage,
   checkSignatures,
   isAppendOnly,
+  normalizeDbRow,
   parseLog,
+  unmatchedRecords,
   recordFromRow,
   serializeLog,
   sha256Hex,
@@ -94,6 +96,87 @@ beforeAll(async () => {
 
 const clone = (entries: readonly LogEntry[]) =>
   JSON.parse(JSON.stringify(entries)) as LogEntry[];
+
+describe("export refuses approvals the repository does not match", () => {
+  const content = { name: "p", rules: [1] };
+  const hash = sha256Hex(content);
+  const record = (
+    policyName: string,
+    policyVersion: string,
+    contentHashAfter: string,
+  ) =>
+    ({
+      policyChangeApprovalRecordId: `id-${policyName}-${policyVersion}`,
+      pendingPolicyChangeId: "pending",
+      policyName,
+      policyVersion,
+      proposedBy: "a",
+      approvedBy: "b",
+      proposedAt: "2026-11-01T10:00:00.000Z",
+      approvedAt: "2026-11-01T10:05:00.000Z",
+      contentHashAfter,
+      signature: { algorithm: "ed25519", keyId: "k", value: "v" },
+    }) as unknown as LoggedApprovalRecord;
+
+  it("accepts a record whose approved content matches the file", () => {
+    const files = new Map([["p/1.0.0", content]]);
+    expect(unmatchedRecords([record("p", "1.0.0", hash)], files)).toEqual([]);
+  });
+
+  it("refuses a record with no policy file in this repository", () => {
+    const problems = unmatchedRecords(
+      [record("razorpay-refund", "1.1.0", hash)],
+      new Map([["p/1.0.0", content]]),
+    );
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toMatch(/matches no policy file/);
+  });
+
+  it("refuses a record whose approved content differs from the file", () => {
+    const problems = unmatchedRecords(
+      [record("p", "1.0.0", "0".repeat(64))],
+      new Map([["p/1.0.0", content]]),
+    );
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toMatch(/differs from/);
+  });
+
+  it("appends only the records the filter admits", () => {
+    const wanted = record("p", "1.0.0", hash);
+    const other = record("q", "1.0.0", hash);
+    const { entries, added } = appendFromDatabase(
+      [],
+      [wanted, other],
+      (r) => r.policyName === "p",
+    );
+    expect(added).toBe(1);
+    expect(entries.map((e) => e.record.policyName)).toEqual(["p"]);
+  });
+});
+
+describe("reading approval rows from PostgreSQL", () => {
+  it("keeps milliseconds when a Date becomes the log's ISO timestamp", () => {
+    const row = {
+      policy_change_approval_record_id: "r1",
+      pending_policy_change_id: "p1",
+      policy_name: "n",
+      policy_version: "1.0.0",
+      proposed_by: "a",
+      approved_by: "b",
+      proposed_at: new Date("2026-11-01T10:00:00.123Z"),
+      approved_at: new Date("2026-11-01T10:05:00.456Z"),
+      content_hash_before: null,
+      content_hash_after: "abc",
+      previous_record_hash: null,
+      signature_json: { algorithm: "ed25519", keyId: "k", value: "v" },
+    };
+
+    const record = recordFromRow(normalizeDbRow(row));
+
+    expect(record.approvedAt).toBe("2026-11-01T10:05:00.456Z");
+    expect(record.proposedAt).toBe("2026-11-01T10:00:00.123Z");
+  });
+});
 
 describe("the policy approval log", () => {
   it("builds a chain whose every record verifies with the server's key", () => {

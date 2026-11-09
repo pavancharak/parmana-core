@@ -54,6 +54,6 @@ doing every step by hand.
 
 [Tutorial 103 - Policy Governance (Maker-Checker)](../103-policy-governance-maker-checker/README.md) —
 the fully manual flow this tutorial's scripts collapse into one step each. ·
-[Tutorial 116 - SupabasePolicyRepository (the EROFS fix)](../116-supabase-policy-repository/README.md) —
+[Tutorial 116 - PostgresPolicyRepository (the EROFS fix)](../116-supabase-policy-repository/README.md) —
 the storage-layer fix from the same night that made real production approvals possible at
 all.

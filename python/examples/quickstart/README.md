@@ -34,8 +34,9 @@ Constructs a `ParmanaClient`, submits a Business Transaction through
   ```
 
   `memory` storage is used here so the example has no external database
-  dependency. The repo's committed `.env` defaults to Supabase-backed
-  storage; override `PARMANA_STORAGE` as shown above to run fully locally.
+  dependency. The repo's committed `.env` defaults to PostgreSQL-backed
+  storage (`PARMANA_STORAGE=supabase`, an alias for `postgres`); override
+  `PARMANA_STORAGE` as shown above to run fully locally.
 
   This example targets `test:fixture-execute`, a generic,
   `NODE_ENV=test`-only fixture connector (`createTestFixtureConnector.ts`)

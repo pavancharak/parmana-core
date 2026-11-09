@@ -111,7 +111,7 @@ export interface ConnectorPolicy {
 
 /**
  * Re-exported from @parmana/shared, not defined here, so
- * packages/storage's SupabaseExecutionAuditSink can use the same
+ * packages/storage's PostgresExecutionAuditSink can use the same
  * shape without importing @parmana/execution-control —
  * tests/architecture/execution-boundary.test.ts enforces a closed
  * dependent set for that package (execution-control, execution-gateway,

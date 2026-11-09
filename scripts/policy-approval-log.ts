@@ -5,14 +5,16 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { createClient } from "@supabase/supabase-js";
+import pg from "pg";
 
 import {
   appendFromDatabase,
+  unmatchedRecords,
   checkChain,
   checkPolicyCoverage,
   checkSignatures,
   isAppendOnly,
+  normalizeDbRow,
   parseLog,
   recordFromRow,
   serializeLog,
@@ -31,12 +33,15 @@ import {
  *       approval (reported; fails only with --require-coverage), and with
  *       --base, that the log only grew since that commit.
  *
- *   npx tsx scripts/policy-approval-log.ts export
+ *   npx tsx scripts/policy-approval-log.ts export [--policy <name>]
  *       Appends the database's approval records the log does not hold
  *       yet, and fetches any public key it has not seen. Needs
- *       SUPABASE_URL and SUPABASE_ANON_KEY (the read only CI role) and
+ *       CI_DATABASE_URL (the read only policy reader role) and
  *       optionally PARMANA_API_URL (default: production). Refuses to
  *       write if a logged record changed or disappeared in the database.
+ *       Refuses, and writes nothing, if a record to be appended does not
+ *       match a policies/{name}/{version}/policy.json in this repository.
+ *       With --policy, appends only that policy's missing records.
  *
  *   npx tsx scripts/policy-approval-log.ts check-db
  *       Same comparison as export, without writing: fails if the log is
@@ -145,36 +150,62 @@ function verify(args: string[]): number {
   return failed === 0 ? 0 : 1;
 }
 
+/**
+ * Reads the approval records directly from PostgreSQL, through the read-only
+ * role named in CI_DATABASE_URL. That role has SELECT on
+ * policy_change_approval_records only, under RLS (see
+ * supabase/migrations/20260818150000_add_ci_read_only_policy_for_approval_records.sql).
+ * It is not DATABASE_URL, which bypasses RLS.
+ */
 async function databaseRecords(): Promise<LoggedApprovalRecord[]> {
-  const url = process.env.SUPABASE_URL;
-  const anonKey = process.env.SUPABASE_ANON_KEY;
-  if (!url || !anonKey) {
+  const url = process.env.CI_DATABASE_URL;
+  if (!url) {
     throw new Error(
-      "Set SUPABASE_URL and SUPABASE_ANON_KEY (the read only CI role).",
+      "Set CI_DATABASE_URL to the read-only policy approval reader role.",
     );
   }
-  const client = createClient(url, anonKey);
-  const rows: Record<string, unknown>[] = [];
-  for (let from = 0; ; from += 1000) {
-    const { data, error } = await client
-      .from("policy_change_approval_records")
-      .select("*")
-      .order("approved_at", { ascending: true })
-      .order("policy_change_approval_record_id", { ascending: true })
-      .range(from, from + 999);
-    if (error)
-      throw new Error(`Reading approval records failed: ${error.message}`);
-    rows.push(...(data as Record<string, unknown>[]));
-    if (data.length < 1000) break;
+  const pool = new pg.Pool({ connectionString: url, max: 1 });
+  try {
+    const { rows } = await pool.query(
+      "SELECT * FROM policy_change_approval_records " +
+        "ORDER BY approved_at ASC, policy_change_approval_record_id ASC",
+    );
+    return rows.map((row) =>
+      recordFromRow(normalizeDbRow(row as Record<string, unknown>)),
+    );
+  } finally {
+    await pool.end();
   }
-  return rows.map(recordFromRow);
 }
 
-async function exportOrCheck(write: boolean): Promise<number> {
+async function exportOrCheck(write: boolean, only?: string): Promise<number> {
   const current = readLog();
+  const records = await databaseRecords();
+  const include = (record: LoggedApprovalRecord) =>
+    only === undefined || record.policyName === only;
+
+  // Refuse before writing if any record about to be appended does not match a
+  // policy file in this repository. Nothing is written in that case.
+  const logged = new Set(
+    current.map((entry) => entry.record.policyChangeApprovalRecordId),
+  );
+  const fresh = records.filter(
+    (record) =>
+      !logged.has(record.policyChangeApprovalRecordId) && include(record),
+  );
+  const unmatched = unmatchedRecords(fresh, readPolicies());
+  if (unmatched.length > 0) {
+    report(
+      "Database approvals that this repository's policies do not match",
+      unmatched,
+    );
+    return 1;
+  }
+
   const { entries, added, problems } = appendFromDatabase(
     current,
-    await databaseRecords(),
+    records,
+    include,
   );
   if (problems.length > 0) {
     report("The database disagrees with the log", problems);
@@ -216,9 +247,19 @@ async function exportOrCheck(write: boolean): Promise<number> {
 async function main(): Promise<void> {
   const [command, ...args] = process.argv.slice(2);
   if (command === "verify") process.exit(verify(args));
-  if (command === "export") process.exit(await exportOrCheck(true));
-  if (command === "check-db") process.exit(await exportOrCheck(false));
-  console.error("Usage: policy-approval-log.ts verify|export|check-db");
+  const policyAt = args.indexOf("--policy");
+  const only = policyAt >= 0 ? args[policyAt + 1] : undefined;
+  if (policyAt >= 0 && (only === undefined || only.startsWith("--"))) {
+    console.error(
+      "--policy needs a policy name, for example --policy customer-refund",
+    );
+    process.exit(2);
+  }
+  if (command === "export") process.exit(await exportOrCheck(true, only));
+  if (command === "check-db") process.exit(await exportOrCheck(false, only));
+  console.error(
+    "Usage: policy-approval-log.ts verify|export|check-db [--policy <name>]",
+  );
   process.exit(2);
 }
 

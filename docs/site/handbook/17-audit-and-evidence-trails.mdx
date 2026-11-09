@@ -47,7 +47,7 @@ artifact in this codebase follows.
 
 ### Caller Audit Events
 
-`SupabaseCallerAuditSink` (`packages/api/src/auth/SupabaseCallerAuditSink.ts`) durably records
+`PostgresCallerAuditSink` (`packages/api/src/auth/PostgresCallerAuditSink.ts`) durably records
 every caller-authentication decision: success, failure, capability checks, principal checks.
 sink lost every event on restart), and four of its columns were each added in a separate,
 dated migration as a distinct milestone landed, `capability` (2026-08-12, capability-scoping),
@@ -68,7 +68,7 @@ Failure semantics are explicit and deliberately unchanged from the sink this rep
 
 ### Execution Audit Events
 
-`SupabaseExecutionAuditSink` (`packages/storage/src/supabase/SupabaseExecutionAuditSink.ts`)
+`PostgresExecutionAuditSink` (`packages/storage/src/postgres/PostgresExecutionAuditSink.ts`)
 covers the execution-control lifecycle separately from caller authentication. Per the
 [Database Schema Reference](/storage/schema-reference) (verify this claim yourself if you
 touch this table, it is a real operational fact worth confirming against current deployment
@@ -124,9 +124,9 @@ governance itself is (Chapter 7).
 
 - `packages/shared/src/domain/refusal-record.ts`, `packages/runtime/src/RefusalRecordBuilder.ts`,
   `packages/crypto/src/RefusalCrypto.ts`
-- `packages/api/src/auth/SupabaseCallerAuditSink.ts` and its migrations, named in its own
+- `packages/api/src/auth/PostgresCallerAuditSink.ts` and its migrations, named in its own
   comment, under `supabase/migrations/`
-- `packages/storage/src/supabase/SupabaseExecutionAuditSink.ts`
+- `packages/storage/src/postgres/PostgresExecutionAuditSink.ts`
 - `packages/shared/src/domain/evidence-anchor.ts`,
   `packages/api/src/governance/PolicyGovernanceAnchorResolver.ts`
 - `packages/api/tests/unit/PolicyGovernanceAnchorResolver.test.ts`,
@@ -135,8 +135,8 @@ governance itself is (Chapter 7).
 
 ## Integration requirements
 
-`DATABASE_URL` (direct Postgres connection) for `SupabaseCallerAuditSink` and
-`SupabaseExecutionAuditSink` to persist durably; without it, this codebase falls back to
+`DATABASE_URL` (direct Postgres connection) for `PostgresCallerAuditSink` and
+`PostgresExecutionAuditSink` to persist durably; without it, this codebase falls back to
 in-memory sinks that lose events on restart (correct for tests, not for production). No
 separate configuration is needed for `EvidenceAnchor`/`PolicyGovernanceAnchorResolver`, they
 are wired unconditionally whenever `RuntimeEngine` is constructed.

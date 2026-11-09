@@ -12,7 +12,7 @@ interface Row {
 
 /**
  * In-process ExecutionOutcomeStore for tests. Loses all state on restart,
- * like MemoryNonceStore. Production uses SupabaseExecutionOutcomeStore.
+ * like MemoryNonceStore. Production uses PostgresExecutionOutcomeStore.
  *
  * Results are stored as JSON, as the durable store stores them, so tests see
  * the same round trip production does (for example, executedAt becomes a Date

@@ -2,7 +2,7 @@ import type { ExecutionOutcomeStore } from "@parmana/shared";
 import { MemoryExecutionOutcomeStore } from "@parmana/execution-gateway";
 import {
   PostgresPoolFactory,
-  SupabaseExecutionOutcomeStore,
+  PostgresExecutionOutcomeStore,
 } from "@parmana/storage";
 
 import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
@@ -16,7 +16,7 @@ import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
  * Test wiring (NODE_ENV=test): MemoryExecutionOutcomeStore, the same split
  * createNonceStore.ts uses.
  *
- * Production: SupabaseExecutionOutcomeStore. Fails closed at startup without
+ * Production: PostgresExecutionOutcomeStore. Fails closed at startup without
  * DATABASE_URL, never falls back to memory, since a silent fallback would
  * bring back the unknown-outcome gap with no signal.
  */
@@ -27,5 +27,5 @@ export function createExecutionOutcomeStore(): ExecutionOutcomeStore {
 
   assertDatabaseUrlConfigured("ExecutionOutcomeStore");
 
-  return new SupabaseExecutionOutcomeStore(PostgresPoolFactory.create());
+  return new PostgresExecutionOutcomeStore(PostgresPoolFactory.create());
 }

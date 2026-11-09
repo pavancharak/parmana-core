@@ -1,7 +1,7 @@
 /**
  * Whether a validated test database is configured. Mirrors supabase-availability.ts's shape
  * exactly, but gates the two audit-sink integration tests that now write via PostgresPoolFactory
- * instead of a supabase-js/PostgREST client (SUPABASE_URL) — see SupabaseCallerAuditSink /
+ * instead of a supabase-js/PostgREST client (SUPABASE_URL) — see PostgresCallerAuditSink /
  * SupabaseRazorpayWebhookAuditSink for why (temporary PostgREST schema-cache workaround,
  * Supabase ticket SU-437429).
  *

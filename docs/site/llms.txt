@@ -243,7 +243,7 @@ This file is generated from the documentation navigation. Do not edit it by hand
 * [Production deployment runbook](https://docs.parmanasystems.com/deployment/production): A numbered procedure to deploy the Parmana server to production, with the check that proves each step worked and the fix when it did not.
 * [AWS KMS signing](https://docs.parmanasystems.com/deployment/aws-kms-signing): Keep the signing key inside AWS KMS so the private key is never released. Set it up, verify it works, and understand the 4096 byte KMS limit.
 * [Environment variable reference](https://docs.parmanasystems.com/deployment/environment-variables): Every environment variable the Parmana server reads: whether it is required, its default, its allowed values, and what it does.
-* [Deploy Patterns](https://docs.parmanasystems.com/guides/deploy-patterns): In-memory vs Supabase storage, the full environment variable checklist, and how key management works.
+* [Deploy Patterns](https://docs.parmanasystems.com/guides/deploy-patterns): In-memory vs PostgreSQL storage, the full environment variable checklist, and how key management works.
 ## Deploy and operate: Security
 
 * [Security](https://docs.parmanasystems.com/security/overview): What Parmana actually guarantees, precisely scoped, and, as important, what it explicitly does not claim.

@@ -2,7 +2,7 @@ import type { NonceStore } from "@parmana/envelope-verifier";
 import { MemoryNonceStore } from "@parmana/envelope-verifier";
 import {
   PostgresPoolFactory,
-  SupabaseApprovalNonceStore,
+  PostgresApprovalNonceStore,
 } from "@parmana/storage";
 
 import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
@@ -14,14 +14,14 @@ import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
  *
  * Deliberately a separate instance/table from createNonceStore.ts's
  * own NonceStore (ExecutionGateway's Authorization-envelope replay
- * protection) -- see SupabaseApprovalNonceStore's own comment for why
+ * protection) -- see PostgresApprovalNonceStore's own comment for why
  * the two nonce namespaces must not share a table.
  *
  * Test wiring (NODE_ENV=test): MemoryNonceStore -- mirrors
  * createNonceStore.ts's own production/test split exactly.
  *
- * Production: SupabaseApprovalNonceStore, a durable store shared
- * across every process pointed at the same Supabase project. Fails
+ * Production: PostgresApprovalNonceStore, a durable store shared
+ * across every process pointed at the same PostgreSQL database. Fails
  * closed at startup if DATABASE_URL is not configured -- never
  * silently falls back to an in-memory store, which would silently
  * narrow Approval Artifact replay protection to a single process's
@@ -35,5 +35,5 @@ export function createApprovalNonceStore(): NonceStore {
 
   assertDatabaseUrlConfigured("ApprovalNonceStore");
 
-  return new SupabaseApprovalNonceStore(PostgresPoolFactory.create());
+  return new PostgresApprovalNonceStore(PostgresPoolFactory.create());
 }
