@@ -294,7 +294,7 @@ matches what was approved. Indexed on `(policy_name, policy_version, approved_at
 This is the only table with a real RLS policy. Migration `20260818150000` grants a read-only
 role `SELECT` here. Nothing in the approval workflow uses that grant any more. The pull request gate
 and the deploy-time check both verify the signed log offline, and the scheduled drift check reads through
-a read-only role named in `CI_DATABASE_URL`. The grant can be removed in a later migration.
+Migration `20261110130000` removed the `anon` grant and the anon policy. Reads now go through the `parmana_policy_reader` group role.
 Never write rows here by hand.
 
 ### `consumed_nonces`, `consumed_approval_nonces`, `consumed_policy_change_step_up_nonces`

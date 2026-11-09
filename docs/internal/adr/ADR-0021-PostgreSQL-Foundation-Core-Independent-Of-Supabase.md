@@ -113,6 +113,13 @@ Not done:
 
 **Code naming (2026-11-09).** The PostgreSQL storage classes that still carried the `Supabase` prefix were renamed to `Postgres`, with their files moved from `packages/storage/src/supabase/` to `packages/storage/src/postgres/`. This includes `SupabaseStorageProvider`, the nonce stores, and the repositories. The unused `supabase-availability` test helpers and their unit tests were removed. Configuration values are unchanged: `PARMANA_STORAGE=supabase` still selects the alias, and the API value `not-supabase-backed` is part of the contract. The deploy-time approval check still uses Supabase's REST API, which is a separate decision. Its credential model is still open.
 
+**Closed (2026-11-09).** Migration `20261110130000_policy_approval_reads_for_reader_role_only.sql` removes the `anon` read of `policy_change_approval_records`. Reads go through the group role `parmana_policy_reader`, which the migration creates with no login. `packages/api/tests/integration/policy-approval-read-grants.integration.test.ts` checks that `anon` is denied and the group role is allowed, and it fails when the anon grant is restored.
+
+Operator steps for production, after the migration is applied there:
+
+- `GRANT parmana_policy_reader TO parmana_ci_reader;` lets the existing login role read through the group. Its own `ci_reader_select` policy keeps working until it is dropped.
+- Applying the migration to production is an operator decision, not part of the repository change.
+
 ## Open questions for the operator
 
 1. Should the Supabase storage adapter be kept as a supported deployment option, or removed once step 3 is done?

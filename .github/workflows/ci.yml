@@ -175,7 +175,7 @@ jobs:
           ALLOW_LIVE_SUPABASE: "1"
         # The append-only test (ADR-0021, step 4) checks that the database
         # rejects UPDATE, DELETE and TRUNCATE on the evidence tables.
-        run: npx vitest run packages/storage/tests/contract packages/api/tests/integration/evidence-append-only.integration.test.ts
+        run: npx vitest run packages/storage/tests/contract packages/api/tests/integration/evidence-append-only.integration.test.ts packages/api/tests/integration/policy-approval-read-grants.integration.test.ts
 
       - name: Verify the policy approval log
         # governance/policy-approvals.jsonl: the chain, every signature,
