@@ -65,8 +65,8 @@ When a decision is **approved** and `decide()` reports a verified approval was u
 - The values come from the verified approval, never from the partner's request.
 - The fields are part of the signed bytes.
 - `decide()` returns the approval it used, as `approval: { approvalId, approverId, keyId, issuedAt }`, and is otherwise unchanged.
-- Records without the fields keep their current bytes and still verify. The external verifier must be updated to read the
-  new fields before any new record is issued.
+- Records without the fields keep their current bytes and still verify. No verifier outside `parmana-core` reads inbound
+  records today, so none needs updating before a record is issued.
 
 ### 4.2 Business-confirmed facts (G-144)
 
@@ -130,7 +130,8 @@ when the record is written. This changes the release path, so it needs the owner
 - Existing records keep their bytes and keep verifying. They gain no approval fields.
 - Inbound checks that approve on declared facts alone will be refused for any fact without a source, after this change. List
   the affected capabilities before enabling it.
-- External verifiers must read the new fields before any new record is issued. This is a release dependency, like G-121.
+- If an external consumer of inbound records is added later, it must read the new fields. G-121 does not apply: G-121
+  concerns Execution Trust Records, which is a different record format.
 
 ## 7. Security
 
@@ -162,7 +163,7 @@ when the record is written. This changes the release path, so it needs the owner
 2. Record the answers here.
 3. Then build, in this order: G-143 (fields, signing, `decide()` change), then G-144 (registration, per-fact checks,
    coverage at approval), then the tests in section 8.
-4. Update the external verifier, CLAIMS, VERIFICATION-GAPS and the public inbound page in the same change.
+4. Update CLAIMS, VERIFICATION-GAPS and the public inbound page in the same change. Add an external consumer of inbound records only if an owner decision requires one.
 
 ## 10. Done when
 
