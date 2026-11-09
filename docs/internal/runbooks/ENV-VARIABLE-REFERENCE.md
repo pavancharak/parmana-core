@@ -310,11 +310,11 @@ Every claim is taken from the code, unless marked **(not tested)**. Read [ENV-FI
 
 These names may appear in a development file. The API server does not read them.
 
-| Name                                                             | Where it is read                                                                                                                                                                            |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `KMS_REGION`, `KMS_KEY_ALIAS`                                    | Nothing in the repository. Use `AWS_REGION` and the key settings in the KMS code                                                                                                            |
-| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY` | Scripts only: `SUPABASE_URL` and `SUPABASE_ANON_KEY` by `scripts/verify-policy-changes-approved.ts` (the deploy-time check). `CI_DATABASE_URL` is used by `scripts/policy-approval-log.ts`. |
-| `TEST_*`                                                         | Tests only                                                                                                                                                                                  |
+| Name                                                             | Where it is read                                                                                                   |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `KMS_REGION`, `KMS_KEY_ALIAS`                                    | Nothing in the repository. Use `AWS_REGION` and the key settings in the KMS code                                   |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY` | Not read by the server. Used only by some tests and tutorials. The deploy-time approval check needs no credential. |
+| `TEST_*`                                                         | Tests only                                                                                                         |
 
 ---
 

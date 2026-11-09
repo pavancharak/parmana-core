@@ -166,7 +166,7 @@ For every policy the operator lists, in the form `POLICY_NAME` and `POLICY_VERSI
 
 Do not run `scripts/backfill-legacy-policy-approvals.ts`. It records a system approval that is not a human decision. Only the operator may choose that, in words.
 
-Then run the check. Set `SUPABASE_URL` and `SUPABASE_ANON_KEY` in your shell first. They are for this script only:
+Then run the check. It needs no credential. It verifies the signed approval log in the repository, and then every policy file against it:
 
 ```bash
 npx tsx scripts/verify-policy-changes-approved.ts --full-scan

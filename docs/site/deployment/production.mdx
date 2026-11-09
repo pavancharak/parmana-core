@@ -204,12 +204,11 @@ The full procedure, and how to do it step by step by hand, is in [Policy governa
 **Check:**
 
 ```bash
-export SUPABASE_URL="<your Supabase project URL>"
-export SUPABASE_ANON_KEY="<your Supabase anon key>"
+npm ci && npm run build
 npx tsx scripts/verify-policy-changes-approved.ts --full-scan
 ```
 
-This script is the one place that reads `SUPABASE_URL` and `SUPABASE_ANON_KEY`, and it reads them from your shell, not from the server. That is deliberate: it uses the low privilege `anon` role, which can only read approval records, so a CI credential cannot write. It needs a Supabase project, because it uses the REST layer. On a plain Postgres, read `policy_change_approval_records` with SQL instead. It is fail closed. It exits with a non zero code if it cannot complete the check or finds a live policy with no matching approval record, and it reports each one.
+The check needs no database and no credential. It reads the signed approval log committed in `governance/policy-approvals.jsonl`, and first verifies the log's hash chain and every signature against the committed public keys. Then it checks that every live policy file matches its latest logged approval. It is fail closed: it exits with a non zero code if the log does not verify, or if a live policy has no matching approval, and it reports each one. Run `npm run policy-log:export` first if an approval is recorded in the database but missing from the log.
 
 ## Step 8: Run one real request
 

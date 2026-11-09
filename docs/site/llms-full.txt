@@ -1455,7 +1455,7 @@ For every policy the operator lists, in the form `POLICY_NAME` and `POLICY_VERSI
 
 Do not run `scripts/backfill-legacy-policy-approvals.ts`. It records a system approval that is not a human decision. Only the operator may choose that, in words.
 
-Then run the check. Set `SUPABASE_URL` and `SUPABASE_ANON_KEY` in your shell first. They are for this script only:
+Then run the check. It needs no credential. It verifies the signed approval log in the repository, and then every policy file against it:
 
 ```bash
 npx tsx scripts/verify-policy-changes-approved.ts --full-scan
@@ -8030,12 +8030,11 @@ The full procedure, and how to do it step by step by hand, is in [Policy governa
 **Check:**
 
 ```bash
-export SUPABASE_URL="<your Supabase project URL>"
-export SUPABASE_ANON_KEY="<your Supabase anon key>"
+npm ci && npm run build
 npx tsx scripts/verify-policy-changes-approved.ts --full-scan
 ```
 
-This script is the one place that reads `SUPABASE_URL` and `SUPABASE_ANON_KEY`, and it reads them from your shell, not from the server. That is deliberate: it uses the low privilege `anon` role, which can only read approval records, so a CI credential cannot write. It needs a Supabase project, because it uses the REST layer. On a plain Postgres, read `policy_change_approval_records` with SQL instead. It is fail closed. It exits with a non zero code if it cannot complete the check or finds a live policy with no matching approval record, and it reports each one.
+The check needs no database and no credential. It reads the signed approval log committed in `governance/policy-approvals.jsonl`, and first verifies the log's hash chain and every signature against the committed public keys. Then it checks that every live policy file matches its latest logged approval. It is fail closed: it exits with a non zero code if the log does not verify, or if a live policy has no matching approval, and it reports each one. Run `npm run policy-log:export` first if an approval is recorded in the database but missing from the log.
 
 ## Step 8: Run one real request
 
@@ -8670,9 +8669,9 @@ The server registers no built in connector in this version, so no connector cred
 
 ## Variables that look relevant but the server does not read
 
-| Variable                                                         | Where you may see it                             | Meaning                                                                                                                                                                    |
-| ---------------------------------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | `.env.example`, the deploy-time check, tutorials | The server does **not** read these. It talks to Postgres only through `DATABASE_URL`. They are used by some tests and tutorials. Setting them on the server has no effect. |
+| Variable                                                         | Where you may see it                     | Meaning                                                                                                                                                                              |
+| ---------------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | `.env.example`, some tests and tutorials | The server does **not** read these. It talks to Postgres only through `DATABASE_URL`. The deploy-time approval check needs no credential. Setting these on the server has no effect. |
 
 ## Startup errors and what to do
 

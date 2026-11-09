@@ -292,9 +292,9 @@ which chains the approval history itself; `content_hash_after` only proves the l
 matches what was approved. Indexed on `(policy_name, policy_version, approved_at DESC)`.
 
 This is the only table with a real RLS policy. Migration `20260818150000` grants a read-only
-role `SELECT` here. The deploy-time check (`scripts/verify-policy-changes-approved.ts`) uses that
-role through `SUPABASE_ANON_KEY`. The pull request gate does not read the database: it verifies the
-signed log offline. The scheduled drift check reads through a read-only role named in `CI_DATABASE_URL`.
+role `SELECT` here. Nothing in the approval workflow uses that grant any more. The pull request gate
+and the deploy-time check both verify the signed log offline, and the scheduled drift check reads through
+a read-only role named in `CI_DATABASE_URL`. The grant can be removed in a later migration.
 Never write rows here by hand.
 
 ### `consumed_nonces`, `consumed_approval_nonces`, `consumed_policy_change_step_up_nonces`

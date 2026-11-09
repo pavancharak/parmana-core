@@ -207,13 +207,12 @@ to `policies/{name}/{version}/policy.json` that skips the pending-change API ent
   committed public keys, that every `policies/{name}/{version}/policy.json` has a logged
   approval for its exact content, and that the log only grew since the base commit. Anyone can
   rerun it from the repository.
-- **`scripts/verify-policy-changes-approved.ts`** is the deploy-time check: **fail closed**, run
-  by an operator before a deploy, not inside the live server. Given a list of changed policy files
-  (or `--full-scan`), it hashes each file's live content and checks it against
-  `policy_change_approval_records` through a read-only role, using `SUPABASE_ANON_KEY`, scoped by
-  RLS to that one table. A missing approval record, a content-hash mismatch, and any failure to
-  complete the check at all (database unreachable, a malformed response) are all treated identically
-  as a failure: there is no "couldn't check, let it through" path.
+- **`scripts/verify-policy-changes-approved.ts`** is the deploy-time check: **fail closed**, run by
+  an operator before a deploy, not inside the live server. It needs no database or API credential.
+  It verifies the signed approval log in the repository, its hash chain and every signature, and then
+  checks each policy file (or, with `--full-scan`, every file) against its latest logged approval. A
+  missing approval, a content-hash mismatch, or a log that does not verify is a failure. There is no
+  "couldn't check, let it through" path.
 - **The scheduled drift check** (`.github/workflows/policy-log-drift.yml`) runs
   `npm run policy-log:check-db` daily. It compares the signed log with the database, through the
   read-only role named in the `CI_DATABASE_URL` secret, and fails if they disagree.

@@ -113,7 +113,7 @@ catches a stale citation in them.
 `.github/workflows/ci.yml` runs, on every push to `main` and on every pull request: install (`npm ci`), build
 (`npm run build`), lint (`npm run lint`), typecheck (`npm run typecheck`), a guard against
 retired terminology (a grep-based check, not a type or lint rule), the full test suite
-(`npm test`), and, in a separate job, `scripts/verify-policy-changes-approved.ts` against all policies (`--full-scan`); this is the fail-closed
+(`npm test`), and, in a separate job, `npm run policy-log:verify -- --require-coverage` on the signed approval log, which checks every policy file against it; this is the fail-closed
 governance gate described in Chapter 7, real and enforced in CI today, not yet wired as a GitHub
 required status check due to a plan or visibility limitation outside this codebase.
 

@@ -84,7 +84,7 @@ Production wiring stays fail-closed. `createExecutionAuditSink` takes the sink f
 
 Removed from `packages/*`: `packages/storage/scripts/migrate.ts`, the legacy `supabase-js` script that called an `exec_sql` RPC, its `npm run migrate` script, and the `@supabase/supabase-js` dependency of `@parmana/storage`. The unreferenced `packages/storage/schemas/` SQL files (001–008, the pre-`supabase/migrations` schema) were deleted on the operator's instruction. Git history has them.
 
-**Not done, and needs a decision:** two root-level scripts still import `@supabase/supabase-js` through PostgREST with an anon key, so the root `devDependency` stays.
+**Superseded (2026-11-09).** The two root scripts no longer use `supabase-js`. The policy approval log export reads through `pg` with the read-only role in `CI_DATABASE_URL`, and the deploy-time check verifies the signed log offline. No package in the repository depends on `@supabase/supabase-js`, and the root dependency has been removed.
 
 - `scripts/verify-policy-changes-approved.ts` is the fail-closed CI gate for the `verify-policy-approvals` job.
 - `scripts/policy-approval-log.ts` reads the policy approval log.
@@ -97,7 +97,7 @@ Open:
 
 - The offline gate fails today on `policies/standard-org-baseline/1.0.0/policy.json`, which has no logged approval. It must be resolved before the gate can pass. Either the approval is exported from the database, or the policy was added without approval.
 - `CI_DATABASE_URL` must be created in production: the read-only role, its password, and the secret. Until then the drift job fails on every run, by design.
-- `scripts/verify-policy-changes-approved.ts` still uses `supabase-js` with the anon key, because the deploy-time check and the refresh and backfill scripts depend on it. That is the last reason the root keeps `@supabase/supabase-js`.
+- `scripts/verify-policy-changes-approved.ts`, the deploy-time check, verifies the signed log offline and needs no credential.
 
 **Export hardening (2026-11-09).** `policy-log:export` now refuses to write if any approval it would append does not match a policy file in this repository. The check compares the file's content hash with the record's `contentHashAfter`, and it runs before anything is written. `--policy <name>` appends only that policy's missing records. Tests cover the match check and the filter.
 
