@@ -2149,7 +2149,7 @@ Run on 2026-10-26, Node 22.22.0: the eight files above pass, 88 of 88.
 - The check repository writes `capability`, `target`, `amount` and `check_status` (always `verified`), and `policy_name` and `policy_version` on each decision (claim 3.30). It writes `approved_by`, `approved_at`, `approval_id` and `approved_key_id` only on an approved decision that used a verified approval (G-143). Migration `20261108170000` adds `approval_id` and `approved_key_id`.
 - The rollback is valid only while no row uses the new columns and every old row still has a value in the two relaxed columns. It is not automated.
 - The check repository's SQL is tested by `supabase-inbound-check-consumption.integration.test.ts`, which passed 4 of 4 on a sandbox database with the migrations applied (2026-11-09). The application's routes are tested with an in-memory store.
-- Production: this claim recorded the migration as applied to production on 2026-11-05. On 2026-11-09 the sandbox was found to lack this migration, and production was not checked. Confirm production's `inbound_decisions` columns before relying on this claim.
+- Production: checked on 2026-11-09 with a read-only query. Production had the eight columns from migration `20261105140000`. Migration `20261108170000` (`approval_id`, `approved_key_id`) was applied on 2026-11-09 in the production SQL editor, and both columns are present and nullable. All ten columns now exist on production.
 
 ## 3.32 The Runtime Decides Without Executing, With Unchanged Behaviour (Scoped, 2026-11-05)
 
