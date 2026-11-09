@@ -42,7 +42,25 @@ psql -h <host> -p <port> -U <user> -d parmana_app -f scripts/apply-all-migration
 On a plain PostgreSQL server, the bundle reports `role "anon" does not exist` for two Supabase grants. Those errors
 are harmless for local testing. On Supabase, the bundle runs without them.
 
-Do not point these settings at production or at a shared Supabase project.
+Do not point these settings at production. The sandbox project is the only hosted target; see section 3a.
+
+## 3a. Sandbox settings, set once in `.env.test`
+
+Put the sandbox connection in `.env.test`, which is gitignored. `vitest.setup.ts` loads it before `.env`, so its
+`DATABASE_URL` replaces the production value in `.env` for the test run. No shell variables are needed.
+
+```bash
+# .env.test (on your machine only; never commit it)
+DATABASE_URL=<sandbox connection string from the Supabase dashboard>
+ALLOW_LIVE_SUPABASE=1
+PARMANA_DATABASE_CA_FILE=
+```
+
+Leave `TEST_DATABASE_URL` unset. The consumption suite then uses `DATABASE_URL`, but only because
+`ALLOW_LIVE_SUPABASE=1` is set. If `TEST_DATABASE_URL` is set and equals `DATABASE_URL`, the suite refuses to run.
+
+Check the target before a run: the project ID in the connection string must be the sandbox project's ID, not the
+production project's ID. Do not set `ALLOW_LIVE_SUPABASE=1` in `.env` itself, because `.env` holds production values.
 
 ## 4. Running the tests
 
