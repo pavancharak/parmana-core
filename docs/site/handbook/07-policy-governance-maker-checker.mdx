@@ -114,7 +114,7 @@ Verification, server-side, runs through `PolicyChangeStepUpVerifier.verify()`
    `PolicyChangeStepUpVerifierOptions.maxTtlSeconds`).
 2. **`consumeNonce()`**: only called if every check above passed, this burns the
    envelope's nonce in a dedicated `NonceStore` (`createPolicyChangeStepUpNonceStore.ts`,
-   `SupabasePolicyChangeStepUpNonceStore` in production, a PostgreSQL store), so the exact same signed
+   `PostgresPolicyChangeStepUpNonceStore` in production, a PostgreSQL store), so the exact same signed
    envelope can never be replayed for a second approval. This nonce namespace is entirely
    separate from execution-authorization or approval-artifact nonces.
 

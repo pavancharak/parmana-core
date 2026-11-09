@@ -31,8 +31,8 @@ import type { CallerAuditEvent, CallerAuditSink } from "./CallerAuditSink.js";
  * middleware/caller-auth.ts — that call site has no try/catch today,
  * and this class does not add one. A write failure here rejects the
  * returned promise exactly like any other failed Supabase insert
- * elsewhere in this codebase (SupabaseBusinessTransactionRepository,
- * SupabaseExecutionTrustRecordRepository); it is the caller's
+ * elsewhere in this codebase (PostgresBusinessTransactionRepository,
+ * PostgresExecutionTrustRecordRepository); it is the caller's
  * existing behavior, unmodified by this class, that decides what
  * happens next. See docs/internal/VERIFICATION-GAPS.md G-13 for why this is
  * documented rather than changed in this session.

@@ -18,18 +18,18 @@ switch (configuration.provider) {
   case "supabase":
   case "postgres":
     // refuses with a named error when DATABASE_URL is not set
-    return new SupabaseStorageProvider();
+    return new PostgresStorageProvider();
   case "sqlite":
     throw new Error("SQLite storage provider not implemented.");
 }
 ```
 
-`postgres` is the name to use. `supabase` is accepted as an alias for the same implementation, so existing configurations keep working. The implementation is `SupabaseStorageProvider` for historical reasons: it writes through a direct PostgreSQL connection (`DATABASE_URL`) with the `pg` driver, not through a Supabase client. A self-hosted PostgreSQL works the same way, and so does a Supabase-hosted database. Both refuse to start without `DATABASE_URL`. `sqlite` throws at startup, by design (fails closed rather than silently falling back).
+`postgres` is the name to use. `supabase` is accepted as an alias for the same implementation, so existing configurations keep working. The implementation is `PostgresStorageProvider` for historical reasons: it writes through a direct PostgreSQL connection (`DATABASE_URL`) with the `pg` driver, not through a Supabase client. A self-hosted PostgreSQL works the same way, and so does a Supabase-hosted database. Both refuse to start without `DATABASE_URL`. `sqlite` throws at startup, by design (fails closed rather than silently falling back).
 
 | Provider   | Status                    | Notes                                                                                                                                 |
 | ---------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `memory`   | [AVAILABLE]               | In-process, non-persistent. Used throughout this site's live examples (`PARMANA_STORAGE=memory`) so they have no external dependency. |
-| `postgres` | [AVAILABLE]               | `SupabaseStorageProvider` over `DATABASE_URL`, using `pg`. Works with any PostgreSQL 16 database built from `supabase/migrations/`.   |
+| `postgres` | [AVAILABLE]               | `PostgresStorageProvider` over `DATABASE_URL`, using `pg`. Works with any PostgreSQL 16 database built from `supabase/migrations/`.   |
 | `supabase` | [AVAILABLE]               | Alias for `postgres`. Kept for existing configurations.                                                                               |
 | `sqlite`   | Declared, not implemented | Throws at startup.                                                                                                                    |
 

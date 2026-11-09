@@ -24,7 +24,7 @@ is registered through maker checker with no code change, and Parmana signs each 
 
 **Fleet wide single use requires a shared NonceStore (3.2).** Single use enforcement is
 scoped to whichever `NonceStore` instance performs the check. Parmana's own server shares one
-in Postgres (`SupabaseNonceStore`, and the same for approvals), so every instance on one
+in Postgres (`PostgresNonceStore`, and the same for approvals), so every instance on one
 database accepts an authorization once, and it fails closed at startup without one. A
 receiving system that runs `@parmana/envelope-verifier` with its own per instance store can
 accept the same authorization once per instance; `MemoryNonceStore`, for tests, loses all

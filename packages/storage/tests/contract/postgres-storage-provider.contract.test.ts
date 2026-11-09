@@ -1,13 +1,13 @@
 import { describe } from "vitest";
 
-import { SupabaseStorageProvider } from "../../src/supabase/SupabaseStorageProvider.js";
+import { PostgresStorageProvider } from "../../src/postgres/PostgresStorageProvider.js";
 
 import { resolveDatabaseGate } from "../helpers/database-availability.js";
 
 import { runStorageProviderContract } from "./storage-provider.contract.js";
 
 /**
- * Runs the contract against the PostgreSQL provider. SupabaseStorageProvider
+ * Runs the contract against the PostgreSQL provider. PostgresStorageProvider
  * is the PostgreSQL adapter today: it writes through PostgresPoolFactory
  * (DATABASE_URL) and does not call PostgREST. The name is historical and is
  * renamed in migration step 2.
@@ -22,7 +22,7 @@ const databaseConfigured = resolveDatabaseGate(
 
 describe.skipIf(!databaseConfigured)("postgres storage provider", () => {
   runStorageProviderContract(
-    "SupabaseStorageProvider (PostgreSQL)",
-    () => new SupabaseStorageProvider(),
+    "PostgresStorageProvider (PostgreSQL)",
+    () => new PostgresStorageProvider(),
   );
 });

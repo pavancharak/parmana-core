@@ -18,7 +18,7 @@ import {
  * repository already preserves insertion order via plain array append
  * (see MemoryExecutionTrustRecordRepository.appendExecution/appendOverride/
  * appendVerification/appendReceipt), so it is expected to pass without the
- * ORDER BY / seq changes made to SupabaseExecutionTrustRecordRepository.
+ * ORDER BY / seq changes made to PostgresExecutionTrustRecordRepository.
  * It runs unconditionally, unlike the Supabase counterpart, to guarantee
  * this specific guarantee — round-tripping a Trust Record with 2+ items
  * per collection without breaking its hash or signature — is exercised on

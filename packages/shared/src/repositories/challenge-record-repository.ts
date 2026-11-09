@@ -83,7 +83,7 @@ const CHALLENGE_RECORD_STATUS_ORDER: readonly ChallengeRecordStatus[] = [
  * implementation should call this rather than re-implementing the
  * same checks, so the enforcement is identical across backends (the
  * same reasoning `isUniqueViolation` gave for a shared mapping across
- * MemoryBusinessTransactionRepository / SupabaseBusinessTransactionRepository).
+ * MemoryBusinessTransactionRepository / PostgresBusinessTransactionRepository).
  *
  * Throws ConflictError, never silently drops or overwrites, on any
  * violation.

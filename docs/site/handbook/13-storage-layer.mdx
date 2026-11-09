@@ -46,8 +46,8 @@ the configured provider:
 | Provider value | Class returned                                                                  | Notes                                                                                                                                              |
 | -------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `"memory"`     | `MemoryStorageProvider`                                                         | Five in-memory repository classes, nothing external touched.                                                                                       |
-| `"supabase"`   | `SupabaseStorageProvider`                                                       | Alias for `"postgres"`. Requires `DATABASE_URL`; throws immediately if missing, rather than constructing a pool that would only fail on first use. |
-| `"postgres"`   | returns `SupabaseStorageProvider` and requires `DATABASE_URL`. The name to use. | Works.                                                                                                                                             |
+| `"supabase"`   | `PostgresStorageProvider`                                                       | Alias for `"postgres"`. Requires `DATABASE_URL`; throws immediately if missing, rather than constructing a pool that would only fail on first use. |
+| `"postgres"`   | returns `PostgresStorageProvider` and requires `DATABASE_URL`. The name to use. | Works.                                                                                                                                             |
 | `"sqlite"`     | throws `"SQLite storage provider not implemented."`                             | Reserved name, not built.                                                                                                                          |
 
 `StorageFactory.createFromEnvironment()` is the real entry point every caller actually uses.
@@ -169,7 +169,7 @@ fix (Chapter 16 covers this fully).
 
 - `packages/storage/src/StorageProvider.ts`, `StorageFactory.ts`, the interface and the
   selection logic.
-- `packages/storage/src/memory/MemoryStorageProvider.ts`, `packages/storage/src/supabase/SupabaseStorageProvider.ts`, the two real implementations.
+- `packages/storage/src/memory/MemoryStorageProvider.ts`, `packages/storage/src/postgres/PostgresStorageProvider.ts`, the two real implementations.
 - `packages/storage/src/postgres/PostgresPoolFactory.ts`, the shared connection pool, its
 - `packages/api/src/repositories.ts` and `packages/api/src/application.ts`, the lazy
   construction pattern, and the place it was once violated.

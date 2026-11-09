@@ -147,7 +147,7 @@ interface ChallengeRecordRow {
  * Date-typed field back from Postgres's returned representation
  * (a string inside JSONB, a Date or string for a native timestamptz
  * column depending on driver configuration) -- required here (unlike
- * SupabaseRefusalRecordRepository's decision_json, which round-trips
+ * PostgresRefusalRecordRepository's decision_json, which round-trips
  * its own nested Date fields as strings without complaint) because
  * ChallengeRecordInvestigationStep.performedAt and friends are read
  * back individually, not only ever passed through opaquely.

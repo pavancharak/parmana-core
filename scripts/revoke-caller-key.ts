@@ -2,7 +2,7 @@ import "dotenv/config";
 
 import {
   PostgresPoolFactory,
-  SupabaseCallerKeyRevocationRepository,
+  PostgresCallerKeyRevocationRepository,
 } from "@parmana/storage";
 
 /**
@@ -73,7 +73,7 @@ async function main(args = process.argv.slice(2)): Promise<void> {
   const pool = PostgresPoolFactory.create();
 
   try {
-    const repository = new SupabaseCallerKeyRevocationRepository(pool);
+    const repository = new PostgresCallerKeyRevocationRepository(pool);
 
     await repository.revoke({
       keyHash: parsed.keyHash,

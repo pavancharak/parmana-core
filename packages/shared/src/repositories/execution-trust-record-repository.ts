@@ -80,7 +80,7 @@ export interface ExecutionTrustRecordRepository {
    * (including the several inline test fakes across packages/runtime's
    * own unit tests) must keep compiling and behaving identically
    * without adding it. Only MemoryExecutionTrustRecordRepository and
-   * SupabaseExecutionTrustRecordRepository implement it.
+   * PostgresExecutionTrustRecordRepository implement it.
    */
   sumSuccessfulExecutionAmounts?(
     action: string,

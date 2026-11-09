@@ -74,7 +74,7 @@ Development environments may use:
 
 Production environments typically use a persistent implementation such as:
 
-- SupabaseExecutionTrustRecordRepository
+- PostgresExecutionTrustRecordRepository
 
 The Runtime code remains unchanged.
 

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { MemoryNonceStore } from "@parmana/envelope-verifier";
-import { SupabaseNonceStore } from "@parmana/storage";
+import { PostgresNonceStore } from "@parmana/storage";
 
 import { createNonceStore } from "../../../src/bootstrap/createNonceStore.js";
 
@@ -52,11 +52,11 @@ describe("createNonceStore", () => {
     expect(result).toBeUndefined();
   });
 
-  it("returns SupabaseNonceStore when NODE_ENV is not test and DATABASE_URL is configured", () => {
+  it("returns PostgresNonceStore when NODE_ENV is not test and DATABASE_URL is configured", () => {
     process.env.NODE_ENV = "production";
     process.env.DATABASE_URL =
       "postgresql://user:pass@example.supabase.co:5432/postgres";
 
-    expect(createNonceStore()).toBeInstanceOf(SupabaseNonceStore);
+    expect(createNonceStore()).toBeInstanceOf(PostgresNonceStore);
   });
 });

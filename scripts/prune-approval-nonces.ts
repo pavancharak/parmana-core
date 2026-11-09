@@ -11,7 +11,7 @@
  */
 import "dotenv/config";
 
-import { SupabaseApprovalNonceStore } from "../packages/storage/src/supabase/SupabaseApprovalNonceStore.js";
+import { PostgresApprovalNonceStore } from "../packages/storage/src/postgres/PostgresApprovalNonceStore.js";
 import { PostgresPoolFactory } from "../packages/storage/src/postgres/PostgresPoolFactory.js";
 
 const dryRun = process.argv.includes("--dry-run");
@@ -32,7 +32,7 @@ try {
       `${rows[0].n} expired approval nonce(s) would be removed. Nothing was removed.`,
     );
   } else {
-    const removed = await new SupabaseApprovalNonceStore(pool).deleteExpired(
+    const removed = await new PostgresApprovalNonceStore(pool).deleteExpired(
       new Date(),
     );
     console.log(`${removed} expired approval nonce(s) removed.`);

@@ -678,7 +678,7 @@ describe("ApprovalVerifier", () => {
 
     // Simulates two separate processes/requests, each constructing
     // their own ApprovalVerifier, but both backed by the same durable
-    // NonceStore (e.g. SupabaseApprovalNonceStore in production) --
+    // NonceStore (e.g. PostgresApprovalNonceStore in production) --
     // replay protection must be a property of the shared store, not
     // of any single verifier instance's in-process state.
     const sharedNonceStore = new MemoryNonceStore();

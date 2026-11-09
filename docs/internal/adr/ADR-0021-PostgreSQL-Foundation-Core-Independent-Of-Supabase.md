@@ -111,6 +111,8 @@ Not done:
 - **Separate application role.** The triggers apply to every role except one that disables them, and the table owner can disable them. The ADR asks for an application role without UPDATE or DELETE. That needs a deployment change to `DATABASE_URL`.
 - **Trust record tables.** `execution_trust_records` and `executions` are not covered. Their repository updates them (`touch()` and the deprecated `replaceExecution()`).
 
+**Code naming (2026-11-09).** The PostgreSQL storage classes that still carried the `Supabase` prefix were renamed to `Postgres`, with their files moved from `packages/storage/src/supabase/` to `packages/storage/src/postgres/`. This includes `SupabaseStorageProvider`, the nonce stores, and the repositories. The unused `supabase-availability` test helpers and their unit tests were removed. Configuration values are unchanged: `PARMANA_STORAGE=supabase` still selects the alias, and the API value `not-supabase-backed` is part of the contract. The deploy-time approval check still uses Supabase's REST API, which is a separate decision. Its credential model is still open.
+
 ## Open questions for the operator
 
 1. Should the Supabase storage adapter be kept as a supported deployment option, or removed once step 3 is done?

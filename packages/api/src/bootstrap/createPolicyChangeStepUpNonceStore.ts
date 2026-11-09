@@ -2,7 +2,7 @@ import type { NonceStore } from "@parmana/envelope-verifier";
 import { MemoryNonceStore } from "@parmana/envelope-verifier";
 import {
   PostgresPoolFactory,
-  SupabasePolicyChangeStepUpNonceStore,
+  PostgresPolicyChangeStepUpNonceStore,
 } from "@parmana/storage";
 
 import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
@@ -16,14 +16,14 @@ import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
  * Deliberately a separate instance/table from both createNonceStore.ts
  * (ExecutionGateway's own Authorization-envelope replay protection)
  * and createApprovalNonceStore.ts (Approval Artifact replay
- * protection) -- see SupabasePolicyChangeStepUpNonceStore's own
+ * protection) -- see PostgresPolicyChangeStepUpNonceStore's own
  * comment for why the three nonce namespaces must not share a table.
  *
  * Test wiring (NODE_ENV=test): MemoryNonceStore -- mirrors
  * createNonceStore.ts/createApprovalNonceStore.ts's own production/
  * test split exactly.
  *
- * Production: SupabasePolicyChangeStepUpNonceStore, a durable store
+ * Production: PostgresPolicyChangeStepUpNonceStore, a durable store
  * shared across every process pointed at the same PostgreSQL database.
  * Fails closed at startup if DATABASE_URL is not configured -- never
  * silently falls back to an in-memory store, which would silently
@@ -38,5 +38,5 @@ export function createPolicyChangeStepUpNonceStore(): NonceStore {
 
   assertDatabaseUrlConfigured("PolicyChangeStepUpNonceStore");
 
-  return new SupabasePolicyChangeStepUpNonceStore(PostgresPoolFactory.create());
+  return new PostgresPolicyChangeStepUpNonceStore(PostgresPoolFactory.create());
 }

@@ -5,7 +5,7 @@ import type { Pool } from "pg";
 import type { PolicyChangeApprovalRecord } from "@parmana/shared";
 
 import { MemoryPolicyChangeApprovalRecordRepository } from "../../src/memory/MemoryPolicyChangeApprovalRecordRepository.js";
-import { SupabasePolicyChangeApprovalRecordRepository } from "../../src/supabase/SupabasePolicyChangeApprovalRecordRepository.js";
+import { PostgresPolicyChangeApprovalRecordRepository } from "../../src/postgres/PostgresPolicyChangeApprovalRecordRepository.js";
 
 function record(
   id: string,
@@ -78,7 +78,7 @@ describe("findMostRecentForName", () => {
       },
     } as unknown as Pool;
 
-    const repository = new SupabasePolicyChangeApprovalRecordRepository(pool);
+    const repository = new PostgresPolicyChangeApprovalRecordRepository(pool);
 
     expect(await repository.findMostRecentForName("customer-refund")).toBe(
       null,

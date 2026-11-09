@@ -32,14 +32,14 @@ switch (configuration.provider) {
   case "supabase":
   case "postgres":
     // both need DATABASE_URL, and refuse to start without it
-    return new SupabaseStorageProvider();
+    return new PostgresStorageProvider();
   case "sqlite":
     throw new Error("SQLite storage provider not implemented.");
 }
 ```
 
 `memory` keeps everything in the process and loses it on restart. `supabase` and `postgres`
-are the same implementation: despite its name, `SupabaseStorageProvider` needs only a Postgres
+are the same implementation: despite its name, `PostgresStorageProvider` needs only a Postgres
 connection string, so a self hosted Postgres works under either name. Both refuse to
 start without `DATABASE_URL`. `sqlite` is declared and throws at startup, by design: it fails
 closed rather than silently falling back to something else.

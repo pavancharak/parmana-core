@@ -1,6 +1,6 @@
 import type { NonceStore } from "@parmana/envelope-verifier";
 import { MemoryNonceStore } from "@parmana/envelope-verifier";
-import { PostgresPoolFactory, SupabaseNonceStore } from "@parmana/storage";
+import { PostgresPoolFactory, PostgresNonceStore } from "@parmana/storage";
 
 import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
 
@@ -11,7 +11,7 @@ import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
  * production/test split every credential provider in this directory
  * uses (for example, a credential provider).
  *
- * Production: SupabaseNonceStore, a durable store shared across
+ * Production: PostgresNonceStore, a durable store shared across
  * every process pointed at the same PostgreSQL database. Closes G-13
  * (docs/internal/VERIFICATION-GAPS.md): replay-nonce state no longer resets
  * on process restart. Fails closed at startup if DATABASE_URL is not
@@ -20,9 +20,9 @@ import { assertDatabaseUrlConfigured } from "./assertDatabaseUrlConfigured.js";
  * process's uptime with no signal that it happened.
  *
  * Wired to PostgresPoolFactory (DATABASE_URL), not a supabase-js/
- * PostgREST client (SUPABASE_URL) — SupabaseNonceStore now writes via
+ * PostgREST client (SUPABASE_URL) — PostgresNonceStore now writes via
  * a direct Postgres connection, removing PostgREST from this store's
- * failure modes entirely (see SupabaseNonceStore for the incident
+ * failure modes entirely (see PostgresNonceStore for the incident
  * this generalizes from).
  */
 export function createNonceStore(): NonceStore {
@@ -32,5 +32,5 @@ export function createNonceStore(): NonceStore {
 
   assertDatabaseUrlConfigured("NonceStore");
 
-  return new SupabaseNonceStore(PostgresPoolFactory.create());
+  return new PostgresNonceStore(PostgresPoolFactory.create());
 }

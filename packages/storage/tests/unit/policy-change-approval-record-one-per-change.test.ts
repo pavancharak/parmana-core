@@ -6,7 +6,7 @@ import { ConflictError } from "@parmana/shared";
 import type { PolicyChangeApprovalRecord } from "@parmana/shared";
 
 import { MemoryPolicyChangeApprovalRecordRepository } from "../../src/memory/MemoryPolicyChangeApprovalRecordRepository.js";
-import { SupabasePolicyChangeApprovalRecordRepository } from "../../src/supabase/SupabasePolicyChangeApprovalRecordRepository.js";
+import { PostgresPolicyChangeApprovalRecordRepository } from "../../src/postgres/PostgresPolicyChangeApprovalRecordRepository.js";
 
 function record(id: string, pendingPolicyChangeId: string) {
   const at = new Date("2026-10-03T00:00:00Z");
@@ -67,7 +67,7 @@ describe("one approval record per pending policy change", () => {
       },
     } as unknown as Pool;
 
-    const repository = new SupabasePolicyChangeApprovalRecordRepository(pool);
+    const repository = new PostgresPolicyChangeApprovalRecordRepository(pool);
 
     const error = await repository
       .create(record("a", "change-1"))
@@ -87,7 +87,7 @@ describe("one approval record per pending policy change", () => {
       },
     } as unknown as Pool;
 
-    const repository = new SupabasePolicyChangeApprovalRecordRepository(pool);
+    const repository = new PostgresPolicyChangeApprovalRecordRepository(pool);
 
     await expect(repository.create(record("a", "change-1"))).rejects.toBe(
       original,
@@ -116,7 +116,7 @@ describe("one approval record per pending policy change", () => {
       },
     } as unknown as Pool;
 
-    const repository = new SupabasePolicyChangeApprovalRecordRepository(pool);
+    const repository = new PostgresPolicyChangeApprovalRecordRepository(pool);
 
     expect(await repository.findByPendingPolicyChangeId("change-1")).toBe(null);
     expect(queries[0]!.values).toEqual(["change-1"]);

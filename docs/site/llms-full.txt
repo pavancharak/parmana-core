@@ -7810,7 +7810,7 @@ skips needing this key.
 - **Single process, single instance.** No HA, no load balancer assumed. Whether replicas
   share replay-nonce state depends on `NODE_ENV`: `MemoryNonceStore` (`NODE_ENV=test`, as
   above) is process-local, each process would accept the same authorization once, not once
-  fleet-wide. Outside `NODE_ENV=test`, `SupabaseNonceStore` is durable and shared across
+  fleet-wide. Outside `NODE_ENV=test`, `PostgresNonceStore` is durable and shared across
   replicas pointed at the same PostgreSQL database, but this deployment shape is still one
   process behind no load balancer.
 - **No built in connectors.** Parmana ships none. See [The gateway](/concepts/the-gateway) for
@@ -8730,7 +8730,7 @@ is registered through maker checker with no code change, and Parmana signs each 
 
 **Fleet wide single use requires a shared NonceStore (3.2).** Single use enforcement is
 scoped to whichever `NonceStore` instance performs the check. Parmana's own server shares one
-in Postgres (`SupabaseNonceStore`, and the same for approvals), so every instance on one
+in Postgres (`PostgresNonceStore`, and the same for approvals), so every instance on one
 database accepts an authorization once, and it fails closed at startup without one. A
 receiving system that runs `@parmana/envelope-verifier` with its own per instance store can
 accept the same authorization once per instance; `MemoryNonceStore`, for tests, loses all

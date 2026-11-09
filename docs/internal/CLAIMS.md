@@ -479,7 +479,7 @@ Evidence
 
 - packages/storage/src/memory/MemoryBusinessTransactionRepository.ts
 
-- packages/storage/src/supabase/SupabaseBusinessTransactionRepository.ts (isUniqueViolation mapping)
+- packages/storage/src/postgres/PostgresBusinessTransactionRepository.ts (isUniqueViolation mapping)
 
 - packages/shared/src/errors/duplicate-business-transaction-error.ts
 
@@ -487,7 +487,7 @@ Evidence
 
 - packages/storage/tests/unit/business-transaction-repository-duplicate-consistency.test.ts: both repository implementations throw the identical error class and message for a duplicate
 
-- packages/storage/tests/integration/supabase-business-transaction-duplicate.integration.test.ts: the same concurrent-race proof against a real Postgres database (Supabase-gated)
+- packages/storage/tests/integration/postgres-business-transaction-duplicate.integration.test.ts: the same concurrent-race proof against a real Postgres database (Supabase-gated)
 
 ---
 
@@ -750,7 +750,7 @@ Verification
 - `packages/api/tests/integration/business-signal-sources-governance.integration.test.ts` (14), through the real app: no credential is 401 and a service credential 403; the maker cannot approve; no step up, or one for the other action, is refused; an unknown change is 404; malformed names, timeouts, keys (not PEM, RSA), a `keyId` without a key, and a revoke with registration fields are 400; `http`, an IP literal, `localhost`, a private address and an unresolvable host are refused; one pending change and one active registration per name; the endpoint is stored normalized and the key in canonical SPKI PEM; nothing is registered until approval; the address is checked again on approval; reject needs a reason and resolves once; a revoke keeps the row.
 - `packages/api/tests/unit/http-business-signal-source.test.ts` (29): the query Parmana sends is signed, names exactly this fact, and uses a fresh nonce; a registered source's signature is verified and marked; `not_found` and `conflicting` pass through; a non-200, non-JSON, missing answer, wrong nonce, subject or source, another version or status, missing value, invalid times, no signature, another key's signature, a signature over a different answer, another `keyId` or algorithm are each refused; a private address is refused before anything is sent; through the resolver, a verified Trusted Signal, `SOURCE_UNAVAILABLE` on a bad signature, after a revoke, and when the registry cannot be read; and the documented endpoint (`typescript/examples/08-business-signal-source.ts`) interoperates with the real client, refusing a query not signed by Parmana, meant for another endpoint, expired or repeated, while Parmana refuses its answer under the wrong key.
 - `packages/api/tests/integration/business-validation-http-source.integration.test.ts` (3), through the real `RuntimeEngine` with a signed approval: the ERP's verified answer decides and is in the Trust Record; an agent claiming an unpaid invoice is paid is refused `INVALID` in a Refusal Record that verifies after a JSON round trip; after a revoke the request is refused `SOURCE_UNAVAILABLE` and no system is asked.
-- `packages/storage/tests/integration/supabase-business-signal-source-repository.integration.test.ts` (6), against Postgres with every migration: register with key, revoke keeping the row; a source without a key; one pending change and one active registration per name; no double resolution, unknown id or revoke of an unregistered name; one of two simultaneous approvals applies; the database refuses the maker as checker, a register without its fields, a `keyId` without a key and a malformed name. Run on 2026-10-11 against a local Postgres 16.
+- `packages/storage/tests/integration/postgres-business-signal-source-repository.integration.test.ts` (6), against Postgres with every migration: register with key, revoke keeping the row; a source without a key; one pending change and one active registration per name; no double resolution, unknown id or revoke of an unregistered name; one of two simultaneous approvals applies; the database refuses the maker as checker, a register without its fields, a `keyId` without a key and a malformed name. Run on 2026-10-11 against a local Postgres 16.
 - `python/tests/test_business_signal_source_api.py` (7): the Python SDK's requests and decoding.
 
 Evidence
@@ -782,7 +782,7 @@ Verification
 - `packages/api/tests/unit/authority-grants-route-clock.test.ts` (1): a grant whose `validUntil` passed while it waited is refused on approval, granting nothing.
 - `packages/api/tests/integration/authority-grant-runtime.integration.test.ts` (1): a grant made and revoked through the API is what the runtime reads: refused before it, executed within it, refused above its limit and after the revoke.
 - `packages/api/tests/integration/policy-in-effect-authority-grant.integration.test.ts` (3) and `packages/policy/tests/unit/PolicyValidator-requireAuthorityGrant.test.ts` (7).
-- `packages/storage/tests/integration/supabase-authority-grant-repository.integration.test.ts` (6), against Postgres 16 with every migration, run 2026-10-11: limits and expiry stored; a grant starts at approval or its `validFrom`; one pending change and one active grant per caller and capability; no double resolution; one of two simultaneous approvals applies; the database refuses a self grant, maker or grantee as checker, a grant without expiry and a revoke with limits.
+- `packages/storage/tests/integration/postgres-authority-grant-repository.integration.test.ts` (6), against Postgres 16 with every migration, run 2026-10-11: limits and expiry stored; a grant starts at approval or its `validFrom`; one pending change and one active grant per caller and capability; no double resolution; one of two simultaneous approvals applies; the database refuses a self grant, maker or grantee as checker, a grant without expiry and a revoke with limits.
 - `python/tests/test_authority_grant_api.py` (7): the Python SDK's requests and decoding.
 
 Evidence
@@ -1153,10 +1153,10 @@ Evidence
 - `packages/runtime/src/BusinessTrustRecordBuilder.ts` (captures `context.authorization` into the draft, conditionally, to satisfy `exactOptionalPropertyTypes`)
 - `packages/crypto/src/VerificationCrypto.ts` (`canonicalRecord()` includes `authorization`)
 - `supabase/migrations/20260907120000_add_authorization_and_hybrid_signatures_to_execution_trust_records.sql` (`authorization_json`, `schema_version`, `signatures_json` columns, all nullable)
-- `packages/storage/src/supabase/SupabaseExecutionTrustRecordRepository.ts` (`create()`/`findByTransactionId()` persist and retrieve all three)
+- `packages/storage/src/postgres/PostgresExecutionTrustRecordRepository.ts` (`create()`/`findByTransactionId()` persist and retrieve all three)
 - `packages/crypto/tests/unit/verification-crypto-authorization.test.ts` (4 cases: verifies with authorization absent; verifies with it present, hash differs from the same record without it; fails closed on a tampered authorization; a record built with the literal pre-fix draft shape hashes identically to one built with `authorization: undefined`)
 - `packages/runtime/tests/unit/business-trust-record-builder.test.ts` (2 cases: captures a present authorization onto the built record; leaves the key genuinely absent, not `undefined`, when RuntimeContext has none)
-- `packages/storage/tests/unit/supabase-execution-trust-record-repository.test.ts` (2 new cases: full round-trip of `authorization`/`schemaVersion`/`signatures` against a fake `pg.Pool`; a legacy row with none of the three persisted returns them as genuinely absent)
+- `packages/storage/tests/unit/postgres-execution-trust-record-repository.test.ts` (2 new cases: full round-trip of `authorization`/`schemaVersion`/`signatures` against a fake `pg.Pool`; a legacy row with none of the three persisted returns them as genuinely absent)
 - `python/parmana/models/trust_record.py` regenerated to match (`npm run check:python-models` clean)
 - Full repo `npx tsc -b`, `npx eslint . --ext .ts`, and `npx vitest run` all clean: 1514 passed, 38 pre-existing skips, 0 failed. Commit `6303801`
 
@@ -1185,7 +1185,7 @@ Evidence
 - `packages/shared/src/domain/policy-change-approval-record.ts` (`previousRecordHash` field)
 - `packages/crypto/src/PolicyChangeCrypto.ts` (`canonicalRecord()` includes `previousRecordHash`)
 - `packages/api/src/bootstrap/policyGovernanceIntegrityCheckRunner.ts`, `schedulePolicyGovernanceIntegrityCheck.ts`, `server.ts`
-- `supabase/migrations/20260907130000_add_previous_record_hash_to_policy_change_approval_records.sql`, `packages/storage/src/supabase/SupabasePolicyChangeApprovalRecordRepository.ts`
+- `supabase/migrations/20260907130000_add_previous_record_hash_to_policy_change_approval_records.sql`, `packages/storage/src/postgres/PostgresPolicyChangeApprovalRecordRepository.ts`
 - `packages/policy/src/PolicyValidator.ts` (`validateRegex()` length cap + nested-quantifier heuristic, `findUncoveredFacts()` surfaced via `coverageWarnings`)
 - `packages/api/src/routes/pending-policy-changes.ts` (`coverageWarnings` on propose response and diff listing)
 - `scripts/backfill-legacy-policy-approvals.ts` (dry-run by default; excludes any pair with an open `PendingPolicyChange`)
@@ -1340,7 +1340,7 @@ Evidence
 - `packages/shared/src/domain/execution-intent.ts`
 - `packages/crypto/src/ExecutionIntentCrypto.ts`, `ExecutionIntentCanonicalView.ts`, and `OfflineVerifier.ts` (`verifyExecutionIntentOffline`); `scripts/verify-execution-intent.ts`
 - `packages/runtime/src/ExecutionIntentBuilder.ts`, `ExecutionIntentService.ts`, `ExecutionIntentFinalizer.ts`, and `RuntimeEngine.ts`
-- `packages/storage/src/supabase/SupabaseExecutionIntentRepository.ts`; `supabase/migrations/20260921120000_add_execution_intents.sql`
+- `packages/storage/src/postgres/PostgresExecutionIntentRepository.ts`; `supabase/migrations/20260921120000_add_execution_intents.sql`
 - `packages/api/src/routes/execution-intents.ts`; `packages/api/src/bootstrap/createExecutionIntents.ts`; `packages/api/src/routes/ready.ts`
 - `packages/runtime/tests/unit/execution-intent.test.ts` (intent signed and stored before release; a failed store releases nothing; finalize rebuilds a verifiable record without a second release; idempotent and race safe)
 - `packages/crypto/tests/unit/execution-intent-crypto.test.ts` (offline verification, tamper detection)
@@ -1567,7 +1567,7 @@ Evidence
 
 Single-use enforcement of an authorization's nonce is scoped to whichever NonceStore instance performs the check. If multiple independent receiving systems, or multiple instances of the same system, each use their own NonceStore, the same authorization can be accepted once per instance. Fleet-wide single-use requires every instance to share one persistent NonceStore that survives a process restart, not a per-process, in-memory one.
 
-Parmana's own production gateway does this by default. `packages/api/src/bootstrap/createNonceStore.ts` wires in `SupabaseNonceStore` (`packages/storage/src/supabase/SupabaseNonceStore.ts`), a durable, Postgres-backed NonceStore shared across every process pointed at the same Supabase project, and fails closed at startup if it is not configured, rather than silently falling back to a per-process `MemoryNonceStore`. A receiving system that does not share a persistent NonceStore (whether by choice, misconfiguration, or because it is not Parmana's own gateway) still has its exposure window bounded by the envelope's short TTL, not unlimited. This is the general, deployment-agnostic version of the claim, and still the correct one for any `@parmana/envelope-verifier` integrator supplying their own NonceStore choice; `MemoryNonceStore` remains available and correct for tests.
+Parmana's own production gateway does this by default. `packages/api/src/bootstrap/createNonceStore.ts` wires in `SupabaseNonceStore` (`packages/storage/src/postgres/PostgresNonceStore.ts`), a durable, Postgres-backed NonceStore shared across every process pointed at the same Supabase project, and fails closed at startup if it is not configured, rather than silently falling back to a per-process `MemoryNonceStore`. A receiving system that does not share a persistent NonceStore (whether by choice, misconfiguration, or because it is not Parmana's own gateway) still has its exposure window bounded by the envelope's short TTL, not unlimited. This is the general, deployment-agnostic version of the claim, and still the correct one for any `@parmana/envelope-verifier` integrator supplying their own NonceStore choice; `MemoryNonceStore` remains available and correct for tests.
 
 Evidence
 
@@ -1575,7 +1575,7 @@ Evidence
 
 - packages/api/src/bootstrap/createNonceStore.ts (production wiring; fails closed when Supabase is not configured, never falls back to in-memory)
 
-- packages/storage/tests/integration/supabase-nonce-store.integration.test.ts: "a nonce consumed through one store instance is still consumed by a fresh instance against the same backing" (the fleet-sharing / restart-survival proof) and "two simultaneous checkAndRecord calls for the same nonce: exactly one succeeds" (a real concurrent-INSERT race against Postgres, not a simulated one)
+- packages/storage/tests/integration/postgres-nonce-store.integration.test.ts: "a nonce consumed through one store instance is still consumed by a fresh instance against the same backing" (the fleet-sharing / restart-survival proof) and "two simultaneous checkAndRecord calls for the same nonce: exactly one succeeds" (a real concurrent-INSERT race against Postgres, not a simulated one)
 
 - packages/envelope-verifier/README.md ("Claims", "PRODUCTION WARNING: MemoryNonceStore")
 
@@ -1623,7 +1623,7 @@ Evidence
 
 - `packages/runtime/tests/unit/refusal-record-fail-open.test.ts` (2 tests): a Refusal Record write failure does not affect the returned rejection
 
-- `packages/storage/tests/unit/supabase-refusal-record-repository.test.ts` (4 tests)
+- `packages/storage/tests/unit/postgres-refusal-record-repository.test.ts` (4 tests)
 
 ---
 
