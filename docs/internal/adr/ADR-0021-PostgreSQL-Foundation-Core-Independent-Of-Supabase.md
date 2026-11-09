@@ -82,7 +82,7 @@ The old names remain in four places, which were deliberately not edited:
 
 Production wiring stays fail-closed. `createExecutionAuditSink` takes the sink from a provider pinned to `"postgres"`, not from `PARMANA_STORAGE`. Setting `PARMANA_STORAGE=memory` in production therefore still gives the durable trail, and a test covers it.
 
-Removed from `packages/*`: `packages/storage/scripts/migrate.ts`, the legacy `supabase-js` script that called an `exec_sql` RPC, its `npm run migrate` script, and the `@supabase/supabase-js` dependency of `@parmana/storage`. The `packages/storage/schemas/` SQL files are left in place, unreferenced, for a decision on their removal.
+Removed from `packages/*`: `packages/storage/scripts/migrate.ts`, the legacy `supabase-js` script that called an `exec_sql` RPC, its `npm run migrate` script, and the `@supabase/supabase-js` dependency of `@parmana/storage`. The unreferenced `packages/storage/schemas/` SQL files (001–008, the pre-`supabase/migrations` schema) were deleted on the operator's instruction. Git history has them.
 
 **Not done, and needs a decision:** two root-level scripts still import `@supabase/supabase-js` through PostgREST with an anon key, so the root `devDependency` stays.
 
