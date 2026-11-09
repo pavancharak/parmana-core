@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { InboundDecisionRecord } from "@parmana/shared";
 
 import { SupabaseInboundDecisionRepository } from "../../src/supabase/SupabaseInboundDecisionRepository.js";
+import { resolveDatabaseGate } from "../helpers/database-availability.js";
 
 /**
  * Runs against a real Postgres database with the inbound_decisions migration applied. Each test
@@ -33,7 +34,7 @@ function record(
   };
 }
 
-describe.skipIf(!url)(
+describe.skipIf(!resolveDatabaseGate("inbound decision repository"))(
   "SupabaseInboundDecisionRepository against Postgres",
   () => {
     let pool: pg.Pool;

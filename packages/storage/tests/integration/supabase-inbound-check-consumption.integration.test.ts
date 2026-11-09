@@ -8,6 +8,7 @@ import {
 } from "@parmana/shared";
 
 import { SupabaseInboundCheckRepository } from "../../src/supabase/SupabaseInboundCheckRepository.js";
+import { resolveDatabaseGate } from "../helpers/database-availability.js";
 
 /**
  * G-143, O1, against a real Postgres database with the real migrations applied (scripts/apply-all-migrations.sql,
@@ -19,7 +20,9 @@ import { SupabaseInboundCheckRepository } from "../../src/supabase/SupabaseInbou
  */
 const url = process.env.TEST_DATABASE_URL?.trim();
 
-const suite = url ? describe : describe.skip;
+const suite = resolveDatabaseGate("G-143 consumption")
+  ? describe
+  : describe.skip;
 
 suite(
   "SupabaseInboundCheckRepository.appendConsumingApprovals (G-143, O1)",

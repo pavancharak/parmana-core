@@ -8,12 +8,12 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import dotenv from "dotenv";
-
 import {
+  describeDatabaseTarget,
   resolveDatabaseTarget,
   resolveDatabaseUrlTarget,
 } from "./test-support/database-target.js";
+import { loadTestEnvironment } from "./test-support/load-test-environment.js";
 
 import { afterAll, vi } from "vitest";
 
@@ -70,10 +70,7 @@ const repoRoot = dirname(fileURLToPath(import.meta.url));
 // file a test run reads for database settings. .env is deliberately NOT loaded
 // here: it holds the production settings, and a test run must never see them
 // (docs/internal/designs/TEST-DATABASE-CONFIG.md, decision D2).
-dotenv.config({
-  path: join(repoRoot, ".env.test"),
-  override: false,
-});
+loadTestEnvironment(repoRoot);
 
 // Refuse the run before any suite starts if a database variable names a target
 // the rules do not allow (decisions D3 and D4). Every variable is checked, not only
@@ -88,13 +85,7 @@ if (databaseTarget.kind !== "none") {
   process.env.TEST_DATABASE_URL = databaseTarget.url;
   process.env.DATABASE_URL = databaseTarget.url;
 }
-if (databaseTarget.kind === "hosted") {
-  console.info(`[test-database] hosted project ${databaseTarget.projectRef}`);
-} else if (databaseTarget.kind === "local") {
-  console.info("[test-database] local database");
-} else {
-  console.info("[test-database] no database configured; database suites skip");
-}
+console.info(describeDatabaseTarget(databaseTarget));
 
 /**
  * Local defaults, so `npm test` works on a fresh clone with no .env.

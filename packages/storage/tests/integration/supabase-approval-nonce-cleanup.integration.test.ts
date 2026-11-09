@@ -3,6 +3,7 @@ import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { SupabaseApprovalNonceStore } from "../../src/supabase/SupabaseApprovalNonceStore.js";
+import { resolveDatabaseGate } from "../helpers/database-availability.js";
 
 /**
  * G-143: removing expired approval nonces. Runs against a real database with the migrations applied. Rows carry a
@@ -11,7 +12,9 @@ import { SupabaseApprovalNonceStore } from "../../src/supabase/SupabaseApprovalN
  */
 const url = process.env.TEST_DATABASE_URL?.trim();
 
-const suite = url ? describe : describe.skip;
+const suite = resolveDatabaseGate("G-143 nonce cleanup")
+  ? describe
+  : describe.skip;
 
 suite("SupabaseApprovalNonceStore.deleteExpired (G-143)", () => {
   const run = randomUUID().replace(/-/g, "");

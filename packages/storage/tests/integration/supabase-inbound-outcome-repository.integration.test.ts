@@ -9,6 +9,7 @@ import type {
 
 import { SupabaseInboundDecisionRepository } from "../../src/supabase/SupabaseInboundDecisionRepository.js";
 import { SupabaseInboundOutcomeRepository } from "../../src/supabase/SupabaseInboundOutcomeRepository.js";
+import { resolveDatabaseGate } from "../helpers/database-availability.js";
 
 /**
  * Runs against a real Postgres database with the inbound migrations applied. Every test runs inside
@@ -48,7 +49,7 @@ function outcome(
   };
 }
 
-describe.skipIf(!url)(
+describe.skipIf(!resolveDatabaseGate("inbound outcome repository"))(
   "SupabaseInboundOutcomeRepository against Postgres",
   () => {
     let pool: pg.Pool;
