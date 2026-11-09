@@ -118,8 +118,8 @@ a private static cache, construction driven entirely by `loadConfig()`.
 
 `packages/api/src/server.ts` runs, in this exact order:
 
-1. `assertStorageConfigured()`, refuses to start with `PARMANA_STORAGE=supabase` and no
-   `DATABASE_URL`.
+1. `assertStorageConfigured()`, refuses to start with `PARMANA_STORAGE=postgres` (or its alias
+   `supabase`) and no `DATABASE_URL`.
 2. `assertSigningKeyMaterialConfigured()`, materializes `PARMANA_KEY_MATERIAL_JSON` into
    `PARMANA_KEY_DIR` for any file not already present, then confirms `default.private.pem`/
    `default.public.pem` exist (skipped for `KEY_PROVIDER=aws-kms`, which has no local file for
@@ -173,8 +173,7 @@ exercises `resolveKmsKeyId()`, one concrete function this configuration ultimate
 A minimal working `.env` needs, at least: `PARMANA_POLICY_DIR`, `PARMANA_KEY_DIR` (with a
 real `default.private.pem`/`default.public.pem` pair present, or `PARMANA_KEY_MATERIAL_JSON`
 set), and either `PARMANA_STORAGE=memory` (no further storage config needed) or
-`PARMANA_STORAGE=supabase` plus `DATABASE_URL`/`SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`/
-`SUPABASE_ANON_KEY`. Caller authentication needs either `PARMANA_API_KEYS` populated or
+`PARMANA_STORAGE=postgres` plus `DATABASE_URL`. The server reads no `SUPABASE_*` variable. Caller authentication needs either `PARMANA_API_KEYS` populated or
 `PARMANA_AUTH_DISABLED=true` (development only). `KEY_PROVIDER=aws-kms` additionally needs
 `AWS_REGION` and either `AWS_ROLE_ARN` (Vercel OIDC federation) or a real AWS credential chain
 reachable in the runtime environment (`~/.aws/credentials` locally, an instance/task role

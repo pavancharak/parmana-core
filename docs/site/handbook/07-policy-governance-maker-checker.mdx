@@ -114,7 +114,7 @@ Verification, server-side, runs through `PolicyChangeStepUpVerifier.verify()`
    `PolicyChangeStepUpVerifierOptions.maxTtlSeconds`).
 2. **`consumeNonce()`**: only called if every check above passed, this burns the
    envelope's nonce in a dedicated `NonceStore` (`createPolicyChangeStepUpNonceStore.ts`,
-   `SupabasePolicyChangeStepUpNonceStore` in production), so the exact same signed
+   `SupabasePolicyChangeStepUpNonceStore` in production, a PostgreSQL store), so the exact same signed
    envelope can never be replayed for a second approval. This nonce namespace is entirely
    separate from execution-authorization or approval-artifact nonces.
 
@@ -200,15 +200,23 @@ to `policies/{name}/{version}/policy.json` that skips the pending-change API ent
   `schedulePolicyGovernanceIntegrityCheck()` re-runs the same check every 5 minutes for
   the life of the process, using an `.unref()`'d timer so it can never itself keep the
   process alive past shutdown.
-- **`scripts/verify-policy-changes-approved.ts`** is the opposite discipline: **fail
-  closed**, meant to gate a CI run or a manual pre-deploy check, not to run inside the
-  live server. Given a list of changed policy files (or `--full-scan`), it hashes each
-  file's live content and checks it against `policy_change_approval_records` via a
-  read-only Supabase `anon` credential, scoped by RLS to that one table. A missing
-  approval record, a content-hash mismatch, and any failure to complete the check at all
-  (Supabase unreachable, a malformed response) are all treated identically as a failure:
-  there is no "couldn't check, let it through" path. `.github/workflows/ci.yml`'s
-  `verify-policy-approvals` job runs it with `--full-scan` on every push to `main` and on every pull request.
+- **The pull request gate** (`.github/workflows/ci.yml`, job `verify-policy-approvals`) is
+  **fail closed** and holds no database credential. It runs `npm run policy-log:verify --
+--require-coverage` against the signed, append-only approval log in
+  `governance/policy-approvals.jsonl`. It checks the hash chain, every signature against the
+  committed public keys, that every `policies/{name}/{version}/policy.json` has a logged
+  approval for its exact content, and that the log only grew since the base commit. Anyone can
+  rerun it from the repository.
+- **`scripts/verify-policy-changes-approved.ts`** is the deploy-time check: **fail closed**, run
+  by an operator before a deploy, not inside the live server. Given a list of changed policy files
+  (or `--full-scan`), it hashes each file's live content and checks it against
+  `policy_change_approval_records` through a read-only role, using `SUPABASE_ANON_KEY`, scoped by
+  RLS to that one table. A missing approval record, a content-hash mismatch, and any failure to
+  complete the check at all (database unreachable, a malformed response) are all treated identically
+  as a failure: there is no "couldn't check, let it through" path.
+- **The scheduled drift check** (`.github/workflows/policy-log-drift.yml`) runs
+  `npm run policy-log:check-db` daily. It compares the signed log with the database, through the
+  read-only role named in the `CI_DATABASE_URL` secret, and fails if they disagree.
 
 ## How it enables things, with concrete examples
 
@@ -220,7 +228,7 @@ to `policies/{name}/{version}/policy.json` that skips the pending-change API ent
   `policy.json` file gets written and a signed approval record gets persisted only once
   every layer has passed.
 - **`examples/tutorials/116-supabase-policy-repository/run.ts`**: proves
-  `PostgresPolicyRepository` satisfies the exact same `PolicyRepository` contract as
+  `PostgresPolicyRepository` (a PostgreSQL implementation) satisfies the exact same `PolicyRepository` contract as
   `FilePolicyRepository`, hermetically, against a minimal fake `pg.Pool` (no real network
   or database). Also reproduces the real `EROFS` failure directly, against a genuinely
   read-only temp directory, on platforms where the OS actually enforces it.

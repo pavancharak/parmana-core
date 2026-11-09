@@ -46,7 +46,7 @@ npm run generate:gateway-keys
 
 ## Step 2: Create the database schema
 
-Ask the operator to apply the schema, or apply it if you have Supabase CLI access. There is exactly one accepted method for an agent: run `supabase db push` in a directory linked to the project. Otherwise give the operator the file `scripts/apply-all-migrations.sql` and ask them to run it in the Supabase SQL Editor.
+Ask the operator to apply the schema, or apply it yourself if you have database access. There is exactly one accepted method for an agent: run `npm run db:migrate -- apply` from the repository root, with `DATABASE_URL` set to the target database. It applies each file in `supabase/migrations/` once and records it. Otherwise give the operator the file `scripts/apply-all-migrations.sql` for a new, empty database only, and ask them to run it with `psql` or in their database's SQL editor.
 
 **Expect:** the query `select count(*) from consumed_nonces;` returns a number.
 
@@ -81,7 +81,7 @@ Set exactly these variables on the host, in the Production environment:
 | `NODE_ENV`           | `production`             |
 | `PARMANA_POLICY_DIR` | `./policies`             |
 | `PARMANA_API_KEYS`   | The array from step 3    |
-| `PARMANA_STORAGE`    | `supabase`               |
+| `PARMANA_STORAGE`    | `postgres`               |
 | `DATABASE_URL`       | The input `DATABASE_URL` |
 | `PARMANA_KEY_DIR`    | `./keys`                 |
 

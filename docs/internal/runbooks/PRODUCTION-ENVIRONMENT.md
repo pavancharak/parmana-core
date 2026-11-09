@@ -9,7 +9,7 @@ The variables the production API reads, and the mistakes that cost us time. The 
 | Variable                    | Value                                                         | Why                                                                                                                                     | Confirmed in                                                              |
 | --------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | `NODE_ENV`                  | `production`                                                  | Turns on every gate. `test` and `development` relax them.                                                                               | `packages/api/src/bootstrap/*`                                            |
-| `PARMANA_STORAGE`           | `supabase`                                                    | **Must be set.** If unset, it defaults to `memory`, and business transactions and trust records are kept in memory and lost on restart. | `packages/shared/src/config/ConfigValidation.ts` (`parseStorageProvider`) |
+| `PARMANA_STORAGE`           | `postgres`                                                    | **Must be set.** If unset, it defaults to `memory`, and business transactions and trust records are kept in memory and lost on restart. | `packages/shared/src/config/ConfigValidation.ts` (`parseStorageProvider`) |
 | `DATABASE_URL`              | Postgres connection string (transaction pooler on serverless) | Required when `PARMANA_STORAGE` is `supabase` or `postgres`. Also used for the nonce stores and the readiness check.                    | `assertStorageConfigured.ts`, `createPolicyChangeStepUpNonceStore.ts`     |
 | `PARMANA_API_KEYS`          | One-line JSON array of caller entries                         | The server refuses to start if it is empty or invalid.                                                                                  | `createCallerAuthenticator.ts`, `ConfigValidation.ts`                     |
 | `PARMANA_POLICY_DIR`        | Directory containing `policies/<name>/<version>/policy.json`  | The process refuses to start without it.                                                                                                | `packages/api/README.md`                                                  |
@@ -66,7 +66,7 @@ Mistakes we or the template made:
 
 The `production-values.txt` template we made earlier had these errors:
 
-- It did not set `PARMANA_STORAGE=supabase`. Without it, storage defaults to memory.
+- It did not set `PARMANA_STORAGE=postgres`. Without it, storage defaults to memory.
 - It set `POLICY_CHANGE_CHECKERS=pavancharak`. That is not valid; use the object form in section 3.
 - It listed `RESEND_API_KEY` as required. This repository never reads it.
 
@@ -81,7 +81,7 @@ vercel env ls production --cwd $link
 Confirm `PARMANA_STORAGE` is present. If it isn't, add it and redeploy:
 
 ```powershell
-"supabase" | vercel env add PARMANA_STORAGE production --cwd $link
+"postgres" | vercel env add PARMANA_STORAGE production --cwd $link
 vercel redeploy <current-production-url> --target production --cwd $link
 ```
 

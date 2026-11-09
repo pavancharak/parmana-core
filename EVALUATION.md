@@ -32,7 +32,7 @@ built `dist/` output; `npm test` refuses to run against stale output.
 
 No `.env` is needed. The test setup uses the same local defaults as CI (the committed
 `./policies`, in memory storage, local Ed25519 keys generated per run) unless you set them
-yourself. Suites that need live services (HubSpot, Supabase) skip cleanly. Expect 3,524 passing tests and 83 skipped, as recorded below.
+yourself. Suites that need live services (HubSpot, a live PostgreSQL database) skip cleanly. Expect 3,524 passing tests and 83 skipped, as recorded below.
 
 ## 2. Run the examples
 

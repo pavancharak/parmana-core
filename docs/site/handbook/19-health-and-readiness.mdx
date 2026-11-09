@@ -23,11 +23,11 @@ specifically to catch that case and let the orchestrator act on it.
 probe, if the process can answer HTTP at all, it answers this.
 
 `GET /ready` (`packages/api/src/routes/ready.ts`) is genuinely different: when storage is not
-Supabase-backed (`NODE_ENV=test`, or `PARMANA_STORAGE` set to anything other than `"supabase"` or `"postgres"`),
+PostgreSQL-backed (`NODE_ENV=test`, or `PARMANA_STORAGE` set to anything other than `"postgres"` or its alias `"supabase"`),
 there is no external dependency to probe, so it reports `READY` unconditionally, the same
 distinction `assertStorageConfigured.ts` already draws at boot. Otherwise, it actually queries
 Postgres with `SELECT 1` (cheap, transfers no table rows, just confirms the connection and
-credentials work) via `PostgresPoolFactory`, not `supabase-js`/PostgREST, the route's own
+credentials work) via `PostgresPoolFactory`, with the `pg` driver and no REST layer, the route's own
 comment notes this probe previously depended on PostgREST for a `consumed_nonces` HEAD request,
 meaning a PostgREST-layer outage could make the readiness probe itself unreliable; querying
 directly removes that failure mode. A failed query returns `503` with `status: "NOT_READY"` and
@@ -59,6 +59,6 @@ code and body for each.
 ## Integration requirements
 
 No additional configuration beyond what storage already requires (`PARMANA_STORAGE`,
-`DATABASE_URL` when Supabase-backed). A PaaS orchestrator should be configured to poll `/health`
+`DATABASE_URL` when PostgreSQL-backed). A PaaS orchestrator should be configured to poll `/health`
 for restart decisions and `/ready` for traffic-routing decisions, treating them as
 interchangeable defeats the reason both exist.

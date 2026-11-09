@@ -160,8 +160,8 @@ The command prints the raw key once. Save it in your password manager, then put 
 **`PARMANA_STORAGE`**: `memory`, `postgres`, `supabase`.
 
 - Default: `memory` (`ConfigValidation.ts`). If you leave it unset, business and trust records are kept in memory and lost on restart.
-- `postgres` and `supabase` both use `DATABASE_URL` (`isPostgresStorage`).
-- Production uses `supabase`.
+- `postgres` and `supabase` both use `DATABASE_URL` (`isPostgresStorage`). `supabase` is an alias for `postgres`.
+- Production uses `postgres`.
 
 **`DATABASE_URL`**: `postgresql://user:password@host:port/database`.
 
@@ -169,7 +169,7 @@ The command prints the raw key once. Save it in your password manager, then put 
 - On serverless hosts, use the transaction pooler string.
 - The password is a secret. Store it in the password manager.
 
-**`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`**: the server's runtime code does not read them. The runtime uses `DATABASE_URL` (`createNonceStore.ts`, `StorageFactory.ts`). Scripts name them: `scripts/policy-approval-log.ts`, `scripts/verify-policy-changes-approved.ts`. Don't set them on a production server.
+**`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`**: the server's runtime code does not read them. The runtime uses `DATABASE_URL` (`createNonceStore.ts`, `StorageFactory.ts`). The deploy-time check names them: `scripts/verify-policy-changes-approved.ts` (`SUPABASE_URL` and `SUPABASE_ANON_KEY`). The policy approval log export and drift check use `CI_DATABASE_URL` instead. Don't set them on a production server.
 
 ### Keys and signing
 
@@ -338,7 +338,7 @@ Never set in production: `PARMANA_AUTH_DISABLED`, `NODE_ENV=test`, `NODE_ENV=dev
 | "PARMANA_KEY_DIR is not set"                              | Not set                                                                      | Set it to a writable folder                 |
 | Startup names the gateway key files                       | No gateway key from a file or `PARMANA_KEY_MATERIAL_JSON`                    | Provide the gateway key pair                |
 | "KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR must be..."      | Kill switch on, value not `true` or `false`                                  | Set it to `true` or `false`                 |
-| Data gone after restart                                   | `PARMANA_STORAGE` unset or `memory`                                          | Set `PARMANA_STORAGE=supabase`              |
+| Data gone after restart                                   | `PARMANA_STORAGE` unset or `memory`                                          | Set `PARMANA_STORAGE=postgres`              |
 | Approvals refused with `CHECKER_NOT_IN_SCOPE`             | `POLICY_CHANGE_CHECKERS` unset, or the checker is not listed for that policy | Add the checker under the policy name       |
 | A value is cut short                                      | A `#` in an unquoted value                                                   | Quote the value in single quotes            |
 | The server reads `.env` even with `PARMANA_SKIP_DOTENV=1` | `server.ts` ignores that variable                                            | Remove `.env` from the folder, or rename it |

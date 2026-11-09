@@ -70,11 +70,12 @@ Parmana is licensed under the Apache License 2.0, so running it locally is permi
   </Step>
 
   <Step title="Start the Runtime locally">
-    The `.env` copied from `.env.example` defaults to Supabase-backed storage. To run fully locally with no
-    external dependency, override storage to `memory` **and** set `NODE_ENV=test`. Both are
-    required: `PARMANA_STORAGE=memory` alone only affects where Business Transactions and Trust
-    Records are stored, two other components, the Execution Gateway's replay-nonce store and the
-    caller-authentication audit trail, independently default to Supabase outside `NODE_ENV=test`.
+    The `.env` copied from `.env.example` defaults to PostgreSQL storage (`PARMANA_STORAGE=supabase`,
+    which is an alias for `postgres`). To run fully locally with no external dependency, override storage
+    to `memory` **and** set `NODE_ENV=test`. Both are required: `PARMANA_STORAGE=memory` alone only affects
+    where Business Transactions and Trust Records are stored, two other components, the Execution
+    Gateway's replay-nonce store and the caller-authentication audit trail, independently require a
+    PostgreSQL database (`DATABASE_URL`) outside `NODE_ENV=test`.
     With `NODE_ENV=test`, a generic, test-only connector (`test-fixture`) registers
     automatically, no credential environment variable required, and the server trusts
     `local-test-approver` with the key in `PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE`:

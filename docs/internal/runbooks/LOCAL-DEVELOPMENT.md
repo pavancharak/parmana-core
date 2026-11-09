@@ -108,10 +108,10 @@ npx vitest run
 
 - `.env.test` (gitignored) is loaded by `vitest.setup.ts` before `.env`. It points `DATABASE_URL` at the local `postgres` service on `127.0.0.1:55432`. The tests never read `.env` for these values, so production settings cannot reach them.
 - `docker compose run --rm migrate` applies the same migrations as the stack, so the schema matches.
-- The Supabase suites (they call the Supabase REST API) still skip. They need a live Supabase project and its own credentials, which a local Postgres does not provide.
+- The live database suites still skip unless `ALLOW_LIVE_SUPABASE=1` is set. A local PostgreSQL 16 database with the migrations applied is enough for them.
 - Do not point `DATABASE_URL` at production. These suites write to the database.
 
-## 5b. Live Supabase suites and TLS
+## 5b. Live database suites and TLS
 
 The `(live)` suites are opt-in. They run only when both `ALLOW_LIVE_SUPABASE=1` and `DATABASE_URL` are set, and they write to whatever database `DATABASE_URL` points at.
 

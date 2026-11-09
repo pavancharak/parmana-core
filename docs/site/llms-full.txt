@@ -1335,7 +1335,7 @@ npm run generate:gateway-keys
 
 ## Step 2: Create the database schema
 
-Ask the operator to apply the schema, or apply it if you have Supabase CLI access. There is exactly one accepted method for an agent: run `supabase db push` in a directory linked to the project. Otherwise give the operator the file `scripts/apply-all-migrations.sql` and ask them to run it in the Supabase SQL Editor.
+Ask the operator to apply the schema, or apply it yourself if you have database access. There is exactly one accepted method for an agent: run `npm run db:migrate -- apply` from the repository root, with `DATABASE_URL` set to the target database. It applies each file in `supabase/migrations/` once and records it. Otherwise give the operator the file `scripts/apply-all-migrations.sql` for a new, empty database only, and ask them to run it with `psql` or in their database's SQL editor.
 
 **Expect:** the query `select count(*) from consumed_nonces;` returns a number.
 
@@ -1370,7 +1370,7 @@ Set exactly these variables on the host, in the Production environment:
 | `NODE_ENV`           | `production`             |
 | `PARMANA_POLICY_DIR` | `./policies`             |
 | `PARMANA_API_KEYS`   | The array from step 3    |
-| `PARMANA_STORAGE`    | `supabase`               |
+| `PARMANA_STORAGE`    | `postgres`               |
 | `DATABASE_URL`       | The input `DATABASE_URL` |
 | `PARMANA_KEY_DIR`    | `./keys`                 |
 
@@ -1567,11 +1567,12 @@ Parmana is licensed under the Apache License 2.0, so running it locally is permi
   </Step>
 
   <Step title="Start the Runtime locally">
-    The `.env` copied from `.env.example` defaults to Supabase-backed storage. To run fully locally with no
-    external dependency, override storage to `memory` **and** set `NODE_ENV=test`. Both are
-    required: `PARMANA_STORAGE=memory` alone only affects where Business Transactions and Trust
-    Records are stored, two other components, the Execution Gateway's replay-nonce store and the
-    caller-authentication audit trail, independently default to Supabase outside `NODE_ENV=test`.
+    The `.env` copied from `.env.example` defaults to PostgreSQL storage (`PARMANA_STORAGE=supabase`,
+    which is an alias for `postgres`). To run fully locally with no external dependency, override storage
+    to `memory` **and** set `NODE_ENV=test`. Both are required: `PARMANA_STORAGE=memory` alone only affects
+    where Business Transactions and Trust Records are stored, two other components, the Execution
+    Gateway's replay-nonce store and the caller-authentication audit trail, independently require a
+    PostgreSQL database (`DATABASE_URL`) outside `NODE_ENV=test`.
     With `NODE_ENV=test`, a generic, test-only connector (`test-fixture`) registers
     automatically, no credential environment variable required, and the server trusts
     `local-test-approver` with the key in `PARMANA_TEST_APPROVER_PUBLIC_KEY_FILE`:
@@ -7785,8 +7786,8 @@ NODE_ENV=test \
 
 `NODE_ENV=test` matters even though `PARMANA_STORAGE=memory` is set: two other components,
 the Execution Gateway's replay-nonce store and the caller-authentication audit trail, default
-to Supabase-backed implementations outside `NODE_ENV=test` (`createNonceStore.ts`,
-`createCallerAuditSink.ts`) and will fail closed without a real, reachable Supabase project.
+to PostgreSQL-backed implementations outside `NODE_ENV=test` (`createNonceStore.ts`,
+`createCallerAuditSink.ts`) and will fail closed without a real, reachable PostgreSQL database (`DATABASE_URL`).
 `PARMANA_API_KEYS` above is a demo key for local development only, raw key
 `my-secret-api-key`, allowed to use `test:fixture-execute` and to act as `demo`. Its raw key is
 public: make real keys with `npm run generate:api-key`, see [Authentication](/api-reference/authentication).
@@ -7810,7 +7811,7 @@ skips needing this key.
   share replay-nonce state depends on `NODE_ENV`: `MemoryNonceStore` (`NODE_ENV=test`, as
   above) is process-local, each process would accept the same authorization once, not once
   fleet-wide. Outside `NODE_ENV=test`, `SupabaseNonceStore` is durable and shared across
-  replicas pointed at the same Supabase project, but this deployment shape is still one
+  replicas pointed at the same PostgreSQL database, but this deployment shape is still one
   process behind no load balancer.
 - **No built in connectors.** Parmana ships none. See [The gateway](/concepts/the-gateway) for
   what adding a new connector requires.
@@ -7949,7 +7950,7 @@ Set these in your platform, not in a file in the image. The minimum for producti
 | `NODE_ENV`           | `production`                                                                            |
 | `PARMANA_POLICY_DIR` | `./policies` (already set in the image)                                                 |
 | `PARMANA_API_KEYS`   | The JSON array from step 3                                                              |
-| `PARMANA_STORAGE`    | `supabase`                                                                              |
+| `PARMANA_STORAGE`    | `postgres`                                                                              |
 | `DATABASE_URL`       | Your Postgres connection string. Use the transaction pooler string on serverless hosts. |
 | `PARMANA_KEY_DIR`    | `./keys`, with the four PEM files from step 1 mounted there                             |
 
@@ -7997,7 +7998,7 @@ If `/ready` returns `503` with `NOT_READY`, read the `reason`. Either the databa
 
 ## Step 7: Load and approve your policies
 
-In production with Supabase storage, policies live in the `policies` table, not on disk. Do these two things.
+In production with PostgreSQL storage, policies live in the `policies` table, not on disk. Do these two things.
 
 **7a. Copy the policies into the database, once.** From the repository root, with `DATABASE_URL` and `PARMANA_POLICY_DIR` set in your shell:
 
@@ -8482,7 +8483,7 @@ stated condition. "No" means optional.
 
 ## The minimum for a production start
 
-These are the variables you must set for a production server that uses local signing keys and Supabase storage. Everything
+These are the variables you must set for a production server that uses local signing keys and PostgreSQL storage. Everything
 else has a safe default.
 
 | Variable             | Example value                                                                                                                                          |
@@ -8490,7 +8491,7 @@ else has a safe default.
 | `NODE_ENV`           | `production`                                                                                                                                           |
 | `PARMANA_POLICY_DIR` | `./policies`                                                                                                                                           |
 | `PARMANA_API_KEYS`   | `[{"callerId":"my-agent","keyHash":"<64 hex characters>","allowedCapabilities":["erp:invoice-pay"]}]`                                                  |
-| `PARMANA_STORAGE`    | `supabase`                                                                                                                                             |
+| `PARMANA_STORAGE`    | `postgres`                                                                                                                                             |
 | `DATABASE_URL`       | `postgresql://postgres.<project>:<password>@<host>:6543/postgres`                                                                                      |
 | `PARMANA_KEY_DIR`    | `./keys` (with `default.private.pem`, `default.public.pem`, `gateway.private.pem` and `gateway.public.pem` inside), or use `PARMANA_KEY_MATERIAL_JSON` |
 
@@ -8555,7 +8556,7 @@ that names `PARMANA_API_KEYS`.
 
 | Variable            | Required     | Default                     | Values or format                                 | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ------------------- | ------------ | --------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `PARMANA_STORAGE`   | No           | `memory`                    | `memory`, `postgres`, `supabase`                 | Where business transactions and trust records are kept. `memory` loses everything on restart and must not be used in production. `postgres` uses any Postgres through `DATABASE_URL`, and is the name for a self hosted database. `supabase` is the same implementation under its older name, kept so existing deployments are unchanged.                                                                                                                          |
+| `PARMANA_STORAGE`   | No           | `memory`                    | `memory`, `postgres`, `supabase`                 | Where business transactions and trust records are kept. `memory` loses everything on restart and must not be used in production. `postgres` uses any PostgreSQL 16 database through `DATABASE_URL`, whether self hosted or hosted by a provider such as Supabase. `supabase` is accepted as an alias for `postgres`, so existing deployments are unchanged.                                                                                                        |
 | `DATABASE_URL`      | Not test     | None                        | A Postgres connection string                     | A direct Postgres connection string. It is required whenever `NODE_ENV` is not `test`, **regardless of `PARMANA_STORAGE`**, because the nonce store, the caller audit trail, the execution audit trail, the approval nonce store and the step up nonce store are always durable outside tests. It also backs shared rate limit counters. Use the Supabase **transaction pooler** string for serverless hosts, see [Production deployment](/deployment/production). |
 | `PARMANA_DB_SCHEMA` | No           | Unset (the `public` schema) | A plain Postgres name, such as `parmana_sandbox` | Puts this process's tables on another schema of the same database, so two systems can share one database. Connections set `search_path` to it. Use the session pooler (port 5432) with it: a transaction pooler may not keep the setting.                                                                                                                                                                                                                          |
 | `DATABASE_PROVIDER` | Never set it | None                        | None                                             | Removed. If it is set at all, the server stops with "DATABASE_PROVIDER is no longer read; set PARMANA_STORAGE instead."                                                                                                                                                                                                                                                                                                                                            |
@@ -8686,7 +8687,7 @@ deliberate: a misconfigured server never runs half configured.
 | `PARMANA_KEY_DIR is not set`                                                                                                                              | No key directory                                                      | Set `PARMANA_KEY_DIR`.                                                                                   |
 | `Signing key material for keyId "default" is missing`                                                                                                     | No `default.private.pem` or `default.public.pem` in `PARMANA_KEY_DIR` | Generate the key pair, mount the files, or set `PARMANA_KEY_MATERIAL_JSON`.                              |
 | `Durable NonceStore requires DATABASE_URL` (or `CallerAuditSink`, `ExecutionAuditSink`, `ApprovalNonceStore`, `PolicyChangeStepUpNonceStore`)             | `DATABASE_URL` is not set and `NODE_ENV` is not `test`                | Set `DATABASE_URL` to a direct Postgres connection string.                                               |
-| `PARMANA_STORAGE=supabase requires DATABASE_URL`                                                                                                          | Supabase storage without a connection string                          | Set `DATABASE_URL`.                                                                                      |
+| `PARMANA_STORAGE=supabase requires DATABASE_URL` (or `postgres`)                                                                                          | Supabase storage without a connection string                          | Set `DATABASE_URL`.                                                                                      |
 | `Invalid PARMANA_STORAGE: <value>` (or `CRYPTO_MODE`, `HASH_PROVIDER`, `KEY_PROVIDER`, `PARMANA_SECRETS_PROVIDER`, `TRUST_PROFILE`, `SIGNATURE_PROVIDER`) | A value outside the allowed list                                      | Use one of the values in the tables above.                                                               |
 | `DATABASE_PROVIDER is no longer read`                                                                                                                     | The removed variable is set                                           | Delete it and set `PARMANA_STORAGE`.                                                                     |
 | `<NAME>=<value> is not implemented in this build`                                                                                                         | `azure-key-vault`, `gcp-kms` or `hsm`                                 | Use `local` or `aws-kms`.                                                                                |
@@ -8751,7 +8752,7 @@ Parmana's public key. Production caller-authentication audit events
 are signed the same way, verifiable at `POST /audit/verify`. Two scope caveats: Refusal
 Record writing is evidentiary and fails open by design (a rejection is never blocked or
 delayed by it; only the durable record can go silently missing, never the correctness of
-the rejection itself), and only production (Supabase) audit sinks sign; the in-memory
+the rejection itself), and only production (PostgreSQL) audit sinks sign; the in-memory
 test sinks don't.
 
 **Hybrid (Ed25519 + ML-DSA-65) signing capability, not yet deployed (3.13).** Trust

@@ -4,8 +4,8 @@ description: "Append-only persistence for Business Transactions, Trust Records, 
 ---
 
 <Info>
-  **[AVAILABLE]** for `memory`, `supabase` and `postgres`. **Declared but
-  unimplemented** for `sqlite`, see below.
+  **[AVAILABLE]** for `memory` and `postgres`. `supabase` is accepted as an
+  alias for `postgres`. **Declared but unimplemented** for `sqlite`, see below.
 </Info>
 
 ## Providers, precisely
@@ -24,16 +24,13 @@ switch (configuration.provider) {
 }
 ```
 
-`postgres` and `supabase` select the same implementation. Despite its name,
-`SupabaseStorageProvider` writes through a direct Postgres connection (`DATABASE_URL`), so a
-self hosted Postgres works under either name. Both refuse to start without `DATABASE_URL`.
-`sqlite` throws at startup, by design (fails closed rather than silently falling back).
+`postgres` is the name to use. `supabase` is accepted as an alias for the same implementation, so existing configurations keep working. The implementation is `SupabaseStorageProvider` for historical reasons: it writes through a direct PostgreSQL connection (`DATABASE_URL`) with the `pg` driver, not through a Supabase client. A self-hosted PostgreSQL works the same way, and so does a Supabase-hosted database. Both refuse to start without `DATABASE_URL`. `sqlite` throws at startup, by design (fails closed rather than silently falling back).
 
 | Provider   | Status                    | Notes                                                                                                                                 |
 | ---------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `memory`   | [AVAILABLE]               | In-process, non-persistent. Used throughout this site's live examples (`PARMANA_STORAGE=memory`) so they have no external dependency. |
-| `supabase` | [AVAILABLE]               | `SupabaseStorageProvider` over `DATABASE_URL`.                                                                                        |
-| `postgres` | [AVAILABLE]               | The same implementation as `supabase`.                                                                                                |
+| `postgres` | [AVAILABLE]               | `SupabaseStorageProvider` over `DATABASE_URL`, using `pg`. Works with any PostgreSQL 16 database built from `supabase/migrations/`.   |
+| `supabase` | [AVAILABLE]               | Alias for `postgres`. Kept for existing configurations.                                                                               |
 | `sqlite`   | Declared, not implemented | Throws at startup.                                                                                                                    |
 
 ## What's stored
@@ -43,12 +40,17 @@ Business Transactions and Execution Trust Records (the append-only ledger behind
 Records, pending policy changes and their signed approval records, approval issuers,
 external connectors, the execution and caller audit events, and the single-use nonces for
 authorizations, approvals and step up envelopes. Each has a `Memory*` implementation for
-tests and a `Supabase*` (Postgres) implementation; see `packages/storage/src/index.ts`.
+tests and a PostgreSQL implementation; see `packages/storage/src/index.ts`.
+
+The evidence tables are append-only at the database level: the caller audit, execution
+audit, policy change approval and refusal record tables reject `UPDATE`, `DELETE` and
+`TRUNCATE` through triggers (migration `20261110120000_enforce_append_only_evidence.sql`).
+See [Storage schema](/storage/schema-reference) for the full list.
 
 ## Configuration
 
 ```bash
-PARMANA_STORAGE=memory     # or supabase, or postgres (both need DATABASE_URL)
+PARMANA_STORAGE=memory     # or postgres (needs DATABASE_URL)
 ```
 
 `PARMANA_STORAGE` is the only variable read. An older `DATABASE_PROVIDER` variable existed

@@ -109,6 +109,6 @@ walk through the real, current deployment steps for each target.
 - `AWS_REGION`, `AWS_ROLE_ARN` (for KMS signing) or local key material via
   `PARMANA_KEY_MATERIAL_JSON` (for local Ed25519 signing, not recommended for production but
   functional).
-- `PARMANA_STORAGE=supabase` with `DATABASE_URL` set, since the filesystem cannot be relied on
+- `PARMANA_STORAGE=postgres` with `DATABASE_URL` set, since the filesystem cannot be relied on
   for anything written at runtime, including approved policy content.
 - Every other env var from Chapter 20's requirements table.

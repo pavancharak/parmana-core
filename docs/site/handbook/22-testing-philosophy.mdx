@@ -12,7 +12,7 @@ not a separate, optional thing bolted on after the real code and real tests exis
 
 ## Why it was built this way
 
-A test that needs a live Supabase connection or real AWS credentials to run cannot run in CI
+A test that needs a live PostgreSQL connection or real AWS credentials to run cannot run in CI
 without secrets, cannot run offline, and is slow. A prose document describing behavior can
 silently go stale the moment the underlying code changes, since nothing forces it to be
 re-checked. Both problems have the same root cause, a gap between what is claimed and what is
@@ -39,7 +39,7 @@ own default behavior, and `packages/storage/src/StorageFactory.createFromEnviron
 that explicitly, returning `MemoryStorageProvider` unconditionally under `NODE_ENV=test`,
 regardless of what `PARMANA_STORAGE` happens to be set to in the ambient environment. This exists
 specifically so importing application code during test collection never accidentally constructs
-a Postgres or Supabase connection.
+a PostgreSQL connection.
 
 ### The tutorial suite as documentation
 
@@ -148,5 +148,5 @@ final `✓`/`✗` verdict, entirely hermetically, no network access, no real cre
 
 None beyond what's already needed to run the codebase locally (Node.js, `npm install`). No
 tutorial or unit test in the default `npm test` / `npm run examples` runs requires real AWS,
-Supabase, or connector credentials; that is the entire point of the hermetic-first discipline
+a live PostgreSQL database, or connector credentials; that is the entire point of the hermetic-first discipline
 described above.

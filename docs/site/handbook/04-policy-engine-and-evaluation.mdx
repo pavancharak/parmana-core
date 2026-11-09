@@ -170,6 +170,6 @@ tracks what's available.
 ## Integration requirements
 
 None beyond what's already required to run the API at all: `PARMANA_POLICY_DIR` (for
-`FilePolicyRepository`, required, with no default) or `PARMANA_STORAGE=supabase` plus
+`FilePolicyRepository`, required, with no default) or `PARMANA_STORAGE=postgres` plus
 `DATABASE_URL` (for `PostgresPolicyRepository` in a real deployment). No policy-engine-specific
 configuration exists, a policy's own content is the only per-policy configuration surface.

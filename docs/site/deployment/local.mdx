@@ -57,8 +57,8 @@ NODE_ENV=test \
 
 `NODE_ENV=test` matters even though `PARMANA_STORAGE=memory` is set: two other components,
 the Execution Gateway's replay-nonce store and the caller-authentication audit trail, default
-to Supabase-backed implementations outside `NODE_ENV=test` (`createNonceStore.ts`,
-`createCallerAuditSink.ts`) and will fail closed without a real, reachable Supabase project.
+to PostgreSQL-backed implementations outside `NODE_ENV=test` (`createNonceStore.ts`,
+`createCallerAuditSink.ts`) and will fail closed without a real, reachable PostgreSQL database (`DATABASE_URL`).
 `PARMANA_API_KEYS` above is a demo key for local development only, raw key
 `my-secret-api-key`, allowed to use `test:fixture-execute` and to act as `demo`. Its raw key is
 public: make real keys with `npm run generate:api-key`, see [Authentication](/api-reference/authentication).
@@ -82,7 +82,7 @@ skips needing this key.
   share replay-nonce state depends on `NODE_ENV`: `MemoryNonceStore` (`NODE_ENV=test`, as
   above) is process-local, each process would accept the same authorization once, not once
   fleet-wide. Outside `NODE_ENV=test`, `SupabaseNonceStore` is durable and shared across
-  replicas pointed at the same Supabase project, but this deployment shape is still one
+  replicas pointed at the same PostgreSQL database, but this deployment shape is still one
   process behind no load balancer.
 - **No built in connectors.** Parmana ships none. See [The gateway](/concepts/the-gateway) for
   what adding a new connector requires.

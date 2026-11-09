@@ -10,50 +10,35 @@ routes live in `src/routes/`.
 
 Most of this package's tests are hermetic and require no environment setup.
 
-### Supabase-backed integration tests
+### Database-backed integration tests
 
-A subset of integration tests exercise the real Supabase-backed storage
-provider (`SupabaseStorageProvider`) against a live Supabase project, rather
-than the in-memory provider. These tests cannot run from a bare clone with no
-credentials, and are skipped automatically — with a logged reason — when the
-required environment variables are absent:
+Some integration tests run against a live PostgreSQL database, built from `supabase/migrations/`,
+rather than the in-memory provider. They cannot run from a bare clone, and they are skipped
+automatically, with a logged reason, when the database is not configured.
 
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY` (or `SUPABASE_ANON_KEY`)
+To run them, set both of these:
 
-Setting these alone is not enough to run these tests: since the G-3 fix
-(docs/internal/VERIFICATION-GAPS.md), a suite that detects `SUPABASE_*` configured
-without `ALLOW_LIVE_SUPABASE=1` also set does not run against the live
-project — it skips cleanly instead, logging why. (Earlier, this was a hard
-failure instead of a skip; G-15 changed that so a default `npm test` on a
-machine with live credentials configured — the common daily-development
-case — stays green without anyone needing to touch `.env`. Explicitly
-requesting a live run with `ALLOW_LIVE_SUPABASE=1` but no visible
-credentials is still a hard failure, not a skip — see G-14.) Set both
-`SUPABASE_*` and `ALLOW_LIVE_SUPABASE=1` to actually run these tests:
+- `TEST_DATABASE_URL`, a PostgreSQL connection string for a **test** database
+- `ALLOW_LIVE_SUPABASE=1`, the explicit opt-in for writes to a live database
 
-- `tests/unit/transactions-api.test.ts` (persistence cases only — most of
-  this file is hermetic)
-- `tests/integration/verification-negative.integration.test.ts`
-- `tests/integration/trust-record-get.integration.test.ts`
-- `tests/integration/trust-record-lifecycle.integration.test.ts`
-- `tests/integration/workflow-negative.integration.test.ts`
-- `tests/integration/workflow-supabase.integration.test.ts`
-- `tests/integration/receipt-negative.integration.test.ts`
-- `tests/integration/receipt-signature.integration.test.ts`
+A local PostgreSQL 16 database works. Apply the migrations first, for example with
+`npm run db:migrate -- apply` with `DATABASE_URL` pointing at it. Setting `TEST_DATABASE_URL`
+without `ALLOW_LIVE_SUPABASE=1` skips these suites with a logged reason. Setting
+`ALLOW_LIVE_SUPABASE=1` without a visible `TEST_DATABASE_URL` is a hard failure, not a skip.
+
+The shared gate is `tests/helpers/database-availability.ts` (`resolveDatabaseGate`). It is used by
+these suites, among others:
+
+- `tests/integration/evidence-append-only.integration.test.ts` (the database rejects updates, deletes and truncates on evidence tables)
+- `tests/integration/postgres-caller-audit-sink.integration.test.ts`
+- `tests/integration/postgres-execution-audit-sink.integration.test.ts`
 - `tests/integration/replay.integration.test.ts`
-- `tests/integration/postgres-caller-audit-sink.integration.test.ts` (added
-  when the durable `PostgresCallerAuditSink` closed G-13)
 
-The skip check lives in `tests/helpers/supabase-availability.ts`.
+The older `SUPABASE_*` gate in `tests/helpers/supabase-availability.ts` is no longer used by any suite.
+It is kept only with its own unit test, and can be removed.
 
-The sibling `@parmana/storage` package has its own Supabase-gated suites,
-routed through the same `resolveSupabaseGate` mechanism (its own copy of the
-helper, kept independent by design — see that file's comment) and the same
-`ALLOW_LIVE_SUPABASE=1` requirement:
-`packages/storage/tests/integration/supabase-execution-trust-record-ordering.integration.test.ts`,
-`supabase-nonce-store.integration.test.ts` (G-13), and
-`supabase-business-transaction-duplicate.integration.test.ts` (G-1).
+The sibling `@parmana/storage` package uses the same database gate for its live suites, under
+`packages/storage/tests/integration/`.
 
 ### HubSpot live integration test
 

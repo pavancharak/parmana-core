@@ -4,16 +4,16 @@ description: "Every live table: what it is for, its columns, which migration bui
 ---
 
 <Info>
-  Checked against all 31 `supabase/migrations/*.sql` files, read in order.
-  Several tables were altered by later migrations, so the shapes below are the
-  final, cumulative schema, not only what the first `CREATE TABLE` said. See
+  Checked against every `supabase/migrations/*.sql` file, read in order. Several
+  tables were altered by later migrations, so the shapes below are the final,
+  cumulative schema, not only what the first `CREATE TABLE` said. See
   [Storage](/storage/overview) first for the conceptual model.
 </Info>
 
-**Connecting:** the application connects directly to Postgres (`DATABASE_URL`), not through
-PostgREST. A direct connection bypasses Row Level Security the same way a table owner does,
-so RLS below matters for what a different credential (for example Supabase's `anon` role)
-could see, not for what the application's own connection can.
+**Connecting:** the application connects directly to PostgreSQL (`DATABASE_URL`) with the `pg`
+driver. It does not use a REST layer. A direct connection bypasses Row Level Security the same
+way a table owner does, so RLS below matters for what a different, less privileged role could
+see, not for what the application's own connection can.
 
 ```bash
 psql "$DATABASE_URL"
@@ -47,8 +47,9 @@ psql "$DATABASE_URL"
 | `rate_limit_counters`                   | Fleet wide rate limits, the only table without RLS                      | `PostgresRateLimitStore`                       |
 | `handbook_download_leads`               | Email captured before a handbook PDF download                           | `SupabaseHandbookDownloadLeadRepository`       |
 
-Not covered here: `supabase_migrations.schema_migrations`, the Supabase CLI's own tracking
-table in a different schema (see the migration sync query below).
+Not covered here: the migration tracking table of the Supabase CLI, `supabase_migrations.schema_migrations`,
+which this repository does not use. The tracked migration runner records each applied file in
+`parmana_schema_migrations` (see the migration sync query below).
 
 ## Table by table
 
@@ -290,8 +291,10 @@ The signed record of a checker's decision on a pending change. Created with
 which chains the approval history itself; `content_hash_after` only proves the live policy
 matches what was approved. Indexed on `(policy_name, policy_version, approved_at DESC)`.
 
-This is the only table with a real RLS policy: `20260818150000` grants the `anon` role read
-only `SELECT` here, for the CI job that checks policy approvals with `SUPABASE_ANON_KEY`.
+This is the only table with a real RLS policy. Migration `20260818150000` grants a read-only
+role `SELECT` here. The deploy-time check (`scripts/verify-policy-changes-approved.ts`) uses that
+role through `SUPABASE_ANON_KEY`. The pull request gate does not read the database: it verifies the
+signed log offline. The scheduled drift check reads through a read-only role named in `CI_DATABASE_URL`.
 Never write rows here by hand.
 
 ### `consumed_nonces`, `consumed_approval_nonces`, `consumed_policy_change_step_up_nonces`
@@ -484,10 +487,10 @@ require("dotenv").config();
 const fs = require("fs");
 const { Pool } = require("pg");
 const pool = new Pool({ connectionString: process.env.DATABASE_URL, min: 1 });
-const fileVersions = fs.readdirSync("supabase/migrations").filter(f => f.endsWith(".sql")).map(f => f.split("_")[0]).sort();
+const fileVersions = fs.readdirSync("supabase/migrations").filter(f => f.endsWith(".sql")).sort();
 (async () => {
-  const { rows } = await pool.query("SELECT version FROM supabase_migrations.schema_migrations ORDER BY version");
-  const dbVersions = rows.map(r => r.version).sort();
+  const { rows } = await pool.query("SELECT name FROM parmana_schema_migrations ORDER BY name");
+  const dbVersions = rows.map(r => r.name).sort();
   console.log("Files:", fileVersions.length, "Tracked:", dbVersions.length);
   console.log("In files, not tracked:", fileVersions.filter(v => !dbVersions.includes(v)));
   console.log("Tracked, no file:", dbVersions.filter(v => !fileVersions.includes(v)));

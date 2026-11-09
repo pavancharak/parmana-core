@@ -124,7 +124,7 @@ Set these in your platform, not in a file in the image. The minimum for producti
 | `NODE_ENV`           | `production`                                                                            |
 | `PARMANA_POLICY_DIR` | `./policies` (already set in the image)                                                 |
 | `PARMANA_API_KEYS`   | The JSON array from step 3                                                              |
-| `PARMANA_STORAGE`    | `supabase`                                                                              |
+| `PARMANA_STORAGE`    | `postgres`                                                                              |
 | `DATABASE_URL`       | Your Postgres connection string. Use the transaction pooler string on serverless hosts. |
 | `PARMANA_KEY_DIR`    | `./keys`, with the four PEM files from step 1 mounted there                             |
 
@@ -172,7 +172,7 @@ If `/ready` returns `503` with `NOT_READY`, read the `reason`. Either the databa
 
 ## Step 7: Load and approve your policies
 
-In production with Supabase storage, policies live in the `policies` table, not on disk. Do these two things.
+In production with PostgreSQL storage, policies live in the `policies` table, not on disk. Do these two things.
 
 **7a. Copy the policies into the database, once.** From the repository root, with `DATABASE_URL` and `PARMANA_POLICY_DIR` set in your shell:
 

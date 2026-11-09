@@ -123,7 +123,7 @@ Authority --> Authorization --> Intent --> Business Transaction
 | `@parmana/execution-system`    | The interface approved requests are forwarded through, with an HTTP implementation                                                       |
 | `@parmana/governance-ui`       | Internal UI to propose and review policy changes; approval stays on the approver's machine                                               |
 | `@parmana/replay`              | Deterministic reconstruction of a past policy decision                                                                                   |
-| `@parmana/storage`             | Append-only persistence, in memory or Supabase-backed                                                                                    |
+| `@parmana/storage`             | Append-only persistence, in memory or PostgreSQL-backed                                                                                  |
 | `@parmana/shared`              | Domain model and configuration shared across every package                                                                               |
 
 Key properties:
