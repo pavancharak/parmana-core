@@ -1,0 +1,38 @@
+name: Commit signatures
+
+# Every commit in a pull request must carry a signature that GitHub verifies.
+# Verification uses the GitHub API, so it trusts the same keys GitHub does.
+# This check is advisory until it is added as a required check on the
+# main branch protection rule (docs/internal/SIGNING.md).
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verified-commits:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Every commit must be verified
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BASE: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          bad=0
+          for sha in $(git rev-list "origin/${BASE}..HEAD"); do
+            verified=$(gh api "repos/${REPO}/commits/${sha}" --jq '.commit.verification.verified')
+            if [ "$verified" != "true" ]; then
+              echo "::error::Commit $sha is not verified (signature missing or not trusted by GitHub)."
+              bad=1
+            fi
+          done
+          exit $bad
