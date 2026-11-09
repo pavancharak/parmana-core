@@ -166,6 +166,15 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f scripts/apply-all-migrations.sql
           npx vitest run packages/api/tests/integration/replay.integration.test.ts
 
+      - name: Storage provider contract against a migrated database
+        # ADR-0021, migration step 1. The same contract runs against the memory
+        # provider and the PostgreSQL provider. The database was migrated in the
+        # step above, so this step only runs the contract.
+        env:
+          DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+          ALLOW_LIVE_SUPABASE: "1"
+        run: npx vitest run packages/storage/tests/contract
+
       - name: Verify the policy approval log
         # governance/policy-approvals.jsonl: the chain, every signature,
         # and that a change only appends to it (compared with the base).

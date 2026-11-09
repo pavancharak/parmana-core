@@ -59,6 +59,15 @@ The codebase already mixes both. `packages/api` and `packages/storage` use the `
 
 Each step is one pull request. Step 3 must not merge while any caller still uses the old path.
 
+### Progress
+
+**Step 1 (2026-11-09): done.** The contract is in `packages/storage/tests/contract/storage-provider.contract.ts`, with 16 cases over business transactions and execution trust records. It runs against the memory provider and against the PostgreSQL provider (`SupabaseStorageProvider`, which uses `PostgresPoolFactory`). The PostgreSQL run needs `TEST_DATABASE_URL` and is wired into CI after the migration step. The contract passes on a PostgreSQL 16 database built from `scripts/apply-all-migrations.sql`, with no Supabase roles or `auth` schema present.
+
+The contract found two behaviour differences that it does not yet pin:
+
+- `trustRecords.create()`: the memory provider stores whatever children it is given. The PostgreSQL provider writes only the header, and executions must be appended with `appendExecution()`. Production uses the append order, so the contract tests that order. A caller that passes children to `create()` on the PostgreSQL provider loses them without an error. The memory provider should be changed to match, in a follow-up.
+- `trustRecords.appendExecution()` for an unknown transaction: the memory provider does nothing. The PostgreSQL provider inserts the row. The contract does not test this case yet.
+
 ## Open questions for the operator
 
 1. Should the Supabase storage adapter be kept as a supported deployment option, or removed once step 3 is done?
