@@ -1,0 +1,71 @@
+{
+  "rules": [
+    {
+      "id": "approve-razorpay-refund",
+      "outcome": {
+        "action": "approve",
+        "reason": "Refund authorized. Razorpay confirmed the payment is refundable for this amount, and a signed manager approval covers this payment and amount."
+      },
+      "condition": {
+        "all": [
+          {
+            "fact": "paymentRefundable",
+            "value": true,
+            "operator": "eq"
+          },
+          {
+            "fact": "managerApproved",
+            "operator": "is_true"
+          }
+        ]
+      }
+    },
+    {
+      "id": "reject-not-refundable",
+      "outcome": {
+        "action": "reject",
+        "reason": "Refund rejected because Razorpay does not show this payment as refundable for this amount."
+      },
+      "condition": {
+        "fact": "paymentRefundable",
+        "value": false,
+        "operator": "eq"
+      }
+    },
+    {
+      "id": "reject-default",
+      "outcome": {
+        "action": "reject",
+        "reason": "Refund rejected because a required policy condition was not satisfied."
+      },
+      "condition": {
+        "always": true
+      }
+    }
+  ],
+  "policyId": "razorpay-refund",
+  "description": "Authorizes a refund on a Razorpay payment. Razorpay itself confirms the payment is captured, not fully refunded, and has the requested amount left. A signed manager approval for that payment and amount is also required. The caller cannot declare either fact.",
+  "policyVersion": "1.1.0",
+  "schemaVersion": "1.0.0",
+  "signalSources": {
+    "paymentRefundable": {
+      "claim": "payment.refundable",
+      "source": "razorpay",
+      "subject": "target",
+      "parameters": [
+        "amount"
+      ],
+      "maxAgeSeconds": 60
+    }
+  },
+  "signalsSchema": {
+    "managerApproved": "boolean",
+    "paymentRefundable": "boolean"
+  },
+  "approvalSignals": {
+    "managerApproved": {
+      "value": "parameters.amount",
+      "resourceId": "target"
+    }
+  }
+}
