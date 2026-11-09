@@ -10868,7 +10868,7 @@ components:
       title: Ready Response
       description: "Response returned by GET /ready on both status codes (200 READY,
         503 NOT_READY). Distinct from GET /health's pure liveness check: when
-        storage is Supabase-backed, this one actually queries Postgres (SELECT
+        storage is PostgreSQL-backed, this one actually queries Postgres (SELECT
         1) so an orchestrator can route around a process that is up but backed
         by dead storage."
       type: object
@@ -10884,7 +10884,7 @@ components:
         storage:
           type: string
           description: "Present only when status is READY and storage is not
-            Supabase-backed (NODE_ENV=test, or PARMANA_STORAGE=memory outside
+            PostgreSQL-backed (NODE_ENV=test, or PARMANA_STORAGE=memory outside
             test): there is no external dependency to probe, so readiness is
             reported unconditionally."
           enum:
@@ -12718,7 +12718,7 @@ components:
         signature:
           type: object
           description: The signature stored alongside the event. Only production
-            (Supabase) audit sinks sign; in-memory test sinks never produce a
+            (PostgreSQL) audit sinks sign; in-memory test sinks never produce a
             genuine one of these.
           additionalProperties: true
           required:

@@ -27,7 +27,7 @@
     },
     "signature": {
       "type": "object",
-      "description": "The signature stored alongside the event. Only production (Supabase) audit sinks sign; in-memory test sinks never produce a genuine one of these.",
+      "description": "The signature stored alongside the event. Only production (PostgreSQL) audit sinks sign; in-memory test sinks never produce a genuine one of these.",
       "additionalProperties": true,
       "required": ["algorithm", "keyId", "value"],
       "properties": {
