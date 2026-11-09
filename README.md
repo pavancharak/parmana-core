@@ -1,6 +1,6 @@
 # Parmana
 
-**Parmana makes sure your AI agents take only the actions your business has approved, even when they could technically do more.** It checks every action, whether a person or a machine takes it, against the limits you set, and it keeps proof of what happened.
+**Parmana makes sure every caller takes only the actions your business has approved, even when they could technically do more.** It checks every action, whether a person or a machine takes it, against the limits you set, and it keeps proof of what happened.
 
 [![CI](https://github.com/pavancharak/parmana-core/actions/workflows/ci.yml/badge.svg)](https://github.com/pavancharak/parmana-core/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/pavancharak/parmana-core/actions/workflows/codeql.yml/badge.svg)](https://github.com/pavancharak/parmana-core/actions/workflows/codeql.yml)
@@ -18,7 +18,7 @@ Companies want AI agents to issue refunds, pay vendors, update CRM deals, merge 
 
 ## What Parmana does
 
-Parmana sits between an AI agent and the systems it calls.
+Parmana sits between any caller (an AI agent, an application or a person) and the systems it calls.
 
 - **Before an action:** the request is checked against an explicit, versioned policy, and it needs a signed approval from a person you trust. No approval, no action, reads included ([CLAIMS.md 2.47](docs/internal/CLAIMS.md)).
 - **When it runs:** on the supported paths, the gateway resolves connector credentials, and an agent calling the HTTP API never receives them. Code on the same host that can read the server's environment can still read those credentials ([G-128](docs/internal/VERIFICATION-GAPS.md)). The gateway releases one approved action, once, through a connector.
