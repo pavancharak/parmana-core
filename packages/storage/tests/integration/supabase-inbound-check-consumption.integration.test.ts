@@ -14,15 +14,23 @@ import { SupabaseInboundCheckRepository } from "../../src/supabase/SupabaseInbou
  * which creates inbound_decisions and consumed_approval_nonces in the public schema). Every row this test writes
  * carries a run tag and is deleted afterwards.
  *
- * Reads TEST_DATABASE_URL only, never DATABASE_URL. Skipped when TEST_DATABASE_URL is not set. Refuses to run if
- * TEST_DATABASE_URL is the same as DATABASE_URL.
+ * Database choice:
+ *   - TEST_DATABASE_URL, when set. Refuses to run if it equals DATABASE_URL.
+ *   - Otherwise DATABASE_URL, but only with ALLOW_LIVE_SUPABASE=1, the same opt-in the other live suites require.
+ *     This lets .env.test point DATABASE_URL at the sandbox for every suite, with no per-run setting.
+ *   - Otherwise skipped.
  */
-const url = process.env.TEST_DATABASE_URL?.trim();
-if (url && url === process.env.DATABASE_URL) {
+const explicitTestUrl = process.env.TEST_DATABASE_URL?.trim();
+if (explicitTestUrl && explicitTestUrl === process.env.DATABASE_URL?.trim()) {
   throw new Error(
-    "TEST_DATABASE_URL equals DATABASE_URL. Point TEST_DATABASE_URL at a separate test database.",
+    "TEST_DATABASE_URL equals DATABASE_URL. Unset TEST_DATABASE_URL to use DATABASE_URL, or point it at a separate test database.",
   );
 }
+const url =
+  explicitTestUrl ||
+  (process.env.ALLOW_LIVE_SUPABASE === "1"
+    ? process.env.DATABASE_URL?.trim()
+    : undefined);
 
 const suite = url ? describe : describe.skip;
 
