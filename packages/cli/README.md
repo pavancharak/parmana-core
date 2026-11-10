@@ -4,7 +4,32 @@ Command-line tool for Parmana policy governance. It covers the maker-checker ste
 
 Full documentation: `docs/site/cli/` (start with `quickstart.mdx`). The command reference is generated: `npm run generate:cli-reference`.
 
-## Install and build
+## Install
+
+With npm, on Node.js 24 or later:
+
+```bash
+npm install -g @parmana/cli
+parmana --help
+```
+
+With the container image, which needs no Node.js:
+
+```bash
+docker pull ghcr.io/pavancharak/parmana-cli:2.0.1
+docker run --rm ghcr.io/pavancharak/parmana-cli:2.0.1 --help
+```
+
+The image runs as a non-root user and has no token in it. Pass the token when you run it, and mount your working folder at `/work` to use local files such as a policy file:
+
+```bash
+docker run --rm -e PARMANA_TOKEN -e PARMANA_API_URL=https://parmana-api-real.vercel.app \
+  -v "$PWD:/work" ghcr.io/pavancharak/parmana-cli:2.0.1 policy propose policy.json --name customer-refund --version 1.3.0 --reason "Tighten refund limit"
+```
+
+`-e PARMANA_TOKEN` with no value passes your shell's token into the container.
+
+## Build from source
 
 ```bash
 npm ci
