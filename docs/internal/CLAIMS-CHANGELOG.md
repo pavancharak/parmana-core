@@ -406,3 +406,71 @@ _Recorded in `CLAIMS.md` on 2026-11-05._
 _Originally at line 111 of `CLAIMS.md`._
 
 **Update (2026-11-05, G-148).** Every decision now names the method that produced its verdict and that method's version: `evaluationMethod: { id: "deterministic-rules", version: "1" }`, set from `POLICY_EVALUATION_METHOD` in `packages/policy`. The inputs are recorded with the verdict as `signals`. Decisions recorded before this change have no `evaluationMethod`.
+
+## Update 2026-11-09: PostgreSQL naming and the managed-hosting wording
+
+_Recorded when the Supabase-named classes were renamed and the storage was described as PostgreSQL (ADR-0021). The claims below are the ones whose wording changed; each one is shown as it was before the change._
+
+Before:
+
+> - `packages/shared/src/domain/business-signal-source.ts`, `packages/storage/src/{memory,supabase}/*BusinessSignalSourceRepository.ts`, `supabase/migrations/20261010120000_add_business_signal_sources.sql`
+
+After:
+
+> - `packages/shared/src/domain/business-signal-source.ts`, `packages/storage/src/{memory,postgres}/*BusinessSignalSourceRepository.ts`, `supabase/migrations/20261010120000_add_business_signal_sources.sql`
+
+Before:
+
+> - `packages/shared/src/domain/authority-grant.ts`, `packages/storage/src/{memory,supabase}/*AuthorityGrantRepository.ts`, `supabase/migrations/20261011120000_add_authority_grants.sql`
+
+After:
+
+> - `packages/shared/src/domain/authority-grant.ts`, `packages/storage/src/{memory,postgres}/*AuthorityGrantRepository.ts`, `supabase/migrations/20261011120000_add_authority_grants.sql`
+
+Before:
+
+> Parmana's own production gateway does this by default. `packages/api/src/bootstrap/createNonceStore.ts` wires in `SupabaseNonceStore` (`packages/storage/src/postgres/PostgresNonceStore.ts`), a durable, Postgres-backed NonceStore shared across every process pointed at the same Supabase project, and fails closed at startup if it is not configured, rather than silently falling back to a per-process `MemoryNonceStore`. A receiving system that does not share a persistent NonceStore (whether by choice, misconfiguration, or because it is not Parmana's own gateway) still has its exposure window bounded by the envelope's short TTL, not unlimited. This is the general, deployment-agnostic version of the claim, and still the correct one for any `@parmana/envelope-verifier` integrator supplying their own NonceStore choice; `MemoryNonceStore` remains available and correct for tests.
+
+After:
+
+> Parmana's own production gateway does this by default. `packages/api/src/bootstrap/createNonceStore.ts` wires in `PostgresNonceStore` (`packages/storage/src/postgres/PostgresNonceStore.ts`), a durable, PostgreSQL-backed NonceStore shared across every process pointed at the same database, and fails closed at startup if it is not configured, rather than silently falling back to a per-process `MemoryNonceStore`. A receiving system that does not share a persistent NonceStore (whether by choice, misconfiguration, or because it is not Parmana's own gateway) still has its exposure window bounded by the envelope's short TTL, not unlimited. This is the general, deployment-agnostic version of the claim, and still the correct one for any `@parmana/envelope-verifier` integrator supplying their own NonceStore choice; `MemoryNonceStore` remains available and correct for tests.
+
+Before:
+
+> - NonceStore / MemoryNonceStore / SupabaseNonceStore
+
+After:
+
+> - NonceStore / MemoryNonceStore / PostgresNonceStore
+
+Before:
+
+> - packages/api/src/bootstrap/createNonceStore.ts (production wiring; fails closed when Supabase is not configured, never falls back to in-memory)
+
+After:
+
+> - packages/api/src/bootstrap/createNonceStore.ts (production wiring; fails closed when the PostgreSQL database is not configured, never falls back to in-memory)
+
+Before:
+
+> 2. **Only production (Supabase) audit sinks sign.** `PostgresCallerAuditSink` signs every event; `InMemoryCallerAuditSink` (test wiring, `NODE_ENV=test`) does not. This claim is therefore about the production deployment path specifically, not every configuration this codebase can run in. Existing rows written before this capability shipped remain unsigned; `signature_json` is nullable and additive, honestly reflecting that history rather than backfilling a signature that was never actually produced at write time.
+
+After:
+
+> 2. **Only production (PostgreSQL) audit sinks sign.** `PostgresCallerAuditSink` signs every event; `InMemoryCallerAuditSink` (test wiring, `NODE_ENV=test`) does not. This claim is therefore about the production deployment path specifically, not every configuration this codebase can run in. Existing rows written before this capability shipped remain unsigned; `signature_json` is nullable and additive, honestly reflecting that history rather than backfilling a signature that was never actually produced at write time.
+
+Before:
+
+> - **A Postgres database, via Supabase, for anything other than a disposable single instance.** `PARMANA_STORAGE=memory` (the default) needs no external database for business-transaction/execution-trust-record data — but the caller-authentication audit trail (`CallerAuditSink`) and the envelope-verifier's replay-protection store (`NonceStore`) are **always** Supabase-backed in any non-test deployment, never falling back to in-memory regardless of `PARMANA_STORAGE`, and both fail closed at boot if `DATABASE_URL` is not configured — via `assertDatabaseUrlConfigured.ts`, called unconditionally from `createCallerAuditSink.ts`/`createNonceStore.ts` (not `assertStorageConfigured.ts`, which validates only business-transaction/execution-trust-record storage, gated on `PARMANA_STORAGE=supabase` or `postgres`; see that file's own doc comment). `SUPABASE_URL` itself is not read by this check — `DATABASE_URL` is the only variable that satisfies it, a documented, temporary substitute pending resolution of Supabase ticket SU-437429. In practice, precisely stated: a real deployment always needs Supabase for the audit trail and nonce store; `PARMANA_STORAGE=supabase` additionally routes business-transaction/execution-trust-record storage through the same database rather than memory. There is no configuration under which a real (non-test) deployment runs with zero external database.
+
+After:
+
+> - **A PostgreSQL database, self-hosted or hosted by a provider such as Supabase, for anything other than a disposable single instance.** `PARMANA_STORAGE=memory` (the default) needs no external database for business-transaction/execution-trust-record data — but the caller-authentication audit trail (`CallerAuditSink`) and the envelope-verifier's replay-protection store (`NonceStore`) are **always** PostgreSQL-backed in any non-test deployment, never falling back to in-memory regardless of `PARMANA_STORAGE`, and both fail closed at boot if `DATABASE_URL` is not configured — via `assertDatabaseUrlConfigured.ts`, called unconditionally from `createCallerAuditSink.ts`/`createNonceStore.ts` (not `assertStorageConfigured.ts`, which validates only business-transaction/execution-trust-record storage, gated on `PARMANA_STORAGE=supabase` or `postgres`; see that file's own doc comment). `SUPABASE_URL` itself is not read by this check — `DATABASE_URL` is the only variable that satisfies it, a documented, temporary substitute pending resolution of Supabase ticket SU-437429. In practice, precisely stated: a real deployment always needs Supabase for the audit trail and nonce store; `PARMANA_STORAGE=supabase` additionally routes business-transaction/execution-trust-record storage through the same database rather than memory. There is no configuration under which a real (non-test) deployment runs with zero external database.
+
+Before:
+
+> - **The schema applied to that database, manually.** `supabase/migrations/` must be applied to the target Supabase project before a real deployment can serve traffic — either `supabase db push` (Supabase CLI, if linked) or `scripts/apply-all-migrations.sql` (a concatenation of every migration file) via the Dashboard SQL Editor, on an empty database. **Corrected 2026-09-25:** this section used to call the bundle idempotent and safe to run again. It is not safe to run again on a database that holds data (`docs/internal/VERIFICATION-GAPS.md` G-61). The container itself does not migrate at boot. The Docker Compose deployment of 2.40 runs the migrations for it, each once, and since 2026-09-25 `npm run db:migrate` does the same for any Postgres, with `baseline` for a database set up with the bundle (G-61, closed).
+
+After:
+
+> - **The schema applied to that database, manually.** `supabase/migrations/` must be applied to the target PostgreSQL database before a real deployment can serve traffic. The tracked runner, `npm run db:migrate -- apply`, applies each file once. `scripts/apply-all-migrations.sql` (a concatenation of every migration file) is for an empty database only. **Corrected 2026-09-25:** this section used to call the bundle idempotent and safe to run again. It is not safe to run again on a database that holds data (`docs/internal/VERIFICATION-GAPS.md` G-61). The container itself does not migrate at boot. The Docker Compose deployment of 2.40 runs the migrations for it, each once, and since 2026-09-25 `npm run db:migrate` does the same for any Postgres, with `baseline` for a database set up with the bundle (G-61, closed).
