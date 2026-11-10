@@ -1,6 +1,6 @@
 {
   "name": "@parmana/runtime",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Parmana Runtime",
   "type": "module",
   "main": "./dist/index.js",
@@ -23,10 +23,10 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@parmana/crypto": "2.0.0",
-    "@parmana/execution-system": "2.0.0",
-    "@parmana/policy": "2.0.0",
-    "@parmana/shared": "2.0.0",
+    "@parmana/crypto": "2.0.1",
+    "@parmana/execution-system": "2.0.1",
+    "@parmana/policy": "2.0.1",
+    "@parmana/shared": "2.0.1",
     "express": "^5.3.0",
     "vitest": "^5.0.3"
   },

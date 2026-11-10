@@ -1,6 +1,6 @@
 {
   "name": "@parmana/replay",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Parmana Replay Engine - Deterministic execution reconstruction system",
   "type": "module",
   "main": "./dist/index.js",
@@ -23,8 +23,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@parmana/policy": "2.0.0",
-    "@parmana/shared": "2.0.0"
+    "@parmana/policy": "2.0.1",
+    "@parmana/shared": "2.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
