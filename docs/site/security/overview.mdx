@@ -213,16 +213,18 @@ workflow, recording the commit, the workflow and each file's SHA-256. To check a
 package with [slsa-verifier](https://github.com/slsa-framework/slsa-verifier):
 
 ```bash
-slsa-verifier verify-artifact parmana-sdk-1.6.3.tgz \
+slsa-verifier verify-artifact parmana-sdk-2.0.1.tgz \
   --provenance-path multiple.intoto.jsonl \
   --source-uri github.com/pavancharak/parmana-core \
-  --source-tag sdk-v1.6.3
+  --source-tag sdk-v2.0.1
 ```
+
+Release `sdk-v2.0.1` holds the 2.0.1 packages of `@parmana/sdk`, `@parmana/connector-sdk`, `@parmana/cli`, `@parmana/shared`, `@parmana/crypto`, `parmana` and `parmana-connector-sdk`, each with its SBOM. The command-line tool's container image is `ghcr.io/pavancharak/parmana-cli:2.0.1`, and it has its own provenance in the registry.
 
 The provenance covers the files attached to the release. The files published to npm and PyPI from 1.6.1 on are the release's own files, so a registry download has the same hash as the release file and the provenance covers it too: `@parmana/sdk` 1.6.2, `@parmana/connector-sdk` 1.6.2, `parmana` 1.6.2 and `parmana-connector-sdk` 1.6.2 are the files of release `sdk-v1.6.2`. Release `sdk-v1.6.3` holds `@parmana/sdk` 1.6.3, `@parmana/connector-sdk` 1.6.3, `parmana` 1.6.3 and `parmana-connector-sdk` 1.6.3. Release `sdk-v1.6.1` holds `@parmana/sdk` 1.6.1, `@parmana/connector-sdk` 0.3.1, `parmana` 1.6.1 and `parmana-connector-sdk` 0.2.1. Versions before 1.6.1 were published before this repository had a release workflow. No release here holds them, so the provenance does not cover them: `@parmana/sdk` and `parmana` 1.6.0 and before, `@parmana/connector-sdk` 0.3.0 and before, and `parmana-connector-sdk` 0.2.0.
 
 Each npm package and each wheel also has a [CycloneDX](https://cyclonedx.org) 1.5 SBOM beside it,
-named after it (for example `parmana-sdk-1.6.3.tgz.cdx.json`): the package, and every dependency
+named after it (for example `parmana-sdk-2.0.1.tgz.cdx.json`): the package, and every dependency
 installed with it, with versions and package URLs. For the npm packages it lists runtime
 dependencies only; for `parmana` it includes the optional `verify` extra (`cryptography`). The
 versions are the ones resolved when the release was built; a later install can resolve newer

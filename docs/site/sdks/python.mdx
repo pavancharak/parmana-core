@@ -17,8 +17,10 @@ description: "Generated models, bearer-key authentication, and a typed error tax
   and the `offline_verifier.py` fix. Two quick follow-up releases, v1.1.3 and
   v1.1.4, corrected the published package metadata (repo name, docs domain,
   added a `Website` URL); v1.1.5 and v1.1.6, both published 2026-09-20, follow;
-  v2.0.0, published 2026-11-07, is the current version. Its offline verifier now
-  verifies hybrid records in full: a `signatures` array with one Ed25519 and one
+  v2.0.1, published 2026-11-10, is the current version. It aligns the SDK with
+  the other 2.0.1 packages and changes no code. v2.0.0, published 2026-11-07,
+  added full hybrid verification to the offline verifier: it verifies hybrid
+  records in full, with a `signatures` array holding one Ed25519 and one
   ML-DSA-65 entry, including the whole-record message of schema version 3. Its
   results report `coverage` (`"full"` or `"legacy"`) and
   `hybrid_signatures_valid`. ML-DSA-65 needs `cryptography` 47.0.0 or later.

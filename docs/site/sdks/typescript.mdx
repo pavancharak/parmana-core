@@ -12,8 +12,10 @@ description: "Real client code, bearer-key authentication, and a typed error tax
   Bearer-key authentication, a real thrown error taxonomy, and full test
   coverage are all in place, along with corrected model types (see below),
   `client.verify()`/`client.version()`, and `client.createTransaction()`.
-  v2.0.0, published 2026-11-07, is the current version. Its offline verifier now
-  verifies hybrid records in full: a `signatures` array with one Ed25519 and one
+  v2.0.1, published 2026-11-10, is the current version. It aligns the SDK with
+  the other 2.0.1 packages and changes no code. v2.0.0, published 2026-11-07,
+  added full hybrid verification to the offline verifier: it verifies hybrid
+  records in full, with a `signatures` array holding one Ed25519 and one
   ML-DSA-65 entry, including the whole-record message of schema version 3. Its
   results report `coverage` (`"full"` or `"legacy"`) and
   `hybridSignaturesValid`. ML-DSA-65 needs Node 24 or later with OpenSSL 3.5 or

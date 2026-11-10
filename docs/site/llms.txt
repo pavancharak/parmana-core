@@ -62,14 +62,14 @@ This file is generated from the documentation navigation. Do not edit it by hand
 * [Storage](https://docs.parmanasystems.com/storage/overview): Append-only persistence for Business Transactions, Trust Records, and policies.
 ## Guides: Command-line tools
 
-* [Quickstart](https://docs.parmanasystems.com/cli/quickstart): Install the parmana command, set your token, and run your first read and dry run in about five minutes.
+* [CLI quickstart](https://docs.parmanasystems.com/cli/quickstart): Install the parmana command, set your token, and run your first read and dry run in about five minutes.
 * [Concepts](https://docs.parmanasystems.com/cli/concepts): How a policy change moves from proposal to approval to a signed log entry, and what the CLI does and does not decide.
 * [Command reference](https://docs.parmanasystems.com/cli/reference): Every parmana command, its options, environment variables and examples. Generated from the command table in the CLI source.
 * [Configuration](https://docs.parmanasystems.com/cli/configuration): Environment variables, the config file, profiles, and the precedence rules for choosing the API address and the token.
 * [Errors and how to fix them](https://docs.parmanasystems.com/cli/errors): Every error the parmana command reports: what it means, why it happens, and the next step. Server refusals, usage errors and network failures.
 * [Recipes](https://docs.parmanasystems.com/cli/recipes): Practical ways to use the parmana command: reviewing a change with a dry run, scripting with JSON output, and running the approval flow in CI.
 * [Security model](https://docs.parmanasystems.com/cli/security): Where the parmana command keeps secrets, what it never prints or stores, which requests it sends and which it refuses to repeat, and what remains your responsibility.
-* [Changelog](https://docs.parmanasystems.com/cli/changelog): A dated record of changes to the parmana command, including the versioning rules.
+* [CLI changelog](https://docs.parmanasystems.com/cli/changelog): A dated record of changes to the parmana command, including the versioning rules.
 ## Guides: Build with Parmana
 
 * [Full Integration Overview](https://docs.parmanasystems.com/guides/full-integration-overview): A map of the four independent pieces a real business system integration needs: policy, caller, connector and signal verification, and how they fit together.
