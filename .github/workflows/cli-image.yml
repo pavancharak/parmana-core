@@ -4,8 +4,10 @@
 # SLSA build provenance to the image in the registry, the same way
 # server-image.yml does for the server image.
 #
-# The image is pinned to the version in the release tag (sdk-v<version>). The
-# workflow stops if that version is not yet on npm, because Dockerfile.cli
+# The image is pinned to the version in the release tag (sdk-v<version>), or to
+# the version typed into the manual run. Run it by hand from the Actions tab to
+# build an image for a release that was published before this workflow existed.
+# The workflow stops if that version is not yet on npm, because Dockerfile.cli
 # installs @parmana/cli from npm, not from this repository.
 
 name: CLI image
@@ -13,6 +15,12 @@ name: CLI image
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to build, for example 2.0.1 (must already be on npm)"
+        required: true
+        type: string
 
 permissions: read-all
 
@@ -21,8 +29,8 @@ env:
 
 jobs:
   build:
-    # Only SDK release tags (sdk-v<version>) build this image.
-    if: startsWith(github.event.release.tag_name, 'sdk-v')
+    # Only SDK release tags (sdk-v<version>) and manual runs build this image.
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'sdk-v')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -37,9 +45,19 @@ jobs:
       - name: Work out the version and check it is on npm
         id: version
         env:
+          EVENT: ${{ github.event_name }}
           TAG: ${{ github.event.release.tag_name }}
+          INPUT: ${{ inputs.version }}
         run: |
-          version="${TAG#sdk-v}"
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            version="$INPUT"
+          else
+            version="${TAG#sdk-v}"
+          fi
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "'$version' is not a version like 2.0.1"
+            exit 1
+          fi
           published="$(npm view "@parmana/cli@$version" version)"
           if [ "$published" != "$version" ]; then
             echo "@parmana/cli@$version is not on npm (got '$published'); not building the image."
