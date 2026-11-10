@@ -48,6 +48,7 @@ Start with the goal closest to yours. The full documentation is at [docs.parmana
 | Run it on my own machine                   | [Quickstart](https://docs.parmanasystems.com/quickstart)                                                                                                                       |
 | Connect an AI agent                        | [Connect an agent](https://docs.parmanasystems.com/guides/connect-an-agent)                                                                                                    |
 | Use the SDKs                               | [TypeScript quickstart](https://docs.parmanasystems.com/guides/typescript-sdk-quickstart) or [Python quickstart](https://docs.parmanasystems.com/guides/python-sdk-quickstart) |
+| Run the command-line tool                  | [Command-line tool](packages/cli/README.md): install with npm or run the container image                                                                                       |
 | Check a record myself, without trusting us | [Verify independently](https://docs.parmanasystems.com/guides/verify-independently)                                                                                            |
 | Check a record with a standalone tool      | [Parmana Verifier](https://github.com/pavancharak/parmana-verifier), an offline checker with no network access and no account                                                  |
 | Review the security model                  | [Security](https://docs.parmanasystems.com/security/overview)                                                                                                                  |
@@ -196,7 +197,7 @@ Every report is listed once, here. Start with the question you have.
 - **Open issues and past incidents:** [docs/internal/VERIFICATION-GAPS.md](docs/internal/VERIFICATION-GAPS.md) lists every gap still open, with its evidence and what to do meanwhile. Past incidents and their fixes are recorded there too; see G-24 for an authorization bypass that was found and fixed. The full incident log is in [04-INCIDENTS-LOG.md](04-INCIDENTS-LOG.md).
 - **Claims you can check:** [docs/internal/CLAIMS.md](docs/internal/CLAIMS.md) states each claim at the scope its evidence supports, with the code and tests behind it, and lists what is not yet true.
 - **Mapped to standards:** the [OWASP mapping](https://docs.parmanasystems.com/security/owasp-mapping) covers the OWASP Top 10 for LLM Applications and for Agentic Applications (2026). The [regulation mapping](https://docs.parmanasystems.com/security/regulation-mapping) covers the EU AI Act, the NIST AI RMF, ISO/IEC 42001 and RBI guidance.
-- **Supply chain:** [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/pavancharak/parmana-core), CodeQL on every change, and signed build provenance for SDK releases and the server image.
+- **Supply chain:** [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/pavancharak/parmana-core), CodeQL on every change, and signed build provenance for SDK releases, the server image and the command-line tool's container image.
 - **Reviewed internally:** four internal passes traced the execution path for every registered capability, looking for any action that could run without authorization. The fourth pass found none for the capabilities in production, with the caveats in [CLAIMS.md 2.25](docs/internal/CLAIMS.md). These were internal reviews, not an independent audit.
 
 **Governance**
@@ -220,7 +221,7 @@ The claims file also tracks what has no implementation yet. Vendor connectors no
 
 ## Packages
 
-The SDKs and the verifier are published at version 1.6.3. All of them share one version.
+The SDKs, the verifier and the command-line tool are published at version 2.0.1. All of them share one version.
 
 | Package                  | Registry | Install                              |
 | ------------------------ | -------- | ------------------------------------ |
@@ -230,6 +231,9 @@ The SDKs and the verifier are published at version 1.6.3. All of them share one 
 | `parmana-connector-sdk`  | PyPI     | `pip install parmana-connector-sdk`  |
 | `@parmana/verifier`      | npm      | `npm install -g @parmana/verifier`   |
 | `parmana-verifier`       | PyPI     | `pip install parmana-verifier`       |
+| `@parmana/cli`           | npm      | `npm install -g @parmana/cli`        |
+
+The command-line tool is also published as a container image, `ghcr.io/pavancharak/parmana-cli:2.0.1`. See [packages/cli/README.md](packages/cli/README.md) for how to run it.
 
 The verifier lives in its own repository, [pavancharak/parmana-verifier](https://github.com/pavancharak/parmana-verifier). The release history for the SDKs is in the [changelog](https://docs.parmanasystems.com/changelog).
 
