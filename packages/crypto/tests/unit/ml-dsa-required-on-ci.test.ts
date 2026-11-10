@@ -23,3 +23,4 @@ describe("ML-DSA-65 on CI", () => {
     },
   );
 });
+// CI pins Node 24.22.2 in .github/workflows/ci.yml.
