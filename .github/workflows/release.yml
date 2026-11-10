@@ -51,6 +51,7 @@ jobs:
         run: |
           mkdir -p release-dist
           npm pack --workspace=typescript --workspace=packages/connector-sdk \
+            --workspace=packages/shared --workspace=packages/crypto --workspace=packages/cli \
             --pack-destination release-dist
 
       - name: Build the Python packages

@@ -7,6 +7,9 @@ This runbook covers a release of the four SDK packages in this repository and th
 | `@parmana/sdk`           | npm      | `parmana-core` (`typescript/`)             | `sdk-v<version>`      |
 | `parmana`                | PyPI     | `parmana-core` (`python/`)                 | `sdk-v<version>`      |
 | `@parmana/connector-sdk` | npm      | `parmana-core` (`packages/connector-sdk/`) | `sdk-v<version>`      |
+| `@parmana/shared`        | npm      | `parmana-core` (`packages/shared/`)        | `sdk-v<version>`      |
+| `@parmana/crypto`        | npm      | `parmana-core` (`packages/crypto/`)        | `sdk-v<version>`      |
+| `@parmana/cli`           | npm      | `parmana-core` (`packages/cli/`)           | `sdk-v<version>`      |
 | `parmana-connector-sdk`  | PyPI     | `parmana-core` (`python-connector-sdk/`)   | `sdk-v<version>`      |
 | `@parmana/verifier`      | npm      | `parmana-verifier`                         | `verifier-v<version>` |
 | `parmana-verifier`       | PyPI     | `parmana-verifier` (`python/`)             | `verifier-v<version>` |
@@ -45,7 +48,7 @@ On GitHub, open **Releases → Draft a new release**. Create the tag (`sdk-v<ver
 
 Publishing the release runs the **Release artifacts** workflow. It builds the packages, writes SBOMs for the npm packages, attaches the files to the release, and then attaches SLSA provenance (`multiple.intoto.jsonl`). Check that the run is green, and that the release has all of its files:
 
-- `parmana-core`: eleven files (six packages, four SBOMs, provenance).
+- `parmana-core`: seventeen files (nine packages, seven SBOMs, provenance).
 - `parmana-verifier`: five files (the npm tarball, its SBOM, the wheel, the source distribution, provenance). The Python package has no SBOM yet.
 
 A release cannot be created from a session without GitHub write access to releases. If you can't use the browser, ask someone with access to publish the release.
@@ -119,3 +122,17 @@ Open a pull request for the docs update and merge it.
 - `parmana-api` (the server image) is published to GHCR as `ghcr.io/pavancharak/parmana-api`. Check that it is Public after each server release. An anonymous pull of its manifest confirms it: the token request and the manifest request should both return 200.
 - Some older sections still describe earlier versions. They are historical and are kept on purpose.
 - In Windows PowerShell, `git` and `npm` outputs can be mistaken for failures. Check the exit state or the registry, not just the colour of the output.
+
+## Publishing the command-line tool chain
+
+`@parmana/cli` depends on `@parmana/crypto`, which depends on `@parmana/shared`. npm must already hold each dependency before the package that uses it can install, so publish in this order and check each step before the next:
+
+1. `@parmana/shared` 2.0.0: `npm publish --workspace=packages/shared --access public`
+2. Confirm it is visible: `npm view @parmana/shared@2.0.0 version`
+3. `@parmana/crypto` 2.0.0: `npm publish --workspace=packages/crypto --access public`
+4. Confirm it is visible: `npm view @parmana/crypto@2.0.0 version`
+5. `@parmana/cli` 2.0.0: `npm publish --workspace=packages/cli --access public`
+
+The release-artifacts workflow generates each package's SBOM by installing its dependencies from npm. Run it after step 5, not before, or the SBOM step fails for the packages whose dependencies are not yet published.
+
+Publishing is manual. Run each command from an account that owns the `@parmana` scope, and only after the release has been approved.
