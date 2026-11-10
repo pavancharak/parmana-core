@@ -9,6 +9,16 @@
 > mentioned elsewhere in this repo's docs/comments but doesn't exist in
 > code, that is stated explicitly, not implied.
 
+## Changes checked on 2026-11-09
+
+These were run in this repository on 2026-11-09, against a local PostgreSQL 16 built from `supabase/migrations/`. The rest of this document is unchanged from its own dates.
+
+- **Storage** is PostgreSQL through `DATABASE_URL`. `PARMANA_STORAGE=postgres` is the name, and `supabase` is accepted as an alias. No package under `packages/*` imports or declares `@supabase/supabase-js`.
+- **Evidence tables** (`caller_audit_events`, `execution_audit_events`, `policy_change_approval_records`, `refusal_records`) reject `UPDATE`, `DELETE` and `TRUNCATE` through triggers. Checked by an integration test, which fails when the triggers are disabled.
+- **Policy approval reads** go through the `parmana_policy_reader` group role. The `anon` role has no read. Checked by an integration test.
+- **Policy gate** and **deploy-time check** verify the signed approval log offline, with no credential.
+- **Doctor** no longer probes the Supabase REST endpoint.
+
 ## What's real and working
 
 **Core pipeline** (`RuntimeEngine.execute()`, `packages/runtime`): load a

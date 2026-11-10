@@ -39,15 +39,14 @@ The `doctor:production` command (#324) is not in the list of open pull requests,
 
 ## Not yet verified
 
-| Item                               | What is needed                                                                                                | Owner    |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------- | -------- |
-| A real KMS key                     | AWS credentials for the key's account. Run `npm run doctor:production` and check the `KMS key` line is `PASS` | Operator |
-| A real Supabase project's REST API | A project's `SUPABASE_URL`. Run the online check and confirm the `SUPABASE_URL` line is `PASS`                | Operator |
-| The database user's grants         | Confirm the user can read and write the tables. The table check does not test this                            | Operator |
+| Item                       | What is needed                                                                                                | Owner    |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------- | -------- |
+| A real KMS key             | AWS credentials for the key's account. Run `npm run doctor:production` and check the `KMS key` line is `PASS` | Operator |
+| The database user's grants | Confirm the user can read and write the tables. The table check does not test this                            | Operator |
 
 ## Closed
 
 - Database TLS verification against a CA: parmana-core #323, merged.
-- Online checks for the database, KMS and Supabase: parmana-core #322, merged.
+- Online checks for the database and KMS: parmana-core #322, merged. The Supabase REST check was removed afterwards, because the server does not use the REST API.
 - Install-script approvals for `re2` and `esbuild`: parmana-core #325, merged.
 - Temporary verification branch `verify-stage3-with-ca`: deleted.

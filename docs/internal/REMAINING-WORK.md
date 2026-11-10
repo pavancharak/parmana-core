@@ -1,5 +1,15 @@
 # Remaining work
 
+## Update 2026-11-09
+
+- **PostgreSQL foundation (ADR-0021).** Steps 1 to 3 are done. Step 4 is partly done: the append-only triggers and the policy-read grant are in migrations `20261110120000` and `20261110130000`, applied to production. Still open in step 4: chain-position uniqueness (needs a production duplicate check first), a separate application role without UPDATE or DELETE, and the trust record tables. Step 5 (the external anchoring runbook) and step 6 (the readiness probe and deployment docs) are not started.
+- **Deploy-time approval check** verifies the signed log offline. It holds no credential. `@supabase/supabase-js` is removed from the workspace.
+- **Doctor.** The Supabase REST check is removed. Pull request #548.
+- **Policy approval log.** `razorpay-refund` 1.1.0 is in the log, with its content in `policies/razorpay-refund/1.1.0/`. Its approved content matches the file. The pending change still records version 1.0.0, while the content and approval say 1.1.0. An owner needs to review that record.
+- **Security review.** Records are under `governance/security-reviews/`. The open items are listed in `VERIFICATION-GAPS.md`. The most important is the customer-refund payment check (high, open): customer-refund 1.2.0 takes the payment checks from the caller.
+- **Open pull requests.** `parmana-core` #548 (doctor and review records) and #549 (signal query parameters). `parmana-connectors` #62, #63 (already open), #66 (Razorpay payment signal service, depends on core #549) and #59 (held draft, do not merge).
+- **Still needed from you:** the `CI_DATABASE_URL` secret for the drift job; confirmation that the reader role is granted `parmana_policy_reader` in production; rotation of the owner database password (it was pasted into chat more than once); the policy 1.3.0 decision and the Razorpay read-only key decision; and whether the RFC draft should stay under `docs/` (it syncs to `parmana-docs`).
+
 ## Update 2026-11-07 (end of day)
 
 - **Merged today:** the schema v3 SDK verification and rollout runbook (#491), the key-delivery design (#492), and option A plus the removal of Fly (#493, awaiting merge in this list's record).

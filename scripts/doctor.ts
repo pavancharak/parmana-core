@@ -7,7 +7,7 @@
  *
  *   npm run doctor                        local rules
  *   npm run doctor -- --production        local and production rules
- *   npm run doctor -- --online            also probes the database, KMS and Supabase
+ * npm run doctor -- --online            also probes the database and KMS
  *   npm run doctor -- --production --online
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -63,7 +63,6 @@ if (online) {
       process.env.KEY_PROVIDER === "aws-kms"
         ? () => SignerBootstrap.create()
         : undefined,
-    fetch: (url, init) => fetch(url, init),
     defaultKeyId: DEFAULT_KEY_ID,
   };
 

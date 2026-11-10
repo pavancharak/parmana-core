@@ -58,7 +58,7 @@ Stages 2 and 3 combine: `npm run doctor:production` is `npm run doctor -- --prod
 | ----------------------------------------------- | -------------------------------- |
 | Check the local settings                        | `npm run doctor`                 |
 | Check the production settings                   | `npm run doctor -- --production` |
-| Check the database, KMS and Supabase too        | `npm run doctor -- --online`     |
+| Check the database and KMS too                  | `npm run doctor -- --online`     |
 | Do all of the above, before a production deploy | `npm run doctor:production`      |
 
 The doctor reads `.env` from the directory you run it in. Run it from the repository root, not from a subfolder. The server itself searches upward for `.env`, so a subfolder run can miss settings the server would see. Set `PARMANA_SKIP_DOTENV=1` to skip the file. The tests do this.
@@ -126,7 +126,6 @@ Every setting the doctor reads, and what it does. Settings marked _service_ are 
 | `KILL_SWITCH_RESET_NEEDS_SECOND_OPERATOR`                        | service | with the kill switch on                 | none                | `true` or `false`. `true` needs a second operator to reset                                                         |
 | `NODE_ENV`                                                       | service | no                                      | unset               | `production` enables the production refusals in the server                                                         |
 | `PORT` and `RATE_LIMIT_*`, `EXECUTION_AUTHORIZATION_TTL_SECONDS` | service | no                                      | defaults            | Whole numbers of at least 1                                                                                        |
-| `SUPABASE_URL`                                                   | service | with `supabase`                         | none                | The Supabase project URL                                                                                           |
 | `PARMANA_CORE_URL`                                               | doctor  | for `--online`                          | unset               | Not read by the server. Used by the doctor only                                                                    |
 
 Other `PARMANA_` names are read by the MCP server, the sandbox, or the tests. The doctor accepts them without a warning. Any other `PARMANA_` name is reported as a probable typo, with the closest real name.
@@ -183,12 +182,11 @@ With `KEY_PROVIDER=aws-kms`, the default key stays in KMS, so the doctor does no
 
 `--online` makes network calls and reads the database. It writes nothing. Each check uses the probe the server uses.
 
-| Check                       | What it does                                                                                                                                                  | Fails when                                                                                                                                     |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `database`                  | Runs `SELECT 1`, the query behind `GET /ready`                                                                                                                | The query fails. The error code is shown, never the connection string                                                                          |
-| `database tables`           | Checks that `consumed_nonces`, `consumed_approval_nonces`, `executions` and `caller_audit_events` exist, plus `execution_intents` when the server enforces it | A table is missing. Apply the migrations in `supabase/migrations`                                                                              |
-| `KMS key` (`aws-kms`)       | Looks up the default key, as the server does at startup                                                                                                       | The key is not reachable, or AWS refuses the request. The error code is shown, never the ARN                                                   |
-| `SUPABASE_URL` (`supabase`) | Requests the REST endpoint with no key                                                                                                                        | HTTP 500 or more, or the host cannot be reached. Any status below 500 counts as reachable, because a keyless request is expected to be refused |
+| Check                 | What it does                                                                                                                                                  | Fails when                                                                                   |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `database`            | Runs `SELECT 1`, the query behind `GET /ready`                                                                                                                | The query fails. The error code is shown, never the connection string                        |
+| `database tables`     | Checks that `consumed_nonces`, `consumed_approval_nonces`, `executions` and `caller_audit_events` exist, plus `execution_intents` when the server enforces it | A table is missing. Apply the migrations in `supabase/migrations`                            |
+| `KMS key` (`aws-kms`) | Looks up the default key, as the server does at startup                                                                                                       | The key is not reachable, or AWS refuses the request. The error code is shown, never the ARN |
 
 If `DATABASE_URL` is not set, the database check warns. If the settings the KMS signer needs (`PARMANA_POLICY_DIR`, `PARMANA_KEY_DIR`) are missing, the KMS check warns and does not run, so a missing setting is not reported as an unreachable key.
 
@@ -196,7 +194,7 @@ The `execution_intents` table is checked only when the server enforces it. The r
 
 ## Database TLS and the CA certificate
 
-Supabase requires TLS, and a Node process must be able to verify the database's certificate. Without a CA, the connection fails with `SELF_SIGNED_CERT_IN_CHAIN` or `UNABLE_TO_VERIFY_LEAF_SIGNATURE`.
+A hosted PostgreSQL, such as one on Supabase, requires TLS, and a Node process must be able to verify the database's certificate. Without a CA, the connection fails with `SELF_SIGNED_CERT_IN_CHAIN` or `UNABLE_TO_VERIFY_LEAF_SIGNATURE`.
 
 **The permanent setting:** give the server the database's root CA, using exactly one of:
 
@@ -207,7 +205,7 @@ With either set, the pool verifies the certificate with `rejectUnauthorized: tru
 
 Fails closed: a missing or unreadable file, text with no certificate, a private key in either setting, or both settings set, all stop the pool from starting.
 
-**Getting the certificate:** in the Supabase dashboard, open the database settings for the project and download the root certificate under SSL Configuration.
+**Getting the certificate (for a database hosted on Supabase):** in the Supabase dashboard, open the database settings for the project and download the root certificate under SSL Configuration.
 
 **What not to do:** do not disable verification (`sslmode=no-verify`, or `rejectUnauthorized: false`). The connection stays encrypted, but anyone on the network path can impersonate the database.
 
@@ -262,10 +260,6 @@ The doctor does not run on every commit. It reads each machine's settings, so on
 - `CredentialsProviderError`: this machine has no AWS credentials that can reach the key. Set up credentials for the key's account.
 - `AccessDeniedException`: the credentials lack permission on the key.
 - A warning that `PARMANA_POLICY_DIR` or `PARMANA_KEY_DIR` must be set: fix the offline check first.
-
-**Supabase (from `SUPABASE_URL`):**
-
-- `ENOTFOUND`: the project host does not exist. Check the project URL in the Supabase dashboard.
 
 **Other:**
 
@@ -330,14 +324,12 @@ The connect service (`parmana-connect`) has its own doctor, with its own setting
 Verified against real systems:
 
 - **PostgreSQL 16, local with TLS:** the database and table checks; the TLS cases (no CA, correct CA, wrong CA, `sslmode=disable`, text setting, both settings, missing file); the wrong-password and missing-database errors.
-- **Supabase, the project's pooler and REST endpoint:** the database checks, the migrations applied, and the REST endpoint answering HTTP 401.
+- **A PostgreSQL database hosted on Supabase, through its pooler:** the database checks and the migrations applied.
 - **AWS, with no credentials:** the real `CredentialsProviderError` from the KMS check.
-- **A nonexistent Supabase host, and a real HTTPS host:** the `ENOTFOUND` error, and a pass.
 
 Not yet verified:
 
 - A real KMS key. The success path has only been tested with fakes. Needs AWS credentials for the key's account.
-- A real Supabase project's REST API. The success path has only been tested with fakes.
 - The database user's grants.
 
 To verify these on your own system, run `npm run doctor:production` with your real `.env`, and check the `[PASS]` and `[FAIL]` lines for the KMS and database checks.
