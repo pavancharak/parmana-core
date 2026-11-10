@@ -136,3 +136,16 @@ Open a pull request for the docs update and merge it.
 The release-artifacts workflow generates each package's SBOM by installing its dependencies from npm. Run it after step 5, not before, or the SBOM step fails for the packages whose dependencies are not yet published.
 
 Publishing is manual. Run each command from an account that owns the `@parmana` scope, and only after the release has been approved.
+
+## Standing rule: every release lists every SDK
+
+Every release publishes every package listed in `.github/release/release-manifest.json`, at the manifest's version. The release notes must name every one of them, with its version, even if only one package changed.
+
+To add a package to a release:
+
+1. Add its name to `.github/release/release-manifest.json`.
+2. Add its workspace to the pack step in `.github/workflows/release.yml`.
+3. Add a row for it to the package table at the top of this runbook.
+4. Set its version to the manifest's version.
+
+`tests/architecture/release-manifest.test.ts` fails if any of these four steps is missing, or if a package is at a different version from the rest. The test runs in the normal test suite, so it is checked on every pull request.

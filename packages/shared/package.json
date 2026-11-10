@@ -1,6 +1,6 @@
 {
   "name": "@parmana/shared",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -21,11 +21,12 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run"
   },
-  "dependencies": {},
+  "dependencies": {
+    "dotenv": "^18.0.9"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/express": "^5.0.6",
-    "dotenv": "^18.0.9",
     "eslint": "^10.14.0",
     "eslint-config-prettier": "^10.1.8",
     "tsx": "^4.23.15",
