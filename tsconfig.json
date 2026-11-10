@@ -15,7 +15,8 @@
     { "path": "./packages/execution-control" },
     { "path": "./packages/execution-gateway" },
     { "path": "./packages/connector-sdk" },
-    { "path": "./packages/approval" }
+    { "path": "./packages/approval" },
+    { "path": "./packages/cli" }
   ],
   "compilerOptions": {
     "target": "ES2022",

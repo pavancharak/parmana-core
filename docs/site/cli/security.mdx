@@ -1,0 +1,53 @@
+---
+title: "Security model"
+description: "Where the parmana command keeps secrets, what it never prints or stores, which requests it sends and which it refuses to repeat, and what remains your responsibility."
+---
+
+The command handles three kinds of sensitive material: a bearer token, a step-up private key, and signed envelopes. This page says where each one lives and what the command does with it.
+
+## Bearer token
+
+- Read only from `PARMANA_TOKEN`. There is no command-line flag for it, so it does not appear in shell history.
+- Sent only in the `Authorization` header of requests to the API address.
+- Never written to the config file, to a log, or to a file the command creates.
+- Masked as `Bearer ***` in `--dry-run` output, and removed from `--verbose` logs and from error messages.
+
+## Step-up private key
+
+- Read from the file path given to `approval sign`. The command reads that file and nothing else.
+- Used only to sign an envelope. The key is never sent to the API, and it is never printed.
+- Keep this file on the checker's machine, with access limited to that person.
+
+## Signed envelopes
+
+- An envelope is signed, not secret, but it authorizes one approval. Treat it as sensitive until it is used or expired.
+- It is single-use and expires two minutes after signing.
+- In `--dry-run` output and in `--verbose` logs, the signature is shown as `***`.
+- Delete the envelope file once the approval has been sent or has expired.
+
+## Database connection
+
+- `log export` and `log check-db` need `CI_DATABASE_URL`. Use the read-only connection that the operator issues. Do not use a connection that can write.
+- The command passes the connection string to the log script through the environment. It does not print it.
+
+## What the command sends
+
+- Requests go only to the API address you configure, or to the production default.
+- `log` commands run the repository's own approval-log script. They do not contact the API.
+- Each request is logged with `--verbose` as a method, an address and a status code. Request and response bodies are not logged.
+
+## Retries
+
+- Reads are retried, to recover from temporary faults.
+- Writes are never retried. A repeated approval could reuse a spent envelope, and a repeated proposal would be refused as a conflict anyway. If a write times out, check the state with `policy status` before sending it again.
+
+## What the command does not protect against
+
+- **Secrets in the reason.** A `--reason` is sent to the server and printed back in a dry run. Do not put tokens or keys in it.
+- **A compromised machine.** Anything on the machine that can read the token, the key file or the envelope can use them. Keep the checker's machine clean.
+- **Shared terminals.** Output in the terminal can be read by anyone who can see the screen. Clear the screen after a sensitive command.
+- **Server-side rules.** Whether a change is allowed is decided by the server, not by the command. The command cannot approve on your behalf.
+
+## Reporting a problem
+
+If you find a way the command prints a secret, or sends one where it should not, report it through the repository's security policy. Do not put the secret in the report.

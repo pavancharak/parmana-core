@@ -94,6 +94,19 @@
         "tab": "Guides",
         "groups": [
           {
+            "group": "Command-line tools",
+            "pages": [
+              "cli/quickstart",
+              "cli/concepts",
+              "cli/reference",
+              "cli/configuration",
+              "cli/errors",
+              "cli/recipes",
+              "cli/security",
+              "cli/changelog"
+            ]
+          },
+          {
             "group": "Build with Parmana",
             "pages": [
               "guides/full-integration-overview",

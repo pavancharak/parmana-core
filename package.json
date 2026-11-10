@@ -26,6 +26,7 @@
     "generate:migration-bundle": "tsx scripts/generate-migration-bundle.ts",
     "db:migrate": "tsx scripts/migrate-database.ts",
     "verify:kms": "tsx scripts/verify-kms-signing.ts",
+    "generate:cli-reference": "tsx scripts/generate-cli-reference.ts",
     "generate:llms-txt": "tsx scripts/generate-llms-txt.ts",
     "record:published-sdk": "tsx scripts/llms/recordPublishedSdkVersions.ts",
     "generate:postman": "tsx scripts/generate-postman-collection.ts",

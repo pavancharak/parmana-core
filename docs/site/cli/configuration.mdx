@@ -1,0 +1,61 @@
+---
+title: "Configuration"
+description: "Environment variables, the config file, profiles, and the precedence rules for choosing the API address and the token."
+---
+
+The CLI reads its settings from the environment and from one optional config file. Secrets come only from the environment.
+
+## Environment variables
+
+| Variable          | Used for                                                             | Required                                                       |
+| ----------------- | -------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `PARMANA_TOKEN`   | The bearer token for API requests.                                   | For any command that sends a request, except with `--dry-run`. |
+| `PARMANA_API_URL` | The API address. Must be `https`, or a local `http` address.         | No.                                                            |
+| `PARMANA_PROFILE` | The profile to use when `--profile` is not given.                    | No.                                                            |
+| `PARMANA_CONFIG`  | The path to the config file.                                         | No. Defaults to `~/.parmana/config.json`.                      |
+| `CI_DATABASE_URL` | The read-only connection string for `log export` and `log check-db`. | Only for those two commands.                                   |
+
+## The config file
+
+The file is optional. When it exists, it looks like this:
+
+```json
+{
+  "default": "prod",
+  "profiles": {
+    "prod": { "apiUrl": "https://parmana-api-real.vercel.app" },
+    "local": { "apiUrl": "http://127.0.0.1:3000" }
+  }
+}
+```
+
+- `default` names the profile to use when nothing else chooses one. It is optional.
+- `profiles` maps a name to settings. Each profile may set `apiUrl`. Nothing else is read from a profile.
+- The file must not contain tokens. The CLI does not read a token from it.
+
+A malformed file stops the command with a message that says what is wrong.
+
+## Choosing the API address
+
+The first of these that is set wins:
+
+1. `--api-url <url>` on the command line.
+2. `PARMANA_API_URL`.
+3. The `apiUrl` of the chosen profile.
+4. The production address, `https://parmana-api-real.vercel.app`.
+
+## Choosing the profile
+
+The first of these that is set wins:
+
+1. `--profile <name>` on the command line. If the name is not in the config file, the command stops.
+2. `PARMANA_PROFILE`.
+3. The `default` in the config file.
+
+## Address rules
+
+An address must be `https`. The one exception is a local address, `http://127.0.0.1` or `http://localhost`, for development against a local server. Trailing slashes are removed.
+
+## Timeouts
+
+Each request waits 30 seconds by default. Change it with `--timeout <seconds>`, for example `--timeout 60`. The value must be a positive number.
