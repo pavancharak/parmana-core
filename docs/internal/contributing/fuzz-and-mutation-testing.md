@@ -12,4 +12,4 @@ Stryker makes small deliberate changes to the package's `src` (a `<=` turned int
 
 The command prints a score per package and writes `reports/mutation/<package>.html` and `.json`. Those reports are not committed. Open the HTML report to see each change the tests missed. The run is slow, because every change runs the package's whole test suite, so it is not part of `npm test` or CI.
 
-[docs/MUTATION-TESTING.md](../../MUTATION-TESTING.md) has the scores for the five security-critical packages, what the surviving changes showed, and what was done about them. `stryker.config.mjs` explains why the command runner is used rather than Stryker's Vitest plugin.
+[docs/MUTATION-TESTING.md](../testing/MUTATION-TESTING.md) has the scores for the five security-critical packages, what the surviving changes showed, and what was done about them. `stryker.config.mjs` explains why the command runner is used rather than Stryker's Vitest plugin.
