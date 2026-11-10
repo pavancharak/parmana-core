@@ -96,4 +96,11 @@ describe("release manifest", () => {
     expect(dir, `no Python directory mapped for ${name}`).toBeDefined();
     expect(pythonVersion(dir as string)).toBe(manifest.version);
   });
+
+  it("pins the CLI container to the manifest version", () => {
+    const dockerfile = readFileSync(join(repoRoot, "Dockerfile.cli"), "utf8");
+    expect(dockerfile).toContain(
+      `ARG PARMANA_CLI_VERSION=${manifest.version}\n`,
+    );
+  });
 });

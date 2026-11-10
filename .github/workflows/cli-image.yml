@@ -1,0 +1,101 @@
+# Builds the parmana command-line image from Dockerfile.cli when an SDK release
+# is published, checks it with docker/cli-smoke.sh, pushes it to the GitHub
+# Container Registry as ghcr.io/pavancharak/parmana-cli:<version>, and attaches
+# SLSA build provenance to the image in the registry, the same way
+# server-image.yml does for the server image.
+#
+# The image is pinned to the version in the release tag (sdk-v<version>). The
+# workflow stops if that version is not yet on npm, because Dockerfile.cli
+# installs @parmana/cli from npm, not from this repository.
+
+name: CLI image
+
+on:
+  release:
+    types: [published]
+
+permissions: read-all
+
+env:
+  IMAGE: ghcr.io/pavancharak/parmana-cli
+
+jobs:
+  build:
+    # Only SDK release tags (sdk-v<version>) build this image.
+    if: startsWith(github.event.release.tag_name, 'sdk-v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # push the image
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Work out the version and check it is on npm
+        id: version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          version="${TAG#sdk-v}"
+          published="$(npm view "@parmana/cli@$version" version)"
+          if [ "$published" != "$version" ]; then
+            echo "@parmana/cli@$version is not on npm (got '$published'); not building the image."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Build the image
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        # The source label links the package to this repository on GitHub.
+        run: |
+          docker build --pull -f Dockerfile.cli \
+            --build-arg PARMANA_CLI_VERSION="$VERSION" \
+            -t "$IMAGE:$VERSION" \
+            --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
+            --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+            .
+
+      - name: Smoke test the image
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: bash docker/cli-smoke.sh "$IMAGE:$VERSION"
+
+      - name: Push the image
+        id: push
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          GH_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
+          docker push "$IMAGE:$VERSION"
+          # The digest the registry stores, which is what the provenance names.
+          ref="$(docker inspect --format '{{index .RepoDigests 0}}' "$IMAGE:$VERSION")"
+          digest="${ref##*@}"
+          case "$digest" in
+            sha256:*) ;;
+            *) echo "No registry digest for $IMAGE:$VERSION"; exit 1 ;;
+          esac
+          echo "$IMAGE@$digest"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          docker logout ghcr.io
+
+  provenance:
+    needs: build
+    permissions:
+      actions: read # read the workflow run
+      id-token: write # sign the provenance with GitHub's OIDC identity
+      packages: write # attach the provenance to the image in the registry
+    # Referenced by tag, not commit, for the same reason as in release.yml:
+    # the generator verifies its own ref and only accepts a release tag.
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0 # zizmor: ignore[unpinned-uses]
+    with:
+      image: ghcr.io/pavancharak/parmana-cli
+      digest: ${{ needs.build.outputs.digest }}
+      registry-username: ${{ github.actor }}
+    secrets:
+      registry-password: ${{ secrets.GITHUB_TOKEN }}
