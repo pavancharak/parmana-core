@@ -17,6 +17,7 @@
 /packages/api/src/auth/ @pavancharak
 /packages/governance-ui/src/ @pavancharak
 /packages/execution-gateway/ @pavancharak
+/packages/cli/ @pavancharak
 
 # CI, release and supply-chain configuration.
 /.github/ @pavancharak

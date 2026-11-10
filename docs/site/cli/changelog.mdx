@@ -1,0 +1,37 @@
+---
+title: "Changelog"
+description: "A dated record of changes to the parmana command, including the versioning rules."
+---
+
+This page lists the changes to the `parmana` command. Versions follow the repository's version, so the command version matches the release of `parmana-core` that ships it.
+
+## Unreleased
+
+### Added
+
+- The `policy status`, `policy propose`, `approval sign`, `approval submit`, `log verify`, `log export`, `log check-db` and `completion` commands.
+- `--help` for every command, generated from one command table, with options, environment variables and an example.
+- `--output json` for every command. Errors are printed as JSON on stdout too.
+- `--dry-run` for requests. It prints the request with the token masked and sends nothing.
+- Named profiles in an optional config file, chosen with `--profile`, `PARMANA_PROFILE` or the config file's default.
+- `--api-url` and `--timeout` on every command.
+- `--verbose`, which logs each request and status code with secrets removed.
+- Retries for reads on network errors and on 429, 502, 503 and 504. Writes are never retried.
+- Hints for each server refusal that has a known fix.
+- Shell completion for PowerShell and bash, generated from the command table.
+- The command reference, generated from the command table, and the error reference.
+
+### Fixed
+
+- The `log` commands now search upward from the current folder for the approval-log script, so they work from any folder inside the repository.
+
+## Versioning
+
+- The command follows `parmana-core`'s version.
+- A change that removes a command, removes an option, or changes an exit code is a breaking change. It is noted here with the word **Breaking**.
+- A new command or option is an addition, and is noted under **Added**.
+- Fixes that change no documented behaviour are noted under **Fixed**.
+
+## Keeping this page honest
+
+The command reference is generated from the command table, and a test fails if it falls out of step with the code. Add an entry here with every change that a user could notice.

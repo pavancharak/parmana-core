@@ -1,0 +1,27 @@
+{
+  "name": "@parmana/cli",
+  "version": "2.0.0",
+  "description": "Command-line tool for Parmana policy governance: propose a policy change, sign and submit a checker's step-up approval, and verify or export the signed approval log.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "parmana": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@parmana/crypto": "2.0.0"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "license": "Apache-2.0"
+}

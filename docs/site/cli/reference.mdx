@@ -1,0 +1,246 @@
+---
+title: "Command reference"
+description: "Every parmana command, its options, environment variables and examples. Generated from the command table in the CLI source."
+---
+
+This page is generated from the CLI's command table. Do not edit it by hand; run `npm run generate:cli-reference` after changing a command.
+
+## Global options
+
+These work with every command.
+
+| Option                | Meaning                                                   |
+| --------------------- | --------------------------------------------------------- |
+| `--output` `<value>`  | Output format: text (default) or json.                    |
+| `--profile` `<value>` | Named API address from the config file.                   |
+| `--api-url` `<value>` | API address; overrides PARMANA_API_URL and the profile.   |
+| `--dry-run`           | Print the request without sending it.                     |
+| `--verbose`           | Log each request and response code, with secrets removed. |
+| `--timeout` `<value>` | Seconds to wait for each request (default 30).            |
+| `--help`              | Show help for this command.                               |
+
+## Commands
+
+- [`policy status`](#policy-status)
+- [`policy propose`](#policy-propose)
+- [`approval sign`](#approval-sign)
+- [`approval submit`](#approval-submit)
+- [`log verify`](#log-verify)
+- [`log export`](#log-export)
+- [`log check-db`](#log-check-db)
+- [`completion`](#completion)
+
+## `policy status`
+
+List pending policy changes for one policy version.
+
+```bash
+parmana policy status <name> <version>
+```
+
+### Options
+
+This command takes no options of its own.
+
+### Environment
+
+- `PARMANA_TOKEN`
+- `PARMANA_API_URL`
+- `PARMANA_PROFILE`
+- `PARMANA_CONFIG`
+
+### Example
+
+```bash
+parmana policy status customer-refund 1.3.0
+```
+
+## `policy propose`
+
+Propose a policy change. The file must match the name and version.
+
+```bash
+parmana policy propose <policy.json> --name <name> --version <version> --reason "<why>"
+```
+
+### Options
+
+| Option                | Meaning                                              |
+| --------------------- | ---------------------------------------------------- |
+| `--name` `<value>`    | Policy name; must equal the file's policyId.         |
+| `--version` `<value>` | Policy version; must equal the file's policyVersion. |
+| `--reason` `<value>`  | Why the change is needed. Required.                  |
+
+### Environment
+
+- `PARMANA_TOKEN`
+- `PARMANA_API_URL`
+- `PARMANA_PROFILE`
+- `PARMANA_CONFIG`
+
+### Example
+
+```bash
+parmana policy propose policy.json --name customer-refund --version 1.3.0 --reason "Refuse all refunds" --dry-run
+```
+
+## `approval sign`
+
+Sign a step-up envelope on the checker's own machine. Nothing is sent.
+
+```bash
+parmana approval sign --key-file <private.pem> --key-id <id> --pending <id> --action <approve|reject> [--out <file>]
+```
+
+### Options
+
+| Option                 | Meaning                                                             |
+| ---------------------- | ------------------------------------------------------------------- |
+| `--key-file` `<value>` | The checker's step-up private key (PEM). Never leaves this machine. |
+| `--key-id` `<value>`   | The key label the operator registered for the checker.              |
+| `--pending` `<value>`  | The pending change ID.                                              |
+| `--action` `<value>`   | approve or reject.                                                  |
+| `--out` `<value>`      | Write the envelope to this file instead of stdout.                  |
+
+### Environment
+
+This command reads no environment variables.
+
+### Example
+
+```bash
+parmana approval sign --key-file .\checker.step-up.private.pem --key-id mamta-checker --pending <id> --action approve --out envelope.json
+```
+
+## `approval submit`
+
+Send a signed envelope with the checker's own token.
+
+```bash
+parmana approval submit --pending <id> --action <approve|reject> --envelope <file>
+```
+
+### Options
+
+| Option                 | Meaning                            |
+| ---------------------- | ---------------------------------- |
+| `--pending` `<value>`  | The pending change ID.             |
+| `--action` `<value>`   | approve or reject.                 |
+| `--envelope` `<value>` | The file written by approval sign. |
+
+### Environment
+
+- `PARMANA_TOKEN`
+- `PARMANA_API_URL`
+- `PARMANA_PROFILE`
+- `PARMANA_CONFIG`
+
+### Example
+
+```bash
+parmana approval submit --pending <id> --action approve --envelope envelope.json --dry-run
+```
+
+## `log verify`
+
+Check the approval log's chain, signatures and policy coverage. Offline.
+
+```bash
+parmana log verify [--policy <name>] [--base <ref>] [--require-coverage]
+```
+
+### Options
+
+| Option               | Meaning                                         |
+| -------------------- | ----------------------------------------------- |
+| `--policy` `<value>` | Check only this policy.                         |
+| `--base` `<value>`   | Git ref; check that the log only grew since it. |
+| `--require-coverage` | Fail if a policy file has no logged approval.   |
+
+### Environment
+
+This command reads no environment variables.
+
+### Example
+
+```bash
+parmana log verify --require-coverage
+```
+
+## `log export`
+
+Append approvals from the database that the log does not hold yet.
+
+```bash
+parmana log export [--policy <name>]
+```
+
+### Options
+
+| Option               | Meaning                  |
+| -------------------- | ------------------------ |
+| `--policy` `<value>` | Export only this policy. |
+
+### Environment
+
+- `CI_DATABASE_URL`
+
+### Example
+
+```bash
+parmana log export --policy customer-refund
+```
+
+## `log check-db`
+
+Compare the log with the database without writing.
+
+```bash
+parmana log check-db [--policy <name>]
+```
+
+### Options
+
+| Option               | Meaning                 |
+| -------------------- | ----------------------- |
+| `--policy` `<value>` | Check only this policy. |
+
+### Environment
+
+- `CI_DATABASE_URL`
+
+### Example
+
+```bash
+parmana log check-db
+```
+
+## `completion`
+
+Print a shell completion script.
+
+```bash
+parmana completion <bash|powershell>
+```
+
+### Options
+
+This command takes no options of its own.
+
+### Environment
+
+This command reads no environment variables.
+
+### Example
+
+```bash
+parmana completion powershell | Out-String | Invoke-Expression
+```
+
+## Exit codes
+
+| Code | Meaning                                                                                 |
+| ---- | --------------------------------------------------------------------------------------- |
+| 0    | Success.                                                                                |
+| 1    | The server, the network or a script reported a failure.                                 |
+| 2    | A usage error: a missing or unknown option, a bad value, or a file that does not match. |

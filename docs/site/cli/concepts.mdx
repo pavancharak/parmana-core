@@ -1,0 +1,50 @@
+---
+title: "Concepts"
+description: "How a policy change moves from proposal to approval to a signed log entry, and what the CLI does and does not decide."
+---
+
+A Parmana policy decides what an action is allowed to do. Changing a policy is itself a sensitive action, so it needs two people and a record.
+
+## The three steps
+
+1. **Propose.** A maker submits the full policy file and a reason. The server stores the proposal as a _pending change_. Nothing takes effect yet.
+2. **Approve.** A checker, a different person, signs a _step-up envelope_ on their own machine and sends it with their own token. The server applies the change and records who approved it.
+3. **Log.** The approval is written to a signed, append-only log in the repository. Anyone can check the log offline.
+
+## Maker and checker
+
+- The maker and the checker must be different people. The server refuses an approval from the person who proposed the change.
+- The checker must be listed for that policy in the server's `POLICY_CHANGE_CHECKERS` setting. An operator maintains that list.
+- Each checker has a step-up key pair. The private key stays on the checker's machine. The public key is registered with the server.
+
+## The step-up envelope
+
+An envelope is a small signed document. It names one pending change and one action (`approve` or `reject`), with a time window of two minutes.
+
+- It is signed by `approval sign`, on the checker's machine. Nothing is sent by that step.
+- It is single-use. Once the server accepts it, it is spent.
+- It expires two minutes after signing. If it expires, sign a new one.
+
+Because of these rules, the CLI never retries an approval. A repeated approval could reuse an envelope that has already been spent.
+
+## The approval log
+
+The log lives in the repository at `governance/policy-approvals.jsonl`. Each line is one approval, signed by the server. The `log` commands check three things:
+
+- **The chain.** Each entry points to the one before it, so an entry cannot be removed or reordered without detection.
+- **The signatures.** Each entry was signed by a key listed in `governance/policy-approval-keys.json`.
+- **Coverage.** Every policy file in the repository has a logged approval for its exact content.
+
+`log export` copies approvals from the database into the log. `log check-db` compares the two without writing anything.
+
+## What the CLI decides
+
+The CLI decides nothing about policy. It formats requests, signs envelopes when asked, and reports what the server said. The server enforces the rules: who may propose, who may approve, whether an envelope is valid, and whether the change is allowed.
+
+The CLI does check things before it sends a request, so that a mistake is caught early. It refuses a policy file whose name or version does not match the command, and it refuses a file that is not a signed envelope.
+
+## Where to go next
+
+- [Security model](/cli/security): where secrets live and what the CLI never prints.
+- [Recipes](/cli/recipes): running this flow in a script or in CI.
+- [Policy governance](/guides/policy-governance-maker-checker): the full server-side rules.

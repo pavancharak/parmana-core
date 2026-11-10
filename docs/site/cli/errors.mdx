@@ -1,0 +1,69 @@
+---
+title: "Errors and how to fix them"
+description: "Every error the parmana command reports: what it means, why it happens, and the next step. Server refusals, usage errors and network failures."
+---
+
+Every error prints one line that says what happened, then a `Hint:` line when there is a specific next step. With `--output json`, the same information is printed as JSON on stdout.
+
+## Server refusals
+
+A refusal from the API prints its HTTP status, its code when there is one, and a hint.
+
+| Code                            | Status | Meaning                                                                                          | What to do                                                                                             |
+| ------------------------------- | ------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `CHECKER_NOT_IN_SCOPE`          | 403    | The checker is not listed to approve changes for this policy.                                    | An operator adds the checker to `POLICY_CHANGE_CHECKERS` for the policy and redeploys. Then try again. |
+| `STEP_UP_AUTHORIZATION_INVALID` | 403    | The envelope is missing, expired, already used, or does not match the pending change and action. | Sign a new envelope for the same pending change and action, and send it within two minutes.            |
+| `CONFLICT`                      | 409    | A change for this policy version is already pending.                                             | Use the pending change ID that `policy status` shows. Do not propose again.                            |
+| (none)                          | 401    | The token is missing or wrong.                                                                   | Check `PARMANA_TOKEN`. Make sure it is the token for the right person.                                 |
+| (none)                          | 403    | The token is valid, but this action is not allowed for it.                                       | Check which credential is set, and whether it is the checker's token when you approve.                 |
+| (none)                          | 429    | The API is rate limiting requests.                                                               | Wait a minute and try again. Reads are retried automatically.                                          |
+| (none)                          | 400    | The request body was rejected.                                                                   | Build the request with the CLI rather than by hand, so the body has the right shape.                   |
+
+## Usage errors (exit code 2)
+
+These are mistakes in the command itself. Nothing was sent.
+
+| Message                                                           | Cause                                                                                            | Fix                                                    |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------ |
+| `Unknown command "<word>"`                                        | The first word is not a command group.                                                           | Run `parmana --help` for the list.                     |
+| `Missing command after "<group>"`                                 | A group name was given without a command.                                                        | Run `parmana <group> --help`.                          |
+| `Usage: ...`                                                      | The command was given the wrong number of arguments.                                             | Use the usage line shown.                              |
+| `--<option> is not an option of "<command>"`                      | The option belongs to another command, or is misspelled.                                         | Run `parmana <command> --help`.                        |
+| `--output must be "text" or "json"`                               | An unknown output format was given.                                                              | Use `text` or `json`.                                  |
+| `--timeout must be a positive number of seconds.`                 | The timeout is zero, negative, or not a number.                                                  | Give a positive number, such as `--timeout 60`.        |
+| `Set PARMANA_TOKEN to your bearer token.`                         | A command that sends a request ran without a token.                                              | Set `PARMANA_TOKEN` for this session.                  |
+| `The API address must be https, or a local http address.`         | The address is plain `http` to another host.                                                     | Use the `https` address.                               |
+| `No profile named "<name>" in the config file.`                   | `--profile` names a profile that does not exist.                                                 | Add the profile, or correct the name.                  |
+| `The config file is not valid JSON.`                              | The config file is damaged.                                                                      | Fix the JSON. See [Configuration](/cli/configuration). |
+| `The file's policyId is "<a>", but the command names "<b>".`      | The name on the command line does not match the policy file. Nothing was sent.                   | Correct the name, or the file.                         |
+| `The file's policyVersion is "<a>", but the command names "<b>".` | The version does not match the file. Nothing was sent.                                           | Correct the version, or the file.                      |
+| `A reason is required. Pass --reason.`                            | A proposal had no reason, or an empty one.                                                       | Pass a non-empty `--reason`.                           |
+| `The envelope file does not look like a signed step-up envelope.` | The file was not written by `approval sign`, or it was edited.                                   | Sign again, and use the file it writes.                |
+| `Run this inside the parmana-core repository`                     | The `log` commands could not find the approval-log script in this folder or any folder above it. | Run the command from inside the repository.            |
+
+## Network failures (exit code 1)
+
+| Message                                | Cause                                                                                       | Fix                                                                               |
+| -------------------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `Could not reach <address>: <reason>.` | The network is down, the address is wrong, or the server did not answer within the timeout. | Check the connection and `PARMANA_API_URL`. For a slow server, raise `--timeout`. |
+
+Reads are retried up to three times before this message appears. Writes are tried once, so a failed write is never sent twice.
+
+## Reading a JSON error
+
+With `--output json`, a server refusal prints the same information as data:
+
+```json
+{
+  "error": { "status": 403, "code": "CHECKER_NOT_IN_SCOPE", "message": "..." },
+  "hint": "The checker is not listed for this policy. ..."
+}
+```
+
+A usage error prints this instead:
+
+```json
+{ "error": { "message": "...", "exitCode": 2 } }
+```
+
+Check `exitCode` in scripts, not the text of the message, because the wording may improve over time.

@@ -1,0 +1,73 @@
+---
+title: "Quickstart"
+description: "Install the parmana command, set your token, and run your first read and dry run in about five minutes."
+---
+
+This guide gets you from nothing to a working `parmana` command. It takes about five minutes and makes one read-only request to the API.
+
+## What you need
+
+- Node.js 24 or later.
+- A checkout of the `parmana-core` repository.
+- A bearer token issued by your operator. It is a credential, so keep it out of chat, tickets and screenshots.
+
+## 1. Build the command
+
+From the repository root:
+
+```bash
+npm ci
+npm run build --workspace=packages/cli
+node packages/cli/dist/index.js --help
+```
+
+The command is not yet published to npm. Until it is, run it as `node packages/cli/dist/index.js`, or add it to your path with `npm link --workspace=packages/cli`.
+
+## 2. Set your token for this session
+
+PowerShell:
+
+```powershell
+$env:PARMANA_TOKEN = "<your token>"
+```
+
+bash:
+
+```bash
+export PARMANA_TOKEN="<your token>"
+```
+
+The token lives only in this session. The CLI never reads it from a file, and it has no flag for it.
+
+## 3. Check your access with a read
+
+```bash
+parmana policy status customer-refund 1.3.0
+```
+
+If there is no pending change, you see `No pending change for customer-refund 1.3.0.` If you see `HTTP 401`, the token is wrong. If you see `HTTP 403`, the token is valid but not allowed to do this. The message includes a hint for each case.
+
+## 4. Preview a write without sending it
+
+Every write command has `--dry-run`. It prints the exact request, with the token masked, and sends nothing:
+
+```bash
+parmana policy propose policy.json --name customer-refund --version 1.3.0 --reason "Refuse all refunds" --dry-run
+```
+
+You can run this step without a token, which makes it safe to try on a shared machine.
+
+## 5. Get machine-readable output
+
+Add `--output json` to any command for JSON that scripts can read:
+
+```bash
+parmana policy status customer-refund 1.3.0 --output json
+```
+
+## Next steps
+
+- [Concepts](/cli/concepts): how a policy change is proposed, approved and logged.
+- [Command reference](/cli/reference): every command and option.
+- [Configuration](/cli/configuration): profiles, the config file and address precedence.
+- [Errors](/cli/errors): what each server refusal means and how to fix it.
