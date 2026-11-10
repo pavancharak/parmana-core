@@ -1,0 +1,22 @@
+# syntax=docker/dockerfile:1
+#
+# The parmana command-line tool in a container. It holds no secrets: the bearer
+# token is passed at run time with -e PARMANA_TOKEN, and the image runs as the
+# unprivileged "node" user. The version is pinned; change it deliberately.
+#
+#   docker build -f Dockerfile.cli -t parmana-cli:2.0.1 .
+#   docker run --rm parmana-cli:2.0.1 --help
+
+FROM node:24-slim
+
+ARG PARMANA_CLI_VERSION=2.0.1
+
+# The package is installed from npm, the same artifact users install directly.
+RUN npm install -g "@parmana/cli@${PARMANA_CLI_VERSION}" \
+ && npm cache clean --force
+
+USER node
+WORKDIR /work
+
+ENTRYPOINT ["parmana"]
+CMD ["--help"]
