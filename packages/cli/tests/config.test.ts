@@ -7,6 +7,7 @@ import {
   requireToken,
   resolveTarget,
   validateBaseUrl,
+  withoutTrailingSlashes,
 } from "../src/config.js";
 import { CliUsageError } from "../src/errors.js";
 
@@ -53,6 +54,22 @@ describe("parseConfigFile", () => {
   ])("refuses %s", (_name, text, message) => {
     expect(() => parseConfigFile(text)).toThrow(CliUsageError);
     expect(() => parseConfigFile(text)).toThrow(message);
+  });
+});
+
+describe("withoutTrailingSlashes", () => {
+  it("removes every trailing slash and nothing else", () => {
+    expect(withoutTrailingSlashes("https://a.test///")).toBe("https://a.test");
+    expect(withoutTrailingSlashes("https://a.test/x")).toBe("https://a.test/x");
+    expect(withoutTrailingSlashes("/")).toBe("");
+  });
+
+  it("finishes quickly on a very long run of slashes", () => {
+    const started = Date.now();
+    expect(withoutTrailingSlashes(`https://a.test${"/".repeat(200_000)}`)).toBe(
+      "https://a.test",
+    );
+    expect(Date.now() - started).toBeLessThan(1000);
   });
 });
 

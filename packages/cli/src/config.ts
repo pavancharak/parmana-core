@@ -67,8 +67,20 @@ export function parseConfigFile(text: string): ConfigFile {
     : { default: defaultProfile, profiles: entries };
 }
 
+/**
+ * Removes trailing slashes with a plain loop. A regular expression such as
+ * /\/+$/ can take quadratic time on a long run of slashes, so it is avoided.
+ */
+export function withoutTrailingSlashes(value: string): string {
+  let end = value.length;
+  while (end > 0 && value.charCodeAt(end - 1) === 47) {
+    end -= 1;
+  }
+  return value.slice(0, end);
+}
+
 export function validateBaseUrl(url: string): string {
-  const trimmed = url.replace(/\/+$/, "");
+  const trimmed = withoutTrailingSlashes(url);
   const local = /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(trimmed);
   if (!trimmed.startsWith("https://") && !local) {
     throw new CliUsageError(
