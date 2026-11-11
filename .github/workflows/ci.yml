@@ -177,6 +177,14 @@ jobs:
         # rejects UPDATE, DELETE and TRUNCATE on the evidence tables.
         run: npx vitest run packages/storage/tests/contract packages/api/tests/integration/evidence-append-only.integration.test.ts packages/api/tests/integration/policy-approval-read-grants.integration.test.ts
 
+      - name: Migrations against a database that holds old audit rows
+        # Regression for the caller audit type constraint: the migrations must apply
+        # to a database that already holds rows of every event type. Creates and
+        # drops its own database, so it never touches the one the other steps use.
+        env:
+          ALLOW_LIVE_SUPABASE: "1"
+        run: npx vitest run packages/storage/tests/integration/migrations-old-data.integration.test.ts
+
       - name: Verify the policy approval log
         # governance/policy-approvals.jsonl: the chain, every signature,
         # and that a change only appends to it (compared with the base).
