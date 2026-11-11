@@ -29,6 +29,8 @@ These work with every command.
 - [`approver propose-add`](#approver-propose-add)
 - [`approver propose-revoke`](#approver-propose-revoke)
 - [`approver submit`](#approver-submit)
+- [`keys generate-api-key`](#keys-generate-api-key)
+- [`keys generate-approver-key`](#keys-generate-approver-key)
 - [`log verify`](#log-verify)
 - [`log export`](#log-export)
 - [`log check-db`](#log-check-db)
@@ -260,6 +262,61 @@ parmana-ops approver submit --change <id> --action <approve|reject> --envelope <
 
 ```bash
 parmana-ops approver submit --change <id> --action approve --envelope step.json --dry-run
+```
+
+## `keys generate-api-key`
+
+Generate a caller API key on this machine: the raw key, its PARMANA_API_KEYS entry, and optionally a step-up key pair. Writes owner-only files; prints no secret.
+
+```bash
+parmana-ops keys generate-api-key --caller-id <id> --out-dir <dir> [--allowed-capabilities <a,b>] [--allowed-principal-ids <a,b>] [--credential-holder-type <type>] [--generate-step-up-key]
+```
+
+### Options
+
+| Option                               | Meaning                                                                 |
+| ------------------------------------ | ----------------------------------------------------------------------- |
+| `--caller-id` `<value>`              | The caller ID, for example pavancharak.                                 |
+| `--out-dir` `<value>`                | Folder for the generated files.                                         |
+| `--allowed-capabilities` `<value>`   | Comma-separated capabilities this key may request.                      |
+| `--allowed-principal-ids` `<value>`  | Comma-separated principal IDs this key may assert.                      |
+| `--credential-holder-type` `<value>` | Who holds the credential, for example USER for a person.                |
+| `--generate-step-up-key`             | Also create a step-up key pair. Requires --credential-holder-type USER. |
+
+### Environment
+
+This command reads no environment variables.
+
+### Example
+
+```bash
+parmana-ops keys generate-api-key --caller-id mamta-checker --out-dir ~/parmana-keys --credential-holder-type USER --generate-step-up-key
+```
+
+## `keys generate-approver-key`
+
+Generate an approver Ed25519 key pair. The private key stays with the approver; send the public key to the operator.
+
+```bash
+parmana-ops keys generate-approver-key --approver-id <id> --key-id <id> --out-dir <dir>
+```
+
+### Options
+
+| Option                    | Meaning                                      |
+| ------------------------- | -------------------------------------------- |
+| `--approver-id` `<value>` | The approver ID, for example mamta-checker.  |
+| `--key-id` `<value>`      | The key ID, for example mamta-checker-key-1. |
+| `--out-dir` `<value>`     | Folder for the generated files.              |
+
+### Environment
+
+This command reads no environment variables.
+
+### Example
+
+```bash
+parmana-ops keys generate-approver-key --approver-id mamta-checker --key-id mamta-checker-key-1 --out-dir ~/parmana-approver
 ```
 
 ## `log verify`

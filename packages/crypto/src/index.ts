@@ -86,3 +86,5 @@ export * from "./errors/CryptoError.js";
 // -----------------------------------------------------------------------------
 
 export * from "./support/MlDsaSupport.js";
+
+export * from "./KeyGeneration.js";

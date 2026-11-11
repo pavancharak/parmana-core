@@ -222,6 +222,62 @@ export const COMMANDS: readonly CommandSpec[] = [
       "parmana-ops approver submit --change <id> --action approve --envelope step.json --dry-run",
   },
   {
+    id: "keys generate-api-key",
+    usage:
+      "parmana-ops keys generate-api-key --caller-id <id> --out-dir <dir> [--allowed-capabilities <a,b>] [--allowed-principal-ids <a,b>] [--credential-holder-type <type>] [--generate-step-up-key]",
+    summary:
+      "Generate a caller API key on this machine: the raw key, its PARMANA_API_KEYS entry, and optionally a step-up key pair. Writes owner-only files; prints no secret.",
+    positionals: 0,
+    flags: {
+      "caller-id": {
+        type: "string",
+        help: "The caller ID, for example pavancharak.",
+      },
+      "out-dir": { type: "string", help: "Folder for the generated files." },
+      "allowed-capabilities": {
+        type: "string",
+        help: "Comma-separated capabilities this key may request.",
+      },
+      "allowed-principal-ids": {
+        type: "string",
+        help: "Comma-separated principal IDs this key may assert.",
+      },
+      "credential-holder-type": {
+        type: "string",
+        help: "Who holds the credential, for example USER for a person.",
+      },
+      "generate-step-up-key": {
+        type: "boolean",
+        help: "Also create a step-up key pair. Requires --credential-holder-type USER.",
+      },
+    },
+    env: [],
+    example:
+      "parmana-ops keys generate-api-key --caller-id mamta-checker --out-dir ~/parmana-keys --credential-holder-type USER --generate-step-up-key",
+  },
+  {
+    id: "keys generate-approver-key",
+    usage:
+      "parmana-ops keys generate-approver-key --approver-id <id> --key-id <id> --out-dir <dir>",
+    summary:
+      "Generate an approver Ed25519 key pair. The private key stays with the approver; send the public key to the operator.",
+    positionals: 0,
+    flags: {
+      "approver-id": {
+        type: "string",
+        help: "The approver ID, for example mamta-checker.",
+      },
+      "key-id": {
+        type: "string",
+        help: "The key ID, for example mamta-checker-key-1.",
+      },
+      "out-dir": { type: "string", help: "Folder for the generated files." },
+    },
+    env: [],
+    example:
+      "parmana-ops keys generate-approver-key --approver-id mamta-checker --key-id mamta-checker-key-1 --out-dir ~/parmana-approver",
+  },
+  {
     id: "log verify",
     usage:
       "parmana-ops log verify [--policy <name>] [--base <ref>] [--require-coverage]",

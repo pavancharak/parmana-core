@@ -1,11 +1,24 @@
 import { spawnSync } from "node:child_process";
 import { createPrivateKey, createPublicKey } from "node:crypto";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname } from "node:path";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-import { PolicyChangeStepUpAuthorizationSigner } from "@parmana/crypto";
+import {
+  AuthorityType,
+  PolicyChangeStepUpAuthorizationSigner,
+  approverKeyFileStem,
+  assertSafeApproverIds,
+  generateApproverKeyPair,
+  generateCallerKey,
+} from "@parmana/crypto";
 
 import { renderCompletion, type ShellName } from "./completion.js";
 import {
@@ -54,6 +67,15 @@ export interface Runtime {
   readonly log: (line: string) => void;
   readonly readText: (path: string) => string | undefined;
   readonly writeText: (path: string, text: string) => void;
+  readonly fileExists: (path: string) => boolean;
+  readonly ensureDirectory: (path: string) => void;
+  /** Writes a key file, mode set explicitly; fails if it exists and overwrite is false. */
+  readonly writeKeyFile: (
+    path: string,
+    text: string,
+    mode: number,
+    overwrite: boolean,
+  ) => void;
   /** The approval-log script, found from the current folder upward; undefined if none. */
   readonly findLogScript: () => string | undefined;
   readonly runScript: (script: string, args: readonly string[]) => number;
@@ -593,6 +615,10 @@ export async function runCommand(
       return approverPropose(parsed, settings, runtime, "revoke");
     case "approver submit":
       return approverSubmit(parsed, settings, runtime);
+    case "keys generate-api-key":
+      return keysGenerateApiKey(parsed, runtime);
+    case "keys generate-approver-key":
+      return keysGenerateApproverKey(parsed, runtime);
     case "log verify":
       return logCommand("verify", parsed, runtime);
     case "log export":
@@ -604,6 +630,164 @@ export async function runCommand(
     default:
       throw new CliUsageError(`Unknown command: ${parsed.id}`);
   }
+}
+
+/** Splits a comma-separated flag into trimmed, non-empty values. */
+function optionalList(text: string | undefined): string[] | undefined {
+  if (text === undefined) return undefined;
+  const list = text
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  return list.length > 0 ? list : undefined;
+}
+
+/** A value safe to use as a file name stem: letters, digits, "." "_" and "-". */
+function safeFileStem(value: string, flag: string): string {
+  if (!/^[A-Za-z0-9._-]+$/.test(value)) {
+    throw new CliUsageError(
+      `${flag} must use only letters, digits, ".", "_" and "-": ${value}`,
+    );
+  }
+  return value;
+}
+
+/**
+ * Generates a caller key on this machine. Writes the raw key, the
+ * PARMANA_API_KEYS entry and, if asked, the step-up private key to owner
+ * only files in --out-dir. No secret is printed or sent anywhere.
+ */
+function keysGenerateApiKey(
+  parsed: ParsedCommand,
+  runtime: Runtime,
+): CommandResult {
+  const callerId = str(parsed.values, "caller-id");
+  const outDir = str(parsed.values, "out-dir");
+  if (callerId === undefined || outDir === undefined) {
+    throw new CliUsageError(
+      "Usage: parmana-ops keys generate-api-key --caller-id <id> --out-dir <dir> [--allowed-capabilities <a,b>] [--allowed-principal-ids <a,b>] [--credential-holder-type <type>] [--generate-step-up-key]",
+    );
+  }
+  const stem = safeFileStem(callerId, "--caller-id");
+  const holder = str(parsed.values, "credential-holder-type");
+  if (
+    holder !== undefined &&
+    !(Object.values(AuthorityType) as string[]).includes(holder)
+  ) {
+    throw new CliUsageError(
+      `--credential-holder-type must be one of ${Object.values(AuthorityType).join(", ")}.`,
+    );
+  }
+
+  let generated: ReturnType<typeof generateCallerKey>;
+  try {
+    generated = generateCallerKey({
+      callerId,
+      allowedCapabilities: optionalList(
+        str(parsed.values, "allowed-capabilities"),
+      ),
+      allowedPrincipalIds: optionalList(
+        str(parsed.values, "allowed-principal-ids"),
+      ),
+      credentialHolderType: holder as AuthorityType | undefined,
+      generateStepUpKey: parsed.values["generate-step-up-key"] === true,
+    });
+  } catch (error) {
+    throw new CliUsageError(
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+
+  const keyPath = join(outDir, `${stem}.key`);
+  const entryPath = join(outDir, `${stem}.entry.json`);
+  const stepUpPath = join(outDir, `${stem}.step-up.private.pem`);
+  const paths = [keyPath, entryPath];
+  if (generated.stepUpPrivateKey !== undefined) paths.push(stepUpPath);
+  for (const path of paths) {
+    if (runtime.fileExists(path)) {
+      throw new CliFailure(`Refusing to overwrite an existing file: ${path}`);
+    }
+  }
+
+  runtime.ensureDirectory(outDir);
+  runtime.writeKeyFile(keyPath, `${generated.rawKey}\n`, 0o600, false);
+  runtime.writeKeyFile(
+    entryPath,
+    `${JSON.stringify(generated.entry)}\n`,
+    0o600,
+    false,
+  );
+  if (generated.stepUpPrivateKey !== undefined) {
+    runtime.writeKeyFile(stepUpPath, generated.stepUpPrivateKey, 0o600, false);
+  }
+
+  const files = {
+    rawKey: keyPath,
+    entry: entryPath,
+    ...(generated.stepUpPrivateKey !== undefined
+      ? { stepUpPrivateKey: stepUpPath }
+      : {}),
+  };
+  const lines = [
+    `Caller "${callerId}" key written. The raw key is in ${keyPath}; it is never printed.`,
+    `Entry for PARMANA_API_KEYS: ${entryPath}`,
+  ];
+  if (generated.stepUpPrivateKey !== undefined) {
+    lines.push(`Step-up private key (keep it with the checker): ${stepUpPath}`);
+  }
+  lines.push(
+    "Move the raw key to a password manager and delete the file. Only the entry's hash goes to the server.",
+  );
+  return { code: 0, data: { callerId, files }, text: lines.join("\n") };
+}
+
+/**
+ * Generates an approver Ed25519 key pair. The private key stays with the
+ * approver; the public key goes to the operator for maker-checker.
+ */
+function keysGenerateApproverKey(
+  parsed: ParsedCommand,
+  runtime: Runtime,
+): CommandResult {
+  const approverId = str(parsed.values, "approver-id");
+  const keyId = str(parsed.values, "key-id");
+  const outDir = str(parsed.values, "out-dir");
+  if (approverId === undefined || keyId === undefined || outDir === undefined) {
+    throw new CliUsageError(
+      "Usage: parmana-ops keys generate-approver-key --approver-id <id> --key-id <id> --out-dir <dir>",
+    );
+  }
+  try {
+    assertSafeApproverIds(approverId, keyId);
+  } catch (error) {
+    throw new CliUsageError(
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+
+  const stem = approverKeyFileStem(approverId, keyId);
+  const privatePath = join(outDir, `${stem}.private.pem`);
+  const publicPath = join(outDir, `${stem}.public.pem`);
+  for (const path of [privatePath, publicPath]) {
+    if (runtime.fileExists(path)) {
+      throw new CliFailure(`Refusing to overwrite an existing file: ${path}`);
+    }
+  }
+
+  const pair = generateApproverKeyPair();
+  runtime.ensureDirectory(outDir);
+  runtime.writeKeyFile(privatePath, pair.privateKeyPem, 0o600, false);
+  runtime.writeKeyFile(publicPath, pair.publicKeyPem, 0o644, false);
+
+  return {
+    code: 0,
+    data: { approverId, keyId, privateKey: privatePath, publicKey: publicPath },
+    text: [
+      `Private key (keep it on this machine): ${privatePath}`,
+      `Public key (give it to your operator): ${publicPath}`,
+      `Next: propose it with "parmana-ops approver propose-add --approver ${approverId} --key ${keyId} --public-key-file <public.pem> --capabilities <a,b> --reason <why>".`,
+    ].join("\n"),
+  };
 }
 
 /** The real runtime: process environment, the global fetch, and the real clock. */
@@ -622,6 +806,20 @@ export function defaultRuntime(): Runtime {
       }
     },
     writeText: (path, text) => writeFileSync(path, text, { encoding: "utf8" }),
+    fileExists: (path) => existsSync(path),
+    ensureDirectory: (path) => {
+      if (!existsSync(path)) mkdirSync(path, { recursive: true, mode: 0o700 });
+    },
+    writeKeyFile: (path, text, mode, overwrite) => {
+      // The mode argument applies only on create and the umask can widen it,
+      // so set it explicitly afterwards.
+      writeFileSync(path, text, {
+        encoding: "utf8",
+        mode,
+        flag: overwrite ? "w" : "wx",
+      });
+      chmodSync(path, mode);
+    },
     findLogScript: () =>
       findUpward(process.cwd(), join("scripts", "policy-approval-log.ts")),
     runScript: (script, args) => {
