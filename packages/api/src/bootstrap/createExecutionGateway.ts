@@ -28,6 +28,7 @@ import { createAuthorizationRevocationList } from "./createAuthorizationRevocati
 import { createPolicyExecutionVerifier } from "./createPolicyExecutionVerifier.js";
 import { createConnectorRoute } from "./createConnectorRoute.js";
 import { executionGatewaySignalStateVerifier } from "./executionGatewaySignalStateVerifier.js";
+import { verificationOnlyKeysConfig } from "./verifierKeyId.js";
 
 /**
  * Used only when governance is explicitly relaxed (test/development opt-in).
@@ -136,6 +137,9 @@ export async function createExecutionGateway(): Promise<ExecutionSystem> {
 
     // Single-authorization revocation (revoked-authorizations.json).
     authorizationRevocations: createAuthorizationRevocationList(),
+
+    // G-111: the verifier key may sign only the read capabilities it is for.
+    verificationOnlyKeys: verificationOnlyKeysConfig(),
 
     executionControl: {
       service: executionControl,
