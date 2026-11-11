@@ -64,6 +64,9 @@ function fakeRuntime(options: {
       writeText: (path, text) => {
         written.set(path, text);
       },
+      fileExists: () => false,
+      ensureDirectory: () => undefined,
+      writeKeyFile: () => undefined,
       findLogScript: () => "/repo/scripts/policy-approval-log.ts",
       runScript: (_script, args) => {
         scripts.push([...args]);

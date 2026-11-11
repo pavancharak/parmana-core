@@ -39,6 +39,9 @@ function run(
     log: () => undefined,
     readText: (path) => files[path],
     writeText: () => undefined,
+    fileExists: () => false,
+    ensureDirectory: () => undefined,
+    writeKeyFile: () => undefined,
     findLogScript: () => undefined,
     runScript: () => 0,
   };

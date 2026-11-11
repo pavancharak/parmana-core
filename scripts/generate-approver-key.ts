@@ -1,5 +1,5 @@
 import { existsSync, writeFileSync } from "node:fs";
-import { generateKeyPairSync } from "node:crypto";
+import { approverKeyFileStem, generateApproverKeyPair } from "@parmana/crypto";
 import { join } from "node:path";
 
 /**
@@ -22,8 +22,6 @@ import { join } from "node:path";
  *     --out-dir ~/.parmana
  */
 
-const ID_PATTERN = /^[A-Za-z0-9._-]+$/;
-
 export interface ApproverKeyFiles {
   readonly privateKeyPath: string;
   readonly publicKeyPath: string;
@@ -34,18 +32,7 @@ export function approverKeyFileNames(
   approverId: string,
   keyId: string,
 ): ApproverKeyFiles {
-  for (const [name, value] of [
-    ["--approver-id", approverId],
-    ["--key-id", keyId],
-  ]) {
-    if (!ID_PATTERN.test(value)) {
-      throw new Error(
-        `${name} must use only letters, digits, ".", "_" and "-": ${value}`,
-      );
-    }
-  }
-
-  const base = `${approverId}__${keyId}`;
+  const base = approverKeyFileStem(approverId, keyId);
 
   return {
     privateKeyPath: join(outDir, `${base}.private.pem`),
@@ -66,17 +53,10 @@ export function generateApproverKey(
     }
   }
 
-  const { publicKey, privateKey } = generateKeyPairSync("ed25519");
+  const pair = generateApproverKeyPair();
 
-  writeFileSync(
-    files.privateKeyPath,
-    privateKey.export({ format: "pem", type: "pkcs8" }).toString(),
-    { mode: 0o600 },
-  );
-  writeFileSync(
-    files.publicKeyPath,
-    publicKey.export({ format: "pem", type: "spki" }).toString(),
-  );
+  writeFileSync(files.privateKeyPath, pair.privateKeyPem, { mode: 0o600 });
+  writeFileSync(files.publicKeyPath, pair.publicKeyPem);
 
   return files;
 }

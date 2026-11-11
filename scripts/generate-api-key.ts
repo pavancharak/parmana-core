@@ -1,9 +1,9 @@
 import "dotenv/config";
 
 import { existsSync, readFileSync } from "node:fs";
-import { createHash, generateKeyPairSync, randomBytes } from "node:crypto";
 
 import { AuthorityType, parseApiKeys } from "@parmana/shared";
+import { generateCallerKey } from "@parmana/crypto";
 
 import { PRIVATE_KEY_MODE, writeKeyFile } from "./lib/key-files.js";
 
@@ -61,80 +61,10 @@ export interface AppendApiKeyResult {
   totalEntries: number;
 }
 
-const API_KEY_HASH_PATTERN = /^[0-9a-f]{64}$/;
-
-export function generateApiKey({
-  callerId,
-  allowedPrincipalIds,
-  allowedCapabilities,
-  credentialHolderType,
-  generateStepUpKey,
-}: GenerateApiKeyOptions): GeneratedApiKey {
-  const normalizedCallerId = callerId.trim();
-
-  if (!normalizedCallerId) {
-    throw new Error("--caller-id must be a non-empty string.");
-  }
-
-  if (generateStepUpKey && credentialHolderType !== AuthorityType.USER) {
-    throw new Error(
-      "--generate-step-up-key requires --credential-holder-type USER: " +
-        "step-up authorization only has meaning for a human-credentialed checker.",
-    );
-  }
-
-  const normalizedPrincipalIds = allowedPrincipalIds
-    ?.map((id) => id.trim())
-    .filter(Boolean);
-
-  const normalizedCapabilities = allowedCapabilities
-    ?.map((capability) => capability.trim())
-    .filter(Boolean);
-
-  const rawKey = randomBytes(32).toString("base64url");
-
-  const keyHash = createHash("sha256").update(rawKey, "utf8").digest("hex");
-
-  if (!API_KEY_HASH_PATTERN.test(keyHash)) {
-    throw new Error("Generated key hash has an invalid format.");
-  }
-
-  const entry: ApiKeyEntry = {
-    callerId: normalizedCallerId,
-    keyHash,
-  };
-
-  if (normalizedPrincipalIds && normalizedPrincipalIds.length > 0) {
-    entry.allowedPrincipalIds = normalizedPrincipalIds;
-  }
-
-  if (normalizedCapabilities && normalizedCapabilities.length > 0) {
-    entry.allowedCapabilities = normalizedCapabilities;
-  }
-
-  if (credentialHolderType !== undefined) {
-    entry.credentialHolderType = credentialHolderType;
-  }
-
-  let stepUpPrivateKey: string | undefined;
-
-  if (generateStepUpKey) {
-    const { publicKey, privateKey } = generateKeyPairSync("ed25519");
-
-    entry.stepUpPublicKey = publicKey
-      .export({ format: "pem", type: "spki" })
-      .toString();
-
-    stepUpPrivateKey = privateKey
-      .export({ format: "pem", type: "pkcs8" })
-      .toString();
-  }
-
-  return {
-    rawKey,
-    entry,
-    ...(stepUpPrivateKey !== undefined ? { stepUpPrivateKey } : {}),
-  };
+export function generateApiKey(
+  options: GenerateApiKeyOptions,
+): GeneratedApiKey {
+  return generateCallerKey(options);
 }
 
 export function parseAllowedPrincipalIds(
