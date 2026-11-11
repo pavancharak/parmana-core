@@ -43,7 +43,7 @@ Evidence
 - `python/parmana/models/trust_record.py`: EXISTS
 - `supabase/migrations/20260907120000_add_authorization_and_hybrid_signatures_to_execution_trust_records.sql`: EXISTS
 
-## Test results from the full run (vitest full run, 403 files, 0 failed)
+## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
 | Test file | Status | Tests | Passed | Skipped |
 |---|---|---|---|---|

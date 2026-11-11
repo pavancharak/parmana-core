@@ -48,7 +48,7 @@ The gap record is G-122 in `docs/internal/VERIFICATION-GAPS.md`.
 - `packages/api/tests/integration/postgres-kill-switch.integration.test.ts`: EXISTS
 - `packages/api/tests/unit/KillSwitchService.test.ts`: EXISTS
 
-## Test results from the full run (vitest full run, 403 files, 0 failed)
+## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
 | Test file | Status | Tests | Passed | Skipped |
 |---|---|---|---|---|

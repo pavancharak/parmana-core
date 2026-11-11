@@ -32,7 +32,7 @@ Evidence
 - `packages/policy/src/PolicyEngine.ts`: EXISTS
 - `packages/policy/tests/unit/PolicyEngine.missing-fact.test.ts`: EXISTS
 
-## Test results from the full run (vitest full run, 403 files, 0 failed)
+## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
 | Test file | Status | Tests | Passed | Skipped |
 |---|---|---|---|---|

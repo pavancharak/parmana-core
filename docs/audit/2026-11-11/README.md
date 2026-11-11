@@ -13,7 +13,7 @@
 
 ## Test results
 
-- TypeScript (Vitest): 403 test files, 0 failed; 3789 tests passed, 0 failed, 106 skipped (Node 24.22.1).
+- TypeScript (Vitest): 403 test files, 0 failed. 3894 tests passed, 0 failed, 1 pending. Run with a local PostgreSQL 16 test database, migrations applied, and ALLOW_LIVE_SUPABASE=1. The database is throwaway and local, not a live project. Without a database, 106 tests are skipped.
 - Python SDK (pytest, requirements-dev.txt, Node 24 on PATH): 193 passed, 0 errors. Without Node 24 on PATH, 19 live-server tests error because the native module was built for another Node version.
 
 ## Limitations

@@ -51,7 +51,7 @@ Dated updates and the production approval history for these policies are in [CLA
 - `policies/customer-refund/1.2.0/policy.json`: EXISTS
 - `policies/llm-tool-call/1.1.0/policy.json`: EXISTS
 
-## Test results from the full run (vitest full run, 403 files, 0 failed)
+## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
 | Test file | Status | Tests | Passed | Skipped |
 |---|---|---|---|---|

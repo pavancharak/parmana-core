@@ -68,7 +68,7 @@ Dated updates, including the change to the example configuration and the earlier
 - `packages/shared/src/repositories/caller-key-revocation-repository.ts`: EXISTS
 - `supabase/migrations/20261030120000_add_caller_key_revocations.sql`: EXISTS
 
-## Test results from the full run (vitest full run, 403 files, 0 failed)
+## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
 | Test file | Status | Tests | Passed | Skipped |
 |---|---|---|---|---|

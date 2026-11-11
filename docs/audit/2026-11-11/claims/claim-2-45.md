@@ -18,8 +18,8 @@ Source: CLAIMS.md (commit d1d63c6), lines 545-552.
 - `packages/api/src/routes/approval-issuers.ts`: EXISTS
 - `supabase-approval-issuer-repository.integration.test.ts`: MISSING
 
-## Test results from the full run (vitest full run, 403 files, 0 failed)
+## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
 | Test file | Status | Tests | Passed | Skipped |
 |---|---|---|---|---|
-| `supabase-approval-issuer-repository.integration.test.ts` | not-run-or-missing | 0 | 0 | 0 |
+| `packages/storage/tests/integration/postgres-approval-issuer-repository.integration.test.ts` (cited as `supabase-approval-issuer-repository.integration.test.ts`; renamed) | passed | 5 | 5 | 0 |
