@@ -109,23 +109,37 @@ Command, from the repository root under Node 24:
 npx vitest run packages/envelope-verifier packages/execution-gateway
 ```
 
-Result: 26 test files and 259 tests, all passing.
+Result: 28 test files and 266 tests, all passing. This includes the 259 existing tests and 7 added to cover the gaps below.
 
 Node 24 is required. The root test setup generates ML-DSA-65 keys, which Node 22 does not support, so every file fails during setup on Node 22. Tests also need a `.env.test` file copied from `.env.test.example`, and `PARMANA_POLICY_DIR` set to `./policies`.
 
-### Gaps the passing tests do not cover
+The workspace packages are imported from `dist/`. Rebuild with `node node_modules/typescript7/bin/tsc -b` after any source change, or the dist-freshness check stops the run before any test executes.
 
-1. **Decision outcome.** Every test uses `decisionOutcome: "APPROVED"`. No test checks that another value is refused (`ExecutionGateway.ts:595–596`).
-2. **Verification-only keys.** `verificationOnlyKeys` (`ExecutionGateway.ts:612–615`) has no tests. Production does not pass the option, so the check never runs there.
-3. **Production nonce path.** Section 6 relies on reading the code. No test confirms the release verifier consumes the nonce exactly once under production wiring.
-4. **Signals.** Three test files mention `signalsHash`. Their coverage of the release-stage signal check was not traced in detail.
+### Coverage of the enforcement invariants
+
+The gaps found in the earlier review are now covered by these tests:
+
+1. **Decision outcome.** `packages/execution-gateway/tests/unit/enforcement-invariants.test.ts` signs a payload with `decisionOutcome: "DECLINED"` and checks that the gateway refuses it, the connector is not called, and the nonce stays unrecorded (`ExecutionGateway.ts:595–596`). The production release verifier has its own copy of this check, tested in `packages/api/tests/unit/release-nonce-path.test.ts`.
+2. **Verification-only keys.** The same file tests all three cases: a capability outside the list is refused (`ExecutionGateway.ts:612–615`), a capability on the list is allowed, and a key not on the list is unrestricted. Production does not pass `verificationOnlyKeys`, so this check is inactive in production. Its tests show the code is correct, not that it is in use.
+3. **Production nonce path.** `packages/api/tests/unit/release-nonce-path.test.ts` wires the gateway to the real `createReleaseVerifier` through an execution-control service. The first release succeeds, a second release of the same authorization is refused with `NonceAlreadyConsumedError`, and the connector runs once. The enforcement-invariants file also checks that the gateway itself leaves the nonce unconsumed when `executionControl` is wired.
+
+To confirm the new decision and key-scope tests fail when those checks are broken, both checks were weakened temporarily. Two tests failed, one for each check. The source was then restored and rebuilt.
+
+4. **Signals.** Nine tests in `packages/execution-gateway/tests/unit/signal-freshness.test.ts` cover the release-stage signal check (section 2, check 4):
+   - Unchanged signals with no drift pass, and `signalsStillCurrent` is `true` (line 130).
+   - Drift reported by the verifier fails the check and names the divergence (lines 181 and 205).
+   - A request whose signals no longer match the signed hash fails with a named mismatch (line 224).
+   - No verifier wired means the check is skipped, not failed (line 249).
+   - An authorization without a `signalsHash` is refused at release (line 270).
+   - Omitted signals hash as `{}`, so a request that omits signals fails against a signed hash of real signals (line 291), and passes against a signed hash of `{}` (line 315).
+   - A replay that also has skipped signal checks is still classified as a replay (line 349).
 
 ### Not yet read
 
 - **Not yet read:** the signature and version checks in `@parmana/crypto`'s `AuthorizationVerifier`. Check 1 relies on them.
 - **Not yet read:** the release verifier (`createReleaseVerifier`) and the call sites in `packages/runtime` (`ExecutionComponent`), which decide how a thrown error is handled.
 - **Not yet read:** how authorizations are issued (`RuntimeEngine`), where `decisionOutcome`, `signalsHash`, and the nonce are set.
-- **To confirm:** that the release verifier's nonce consumption is covered by tests for the production path, not only for the test wiring.
+- **Still not tested end to end:** the test in `packages/api/tests/unit/release-nonce-path.test.ts` uses the real release verifier but a stub execution-control service. Production uses `ExecutionControlService` and `createExecutionGateway`, which need database, vault, and signer setup. That full wiring has no test here.
 
 ## Sources
 
