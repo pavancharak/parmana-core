@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { createPrivateKey } from "node:crypto";
+import { createPrivateKey, createPublicKey } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { homedir } from "node:os";
@@ -269,7 +269,24 @@ async function approvalSign(
   const keyText = runtime.readText(keyFile);
   if (keyText === undefined)
     throw new CliUsageError(`Cannot read the key file ${keyFile}.`);
-  const privateKey = createPrivateKey(keyText);
+  let privateKey: ReturnType<typeof createPrivateKey>;
+  try {
+    privateKey = createPrivateKey(keyText);
+  } catch {
+    // Name the mistake instead of passing OpenSSL's decoder message through.
+    let isPublic: boolean;
+    try {
+      createPublicKey(keyText);
+      isPublic = true;
+    } catch {
+      isPublic = false;
+    }
+    throw new CliUsageError(
+      isPublic
+        ? `${keyFile} is a public key. Sign with the private key that was generated with it.`
+        : `${keyFile} is not a readable private key in PEM format.`,
+    );
+  }
   const signer = new PolicyChangeStepUpAuthorizationSigner();
   const envelope = await signer.sign(
     { pendingPolicyChangeId: pending, action },
