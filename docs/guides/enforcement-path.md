@@ -188,7 +188,7 @@ In priority order. Each item names the reason it matters.
 2. **Decide whether the release verifier should run after the connector lookup.** Today a lookup failure burns the nonce (section 6). That is safe, but it means a request to an unregistered capability can never be retried, even after the registration is added.
 3. **Done: the failed-`fail()` case in `ExecutionComponent`.** The original refusal is rethrown even when recording it fails, and the recording error is logged (section 8).
 4. **Done: the nonce generation.** Traced in section 7. Nonces are random version-4 UUIDs, and a regression test keeps them distinct.
-5. **Read the generic 500 path in `error-handler.ts`** to confirm which errors can leak details.
+5. **Done: the generic 500 path.** Traced in section 8. Unexpected errors do not leak details to the client. Gateway verification failures are reported as 500, which misclassifies caller errors.
 6. **Decide on the HubSpot helper branch** (`fix/hubspot-self-approval`). The verification-only key is now active in production, but nothing on `main` signs with it, so the containment is in place without its caller (audit G-111).
 
 ## 11. Outcome-record defect: analysis and design
@@ -282,3 +282,21 @@ All paths are relative to the repository root.
 ### Failed recording in `ExecutionComponent` (next steps item 3)
 
 When the gateway refuses a release, `ExecutionComponent` marks the execution failed and rethrows. Before this change, a failure inside that recording step replaced the refusal in the caller's hands. Now the refusal is rethrown unchanged, and the recording error is logged as `execution_failure_not_recorded`. The execution row may then stay in its prior state; the log line is the record that it wasn't updated. The test runs in `packages/runtime/tests/unit/execution-component-failure.test.ts`, and disabling the wrap makes its second case fail. The runtime and gateway suites pass: 62 files and 490 tests.
+
+### The generic 500 path (next steps item 5)
+
+`packages/api/src/middleware/error-handler.ts` maps errors in order: validation (400), missing policy (404), duplicate and immutable policy (409), the release refusals (their own status), `RuntimeError` (its own status), and then everything else.
+
+What the last branch does:
+
+- It logs the full error on the server with `console.error(error)`.
+- It returns `500` with the body `{ "error": "Internal Server Error" }`.
+
+So an unexpected failure does not leak its message or stack to the client. That part is correct.
+
+Two findings:
+
+1. **Gateway verification failures are reported as 500.** A forged signature, tampered content, or expired envelope is a plain `Error` from `ExecutionGateway.verify`. None of the mapped classes catch it, so the caller gets a `500` and the server logs a stack trace for each one. These are caller errors. A `403` with the failed check named would be accurate, and the message would not leak anything the caller didn't send.
+2. **Classes mapped to a status pass their message through.** For the validation, not-found and conflict classes, the body is `error.message`. Those messages are written by this codebase, but a future message that includes internal detail would reach the client. This is a review point, not a current leak.
+
+Not changed here. Finding 1 is a behaviour change for callers that currently treat `500` as "retry later", so it needs a decision on the status code and on the response body.
