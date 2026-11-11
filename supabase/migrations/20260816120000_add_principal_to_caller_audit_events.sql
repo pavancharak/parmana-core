@@ -29,7 +29,7 @@ CHECK (type IN (
     'caller.rejected',
     'caller.capability_denied',
     'caller.principal_denied'
-)) NOT VALID;
+));
 
 ALTER TABLE caller_audit_events
 ADD COLUMN IF NOT EXISTS principal_id TEXT;

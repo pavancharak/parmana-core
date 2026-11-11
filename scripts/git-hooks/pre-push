@@ -1,34 +1,22 @@
 #!/usr/bin/env bash
 #
-# Pre-push hook: refuses any push that would change main, then runs the full
-# verification once for each push that updates a branch.
+# Pre-push hook: refuses any push that would change main.
 #
 # Changes reach main only through a pull request, after the required CI checks
 # pass on it. Push a branch and open a pull request instead. Wired in by the
 # root package.json "prepare" script (core.hooksPath scripts/git-hooks).
-#
-# The full preflight (scripts/db-check.mjs, then npm run preflight) runs here,
-# not in pre-commit, so a rebase of many commits runs it once, not once per
-# commit. A branch deletion skips it. CI runs the same checks on the pull
-# request.
 #
 # Git passes one line per ref on stdin:
 #   <local ref> <local sha> <remote ref> <remote sha>
 
 set -euo pipefail
 
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-zero="0000000000000000000000000000000000000000"
 blocked=0
-needs_check=0
 
 while read -r local_ref local_sha remote_ref remote_sha; do
   if [ "$remote_ref" = "refs/heads/main" ]; then
     echo "pre-push: a push to main is blocked (local ${local_ref} -> main)."
     blocked=1
-  fi
-  if [ "$local_sha" != "$zero" ]; then
-    needs_check=1
   fi
 done
 
@@ -39,31 +27,6 @@ if [ "$blocked" -ne 0 ]; then
   echo "then open a pull request. Merge only after CI is green."
   echo "This check is not bypassed by a force push."
   exit 1
-fi
-
-if [ "$needs_check" -eq 1 ]; then
-  cd "$REPO_ROOT"
-
-  if ! node scripts/db-check.mjs; then
-    echo ""
-    echo "pre-push: the test database is not ready. Push blocked."
-    echo "Fix the database as the message above says, then push again."
-    echo ""
-    exit 1
-  fi
-
-  echo ""
-  echo "pre-push: running the full preflight (typecheck, lint, format, tests, build, examples)."
-  echo "This runs once per push and takes a few minutes."
-  echo ""
-
-  if ! npm run preflight; then
-    echo ""
-    echo "pre-push: preflight failed (see output above). Push blocked."
-    echo "Fix the failure and push again, or use --no-verify only with a specific, understood reason."
-    echo ""
-    exit 1
-  fi
 fi
 
 exit 0

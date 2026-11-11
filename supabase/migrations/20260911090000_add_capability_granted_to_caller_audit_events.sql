@@ -37,4 +37,4 @@ CHECK (type IN (
     'caller.non_human_denied',
     'caller.structural_rejected',
     'caller.capability_granted'
-)) NOT VALID;
+));
