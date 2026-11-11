@@ -88,11 +88,11 @@ npm run evaluate
 
 Pick the path that matches what you want to see. All three run on your own machine and send nothing to a hosted service.
 
-| Path                  | Command                                                  | What you get                                                                  | Needs                 |
-| --------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------- | --------------------- |
-| 1. Check the code     | `npm ci && npm run build && npm test && npm run evaluate` | Build, tests and the 16 attack scenarios. No server.                          | Node.js 24            |
-| 2. Local API server   | `npm run dev:setup`                                      | API at `http://localhost:3000`, with local signing and caller keys generated. | Node.js 24            |
-| 3. Self-hosted stack  | `docker compose up -d`                                   | API and its own Postgres, started together, on `127.0.0.1:3000`.              | Docker with Compose   |
+| Path                 | Command                                                   | What you get                                                                  | Needs               |
+| -------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------- |
+| 1. Check the code    | `npm ci && npm run build && npm test && npm run evaluate` | Build, tests and the 16 attack scenarios. No server.                          | Node.js 24          |
+| 2. Local API server  | `npm run dev:setup`                                       | API at `http://localhost:3000`, with local signing and caller keys generated. | Node.js 24          |
+| 3. Self-hosted stack | `docker compose up -d`                                    | API and its own Postgres, started together, on `127.0.0.1:3000`.              | Docker with Compose |
 
 **Before you start.** Use Node.js 24 or later. The repo pins 24.22.2 in `.nvmrc`, so `nvm use` picks it up if you use nvm. Clone the repo and run everything from its root.
 
@@ -113,11 +113,13 @@ The Compose file's header explains each startup step. Use `PARMANA_PORT` to chan
 
 **Common problems.**
 
-- *Port 3000 is in use.* Stop the other process, or for Path 3 set `PARMANA_PORT` to another port.
-- *Node version errors.* Check `node -v` shows 24 or later. Use `nvm use` or install Node 24.
-- *Docker stack stops at migrate or seed.* Run `docker compose logs migrate seed` to see the failing step.
+- _Port 3000 is in use._ Stop the other process, or for Path 3 set `PARMANA_PORT` to another port.
+- _Node version errors._ Check `node -v` shows 24 or later. Use `nvm use` or install Node 24.
+- _Docker stack stops at migrate or seed._ Run `docker compose logs migrate seed` to see the failing step.
 
 **Windows.** Path 3 needs Docker Desktop. The setup script checks for Windows shells, so Paths 1 and 2 may work natively with Node.js 24, but this has not been tested. If you hit a problem, running the repo inside WSL 2 is the safer option, and an issue with the output helps us fix the native path.
+
+**Technical guide.** A 20-page PDF covers how a request moves through Parmana, how policies and human approvals work, how to verify signed records offline, and the security model with its limits: [docs/site/parmana-technical-guide.pdf](docs/site/parmana-technical-guide.pdf).
 
 ## How it works
 
