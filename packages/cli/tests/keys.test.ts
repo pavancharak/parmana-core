@@ -1,4 +1,5 @@
 import { createHash, sign, verify } from "node:crypto";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import type { Runtime } from "../src/commands.js";
@@ -57,12 +58,12 @@ describe("keys generate-api-key", () => {
     ]);
 
     expect(result.code).toBe(0);
-    const rawKey = result.files["/keys/pavancharak.key"]?.trim() ?? "";
+    const rawKey = result.files[join("/keys", "pavancharak.key")]?.trim() ?? "";
     expect(rawKey.length).toBeGreaterThan(20);
-    expect(result.modes["/keys/pavancharak.key"]).toBe(0o600);
+    expect(result.modes[join("/keys", "pavancharak.key")]).toBe(0o600);
 
     const entry = JSON.parse(
-      result.files["/keys/pavancharak.entry.json"] ?? "",
+      result.files[join("/keys", "pavancharak.entry.json")] ?? "",
     );
     expect(entry.callerId).toBe("pavancharak");
     expect(entry.credentialHolderType).toBe("USER");
@@ -88,12 +89,15 @@ describe("keys generate-api-key", () => {
     ]);
 
     expect(result.code).toBe(0);
-    const privatePem = result.files["/keys/mamta-checker.step-up.private.pem"];
+    const privatePem =
+      result.files[join("/keys", "mamta-checker.step-up.private.pem")];
     expect(privatePem).toContain("BEGIN PRIVATE KEY");
-    expect(result.modes["/keys/mamta-checker.step-up.private.pem"]).toBe(0o600);
+    expect(
+      result.modes[join("/keys", "mamta-checker.step-up.private.pem")],
+    ).toBe(0o600);
 
     const entry = JSON.parse(
-      result.files["/keys/mamta-checker.entry.json"] ?? "",
+      result.files[join("/keys", "mamta-checker.entry.json")] ?? "",
     );
     expect(entry.stepUpPublicKey).toContain("BEGIN PUBLIC KEY");
     expect(result.out).not.toContain("PRIVATE KEY");
@@ -125,12 +129,12 @@ describe("keys generate-api-key", () => {
         "--out-dir",
         "/keys",
       ],
-      { "/keys/pavancharak.key": "old-secret\n" },
+      { [join("/keys", "pavancharak.key")]: "old-secret\n" },
     );
 
     expect(result.code).not.toBe(0);
     expect(result.err).toContain("Refusing to overwrite");
-    expect(result.files["/keys/pavancharak.key"]).toBe("old-secret\n");
+    expect(result.files[join("/keys", "pavancharak.key")]).toBe("old-secret\n");
   });
 
   it("rejects a caller ID that is unsafe as a file name", async () => {
@@ -162,7 +166,7 @@ describe("keys generate-approver-key", () => {
     ]);
 
     expect(result.code).toBe(0);
-    const stem = "/approver/mamta-checker__mamta-checker-key-1";
+    const stem = join("/approver", "mamta-checker__mamta-checker-key-1");
     const privatePem = result.files[`${stem}.private.pem`] ?? "";
     const publicPem = result.files[`${stem}.public.pem`] ?? "";
     expect(privatePem).toContain("BEGIN PRIVATE KEY");
