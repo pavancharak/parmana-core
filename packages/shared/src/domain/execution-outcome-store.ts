@@ -8,10 +8,14 @@ import type { ExecutionResult } from "./execution-result.js";
  *   happened. A retry must not execute again and must not assume either way.
  * - `completed`: the connector returned. A retry returns this result without
  *   calling the connector again.
+ * - `failed`: the authorization's nonce was consumed, but the release was
+ *   refused before the connector was called. Nothing ran. A retry is refused
+ *   with the recorded reason, and the authorization must be replaced.
  */
 export type ExecutionOutcome =
   | { readonly status: "in_flight" }
-  | { readonly status: "completed"; readonly result: ExecutionResult };
+  | { readonly status: "completed"; readonly result: ExecutionResult }
+  | { readonly status: "failed"; readonly reason: string };
 
 /**
  * Records the outcome of each authorization so a retry after a lost response
@@ -37,6 +41,19 @@ export interface ExecutionOutcomeStore {
    * Throws if no in-flight row exists, so a missing record is never silent.
    */
   complete(nonce: string, result: ExecutionResult): Promise<void>;
+
+  /**
+   * Records that the release was refused before the connector ran, for a
+   * nonce whose row is `in_flight`. Throws if no in-flight row exists.
+   */
+  fail(nonce: string, reason: string): Promise<void>;
+
+  /**
+   * Deletes the `in_flight` row for a nonce whose release was refused before
+   * the nonce was consumed, so that a corrected retry can be released. Only an
+   * in-flight row is deleted; a completed or failed row is never removed.
+   */
+  abort(nonce: string): Promise<void>;
 
   /** Returns the recorded outcome, or undefined when none is recorded. */
   get(nonce: string): Promise<ExecutionOutcome | undefined>;

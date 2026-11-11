@@ -12,7 +12,7 @@ import {
 import type { ExecutionRequest } from "@parmana/execution-system";
 import {
   ConnectorNotRegisteredError,
-  OutcomeUnknownError,
+  ReleaseNotDispatchedError,
   type ExecutableContent,
   type SignedExecutionAuthorization,
 } from "@parmana/shared";
@@ -166,15 +166,10 @@ describe("production gateway, end to end", () => {
       ConnectorNotRegisteredError,
     );
 
-    // KNOWN DEFECT (see the enforcement-path guide, section 9): the outcome
-    // store row was opened with begin() before dispatch, and a dispatch that
-    // throws never reaches complete(). The row stays in_flight, so a retry is
-    // answered as OutcomeUnknownError ("the earlier attempt may have run"),
-    // although the connector never ran. The expected answer is a refusal
-    // that names the failure. Asserted as it is so a fix shows up as a
-    // deliberate change to this line.
+    // The refusal was recorded as failed, with its reason. A retry is refused
+    // with that reason, and nothing is reported as unknown.
     await expect(gateway.execute(request)).rejects.toBeInstanceOf(
-      OutcomeUnknownError,
+      ReleaseNotDispatchedError,
     );
   });
 

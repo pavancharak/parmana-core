@@ -5,10 +5,10 @@ import {
   type ExecutionResult,
 } from "@parmana/shared";
 
-interface Row {
-  readonly status: "in_flight" | "completed";
-  readonly resultJson?: string;
-}
+type Row =
+  | { readonly status: "in_flight" }
+  | { readonly status: "completed"; readonly resultJson: string }
+  | { readonly status: "failed"; readonly reason: string };
 
 /**
  * In-process ExecutionOutcomeStore for tests. Loses all state on restart,
@@ -46,6 +46,24 @@ export class MemoryExecutionOutcomeStore implements ExecutionOutcomeStore {
     });
   }
 
+  async fail(nonce: string, reason: string): Promise<void> {
+    const row = this.rows.get(nonce);
+
+    if (row?.status !== "in_flight") {
+      throw new Error(
+        `No in-flight execution outcome recorded for nonce '${nonce}'.`,
+      );
+    }
+
+    this.rows.set(nonce, { status: "failed", reason });
+  }
+
+  async abort(nonce: string): Promise<void> {
+    if (this.rows.get(nonce)?.status === "in_flight") {
+      this.rows.delete(nonce);
+    }
+  }
+
   async get(nonce: string): Promise<ExecutionOutcome | undefined> {
     const row = this.rows.get(nonce);
 
@@ -57,9 +75,13 @@ export class MemoryExecutionOutcomeStore implements ExecutionOutcomeStore {
       return { status: "in_flight" };
     }
 
+    if (row.status === "failed") {
+      return { status: "failed", reason: row.reason };
+    }
+
     return {
       status: "completed",
-      result: reviveExecutionResult(JSON.parse(row.resultJson ?? "null")),
+      result: reviveExecutionResult(JSON.parse(row.resultJson)),
     };
   }
 }
