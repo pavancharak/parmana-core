@@ -192,3 +192,42 @@ The reviews so far, including four passes over the authorization path (2.25), we
 No independent audit has been completed. The
 [Audit guide](https://docs.parmanasystems.com/evaluation/audit-guide) is the starting point for
 one.
+
+## 9. Limits outside the controls, and limits the project states
+
+Nothing in this section adds a threat or changes a control. It states what the controls above do not
+close, so that a reader sees the boundary next to the claims.
+
+**Limits outside Parmana's control**
+
+- **Agents with their own credentials (A8, assumption 9).** Parmana governs only actions routed through
+  it. An agent that holds a credential to a downstream system and calls it directly is not governed. The
+  downstream system must refuse calls that lack a Parmana release (E5). See RFC-0024 for agents that reach
+  a business's systems from outside.
+- **Prompt injection (§7).** Parmana does not detect injected instructions. An agent that reads private
+  data, reads untrusted input and can send data outward can be steered to send private data out. Removing
+  one of those three capabilities from the agent is the deployer's control, not Parmana's.
+- **Network egress (assumption 8).** Parmana does not enforce network policy. Outbound allowlists are set
+  at the hosting platform.
+- **Approval quality (T2, T3).** An approval binds the action and the resource, and for some actions the
+  amount. It does not bind every parameter, and a person can approve without reading closely. RFC-0027
+  proposes binding every parameter; it is not built.
+
+**Limits the project records about itself**
+
+- **Software-only enforcement.** Enforcement is in software, not the network. Code on the same host can read
+  credentials from the server's environment (gap G-128).
+- **Trusted host, database and keys.** The host, the database and the signing keys are assumed not
+  compromised (A5, A6, A9; assumptions 1, 4, 8).
+- **One approver key in production.** Only one approver key is trusted in production (T3).
+- **Maker and checker held by one person.** In the current production deployment one person holds both
+  roles (T11, A7).
+- **Internal reviews only.** No independent audit has been completed (§8).
+- **Technology readiness level 6.** Assessed as a prototype demonstrated in a relevant environment. Sustained
+  production load and high availability are not claimed (T16).
+- **Connectors not yet proven live.** The Slack and GitHub connectors have not been run against live systems.
+  The Razorpay connector passed 4 of 4 checks in Razorpay's test mode. No signed release has yet run end to
+  end through the deployed service.
+
+Operator steps for each of these are in
+[docs/internal/guides/AGENT-DEPLOYMENT-LIMITS.md](docs/internal/guides/AGENT-DEPLOYMENT-LIMITS.md).
