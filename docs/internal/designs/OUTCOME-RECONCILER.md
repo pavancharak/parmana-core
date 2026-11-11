@@ -19,11 +19,11 @@ That is safe, but it doesn't scale. Each stuck row blocks its authorization unti
 
 A reconciler resolves an `in_flight` row to one of three outcomes, and it may only write one of them after checking the external system:
 
-| Finding | Action on the row | Effect on the authorization |
-|---|---|---|
-| The external system shows the effect happened | Record `completed` with the result the connector would have returned | Retries return that result. Nothing runs again. |
-| The external system shows no effect, and the connector confirms it did not act | Record `failed` with the reason, or delete the row | The authorization is spent (`failed`), or it can be released again (deleted). |
-| The external system cannot say | Leave the row `in_flight` and raise it for a person | Unchanged. |
+| Finding                                                                        | Action on the row                                                    | Effect on the authorization                                                   |
+| ------------------------------------------------------------------------------ | -------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| The external system shows the effect happened                                  | Record `completed` with the result the connector would have returned | Retries return that result. Nothing runs again.                               |
+| The external system shows no effect, and the connector confirms it did not act | Record `failed` with the reason, or delete the row                   | The authorization is spent (`failed`), or it can be released again (deleted). |
+| The external system cannot say                                                 | Leave the row `in_flight` and raise it for a person                  | Unchanged.                                                                    |
 
 The reconciler must never re-execute the connector to find out what happened. A second call is the duplicate effect the outcome record exists to prevent.
 
@@ -36,7 +36,9 @@ Each connector that can leave a row `in_flight` needs a read-back: a way to ask 
 ```ts
 interface ConnectorReconciliation {
   // Returns the state of the effect for this authorization, without changing anything.
-  check(record: InFlightRecord): Promise<
+  check(
+    record: InFlightRecord,
+  ): Promise<
     | { state: "applied"; result: ExecutionResult }
     | { state: "not_applied" }
     | { state: "unknown"; reason: string }
