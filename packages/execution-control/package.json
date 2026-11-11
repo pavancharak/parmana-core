@@ -1,6 +1,6 @@
 {
   "name": "@parmana/execution-control",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Credential-isolating, single-use execution release for Parmana connectors",
   "type": "module",
   "main": "./dist/index.js",
@@ -22,8 +22,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@parmana/crypto": "2.0.1",
-    "@parmana/shared": "2.0.1"
+    "@parmana/crypto": "2.0.2",
+    "@parmana/shared": "2.0.2"
   },
   "devDependencies": {
     "typescript": "^6.0.3",

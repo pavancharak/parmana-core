@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "parmana"
-version = "2.0.1"
+version = "2.0.2"
 description = "Python SDK for Parmana Execution Trust Infrastructure."
 
 readme = { file = "README.md", content-type = "text/markdown" }
