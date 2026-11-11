@@ -35,7 +35,7 @@ CHECK (type IN (
     'caller.principal_denied',
     'caller.non_human_denied',
     'caller.structural_rejected'
-));
+)) NOT VALID;
 
 ALTER TABLE caller_audit_events
 ADD COLUMN IF NOT EXISTS business_transaction_id TEXT;
