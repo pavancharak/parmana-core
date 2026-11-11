@@ -1,14 +1,37 @@
 # RFC-0028 — Core holds no vendor credentials
 
-Status: Proposed. Nothing is built yet.
+Status: Proposed. Part of the code guard is built; runtime separation is not.
 
 Created: 2026-11-11
 
 Target Version: unset.
 
-Gap: G-128 in `docs/internal/VERIFICATION-GAPS.md` (backlog row 52).
+Gap: G-128 in `docs/internal/VERIFICATION-GAPS.md` (backlog row 52). G-128 stays open.
 
 Related: ADR-0018 (connectors outside core), THREAT-MODEL.md A5, A9, §9, RFC-0027.
+
+---
+
+# Current status
+
+| Item | State on `main` | Evidence |
+| --- | --- | --- |
+| Core registers no built-in vendor connector | Done | `packages/api/src/bootstrap/createConnectorRegistry.ts` registers only the test fixture and external connectors |
+| Core reads no vendor credential variable, in any mode | Done in code | `tests/architecture/core-holds-no-vendor-credentials.test.ts` (PR #563, commit `fe18086`) |
+| Startup refusal when a vendor variable is present | Not built | The architecture test covers the code, not the running environment |
+| Each connector is its own service with its own identity | Not built | Connectors run as one Vercel deployment in `parmana-connectors` |
+| Each connector reads its secret at call time from a secrets store | Not built | Secrets store not chosen (open question 1) |
+| Each connector sits on its own network segment | Not built | Needs cloud accounts and network setup, which are operator decisions |
+| One Razorpay release run end to end through the separate service | Not run | Razorpay test mode passed 4 of 4 checks, without a signed release through the deployed service |
+
+**What this means.** The code guard shows that core cannot read a vendor credential by accident. It does not
+isolate anything at runtime. A process on the same host can still read a secret if one is placed in its
+environment, so G-128 stays open until the runtime items above are built and the Razorpay run is recorded.
+
+**What is blocking the open items.**
+- The secrets store choice (open question 1).
+- Where each connector service runs, and in which account or project (tier, below).
+- Cloud accounts and network segments, which an operator creates.
 
 ---
 
@@ -147,13 +170,13 @@ on the host. Rejected for every hosted tier.
 
 # Migration
 
-1. Finish moving the vendor connectors out of core (ADR-0018). Remove their variables from core's
-   configuration.
+1. Finish moving the vendor connectors out of core (ADR-0018). Done on `main`: core registers none.
 2. Add the core startup check and the architecture test, so no new credential can be added to core.
+   The architecture test is done. The startup check is not.
 3. Stand up the connector services with their own identities, at the tier chosen, and point core's
-   release endpoints at them.
+   release endpoints at them. Not started.
 4. Run one connector end to end through the new path (Razorpay is the first, as it has test-mode
-   coverage) and record the result in the gap log.
+   coverage) and record the result in the gap log. Not started.
 5. Remove the remaining credential variables from core. Close G-128 only after step 4 is recorded.
 
 # Open questions
