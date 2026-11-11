@@ -99,7 +99,28 @@ These properties follow from the code above. Each one should have a test that fa
 
 Tests in `packages/execution-gateway/tests/unit/` cover parts of this. These are the most relevant files: `execution-gateway.test.ts`, `release-recheck.test.ts`, `policy-freshness.test.ts`, `signal-freshness.test.ts`, and `execution-control.test.ts`.
 
-## 8. Open items
+## 8. Test results and open items
+
+### Test run
+
+Command, from the repository root under Node 24:
+
+```bash
+npx vitest run packages/envelope-verifier packages/execution-gateway
+```
+
+Result: 26 test files and 259 tests, all passing.
+
+Node 24 is required. The root test setup generates ML-DSA-65 keys, which Node 22 does not support, so every file fails during setup on Node 22. Tests also need a `.env.test` file copied from `.env.test.example`, and `PARMANA_POLICY_DIR` set to `./policies`.
+
+### Gaps the passing tests do not cover
+
+1. **Decision outcome.** Every test uses `decisionOutcome: "APPROVED"`. No test checks that another value is refused (`ExecutionGateway.ts:595–596`).
+2. **Verification-only keys.** `verificationOnlyKeys` (`ExecutionGateway.ts:612–615`) has no tests. Production does not pass the option, so the check never runs there.
+3. **Production nonce path.** Section 6 relies on reading the code. No test confirms the release verifier consumes the nonce exactly once under production wiring.
+4. **Signals.** Three test files mention `signalsHash`. Their coverage of the release-stage signal check was not traced in detail.
+
+### Not yet read
 
 - **Not yet read:** the signature and version checks in `@parmana/crypto`'s `AuthorizationVerifier`. Check 1 relies on them.
 - **Not yet read:** the release verifier (`createReleaseVerifier`) and the call sites in `packages/runtime` (`ExecutionComponent`), which decide how a thrown error is handled.
