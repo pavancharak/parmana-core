@@ -1,6 +1,6 @@
 {
   "name": "@parmana/cli",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Command-line tool for Parmana policy governance: propose a policy change, sign and submit a checker's step-up approval, and verify or export the signed approval log.",
   "type": "module",
   "main": "./dist/index.js",
