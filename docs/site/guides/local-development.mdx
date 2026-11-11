@@ -37,6 +37,18 @@ The first run creates what the server needs. Later runs reuse it:
 - **An approver key** in `.parmana-dev/`: the stand-in for the person who approves an action. Anyone who holds this private key can approve actions on your local server, so keep it to yourself.
 - **A caller key** in `.parmana-dev/caller.json`: the key your code sends to the server. The file holds the raw key in its `raw` field, and the server stores only its hash.
 
+The first run also builds the packages the server uses, which takes a few minutes. Later runs skip the build unless the build output is missing.
+
+The script starts the server with these settings. They apply only to that server, and they override any `.env` file in the repository root:
+
+| Setting               | Value       | Why                                                       |
+| --------------------- | ----------- | --------------------------------------------------------- |
+| `NODE_ENV`            | `test`      | Enables the test fixture connector and in-memory storage. |
+| `PARMANA_STORAGE`     | `memory`    | No database. Data is lost when the server stops.          |
+| `KILL_SWITCH_ENABLED` | `false`     | The kill switch is for production. It is off here.        |
+| `PARMANA_POLICY_DIR`  | `policies/` | The policy files in the repository.                       |
+| `PARMANA_KEY_DIR`     | `keys/`     | The signing keys.                                         |
+
 When the server is running it listens on `http://localhost:3000`. Stop it with Ctrl+C.
 
 ## Check that it is running
@@ -48,6 +60,12 @@ curl http://localhost:3000/ready
 ```
 
 The response includes `"status":"READY"`.
+
+On Windows PowerShell, `curl` runs a different command that asks about script execution. Use `curl.exe` instead:
+
+```powershell
+curl.exe http://localhost:3000/ready
+```
 
 ## Use the keys in the Quickstart samples
 
@@ -74,6 +92,9 @@ Then run `npm run dev:setup` again. The script creates new keys.
 ## If something goes wrong
 
 - **Port 3000 is in use.** Another program is using it. Stop that program, then run the command again.
+- **`Cannot find module './build/Release/re2.node'`.** The native module `re2` was not built, usually because the install skipped install scripts. Run `npm rebuild re2`, then start the server again.
+- **`PARMANA_POLICY_DIR is not set` or a `kill-switch-probe` error.** Your copy of the script is out of date. Update the repository and run the command again.
+- **A `DeprecationWarning` about `DEP0190` appears.** It is harmless. The script still runs.
 - **The script stops during key creation.** Read the message above the error. Fix the cause, then run the command again. Finished steps are not repeated.
 - **`/ready` does not return `READY`.** Read the server's output in the terminal where you started it.
 
