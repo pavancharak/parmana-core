@@ -137,7 +137,7 @@ The authorization is signed only on the approval path. The sequence in `RuntimeE
 Points to note:
 
 - **No refusal record is written after release.** Refusal records come from the decision path (`RuntimeEngine.writeRefusalRecord`), so a release refusal is recorded only as a failed Execution.
-- **Ordering risk.** `fail` is awaited before the rethrow. If `fail` itself throws, the original refusal is lost. This was not tested.
+- **Recording failure.** `fail` is awaited before the rethrow. If `fail` throws, the original refusal is still the error the caller receives. The recording error is logged as `execution_failure_not_recorded` with the business transaction and execution IDs. Tested in `packages/runtime/tests/unit/execution-component-failure.test.ts`, which fails if the wrap is removed.
 - **The pipeline does not catch.** `RuntimePipeline` has no `try` around components, so the error propagates to the caller.
 
 At the API, the error reaches `error-handler.ts`, which maps these refusals by their class:
@@ -186,7 +186,7 @@ In priority order. Each item names the reason it matters.
 
 1. **Done: the outcome-record defect (section 11).** Refusals before dispatch are recorded, and a retry is no longer reported as unknown. The remaining question is in section 11.
 2. **Decide whether the release verifier should run after the connector lookup.** Today a lookup failure burns the nonce (section 6). That is safe, but it means a request to an unregistered capability can never be retried, even after the registration is added.
-3. **Trace the failed-`fail()` case in `ExecutionComponent`.** If `executionService.fail` throws, the refusal is lost (section 8). Add a test or wrap the call.
+3. **Done: the failed-`fail()` case in `ExecutionComponent`.** The original refusal is rethrown even when recording it fails, and the recording error is logged (section 8).
 4. **Trace the nonce generation in `AuthorizationSigner`** and confirm it is unique per authorization (section 7).
 5. **Read the generic 500 path in `error-handler.ts`** to confirm which errors can leak details.
 6. **Decide on the HubSpot helper branch** (`fix/hubspot-self-approval`). The verification-only key is now active in production, but nothing on `main` signs with it, so the containment is in place without its caller (audit G-111).
@@ -278,3 +278,7 @@ All paths are relative to the repository root.
 
 - The release verifier still runs before the connector lookup, so a request for an unregistered capability burns its nonce (section 10, item 2). This change makes that refusal visible but does not reorder the checks.
 - The reconciler for `in_flight` rows after a crash (G-125, Part 3) is not built.
+
+### Failed recording in `ExecutionComponent` (next steps item 3)
+
+When the gateway refuses a release, `ExecutionComponent` marks the execution failed and rethrows. Before this change, a failure inside that recording step replaced the refusal in the caller's hands. Now the refusal is rethrown unchanged, and the recording error is logged as `execution_failure_not_recorded`. The execution row may then stay in its prior state; the log line is the record that it wasn't updated. The test runs in `packages/runtime/tests/unit/execution-component-failure.test.ts`, and disabling the wrap makes its second case fail. The runtime and gateway suites pass: 62 files and 490 tests.
