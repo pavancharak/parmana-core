@@ -94,9 +94,23 @@ export class ExecutionComponent implements RuntimeComponent {
       execution = await this.executionService.complete(execution);
     } catch (error) {
       //
-      // Mark execution failed.
+      // Mark execution failed. If recording the failure throws, the caller
+      // still gets the original error, the one that refused the release. The
+      // recording failure is logged, not thrown in its place.
       //
-      await this.executionService.fail(execution);
+      try {
+        await this.executionService.fail(execution);
+      } catch (recordError) {
+        console.error({
+          event: "execution_failure_not_recorded",
+          businessTransactionId: context.transaction.businessTransactionId,
+          executionId: execution.executionId,
+          error:
+            recordError instanceof Error
+              ? recordError.message
+              : String(recordError),
+        });
+      }
 
       throw error;
     }
