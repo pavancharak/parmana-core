@@ -18,7 +18,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@parmana/crypto": "2.0.1"
+    "@parmana/crypto": "2.0.2"
   },
   "engines": {
     "node": ">=24"

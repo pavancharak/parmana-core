@@ -1,6 +1,6 @@
 {
   "name": "@parmana/capability-registry",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -21,7 +21,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@parmana/shared": "2.0.1",
+    "@parmana/shared": "2.0.2",
     "vitest": "^5.0.3"
   },
   "devDependencies": {

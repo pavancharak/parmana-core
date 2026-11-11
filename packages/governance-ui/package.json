@@ -1,6 +1,6 @@
 {
   "name": "@parmana/governance-ui",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Policy Governance internal UI: propose/list/diff-review for pending policy changes. Read-only by design -- approve/reject stay CLI-only via scripts/sign-policy-change-step-up.ts, since step-up's security depends on the checker's private key never leaving their machine.",
   "type": "module",
   "scripts": {
