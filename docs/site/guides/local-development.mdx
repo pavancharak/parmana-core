@@ -89,9 +89,51 @@ Remove-Item -Recurse -Force .parmana-dev, keys
 
 Then run `npm run dev:setup` again. The script creates new keys.
 
+## Check the Parmana CLI
+
+The `parmana` command-line tool proposes policy changes, signs approvals, and checks the approval log. Build it once:
+
+```bash
+npm run build --workspace=packages/cli
+```
+
+Run these from the repository root. None of them needs a server.
+
+```bash
+node packages/cli/dist/index.js --help
+node packages/cli/dist/index.js log verify
+node packages/cli/dist/index.js policy propose policies/customer-refund/1.3.0/policy.json --name customer-refund --version 1.3.0 --reason "Local test" --dry-run --api-url http://localhost:3000
+node packages/cli/dist/index.js policy propose policies/customer-refund/1.3.0/policy.json --name wrong-name --version 1.3.0 --reason "x" --dry-run
+```
+
+What you should see:
+
+- `--help` lists eight commands.
+- `log verify` reports `The log verifies` and exits with code 0.
+- The dry run prints the request and says `Nothing was sent`.
+- The wrong name prints `The file's policyId is "customer-refund", but the command names "wrong-name"` and exits with code 2.
+
+Signing an approval happens on the checker's machine. It sends nothing, so you can test it locally with the approver key that `npm run dev:setup` creates:
+
+```bash
+node packages/cli/dist/index.js approval sign --key-file .parmana-dev/local-test-approver__local-test-approver-key-1.private.pem --key-id local-test-approver-key-1 --pending test-pending-001 --action approve --out envelope.json
+```
+
+The command writes `envelope.json` and prints when it expires. The envelope is valid for 120 seconds. Use a real pending change ID from the server in place of `test-pending-001`.
+
+To check the live server, start `npm run dev:setup` in one terminal. In a second terminal, set the caller key and run a command:
+
+```powershell
+$env:PARMANA_TOKEN = (Get-Content .parmana-dev\caller.json | ConvertFrom-Json).raw
+node packages/cli/dist/index.js policy status customer-refund 1.3.0 --api-url http://localhost:3000
+```
+
+The server answers with `403 NON_HUMAN_CALLER_DENIED`. That is expected. Policy changes and approvals need a credential for a verified person, and the dev setup provides only a service key. So you can't complete a proposal or an approval against the local server. The approval steps are covered in the [CLI quickstart](/cli/quickstart).
+
 ## If something goes wrong
 
 - **Port 3000 is in use.** Another program is using it. Stop that program, then run the command again.
+- **`/ready` answers, but the CLI or the server reports `401`.** Another server is answering on port 3000. A common cause is the API container from the [Quickstart](/quickstart) with Docker, which publishes port 3000. Check with `docker ps`. If `parmana-api-1` is listed with `3000->3000`, stop it with `docker stop parmana-api-1`, then run `npm run dev:setup` again. Stopping only the API container leaves the PostgreSQL container running, which the repository's tests use.
 - **`Cannot find module './build/Release/re2.node'`.** The native module `re2` was not built, usually because the install skipped install scripts. Run `npm rebuild re2`, then start the server again.
 - **`PARMANA_POLICY_DIR is not set` or a `kill-switch-probe` error.** Your copy of the script is out of date. Update the repository and run the command again.
 - **A `DeprecationWarning` about `DEP0190` appears.** It is harmless. The script still runs.
