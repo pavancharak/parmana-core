@@ -76,10 +76,11 @@ export class GovernedApprovalIssuerRegistry implements ApprovalIssuerRegistry {
         );
       }
 
-      // G-50: database issuers do not store capabilities yet, so they
-      // are granted none and cannot approve anything until the grants
-      // are stored (see the migration and maker-checker path).
-      return { publicKey, revoked: record.revoked, capabilities: [] };
+      return {
+        publicKey,
+        revoked: record.revoked,
+        capabilities: record.capabilities,
+      };
     } catch (error) {
       console.error({
         event: "approval_issuer_lookup_failed",

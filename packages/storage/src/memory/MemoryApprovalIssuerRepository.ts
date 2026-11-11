@@ -80,6 +80,7 @@ export class MemoryApprovalIssuerRepository implements ApprovalIssuerRepository 
         approverId: change.approverId,
         keyId: change.keyId,
         publicKeyPem: change.publicKeyPem ?? "",
+        capabilities: change.capabilities ?? [],
         revoked: false,
         addedByChangeId: change.changeId,
         addedAt: at,
