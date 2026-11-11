@@ -131,6 +131,97 @@ export const COMMANDS: readonly CommandSpec[] = [
       "parmana approval submit --pending <id> --action approve --envelope envelope.json --dry-run",
   },
   {
+    id: "approver list",
+    usage:
+      "parmana approver list [--status <PENDING_APPROVAL|APPROVED|REJECTED>]",
+    summary: "List approver-key changes (add or revoke), optionally by status.",
+    positionals: 0,
+    flags: {
+      status: { type: "string", help: "Only changes with this status." },
+    },
+    env: [
+      "PARMANA_TOKEN",
+      "PARMANA_API_URL",
+      "PARMANA_PROFILE",
+      "PARMANA_CONFIG",
+    ],
+    example: "parmana approver list --status PENDING_APPROVAL",
+  },
+  {
+    id: "approver propose-add",
+    usage:
+      "parmana approver propose-add --approver <id> --key <id> --public-key-file <pem> --capabilities <a,b> --reason <why>",
+    summary: "Propose adding an approver key, granted the listed capabilities.",
+    positionals: 0,
+    flags: {
+      approver: { type: "string", help: "The approver ID." },
+      key: { type: "string", help: "The key ID." },
+      "public-key-file": {
+        type: "string",
+        help: "The Ed25519 public key, PEM.",
+      },
+      capabilities: {
+        type: "string",
+        help: "Comma-separated capability names.",
+      },
+      reason: { type: "string", help: "Why the key is being added." },
+    },
+    env: [
+      "PARMANA_TOKEN",
+      "PARMANA_API_URL",
+      "PARMANA_PROFILE",
+      "PARMANA_CONFIG",
+    ],
+    example:
+      "parmana approver propose-add --approver pavan --key pavan-key-1 --public-key-file pavan.public.pem --capabilities razorpay:refund --reason rotation --dry-run",
+  },
+  {
+    id: "approver propose-revoke",
+    usage:
+      "parmana approver propose-revoke --approver <id> --key <id> --reason <why>",
+    summary:
+      "Propose revoking an approver key that was added through approver changes.",
+    positionals: 0,
+    flags: {
+      approver: { type: "string", help: "The approver ID." },
+      key: { type: "string", help: "The key ID." },
+      reason: { type: "string", help: "Why the key is being revoked." },
+    },
+    env: [
+      "PARMANA_TOKEN",
+      "PARMANA_API_URL",
+      "PARMANA_PROFILE",
+      "PARMANA_CONFIG",
+    ],
+    example:
+      "parmana approver propose-revoke --approver manager-charak1987 --key manager-charak1987-key-2 --reason rotation --dry-run",
+  },
+  {
+    id: "approver submit",
+    usage:
+      "parmana approver submit --change <id> --action <approve|reject> --envelope <file> [--reason <why>]",
+    summary:
+      "Approve or reject an approver change, with the checker's signed step-up envelope.",
+    positionals: 0,
+    flags: {
+      change: { type: "string", help: "The approver change ID." },
+      action: { type: "string", help: "approve or reject." },
+      envelope: { type: "string", help: "The file written by approval sign." },
+      reason: {
+        type: "string",
+        help: "Required with reject: why it is rejected.",
+      },
+    },
+    env: [
+      "PARMANA_TOKEN",
+      "PARMANA_API_URL",
+      "PARMANA_PROFILE",
+      "PARMANA_CONFIG",
+    ],
+    example:
+      "parmana approver submit --change <id> --action approve --envelope step.json --dry-run",
+  },
+  {
     id: "log verify",
     usage:
       "parmana log verify [--policy <name>] [--base <ref>] [--require-coverage]",

@@ -25,6 +25,10 @@ These work with every command.
 - [`policy propose`](#policy-propose)
 - [`approval sign`](#approval-sign)
 - [`approval submit`](#approval-submit)
+- [`approver list`](#approver-list)
+- [`approver propose-add`](#approver-propose-add)
+- [`approver propose-revoke`](#approver-propose-revoke)
+- [`approver submit`](#approver-submit)
 - [`log verify`](#log-verify)
 - [`log export`](#log-export)
 - [`log check-db`](#log-check-db)
@@ -139,6 +143,123 @@ parmana approval submit --pending <id> --action <approve|reject> --envelope <fil
 
 ```bash
 parmana approval submit --pending <id> --action approve --envelope envelope.json --dry-run
+```
+
+## `approver list`
+
+List approver-key changes (add or revoke), optionally by status.
+
+```bash
+parmana approver list [--status <PENDING_APPROVAL|APPROVED|REJECTED>]
+```
+
+### Options
+
+| Option               | Meaning                        |
+| -------------------- | ------------------------------ |
+| `--status` `<value>` | Only changes with this status. |
+
+### Environment
+
+- `PARMANA_TOKEN`
+- `PARMANA_API_URL`
+- `PARMANA_PROFILE`
+- `PARMANA_CONFIG`
+
+### Example
+
+```bash
+parmana approver list --status PENDING_APPROVAL
+```
+
+## `approver propose-add`
+
+Propose adding an approver key, granted the listed capabilities.
+
+```bash
+parmana approver propose-add --approver <id> --key <id> --public-key-file <pem> --capabilities <a,b> --reason <why>
+```
+
+### Options
+
+| Option                        | Meaning                           |
+| ----------------------------- | --------------------------------- |
+| `--approver` `<value>`        | The approver ID.                  |
+| `--key` `<value>`             | The key ID.                       |
+| `--public-key-file` `<value>` | The Ed25519 public key, PEM.      |
+| `--capabilities` `<value>`    | Comma-separated capability names. |
+| `--reason` `<value>`          | Why the key is being added.       |
+
+### Environment
+
+- `PARMANA_TOKEN`
+- `PARMANA_API_URL`
+- `PARMANA_PROFILE`
+- `PARMANA_CONFIG`
+
+### Example
+
+```bash
+parmana approver propose-add --approver pavan --key pavan-key-1 --public-key-file pavan.public.pem --capabilities razorpay:refund --reason rotation --dry-run
+```
+
+## `approver propose-revoke`
+
+Propose revoking an approver key that was added through approver changes.
+
+```bash
+parmana approver propose-revoke --approver <id> --key <id> --reason <why>
+```
+
+### Options
+
+| Option                 | Meaning                       |
+| ---------------------- | ----------------------------- |
+| `--approver` `<value>` | The approver ID.              |
+| `--key` `<value>`      | The key ID.                   |
+| `--reason` `<value>`   | Why the key is being revoked. |
+
+### Environment
+
+- `PARMANA_TOKEN`
+- `PARMANA_API_URL`
+- `PARMANA_PROFILE`
+- `PARMANA_CONFIG`
+
+### Example
+
+```bash
+parmana approver propose-revoke --approver manager-charak1987 --key manager-charak1987-key-2 --reason rotation --dry-run
+```
+
+## `approver submit`
+
+Approve or reject an approver change, with the checker's signed step-up envelope.
+
+```bash
+parmana approver submit --change <id> --action <approve|reject> --envelope <file> [--reason <why>]
+```
+
+### Options
+
+| Option                 | Meaning                                   |
+| ---------------------- | ----------------------------------------- |
+| `--change` `<value>`   | The approver change ID.                   |
+| `--action` `<value>`   | approve or reject.                        |
+| `--envelope` `<value>` | The file written by approval sign.        |
+| `--reason` `<value>`   | Required with reject: why it is rejected. |
+
+### Environment
+
+- `PARMANA_TOKEN`
+- `PARMANA_API_URL`
+- `PARMANA_PROFILE`
+- `PARMANA_CONFIG`
+
+### Example
+
+```bash
+parmana approver submit --change <id> --action approve --envelope step.json --dry-run
 ```
 
 ## `log verify`
