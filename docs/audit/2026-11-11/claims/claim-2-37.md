@@ -46,4 +46,4 @@ Evidence
 |---|---|---|---|---|
 | `packages/crypto/tests/unit/kms-signer.test.ts` | passed | 31 | 31 | 0 |
 | `packages/crypto/tests/unit/signature-commitment.test.ts` | passed | 12 | 12 | 0 |
-| `python/tests/test_offline_verifier.py` | not-run-or-missing | 0 | 0 | 0 |
+| `python/tests/test_offline_verifier.py` | passed | 5 | 5 | 0 |

@@ -52,5 +52,5 @@ Evidence
 
 | Test file | Status | Tests | Passed | Skipped |
 |---|---|---|---|---|
-| `python/tests/test_quickstart_example.py` | not-run-or-missing | 0 | 0 | 0 |
+| `python/tests/test_quickstart_example.py` | passed | 1 | 1 | 0 |
 | `typescript/test/integration/examples.integration.test.ts` | passed | 3 | 3 | 0 |

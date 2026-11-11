@@ -14,7 +14,7 @@
 ## Test results
 
 - TypeScript (Vitest): 403 test files, 0 failed; 3789 tests passed, 0 failed, 106 skipped (Node 24.22.1).
-- Python SDK (pytest, requirements-dev.txt): 174 passed, 19 errors. The 19 errors are live-server integration tests that need a running Parmana server. They were not executed.
+- Python SDK (pytest, requirements-dev.txt, Node 24 on PATH): 193 passed, 0 errors. Without Node 24 on PATH, 19 live-server tests error because the native module was built for another Node version.
 
 ## Limitations
 

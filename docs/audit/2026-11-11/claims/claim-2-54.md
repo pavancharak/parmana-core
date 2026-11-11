@@ -59,4 +59,4 @@ Evidence
 | `packages/api/tests/integration/business-validation-http-source.integration.test.ts` | passed | 3 | 3 | 0 |
 | `packages/api/tests/unit/http-business-signal-source.test.ts` | passed | 30 | 30 | 0 |
 | `packages/storage/tests/integration/postgres-business-signal-source-repository.integration.test.ts` | passed | 6 | 0 | 6 |
-| `python/tests/test_business_signal_source_api.py` | not-run-or-missing | 0 | 0 | 0 |
+| `python/tests/test_business_signal_source_api.py` | passed | 7 | 7 | 0 |

@@ -42,5 +42,5 @@ Evidence
 | Test file | Status | Tests | Passed | Skipped |
 |---|---|---|---|---|
 | `packages/policy/tests/unit/policySignalRequirements.test.ts` | passed | 3 | 3 | 0 |
-| `python/tests/test_sdk_alignment.py` | not-run-or-missing | 0 | 0 | 0 |
+| `python/tests/test_sdk_alignment.py` | passed | 11 | 11 | 0 |
 | `typescript/test/Alignment.test.ts` | passed | 17 | 17 | 0 |

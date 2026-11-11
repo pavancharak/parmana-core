@@ -71,4 +71,4 @@ Evidence
 | `packages/runtime/tests/unit/authority-grant-evaluator.test.ts` | passed | 14 | 14 | 0 |
 | `packages/runtime/tests/unit/authority-grants-runtime.test.ts` | passed | 9 | 9 | 0 |
 | `packages/storage/tests/integration/postgres-authority-grant-repository.integration.test.ts` | passed | 6 | 0 | 6 |
-| `python/tests/test_authority_grant_api.py` | not-run-or-missing | 0 | 0 | 0 |
+| `python/tests/test_authority_grant_api.py` | passed | 7 | 7 | 0 |

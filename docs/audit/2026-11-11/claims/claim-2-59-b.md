@@ -36,5 +36,5 @@ The following claims are true only under an explicitly stated scope. The scope c
 
 | Test file | Status | Tests | Passed | Skipped |
 |---|---|---|---|---|
-| `python/tests/test_whole_record_v3_offline.py` | not-run-or-missing | 0 | 0 | 0 |
+| `python/tests/test_whole_record_v3_offline.py` | passed | 3 | 3 | 0 |
 | `typescript/test/whole-record-v3-offline.test.ts` | passed | 3 | 3 | 0 |
