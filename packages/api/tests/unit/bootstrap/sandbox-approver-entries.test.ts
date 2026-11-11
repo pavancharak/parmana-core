@@ -71,6 +71,7 @@ describe("sandboxApproverEntries", () => {
         "github:pr-merge",
         "erp:invoice-pay",
         "erp:record-update",
+        "sandbox:receipt",
       ],
       publicKeyPem,
     });

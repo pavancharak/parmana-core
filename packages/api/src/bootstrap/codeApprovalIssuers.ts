@@ -93,6 +93,7 @@ const SANDBOX_APPROVER_CAPABILITIES: readonly string[] = [
   "github:pr-merge",
   "erp:invoice-pay",
   "erp:record-update",
+  "sandbox:receipt",
 ];
 
 /**
