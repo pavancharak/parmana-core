@@ -20,6 +20,12 @@ export interface ConfiguredApprovalIssuer {
   readonly revoked: boolean;
 
   /**
+   * The capabilities this approver may approve (G-50). An approval for
+   * any other capability is refused. Empty grants nothing.
+   */
+  readonly capabilities: readonly string[];
+
+  /**
    * The approver's Ed25519 public key as PEM, written here in the entry.
    * Public keys are not secret, and this list is reviewed code. This is
    * the way to provision an approver where the server cannot read
@@ -68,11 +74,25 @@ const TRUSTED_APPROVAL_ISSUERS: readonly ConfiguredApprovalIssuer[] = [
     approverId: "manager-charak1987",
     keyId: "manager-charak1987-key-1",
     revoked: true,
+    capabilities: [],
     publicKeyPem:
       "-----BEGIN PUBLIC KEY-----\n" +
       "MCowBQYDK2VwAyEAVMs/E6N2XEQfEEWlwMg0wRS0L4svbZ0W785aAxUP78M=\n" +
       "-----END PUBLIC KEY-----\n",
   },
+];
+
+/**
+ * Capabilities the local sandbox approver may approve (G-50). Used only
+ * when PARMANA_SANDBOX=true. The sandbox has no production traffic.
+ */
+const SANDBOX_APPROVER_CAPABILITIES: readonly string[] = [
+  "paytm:refund",
+  "razorpay:refund-create",
+  "hubspot:deal-update",
+  "github:pr-merge",
+  "erp:invoice-pay",
+  "erp:record-update",
 ];
 
 /**
@@ -114,6 +134,7 @@ function localTestApproverEntries(): ConfiguredApprovalIssuer[] {
     {
       ...LOCAL_TEST_APPROVER,
       revoked: false,
+      capabilities: SANDBOX_APPROVER_CAPABILITIES,
       publicKeyPem: readFileSync(file, "utf8"),
     },
   ];
@@ -152,7 +173,15 @@ export function sandboxApproverEntries(
     .export({ type: "spki", format: "pem" })
     .toString();
 
-  return [{ approverId, keyId, revoked: false, publicKeyPem }];
+  return [
+    {
+      approverId,
+      keyId,
+      revoked: false,
+      capabilities: SANDBOX_APPROVER_CAPABILITIES,
+      publicKeyPem,
+    },
+  ];
 }
 
 /**
@@ -193,7 +222,7 @@ export function buildApprovalIssuerRegistry(
   const seen = new Set<string>();
 
   const issuers: TrustedApprovalIssuer[] = entries.map(
-    ({ approverId, keyId, revoked, publicKeyPem }) => {
+    ({ approverId, keyId, revoked, capabilities, publicKeyPem }) => {
       const label = `${approverId}__${keyId}`;
 
       if (seen.has(label)) {
@@ -240,7 +269,7 @@ export function buildApprovalIssuerRegistry(
         );
       }
 
-      return { approverId, keyId, publicKey, revoked };
+      return { approverId, keyId, publicKey, revoked, capabilities };
     },
   );
 

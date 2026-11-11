@@ -64,6 +64,14 @@ describe("sandboxApproverEntries", () => {
       approverId: "sandbox-demo-approver",
       keyId: "sandbox-demo-approver-key-1",
       revoked: false,
+      capabilities: [
+        "paytm:refund",
+        "razorpay:refund-create",
+        "hubspot:deal-update",
+        "github:pr-merge",
+        "erp:invoice-pay",
+        "erp:record-update",
+      ],
       publicKeyPem,
     });
   });
