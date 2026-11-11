@@ -71,7 +71,7 @@ If `verify` returns `valid: false`, `execute` picks one of three outcomes:
    - Without `executionControl`, it calls `connector.execute` directly.
 4. **Complete the record.** `complete(nonce, result)` runs only after dispatch returns (line 792).
 
-**Known defect (step 4).** Dispatch has no `try`/`finally`. If dispatch throws before the connector runs, the row stays `in_flight`. Section 11 gives the analysis and the planned fix.
+**Refusals before dispatch (step 4).** A refusal before the connector runs is recorded: `failed` when the nonce was consumed, or the row is deleted when it was not (section 11). An error from the connector itself leaves the row `in_flight`, because the connector may have acted.
 
 ## 5. Envelope and signature checks
 
@@ -184,7 +184,7 @@ The production test cannot release to a connector. `createExecutionGateway` buil
 
 In priority order. Each item names the reason it matters.
 
-1. **Fix the outcome-record defect (section 11).** A release refused before dispatch leaves the row `in_flight`, and retries tell the caller to check the external system although nothing ran. The fix needs a new `failed` status, a migration, and a rule that separates a failure before dispatch from one after it.
+1. **Done: the outcome-record defect (section 11).** Refusals before dispatch are recorded, and a retry is no longer reported as unknown. The remaining question is in section 11.
 2. **Decide whether the release verifier should run after the connector lookup.** Today a lookup failure burns the nonce (section 6). That is safe, but it means a request to an unregistered capability can never be retried, even after the registration is added.
 3. **Trace the failed-`fail()` case in `ExecutionComponent`.** If `executionService.fail` throws, the refusal is lost (section 8). Add a test or wrap the call.
 4. **Trace the nonce generation in `AuthorizationSigner`** and confirm it is unique per authorization (section 7).
@@ -193,7 +193,7 @@ In priority order. Each item names the reason it matters.
 
 ## 11. Outcome-record defect: analysis and design
 
-Status: analysed, not implemented. The production test `packages/api/tests/integration/production-gateway.integration.test.ts` asserts the current behaviour and must change with the fix.
+Status: implemented (option A). A refusal before the release verifier passes deletes the in-flight row, so a corrected retry is released. A refusal after it records the row as `failed`, and a retry is refused with the reason. Errors from the connector itself still leave the row `in_flight`.
 
 ### What happens today
 
@@ -264,3 +264,17 @@ All paths are relative to the repository root.
 - `packages/runtime/src/RuntimePipeline.ts`: 31
 - `packages/shared/src/errors/` (status codes)
 - Tests: `packages/execution-gateway/tests/unit/` (`enforcement-invariants`, `signal-freshness`), `packages/api/tests/unit/release-nonce-path.test.ts`, `packages/api/tests/integration/production-gateway.integration.test.ts`, `packages/api/tests/integration/external-connector-release.integration.test.ts`
+
+### What was implemented
+
+- **Refusal marks.** `ExecutionControlService.execute` marks each refusal on the release path before the connector runs, and records whether the nonce was consumed (`packages/execution-control/src/ReleaseRefusal.ts`). The error object is thrown unchanged, so callers see the same class, message and code as before.
+- **Gateway.** `ExecutionGateway.execute` reads the mark. If the nonce was not consumed, it calls `abort(nonce)`. If it was consumed, it calls `fail(nonce, reason)`. In both cases it rethrows the original error. Unmarked errors leave the row `in_flight`.
+- **Replay.** A retry against a `failed` row throws `ReleaseNotDispatchedError` (`packages/shared/src/errors/release-not-dispatched-error.ts`, HTTP 409, code `RELEASE_NOT_DISPATCHED`). The message names the recorded reason and says the authorization is spent.
+- **Storage.** `ExecutionOutcomeStore` gains `fail` and `abort`. `failed` is a status. The memory store and `PostgresExecutionOutcomeStore` implement both. `abort` only deletes an in-flight row.
+- **Migration.** `supabase/migrations/20261111180000_execution_outcome_failed.sql` admits `failed` and adds `failure_reason`, with a check that failed rows have a reason. It is also appended to `scripts/apply-all-migrations.sql`.
+- **Tests.** `packages/execution-gateway/tests/unit/outcome-record.test.ts` covers the three cases: a refusal after consumption, a verifier refusal, and a connector error. Disabling the recording makes the first and second cases fail. The Postgres store is tested on PGlite with both migrations applied, including `fail`, `abort`, and that `abort` never removes a failed row. The production test now expects `ReleaseNotDispatchedError` on retry.
+
+### Still open
+
+- The release verifier still runs before the connector lookup, so a request for an unregistered capability burns its nonce (section 10, item 2). This change makes that refusal visible but does not reorder the checks.
+- The reconciler for `in_flight` rows after a crash (G-125, Part 3) is not built.

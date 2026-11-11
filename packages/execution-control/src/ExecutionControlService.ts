@@ -1,4 +1,9 @@
-import type { ExecutionResult } from "@parmana/shared";
+import {
+  NonceAlreadyConsumedError,
+  type ExecutionResult,
+} from "@parmana/shared";
+
+import { markReleaseRefusal } from "./ReleaseRefusal.js";
 
 import { deepFreeze } from "./deepFreeze.js";
 import { InMemoryGatewaySessionStore } from "./GatewaySessionStore.js";
@@ -49,73 +54,98 @@ export class ExecutionControlService implements ExecutionControl {
     }
   }
 
+  /**
+   * Prepares the dispatch and calls the connector. Refusals before the
+   * connector runs are wrapped in ReleaseRefusedBeforeDispatch, so the Gateway
+   * can record them. Errors from the connector itself are not wrapped.
+   */
+  private async prepareDispatch(
+    release: ExecutionRelease,
+    gatewayAuthentication: unknown,
+  ) {
+    try {
+      if (
+        !this.options.authenticator.authenticateGateway(
+          this.options.gatewayIdentity,
+          gatewayAuthentication,
+        )
+      ) {
+        throw new Error("Execution Control rejected unauthenticated Gateway.");
+      }
+
+      //
+      // Resolve connector from capability.
+      //
+      const connector = await this.options.registry.resolveCapability(
+        release.executableContent.action,
+      );
+
+      //
+      // Create one-time Gateway session.
+      //
+      const session = this.options.sessions.create(
+        release,
+        connector.connectorId,
+        this.sessionLifetimeMs,
+        this.options.sessionIssuanceAuthentication,
+      );
+
+      await this.options.audit.record({
+        type: "session.created",
+        occurredAt: new Date().toISOString(),
+        connectorId: connector.connectorId,
+        authorizationId: release.authorization.payload.authorizationId,
+        sessionId: session.sessionId,
+        action: release.executableContent.action,
+        businessTransactionId: release.executableContent.businessTransactionId,
+      });
+
+      //
+      // Immutable execution request.
+      //
+      const request: GatewayExecutionRequest = deepFreeze({
+        authorization: release.authorization,
+        executableContent: release.executableContent,
+        verifiedTransaction: release.verifiedTransaction,
+        executionTimestamp: release.executionTimestamp,
+        gatewayIdentity: this.options.gatewayIdentity,
+        gatewaySession: session,
+        ...(release.approvals !== undefined
+          ? { approvals: release.approvals }
+          : {}),
+      });
+
+      return { connector, request, session };
+    } catch (error) {
+      // The release verifier has already passed, so it consumed the nonce.
+      markReleaseRefusal(error, true);
+
+      throw error;
+    }
+  }
+
   async execute(
     release: ExecutionRelease,
     gatewayAuthentication: unknown,
   ): Promise<ExecutionResult> {
     //
     // Independent verification. verifiedTransaction below is a caller
-    // assertion; this check is what makes it true.
+    // assertion; this check is what makes it true. The release verifier
+    // consumes the nonce last, so a refusal from it leaves the nonce unused,
+    // except when the nonce was already consumed.
     //
-    await this.options.verifyRelease(release);
+    try {
+      await this.options.verifyRelease(release);
+    } catch (error) {
+      markReleaseRefusal(error, error instanceof NonceAlreadyConsumedError);
 
-    //
-    // Authenticate Gateway
-    //
-
-    if (
-      !this.options.authenticator.authenticateGateway(
-        this.options.gatewayIdentity,
-        gatewayAuthentication,
-      )
-    ) {
-      throw new Error("Execution Control rejected unauthenticated Gateway.");
+      throw error;
     }
 
-    //
-    // Resolve connector from capability.
-    //
-
-    const connector = await this.options.registry.resolveCapability(
-      release.executableContent.action,
-    );
-
-    //
-    // Create one-time Gateway session.
-    //
-
-    const session = this.options.sessions.create(
+    const { connector, request, session } = await this.prepareDispatch(
       release,
-      connector.connectorId,
-      this.sessionLifetimeMs,
-      this.options.sessionIssuanceAuthentication,
+      gatewayAuthentication,
     );
-
-    await this.options.audit.record({
-      type: "session.created",
-      occurredAt: new Date().toISOString(),
-      connectorId: connector.connectorId,
-      authorizationId: release.authorization.payload.authorizationId,
-      sessionId: session.sessionId,
-      action: release.executableContent.action,
-      businessTransactionId: release.executableContent.businessTransactionId,
-    });
-
-    //
-    // Immutable execution request.
-    //
-
-    const request: GatewayExecutionRequest = deepFreeze({
-      authorization: release.authorization,
-      executableContent: release.executableContent,
-      verifiedTransaction: release.verifiedTransaction,
-      executionTimestamp: release.executionTimestamp,
-      gatewayIdentity: this.options.gatewayIdentity,
-      gatewaySession: session,
-      ...(release.approvals !== undefined
-        ? { approvals: release.approvals }
-        : {}),
-    });
 
     try {
       const result = await connector.execute(request);

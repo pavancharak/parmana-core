@@ -18,7 +18,10 @@ import type {
 
 import { EnvelopeVerifier, type NonceStore } from "@parmana/envelope-verifier";
 
-import type { ExecutionControl } from "@parmana/execution-control";
+import {
+  releaseRefusalOf,
+  type ExecutionControl,
+} from "@parmana/execution-control";
 
 import type {
   ExecutionRequest,
@@ -30,6 +33,7 @@ import {
   AuthorizationNoLongerValidError,
   NonceAlreadyConsumedError,
   OutcomeUnknownError,
+  ReleaseNotDispatchedError,
   type ExecutableContent,
   type AuthorityGrantRepository,
   type ExecutionOutcomeStore,
@@ -782,11 +786,24 @@ export class ExecutionGateway implements ExecutionSystem {
       }
     }
 
-    const dispatched = await this.releaseToConnector(
-      request,
-      transaction,
-      result,
-    );
+    let dispatched: ExecutionResult;
+
+    try {
+      dispatched = await this.releaseToConnector(request, transaction, result);
+    } catch (error) {
+      //
+      // A refusal before the connector ran is recorded, so the outcome is
+      // not reported as unknown. Any other error may come after the connector
+      // acted, so its row stays in flight. The error is rethrown unchanged.
+      //
+      const refusal = releaseRefusalOf(error);
+
+      if (refusal !== undefined) {
+        await this.recordRefusal(nonce, refusal.nonceConsumed, error);
+      }
+
+      throw error;
+    }
 
     if (this.executionOutcomeStore !== undefined) {
       await this.executionOutcomeStore.complete(nonce, dispatched);
@@ -816,7 +833,37 @@ export class ExecutionGateway implements ExecutionSystem {
       throw new OutcomeUnknownError(request.businessTransactionId);
     }
 
+    if (outcome?.status === "failed") {
+      throw new ReleaseNotDispatchedError(
+        request.businessTransactionId,
+        outcome.reason,
+      );
+    }
+
     throw new NonceAlreadyConsumedError(request.businessTransactionId);
+  }
+
+  /**
+   * Records a refusal from the release path before the connector ran. If the
+   * nonce was consumed, the row becomes `failed`. Otherwise the in-flight row
+   * is deleted, so a corrected retry can be released.
+   */
+  private async recordRefusal(
+    nonce: string,
+    nonceConsumed: boolean,
+    error: unknown,
+  ): Promise<void> {
+    if (this.executionOutcomeStore === undefined) {
+      return;
+    }
+
+    if (nonceConsumed) {
+      const reason = error instanceof Error ? error.message : String(error);
+
+      await this.executionOutcomeStore.fail(nonce, reason);
+    } else {
+      await this.executionOutcomeStore.abort(nonce);
+    }
   }
 
   private async releaseToConnector(

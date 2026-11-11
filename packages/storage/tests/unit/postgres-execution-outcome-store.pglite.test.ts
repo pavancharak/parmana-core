@@ -22,10 +22,10 @@ import { PostgresExecutionOutcomeStore } from "../../src/postgres/PostgresExecut
  * ON CONFLICT DO NOTHING, the status guard on UPDATE, the jsonb round trip,
  * and the primary key deciding the winner under concurrent calls.
  */
-const MIGRATION = resolve(
-  dirname(fileURLToPath(import.meta.url)),
+const MIGRATIONS = [
   "../../../../supabase/migrations/20261027120000_add_execution_outcomes.sql",
-);
+  "../../../../supabase/migrations/20261111180000_execution_outcome_failed.sql",
+].map((file) => resolve(dirname(fileURLToPath(import.meta.url)), file));
 
 async function createDatabase(): Promise<{
   pool: Pool;
@@ -33,7 +33,9 @@ async function createDatabase(): Promise<{
 }> {
   const db = new PGlite();
 
-  await db.exec(readFileSync(MIGRATION, "utf8"));
+  for (const migration of MIGRATIONS) {
+    await db.exec(readFileSync(migration, "utf8"));
+  }
 
   // pg's Pool reports `rowCount`. PGlite reports `affectedRows`.
   const pool = {
@@ -124,6 +126,52 @@ describe("PostgresExecutionOutcomeStore on PostgreSQL semantics", () => {
 
     expect(await store.get("n-none")).toBeUndefined();
     expect(await store.begin("n-none", EXPIRES_AT)).toBe(true);
+
+    await close();
+  });
+  it("records a failed refusal with its reason, and refuses to fail a nonce that is not in flight", async () => {
+    const { pool, close } = await createDatabase();
+    const store = new PostgresExecutionOutcomeStore(pool);
+
+    expect(await store.begin("n-fail", EXPIRES_AT)).toBe(true);
+    await store.fail("n-fail", "No connector registered for action: erp:x.");
+
+    expect(await store.get("n-fail")).toEqual({
+      status: "failed",
+      reason: "No connector registered for action: erp:x.",
+    });
+    await expect(store.fail("n-fail", "again")).rejects.toThrow(
+      "No in-flight execution outcome recorded",
+    );
+
+    await close();
+  });
+
+  it("aborts an in-flight row so a corrected retry can begin again", async () => {
+    const { pool, close } = await createDatabase();
+    const store = new PostgresExecutionOutcomeStore(pool);
+
+    expect(await store.begin("n-abort", EXPIRES_AT)).toBe(true);
+    await store.abort("n-abort");
+
+    expect(await store.get("n-abort")).toBeUndefined();
+    expect(await store.begin("n-abort", EXPIRES_AT)).toBe(true);
+
+    await close();
+  });
+
+  it("never aborts a failed or completed row", async () => {
+    const { pool, close } = await createDatabase();
+    const store = new PostgresExecutionOutcomeStore(pool);
+
+    expect(await store.begin("n-keep", EXPIRES_AT)).toBe(true);
+    await store.fail("n-keep", "refused after the nonce was consumed");
+    await store.abort("n-keep");
+
+    expect(await store.get("n-keep")).toEqual({
+      status: "failed",
+      reason: "refused after the nonce was consumed",
+    });
 
     await close();
   });

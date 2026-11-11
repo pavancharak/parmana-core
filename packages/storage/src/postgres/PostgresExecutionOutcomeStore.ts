@@ -59,11 +59,30 @@ export class PostgresExecutionOutcomeStore implements ExecutionOutcomeStore {
     }
   }
 
+  async fail(nonce: string, reason: string): Promise<void> {
+    const { rowCount } = await this.pool.query(FAIL_OUTCOME_SQL, [
+      nonce,
+      reason,
+    ]);
+
+    if (rowCount !== 1) {
+      throw new Error(
+        `No in-flight execution outcome recorded for nonce '${nonce}'.`,
+      );
+    }
+  }
+
+  async abort(nonce: string): Promise<void> {
+    // Deletes only an in-flight row. A completed or failed row is never removed.
+    await this.pool.query(ABORT_OUTCOME_SQL, [nonce]);
+  }
+
   async get(nonce: string): Promise<ExecutionOutcome | undefined> {
-    const { rows } = await this.pool.query<{ status: string; result: unknown }>(
-      GET_OUTCOME_SQL,
-      [nonce],
-    );
+    const { rows } = await this.pool.query<{
+      status: string;
+      result: unknown;
+      failure_reason: string | null;
+    }>(GET_OUTCOME_SQL, [nonce]);
 
     const row = rows[0];
 
@@ -73,6 +92,10 @@ export class PostgresExecutionOutcomeStore implements ExecutionOutcomeStore {
 
     if (row.status === "in_flight") {
       return { status: "in_flight" };
+    }
+
+    if (row.status === "failed") {
+      return { status: "failed", reason: row.failure_reason ?? "" };
     }
 
     return { status: "completed", result: reviveExecutionResult(row.result) };
@@ -92,7 +115,18 @@ const COMPLETE_OUTCOME_SQL = `
 `;
 
 const GET_OUTCOME_SQL = `
-  SELECT status, result
+  SELECT status, result, failure_reason
   FROM execution_outcomes
   WHERE nonce = $1
+`;
+
+const FAIL_OUTCOME_SQL = `
+  UPDATE execution_outcomes
+  SET status = 'failed', failure_reason = $2, updated_at = now()
+  WHERE nonce = $1 AND status = 'in_flight'
+`;
+
+const ABORT_OUTCOME_SQL = `
+  DELETE FROM execution_outcomes
+  WHERE nonce = $1 AND status = 'in_flight'
 `;
