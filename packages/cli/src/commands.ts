@@ -170,7 +170,9 @@ async function policyStatus(
 ): Promise<CommandResult> {
   const [name, version] = parsed.args;
   if (name === undefined || version === undefined) {
-    throw new CliUsageError("Usage: parmana policy status <name> <version>");
+    throw new CliUsageError(
+      "Usage: parmana-ops policy status <name> <version>",
+    );
   }
   const target = targetFor(settings, runtime, true);
   const spec: RequestSpec = {
@@ -221,7 +223,7 @@ async function policyPropose(
     reason === undefined
   ) {
     throw new CliUsageError(
-      'Usage: parmana policy propose <policy.json> --name <name> --version <version> --reason "<why>"',
+      'Usage: parmana-ops policy propose <policy.json> --name <name> --version <version> --reason "<why>"',
     );
   }
   const text = runtime.readText(file);
@@ -262,7 +264,7 @@ async function approvalSign(
   const outFile = str(parsed.values, "out");
   if (keyFile === undefined || keyId === undefined || pending === undefined) {
     throw new CliUsageError(
-      "Usage: parmana approval sign --key-file <pem> --key-id <id> --pending <id> --action <approve|reject> [--out <file>]",
+      "Usage: parmana-ops approval sign --key-file <pem> --key-id <id> --pending <id> --action <approve|reject> [--out <file>]",
     );
   }
   const action = parseApprovalAction(str(parsed.values, "action"));
@@ -325,7 +327,7 @@ async function approvalSubmit(
   const envelopeFile = str(parsed.values, "envelope");
   if (pending === undefined || envelopeFile === undefined) {
     throw new CliUsageError(
-      "Usage: parmana approval submit --pending <id> --action <approve|reject> --envelope <file>",
+      "Usage: parmana-ops approval submit --pending <id> --action <approve|reject> --envelope <file>",
     );
   }
   const action = parseApprovalAction(str(parsed.values, "action"));
@@ -380,7 +382,7 @@ function logCommand(
 function completion(parsed: ParsedCommand): CommandResult {
   const [shell] = parsed.args;
   if (shell !== "bash" && shell !== "powershell") {
-    throw new CliUsageError("Usage: parmana completion <bash|powershell>");
+    throw new CliUsageError("Usage: parmana-ops completion <bash|powershell>");
   }
   const script = renderCompletion(shell as ShellName);
   return { code: 0, data: { shell, script }, text: script };
@@ -526,7 +528,7 @@ async function approverSubmit(
   const envelopeFile = str(parsed.values, "envelope");
   if (change === undefined || envelopeFile === undefined) {
     throw new CliUsageError(
-      "Usage: parmana approver submit --change <id> --action <approve|reject> --envelope <file> [--reason <why>]",
+      "Usage: parmana-ops approver submit --change <id> --action <approve|reject> --envelope <file> [--reason <why>]",
     );
   }
   const action = parseApprovalAction(str(parsed.values, "action"));

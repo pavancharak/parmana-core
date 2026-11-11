@@ -116,7 +116,7 @@ export async function main(
       });
     } catch (error) {
       throw new CliUsageError(
-        `${error instanceof Error ? error.message : String(error)}. Run 'parmana --help' for the options.`,
+        `${error instanceof Error ? error.message : String(error)}. Run 'parmana-ops --help' for the options.`,
       );
     }
     const { positionals, values } = parsed;
@@ -139,7 +139,7 @@ export async function main(
 
     if (!KNOWN_GROUPS.has(group)) {
       throw new CliUsageError(
-        `Unknown command "${group}". Run 'parmana --help' for the list.`,
+        `Unknown command "${group}". Run 'parmana-ops --help' for the list.`,
       );
     }
 
@@ -152,7 +152,7 @@ export async function main(
       const sub = positionals[1];
       if (sub === undefined) {
         throw new CliUsageError(
-          `Missing command after "${group}". Run 'parmana --help' for the list.`,
+          `Missing command after "${group}". Run 'parmana-ops --help' for the list.`,
         );
       }
       id = `${group} ${sub}`;
@@ -162,7 +162,7 @@ export async function main(
     const spec = findCommand(id);
     if (spec === undefined) {
       throw new CliUsageError(
-        `Unknown command "${id}". Run 'parmana --help' for the list.`,
+        `Unknown command "${id}". Run 'parmana-ops --help' for the list.`,
       );
     }
     if (values["help"] === true) {

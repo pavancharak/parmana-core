@@ -39,7 +39,7 @@ These work with every command.
 List pending policy changes for one policy version.
 
 ```bash
-parmana policy status <name> <version>
+parmana-ops policy status <name> <version>
 ```
 
 ### Options
@@ -56,7 +56,7 @@ This command takes no options of its own.
 ### Example
 
 ```bash
-parmana policy status customer-refund 1.3.0
+parmana-ops policy status customer-refund 1.3.0
 ```
 
 ## `policy propose`
@@ -64,7 +64,7 @@ parmana policy status customer-refund 1.3.0
 Propose a policy change. The file must match the name and version.
 
 ```bash
-parmana policy propose <policy.json> --name <name> --version <version> --reason "<why>"
+parmana-ops policy propose <policy.json> --name <name> --version <version> --reason "<why>"
 ```
 
 ### Options
@@ -85,7 +85,7 @@ parmana policy propose <policy.json> --name <name> --version <version> --reason 
 ### Example
 
 ```bash
-parmana policy propose policy.json --name customer-refund --version 1.3.0 --reason "Refuse all refunds" --dry-run
+parmana-ops policy propose policy.json --name customer-refund --version 1.3.0 --reason "Refuse all refunds" --dry-run
 ```
 
 ## `approval sign`
@@ -93,7 +93,7 @@ parmana policy propose policy.json --name customer-refund --version 1.3.0 --reas
 Sign a step-up envelope on the checker's own machine. Nothing is sent.
 
 ```bash
-parmana approval sign --key-file <private.pem> --key-id <id> --pending <id> --action <approve|reject> [--out <file>]
+parmana-ops approval sign --key-file <private.pem> --key-id <id> --pending <id> --action <approve|reject> [--out <file>]
 ```
 
 ### Options
@@ -113,7 +113,7 @@ This command reads no environment variables.
 ### Example
 
 ```bash
-parmana approval sign --key-file .\checker.step-up.private.pem --key-id mamta-checker --pending <id> --action approve --out envelope.json
+parmana-ops approval sign --key-file .\checker.step-up.private.pem --key-id mamta-checker --pending <id> --action approve --out envelope.json
 ```
 
 ## `approval submit`
@@ -121,7 +121,7 @@ parmana approval sign --key-file .\checker.step-up.private.pem --key-id mamta-ch
 Send a signed envelope with the checker's own token.
 
 ```bash
-parmana approval submit --pending <id> --action <approve|reject> --envelope <file>
+parmana-ops approval submit --pending <id> --action <approve|reject> --envelope <file>
 ```
 
 ### Options
@@ -142,7 +142,7 @@ parmana approval submit --pending <id> --action <approve|reject> --envelope <fil
 ### Example
 
 ```bash
-parmana approval submit --pending <id> --action approve --envelope envelope.json --dry-run
+parmana-ops approval submit --pending <id> --action approve --envelope envelope.json --dry-run
 ```
 
 ## `approver list`
@@ -150,7 +150,7 @@ parmana approval submit --pending <id> --action approve --envelope envelope.json
 List approver-key changes (add or revoke), optionally by status.
 
 ```bash
-parmana approver list [--status <PENDING_APPROVAL|APPROVED|REJECTED>]
+parmana-ops approver list [--status <PENDING_APPROVAL|APPROVED|REJECTED>]
 ```
 
 ### Options
@@ -169,7 +169,7 @@ parmana approver list [--status <PENDING_APPROVAL|APPROVED|REJECTED>]
 ### Example
 
 ```bash
-parmana approver list --status PENDING_APPROVAL
+parmana-ops approver list --status PENDING_APPROVAL
 ```
 
 ## `approver propose-add`
@@ -177,7 +177,7 @@ parmana approver list --status PENDING_APPROVAL
 Propose adding an approver key, granted the listed capabilities.
 
 ```bash
-parmana approver propose-add --approver <id> --key <id> --public-key-file <pem> --capabilities <a,b> --reason <why>
+parmana-ops approver propose-add --approver <id> --key <id> --public-key-file <pem> --capabilities <a,b> --reason <why>
 ```
 
 ### Options
@@ -200,7 +200,7 @@ parmana approver propose-add --approver <id> --key <id> --public-key-file <pem> 
 ### Example
 
 ```bash
-parmana approver propose-add --approver pavan --key pavan-key-1 --public-key-file pavan.public.pem --capabilities razorpay:refund --reason rotation --dry-run
+parmana-ops approver propose-add --approver pavan --key pavan-key-1 --public-key-file pavan.public.pem --capabilities razorpay:refund --reason rotation --dry-run
 ```
 
 ## `approver propose-revoke`
@@ -208,7 +208,7 @@ parmana approver propose-add --approver pavan --key pavan-key-1 --public-key-fil
 Propose revoking an approver key that was added through approver changes.
 
 ```bash
-parmana approver propose-revoke --approver <id> --key <id> --reason <why>
+parmana-ops approver propose-revoke --approver <id> --key <id> --reason <why>
 ```
 
 ### Options
@@ -229,7 +229,7 @@ parmana approver propose-revoke --approver <id> --key <id> --reason <why>
 ### Example
 
 ```bash
-parmana approver propose-revoke --approver manager-charak1987 --key manager-charak1987-key-2 --reason rotation --dry-run
+parmana-ops approver propose-revoke --approver manager-charak1987 --key manager-charak1987-key-2 --reason rotation --dry-run
 ```
 
 ## `approver submit`
@@ -237,7 +237,7 @@ parmana approver propose-revoke --approver manager-charak1987 --key manager-char
 Approve or reject an approver change, with the checker's signed step-up envelope.
 
 ```bash
-parmana approver submit --change <id> --action <approve|reject> --envelope <file> [--reason <why>]
+parmana-ops approver submit --change <id> --action <approve|reject> --envelope <file> [--reason <why>]
 ```
 
 ### Options
@@ -259,7 +259,7 @@ parmana approver submit --change <id> --action <approve|reject> --envelope <file
 ### Example
 
 ```bash
-parmana approver submit --change <id> --action approve --envelope step.json --dry-run
+parmana-ops approver submit --change <id> --action approve --envelope step.json --dry-run
 ```
 
 ## `log verify`
@@ -267,7 +267,7 @@ parmana approver submit --change <id> --action approve --envelope step.json --dr
 Check the approval log's chain, signatures and policy coverage. Offline.
 
 ```bash
-parmana log verify [--policy <name>] [--base <ref>] [--require-coverage]
+parmana-ops log verify [--policy <name>] [--base <ref>] [--require-coverage]
 ```
 
 ### Options
@@ -285,7 +285,7 @@ This command reads no environment variables.
 ### Example
 
 ```bash
-parmana log verify --require-coverage
+parmana-ops log verify --require-coverage
 ```
 
 ## `log export`
@@ -293,7 +293,7 @@ parmana log verify --require-coverage
 Append approvals from the database that the log does not hold yet.
 
 ```bash
-parmana log export [--policy <name>]
+parmana-ops log export [--policy <name>]
 ```
 
 ### Options
@@ -309,7 +309,7 @@ parmana log export [--policy <name>]
 ### Example
 
 ```bash
-parmana log export --policy customer-refund
+parmana-ops log export --policy customer-refund
 ```
 
 ## `log check-db`
@@ -317,7 +317,7 @@ parmana log export --policy customer-refund
 Compare the log with the database without writing.
 
 ```bash
-parmana log check-db [--policy <name>]
+parmana-ops log check-db [--policy <name>]
 ```
 
 ### Options
@@ -333,7 +333,7 @@ parmana log check-db [--policy <name>]
 ### Example
 
 ```bash
-parmana log check-db
+parmana-ops log check-db
 ```
 
 ## `completion`
@@ -341,7 +341,7 @@ parmana log check-db
 Print a shell completion script.
 
 ```bash
-parmana completion <bash|powershell>
+parmana-ops completion <bash|powershell>
 ```
 
 ### Options
@@ -355,7 +355,7 @@ This command reads no environment variables.
 ### Example
 
 ```bash
-parmana completion powershell | Out-String | Invoke-Expression
+parmana-ops completion powershell | Out-String | Invoke-Expression
 ```
 
 ## Exit codes

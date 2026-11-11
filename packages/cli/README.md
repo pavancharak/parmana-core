@@ -10,7 +10,7 @@ With npm, on Node.js 24 or later:
 
 ```bash
 npm install -g @parmana/cli
-parmana --help
+parmana-ops --help
 ```
 
 With the container image, which needs no Node.js:
@@ -39,7 +39,7 @@ node packages/cli/dist/index.js --help
 
 ## Commands
 
-Run `parmana <command> --help` for a command's options and an example.
+Run `parmana-ops <command> --help` for a command's options and an example.
 
 | Command                                                                           | Purpose                                                                  |
 | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
@@ -113,14 +113,14 @@ The config file holds only non-secret settings. Tokens are never stored in it.
 Run the signing step on the checker's machine. Nothing is sent by it:
 
 ```bash
-parmana approval sign --key-file .\checker.step-up.private.pem --key-id <checker-key-id> --pending <pending-id> --action approve --out envelope.json
+parmana-ops approval sign --key-file .\checker.step-up.private.pem --key-id <checker-key-id> --pending <pending-id> --action approve --out envelope.json
 ```
 
 Preview the submission without sending it, then submit:
 
 ```bash
-parmana approval submit --pending <pending-id> --action approve --envelope envelope.json --dry-run
-parmana approval submit --pending <pending-id> --action approve --envelope envelope.json
+parmana-ops approval submit --pending <pending-id> --action approve --envelope envelope.json --dry-run
+parmana-ops approval submit --pending <pending-id> --action approve --envelope envelope.json
 ```
 
 The checker's `PARMANA_TOKEN` must be set for the `submit` step.
@@ -130,11 +130,11 @@ The checker's `PARMANA_TOKEN` must be set for the `submit` step.
 PowerShell:
 
 ```powershell
-parmana completion powershell | Out-String | Invoke-Expression
+parmana-ops completion powershell | Out-String | Invoke-Expression
 ```
 
 Bash:
 
 ```bash
-eval "$(parmana completion bash)"
+eval "$(parmana-ops completion bash)"
 ```
