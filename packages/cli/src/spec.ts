@@ -295,7 +295,7 @@ export function renderHelp(commandId: string | undefined): string {
       (command) => `  ${command.id.padEnd(18)} ${command.summary}`,
     ).join("\n");
     return [
-      "parmana: policy governance from the command line",
+      "parmana-ops: policy governance from the command line",
       "",
       "Usage: parmana-ops <command> [options]",
       "",
