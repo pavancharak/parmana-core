@@ -1526,10 +1526,14 @@ Source: https://docs.parmanasystems.com/quickstart
 Parmana is licensed under the Apache License 2.0, so running it locally is permitted. See
 [License](/license).
 
+This page runs the server from source. To run it in containers instead, see
+[Self hosted](/self-hosted/overview), which starts the API and its database with
+`docker compose up -d`.
+
 <Steps>
   <Step title="Install and build">
     ```bash
-    cp.env.example.env
+    cp .env.example .env
     npm ci
     npm run build
     ```
@@ -1567,6 +1571,9 @@ Parmana is licensed under the Apache License 2.0, so running it locally is permi
   </Step>
 
   <Step title="Start the Runtime locally">
+    This step sets four variables. `NODE_ENV=test` and `PARMANA_STORAGE=memory` let the server run
+    without a database. They are for this local run only, and a real deployment must not use them.
+
     The `.env` copied from `.env.example` defaults to PostgreSQL storage (`PARMANA_STORAGE=supabase`,
     which is an alias for `postgres`). To run fully locally with no external dependency, override storage
     to `memory` **and** set `NODE_ENV=test`. Both are required: `PARMANA_STORAGE=memory` alone only affects
@@ -1605,7 +1612,9 @@ Parmana is licensed under the Apache License 2.0, so running it locally is permi
 
   </Step>
 
-  <Step title="Authenticate: every other route requires a bearer key">
+  <Step title="Authenticate (optional): every other route requires a bearer key">
+    You can skip this step. The SDK calls in the next steps send the key for you.
+
     `/health` is the one route exempt from caller authentication (along with `/ready`,
     `/openapi.yaml`, `/openapi.json`, `/api-manifest.json`, `/documentation`, and
     `/reference`). Everything else, including `/version`, fails closed with a `401` before a
@@ -1656,15 +1665,11 @@ Parmana is licensed under the Apache License 2.0, so running it locally is permi
       ```
 
       ```typescript TypeScript
-      import { ParmanaClient, HttpTransport } from "@parmana/sdk";
-
-      const endpoint = "http://localhost:3000";
-      const apiKey = "my-secret-api-key";
+      import { ParmanaClient } from "@parmana/sdk";
 
       const client = new ParmanaClient({
-        endpoint,
-        apiKey,
-        transport: new HttpTransport({ endpoint, apiKey }),
+        endpoint: "http://localhost:3000",
+        apiKey: "my-secret-api-key",
       });
       ```
     </CodeGroup>
@@ -1729,19 +1734,14 @@ Parmana is licensed under the Apache License 2.0, so running it locally is permi
 
       import {
         ParmanaClient,
-        HttpTransport,
         createBusinessTransaction,
         signApproval,
         ExecutionRejectedError,
       } from "@parmana/sdk";
 
-      const endpoint = "http://localhost:3000";
-      const apiKey = "my-secret-api-key";
-
       const client = new ParmanaClient({
-        endpoint,
-        apiKey,
-        transport: new HttpTransport({ endpoint, apiKey }),
+        endpoint: "http://localhost:3000",
+        apiKey: "my-secret-api-key",
       });
 
       // The approver's step, on the approver's machine.
@@ -1795,6 +1795,9 @@ Parmana is licensed under the Apache License 2.0, so running it locally is permi
       ```
     </CodeGroup>
 
+    The `signals` are the facts the policy checks before it approves. This quickstart sets them for you.
+    You don't need to change them to get the first approved action.
+
     Without `humanApproved` and a valid `approvalArtifact`, the server refuses this transaction
     with `403 POLICY_DENIED`, whatever else the signals say.
 
@@ -1804,7 +1807,7 @@ Parmana is licensed under the Apache License 2.0, so running it locally is permi
     `PARMANA_APPROVAL_FILE` names when run as a script. `python/tests/test_quickstart_example.py` and
     `typescript/test/integration/examples.integration.test.ts` run them against a real,
     freshly-spawned server on every test run, so both examples are verified to work, not just
-    syntax-checked. The two samples above were run as shown, with the demo key, against a server
+    syntax-checked. The two samples above were run as shown, with the demo key, against a server started as in step 4.
 
   </Step>
 
