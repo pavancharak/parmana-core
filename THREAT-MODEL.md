@@ -230,4 +230,4 @@ close, so that a reader sees the boundary next to the claims.
   end through the deployed service.
 
 Operator steps for each of these are in
-[docs/internal/guides/AGENT-DEPLOYMENT-LIMITS.md](docs/internal/guides/AGENT-DEPLOYMENT-LIMITS.md).
+[docs/internal/new-docs-2026-11/guides/AGENT-DEPLOYMENT-LIMITS.md](docs/internal/new-docs-2026-11/guides/AGENT-DEPLOYMENT-LIMITS.md).

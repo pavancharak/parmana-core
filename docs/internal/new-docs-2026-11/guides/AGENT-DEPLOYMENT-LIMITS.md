@@ -1,6 +1,6 @@
 # Agent deployment: limits outside Parmana's control
 
-Status: Guidance. No code changes. Read with [THREAT-MODEL.md](../../../THREAT-MODEL.md).
+Status: Guidance. No code changes. Read with [THREAT-MODEL.md](../../../../THREAT-MODEL.md).
 
 Parmana controls the actions that pass through its gateway. Several parts of agent security sit outside
 that boundary. This guide covers them so an operator can close the gaps the software does not close.
@@ -153,6 +153,6 @@ These are recorded by the project. Each one is a condition for relying on Parman
 
 ## See also
 
-- [THREAT-MODEL.md](../../../THREAT-MODEL.md): T2, T3, T11, §4 (attackers), §6 (assumptions), §7 (prompt injection), §8 (how this is checked).
-- [RFC-0024](../rfcs/RFC-0024-Inbound-Agent-Authorization.md): agents that reach your systems directly.
+- [THREAT-MODEL.md](../../../../THREAT-MODEL.md): T2, T3, T11, §4 (attackers), §6 (assumptions), §7 (prompt injection), §8 (how this is checked).
+- [RFC-0024](../../rfcs/RFC-0024-Inbound-Agent-Authorization.md): agents that reach your systems directly.
 - [RFC-0027](../rfcs/RFC-0027-Approval-Parameter-Binding.md): binding approvals to every parameter.
