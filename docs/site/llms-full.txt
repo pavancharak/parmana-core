@@ -1526,9 +1526,19 @@ Source: https://docs.parmanasystems.com/quickstart
 Parmana is licensed under the Apache License 2.0, so running it locally is permitted. See
 [License](/license).
 
-This page runs the server from source. To run it in containers instead, see
-[Self hosted](/self-hosted/overview), which starts the API and its database with
-`docker compose up -d`.
+This page runs the server from source. To run it in containers instead, start the
+API and its database with one command from the repository root:
+
+```bash
+docker compose up -d
+curl http://localhost:3000/ready
+# {"status":"READY","authDisabled":false}
+```
+
+The Docker server generates its own caller key on first start, in `parmana-local/api-key.txt`.
+The demo key used below is accepted only by the server started from source, so use the key from
+that file in its place when you run the Docker server. For the full setup, including the approver
+key, see [Self hosted](/self-hosted/overview).
 
 <Steps>
   <Step title="Install and build">
