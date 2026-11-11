@@ -23,6 +23,36 @@ Thank you for helping. Parmana decides whether an automated action may run, and 
 
    [docs/internal/runbooks/LOCAL-DEVELOPMENT.md](docs/internal/runbooks/LOCAL-DEVELOPMENT.md) describes the environment in full. The database-backed suites skip unless `TEST_DATABASE_URL` and `ALLOW_LIVE_SUPABASE=1` are set.
 
+   **Without Docker.** Use a local PostgreSQL 16 server on port 55432, the port in `.env.test.example`:
+
+   ```bash
+   # 1. Create a role and database (any superuser):
+   psql -p 55432 -U postgres -c "CREATE ROLE parmana LOGIN SUPERUSER PASSWORD 'parmana-local';"
+   psql -p 55432 -U postgres -c "CREATE DATABASE parmana OWNER parmana;"
+
+   # 2. Create the Supabase roles, then apply each migration once, in filename order.
+   #    This mirrors docker/local/migrate.sh, which records each file in parmana_schema_migrations.
+   export PGHOST=127.0.0.1 PGPORT=55432 PGUSER=parmana PGDATABASE=parmana PGPASSWORD=parmana-local
+   psql --set=ON_ERROR_STOP=1 --quiet --file=docker/local/postgres-roles.sql
+   psql --set=ON_ERROR_STOP=1 --quiet --command="CREATE TABLE IF NOT EXISTS parmana_schema_migrations (name text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())"
+   for f in supabase/migrations/*.sql; do
+     n=$(basename "$f")
+     [ "$(printf "SELECT 1 FROM parmana_schema_migrations WHERE name = :'name';" | psql --tuples-only --no-align --set=ON_ERROR_STOP=1 --set=name="$n")" = "1" ] && continue
+     printf "INSERT INTO parmana_schema_migrations (name) VALUES (:'name');" | psql --set=ON_ERROR_STOP=1 --single-transaction --quiet --set=name="$n" --file="$f" --file=-
+   done
+
+   # 3. Point the test settings at it. .env.test is gitignored.
+   cp .env.test.example .env.test
+   # then set DATABASE_URL=postgresql://parmana:parmana-local@127.0.0.1:55432/parmana
+
+   # 4. Confirm the database is ready:
+   node scripts/db-check.mjs
+   ```
+
+   **The test suites reset this database.** The full test run drops and recreates the schema, so the migrations table disappears. Re-run step 2 before you run `npm test` again or push. Do not point `DATABASE_URL` at a database you care about.
+
+   **Pre-push runs the full preflight.** `git push` runs `scripts/db-check.mjs` and then `npm run preflight`, which covers typecheck, lint, format, every test file and the examples. It takes a few minutes. It can fail on the database if the schema was reset since the last run, so re-apply the migrations and push again.
+
 5. Check the set-up with `npm run build` and `npm test`. The full suite takes several minutes.
 
 ## Finding work
