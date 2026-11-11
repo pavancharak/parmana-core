@@ -117,6 +117,7 @@
               "guides/manage-approvers",
               "guides/approval-notifications",
               "guides/credentials-maker-checker-approver",
+              "guides/credential-setup-runbook",
               "guides/authorize-and-execute",
               "guides/connect-an-agent",
               "guides/connect-any-external-system",
