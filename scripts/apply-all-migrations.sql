@@ -891,7 +891,7 @@ CHECK (type IN (
     'caller.authenticated',
     'caller.rejected',
     'caller.capability_denied'
-));
+)) NOT VALID;
 
 ALTER TABLE caller_audit_events
 ADD COLUMN IF NOT EXISTS capability TEXT;
@@ -936,7 +936,7 @@ CHECK (type IN (
     'caller.rejected',
     'caller.capability_denied',
     'caller.principal_denied'
-));
+)) NOT VALID;
 
 ALTER TABLE caller_audit_events
 ADD COLUMN IF NOT EXISTS principal_id TEXT;
@@ -1098,7 +1098,7 @@ CHECK (type IN (
     'caller.capability_denied',
     'caller.principal_denied',
     'caller.non_human_denied'
-));
+)) NOT VALID;
 
 ALTER TABLE caller_audit_events
 ADD COLUMN IF NOT EXISTS severity TEXT;
@@ -1255,7 +1255,7 @@ CHECK (type IN (
     'caller.principal_denied',
     'caller.non_human_denied',
     'caller.structural_rejected'
-));
+)) NOT VALID;
 
 ALTER TABLE caller_audit_events
 ADD COLUMN IF NOT EXISTS business_transaction_id TEXT;
@@ -1466,7 +1466,7 @@ CHECK (type IN (
     'caller.non_human_denied',
     'caller.structural_rejected',
     'caller.capability_granted'
-));
+)) NOT VALID;
 
 
 -- =============================================================================
