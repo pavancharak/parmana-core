@@ -309,10 +309,7 @@ describe("GET /callers/me (proof artifact)", () => {
         callerId: "caller-a",
         keyHash: hashApiKey(CALLER_A_KEY),
         allowedPrincipalIds: ["integration-test"],
-        allowedCapabilities: [
-          "razorpay:refund",
-          "razorpay:refund-fetch",
-        ],
+        allowedCapabilities: ["razorpay:refund", "razorpay:refund-fetch"],
       },
       {
         callerId: "caller-b",

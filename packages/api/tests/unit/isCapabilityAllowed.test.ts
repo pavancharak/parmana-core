@@ -4,9 +4,7 @@ import { isCapabilityAllowed } from "../../src/auth/isCapabilityAllowed.js";
 
 describe("isCapabilityAllowed", () => {
   it("rejects an undefined action", () => {
-    expect(isCapabilityAllowed(undefined, ["razorpay:refund"])).toBe(
-      false,
-    );
+    expect(isCapabilityAllowed(undefined, ["razorpay:refund"])).toBe(false);
   });
 
   it("rejects an empty action", () => {
@@ -14,9 +12,7 @@ describe("isCapabilityAllowed", () => {
   });
 
   it("fail-closed default: denies every capability when allowedCapabilities is unset", () => {
-    expect(isCapabilityAllowed("razorpay:refund", undefined)).toBe(
-      false,
-    );
+    expect(isCapabilityAllowed("razorpay:refund", undefined)).toBe(false);
   });
 
   it("fail-closed default: denies every capability when allowedCapabilities is empty", () => {
@@ -24,9 +20,9 @@ describe("isCapabilityAllowed", () => {
   });
 
   it("honors an explicit allowedCapabilities grant", () => {
-    expect(
-      isCapabilityAllowed("razorpay:refund", ["razorpay:refund"]),
-    ).toBe(true);
+    expect(isCapabilityAllowed("razorpay:refund", ["razorpay:refund"])).toBe(
+      true,
+    );
   });
 
   it("rejects a capability not present in an explicit allowedCapabilities grant", () => {

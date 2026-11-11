@@ -135,7 +135,9 @@ function localTestApproverEntries(): ConfiguredApprovalIssuer[] {
     {
       ...LOCAL_TEST_APPROVER,
       revoked: false,
-      capabilities: SANDBOX_APPROVER_CAPABILITIES,
+      // The test fixture capability is granted here only: this approver
+      // exists only when NODE_ENV is test (G-50).
+      capabilities: [...SANDBOX_APPROVER_CAPABILITIES, "test:fixture-execute"],
       publicKeyPem: readFileSync(file, "utf8"),
     },
   ];
