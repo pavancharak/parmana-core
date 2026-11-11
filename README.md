@@ -260,7 +260,7 @@ The claims file also tracks what has no implementation yet. Vendor connectors no
 
 ## Packages
 
-The SDKs, the verifier and the command-line tool are published at version 2.0.1. All of them share one version.
+The SDKs, the verifier and the command-line tool are published at version 2.0.2. All of them share one version.
 
 | Package                  | Registry | Install                              |
 | ------------------------ | -------- | ------------------------------------ |
@@ -272,7 +272,7 @@ The SDKs, the verifier and the command-line tool are published at version 2.0.1.
 | `parmana-verifier`       | PyPI     | `pip install parmana-verifier`       |
 | `@parmana/cli`           | npm      | `npm install -g @parmana/cli`        |
 
-The command-line tool is also published as a container image, `ghcr.io/pavancharak/parmana-cli:2.0.1`. See [packages/cli/README.md](packages/cli/README.md) for how to run it.
+The command-line tool is also published as a container image, `ghcr.io/pavancharak/parmana-cli:2.0.2`. See [packages/cli/README.md](packages/cli/README.md) for how to run it.
 
 The verifier lives in its own repository, [pavancharak/parmana-verifier](https://github.com/pavancharak/parmana-verifier). The release history for the SDKs is in the [changelog](https://docs.parmanasystems.com/changelog).
 
