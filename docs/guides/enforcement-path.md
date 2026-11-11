@@ -134,12 +134,17 @@ To confirm the new decision and key-scope tests fail when those checks are broke
    - Omitted signals hash as `{}`, so a request that omits signals fails against a signed hash of real signals (line 291), and passes against a signed hash of `{}` (line 315).
    - A replay that also has skipped signal checks is still classified as a replay (line 349).
 
-### Not yet read
+### Next steps
 
-- **Not yet read:** the signature and version checks in `@parmana/crypto`'s `AuthorizationVerifier`. Check 1 relies on them.
-- **Not yet read:** the release verifier (`createReleaseVerifier`) and the call sites in `packages/runtime` (`ExecutionComponent`), which decide how a thrown error is handled.
-- **Not yet read:** how authorizations are issued (`RuntimeEngine`), where `decisionOutcome`, `signalsHash`, and the nonce are set.
-- **Still not tested end to end:** the test in `packages/api/tests/unit/release-nonce-path.test.ts` uses the real release verifier but a stub execution-control service. Production uses `ExecutionControlService` and `createExecutionGateway`, which need database, vault, and signer setup. That full wiring has no test here.
+In priority order. Each item names the reason it matters.
+
+1. **Decide on `verificationOnlyKeys`.** Production does not pass this option (`packages/api/src/bootstrap/createExecutionGateway.ts:120`), so the check at `ExecutionGateway.ts:612–615` never runs in production. Either wire it with a real key list, or remove the option and its tests. Leaving it as is suggests a protection that does not exist.
+2. **Read the signature checks in `@parmana/crypto`.** Check 1 and the envelope verifier depend on `AuthorizationVerifier`. This code has not been read yet, so the guide cannot yet confirm the signature and version claims in sections 2 and 5.
+3. **Read how authorizations are issued (`RuntimeEngine`).** `decisionOutcome`, `signalsHash`, and the nonce are set there. The gateway's checks are only as strong as what is signed upstream.
+4. **Test the full production wiring.** The release-nonce test in `packages/api/tests/unit/release-nonce-path.test.ts` uses the real release verifier with a stub execution-control service. Production uses `ExecutionControlService` and `createExecutionGateway`, which need database, vault, and signer setup. That wiring has no end-to-end test.
+5. **Trace how a refusal is handled after release.** The call sites in `packages/runtime` (`ExecutionComponent`) decide whether a thrown refusal is recorded, retried, or surfaced. This has not been read.
+
+Already read and covered in this guide: `createReleaseVerifier` (`packages/api/src/bootstrap/createReleaseVerifier.ts`), which is the production release-time check and the single nonce consumption on that path.
 
 ## Sources
 
