@@ -165,3 +165,6 @@ docs/SIGNING-WORK-SUMMARY.md
 =======
 docs/OPEN-SOURCE-WORK.md
 
+
+# Local development: the caller key and approver key that dev:setup creates.
+.parmana-dev/

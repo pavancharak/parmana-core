@@ -82,6 +82,10 @@ npm run evaluate
 
 - For the step-by-step evaluation guide, see [EVALUATION.md](EVALUATION.md).
 
+### Run a local server in one command
+
+To build against Parmana on your own machine, run `npm run dev:setup`. The first run creates the signing keys, a local approver key and a caller key, then starts the server at `http://localhost:3000`. It is for local development only. Full details, including how to use the keys, are on the [local development page](https://docs.parmanasystems.com/guides/local-development).
+
 ## How it works
 
 The chain is **authorize, verify, execute, confirm**. A Business Transaction carries an explicit authority, authorization and intent. A deterministic policy evaluates it and approves or rejects it. An approved transaction executes through a gateway that never gives the caller real credentials. The result is signed into an append-only Execution Trust Record, which can be verified without trusting Parmana's runtime or database.

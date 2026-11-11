@@ -1,0 +1,83 @@
+---
+title: "Run a local server in one command"
+description: "Start a Parmana server on your own machine with npm run dev:setup. It creates the keys, the approver and a caller key, then starts the server."
+---
+
+This page is for building against Parmana on your own machine. It starts a local server with one command, instead of the separate setup steps in the [Quickstart](/quickstart).
+
+<Warning>
+  This setup is for local development only. It turns on test settings
+  (`NODE_ENV=test`, in-memory storage and a test approver). Never use these
+  settings on a server anyone else can reach. The script refuses to run with
+  `NODE_ENV=production`.
+</Warning>
+
+## What you need
+
+- Node.js 24 or later.
+- The repository, with its dependencies installed. From the repository root:
+
+  ```bash
+  git clone https://github.com/pavancharak/parmana-core.git
+  cd parmana-core
+  npm ci
+  ```
+
+Docker is not needed for this page.
+
+## Start the server
+
+```bash
+npm run dev:setup
+```
+
+The first run creates what the server needs. Later runs reuse it:
+
+- **Signing keys** in `keys/`: the `default` and `gateway` keys that sign authorizations and records.
+- **An approver key** in `.parmana-dev/`: the stand-in for the person who approves an action. Anyone who holds this private key can approve actions on your local server, so keep it to yourself.
+- **A caller key** in `.parmana-dev/caller.json`: the key your code sends to the server. The file holds the raw key in its `raw` field, and the server stores only its hash.
+
+When the server is running it listens on `http://localhost:3000`. Stop it with Ctrl+C.
+
+## Check that it is running
+
+In a second terminal:
+
+```bash
+curl http://localhost:3000/ready
+```
+
+The response includes `"status":"READY"`.
+
+## Use the keys in the Quickstart samples
+
+The Quickstart samples use a demo key, `my-secret-api-key`, which only a server started from the Quickstart accepts. With `npm run dev:setup`, use the raw key from `.parmana-dev/caller.json` in its place, and the approver key at `.parmana-dev/local-test-approver__local-test-approver-key-1.private.pem` in place of the approver key path the Quickstart shows.
+
+Remember that the `dev:setup` server allows only the `test:fixture-execute` capability for this caller, which is the capability the Quickstart samples use.
+
+## Start over
+
+To reset, stop the server and delete the folders the script created:
+
+```bash
+rm -rf .parmana-dev keys
+```
+
+On Windows PowerShell:
+
+```powershell
+Remove-Item -Recurse -Force .parmana-dev, keys
+```
+
+Then run `npm run dev:setup` again. The script creates new keys.
+
+## If something goes wrong
+
+- **Port 3000 is in use.** Another program is using it. Stop that program, then run the command again.
+- **The script stops during key creation.** Read the message above the error. Fix the cause, then run the command again. Finished steps are not repeated.
+- **`/ready` does not return `READY`.** Read the server's output in the terminal where you started it.
+
+## Next
+
+- [Quickstart](/quickstart): the full walkthrough, with each step explained.
+- [Self hosted](/self-hosted/overview): run the server with Docker and a database.
