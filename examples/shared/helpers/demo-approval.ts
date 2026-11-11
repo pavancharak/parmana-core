@@ -40,12 +40,39 @@ const policiesDirectory = path.resolve(
   "../../../policies",
 );
 
+/**
+ * The actions the demo approver may approve (G-50: an approval is only
+ * accepted for a capability the approver is granted). Covers every action the
+ * examples approve through withDemoApproval.
+ */
+const DEMO_CAPABILITIES = [
+  "release-payment",
+  "vendor-payment",
+  "reject",
+  "approve",
+  "expense-approval",
+  "purchase-order",
+  "payments:execute",
+  "PAY_VENDOR",
+  "test:fixture-execute",
+  "tutorial:noop",
+  "tutorial:read-report",
+  "api-key-issuance",
+  "erp:invoice-pay",
+  "erp:record-update",
+] as const;
+
 /** Trusts DEMO_APPROVER only. Pass to createApplication(). */
 export function demoApprovalVerifier(): ApprovalVerifier {
   return new ApprovalVerifier({
     crypto: APPROVAL_ARTIFACT_CRYPTO_PROVIDER,
     issuerRegistry: new StaticApprovalIssuerRegistry([
-      { ...DEMO_APPROVER, publicKey: keys.publicKey, revoked: false },
+      {
+        ...DEMO_APPROVER,
+        publicKey: keys.publicKey,
+        revoked: false,
+        capabilities: DEMO_CAPABILITIES,
+      },
     ]),
     nonceStore: new MemoryNonceStore(),
   });
