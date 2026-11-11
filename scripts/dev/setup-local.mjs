@@ -63,6 +63,11 @@ function sha256Hex(text) {
 
 mkdirSync(devDir, { recursive: true });
 
+// 0. The server runs from the built packages. Build them once, if they are missing.
+if (!existsSync(join(root, "packages", "crypto", "dist", "index.js"))) {
+  run("npm", ["run", "build"]);
+}
+
 // 1. Signing keys: default and gateway, in keys/.
 if (!existsSync(join(keyDir, "default.private.pem"))) {
   run("npx", [
@@ -106,8 +111,10 @@ const caller = JSON.parse(readFileSync(callerFile, "utf8"));
 const env = {
   ...process.env,
   NODE_ENV: "test",
+  KILL_SWITCH_ENABLED: "false",
   PARMANA_STORAGE: "memory",
   PARMANA_KEY_DIR: keyDir,
+  PARMANA_POLICY_DIR: join(root, "policies"),
   PARMANA_API_KEYS: JSON.stringify([
     {
       callerId: CALLER_ID,
