@@ -32,7 +32,7 @@ CHECK (type IN (
     'caller.capability_denied',
     'caller.principal_denied',
     'caller.non_human_denied'
-));
+)) NOT VALID;
 
 ALTER TABLE caller_audit_events
 ADD COLUMN IF NOT EXISTS severity TEXT;

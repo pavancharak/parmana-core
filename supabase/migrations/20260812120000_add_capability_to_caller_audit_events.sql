@@ -26,7 +26,7 @@ CHECK (type IN (
     'caller.authenticated',
     'caller.rejected',
     'caller.capability_denied'
-));
+)) NOT VALID;
 
 ALTER TABLE caller_audit_events
 ADD COLUMN IF NOT EXISTS capability TEXT;
