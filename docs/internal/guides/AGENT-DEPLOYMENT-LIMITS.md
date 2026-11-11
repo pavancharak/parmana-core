@@ -83,11 +83,11 @@ platform.
 
 **For each component, list the hosts it must reach and deny everything else:**
 
-| Component | Needs outbound to |
-| --- | --- |
-| Parmana core (API, runtime) | its database, its key-management service, and the connectors' release endpoints |
-| Connectors service | the single downstream system each connector serves (for example Razorpay, Paytm, Slack, GitHub, HubSpot) |
-| Agents | the Parmana API only |
+| Component                   | Needs outbound to                                                                                        |
+| --------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Parmana core (API, runtime) | its database, its key-management service, and the connectors' release endpoints                          |
+| Connectors service          | the single downstream system each connector serves (for example Razorpay, Paytm, Slack, GitHub, HubSpot) |
+| Agents                      | the Parmana API only                                                                                     |
 
 **Set it at the platform.** Use the hosting platform's outbound allowlist, a network policy, or an egress
 proxy. Confirm it by testing a blocked host and recording the result.
