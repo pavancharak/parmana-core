@@ -119,16 +119,40 @@ Until RFC-0027 is built, operators can reduce the gap:
 
 ---
 
+## 5. Limits the project states about itself
+
+These are recorded by the project. Each one is a condition for relying on Parmana, not a footnote.
+
+- **Software-only enforcement.** Enforcement is in software, not the network. Code on the same host can read
+  credentials from the server's environment (gap G-128). Protect the host accordingly (§3).
+- **Trusted host, database and keys.** Parmana assumes the host, the database, and the signing keys are not
+  compromised. These are out of its threat model (THREAT-MODEL.md §4, A5, A6, A9; assumptions 1, 4, 8).
+- **One approver key in production.** Only one approver key is trusted in production. A stolen approver key
+  signs valid approvals (T3). Rotate and limit approver keys as a standing task.
+- **Maker and checker held by one person.** In the current production deployment, one person holds both
+  roles. The server cannot tell two credentials apart (T11, A7). Until two people hold them, the
+  maker-checker control is not independent.
+- **Internal reviews only.** Reviews so far were internal. The project states that no independent audit has
+  been done (THREAT-MODEL.md §8). Do not treat the project as independently assessed.
+- **Technology readiness level 6.** Assessed at TRL 6: a prototype demonstrated in a relevant environment. Sustained
+  production load and high availability are not claimed.
+- **Connectors not yet proven live.** The Slack and GitHub connectors have not been run against live systems.
+  The Razorpay connector passed 4 of 4 checks in Razorpay's test mode, but no signed release has yet run end to end
+  through the deployed service. Treat each connector as unproven until its end-to-end run is recorded.
+
+---
+
 ## Checklist
 
 - [ ] Every direct credential to a downstream system is listed, and the direct path is closed or recorded as open.
 - [ ] Each agent is marked with the trifecta combination it has, and at least one part is removed where all three are present.
 - [ ] Each component's outbound hosts are listed, with an allowlist at the platform, and a blocked host has been tested.
 - [ ] Approval-required policies are narrow, and parameters that matter have explicit rules.
-- [ ] The open items above are recorded in the deployment record, not omitted.
+- [ ] The limits in §5 are recorded in the deployment record, with the owner and date of each.
+- [ ] Each connector has an end-to-end run through the deployed service recorded before it is relied on.
 
 ## See also
 
-- [THREAT-MODEL.md](../../../THREAT-MODEL.md): T2, T3, §4 (attackers), §6 (assumptions), §7 (prompt injection).
+- [THREAT-MODEL.md](../../../THREAT-MODEL.md): T2, T3, T11, §4 (attackers), §6 (assumptions), §7 (prompt injection), §8 (how this is checked).
 - [RFC-0024](../rfcs/RFC-0024-Inbound-Agent-Authorization.md): agents that reach your systems directly.
 - [RFC-0027](../rfcs/RFC-0027-Approval-Parameter-Binding.md): binding approvals to every parameter.
