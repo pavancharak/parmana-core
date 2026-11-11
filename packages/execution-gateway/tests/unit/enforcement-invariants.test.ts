@@ -68,7 +68,9 @@ async function sign(
   );
 }
 
-function request(authorization: SignedExecutionAuthorization): ExecutionRequest {
+function request(
+  authorization: SignedExecutionAuthorization,
+): ExecutionRequest {
   return {
     businessTransactionId: CONTENT.businessTransactionId,
     action: CONTENT.action,

@@ -67,7 +67,9 @@ async function sign(
   );
 }
 
-function request(authorization: SignedExecutionAuthorization): ExecutionRequest {
+function request(
+  authorization: SignedExecutionAuthorization,
+): ExecutionRequest {
   return {
     businessTransactionId: CONTENT.businessTransactionId,
     action: CONTENT.action,
@@ -125,9 +127,9 @@ describe("production nonce path: gateway plus release verifier", () => {
     expect(first.success).toBe(true);
     expect(connector.calls).toBe(1);
 
-    await expect(gateway.execute(request(authorization))).rejects.toBeInstanceOf(
-      NonceAlreadyConsumedError,
-    );
+    await expect(
+      gateway.execute(request(authorization)),
+    ).rejects.toBeInstanceOf(NonceAlreadyConsumedError);
     expect(connector.calls).toBe(1);
   });
 

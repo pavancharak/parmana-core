@@ -30,17 +30,17 @@ The signal state verifier is late-bound. `createApplication()` calls `.bind()` o
 
 `verify` runs all nine checks and records each in a `checks` object. A failed check does not throw inside `verify`. Throwing happens in `execute`.
 
-| # | Check | Source | Passes when | Fails when |
-|---|---|---|---|---|
-| 1 | Envelope | `envelopeVerifier.verifyChecks` (line 361) | Key resolves, signature verifies, version supported, not expired, TTL within policy | Any of those is false. See section 5. |
-| 2 | Content hash | lines 369–383 | Hash of rebuilt content equals signed `businessTransactionHash` | Content changed after signing |
-| 3 | Policy binding | lines 395–478 | Live policy hash equals signed `policyContentHash`; approval record verifies | Hash absent (fails closed), differs, policy not found, or approval invalid |
-| 4 | Signals | lines 480–537 | Request signals hash equals signed `signalsHash`; no release-stage violations | Hash absent (fails closed when verifier is wired), differs, or violations found |
-| 5 | Business conditions | lines 559–570 | Every `validUntil` is later than `now` | Any condition expired or unparseable |
-| 6 | Authority grant | lines 572–588; `checkAuthorityGrant` at 688 | Grant unexpired, active for caller and capability, unexpired in registry | Expired, revoked, replaced, or unreadable |
-| 7 | Decision | lines 595–596 | Signed `decisionOutcome` is `"APPROVED"` | Any other value |
-| 8 | Revocation | lines 602–607 | Authorization ID not on revocation list | Revoked, or read error (refuses release) |
-| 9 | Verification-only key scope | lines 612–615 | Key not in `verificationOnlyKeys`, or capability in its allowed list | Verification-only key used for a capability outside its list |
+| #   | Check                       | Source                                      | Passes when                                                                         | Fails when                                                                      |
+| --- | --------------------------- | ------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| 1   | Envelope                    | `envelopeVerifier.verifyChecks` (line 361)  | Key resolves, signature verifies, version supported, not expired, TTL within policy | Any of those is false. See section 5.                                           |
+| 2   | Content hash                | lines 369–383                               | Hash of rebuilt content equals signed `businessTransactionHash`                     | Content changed after signing                                                   |
+| 3   | Policy binding              | lines 395–478                               | Live policy hash equals signed `policyContentHash`; approval record verifies        | Hash absent (fails closed), differs, policy not found, or approval invalid      |
+| 4   | Signals                     | lines 480–537                               | Request signals hash equals signed `signalsHash`; no release-stage violations       | Hash absent (fails closed when verifier is wired), differs, or violations found |
+| 5   | Business conditions         | lines 559–570                               | Every `validUntil` is later than `now`                                              | Any condition expired or unparseable                                            |
+| 6   | Authority grant             | lines 572–588; `checkAuthorityGrant` at 688 | Grant unexpired, active for caller and capability, unexpired in registry            | Expired, revoked, replaced, or unreadable                                       |
+| 7   | Decision                    | lines 595–596                               | Signed `decisionOutcome` is `"APPROVED"`                                            | Any other value                                                                 |
+| 8   | Revocation                  | lines 602–607                               | Authorization ID not on revocation list                                             | Revoked, or read error (refuses release)                                        |
+| 9   | Verification-only key scope | lines 612–615                               | Key not in `verificationOnlyKeys`, or capability in its allowed list                | Verification-only key used for a capability outside its list                    |
 
 Only when all nine pass does the gateway consume the nonce (lines 617–645). Consumption is the only side effect in this path, so a forged or mismatched request cannot burn a nonce. Result: `valid = priorChecksPassed && nonceUnseen !== false` (line 648).
 
@@ -142,11 +142,11 @@ Points to note:
 
 At the API, the error reaches `error-handler.ts`, which maps these refusals by their class:
 
-| Refusal | Status | Source |
-|---|---|---|
-| `ConnectorNotRegisteredError` | 503 | `packages/shared/src/errors/connector-not-registered-error.ts` |
-| `NonceAlreadyConsumedError` | 409 | `packages/shared/src/errors/nonce-already-consumed-error.ts` |
-| `OutcomeUnknownError` | 409 | `packages/shared/src/errors/outcome-unknown-error.ts` |
+| Refusal                           | Status                      | Source                                                              |
+| --------------------------------- | --------------------------- | ------------------------------------------------------------------- |
+| `ConnectorNotRegisteredError`     | 503                         | `packages/shared/src/errors/connector-not-registered-error.ts`      |
+| `NonceAlreadyConsumedError`       | 409                         | `packages/shared/src/errors/nonce-already-consumed-error.ts`        |
+| `OutcomeUnknownError`             | 409                         | `packages/shared/src/errors/outcome-unknown-error.ts`               |
 | `AuthorizationNoLongerValidError` | 409, with `executionStatus` | `packages/shared/src/errors/authorization-no-longer-valid-error.ts` |
 
 Any other error reaches the generic 500 path. That path was not traced in detail.

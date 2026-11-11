@@ -140,9 +140,13 @@ describe("production gateway, end to end", () => {
     const content = contentFor(CAPABILITY);
     const authorization = await signWithRuntimeKey(content);
 
-    const { result } = await (gateway as never as {
-      verify(r: ExecutionRequest): Promise<{ result: { valid: boolean; checks: Record<string, unknown> } }>;
-    }).verify(requestFor(content, authorization));
+    const { result } = await (
+      gateway as never as {
+        verify(r: ExecutionRequest): Promise<{
+          result: { valid: boolean; checks: Record<string, unknown> };
+        }>;
+      }
+    ).verify(requestFor(content, authorization));
 
     expect(result.checks.policyStillCurrent).toBe(true);
     expect(result.checks.policyGovernanceVerified).toBe(true);
@@ -179,9 +183,13 @@ describe("production gateway, end to end", () => {
     const content = contentFor(CAPABILITY);
     const authorization = await signWithVerifierKey(content);
 
-    const { result } = await (gateway as never as {
-      verify(r: ExecutionRequest): Promise<{ result: { valid: boolean; checks: Record<string, unknown> } }>;
-    }).verify(requestFor(content, authorization));
+    const { result } = await (
+      gateway as never as {
+        verify(r: ExecutionRequest): Promise<{
+          result: { valid: boolean; checks: Record<string, unknown> };
+        }>;
+      }
+    ).verify(requestFor(content, authorization));
 
     expect(result.checks.verificationKeyScope).toBe(false);
     expect(result.valid).toBe(false);
@@ -192,9 +200,13 @@ describe("production gateway, end to end", () => {
     const content = contentFor("hubspot:deal-fetch");
     const authorization = await signWithVerifierKey(content);
 
-    const { result } = await (gateway as never as {
-      verify(r: ExecutionRequest): Promise<{ result: { valid: boolean; checks: Record<string, unknown> } }>;
-    }).verify(requestFor(content, authorization));
+    const { result } = await (
+      gateway as never as {
+        verify(r: ExecutionRequest): Promise<{
+          result: { valid: boolean; checks: Record<string, unknown> };
+        }>;
+      }
+    ).verify(requestFor(content, authorization));
 
     expect(result.checks.verificationKeyScope).toBe(true);
     expect(result.valid).toBe(true);
