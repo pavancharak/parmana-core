@@ -69,7 +69,12 @@ const MANAGER = { approverId: "manager-priya", keyId: "manager-priya-key-1" };
 const approvalVerifier = new ApprovalVerifier({
   crypto: APPROVAL_ARTIFACT_CRYPTO_PROVIDER,
   issuerRegistry: new StaticApprovalIssuerRegistry([
-    { ...MANAGER, publicKey: manager.publicKey, revoked: false },
+    {
+      ...MANAGER,
+      publicKey: manager.publicKey,
+      revoked: false,
+      capabilities: ["erp:invoice-pay"],
+    },
   ]),
   nonceStore: new MemoryNonceStore(),
 });

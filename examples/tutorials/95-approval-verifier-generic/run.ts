@@ -81,6 +81,7 @@ console.log("--------------------------------------------------");
       keyId: "manager-jane-key-1",
       publicKey,
       revoked: false,
+      capabilities: ["erp:record-update", "erp:invoice-pay"],
     },
   ]);
   const verifier = new ApprovalVerifier({
@@ -117,6 +118,7 @@ console.log("--------------------------------------------------");
       keyId: "manager-jane-key-1",
       publicKey,
       revoked: false,
+      capabilities: ["erp:record-update", "erp:invoice-pay"],
     },
   ]);
   const verifier = new ApprovalVerifier({
@@ -165,6 +167,7 @@ console.log("--------------------------------------------------");
       keyId: "manager-jane-key-1",
       publicKey,
       revoked: true,
+      capabilities: ["erp:record-update", "erp:invoice-pay"],
     },
   ]);
   const verifier = new ApprovalVerifier({
@@ -197,6 +200,7 @@ console.log("--------------------------------------------------");
       keyId: "manager-jane-key-1",
       publicKey,
       revoked: false,
+      capabilities: ["erp:record-update", "erp:invoice-pay"],
     },
   ]);
   const verifier = new ApprovalVerifier({
@@ -235,6 +239,7 @@ console.log("--------------------------------------------------");
       keyId: "manager-jane-key-1",
       publicKey: legitimate.publicKey,
       revoked: false,
+      capabilities: ["erp:record-update", "erp:invoice-pay"],
     },
   ]);
   const verifier = new ApprovalVerifier({
@@ -269,6 +274,7 @@ console.log("--------------------------------------------------");
       keyId: "manager-jane-key-1",
       publicKey,
       revoked: false,
+      capabilities: ["erp:record-update", "erp:invoice-pay"],
     },
   ]);
   const verifier = new ApprovalVerifier({
@@ -306,6 +312,7 @@ console.log("--------------------------------------------------");
       keyId: "manager-jane-key-1",
       publicKey,
       revoked: false,
+      capabilities: ["erp:record-update", "erp:invoice-pay"],
     },
   ]);
   const verifier = new ApprovalVerifier({
@@ -336,6 +343,7 @@ console.log("--------------------------------------------------");
       keyId: "manager-jane-key-1",
       publicKey,
       revoked: false,
+      capabilities: ["erp:record-update", "erp:invoice-pay"],
     },
   ]);
   const verifier = new ApprovalVerifier({
@@ -366,6 +374,7 @@ console.log("--------------------------------------------------");
       keyId: "manager-jane-key-1",
       publicKey,
       revoked: false,
+      capabilities: ["erp:record-update", "erp:invoice-pay"],
     },
   ]);
   const verifier = new ApprovalVerifier({
@@ -411,6 +420,7 @@ console.log("--------------------------------------------------");
       keyId: "manager-jane-key-1",
       publicKey,
       revoked: false,
+      capabilities: ["erp:record-update", "erp:invoice-pay"],
     },
   ]);
   const verifier = new ApprovalVerifier({
@@ -442,6 +452,7 @@ console.log("--------------------------------------------------");
       keyId: "manager-jane-key-1",
       publicKey,
       revoked: false,
+      capabilities: ["erp:record-update", "erp:invoice-pay"],
     },
   ]);
   const verifier = new ApprovalVerifier({
@@ -482,6 +493,7 @@ console.log("--------------------------------------------------");
       keyId: "manager-jane-key-1",
       publicKey,
       revoked: false,
+      capabilities: ["erp:record-update", "erp:invoice-pay"],
     },
   ]);
   const sharedNonceStore = new MemoryNonceStore();
