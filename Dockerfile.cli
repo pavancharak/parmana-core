@@ -4,12 +4,15 @@
 # token is passed at run time with -e PARMANA_TOKEN, and the image runs as the
 # unprivileged "node" user. The version is pinned; change it deliberately.
 #
-#   docker build -f Dockerfile.cli -t parmana-cli:2.0.1 .
-#   docker run --rm parmana-cli:2.0.1 --help
+#   docker build -f Dockerfile.cli -t parmana-cli:2.0.2 .
+#   docker run --rm parmana-cli:2.0.2 --help
+#
+# The command inside the image is parmana-ops. The name parmana is the
+# verifier tool's, so this image does not use it.
 
 FROM node:24-slim
 
-ARG PARMANA_CLI_VERSION=2.0.1
+ARG PARMANA_CLI_VERSION=2.0.2
 
 # The package is installed from npm, the same artifact users install directly.
 RUN npm install -g "@parmana/cli@${PARMANA_CLI_VERSION}" \
@@ -18,5 +21,5 @@ RUN npm install -g "@parmana/cli@${PARMANA_CLI_VERSION}" \
 USER node
 WORKDIR /work
 
-ENTRYPOINT ["parmana"]
+ENTRYPOINT ["parmana-ops"]
 CMD ["--help"]
