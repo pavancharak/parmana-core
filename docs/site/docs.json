@@ -33,6 +33,7 @@
               "index",
               "choose-your-path",
               "quickstart",
+              "guides/local-development",
               "how-parmana-thinks",
               "why-parmana-is-built-this-way",
               "how-parmana-compares"

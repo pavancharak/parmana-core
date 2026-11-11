@@ -1,0 +1,146 @@
+---
+title: "Run a local server in one command"
+description: "Start a Parmana server on your own machine with npm run dev:setup. It creates the keys, the approver and a caller key, then starts the server."
+---
+
+This page is for building against Parmana on your own machine. It starts a local server with one command, instead of the separate setup steps in the [Quickstart](/quickstart).
+
+<Warning>
+  This setup is for local development only. It turns on test settings
+  (`NODE_ENV=test`, in-memory storage and a test approver). Never use these
+  settings on a server anyone else can reach. The script refuses to run with
+  `NODE_ENV=production`.
+</Warning>
+
+## What you need
+
+- Node.js 24 or later.
+- The repository, with its dependencies installed. From the repository root:
+
+  ```bash
+  git clone https://github.com/pavancharak/parmana-core.git
+  cd parmana-core
+  npm ci
+  ```
+
+Docker is not needed for this page.
+
+## Start the server
+
+```bash
+npm run dev:setup
+```
+
+The first run creates what the server needs. Later runs reuse it:
+
+- **Signing keys** in `keys/`: the `default` and `gateway` keys that sign authorizations and records.
+- **An approver key** in `.parmana-dev/`: the stand-in for the person who approves an action. Anyone who holds this private key can approve actions on your local server, so keep it to yourself.
+- **A caller key** in `.parmana-dev/caller.json`: the key your code sends to the server. The file holds the raw key in its `raw` field, and the server stores only its hash.
+
+The first run also builds the packages the server uses, which takes a few minutes. Later runs skip the build unless the build output is missing.
+
+The script starts the server with these settings. They apply only to that server, and they override any `.env` file in the repository root:
+
+| Setting               | Value       | Why                                                       |
+| --------------------- | ----------- | --------------------------------------------------------- |
+| `NODE_ENV`            | `test`      | Enables the test fixture connector and in-memory storage. |
+| `PARMANA_STORAGE`     | `memory`    | No database. Data is lost when the server stops.          |
+| `KILL_SWITCH_ENABLED` | `false`     | The kill switch is for production. It is off here.        |
+| `PARMANA_POLICY_DIR`  | `policies/` | The policy files in the repository.                       |
+| `PARMANA_KEY_DIR`     | `keys/`     | The signing keys.                                         |
+
+When the server is running it listens on `http://localhost:3000`. Stop it with Ctrl+C.
+
+## Check that it is running
+
+In a second terminal:
+
+```bash
+curl http://localhost:3000/ready
+```
+
+The response includes `"status":"READY"`.
+
+On Windows PowerShell, `curl` runs a different command that asks about script execution. Use `curl.exe` instead:
+
+```powershell
+curl.exe http://localhost:3000/ready
+```
+
+## Use the keys in the Quickstart samples
+
+The Quickstart samples use a demo key, `my-secret-api-key`, which only a server started from the Quickstart accepts. With `npm run dev:setup`, use the raw key from `.parmana-dev/caller.json` in its place, and the approver key at `.parmana-dev/local-test-approver__local-test-approver-key-1.private.pem` in place of the approver key path the Quickstart shows.
+
+Remember that the `dev:setup` server allows only the `test:fixture-execute` capability for this caller, which is the capability the Quickstart samples use.
+
+## Start over
+
+To reset, stop the server and delete the folders the script created:
+
+```bash
+rm -rf .parmana-dev keys
+```
+
+On Windows PowerShell:
+
+```powershell
+Remove-Item -Recurse -Force .parmana-dev, keys
+```
+
+Then run `npm run dev:setup` again. The script creates new keys.
+
+## Check the Parmana CLI
+
+The `parmana` command-line tool proposes policy changes, signs approvals, and checks the approval log. Build it once:
+
+```bash
+npm run build --workspace=packages/cli
+```
+
+Run these from the repository root. None of them needs a server.
+
+```bash
+node packages/cli/dist/index.js --help
+node packages/cli/dist/index.js log verify
+node packages/cli/dist/index.js policy propose policies/customer-refund/1.3.0/policy.json --name customer-refund --version 1.3.0 --reason "Local test" --dry-run --api-url http://localhost:3000
+node packages/cli/dist/index.js policy propose policies/customer-refund/1.3.0/policy.json --name wrong-name --version 1.3.0 --reason "x" --dry-run
+```
+
+What you should see:
+
+- `--help` lists eight commands.
+- `log verify` reports `The log verifies` and exits with code 0.
+- The dry run prints the request and says `Nothing was sent`.
+- The wrong name prints `The file's policyId is "customer-refund", but the command names "wrong-name"` and exits with code 2.
+
+Signing an approval happens on the checker's machine. It sends nothing, so you can test it locally with the approver key that `npm run dev:setup` creates:
+
+```bash
+node packages/cli/dist/index.js approval sign --key-file .parmana-dev/local-test-approver__local-test-approver-key-1.private.pem --key-id local-test-approver-key-1 --pending test-pending-001 --action approve --out envelope.json
+```
+
+The command writes `envelope.json` and prints when it expires. The envelope is valid for 120 seconds. Use a real pending change ID from the server in place of `test-pending-001`.
+
+To check the live server, start `npm run dev:setup` in one terminal. In a second terminal, set the caller key and run a command:
+
+```powershell
+$env:PARMANA_TOKEN = (Get-Content .parmana-dev\caller.json | ConvertFrom-Json).raw
+node packages/cli/dist/index.js policy status customer-refund 1.3.0 --api-url http://localhost:3000
+```
+
+The server answers with `403 NON_HUMAN_CALLER_DENIED`. That is expected. Policy changes and approvals need a credential for a verified person, and the dev setup provides only a service key. So you can't complete a proposal or an approval against the local server. The approval steps are covered in the [CLI quickstart](/cli/quickstart).
+
+## If something goes wrong
+
+- **Port 3000 is in use.** Another program is using it. Stop that program, then run the command again.
+- **`/ready` answers, but the CLI or the server reports `401`.** Another server is answering on port 3000. A common cause is the API container from the [Quickstart](/quickstart) with Docker, which publishes port 3000. Check with `docker ps`. If `parmana-api-1` is listed with `3000->3000`, stop it with `docker stop parmana-api-1`, then run `npm run dev:setup` again. Stopping only the API container leaves the PostgreSQL container running, which the repository's tests use.
+- **`Cannot find module './build/Release/re2.node'`.** The native module `re2` was not built, usually because the install skipped install scripts. Run `npm rebuild re2`, then start the server again.
+- **`PARMANA_POLICY_DIR is not set` or a `kill-switch-probe` error.** Your copy of the script is out of date. Update the repository and run the command again.
+- **A `DeprecationWarning` about `DEP0190` appears.** It is harmless. The script still runs.
+- **The script stops during key creation.** Read the message above the error. Fix the cause, then run the command again. Finished steps are not repeated.
+- **`/ready` does not return `READY`.** Read the server's output in the terminal where you started it.
+
+## Next
+
+- [Quickstart](/quickstart): the full walkthrough, with each step explained.
+- [Self hosted](/self-hosted/overview): run the server with Docker and a database.
