@@ -138,13 +138,13 @@ describe("StaticKeyAuthenticator", () => {
       {
         callerId: "orchestrator-1",
         keyHash: hashApiKey("the-real-key"),
-        allowedCapabilities: ["razorpay:refund-create"],
+        allowedCapabilities: ["razorpay:refund"],
       },
     ]);
 
     await expect(authenticator.authenticate("the-real-key")).resolves.toEqual({
       callerId: "orchestrator-1",
-      allowedCapabilities: ["razorpay:refund-create"],
+      allowedCapabilities: ["razorpay:refund"],
     });
   });
 

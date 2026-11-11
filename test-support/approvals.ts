@@ -83,7 +83,7 @@ export function testApprovalIssuerRegistry(): StaticApprovalIssuerRegistry {
         "paytm:cancel",
         "paytm:refund",
         "razorpay:refund",
-        "razorpay:refund-create",
+        "razorpay:refund",
         "refund",
         "register",
         "reject",
