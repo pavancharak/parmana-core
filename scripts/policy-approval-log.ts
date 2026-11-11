@@ -255,6 +255,15 @@ async function main(): Promise<void> {
     );
     process.exit(2);
   }
+  if (
+    (command === "export" || command === "check-db") &&
+    !process.env.CI_DATABASE_URL
+  ) {
+    console.error(
+      "Set CI_DATABASE_URL to the read-only policy approval reader role.",
+    );
+    process.exit(2);
+  }
   if (command === "export") process.exit(await exportOrCheck(true, only));
   if (command === "check-db") process.exit(await exportOrCheck(false, only));
   console.error(
