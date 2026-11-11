@@ -30,7 +30,8 @@ Parmana is licensed under the Apache License 2.0, so running it locally is permi
 [License](/license).
 
 This page runs the server from source. To run it in containers instead, start the
-API and its database with one command from the repository root:
+API and its database with one command from the folder that contains `docker-compose.yml`
+(the `parmana-core` folder from the step above):
 
 ```bash
 docker compose up -d
@@ -42,6 +43,22 @@ The Docker server generates its own caller key on first start, in `parmana-local
 The demo key used below is accepted only by the server started from source, so use the key from
 that file in its place when you run the Docker server. For the full setup, including the approver
 key, see [Self hosted](/self-hosted/overview).
+
+Before you start, get the code and go into its folder. Every command on this page runs from that folder:
+
+```bash
+git clone https://github.com/pavancharak/parmana-core.git
+cd parmana-core
+```
+
+## What you will do, and why
+
+The goal is one agent action that a person approves, Parmana executes, and Parmana records as proof. Then you check that proof yourself, without trusting Parmana's word for it.
+
+- **Set up the server** (steps 1 to 4). Parmana refuses to run an action unless it has signing keys, a policy, and an approver it trusts. Each step creates one of those.
+- **Make the approver key** (step 3). No agent action runs without a signed human approval, even a read. This key stands in for the person who approves. On a real deployment that person is someone else.
+- **Call the server as the agent** (steps 5 to 7). The agent sends a request. Parmana checks it against the policy, and refuses it unless the approval matches.
+- **Read the record** (step 8). The signed record is what an auditor or a partner can check later, without access to your server.
 
 <Steps>
   <Step title="Install and build">
