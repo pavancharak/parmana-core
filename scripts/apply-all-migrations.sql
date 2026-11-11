@@ -2874,10 +2874,8 @@ ALTER TABLE approval_issuers
     ADD COLUMN IF NOT EXISTS capabilities TEXT[] NOT NULL DEFAULT '{}';
 
 
-
 -- =============================================================================
 -- Source: supabase/migrations/20261111180000_execution_outcome_failed.sql
--- =============================================================================
 -- =============================================================================
 -- Execution outcome: a 'failed' state (outcome-record defect, enforcement-path
 -- guide section 11)
