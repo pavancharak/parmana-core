@@ -56,6 +56,7 @@ export interface ApprovalVerificationResult {
     readonly notExpired: boolean;
     readonly notRevoked: boolean;
     readonly capabilityMatches: boolean;
+    readonly capabilityGranted: boolean;
     readonly resourceMatches: boolean;
     readonly scopeSatisfied: boolean;
     readonly nonceUnseen: boolean;
@@ -71,6 +72,7 @@ const FAILED_BEFORE_SIGNATURE: ApprovalVerificationResult = {
     notExpired: false,
     notRevoked: false,
     capabilityMatches: false,
+    capabilityGranted: false,
     resourceMatches: false,
     scopeSatisfied: false,
     nonceUnseen: false,
@@ -149,6 +151,12 @@ export class ApprovalVerifier {
 
     const capabilityMatches = artifact.payload.capability === request.action;
 
+    // G-50: the approver must be granted this capability, not only
+    // name it. Without a grant, any approver could approve any action.
+    const capabilityGranted =
+      resolvedIssuer !== undefined &&
+      resolvedIssuer.capabilities.includes(request.action);
+
     const resourceMatches = artifact.payload.resourceId === request.resourceId;
 
     const scopeSatisfied =
@@ -169,6 +177,7 @@ export class ApprovalVerifier {
       notExpired &&
       notRevoked &&
       capabilityMatches &&
+      capabilityGranted &&
       resourceMatches &&
       scopeSatisfied;
 
@@ -192,6 +201,7 @@ export class ApprovalVerifier {
         notExpired,
         notRevoked,
         capabilityMatches,
+        capabilityGranted,
         resourceMatches,
         scopeSatisfied,
         nonceUnseen,

@@ -42,6 +42,8 @@ import { approvalIssuerRepository } from "../repositories.js";
  */
 
 const VALID_ID = /^[A-Za-z0-9._-]{1,128}$/;
+const VALID_CAPABILITY = /^[a-z0-9][a-z0-9._:-]{0,127}$/;
+const MAX_CAPABILITIES = 50;
 const MAX_REASON_LENGTH = 2000;
 
 function asString(value: unknown): string | undefined {
@@ -163,8 +165,14 @@ export function createApprovalIssuersRouter(
 
         if (!(await requireHumanCaller(req, auditSink, next))) return;
 
-        const { action, approverId, keyId, publicKeyPem, reason } =
-          req.body ?? {};
+        const {
+          action,
+          approverId,
+          keyId,
+          publicKeyPem,
+          reason,
+          capabilities,
+        } = req.body ?? {};
 
         if (action !== "add" && action !== "revoke") {
           res.status(400).json({ error: 'action must be "add" or "revoke".' });
@@ -191,6 +199,31 @@ export function createApprovalIssuersRouter(
           res.status(400).json({
             error: `reason is required, at most ${MAX_REASON_LENGTH} characters.`,
           });
+          return;
+        }
+
+        let normalizedCapabilities: string[] | undefined;
+
+        if (action === "add") {
+          if (
+            !Array.isArray(capabilities) ||
+            capabilities.length === 0 ||
+            capabilities.length > MAX_CAPABILITIES ||
+            !capabilities.every(
+              (c) => typeof c === "string" && VALID_CAPABILITY.test(c),
+            )
+          ) {
+            res.status(400).json({
+              error: `capabilities is required for add: a list of 1 to ${MAX_CAPABILITIES} capability names, each matching ^[a-z0-9][a-z0-9._:-]{0,127}$.`,
+            });
+            return;
+          }
+
+          normalizedCapabilities = [...new Set(capabilities as string[])];
+        } else if (capabilities !== undefined) {
+          res
+            .status(400)
+            .json({ error: "capabilities is only for action add." });
           return;
         }
 
@@ -243,6 +276,9 @@ export function createApprovalIssuersRouter(
           keyId,
           ...(normalizedKey !== undefined
             ? { publicKeyPem: normalizedKey }
+            : {}),
+          ...(normalizedCapabilities !== undefined
+            ? { capabilities: normalizedCapabilities }
             : {}),
           reason,
           proposedBy: req.callerId,

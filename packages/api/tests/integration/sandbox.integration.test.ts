@@ -66,7 +66,20 @@ function sandboxVerifier() {
   return new ApprovalVerifier({
     crypto: APPROVAL_ARTIFACT_CRYPTO_PROVIDER,
     issuerRegistry: new StaticApprovalIssuerRegistry([
-      { ...DEMO_APPROVER, publicKey: demo.publicKey, revoked: false },
+      {
+        ...DEMO_APPROVER,
+        publicKey: demo.publicKey,
+        revoked: false,
+        capabilities: [
+          "paytm:refund",
+          "hubspot:deal-update",
+          "github:pr-merge",
+          "erp:invoice-pay",
+          "erp:record-update",
+          "razorpay:refund",
+          "sandbox:receipt",
+        ],
+      },
     ]),
     nonceStore: new MemoryNonceStore(),
   });

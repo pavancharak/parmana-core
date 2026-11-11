@@ -42,7 +42,57 @@ const policiesDirectory = join(
 
 export function testApprovalIssuerRegistry(): StaticApprovalIssuerRegistry {
   return new StaticApprovalIssuerRegistry([
-    { ...TEST_APPROVER, publicKey: keys.publicKey, revoked: false },
+    {
+      ...TEST_APPROVER,
+      publicKey: keys.publicKey,
+      revoked: false,
+      // Every capability the test suites use, so each test can approve
+      // its own action. Test data only; no production issuer uses it.
+      capabilities: [
+        "CreateCharge",
+        "CreateInvoice",
+        "DeleteAccount",
+        "DeployApplication",
+        "PAY",
+        "TransferFunds",
+        "a",
+        "add",
+        "allow",
+        "append-only:action",
+        "approve",
+        "contract:action",
+        "crm:delete",
+        "crm:read",
+        "customer-refund",
+        "delete",
+        "delete-account",
+        "erp:create-invoice",
+        "erp:invoice-pay",
+        "erp:record-update",
+        "erp:release-goods",
+        "fixture:write",
+        "github:pr-merge",
+        "grant",
+        "http:get",
+        "http:post",
+        "hubspot:deal-update",
+        "pay",
+        "payments:execute",
+        "payments:pay",
+        "payments:refund",
+        "paytm:cancel",
+        "paytm:refund",
+        "razorpay:refund",
+        "razorpay:refund",
+        "refund",
+        "register",
+        "reject",
+        "release-goods",
+        "revoke",
+        "test:fixture-execute",
+        "vendor.payment",
+      ],
+    },
   ]);
 }
 

@@ -68,6 +68,7 @@ describe("ApprovalVerifier", () => {
         keyId: "manager-jane-key-1",
         publicKey,
         revoked: false,
+        capabilities: ["hubspot:deal-update", "razorpay:refund"],
       },
     ]);
 
@@ -97,6 +98,7 @@ describe("ApprovalVerifier", () => {
       notExpired: true,
       notRevoked: true,
       capabilityMatches: true,
+      capabilityGranted: true,
       resourceMatches: true,
       scopeSatisfied: true,
       nonceUnseen: true,
@@ -112,6 +114,7 @@ describe("ApprovalVerifier", () => {
         keyId: "manager-jane-key-1",
         publicKey,
         revoked: false,
+        capabilities: ["hubspot:deal-update", "razorpay:refund"],
       },
     ]);
 
@@ -147,6 +150,7 @@ describe("ApprovalVerifier", () => {
             keyId: "manager-jane-key-1",
             publicKey,
             revoked: false,
+            capabilities: ["hubspot:deal-update", "razorpay:refund"],
           },
         ]),
         nonceStore: new MemoryNonceStore(),
@@ -185,6 +189,7 @@ describe("ApprovalVerifier", () => {
           keyId: "manager-jane-key-1",
           publicKey,
           revoked: false,
+          capabilities: ["hubspot:deal-update", "razorpay:refund"],
         },
       ]),
       nonceStore: new MemoryNonceStore(),
@@ -209,6 +214,7 @@ describe("ApprovalVerifier", () => {
         notExpired: false,
         notRevoked: false,
         capabilityMatches: false,
+        capabilityGranted: false,
         resourceMatches: false,
         scopeSatisfied: false,
         nonceUnseen: false,
@@ -249,6 +255,7 @@ describe("ApprovalVerifier", () => {
         keyId: "manager-jane-key-1",
         publicKey,
         revoked: true,
+        capabilities: ["hubspot:deal-update", "razorpay:refund"],
       },
     ]);
 
@@ -286,6 +293,7 @@ describe("ApprovalVerifier", () => {
         keyId: "manager-jane-key-1",
         publicKey,
         revoked: false,
+        capabilities: ["hubspot:deal-update", "razorpay:refund"],
       },
     ]);
 
@@ -329,6 +337,7 @@ describe("ApprovalVerifier", () => {
         keyId: "manager-jane-key-1",
         publicKey: legitimate.publicKey,
         revoked: false,
+        capabilities: ["hubspot:deal-update", "razorpay:refund"],
       },
     ]);
 
@@ -365,6 +374,7 @@ describe("ApprovalVerifier", () => {
         keyId: "manager-jane-key-1",
         publicKey,
         revoked: false,
+        capabilities: ["hubspot:deal-update", "razorpay:refund"],
       },
     ]);
 
@@ -399,6 +409,7 @@ describe("ApprovalVerifier", () => {
         keyId: "manager-jane-key-1",
         publicKey,
         revoked: false,
+        capabilities: ["hubspot:deal-update", "razorpay:refund"],
       },
     ]);
 
@@ -413,7 +424,7 @@ describe("ApprovalVerifier", () => {
     const result = await verifier.verify(
       artifact,
       {
-        action: "razorpay:refund-create",
+        action: "razorpay:refund",
         resourceId: "9005",
         requestedValue: 40_000,
       },
@@ -433,6 +444,7 @@ describe("ApprovalVerifier", () => {
         keyId: "manager-jane-key-1",
         publicKey,
         revoked: false,
+        capabilities: ["hubspot:deal-update", "razorpay:refund"],
       },
     ]);
 
@@ -467,6 +479,7 @@ describe("ApprovalVerifier", () => {
         keyId: "manager-jane-key-1",
         publicKey,
         revoked: false,
+        capabilities: ["hubspot:deal-update", "razorpay:refund"],
       },
     ]);
 
@@ -506,6 +519,7 @@ describe("ApprovalVerifier", () => {
           keyId: "manager-jane-key-1",
           publicKey,
           revoked: false,
+          capabilities: ["hubspot:deal-update", "razorpay:refund"],
         },
       ]),
       nonceStore: new MemoryNonceStore(),
@@ -549,6 +563,7 @@ describe("ApprovalVerifier", () => {
         keyId: "manager-jane-key-1",
         publicKey,
         revoked: false,
+        capabilities: ["hubspot:deal-update", "razorpay:refund"],
       },
     ]);
 
@@ -590,6 +605,7 @@ describe("ApprovalVerifier", () => {
         keyId: "manager-jane-key-1",
         publicKey,
         revoked: false,
+        capabilities: ["hubspot:deal-update", "razorpay:refund"],
       },
     ]);
 
@@ -624,6 +640,7 @@ describe("ApprovalVerifier", () => {
         keyId: "manager-jane-key-1",
         publicKey,
         revoked: false,
+        capabilities: ["hubspot:deal-update", "razorpay:refund"],
       },
     ]);
 
@@ -673,6 +690,7 @@ describe("ApprovalVerifier", () => {
         keyId: "manager-jane-key-1",
         publicKey,
         revoked: false,
+        capabilities: ["hubspot:deal-update", "razorpay:refund"],
       },
     ]);
 
@@ -718,6 +736,7 @@ describe("ApprovalVerifier", () => {
         keyId: "manager-jane-key-1",
         publicKey,
         revoked: false,
+        capabilities: ["hubspot:deal-update", "razorpay:refund"],
       },
     ]);
 
@@ -762,6 +781,7 @@ describe("ApprovalVerifier", () => {
             keyId: "manager-jane-key-1",
             publicKey,
             revoked: false,
+            capabilities: ["hubspot:deal-update", "razorpay:refund"],
           },
         ]),
         nonceStore,

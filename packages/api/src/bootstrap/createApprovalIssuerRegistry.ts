@@ -76,7 +76,11 @@ export class GovernedApprovalIssuerRegistry implements ApprovalIssuerRegistry {
         );
       }
 
-      return { publicKey, revoked: record.revoked };
+      return {
+        publicKey,
+        revoked: record.revoked,
+        capabilities: record.capabilities,
+      };
     } catch (error) {
       console.error({
         event: "approval_issuer_lookup_failed",

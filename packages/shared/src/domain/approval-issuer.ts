@@ -27,6 +27,12 @@ export interface ApprovalIssuerRecord {
   readonly addedByChangeId: string;
   readonly addedAt: Date;
 
+  /**
+   * The capabilities this key may approve (G-50). An approval for any
+   * other capability is refused. Empty grants nothing.
+   */
+  readonly capabilities: readonly string[];
+
   readonly revokedByChangeId?: string;
   readonly revokedAt?: Date;
 }
@@ -49,6 +55,11 @@ export interface ApprovalIssuerChange {
    * Required to add, absent to revoke.
    */
   readonly publicKeyPem?: string;
+
+  /**
+   * Required to add: the capabilities the key may approve. Absent to revoke.
+   */
+  readonly capabilities?: readonly string[];
 
   readonly reason: string;
   readonly proposedBy: string;

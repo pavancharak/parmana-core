@@ -64,6 +64,7 @@ export class PostgresApprovalIssuerRepository implements ApprovalIssuerRepositor
         change.proposedBy,
         change.proposedAt.toISOString(),
         change.status,
+        change.capabilities ?? [],
       ]);
     } catch (error) {
       if (isUniqueViolation(error)) {
@@ -109,6 +110,7 @@ export class PostgresApprovalIssuerRepository implements ApprovalIssuerRepositor
             change.publicKeyPem,
             change.changeId,
             at.toISOString(),
+            change.capabilities ?? [],
           ]);
         } catch (error) {
           if (isUniqueViolation(error)) {
@@ -222,9 +224,10 @@ const SELECT_ISSUERS_SQL = `
 
 const INSERT_ISSUER_SQL = `
   INSERT INTO approval_issuers
-    (approver_id, key_id, public_key_pem, revoked, added_by_change_id, added_at)
+    (approver_id, key_id, public_key_pem, revoked, added_by_change_id, added_at,
+     capabilities)
   VALUES
-    ($1, $2, $3, FALSE, $4, $5)
+    ($1, $2, $3, FALSE, $4, $5, $6)
 `;
 
 const REVOKE_ISSUER_SQL = `
@@ -236,9 +239,9 @@ const REVOKE_ISSUER_SQL = `
 const INSERT_CHANGE_SQL = `
   INSERT INTO approval_issuer_changes
     (change_id, action, approver_id, key_id, public_key_pem, reason,
-     proposed_by, proposed_at, status)
+     proposed_by, proposed_at, status, capabilities)
   VALUES
-    ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 `;
 
 const SELECT_CHANGE_SQL = `
@@ -267,6 +270,7 @@ interface IssuerRow {
   readonly approver_id: string;
   readonly key_id: string;
   readonly public_key_pem: string;
+  readonly capabilities: string[];
   readonly revoked: boolean;
   readonly added_by_change_id: string;
   readonly added_at: string | Date;
@@ -280,6 +284,7 @@ interface ChangeRow {
   readonly approver_id: string;
   readonly key_id: string;
   readonly public_key_pem: string | null;
+  readonly capabilities: string[];
   readonly reason: string;
   readonly proposed_by: string;
   readonly proposed_at: string | Date;
@@ -294,6 +299,7 @@ function toIssuer(row: IssuerRow): ApprovalIssuerRecord {
     approverId: row.approver_id,
     keyId: row.key_id,
     publicKeyPem: row.public_key_pem,
+    capabilities: row.capabilities,
     revoked: row.revoked,
     addedByChangeId: row.added_by_change_id,
     addedAt: new Date(row.added_at),

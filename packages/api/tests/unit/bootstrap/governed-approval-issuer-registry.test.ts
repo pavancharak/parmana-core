@@ -43,6 +43,7 @@ describe("GovernedApprovalIssuerRegistry", () => {
       keyId: "k1",
       publicKey: codeKeys.publicKey,
       revoked: false,
+      capabilities: ["hubspot:deal-update"],
     },
   ]);
 
