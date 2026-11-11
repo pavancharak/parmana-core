@@ -46,6 +46,7 @@ Start with the goal closest to yours. The full documentation is at [docs.parmana
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Understand the ideas behind it             | [How Parmana thinks](https://docs.parmanasystems.com/how-parmana-thinks), then the [glossary](https://docs.parmanasystems.com/glossary)                                        |
 | Run it on my own machine                   | [Quickstart](https://docs.parmanasystems.com/quickstart)                                                                                                                       |
+| Run a local server in one command          | [Run a local server in one command](https://docs.parmanasystems.com/guides/local-development)                                                                                  |
 | Connect an AI agent                        | [Connect an agent](https://docs.parmanasystems.com/guides/connect-an-agent)                                                                                                    |
 | Use the SDKs                               | [TypeScript quickstart](https://docs.parmanasystems.com/guides/typescript-sdk-quickstart) or [Python quickstart](https://docs.parmanasystems.com/guides/python-sdk-quickstart) |
 | Run the command-line tool                  | [Command-line tool](packages/cli/README.md): install with npm or run the container image                                                                                       |
@@ -81,10 +82,7 @@ npm run evaluate
   ```
 
 - For the step-by-step evaluation guide, see [EVALUATION.md](EVALUATION.md).
-
-### Run a local server in one command
-
-To build against Parmana on your own machine, run `npm run dev:setup`. The first run creates the signing keys, a local approver key and a caller key, then starts the server at `http://localhost:3000`. It is for local development only. Full details, including how to use the keys, are on the [local development page](https://docs.parmanasystems.com/guides/local-development).
+- `npm run dev:setup` starts a local server with test keys, for building against the API. It is for local development only. See [Run a local server in one command](https://docs.parmanasystems.com/guides/local-development).
 
 ## How it works
 
