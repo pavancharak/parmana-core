@@ -10,7 +10,7 @@ With npm, on Node.js 24 or later:
 
 ```bash
 npm install -g @parmana/cli
-parmana --help
+parmana-ops --help
 ```
 
 With the container image, which needs no Node.js:
@@ -39,18 +39,22 @@ node packages/cli/dist/index.js --help
 
 ## Commands
 
-Run `parmana <command> --help` for a command's options and an example.
+Run `parmana-ops <command> --help` for a command's options and an example.
 
-| Command                                                        | Purpose                                                           |
-| -------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `policy status <name> <version>`                               | Pending changes for one policy version                            |
-| `policy propose <policy.json> --name --version --reason`       | Propose a change; the file must match the name and version        |
-| `approval sign --key-file --key-id --pending --action [--out]` | Sign a step-up envelope on the checker's machine; nothing is sent |
-| `approval submit --pending --action --envelope`                | Send a signed envelope with the checker's own token               |
-| `log verify [--policy] [--base] [--require-coverage]`          | Check the approval log offline                                    |
-| `log export [--policy]`                                        | Append approvals from the database to the log                     |
-| `log check-db [--policy]`                                      | Compare the log with the database without writing                 |
-| `completion <bash\|powershell>`                                | Print a shell completion script                                   |
+| Command                                                                           | Purpose                                                                  |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `policy status <name> <version>`                                                  | Pending changes for one policy version                                   |
+| `policy propose <policy.json> --name --version --reason`                          | Propose a change; the file must match the name and version               |
+| `approval sign --key-file --key-id --pending --action [--out]`                    | Sign a step-up envelope on the checker's machine; nothing is sent        |
+| `approval submit --pending --action --envelope`                                   | Send a signed envelope with the checker's own token                      |
+| `approver list [--status <PENDING_APPROVAL\|APPROVED\|REJECTED>]`                 | List approver-key changes (add or revoke)                                |
+| `approver propose-add --approver --key --public-key-file --capabilities --reason` | Propose adding an approver key with its capability grants                |
+| `approver propose-revoke --approver --key --reason`                               | Propose revoking an approver key added through approver changes          |
+| `approver submit --change --action --envelope [--reason]`                         | Approve or reject an approver change with the checker's step-up envelope |
+| `log verify [--policy] [--base] [--require-coverage]`                             | Check the approval log offline                                           |
+| `log export [--policy]`                                                           | Append approvals from the database to the log                            |
+| `log check-db [--policy]`                                                         | Compare the log with the database without writing                        |
+| `completion <bash\|powershell>`                                                   | Print a shell completion script                                          |
 
 ## Global options
 
@@ -109,14 +113,14 @@ The config file holds only non-secret settings. Tokens are never stored in it.
 Run the signing step on the checker's machine. Nothing is sent by it:
 
 ```bash
-parmana approval sign --key-file .\checker.step-up.private.pem --key-id <checker-key-id> --pending <pending-id> --action approve --out envelope.json
+parmana-ops approval sign --key-file .\checker.step-up.private.pem --key-id <checker-key-id> --pending <pending-id> --action approve --out envelope.json
 ```
 
 Preview the submission without sending it, then submit:
 
 ```bash
-parmana approval submit --pending <pending-id> --action approve --envelope envelope.json --dry-run
-parmana approval submit --pending <pending-id> --action approve --envelope envelope.json
+parmana-ops approval submit --pending <pending-id> --action approve --envelope envelope.json --dry-run
+parmana-ops approval submit --pending <pending-id> --action approve --envelope envelope.json
 ```
 
 The checker's `PARMANA_TOKEN` must be set for the `submit` step.
@@ -126,11 +130,11 @@ The checker's `PARMANA_TOKEN` must be set for the `submit` step.
 PowerShell:
 
 ```powershell
-parmana completion powershell | Out-String | Invoke-Expression
+parmana-ops completion powershell | Out-String | Invoke-Expression
 ```
 
 Bash:
 
 ```bash
-eval "$(parmana completion bash)"
+eval "$(parmana-ops completion bash)"
 ```

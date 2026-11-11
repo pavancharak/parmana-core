@@ -83,7 +83,7 @@ describe("help", () => {
 describe("usage errors exit 2", () => {
   it.each([
     [["nonsense"], "Unknown command"],
-    [["policy", "status"], "Usage: parmana policy status"],
+    [["policy", "status"], "Usage: parmana-ops policy status"],
     [
       ["policy", "status", "a", "1", "--reason", "x"],
       "--reason is not an option",

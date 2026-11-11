@@ -5,6 +5,12 @@ description: "A dated record of changes to the parmana command, including the ve
 
 This page lists the changes to the `parmana` command. Versions follow the repository's version, so the command version matches the release of `parmana-core` that ships it.
 
+## Renamed to parmana-ops
+
+The command is now `parmana-ops`. The name `parmana` is taken on many machines by the verifier tool (`@parmanasystems/verifier-cli`), which has no approval commands. Earlier entries in this changelog refer to the old name. Replace `parmana` with `parmana-ops` in any script that runs this CLI. The package name `@parmana/cli` is unchanged.
+
+New in this release: `approver list`, `approver propose-add`, `approver propose-revoke`, and `approver submit` for approver-key changes.
+
 ## Unreleased
 
 ### Added

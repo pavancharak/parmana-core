@@ -170,7 +170,9 @@ async function policyStatus(
 ): Promise<CommandResult> {
   const [name, version] = parsed.args;
   if (name === undefined || version === undefined) {
-    throw new CliUsageError("Usage: parmana policy status <name> <version>");
+    throw new CliUsageError(
+      "Usage: parmana-ops policy status <name> <version>",
+    );
   }
   const target = targetFor(settings, runtime, true);
   const spec: RequestSpec = {
@@ -221,7 +223,7 @@ async function policyPropose(
     reason === undefined
   ) {
     throw new CliUsageError(
-      'Usage: parmana policy propose <policy.json> --name <name> --version <version> --reason "<why>"',
+      'Usage: parmana-ops policy propose <policy.json> --name <name> --version <version> --reason "<why>"',
     );
   }
   const text = runtime.readText(file);
@@ -262,7 +264,7 @@ async function approvalSign(
   const outFile = str(parsed.values, "out");
   if (keyFile === undefined || keyId === undefined || pending === undefined) {
     throw new CliUsageError(
-      "Usage: parmana approval sign --key-file <pem> --key-id <id> --pending <id> --action <approve|reject> [--out <file>]",
+      "Usage: parmana-ops approval sign --key-file <pem> --key-id <id> --pending <id> --action <approve|reject> [--out <file>]",
     );
   }
   const action = parseApprovalAction(str(parsed.values, "action"));
@@ -325,7 +327,7 @@ async function approvalSubmit(
   const envelopeFile = str(parsed.values, "envelope");
   if (pending === undefined || envelopeFile === undefined) {
     throw new CliUsageError(
-      "Usage: parmana approval submit --pending <id> --action <approve|reject> --envelope <file>",
+      "Usage: parmana-ops approval submit --pending <id> --action <approve|reject> --envelope <file>",
     );
   }
   const action = parseApprovalAction(str(parsed.values, "action"));
@@ -380,10 +382,192 @@ function logCommand(
 function completion(parsed: ParsedCommand): CommandResult {
   const [shell] = parsed.args;
   if (shell !== "bash" && shell !== "powershell") {
-    throw new CliUsageError("Usage: parmana completion <bash|powershell>");
+    throw new CliUsageError("Usage: parmana-ops completion <bash|powershell>");
   }
   const script = renderCompletion(shell as ShellName);
   return { code: 0, data: { shell, script }, text: script };
+}
+
+const APPROVER_ID = /^[A-Za-z0-9._-]{1,128}$/;
+const CAPABILITY = /^[a-z0-9][a-z0-9._:-]{0,127}$/i;
+const MAX_CAPABILITIES = 50;
+
+function requireApproverId(value: string | undefined, flag: string): string {
+  if (value === undefined || !APPROVER_ID.test(value)) {
+    throw new CliUsageError(`${flag} must match ^[A-Za-z0-9._-]{1,128}$.`);
+  }
+  return value;
+}
+
+/** Comma-separated capability names, deduplicated, at most MAX_CAPABILITIES. */
+export function parseCapabilities(text: string | undefined): string[] {
+  if (text === undefined) {
+    throw new CliUsageError(
+      "--capabilities is required: a comma-separated list, for example razorpay:refund.",
+    );
+  }
+  const list = [
+    ...new Set(
+      text
+        .split(",")
+        .map((c) => c.trim())
+        .filter((c) => c.length > 0),
+    ),
+  ];
+  if (
+    list.length === 0 ||
+    list.length > MAX_CAPABILITIES ||
+    !list.every((c) => CAPABILITY.test(c))
+  ) {
+    throw new CliUsageError(
+      `--capabilities must be 1 to ${MAX_CAPABILITIES} capability names, each matching ^[a-z0-9][a-z0-9._:-]{0,127}$.`,
+    );
+  }
+  return list;
+}
+
+async function approverList(
+  parsed: ParsedCommand,
+  settings: Settings,
+  runtime: Runtime,
+): Promise<CommandResult> {
+  const status = str(parsed.values, "status");
+  const query =
+    status === undefined ? "" : `?status=${encodeURIComponent(status)}`;
+  const target = targetFor(settings, runtime, true);
+  const spec: RequestSpec = {
+    method: "GET",
+    path: `/approval-issuers/changes${query}`,
+  };
+  if (settings.dryRun) return dryRunResult(spec, target);
+
+  const response = await send(target, spec, runtime);
+  return fromResponse(
+    response.status,
+    response.body,
+    200,
+    (body) => {
+      const changes =
+        (body as { changes?: Record<string, unknown>[] }).changes ?? [];
+      if (changes.length === 0) return "No approver changes.\n";
+      const lines = changes.map(
+        (c) =>
+          `${String(c["changeId"])}  ${String(c["action"])}  ${String(c["approverId"])}  ${String(c["keyId"])}  ${String(c["status"])}`,
+      );
+      return `${lines.join("\n")}\n`;
+    },
+    [target.token],
+  );
+}
+
+async function approverPropose(
+  parsed: ParsedCommand,
+  settings: Settings,
+  runtime: Runtime,
+  action: "add" | "revoke",
+): Promise<CommandResult> {
+  const approverId = requireApproverId(
+    str(parsed.values, "approver"),
+    "--approver",
+  );
+  const keyId = requireApproverId(str(parsed.values, "key"), "--key");
+  const reason = str(parsed.values, "reason");
+  if (reason === undefined || reason.trim().length === 0) {
+    throw new CliUsageError('--reason is required, for example "rotation".');
+  }
+
+  let body: Record<string, unknown>;
+  if (action === "add") {
+    const keyFile = str(parsed.values, "public-key-file");
+    if (keyFile === undefined) {
+      throw new CliUsageError("--public-key-file is required to add a key.");
+    }
+    const publicKeyPem = runtime.readText(keyFile);
+    if (publicKeyPem === undefined) {
+      throw new CliUsageError(`Cannot read ${keyFile}.`);
+    }
+    body = {
+      action,
+      approverId,
+      keyId,
+      publicKeyPem,
+      capabilities: parseCapabilities(str(parsed.values, "capabilities")),
+      reason,
+    };
+  } else {
+    body = { action, approverId, keyId, reason };
+  }
+
+  const target = targetFor(settings, runtime, true);
+  const spec: RequestSpec = {
+    method: "POST",
+    path: "/approval-issuers/changes",
+    body: JSON.stringify(body),
+  };
+  if (settings.dryRun) return dryRunResult(spec, target);
+
+  const response = await send(target, spec, runtime);
+  return fromResponse(
+    response.status,
+    response.body,
+    201,
+    (body) => {
+      const id = (body as { changeId?: unknown }).changeId;
+      return `Proposed ${action} of ${approverId} key ${keyId}. Change: ${String(id)}\n`;
+    },
+    [target.token],
+  );
+}
+
+async function approverSubmit(
+  parsed: ParsedCommand,
+  settings: Settings,
+  runtime: Runtime,
+): Promise<CommandResult> {
+  const change = str(parsed.values, "change");
+  const envelopeFile = str(parsed.values, "envelope");
+  if (change === undefined || envelopeFile === undefined) {
+    throw new CliUsageError(
+      "Usage: parmana-ops approver submit --change <id> --action <approve|reject> --envelope <file> [--reason <why>]",
+    );
+  }
+  const action = parseApprovalAction(str(parsed.values, "action"));
+  const reason = str(parsed.values, "reason");
+  if (
+    action === "reject" &&
+    (reason === undefined || reason.trim().length === 0)
+  ) {
+    throw new CliUsageError(
+      '--reason is required to reject, for example "not needed".',
+    );
+  }
+  const envelopeText = runtime.readText(envelopeFile);
+  if (envelopeText === undefined) {
+    throw new CliUsageError(`Cannot read ${envelopeFile}.`);
+  }
+  const stepUp = buildApprovalBody(envelopeText);
+  const body =
+    action === "reject" ? { rejectionReason: reason, ...stepUp } : stepUp;
+
+  const target = targetFor(settings, runtime, true);
+  const spec: RequestSpec = {
+    method: "POST",
+    path: `/approval-issuers/changes/${encodeURIComponent(change)}/${action}`,
+    body: JSON.stringify(body),
+  };
+  if (settings.dryRun) return dryRunResult(spec, target);
+
+  const response = await send(target, spec, runtime);
+  return fromResponse(
+    response.status,
+    response.body,
+    200,
+    () => {
+      const verb = action === "approve" ? "Approved" : "Rejected";
+      return `${verb} approver change ${change}.\n`;
+    },
+    [target.token],
+  );
 }
 
 /** Runs one command. Usage problems and failures are thrown as CliError subclasses. */
@@ -401,6 +585,14 @@ export async function runCommand(
       return approvalSign(parsed, settings, runtime);
     case "approval submit":
       return approvalSubmit(parsed, settings, runtime);
+    case "approver list":
+      return approverList(parsed, settings, runtime);
+    case "approver propose-add":
+      return approverPropose(parsed, settings, runtime, "add");
+    case "approver propose-revoke":
+      return approverPropose(parsed, settings, runtime, "revoke");
+    case "approver submit":
+      return approverSubmit(parsed, settings, runtime);
     case "log verify":
       return logCommand("verify", parsed, runtime);
     case "log export":
