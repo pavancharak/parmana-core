@@ -22,7 +22,6 @@ Source: CLAIMS.md (commit d1d63c6), lines 2119-2136.
 - No business system calls the check, and no probe checks that a direct call is refused (G-146, G-129).
 - This change is on a branch stacked on the open pull request #448, and is not on `main` until #448 merges.
 
-
 ## Cited evidence paths
 
 - `packages/api/src/routes/inbound-checks.ts`: EXISTS
@@ -31,6 +30,6 @@ Source: CLAIMS.md (commit d1d63c6), lines 2119-2136.
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/api/tests/unit/routes/inbound-checks.test.ts` | passed | 16 | 16 | 0 |
+| Test file                                               | Status | Tests | Passed | Skipped |
+| ------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/api/tests/unit/routes/inbound-checks.test.ts` | passed | 16    | 16     | 0       |

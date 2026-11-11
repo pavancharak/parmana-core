@@ -35,7 +35,6 @@ Evidence
 - `typescript/test/Alignment.test.ts`, `python/tests/test_sdk_alignment.py`
 - `docs/site/sdks/api-coverage.mdx`, `docs/site/sdks/typescript.mdx`, `docs/site/sdks/python.mdx`; `docs/internal/VERIFICATION-GAPS.md` G-62 and G-64
 
-
 ## Cited evidence paths
 
 - `docs/internal/VERIFICATION-GAPS.md`: EXISTS
@@ -56,7 +55,7 @@ Evidence
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `python/tests/test_sdk_alignment.py` | passed | 11 | 11 | 0 |
-| `typescript/test/Alignment.test.ts` | passed | 17 | 17 | 0 |
+| Test file                            | Status | Tests | Passed | Skipped |
+| ------------------------------------ | ------ | ----- | ------ | ------- |
+| `python/tests/test_sdk_alignment.py` | passed | 11    | 11     | 0       |
+| `typescript/test/Alignment.test.ts`  | passed | 17    | 17     | 0       |

@@ -33,7 +33,6 @@ Evidence (update)
 **Update (2026-10-03, follow up):** `KmsSigner` now caches successful `GetPublicKey` and `DescribeKey` answers in memory for 5 minutes, by region and alias, shared across signer instances in one process, so repeated key discovery and verification no longer cost a KMS call each. Concurrent lookups of one key share a call; a missing key or a failed call is never cached; `Sign` is never cached. Evidence: `packages/crypto/tests/unit/kms-signer.test.ts` (5 new).
 ---
 
-
 ## Cited evidence paths
 
 - `docs/internal/VERIFICATION-GAPS.md`: EXISTS
@@ -50,9 +49,9 @@ Evidence (update)
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/api/tests/integration/rate-limit.integration.test.ts` | passed | 15 | 15 | 0 |
-| `packages/api/tests/unit/bootstrap/create-rate-limit-store.test.ts` | passed | 4 | 4 | 0 |
-| `packages/crypto/tests/unit/kms-signer.test.ts` | passed | 31 | 31 | 0 |
-| `packages/storage/tests/unit/postgres-rate-limit-store.test.ts` | passed | 3 | 3 | 0 |
+| Test file                                                           | Status | Tests | Passed | Skipped |
+| ------------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/api/tests/integration/rate-limit.integration.test.ts`     | passed | 15    | 15     | 0       |
+| `packages/api/tests/unit/bootstrap/create-rate-limit-store.test.ts` | passed | 4     | 4      | 0       |
+| `packages/crypto/tests/unit/kms-signer.test.ts`                     | passed | 31    | 31     | 0       |
+| `packages/storage/tests/unit/postgres-rate-limit-store.test.ts`     | passed | 3     | 3      | 0       |

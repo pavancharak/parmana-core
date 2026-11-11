@@ -37,7 +37,6 @@ Evidence
 
 ---
 
-
 ## Cited evidence paths
 
 - `docs/internal/rfcs/RFC-0023-Business-Validation.md`: EXISTS
@@ -61,14 +60,14 @@ Evidence
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/api/tests/integration/authority-grant-runtime.integration.test.ts` | passed | 1 | 1 | 0 |
-| `packages/api/tests/integration/authority-grants-governance.integration.test.ts` | passed | 11 | 11 | 0 |
-| `packages/api/tests/integration/policy-in-effect-authority-grant.integration.test.ts` | passed | 3 | 3 | 0 |
-| `packages/api/tests/unit/authority-grants-route-clock.test.ts` | passed | 1 | 1 | 0 |
-| `packages/policy/tests/unit/PolicyValidator-requireAuthorityGrant.test.ts` | passed | 7 | 7 | 0 |
-| `packages/runtime/tests/unit/authority-grant-evaluator.test.ts` | passed | 14 | 14 | 0 |
-| `packages/runtime/tests/unit/authority-grants-runtime.test.ts` | passed | 9 | 9 | 0 |
-| `packages/storage/tests/integration/postgres-authority-grant-repository.integration.test.ts` | passed | 6 | 0 | 6 |
-| `python/tests/test_authority_grant_api.py` | passed | 7 | 7 | 0 |
+| Test file                                                                                    | Status | Tests | Passed | Skipped |
+| -------------------------------------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/api/tests/integration/authority-grant-runtime.integration.test.ts`                 | passed | 1     | 1      | 0       |
+| `packages/api/tests/integration/authority-grants-governance.integration.test.ts`             | passed | 11    | 11     | 0       |
+| `packages/api/tests/integration/policy-in-effect-authority-grant.integration.test.ts`        | passed | 3     | 3      | 0       |
+| `packages/api/tests/unit/authority-grants-route-clock.test.ts`                               | passed | 1     | 1      | 0       |
+| `packages/policy/tests/unit/PolicyValidator-requireAuthorityGrant.test.ts`                   | passed | 7     | 7      | 0       |
+| `packages/runtime/tests/unit/authority-grant-evaluator.test.ts`                              | passed | 14    | 14     | 0       |
+| `packages/runtime/tests/unit/authority-grants-runtime.test.ts`                               | passed | 9     | 9      | 0       |
+| `packages/storage/tests/integration/postgres-authority-grant-repository.integration.test.ts` | passed | 6     | 0      | 6       |
+| `python/tests/test_authority_grant_api.py`                                                   | passed | 7     | 7      | 0       |

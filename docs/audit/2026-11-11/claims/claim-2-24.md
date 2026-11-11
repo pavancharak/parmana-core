@@ -30,7 +30,6 @@ Evidence
 
 ---
 
-
 ## Cited evidence paths
 
 - `packages/api/src/auth/StaticKeyAuthenticator.ts`: EXISTS

@@ -37,7 +37,6 @@ now also needs an explicit `PARMANA_ALLOW_UNGOVERNED_POLICY=true`. `NODE_ENV` al
 approval-record check. The policy content hash is always required, including in the relaxed mode, since the
 production bootstrap no longer sets `allowUnverifiedPolicy`.
 
-
 ## Cited evidence paths
 
 - `examples/tutorials/104-policy-governance-execution-verification/run.ts`: EXISTS
@@ -57,9 +56,9 @@ production bootstrap no longer sets `allowUnverifiedPolicy`.
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/api/tests/unit/PolicyGovernanceExecutionVerifier.test.ts` | passed | 6 | 6 | 0 |
-| `packages/api/tests/unit/bootstrap/create-policy-execution-verifier.test.ts` | passed | 4 | 4 | 0 |
-| `packages/runtime/tests/e2e/runtime.e2e.test.ts` | passed | 8 | 8 | 0 |
-| `packages/runtime/tests/unit/optional-protections-logging.test.ts` | passed | 4 | 4 | 0 |
+| Test file                                                                    | Status | Tests | Passed | Skipped |
+| ---------------------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/api/tests/unit/PolicyGovernanceExecutionVerifier.test.ts`          | passed | 6     | 6      | 0       |
+| `packages/api/tests/unit/bootstrap/create-policy-execution-verifier.test.ts` | passed | 4     | 4      | 0       |
+| `packages/runtime/tests/e2e/runtime.e2e.test.ts`                             | passed | 8     | 8      | 0       |
+| `packages/runtime/tests/unit/optional-protections-logging.test.ts`           | passed | 4     | 4      | 0       |

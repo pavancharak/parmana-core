@@ -23,7 +23,6 @@ The following claims are true only under an explicitly stated scope. The scope c
 
 ---
 
-
 ## Cited evidence paths
 
 - `python/parmana/crypto/offline_verifier.py`: EXISTS
@@ -34,7 +33,7 @@ The following claims are true only under an explicitly stated scope. The scope c
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `python/tests/test_whole_record_v3_offline.py` | passed | 3 | 3 | 0 |
-| `typescript/test/whole-record-v3-offline.test.ts` | passed | 3 | 3 | 0 |
+| Test file                                         | Status | Tests | Passed | Skipped |
+| ------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `python/tests/test_whole_record_v3_offline.py`    | passed | 3     | 3      | 0       |
+| `typescript/test/whole-record-v3-offline.test.ts` | passed | 3     | 3      | 0       |

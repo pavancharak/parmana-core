@@ -24,7 +24,6 @@ Source: CLAIMS.md (commit d1d63c6), lines 2027-2046.
 - The governance UI check validates the URL's shape only. It does not check which host the URL names. Choosing the right API host remains an operator decision.
 - Status: fixed on local branch `fix/policy-scan-and-governance-url` (commit `a8ac2961`). Not yet pushed or merged. See G-96 and G-97 in `docs/internal/VERIFICATION-GAPS.md`.
 
-
 ## Cited evidence paths
 
 - `docs/internal/VERIFICATION-GAPS.md`: EXISTS

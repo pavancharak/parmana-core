@@ -22,13 +22,12 @@ Run on 2026-10-26, Node 22.22.0: the eight files above pass, 88 of 88.
 - The approval tests cover the governance-approval flows. They do not show the same binding for every connector.
 - The audit-tamper tests cover the caller audit event and the execution intent. They do not cover every record the system writes.
 
-
 ## Cited evidence paths
 
 - `packages/api/tests/integration/kill-switch.integration.test.ts`: EXISTS
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/api/tests/integration/kill-switch.integration.test.ts` | passed | 9 | 9 | 0 |
+| Test file                                                        | Status | Tests | Passed | Skipped |
+| ---------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/api/tests/integration/kill-switch.integration.test.ts` | passed | 9     | 9      | 0       |

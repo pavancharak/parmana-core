@@ -21,7 +21,6 @@ Source: CLAIMS.md (commit d1d63c6), lines 2137-2153.
 - The check repository's SQL is tested by `supabase-inbound-check-consumption.integration.test.ts`, which passed 4 of 4 on a sandbox database with the migrations applied (2026-11-09). The application's routes are tested with an in-memory store.
 - Production: checked on 2026-11-09 with a read-only query. Production had the eight columns from migration `20261105140000`. Migration `20261108170000` (`approval_id`, `approved_key_id`) was applied on 2026-11-09 in the production SQL editor, and both columns are present and nullable. All ten columns now exist on production.
 
-
 ## Cited evidence paths
 
 - `scripts/apply-all-migrations.sql`: EXISTS
@@ -30,6 +29,6 @@ Source: CLAIMS.md (commit d1d63c6), lines 2137-2153.
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/storage/tests/integration/postgres-inbound-check-consumption.integration.test.ts` (cited as `supabase-inbound-check-consumption.integration.test.ts`; renamed) | passed | 4 | 4 | 0 |
+| Test file                                                                                                                                                                | Status | Tests | Passed | Skipped |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ | ----- | ------ | ------- |
+| `packages/storage/tests/integration/postgres-inbound-check-consumption.integration.test.ts` (cited as `supabase-inbound-check-consumption.integration.test.ts`; renamed) | passed | 4     | 4      | 0       |

@@ -24,7 +24,6 @@ Evidence
 
 ---
 
-
 ## Cited evidence paths
 
 No backticked repo path in this claim.

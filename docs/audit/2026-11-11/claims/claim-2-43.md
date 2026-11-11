@@ -34,7 +34,6 @@ Evidence
 
 ---
 
-
 ## Cited evidence paths
 
 - `docs/internal/VERIFICATION-GAPS.md`: EXISTS
@@ -54,9 +53,9 @@ Evidence
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/api/tests/unit/GovernedPolicyVersion.test.ts` | passed | 4 | 4 | 0 |
-| `packages/api/tests/unit/bootstrap/create-current-policy-version-source.test.ts` | passed | 10 | 10 | 0 |
-| `packages/capability-registry/tests/unit/CapabilityPolicyBinder.test.ts` | passed | 21 | 21 | 0 |
-| `packages/storage/tests/unit/policy-change-approval-record-most-recent-for-name.test.ts` | passed | 2 | 2 | 0 |
+| Test file                                                                                | Status | Tests | Passed | Skipped |
+| ---------------------------------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/api/tests/unit/GovernedPolicyVersion.test.ts`                                  | passed | 4     | 4      | 0       |
+| `packages/api/tests/unit/bootstrap/create-current-policy-version-source.test.ts`         | passed | 10    | 10     | 0       |
+| `packages/capability-registry/tests/unit/CapabilityPolicyBinder.test.ts`                 | passed | 21    | 21     | 0       |
+| `packages/storage/tests/unit/policy-change-approval-record-most-recent-for-name.test.ts` | passed | 2     | 2      | 0       |

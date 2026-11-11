@@ -44,7 +44,6 @@ Source: CLAIMS.md (commit d1d63c6), lines 1312-1351.
 
 Dated updates and the live-check detail are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
-
 ## Cited evidence paths
 
 - `docs/internal/adr/ADR-0012-Signed-Execution-Intent-Before-Release.md`: EXISTS
@@ -64,8 +63,8 @@ Dated updates and the live-check detail are in [CLAIMS-CHANGELOG.md](CLAIMS-CHAN
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/api/tests/integration/execution-intents.integration.test.ts` | passed | 13 | 13 | 0 |
-| `packages/crypto/tests/unit/execution-intent-crypto.test.ts` | passed | 10 | 10 | 0 |
-| `packages/runtime/tests/unit/execution-intent.test.ts` | passed | 39 | 39 | 0 |
+| Test file                                                              | Status | Tests | Passed | Skipped |
+| ---------------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/api/tests/integration/execution-intents.integration.test.ts` | passed | 13    | 13     | 0       |
+| `packages/crypto/tests/unit/execution-intent-crypto.test.ts`           | passed | 10    | 10     | 0       |
+| `packages/runtime/tests/unit/execution-intent.test.ts`                 | passed | 39    | 39     | 0       |

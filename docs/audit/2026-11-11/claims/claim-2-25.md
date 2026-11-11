@@ -20,7 +20,6 @@ Evidence
 
 Dated updates for this claim, and the detail of each review pass, are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
-
 ## Cited evidence paths
 
 - `docs/internal/VERIFICATION-GAPS.md`: EXISTS
@@ -28,6 +27,6 @@ Dated updates for this claim, and the detail of each review pass, are in [CLAIMS
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/api/tests/integration/action-without-human-approval.integration.test.ts` | passed | 4 | 4 | 0 |
+| Test file                                                                          | Status | Tests | Passed | Skipped |
+| ---------------------------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/api/tests/integration/action-without-human-approval.integration.test.ts` | passed | 4     | 4      | 0       |

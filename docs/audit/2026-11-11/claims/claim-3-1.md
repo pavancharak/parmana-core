@@ -18,7 +18,6 @@ Evidence
 
 ---
 
-
 ## Cited evidence paths
 
 - `docs/site/evaluation/audit-guide.mdx`: MISSING

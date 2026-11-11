@@ -22,7 +22,6 @@ Evidence
 
 ---
 
-
 ## Cited evidence paths
 
 - `packages/api/src/bootstrap/createNonceStore.ts`: EXISTS

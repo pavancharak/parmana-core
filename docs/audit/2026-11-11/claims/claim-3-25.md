@@ -24,7 +24,6 @@ Source: CLAIMS.md (commit d1d63c6), lines 2047-2066.
 - The entry imported `runPolicyGovernanceIntegrityCheckAtStartup` from `packages/api/dist`, a module with no source in `packages/api/src`. The import now points at the module the source builds.
 - Status: fixed on branch `fix/policy-scan-and-governance-url`. See G-98 and G-99 in `docs/internal/VERIFICATION-GAPS.md`.
 
-
 ## Cited evidence paths
 
 - `api/index.ts`: EXISTS

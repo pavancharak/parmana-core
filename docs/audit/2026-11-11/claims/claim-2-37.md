@@ -28,7 +28,6 @@ Evidence
 - Live evidence, 2026-09-20, production commit 333786a: canonical record 4965 bytes, raw signature check false, commitment signature check true, offline verifier `valid: true` against `GET /keys/default`, `verifications[0].status` `VERIFIED`, no `ValidationException` in the runtime log
 - `python/parmana/crypto/offline_verifier.py`, `python/tests/test_offline_verifier.py` (TypeScript signs a large record as a commitment and the independent Python verifier accepts it, rejects a tampered copy, and rejects a commitment signature over a small message), `scripts/generate-offline-verifier-fixture.ts`
 
-
 ## Cited evidence paths
 
 - `docs/internal/VERIFICATION-GAPS.md`: EXISTS
@@ -42,8 +41,8 @@ Evidence
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/crypto/tests/unit/kms-signer.test.ts` | passed | 31 | 31 | 0 |
-| `packages/crypto/tests/unit/signature-commitment.test.ts` | passed | 12 | 12 | 0 |
-| `python/tests/test_offline_verifier.py` | passed | 5 | 5 | 0 |
+| Test file                                                 | Status | Tests | Passed | Skipped |
+| --------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/crypto/tests/unit/kms-signer.test.ts`           | passed | 31    | 31     | 0       |
+| `packages/crypto/tests/unit/signature-commitment.test.ts` | passed | 12    | 12     | 0       |
+| `python/tests/test_offline_verifier.py`                   | passed | 5     | 5      | 0       |

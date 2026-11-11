@@ -42,7 +42,6 @@ The demo approver signs only for `sandbox:receipt`, and only the documentation s
 
 Dated operational records for the sandbox are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
-
 ## Cited evidence paths
 
 - `packages/api/src/app.ts`: EXISTS
@@ -54,7 +53,7 @@ Dated operational records for the sandbox are in [CLAIMS-CHANGELOG.md](CLAIMS-CH
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/api/tests/integration/sandbox.integration.test.ts` | passed | 17 | 17 | 0 |
-| `packages/api/tests/unit/createSandboxOptions.test.ts` | passed | 20 | 20 | 0 |
+| Test file                                                    | Status | Tests | Passed | Skipped |
+| ------------------------------------------------------------ | ------ | ----- | ------ | ------- |
+| `packages/api/tests/integration/sandbox.integration.test.ts` | passed | 17    | 17     | 0       |
+| `packages/api/tests/unit/createSandboxOptions.test.ts`       | passed | 20    | 20     | 0       |

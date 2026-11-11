@@ -52,7 +52,6 @@ Every other route, including `/` and `/version`, sits behind caller authenticati
 
 Dated updates, including the change to the example configuration and the earlier revocation gap, are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
-
 ## Cited evidence paths
 
 - `packages/api/src/app.ts`: EXISTS
@@ -70,9 +69,9 @@ Dated updates, including the change to the example configuration and the earlier
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/api/tests/integration/caller-auth.integration.test.ts` | passed | 27 | 27 | 0 |
-| `packages/api/tests/integration/postgres-caller-audit-sink.integration.test.ts` | passed | 5 | 0 | 5 |
-| `packages/api/tests/unit/bootstrap/create-caller-authenticator.test.ts` | passed | 4 | 4 | 0 |
-| `packages/api/tests/unit/routes/ready.test.ts` | passed | 10 | 10 | 0 |
+| Test file                                                                       | Status | Tests | Passed | Skipped |
+| ------------------------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/api/tests/integration/caller-auth.integration.test.ts`                | passed | 27    | 27     | 0       |
+| `packages/api/tests/integration/postgres-caller-audit-sink.integration.test.ts` | passed | 5     | 0      | 5       |
+| `packages/api/tests/unit/bootstrap/create-caller-authenticator.test.ts`         | passed | 4     | 4      | 0       |
+| `packages/api/tests/unit/routes/ready.test.ts`                                  | passed | 10    | 10     | 0       |

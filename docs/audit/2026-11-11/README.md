@@ -24,6 +24,21 @@
 - `parmana-connect` and the separately published verifier are outside the reviewed repository.
 - Commit `66c1e50` cited in G-158 is not in the reviewed clone.
 
+## How to read this folder
+
+1. Start with `register.xlsx`. The Summary sheet gives the totals. The Claims and Gaps sheets have one row per item.
+2. For detail on one item, open its file: `claims/claim-<number>.md` or `gaps/G-<number>.md`. Each file has the exact text from the project's document, the evidence checked, and the code-check result.
+3. `STALE-DOCUMENTS.md` lists statements in the project's own documents that the code or another document contradicts, with the replacement wording. It is the list of corrections the project needs to make.
+
+## Status terms
+
+- **Evidence present; cited tests pass** (claims): cited files exist and the cited test files passed in the run described above.
+- **Evidence reference missing** (claims): at least one cited file does not exist at d1d63c6. See `STALE-DOCUMENTS.md`.
+- **CONFIRMED, CONSISTENT, FIXED, CONFIRMED OPEN** (gaps): a code check was done on the gap's cited code.
+- **PARTLY CHANGED, CHANGED IN CODE, CONTRADICTED BY CODE** (gaps): the code differs from the entry's text. See the file and `STALE-DOCUMENTS.md`.
+- **CLAIMED CLOSED (mechanical check)** (gaps): only paths and tests were checked. Behaviour has not been re-read.
+- **NOT VERIFIABLE, NOT IN CORE** (gaps): needs production state or the parmana-connect repository.
+
 ## Sign-off
 
-Reviewer: ____________________  Role: ____________________  Date: ____________
+Reviewer: ____________________ Role: ____________________ Date: ____________

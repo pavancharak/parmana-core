@@ -39,7 +39,6 @@ Evidence
 
 ---
 
-
 ## Cited evidence paths
 
 - `.github/workflows/docker-image.yml`: EXISTS
@@ -68,9 +67,9 @@ Evidence
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/api/tests/unit/bootstrap/assert-storage-configured.test.ts` | passed | 6 | 6 | 0 |
-| `packages/api/tests/unit/routes/ready.test.ts` | passed | 10 | 10 | 0 |
-| `packages/shared/tests/unit/config-validation.test.ts` | passed | 49 | 49 | 0 |
-| `packages/storage/tests/unit/storage-factory.test.ts` | passed | 7 | 7 | 0 |
+| Test file                                                             | Status | Tests | Passed | Skipped |
+| --------------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/api/tests/unit/bootstrap/assert-storage-configured.test.ts` | passed | 6     | 6      | 0       |
+| `packages/api/tests/unit/routes/ready.test.ts`                        | passed | 10    | 10     | 0       |
+| `packages/shared/tests/unit/config-validation.test.ts`                | passed | 49    | 49     | 0       |
+| `packages/storage/tests/unit/storage-factory.test.ts`                 | passed | 7     | 7      | 0       |

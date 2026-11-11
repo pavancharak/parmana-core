@@ -39,7 +39,6 @@ Both are optional, so authorizations issued before they existed still verify unc
 
 Dated updates, including the parity fix for `POST /transactions` and the audit constraint fix found in a real deployment, are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
-
 ## Cited evidence paths
 
 - `packages/api/src/routes/execute.ts`: EXISTS
@@ -56,9 +55,9 @@ Dated updates, including the parity fix for `POST /transactions` and the audit c
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/api/tests/integration/caller-auth.integration.test.ts` | passed | 27 | 27 | 0 |
-| `packages/crypto/tests/unit/authorization-envelope.test.ts` | passed | 15 | 15 | 0 |
-| `packages/execution-control/tests/unit/connector-policy-granted-capability.test.ts` | passed | 3 | 3 | 0 |
-| `packages/runtime/tests/unit/execution-authorization-wiring.test.ts` | passed | 10 | 10 | 0 |
+| Test file                                                                           | Status | Tests | Passed | Skipped |
+| ----------------------------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/api/tests/integration/caller-auth.integration.test.ts`                    | passed | 27    | 27     | 0       |
+| `packages/crypto/tests/unit/authorization-envelope.test.ts`                         | passed | 15    | 15     | 0       |
+| `packages/execution-control/tests/unit/connector-policy-granted-capability.test.ts` | passed | 3     | 3      | 0       |
+| `packages/runtime/tests/unit/execution-authorization-wiring.test.ts`                | passed | 10    | 10     | 0       |

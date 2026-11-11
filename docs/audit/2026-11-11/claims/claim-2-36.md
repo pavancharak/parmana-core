@@ -36,7 +36,6 @@ Evidence
 - `packages/api/tests/unit/bootstrap/create-policy-execution-verifier.test.ts`
 - Full repo `npx tsc -b` clean and `npx vitest run`: 1871 passed, 42 skipped, 0 failed
 
-
 ## Cited evidence paths
 
 - `docs/internal/VERIFICATION-GAPS.md`: EXISTS
@@ -47,7 +46,7 @@ Evidence
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/api/tests/unit/bootstrap/create-policy-execution-verifier.test.ts` | passed | 4 | 4 | 0 |
-| `packages/execution-gateway/tests/unit/policy-binding-fail-closed.test.ts` | passed | 10 | 10 | 0 |
+| Test file                                                                    | Status | Tests | Passed | Skipped |
+| ---------------------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/api/tests/unit/bootstrap/create-policy-execution-verifier.test.ts` | passed | 4     | 4      | 0       |
+| `packages/execution-gateway/tests/unit/policy-binding-fail-closed.test.ts`   | passed | 10    | 10     | 0       |

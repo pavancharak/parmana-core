@@ -35,7 +35,6 @@ Evidence
 
 ---
 
-
 ## Cited evidence paths
 
 - `.github/workflows/server-image.yml`: EXISTS

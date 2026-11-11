@@ -29,7 +29,6 @@ Evidence
 
 ---
 
-
 ## Cited evidence paths
 
 - `packages/crypto/src/CanonicalSerializer.ts`: EXISTS
@@ -45,8 +44,8 @@ Evidence
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/crypto/tests/unit/verification-crypto-authorization.test.ts` | passed | 4 | 4 | 0 |
-| `packages/runtime/tests/unit/business-trust-record-builder.test.ts` | passed | 2 | 2 | 0 |
-| `packages/storage/tests/unit/postgres-execution-trust-record-repository.test.ts` | passed | 6 | 6 | 0 |
+| Test file                                                                        | Status | Tests | Passed | Skipped |
+| -------------------------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/crypto/tests/unit/verification-crypto-authorization.test.ts`           | passed | 4     | 4      | 0       |
+| `packages/runtime/tests/unit/business-trust-record-builder.test.ts`              | passed | 2     | 2      | 0       |
+| `packages/storage/tests/unit/postgres-execution-trust-record-repository.test.ts` | passed | 6     | 6      | 0       |

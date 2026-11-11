@@ -29,7 +29,6 @@ Evidence
 
 Dated updates for this claim are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
-
 ## Cited evidence paths
 
 - `docs/internal/VERIFICATION-GAPS.md`: EXISTS
@@ -44,8 +43,8 @@ Dated updates for this claim are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/crypto/tests/unit/key-expiry.test.ts` | passed | 7 | 7 | 0 |
-| `packages/envelope-verifier/tests/unit/envelope-verifier.test.ts` | passed | 22 | 22 | 0 |
-| `packages/runtime/tests/unit/tenant-key-resolver.test.ts` | passed | 5 | 5 | 0 |
+| Test file                                                         | Status | Tests | Passed | Skipped |
+| ----------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/crypto/tests/unit/key-expiry.test.ts`                   | passed | 7     | 7      | 0       |
+| `packages/envelope-verifier/tests/unit/envelope-verifier.test.ts` | passed | 22    | 22     | 0       |
+| `packages/runtime/tests/unit/tenant-key-resolver.test.ts`         | passed | 5     | 5      | 0       |

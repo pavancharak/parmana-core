@@ -26,7 +26,6 @@ Evidence
 
 ---
 
-
 ## Cited evidence paths
 
 - `docs/internal/VERIFICATION-GAPS.md`: EXISTS

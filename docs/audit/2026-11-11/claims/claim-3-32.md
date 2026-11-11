@@ -18,7 +18,6 @@ Source: CLAIMS.md (commit d1d63c6), lines 2154-2167.
 - No test calls `decide()` directly yet. Its behaviour is covered only through `execute()`.
 - The inbound check does not call `decide()` yet, so the policy is still not evaluated for inbound requests (G-142).
 
-
 ## Cited evidence paths
 
 - `packages/runtime/src/RuntimeEngine.ts`: EXISTS

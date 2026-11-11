@@ -41,7 +41,6 @@ Two behaviours protect the key layer. First, a key identifier cannot be used to 
 
 Dated updates, including the 2026 fix that made `KmsSigner` map key IDs to aliases and the live check against a real AWS KMS key, are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
-
 ## Cited evidence paths
 
 - `packages/crypto/src/KeyBootstrap.ts`: EXISTS
@@ -56,9 +55,9 @@ Dated updates, including the 2026 fix that made `KmsSigner` map key IDs to alias
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/crypto/tests/unit/file-key-provider.test.ts` | passed | 7 | 7 | 0 |
-| `packages/crypto/tests/unit/key-bootstrap.test.ts` | passed | 7 | 7 | 0 |
-| `packages/crypto/tests/unit/kms-signer.test.ts` | passed | 31 | 31 | 0 |
-| `packages/crypto/tests/unit/signer-bootstrap.test.ts` | passed | 8 | 8 | 0 |
+| Test file                                              | Status | Tests | Passed | Skipped |
+| ------------------------------------------------------ | ------ | ----- | ------ | ------- |
+| `packages/crypto/tests/unit/file-key-provider.test.ts` | passed | 7     | 7      | 0       |
+| `packages/crypto/tests/unit/key-bootstrap.test.ts`     | passed | 7     | 7      | 0       |
+| `packages/crypto/tests/unit/kms-signer.test.ts`        | passed | 31    | 31     | 0       |
+| `packages/crypto/tests/unit/signer-bootstrap.test.ts`  | passed | 8     | 8      | 0       |

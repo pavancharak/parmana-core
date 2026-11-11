@@ -43,7 +43,6 @@ Source: CLAIMS.md (commit d1d63c6), lines 1418-1456.
 
 Dated updates for this claim are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
-
 ## Cited evidence paths
 
 - `docs/site/concepts/human-approval.mdx`: EXISTS
@@ -61,9 +60,9 @@ Dated updates for this claim are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/approval/tests/unit/ApprovalSignalVerifier.test.ts` | passed | 34 | 34 | 0 |
-| `packages/approval/tests/unit/ApprovalVerifier.test.ts` | passed | 22 | 22 | 0 |
-| `packages/crypto/tests/unit/approval-artifact-signer.test.ts` | passed | 6 | 6 | 0 |
-| `packages/policy/tests/unit/PolicyValidator-approvalSignals.test.ts` | passed | 14 | 14 | 0 |
+| Test file                                                            | Status | Tests | Passed | Skipped |
+| -------------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/approval/tests/unit/ApprovalSignalVerifier.test.ts`        | passed | 34    | 34     | 0       |
+| `packages/approval/tests/unit/ApprovalVerifier.test.ts`              | passed | 22    | 22     | 0       |
+| `packages/crypto/tests/unit/approval-artifact-signer.test.ts`        | passed | 6     | 6      | 0       |
+| `packages/policy/tests/unit/PolicyValidator-approvalSignals.test.ts` | passed | 14    | 14     | 0       |

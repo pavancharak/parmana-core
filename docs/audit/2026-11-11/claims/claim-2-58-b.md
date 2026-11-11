@@ -15,7 +15,6 @@ Source: CLAIMS.md (commit d1d63c6), lines 1522-1532.
 - `packages/api/src/bootstrap/loadKeyMaterialFromSecretsManager.ts`
 - `packages/api/src/bootstrap/assertSigningKeyMaterialConfigured.ts` (`writeKeyMaterialJson`)
 
-
 ## Cited evidence paths
 
 - `docs/internal/runbooks/SECRETS-MANAGER-KEYS.md`: EXISTS
@@ -25,6 +24,6 @@ Source: CLAIMS.md (commit d1d63c6), lines 1522-1532.
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/api/tests/unit/bootstrap/load-key-material-secrets-manager.test.ts` | passed | 5 | 5 | 0 |
+| Test file                                                                     | Status | Tests | Passed | Skipped |
+| ----------------------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/api/tests/unit/bootstrap/load-key-material-secrets-manager.test.ts` | passed | 5     | 5      | 0       |

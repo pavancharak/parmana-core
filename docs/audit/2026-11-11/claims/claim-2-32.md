@@ -32,7 +32,6 @@ nothing remains after it to break. `CallerAuditChainVerifier.verifyChain(rows, a
 recorded outside the database. With that anchor, a chain that no longer ends at the head fails verification. Without
 an anchor the limit stands. Publishing the head to an external store is an operator step, not yet done.
 
-
 ## Cited evidence paths
 
 - `docs/site/trust-and-claims/objections-and-evidence.mdx`: MISSING
@@ -46,8 +45,8 @@ an anchor the limit stands. Publishing the head to an external store is an opera
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/api/tests/integration/postgres-caller-audit-sink.integration.test.ts` | passed | 5 | 0 | 5 |
-| `packages/api/tests/unit/postgres-caller-audit-sink.test.ts` | passed | 13 | 13 | 0 |
-| `packages/crypto/tests/unit/caller-audit-chain-verifier.test.ts` | passed | 5 | 5 | 0 |
+| Test file                                                                       | Status | Tests | Passed | Skipped |
+| ------------------------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/api/tests/integration/postgres-caller-audit-sink.integration.test.ts` | passed | 5     | 0      | 5       |
+| `packages/api/tests/unit/postgres-caller-audit-sink.test.ts`                    | passed | 13    | 13     | 0       |
+| `packages/crypto/tests/unit/caller-audit-chain-verifier.test.ts`                | passed | 5     | 5      | 0       |

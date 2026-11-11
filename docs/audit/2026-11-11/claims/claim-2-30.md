@@ -32,7 +32,6 @@ Three checks make gaps visible that were previously silent: a rule fact that is 
 
 Dated updates, including the policy changes that closed the gaps and the 2026 coverage and conflict findings, are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
-
 ## Cited evidence paths
 
 - `packages/api/src/routes/pending-policy-changes.ts`: EXISTS
@@ -45,8 +44,8 @@ Dated updates, including the policy changes that closed the gaps and the 2026 co
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/policy/tests/unit/PolicyRouter-boundSignals-coverage.test.ts` | passed | 3 | 3 | 0 |
-| `packages/policy/tests/unit/PolicyValidator.test.ts` | passed | 31 | 31 | 0 |
-| `packages/runtime/tests/unit/optional-protections-logging.test.ts` | passed | 4 | 4 | 0 |
+| Test file                                                               | Status | Tests | Passed | Skipped |
+| ----------------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/policy/tests/unit/PolicyRouter-boundSignals-coverage.test.ts` | passed | 3     | 3      | 0       |
+| `packages/policy/tests/unit/PolicyValidator.test.ts`                    | passed | 31    | 31     | 0       |
+| `packages/runtime/tests/unit/optional-protections-logging.test.ts`      | passed | 4     | 4      | 0       |

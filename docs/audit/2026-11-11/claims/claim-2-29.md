@@ -40,7 +40,6 @@ Evidence
 
 **Update (2026-10-03, follow up):** a request with no `signals` used to skip this check even when the authorization carried a `signalsHash`. It is now checked as `{}`, the value `RuntimeEngine` hashes for a transaction with no signals, so omitting signals passes only against an authorization signed over no signals, and is then still re-verified by the `SignalStateVerifier`. Evidence: `signal-freshness.test.ts` (the two new cases above).
 
-
 ## Cited evidence paths
 
 - `docs/internal/VERIFICATION-GAPS.md`: EXISTS
@@ -60,8 +59,8 @@ Evidence
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/crypto/tests/unit/authorization-envelope.test.ts` | passed | 15 | 15 | 0 |
-| `packages/execution-gateway/tests/unit/signal-freshness.test.ts` | passed | 10 | 10 | 0 |
-| `packages/runtime/tests/unit/execution-authorization-wiring.test.ts` | passed | 10 | 10 | 0 |
+| Test file                                                            | Status | Tests | Passed | Skipped |
+| -------------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/crypto/tests/unit/authorization-envelope.test.ts`          | passed | 15    | 15     | 0       |
+| `packages/execution-gateway/tests/unit/signal-freshness.test.ts`     | passed | 10    | 10     | 0       |
+| `packages/runtime/tests/unit/execution-authorization-wiring.test.ts` | passed | 10    | 10     | 0       |

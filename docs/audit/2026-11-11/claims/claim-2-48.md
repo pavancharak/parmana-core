@@ -26,7 +26,6 @@ Evidence
 - `packages/api/src/routes/policy-in-effect.ts`; `packages/policy/src/policySignalRequirements.ts` (also used by `PolicyValidator`)
 - `openapi/openapi.yaml` (`getPolicyInEffect`); `docs/site/agents/integrate.mdx` step 3
 
-
 ## Cited evidence paths
 
 - `docs/site/agents/integrate.mdx`: EXISTS
@@ -39,8 +38,8 @@ Evidence
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/policy/tests/unit/policySignalRequirements.test.ts` | passed | 3 | 3 | 0 |
-| `python/tests/test_sdk_alignment.py` | passed | 11 | 11 | 0 |
-| `typescript/test/Alignment.test.ts` | passed | 17 | 17 | 0 |
+| Test file                                                     | Status | Tests | Passed | Skipped |
+| ------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/policy/tests/unit/policySignalRequirements.test.ts` | passed | 3     | 3      | 0       |
+| `python/tests/test_sdk_alignment.py`                          | passed | 11    | 11     | 0       |
+| `typescript/test/Alignment.test.ts`                           | passed | 17    | 17     | 0       |

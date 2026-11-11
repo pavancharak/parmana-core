@@ -42,7 +42,6 @@ Source: CLAIMS.md (commit d1d63c6), lines 585-622.
 
 Dated updates, the production history of these policies, and the approver records are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
-
 ## Cited evidence paths
 
 - `docs/internal/VERIFICATION-GAPS.md`: EXISTS
@@ -62,10 +61,10 @@ Dated updates, the production history of these policies, and the approver record
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/api/tests/integration/pending-policy-changes-governance.integration.test.ts` | passed | 33 | 33 | 0 |
-| `packages/policy/tests/unit/ApprovalBackedPolicies.test.ts` | passed | 84 | 84 | 0 |
-| `packages/policy/tests/unit/PolicyValidator.test.ts` | passed | 31 | 31 | 0 |
-| `packages/policy/tests/unit/ReferencePolicies.test.ts` | passed | 27 | 27 | 0 |
-| `packages/runtime/tests/unit/runtime.test.ts` | passed | 4 | 4 | 0 |
+| Test file                                                                              | Status | Tests | Passed | Skipped |
+| -------------------------------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/api/tests/integration/pending-policy-changes-governance.integration.test.ts` | passed | 33    | 33     | 0       |
+| `packages/policy/tests/unit/ApprovalBackedPolicies.test.ts`                            | passed | 84    | 84     | 0       |
+| `packages/policy/tests/unit/PolicyValidator.test.ts`                                   | passed | 31    | 31     | 0       |
+| `packages/policy/tests/unit/ReferencePolicies.test.ts`                                 | passed | 27    | 27     | 0       |
+| `packages/runtime/tests/unit/runtime.test.ts`                                          | passed | 4     | 4      | 0       |

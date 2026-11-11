@@ -29,7 +29,6 @@ Evidence
 
 ---
 
-
 ## Cited evidence paths
 
 - `docs/internal/VERIFICATION-GAPS.md`: EXISTS
@@ -44,8 +43,8 @@ Evidence
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/api/tests/unit/bootstrap/create-signing-readiness.test.ts` | passed | 4 | 4 | 0 |
-| `packages/crypto/tests/unit/signing-probe.test.ts` | passed | 3 | 3 | 0 |
-| `packages/runtime/tests/unit/signing-readiness.test.ts` | passed | 5 | 5 | 0 |
+| Test file                                                            | Status | Tests | Passed | Skipped |
+| -------------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/api/tests/unit/bootstrap/create-signing-readiness.test.ts` | passed | 4     | 4      | 0       |
+| `packages/crypto/tests/unit/signing-probe.test.ts`                   | passed | 3     | 3      | 0       |
+| `packages/runtime/tests/unit/signing-readiness.test.ts`              | passed | 5     | 5      | 0       |

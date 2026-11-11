@@ -12,7 +12,6 @@ Source: CLAIMS.md (commit d1d63c6), lines 545-552.
 
 **Scope:** distinct credentials, not proven distinct people. Keys listed in code still change only by deploy. An operator with database access can bypass the API. Not live until the migration is applied in production.
 
-
 ## Cited evidence paths
 
 - `packages/api/src/routes/approval-issuers.ts`: EXISTS
@@ -20,6 +19,6 @@ Source: CLAIMS.md (commit d1d63c6), lines 545-552.
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/storage/tests/integration/postgres-approval-issuer-repository.integration.test.ts` (cited as `supabase-approval-issuer-repository.integration.test.ts`; renamed) | passed | 5 | 5 | 0 |
+| Test file                                                                                                                                                                  | Status | Tests | Passed | Skipped |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/storage/tests/integration/postgres-approval-issuer-repository.integration.test.ts` (cited as `supabase-approval-issuer-repository.integration.test.ts`; renamed) | passed | 5     | 5      | 0       |

@@ -32,7 +32,6 @@ Evidence
 
 ---
 
-
 ## Cited evidence paths
 
 - `api_key`: MISSING
@@ -50,7 +49,7 @@ Evidence
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `python/tests/test_quickstart_example.py` | passed | 1 | 1 | 0 |
-| `typescript/test/integration/examples.integration.test.ts` | passed | 3 | 3 | 0 |
+| Test file                                                  | Status | Tests | Passed | Skipped |
+| ---------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `python/tests/test_quickstart_example.py`                  | passed | 1     | 1      | 0       |
+| `typescript/test/integration/examples.integration.test.ts` | passed | 3     | 3      | 0       |

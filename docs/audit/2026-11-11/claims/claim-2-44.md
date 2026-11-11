@@ -39,7 +39,6 @@ Every approve rule in these policies requires an approval-backed fact to be true
 
 Dated updates and the production approval history for these policies are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md). The text this section had before this rewrite is in the git history of `main`.
 
-
 ## Cited evidence paths
 
 - `examples/tutorials/119-human-approval-for-one-action`: EXISTS
@@ -53,9 +52,9 @@ Dated updates and the production approval history for these policies are in [CLA
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/api/tests/unit/connector-policies-not-self-authorizing.test.ts` | passed | 1 | 1 | 0 |
-| `packages/approval/tests/unit/injected-instruction-cannot-approve.test.ts` | passed | 6 | 6 | 0 |
-| `packages/policy/tests/unit/ApprovalBackedPolicies.test.ts` | passed | 84 | 84 | 0 |
-| `packages/policy/tests/unit/CustomerRefundPolicy120.test.ts` | passed | 11 | 11 | 0 |
+| Test file                                                                  | Status | Tests | Passed | Skipped |
+| -------------------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/api/tests/unit/connector-policies-not-self-authorizing.test.ts`  | passed | 1     | 1      | 0       |
+| `packages/approval/tests/unit/injected-instruction-cannot-approve.test.ts` | passed | 6     | 6      | 0       |
+| `packages/policy/tests/unit/ApprovalBackedPolicies.test.ts`                | passed | 84    | 84     | 0       |
+| `packages/policy/tests/unit/CustomerRefundPolicy120.test.ts`               | passed | 11    | 11     | 0       |

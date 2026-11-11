@@ -189,7 +189,6 @@ Every public technical claim should be traceable to:
 
 This discipline ensures that Parmana's public positioning remains aligned with its implementation and verifiable technical capabilities.
 
-
 ## Cited evidence paths
 
 - `docs/internal/adr/ADR-0009-KMS-Secrets-And-Connector-Signature-Hardening.md`: EXISTS

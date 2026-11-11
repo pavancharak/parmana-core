@@ -57,7 +57,6 @@ packages/execution-gateway/tests/unit/evidence-hashing.test.ts and a real live e
 
 ---
 
-
 ## Cited evidence paths
 
 No backticked repo path in this claim.

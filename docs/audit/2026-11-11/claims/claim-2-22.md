@@ -25,7 +25,6 @@ Evidence
 
 Dated updates for this claim are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
-
 ## Cited evidence paths
 
 - `packages/capability-registry`: EXISTS
@@ -36,7 +35,7 @@ Dated updates for this claim are in [CLAIMS-CHANGELOG.md](CLAIMS-CHANGELOG.md).
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/capability-registry/tests/unit/CapabilityPolicyBinder.test.ts` | passed | 21 | 21 | 0 |
-| `packages/capability-registry/tests/unit/ExternalPolicyBinding.test.ts` | passed | 7 | 7 | 0 |
+| Test file                                                                | Status | Tests | Passed | Skipped |
+| ------------------------------------------------------------------------ | ------ | ----- | ------ | ------- |
+| `packages/capability-registry/tests/unit/CapabilityPolicyBinder.test.ts` | passed | 21    | 21     | 0       |
+| `packages/capability-registry/tests/unit/ExternalPolicyBinding.test.ts`  | passed | 7     | 7      | 0       |

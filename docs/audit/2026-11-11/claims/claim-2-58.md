@@ -38,7 +38,6 @@ Source: CLAIMS.md (commit d1d63c6), lines 839-872.
 
 The gap record is G-122 in `docs/internal/VERIFICATION-GAPS.md`.
 
-
 ## Cited evidence paths
 
 - `docs/internal/VERIFICATION-GAPS.md`: EXISTS
@@ -50,8 +49,8 @@ The gap record is G-122 in `docs/internal/VERIFICATION-GAPS.md`.
 
 ## Test results from the full run (vitest, 403 files, 0 failed; run with PostgreSQL 16 test database and migrations applied)
 
-| Test file | Status | Tests | Passed | Skipped |
-|---|---|---|---|---|
-| `packages/api/tests/integration/kill-switch.integration.test.ts` | passed | 9 | 9 | 0 |
-| `packages/api/tests/integration/postgres-kill-switch.integration.test.ts` | passed | 6 | 0 | 6 |
-| `packages/api/tests/unit/KillSwitchService.test.ts` | passed | 10 | 10 | 0 |
+| Test file                                                                 | Status | Tests | Passed | Skipped |
+| ------------------------------------------------------------------------- | ------ | ----- | ------ | ------- |
+| `packages/api/tests/integration/kill-switch.integration.test.ts`          | passed | 9     | 9      | 0       |
+| `packages/api/tests/integration/postgres-kill-switch.integration.test.ts` | passed | 6     | 0      | 6       |
+| `packages/api/tests/unit/KillSwitchService.test.ts`                       | passed | 10    | 10     | 0       |
