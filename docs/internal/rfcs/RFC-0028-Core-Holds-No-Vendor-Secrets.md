@@ -14,21 +14,22 @@ Related: ADR-0018 (connectors outside core), THREAT-MODEL.md A5, A9, §9, RFC-00
 
 # Current status
 
-| Item | State on `main` | Evidence |
-| --- | --- | --- |
-| Core registers no built-in vendor connector | Done | `packages/api/src/bootstrap/createConnectorRegistry.ts` registers only the test fixture and external connectors |
-| Core reads no vendor credential variable, in any mode | Done in code | `tests/architecture/core-holds-no-vendor-credentials.test.ts` (PR #563, commit `fe18086`) |
-| Startup refusal when a vendor variable is present | Not built | The architecture test covers the code, not the running environment |
-| Each connector is its own service with its own identity | Not built | Connectors run as one Vercel deployment in `parmana-connectors` |
-| Each connector reads its secret at call time from a secrets store | Not built | Secrets store not chosen (open question 1) |
-| Each connector sits on its own network segment | Not built | Needs cloud accounts and network setup, which are operator decisions |
-| One Razorpay release run end to end through the separate service | Not run | Razorpay test mode passed 4 of 4 checks, without a signed release through the deployed service |
+| Item                                                              | State on `main` | Evidence                                                                                                        |
+| ----------------------------------------------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------- |
+| Core registers no built-in vendor connector                       | Done            | `packages/api/src/bootstrap/createConnectorRegistry.ts` registers only the test fixture and external connectors |
+| Core reads no vendor credential variable, in any mode             | Done in code    | `tests/architecture/core-holds-no-vendor-credentials.test.ts` (PR #563, commit `fe18086`)                       |
+| Startup refusal when a vendor variable is present                 | Not built       | The architecture test covers the code, not the running environment                                              |
+| Each connector is its own service with its own identity           | Not built       | Connectors run as one Vercel deployment in `parmana-connectors`                                                 |
+| Each connector reads its secret at call time from a secrets store | Not built       | Secrets store not chosen (open question 1)                                                                      |
+| Each connector sits on its own network segment                    | Not built       | Needs cloud accounts and network setup, which are operator decisions                                            |
+| One Razorpay release run end to end through the separate service  | Not run         | Razorpay test mode passed 4 of 4 checks, without a signed release through the deployed service                  |
 
 **What this means.** The code guard shows that core cannot read a vendor credential by accident. It does not
 isolate anything at runtime. A process on the same host can still read a secret if one is placed in its
 environment, so G-128 stays open until the runtime items above are built and the Razorpay run is recorded.
 
 **What is blocking the open items.**
+
 - The secrets store choice (open question 1).
 - Where each connector service runs, and in which account or project (tier, below).
 - Cloud accounts and network segments, which an operator creates.
@@ -83,11 +84,13 @@ and its own secret, not one deployment per connector.
 - **Self-hosted:** one Compose file with one container per connector, each with its own Docker secret.
 
 **Pros**
+
 - Lowest cost and the fewest deployment units.
 - Core is still isolated from every vendor secret.
 - Setup is short: one service, a few roles, a few secrets.
 
 **Cons**
+
 - A compromise of the connector service's host or runtime can reach every connector on it. Per-process
   identity limits the damage only if the platform enforces it.
 - One deployment to update, so one bad release affects every connector.
@@ -109,11 +112,13 @@ segments, and rotation on a schedule.
   mounted into that container only.
 
 **Pros**
+
 - A compromised connector reaches only its own vendor's secret and API.
 - A bad release affects one connector, not all of them.
 - Per-connector logs and alerts make failures easier to trace.
 
 **Cons**
+
 - More deployments, roles and network rules to write and keep correct.
 - Rotation and access reviews multiply by connector count.
 - Higher monthly cost for secret reads, logs and per-deployment resources.
@@ -133,12 +138,14 @@ every secret read.
 - **Review:** access reviews on a fixed schedule, and an independent review each year.
 
 **Pros**
+
 - A compromise of core's account does not reach vendor secrets, and a compromise of one connector host
   does not reach the others.
 - Signed secret-read logs give evidence for audits and for incident response.
 - Meets the strongest separation most regulators and enterprise buyers ask about.
 
 **Cons**
+
 - The highest cost: multiple accounts, per-connector hosts, audit storage, and reviewers.
 - Cross-account access needs its own design and its own review.
 - Slower to change, since a new connector goes through account, role and network approval.
