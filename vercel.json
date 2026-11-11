@@ -1,7 +1,6 @@
 {
   "buildCommand": "npm run openapi && node node_modules/typescript7/bin/tsc -b",
   "installCommand": "npm install --include=dev",
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':(exclude)docs/internal' ':(exclude)*.md' && exit 0 || exit 1",
   "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
   "functions": {
     "api/index.ts": {
