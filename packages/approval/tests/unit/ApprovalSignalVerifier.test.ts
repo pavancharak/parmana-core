@@ -30,6 +30,7 @@ function setup() {
         keyId: "approver-1-key-1",
         publicKey: approverKeys.publicKey,
         revoked: false,
+        capabilities: ["github:pr-merge", "paytm:refund"],
       },
     ]),
     nonceStore,

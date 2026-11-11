@@ -13,6 +13,7 @@ describe("StaticApprovalIssuerRegistry", () => {
         keyId: "key-1",
         publicKey,
         revoked: false,
+        capabilities: ["hubspot:deal-update"],
       },
     ]);
 

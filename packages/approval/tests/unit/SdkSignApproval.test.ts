@@ -28,6 +28,7 @@ describe("SDK signApproval() accepted by the server", () => {
           keyId: "manager-a-key-1",
           publicKey,
           revoked: false,
+          capabilities: ["paytm:refund"],
         },
       ]),
       nonceStore: new MemoryNonceStore(),

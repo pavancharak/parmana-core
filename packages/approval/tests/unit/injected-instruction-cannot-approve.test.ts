@@ -39,6 +39,7 @@ function setup() {
         keyId: "approver-1-key-1",
         publicKey: approverKeys.publicKey,
         revoked: false,
+        capabilities: ["paytm:refund"],
       },
     ]),
     nonceStore: new MemoryNonceStore(),

@@ -20,6 +20,12 @@ export interface TrustedApprovalIssuer {
   readonly keyId: string;
   readonly publicKey: KeyObject;
   readonly revoked: boolean;
+
+  /**
+   * The capabilities this approver may approve (G-50). An approval
+   * for any other capability is refused. An empty list grants nothing.
+   */
+  readonly capabilities: readonly string[];
 }
 
 /**
@@ -32,6 +38,12 @@ export interface TrustedApprovalIssuer {
 export interface ResolvedApprovalIssuer {
   readonly publicKey: KeyObject;
   readonly revoked: boolean;
+
+  /**
+   * The capabilities this approver may approve (G-50). An approval for
+   * any other capability is refused. An empty list grants nothing.
+   */
+  readonly capabilities: readonly string[];
 }
 
 /**
@@ -91,7 +103,11 @@ export class StaticApprovalIssuerRegistry implements ApprovalIssuerRegistry {
       return undefined;
     }
 
-    return { publicKey: issuer.publicKey, revoked: issuer.revoked };
+    return {
+      publicKey: issuer.publicKey,
+      revoked: issuer.revoked,
+      capabilities: issuer.capabilities,
+    };
   }
 
   /**
