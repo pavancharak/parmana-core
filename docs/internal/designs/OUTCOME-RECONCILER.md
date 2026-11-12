@@ -82,7 +82,11 @@ Rows are only reconciled after their authorization has expired (`expires_at` in 
 
 ## Open questions
 
-1. Which connectors exist today, and which can read back the effect of an authorization? This is needed before step 4 can be sized.
+1. **Answered (survey on this branch).** No connector can read back the effect of an authorization today.
+   - The connector contract in `packages/execution-control/src/SecureConnector.ts` has one method, `execute`. Nothing else is required of a connector, and nothing in `packages/connector-sdk` or the runtime provides a read.
+   - Production capabilities are external endpoints registered through the connector repository (ADR-0013), and each endpoint is run by its operator. Parmana has no read path into them.
+   - Under this design every existing connector therefore answers `unknown`, so every `in_flight` row is a person's to resolve.
+   - A reconciler can still ship (plan step 3), because it reports rows and changes none. Read-backs need a contract change first: an optional `checkEffect(authorizationId)` on the external endpoint contract, specified and implemented by each endpoint's operator. That is a decision for the repository owner, and it should be made before plan step 4.
 2. Should `not_applied` delete the row or only mark it `failed`? The design says `failed`, which keeps the nonce spent. Is that acceptable for every case?
 3. Who may resolve a row by hand? One operator, or two?
 4. What is the reconciler's threshold? The authorization's `expiresAt` is the natural choice, but it may be too late for a connector with a slow read-back.
