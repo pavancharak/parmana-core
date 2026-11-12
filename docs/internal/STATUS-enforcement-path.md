@@ -48,8 +48,13 @@ Items 1 to 3 are decisions for the owner. Item 4 waits on operating data.
 
 - Verified locally, on Linux with Node 24: the workspace build and typecheck (`tsc -b`), the examples runner, and the unit suites for each changed package. Each fix has a test that fails when the fix is removed.
 - The report command was run against a scratch PostgreSQL server with seeded rows. It listed the expired in-flight row and changed none of the rows.
-- Not verified locally: the full `npm test` suite, which needs PostgreSQL on port 55432. CI runs it on each pull request.
-- The CLI key tests were fixed for Windows by construction, since the test and the command use the same `join`. They were not run on Windows from the sandbox.
+- **Full `npm test`, Linux sandbox** (Node 24.22.3, local PostgreSQL 16 on port 55432 with `scripts/apply-all-migrations.sql` applied): 415 test files passed and 1 skipped; 3,936 tests passed and 1 skipped. The skip is the ML-DSA CI test.
+- **Full `npm test`, Windows** (local Docker database, `[test-database] local database`): 415 test files passed and 1 skipped; 3,931 tests passed and 6 skipped. The 6 skips are environment gates, not failures:
+  - 5 POSIX file-mode tests (owner-only key files) in `scripts/tests/generate-api-key.test.ts` and `tests/scripts/key-files.test.ts`. Windows does not enforce POSIX modes, so they run on Linux and CI.
+  - 1 ML-DSA-65 CI test in `packages/crypto/tests/unit/ml-dsa-required-on-ci.test.ts`, which is meant to run on CI's Node 24 runner.
+- **CLI key tests on Windows:** `packages/cli/tests/keys.test.ts` passes all 7 tests on Windows. This closes the open Windows item.
+- **Pre-push hook on Windows** was not run as a hook in this record. Its test database is the same local Docker database the suite used above.
+- The sandbox does not run Docker. Its PostgreSQL 16 server was started by hand for the run above.
 
 ## Release-check reorder (option A)
 
