@@ -48,3 +48,15 @@ The authenticity checks stay before any side effect. Only the order of the two n
 
 - **Option A (recommended): reorder** as proposed, after the threat tests exist.
 - **Option B: keep the order** and document that an unregistered action spends its authorization, with the refusal recorded as `failed`.
+
+## Threat tests (written before any reorder)
+
+These tests pin the properties the reorder must keep. They pass on the current order and must keep passing after it:
+
+- `packages/execution-control/tests/unit/release-order-threats.test.ts`:
+  - an unauthenticated caller never reaches the connector lookup;
+  - a release the verifier refuses creates no session and calls no connector;
+  - a `todo` for the one property that only option A can add: a corrected registration releases the same authorization.
+- `packages/execution-gateway/tests/unit/release-order-threats.test.ts`: a forged request for an unregistered action is refused before the execution-control service, and its nonce stays unused.
+
+Checked by moving the connector lookup ahead of authentication: both execution-control threat tests fail.

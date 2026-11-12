@@ -1,0 +1,90 @@
+import { describe, expect, it, vi } from "vitest";
+
+import type { ExecutableContent } from "@parmana/shared";
+
+import { ExecutionControlService } from "../../src/index.js";
+
+/**
+ * Threat tests for reordering the release checks (docs/internal/designs/RELEASE-CHECK-ORDER.md).
+ * These pin properties that must hold under the current order and under the proposed
+ * order (authentication, lookup, verifier). They must keep passing across the reorder.
+ */
+
+const content: ExecutableContent = {
+  businessTransactionId: "txn-threat-1",
+  action: "NotRegistered",
+  target: "stripe/account/1",
+  parameters: {},
+};
+
+function release() {
+  return {
+    authorization: {} as never,
+    executableContent: content,
+    verifiedTransaction: {
+      authorizationVerified: true,
+      executableContentVerified: true,
+      replayCheckPassed: true,
+    },
+    executionTimestamp: new Date().toISOString(),
+  };
+}
+
+function serviceWith(options: {
+  authenticates: boolean;
+  verifyRelease: () => Promise<void>;
+}) {
+  const registry = {
+    resolveCapability: vi.fn(async () => {
+      throw new Error("No connector registered for action: NotRegistered.");
+    }),
+  };
+  const sessions = { create: vi.fn() };
+  const service = new ExecutionControlService({
+    verifyRelease: options.verifyRelease,
+    gatewayIdentity: {} as never,
+    authenticator: {
+      authenticateGateway: () => options.authenticates,
+    } as never,
+    registry: registry as never,
+    sessions: sessions as never,
+    audit: { record: vi.fn() } as never,
+    sessionIssuanceAuthentication: {},
+  });
+  return { service, registry, sessions };
+}
+
+describe("release order threats", () => {
+  it("an unauthenticated caller never reaches the connector lookup, so it learns nothing about registrations", async () => {
+    const { service, registry } = serviceWith({
+      authenticates: false,
+      verifyRelease: async () => {},
+    });
+
+    await expect(service.execute(release() as never, {})).rejects.toThrow(
+      "rejected unauthenticated Gateway",
+    );
+    expect(registry.resolveCapability).not.toHaveBeenCalled();
+  });
+
+  it("a release the verifier refuses creates no session and calls no connector", async () => {
+    const { service, registry, sessions } = serviceWith({
+      authenticates: true,
+      verifyRelease: async () => {
+        throw new Error(
+          "Execution Control refused release: authorization did not verify.",
+        );
+      },
+    });
+
+    await expect(service.execute(release() as never, {})).rejects.toThrow(
+      "did not verify",
+    );
+    expect(sessions.create).not.toHaveBeenCalled();
+    expect(registry.resolveCapability).toHaveBeenCalledTimes(0);
+  });
+
+  it.todo(
+    "after option A: a corrected registration releases the same authorization, because an unregistered action does not spend its nonce",
+  );
+});
