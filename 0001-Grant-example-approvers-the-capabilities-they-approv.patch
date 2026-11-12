@@ -1,0 +1,186 @@
+From e3c61ff9f55eea413a2cadb6de15c87ef72819df Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 11 Nov 2026 17:20:34 +0000
+Subject: [PATCH] Grant example approvers the capabilities they approve
+
+Since G-50, an approval issuer must list the capabilities it may approve.
+The examples' issuers did not, so every approval check threw
+'Cannot read properties of undefined' and 66 of the example scripts failed,
+including on main. Grant each example issuer the actions its positive cases
+approve. Negative cases keep their intended issuers.
+
+Co-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_016dzNudYV8HccMe3aYMdNLD
+Signed-off-by: Claude <noreply@anthropic.com>
+---
+ examples/shared/helpers/demo-approval.ts      | 29 ++++++++++++++++++-
+ .../119-human-approval-for-one-action/run.ts  |  7 ++++-
+ .../95-approval-verifier-generic/run.ts       | 12 ++++++++
+ 3 files changed, 46 insertions(+), 2 deletions(-)
+
+diff --git a/examples/shared/helpers/demo-approval.ts b/examples/shared/helpers/demo-approval.ts
+index 6dad48c..4c5f8cd 100644
+--- a/examples/shared/helpers/demo-approval.ts
++++ b/examples/shared/helpers/demo-approval.ts
+@@ -40,12 +40,39 @@ const policiesDirectory = path.resolve(
+   "../../../policies",
+ );
+ 
++/**
++ * The actions the demo approver may approve (G-50: an approval is only
++ * accepted for a capability the approver is granted). Covers every action the
++ * examples approve through withDemoApproval.
++ */
++const DEMO_CAPABILITIES = [
++  "release-payment",
++  "vendor-payment",
++  "reject",
++  "approve",
++  "expense-approval",
++  "purchase-order",
++  "payments:execute",
++  "PAY_VENDOR",
++  "test:fixture-execute",
++  "tutorial:noop",
++  "tutorial:read-report",
++  "api-key-issuance",
++  "erp:invoice-pay",
++  "erp:record-update",
++] as const;
++
+ /** Trusts DEMO_APPROVER only. Pass to createApplication(). */
+ export function demoApprovalVerifier(): ApprovalVerifier {
+   return new ApprovalVerifier({
+     crypto: APPROVAL_ARTIFACT_CRYPTO_PROVIDER,
+     issuerRegistry: new StaticApprovalIssuerRegistry([
+-      { ...DEMO_APPROVER, publicKey: keys.publicKey, revoked: false },
++      {
++        ...DEMO_APPROVER,
++        publicKey: keys.publicKey,
++        revoked: false,
++        capabilities: DEMO_CAPABILITIES,
++      },
+     ]),
+     nonceStore: new MemoryNonceStore(),
+   });
+diff --git a/examples/tutorials/119-human-approval-for-one-action/run.ts b/examples/tutorials/119-human-approval-for-one-action/run.ts
+index 0c63b1d..540fb52 100644
+--- a/examples/tutorials/119-human-approval-for-one-action/run.ts
++++ b/examples/tutorials/119-human-approval-for-one-action/run.ts
+@@ -69,7 +69,12 @@ const MANAGER = { approverId: "manager-priya", keyId: "manager-priya-key-1" };
+ const approvalVerifier = new ApprovalVerifier({
+   crypto: APPROVAL_ARTIFACT_CRYPTO_PROVIDER,
+   issuerRegistry: new StaticApprovalIssuerRegistry([
+-    { ...MANAGER, publicKey: manager.publicKey, revoked: false },
++    {
++      ...MANAGER,
++      publicKey: manager.publicKey,
++      revoked: false,
++      capabilities: ["erp:invoice-pay"],
++    },
+   ]),
+   nonceStore: new MemoryNonceStore(),
+ });
+diff --git a/examples/tutorials/95-approval-verifier-generic/run.ts b/examples/tutorials/95-approval-verifier-generic/run.ts
+index 337dccb..60a0f26 100644
+--- a/examples/tutorials/95-approval-verifier-generic/run.ts
++++ b/examples/tutorials/95-approval-verifier-generic/run.ts
+@@ -81,6 +81,7 @@ console.log("--------------------------------------------------");
+       keyId: "manager-jane-key-1",
+       publicKey,
+       revoked: false,
++      capabilities: ["erp:record-update", "erp:invoice-pay"],
+     },
+   ]);
+   const verifier = new ApprovalVerifier({
+@@ -117,6 +118,7 @@ console.log("--------------------------------------------------");
+       keyId: "manager-jane-key-1",
+       publicKey,
+       revoked: false,
++      capabilities: ["erp:record-update", "erp:invoice-pay"],
+     },
+   ]);
+   const verifier = new ApprovalVerifier({
+@@ -165,6 +167,7 @@ console.log("--------------------------------------------------");
+       keyId: "manager-jane-key-1",
+       publicKey,
+       revoked: true,
++      capabilities: ["erp:record-update", "erp:invoice-pay"],
+     },
+   ]);
+   const verifier = new ApprovalVerifier({
+@@ -197,6 +200,7 @@ console.log("--------------------------------------------------");
+       keyId: "manager-jane-key-1",
+       publicKey,
+       revoked: false,
++      capabilities: ["erp:record-update", "erp:invoice-pay"],
+     },
+   ]);
+   const verifier = new ApprovalVerifier({
+@@ -235,6 +239,7 @@ console.log("--------------------------------------------------");
+       keyId: "manager-jane-key-1",
+       publicKey: legitimate.publicKey,
+       revoked: false,
++      capabilities: ["erp:record-update", "erp:invoice-pay"],
+     },
+   ]);
+   const verifier = new ApprovalVerifier({
+@@ -269,6 +274,7 @@ console.log("--------------------------------------------------");
+       keyId: "manager-jane-key-1",
+       publicKey,
+       revoked: false,
++      capabilities: ["erp:record-update", "erp:invoice-pay"],
+     },
+   ]);
+   const verifier = new ApprovalVerifier({
+@@ -306,6 +312,7 @@ console.log("--------------------------------------------------");
+       keyId: "manager-jane-key-1",
+       publicKey,
+       revoked: false,
++      capabilities: ["erp:record-update", "erp:invoice-pay"],
+     },
+   ]);
+   const verifier = new ApprovalVerifier({
+@@ -336,6 +343,7 @@ console.log("--------------------------------------------------");
+       keyId: "manager-jane-key-1",
+       publicKey,
+       revoked: false,
++      capabilities: ["erp:record-update", "erp:invoice-pay"],
+     },
+   ]);
+   const verifier = new ApprovalVerifier({
+@@ -366,6 +374,7 @@ console.log("--------------------------------------------------");
+       keyId: "manager-jane-key-1",
+       publicKey,
+       revoked: false,
++      capabilities: ["erp:record-update", "erp:invoice-pay"],
+     },
+   ]);
+   const verifier = new ApprovalVerifier({
+@@ -411,6 +420,7 @@ console.log("--------------------------------------------------");
+       keyId: "manager-jane-key-1",
+       publicKey,
+       revoked: false,
++      capabilities: ["erp:record-update", "erp:invoice-pay"],
+     },
+   ]);
+   const verifier = new ApprovalVerifier({
+@@ -442,6 +452,7 @@ console.log("--------------------------------------------------");
+       keyId: "manager-jane-key-1",
+       publicKey,
+       revoked: false,
++      capabilities: ["erp:record-update", "erp:invoice-pay"],
+     },
+   ]);
+   const verifier = new ApprovalVerifier({
+@@ -482,6 +493,7 @@ console.log("--------------------------------------------------");
+       keyId: "manager-jane-key-1",
+       publicKey,
+       revoked: false,
++      capabilities: ["erp:record-update", "erp:invoice-pay"],
+     },
+   ]);
+   const sharedNonceStore = new MemoryNonceStore();
+-- 
+2.43.0
+
