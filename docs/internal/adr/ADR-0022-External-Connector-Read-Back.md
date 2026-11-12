@@ -1,8 +1,8 @@
 # ADR-0022: External Connector Read-Back
 
-**Status:** Proposed. Not accepted. Two decisions below need the repository owner's answer before any step is built.
+**Status:** Accepted with the recommended options for D1 and D2 (owner answer: "yes", 2026-11-12). The plan below has not started.
 
-**Date:** Proposed 2026-11-12.
+**Date:** Proposed 2026-11-12. Accepted 2026-11-12.
 
 **Relates to:** ADR-0013 (the external connector contract this extends), ADR-0018 (connectors outside core), `docs/internal/designs/OUTCOME-RECONCILER.md` (the reconciler this serves, including the connector survey and the latency measurement), `docs/guides/enforcement-path.md` section 4 and section 11 (the `in_flight` outcome record).
 
@@ -28,14 +28,14 @@ Add an optional operation to the external connector contract:
 
 ## Decisions for the owner
 
-### D1. Is the signed answer mandatory?
+### D1. Is the signed answer mandatory? **Decided: Option A.**
 
 ADR-0013 makes the endpoint's signature on its answer optional, and records it when present. A check answer would cause Parmana to write a record, so the question is whether an unsigned answer can count.
 
 - **Option A (recommended): mandatory.** An unsigned or wrongly signed check answer is treated as `unknown`. Parmana never records `applied` or `not_applied` from a claim it cannot attribute to the endpoint.
 - **Option B: optional.** An unsigned answer is recorded as the endpoint's claim, as the release answer is today. This is simpler for operators, but a record in the audit trail would rest on an answer no one can attribute.
 
-### D2. Must the endpoint record intent before it acts?
+### D2. Must the endpoint record intent before it acts? **Decided: Option A.**
 
 A `not_applied` is only safe if the endpoint can prove the action never ran. That holds only if the endpoint writes a record of the attempt before it acts. If it crashes between acting and recording, it has nothing to answer from.
 
