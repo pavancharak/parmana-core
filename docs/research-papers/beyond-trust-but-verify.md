@@ -58,25 +58,29 @@ A system can possess the capability to perform an action without possessing the 
 
 ## 2. What the report and California's framework establish
 
-In *Trust But Verify: Implementing Frontier AI Policy in California and Beyond*, Scott R. Singer examines how frontier AI policy can move beyond voluntary commitments toward transparency, assessment and accountability [1]. The report builds on the June 2025 *California Report on Frontier AI Policy* [2], whose "trust but verify" approach relies on developers' technical knowledge while ensuring that their claims can be independently validated [2].
+In *Trust But Verify: Implementing Frontier AI Policy in California and Beyond*, Scott R. Singer and co-authors examine how frontier AI policy can move beyond voluntary commitments toward transparency, assessment and accountability [1]. The report builds on the June 2025 *California Report on Frontier AI Policy* [2], whose "trust but verify" approach relies on developers' technical knowledge while ensuring that their claims can be independently validated [2].
 
-The surrounding framework includes SB 53 [3], SB 813 [4] and AB 1405 [5]. Two elements are directly relevant to the accountability of increasingly autonomous systems.
+The report's framework covers SB 53 [3], which took effect in 2026, and two laws signed in September 2026: SB 813 [4], which sets up independent verification organizations (IVOs), and AB 1405 [5], which sets up registration for AI auditors. The report describes the latter two as "initial, high-level rules" [1]. Four points from the report are directly relevant to the accountability of increasingly autonomous systems.
 
-### 2.1 Internal deployment is within policy scope
+### 2.1 Commitments need evidence
 
-SB 53 and related laws create reporting obligations for risks arising from the internal deployment of frontier AI systems, not only from public releases [1]. Important AI activity increasingly occurs inside organizations, where systems may have access to internal infrastructure, tools and operational processes. Policy therefore has to address internal use as well as public release.
+The report says SB 53's transparency reports "are designed to translate developers' broader safety commitments into model-specific evidence" [1]. It also notes that SB 53 "has no explicit requirements to conduct assessments or evaluations beyond companies' own commitments" [1]. Stated commitments therefore need to be checked against evidence, and that evidence needs to come from outside the developer.
 
-### 2.2 Independent verification requires independent organizations
+### 2.2 Internal deployment is within policy scope
 
-SB 813 provides a framework for independent verification organizations that assess AI systems and models. It requires them to have appropriate expertise, to use credible methodologies and to remain independent of the entities they assess [4].
+SB 53 requires developers to address "the risk that their models may circumvent internal oversight mechanisms" when assessing internal deployments [1]. Important AI activity increasingly occurs inside organizations, where systems may have access to internal infrastructure, tools and operational processes. Policy therefore has to address internal use as well as public release [1].
 
-AB 1405 establishes a public AI Auditor Registry. Under its timeline, unregistered persons may not offer, sell or conduct a covered AI audit, and registered auditors are subject to independence and conflict-of-interest rules [5].
+### 2.3 Independent assessment needs access
 
-### 2.3 Verification depends on evidence and independence
+The report states that third-party assessors "need access to AI companies' systems, documents, and other information," but that "access is limited, ad hoc, and controlled by AI companies." It adds that "SB 53, SB 813, and AB 1405 do not provide specific legal rules to ensure access" [1]. An assessor who cannot examine enough of a system cannot form a well-supported judgment.
 
-The following is this paper's reading of the framework, not a finding attributed to the report. Verification is only as strong as the evidence and independence behind it. A developer's published commitments need evidence to support them. An independent check is meaningful only when the assessor has enough access to form a well-supported judgment. A score or declaration needs enough context about method and limitations to be interpreted correctly.
+### 2.4 Evaluation results need methodological rigor
 
-This paper takes that principle as its starting point. It examines a related but distinct problem: enforcing authority when AI systems take consequential business actions.
+The report finds that "existing evaluation results may not be sufficiently precise and robust to support effective risk management," and it identifies methodological quality of AI evaluations as an open implementation challenge [1]. SB 813 defines IVOs by their expertise in "the metrics and methodologies" used to assess AI risk [1][4]. A score or declaration is only as informative as the method and limitations behind it.
+
+### 2.5 This paper's reading
+
+The following is this paper's reading, not a finding attributed to the report. Verification is only as strong as the evidence and independence behind it. The report's points on commitments, internal deployment, access and methodology all lead to the same question: can an outside party confirm what a system was permitted to do, and what it actually did? This paper examines a related but distinct problem: enforcing authority when AI systems take consequential business actions, rather than evaluating model behavior.
 
 ---
 
@@ -451,13 +455,14 @@ The architecture is a conceptual reference model. Its effectiveness in a particu
 
 ## References
 
-1. Singer, S. R., et al. *Trust but Verify: Implementing Frontier AI Policy in California and Beyond*. Carnegie Endowment for International Peace, 2026. https://carnegieendowment.org/research/2026/11/trust-but-verify-implementing-frontier-ai-policy-in-california-and-beyond
+1. Singer, S. R., et al. *Trust but Verify: Implementing Frontier AI Policy in California and Beyond*. Carnegie Endowment for International Peace, published November 10, 2026. https://carnegieendowment.org/research/2026/11/trust-but-verify-implementing-frontier-ai-policy-in-california-and-beyond
 
 2. *The California Report on Frontier AI Policy*. June 17, 2025. Commissioned by Governor Gavin Newsom. https://www.gov.ca.gov/wp-content/uploads/2025/06/June-17-2025-–-The-California-Report-on-Frontier-AI-Policy.pdf (also arXiv:2506.17303, https://arxiv.org/abs/2506.17303)
 
 3. California Senate Bill 53 (2025), frontier artificial intelligence models. Signed September 29, 2025; effective January 1, 2026. https://open.pluralpolicy.com/ca/bills/20252026/SB53
 
-4. California Senate Bill 813 (2026). Signed by the Governor on September 9, 2026. Establishes a framework for independent verification organizations that assess AI systems and models. Implementation dates differ across secondary sources; confirm against the chaptered text. Sources: https://www.gov.ca.gov/2026/09/30/californias-nation-leading-ai-framework-just-got-stronger-governor-newsom-signs-more-first-in-the-nation-worker-protections-and-more/ and https://www.akingump.com/en/insights/ai-law-and-regulation-tracker/california-enacts-ai-auditor-registry-and-independent-verification-framework-sb-813-and-ab-1405
+4. California Senate Bill 813 (2026). Signed September 2026 (per [1]). Requires the state to develop, by January 1, 2028, a process for designating third-party organizations as independent verification organizations (IVOs). Confirm against the chaptered text at https://leginfo.legislature.ca.gov.
 
-5. California Assembly Bill 1405 (2026). Signed by the Governor on September 9, 2026; reported as Chapter 178, Statutes of 2026. Creates a public AI Auditor Registry administered by the Government Operations Agency. The registry deadline differs across secondary sources; confirm against the chaptered text. Sources: the same two links as reference 4.
+5. California Assembly Bill 1405 (2026). Signed September 2026 (per [1]). Requires third-party AI auditors to register with the state beginning January 1, 2029. Confirm against the chaptered text at https://leginfo.legislature.ca.gov.
 
+*Source 1 was checked against the report's full text. Sources 3 to 5 are described as the report describes them; the chaptered texts of SB 813 and AB 1405 could not be read from this session.*
