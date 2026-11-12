@@ -241,6 +241,36 @@ The authorization decision remains independently enforceable.
 
 This separation is critical because it prevents the reasoning system from becoming the final authority over its own permissions.
 
+## 4.1 From behavioural restrictions to capability restrictions
+
+Organizations commonly try to control autonomous systems through behavioural restrictions: instructions that tell the system what it must not do. An agent with access to a payment API may be instructed: "Do not issue refunds above ₹5,000."
+
+This arrangement is fragile for a specific reason. The agent still has the technical capability to issue a ₹50,000 refund. The restriction exists in the agent's instructions, not necessarily in its execution environment. The institution is relying on system prompts, model alignment, guardrails and the agent's own interpretation of those restrictions. Each of these can fail under ambiguity, manipulation or unexpected behaviour (see Section 3.2).
+
+A capability restriction takes a different approach. The institution does not give the agent unrestricted access to the payment API. Instead:
+
+1. The agent proposes a refund.
+2. A separate authorization layer evaluates the request against the delegated mandate.
+3. Only requests that satisfy the mandate reach the payment system.
+4. Requests outside the mandate have no execution path through which to proceed.
+
+The restriction is now enforced by the architecture. It does not depend on the agent remembering or following an instruction.
+
+The two approaches differ in what they rely on:
+
+|              | Behavioural restriction                                         | Capability restriction                                                   |
+| ------------ | --------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Mechanism    | The agent is told not to act.                                   | The agent cannot act without authorization.                              |
+| Capability   | Exists. The agent has access and is instructed not to use it.   | Constrained. The execution path does not permit the unauthorized action. |
+| Dependence   | The agent's interpretation and compliance.                      | Independently enforced authority.                                        |
+| Failure mode | A misinterpreted or manipulated instruction permits the action. | The action is blocked at the execution boundary.                         |
+
+This supports a principle for the design of agentic systems: do not rely on an autonomous system to respect a boundary that the architecture can enforce. Put more directly, do not ask an agent not to do something; make sure it cannot do it without authorization.
+
+Capability restriction has an important engineering condition. Removing direct API access is not sufficient if the agent can reach the same resource through another tool, credential or execution path. Every path to a protected resource must be controlled. This is why Section 5.3 requires that execution be bound to the authorization decision at the point of action. A capability restriction holds only as far as its enforcement boundary extends.
+
+The distinction can be stated simply. An agent should be free to reason about possible actions, but its ability to execute those actions should be constrained by authority enforced outside its reasoning process. The difference is between asking a system to respect a boundary and engineering the boundary into the system itself.
+
 # 5. A model for deterministic execution boundaries
 
 We propose a four-stage model:
