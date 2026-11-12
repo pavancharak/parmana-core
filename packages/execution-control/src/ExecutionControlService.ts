@@ -55,9 +55,10 @@ export class ExecutionControlService implements ExecutionControl {
   }
 
   /**
-   * Prepares the dispatch and calls the connector. Refusals before the
-   * connector runs are wrapped in ReleaseRefusedBeforeDispatch, so the Gateway
-   * can record them. Errors from the connector itself are not wrapped.
+   * Prepares the dispatch: gateway authentication, connector lookup, the
+   * session and its audit record. A failure here is marked with markReleaseRefusal
+   * (nonceConsumed true), so the Gateway can record it. The error is rethrown
+   * unchanged. Errors from the connector itself are not marked.
    */
   private async prepareDispatch(
     release: ExecutionRelease,
