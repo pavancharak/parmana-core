@@ -185,7 +185,7 @@ The production test cannot release to a connector. `createExecutionGateway` buil
 In priority order. Each item names the reason it matters.
 
 1. **Done: the outcome-record defect (section 11).** Refusals before dispatch are recorded, and a retry is no longer reported as unknown. The remaining question is in section 11.
-2. **Decide whether the release verifier should run after the connector lookup.** Today a lookup failure burns the nonce (section 6). That is safe, but it means a request to an unregistered capability can never be retried, even after the registration is added.
+2. **Decide whether the release verifier should run after the connector lookup.** Review and options: `docs/internal/designs/RELEASE-CHECK-ORDER.md`. Today a lookup failure burns the nonce (section 6). That is safe, but it means a request for an unregistered capability cannot be retried after the registration is added. The review recommends reordering after threat tests exist, and it is waiting on the owner's decision.
 3. **Done: the failed-`fail()` case in `ExecutionComponent`.** The original refusal is rethrown even when recording it fails, and the recording error is logged (section 8).
 4. **Done: the nonce generation.** Traced in section 7. Nonces are random version-4 UUIDs, and a regression test keeps them distinct.
 5. **Done: the generic 500 path.** Traced in section 8. Unexpected errors do not leak details to the client. Gateway verification failures are reported as 500, which misclassifies caller errors.
