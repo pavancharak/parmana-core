@@ -300,3 +300,12 @@ Two findings:
 2. **Classes mapped to a status pass their message through.** For the validation, not-found and conflict classes, the body is `error.message`. Those messages are written by this codebase, but a future message that includes internal detail would reach the client. This is a review point, not a current leak.
 
 Not changed here. Finding 1 is a behaviour change for callers that currently treat `500` as "retry later", so it needs a decision on the status code and on the response body.
+
+## 12. Connector read-back (where the reconciler stands)
+
+Section 11 explains why an `in_flight` row cannot be settled by Parmana alone. Settling it needs the external system to say whether an authorization's effect happened.
+
+- **Survey.** No connector has such a check today. The connector contract (`packages/execution-control/src/SecureConnector.ts`) defines only `execute`. Production capabilities are external endpoints run by their operators (ADR-0013), and built-in connectors were removed (ADR-0018).
+- **Design.** `docs/internal/designs/OUTCOME-RECONCILER.md` gives the reconciler's staged plan and the measured cost of the intent record the endpoint would need (median 0.53 ms on a local database).
+- **Decision.** `docs/internal/adr/ADR-0022-External-Connector-Read-Back.md` adds an optional, read-only `check` operation to the endpoint contract. It is accepted with two conditions: the signed check answer is mandatory, and the endpoint must record intent before it acts. Its implementation plan has not started.
+- **Status.** Until endpoints implement the check, every existing row is `unknown`, so a person resolves it. The reconciler's reporting stage can be built without the check.
