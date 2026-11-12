@@ -68,3 +68,4 @@ Checked by moving the connector lookup ahead of authentication: both execution-c
 - Session creation and the audit record follow, marked `nonceConsumed: true` on failure, so the Gateway records a `failed` row.
 - The threat test "a refusal for an unregistered action does not spend the authorization" was the `todo` and now runs. It passes.
 - The production test for an unregistered capability now expects the same refusal on retry, not a replay.
+- **Mutation check of the retry test.** Its first version used a verifier stub that never consumed the nonce, so it passed under the old order too and tested nothing about the nonce. The verifier in the test now consumes the nonce and refuses it once used, as the real verifier does. With the old order put back temporarily, the retry test fails. With the reordered checks it passes. The source was restored afterwards.
