@@ -45,6 +45,11 @@ This is the full record of the enforcement-path work, updated 2026-11-12. The de
 - Not verified locally: the full `npm test` suite, which needs PostgreSQL on port 55432. CI runs it on each pull request.
 - The CLI key tests were fixed for Windows by construction, since the test and the command use the same `join`. They were not run on Windows from the sandbox.
 
+## Production run of the stuck-outcome report
+
+- **2026-11-12.** Run by the repository owner from Windows PowerShell, on `main` with #592 merged, against the production database: `npm run report:stuck-outcomes`. Result: no stuck in-flight outcomes. The command only reads, so the run changed nothing.
+- This is a single snapshot. The report is not scheduled, so it says nothing about rows that become stuck later.
+
 ## Working notes
 
 - Branches for new work are cut from `main`. The old designated branch was rebuilt after each merge, which required force-pushes.
