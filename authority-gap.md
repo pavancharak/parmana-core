@@ -482,10 +482,10 @@ On October 27, 2026, NIST published ten initial design tenets for agent identity
 Several are relevant to this paper. As summarized in published coverage of the post, they include:
 
 - Agents should have an identity, credential and access lifecycle separate from human principals.
-- Access decisions should be deterministic. Probabilistic signals such as risk scores may inform a decision but should not make it.
+- Access decisions should rest primarily on deterministic mechanisms (NIST Tenet 08). Probabilistic signals such as risk scores may be used as inputs to an access decision, but are not the primary mechanism for making it.
 - Because language models take data and instructions as one token stream, the separation between them must be enforced by architecture rather than by the model.
 - Guardrails alone are insufficient.
-- Logs should be tamper-evident, append-only and kept independent of the agent.
+- Evidence should be tamper-evident and append-only (NIST Tenet 10).
 
 This provides independent support for the architectural principles discussed here. The exact tenet wording should be checked against NIST's post before quoting it.
 
