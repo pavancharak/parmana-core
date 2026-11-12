@@ -132,8 +132,7 @@ Applications (2026), see [OWASP mapping](https://docs.parmanasystems.com/securit
 
 These are not defended. A review should state them as assumptions:
 
-1. Signing keys (`default`, `gateway`) are not compromised. Under AWS KMS the key cannot be
-   exported, but a process that can call `kms:Sign` can still sign.
+1. Signing keys (default, gateway) are not compromised. Under AWS KMS the key cannot be exported, but a process that can call kms:Sign can still sign. Key registration, validation and status are specified in RFC-0028 (v1 scope). Until they are implemented, a signing key that is later found to be compromised is not detected by Parmana, and records it signed still verify as valid signatures. Revocation distribution to external verifiers is deferred to the ETVM specification.
 2. Approver and step up keys are held by the people they name.
 3. The maker and the checker are two people.
 4. The database is not writable by an attacker.
