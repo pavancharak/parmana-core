@@ -1,6 +1,6 @@
 # Release check order: review before any change
 
-Status: option A accepted by the owner and implemented on branch `claude/release-order-reorder`. The threat tests were written first, on `claude/release-order-threat-tests`.
+Status: option A accepted by the owner and implemented, merged to `main` as #597. The threat tests were written first, on `claude/release-order-threat-tests`, and merged with it.
 
 Related: `docs/guides/enforcement-path.md` (section 6, and next-steps item 2), `packages/execution-control/src/ExecutionControlService.ts`, `packages/api/src/bootstrap/createReleaseVerifier.ts`.
 

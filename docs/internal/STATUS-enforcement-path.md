@@ -15,10 +15,12 @@ This is the full record of the enforcement-path work, updated 2026-11-12. The de
 - **#591** This status record.
 - **#592** Reconciler stage 1: the read-only listing `listStuck(now)` in the outcome store, with tests on the in-memory and PostgreSQL stores, and `scripts/report-stuck-outcomes.ts` (run with `npm run report:stuck-outcomes`), which prints stuck rows as a table or with `--json`. It only reads.
 - **#593** The first production run of the report, recorded.
+- **#597** Release-check reorder (option A). Gateway authentication and the connector lookup run before the release verifier, which still consumes the nonce last. The threat tests were written first and pin the properties. An unregistered action no longer spends its authorization. Review: `docs/internal/designs/RELEASE-CHECK-ORDER.md`.
+- **#599** Gateway verification failures (forged, tampered, expired) return 403 and name the failed checks (`AuthorizationVerificationFailedError`). Server faults stay 500. The error reference was regenerated to 50 errors.
 
-## On a branch, not yet a pull request
+## Work not yet merged
 
-- **`claude/release-order-reorder`** (latest commit `413c11d`, built on `claude/release-order-threat-tests`, so a pull request would include the threat tests too). Contains the release-check reorder (option A) and the threat tests. See the section below.
+- Nothing is waiting on an unmerged branch as of this update. The reorder branch `claude/release-order-reorder` and the 403 branch `claude/verification-403` were merged as #597 and #599 and can be deleted.
 
 ## Connector read-back
 

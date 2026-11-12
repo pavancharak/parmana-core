@@ -111,6 +111,6 @@ At the median the insert costs about 0.44 ms more than a bare round trip.
 
 ## Implementation status
 
-- **Stage 1, complete on branch `claude/reconciler-report`.** `ExecutionOutcomeStore.listStuck(now)` returns rows that are still `in_flight` and whose authorization expired at or before `now`. It is read-only, and the in-memory and PostgreSQL stores are both tested, including a check that the listed rows are unchanged afterwards. `scripts/report-stuck-outcomes.ts` (run with `npm run report:stuck-outcomes`) prints the stuck rows as a table or with `--json`. It only reads. It was run against seeded rows: it listed the one expired in-flight row and changed none of the three.
+- **Stage 1, complete and merged to `main` as #592.** `ExecutionOutcomeStore.listStuck(now)` returns rows that are still `in_flight` and whose authorization expired at or before `now`. It is read-only, and the in-memory and PostgreSQL stores are both tested, including a check that the listed rows are unchanged afterwards. `scripts/report-stuck-outcomes.ts` (run with `npm run report:stuck-outcomes`) prints the stuck rows as a table or with `--json`. It only reads. It was run against seeded rows: it listed the one expired in-flight row and changed none of the three.
 - **Not yet built:** scheduling the report, and any resolution. Stage 1 is the report only; a person resolves each row.
 - **Read-backs (stage 4)** stay blocked on ADR-0022 step 1.
