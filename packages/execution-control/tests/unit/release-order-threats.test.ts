@@ -19,7 +19,7 @@ const content: ExecutableContent = {
 
 function release() {
   return {
-    authorization: {} as never,
+    authorization: { payload: { authorizationId: "auth-threat-1" } } as never,
     executableContent: content,
     verifiedTransaction: {
       authorizationVerified: true,
@@ -35,9 +35,8 @@ function serviceWith(options: {
   verifyRelease: () => Promise<void>;
 }) {
   const registry = {
-    resolveCapability: vi.fn(async () => {
-      throw new Error("No connector registered for action: NotRegistered.");
-    }),
+    // Registered, so a release reaches the verifier. The unregistered case is its own test.
+    resolveCapability: vi.fn(async () => ({ connectorId: "stripe" })),
   };
   const sessions = { create: vi.fn() };
   const service = new ExecutionControlService({
@@ -81,10 +80,48 @@ describe("release order threats", () => {
       "did not verify",
     );
     expect(sessions.create).not.toHaveBeenCalled();
-    expect(registry.resolveCapability).toHaveBeenCalledTimes(0);
   });
 
-  it.todo(
-    "after option A: a corrected registration releases the same authorization, because an unregistered action does not spend its nonce",
-  );
+  it("a refusal for an unregistered action does not spend the authorization, so a corrected registration releases it", async () => {
+    const executed: string[] = [];
+    const connector = {
+      connectorId: "stripe",
+      execute: async (request: { executableContent: ExecutableContent }) => {
+        executed.push(request.executableContent.businessTransactionId);
+
+        return {
+          ...request.executableContent,
+          success: true,
+          executedAt: new Date(),
+          metadata: {},
+        };
+      },
+    };
+    const registry = {
+      resolveCapability: vi
+        .fn()
+        .mockRejectedValueOnce(
+          new Error("No connector registered for action: NotRegistered."),
+        )
+        .mockResolvedValue(connector),
+    };
+    const service = new ExecutionControlService({
+      verifyRelease: async () => {},
+      gatewayIdentity: {} as never,
+      authenticator: { authenticateGateway: () => true } as never,
+      registry: registry as never,
+      sessions: { create: () => ({ sessionId: "s-1" }) } as never,
+      audit: { record: async () => {} } as never,
+      sessionIssuanceAuthentication: {},
+    });
+
+    await expect(service.execute(release() as never, {})).rejects.toThrow(
+      "No connector registered",
+    );
+
+    // The same authorization, now that the action is registered.
+    const result = await service.execute(release() as never, {});
+    expect(result.success).toBe(true);
+    expect(executed).toEqual([content.businessTransactionId]);
+  });
 });

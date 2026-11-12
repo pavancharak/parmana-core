@@ -55,12 +55,12 @@ export class ExecutionControlService implements ExecutionControl {
   }
 
   /**
-   * Prepares the dispatch: gateway authentication, connector lookup, the
-   * session and its audit record. A failure here is marked with markReleaseRefusal
-   * (nonceConsumed true), so the Gateway can record it. The error is rethrown
-   * unchanged. Errors from the connector itself are not marked.
+   * Gateway authentication, then connector lookup. Both run before the release
+   * verifier, so a refusal here does not consume the nonce
+   * (docs/internal/designs/RELEASE-CHECK-ORDER.md). Marked nonceConsumed false: the
+   * Gateway deletes its in-flight row, so a corrected retry can be released.
    */
-  private async prepareDispatch(
+  private async authenticateAndResolve(
     release: ExecutionRelease,
     gatewayAuthentication: unknown,
   ) {
@@ -74,16 +74,26 @@ export class ExecutionControlService implements ExecutionControl {
         throw new Error("Execution Control rejected unauthenticated Gateway.");
       }
 
-      //
-      // Resolve connector from capability.
-      //
-      const connector = await this.options.registry.resolveCapability(
+      return await this.options.registry.resolveCapability(
         release.executableContent.action,
       );
+    } catch (error) {
+      markReleaseRefusal(error, false);
 
-      //
-      // Create one-time Gateway session.
-      //
+      throw error;
+    }
+  }
+
+  /**
+   * The one-time session, its audit record and the immutable request. Runs after
+   * the release verifier has consumed the nonce, so a failure here is marked
+   * nonceConsumed true and the Gateway records it as failed.
+   */
+  private async openSession(
+    release: ExecutionRelease,
+    connector: { readonly connectorId: string },
+  ) {
+    try {
       const session = this.options.sessions.create(
         release,
         connector.connectorId,
@@ -101,9 +111,6 @@ export class ExecutionControlService implements ExecutionControl {
         businessTransactionId: release.executableContent.businessTransactionId,
       });
 
-      //
-      // Immutable execution request.
-      //
       const request: GatewayExecutionRequest = deepFreeze({
         authorization: release.authorization,
         executableContent: release.executableContent,
@@ -116,9 +123,8 @@ export class ExecutionControlService implements ExecutionControl {
           : {}),
       });
 
-      return { connector, request, session };
+      return { request, session };
     } catch (error) {
-      // The release verifier has already passed, so it consumed the nonce.
       markReleaseRefusal(error, true);
 
       throw error;
@@ -130,11 +136,16 @@ export class ExecutionControlService implements ExecutionControl {
     gatewayAuthentication: unknown,
   ): Promise<ExecutionResult> {
     //
-    // Independent verification. verifiedTransaction below is a caller
-    // assertion; this check is what makes it true. The release verifier
-    // consumes the nonce last, so a refusal from it leaves the nonce unused,
-    // except when the nonce was already consumed.
+    // Order (docs/internal/designs/RELEASE-CHECK-ORDER.md): gateway authentication,
+    // connector lookup, the release verifier (which consumes the nonce last), then
+    // the session and the connector call. Refusals before the verifier leave the
+    // nonce unused, so a corrected retry can be released.
     //
+    const connector = await this.authenticateAndResolve(
+      release,
+      gatewayAuthentication,
+    );
+
     try {
       await this.options.verifyRelease(release);
     } catch (error) {
@@ -143,10 +154,7 @@ export class ExecutionControlService implements ExecutionControl {
       throw error;
     }
 
-    const { connector, request, session } = await this.prepareDispatch(
-      release,
-      gatewayAuthentication,
-    );
+    const { request, session } = await this.openSession(release, connector);
 
     try {
       const result = await connector.execute(request);

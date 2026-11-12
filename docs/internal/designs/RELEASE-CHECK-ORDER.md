@@ -1,6 +1,6 @@
 # Release check order: review before any change
 
-Status: review, not a change. Nothing in this document alters the release path. A decision by the repository owner is needed before any code changes.
+Status: option A accepted by the owner and implemented on branch `claude/release-order-reorder`. The threat tests were written first, on `claude/release-order-threat-tests`.
 
 Related: `docs/guides/enforcement-path.md` (section 6, and next-steps item 2), `packages/execution-control/src/ExecutionControlService.ts`, `packages/api/src/bootstrap/createReleaseVerifier.ts`.
 
@@ -60,3 +60,11 @@ These tests pin the properties the reorder must keep. They pass on the current o
 - `packages/execution-gateway/tests/unit/release-order-threats.test.ts`: a forged request for an unregistered action is refused before the execution-control service, and its nonce stays unused.
 
 Checked by moving the connector lookup ahead of authentication: both execution-control threat tests fail.
+
+## Implemented (option A)
+
+- `ExecutionControlService.execute` runs gateway authentication and the connector lookup first. A failure there is marked `nonceConsumed: false`, so the Gateway deletes its in-flight row and a corrected retry can be released.
+- The release verifier runs next and consumes the nonce last, as before.
+- Session creation and the audit record follow, marked `nonceConsumed: true` on failure, so the Gateway records a `failed` row.
+- The threat test "a refusal for an unregistered action does not spend the authorization" was the `todo` and now runs. It passes.
+- The production test for an unregistered capability now expects the same refusal on retry, not a replay.
