@@ -28,3 +28,4 @@ export * from "./non-human-caller-denied-error.js";
 export * from "./same-actor-cannot-approve-own-change-error.js";
 export * from "./step-up-authorization-invalid-error.js";
 export * from "./release-not-dispatched-error.js";
+export * from "./authorization-verification-failed-error.js";

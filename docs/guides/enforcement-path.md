@@ -296,7 +296,7 @@ So an unexpected failure does not leak its message or stack to the client. That 
 
 Two findings:
 
-1. **Gateway verification failures are reported as 500.** A forged signature, tampered content, or expired envelope is a plain `Error` from `ExecutionGateway.verify`. None of the mapped classes catch it, so the caller gets a `500` and the server logs a stack trace for each one. These are caller errors. A `403` with the failed check named would be accurate, and the message would not leak anything the caller didn't send.
+1. **Done: gateway verification failures are now 403.** A forged, tampered or expired authorization raises `AuthorizationVerificationFailedError` (`packages/shared/src/errors/authorization-verification-failed-error.ts`). The API answers 403 with code `AUTHORIZATION_VERIFICATION_FAILED`, and the message names the failed checks. Before this, these reached callers as a generic 500.
 2. **Classes mapped to a status pass their message through.** For the validation, not-found and conflict classes, the body is `error.message`. Those messages are written by this codebase, but a future message that includes internal detail would reach the client. This is a review point, not a current leak.
 
 Not changed here. Finding 1 is a behaviour change for callers that currently treat `500` as "retry later", so it needs a decision on the status code and on the response body.
