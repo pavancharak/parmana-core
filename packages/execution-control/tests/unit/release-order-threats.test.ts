@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ExecutableContent } from "@parmana/shared";
+import {
+  NonceAlreadyConsumedError,
+  type ExecutableContent,
+} from "@parmana/shared";
 
 import { ExecutionControlService } from "../../src/index.js";
 
@@ -19,7 +22,9 @@ const content: ExecutableContent = {
 
 function release() {
   return {
-    authorization: { payload: { authorizationId: "auth-threat-1" } } as never,
+    authorization: {
+      payload: { authorizationId: "auth-threat-1", nonce: "nonce-threat-1" },
+    } as never,
     executableContent: content,
     verifiedTransaction: {
       authorizationVerified: true,
@@ -105,8 +110,20 @@ describe("release order threats", () => {
         )
         .mockResolvedValue(connector),
     };
+    // A stateful verifier, as the real one is: it consumes the nonce, and refuses it once consumed.
+    const consumed = new Set<string>();
     const service = new ExecutionControlService({
-      verifyRelease: async () => {},
+      verifyRelease: async (release) => {
+        const nonce = release.authorization.payload.nonce;
+
+        if (consumed.has(nonce)) {
+          throw new NonceAlreadyConsumedError(
+            release.executableContent.businessTransactionId,
+          );
+        }
+
+        consumed.add(nonce);
+      },
       gatewayIdentity: {} as never,
       authenticator: { authenticateGateway: () => true } as never,
       registry: registry as never,
