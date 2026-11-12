@@ -175,8 +175,8 @@ describe("documentation file references resolve to real files", () => {
 
 const CLAIMS_MD_PATH = "docs/internal/CLAIMS.md";
 
-/** Every .mdx file under a directory, recursively, as repo-relative forward-slash paths. */
-function collectMdxFiles(relDir: string): string[] {
+/** Every file with the given extension under a directory, recursively, as repo-relative forward-slash paths. */
+function collectFiles(relDir: string, ext: string): string[] {
   const absDir = join(repoRoot, relDir);
   if (!existsSync(absDir)) return [];
 
@@ -184,8 +184,8 @@ function collectMdxFiles(relDir: string): string[] {
   for (const entry of readdirSync(absDir)) {
     const relPath = join(relDir, entry);
     if (statSync(join(repoRoot, relPath)).isDirectory()) {
-      out.push(...collectMdxFiles(relPath));
-    } else if (extname(entry) === ".mdx") {
+      out.push(...collectFiles(relPath, ext));
+    } else if (extname(entry) === ext) {
       out.push(relPath.split("\\").join("/"));
     }
   }
@@ -196,7 +196,8 @@ const CITATION_DOCS = [
   CLAIMS_MD_PATH,
   "README.md",
   "SECURITY.md",
-  ...collectMdxFiles("docs/site"),
+  ...collectFiles("docs/site", ".mdx"),
+  ...collectFiles("docs/dev", ".md"),
 ];
 
 /** How far past the literal "CLAIMS.md" a section-number token is still considered a citation of it, not an unrelated nearby number. Bounded to one line, never crosses a line break. */
