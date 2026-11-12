@@ -19,6 +19,7 @@ import {
   OutcomeUnknownError,
   ReleaseNotDispatchedError,
   AuthorizationNoLongerValidError,
+  AuthorizationVerificationFailedError,
 } from "@parmana/shared";
 
 import type { CallerAuditSink } from "../auth/CallerAuditSink.js";
@@ -191,9 +192,9 @@ export function createErrorHandler(auditSink?: CallerAuditSink) {
     //
     // Execution Gateway rejected a replayed (already-consumed-nonce)
     // authorization. Distinguished from a genuine server error (and from
-    // every other Gateway verification failure — forged signature,
-    // expired envelope, tampered content — which remain a plain Error and
-    // fall through to the generic 500 below, unchanged) so a caller or a
+    // every other Gateway verification failure, such as a forged signature,
+    // an expired envelope or a tampered content, is an AuthorizationVerificationFailedError
+    // and is answered 403 with the failed checks named) so a caller or a
     // monitoring system can tell "this already ran" apart from "something
     // broke" without string-matching a 500 body.
     //
@@ -202,7 +203,8 @@ export function createErrorHandler(auditSink?: CallerAuditSink) {
       error instanceof OutcomeUnknownError ||
       error instanceof ReleaseNotDispatchedError ||
       error instanceof ConnectorNotRegisteredError ||
-      error instanceof AuthorizationNoLongerValidError
+      error instanceof AuthorizationNoLongerValidError ||
+      error instanceof AuthorizationVerificationFailedError
     ) {
       res.status(error.status).json({
         error: error.message,

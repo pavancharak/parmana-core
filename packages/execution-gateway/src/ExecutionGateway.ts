@@ -31,6 +31,7 @@ import type {
 import {
   toExecutableContent,
   AuthorizationNoLongerValidError,
+  AuthorizationVerificationFailedError,
   NonceAlreadyConsumedError,
   OutcomeUnknownError,
   ReleaseNotDispatchedError,
@@ -760,7 +761,9 @@ export class ExecutionGateway implements ExecutionSystem {
           ],
         );
       }
-      throw new Error(this.describeFailure(result));
+      throw new AuthorizationVerificationFailedError(
+        this.describeFailure(result),
+      );
     }
 
     const transaction = deepFreeze(executableContent);
