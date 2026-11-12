@@ -37,7 +37,7 @@ None.
 
 Items 1 to 3 are decisions for the owner. Item 4 waits on operating data.
 
-1. **Release-verifier reordering.** The verifier runs before the connector lookup, so a request for an unregistered capability burns its nonce. The refusal is now visible, but the checks are not reordered. Waiting on the owner's decision. Recommended: a separate branch, with a threat review and tests before any change.
+1. **Release-verifier reordering** (review: `docs/internal/designs/RELEASE-CHECK-ORDER.md`, on branch `claude/release-order-review`, no pull request yet). The verifier runs before the connector lookup, so a request for an unregistered capability burns its nonce. The refusal is now visible, but the checks are not reordered. Waiting on the owner's decision. Recommended: a separate branch, with a threat review and tests before any change.
 2. **HubSpot helper branch (`fix/hubspot-self-approval`).** The verifier key is active in production, but nothing on `main` signs with it, so the containment is in place without its caller (G-111). Waiting on the owner's decision.
 3. **Status code for gateway verification failures.** Forged, tampered and expired authorizations return 500. They should return 403 with the failed check named. Callers that treat 500 as "retry later" would change behaviour. Waiting on the owner's decision.
 4. **Reconciler scheduling and resolution,** after the report has run long enough to show how many rows are stuck.
