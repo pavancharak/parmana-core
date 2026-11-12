@@ -13,10 +13,12 @@ This is the full record of the enforcement-path work, updated 2026-11-12. The de
 - **#589** Documentation of the generic 500 path in the error handler. Unexpected errors don't leak their details. Gateway verification failures (forged, tampered, expired) are reported as 500, which is wrong for caller errors. The status change is not made.
 - **#590** ADR-0022 (external connector read-back), the connector survey, the measured latency of the intent record, and guide section 12.
 - **#591** This status record.
+- **#592** Reconciler stage 1: the read-only listing `listStuck(now)` in the outcome store, with tests on the in-memory and PostgreSQL stores, and `scripts/report-stuck-outcomes.ts` (run with `npm run report:stuck-outcomes`), which prints stuck rows as a table or with `--json`. It only reads.
+- **#593** The first production run of the report, recorded.
 
 ## On a branch, not yet a pull request
 
-- **`claude/reconciler-report`.** Reconciler stage 1: the read-only listing `listStuck(now)` in the outcome store, with tests on the in-memory and PostgreSQL stores, and `scripts/report-stuck-outcomes.ts` (run with `npm run report:stuck-outcomes`), which prints the stuck rows as a table or with `--json`. It only reads.
+None.
 
 ## Connector read-back
 
@@ -27,11 +29,13 @@ This is the full record of the enforcement-path work, updated 2026-11-12. The de
 
 ## Reconciler
 
-- **Stage 1, the report, is built** (see the branch above). It lists stuck rows and changes none.
+- **Stage 1, the report, is built and merged (#592).** It lists stuck rows and changes none.
 - **Not yet built:** scheduling the report, and any resolution.
 - **Stage 4, the read-backs,** are blocked on ADR-0022 step 1.
 
 ## Open items
+
+Items 1 to 3 are decisions for the owner. Item 4 waits on operating data.
 
 1. **Release-verifier reordering.** The verifier runs before the connector lookup, so a request for an unregistered capability burns its nonce. The refusal is now visible, but the checks are not reordered. Waiting on the owner's decision. Recommended: a separate branch, with a threat review and tests before any change.
 2. **HubSpot helper branch (`fix/hubspot-self-approval`).** The verifier key is active in production, but nothing on `main` signs with it, so the containment is in place without its caller (G-111). Waiting on the owner's decision.
