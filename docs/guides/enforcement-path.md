@@ -103,7 +103,7 @@ The gateway's `verify` consumes the nonce only when `executionControl` is not wi
 
 The single consumption on the release path happens in the release verifier (`packages/api/src/bootstrap/createReleaseVerifier.ts`). It runs before the connector is looked up. In order, it checks the signature and expiry, the `APPROVED` decision, and the content hash, then consumes the nonce. `ExecutionControlService.ts:18` says consuming twice would refuse every release.
 
-Consequence: if the release verifier passes but the connector lookup then fails, the nonce is already consumed. The authorization cannot be used again.
+Consequence (before the release-order change): the release verifier ran before the connector lookup, so a failed lookup left the nonce consumed. Since the reorder, the lookup runs before the verifier. A failed lookup or failed gateway authentication leaves the nonce unused, and a corrected retry can be released. A refusal after the verifier still consumes the nonce.
 
 ## 7. Issuing authorizations (`RuntimeEngine`)
 
@@ -276,7 +276,7 @@ All paths are relative to the repository root.
 
 ### Still open
 
-- The release verifier still runs before the connector lookup, so a request for an unregistered capability burns its nonce (section 10, item 2). This change makes that refusal visible but does not reorder the checks.
+- The release verifier now runs after gateway authentication and the connector lookup, so an unregistered capability no longer spends its authorization (section 10, item 2).
 - The reconciler for `in_flight` rows after a crash (G-125, Part 3) is not built.
 
 ### Failed recording in `ExecutionComponent` (next steps item 3)

@@ -1,6 +1,6 @@
 # Release check order: review before any change
 
-Status: review, not a change. Nothing in this document alters the release path. A decision by the repository owner is needed before any code changes.
+Status: option A accepted by the owner and implemented on branch `claude/release-order-reorder`. The threat tests were written first, on `claude/release-order-threat-tests`.
 
 Related: `docs/guides/enforcement-path.md` (section 6, and next-steps item 2), `packages/execution-control/src/ExecutionControlService.ts`, `packages/api/src/bootstrap/createReleaseVerifier.ts`.
 
@@ -48,3 +48,24 @@ The authenticity checks stay before any side effect. Only the order of the two n
 
 - **Option A (recommended): reorder** as proposed, after the threat tests exist.
 - **Option B: keep the order** and document that an unregistered action spends its authorization, with the refusal recorded as `failed`.
+
+## Threat tests (written before any reorder)
+
+These tests pin the properties the reorder must keep. They pass on the current order and must keep passing after it:
+
+- `packages/execution-control/tests/unit/release-order-threats.test.ts`:
+  - an unauthenticated caller never reaches the connector lookup;
+  - a release the verifier refuses creates no session and calls no connector;
+  - a `todo` for the one property that only option A can add: a corrected registration releases the same authorization.
+- `packages/execution-gateway/tests/unit/release-order-threats.test.ts`: a forged request for an unregistered action is refused before the execution-control service, and its nonce stays unused.
+
+Checked by moving the connector lookup ahead of authentication: both execution-control threat tests fail.
+
+## Implemented (option A)
+
+- `ExecutionControlService.execute` runs gateway authentication and the connector lookup first. A failure there is marked `nonceConsumed: false`, so the Gateway deletes its in-flight row and a corrected retry can be released.
+- The release verifier runs next and consumes the nonce last, as before.
+- Session creation and the audit record follow, marked `nonceConsumed: true` on failure, so the Gateway records a `failed` row.
+- The threat test "a refusal for an unregistered action does not spend the authorization" was the `todo` and now runs. It passes.
+- The production test for an unregistered capability now expects the same refusal on retry, not a replay.
+- **Mutation check of the retry test.** Its first version used a verifier stub that never consumed the nonce, so it passed under the old order too and tested nothing about the nonce. The verifier in the test now consumes the nonce and refuses it once used, as the real verifier does. With the old order put back temporarily, the retry test fails. With the reordered checks it passes. The source was restored afterwards.

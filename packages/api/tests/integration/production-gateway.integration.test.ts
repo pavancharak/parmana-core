@@ -12,7 +12,6 @@ import {
 import type { ExecutionRequest } from "@parmana/execution-system";
 import {
   ConnectorNotRegisteredError,
-  ReleaseNotDispatchedError,
   type ExecutableContent,
   type SignedExecutionAuthorization,
 } from "@parmana/shared";
@@ -156,7 +155,7 @@ describe("production gateway, end to end", () => {
     expect(result.valid).toBe(true);
   });
 
-  it("refuses a release to an unregistered capability at the connector lookup, and the consumed nonce cannot be replayed", async () => {
+  it("refuses a release to an unregistered capability at the connector lookup, and does not spend the authorization", async () => {
     const gateway = await createExecutionGateway();
     const content = contentFor(CAPABILITY);
     const authorization = await signWithRuntimeKey(content);
@@ -166,10 +165,10 @@ describe("production gateway, end to end", () => {
       ConnectorNotRegisteredError,
     );
 
-    // The refusal was recorded as failed, with its reason. A retry is refused
-    // with that reason, and nothing is reported as unknown.
+    // A refused release does not spend its authorization. The retry runs the
+    // lookup again and is refused again for the same reason, not reported as a replay.
     await expect(gateway.execute(request)).rejects.toBeInstanceOf(
-      ReleaseNotDispatchedError,
+      ConnectorNotRegisteredError,
     );
   });
 
