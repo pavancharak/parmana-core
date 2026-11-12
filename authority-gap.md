@@ -499,7 +499,7 @@ Several developments are particularly relevant.
 
 In February 2026, NIST's National Cybersecurity Center of Excellence (NCCoE) published a draft concept paper, _Accelerating the Adoption of Software and AI Agent Identity and Authorization_, exploring how existing identity and authorization standards could be applied to software and AI agents. Its public comment period ran from February 5 to April 2, 2026.
 
-Its focus includes how agents are identified; how agent authentication is handled, including key issuance, update and revocation; whether authorization policies can be dynamically updated when an agent's context changes; and how agent actions can be logged in a tamper-proof and verifiable manner and bound back to human authorization, for non-repudiation. The paper names OAuth, OpenID Connect, SCIM and SPIFFE/SPIRE as possible foundations, and it invites feedback on others. Its emphasis on applying existing standards rather than new ones is consistent with the approach discussed here.
+Its focus includes how agents are identified; how agent authentication is handled, including key issuance, update and revocation; whether authorization policies can be dynamically updated when an agent's context changes; and how agent actions can be logged in a tamper-proof and verifiable manner and bound back to human authorization, for non-repudiation. The paper discusses OAuth 2.0/2.1, OpenID Connect, SPIFFE/SPIRE, SCIM, NGAC and the Model Context Protocol (MCP), and it invites feedback on others. Its emphasis on applying existing standards rather than new ones is consistent with the approach discussed here.
 
 These themes directly intersect with the Authority Gap.
 
@@ -511,13 +511,13 @@ On October 27, 2026, NIST published ten initial design tenets for agent identity
 
 Several are relevant to this paper. As summarized in published coverage of the post, they include:
 
-- Agents should have an identity, credential and access lifecycle separate from human principals.
-- Access decisions should rest primarily on deterministic mechanisms. Probabilistic signals such as risk scores may be used as inputs to an access decision, but are not the primary mechanism for making it.
-- Policy decisions should sit apart from the model that decides what the agent attempts.
-- Guardrails alone are insufficient.
-- Monitoring and tamper-evident logs should be kept independent of the agent.
+- Tenet 1 (Distinct Agent Identification): agents can be uniquely and cryptographically identified.
+- Tenet 6 (Mandates and Constraints): mandates define intended outcomes and constraints, and are cryptographically signed.
+- Tenet 7 (Architectural Separation of Policy from Reasoning): policy is architecturally separated from the systems that decide what the agent is allowed to do. The post adds that "Guardrails alone are insufficient."
+- Tenet 8 (Deterministic Access Decisions): deterministic capabilities are the primary mechanism for access decisions. Probabilistic information may be used only as an input.
+- Tenet 10 (Immutable Evidence): the enterprise maintains a tamper-evident, append-only body of evidence that is independent of the agent.
 
-This provides independent support for the architectural principles discussed here. This section paraphrases secondary coverage of the post. The tenet numbering and exact wording should be checked against NIST's post before quoting them.
+The post describes these as "an initial set of ten design tenets" and not as a standard, mandate or checklist. It also notes that not all of them can be immediately fulfilled by current standards and technology. This provides independent support for the architectural principles discussed here. The tenet numbers and quoted wording were checked against NIST's post as fetched on 12 November 2026.
 
 Reference: [NIST, Design Tenets for Agent Identity Management Systems](https://www.nist.gov/blogs/cybersecurity-insights/design-tenets-agent-identity-management-systems)
 
@@ -533,9 +533,9 @@ Reference: [OWASP LLM06:2025, Excessive Agency](https://genai.owasp.org/llmrisk/
 
 ### 9.4 CNAS: Autonomous Systems and Loss of Control
 
-The 2026 CNAS report, _Sovereign Agents: The Pathway to Irreversible Loss of Control_ by Ben Hayum (October 30, 2026), examines the possibility of autonomous systems operating beyond effective human control.
+The 2026 CNAS report, _Sovereign Agents: The Pathway to Irreversible Loss of Control_ by Ben Hayum (November 3, 2026), examines the possibility of autonomous systems operating beyond effective human control.
 
-Its analysis makes downstream barriers and mechanisms of control especially relevant. This summary is based on the report's executive summary and press coverage; the full report was not reviewed in detail.
+Its analysis makes downstream barriers and mechanisms of control especially relevant. This summary is based on the report's executive summary as published on the CNAS site; the full PDF has not been read in detail.
 
 The Authority Gap addresses a related but distinct engineering question: how institutions can enforce explicit authority boundaries over actions taken by autonomous systems within their operational environments.
 
