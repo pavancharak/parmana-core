@@ -91,3 +91,20 @@ Rows are only reconciled after their authorization has expired (`expires_at` in 
 3. Who may resolve a row by hand? One operator, or two?
 4. What is the reconciler's threshold? The authorization's `expiresAt` is the natural choice, but it may be too late for a connector with a slow read-back.
 5. Does this need its own RFC? It changes what the audit trail records for a refused or stuck execution.
+
+## Measured cost of an intent record
+
+The read-back design needs endpoints to record intent before they act. This section measures the cost of that write, using the existing outcome-store insert as the closest equivalent.
+
+**Method.** A local PostgreSQL 16.15 server (loopback, 127.0.0.1, single client, `max: 1` connection pool) with the two outcome migrations applied (`20261027120000_add_execution_outcomes.sql` and `20261111180000_execution_outcome_failed.sql`). Each run did 100 warm-up operations, then 2,000 timed operations, each awaited before the next. The write is the one `PostgresExecutionOutcomeStore.begin` performs: an insert of an `in_flight` row with `ON CONFLICT (nonce) DO NOTHING`. Latency is wall-clock time measured in Node 24 with `process.hrtime`.
+
+| Operation                       | n     | p50      | p95      | p99      | mean     |
+| ------------------------------- | ----- | -------- | -------- | -------- | -------- |
+| Round trip (`SELECT 1`)         | 2,000 | 0.088 ms | 0.323 ms | 0.572 ms | 0.128 ms |
+| `begin`: insert `in_flight` row | 2,000 | 0.526 ms | 0.960 ms | 1.372 ms | 0.564 ms |
+
+At the median the insert costs about 0.44 ms more than a bare round trip.
+
+**What this does not show.** The database was on the same host, with no network between the application and the database, no replica, and a small table. It is a floor, not a forecast. An intent record adds one database commit round trip to every release, so the real cost is that database's distance from the endpoint, plus any synchronous replication. A database 50 ms away adds roughly 50 ms per release. The figure above applies only where the endpoint's database is on the same host or in the same network.
+
+**To repeat.** Start a PostgreSQL 16 server on port 55432, create database `parmana`, apply the two migrations with `psql`, and run a small Node script that times 2,000 inserts of the form above with `pg`. Re-run with the database placed at the distance the workload will actually have, and record the numbers in this section.
