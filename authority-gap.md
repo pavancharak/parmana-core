@@ -503,7 +503,7 @@ Reference: [OWASP LLM06:2025, Excessive Agency](https://genai.owasp.org/llmrisk/
 
 ### 9.4 CNAS: Autonomous Systems and Loss of Control
 
-The 2026 CNAS report, _Sovereign Agents: The Pathway to Irreversible Loss of Control_, examines the possibility of autonomous systems operating beyond effective human control.
+The 2026 CNAS report, _Sovereign Agents: The Pathway to Irreversible Loss of Control_ by Ben Hayum (November 3, 2026), examines the possibility of autonomous systems operating beyond effective human control.
 
 Its analysis makes downstream barriers and mechanisms of control especially relevant.
 
