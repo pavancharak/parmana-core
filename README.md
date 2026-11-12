@@ -1,6 +1,6 @@
 # Parmana
 
-**Parmana makes sure every caller takes only the actions your business has approved, even when they could technically do more.** It checks every action, whether a person or a machine takes it, against the limits you set, and it keeps proof of what happened.
+**Parmana makes sure every caller takes only the actions your business has approved, even when they could technically do more.** It checks every action, whether a person or a machine takes it, against the limits you set, and it keeps signed proof of what happened.
 
 [![CI](https://github.com/pavancharak/parmana-core/actions/workflows/ci.yml/badge.svg)](https://github.com/pavancharak/parmana-core/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/pavancharak/parmana-core/actions/workflows/codeql.yml/badge.svg)](https://github.com/pavancharak/parmana-core/actions/workflows/codeql.yml)
@@ -30,7 +30,9 @@ Parmana sits between any caller (an AI agent, an application or a person) and th
 
 Parmana does not decide what the agent should do. It decides whether the agent was allowed to do it, and it records that decision in a signed record that anyone can check with the verifier.
 
-Parmana checks actions that leave through its gateway. It does not check an agent run by a customer or a partner that calls one of your systems directly. That path is not covered yet; see [G-129](docs/internal/VERIFICATION-GAPS.md) and [RFC-0024](docs/internal/rfcs/RFC-0024-Inbound-Agent-Authorization.md).
+**Limits, stated up front.** Parmana checks only actions that leave through its gateway. It does not yet check an agent that calls one of your systems directly ([G-129](docs/internal/VERIFICATION-GAPS.md)). Code on the same host that can read the server's environment can still read connector credentials ([G-128](docs/internal/VERIFICATION-GAPS.md)). Parmana is a prototype; see [Status and scope](#status-and-scope).
+
+The planned fix for direct calls from outside agents is described in [RFC-0024](docs/internal/rfcs/RFC-0024-Inbound-Agent-Authorization.md).
 
 ## Why the claims matter
 
