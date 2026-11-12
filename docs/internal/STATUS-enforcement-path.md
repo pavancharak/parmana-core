@@ -18,7 +18,7 @@ This is the full record of the enforcement-path work, updated 2026-11-12. The de
 
 ## On a branch, not yet a pull request
 
-None.
+- **`claude/release-order-reorder`** (latest commit `413c11d`, built on `claude/release-order-threat-tests`, so a pull request would include the threat tests too). Contains the release-check reorder (option A) and the threat tests. See the section below.
 
 ## Connector read-back
 
@@ -48,6 +48,14 @@ Items 1 to 3 are decisions for the owner. Item 4 waits on operating data.
 - The report command was run against a scratch PostgreSQL server with seeded rows. It listed the expired in-flight row and changed none of the rows.
 - Not verified locally: the full `npm test` suite, which needs PostgreSQL on port 55432. CI runs it on each pull request.
 - The CLI key tests were fixed for Windows by construction, since the test and the command use the same `join`. They were not run on Windows from the sandbox.
+
+## Release-check reorder (option A)
+
+- **Threat tests first.** `packages/execution-control/tests/unit/release-order-threats.test.ts` and `packages/execution-gateway/tests/unit/release-order-threats.test.ts`, written before the change. They pin three properties: an unauthenticated caller never reaches the connector lookup; a refused verification creates no session; a forged request for an unregistered action is refused before the service, with its nonce unused.
+- **The reorder.** Gateway authentication and the connector lookup now run before the release verifier, which still consumes the nonce last. An unregistered action no longer spends its authorization, so a corrected registration can release it.
+- **Mutation checks.** Moving the lookup ahead of authentication fails the two unauthenticated and verifier-refusal tests. The retry test first passed under both orders, because its verifier stub never consumed the nonce. It now consumes the nonce, and it fails under the old order. The source was restored afterwards.
+- **Verification.** Execution-control and gateway: 293 tests pass. The examples runner passes. Typecheck passes.
+- **Review:** `docs/internal/designs/RELEASE-CHECK-ORDER.md`.
 
 ## Production run of the stuck-outcome report
 
