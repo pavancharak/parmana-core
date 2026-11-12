@@ -1,0 +1,100 @@
+From 8fb933be5a8ecd3ffdeac3555e97b3c17a95ef95 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 11 Nov 2026 16:55:48 +0000
+Subject: [PATCH] Document the outcome-record defect and its fix design
+
+Add section 11 to the enforcement-path guide: how a release refused before
+dispatch leaves the outcome row in_flight, where the connector is first
+called, the proposed ReleaseNotDispatchedError and failed-state fix, the
+storage migration it needs, and a decision between two options for
+refusals from the release verifier. The fix itself is not implemented.
+
+Co-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_016dzNudYV8HccMe3aYMdNLD
+Signed-off-by: Claude <noreply@anthropic.com>
+---
+ docs/guides/enforcement-path.md | 55 +++++++++++++++++++++++++++++++--
+ 1 file changed, 53 insertions(+), 2 deletions(-)
+
+diff --git a/docs/guides/enforcement-path.md b/docs/guides/enforcement-path.md
+index 3953595..72661e7 100644
+--- a/docs/guides/enforcement-path.md
++++ b/docs/guides/enforcement-path.md
+@@ -71,7 +71,7 @@ If `verify` returns `valid: false`, `execute` picks one of three outcomes:
+    - Without `executionControl`, it calls `connector.execute` directly.
+ 4. **Complete the record.** `complete(nonce, result)` runs only after dispatch returns (line 792).
+ 
+-**Known defect (step 4).** Dispatch has no `try`/`finally`. If dispatch throws, `complete` never runs and the row stays `in_flight`. Every later attempt with the same nonce then gets `OutcomeUnknownError`, with the message "Do not retry. Check the external system before acting again." That is wrong when the connector never ran, for example when the capability is not registered. Section 8 shows this with a test. The fix is not made yet, because it needs a rule for telling a failure before dispatch from one after it.
++**Known defect (step 4).** Dispatch has no `try`/`finally`. If dispatch throws before the connector runs, the row stays `in_flight`. Section 11 gives the analysis and the planned fix.
+ 
+ ## 5. Envelope and signature checks
+ 
+@@ -184,13 +184,64 @@ The production test cannot release to a connector. `createExecutionGateway` buil
+ 
+ In priority order. Each item names the reason it matters.
+ 
+-1. **Fix the outcome-record defect (section 4).** A release refused before dispatch leaves the row `in_flight`. Retries then tell the caller to check the external system, though nothing ran. The fix needs a rule that separates a failure before dispatch (the connector was never called) from one after it (it may have run). It also needs the production test's last assertion changed.
++1. **Fix the outcome-record defect (section 11).** A release refused before dispatch leaves the row `in_flight`, and retries tell the caller to check the external system although nothing ran. The fix needs a new `failed` status, a migration, and a rule that separates a failure before dispatch from one after it.
+ 2. **Decide whether the release verifier should run after the connector lookup.** Today a lookup failure burns the nonce (section 6). That is safe, but it means a request to an unregistered capability can never be retried, even after the registration is added.
+ 3. **Trace the failed-`fail()` case in `ExecutionComponent`.** If `executionService.fail` throws, the refusal is lost (section 8). Add a test or wrap the call.
+ 4. **Trace the nonce generation in `AuthorizationSigner`** and confirm it is unique per authorization (section 7).
+ 5. **Read the generic 500 path in `error-handler.ts`** to confirm which errors can leak details.
+ 6. **Decide on the HubSpot helper branch** (`fix/hubspot-self-approval`). The verification-only key is now active in production, but nothing on `main` signs with it, so the containment is in place without its caller (audit G-111).
+ 
++## 11. Outcome-record defect: analysis and design
++
++Status: analysed, not implemented. The production test `packages/api/tests/integration/production-gateway.integration.test.ts` asserts the current behaviour and must change with the fix.
++
++### What happens today
++
++1. `ExecutionGateway.execute` calls `executionOutcomeStore.begin(nonce, expiresAt)` before dispatch (`ExecutionGateway.ts`, around line 774). That writes an `in_flight` row.
++2. `releaseToConnector` runs. Under production wiring it calls `ExecutionControlService.execute`.
++3. If step 2 throws, `complete` is never called. The row stays `in_flight`.
++4. A retry with the same authorization passes `verify` (the gateway does not consume the nonce under `executionControl`), finds the row in `begin`, and goes to `replayedOutcome`. That returns `OutcomeUnknownError`, status 409, with the message "an earlier attempt consumed this authorization and its outcome is not recorded. Do not retry. Check the external system before acting again."
++
++For a capability with no registration, the message is wrong. Nothing ran, and the advice sends the caller to check an external system for nothing.
++
++### Where the connector is first called
++
++`ExecutionControlService.execute` (`packages/execution-control/src/ExecutionControlService.ts`) runs these steps in order:
++
++| Line                          | Step                                                    | Can throw before the connector runs?                                                                  |
++| ----------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
++| 60                            | `verifyRelease(release)`, the release verifier          | Yes. The nonce is consumed last in that verifier, so a refusal before that step leaves it unconsumed. |
++| 72                            | Gateway authentication                                  | Yes                                                                                                   |
++| 79                            | `registry.resolveCapability(action)`                    | Yes. This is where `ConnectorNotRegisteredError` comes from.                                          |
++| 85–95                         | Session creation and the `session.created` audit record | Yes                                                                                                   |
++| inside `try`, around line 150 | `connector.execute(request)`                            | This is the first call that reaches the connector.                                                    |
++
++Errors from step 150 onward may come after the connector has acted. They keep the `in_flight` meaning in the store's own documentation: "the connector was (or may have been) called." Errors before step 150 mean the connector was never called.
++
++### Proposed fix
++
++1. **Name the pre-dispatch failures.** Add a `ReleaseNotDispatchedError` in `packages/shared/src/errors/`. `ExecutionControlService` wraps the steps before the `try` (lines 60–95) so that any error from them is rethrown as `ReleaseNotDispatchedError`, carrying the original message as its reason. Errors from the connector itself are not wrapped.
++2. **Record a terminal state.** The gateway catches `ReleaseNotDispatchedError` around `releaseToConnector` and calls a new `executionOutcomeStore.fail(nonce, reason)`. Under option A (below), a refusal from the release verifier calls `abort(nonce)` instead, which deletes the row. The row becomes `failed`. The `ExecutionOutcome` union in `packages/shared/src/domain/execution-outcome-store.ts` gains `{ status: "failed"; reason: string }`.
++3. **Replay the refusal, not "unknown".** `replayedOutcome` returns or throws a `ReleaseNotDispatchedError` for a `failed` row. Its message says that nothing was executed, the authorization is spent, and a new request must be made. That replaces `OutcomeUnknownError` for these rows. Connector failures still produce `OutcomeUnknownError`.
++4. **Storage.** Two implementations change: `MemoryExecutionOutcomeStore` and `PostgresExecutionOutcomeStore` (`packages/storage/src/postgres/`). The Postgres one needs a migration. The existing `CHECK (status IN ('in_flight', 'completed'))` in `supabase/migrations/20261027120000_add_execution_outcomes.sql` has to admit `failed`, and a `failure_reason TEXT` column is needed. The migration file reserves a `failed` state for the reconciler (G-125 Part 3), so this uses that reserved state.
++5. **Tests.** The production test changes its last assertion from `OutcomeUnknownError` to the new refusal class. New unit tests cover: a `failed` row replays the refusal; a connector error still leaves `in_flight`; and the store's `fail` is atomic with `begin`.
++
++### Decision needed before implementing
++
++The release verifier can refuse for transient reasons, such as a key lookup that fails. Under the proposal, a refusal at step 60 records `failed`, and a retry is then refused, although the nonce was never consumed and a corrected retry might succeed.
++
++Two options:
++
++- **A (recommended for this change).** Record `failed` only for refusals that happen after the release verifier has passed, meaning steps 72–95. For a refusal at step 60, the gateway deletes its `in_flight` row (an `abort(nonce)` on the store) so that no outcome is recorded, and a retry runs the release verifier again. This is the narrower change and leaves the nonce semantics alone.
++- **B.** Record `failed` for every pre-dispatch refusal, including step 60. Simpler, but a transient verifier error permanently refuses an authorization whose nonce was never consumed.
++
++Option A needs the gateway to know whether the release verifier passed. That means `ExecutionControlService` marks which refusals came after step 60.
++
++### Out of scope
++
++- The reconciler (G-125 Part 3) that would resolve `in_flight` rows after a crash. This change does not touch it.
++- Changing the release verifier's nonce order. Section 10 item 2 covers that separately.
++
+ ## Sources
+ 
+ All paths are relative to the repository root.
+-- 
+2.43.0
+
