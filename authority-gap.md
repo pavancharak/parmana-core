@@ -465,11 +465,11 @@ The proposed approach builds on existing work rather than attempting to replace 
 
 Several developments are particularly relevant.
 
-### 9.1 NIST: Software and AI Agent Identity and Authorization
+### 9.1 NIST NCCoE: Accelerating the Adoption of Software and AI Agent Identity and Authorization
 
-In February 2026, NIST's National Cybersecurity Center of Excellence published a concept paper exploring how existing identity and authorization standards could be applied to AI agents.
+In February 2026, NIST's National Cybersecurity Center of Excellence (NCCoE) published a draft concept paper, _Accelerating the Adoption of Software and AI Agent Identity and Authorization_, exploring how existing identity and authorization standards could be applied to software and AI agents. Its public comment period ran from February 5 to April 2, 2026.
 
-Its focus includes how agents are identified, how their credentials are issued, updated and revoked, whether authorization policies can adapt in real time as an agent's context changes, and how agent activity can be audited and attributed, including through non-repudiation. It points to existing standards such as OAuth, OpenID Connect, SCIM and SPIFFE rather than inventing new ones.
+Its focus includes how agents are identified; how agent authentication is handled, including key issuance, update and revocation; whether authorization policies can be dynamically updated when an agent's context changes; and how agent actions can be logged in a tamper-proof and verifiable manner and bound back to human authorization, for non-repudiation. The paper names OAuth 2.0/2.1, OpenID Connect, SPIFFE/SPIRE, SCIM and NGAC, along with MCP, as standards under consideration, and it invites feedback on others. Its emphasis on applying existing standards rather than new ones is consistent with the approach discussed here.
 
 These themes directly intersect with the Authority Gap.
 
