@@ -469,37 +469,25 @@ Several developments are particularly relevant.
 
 In February 2026, NIST's National Cybersecurity Center of Excellence published a concept paper exploring how existing identity and authorization standards could be applied to AI agents.
 
-Its research questions include:
+Its focus includes how agents are identified, how their credentials are issued, updated and revoked, and whether authorization policies can adapt in real time as an agent's context changes. It points to existing standards such as OAuth, OpenID Connect, SCIM and SPIFFE rather than inventing new ones.
 
-- How agents should be identified.
-- How authorization should be established.
-- How least privilege can be implemented.
-- How delegated authority should be represented.
-- How agent actions can be linked to human authorization.
-- How tamper-evident evidence can be maintained.
-
-These questions directly intersect with the Authority Gap.
+These themes directly intersect with the Authority Gap.
 
 Reference: [NIST NCCoE Concept Paper, February 2026](https://www.nccoe.nist.gov/sites/default/files/2026-02/accelerating-the-adoption-of-software-and-ai-agent-identity-and-authorization-concept-paper.pdf)
 
 ### 9.2 NIST: Design Tenets for Agent Identity Management Systems
 
-On October 27, 2026, NIST published ten initial design tenets for agent identity management.
+On October 27, 2026, NIST published ten initial design tenets for agent identity management. The tenets are not a standard or mandate.
 
-Several are particularly significant to this paper:
+Several are relevant to this paper. As summarized in published coverage of the post, they include:
 
-- Agent linking, delegation and attenuation.
-- Least and zero standing privilege.
-- Short-lived and revocable authorization.
-- Architectural separation of policy from reasoning.
-- Deterministic access decisions.
-- Immutable evidence.
+- Agents should have an identity, credential and access lifecycle separate from human principals.
+- Access decisions should be deterministic. Probabilistic signals such as risk scores may inform a decision but should not make it.
+- Because language models take data and instructions as one token stream, the separation between them must be enforced by architecture rather than by the model.
+- Guardrails alone are insufficient.
+- Logs should be tamper-evident, append-only and kept independent of the agent.
 
-NIST explicitly identifies deterministic access decisions as the primary mechanism for authorization, rather than using probabilistic information as the final access decision.
-
-It also emphasizes that guardrails alone are insufficient.
-
-This provides important independent support for the architectural principles discussed here.
+This provides independent support for the architectural principles discussed here. The exact tenet wording should be checked against NIST's post before quoting it.
 
 Reference: [NIST, Design Tenets for Agent Identity Management Systems](https://www.nist.gov/blogs/cybersecurity-insights/design-tenets-agent-identity-management-systems)
 
@@ -515,7 +503,7 @@ Reference: [OWASP LLM06:2025, Excessive Agency](https://genai.owasp.org/llmrisk/
 
 ### 9.4 CNAS: Autonomous Systems and Loss of Control
 
-The November 2026 CNAS report, _Sovereign Agents: The Pathway to Irreversible Loss of Control_, examines the possibility of autonomous systems operating beyond effective human control.
+The 2026 CNAS report, _Sovereign Agents: The Pathway to Irreversible Loss of Control_, examines the possibility of autonomous systems operating beyond effective human control.
 
 Its analysis makes downstream barriers and mechanisms of control especially relevant.
 
@@ -754,7 +742,7 @@ Website: https://parmanasystems.com/
 
 4. National Institute of Standards and Technology. (2020). _Zero Trust Architecture. NIST SP 800-207._ https://csrc.nist.gov/pubs/sp/800/207/final
 
-5. Hayum, B. (November 3, 2026). _Sovereign Agents: The Pathway to Irreversible Loss of Control._ Center for a New American Security. https://www.cnas.org/publications/reports/sovereign-agents
+5. Hayum, B. (2026). _Sovereign Agents: The Pathway to Irreversible Loss of Control._ Center for a New American Security. https://www.cnas.org/publications/reports/sovereign-agents
 
 ---
 
