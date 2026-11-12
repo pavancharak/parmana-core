@@ -469,7 +469,7 @@ Several developments are particularly relevant.
 
 In February 2026, NIST's National Cybersecurity Center of Excellence published a concept paper exploring how existing identity and authorization standards could be applied to AI agents.
 
-Its focus includes how agents are identified, how their credentials are issued, updated and revoked, and whether authorization policies can adapt in real time as an agent's context changes. It points to existing standards such as OAuth, OpenID Connect, SCIM and SPIFFE rather than inventing new ones.
+Its focus includes how agents are identified, how their credentials are issued, updated and revoked, whether authorization policies can adapt in real time as an agent's context changes, and how agent activity can be audited and attributed, including through non-repudiation. It points to existing standards such as OAuth, OpenID Connect, SCIM and SPIFFE rather than inventing new ones.
 
 These themes directly intersect with the Authority Gap.
 
