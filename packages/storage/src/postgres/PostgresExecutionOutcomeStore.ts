@@ -5,6 +5,7 @@ import {
   type ExecutionOutcome,
   type ExecutionOutcomeStore,
   type ExecutionResult,
+  type StuckExecutionOutcome,
 } from "@parmana/shared";
 
 import { isUniqueViolation } from "../errors/PostgresErrorCodes.js";
@@ -77,6 +78,18 @@ export class PostgresExecutionOutcomeStore implements ExecutionOutcomeStore {
     await this.pool.query(ABORT_OUTCOME_SQL, [nonce]);
   }
 
+  async listStuck(now: Date): Promise<readonly StuckExecutionOutcome[]> {
+    const { rows } = await this.pool.query<{ nonce: string; expires_at: Date }>(
+      LIST_STUCK_SQL,
+      [now.toISOString()],
+    );
+
+    return rows.map((row) => ({
+      nonce: row.nonce,
+      expiresAt: new Date(row.expires_at).toISOString(),
+    }));
+  }
+
   async get(nonce: string): Promise<ExecutionOutcome | undefined> {
     const { rows } = await this.pool.query<{
       status: string;
@@ -112,6 +125,14 @@ const COMPLETE_OUTCOME_SQL = `
   UPDATE execution_outcomes
   SET status = 'completed', result = $2::jsonb, updated_at = now()
   WHERE nonce = $1 AND status = 'in_flight'
+`;
+
+const LIST_STUCK_SQL = `
+  SELECT nonce, expires_at
+  FROM execution_outcomes
+  WHERE status = 'in_flight' AND expires_at <= $1
+  ORDER BY expires_at
+  LIMIT 1000
 `;
 
 const GET_OUTCOME_SQL = `

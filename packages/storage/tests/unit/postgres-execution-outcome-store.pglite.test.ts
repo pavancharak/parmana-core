@@ -175,4 +175,21 @@ describe("PostgresExecutionOutcomeStore on PostgreSQL semantics", () => {
 
     await close();
   });
+  it("lists only in-flight rows whose authorization has expired, and changes nothing", async () => {
+    const { pool, close } = await createDatabase();
+    const store = new PostgresExecutionOutcomeStore(pool);
+    const now = new Date("2026-11-12T10:00:00.000Z");
+
+    expect(await store.begin("l-stuck", EXPIRES_AT)).toBe(true);
+    expect(await store.begin("l-live", "2026-11-12T11:00:00.000Z")).toBe(true);
+    expect(await store.begin("l-failed", EXPIRES_AT)).toBe(true);
+    await store.fail("l-failed", "refused");
+
+    expect(await store.listStuck(now)).toEqual([
+      { nonce: "l-stuck", expiresAt: EXPIRES_AT },
+    ]);
+    expect(await store.get("l-stuck")).toEqual({ status: "in_flight" });
+
+    await close();
+  });
 });

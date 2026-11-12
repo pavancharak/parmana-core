@@ -108,3 +108,9 @@ At the median the insert costs about 0.44 ms more than a bare round trip.
 **What this does not show.** The database was on the same host, with no network between the application and the database, no replica, and a small table. It is a floor, not a forecast. An intent record adds one database commit round trip to every release, so the real cost is that database's distance from the endpoint, plus any synchronous replication. A database 50 ms away adds roughly 50 ms per release. The figure above applies only where the endpoint's database is on the same host or in the same network.
 
 **To repeat.** Start a PostgreSQL 16 server on port 55432, create database `parmana`, apply the two migrations with `psql`, and run a small Node script that times 2,000 inserts of the form above with `pg`. Re-run with the database placed at the distance the workload will actually have, and record the numbers in this section.
+
+## Implementation status
+
+- **Stage 1, complete on branch `claude/reconciler-report`.** `ExecutionOutcomeStore.listStuck(now)` returns rows that are still `in_flight` and whose authorization expired at or before `now`. It is read-only, and the in-memory and PostgreSQL stores are both tested, including a check that the listed rows are unchanged afterwards. `scripts/report-stuck-outcomes.ts` (run with `npm run report:stuck-outcomes`) prints the stuck rows as a table or with `--json`. It only reads. It was run against seeded rows: it listed the one expired in-flight row and changed none of the three.
+- **Not yet built:** scheduling the report, and any resolution. Stage 1 is the report only; a person resolves each row.
+- **Read-backs (stage 4)** stay blocked on ADR-0022 step 1.

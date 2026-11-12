@@ -57,6 +57,19 @@ export interface ExecutionOutcomeStore {
 
   /** Returns the recorded outcome, or undefined when none is recorded. */
   get(nonce: string): Promise<ExecutionOutcome | undefined>;
+
+  /**
+   * Read only. Lists rows still `in_flight` whose authorization expired at or
+   * before `now`. These are the only rows the reconciler may consider, because
+   * a retry can no longer arrive for them. Changes nothing.
+   */
+  listStuck(now: Date): Promise<readonly StuckExecutionOutcome[]>;
+}
+
+/** An in-flight outcome whose authorization has expired. */
+export interface StuckExecutionOutcome {
+  readonly nonce: string;
+  readonly expiresAt: string;
 }
 
 /**

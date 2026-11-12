@@ -3,10 +3,11 @@ import {
   type ExecutionOutcome,
   type ExecutionOutcomeStore,
   type ExecutionResult,
+  type StuckExecutionOutcome,
 } from "@parmana/shared";
 
 type Row =
-  | { readonly status: "in_flight" }
+  | { readonly status: "in_flight"; readonly expiresAt: string }
   | { readonly status: "completed"; readonly resultJson: string }
   | { readonly status: "failed"; readonly reason: string };
 
@@ -21,12 +22,12 @@ type Row =
 export class MemoryExecutionOutcomeStore implements ExecutionOutcomeStore {
   private readonly rows = new Map<string, Row>();
 
-  async begin(nonce: string): Promise<boolean> {
+  async begin(nonce: string, expiresAt: string): Promise<boolean> {
     if (this.rows.has(nonce)) {
       return false;
     }
 
-    this.rows.set(nonce, { status: "in_flight" });
+    this.rows.set(nonce, { status: "in_flight", expiresAt });
 
     return true;
   }
@@ -62,6 +63,21 @@ export class MemoryExecutionOutcomeStore implements ExecutionOutcomeStore {
     if (this.rows.get(nonce)?.status === "in_flight") {
       this.rows.delete(nonce);
     }
+  }
+
+  async listStuck(now: Date): Promise<readonly StuckExecutionOutcome[]> {
+    const stuck: StuckExecutionOutcome[] = [];
+
+    for (const [nonce, row] of this.rows) {
+      if (
+        row.status === "in_flight" &&
+        Date.parse(row.expiresAt) <= now.getTime()
+      ) {
+        stuck.push({ nonce, expiresAt: row.expiresAt });
+      }
+    }
+
+    return stuck;
   }
 
   async get(nonce: string): Promise<ExecutionOutcome | undefined> {

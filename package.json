@@ -25,6 +25,7 @@
     "generate:api-key": "tsx scripts/generate-api-key.ts",
     "generate:migration-bundle": "tsx scripts/generate-migration-bundle.ts",
     "db:migrate": "tsx scripts/migrate-database.ts",
+    "report:stuck-outcomes": "tsx scripts/report-stuck-outcomes.ts",
     "verify:kms": "tsx scripts/verify-kms-signing.ts",
     "generate:cli-reference": "tsx scripts/generate-cli-reference.ts",
     "dev:setup": "node scripts/dev/setup-local.mjs",
