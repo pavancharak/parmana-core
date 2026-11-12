@@ -1,0 +1,38 @@
+{
+  "rules": [
+    {
+      "id": "approve-github-pr-comment",
+      "outcome": {
+        "action": "approve",
+        "reason": "Comment authorized. A signed approval from a trusted person covers this exact comment text on this pull request."
+      },
+      "condition": {
+        "fact": "humanApproved",
+        "operator": "is_true"
+      }
+    },
+    {
+      "id": "reject-default",
+      "outcome": {
+        "action": "reject",
+        "reason": "Comment rejected because no signed approval covers this exact text on this pull request."
+      },
+      "condition": {
+        "always": true
+      }
+    }
+  ],
+  "policyId": "github-pr-comment",
+  "description": "Authorizes one comment on a GitHub pull request. A signed approval from a trusted person is required, and it covers the exact comment text on the exact pull request. Nothing else authorizes the comment.",
+  "policyVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "signalsSchema": {
+    "humanApproved": "boolean"
+  },
+  "approvalSignals": {
+    "humanApproved": {
+      "value": "parameters.body",
+      "resourceId": "target"
+    }
+  }
+}
