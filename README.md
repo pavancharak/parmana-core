@@ -9,6 +9,10 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/pavancharak/parmana-core/badge)](https://scorecard.dev/viewer/?uri=github.com/pavancharak/parmana-core)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15846/badge)](https://www.bestpractices.dev/projects/15846)
 
+## Research
+
+- **[The Authority Gap: Why Autonomous AI Needs Deterministic Execution Boundaries](./authority-gap.md)** (discussion draft, November 2026). The paper's architecture diagram is in [`authority-gap.md`](./authority-gap.md).
+
 ## The problem
 
 Companies want AI agents to issue refunds, pay vendors, update CRM deals, merge pull requests and post to team channels. Two questions stand between that and production:
