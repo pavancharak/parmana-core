@@ -23,12 +23,13 @@ export PGUSER="${PGUSER:-parmana}"
 export PGDATABASE="${PGDATABASE:-parmana}"
 
 MIGRATIONS_DIR="${MIGRATIONS_DIR:-/migrations/supabase}"
+# ROLES_FILE overrides the roles script; the container sets neither (defaults apply).
 
 psql_quiet() {
   psql --set=ON_ERROR_STOP=1 --quiet --no-psqlrc "$@"
 }
 
-psql_quiet --file=/migrations/postgres-roles.sql
+psql_quiet --file="${ROLES_FILE:-/migrations/postgres-roles.sql}"
 
 psql_quiet --command="
   CREATE TABLE IF NOT EXISTS parmana_schema_migrations (

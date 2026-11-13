@@ -49,33 +49,44 @@ npx vitest run packages/api/tests/integration/fault-injection.integration.test.t
 
 Expected result: 5 passed, 1 expected failure (the known gap above).
 
-## Local deployment drill
+## Deployment drill
 
-The suite above uses in-memory stores. A separate drill runs the real server (`packages/api/src/server.ts`) against a local Postgres 16 with the repository's 51 migrations applied, and injects faults into the running process. It was run by hand, not in CI.
+The suite above uses in-memory stores. The deployment drill runs the real server (`packages/api/src/server.ts`) against a real Postgres 16, with the repository's migrations applied, and injects faults into it. It runs in CI as `.github/workflows/outage-drill.yml`, and locally with:
 
-Setup used: `PARMANA_STORAGE=postgres`, `NODE_ENV=development`, a local database on port 55432, generated `default` and `gateway` keys, one API key, policies seeded with `docker/local/seed-policies.mjs`, and a TCP proxy on port 55433 between the API and the database so the network can be cut without stopping the database. Two drill-only switches were set: `PARMANA_ALLOW_UNGOVERNED_POLICY=true` (no policy governance records) and the checks `EXECUTION_INTENTS_CHECK` and `SIGNING_READINESS_CHECK`.
+```bash
+npm ci && npm run build
+PGHOST=127.0.0.1 PGPORT=5432 PGUSER=postgres PGPASSWORD=postgres bash scripts/drills/outage-drill.sh
+```
 
-**Important: `NODE_ENV=test` forces in-memory storage** (`packages/storage/src/StorageFactory.ts`). A run with `NODE_ENV=test` does not test Postgres at all. The first network-cut attempt was run that way and was discarded for that reason.
+The script (`scripts/drills/outage-drill.sh`) does the following:
 
-### Results
+1. Applies the migrations and seeds the policies.
+2. Starts a TCP proxy (`scripts/drills/tcp-proxy.mjs`) between the API and the database.
+3. Checks a baseline: an unapproved transaction is refused with `403 POLICY_DENIED`.
+4. **Network cut.** Cuts the proxy. The process must stay up. `/health` must return 200. `/execute` must return a 5xx, not a success or a domain decision. Then it heals the proxy and checks recovery.
+5. **Missing signing key.** Moves the `default` key away and starts the server. It must exit with code 1, name the missing key, and not listen on the port.
 
-| Fault                                      | Injected by                           | Observed                                                                                                                                                                                                                      | Result                                                                   |
-| ------------------------------------------ | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Database stopped                           | `pg_ctl -m immediate stop`            | Process stays up. `/health` 500, `/ready` 500, `/execute` 500 with a generic body. Recovers when the database returns: `/health` and `/ready` 200, `/execute` returns its normal domain response.                             | Process fix works (finding 1). Health finding open (finding 2).          |
-| Network cut between API and database       | Proxy refuses and drops connections   | Same as above: process up, `/health` and `/ready` 500, `/execute` generic 500. No row written during the cut. After the cut is healed, all endpoints recover, and the next request is written (row count went from 30 to 31). | Same as above. No success response during the cut.                       |
-| Signing key file missing at startup        | Key file moved away before start      | The server refuses to start, names the missing key, and exits with code 1. Nothing listens on the port.                                                                                                                       | Fails closed.                                                            |
-| Approved execution through the live server | Local test approver (`NODE_ENV=test`) | HTTP 200 with a signed trust record. Run in memory mode only, because `NODE_ENV=test` is required for the local approver.                                                                                                     | Approval path works end to end in memory mode. Not run against Postgres. |
+Scope: refusal and outage paths only. An approved execution needs a trusted approver. Neither the drill nor CI sets one up.
 
-Findings:
+**Drill-only settings.** The server runs with `NODE_ENV=development`, `PARMANA_ALLOW_UNGOVERNED_POLICY=true` (no policy governance records), and the checks `EXECUTION_INTENTS_CHECK` and `SIGNING_READINESS_CHECK` on. **`NODE_ENV=test` forces in-memory storage** (`packages/storage/src/StorageFactory.ts`), so the drill must not use it.
+
+### Results (local run, before and after the fix)
+
+| Fault                                      | Before the fix                                | After the fix                                                                                                             |
+| ------------------------------------------ | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Database stopped                           | Process exits.                                | Process stays up. `/health` 200 (after finding 2), `/ready` 503, `/execute` 500 with a generic body. Recovers on restart. |
+| Network cut between API and database       | Process exits (the same defect as finding 1). | Process stays up. `/health` 200, `/ready` 503, `/execute` 500. No row written during the cut. Recovers after heal.        |
+| Signing key missing at startup             | Refuses to start, exit code 1.                | Same.                                                                                                                     |
+| Approved execution through the live server | Works in memory mode only (`NODE_ENV=test`).  | Not changed. Not run against Postgres.                                                                                    |
+
+### Findings
 
 1. **Fixed: a dropped connection killed the process.** `PostgresPoolFactory` created the pool with no `error` listener. When an idle connection dropped, Node treated the pool's `error` event as unhandled and the process exited. The pool now logs `postgres_pool_idle_client_error` (without the connection string). Regression test: `packages/storage/tests/unit/postgres-pool-error.test.ts`. It fails without the listener and passes with it.
-2. **Open: `/health` and `/ready` depend on the database.** Both sit behind a rate limiter whose store is Postgres (`PostgresRateLimitStore`). With the database down or unreachable, they return 500. The README says `/health` only shows that the process is running. A liveness probe on `/health` would mark the process unhealthy during an outage, and an orchestrator could restart it. Possible fixes are a memory store for the health limiter, or skipping the limiter on `/health`. Either changes a rate-limit decision, so it is not made here.
-3. **Open: an approved execution cannot reach the Postgres path in the drill.** The server trusts approvers from code, from the `approval_issuers` table (added through two-person maker-checker), or from the local test approver, which exists only when `NODE_ENV=test` and that mode forces memory storage. A trusted approver for a Postgres drill needs a decision by the project owner. A row inserted by hand would need a fake governance change record, and that would defeat the control this drill is meant to exercise.
+2. **Fixed: `/health` depended on the database.** The health and ready limiter was backed by Postgres, so `/health` returned 500 during an outage, and a liveness probe would have restarted a healthy process. The health limiter is now in-process (`packages/api/src/server.ts`). `/health` stays 200 during an outage. `/ready` still returns 503 while the database is unreachable, which is the correct readiness answer.
 
-## Not covered
+## Open
 
-- Signing and key-store failures while the server is running. The signing gate sits behind the human-approval check, which needs finding 3 to be resolved. The readiness route does not probe signing.
-- KMS or other remote key-store outages. No AWS account is available to the drill.
-- Approved execution against Postgres (finding 3).
-- CI. The drill is manual. Running it in CI would need a Postgres service, the proxy, and an approver key that is not a production key.
-- Load under failure. See the load-testing item in `docs/internal/VERIFICATION-GAPS.md`.
+- **Approved execution against Postgres.** The server trusts approvers from code, from the `approval_issuers` table (added through two-person maker-checker), or from the local test approver. The local test approver exists only when `NODE_ENV=test`, which forces memory storage. A real maker-checker drill approver needs two people and signed approvals. Inserting a row by hand would need a fake governance change record, which would defeat the control the drill tests.
+- **Signing faults while running.** The signing gate sits behind the human-approval check, so it cannot be reached without an approved execution (see above). The readiness route does not probe signing.
+- **KMS and other remote key stores.** No AWS account is available to the drill.
+- **Load under failure.** See the load-testing item in `docs/internal/VERIFICATION-GAPS.md`.
