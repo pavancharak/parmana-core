@@ -236,3 +236,42 @@ currentSigningKeyId origin/main -- packages/crypto/src/KeyProvider.ts`).
 - Old shared key: `2787acce-…` (alias `alias/default`), unchanged
 - Server role: `parmana-vercel-kms-signer` (Vercel project `parmana-api-real`, production)
 - PR: https://github.com/pavancharak/parmana-core/pull/613
+
+## 9. Open items (as of the last update)
+
+| #   | Item                                                                                                                                                                                                              | Owner    | Status      |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ----------- |
+| 1   | Confirm production signs with `alias/parmana-prod` (section 5). Needs one real signed request.                                                                                                                    | Team     | Open        |
+| 2   | Confirm the Git commit of the current production deployment `dpl_AGh2CNLugRCsqzm4R3FK5zhGGjXp` (URL `parmana-api-real-8ma2zq723-â€¦`) in the Vercel dashboard, Source field.                                      | Team     | Open        |
+| 3   | Delete the access key, user `parmana-prod-test` and policy `parmana-prod-signing-test` in IAM.                                                                                                                    | Admin    | Open        |
+| 4   | Drill key `83cd2361-df73-4879-859f-412d5f9fd7c9` is scheduled for deletion (around 2026-11-20). Cancel with `aws kms cancel-key-deletion` if it's still needed, otherwise let it delete.                          | Admin    | Open        |
+| 5   | Remove `EnableKey`, `DisableKey`, `CreateAlias` and `DeleteAlias` from the inline policy on user `parmana-kms-drill` once the drill is closed.                                                                    | Admin    | Open        |
+| 6   | Stop the local PostgreSQL cluster on the sandbox (`pg_ctlcluster 16 main stop`). It's test-only and has a superuser test role.                                                                                    | Engineer | Open        |
+| 7   | Run the full test suite on Node 24 (`.nvmrc` pins 24.22.2). The crypto suite had 56 failures on Node 22 both before and after the change, from the ML-DSA key type. The runtime and API test suites were not run. | Engineer | Open        |
+| 8   | Staging key and alias: not created. Repeat section 3 when staging is needed.                                                                                                                                      | Admin    | Not started |
+
+## 10. Security notes
+
+- **Root account use.** Much of this work used the root account through `aws login`. Root should not be used for routine changes. For future work, sign in as an IAM admin user, and use a session that expires.
+- **Test access key.** The access key for `parmana-prod-test` was used once and should have been deleted straight after the test. Item 3 covers it.
+- **Superuser on a test database.** The local `parmana` role was made a superuser so migrations could run. It only exists on the sandbox's local PostgreSQL. Don't reuse that role on any shared database.
+- **Credentials in chat.** No access keys or secrets should be pasted into chats or repo files. Use `aws configure --profile <name>` in your own terminal.
+- **Key IDs in documents.** KMS key IDs are identifiers, not secrets. The secret scanner (gitleaks) flags them in some contexts. Shorten them in documents (for example `7b0c7156-â€¦`) rather than adding allowlist entries.
+
+## 11. Known issues and workarounds
+
+- **Terraform provider rejects the Ed25519 key spec.** The AWS Terraform provider (5.x) does not accept `ECC_NIST_EDWARDS25519`. The key is created by `create-signing-key.ps1` (AWS CLI); Terraform manages only the alias and the role policy. Provider 6.x was not confirmed to accept the spec.
+- **Vercel "Redeploy" rebuilds the old commit.** After changing an environment variable, deploy from `main` (`git checkout --detach origin/main` then `vercel --prod`), not from the dashboard's Redeploy button.
+- **Health checks don't prove the key.** `/health` returns 200 whether or not the server uses the new key. Only a signed request, checked in CloudTrail, proves it.
+- **CloudShell blocked for new accounts.** It can show "account verification in progress". Use the AWS CLI or the CloudTrail console instead.
+- **CloudTrail lookups lag.** Allow about 15 minutes before a new event appears.
+- **Pre-commit gitleaks on KMS IDs.** See the security note above.
+
+## 12. Decisions and reasons
+
+- **Alias, not key ID, in configuration.** The alias lets a key be rotated by pointing a new alias at a new key. Repointing an existing alias would break verification of earlier signatures, so it is forbidden.
+- **Key created by script, alias managed by Terraform.** The provider can't create an Ed25519 key, so the key is created with the CLI and recorded in `prod.tfvars`. Terraform then manages the alias and the policy.
+- **30-day deletion window for production, 7 days for staging.** Production keys are kept longer, in case a deletion needs reversing. Staging uses the shorter window.
+- **Role policy limited to three actions on one key.** The server needs only sign, public-key read and describe. Nothing else is granted.
+- **Drill identity limited by tag.** The drill user can act only on keys tagged `purpose=parmana-drill`, so it cannot affect production keys.
+- **Shared alias left alone.** `alias/default` still backs the old key and has existing signatures, so it isn't touched.
