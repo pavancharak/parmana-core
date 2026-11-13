@@ -23,6 +23,24 @@ export const DEFAULT_KEY_ID = "default";
 export const DEFAULT_SECONDARY_KEY_ID = "default-secondary";
 
 /**
+ * Resolves the logical keyId this process signs with. Defaults to
+ * DEFAULT_KEY_ID, so existing deployments are unchanged. Set
+ * PARMANA_SIGNING_KEY_ID to point a deployment at its own signing key
+ * (for example a per-environment KMS alias such as "alias/parmana-prod"
+ * under KEY_PROVIDER=aws-kms), so environments never share a key through
+ * a shared alias. Read fresh on every call. The KMS signer maps the
+ * value to an alias the same way it maps DEFAULT_KEY_ID, and a value
+ * that cannot be mapped is rejected when the key is first used.
+ */
+export function currentSigningKeyId(): string {
+  const configured = process.env.PARMANA_SIGNING_KEY_ID;
+
+  return configured === undefined || configured.trim() === ""
+    ? DEFAULT_KEY_ID
+    : configured.trim();
+}
+
+/**
  * Resolves the keyId that VerificationCrypto/RefusalCrypto/
  * AuditEventCrypto -- the durable-evidence signers (Trust Records,
  * Refusal Records, Audit Events) -- use for NEW signatures (PQC audit
@@ -50,7 +68,7 @@ export const DEFAULT_SECONDARY_KEY_ID = "default-secondary";
  * validation is duplicated here.
  */
 export function currentVerificationKeyId(): string {
-  return process.env.PARMANA_VERIFICATION_KEY_ID ?? DEFAULT_KEY_ID;
+  return process.env.PARMANA_VERIFICATION_KEY_ID ?? currentSigningKeyId();
 }
 
 /**

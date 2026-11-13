@@ -10,7 +10,10 @@ import { TrustRecordHasher } from "./TrustRecordHasher.js";
 
 import { SignerBootstrap } from "./SignerBootstrap.js";
 import { FileKeyProvider } from "./providers/key/FileKeyProvider.js";
-import { DEFAULT_KEY_ID, DEFAULT_SECONDARY_KEY_ID } from "./KeyProvider.js";
+import {
+  currentSigningKeyId,
+  DEFAULT_SECONDARY_KEY_ID,
+} from "./KeyProvider.js";
 
 /**
  * Schema version stamped on `signatures`-bearing Receipts. See the
@@ -60,7 +63,7 @@ export class ReceiptCrypto {
   async sign(value: unknown): Promise<string> {
     const signer = await this.signerPromise;
 
-    return this.signer.signWithSigner(value, DEFAULT_KEY_ID, signer);
+    return this.signer.signWithSigner(value, currentSigningKeyId(), signer);
   }
 
   /**
@@ -104,7 +107,7 @@ export class ReceiptCrypto {
 
         schemaVersion: HYBRID_SCHEMA_VERSION,
       },
-      DEFAULT_KEY_ID,
+      currentSigningKeyId(),
       DEFAULT_SECONDARY_KEY_ID,
     );
 

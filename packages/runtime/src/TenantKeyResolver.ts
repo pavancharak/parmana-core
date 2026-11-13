@@ -1,4 +1,4 @@
-import { DEFAULT_KEY_ID } from "@parmana/crypto";
+import { currentSigningKeyId } from "@parmana/crypto";
 
 /**
  * Resolves which signing keyId an Execution Authorization for a given
@@ -41,7 +41,7 @@ export class FileTenantKeyResolver implements TenantKeyResolver {
 
   async resolveKeyId(tenantId: string | undefined): Promise<string> {
     if (tenantId === undefined) {
-      return DEFAULT_KEY_ID;
+      return currentSigningKeyId();
     }
 
     const candidate = `${TENANT_KEY_PREFIX}${tenantId}`;
@@ -55,6 +55,6 @@ export class FileTenantKeyResolver implements TenantKeyResolver {
       // rather than fail signing over a per-tenant provisioning gap.
     }
 
-    return DEFAULT_KEY_ID;
+    return currentSigningKeyId();
   }
 }

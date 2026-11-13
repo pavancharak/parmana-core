@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 
 import {
   CanonicalSerializer,
-  DEFAULT_KEY_ID,
+  currentSigningKeyId,
   SignerBootstrap,
   type Signer,
 } from "@parmana/crypto";
@@ -174,7 +174,7 @@ export class HttpBusinessSignalSource implements BusinessSignalSource {
       ).toISOString(),
     };
 
-    const keyId = this.options.keyId ?? DEFAULT_KEY_ID;
+    const keyId = this.options.keyId ?? currentSigningKeyId();
     const signer = this.options.signer ?? (await SignerBootstrap.create());
     const signed: SignedBusinessSignalQuery = {
       query: message,

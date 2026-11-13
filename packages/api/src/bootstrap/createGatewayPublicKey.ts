@@ -1,6 +1,10 @@
 import type { KeyObject } from "node:crypto";
 
-import { DEFAULT_KEY_ID, SignerBootstrap, type Signer } from "@parmana/crypto";
+import {
+  currentSigningKeyId,
+  SignerBootstrap,
+  type Signer,
+} from "@parmana/crypto";
 
 /**
  * Loads the gateway verification public key.
@@ -26,5 +30,5 @@ export async function createGatewayPublicKey(
 ): Promise<KeyObject> {
   const resolvedSigner = signer ?? (await SignerBootstrap.create());
 
-  return resolvedSigner.getPublicKey(DEFAULT_KEY_ID);
+  return resolvedSigner.getPublicKey(currentSigningKeyId());
 }
