@@ -12,7 +12,7 @@ import {
 } from "@parmana/connector-sdk";
 import {
   CanonicalSerializer,
-  DEFAULT_KEY_ID,
+  currentSigningKeyId,
   SignerBootstrap,
   type Signer,
 } from "@parmana/crypto";
@@ -229,7 +229,7 @@ export class GatewayExternalAdapter implements Connector {
     this.url = checked.url;
     this.connectorId = `ext-${target.capability}`;
     this.capabilities = connectorCapabilities([target.capability]);
-    this.keyId = options.keyId ?? DEFAULT_KEY_ID;
+    this.keyId = options.keyId ?? currentSigningKeyId();
     this.lookup = options.lookup ?? systemEndpointAddressLookup;
     this.transport = options.transport ?? createPinnedHttpsTransport();
     this.now = options.now ?? (() => new Date());

@@ -6,6 +6,7 @@ import {
   DEFAULT_KEY_ID,
   DEFAULT_SECONDARY_KEY_ID,
   SignerBootstrap,
+  currentSigningKeyId,
   currentVerificationKeyId,
   currentVerificationSecondaryKeyId,
 } from "@parmana/crypto";
@@ -124,16 +125,16 @@ export async function assertKmsSigningKeyReachable(): Promise<void> {
 
   const signer = await SignerBootstrap.create();
 
-  if (!(await signer.hasKey(DEFAULT_KEY_ID))) {
+  if (!(await signer.hasKey(currentSigningKeyId()))) {
     throw new Error(
-      `KEY_PROVIDER=aws-kms is configured, but no KMS key named "${DEFAULT_KEY_ID}" ` +
+      `KEY_PROVIDER=aws-kms is configured, but no KMS key named "${currentSigningKeyId()}" ` +
         "is reachable. Refusing to start: every execution authorization, receipt, " +
         "verification, and settlement confirmation this process signs requires this " +
         "key. Verify AWS_REGION/AWS_ROLE_ARN and the key's existence/permissions.",
     );
   }
 
-  await signer.getMetadata(DEFAULT_KEY_ID);
+  await signer.getMetadata(currentSigningKeyId());
 }
 
 /**

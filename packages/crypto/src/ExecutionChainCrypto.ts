@@ -6,7 +6,7 @@ import { ExecutionChainHasher } from "./ExecutionChainHasher.js";
 import { ArtifactSigner } from "./ArtifactSigner.js";
 import { SignatureVerifier } from "./SignatureVerifier.js";
 import { SignerBootstrap } from "./SignerBootstrap.js";
-import { DEFAULT_KEY_ID } from "./KeyProvider.js";
+import { currentSigningKeyId } from "./KeyProvider.js";
 
 /**
  * Result of computing one Execution's chain fields.
@@ -108,7 +108,7 @@ export class ExecutionChainCrypto {
 
     const chainHash = await this.chainHasher.hash(entry);
 
-    const keyId = DEFAULT_KEY_ID;
+    const keyId = currentSigningKeyId();
 
     const signer = await this.signerPromise;
 

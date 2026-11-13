@@ -1,0 +1,37 @@
+---
+title: Per-environment signing keys
+description: Give each deployment its own KMS signing key with PARMANA_SIGNING_KEY_ID, and what that enables.
+---
+
+# Per-environment signing keys
+
+Under `KEY_PROVIDER=aws-kms`, the server signs with the key named by `PARMANA_SIGNING_KEY_ID`. The default is `default`, which resolves to the shared `alias/default`. Set this variable per environment so that environments do not share a signing key.
+
+## What this enables
+
+- **Separate keys per environment.** Production, staging and drills each sign with their own KMS key. A drill cannot change production signatures.
+- **Safe drills.** A drill creates a tagged test key and its own alias, runs the server against it, then schedules the key for deletion. `alias/default` is never touched.
+- **Key rotation by new alias.** Create a new key with a new alias and point `PARMANA_SIGNING_KEY_ID` at it. Records signed under the old alias keep verifying, because that alias still points at the old key.
+
+## How to set it up
+
+1. Create a KMS key in the target region with key spec `ECC_NIST_EDWARDS25519` and key usage `SIGN_VERIFY`. Tag it `purpose=<environment>`. Give it an alias such as `alias/parmana-<environment>`. Terraform is the preferred way to do this.
+2. Grant the server's role only `kms:Sign`, `kms:GetPublicKey` and `kms:DescribeKey` on that key.
+3. Start the server with:
+
+   ```bash
+   KEY_PROVIDER=aws-kms
+   AWS_REGION=<region>
+   PARMANA_SIGNING_KEY_ID=alias/parmana-<environment>
+   ```
+
+4. Check that `GET /health` returns `200`. If the alias is missing or the role lacks permission, the server refuses to start and logs the error.
+
+## What not to do
+
+- **Do not repoint an existing alias** to a different key. Records and signatures that name that alias will then fail to verify. Create a new alias for a new key instead.
+- **Do not leave `PARMANA_SIGNING_KEY_ID` unset** in a KMS environment that should use its own key. It falls back to `default`, the shared alias.
+
+## Related
+
+- [Environment variables](./environment-variables.mdx), for the full variable reference.

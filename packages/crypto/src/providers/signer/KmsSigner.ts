@@ -11,7 +11,7 @@ import {
 import { SignatureAlgorithms, type SignatureAlgorithm } from "@parmana/shared";
 
 import {
-  DEFAULT_KEY_ID,
+  currentSigningKeyId,
   currentVerificationKeyId,
   type KeyMetadata,
 } from "../../KeyProvider.js";
@@ -253,7 +253,7 @@ export class KmsSigner implements Signer {
    */
   async listKeys(): Promise<string[]> {
     const candidates = [
-      ...new Set([DEFAULT_KEY_ID, currentVerificationKeyId()]),
+      ...new Set([currentSigningKeyId(), currentVerificationKeyId()]),
     ];
 
     const present = await Promise.all(

@@ -5,7 +5,7 @@ import { TrustRecordHasher } from "./TrustRecordHasher.js";
 import { ArtifactSigner } from "./ArtifactSigner.js";
 import { SignatureVerifier } from "./SignatureVerifier.js";
 import { SignerBootstrap } from "./SignerBootstrap.js";
-import { DEFAULT_KEY_ID } from "./KeyProvider.js";
+import { currentSigningKeyId } from "./KeyProvider.js";
 
 /**
  * Policy Change cryptographic operations (Policy Governance,
@@ -77,7 +77,7 @@ export class PolicyChangeCrypto {
    * Approval Record.
    */
   async sign(record: PolicyChangeApprovalRecord): Promise<Signature> {
-    const keyId = DEFAULT_KEY_ID;
+    const keyId = currentSigningKeyId();
 
     const signer = await this.signerPromise;
 

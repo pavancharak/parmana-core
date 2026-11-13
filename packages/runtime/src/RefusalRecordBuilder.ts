@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 
 import {
   CryptoBootstrap,
-  DEFAULT_KEY_ID,
+  currentSigningKeyId,
   RefusalCrypto,
 } from "@parmana/crypto";
 
@@ -76,7 +76,7 @@ export class RefusalRecordBuilder {
       signature: {
         algorithm: CryptoBootstrap.create().signature.algorithm,
 
-        keyId: DEFAULT_KEY_ID,
+        keyId: currentSigningKeyId(),
 
         value: "",
 

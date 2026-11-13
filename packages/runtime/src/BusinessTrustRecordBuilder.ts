@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 
 import {
   CryptoBootstrap,
-  DEFAULT_KEY_ID,
+  currentSigningKeyId,
   TrustRecordHasher,
   VerificationCrypto,
 } from "@parmana/crypto";
@@ -150,7 +150,7 @@ export class BusinessTrustRecordBuilder {
       signature: {
         algorithm: CryptoBootstrap.create().signature.algorithm,
 
-        keyId: DEFAULT_KEY_ID,
+        keyId: currentSigningKeyId(),
 
         value: "",
 
