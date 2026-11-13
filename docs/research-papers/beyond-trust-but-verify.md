@@ -76,7 +76,7 @@ The report states that third-party assessors "need access to AI companies' syste
 
 ### 2.4 Evaluation results need methodological rigor
 
-The report finds that "existing evaluation results may not be sufficiently precise and robust to support effective risk management," and it identifies methodological quality of AI evaluations as an open implementation challenge [1]. SB 813 defines IVOs by their expertise in "the metrics and methodologies" used to assess AI risk [1][4]. A score or declaration is only as informative as the method and limitations behind it.
+The report finds that "existing evaluation results may not be sufficiently precise and robust to support effective risk management," and it identifies methodological quality of AI evaluations as an open implementation challenge [1]. SB 813 defines an IVO by its demonstrated expertise and by the "metrics and methodologies" it uses to assess AI risk [4]. The bill does not require any developer or deployer to engage an IVO [4]. A score or declaration is only as informative as the method and limitations behind it.
 
 ### 2.5 This paper's reading
 
@@ -461,8 +461,8 @@ The architecture is a conceptual reference model. Its effectiveness in a particu
 
 3. California Senate Bill 53 (2025), frontier artificial intelligence models. Signed September 29, 2025; effective January 1, 2026. https://open.pluralpolicy.com/ca/bills/20252026/SB53
 
-4. California Senate Bill 813 (2026), Independent verification organizations. Approved by the Governor and chaptered September 9, 2026, as Chapter 179, Statutes of 2026, adding Chapter 14 (commencing with Section 8898) to Division 1 of Title 2 of the Government Code (per the Legislature's bill status page, https://leginfo.legislature.ca.gov/faces/billStatusClient.xhtml?bill_id=202520260SB813). Requires the state to develop, by January 1, 2028, a process for designating third-party organizations as independent verification organizations (IVOs) (per [1]; bill text not yet checked).
+4. California Senate Bill 813 (2026), Independent verification organizations. Approved by the Governor and chaptered September 9, 2026, as Chapter 179, Statutes of 2026, adding Chapter 14 (commencing with Section 8898) to Division 1 of Title 2 of the Government Code. Section 8898.1 requires the Government Operations Agency, on or before January 1, 2028, to develop application requirements, suspension and termination procedures, and criteria for designating independent verification organizations. Section 8898.4(a)(3) provides that the chapter does not require any person or company to engage an IVO or undergo a covered AI audit. Chaptered text checked: https://leginfo.legislature.ca.gov/faces/billStatusClient.xhtml?bill_id=202520260SB813
 
 5. California Assembly Bill 1405 (2026), Artificial intelligence: auditors: registration. Approved by the Governor and chaptered September 9, 2026, as Chapter 178, Statutes of 2026, adding Chapter 5.9.5 (commencing with Section 11549.80) to Part 1 of Division 3 of Title 2 of the Government Code (per the Legislature's bill status page, https://leginfo.legislature.ca.gov/faces/billStatusClient.xhtml?bill_id=202520260AB1405). Requires third-party AI auditors to register with the state beginning January 1, 2029 (per [1]; bill text not yet checked).
 
-*Source 1 was checked against the report's full text. Sources 4 and 5's enactment details come from the Legislature's bill status pages; the bill texts, and the deadlines taken from the report, could not be read from this session.*
+*Source 1 was checked against the report's full text. Source 4 was checked against the chaptered bill text. Source 5's enactment details come from the Legislature's status page; its bill text, and the January 1, 2029 registration date taken from the report, could not be read from this session.*
