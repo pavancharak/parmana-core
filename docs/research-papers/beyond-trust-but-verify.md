@@ -64,7 +64,7 @@ The report's framework covers SB 53 [3], which took effect in 2026, and two laws
 
 ### 2.1 Commitments need evidence
 
-The report says SB 53's transparency reports "are designed to translate developers' broader safety commitments into model-specific evidence" [1]. It also notes that SB 53 "has no explicit requirements to conduct assessments or evaluations beyond companies' own commitments" [1]. Stated commitments therefore need to be checked against evidence, and that evidence needs to come from outside the developer.
+The report says SB 53's transparency reports "are therefore designed to translate developers' broader safety commitments into model-specific evidence" [1]. It also notes that SB 53 "has no explicit requirements to conduct assessments or evaluations beyond companies' own commitments" [1]. Stated commitments therefore need to be checked against evidence, and that evidence needs to come from outside the developer.
 
 ### 2.2 Internal deployment is within policy scope
 
@@ -72,7 +72,7 @@ SB 53 requires developers to address "the risk that their models may circumvent 
 
 ### 2.3 Independent assessment needs access
 
-The report states that third-party assessors "need access to AI companies' systems, documents, and other information," but that "access is limited, ad hoc, and controlled by AI companies." It adds that "SB 53, SB 813, and AB 1405 do not provide specific legal rules to ensure access" [1]. An assessor who cannot examine enough of a system cannot form a well-supported judgment.
+The report states that third-party assessors "need access to AI companies' systems, documents, and other information to make qualified safety assessments," but that "access is limited, ad hoc, and controlled by AI companies." It adds that "SB 53, SB 813, and AB 1405 do not provide specific legal rules to ensure access" [1]. An assessor who cannot examine enough of a system cannot form a well-supported judgment.
 
 ### 2.4 Evaluation results need methodological rigor
 
