@@ -463,6 +463,6 @@ The architecture is a conceptual reference model. Its effectiveness in a particu
 
 4. California Senate Bill 813 (2026), Independent verification organizations. Approved by the Governor and chaptered September 9, 2026, as Chapter 179, Statutes of 2026 (per the Legislature's bill status page, https://leginfo.legislature.ca.gov/faces/billStatusClient.xhtml?bill_id=202520260SB813). Requires the state to develop, by January 1, 2028, a process for designating third-party organizations as independent verification organizations (IVOs) (per [1]; bill text not yet checked).
 
-5. California Assembly Bill 1405 (2026). Signed September 2026 (per [1]). Requires third-party AI auditors to register with the state beginning January 1, 2029. Confirm against the chaptered text at https://leginfo.legislature.ca.gov.
+5. California Assembly Bill 1405 (2026), Artificial intelligence: auditors: registration. Approved by the Governor and chaptered September 9, 2026, as Chapter 178, Statutes of 2026 (per the Legislature's bill status page, https://leginfo.legislature.ca.gov/faces/billStatusClient.xhtml?bill_id=202520260AB1405). Requires third-party AI auditors to register with the state beginning January 1, 2029 (per [1]; bill text not yet checked).
 
-*Source 1 was checked against the report's full text. Source 4's enactment details come from the Legislature's bill status page; its text, and source 5's text, could not be read from this session.*
+*Source 1 was checked against the report's full text. Sources 4 and 5's enactment details come from the Legislature's bill status pages; the bill texts, and the deadlines taken from the report, could not be read from this session.*
