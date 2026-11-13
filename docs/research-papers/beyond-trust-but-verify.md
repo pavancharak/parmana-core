@@ -461,8 +461,8 @@ The architecture is a conceptual reference model. Its effectiveness in a particu
 
 3. California Senate Bill 53 (2025), frontier artificial intelligence models. Signed September 29, 2025; effective January 1, 2026. https://open.pluralpolicy.com/ca/bills/20252026/SB53
 
-4. California Senate Bill 813 (2026). Signed September 2026 (per [1]). Requires the state to develop, by January 1, 2028, a process for designating third-party organizations as independent verification organizations (IVOs). Confirm against the chaptered text at https://leginfo.legislature.ca.gov.
+4. California Senate Bill 813 (2026), Independent verification organizations. Approved by the Governor and chaptered September 9, 2026, as Chapter 179, Statutes of 2026 (per the Legislature's bill status page, https://leginfo.legislature.ca.gov/faces/billStatusClient.xhtml?bill_id=202520260SB813). Requires the state to develop, by January 1, 2028, a process for designating third-party organizations as independent verification organizations (IVOs) (per [1]; bill text not yet checked).
 
 5. California Assembly Bill 1405 (2026). Signed September 2026 (per [1]). Requires third-party AI auditors to register with the state beginning January 1, 2029. Confirm against the chaptered text at https://leginfo.legislature.ca.gov.
 
-*Source 1 was checked against the report's full text. Sources 3 to 5 are described as the report describes them; the chaptered texts of SB 813 and AB 1405 could not be read from this session.*
+*Source 1 was checked against the report's full text. Source 4's enactment details come from the Legislature's bill status page; its text, and source 5's text, could not be read from this session.*
