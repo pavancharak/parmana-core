@@ -48,7 +48,15 @@ cleanup() {
 trap cleanup EXIT
 
 step() { echo; echo "== $*"; }
-fail() { echo "DRILL FAILED: $*" >&2; exit 1; }
+fail() {
+  echo "DRILL FAILED: $*" >&2
+  # The server's own output is the only record of why it stopped.
+  if [ -f "$WORK/server.log" ]; then
+    echo "--- last 120 lines of server.log ---" >&2
+    tail -n 120 "$WORK/server.log" >&2
+  fi
+  exit 1
+}
 
 # Runs the API against the proxied database. One node process, so the pid
 # we hold is the server itself and its exit code is the server's.
