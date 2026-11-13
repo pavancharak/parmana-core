@@ -9,6 +9,8 @@
 #      a domain decision during the cut. Recovery must follow the heal.
 #   2. Signing key missing at startup. The server must refuse to start,
 #      exit with code 1, and never listen.
+#   3. KMS unreachable at startup (KEY_PROVIDER=aws-kms, endpoint refused).
+#      No AWS account is needed. The server must exit with code 1.
 #
 # Scope: only refusal paths are exercised. An approved execution needs a
 # trusted approver, which this drill does not set up. The fault-injection
@@ -175,6 +177,33 @@ grep -q 'Signing key material for keyId "default" is missing' "$WORK/server.log"
 if curl -s -m 3 "http://127.0.0.1:$API_PORT/health" > /dev/null 2>&1; then
   fail "something is listening on the API port"
 fi
+echo "refused to start, exit code 1"
+
+step "Fault 3: KMS unreachable at startup"
+# No AWS account is needed. The endpoint points at a closed port, so the
+# startup check cannot reach KMS and must refuse to start.
+set +e
+(
+  cd "$ROOT/packages/api"
+  env \
+    NODE_ENV=development \
+    PARMANA_STORAGE=memory \
+    PARMANA_KEY_DIR="$WORK/keys" \
+    PARMANA_POLICY_DIR="$ROOT/policies" \
+    KEY_PROVIDER=aws-kms \
+    AWS_REGION=ap-south-1 \
+    AWS_ACCESS_KEY_ID=drill-not-real \
+    AWS_SECRET_ACCESS_KEY=drill-not-real \
+    AWS_ENDPOINT_URL=http://127.0.0.1:1 \
+    PARMANA_API_KEYS='[]' \
+    PARMANA_PORT="$API_PORT" \
+    PORT="$API_PORT" \
+    PARMANA_DATABASE_CA_FILE= \
+    node --import tsx src/server.ts > "$WORK/kms.log" 2>&1
+)
+exit_code=$?
+set -e
+[ "$exit_code" = "1" ] || fail "KMS unreachable: expected exit code 1, got $exit_code"
 echo "refused to start, exit code 1"
 
 step "Drill passed"
