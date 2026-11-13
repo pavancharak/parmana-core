@@ -161,6 +161,21 @@ export class PostgresPoolFactory {
       ...(schema ? { options: `-c search_path=${schema}` } : {}),
     });
 
+    // An idle client that loses its connection (a database restart, a
+    // failover, a network drop) emits 'error' on the pool. With no listener,
+    // Node treats that as an unhandled error and the whole process exits,
+    // so one database blip takes the API down. Log it instead: the pool
+    // drops the broken client and opens a new one for the next query.
+    // The message is logged without the connection string.
+    this.pool.on("error", (error: Error) => {
+      console.error(
+        JSON.stringify({
+          event: "postgres_pool_idle_client_error",
+          message: error.message,
+        }),
+      );
+    });
+
     // Best-effort warm-up: opens the first connection immediately
     // instead of on the first real query. A failure here doesn't
     // prevent the pool from being used -- the query that actually

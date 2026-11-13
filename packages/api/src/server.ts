@@ -82,7 +82,11 @@ const callerAuth = createCallerAuthenticator();
 
 const executeRateLimitStore = createRateLimitStore("execute:");
 
-const healthRateLimitStore = createRateLimitStore("health:");
+// /health and /ready use the in-process limiter, not Postgres. They are
+// liveness and readiness probes, so they must answer while the database is
+// down. A Postgres-backed limiter here made /health return 500 during a
+// database outage (see docs/internal/testing/FAULT-INJECTION.md, finding 2).
+// Each instance limits its own probes, which is the right scope for them.
 
 const publicRateLimitStore = createRateLimitStore("public:");
 const authFailureRateLimitStore = createRateLimitStore("auth-failure:");
@@ -130,7 +134,6 @@ const app = createApp(application, {
   rateLimit: {
     ...loadConfig().rateLimit,
     ...(executeRateLimitStore ? { executeStore: executeRateLimitStore } : {}),
-    ...(healthRateLimitStore ? { healthStore: healthRateLimitStore } : {}),
     ...(publicRateLimitStore ? { publicStore: publicRateLimitStore } : {}),
     ...(authFailureRateLimitStore
       ? { authFailureStore: authFailureRateLimitStore }

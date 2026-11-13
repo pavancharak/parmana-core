@@ -1,0 +1,56 @@
+name: Outage drill
+
+# Runs scripts/drills/outage-drill.sh: the real API against a real Postgres,
+# with a network cut between them and a missing signing key at startup.
+# Refusal and outage paths only. An approved execution needs a trusted
+# approver, which this job does not set up.
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drill:
+    runs-on: ubuntu-latest
+
+    # A throwaway PostgreSQL. The drill applies the migrations to it, so it
+    # must hold nothing else.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24.22.2"
+
+      - name: Install workspace
+        run: npm ci
+
+      - name: Build workspace
+        run: npm run build
+
+      - name: Run the outage drill
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: "5432"
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: bash scripts/drills/outage-drill.sh

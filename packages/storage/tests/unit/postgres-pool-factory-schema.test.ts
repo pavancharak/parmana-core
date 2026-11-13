@@ -12,6 +12,11 @@ function createPoolMock() {
     constructor(options: unknown) {
       this.options = options;
     }
+
+    // The factory listens for idle-client errors; the mock never emits one.
+    on() {
+      return this;
+    }
   }
 
   return vi.fn(PoolMock);
