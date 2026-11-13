@@ -1,0 +1,568 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=black,urlcolor=blue!50!black,citecolor=black]{hyperref}
+\usepackage{microtype}
+\hypersetup{pdftitle={The Infrastructure Dependency Gap: Accountable Execution in Autonomous AI Systems Under Infrastructure Failure},pdfauthor={Pavan Dev Singh Charak},pdfsubject={Position and framework paper; experimental validation pending}}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+
+\setlength{\parskip}{0.6em}
+\setlength{\parindent}{0pt}
+\titleformat{\section}{\large\bfseries}{\thesection}{0.8em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.8em}{}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Parmana Systems --- PS-RP-002}
+\fancyhead[R]{\small The Infrastructure Dependency Gap}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\newcommand{\RAEA}{Resilient Accountable Execution Architecture (RAEA)}
+
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{3cm}
+  {\LARGE\bfseries The Infrastructure Dependency Gap\par}
+  \vspace{0.6cm}
+  {\Large Accountable Execution in Autonomous AI Systems Under Infrastructure Failure\par}
+  \vspace{1.2cm}
+  {\large A Research Paper\par}
+  \vspace{1.5cm}
+  {\normalsize
+  Author: Pavan Dev Singh Charak\\[0.3em]
+  Organization: Parmana Systems\\[0.3em]
+  Research Area: Autonomous Systems, Distributed Systems, Deterministic Authorization and Execution Accountability\\[0.3em]
+  Version 1.0 --- November 2026\\[0.3em]
+  Status: Research Draft\\[0.3em]
+  Research identifier: PS-RP-002}
+  \vfill
+  \begin{minipage}{0.85\textwidth}
+    \small\textbf{Keywords:} Agentic AI, Autonomous Systems, Infrastructure Dependency, Execution Accountability, Deterministic Authorization, Distributed Systems, Fault Tolerance, Idempotency, Cryptographic Evidence, Enterprise AI.
+  \end{minipage}
+  \vspace{1cm}
+\end{titlepage}
+
+\begin{abstract}
+Autonomous AI systems are increasingly integrated with enterprise applications, cloud infrastructure, identity providers, external APIs and business data services. These integrations enable AI agents to perform increasingly complex operations, from retrieving organizational information to initiating transactions and executing business workflows.
+
+However, the reliability of an autonomous system depends on more than the intelligence of its underlying model. Its ability to operate also depends on the availability, integrity and responsiveness of multiple independently operated infrastructure components.
+
+Recent infrastructure disruptions demonstrate how failures in a single provider can propagate across otherwise independent applications. In 2026, a widespread Microsoft 365 service disruption affecting Exchange Online and related services was reported to have degraded access for AI platforms that depend on Microsoft 365, including OpenAI's ChatGPT and Anthropic's Claude. The incident illustrated the extent to which AI capabilities can inherit dependencies on external enterprise infrastructure.
+
+This paper introduces the \emph{Infrastructure Dependency Gap}: the difference between an autonomous system's ability to perform an intended operation and its ability to maintain accountable execution when one or more supporting dependencies become unavailable, unreliable or inconsistent.
+
+Existing distributed systems engineering provides established techniques for handling transient faults, retries, circuit breaking, idempotency and service recovery. However, reliable infrastructure recovery alone does not establish whether a business operation was authorized, whether it executed successfully, whether it was executed more than once, or whether its outcome can subsequently be verified.
+
+We propose a deterministic execution accountability architecture that separates AI reasoning, business authorization, infrastructure dependency management, execution control and evidence verification. The architecture introduces explicit authority boundaries, dependency-aware execution states, fail-closed authorization, controlled retries, idempotent execution, reconciliation of uncertain outcomes and independently verifiable execution evidence.
+
+We develop a conceptual model, define system properties, propose an experimental evaluation framework and identify research questions for future work. The central proposition is that autonomous systems must preserve business authority and execution accountability across infrastructure failures, rather than treating infrastructure availability as a sufficient condition for trustworthy operation.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%=====================================================================
+\section{Introduction}
+
+Autonomous AI systems are moving from conversational interfaces towards systems capable of interacting with enterprise applications and performing business operations. An AI agent may retrieve customer information, interpret business requests, access financial records, initiate payments, update enterprise systems and communicate with customers.
+
+These capabilities depend on a network of external services. A typical enterprise AI workflow may involve an AI model provider, an identity and authentication provider, enterprise data connectors, cloud-hosted applications, internal business APIs, authorization services, transaction processing systems and logging or evidence infrastructure. The apparent simplicity of an AI interaction can conceal substantial infrastructure complexity.
+
+A user may ask an agent to process a refund. The agent may need to retrieve an email, identify the customer, access transaction records, evaluate refund eligibility, obtain authorization and communicate with a payment service. Every dependency introduces another potential failure point.
+
+A 2026 Microsoft 365 disruption provides a useful example. Reporting describes an incident affecting Exchange Online and related Microsoft 365 services, during which Claude, ChatGPT and other AI platforms were reported to be recovering from disrupted access to those services \cite{tribune}. Microsoft attributed a related day-two incident to a faulty authentication configuration \cite{itpro}. The incident demonstrated that an AI application can remain conceptually independent of an infrastructure provider while operationally depending on that provider for important capabilities.
+
+The date of this disruption and the extent of connector impact are reported in secondary sources and have not been confirmed against Microsoft's own incident records.
+
+This creates a critical distinction:
+\begin{quote}
+\emph{An autonomous system may retain its intelligence while losing the infrastructure required to act.}
+\end{quote}
+
+The resulting problem is not limited to service availability. When infrastructure becomes unavailable during a business operation, the system must determine:
+\begin{enumerate}[label=(\arabic*)]
+  \item whether the requested action remains authorized;
+  \item whether the information supporting the action is still valid;
+  \item whether the action was already executed;
+  \item whether retrying could produce duplicate effects;
+  \item whether an execution outcome can be established; and
+  \item whether the system can safely resume after recovery.
+\end{enumerate}
+These questions establish the research problem addressed in this paper.
+
+\subsection{The Infrastructure Dependency Gap}
+
+We define the \textbf{Infrastructure Dependency Gap} as:
+\begin{quote}
+The gap between an autonomous system's intended operational capability and its ability to maintain authorized, controlled and verifiable execution when its supporting infrastructure experiences failure.
+\end{quote}
+
+The gap becomes particularly important when an AI agent can initiate actions that create external business consequences. A conversational failure may produce an incomplete answer. An execution failure may produce an incomplete transaction, a duplicate payment, an inconsistent customer record or an action whose final outcome cannot be established. These are fundamentally different operational consequences.
+
+\subsection{Research objectives}
+
+This research has five objectives:
+\begin{enumerate}[label=O\arabic*.]
+  \item Identify how infrastructure failures affect autonomous business execution.
+  \item Establish the distinction between infrastructure availability and execution accountability.
+  \item Propose an architecture that separates AI reasoning from deterministic business authorization.
+  \item Define mechanisms for safe execution, recovery and evidence preservation.
+  \item Develop an experimental framework for evaluating accountable execution under dependency failures.
+\end{enumerate}
+
+\subsection{Research questions}
+
+\begin{description}[leftmargin=3.2em,style=nextline]
+  \item[RQ1] How do failures in external infrastructure dependencies affect the execution integrity of autonomous AI systems?
+  \item[RQ2] How can business authorization remain independent of AI model and enterprise connector availability?
+  \item[RQ3] What mechanisms are required to prevent unauthorized or duplicate execution during infrastructure recovery?
+  \item[RQ4] How can an autonomous system establish the outcome of an operation when a downstream service becomes unavailable during execution?
+  \item[RQ5] How can cryptographically verifiable evidence preserve accountability across failure and recovery events?
+\end{description}
+
+%=====================================================================
+\section{Background and Related Work}
+
+The Infrastructure Dependency Gap intersects several established areas of computer science and systems engineering. This research does not suggest that infrastructure failures, retries or distributed transaction problems are new. Its contribution is to examine their implications for autonomous AI execution and business authority.
+
+\subsection{Distributed systems and cascading failures}
+
+Distributed systems operate across multiple services, networks and computing resources. The failure of one component can increase the load on other components, creating cascading failures. Google's Site Reliability Engineering literature describes how failures can propagate through positive feedback mechanisms: when one service becomes unavailable, additional requests may be redirected towards remaining resources, increasing their load and potentially causing further failures \cite{sre}.
+
+Autonomous AI systems introduce additional layers of dependency because their execution workflows may involve multiple external services. A single user request can trigger several interconnected operations, so the failure of one dependency can affect the entire workflow.
+
+\subsection{Transient faults and recovery mechanisms}
+
+Cloud architecture guidance identifies transient faults such as temporary service unavailability, network connectivity failures and request timeouts \cite{azuretransient}. Established recovery techniques include finite retry policies, exponential backoff, circuit breakers, dependency health monitoring and controlled fallback mechanisms \cite{azureretry,azurecb}.
+
+These techniques improve infrastructure resilience. However, retrying an operation does not establish whether its previous execution attempt produced an external side effect. For example, a payment request may reach the payment provider even when the response never reaches the calling application. Repeating the request without appropriate safeguards may initiate another payment. Consequently, recovery logic must account for the semantics of the operation being repeated.
+
+\subsection{Idempotency and transaction integrity}
+
+Idempotency is an established distributed systems property: an operation is idempotent when repeating the same logical request does not produce additional unintended effects. AWS's Builders' Library discusses the use of idempotent APIs to make retries safer and preserve operation semantics \cite{aws}.
+
+For autonomous business systems, idempotency is particularly important because agents may retry operations after timeouts, connector failures or interrupted workflows. An agent must not interpret the absence of a response as proof that an operation did not occur.
+
+\subsection{Zero Trust and independent authorization}
+
+NIST Special Publication 800-207 describes Zero Trust Architecture and rejects implicit trust based on network location or ownership \cite{nist}. Authentication and authorization are treated as distinct functions. This provides an important foundation for autonomous execution systems: an AI agent's ability to authenticate with a service does not establish that it is authorized to perform every operation available through that service. The present research extends this distinction into the execution lifecycle of autonomous business operations.
+
+\subsection{Long-lived transactions and compensation}
+
+Classical commit protocols assume participants that a common coordinator can drive to agreement; Gray's treatment of database operating systems is the standard reference for this setting \cite{gray}. Garcia-Molina and Salem introduced sagas as a way to decompose a long-lived transaction into a sequence of smaller transactions, each paired with a compensating action that can semantically undo it if the saga must be aborted \cite{sagas}. Sagas trade the atomicity and isolation of a single distributed transaction for availability and loose coupling. The present work inherits this idea but adds two requirements that sagas do not address: that the compensating decision itself be authorized, and that an unknown outcome be reconciled before compensation is considered.
+
+\subsection{Scope of fault assumptions}
+
+Byzantine fault models, in which components may send arbitrary or conflicting information, were formalized by Lamport, Shostak and Pease \cite{byzantine}. This paper does not assume Byzantine behaviour from dependencies. It assumes dependencies may be unavailable, delayed, stale or silent, and that their responses are not adversarial. Where a dependency may be untrusted, the evidence layer and independent reconciliation are the relevant mechanisms.
+
+\subsection{Deterministic enforcement at the tool-call boundary}
+
+A growing body of work on agentic systems places deterministic checks at the boundary between a model's proposed action and its execution. ToolGuards compiles natural-language policy documents into validator code that runs before each tool call \cite{toolguards}. Palumbo et al.\ apply a reference monitor with attribute-based access control over a dependency graph of agent actions \cite{pcas}. Related work on pre-execution gates checks proposed mutating tool calls against explicit, state-decidable policy predicates before they run \cite{reasonless}. These systems share the premise that authorization should be separate from model reasoning. They generally do not address what happens when the authorizing or executing dependency becomes unavailable mid-operation, which is the focus of this paper. The arXiv preprints cited here have not been checked for peer-review status or benchmark reproducibility.
+
+\subsection{Research positioning}
+
+Table~\ref{tab:positioning} summarizes how existing work addresses components of the problem and what question remains open for this research. The proposed contribution is an integrated execution accountability architecture connecting these areas.
+
+\begin{table}[ht]
+\centering
+\caption{Positioning of this work relative to established areas.}
+\label{tab:positioning}
+\begin{tabular}{@{}p{3.2cm}p{5.2cm}p{5.6cm}@{}}
+\toprule
+\textbf{Research area} & \textbf{Established contribution} & \textbf{Remaining question for this research} \\
+\midrule
+Fault tolerance & Recovery from service failures & How does business authority persist during recovery? \\
+Circuit breakers & Containment of failing dependencies & What happens to partially executed business operations? \\
+Idempotency & Prevention of duplicate effects & How are agent execution decisions linked to evidence? \\
+Zero Trust & Independent access authorization & How is authorization enforced across an agent's complete action lifecycle? \\
+Event sourcing & Reconstruction from recorded events & How can authorization and execution evidence be independently verified? \\
+AI safety & Reduction of harmful model behaviour & How are business permissions enforced independently of model reasoning? \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%=====================================================================
+\section{Problem Formulation}
+
+Consider an autonomous agent executing a business operation. The agent receives an instruction and proposes an action. The action requires several dependencies: AI inference, enterprise information retrieval, identity verification, business authorization, external execution and evidence recording.
+
+Let the system be represented as
+\[
+S = (A, D, P, E, V),
+\]
+where $A$ is the autonomous agent, $D$ the external dependency set, $P$ the business authorization policy, $E$ the execution environment and $V$ the verification and evidence mechanism.
+
+An operation is not considered successfully completed merely because the agent generates an appropriate response. A successful accountable operation requires that (i) the operation is authorized, (ii) its execution conditions are satisfied, (iii) its external effects are established, (iv) its evidence is preserved and (v) its outcome can be independently verified.
+
+\subsection{Dependency failure}
+
+Let $D = \{d_1, d_2, \ldots, d_n\}$. Each dependency may occupy one of several operational states: available, degraded, unavailable, unverified or recovered. A dependency failure occurs when a required service cannot provide a response consistent with the operation's execution requirements.
+
+The important distinction is that dependency failure does not automatically establish whether a business operation has or has not occurred. A timeout, for example, may indicate that (a) the request never reached the downstream service; (b) the request reached the service but was rejected; (c) the request was accepted but not completed; (d) the operation completed but its response was lost; or (e) the operation completed and its evidence is temporarily inaccessible. These outcomes require different recovery decisions.
+
+\subsection{The uncertain execution problem}
+
+Consider a payment request. An agent submits a payment request; the provider receives it and processes the payment; the response is lost because of a network failure; and the agent receives a timeout. The agent does not know whether the payment occurred. A naive retry may create a duplicate payment, while a naive cancellation may leave the business unaware of an already completed transaction.
+
+\begin{quote}
+\textbf{Principle.} An unknown execution outcome must be treated as an unresolved state, not as a failed transaction.
+\end{quote}
+
+This principle is central to the proposed architecture.
+
+%=====================================================================
+\section{Proposed Architecture}
+
+We propose a five-layer architecture, the \RAEA{}. It separates reasoning, authorization, dependency management, execution and evidence.
+
+\subsection{Layer 1: Autonomous reasoning}
+
+The AI agent interprets user requests, retrieves information and proposes actions. It is responsible for understanding intent, planning operations, producing structured action proposals, identifying required business information and communicating operational outcomes. The agent does not independently establish its authority; its output is treated as a proposal requiring external authorization.
+
+\subsection{Layer 2: Deterministic authority enforcement}
+
+This layer evaluates proposed actions against explicit business-defined permissions. An authorization decision may depend on agent identity, action type, resource identity, transaction amount, organizational role, business policy, time and validity conditions, and required approvals. The authorization mechanism must operate independently of the AI model's interpretation.
+
+If the authorization service is unavailable, the system must not treat an unverified decision as approval. For protected operations, authorization failure results in rejection or safe deferral.
+
+\subsection{Layer 3: Dependency control}
+
+The dependency control layer maintains operational awareness of required external services. It evaluates service availability, response validity, connector status, authentication state, data freshness, dependency health and recovery status. It implements controlled retries, circuit breakers and dependency-specific failure handling.
+
+A critical requirement is that a dependency's recovery must not automatically authorize an operation that was previously blocked. The operation must pass the applicable authorization conditions again before execution.
+
+\subsection{Layer 4: Controlled execution}
+
+The execution layer translates authorized actions into external operations. It applies idempotency keys, operation identifiers, execution state management, duplicate request detection, transaction reconciliation, controlled retries and explicit completion states. An operation should not be marked successful solely because the agent requested it; its outcome must be established through reliable downstream confirmation or reconciliation.
+
+\subsection{Layer 5: Evidence and verification}
+
+The evidence layer records the relationship between declared authority, proposed action, authorization decision, execution request, dependency state, execution outcome, recovery events and verification result. Evidence records should be tamper-evident and independently verifiable. A cryptographic hash chain can establish integrity and ordering of recorded evidence, subject to secure key management and trusted record creation. Forward-secure audit logs, in which previously written entries remain protected after the logging machine is compromised, provide a precedent for this layer \cite{schneier}.
+
+Cryptographic integrity alone does not establish that an underlying external event actually occurred. That requires corroboration from the execution system or another trusted source.
+
+%=====================================================================
+\section{Execution Lifecycle and State Model}
+
+The architecture requires explicit execution states:
+\begin{align*}
+&\textsc{Requested} \rightarrow \textsc{Proposed} \rightarrow \textsc{Authorization\_Pending} \rightarrow \textsc{Authorized} \\
+&\quad\rightarrow \textsc{Execution\_Pending} \rightarrow \textsc{Executing} \rightarrow \textsc{Executed}
+\end{align*}
+together with the terminal or interrupted states \textsc{Reconciliation\_Required}, \textsc{Failed}, \textsc{Rejected} and \textsc{Deferred}.
+The state model must distinguish between rejection, failure, deferral and uncertain execution. These states are not interchangeable.
+
+\subsection{State transition principles}
+
+\begin{description}[leftmargin=2.4em,style=nextline]
+  \item[Principle 1: Authorization precedes execution.] An action cannot enter an executable state without a valid authorization decision.
+  \item[Principle 2: Infrastructure recovery does not grant authority.] A previously rejected or deferred operation must undergo the required authorization checks before execution.
+  \item[Principle 3: Timeout does not imply failure.] A timeout after submission may require reconciliation.
+  \item[Principle 4: Retry does not imply a new business operation.] Retries must retain the identity of the original logical operation.
+  \item[Principle 5: Evidence must distinguish attempted and completed execution.] A submitted request must not be recorded as a completed transaction without sufficient confirmation.
+\end{description}
+
+\subsection{State transition example}
+
+An authorized payment may progress as follows:
+\begin{align*}
+&\textsc{Requested} \rightarrow \textsc{Proposed} \rightarrow \textsc{Authorized} \rightarrow \textsc{Executing} \\
+&\quad\rightarrow \textsc{Reconciliation\_Required} \rightarrow \textsc{Executed}.
+\end{align*}
+The reconciliation state is required when the execution provider may have processed the payment but the caller cannot establish the result. The system must resolve the transaction using the original operation identifier or an authoritative downstream record.
+
+%=====================================================================
+\section{Formal System Properties}
+
+We propose six properties for evaluating accountable execution.
+
+\begin{description}[leftmargin=0pt,style=nextline]
+  \item[P1 (Authorization safety).] For every protected execution event, a valid authorization decision must exist:
+  \[ \mathrm{Executed}(a) \Rightarrow \mathrm{Authorized}(a). \]
+  This assumes the authorization decision is correctly bound to the action and remains valid under the applicable policy conditions.
+
+  \item[P2 (Fail-closed authorization).] If authorization cannot be established, the system must not execute the protected action:
+  \[ \mathrm{Unavailable}(\mathrm{Authorization}) \Rightarrow \neg\,\mathrm{Execute}(\mathrm{ProtectedAction}). \]
+
+  \item[P3 (Execution identity preservation).] Every retry of a logical operation must preserve its operation identity:
+  \[ \mathrm{Retry}(a,k) \Rightarrow \mathrm{OperationID}(a,k) = \mathrm{const}. \]
+  This enables downstream deduplication and reconciliation.
+
+  \item[P4 (Duplicate-effect prevention).] For an operation with an idempotent execution contract, repeated delivery of the same logical operation must not produce additional unintended business effects. This property depends on the downstream service honouring the idempotency contract and cannot be guaranteed solely by a local retry mechanism.
+
+  \item[P5 (Outcome integrity).] An operation must not be represented as completed without sufficient evidence of its completion:
+  \[ \mathrm{ReportedSuccess}(a) \Rightarrow \mathrm{VerifiedOutcome}(a). \]
+
+  \item[P6 (Evidence integrity).] Once evidence is committed to the protected ledger, subsequent modification must be detectable. This can be implemented using canonical serialization, cryptographic hashing and chained records. The property establishes record integrity, not the truth of every external observation.
+\end{description}
+
+%=====================================================================
+\section{Failure Scenarios and Expected System Behaviour}
+
+The following scenarios form the proposed experimental test suite.
+
+\paragraph{Scenario 1: AI provider unavailable.} An agent cannot obtain model inference. Expected behaviour: no new AI-generated action proposal; existing authorization records remain independently verifiable; no unauthorized fallback to another model; pending operations retain their existing execution state.
+
+\paragraph{Scenario 2: Enterprise connector unavailable.} The agent cannot retrieve customer information from Microsoft 365 or another enterprise provider. Expected behaviour: required information is marked unavailable; stale data is not silently treated as current; operations requiring missing information are rejected or deferred; previously authorized operations are evaluated against their defined validity conditions.
+
+\paragraph{Scenario 3: Authorization service unavailable.} The system cannot establish whether a proposed action is authorized. Expected behaviour: protected execution is blocked; the action is recorded as ``authorization unavailable''; recovery does not automatically convert the request into an approved action; authorization must be re-established before execution.
+
+\paragraph{Scenario 4: Execution provider timeout.} A payment request is submitted, but the response is not received. Expected behaviour: the operation enters \textsc{Reconciliation\_Required}; the original operation identifier is preserved; a duplicate business operation is not initiated blindly; the downstream execution state is queried or reconciled.
+
+\paragraph{Scenario 5: Evidence service unavailable.} The system cannot immediately commit its execution evidence. Expected behaviour: where the assurance contract requires it, a durable evidence mechanism must preserve the required record before execution is allowed; if evidence durability cannot be established, protected execution is blocked; recovery reconciles pending evidence records; verification identifies missing or incomplete evidence. This scenario requires special attention because an evidence service outage and an execution provider outage create different risks.
+
+%=====================================================================
+\section{Experimental Methodology}
+
+The proposed architecture will be evaluated through controlled fault injection.
+
+\subsection{Experimental environment}
+
+The test environment will contain an autonomous AI agent or deterministic agent simulator, a simulated enterprise connector, a business authorization service, a payment execution API, an evidence ledger and a fault injection controller. The environment should support repeatable failure conditions and deterministic test inputs.
+
+\subsection{Baseline and proposed system}
+
+Two configurations will be compared.
+\begin{description}[leftmargin=2.4em,style=nextline]
+  \item[Baseline A: Conventional agentic execution.] The agent interacts with enterprise connectors and business APIs using ordinary integration and recovery mechanisms.
+  \item[System B: RAEA with Parmana.] The agent's action proposals pass through independent deterministic authorization, controlled execution and evidence verification.
+\end{description}
+Both configurations should use equivalent business rules, test inputs and downstream service conditions.
+
+\subsection{Fault injection matrix}
+
+\begin{table}[ht]
+\centering
+\caption{Planned fault injection matrix.}
+\label{tab:faults}
+\begin{tabular}{@{}llp{6.2cm}@{}}
+\toprule
+\textbf{Test} & \textbf{Injected failure} & \textbf{Primary measurement} \\
+\midrule
+F1 & AI provider unavailable & Unauthorized fallback rate \\
+F2 & Enterprise connector unavailable & Stale-data execution rate \\
+F3 & Authorization service unavailable & Unauthorized execution rate \\
+F4 & Payment response timeout & Duplicate execution rate \\
+F5 & Evidence service unavailable & Evidence completeness \\
+F6 & Repeated requests & Duplicate business effects \\
+F7 & Recovery during pending execution & Reconciliation correctness \\
+F8 & Delayed or inconsistent dependency responses & State consistency \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Evaluation metrics}
+
+\begin{description}[leftmargin=0pt,style=nextline]
+  \item[Unauthorized Execution Rate (UER).] Number of unauthorized executions divided by the total number of protected execution attempts.
+  \item[Duplicate Execution Rate (DER).] Number of unintended duplicate business effects divided by the total number of logical operations.
+  \item[Evidence Verification Rate (EVR).] Number of execution records successfully verified divided by the total number of records requiring verification.
+  \item[Recovery Consistency Rate (RCR).] Number of operations whose final recorded state matches the authoritative downstream outcome divided by the total number of operations requiring reconciliation.
+  \item[Authorization Consistency (AC).] The proportion of execution decisions that conform to the applicable business authorization policy.
+  \item[Recovery Latency (RL).] Elapsed time between dependency restoration and the establishment of a verified final operation state.
+\end{description}
+
+\subsection{Experimental procedure}
+
+For each test scenario:
+\begin{enumerate}[label=\arabic*.]
+  \item Initialize the same business policies and test data.
+  \item Submit a predefined set of action proposals.
+  \item Record initial authorization and execution decisions.
+  \item Inject a controlled infrastructure failure.
+  \item Observe system behaviour.
+  \item Restore the affected dependency.
+  \item Execute recovery and reconciliation procedures.
+  \item Verify the resulting evidence.
+  \item Compare baseline and proposed system outcomes.
+\end{enumerate}
+Experiments should be repeated across multiple failure timings and concurrency levels. The final results must report sample sizes, failure distributions, confidence intervals and limitations. No performance improvement should be claimed before measurements are completed.
+
+%=====================================================================
+\section{Proposed Contribution}
+
+The primary contribution is an integrated model of accountable autonomous execution under infrastructure failure. The paper advances five propositions:
+\begin{enumerate}[label=\textbf{C\arabic*.}]
+  \item \textbf{Separation of intelligence and authority.} AI reasoning and business authorization should remain independent system functions.
+  \item \textbf{Dependency-aware execution.} Infrastructure availability must be treated as an explicit execution condition rather than an implicit assumption.
+  \item \textbf{Uncertain outcome reconciliation.} A timeout must not automatically be interpreted as transaction failure.
+  \item \textbf{Authority-preserving recovery.} Infrastructure recovery must not independently authorize previously pending actions.
+  \item \textbf{Verifiable execution evidence.} Execution, failure and recovery events must form a verifiable record of the operation lifecycle.
+\end{enumerate}
+Together, these propositions provide a foundation for evaluating accountability as a systems property rather than solely as a model behaviour property.
+
+%=====================================================================
+\section{Limitations and Open Research Questions}
+
+The proposed architecture does not eliminate infrastructure failures. It also does not guarantee that every external service will provide a reliable execution contract. Several limitations require further investigation.
+
+\subsection{External system observability}
+A business may not have direct access to authoritative execution records from an external provider. Reconciliation quality therefore depends on the availability and trustworthiness of downstream evidence.
+
+\subsection{Distributed transaction boundaries}
+A business workflow may span multiple independently operated systems. Atomic execution across these systems cannot generally be assumed. Compensation, reconciliation and explicit intermediate states may be necessary, as in the saga model \cite{sagas}.
+
+\subsection{Evidence availability}
+An immutable or tamper-evident ledger does not automatically guarantee availability during infrastructure disruption. Evidence persistence requires independent durability and recovery mechanisms.
+
+\subsection{Policy correctness}
+Deterministic authorization guarantees consistent application of a policy, not that the policy itself is correct or appropriate.
+
+\subsection{Operational trade-offs}
+Fail-closed execution improves protection against unauthorized action but may reduce business availability. The appropriate behaviour depends on the operation's risk classification and explicitly defined business requirements.
+
+\subsection{Future research}
+Further work should investigate multi-cloud and multi-provider dependency failures; autonomous agent recovery without unintended action replay; policy consistency across distributed execution environments; evidence continuity across independently operated systems; formal verification of authorization and execution state transitions; and the economic costs of conservative failure handling in enterprise operations.
+
+%=====================================================================
+\section{Conclusion}
+
+Autonomous AI systems are becoming increasingly capable of interacting with business infrastructure and executing operations on behalf of organizations. Their operational reliability is therefore influenced by more than the intelligence of the model. An agent may reason correctly and still be unable to act because a connector, identity service, enterprise application or cloud provider has become unavailable.
+
+More importantly, an infrastructure failure during execution may leave a business unable to establish whether an operation was authorized, whether it occurred, whether it was repeated or whether its outcome was recorded correctly. Traditional distributed systems engineering provides essential mechanisms for resilience and recovery; autonomous business execution additionally requires explicit mechanisms for preserving authority and establishing accountability.
+
+This paper proposes the \RAEA{}, separating AI reasoning, deterministic authorization, dependency control, execution and evidence verification. Its central principle is that infrastructure recovery must never be confused with business authorization, and a successful retry must never be confused with proof of successful execution.
+
+The objective is not to make autonomous systems immune to infrastructure failures. It is to make their behaviour accountable when those failures occur.
+
+\begin{center}
+\textbf{Infrastructure provides capability. Authority defines permission. Deterministic enforcement controls execution. Verifiable evidence establishes accountability.}
+\end{center}
+
+\vspace{1em}
+\noindent\textbf{Research status.} Conceptual framework developed. Experimental validation pending.
+
+%=====================================================================
+%=====================================================================
+\appendix
+\section{Experimental Harness Specification}
+
+This appendix specifies the harness required to execute the experimental procedure in Section~8. It defines what must be built and measured. It reports no results.
+
+\subsection{Components}
+
+\begin{description}[leftmargin=0pt,style=nextline]
+  \item[Deterministic agent driver.] Replays a fixed, versioned set of action proposals (seeded), so that Baseline~A and System~B receive identical inputs.
+  \item[Simulated enterprise connector.] Returns scripted responses with controllable latency, staleness and error codes, including the response-loss pattern needed for F4.
+  \item[Authorization service.] Implements the business policy as a versioned rule set. Both systems share the same policy file and hash, recorded with each run.
+  \item[Payment execution API.] Accepts an idempotency key per logical operation, persists the result, and exposes a read-only query by operation identifier for reconciliation. A variant without idempotency support is used to measure the baseline risk.
+  \item[Evidence ledger.] Append-only hash-chained log using canonical serialization (e.g., sorted-key JSON) and SHA-256. Keys are held outside the test subject.
+  \item[Fault injection controller.] Drives dependency failures on a schedule and records the injection time, target, and duration, so that failure timing can be correlated with agent behaviour.
+\end{description}
+
+\subsection{Fault injection mechanics}
+
+\begin{table}[ht]
+\centering
+\caption{Injection method per test.}
+\label{tab:inject}
+\begin{tabular}{@{}llp{7.6cm}@{}}
+\toprule
+\textbf{Test} & \textbf{Target} & \textbf{Injection method} \\
+\midrule
+F1 & AI provider & Return HTTP 503 for all inference requests in a window; a fallback model endpoint is available so unauthorized fallback can be detected. \\
+F2 & Connector & Return errors or responses marked with stale timestamps beyond the freshness threshold. \\
+F3 & Authorization & Make the decision endpoint unreachable or return timeouts. \\
+F4 & Payment API & Accept the request, persist the result, then drop the response, so the caller observes a timeout. \\
+F5 & Evidence ledger & Make the append operation fail or block. \\
+F6 & Agent driver & Re-send each logical request 1--5 times, with and without retry logic. \\
+F7 & Full stack & Restore dependencies at randomized points during pending execution. \\
+F8 & Connector / API & Inject delayed, reordered or duplicated responses. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Metric collection}
+
+Each metric in Section~8.4 is computed from the same run log:
+\begin{itemize}
+  \item \textbf{UER:} count of executions in the payment API with no matching authorization record that was valid at execution time, divided by protected execution attempts.
+  \item \textbf{DER:} count of logical operations with more than one successful effect in the payment API's persisted state, divided by logical operations.
+  \item \textbf{EVR:} fraction of records that pass hash-chain and schema verification, computed over records requiring verification.
+  \item \textbf{RCR:} fraction of operations in \textsc{Reconciliation\_Required} whose final state equals the authoritative payment API state.
+  \item \textbf{AC:} fraction of decisions matching an independent oracle that evaluates the policy on the same inputs.
+  \item \textbf{RL:} time from dependency restoration to the first verified terminal state, per operation.
+\end{itemize}
+The oracle in AC must be implemented separately from the authorization service under test, to avoid common-mode error.
+
+\subsection{Run protocol and statistics}
+
+\begin{itemize}
+  \item Each scenario is run with a fixed number of repetitions, chosen in advance by a power calculation for the primary metric (UER or DER). The sample size is fixed before the first run.
+  \item Failure timing and concurrency are varied across a predefined grid, with seeds recorded.
+  \item Report counts, rates, and 95\% confidence intervals (e.g., Wilson intervals for proportions, bootstrap for latency).
+  \item Report all runs, including failed harness runs. Exclusions must be stated and justified before analysis.
+\end{itemize}
+
+\subsection{Validity threats}
+
+\begin{itemize}
+  \item \textbf{Oracle coupling.} The AC oracle shares code or assumptions with System~B, inflating agreement.
+  \item \textbf{Baseline strength.} Baseline~A must use industry-standard retries and circuit breakers. A weak baseline overstates the benefit.
+  \item \textbf{Downstream idempotency.} P4 depends on the payment API honouring idempotency keys. Results must show the behaviour with and without that contract.
+  \item \textbf{Harness realism.} Scripted faults may not reflect real provider failure modes. Results should be framed as controlled-fault evidence, not production rates.
+\end{itemize}
+
+\subsection{Acceptance criteria for reporting}
+
+A result may be reported as supporting a proposition only if: the harness, policy, and seeds are versioned and released with the paper; both configurations received identical inputs; the oracle is independent; and all runs are reported.
+
+\sloppy
+\begin{thebibliography}{99}
+\bibitem{sagas}
+Garcia-Molina, H., and Salem, K. (1987). Sagas. In \emph{Proceedings of the 1987 ACM SIGMOD International Conference on Management of Data}, pp.~249--259. \url{https://doi.org/10.1145/38713.38742}
+
+\bibitem{schneier}
+Schneier, B., and Kelsey, J. (1999). Secure audit logs to support computer forensics. \emph{ACM Transactions on Information and System Security}, 1(3), pp.~159--176. \url{https://doi.org/10.1145/317087.317089}
+
+\bibitem{byzantine}
+Lamport, L., Shostak, R., and Pease, M. (1982). The Byzantine generals problem. \emph{ACM Transactions on Programming Languages and Systems}, 4(3), pp.~382--401.
+
+\bibitem{toolguards}
+Zwerdling, N., Boaz, D., Rabinovich, E., Uziel, G., Amid, D., and Anaby-Tavor, A. (2025). \emph{Towards Enforcing Company Policy Adherence in Agentic Workflows}. arXiv:2507.16459. \url{https://arxiv.org/abs/2507.16459}
+
+\bibitem{pcas}
+Palumbo, N., Choudhary, S., Choi, J., Amir, G., Chalasani, P., Dillig, I., and Jha, S. (2026). \emph{Formal Policy Enforcement for Agentic Systems}. arXiv:2602.16708 (first posted as \emph{Policy Compiler for Secure Agentic Systems}; cited here by its latest version, v4). \url{https://arxiv.org/abs/2602.16708}
+
+\bibitem{reasonless}
+Reddy, V., Challaram, S. R., and Basu, A. (2026). \emph{Reason Less, Verify More: Deterministic Gates Recover a Silent Policy-Violation Failure Mode in Tool-Using LLM Agents}. arXiv:2607.07405. \url{https://arxiv.org/abs/2607.07405}
+
+\bibitem{gray}
+Gray, J. N. (1978). Notes on data base operating systems. In \emph{Operating Systems: An Advanced Course}, Lecture Notes in Computer Science, vol.~60, Springer, pp.~393--481. \url{https://doi.org/10.1007/3-540-08755-9_9}
+
+\bibitem{nist}
+Rose, S., Borchert, O., Mitchell, S., and Connelly, S. (2020). \emph{Zero Trust Architecture}. NIST Special Publication 800-207. \url{https://doi.org/10.6028/NIST.SP.800-207}
+
+\bibitem{sre}
+Ulrich, M. \emph{Addressing Cascading Failures}. In \emph{Site Reliability Engineering: How Google Runs Production Systems}. Google. \url{https://sre.google/sre-book/addressing-cascading-failures/}
+
+\bibitem{aws}
+Amazon Web Services. \emph{Making retries safe with idempotent APIs}. AWS Builders' Library. \url{https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/}
+
+\bibitem{azuretransient}
+Microsoft. \emph{Transient Fault Handling}. Azure Architecture Center. \url{https://learn.microsoft.com/en-us/azure/architecture/best-practices/transient-faults}
+
+\bibitem{azurecb}
+Microsoft. \emph{Circuit Breaker Pattern}. Azure Architecture Center. \url{https://learn.microsoft.com/en-us/azure/architecture/patterns/circuit-breaker}
+
+\bibitem{azureretry}
+Microsoft. \emph{Retry Pattern}. Azure Architecture Center. \url{https://learn.microsoft.com/en-us/azure/architecture/patterns/retry}
+
+\bibitem{tribune}
+Tribune (Pakistan). \emph{Claude, ChatGPT, Grok and Microsoft email services recover after disruption}. \url{https://tribune.com.pk/story/2627282/claude-chatgpt-grok-and-microsoft-email-services-recover-after-disruption}
+
+\bibitem{itpro}
+ITPro. \emph{The Microsoft 365 outage explained: What happened, what apps are affected, and is a fix available?} \url{https://www.itpro.com/software/microsoft/the-microsoft-365-outage-explained-what-happened-what-apps-are-affected-and-is-a-fix-available}
+\end{thebibliography}
+
+\end{document}
