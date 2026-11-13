@@ -58,9 +58,9 @@ A system can possess the capability to perform an action without possessing the 
 
 ## 2. What the report and California's framework establish
 
-In *Trust But Verify: Implementing Frontier AI Policy in California and Beyond*, Scott R. Singer and co-authors examine how frontier AI policy can move beyond voluntary commitments toward transparency, assessment and accountability [1]. The report builds on the June 2025 *California Report on Frontier AI Policy* [2], whose "trust but verify" approach relies on developers' technical knowledge while ensuring that their claims can be independently validated [2].
+In *Trust But Verify: Implementing Frontier AI Policy in California and Beyond*, Scott R. Singer and co-authors examine how frontier AI policy can move beyond voluntary commitments toward transparency, assessment and accountability [1]. The report builds on the June 2025 *California Report on Frontier AI Policy* [2], whose "trust but verify" approach "recognizes the distinctive insights and expertise of foundation model developers about their technology while ensuring claims can be independently validated" [2].
 
-The report's framework covers SB 53 [3], which took effect in 2026, and two laws signed in September 2026: SB 813 [4], which sets up independent verification organizations (IVOs), and AB 1405 [5], which sets up registration for AI auditors. The report describes the latter two as "initial, high-level rules" [1]. Four points from the report are directly relevant to the accountability of increasingly autonomous systems.
+The report's framework covers SB 53 [3], and two laws signed in September 2026: SB 813 [4], which sets up independent verification organizations (IVOs), and AB 1405 [5], which sets up registration for AI auditors. The report describes the latter two as "initial, high-level rules" [1]. Four points from the report are directly relevant to the accountability of increasingly autonomous systems.
 
 ### 2.1 Commitments need evidence
 
@@ -457,12 +457,12 @@ The architecture is a conceptual reference model. Its effectiveness in a particu
 
 1. Singer, S. R., et al. *Trust but Verify: Implementing Frontier AI Policy in California and Beyond*. Carnegie Endowment for International Peace, published November 10, 2026. https://carnegieendowment.org/research/2026/11/trust-but-verify-implementing-frontier-ai-policy-in-california-and-beyond
 
-2. *The California Report on Frontier AI Policy*. June 17, 2025. Commissioned by Governor Gavin Newsom. https://www.gov.ca.gov/wp-content/uploads/2025/06/June-17-2025-–-The-California-Report-on-Frontier-AI-Policy.pdf (also arXiv:2506.17303, https://arxiv.org/abs/2506.17303)
+2. *The California Report on Frontier AI Policy*. Joint California Policy Working Group on AI Frontier Models, June 17, 2025. Prepared at the request of Governor Gavin Newsom (per the report's acknowledgments). https://www.gov.ca.gov/wp-content/uploads/2025/06/June-17-2025-–-The-California-Report-on-Frontier-AI-Policy.pdf (also arXiv:2506.17303, https://arxiv.org/abs/2506.17303)
 
-3. California Senate Bill 53 (2025), frontier artificial intelligence models. Signed September 29, 2025; effective January 1, 2026. https://open.pluralpolicy.com/ca/bills/20252026/SB53
+3. California Senate Bill 53 (2025), Transparency in Frontier Artificial Intelligence Act, authored by Senator Scott Wiener. Signed by the Governor September 29, 2025. Source: https://www.gov.ca.gov/2025/09/29/governor-newsom-signs-sb-53-advancing-californias-world-leading-artificial-intelligence-industry/ (chaptered text not checked).
 
 4. California Senate Bill 813 (2026), Independent verification organizations. Approved by the Governor and chaptered September 9, 2026, as Chapter 179, Statutes of 2026, adding Chapter 14 (commencing with Section 8898) to Division 1 of Title 2 of the Government Code. Section 8898.1 requires the Government Operations Agency, on or before January 1, 2028, to develop application requirements, suspension and termination procedures, and criteria for designating independent verification organizations. Section 8898.4(a)(3) provides that the chapter does not require any person or company to engage an IVO or undergo a covered AI audit. Chaptered text checked: https://leginfo.legislature.ca.gov/faces/billStatusClient.xhtml?bill_id=202520260SB813
 
 5. California Assembly Bill 1405 (2026), Artificial intelligence: auditors: registration. Approved by the Governor and chaptered September 9, 2026, as Chapter 178, Statutes of 2026, adding Chapter 5.9.5 (commencing with Section 11549.80) to Part 1 of Division 3 of Title 2 of the Government Code. Section 11549.82 requires the Government Operations Agency to establish an AI Auditor Registry no later than January 1, 2029. Section 11549.82.5 prohibits offering, selling or conducting a covered AI audit without registration, beginning January 1, 2029. Section 11549.83(d)(1)(E) requires a registered auditor's report to describe the limitations of the audit. Chaptered text checked: https://leginfo.legislature.ca.gov/faces/billStatusClient.xhtml?bill_id=202520260AB1405
 
-*Source 1 was checked against the report's full text. Sources 4 and 5 were checked against the chaptered bill texts.*
+*Source 1 was checked against the report's full text. Source 2 was checked against the report PDF and the arXiv record. Source 3 was checked against the governor's signing release. Sources 4 and 5 were checked against the chaptered bill texts.*
