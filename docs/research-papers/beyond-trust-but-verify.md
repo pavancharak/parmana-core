@@ -58,7 +58,7 @@ A system can possess the capability to perform an action without possessing the 
 
 ## 2. What the report and California's framework establish
 
-In *Trust But Verify: Implementing Frontier AI Policy in California and Beyond*, Scott R. Singer and co-authors examine how frontier AI policy can move beyond voluntary commitments toward transparency, assessment and accountability [1]. The report builds on the June 2025 *California Report on Frontier AI Policy* [2], whose "trust but verify" approach "recognizes the distinctive insights and expertise of foundation model developers about their technology while ensuring claims can be independently validated" [2].
+In _Trust But Verify: Implementing Frontier AI Policy in California and Beyond_, Scott R. Singer and co-authors examine how frontier AI policy can move beyond voluntary commitments toward transparency, assessment and accountability [1]. The report builds on the June 2025 _California Report on Frontier AI Policy_ [2], whose "trust but verify" approach "recognizes the distinctive insights and expertise of foundation model developers about their technology while ensuring claims can be independently validated" [2].
 
 The report's framework covers SB 53 [3], and two laws signed in September 2026: SB 813 [4], which sets up independent verification organizations (IVOs), and AB 1405 [5], which sets up registration for AI auditors. The report describes the latter two as "initial, high-level rules" [1]. Four points from the report are directly relevant to the accountability of increasingly autonomous systems.
 
@@ -92,13 +92,13 @@ AI assurance examines the properties, capabilities, risks and behavior of an AI 
 
 Execution accountability examines whether a specific action was permitted, whether the authorization conditions were satisfied, whether execution matched the authorization and whether the resulting evidence can be independently checked.
 
-| AI assurance | Execution accountability |
-|---|---|
-| What can the system do? | What is the system permitted to do? |
-| How does the model behave? | Was this specific action authorized? |
-| What risks have been evaluated? | Were the declared limits enforced? |
-| How reliable are the assessments? | Did execution match the approved request? |
-| What does the assessment establish? | What evidence establishes what happened? |
+| AI assurance                        | Execution accountability                  |
+| ----------------------------------- | ----------------------------------------- |
+| What can the system do?             | What is the system permitted to do?       |
+| How does the model behave?          | Was this specific action authorized?      |
+| What risks have been evaluated?     | Were the declared limits enforced?        |
+| How reliable are the assessments?   | Did execution match the approved request? |
+| What does the assessment establish? | What evidence establishes what happened?  |
 
 These questions are complementary.
 
@@ -293,16 +293,16 @@ It is to demonstrate that the business does not have to rely on the agent behavi
 
 An execution accountability system should be tested against the conditions most likely to expose weaknesses in its control boundary.
 
-| Test | Expected system behavior |
-|---|---|
-| Action within declared limits | Authorize and permit the exact action |
-| Amount exceeds authority | Reject before execution |
-| Unauthorized supplier | Reject before execution |
-| Required approval missing | Do not execute |
-| Transaction changed after authorization | Require fresh authorization |
-| Agent authority revoked | Reject subsequent unauthorized requests |
-| Policy unavailable or invalid | Fail closed |
-| Evidence record altered | Independent verification detects the change |
+| Test                                               | Expected system behavior                    |
+| -------------------------------------------------- | ------------------------------------------- |
+| Action within declared limits                      | Authorize and permit the exact action       |
+| Amount exceeds authority                           | Reject before execution                     |
+| Unauthorized supplier                              | Reject before execution                     |
+| Required approval missing                          | Do not execute                              |
+| Transaction changed after authorization            | Require fresh authorization                 |
+| Agent authority revoked                            | Reject subsequent unauthorized requests     |
+| Policy unavailable or invalid                      | Fail closed                                 |
+| Evidence record altered                            | Independent verification detects the change |
 | Agent attempts direct access to execution provider | Access denied by the execution architecture |
 
 These tests are more meaningful than demonstrating only that an agent can complete a successful transaction.
@@ -405,7 +405,7 @@ Make execution provable.
 
 ## Research basis and scope
 
-This paper draws on Scott R. Singer's *Trust But Verify: Implementing Frontier AI Policy in California and Beyond* [1], published by the Carnegie Endowment for International Peace in 2026, and on the *California Report on Frontier AI Policy* [2] that the report builds on.
+This paper draws on Scott R. Singer's _Trust But Verify: Implementing Frontier AI Policy in California and Beyond_ [1], published by the Carnegie Endowment for International Peace in 2026, and on the _California Report on Frontier AI Policy_ [2] that the report builds on.
 
 The report examines frontier AI policy implementation, transparency, independent assessment, internal deployment oversight and the institutional conditions required for credible verification.
 
@@ -417,9 +417,9 @@ The architecture is a conceptual reference model. Its effectiveness in a particu
 
 ## References
 
-1. Singer, S. R., et al. *Trust but Verify: Implementing Frontier AI Policy in California and Beyond*. Carnegie Endowment for International Peace, published November 10, 2026. https://carnegieendowment.org/research/2026/11/trust-but-verify-implementing-frontier-ai-policy-in-california-and-beyond
+1. Singer, S. R., et al. _Trust but Verify: Implementing Frontier AI Policy in California and Beyond_. Carnegie Endowment for International Peace, published November 10, 2026. https://carnegieendowment.org/research/2026/11/trust-but-verify-implementing-frontier-ai-policy-in-california-and-beyond
 
-2. *The California Report on Frontier AI Policy*. Joint California Policy Working Group on AI Frontier Models, June 17, 2025. Prepared at the request of Governor Gavin Newsom (per the report's acknowledgments). https://www.gov.ca.gov/wp-content/uploads/2025/06/June-17-2025-–-The-California-Report-on-Frontier-AI-Policy.pdf (also arXiv:2506.17303, https://arxiv.org/abs/2506.17303)
+2. _The California Report on Frontier AI Policy_. Joint California Policy Working Group on AI Frontier Models, June 17, 2025. Prepared at the request of Governor Gavin Newsom (per the report's acknowledgments). https://www.gov.ca.gov/wp-content/uploads/2025/06/June-17-2025-–-The-California-Report-on-Frontier-AI-Policy.pdf (also arXiv:2506.17303, https://arxiv.org/abs/2506.17303)
 
 3. California Senate Bill 53 (2025), Transparency in Frontier Artificial Intelligence Act, authored by Senator Scott Wiener. Signed by the Governor September 29, 2025. Source: https://www.gov.ca.gov/2025/09/29/governor-newsom-signs-sb-53-advancing-californias-world-leading-artificial-intelligence-industry/ (chaptered text not checked).
 
@@ -427,4 +427,4 @@ The architecture is a conceptual reference model. Its effectiveness in a particu
 
 5. California Assembly Bill 1405 (2026), Artificial intelligence: auditors: registration. Approved by the Governor and chaptered September 9, 2026, as Chapter 178, Statutes of 2026, adding Chapter 5.9.5 (commencing with Section 11549.80) to Part 1 of Division 3 of Title 2 of the Government Code. Section 11549.82 requires the Government Operations Agency to establish an AI Auditor Registry no later than January 1, 2029. Section 11549.82.5 prohibits offering, selling or conducting a covered AI audit without registration, beginning January 1, 2029. Section 11549.83(d)(1)(E) requires a registered auditor's report to describe the limitations of the audit. Chaptered text checked: https://leginfo.legislature.ca.gov/faces/billStatusClient.xhtml?bill_id=202520260AB1405
 
-*Source 1 was checked against the report's full text. Source 2 was checked against the report PDF and the arXiv record. Source 3 was checked against the governor's signing release. Sources 4 and 5 were checked against the chaptered bill texts.*
+_Source 1 was checked against the report's full text. Source 2 was checked against the report PDF and the arXiv record. Source 3 was checked against the governor's signing release. Sources 4 and 5 were checked against the chaptered bill texts._
