@@ -137,8 +137,7 @@ The server only calls KMS when it signs something. Health checks don't. So:
 
 **Terraform: "expected customer_master_key_spec to be one of [...] got ECC_NIST_EDWARDS25519"**
 
-- The AWS provider (5.x, and 6.x was not confirmed to help) does not accept this key
-  spec. Create the key with `create-signing-key.ps1` and let Terraform manage only the
+- The AWS provider 5.x does not accept this key spec (6.x not yet tested). Create the key with `create-signing-key.ps1` and let Terraform manage only the
   alias and role policy (current design).
 
 **Terraform plan: "Given variables file prod does not exist" / "Too many command line arguments"**
