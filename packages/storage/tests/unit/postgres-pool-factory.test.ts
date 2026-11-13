@@ -15,6 +15,11 @@ function createPoolMock(connect: () => Promise<{ release: () => void }>) {
       this.options = options;
       this.connect = connect;
     }
+
+    // The factory listens for idle-client errors; the mock never emits one.
+    on() {
+      return this;
+    }
   }
 
   return vi.fn(PoolMock);
