@@ -1,59 +1,50 @@
-# Status: per-environment KMS signing key
+# Change record: per-environment KMS signing key
 
-Last updated: 2026-11-14 (IST), at the end of the working session.
+Status: code and documentation merged. Production configured. Two verification items open.
 
-## Summary
+## Merged
 
-Production uses a per-environment KMS signing key, `alias/parmana-prod`. The change is
-deployed and the health check passes. Production signing with the new key is not yet
-confirmed, because no signing request has reached production since the redeploy.
+| PR   | Content                                                                                                           | Merged to                  |
+| ---- | ----------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| #613 | `PARMANA_SIGNING_KEY_ID` setting, signing call sites, tests, docs                                                 | `main` (commit `a1d75f4d`) |
+| #614 | Runbook, command and policy log, status document, production Terraform, Prettier ignore for local Terraform state | `main`                     |
 
-## Current state
+## Live in production
 
-| Item                                           | State                                                        | Reference                                                           |
-| ---------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------- |
-| Code: `PARMANA_SIGNING_KEY_ID` setting         | Merged to `main`                                             | PR #613                                                             |
-| Runbook and command log                        | Committed on `claude/gracious-cerf-c2ehq9`                   | `docs/dev/runbooks/`                                                |
-| Terraform for production alias and role policy | Committed; PR open                                           | `infra/parmana-prod-signing/`, PR #614                              |
-| Production KMS key                             | Enabled, `ECC_NIST_EDWARDS25519`, tag `purpose=parmana-prod` | `7b0c7156-88b1-4979-be5d-7eca96972c39`                              |
-| Production alias                               | Exists, points to the key above                              | `alias/parmana-prod`                                                |
-| Server role policy                             | Applied: sign, get public key, describe, on that key only    | Role `parmana-vercel-kms-signer`                                    |
-| Vercel variable                                | `PARMANA_SIGNING_KEY_ID=alias/parmana-prod` in Production    | Project `parmana-api-real`                                          |
-| Production deployment                          | Built from `main`, Ready                                     | `dpl_AGh2CNLugRCsqzm4R3FK5zhGGjXp` (`parmana-api-real-8ma2zq723-…`) |
-| Health check                                   | 200                                                          | `https://parmana-api-real.vercel.app/health`                        |
-| Test signing with new key                      | Succeeded; logged in CloudTrail against the new key          | Test identity, 18:33 UTC                                            |
-| Old shared key                                 | Unchanged, still behind `alias/default`                      | `2787acce-db19-4cd6-88ed-ce2c1319096b`                              |
-| Drill key                                      | Scheduled for deletion (around 2026-11-20)                   | `83cd2361-df73-4879-859f-412d5f9fd7c9`                              |
+- KMS key `7b0c7156-88b1-4979-be5d-7eca96972c39`, Ed25519 (`ECC_NIST_EDWARDS25519`), tag `purpose=parmana-prod`, ap-south-1.
+- Alias `alias/parmana-prod` points to that key.
+- Role `parmana-vercel-kms-signer` has inline policy `parmana-prod-kms-signing`: `kms:Sign`, `kms:GetPublicKey`, `kms:DescribeKey` on that key only.
+- Vercel production variable `PARMANA_SIGNING_KEY_ID=alias/parmana-prod`.
+- Production deployment built from `main`: `dpl_AGh2CNLugRCsqzm4R3FK5zhGGjXp` (`parmana-api-real-8ma2zq723-…`), Ready. Health check returns 200.
 
 ## Verified
 
-- The new key and alias are enabled and have the right spec.
-- The server role can sign with the new key and nothing else, by policy.
-- A test signature with the new key succeeded, and CloudTrail recorded it.
-- The production health check returns 200.
+- Key and alias are enabled with the correct spec.
+- Test signature with the new key succeeded; CloudTrail recorded it against `7b0c7156-…`.
+- Role policy allows only the three actions on that key.
+- Production health check returns 200.
 
 ## Not verified
 
-- **Production signs with `alias/parmana-prod`.** The newest production `Sign` calls are from the old build and use `alias/default`. Nothing has signed since the redeploy.
-- **Git commit of the current production deployment.** The Vercel CLI output didn't show it. Check the Source field in the dashboard.
-- **Provider 6.x** can create the Ed25519 key in Terraform. Not tested; the provider 5.x rejects the key spec.
-- **Full test suite on Node 24.** The crypto suite had 56 failures on Node 22 before and after the change, from ML-DSA support. The runtime and API suites weren't run.
+- Production signs with `alias/parmana-prod`. The newest production `Sign` events are from the old build and use `alias/default`. Confirm after one real signed request and a CloudTrail check.
+- Git commit of the current production deployment. Confirm in the Vercel dashboard (deployment → Source).
 
 ## Open actions
 
-1. Make one real signed request in production, wait about 15 minutes, then check CloudTrail `Sign` events for `7b0c7156-…` from `parmana-vercel-kms-signer`. Owner: team.
-2. Confirm the Git commit of the current production deployment in the Vercel dashboard. Owner: team.
-3. Delete the test access key, user `parmana-prod-test` and policy `parmana-prod-signing-test`. Owner: admin.
-4. Cancel the drill key's deletion if it's still needed, before about 2026-11-20. Owner: admin.
-5. Remove `EnableKey`, `DisableKey`, `CreateAlias` and `DeleteAlias` from the inline policy on `parmana-kms-drill`. Owner: admin.
-6. Stop the local PostgreSQL cluster on the sandbox. Owner: engineer.
+1. Make one real signed request in production, wait about 15 minutes, check CloudTrail `Sign` events for `7b0c7156-…` from `parmana-vercel-kms-signer`. Owner: team.
+2. Confirm the commit of deployment `dpl_AGh2CNLugRCsqzm4R3FK5zhGGjXp`. Owner: team.
+3. Delete access key, user `parmana-prod-test` and policy `parmana-prod-signing-test`. Owner: admin.
+4. Cancel deletion of drill key `83cd2361-df73-4879-859f-412d5f9fd7c9` if still needed (scheduled around 2026-11-20). Owner: admin.
+5. Remove `EnableKey`, `DisableKey`, `CreateAlias`, `DeleteAlias` from the inline policy on `parmana-kms-drill`. Owner: admin.
+6. Stop local PostgreSQL on the sandbox. Owner: engineer.
 7. Run the full test suite on Node 24. Owner: engineer.
-8. Staging key and alias not created; repeat the runbook when needed. Owner: admin.
-9. Merge PR #614 after review.
+8. Staging key and alias: not created. Repeat the runbook when needed. Owner: admin.
+9. Provider 6.x support for the Ed25519 key spec: untested. Owner: engineer.
 
 ## Known issues
 
 - Vercel "Redeploy" rebuilds the old commit. Deploy from `main` after changing variables.
-- Health checks don't prove which key the server uses.
-- CloudTrail lookups can lag about 15 minutes.
+- `/health` does not show which key the server uses.
+- CloudTrail lookups lag about 15 minutes.
 - CloudShell may be blocked for new accounts.
+- Crypto suite: 56 failures on Node 22 before and after the change (ML-DSA key type). Not caused by this change.
