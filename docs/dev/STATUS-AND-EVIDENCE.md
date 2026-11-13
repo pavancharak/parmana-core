@@ -10,6 +10,7 @@ Every report is listed once, here. Start with the question you have.
 
 - **Live CI runs:** every push runs the build, lint, typecheck and test suite. Results for each run are on the [CI workflow page](https://github.com/pavancharak/parmana-core/actions/workflows/ci.yml). To reproduce them, see [Quick start](RUNNING.md#quick-start).
 - **Evaluation scenarios:** the 16 attack scenarios are in [evaluations/scenarios.json](../../evaluations/scenarios.json). [EVALUATION.md](../../EVALUATION.md) explains the result.
+- **Fault injection:** [docs/internal/testing/FAULT-INJECTION.md](../internal/testing/FAULT-INJECTION.md) makes the business transaction store, the intent store or signing fail on purpose, at the HTTP boundary, and checks that nothing is released. It does not test a deployed system.
 - **Mutation testing:** [docs/internal/testing/MUTATION-TESTING.md](../internal/testing/MUTATION-TESTING.md) breaks the security code on purpose and checks that the tests notice. Fuzz tests send damaged and arbitrary requests, policies and records, and require a clear refusal, never a crash.
 
 **Security**
