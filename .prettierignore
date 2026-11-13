@@ -30,3 +30,5 @@ governance/security-reviews/FINDINGS.md
 governance/security-reviews/FINDINGS-2.md
 governance/security-reviews/FINAL-REPORT-2.md
 governance/security-reviews/PROGRESS-2026-11-08.md
+infra/**/.terraform/
+infra/**/*.tfstate*
