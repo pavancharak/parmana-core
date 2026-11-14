@@ -159,3 +159,13 @@ Checked by reading the code. Not tested.
 **Not done:** no code or test has changed. The binding is still not written (D15), and the naming format (D16) is still unimplemented.
 
 Recorded as D18 in `docs/ASSURANCE_DECISIONS.md`.
+
+## 16. Code change for D18 (14 November 2026)
+
+`createCurrentPolicyVersionSource` now returns the governed source in every environment. The environment check that turned it off in test and development is removed. The unit test asserts this for each environment setting.
+
+**Checks run after the change:** typecheck exit 0. Seven test files, 62 tests, all passed: the version-source unit test, the four integration tests for policy-in-effect and capability scoping, and the capability-registry suite.
+
+**Not changed:** `createPolicyExecutionVerifier` still uses `policyGovernanceRelaxed()` to decide whether execution-time governance is checked. That is a separate decision from version selection. It is still environment-dependent, and it is not covered by D18. Owner to decide whether it should follow the same rule.
+
+**Not run:** the full suite.
