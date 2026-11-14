@@ -1,113 +1,75 @@
-# The declare stage: what is sent and what happens
+# The declare stage
 
-**Status:** Written 14 November 2026. Revised the same day to clarify the caller, authority and policy fields. from `packages/api/src/routes/transactions.ts` and the Business Transaction types in `packages/shared/src/domain`. The order of checks below was read from the handler. It has not been run against a live server in this document.
+**Status:** Agreed description, 14 November 2026. Each statement is taken from the code named in it, or is marked as part of the agreed plan.
 **Owner:** Pavan Charak
 
-## 1. The request
+## 1. What declare is
 
-`POST /transactions` with a Business Transaction in the body. Declaring and executing are one call: the handler passes the transaction straight to execution, and no separate declare step is stored before it. The request carries one header:
+Declare is one request: `POST /transactions`. Declaring and executing are the same call. The handler passes the transaction directly to execution. No separate declare step is stored before execution.
 
-- `Authorization: Bearer <caller key>`. The key identifies the caller (`callerId`), not the transaction. Its holder type (human or service) is set by the operator at issue time; if absent it is treated as non-human.
+## 2. The request
 
-The body has these parts.
+**Header:** `Authorization: Bearer <caller key>`.
 
-| Part                    | Fields                                                                                                                                | Notes                                                                                                  |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `businessTransactionId` | a UUID                                                                                                                                | Checked for format first.                                                                              |
-| `metadata`              | `businessTransactionId`, `correlationId`, `createdBy`, `createdAt`; optional `tenantId`, `sourceSystem`, `submittedBy`, `submittedAt` | Describes the request.                                                                                 |
-| `authority`             | `authorityId`, `authorityType` (for example `USER`), `principalId`, `issuedAt`; optional `displayName`                                | `principalId` is the party the caller says it acts for.                                                |
-| `authorization`         | `authorizationId`, `authorityId`, `purpose`, `issuedAt`; optional `expiresAt`                                                         | Links the authority to the intent.                                                                     |
-| `intent`                | `intentId`, `authorizationId`, `action`, `target`, `parameters`, `createdAt`                                                          | `action` is the capability, for example `razorpay:refund`. `parameters` holds values such as `amount`. |
-| `policy`                | `name`, `version`, `schemaVersion`                                                                                                    | The policy version the request relies on. A request must name it.                                      |
+- The key identifies the caller, as `callerId`. It does not identify the transaction.
+- The key's holder type is `credentialHolderType`, set by the operator when the key is issued. A key with no holder type is treated as non-human.
 
-## 2. What the server does, in this order
+**Body:** a Business Transaction. Fields are listed as in the types under `packages/shared/src/domain/`.
 
-1. **Structural check.** `businessTransactionId` must be a valid UUID. If not, the response is `400` and an audit event `caller.structural_rejected` is written, when an audit sink is configured.
-2. **Principal check.** If the key is identified, `authority.principalId` must be allowed for that key. If not, the response is `403` ("Caller is not permitted to assert this authority.principalId") and an audit event `caller.principal_denied` is written. An unset allowed-principal list means the key may assert only its own caller ID.
-3. **Capability check.** `intent.action` must be allowed for that key. If not, the response is `403` ("Caller is not permitted to invoke this capability") and an audit event `caller.capability_denied` is written. When allowed, `caller.capability_granted` is written.
-4. **Execution.** The transaction is passed to `application.execute`. Its first step is `accept`, which runs the ID match check and the duplicate check (section 5). This starts the runtime: it loads the named policy version, checks governance, evaluates the policy, and, on approval, signs an authorization envelope. The later stages are in `docs/MASTER_DOCUMENT.md`, section 2.
-5. **Response.** On success the response is `201` with the execution result.
+| Part            | Field                                                                        | Required | Set by               | Meaning                                                                                      |
+| --------------- | ---------------------------------------------------------------------------- | -------- | -------------------- | -------------------------------------------------------------------------------------------- |
+| top level       | `businessTransactionId`                                                      | Yes      | Caller               | UUID. Identifies the transaction. Checked for format.                                        |
+| `metadata`      | `businessTransactionId`                                                      | Yes      | Caller               | Must equal the top-level value.                                                              |
+| `metadata`      | `correlationId`                                                              | No       | Caller               | Stored as a label. Not validated.                                                            |
+| `metadata`      | `tenantId`                                                                   | No       | Caller               | Checked against the caller's allowed tenants. Selects the signing key.                       |
+| `metadata`      | `sourceSystem`                                                               | No       | Caller               | Stored as a label. Not validated.                                                            |
+| `metadata`      | `submittedBy`                                                                | No       | Server               | The authenticated caller's ID.                                                               |
+| `metadata`      | `grantedCapability`                                                          | No       | Server               | The capability the caller was checked for.                                                   |
+| `metadata`      | `submittedAt`                                                                | No       | Caller, not set here | Not set by this handler.                                                                     |
+| `authority`     | `authorityId`, `authorityType`, `principalId`, `issuedAt`                    | Yes      | Caller               | The authority the caller asserts.                                                            |
+| `authority`     | `displayName`                                                                | No       | Caller               | Label.                                                                                       |
+| `authorization` | `authorizationId`, `authorityId`, `purpose`, `issuedAt`                      | Yes      | Caller               | Links the authority to the intent.                                                           |
+| `authorization` | `expiresAt`                                                                  | No       | Caller               | Expiry, if given.                                                                            |
+| `intent`        | `intentId`, `authorizationId`, `action`, `target`, `parameters`, `createdAt` | Yes      | Caller               | `action` is the capability, for example `razorpay:refund`. `parameters` are caller-supplied. |
+| `policy`        | `name`, `version`, `schemaVersion`                                           | Yes      | Caller               | The policy version the request relies on.                                                    |
 
-Refusals in steps 1 to 3 happen before any policy is loaded. Nothing reaches the connector from them.
+**Authority.** `principalId` and `authorityType` are asserted by the caller. The server checks only that the key may assert that principal.
 
-## 5. The Business Transaction ID
+**Policy version.** The caller names the version (D17). Governance decides whether that version is in effect (D18).
 
-`businessTransactionId` identifies one business transaction. The caller generates it. It is a UUID.
+## 3. Checks made at declare
 
-- **Format:** checked first, at the declare stage (step 1 above). An invalid value is refused with `400`.
-- **Metadata match: confirmed in code.** `metadata.businessTransactionId` must equal the top-level `businessTransactionId`. The path is: `POST /transactions` handler, then `application.execute` (built by `RuntimeFactory`), then `ExecutionTrustApplication.execute`, then `BusinessTransactionService.accept`, which calls `BusinessTransactionValidator.validate` (`packages/runtime/src/validators/BusinessTransactionValidator.ts`, "metadata.businessTransactionId must match businessTransactionId"). A mismatch is refused with a validation error before any policy is loaded. The test suite does not have a dedicated test for this check on `POST /transactions` that this review found.
-- **Uniqueness: confirmed in code.** The same `accept` step checks whether the ID already exists and refuses a duplicate with `DuplicateBusinessTransactionError`, which the error handler maps to `409` (`packages/api/src/middleware/error-handler.ts`). The test suite checks this on `POST /execute`. The `POST /transactions` path uses the same `accept` step.
-- **Purpose:** the ID ties together the request, its audit events, and its execution record. A retry with the same ID is refused rather than executed twice.
+The handler makes these checks before it calls execution. Each refusal writes an audit event when an audit sink is configured.
 
-## 6. The metadata fields
+| Check                                             | Refusal                          | Audit event                  |
+| ------------------------------------------------- | -------------------------------- | ---------------------------- |
+| `businessTransactionId` is a UUID                 | `400`                            | `caller.structural_rejected` |
+| The key may assert `authority.principalId`        | `403`                            | `caller.principal_denied`    |
+| `metadata.tenantId`, if set, is one the key lists | `403`, code `TENANT_NOT_ALLOWED` | none                         |
+| The key may invoke `intent.action`                | `403`                            | `caller.capability_denied`   |
 
-The metadata type is `TransactionMetadata` (`packages/shared/src/domain/metadata.ts`). Its comment says it is immutable, supplied by the calling application, and never evaluated by Policy.
+When the capability check passes, the handler writes `caller.capability_granted`.
 
-Correction: an earlier version of this document listed `createdBy` and `createdAt` as metadata fields. They are not in the type. `createdAt` exists on the Business Transaction itself, and is the time Parmana accepted it; the caller does not set it.
+The relative order of the principal, tenant and capability checks is set by the contract test (section 6, item 1).
 
-| Field                   | Required | Set by          | Purpose                                                                                                                                                                                                  |
-| ----------------------- | -------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `businessTransactionId` | Yes      | Caller          | The primary identifier of the transaction. It is also the idempotency key (a repeat is refused) and the root identifier of the Execution Trust Record. Must equal the top-level `businessTransactionId`. |
-| `correlationId`         | No       | Caller          | Ties this request to other requests across systems, for tracing. Storage was not checked in this review. The type does not say it affects any decision.                                                  |
-| `tenantId`              | No       | Caller          | Selects the signing key (`tenant.<tenantId>`). Checked: a caller may name only a tenant its own key lists, otherwise `403` with `TENANT_NOT_ALLOWED`. `null` and absent both mean no tenant.             |
-| `sourceSystem`          | No       | Caller          | Names the application or service that sent the transaction, for audit.                                                                                                                                   |
-| `submittedBy`           | No       | Server          | The identity of the authenticated caller. The type says it is server-set and never trusted from the client.                                                                                              |
-| `grantedCapability`     | No       | Server          | The capability (`intent.action`) that the caller was checked and allowed to invoke. It is signed into the authorization payload. Present only when caller authentication is enabled.                     |
-| `submittedAt`           | No       | Caller, as sent | `POST /transactions` does not set it; the value is stored as the caller sent it, and is not validated. Only the inbound partner flow sets it (`inbound-checks.ts`).                                      |
+## 4. Checks made at execution, as the first step of `application.execute`
 
-**Checks on these fields, from the code:**
+1. **Trust-chain validation.** `metadata.businessTransactionId` must equal `businessTransactionId`. A mismatch is refused. Code: `BusinessTransactionValidator.validate`, called from `BusinessTransactionService.accept`.
+2. **Duplicate check.** A `businessTransactionId` already accepted is refused with `409` (`DuplicateBusinessTransactionError`).
 
-- `tenantId` is checked on `POST /transactions` (`packages/api/src/routes/transactions.ts`), after the principal check and before execution. Its value also selects the signing key.
-- `submittedBy` and `grantedCapability` are set by the server from the authenticated caller and the capability check.
-- `submittedAt` is not validated and not set on this path. It is stored as the caller sent it.
-- `correlationId` and `sourceSystem` are not validated on any path reviewed. Neither is used in a decision; they are recorded only.
+After these two checks, the policy is loaded and evaluated. The execution stages are described in `docs/MASTER_DOCUMENT.md`, section 2.
 
-**Still open for the owner:** whether `submittedAt` should be server-set, and whether `correlationId` and `sourceSystem` need length or format limits.
+## 5. Business Transaction ID
 
-## 3. What is not yet confirmed
+- Caller-generated. A UUID.
+- Refused with `400` if malformed.
+- Must equal `metadata.businessTransactionId`.
+- A second use is refused with `409`.
 
-- Whether the transaction is stored before step 4, or only after the execution result. The handler does not show it in the section read.
-- The exact fields of the request's error responses after step 4. These depend on the runtime and are covered by the execute stage, not this one.
-- Whether `policy.version` is checked against governance here or only inside step 4. The runtime path is where governance runs (D19), so it is expected to be there.
+## 6. Plan (agreed, not yet built)
 
-## 4. Decisions that bear on this stage
+1. **Contract test.** An integration test in `packages/api/tests/integration/` sends `POST /transactions` requests and checks: each required field; the structural refusal; the principal, tenant and capability refusals and their audit events; the ID match; the duplicate `409`; and the order in section 3. It is done when it passes on `main` and fails if any listed check is removed from the handler.
+2. **Generated tables.** A script regenerates the tables in section 2 from the types in `packages/shared/src/domain/`. CI fails if this document differs from the generated output.
+3. **Owner decision: separate declare step.** Option A keeps one call, as now. Option B splits it into a declare call that returns the policy decision, and an execute call. This document describes Option A. It changes only if the owner chooses Option B.
 
-- **D17:** the request defines the policy version. The request must name `policy.name` and `policy.version`; governance decides only whether that version is the one in effect (D18).
-- **D18:** the version in effect comes from governance records, with no fallback to the canonical table.
-- **D15 and D14:** `razorpay:refund` is not bound to any policy in code, so a declare request for that capability does not yet reach a policy check it can be bound to. See `docs/assurance/POLICY_BINDING_RAZORPAY.md`.
-
-## 7. Long-term fix for the declare stage (agreed plan, 14 November 2026)
-
-**Why this section exists.** The earlier description of this stage was written from memory of the concepts, not from the handler. Nothing checked it against the code, so it contained errors: the key was described as identifying the authority, `createdBy` and `createdAt` were listed as metadata, and `tenantId` was described as a label. This plan prevents that from happening again.
-
-### 7.1 Contract test (no owner decision needed)
-
-- **What:** a test, in `packages/api/tests/integration/`, that sends `POST /transactions` requests and checks the behaviour this document describes.
-- **It must check:**
-  1. Each required field: a request without `businessTransactionId`, `metadata.businessTransactionId`, `authority`, `authorization`, `intent` or `policy` is refused.
-  2. The structural check: a malformed `businessTransactionId` returns `400` and writes `caller.structural_rejected`.
-  3. The principal check: a principal the key may not assert returns `403` and writes `caller.principal_denied`.
-  4. The capability check: an action the key may not invoke returns `403` and writes `caller.capability_denied`.
-  5. The tenant check: a `tenantId` the key does not list returns `403` with `TENANT_NOT_ALLOWED`.
-  6. The ID match: a mismatched `metadata.businessTransactionId` is refused.
-  7. The duplicate check: a reused `businessTransactionId` returns `409`.
-  8. The order: a request that fails check 2 is refused before check 3 is reached, and no policy is loaded for any refusal in checks 1 to 5.
-- **Done when:** the test passes on `main`, and it fails if any one of those checks is removed from the handler.
-
-### 7.2 Field tables generated from the types (no owner decision needed)
-
-- **What:** the tables in sections 1 and 6 are generated from `TransactionMetadata`, `Authority`, `Authorization`, `Intent` and `PolicyReference` in `packages/shared/src/domain/`.
-- **Done when:** a script regenerates the tables, and CI fails if the committed document differs from the generated output.
-
-### 7.3 Whether declare is a separate step (owner decision)
-
-- **Today:** `POST /transactions` declares and executes in one call. A caller cannot see the policy decision before execution.
-- **Option A:** keep one call. This is the current behaviour, and it needs no change.
-- **Option B:** split into two calls. The first declares and returns the policy decision without executing. The second executes a declared transaction. This changes the API and needs a new contract test.
-- **Until the owner decides,** this document describes Option A, the current behaviour.
-
-### 7.4 Order of work
-
-1. Contract test (7.1).
-2. Generated tables (7.2).
-3. Owner decision on 7.3, then any change it requires.
+Order: item 1, then item 2, then item 3 if the owner chooses it.
