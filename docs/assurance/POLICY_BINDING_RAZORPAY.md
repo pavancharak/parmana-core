@@ -169,3 +169,17 @@ Recorded as D18 in `docs/ASSURANCE_DECISIONS.md`.
 **Not changed:** `createPolicyExecutionVerifier` still uses `policyGovernanceRelaxed()` to decide whether execution-time governance is checked. That is a separate decision from version selection. It is still environment-dependent, and it is not covered by D18. Owner to decide whether it should follow the same rule.
 
 **Not run:** the full suite.
+
+## 17. Decision: execution-time governance follows the same rule (owner, 14 November 2026)
+
+**Owner decision:** yes. The execution-time check (`createPolicyExecutionVerifier`) should follow the same rule as version selection: no relaxation by environment. Recorded as D19.
+
+**Not done yet.** Making the change would affect far more than the version source:
+
+- `vitest.setup.ts` sets `PARMANA_ALLOW_UNGOVERNED_POLICY`, so the whole unit suite runs with governance off. Removing the relaxation would make it require signed approval records in every test that executes a policy.
+- 27 files set or document the flag, including `Doctor.ts`, `.env.example`, `.github/workflows/docker-image.yml`, the Python tests, scripts, tutorials, and the site and internal docs.
+- `policyGovernanceRelaxed` is also used by `createPolicyExecutionVerifier` and, through it, by `createExecutionGateway`, `createSigningReadiness` and `createPolicyGovernanceAnchorResolver`.
+
+**Proposed approach, to confirm before any code change:** test fixtures seed signed approval records, and the relaxation is removed from the production code path. The test setup and documentation changes are part of the same change.
+
+**Not changed:** no code or test has been modified for this decision.

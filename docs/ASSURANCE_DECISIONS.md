@@ -282,3 +282,18 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 **Owner decision:** No fallback. The version in effect comes from governance records only.
 
 **Effect:** a bound capability with no governance record is refused. Code and test changes are not made yet; their scope is listed in section 15.
+
+---
+
+## D19. Execution-time governance follows the same rule (14 November 2026)
+
+- **Reference:** D19
+- **Source:** docs/assurance/POLICY_BINDING_RAZORPAY.md, section 17
+- **Date recorded:** 2026-11-14
+- **Owner:** Pavan Charak
+
+**Question:** Should the execution-time governance check (`createPolicyExecutionVerifier`) be relaxed by environment, as it is now, or follow the same rule as version selection?
+
+**Owner decision:** Yes, the same rule. No relaxation by environment.
+
+**Effect:** not implemented. The unit test suite, `vitest.setup.ts` and 27 files that reference the opt-in flag would need changing, with test fixtures that seed approval records.
