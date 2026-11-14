@@ -149,15 +149,16 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 ## Record
 
-| Decision | Owner decision                 | Date       | Recorded by                              |
-| -------- | ------------------------------ | ---------- | ---------------------------------------- |
-| D7       | In scope                       | 2026-11-14 | Recorded in session at owner's direction |
-| D8       | Define as proposed             | 2026-11-14 | Recorded in session at owner's direction |
-| D9       | Reject non-canonical encodings | 2026-11-14 | Recorded in session at owner's direction |
-| D10      | Pending                        |            |                                          |
-| D11      | Pending                        |            |                                          |
-| D12      | Pending                        |            |                                          |
-| D13      | Adopted: permanent direction   | 2026-11-14 | Recorded in session at owner's direction |
+| Decision | Owner decision                          | Date       | Recorded by                              |
+| -------- | --------------------------------------- | ---------- | ---------------------------------------- |
+| D7       | In scope                                | 2026-11-14 | Recorded in session at owner's direction |
+| D8       | Define as proposed                      | 2026-11-14 | Recorded in session at owner's direction |
+| D9       | Reject non-canonical encodings          | 2026-11-14 | Recorded in session at owner's direction |
+| D10      | Pending                                 |            |                                          |
+| D11      | Pending                                 |            |                                          |
+| D12      | Pending                                 |            |                                          |
+| D13      | Adopted: permanent direction            | 2026-11-14 | Recorded in session at owner's direction |
+| D14      | Adopted: razorpay:refund policy version | 2026-11-14 | Owner confirmed version 1.3.0            |
 
 ---
 
@@ -180,3 +181,119 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 **Recommendation:** Adopt it. It covers: claims limited to the coverage register; the frozen-core list written down; one source of truth per fact; independent review of the verifier; small pull requests.
 
 **Owner decision:** **Agreed.** Adopted as the standing direction. Coverage claims follow [assurance/COVERAGE_REGISTER.md](assurance/COVERAGE_REGISTER.md). The frozen-core list in that register still needs confirmation under D8.
+
+---
+
+## D14. Policy version for razorpay:refund (14 November 2026)
+
+- **Reference:** D14
+- **Source:** docs/assurance/POLICY_BINDING_RAZORPAY.md, section 3
+- **Date recorded:** 2026-11-14
+- **Owner:** Pavan Charak
+
+**Question:** Which version of `customer-refund` does `razorpay:refund` bind to?
+
+**Options considered:** the latest version in the repository (1.3.0), or another version named by the owner.
+
+**Recommendation:** 1.3.0, the latest in the repository.
+
+**Owner decision:** **Policy is correct.** Version 1.3.0 is confirmed. Owner also stated that there is no live traffic for `razorpay:refund`, so no live caller can be refused by the binding. Correction: an earlier draft of this entry said live traffic already uses 1.3.0. That was a misreading of the owner's words and is withdrawn.
+
+**Effect on the documents**
+
+| Document                                  | Change                                               |
+| ----------------------------------------- | ---------------------------------------------------- |
+| docs/assurance/OPEN_ITEMS.md              | P-5 closed for the version. Caller check still open. |
+| docs/assurance/POLICY_BINDING_RAZORPAY.md | Status and section 3 updated to show the decision.   |
+
+---
+
+## D15. Drop the razorpay:refund policy binding (14 November 2026)
+
+- **Reference:** D15
+- **Source:** docs/assurance/POLICY_BINDING_RAZORPAY.md, section 2
+- **Date recorded:** 2026-11-14
+- **Owner:** Pavan Charak
+
+**Question:** The binding `razorpay:refund` to `customer-refund` 1.3.0 (D14) conflicts with the G-77 classification assertion, which requires every bound capability to be a read. How should this be resolved?
+
+**Options considered:**
+
+1. Relax the G-77 classification assertion, so bound writes are checked by the per-capability test.
+2. Keep the strict assertion, and drop the binding.
+
+**Owner decision:** Option 2. Keep the strict G-77 assertion and drop the binding.
+
+**Effect on the documents**
+
+| Document                                  | Change                                                             |
+| ----------------------------------------- | ------------------------------------------------------------------ |
+| docs/assurance/POLICY_BINDING_RAZORPAY.md | Rewritten: gap stays open; binding dropped; revert state recorded. |
+| docs/assurance/OPEN_ITEMS.md              | P-5 closed as superseded by D15. Razorpay binding row: gap open.   |
+| docs/ASSURANCE_RESULTS.md                 | Dated entry for the revert and the checks run after it.            |
+
+---
+
+## D16. Capability naming (14 November 2026)
+
+- **Reference:** D16
+- **Source:** docs/assurance/POLICY_BINDING_RAZORPAY.md, sections 9 and 11
+- **Date recorded:** 2026-11-14
+- **Owner:** Pavan Charak
+
+**Question:** Should capability names follow the connector, policy and version format the owner described, or keep `namespace:verb`?
+
+**Options considered:** 1. Change the format to connector, policy and version. 2. Keep `namespace:verb` and record the combination as a label.
+
+**Owner decision:** Option 1.
+
+**Format chosen (14 November 2026):** option A, `razorpay_customer-refund_1-3-0`. Not implemented. It embeds `customer-refund` 1.3.0, which rejects every refund; settle the policy first (POLICY_BINDING_RAZORPAY.md, section 12).
+
+**Effect on the documents:** POLICY_BINDING_RAZORPAY.md, section 11. OPEN_ITEMS.md: a row for the format.
+
+---
+
+## D17. The request defines the policy version (14 November 2026)
+
+- **Reference:** D17
+- **Source:** docs/assurance/POLICY_BINDING_RAZORPAY.md, section 13
+- **Date recorded:** 2026-11-14
+- **Owner:** Pavan Charak
+
+**Question:** Does the policy version come from the request, or from governance records (G-66)?
+
+**Options considered:** 1. The request defines the version. 2. The governance record defines the version.
+
+**Owner decision:** Option 1. The request must define the policy version.
+
+**Effect:** callers declare the version. A new approved version needs callers to change their declared version. The governance version source is not used for this capability.
+
+---
+
+## D18. No fallback to the canonical table version (14 November 2026)
+
+- **Reference:** D18
+- **Source:** docs/assurance/POLICY_BINDING_RAZORPAY.md, section 15
+- **Date recorded:** 2026-11-14
+- **Owner:** Pavan Charak
+
+**Question:** When governance is relaxed (test and development), should the version in the canonical table be used as a fallback?
+
+**Owner decision:** No fallback. The version in effect comes from governance records only.
+
+**Effect:** a bound capability with no governance record is refused. Code and test changes are not made yet; their scope is listed in section 15.
+
+---
+
+## D19. Execution-time governance follows the same rule (14 November 2026)
+
+- **Reference:** D19
+- **Source:** docs/assurance/POLICY_BINDING_RAZORPAY.md, section 17
+- **Date recorded:** 2026-11-14
+- **Owner:** Pavan Charak
+
+**Question:** Should the execution-time governance check (`createPolicyExecutionVerifier`) be relaxed by environment, as it is now, or follow the same rule as version selection?
+
+**Owner decision:** Yes, the same rule. No relaxation by environment.
+
+**Effect:** not implemented. The unit test suite, `vitest.setup.ts` and 27 files that reference the opt-in flag would need changing, with test fixtures that seed approval records.

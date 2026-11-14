@@ -370,6 +370,44 @@ The PoAE benchmark runner (`tests/assurance/poae/poae-benchmark.test.ts`) and it
 
 ---
 
+### 2026-11-14: razorpay:refund policy binding (capability-registry)
+
+- Command: `npm run typecheck`; `node_modules/vitest/vitest.mjs run packages/capability-registry` (Node 24.22.2), after `npm run build:packages`
+- Runtime: not measured
+- Commit tested: `6b573f63` on branch `claude/bind-razorpay-refund` (signed off, not signed; see POLICY_BINDING_RAZORPAY.md section 8).
+- Branch: `claude/bind-razorpay-refund`
+
+Results: typecheck exit 0. capability-registry: 3 files, 32 tests, all passed. Before the fix, one existing test (which asserted an empty canonical table) failed; it was updated to assert the single new entry.
+
+Survivor classification: not applicable. No mutation run.
+
+Open items: P-5, confirmation of the policy version (`docs/assurance/POLICY_BINDING_RAZORPAY.md`). Full suite, frozen-core test and Razorpay live test not run.
+
+Phase status change: none.
+
+---
+
+### 2026-11-14: revert of the razorpay:refund binding (decision D15)
+
+- Command: `npm run typecheck`; `node_modules/vitest/vitest.mjs run packages/capability-registry packages/api/tests/unit/connector-policies-not-self-authorizing.test.ts` (Node 24.22.2), after `npm run build:packages`
+- Runtime: not measured
+- Commit tested: the revert commit on branch `claude/bind-razorpay-refund` (the SHA is recorded in the pull request, not here, because the commit is not signed)
+- Branch: `claude/bind-razorpay-refund`
+
+Results: typecheck exit 0. Tests: 3 files, 29 tests, all passed.
+
+Earlier full-suite run (before the revert, Node 24.22.2): 403 of 433 files passed, 29 skipped; 3,956 tests passed, 1 failed. The failure was the G-77 classification assertion, caused by the razorpay:refund binding. Owner decision D15: keep the assertion, drop the binding.
+
+Not run after the revert: the full suite.
+
+Survivor classification: not applicable. No mutation run.
+
+Open items: the razorpay:refund policy binding remains open (OPEN_ITEMS.md, Razorpay bind). Commit signing: not signed (no key in this session).
+
+Phase status change: none.
+
+---
+
 ### Entry template
 
 Copy this for each new run.

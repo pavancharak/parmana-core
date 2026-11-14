@@ -1,75 +1,54 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { createCurrentPolicyVersionSource } from "../../../src/bootstrap/createCurrentPolicyVersionSource.js";
-import { createPolicyExecutionVerifier } from "../../../src/bootstrap/createPolicyExecutionVerifier.js";
 import { GovernedPolicyVersionSource } from "../../../src/governance/GovernedPolicyVersionSource.js";
 
-const ENFORCE_KEY = "POLICY_EXECUTION_VERIFICATION_ENFORCED";
-
 /**
- * G-66: the version in effect comes from policy governance exactly where
- * policy governance is enforced, never in one without the other.
+ * G-66 and D18: the version in effect comes from policy governance in every
+ * environment. No NODE_ENV or override setting turns it off, and there is
+ * no fallback to the canonical table.
  */
 describe("createCurrentPolicyVersionSource", () => {
-  const originalEnforce = process.env[ENFORCE_KEY];
   const originalNodeEnv = process.env.NODE_ENV;
+  const originalAllow = process.env.PARMANA_ALLOW_UNGOVERNED_POLICY;
+  const originalEnforce = process.env.POLICY_EXECUTION_VERIFICATION_ENFORCED;
 
   afterEach(() => {
-    if (originalEnforce === undefined) {
-      delete process.env[ENFORCE_KEY];
-    } else {
-      process.env[ENFORCE_KEY] = originalEnforce;
-    }
-
-    if (originalNodeEnv === undefined) {
-      delete process.env.NODE_ENV;
-    } else {
-      process.env.NODE_ENV = originalNodeEnv;
-    }
+    restore("NODE_ENV", originalNodeEnv);
+    restore("PARMANA_ALLOW_UNGOVERNED_POLICY", originalAllow);
+    restore("POLICY_EXECUTION_VERIFICATION_ENFORCED", originalEnforce);
   });
 
   it.each([
-    ["production", undefined],
-    ["production", "false"],
-    [undefined, undefined],
-    ["staging", undefined],
-    ["test", undefined],
-    ["test", "true"],
-    ["development", undefined],
-    ["development", "true"],
-    ["development", "TRUE"],
+    ["production", undefined, undefined],
+    ["staging", undefined, undefined],
+    [undefined, undefined, undefined],
+    ["test", "true", undefined],
+    ["test", undefined, "false"],
+    ["development", "true", undefined],
+    ["development", "TRUE", "true"],
   ])(
-    "matches policy governance enforcement with NODE_ENV=%s and the override %s",
-    (nodeEnv, enforce) => {
-      if (nodeEnv === undefined) {
-        delete process.env.NODE_ENV;
-      } else {
-        process.env.NODE_ENV = nodeEnv;
-      }
+    "is governed with NODE_ENV=%s, the ungoverned opt-in %s and enforcement %s",
+    (nodeEnv, allow, enforce) => {
+      setOrDelete("NODE_ENV", nodeEnv);
+      setOrDelete("PARMANA_ALLOW_UNGOVERNED_POLICY", allow);
+      setOrDelete("POLICY_EXECUTION_VERIFICATION_ENFORCED", enforce);
 
-      if (enforce === undefined) {
-        delete process.env[ENFORCE_KEY];
-      } else {
-        process.env[ENFORCE_KEY] = enforce;
-      }
-
-      const governed = createPolicyExecutionVerifier() !== undefined;
-      const source = createCurrentPolicyVersionSource();
-
-      expect(source !== undefined).toBe(governed);
-
-      if (governed) {
-        expect(source).toBeInstanceOf(GovernedPolicyVersionSource);
-      }
+      expect(createCurrentPolicyVersionSource()).toBeInstanceOf(
+        GovernedPolicyVersionSource,
+      );
     },
   );
-
-  it("is on in production", () => {
-    process.env.NODE_ENV = "production";
-    delete process.env[ENFORCE_KEY];
-
-    expect(createCurrentPolicyVersionSource()).toBeInstanceOf(
-      GovernedPolicyVersionSource,
-    );
-  });
 });
+
+function setOrDelete(key: string, value: string | undefined): void {
+  if (value === undefined) {
+    delete process.env[key];
+  } else {
+    process.env[key] = value;
+  }
+}
+
+function restore(key: string, value: string | undefined): void {
+  setOrDelete(key, value);
+}
