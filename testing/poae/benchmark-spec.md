@@ -21,12 +21,12 @@ Status values:
 
 ## Gaps referenced
 
-| Gap | Missing piece                                                                                                                 | Blocks               |
-| --- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| G-A | Authority version binding. The grant identifier is present; the version is not.                                               | AM-04                |
-| G-P | Closed. `policyContentHash` is bound and checked at execution.                                                                | None                 |
-| G-R | Record-level correspondence is implemented (`checkTrustRecordCorrespondenceOffline`). The connector-level hash is still open. | None at record level |
-| G-L | Independent reconciliation of the ledger against evidence                                                                     | CE-04                |
+| Gap | Missing piece                                                                                                                 | Blocks                         |
+| --- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| G-A | Authority version binding. The grant identifier is present; the version is not.                                               | AM-04                          |
+| G-P | Closed. `policyContentHash` is bound and checked at execution.                                                                | None                           |
+| G-R | Record-level correspondence is implemented (`checkTrustRecordCorrespondenceOffline`). The connector-level hash is still open. | None at record level           |
+| G-L | Pure reconciliation implemented (`reconcileExecutionEvidence`). Connecting it to the stored ledger is still open.             | CE-04 (ledger connection only) |
 
 ## The 20 tests
 
@@ -59,12 +59,12 @@ Status values:
 
 ### Cryptographic evidence manipulation (CE)
 
-| ID    | Threat | Property | Mutation                                          | Expected                   | Status                                     |
-| ----- | ------ | -------- | ------------------------------------------------- | -------------------------- | ------------------------------------------ |
-| CE-01 | T04    | POAE-04  | Evidence record altered after signing             | Verification failure       | Testable now                               |
-| CE-02 | T05    | POAE-04  | Signature bytes altered                           | Reject                     | Testable now                               |
-| CE-03 | T05    | POAE-01  | Valid signature from a key outside the trust root | Reject                     | Testable now (trust-root check to confirm) |
-| CE-04 | T10    | POAE-06  | Evidence removed from the ledger                  | Detected by reconciliation | Gap G-L                                    |
+| ID    | Threat | Property | Mutation                                                   | Expected                   | Status                                                                                                    |
+| ----- | ------ | -------- | ---------------------------------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------- |
+| CE-01 | T04    | POAE-04  | Evidence record altered after signing                      | Verification failure       | Testable now                                                                                              |
+| CE-02 | T05    | POAE-04  | Signature bytes altered                                    | Reject                     | Testable now                                                                                              |
+| CE-03 | T05    | POAE-01  | Valid signature from a key outside the trust root          | Reject                     | Testable now (trust-root check to confirm)                                                                |
+| CE-04 | T10    | POAE-06  | Completed execution's trust record removed from the ledger | Detected by reconciliation | Reconciliation implemented (`reconcileExecutionEvidence`, pure). Ledger integration still open (gap G-L). |
 
 ### Replay and temporal attacks (RT)
 
