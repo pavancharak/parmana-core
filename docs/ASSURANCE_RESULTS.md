@@ -301,6 +301,37 @@ Full suite on the same commit: a first run had one failure, an existing exact as
 
 ---
 
+### 2026-11-14: frozen-core enforcement test and probe
+
+- **Command:** `ASSURANCE_WRITE_FROZEN_MANIFEST=1 node_modules/vitest/vitest.mjs run tests/assurance/frozen-core.test.ts` (manifest written once), then `node_modules/vitest/vitest.mjs run tests/assurance/frozen-core.test.ts`, then a probe: append a comment to `packages/crypto/src/ArtifactSigner.ts`, run `npm run build:packages`, run the test, restore the file with `git checkout`, rebuild, run the test. All under Node 24.22.2.
+- **Runtime:** Node 24.22.2, vitest 5.1.0, Linux container.
+- **Commit tested:** `5b7d2c3c6fe3f8622b9256c2289974540427376f`
+- **Branch:** `claude/lucid-sagan-1gs4xj`
+- **Run by:** session (Claude Code), at the owner's direction
+
+**Results**
+
+| Measurement                                         |                                                          Value |
+| --------------------------------------------------- | -------------------------------------------------------------: |
+| Frozen-core test, clean tree                        |                                             4 passed, 0 failed |
+| Probe: test on a changed frozen file                | 1 failed, naming `every frozen file matches its recorded hash` |
+| Probe: test after the file was restored and rebuilt |                                             4 passed, 0 failed |
+
+**Not shown by the probe, recorded for accuracy:** the first probe attempt, without a rebuild, was stopped by the repository's dist-freshness guard in the global setup, before the test ran. The test did not produce that result. The probe was repeated after a rebuild, and the table reflects the repeated run.
+
+**Limits:** the test checks that files have not changed, not that they are correct. Branch protection must require the owner's review for CODEOWNERS paths to be enforced.
+
+**Survivor classification:** not applicable. No mutation run.
+
+**Open items**
+
+1. Confirm that branch protection on `main` requires the code-owner review for the frozen paths.
+2. Frozen files not yet covered by vectors beyond the existing tests (see the coverage register).
+
+**Phase status change:** none.
+
+---
+
 ### Entry template
 
 Copy this for each new run.
