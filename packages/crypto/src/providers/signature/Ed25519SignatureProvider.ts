@@ -8,6 +8,7 @@ import {
   commitmentMessage,
   requiresCommitment,
 } from "../../SignatureCommitment.js";
+import { canonicalSignatureBytes } from "./canonicalSignatureBytes.js";
 
 const NODE_KEY_TYPE = "ed25519";
 
@@ -40,7 +41,11 @@ export class Ed25519SignatureProvider implements SignatureProvider {
   ): Promise<boolean> {
     assertKeyType(publicKey, NODE_KEY_TYPE, "verify");
 
-    const signatureBytes = Buffer.from(signature, "base64");
+    const signatureBytes = canonicalSignatureBytes(signature);
+
+    if (signatureBytes === undefined) {
+      return false;
+    }
 
     if (verify(null, Buffer.from(data), publicKey, signatureBytes)) {
       return true;
