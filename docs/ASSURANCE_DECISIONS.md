@@ -247,6 +247,6 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 **Owner decision:** Option 1.
 
-**Not decided:** the exact format. Dots in `1.3.0` are not allowed by the current pattern. Options A (hyphens), B (major version only) and C (other) are open.
+**Format chosen (14 November 2026):** option A, `razorpay_customer-refund_1-3-0`. Not implemented. It embeds `customer-refund` 1.3.0, which rejects every refund; settle the policy first (POLICY_BINDING_RAZORPAY.md, section 12).
 
 **Effect on the documents:** POLICY_BINDING_RAZORPAY.md, section 11. OPEN_ITEMS.md: a row for the format.

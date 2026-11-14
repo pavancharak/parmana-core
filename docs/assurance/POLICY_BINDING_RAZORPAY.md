@@ -107,3 +107,11 @@ This does not change section 8. Binding `razorpay:refund` to `customer-refund` 1
 **Not yet done:** no code, connector or record has been changed. The change would touch the name check in `external-connectors.ts`, `inbound-checks.ts` and `authority-grants.ts`, the connector in `parmana-connectors` (which uses `razorpay:refund`), and any stored records.
 
 **Open with this decision:** the policy the capability should point at. `customer-refund` 1.3.0 rejects every refund. The policy that approves Razorpay refunds is `razorpay-refund` 1.1.0. A rename does not fix this.
+
+## 12. Format chosen: option A (owner, 14 November 2026)
+
+**Owner choice: A.** The capability name would be `razorpay_customer-refund_1-3-0`: connector, policy and version, with dots in the version replaced by hyphens.
+
+**Not done:** no code, connector or record has changed. Option A needs the name pattern changed in `external-connectors.ts`, `inbound-checks.ts` and `authority-grants.ts`, because the current pattern allows only one colon and no underscores. The connector in `parmana-connectors` would also be renamed from `razorpay:refund`.
+
+**Concern to settle first:** option A puts the policy name and version into the capability name. Both point at `customer-refund` 1.3.0, which rejects every refund. Any rename would bake that wrong policy into the name, and changing the policy later would mean renaming again. Recommended: settle which policy and version the capability points at (`razorpay-refund` 1.1.0 is the one that approves refunds) before the rename.
