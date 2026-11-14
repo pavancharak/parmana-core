@@ -7,12 +7,12 @@
 
 Parmana makes four promises. Each needs a testing strategy that can be challenged independently:
 
-| Promise | Meaning |
-|---|---|
-| Authority is explicit | The business's limits are declared, versioned and tied to the actions they cover. |
-| Authorization is deterministic | The same input and policy always give the same decision. |
-| Execution stays within authority | An action cannot exceed the authority that was granted. |
-| Evidence is verifiable | A third party can check the record without trusting the system that produced it. |
+| Promise                          | Meaning                                                                           |
+| -------------------------------- | --------------------------------------------------------------------------------- |
+| Authority is explicit            | The business's limits are declared, versioned and tied to the actions they cover. |
+| Authorization is deterministic   | The same input and policy always give the same decision.                          |
+| Execution stays within authority | An action cannot exceed the authority that was granted.                           |
+| Evidence is verifiable           | A third party can check the record without trusting the system that produced it.  |
 
 Fail-closed behaviour applies to all four: when a check cannot be completed, the action is refused.
 
@@ -43,13 +43,13 @@ Whether the attack examples run as gated tests in CI has not been confirmed. Pha
 
 ## 4. Guarantees mapped to controls
 
-| Promise | Test categories | Primary packages | Evidence produced |
-|---|---|---|---|
-| Authority is explicit | Policy validation, authoring-time refusal | `policy` | Validator test results |
-| Authorization is deterministic | Property-based, reproducibility | `policy`, `approval`, `execution-control` | Same-input, same-output report |
-| Execution stays within authority | Boundary, adversarial, concurrency | `execution-gateway`, `execution-control`, `storage` | Attack-suite results per release |
-| Evidence is verifiable | Mutation, cross-verification, fuzzing, tampering | `crypto`, `envelope-verifier`, `replay` | Survivor classification, vector results |
-| Fail-closed | Fault injection | `execution-gateway`, `storage`, `api` | Fault-matrix results |
+| Promise                          | Test categories                                  | Primary packages                                    | Evidence produced                       |
+| -------------------------------- | ------------------------------------------------ | --------------------------------------------------- | --------------------------------------- |
+| Authority is explicit            | Policy validation, authoring-time refusal        | `policy`                                            | Validator test results                  |
+| Authorization is deterministic   | Property-based, reproducibility                  | `policy`, `approval`, `execution-control`           | Same-input, same-output report          |
+| Execution stays within authority | Boundary, adversarial, concurrency               | `execution-gateway`, `execution-control`, `storage` | Attack-suite results per release        |
+| Evidence is verifiable           | Mutation, cross-verification, fuzzing, tampering | `crypto`, `envelope-verifier`, `replay`             | Survivor classification, vector results |
+| Fail-closed                      | Fault injection                                  | `execution-gateway`, `storage`, `api`               | Fault-matrix results                    |
 
 ## 5. Phases
 
@@ -125,24 +125,24 @@ Each phase has exit criteria. No phase is complete until its criteria are met. *
 
 ## 6. Authorization boundary matrix
 
-| Scenario | Expected result |
-|---|---|
-| Authorized payment | Allow |
-| Payment above limit | Deny |
-| Unauthorized vendor | Deny |
-| Expired authority | Deny |
-| Revoked credential | Deny |
-| Missing policy | Deny |
-| Invalid signature | Deny |
-| Changed agent identity | Deny |
-| Unauthorized operation | Deny |
-| Policy verification unavailable | Deny |
-| Agent changes its own authority | Deny |
-| Credential reused by another agent | Deny |
-| Replayed credential | Deny |
-| Policy changed after approval | Defined behaviour, documented and tested |
-| Revoked credential used from a cached copy | Deny |
-| Direct API call bypassing the gateway | Deny |
+| Scenario                                   | Expected result                          |
+| ------------------------------------------ | ---------------------------------------- |
+| Authorized payment                         | Allow                                    |
+| Payment above limit                        | Deny                                     |
+| Unauthorized vendor                        | Deny                                     |
+| Expired authority                          | Deny                                     |
+| Revoked credential                         | Deny                                     |
+| Missing policy                             | Deny                                     |
+| Invalid signature                          | Deny                                     |
+| Changed agent identity                     | Deny                                     |
+| Unauthorized operation                     | Deny                                     |
+| Policy verification unavailable            | Deny                                     |
+| Agent changes its own authority            | Deny                                     |
+| Credential reused by another agent         | Deny                                     |
+| Replayed credential                        | Deny                                     |
+| Policy changed after approval              | Defined behaviour, documented and tested |
+| Revoked credential used from a cached copy | Deny                                     |
+| Direct API call bypassing the gateway      | Deny                                     |
 
 The "policy changed after approval" row needs a decision before it can be tested. The behaviour must be defined in the policy specification first.
 
@@ -150,16 +150,16 @@ The "policy changed after approval" row needs a decision before it can be tested
 
 These are proposed requirements, not validated claims.
 
-| Principle | Requirement |
-|---|---|
-| Determinism | Identical inputs produce identical defined outputs. |
-| Authorization | No unauthorized execution. |
-| Integrity | Tampering is detected. |
-| Verification | Invalid evidence is rejected. |
-| Isolation | One agent cannot exceed another agent's authority. |
-| Concurrency | Simultaneous requests cannot bypass limits. |
-| Fail-closed | A verification failure cannot become an approval. |
-| Reproducibility | Release testing can be repeated independently. |
+| Principle       | Requirement                                         |
+| --------------- | --------------------------------------------------- |
+| Determinism     | Identical inputs produce identical defined outputs. |
+| Authorization   | No unauthorized execution.                          |
+| Integrity       | Tampering is detected.                              |
+| Verification    | Invalid evidence is rejected.                       |
+| Isolation       | One agent cannot exceed another agent's authority.  |
+| Concurrency     | Simultaneous requests cannot bypass limits.         |
+| Fail-closed     | A verification failure cannot become an approval.   |
+| Reproducibility | Release testing can be repeated independently.      |
 
 ## 8. Gates
 

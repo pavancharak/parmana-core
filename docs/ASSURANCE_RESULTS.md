@@ -11,13 +11,13 @@ This log records assurance test runs against the plan in
 
 ## Phase status
 
-| Phase | Status | Notes |
-|---|---|---|
+| Phase                      | Status      | Notes                                                                                   |
+| -------------------------- | ----------- | --------------------------------------------------------------------------------------- |
 | 1. Cryptographic assurance | In progress | Mutation campaign complete. Survivors not yet classified. Chain-head check not covered. |
-| 2. Authorization assurance | Not started | |
-| 3. Adversarial assurance | Not started | |
-| 4. Operational assurance | Not started | |
-| 5. Release assurance | Not started | |
+| 2. Authorization assurance | Not started |                                                                                         |
+| 3. Adversarial assurance   | Not started |                                                                                         |
+| 4. Operational assurance   | Not started |                                                                                         |
+| 5. Release assurance       | Not started |                                                                                         |
 
 ## Entries
 
@@ -28,14 +28,14 @@ This log records assurance test runs against the plan in
 - **Commit tested:** not recorded. The campaign ran after PR #613 (signing-key configuration) and a build fix. Record the SHA for the next run.
 - **Source:** [docs/internal/testing/MUTATION-TESTING.md](internal/testing/MUTATION-TESTING.md)
 
-| Measurement | Value |
-|---|---:|
-| Mutants generated | 1,316 |
-| Killed by tests | 1,185 |
-| Timed out (counted as caught) | 30 |
-| Survived | 101 |
-| Stryker score (caught / generated) | 92.3% |
-| Duration | 92 minutes |
+| Measurement                        |      Value |
+| ---------------------------------- | ---------: |
+| Mutants generated                  |      1,316 |
+| Killed by tests                    |      1,185 |
+| Timed out (counted as caught)      |         30 |
+| Survived                           |        101 |
+| Stryker score (caught / generated) |      92.3% |
+| Duration                           | 92 minutes |
 
 **Survivor classification:** 0 of 101 classified.
 
