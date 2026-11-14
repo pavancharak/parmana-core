@@ -1,7 +1,8 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { PolicyGovernanceExecutionVerifier } from "../../../src/governance/PolicyGovernanceExecutionVerifier.js";
 import { createPolicyExecutionVerifier } from "../../../src/bootstrap/createPolicyExecutionVerifier.js";
+import { seedPolicyGovernanceApprovals } from "../../../../../test-support/policy-governance.js";
 
 const ENFORCE_KEY = "POLICY_EXECUTION_VERIFICATION_ENFORCED";
 
@@ -56,19 +57,22 @@ describe("createPolicyExecutionVerifier", () => {
     );
   });
 
-  it("stays off in test and development unless explicitly 'true'", () => {
+  it("is enforced in test and development too (D19: no environment relaxation)", () => {
     for (const env of ["test", "development"]) {
       process.env.NODE_ENV = env;
       delete process.env[ENFORCE_KEY];
-      expect(createPolicyExecutionVerifier()).toBeUndefined();
+      expect(createPolicyExecutionVerifier()).toBeInstanceOf(
+        PolicyGovernanceExecutionVerifier,
+      );
 
-      process.env[ENFORCE_KEY] = "1";
-      expect(createPolicyExecutionVerifier()).toBeUndefined();
-
-      process.env[ENFORCE_KEY] = "true";
+      process.env[ENFORCE_KEY] = "false";
       expect(createPolicyExecutionVerifier()).toBeInstanceOf(
         PolicyGovernanceExecutionVerifier,
       );
     }
   });
+});
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
 });

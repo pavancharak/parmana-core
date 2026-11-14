@@ -26,6 +26,7 @@ import type { Server } from "node:http";
 import { fileURLToPath } from "node:url";
 
 import { signTestApproval } from "../../../test-support/approvals.js";
+import { seedPolicyGovernanceApprovals } from "../../../test-support/policy-governance.js";
 
 /**
  * What a trusted approver signs for both examples: this capability,
@@ -137,4 +138,8 @@ describe("typescript/examples/06-create-business-transaction.ts against a real l
       trustRecord.transaction.authorization.authorizationId,
     );
   });
+});
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
 });

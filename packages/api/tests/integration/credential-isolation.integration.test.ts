@@ -1,11 +1,12 @@
 import request from "supertest";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import { createApplication } from "../../src/application.js";
 import { createApp } from "../../src/app.js";
 
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
+import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
 
 /**
  * HTTP-level proof of the credential-isolation guarantee.
@@ -138,4 +139,8 @@ describe("Credential Isolation (HTTP boundary)", () => {
     expect(response.status).toBeGreaterThanOrEqual(400);
     expect(auditSink.events).toHaveLength(0);
   });
+});
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
 });

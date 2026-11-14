@@ -1,8 +1,9 @@
 import request from "supertest";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import app from "../test-app.js";
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
+import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
 
 describe("Execution Trust Lifecycle", () => {
   it("should execute, verify, generate a receipt and replay a business transaction", async () => {
@@ -56,4 +57,8 @@ describe("Execution Trust Lifecycle", () => {
 
     expect(replay.body.verified).toBe(true);
   }, 30000);
+});
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
 });

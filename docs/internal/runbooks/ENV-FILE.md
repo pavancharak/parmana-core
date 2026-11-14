@@ -122,9 +122,9 @@ POLICY_CHANGE_CHECKERS={"checker-wiring-check":["pavancharak"]}
 - Unset or empty: no one can approve or reject a policy change. Approval fails with `CHECKER_NOT_IN_SCOPE`.
 - Only the listed callers may approve changes to that policy.
 
-**`POLICY_EXECUTION_VERIFICATION_ENFORCED`**: `true` or `false`.
+**`POLICY_EXECUTION_VERIFICATION_ENFORCED`**: retired (D19). It has no effect.
 
-This flag matters only in one case. Governance is relaxed only when all of these hold: `NODE_ENV` is `test` or `development`, `PARMANA_ALLOW_UNGOVERNED_POLICY=true`, and this flag is not `true` (`policyGovernanceRelaxed.ts`). In every other case, governance is enforced.
+Policy governance is enforced in every environment (D19). This flag is not read by the code.
 
 - In production, leave this unset. Governance is enforced regardless.
 - The detection and prevention descriptions in older template comments are not in the code. Remove them from any template you keep.
@@ -312,7 +312,7 @@ Production values go in Vercel's environment settings, not in a `.env` file. Ver
 | `RATE_LIMIT_EXECUTE_PER_MINUTE`           | `30`                             | Calls per minute to execute       |
 | `RATE_LIMIT_HEALTH_PER_MINUTE`            | `300`                            | Calls per minute to health        |
 
-Never set in production: `PARMANA_AUTH_DISABLED`, `NODE_ENV=test`, `NODE_ENV=development`, `PARMANA_ALLOW_UNGOVERNED_POLICY`, `DATABASE_PROVIDER`, `SUPABASE_*`.
+Never set in production: `PARMANA_AUTH_DISABLED`, `NODE_ENV=test`, `NODE_ENV=development`, `DATABASE_PROVIDER`, `SUPABASE_*`.
 
 - `DATABASE_PROVIDER` is refused when the module loads: "DATABASE_PROVIDER is no longer read; set PARMANA_STORAGE instead." (`ConfigValidation.ts`, tested).
 

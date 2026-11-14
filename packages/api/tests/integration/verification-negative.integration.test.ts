@@ -9,6 +9,7 @@ import app from "../test-app.js";
 import { executionTrustRecordRepository } from "../../src/repositories.js";
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { resolveDatabaseGate } from "../helpers/database-availability.js";
+import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
 
 const databaseConfigured = resolveDatabaseGate(
   "Verification Negative Integration",
@@ -95,3 +96,7 @@ describe.skipIf(!databaseConfigured)(
     });
   },
 );
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
+});

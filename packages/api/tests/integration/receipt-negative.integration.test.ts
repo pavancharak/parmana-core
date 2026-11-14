@@ -9,6 +9,7 @@ import app from "../test-app.js";
 import { executionTrustRecordRepository } from "../../src/repositories.js";
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { resolveDatabaseGate } from "../helpers/database-availability.js";
+import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
 
 const databaseConfigured = resolveDatabaseGate("Receipt Negative Integration");
 
@@ -78,4 +79,8 @@ describe.skipIf(!databaseConfigured)("Receipt Negative Integration", () => {
 
     expect(response.status).toBe(400);
   });
+});
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
 });

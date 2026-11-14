@@ -48,6 +48,7 @@ import { ExecutionRejectedError } from "../../src/errors/ExecutionRejectedError.
 import { NotFoundError } from "../../src/errors/NotFoundError.js";
 import { ConflictError } from "../../src/errors/ConflictError.js";
 import { withTestApproval } from "../../../test-support/approvals.js";
+import { seedPolicyGovernanceApprovals } from "../../../test-support/policy-governance.js";
 
 const RAW_API_KEY = "ts-sdk-integration-test-key";
 
@@ -496,4 +497,8 @@ describe("ParmanaClient against a real local @parmana/api instance", () => {
       ).toBe(false);
     });
   });
+});
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
 });

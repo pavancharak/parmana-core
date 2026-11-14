@@ -16,6 +16,7 @@ beforeAll(() => {
 
 import app from "../test-app.js";
 import { resolveDatabaseGate } from "../helpers/database-availability.js";
+import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
 
 const databaseConfigured = resolveDatabaseGate("Supabase Workflow Integration");
 
@@ -148,4 +149,8 @@ describe.skipIf(!databaseConfigured)("Supabase Workflow Integration", () => {
 
     expect(verification.status).toBe("VERIFIED");
   }, 30000);
+});
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
 });

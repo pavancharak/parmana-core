@@ -55,7 +55,7 @@ Mistakes we or the template made:
 | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `PARMANA_AUTH_DISABLED` (set to `true`)         | Accepts every request with no authentication. `GET /ready` reports `authDisabled` so monitoring can alert on it. |
 | `NODE_ENV` set to `test` or `development`       | Turns off the durable stores, key checks and connector requirements.                                             |
-| `PARMANA_ALLOW_UNGOVERNED_POLICY`               | Lets unapproved policies run. Honored only in `test` or `development`.                                           |
+| `PARMANA_ALLOW_UNGOVERNED_POLICY`               | Retired (D19). Has no effect. Governance is enforced in every environment.                                       |
 | `SUPABASE_URL` and other `SUPABASE_*` variables | The server does not read them. Only `DATABASE_URL` is used.                                                      |
 
 ## 6. Not read by this repository

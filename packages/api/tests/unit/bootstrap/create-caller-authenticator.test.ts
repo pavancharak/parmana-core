@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { loadConfig } from "@parmana/shared";
 
@@ -70,5 +70,45 @@ describe("createCallerAuthenticator", () => {
       callerId: "caller-1",
     });
     expect(result.auditSink).toBeDefined();
+  });
+
+  describe("PARMANA_AUTH_DISABLED is refused outside development and test (fail closed)", () => {
+    const original = process.env.NODE_ENV;
+    afterEach(() => {
+      if (original === undefined) {
+        delete process.env.NODE_ENV;
+      } else {
+        process.env.NODE_ENV = original;
+      }
+    });
+
+    it.each([["production"], ["staging"], ["Production"]])(
+      "refuses NODE_ENV=%s",
+      (nodeEnv) => {
+        process.env.NODE_ENV = nodeEnv;
+        expect(() =>
+          createCallerAuthenticator({
+            auth: { keys: [], disabled: true },
+          } as never),
+        ).toThrow(/refused unless NODE_ENV is exactly/);
+      },
+    );
+
+    it("refuses when NODE_ENV is unset", () => {
+      delete process.env.NODE_ENV;
+      expect(() =>
+        createCallerAuthenticator({
+          auth: { keys: [], disabled: true },
+        } as never),
+      ).toThrow(/refused unless NODE_ENV is exactly/);
+    });
+
+    it.each([["development"], ["test"]])("allows NODE_ENV=%s", (nodeEnv) => {
+      process.env.NODE_ENV = nodeEnv;
+      const result = createCallerAuthenticator({
+        auth: { keys: [], disabled: true },
+      } as never);
+      expect(result.disabled).toBe(true);
+    });
   });
 });
