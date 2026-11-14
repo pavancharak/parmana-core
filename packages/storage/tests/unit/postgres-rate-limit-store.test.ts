@@ -55,3 +55,38 @@ describe("PostgresRateLimitStore prefix", () => {
     ]);
   });
 });
+
+/**
+ * Regression coverage for the outage drill (Fault 1): when the database
+ * connection is cut, express-rate-limit's post-response decrement() must
+ * not reject, because nothing handles that rejection and it used to exit
+ * the process. increment() must still reject so new requests fail closed.
+ */
+describe("PostgresRateLimitStore during a database outage", () => {
+  function brokenPool() {
+    const query = vi
+      .fn()
+      .mockRejectedValue(new Error("Connection terminated unexpectedly"));
+    return { query } as unknown as import("pg").Pool;
+  }
+
+  it("resolves decrement() when the database fails, and logs the failure", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const store = new PostgresRateLimitStore(brokenPool(), "execute:");
+
+    await expect(store.decrement("caller-a")).resolves.toBeUndefined();
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("rate_limit_decrement_failed"),
+    );
+    errorSpy.mockRestore();
+  });
+
+  it("still rejects increment() when the database fails, so requests fail closed", async () => {
+    const store = new PostgresRateLimitStore(brokenPool(), "execute:");
+
+    await expect(store.increment("caller-a")).rejects.toThrow(
+      "Connection terminated unexpectedly",
+    );
+  });
+});
