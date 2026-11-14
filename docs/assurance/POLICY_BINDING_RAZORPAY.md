@@ -129,3 +129,15 @@ This does not change section 8. Binding `razorpay:refund` to `customer-refund` 1
 **Not done:** no code has changed. The binding itself is still not written (D15), and the version to bind is still open: `razorpay-refund` 1.1.0 is the only version in the repo.
 
 Recorded as D17 in `docs/ASSURANCE_DECISIONS.md`.
+
+## 14. Ambiguities in the code (checked 14 November 2026)
+
+Checked by reading the code. Not tested.
+
+1. **Two sources of the version in effect, by environment.** `createCurrentPolicyVersionSource` (`packages/api/src/bootstrap/createCurrentPolicyVersionSource.ts`) returns the governance source in production. In test and development, it returns nothing, and the version in the canonical table applies. The same binding can therefore behave differently by environment.
+2. **Declared versus in effect.** `CapabilityPolicyBinder.findViolation` (`packages/capability-registry/src/CapabilityPolicyBinding.ts`) passes a request only if its declared name and version equal `policyInEffect`. So the request names a version, but governance decides which version is accepted in production. D17 says the request defines the version; the code also requires that version to be the one in effect.
+3. **Correction to an earlier statement.** The governance version source is wired into the production API now. It has no effect on `razorpay:refund` only because that capability has no binding. Earlier I said it was not in use.
+4. **No approval record.** If no version has been approved for a bound policy, the in-effect version is "unavailable" and the request is refused (`governedVersion`, read but not tested).
+5. **External connectors.** Capabilities outside the built-in table use external bindings (`externalPolicyInEffect`). Their rule is not covered here.
+
+**Open:** D17 should say exactly what it means: the request names a version, and the version accepted is the one in effect. Owner to confirm the wording, and whether the environment difference in item 1 is acceptable.
