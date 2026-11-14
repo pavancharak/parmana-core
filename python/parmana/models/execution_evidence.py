@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 
 @dataclass(frozen=True)
@@ -30,3 +30,20 @@ class ExecutionEvidence:
     attributes: dict[str, Any] | None = None
 
     correspondence: ExecutionCorrespondence | None = None
+
+
+@dataclass(frozen=True)
+class ExecutionCorrespondence:
+    schema_version: Literal[1]
+
+    authorization_nonce: str
+
+    authorized_content_hash: str
+
+    dispatched_content_hash: str
+
+    policy_content_hash: str | None = None
+
+    authority_grant_id: str | None = None
+
+    dispatched_hash_source: Any | None = None
