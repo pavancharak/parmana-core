@@ -344,6 +344,32 @@ The PoAE benchmark runner (`tests/assurance/poae/poae-benchmark.test.ts`) and it
 
 ---
 
+### 2026-11-14: full test suite on the PR #634 head
+
+- **Command:** `npm run build:packages`, then `node_modules/vitest/vitest.mjs run` (the full suite), under Node 24.22.2.
+- **Runtime:** Node 24.22.2, vitest 5.1.0, Linux container. Suite duration 102.98 s.
+- **Commit tested:** `70aac76c800adcf0b4b0179ac794902aaac984c7`
+- **Branch:** `claude/lucid-sagan-1gs4xj`
+- **Run by:** session (Claude Code), at the owner's direction
+
+**Results**
+
+| Measurement       |                                                      Value |
+| ----------------- | ---------------------------------------------------------: |
+| Test files passed |                                           403 (29 skipped) |
+| Tests passed      | 3952 (106 skipped, 1 expected fail, from an existing test) |
+| Failed            |                                                          0 |
+
+**Limits:** one run. The PoAE benchmark is no longer in this repository, so these tests do not include it.
+
+**Survivor classification:** not applicable. No mutation run.
+
+**Open items:** none added by this run.
+
+**Phase status change:** none.
+
+---
+
 ### Entry template
 
 Copy this for each new run.
