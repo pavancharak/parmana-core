@@ -39,6 +39,27 @@ Refusals in steps 1 to 3 happen before any policy is loaded. Nothing reaches the
 - **Uniqueness: confirmed in code.** The same `accept` step checks whether the ID already exists and refuses a duplicate with `DuplicateBusinessTransactionError`, which the error handler maps to `409` (`packages/api/src/middleware/error-handler.ts`). The test suite checks this on `POST /execute`. The `POST /transactions` path uses the same `accept` step.
 - **Purpose:** the ID ties together the request, its audit events, and its execution record. A retry with the same ID is refused rather than executed twice.
 
+## 6. The metadata fields
+
+The metadata type is `TransactionMetadata` (`packages/shared/src/domain/metadata.ts`). Its comment says it is immutable, supplied by the calling application, and never evaluated by Policy.
+
+Correction: an earlier version of this document listed `createdBy` and `createdAt` as metadata fields. They are not in the type. `createdAt` exists on the Business Transaction itself, and is the time Parmana accepted it; the caller does not set it.
+
+| Field                   | Required | Set by        | Purpose                                                                                                                                                                                                  |
+| ----------------------- | -------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `businessTransactionId` | Yes      | Caller        | The primary identifier of the transaction. It is also the idempotency key (a repeat is refused) and the root identifier of the Execution Trust Record. Must equal the top-level `businessTransactionId`. |
+| `correlationId`         | No       | Caller        | Ties this request to other requests across systems, for tracing. Parmana stores it; the type does not say it affects any decision.                                                                       |
+| `tenantId`              | No       | Caller        | Labels which tenant the transaction belongs to, for separating records. The type does not describe any enforcement based on it.                                                                          |
+| `sourceSystem`          | No       | Caller        | Names the application or service that sent the transaction, for audit.                                                                                                                                   |
+| `submittedBy`           | No       | Server        | The identity of the authenticated caller. The type says it is server-set and never trusted from the client.                                                                                              |
+| `grantedCapability`     | No       | Server        | The capability (`intent.action`) that the caller was checked and allowed to invoke. It is signed into the authorization payload. Present only when caller authentication is enabled.                     |
+| `submittedAt`           | No       | Not confirmed | The UTC time the transaction was submitted. The type does not say whether the caller or the server sets it.                                                                                              |
+
+**Open points for this section:**
+
+- Who sets `submittedAt`. The type comment does not say, and the handler was not read for it.
+- Whether `tenantId`, `correlationId` or `sourceSystem` are validated in any way. The validator checks the trust-chain IDs; I did not find checks for these three.
+
 ## 3. What is not yet confirmed
 
 - Whether the transaction is stored before step 4, or only after the execution result. The handler does not show it in the section read.
