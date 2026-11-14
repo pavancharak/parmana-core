@@ -90,8 +90,8 @@ export const CANONICAL_CAPABILITY_POLICY_BINDINGS: ReadonlyMap<
   //
   // razorpay:refund is the refund capability of the Razorpay connector
   // (parmana-connectors). It is bound to customer-refund, the policy that
-  // governs refunds. Version 1.3.0 is the latest in this repository and is
-  // PROPOSED: the owner confirms the version before this is merged. A
+  // governs refunds. Version 1.3.0 is the latest in this repository and was
+  // confirmed by the owner (D14). A
   // request for razorpay:refund that declares any other policy, or any
   // other version, is refused.
   //

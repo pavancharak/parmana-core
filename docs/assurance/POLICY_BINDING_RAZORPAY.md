@@ -1,6 +1,6 @@
 # Policy binding: razorpay:refund to customer-refund
 
-**Status:** Implemented on branch `claude/bind-razorpay-refund`. Not merged. The policy version is proposed and awaits the owner's confirmation (OPEN_ITEMS, decision row P-5).
+**Status:** Implemented on branch `claude/bind-razorpay-refund`. Not merged. The policy version 1.3.0 is confirmed by the owner (D14, in ASSURANCE_DECISIONS.md). Before deploy, live callers must be checked against it (section 4).
 **Date:** 14 November 2026
 **Owner:** Pavan Charak
 
@@ -28,7 +28,7 @@ Note: the audit note `docs/audit/2026-11-11/gaps/G-27.md` names the capability `
 
 Files:
 
-- `packages/capability-registry/src/CapabilityPolicyBinding.ts`: the new entry, with a comment that marks the version as proposed.
+- `packages/capability-registry/src/CapabilityPolicyBinding.ts`: the new entry, with a comment that records the owner's confirmation of the version (D14).
 - `packages/capability-registry/tests/unit/razorpay-refund-binding.test.ts`: new. Four cases:
   - the bound policy and version are accepted;
   - the same policy at another version is refused;
@@ -36,9 +36,9 @@ Files:
   - a capability with no entry (`paytm:refund`) is unaffected.
 - `packages/capability-registry/tests/unit/CapabilityPolicyBinder.test.ts`: the test that asserted an empty table now asserts that the only entry is `razorpay:refund`, bound to `customer-refund` 1.3.0.
 
-## 3. Decision needed (owner)
+## 3. Decision (owner, D14)
 
-The version `1.3.0` is the latest in this repository. It was chosen without a governance decision. The owner must confirm it, or name another version, before merge.
+Version `1.3.0` is confirmed by the owner: "policy is correct" (14 November 2026). The version is confirmed. Checking live callers is still open (section 4).
 
 ## 4. Risk to live refunds
 

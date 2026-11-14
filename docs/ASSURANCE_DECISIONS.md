@@ -149,15 +149,16 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 ## Record
 
-| Decision | Owner decision                 | Date       | Recorded by                              |
-| -------- | ------------------------------ | ---------- | ---------------------------------------- |
-| D7       | In scope                       | 2026-11-14 | Recorded in session at owner's direction |
-| D8       | Define as proposed             | 2026-11-14 | Recorded in session at owner's direction |
-| D9       | Reject non-canonical encodings | 2026-11-14 | Recorded in session at owner's direction |
-| D10      | Pending                        |            |                                          |
-| D11      | Pending                        |            |                                          |
-| D12      | Pending                        |            |                                          |
-| D13      | Adopted: permanent direction   | 2026-11-14 | Recorded in session at owner's direction |
+| Decision | Owner decision                          | Date       | Recorded by                              |
+| -------- | --------------------------------------- | ---------- | ---------------------------------------- |
+| D7       | In scope                                | 2026-11-14 | Recorded in session at owner's direction |
+| D8       | Define as proposed                      | 2026-11-14 | Recorded in session at owner's direction |
+| D9       | Reject non-canonical encodings          | 2026-11-14 | Recorded in session at owner's direction |
+| D10      | Pending                                 |            |                                          |
+| D11      | Pending                                 |            |                                          |
+| D12      | Pending                                 |            |                                          |
+| D13      | Adopted: permanent direction            | 2026-11-14 | Recorded in session at owner's direction |
+| D14      | Adopted: razorpay:refund policy version | 2026-11-14 | Owner confirmed version 1.3.0            |
 
 ---
 
@@ -180,3 +181,27 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 **Recommendation:** Adopt it. It covers: claims limited to the coverage register; the frozen-core list written down; one source of truth per fact; independent review of the verifier; small pull requests.
 
 **Owner decision:** **Agreed.** Adopted as the standing direction. Coverage claims follow [assurance/COVERAGE_REGISTER.md](assurance/COVERAGE_REGISTER.md). The frozen-core list in that register still needs confirmation under D8.
+
+---
+
+## D14. Policy version for razorpay:refund (14 November 2026)
+
+- **Reference:** D14
+- **Source:** docs/assurance/POLICY_BINDING_RAZORPAY.md, section 3
+- **Date recorded:** 2026-11-14
+- **Owner:** Pavan Charak
+
+**Question:** Which version of `customer-refund` does `razorpay:refund` bind to?
+
+**Options considered:** the latest version in the repository (1.3.0), or another version named by the owner.
+
+**Recommendation:** 1.3.0, the latest in the repository.
+
+**Owner decision:** **Policy is correct.** Version 1.3.0 is confirmed. This records the version only. It does not confirm that live callers can move to 1.3.0 (POLICY_BINDING_RAZORPAY.md, section 4). That remains open.
+
+**Effect on the documents**
+
+| Document                                  | Change                                               |
+| ----------------------------------------- | ---------------------------------------------------- |
+| docs/assurance/OPEN_ITEMS.md              | P-5 closed for the version. Caller check still open. |
+| docs/assurance/POLICY_BINDING_RAZORPAY.md | Status and section 3 updated to show the decision.   |
