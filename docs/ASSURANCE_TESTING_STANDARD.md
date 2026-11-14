@@ -110,11 +110,11 @@ Reuse existing test directories and configuration where they already serve the s
 | verifier | `packages/envelope-verifier` (`@parmana/envelope-verifier`) | Exists under a different name |
 | governance | `packages/policy` and `packages/approval` | No package of this name. Candidate mapping, to confirm. |
 | execution | `packages/execution-gateway` and `packages/execution-control` | No package of this name. Candidate mapping, to confirm. |
-| bundle | None identified | No candidate. Policy bundles may belong in `packages/policy`; to confirm. |
-| core | None identified | No candidate. To confirm. |
-| server | `packages/api` | No package of this name. Candidate mapping, to confirm. |
-| audit-db | `packages/storage` | No package of this name. Candidate mapping, to confirm. |
-| verifier-cli | `packages/cli` | Candidate mapping, to confirm. |
+| bundle | None found | Likely a concept, not a package. The internal claims docs use "bundle" for the Execution Trust Record bundle, a record format. |
+| core | None found | Likely a concept, not a package. The internal claims docs use "core" for the core product. |
+| server | `packages/api` | Plausible, not confirmed. `packages/api/src/server.ts` is the server entry point. |
+| audit-db | `packages/storage` | Not confirmed. No audit-specific storage code was found in `packages/storage/src`. |
+| verifier-cli | `packages/cli` | Not confirmed. A search for `command(` definitions in `packages/cli/src` found nothing. The CLI framework was not checked. |
 | SDK client | `packages/connector-sdk`; `python-connector-sdk/` | Candidate mapping, to confirm. |
 
 ## 4. Testing categories and implementation
@@ -524,6 +524,6 @@ Checked on 14 November 2026 against commit `4a29854`. Each item lists the statem
 1. Decide whether this standard is adopted (plan decision 9.1). Until then it is a proposal.
 2. Decide which invariant list governs: ATS-001 to ATS-012 here, or the eight principles in plan Section 7 (A13).
 3. Complete the invariant-to-function mapping (A7).
-4. Confirm the candidate package mappings for `bundle`, `core`, `server`, `audit-db`, `verifier-cli` and the SDK client (Section 3).
+4. Confirm the candidate package mappings (Section 3). Status at 14 November 2026: `server` → `packages/api` is plausible and unconfirmed. `audit-db` → `packages/storage` and `verifier-cli` → `packages/cli` are unconfirmed. `bundle` and `core` have no matching package and are probably concepts. The owner needs to decide whether to keep them as concepts or drop them from the matrices.
 5. Create `tests/assurance/` only after adoption.
 6. The scheduled and release gates depend on measured run times, which have not been recorded.
