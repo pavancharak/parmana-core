@@ -1,6 +1,6 @@
 # Execution correspondence: design revision
 
-**Status:** Proposed. Pending owner confirmation before any code changes.
+**Status:** Confirmed 14 November 2026 by the owner, with the four decisions in section 6 recorded below. Implementation has started on `claude/lucid-sagan-1gs4xj`.
 **Date:** 14 November 2026
 **Related:** decision D7 in [ASSURANCE_DECISIONS.md](../ASSURANCE_DECISIONS.md), plan Section 12 in [ASSURANCE_TESTING_PLAN.md](../ASSURANCE_TESTING_PLAN.md), benchmark tests EM-01, EM-02 and EM-04 in [benchmark-spec.md](../../testing/poae/benchmark-spec.md).
 
@@ -61,3 +61,34 @@ Extend the existing signed records. Do not add a new receipt type.
 4. Confirm that records without the new fields are reported as "not checked", not as failed.
 
 Code will not start until these four are confirmed.
+
+## 7. Confirmed decisions (14 November 2026)
+
+1. **Extend the existing signed records.** Confirmed. No new receipt type.
+2. **Typed fields on `ExecutionEvidence`, not in `attributes`.** Confirmed.
+3. **Schema version: the current trust-record `schemaVersion`, increased by one.** Confirmed. The current value is recorded in the implementation notes.
+4. **Records without the new fields are reported as "not checked".** Confirmed. They never count as passing a correspondence check.
+
+### Revision to decision 3 (14 November 2026, during implementation)
+
+The confirmed decision was to increase the trust-record `schemaVersion` by one. Checking the code showed that this is not needed, and that it would have required changes to the crypto canonical view:
+
+- The version 2 signed view (`hybridCanonicalExecutionTrustRecord`) includes the whole `executions` array. The version 3 view signs every top-level field. Either way, a new optional field inside `executions[].evidence` is covered by the existing signatures.
+- The supported versions are 2 and 3 (`SUPPORTED_HYBRID_SCHEMA_VERSIONS`). A version 4 would need crypto changes, and that is the code D8 would freeze.
+
+So the schema version is not changed. The new `correspondence` object is optional and versioned inside itself (`schemaVersion: 1`). **This departs from the confirmed decision. The owner should confirm it.**
+
+## 8. Implementation status
+
+Done, on `claude/lucid-sagan-1gs4xj`:
+
+- `ExecutionEvidence.correspondence` (optional) and the `ExecutionCorrespondence` type, in `packages/shared/src/domain/execution-evidence.ts`.
+- `checkExecutionCorrespondence`, a pure check that returns passed, failed or not checked. In `packages/shared/src/domain/execution-correspondence.ts`.
+- 10 unit tests in `packages/shared/tests/unit/execution-correspondence.test.ts`. All pass on Node 24.22.2.
+- Shared and crypto suites: 545 passed, 1 skipped, on Node 24.22.2.
+
+Not done, and needed before the benchmark can run EM-01, EM-02 and EM-04:
+
+- The gateway does not yet fill `correspondence`. It must hash the exact content passed to the connector, using the same canonical hasher as `businessTransactionHash`, and store only the hash.
+- No verifier calls `checkExecutionCorrespondence` yet.
+- The benchmark tests have not been run.

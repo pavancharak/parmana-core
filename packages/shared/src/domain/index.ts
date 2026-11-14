@@ -7,6 +7,7 @@ export * from "./execution.js";
 export * from "./execution-outcome-store.js";
 export * from "./execution-result.js";
 export * from "./execution-evidence.js";
+export * from "./execution-correspondence.js";
 export * from "./metadata.js";
 export * from "./override.js";
 export * from "./verification.js";
