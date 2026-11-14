@@ -6,7 +6,8 @@ tests against each. A change the tests catch is **caught**; one they miss **surv
 is the share caught.
 
 This file records the first run on the five security-critical packages, what the surviving
-changes showed, and what was done about them.
+changes showed, and what was done about them. A later run of the crypto package on 14 November
+2026 is recorded in [its own section](#run-of-14-november-2026-crypto).
 
 ## How to read the scores
 
@@ -32,6 +33,8 @@ changes showed, and what was done about them.
 First run and re-run: 2026-10-05. The number of changes differs where the fixes added code
 (the signal type check, the chain check). A few tests were added after each re-run, for the
 survivors it showed (listed below), so the current figures are slightly higher.
+
+Latest crypto run, 14 November 2026: **92.3%** (1,215 of 1,316 caught). See the section below.
 
 \* Measured on Node 22. The repository and CI run Node 24; on Node 22 the ML-DSA-65 and hybrid
 signature tests skip themselves, so every change in those paths counted as missed. `npm run
@@ -150,3 +153,57 @@ survivors showed one real weakness and several checks never tested on their own.
 | `FileKeyProvider`: the keyId pattern on its own (its containment check also refused every tested id)                                                                                                   | Yes: path traversal                                                                                             | Tested with ids that stay inside the directory                                                                                                                 |
 | `AuthorizationSigner` optional fields, `KeyPair` (0%), `ReceiptCrypto` (0%) in single mode                                                                                                             | Signed content; key handling                                                                                    | Tested                                                                                                                                                         |
 | `FileKeyProvider`'s containment check                                                                                                                                                                  | No: a key file name always ends in `.public.pem` or `.private.pem`, so a valid keyId cannot leave the directory | Equivalent, left                                                                                                                                               |
+
+## Run of 14 November 2026: crypto
+
+`npm run mutation -- crypto` on Node 24.18, after the signing-key configuration change (PR #613)
+and the build fix. The initial test run passed before any mutant was tested.
+
+**Result: 92.3%** (1,215 of 1,316 mutants caught: 1,185 killed by tests and 30 timed out, which
+Stryker counts as caught; 101 survived). The run took 92 minutes.
+
+Survivors by file, lowest score first:
+
+| File                          | Score  | Survived |
+| ----------------------------- | ------ | -------- |
+| `KeyGeneration.ts`            | 73.1%  | 25       |
+| `CallerAuditChainVerifier.ts` | 63.8%  | 21       |
+| `AuthorizationSigner.ts`      | 67.7%  | 21       |
+| `KeyBootstrap.ts`             | 64.3%  | 5        |
+| `CryptoBootstrap.ts`          | 61.1%  | 7        |
+| `ExecutionIntentCrypto.ts`    | 66.7%  | 3        |
+| `CryptoError.ts`              | 33.3%  | 2        |
+| `KeyProvider.ts`              | 100%   | 0        |
+| `KmsSigner.ts`                | 100%   | 0        |
+
+What the survivors show:
+
+- **The chain-head check is not covered.** In `CallerAuditChainVerifier.ts`, changing or removing
+  the check that the chain ends at the anchored head was not caught. A truncated audit chain could
+  pass that check. **Open:** tests for this check come first.
+- **The signing-key code is covered.** `KeyProvider.ts`, which holds `currentSigningKeyId()`, and
+  the KMS signer have no survivors.
+- **Optional-field and key-generation conditions.** Changes to the conditions on optional fields
+  in `AuthorizationSigner.ts` and to the principal, capability and hash rules in `KeyGeneration.ts`
+  were not caught. **Open:** each survivor still needs classifying as a missing test or an
+  equivalent change.
+- **Bootstrap and error text.** Guards in `CryptoBootstrap.ts` and `KeyBootstrap.ts`, and the
+  message in `CryptoError.ts`, were not all checked. **Open.**
+
+The full reports are written by the run to `reports/mutation/crypto.html` and `crypto.json`, which
+are gitignored.
+
+## What is left
+
+The remaining survivors are, in nearly every case, one of:
+
+- **Equivalent:** a guard that a later check repeats (the gateway's `passed &&` before each
+  check), a check that cannot be reached because an earlier one already refused (the key file
+  containment check in `FileKeyProvider`), or a fallback that gives the same answer (the
+  envelope verifier's checks when no key resolves).
+- **Advisory:** `PolicyValidator.findRuleConflicts`, which only logs possible rule overlaps.
+- **Text:** wording and plural forms in error messages, request formatting in the built in
+  connectors.
+
+Survivors in a check that refuses an action were each given a test, checked by putting the
+change back by hand.
