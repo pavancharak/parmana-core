@@ -8,6 +8,7 @@ beforeAll(() => {
 
 import app from "../test-app.js";
 import { resolveDatabaseGate } from "../helpers/database-availability.js";
+import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
 
 const databaseConfigured = resolveDatabaseGate(
   "Execution Trust Record Lifecycle",
@@ -52,4 +53,8 @@ describe.skipIf(!databaseConfigured)("Execution Trust Record Lifecycle", () => {
 
     expect(response.body.trustRecordHash).toBe(trustRecord.trustRecordHash);
   });
+});
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
 });

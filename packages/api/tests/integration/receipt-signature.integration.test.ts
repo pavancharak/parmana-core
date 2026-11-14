@@ -10,6 +10,7 @@ import {
 
 import app from "../test-app.js";
 import { resolveDatabaseGate } from "../helpers/database-availability.js";
+import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
 
 interface ReceiptResponse {
   receiptId: string;
@@ -84,4 +85,8 @@ describe.skipIf(!databaseConfigured)("Receipt Signature", () => {
 
     expect(verified).toBe(true);
   }, 30000);
+});
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
 });
