@@ -1,8 +1,10 @@
 # Parmana Verification and Assurance Plan
 
-**Draft v0.1, 14 November 2026. Proposed plan, not yet approved.**
+**Version 1.0 (consolidated), 14 November 2026.**
 **Owner (all phases):** Pavan Charak
-**Verified against the repository at commit `4a29854` on 14 November 2026. Section 11 records the check of the Verification and Assurance Program proposal and the changes it suggests.**
+**Decisions applied:** D1 to D5 in [ASSURANCE_DECISIONS.md](ASSURANCE_DECISIONS.md), recorded 14 November 2026.
+**Verified against the repository at commit `4a29854`.** Section 11 records the review of the earlier proposals.
+**Standard:** [ASSURANCE_TESTING_STANDARD.md](ASSURANCE_TESTING_STANDARD.md) (PARMANA-ATS-001), adopted as D1.
 
 ## 1. Purpose
 
@@ -17,35 +19,43 @@ Parmana makes four promises. Each needs a testing strategy that can be challenge
 
 Fail-closed behaviour applies to all four: when a check cannot be completed, the action is refused.
 
+The invariants that testing must protect are ATS-001 to ATS-012 in the standard (Section 7 below).
+
 ## 2. Baseline
 
-**Mutation testing (crypto).** The campaign on 14 November 2026 is complete: 1,215 of 1,316 mutants caught (92.3% Stryker score), 101 survived. Survivors are not yet classified. One gap is already confirmed: the chain-head check in `CallerAuditChainVerifier.ts` is not covered by tests.
+**Mutation testing (crypto).** The campaign on 14 November 2026 is complete: 1,215 of 1,316 mutants caught (92.3% Stryker score), 101 survived. Survivors are not yet classified. One gap is confirmed: the chain-head check in `CallerAuditChainVerifier.ts` is not covered by tests.
 
 **Earlier mutation runs (5 October 2026).** Recorded in `docs/internal/testing/MUTATION-TESTING.md` across five packages. The re-run scores were envelope-verifier 94.0%, approval 93.9%, policy 96.0%, execution-gateway 83.6% and crypto 85.0%. Those runs used different mutant sets, so they are not directly comparable.
 
-**Existing assets to build on.** The repository already contains:
+**Existing assets to build on:**
 
 - `THREAT-MODEL.md`, `SECURITY-CHALLENGE.md` and `EVALUATION.md`.
 - `evaluations/`, `proof-audit/`, `stryker.config.mjs`, `vitest.config.ts` and `tests/architecture/`.
-- Attack examples that demonstrate refusal: 35 replay, 36 parameter tampering, 37–39 action, target and policy substitution, 40 signature forgery, 41 expired authorization, 42 nonce reuse, 43 stolen authorization, 44 direct API bypass, 45 connector bypass, 46 TOCTOU protection, and 78 duplicate transaction race.
-- `fast-check` (`^4.10.2`) is a root dependency. It is already imported by property or fuzz tests in `packages/crypto` (`canonical-serializer.property.test.ts`, `offline-verifier.fuzz.test.ts`), `packages/policy` (`policy.fuzz.test.ts`), `packages/approval` (`approval.fuzz.test.ts`) and `packages/api` (`request-fuzz.integration.test.ts`).
+- Attack examples that demonstrate refusal: 35 replay, 36 parameter tampering, 37–39 action, target and policy substitution, 40 signature forgery, 41 expired authorization, 42 nonce reuse, 43 stolen authorization, 44 direct API bypass, 45 connector bypass, 46 TOCTOU protection, and 78 duplicate transaction race. Whether they run as gated tests in CI has not been confirmed.
+- `fast-check` (`^4.10.2`) is a root dependency. It is already used by property or fuzz tests in `packages/crypto` (`canonical-serializer.property.test.ts`, `offline-verifier.fuzz.test.ts`), `packages/policy` (`policy.fuzz.test.ts`), `packages/approval` (`approval.fuzz.test.ts`) and `packages/api` (`request-fuzz.integration.test.ts`).
 - `packages/crypto/tests/unit/canonical-serializer-rfc8785.test.ts` exists. Its coverage of the RFC 8785 reference vectors has not been reviewed.
-- Chain-head tests exist for `CallerAuditChainVerifier` (`packages/crypto/tests/unit/caller-audit-chain-verifier.test.ts`), and `proof-audit/tests` includes audit-tamper tests. The gap in the chain-head check is still open (Section 2, mutation baseline).
-- CI probe workflows run on a schedule or on pull requests: `bypass-probe.yml` (every 6 hours), `kill-switch-probe.yml` (every 15 minutes), `policy-log-drift.yml` (daily) and `outage-drill.yml` (on pull requests). None is referenced in the phase work yet. What they test has not been reviewed.
+- Chain-head tests exist for `CallerAuditChainVerifier` (`packages/crypto/tests/unit/caller-audit-chain-verifier.test.ts`), and `proof-audit/tests` includes audit-tamper tests. Whether any of them covers the chain-head check is not confirmed.
+- CI probe workflows: `bypass-probe.yml` (every 6 hours), `kill-switch-probe.yml` (every 15 minutes), `policy-log-drift.yml` (daily) and `outage-drill.yml` (on pull requests). What they test has not been reviewed.
 
-Whether the attack examples run as gated tests in CI has not been confirmed. Phase 3 converts them into gated tests.
+**Not yet in place:** a cross-verification suite, concurrency tests against real storage, a fault-injection harness, and a complete property suite for canonical JSON, hashing and signature verification.
 
-**Not yet in place:** a cross-verification suite, concurrency tests against real storage, a fault-injection harness, and the assurance standard document. Property and fuzz tests exist for some packages (listed above) but not yet as a complete suite for canonical JSON, hashing and signature verification.
+## 3. Package names
 
-## 3. Corrections to earlier drafts
+Use the repository's real paths under `packages/`: `crypto`, `envelope-verifier`, `policy`, `approval`, `execution-gateway`, `execution-control`, `runtime`, `replay`, `storage`, `api`, `capability-registry`, `connector-sdk`, `shared`, `cli`, `execution-system` and `governance-ui`. The npm scope is `@parmana/`, for example `@parmana/crypto` and `@parmana/envelope-verifier`. Check npm names before citing them externally.
 
-- **Mutation testing is no longer "already running."** The crypto campaign has finished. Survivor classification is the open work.
-- **Package names.** Use the repository's real paths under `packages/`: `crypto`, `envelope-verifier`, `policy`, `approval`, `execution-gateway`, `execution-control`, `runtime`, `replay`, `storage`, `api`, `capability-registry`, `connector-sdk` and `shared`. The npm scope is `@parmana/`, for example `@parmana/crypto` and `@parmana/envelope-verifier`. Check npm names before citing them externally.
-- **The independent verifier question.** `packages/envelope-verifier` exists and is named `@parmana/envelope-verifier`. An earlier draft referred to a package `@parmana/verifier`. No such name appears in this repository, and whether one is published has not been checked. The open question is whether the verifier shares code with the signer, because a shared implementation means a shared defect could go unnoticed.
-- **Example code is illustrative.** Property tests must be written against the real function signatures.
-- **The "Unauthorized Execution Challenge" is built from the attack examples**, not designed from scratch.
-- **fast-check.** Already a root dependency (`^4.10.2`) and in use in five test files (Section 2). Decision 9.2 is therefore whether to keep it as the standard, not whether to add it.
-- **Packages without a directory.** The Verification and Assurance Program proposal names `governance`, `execution`, `bundle`, `server` and `audit-db`, and the `@parmanasystems/` scope. None of these exists in this repository. Section 11 gives the nearest real packages.
+Names used in the standard that have no directory of their own:
+
+| Name in the standard | Status                                                  |
+| -------------------- | ------------------------------------------------------- |
+| verifier             | `packages/envelope-verifier`                            |
+| governance           | `policy` and `approval` (candidate)                     |
+| execution            | `execution-gateway` and `execution-control` (candidate) |
+| server               | `packages/api` (plausible, not confirmed)               |
+| audit-db             | `packages/storage` (not confirmed)                      |
+| verifier-cli         | `packages/cli` (not confirmed)                          |
+| bundle, core         | Not packages. Probably concepts. Owner to decide.       |
+
+The mapping status is recorded in standard Section 3 and Appendix A.
 
 ## 4. Guarantees mapped to controls
 
@@ -53,13 +63,15 @@ Whether the attack examples run as gated tests in CI has not been confirmed. Pha
 | -------------------------------- | ------------------------------------------------ | --------------------------------------------------- | --------------------------------------- |
 | Authority is explicit            | Policy validation, authoring-time refusal        | `policy`                                            | Validator test results                  |
 | Authorization is deterministic   | Property-based, reproducibility                  | `policy`, `approval`, `execution-control`           | Same-input, same-output report          |
-| Execution stays within authority | Boundary, adversarial, concurrency               | `execution-gateway`, `execution-control`, `storage` | Attack-suite results per release        |
+| Execution stays within authority | Boundary, adversarial, concurrency, integration  | `execution-gateway`, `execution-control`, `storage` | Attack-suite results per release        |
 | Evidence is verifiable           | Mutation, cross-verification, fuzzing, tampering | `crypto`, `envelope-verifier`, `replay`             | Survivor classification, vector results |
 | Fail-closed                      | Fault injection                                  | `execution-gateway`, `storage`, `api`               | Fault-matrix results                    |
 
 ## 5. Phases
 
-Each phase has exit criteria. No phase is complete until its criteria are met. **Owner for every phase: Pavan Charak.**
+Each phase has work and exit criteria. No phase is complete until its criteria are met. **Owner for every phase: Pavan Charak.**
+
+Work items marked **[D3]** were added by decision D3 in `ASSURANCE_DECISIONS.md`. Work items marked **[D4]** or **[D5]** follow from those decisions.
 
 ### Phase 1: Cryptographic assurance
 
@@ -67,8 +79,8 @@ Each phase has exit criteria. No phase is complete until its criteria are met. *
 
 1. Classify all 101 crypto survivors as missing test, insufficient assertion, equivalent, unreachable or out of scope. Record the rationale for each.
 2. Cover the chain-head check in `CallerAuditChainVerifier.ts`. Write the tests first, then re-run the mutants for that file.
-3. Add property-based tests for canonical JSON, hashing and signature verification.
-4. Add RFC 8785 test vectors for canonicalization.
+3. Complete the property-based suite for canonical JSON, hashing and signature verification. Build on the existing property and fuzz tests.
+4. Review the RFC 8785 test file and add any missing reference vectors.
 5. Add a cross-verification test: sign with the production code, verify with an independently written verifier, then tamper and re-check.
 
 **Exit criteria**
@@ -82,14 +94,20 @@ Each phase has exit criteria. No phase is complete until its criteria are met. *
 
 **Work**
 
-1. Automate the authorization boundary matrix (Section 6) in `policy`, `approval` and `execution-gateway`.
+0. **[D4]** Write a one-page plain-language specification of the authority invariant, `Executed(a) ⇒ Authorized(a)`. Define the predicates it relies on: correct agent, correct scope, valid credential, valid policy and approved action matches. This comes before any formal tool is considered.
+1. Automate the authorization boundary matrix (Section 6) in `policy`, `approval` and `execution-gateway`. **[D4]** Each deny case has a paired allow case on the same execution path.
 2. Test replay, revocation, cached credentials, and policy changes after an approval has been granted.
-3. Add a fail-closed matrix: policy unavailable, database unavailable, signature verifier unavailable, trust root unavailable, ledger write failure, timeout, incomplete context.
+3. Add a fail-closed matrix: policy unavailable, database unavailable, signature verifier unavailable, trust root unavailable, ledger write failure, timeout, incomplete context, credential lookup failure. **[D3]** Include partial execution: execution must not begin before authorization is complete, and a failure partway through must be recorded.
+4. **[D3]** Credential scope and tenant isolation: one agent cannot use another agent's credential, and one tenant's agent cannot reach another tenant's authority (ATS-006, ATS-007).
+5. **[D3]** Integration tests for package interactions: Governance → Verifier, Governance → Execution, Execution → Audit storage, and Server → Core (Section 4.9 of the standard).
+6. **[D3]** One end-to-end test of the payment workflow, from request to recorded evidence, asserting that authority is preserved.
 
 **Exit criteria**
 
 - Every matrix row has an automated test.
 - Each fail-closed case shows that no execution occurred and that the failure was recorded.
+- Each deny case in the boundary suites has a paired allow case.
+- The integration and end-to-end tests run in CI.
 
 ### Phase 3: Adversarial assurance
 
@@ -98,6 +116,7 @@ Each phase has exit criteria. No phase is complete until its criteria are met. *
 1. Convert examples 35–46 and 78 into CI tests that assert refusal.
 2. Fuzz the parsers for canonical JSON, envelopes, policy bundles and signal input.
 3. Run an API security scan against `packages/api`, a static analysis pass, and a dependency scan.
+4. Name the attack suite "Unauthorized Execution Challenge", using the scenarios in the proposal as its starting list (Section 11.4).
 
 **Exit criteria**
 
@@ -111,11 +130,13 @@ Each phase has exit criteria. No phase is complete until its criteria are met. *
 1. Test concurrency against real storage, not just in-memory functions. Scenario: two simultaneous ₹7,000 requests against a ₹10,000 limit.
 2. Inject faults into the database, the policy service and the ledger write.
 3. Run load tests on the enforcement path.
+4. **[D3]** Concurrency cases: credential revocation during execution, policy updates during authorization, and duplicate evidence submissions (ATS-007, ATS-008).
 
 **Exit criteria**
 
 - Concurrent spend tests never exceed the granted limit across repeated runs.
 - The fault matrix passes with fail-closed behaviour.
+- The concurrency cases in item 4 pass against real storage.
 
 ### Phase 5: Release assurance
 
@@ -123,11 +144,13 @@ Each phase has exit criteria. No phase is complete until its criteria are met. *
 
 1. Verify reproducible builds.
 2. Generate an SBOM for each release.
-3. Produce an assurance report per release, recording the commit SHA, the mutation score for each package, the invariant table, and the failures and how each was resolved.
+3. **[D3]** Supply-chain gate: dependency scan, lockfile consistency, build provenance and release signatures (ATS-012).
+4. Produce an assurance report per release, recording the commit SHA, the mutation score for each package, the invariant table, and the failures and how each was resolved.
 
 **Exit criteria**
 
 - A release can be rebuilt and its assurance report regenerated from the commit SHA.
+- The supply-chain gate passes for the release.
 
 ## 6. Authorization boundary matrix
 
@@ -150,70 +173,77 @@ Each phase has exit criteria. No phase is complete until its criteria are met. *
 | Revoked credential used from a cached copy | Deny                                     |
 | Direct API call bypassing the gateway      | Deny                                     |
 
-The "policy changed after approval" row needs a decision before it can be tested. The behaviour must be defined in the policy specification first.
+Every Deny row has a paired Allow case on the same path (**[D4]**). The "policy changed after approval" row cannot be tested until its behaviour is defined (Section 9, item 3).
 
 ## 7. Acceptance principles
 
-These are proposed requirements, not validated claims.
+These are the engineering invariants of the standard (ATS-001 to ATS-012). **Decided 14 November 2026 (D2):** ATS-001 to ATS-012 governs.
 
-**Decided 14 November 2026 (D2, see [ASSURANCE_DECISIONS.md](ASSURANCE_DECISIONS.md)):** ATS-001 to ATS-012 in the Assurance Testing Standard governs. The eight principles above map to ATS-001, 002, 003, 004, 006, 008, 009 and 011. The four principles not listed here are added by reference: Trust (ATS-005), Revocation (ATS-007), Evidence (ATS-010) and Supply chain (ATS-012).
-
-| Principle       | Requirement                                         |
-| --------------- | --------------------------------------------------- |
-| Determinism     | Identical inputs produce identical defined outputs. |
-| Authorization   | No unauthorized execution.                          |
-| Integrity       | Tampering is detected.                              |
-| Verification    | Invalid evidence is rejected.                       |
-| Isolation       | One agent cannot exceed another agent's authority.  |
-| Concurrency     | Simultaneous requests cannot bypass limits.         |
-| Fail-closed     | A verification failure cannot become an approval.   |
-| Reproducibility | Release testing can be repeated independently.      |
+| Principle       | ATS ID  | Requirement                                                |
+| --------------- | ------- | ---------------------------------------------------------- |
+| Determinism     | ATS-001 | Identical inputs produce identical defined outputs.        |
+| Authorization   | ATS-002 | No unauthorized execution.                                 |
+| Integrity       | ATS-003 | Tampering is detected.                                     |
+| Verification    | ATS-004 | Invalid evidence is rejected.                              |
+| Trust           | ATS-005 | Untrusted keys cannot establish valid authorization.       |
+| Isolation       | ATS-006 | One agent cannot exceed another agent's authority.         |
+| Revocation      | ATS-007 | Revoked authority cannot authorize new execution.          |
+| Concurrency     | ATS-008 | Simultaneous requests cannot bypass limits.                |
+| Fail-closed     | ATS-009 | A verification failure cannot become an approval.          |
+| Evidence        | ATS-010 | Execution evidence corresponds to the actual decision.     |
+| Reproducibility | ATS-011 | Release testing can be repeated independently.             |
+| Supply chain    | ATS-012 | Published artifacts correspond to validated source builds. |
 
 ## 8. Gates
 
-**Pull request gate.** Existing jobs (build-and-test, DCO, verified-commits, CodeQL, dependency-review, verify-policy-approvals) plus the property, boundary and attack-example suites added in Phases 1–3.
+**Pull request gate.** Existing jobs (build-and-test, DCO, verified-commits, CodeQL, dependency-review, verify-policy-approvals) plus the property, boundary, integration and attack-example suites as they are added in Phases 1–3.
 
-**Scheduled gate.** Per-package mutation runs, plus the concurrency and fault-injection suites. The schedule should be set by measured run time.
+**Scheduled gate.** Per-package mutation runs, plus the concurrency and fault-injection suites. The schedule should be set by measured run time, which has not yet been recorded.
 
-**Release gate.** Full suite, reproducible-build check, SBOM and the assurance report.
+**Release gate.** Full suite, reproducible-build check, SBOM, supply-chain gate and the assurance report.
 
 **Score policy.** No aggregate mutation threshold defines success. Critical invariants require every survivor to be classified and, where meaningful, tested. A high aggregate score cannot offset one untested authorization bypass.
 
-## 9. Decisions needed
+## 9. Decisions
 
-1. Should `docs/ASSURANCE_TESTING_STANDARD.md` be adopted as the repository standard? **Decided 14 November 2026: adopted (D1).** Candidate package mappings remain open.
-2. Should fast-check be added as a dependency?
-3. What is the defined behaviour for a policy change after approval?
-4. Is OSS-Fuzz worth the setup cost for this repository? It is optional, and adapting it is not trivial.
+| #   | Question                                                          | Status                                                                         |
+| --- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| 1   | Adopt `ASSURANCE_TESTING_STANDARD.md` as the repository standard? | **Decided (D1): adopted.** Candidate package mappings remain open (Section 3). |
+| 2   | Keep fast-check as the property-testing library?                  | Open. It is already a dependency and in use. Recommended: keep.                |
+| 3   | What is the defined behaviour for a policy change after approval? | **Open.** Needed before the matching row in Section 6 can be tested.           |
+| 4   | Is OSS-Fuzz worth the setup cost?                                 | Open. Optional, and adapting it is not trivial.                                |
+| 5   | Are formal proofs in scope?                                       | **Decided (D5): revisit after Phase 2.** Not in scope now.                     |
+
+Other decisions that are recorded: the invariant list (D2), the scope of added categories (D3), and the plain-language specification and paired tests (D4).
 
 ## 10. Limits
 
 This plan does not establish security. It defines how to test whether the guarantees hold. A passing suite shows that the tests were not defeated by the scenarios they cover, not that the system is secure. Independent review and adversarial testing remain necessary.
 
-## 11. Review of the Verification and Assurance Program proposal
+## 11. Review record
 
-This section records a check of the proposal "Parmana Verification and Assurance Program" against the repository at commit `4a29854` (14 November 2026). It is a record, not a change of policy. Score policy (Section 8), phase exit criteria (Section 5) and acceptance principles (Section 7) are unchanged. The proposal's changes to those are listed in 11.4 for owner decision.
+This section records the checks made on the earlier proposals. It is a record, not a change of policy.
 
-### 11.1 Claims checked
+### 11.1 Claims checked (Verification and Assurance Program proposal)
 
-| Claim in proposal                                                                                            | Result                                                                                                                                                            | Evidence                                  |
-| ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| Mutation testing is "already running"                                                                        | Out of date. The crypto run is complete.                                                                                                                          | Section 2; results log entry 2026-11-14   |
-| Packages are `@parmanasystems/crypto`, `verifier`, `governance`, `execution`, `bundle`, `server`, `audit-db` | Incorrect. Names are `@parmana/*`. Six of the seven have no directory under that name.                                                                            | `packages/*/package.json`                 |
-| `@parmana/verifier` is the independent verifier                                                              | Incorrect name. The package is `@parmana/envelope-verifier`.                                                                                                      | `packages/envelope-verifier/package.json` |
-| fast-check should be added                                                                                   | Already a dependency and in use.                                                                                                                                  | Root `package.json`; Section 2            |
-| Property-based tests for canonical JSON and signatures are needed                                            | Partly in place. A canonical-serializer property test and an offline-verifier fuzz test exist.                                                                    | Section 2                                 |
-| RFC 8785 vectors are needed                                                                                  | A test file exists. Vector coverage not reviewed.                                                                                                                 | `canonical-serializer-rfc8785.test.ts`    |
-| Fuzzing of parsers and inputs is needed                                                                      | Fuzz tests exist for policy, approval, api and crypto. Coverage not reviewed.                                                                                     | Section 2                                 |
-| Chain-head check is uncovered                                                                                | Gap confirmed by the mutation run and still open. Tests reference `CallerAuditChainVerifier`, but whether any covers the chain-head check has not been confirmed. | Section 2; results log open item 1        |
-| Semgrep, OWASP ZAP, Socket and OSS-Fuzz are recommended                                                      | Not in CI. Semgrep and ZAP do not appear anywhere in the repository. OSS-Fuzz appears only in this plan. Socket appears only in a handbook page.                  | Repository search                         |
-| Probe-style tests for bypass and kill switch                                                                 | Workflows exist. Their scope is not reviewed.                                                                                                                     | Section 2                                 |
-| Concurrency, fault injection and load are needed                                                             | Confirmed. Phase 4 covers them.                                                                                                                                   | Section 5, Phase 4                        |
-| Reproducibility is needed                                                                                    | Confirmed. Phase 5 covers it.                                                                                                                                     | Section 5, Phase 5                        |
+| Claim in proposal                                                                                                  | Result                                                                                                                                          | Evidence                                  |
+| ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| Mutation testing is "already running"                                                                              | Out of date. The crypto run is complete.                                                                                                        | Section 2; results log entry 2026-11-14   |
+| Packages are `@parmanasystems/*` (`crypto`, `verifier`, `governance`, `execution`, `bundle`, `server`, `audit-db`) | Incorrect. Names are `@parmana/*`. Six of the seven have no directory under that name.                                                          | `packages/*/package.json`                 |
+| `@parmana/verifier` is the independent verifier                                                                    | Incorrect name. The package is `@parmana/envelope-verifier`.                                                                                    | `packages/envelope-verifier/package.json` |
+| fast-check should be added                                                                                         | Already a dependency and in use.                                                                                                                | Root `package.json`; Section 2            |
+| Property-based tests for canonical JSON and signatures are needed                                                  | Partly in place.                                                                                                                                | Section 2                                 |
+| RFC 8785 vectors are needed                                                                                        | A test file exists. Vector coverage not reviewed.                                                                                               | `canonical-serializer-rfc8785.test.ts`    |
+| Fuzzing of parsers and inputs is needed                                                                            | Fuzz tests exist for policy, approval, api and crypto. Coverage not reviewed.                                                                   | Section 2                                 |
+| Chain-head check is uncovered                                                                                      | Gap confirmed by the mutation run and still open.                                                                                               | Section 2; results log open item 1        |
+| Semgrep, OWASP ZAP, Socket and OSS-Fuzz are recommended                                                            | Not in CI. Semgrep and ZAP do not appear anywhere in the repository. OSS-Fuzz appears only in the plan. Socket appears only in a handbook page. | Repository search                         |
+| Probe-style tests for bypass and kill switch                                                                       | Workflows exist. Their scope is not reviewed.                                                                                                   | Section 2                                 |
+| Concurrency, fault injection and load are needed                                                                   | Confirmed. Phase 4 covers them.                                                                                                                 | Section 5, Phase 4                        |
+| Reproducibility is needed                                                                                          | Confirmed. Phase 5 covers it.                                                                                                                   | Section 5, Phase 5                        |
 
 ### 11.2 Mapping the 12 categories to the plan
 
-| Category in proposal          | Where it sits in this plan       | Gap                                 |
+| Category                      | Where it sits in this plan       | Gap                                 |
 | ----------------------------- | -------------------------------- | ----------------------------------- |
 | 1. Mutation                   | Phase 1                          | Survivor classification             |
 | 2. Property-based             | Phase 1, item 3                  | Complete suite not yet written      |
@@ -221,74 +251,61 @@ This section records a check of the proposal "Parmana Verification and Assurance
 | 4. Cryptographic verification | Phase 1, items 4–5               | Cross-verification suite            |
 | 5. Authorization boundary     | Phase 2, item 1; Section 6       | Automation                          |
 | 6. Adversarial security       | Phase 3, items 1 and 3           | API, static and dependency scans    |
-| 7. Integration                | Not in plan                      | Gap. Proposed in 11.4.              |
-| 8. End-to-end                 | Not in plan                      | Gap. Proposed in 11.4.              |
-| 9. Concurrency                | Phase 4, item 1                  | Real storage tests                  |
+| 7. Integration                | Phase 2, item 5 **[D3]**         | Harness not yet built               |
+| 8. End-to-end                 | Phase 2, item 6 **[D3]**         | One payment test                    |
+| 9. Concurrency                | Phase 4, items 1 and 4           | Real storage tests                  |
 | 10. Fault injection           | Phase 2, item 3; Phase 4, item 2 | Harness                             |
 | 11. Performance and load      | Phase 4, item 3                  | None yet                            |
 | 12. Reproducibility           | Phase 5, item 1                  | None yet                            |
 
-Integration and end-to-end testing are the only categories without a home in the plan. They are not adopted here.
+### 11.3 Items the proposal raised
 
-### 11.3 Items not in the plan that the proposal raises
+- **Fail-closed cases:** added to Phase 2, item 3 **[D3]**.
+- **Concurrency cases:** added to Phase 4, item 4 **[D3]**.
+- **Credential scope and tenant isolation:** added to Phase 2, item 4 **[D3]**.
+- **Supply-chain checks:** added to Phase 5, item 3 **[D3]**.
 
-- **Fail-closed cases beyond Phase 2 item 3:** credential lookup failure, incomplete execution context, partial execution, whether a failed request can be retried safely, and whether a failure to persist evidence can turn a denied or unverified operation into a success.
-- **Concurrency cases beyond Phase 4, item 1:** credential revocation during execution, policy updates during authorization, and duplicate evidence submissions.
-- **Credential scope and tenant isolation:** whether one tenant's agent can reach another tenant's authority.
-- **Supply-chain checks:** build provenance and package provenance, beyond the SBOM in Phase 5.
+### 11.4 Changes proposed, and their decisions
 
-### 11.4 Changes proposed for owner decision
+These were decided as recorded in [ASSURANCE_DECISIONS.md](ASSURANCE_DECISIONS.md), D3 and D5.
 
-These are not adopted. Each needs a decision from Pavan Charak, as rule 5 of `CLAUDE.md` requires for changes to the plan's policy, exit criteria and principles.
+1. Integration and end-to-end categories: added, with the scope in D3.
+2. Fail-closed, concurrency, credential-scope, tenant-isolation and supply-chain items: added to Phases 2, 4 and 5.
+3. "Unauthorized Execution Challenge" as the name of the Phase 3 attack suite: adopted.
+4. Policy change after approval: **still open** (Section 9, item 3).
+5. "Phase 1 first" ordering: kept.
 
-1. Add the integration and end-to-end categories to the plan, with a phase or a gate.
-2. Add the fail-closed, concurrency, credential-scope, tenant-isolation and supply-chain items in 11.3 to the matrices in Phases 2, 4 and 5.
-3. Use "Unauthorized Execution Challenge" (already named in Section 3) as the name of the Phase 3 attack suite, with the scenarios from the proposal as its starting list.
-4. Decide the policy for a policy change after approval (Section 6, Section 9 item 3). The proposal does not resolve this.
-5. Decide whether the proposal's "Phase 1 first" ordering stands. It matches this plan.
+### 11.5 Engineering standard
 
-The proposal's package mapping for the rest of the work, with its order of priority, is not adopted until the names are corrected as in Section 3.
+The Assurance Testing Standard (PARMANA-ATS-001) is at [ASSURANCE_TESTING_STANDARD.md](ASSURANCE_TESTING_STANDARD.md). It is adopted (D1). Its factual claims were checked against the repository, and the corrections are in its Appendix A.
 
-### 11.5 Proposed engineering standard
-
-The proposed Assurance Testing Standard (PARMANA-ATS-001) is saved at [ASSURANCE_TESTING_STANDARD.md](ASSURANCE_TESTING_STANDARD.md) and marked not adopted. Its factual claims were checked against the repository, and the corrections are in its Appendix A. Adoption is decision 9.1 in Section 9. Its invariant list (ATS-001 to ATS-012) differs from Section 7 of this plan, and the owner needs to decide which list governs.
-
-### 11.6 Formal assurance: DeepMind `code-verification` (research reference, proposed)
+### 11.6 Formal assurance: DeepMind `code-verification` (research reference)
 
 Checked on 14 November 2026 against the public repository (`google-deepmind/code-verification`) through its README and linked documents. The repository is not in this session's GitHub scope, so nothing was read through the GitHub tools.
 
-**Verified**
+**Verified:**
 
-| Claim                                                                                                                                          | Result                                                                                                                                                                                                                                                                   |
-| ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Lean 4 formalizations of Signal `libsignal` security proofs                                                                                    | Verified                                                                                                                                                                                                                                                                 |
-| Two arguments: symbolic (Dolev–Yao) and computational (game-based)                                                                             | Verified                                                                                                                                                                                                                                                                 |
-| Security claim for compiled AArch64 machine code                                                                                               | Verified, with a narrower scope. The README says "two AI-generated proofs of security" for a CLI harness "with hooked cryptographic primitives".                                                                                                                         |
-| Toolchain: Lean 4.34.0, Rust 1.98.1, LLVM `ld.lld` 22.1.8, Zig 0.16.0                                                                          | Verified                                                                                                                                                                                                                                                                 |
-| Full build: several hours, about 15–34 GiB peak RAM                                                                                            | Verified                                                                                                                                                                                                                                                                 |
-| Lean Comparator: checks statement match, allowed axioms (`propext`, `Quot.sound`, `Classical.choice`) and replay in a fresh kernel             | Verified. Linux only, because it uses Landlock sandboxing.                                                                                                                                                                                                               |
-| Non-vacuity                                                                                                                                    | Partly verified. The term appears in the deviation register (DEV-PQ3, "proved non-vacuity on reachable/honest states"). Its general use as a principle is not confirmed.                                                                                                 |
-| Bug injection examples: dropped post-quantum ratchet key, leaked authentication key, retained rotated-out keys, skipped message authentication | **Not verified.** The cited page does not contain these. It documents two upstream bugs (removal of `EdwardsPoint::is_torsion_free`, and an SPQR chain key read without commitment) and synthetic mutants it does not list. Do not cite the four examples as DeepMind's. |
+- Lean 4 formalizations of Signal `libsignal` security proofs, with symbolic (Dolev–Yao) and computational (game-based) arguments.
+- The machine-code claim is narrower than the proposal's wording. The README says "two AI-generated proofs of security" for a CLI harness "with hooked cryptographic primitives".
+- Toolchain: Lean 4.34.0, Rust 1.98.1, LLVM `ld.lld` 22.1.8, Zig 0.16.0. Full build: several hours, about 15–34 GiB peak RAM.
+- Lean Comparator checks statement match, allowed axioms (`propext`, `Quot.sound`, `Classical.choice`) and replay in a fresh kernel. Linux only, because it uses Landlock sandboxing.
+- "Non-vacuity" appears in the deviation register (DEV-PQ3, "proved non-vacuity on reachable/honest states"). Its use as a general principle is not confirmed.
 
-**Omitted from the proposal, and relevant to Parmana**
+**Not verified:** the bug-injection examples in the proposal (dropped post-quantum ratchet key, leaked authentication key, retained rotated-out keys, skipped message authentication). The cited page does not contain them. It documents two upstream bugs (removal of `EdwardsPoint::is_torsion_free`, and an SPQR chain key read without commitment) and synthetic mutants it does not list. Do not cite the four examples as DeepMind's.
+
+**Omitted from the proposal, and relevant to Parmana:**
 
 - The proofs cover one pinned ELF built with a specific toolchain and linker script. Other builds are not covered (DEV-M7).
 - Cryptographic primitives are hooked, meaning trusted models, not verified as machine code. This includes SHA-256, AES-256-CBC, X25519, the Ed25519 curve core and Kyber1024 (DEV-E8, DEV-PQ1).
-- **Every PQXDH result is classical.** "No post-quantum or HNDL security is claimed" (DEV-PQ19). Parmana's post-quantum signing (ML-DSA, in `packages/crypto/src/support/MlDsaSupport.ts` and `providers/signature/Dilithium3SignatureProvider.ts`) must not be described with stronger claims than the code and tests support.
+- Every PQXDH result is classical. No post-quantum or HNDL security is claimed (DEV-PQ19). Parmana's ML-DSA signing (`packages/crypto/src/support/MlDsaSupport.ts`, `providers/signature/Dilithium3SignatureProvider.ts`) must not be described with stronger claims than the code and tests support.
 - Fixed memory layout, a process per CLI call, an allocator that never frees, and public test identity keys (DEV-M6, DEV-E6, DEV-M10, DEV-M11).
 - The project is "not an official Google product" and is provided "AS IS".
 
-**Parmana corrections to the proposal**
+**Parmana corrections to the proposal:**
 
-- The package table uses names that do not exist (`verifier`, `governance`, `execution`, `bundle`, `audit-db`, `server`). Use the mapping in the Assurance Testing Standard, Section 3.
-- The repository contains no Lean, TLA+ or Alloy files. No formal specification of the authority invariant exists yet.
-- The authority invariant `Executed(a) ⇒ Authorized(a)` is a proposed property. The predicates `CorrectAgent`, `CorrectScope`, `ValidCredential`, `ValidPolicy` and `ApprovedActionMatches` have no code definitions yet. Each needs one before it can be stated or tested.
+- The package table uses names that do not exist. Use the mapping in Section 3.
+- The repository contains no Lean, TLA+ or Alloy files.
+- The predicates in `Executed(a) ⇒ Authorized(a)` have no code definitions yet. Phase 2, item 0 covers them **[D4]**.
 - The image in the proposal is linked from an `images.openai.com` address and labelled as the DeepMind logo. It was not verified and was not used.
 
-**Proposals for owner decision (not adopted)**
-
-1. Write a plain-language specification of the authority invariant and its predicates before any prover is chosen. This is the first step in the proposal and is consistent with Section 6 of the plan.
-2. Add a non-vacuity requirement: every deny test has a paired allow test on the same path. This would extend Section 4.4 of the Standard.
-3. Build a bug-injection harness that pairs each injected defect with a named detection. Stryker mutators can be used for the code-level part. The proposal's expected-detection table is a proposal and has not been checked against code.
-4. Decide whether a formal proof effort is in scope. The proposal's first target, one payment workflow, would need its own scope and owner.
-5. Decide whether the research publication described in the proposal is a goal.
+**Decided:** a plain-language specification before any prover (D4); formal proofs revisited after Phase 2, not in scope now (D5). Still open, not decided: the bug-injection harness and the research publication.

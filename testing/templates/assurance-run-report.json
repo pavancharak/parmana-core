@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "project": "parmana-core",
+  "assuranceRun": {
+    "sourceRevision": "COMMIT_SHA",
+    "branch": "BRANCH",
+    "startedAt": "RECORDED_TIMESTAMP",
+    "completedAt": "RECORDED_TIMESTAMP",
+    "runtime": "NODE_VERSION, OS"
+  },
+  "categories": {
+    "mutation": {
+      "status": "not run",
+      "command": null,
+      "total": 0,
+      "killed": 0,
+      "survived": 0,
+      "timedOut": 0,
+      "survivorsClassified": 0
+    },
+    "property": {
+      "status": "not run",
+      "command": null
+    },
+    "cryptographicVerification": {
+      "status": "not run",
+      "command": null
+    },
+    "authorization": {
+      "status": "not run",
+      "command": null
+    },
+    "concurrency": {
+      "status": "not run",
+      "command": null
+    },
+    "integration": {
+      "status": "not run",
+      "command": null
+    },
+    "failClosed": {
+      "status": "not run",
+      "command": null
+    }
+  },
+  "criticalFindings": [],
+  "reviewedExceptions": [],
+  "releaseDecision": "pending"
+}
