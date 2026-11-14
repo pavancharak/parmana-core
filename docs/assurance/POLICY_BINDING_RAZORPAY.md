@@ -49,17 +49,17 @@ The version to bind is 1.3.0 (D14). Live traffic: the owner states there is none
 
 ## 7. Capability connection (as it stands)
 
-| Field           | Value                                                                                                 | Where it is defined                                                  |
-| --------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Capability name | `razorpay:refund`                                                                                     | `parmana-connectors` `src/connectors/razorpay/razorpay-connector.ts` |
-| Intent name     | **Not defined.** No intent name for this capability exists in `parmana-core` or `parmana-connectors`. | Not applicable                                                       |
-| Policy name     | `customer-refund`                                                                                     | `policies/customer-refund/`                                          |
-| Policy version  | `1.3.0` (owner confirmed, D14). Latest version in the repo.                                           | D14 in `docs/ASSURANCE_DECISIONS.md`                                 |
-| Binding in code | **None.** `CANONICAL_CAPABILITY_POLICY_BINDINGS` is empty (D15).                                      | `packages/capability-registry/src/CapabilityPolicyBinding.ts`        |
+| Field           | Value                                                                        | Where it is defined                                                  |
+| --------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Capability name | `razorpay:refund`                                                            | `parmana-connectors` `src/connectors/razorpay/razorpay-connector.ts` |
+| Intent name     | `customer-refund`. The owner states that the policy name is the intent name. | Owner statement (14 November 2026)                                   |
+| Policy name     | `customer-refund`                                                            | `policies/customer-refund/`                                          |
+| Policy version  | `1.3.0` (owner confirmed, D14). Latest version in the repo.                  | D14 in `docs/ASSURANCE_DECISIONS.md`                                 |
+| Binding in code | **None.** `CANONICAL_CAPABILITY_POLICY_BINDINGS` is empty (D15).             | `packages/capability-registry/src/CapabilityPolicyBinding.ts`        |
 
 Two other places the link could live, both to verify before any binding is designed:
 
 - `docs/guides/production-integration-guide.md` says a capability (for example `razorpay:refund`) is bound to an endpoint and a policy, and is registered through maker-checker. If that registration records the policy, it is a second connection path and was not checked here.
 - `docs/audit/2026-11-11/STALE-DOCUMENTS.md` and G-66 cite `paytm:refund` to `customer-refund` as an example of the canonical table. That example is stale: the table is empty.
 
-The intent name must be defined by the owner before a binding is designed, if the binding is to carry one.
+Because the intent name is the policy name, a binding for `razorpay:refund` would name `customer-refund` as both the intent and the policy. Whether the code accepts that equality has not been checked.
