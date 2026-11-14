@@ -115,3 +115,17 @@ This does not change section 8. Binding `razorpay:refund` to `customer-refund` 1
 **Not done:** no code, connector or record has changed. Option A needs the name pattern changed in `external-connectors.ts`, `inbound-checks.ts` and `authority-grants.ts`, because the current pattern allows only one colon and no underscores. The connector in `parmana-connectors` would also be renamed from `razorpay:refund`.
 
 **Concern to settle first:** option A puts the policy name and version into the capability name. Both point at `customer-refund` 1.3.0, which rejects every refund. Any rename would bake that wrong policy into the name, and changing the policy later would mean renaming again. Recommended: settle which policy and version the capability points at (`razorpay-refund` 1.1.0 is the one that approves refunds) before the rename.
+
+## 13. Decision: the request defines the policy version (owner, 14 November 2026)
+
+**Owner decision:** the request must define the policy version. The system does not pick a version from governance records.
+
+**What this means:**
+
+- A `razorpay:refund` request declares the policy name and version it relies on. The binder checks that declaration against the bound version.
+- The governance-based version source (G-66) is not used for this capability. Its code stays in place, unused.
+- When a new version is approved, callers must change their declared version before they can use it. Old versions are refused once the binding names a new one.
+
+**Not done:** no code has changed. The binding itself is still not written (D15), and the version to bind is still open: `razorpay-refund` 1.1.0 is the only version in the repo.
+
+Recorded as D17 in `docs/ASSURANCE_DECISIONS.md`.

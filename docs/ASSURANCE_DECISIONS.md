@@ -250,3 +250,20 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 **Format chosen (14 November 2026):** option A, `razorpay_customer-refund_1-3-0`. Not implemented. It embeds `customer-refund` 1.3.0, which rejects every refund; settle the policy first (POLICY_BINDING_RAZORPAY.md, section 12).
 
 **Effect on the documents:** POLICY_BINDING_RAZORPAY.md, section 11. OPEN_ITEMS.md: a row for the format.
+
+---
+
+## D17. The request defines the policy version (14 November 2026)
+
+- **Reference:** D17
+- **Source:** docs/assurance/POLICY_BINDING_RAZORPAY.md, section 13
+- **Date recorded:** 2026-11-14
+- **Owner:** Pavan Charak
+
+**Question:** Does the policy version come from the request, or from governance records (G-66)?
+
+**Options considered:** 1. The request defines the version. 2. The governance record defines the version.
+
+**Owner decision:** Option 1. The request must define the policy version.
+
+**Effect:** callers declare the version. A new approved version needs callers to change their declared version. The governance version source is not used for this capability.
