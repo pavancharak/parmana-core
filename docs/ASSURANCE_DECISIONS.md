@@ -145,6 +145,19 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 ---
 
+---
+
+## D9. Reject non-canonical signature encodings (benchmark CE-02, results 14 November 2026)
+
+**Question:** Should signature verification reject any base64 string that is not the canonical encoding of the signature bytes?
+
+**Finding:** Changing the final base64 character of an Ed25519 signature still verifies. The signature bytes are unchanged, so this is not a forgery. The verifier accepts more than one encoding of one signature.
+
+**Recommendation:** Reject non-canonical encodings: decode the signature, re-encode it, and compare with the input. This is a small change, but it is in the verifier, so it needs review. Check first whether any stored record or receipt hashes the signature string, since such a change would alter those hashes.
+
+**Owner decision:** _[ ] Reject non-canonical encodings [ ] Accept as is, with a documented note [ ] Other_
+**Notes:**
+
 ## Record (PoAE)
 
 | Decision | Owner decision          | Date       | Recorded by                              |
@@ -152,3 +165,4 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 | D6       | Separate research track | 2026-11-14 | Recorded in session at owner's direction |
 | D7       | In scope                | 2026-11-14 | Recorded in session at owner's direction |
 | D8       | Define as proposed      | 2026-11-14 | Recorded in session at owner's direction |
+| D9       | Pending                 |            |                                          |

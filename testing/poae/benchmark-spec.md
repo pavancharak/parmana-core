@@ -102,9 +102,9 @@ Each result must be reported as measured, using `testing/templates/assurance-res
 
 ## Results
 
-| ID     | Result  | Commit | Date |
-| ------ | ------- | ------ | ---- |
-| All 20 | Not run |        |      |
+| ID                               | Result                                                                   | Commit                                   | Date       |
+| -------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------- | ---------- |
+| Run 14 Nov 2026 (11 implemented) | 10 passed, 1 failed (CE-02), 9 not run. Details in ASSURANCE_RESULTS.md. | d7b4e48dd739e5868db738b6255494218a64bc34 | 2026-11-14 |
 
 ## Limits of the record-level tests
 
