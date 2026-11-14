@@ -116,3 +116,9 @@ All branches named in this document are unmerged. None has been merged to `main`
 ## 9. Declare-stage documentation: agreed plan (14 November 2026)
 
 The plan is in `docs/DECLARE_STAGE.md`, section 7. In order: a contract test that checks the documented behaviour against the handler; field tables generated from the types; and an owner decision on whether declare is a separate step (Option A keeps one call, the current behaviour; Option B splits it into two). The contract test and generated tables need no decision and are the next work. Option B is for the owner to decide.
+
+## 10. Authentication disabled: closed (14 November 2026)
+
+`PARMANA_AUTH_DISABLED=true` disables the caller checks at declare. It is now refused at startup unless `NODE_ENV` is exactly `development` or `test`. Before this, `staging` and an unset `NODE_ENV` started with authentication disabled.
+
+Evidence: `create-caller-authenticator.test.ts` (new cases for production, staging, unset, development and test) and `createSandboxOptions.test.ts` passed, 30 tests. The full suite under Node 24.22.2 passed: 403 files, 3,954 tests, 1 expected fail, 106 skipped. Commit `40aa408f` on `claude/master-document`.

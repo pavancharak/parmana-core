@@ -56,6 +56,8 @@ When the capability check passes, the handler writes `caller.capability_granted`
 2. Principal check, tenant check, capability check, in that order. These three run only when the request carries an authenticated caller (`req.callerId` is set). Without an authenticated caller they are skipped.
 3. Execution (`application.execute`), reached only when every check above passes.
 
+**Authentication disabled.** With `PARMANA_AUTH_DISABLED=true`, the caller is never identified, so step 2 is skipped for every request. The server refuses to start with this flag unless `NODE_ENV` is exactly `development` or `test` (`packages/api/src/bootstrap/createCallerAuthenticator.ts`). For any other value, including unset, startup fails. Before this rule, `staging` and an unset `NODE_ENV` started with authentication disabled.
+
 Source: `packages/api/src/routes/transactions.ts`. The structural check is at the start of the handler; the principal, tenant and capability checks are inside the `req.callerId !== undefined` block; `application.execute` is called after that block.
 
 ## 4. Checks made at execution, as the first step of `application.execute`
