@@ -28,3 +28,5 @@ class ExecutionEvidence:
     executed_at: datetime
 
     attributes: dict[str, Any] | None = None
+
+    correspondence: ExecutionCorrespondence | None = None
