@@ -109,3 +109,46 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 | D3       | Accept recommendation                 | 2026-11-14 | Recorded in session at owner's direction |
 | D4       | (a) Yes; (b) yes, boundary suites     | 2026-11-14 | Recorded in session at owner's direction |
 | D5       | Revisit after Phase 2                 | 2026-11-14 | Recorded in session at owner's direction |
+
+---
+
+## D6. PoAE as a research track (plan Section 12.3, item 1)
+
+**Question:** Is the PoAE formal security specification (v0.1) a separate research track, or part of Phase 2?
+
+**Recommendation:** A separate research track. It should use the Phase 2 tests where they overlap, and it should not add new phases.
+
+**Owner decision:** _[ ] Separate research track [ ] Part of Phase 2 [ ] Other_
+**Notes:**
+
+---
+
+## D7. Execution receipt in scope (plan Section 12.3, item 3)
+
+**Question:** Should Parmana add an execution receipt that binds the executed action hash to the authorization?
+
+**Recommendation:** Yes, as a product change on its own branch. It closes the gap for POAE-03 and tests EM-01, EM-02 and EM-04. It needs its own review, because it changes what the system outputs.
+
+**Owner decision:** _[ ] In scope [ ] Not in scope [ ] Revisit after Phase 2_
+**Notes:**
+
+---
+
+## D8. Definition of the frozen cryptographic core (plan Section 12.3, item 2)
+
+**Question:** Which files form the "frozen" cryptographic integrity core, and what changes are allowed to them?
+
+**Recommendation:** Define it in writing before relying on the rule. The definition should list the files and the change process. No file should be frozen until it is listed.
+
+**Owner decision:** _[ ] Define as proposed [ ] Define with changes [ ] No frozen core_
+**Notes:**
+
+---
+
+## Record (PoAE)
+
+| Decision | Owner decision | Date | Recorded by |
+| -------- | -------------- | ---- | ----------- |
+| D6       | Pending        |      |             |
+| D7       | Pending        |      |             |
+| D8       | Pending        |      |             |
