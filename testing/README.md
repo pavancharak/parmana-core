@@ -43,3 +43,8 @@ When a request says **"updated documentation"**, **"testing results"** or simila
 ## PoAE benchmark
 
 The benchmark specification lives in [`poae/`](poae/README.md). Update [`poae/benchmark-spec.md`](poae/benchmark-spec.md) when a gap closes or a test is run. Record results with the templates above.
+
+## Coverage and direction
+
+- [`docs/assurance/COVERAGE_REGISTER.md`](../docs/assurance/COVERAGE_REGISTER.md) lists what each product claim covers. Update it whenever coverage changes.
+- [`docs/assurance/PERMANENT_DIRECTION.md`](../docs/assurance/PERMANENT_DIRECTION.md) is the standing reference for priorities.

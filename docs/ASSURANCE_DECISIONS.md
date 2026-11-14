@@ -169,6 +169,7 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 | D10      | Pending                        |            |                                          |
 | D11      | Pending                        |            |                                          |
 | D12      | Pending                        |            |                                          |
+| D13      | Adopted: permanent direction   | 2026-11-14 | Recorded in session at owner's direction |
 
 ---
 
@@ -181,3 +182,13 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 **D12, authority version (AM-04).** Choose how re-issued authority is handled. Recommended: immutable grant identifiers (option B), if the registry can enforce them. Owner decision: _[ ] A (version field) [ ] B (immutable IDs) [ ] C (leave as is)_. Registry can enforce immutable IDs: _[ ] yes [ ] no_
 
 **Long-term recommendation (not a decision):** A now, and B for external connectors later (D10). A now, with an external anchor (C) as the target, because only an anchor lets an outside party detect removal (D11). B, enforced by a database constraint (D12). Details: docs/assurance/OPEN_ITEMS_DESIGN.md.
+
+---
+
+## D13. Permanent direction for Parmana assurance (14 November 2026)
+
+**Question:** Should the long-term direction in [assurance/PERMANENT_DIRECTION.md](assurance/PERMANENT_DIRECTION.md) be adopted as the standing reference?
+
+**Recommendation:** Adopt it. It covers: claims limited to the coverage register; the benchmark as a CI gate; the frozen-core list written down; one source of truth per fact; independent review of the verifier; small pull requests.
+
+**Owner decision:** **Agreed.** Adopted as the standing direction. Coverage claims follow [assurance/COVERAGE_REGISTER.md](assurance/COVERAGE_REGISTER.md). The frozen-core list in that register still needs confirmation under D8.
