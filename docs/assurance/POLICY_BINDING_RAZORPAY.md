@@ -183,3 +183,22 @@ Recorded as D18 in `docs/ASSURANCE_DECISIONS.md`.
 **Proposed approach, to confirm before any code change:** test fixtures seed signed approval records, and the relaxation is removed from the production code path. The test setup and documentation changes are part of the same change.
 
 **Not changed:** no code or test has been modified for this decision.
+
+## 18. D19 measured (14 November 2026)
+
+The change was made, measured, and then reverted, so the branch stays green.
+
+**Change made (not committed):** `createPolicyExecutionVerifier` always returns the governed verifier. The gateway's ungoverned fallback is removed. `policyGovernanceRelaxed.ts` is deleted. The flag is removed from `vitest.setup.ts`. The patch is saved in the session scratchpad as `d19-production-and-setup.patch`.
+
+**Full suite with the change (Node 24.22.2):** 25 files failed, 60 tests failed; 3,888 tests passed. The failures are executions refused for lack of a signed approval record. Most show `expected 403 to be 200` (or 201, 502, 503). Some tests check the refusal reason rather than the status.
+
+**Files most affected:** `caller-scoping`, `caller-capability-scoping`, `caller-auth`, `rate-limit`, `production-gateway`, `trust-record-api`, `parmana-client` (TypeScript client integration), `examples` and others.
+
+**Not decided:** how tests get approval records. Options for the owner:
+
+1. A test-only fixture that seeds signed approval records for each policy the tests use, clearly labelled as test data.
+2. Real signed approvals for the policies under test, produced through the normal maker-checker path.
+
+Option 1 is the practical route, but it is the same relaxation moved into the test setup, so it needs an explicit decision. The backfill script (`scripts/backfill-legacy-policy-approvals.ts`) creates approvals under a synthetic system identity, and it should not be used as the test fixture without a decision.
+
+**Also outside D19:** the signing-readiness check (`createSigningReadiness`) has its own environment rule, `SIGNING_READINESS_CHECK`. It is not covered by D19 and is unchanged. The doctor check (`packages/shared/src/config/Doctor.ts`) still lists the flag as a known setting; removing it from the list would make the doctor report a misleading typo.
