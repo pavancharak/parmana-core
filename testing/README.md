@@ -49,3 +49,4 @@ The benchmark specification lives in [`poae/`](poae/README.md). Update [`poae/be
 - [`docs/assurance/COVERAGE_REGISTER.md`](../docs/assurance/COVERAGE_REGISTER.md) lists what each product claim covers. Update it whenever coverage changes.
 - [`docs/assurance/PERMANENT_DIRECTION.md`](../docs/assurance/PERMANENT_DIRECTION.md) is the standing reference for priorities.
 - [`docs/assurance/FROZEN_CORE.md`](../docs/assurance/FROZEN_CORE.md) is the rule and the procedure for changing the frozen cryptographic core.
+- [`docs/assurance/OPEN_ITEMS.md`](../docs/assurance/OPEN_ITEMS.md) lists every open item, with the decision or action it needs.
