@@ -7,15 +7,15 @@ Each row names the item, what is needed, who decides, and the document with the 
 
 ## 1. Decisions waiting for the owner
 
-| ID  | Item                                            | Needed                                                                                                                 | Detail                                                                    |
-| --- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| D10 | Vendor adapter hash                             | Choose: declared mapping per adapter (recommended), attestation, or accept the gap                                     | [OPEN_ITEMS_DESIGN.md](OPEN_ITEMS_DESIGN.md) section 1                    |
-| D11 | Ledger connection and anchor                    | Choose: scheduled job (recommended now), anchor as the target. Set the window. Approve listing methods on both stores. | [OPEN_ITEMS_DESIGN.md](OPEN_ITEMS_DESIGN.md) section 2                    |
-| D12 | Authority version (AM-04)                       | Choose: immutable grant IDs (recommended), version field, or leave as is                                               | [OPEN_ITEMS_DESIGN.md](OPEN_ITEMS_DESIGN.md) section 3                    |
-| P-3 | Policy change after approval: defined behaviour | Ratify the behaviour: a changed policy is denied. Plan Section 9, item 3.                                              | [ASSURANCE_TESTING_PLAN.md](../ASSURANCE_TESTING_PLAN.md)                 |
-| P-2 | fast-check as the property library              | Confirm. It is already a dependency and in use.                                                                        | Plan Section 9, item 2                                                    |
-| P-5 | razorpay:refund caller version check            | Version 1.3.0 confirmed (D14). Still needed: confirm live callers can move to 1.3.0 before deploy.                     | [POLICY_BINDING_RAZORPAY.md](POLICY_BINDING_RAZORPAY.md) sections 4 and 8 |
-| P-4 | OSS-Fuzz                                        | Decide whether it is worth the setup cost                                                                              | Plan Section 9, item 4                                                    |
+| ID  | Item                                            | Needed                                                                                                                                 | Detail                                                                    |
+| --- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| D10 | Vendor adapter hash                             | Choose: declared mapping per adapter (recommended), attestation, or accept the gap                                                     | [OPEN_ITEMS_DESIGN.md](OPEN_ITEMS_DESIGN.md) section 1                    |
+| D11 | Ledger connection and anchor                    | Choose: scheduled job (recommended now), anchor as the target. Set the window. Approve listing methods on both stores.                 | [OPEN_ITEMS_DESIGN.md](OPEN_ITEMS_DESIGN.md) section 2                    |
+| D12 | Authority version (AM-04)                       | Choose: immutable grant IDs (recommended), version field, or leave as is                                                               | [OPEN_ITEMS_DESIGN.md](OPEN_ITEMS_DESIGN.md) section 3                    |
+| P-3 | Policy change after approval: defined behaviour | Ratify the behaviour: a changed policy is denied. Plan Section 9, item 3.                                                              | [ASSURANCE_TESTING_PLAN.md](../ASSURANCE_TESTING_PLAN.md)                 |
+| P-2 | fast-check as the property library              | Confirm. It is already a dependency and in use.                                                                                        | Plan Section 9, item 2                                                    |
+| P-5 | razorpay:refund caller version check            | Closed (D14): owner confirmed version 1.3.0 and that live traffic uses the correct version. Not verified against logs in this session. | [POLICY_BINDING_RAZORPAY.md](POLICY_BINDING_RAZORPAY.md) sections 4 and 8 |
+| P-4 | OSS-Fuzz                                        | Decide whether it is worth the setup cost                                                                                              | Plan Section 9, item 4                                                    |
 
 ## 2. Gaps in the product
 

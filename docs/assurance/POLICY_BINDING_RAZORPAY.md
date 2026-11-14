@@ -1,6 +1,6 @@
 # Policy binding: razorpay:refund to customer-refund
 
-**Status:** Implemented on branch `claude/bind-razorpay-refund`. Not merged. The policy version 1.3.0 is confirmed by the owner (D14, in ASSURANCE_DECISIONS.md). Before deploy, live callers must be checked against it (section 4).
+**Status:** Implemented on branch `claude/bind-razorpay-refund`. Not merged. The policy version 1.3.0 is confirmed by the owner (D14, in ASSURANCE_DECISIONS.md). Live traffic was confirmed by the owner to use the correct version (section 4).
 **Date:** 14 November 2026
 **Owner:** Pavan Charak
 
@@ -38,14 +38,13 @@ Files:
 
 ## 3. Decision (owner, D14)
 
-Version `1.3.0` is confirmed by the owner: "policy is correct" (14 November 2026). The version is confirmed. Checking live callers is still open (section 4).
+Version `1.3.0` is confirmed by the owner: "policy is correct" (14 November 2026). The version is confirmed. The owner also confirmed that live traffic uses it (section 4).
 
 ## 4. Risk to live refunds
 
-This change alters live behaviour. Any request for `razorpay:refund` that declares a policy other than `customer-refund` 1.3.0 will be refused after this change is deployed. Requests that declared an older version (1.0.0, 1.1.0 or 1.2.0) will also be refused. Before merge, confirm:
+This change alters live behaviour: a `razorpay:refund` request that declares a version other than `customer-refund` 1.3.0 is refused after deploy, including 1.0.0, 1.1.0 and 1.2.0.
 
-- which policy version live callers declare;
-- whether those callers can move to 1.3.0 before the change is deployed.
+**Owner statement (14 November 2026):** live traffic already uses the correct version. The owner did not provide log evidence, and this session did not check logs.
 
 ## 5. Rollback
 

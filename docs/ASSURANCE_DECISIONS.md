@@ -197,7 +197,7 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 **Recommendation:** 1.3.0, the latest in the repository.
 
-**Owner decision:** **Policy is correct.** Version 1.3.0 is confirmed. This records the version only. It does not confirm that live callers can move to 1.3.0 (POLICY_BINDING_RAZORPAY.md, section 4). That remains open.
+**Owner decision:** **Policy is correct.** Version 1.3.0 is confirmed. Owner also confirmed that live traffic already uses the correct version, so the caller check in POLICY_BINDING_RAZORPAY.md, section 4 is closed by the owner's statement. The check was not verified against logs in this session.
 
 **Effect on the documents**
 
