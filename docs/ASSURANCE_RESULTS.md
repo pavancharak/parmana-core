@@ -164,6 +164,8 @@ Survivor classification: 0 of 4 classified. The two line-89 mutants are suspecte
 
 **Dated note, 14 November 2026:** the test file from this run is merged as PR #630 (`claude/kms-signer-tests`, merged 12:24 UTC into `main`, merge commit `6df7bd19` is the base it was tested against). The open items above are unchanged; item 1 now needs only the full-suite run on `main`. The stamp fix needed for that run is in PR #631, which is not yet merged.
 
+**Dated correction, 14 November 2026:** the note above says merge commit `6df7bd19` is the base the KMS run was tested against. That is wrong. The run was tested on `72de667` (see the KmsSigner entry). `6df7bd19` is the `main` commit that PR #630 was opened against.
+
 ### Entry template
 
 Copy this for each new run.
