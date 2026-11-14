@@ -66,3 +66,13 @@ Also, an execution is written to the outcome store before its trust record exist
 | D10      | Vendor adapter hash | A for in-repository adapters; B later for external connectors |
 | D11      | Ledger connection   | A (scheduled job), with a measured window; C later if needed  |
 | D12      | Authority version   | B if the registry can enforce immutable IDs; otherwise A      |
+
+## Long-term direction (recommendation, not decided)
+
+These are the recommendations for the long term. They are not decisions. The owner decides D10 to D12.
+
+- **Vendor adapters (D10).** Use a declared mapping per in-repository adapter now, since Parmana controls those mappings and can test them. Connectors outside Parmana's control need attestation (option B), because a mapping cannot show what an external system did. Until external connectors are a real deployment mode, keep option C documented as an explicit gap.
+- **Ledger connection (D11).** Build the scheduled job (option A) first. It does not meet the long-term goal on its own: anyone who can delete records can also delete the job's findings. Only an external anchor (option C) lets an outside party detect removal. Treat C as the target. The claim that a third party can verify evidence depends on it.
+- **Authority version (D12).** Use immutable grant identifiers (option B), enforced by a database constraint rather than by convention. A version field only makes sense if the business needs to reason about versions. Reusing an identifier fails silently and is hard to undo, so the constraint matters more than the choice of option.
+
+**Summary:** A for D10 and D11 now, with C as the D11 target. B for D12, enforced at the database level.

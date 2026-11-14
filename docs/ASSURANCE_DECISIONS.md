@@ -179,3 +179,5 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 **D11, ledger connection.** Choose how reconciliation reads the stored ledger. Recommended: a scheduled job (option A), with the window set from measured write latency, and listing methods added to the outcome and trust-record stores. Owner decision: _[ ] A [ ] B [ ] C [ ] Other_. Window: _____. Listing methods may be added: _[ ] yes [ ] no_
 
 **D12, authority version (AM-04).** Choose how re-issued authority is handled. Recommended: immutable grant identifiers (option B), if the registry can enforce them. Owner decision: _[ ] A (version field) [ ] B (immutable IDs) [ ] C (leave as is)_. Registry can enforce immutable IDs: _[ ] yes [ ] no_
+
+**Long-term recommendation (not a decision):** A now, and B for external connectors later (D10). A now, with an external anchor (C) as the target, because only an anchor lets an outside party detect removal (D11). B, enforced by a database constraint (D12). Details: docs/assurance/OPEN_ITEMS_DESIGN.md.
