@@ -87,3 +87,9 @@ The owner states: "connectorname_policyname_version is capability." No further d
 Code as it stands: capability names are validated as `namespace:verb`, one colon, lowercase letters, digits and hyphens. This is enforced in `packages/api/src/routes/external-connectors.ts` (`CAPABILITY_PATTERN`), `packages/api/src/routes/inbound-checks.ts` and `packages/api/src/routes/authority-grants.ts`. The form `connectorname_policyname_version` does not match that pattern (it uses underscores and has no colon). The connector uses `razorpay:refund`.
 
 Open question for the owner: does "capability" in the owner's statement mean a new naming format, or a label for the combination of connector, policy and version? The answer decides whether the existing validation changes.
+
+## 10. Customers (owner statement, 14 November 2026)
+
+The owner states there are no live customers. So no customer is affected by the binding question, either way, now.
+
+This does not change section 8. Binding `razorpay:refund` to `customer-refund` 1.3.0 would still reject every refund, and the binding would still point at the wrong policy. The risk is to correctness before launch, not to customers today.
