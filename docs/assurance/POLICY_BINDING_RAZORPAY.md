@@ -63,3 +63,19 @@ Two other places the link could live, both to verify before any binding is desig
 - `docs/audit/2026-11-11/STALE-DOCUMENTS.md` and G-66 cite `paytm:refund` to `customer-refund` as an example of the canonical table. That example is stale: the table is empty.
 
 Because the intent name is the policy name, a binding for `razorpay:refund` would name `customer-refund` as both the intent and the policy. Whether the code accepts that equality has not been checked.
+
+## 8. Check of the intent name and the policy (14 November 2026)
+
+The check found that the policy chosen for the binding is not the policy that authorizes Razorpay refunds.
+
+**`customer-refund` 1.3.0 refuses every customer refund.** Its only rule is `reject-all-customer-refunds` (`"condition": { "always": true }`, action `reject`). Its description says Razorpay refunds go through `razorpay-refund`. Binding `razorpay:refund` to it would make every Razorpay refund rejected.
+
+**`razorpay-refund` 1.1.0 is the policy that approves a Razorpay refund** (`policies/razorpay-refund/1.1.0/policy.json`). It requires `paymentRefundable` (a Razorpay signal source, `payment.refundable`, max age 60 s) to be true, and a signed `managerApproved`. It has a reject default. It is the only version in the repo.
+
+So the connection table in section 7 is wrong on the policy. The intent name the owner stated (the policy name) would be `razorpay-refund`, not `customer-refund`.
+
+The owner confirmed `customer-refund` 1.3.0 as correct (D14). That confirmation was made on the basis of this record, which named `customer-refund` as the latest version to bind. The owner should look at it again before it stands.
+
+Intent name check in code: `packages/shared/src/domain/intent.ts` has no `name` or `policy` field, so the code does not link an intent to a policy by name. Whether an intent name equal to the policy name is accepted by any code path was not established.
+
+Not changed: D14 and D15 are the owner's recorded decisions and are left as they stand.
