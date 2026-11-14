@@ -166,3 +166,16 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 | D7       | In scope                       | 2026-11-14 | Recorded in session at owner's direction |
 | D8       | Define as proposed             | 2026-11-14 | Recorded in session at owner's direction |
 | D9       | Reject non-canonical encodings | 2026-11-14 | Recorded in session at owner's direction |
+| D10      | Pending                        |            |                                          |
+| D11      | Pending                        |            |                                          |
+| D12      | Pending                        |            |                                          |
+
+---
+
+## D10 to D12. Open items after the connector and reconciliation work (plan: docs/assurance/OPEN_ITEMS_DESIGN.md)
+
+**D10, vendor adapter hash.** Choose how the in-repository vendor adapters are covered. Recommended: a declared mapping per adapter (option A). External connectors later (option B). Owner decision: _[ ] A [ ] B [ ] C (accept the gap) [ ] Other_
+
+**D11, ledger connection.** Choose how reconciliation reads the stored ledger. Recommended: a scheduled job (option A), with the window set from measured write latency, and listing methods added to the outcome and trust-record stores. Owner decision: _[ ] A [ ] B [ ] C [ ] Other_. Window: _____. Listing methods may be added: _[ ] yes [ ] no_
+
+**D12, authority version (AM-04).** Choose how re-issued authority is handled. Recommended: immutable grant identifiers (option B), if the registry can enforce them. Owner decision: _[ ] A (version field) [ ] B (immutable IDs) [ ] C (leave as is)_. Registry can enforce immutable IDs: _[ ] yes [ ] no_
