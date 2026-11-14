@@ -1,11 +1,12 @@
 import request from "supertest";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import { createApplication } from "../../src/application.js";
 import { createApp } from "../../src/app.js";
 
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
+import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
 
 /**
  * EV-04: no action is authorized without a signed approval from a trusted
@@ -113,4 +114,8 @@ describe("Action without a human approval (HTTP boundary)", () => {
       auditSink.events.filter((event) => event.type === "execution.completed"),
     ).toHaveLength(0);
   });
+});
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
 });

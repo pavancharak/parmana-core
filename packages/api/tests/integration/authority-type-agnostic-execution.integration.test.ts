@@ -1,8 +1,9 @@
 import request from "supertest";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import app from "../test-app.js";
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
+import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
 
 /**
  * Strategic-positioning validation follow-up: "We Are Not in the AI Race"
@@ -132,4 +133,8 @@ describe("Authorization is authority-type-agnostic (AI/human/application/third-p
     // the same status code via a different path.
     expect(novelResponse.body.error).toBe(userResponse.body.error);
   });
+});
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
 });

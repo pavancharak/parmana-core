@@ -202,3 +202,26 @@ The change was made, measured, and then reverted, so the branch stays green.
 Option 1 is the practical route, but it is the same relaxation moved into the test setup, so it needs an explicit decision. The backfill script (`scripts/backfill-legacy-policy-approvals.ts`) creates approvals under a synthetic system identity, and it should not be used as the test fixture without a decision.
 
 **Also outside D19:** the signing-readiness check (`createSigningReadiness`) has its own environment rule, `SIGNING_READINESS_CHECK`. It is not covered by D19 and is unchanged. The doctor check (`packages/shared/src/config/Doctor.ts`) still lists the flag as a known setting; removing it from the list would make the doctor report a misleading typo.
+
+## 19. D19 implemented in the test suite and production code (14 November 2026)
+
+Supersedes section 18's "reverted" state. Branch `claude/d19-governance-everywhere`.
+
+**Done:**
+
+- `createPolicyExecutionVerifier` always returns the governed verifier. The gateway's ungoverned fallback is removed. `policyGovernanceRelaxed.ts` is deleted.
+- `vitest.setup.ts` no longer sets the opt-in flag. Tests run governed.
+- `test-support/policy-governance.ts` (test data only, never imported by production) seeds signed policy-governance approval records through the real `PolicyChangeApprovalService`, in ascending version order, so the highest version of each policy is in effect. `approvePolicyVersion` makes a chosen version in effect, for tests that need an older one.
+- 25 failing test files call the seeding. The production-gateway file approves `access-control` 1.0.0 explicitly.
+- Bug fixed in the in-memory approval repository (`packages/storage/src/memory/MemoryPolicyChangeApprovalRecordRepository.ts`): two approvals in the same millisecond tied, and the earlier one won. Ties now go to the later-inserted record. The Postgres repository orders ties by record id, which is random, so ties there are still unordered. Approvals by people are not normally that close in time, but this is not proven safe.
+- `.env.example`, the handbook (`07-policy-governance-maker-checker.mdx`) and the environment-variable page are updated to the always-on rule.
+
+**Checks:** typecheck exit 0. Full suite (Node 24.22.2): 403 files passed, 29 skipped; 3,948 tests passed, 1 expected fail, 106 skipped. Zero failures.
+
+**Not done:**
+
+1. **Out-of-process harnesses.** These start a separate API server, which has no approval records, so they will now be refused: the three Python live-server tests, `scripts/load-test.ts`, `scripts/run-examples.ts`, `scripts/drills/outage-drill.sh`, the docker smoke test in `.github/workflows/docker-image.yml`, and `examples/tutorials/81-connector-execution-gateway/run.ts` (in-process, not yet checked). They need a real approval path (the maker-checker API or `parmana-ops policy`) run before the server is used. This is a design decision with CI impact; it is not done.
+2. **Internal runbooks and generated files:** `docs/internal/runbooks/ENV-VARIABLE-REFERENCE.md`, `ENV-FILE.md`, `PRODUCTION-ENVIRONMENT.md`, `docs/internal/testing/FAULT-INJECTION.md`, `docs/site/llms-full.txt` (generated), and the claims log. They still describe the relaxation.
+3. **`packages/shared/src/config/Doctor.ts`** still lists the flag as a known setting. Removing it would make the doctor report a misleading typo; a warning that it is ignored would be better. Not changed.
+4. **Signing readiness** (`createSigningReadiness`) has its own environment rule (`SIGNING_READINESS_CHECK`). It is not part of D19 and is unchanged.
+5. **Postgres tie-break** (above).

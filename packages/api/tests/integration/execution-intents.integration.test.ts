@@ -27,6 +27,7 @@ import { StaticKeyAuthenticator } from "../../src/auth/StaticKeyAuthenticator.js
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
 import { testApprovalSignalVerifier } from "../../../../test-support/approvals.js";
+import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
 
 /**
  * HTTP-level proof of ADR-0012 through the real Express app: an Execution
@@ -643,4 +644,8 @@ describe("Execution Intents (G-54, HTTP boundary): closing an intent reconciled 
       "PREPARED",
     );
   });
+});
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
 });

@@ -53,7 +53,7 @@ export class MemoryPolicyChangeApprovalRecordRepository implements PolicyChangeA
     }
 
     return matches.reduce((mostRecent, candidate) =>
-      candidate.approvedAt > mostRecent.approvedAt ? candidate : mostRecent,
+      candidate.approvedAt >= mostRecent.approvedAt ? candidate : mostRecent,
     );
   }
 
@@ -76,7 +76,7 @@ export class MemoryPolicyChangeApprovalRecordRepository implements PolicyChangeA
     }
 
     return matches.reduce((mostRecent, candidate) =>
-      candidate.approvedAt > mostRecent.approvedAt ? candidate : mostRecent,
+      candidate.approvedAt >= mostRecent.approvedAt ? candidate : mostRecent,
     );
   }
 
@@ -91,8 +91,10 @@ export class MemoryPolicyChangeApprovalRecordRepository implements PolicyChangeA
       return null;
     }
 
+    // On an equal approvedAt (two approvals in the same millisecond) the
+    // later-inserted record wins: Map iteration is insertion order.
     return matches.reduce((mostRecent, candidate) =>
-      candidate.approvedAt > mostRecent.approvedAt ? candidate : mostRecent,
+      candidate.approvedAt >= mostRecent.approvedAt ? candidate : mostRecent,
     );
   }
 }

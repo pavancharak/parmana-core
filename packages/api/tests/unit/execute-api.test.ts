@@ -1,8 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import request from "supertest";
 
 import app from "../test-app.js";
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
+import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
+});
 
 describe("POST /execute", () => {
   it("returns a validation error for an invalid Business Transaction ID", async () => {
