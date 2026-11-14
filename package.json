@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "prepare": "git config core.hooksPath scripts/git-hooks || true",
-    "build": "npm run openapi && node node_modules/typescript7/bin/tsc -b && npm run build --workspace=typescript",
+    "build": "npm run openapi && node node_modules/typescript7/bin/tsc -b && tsx scripts/write-dist-stamps.ts && npm run build --workspace=typescript",
     "build:verbose": "node node_modules/typescript7/bin/tsc -b --verbose",
     "build:force": "node node_modules/typescript7/bin/tsc -b --force --verbose",
     "clean": "node node_modules/typescript7/bin/tsc -b --clean",
@@ -45,7 +45,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "pretest": "node node_modules/typescript7/bin/tsc -b && npm run build --workspace=typescript && tsx scripts/check-dist-fresh.ts",
-    "build:packages": "node node_modules/typescript7/bin/tsc -b --force",
+    "build:packages": "node node_modules/typescript7/bin/tsc -b --force && tsx scripts/write-dist-stamps.ts",
     "test": "npm run build:packages && vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
