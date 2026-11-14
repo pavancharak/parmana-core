@@ -19,35 +19,38 @@ import { existsSync } from "node:fs";
 
 const pkg = process.env.STRYKER_PACKAGE;
 if (!pkg) throw new Error("Run through `npm run mutation -- <package>`.");
-if (!/^[a-z0-9-]+$/.test(pkg)) throw new Error(`Invalid package name: ${pkg}`);
+
+const NAME = /^[a-z0-9-]+$/;
+if (!NAME.test(pkg)) throw new Error(`Invalid package name: ${pkg}`);
 
 const reportName = process.env.STRYKER_REPORT_NAME ?? pkg;
-if (!/^[a-z0-9-]+$/.test(reportName)) {
+if (!NAME.test(reportName)) {
   throw new Error(`Invalid STRYKER_REPORT_NAME: ${reportName}`);
 }
 
 const srcPrefix = `packages/${pkg}/src/`;
 
-const targeted = process.env.STRYKER_MUTATE
-  ? process.env.STRYKER_MUTATE.split(",")
-      .map((file) => file.trim())
-      .filter((file) => file !== "")
-  : undefined;
-
-if (targeted !== undefined) {
-  if (targeted.length === 0) {
+/** Splits STRYKER_MUTATE into file paths and checks each one. */
+function parseTargets(value) {
+  const files = value.split(",").map((file) => file.trim());
+  const listed = files.filter((file) => file !== "");
+  if (listed.length === 0) {
     throw new Error("STRYKER_MUTATE is set but names no files.");
   }
-  for (const file of targeted) {
-    if (!file.startsWith(srcPrefix) || file.includes("..") || !file.endsWith(".ts")) {
-      throw new Error(`STRYKER_MUTATE must list .ts files under ${srcPrefix}: ${file}`);
+  for (const file of listed) {
+    const underSrc = file.startsWith(srcPrefix);
+    if (!underSrc || file.includes("..") || !file.endsWith(".ts")) {
+      throw new Error(`STRYKER_MUTATE must list .ts files under ${srcPrefix}`);
     }
     if (!existsSync(file)) {
       throw new Error(`STRYKER_MUTATE file does not exist: ${file}`);
     }
   }
+  return listed;
 }
 
+const requested = process.env.STRYKER_MUTATE;
+const targeted = requested === undefined ? undefined : parseTargets(requested);
 const mutate = targeted ?? [`${srcPrefix}**/*.ts`, `!${srcPrefix}**/index.ts`];
 
 /** @type {import('@stryker-mutator/api/core').PartialStrykerOptions} */
