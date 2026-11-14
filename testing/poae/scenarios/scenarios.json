@@ -1,0 +1,314 @@
+{
+  "schemaVersion": "1.0",
+  "programme": "PoAE",
+  "phase": 2,
+  "statusVocabulary": [
+    "implemented",
+    "elsewhere",
+    "gap",
+    "partial",
+    "not_implemented"
+  ],
+  "scenarios": [
+    {
+      "id": "T01",
+      "category": "authority",
+      "title": "Authority record from an unauthenticated source",
+      "expected": "Deny",
+      "properties": ["P1"],
+      "status": "implemented",
+      "evidence": "AM-03",
+      "blockedBy": null
+    },
+    {
+      "id": "T02",
+      "category": "authority",
+      "title": "Expired authority used to authorize",
+      "expected": "Deny",
+      "properties": ["P1", "P3"],
+      "status": "implemented",
+      "evidence": "AM-01",
+      "blockedBy": null
+    },
+    {
+      "id": "T03",
+      "category": "authority",
+      "title": "Revoked grant used, including from a cached copy",
+      "expected": "Deny",
+      "properties": ["P6"],
+      "status": "implemented",
+      "evidence": "AM-02",
+      "blockedBy": null
+    },
+    {
+      "id": "T04",
+      "category": "authority",
+      "title": "Authority re-issued under the same identifier, or a superseded version used",
+      "expected": "Deny",
+      "properties": ["P3"],
+      "status": "gap",
+      "evidence": null,
+      "blockedBy": "D12"
+    },
+    {
+      "id": "T05",
+      "category": "authorization",
+      "title": "Amount above the authorized limit",
+      "expected": "Deny",
+      "properties": ["P1"],
+      "status": "implemented",
+      "evidence": "XM-01",
+      "blockedBy": null
+    },
+    {
+      "id": "T06",
+      "category": "authorization",
+      "title": "Unauthorized vendor or target",
+      "expected": "Deny",
+      "properties": ["P1"],
+      "status": "implemented",
+      "evidence": "XM-02",
+      "blockedBy": null
+    },
+    {
+      "id": "T07",
+      "category": "authorization",
+      "title": "Policy changed after authorization",
+      "expected": "Reject stale authorization",
+      "properties": ["P1", "P3"],
+      "status": "implemented",
+      "evidence": "XM-03",
+      "blockedBy": null
+    },
+    {
+      "id": "T08",
+      "category": "authorization",
+      "title": "Authorization service unavailable",
+      "expected": "Fail closed",
+      "properties": ["P1"],
+      "status": "implemented",
+      "evidence": "XM-04",
+      "blockedBy": null
+    },
+    {
+      "id": "T09",
+      "category": "authorization",
+      "title": "Execution called directly, bypassing the gateway",
+      "expected": "Deny",
+      "properties": ["P1"],
+      "status": "elsewhere",
+      "evidence": "tests/architecture/execution-boundary.test.ts",
+      "blockedBy": null
+    },
+    {
+      "id": "T10",
+      "category": "authorization",
+      "title": "Agent changes its own authority",
+      "expected": "Deny",
+      "properties": ["P1", "P3"],
+      "status": "not_implemented",
+      "evidence": null,
+      "blockedBy": null
+    },
+    {
+      "id": "T11",
+      "category": "cryptographic",
+      "title": "Evidence record altered after signing",
+      "expected": "Verification fails",
+      "properties": ["P5"],
+      "status": "implemented",
+      "evidence": "CE-01",
+      "blockedBy": null
+    },
+    {
+      "id": "T12",
+      "category": "cryptographic",
+      "title": "Signature bytes altered",
+      "expected": "Reject",
+      "properties": ["P5"],
+      "status": "implemented",
+      "evidence": "CE-02",
+      "blockedBy": null
+    },
+    {
+      "id": "T13",
+      "category": "cryptographic",
+      "title": "Valid signature from a key outside the trust root",
+      "expected": "Reject",
+      "properties": ["P5", "A2"],
+      "status": "implemented",
+      "evidence": "CE-03",
+      "blockedBy": null
+    },
+    {
+      "id": "T14",
+      "category": "cryptographic",
+      "title": "Non-canonical encoding of a valid signature",
+      "expected": "Reject",
+      "properties": ["P5"],
+      "status": "elsewhere",
+      "evidence": "packages/crypto/tests/unit/canonical-signature-encoding.test.ts",
+      "blockedBy": null
+    },
+    {
+      "id": "T15",
+      "category": "cryptographic",
+      "title": "Broken hash chain, or altered previous hash",
+      "expected": "Verification fails",
+      "properties": ["P5"],
+      "status": "not_implemented",
+      "evidence": null,
+      "blockedBy": null
+    },
+    {
+      "id": "T16",
+      "category": "replay",
+      "title": "Approved transaction submitted twice",
+      "expected": "Released once",
+      "properties": ["P4"],
+      "status": "implemented",
+      "evidence": "RT-01",
+      "blockedBy": null
+    },
+    {
+      "id": "T17",
+      "category": "replay",
+      "title": "Nonce reused with different content",
+      "expected": "Deny",
+      "properties": ["P4"],
+      "status": "implemented",
+      "evidence": "RT-02",
+      "blockedBy": null
+    },
+    {
+      "id": "T18",
+      "category": "authorization",
+      "title": "Grant reused by another agent",
+      "expected": "Deny",
+      "properties": ["P1", "P6"],
+      "status": "implemented",
+      "evidence": "RT-04",
+      "blockedBy": null
+    },
+    {
+      "id": "T19",
+      "category": "replay",
+      "title": "Authorization replayed after expiry",
+      "expected": "Deny",
+      "properties": ["P4", "P1"],
+      "status": "implemented",
+      "evidence": "RT-03",
+      "blockedBy": null
+    },
+    {
+      "id": "T20",
+      "category": "correspondence",
+      "title": "Dispatched amount differs from the authorized amount",
+      "expected": "Failed correspondence",
+      "properties": ["P2"],
+      "status": "implemented",
+      "evidence": "EM-02",
+      "blockedBy": null
+    },
+    {
+      "id": "T21",
+      "category": "correspondence",
+      "title": "Dispatched vendor or target differs",
+      "expected": "Failed correspondence",
+      "properties": ["P2"],
+      "status": "implemented",
+      "evidence": "EM-01",
+      "blockedBy": null
+    },
+    {
+      "id": "T22",
+      "category": "infrastructure",
+      "title": "Completed execution's evidence removed from the ledger",
+      "expected": "Detected by reconciliation",
+      "properties": ["P7"],
+      "status": "implemented",
+      "evidence": "CE-04",
+      "blockedBy": null
+    },
+    {
+      "id": "T23",
+      "category": "infrastructure",
+      "title": "Ledger truncated",
+      "expected": "Detected against an independent checkpoint",
+      "properties": ["P7"],
+      "status": "not_implemented",
+      "evidence": null,
+      "blockedBy": null
+    },
+    {
+      "id": "T24",
+      "category": "infrastructure",
+      "title": "Signing key compromised, then rotated",
+      "expected": "Old key refused after revocation",
+      "properties": ["P6", "A1"],
+      "status": "not_implemented",
+      "evidence": null,
+      "blockedBy": null
+    },
+    {
+      "id": "T25",
+      "category": "infrastructure",
+      "title": "Trust root substituted",
+      "expected": "Verification fails against the published root",
+      "properties": ["A2", "P5"],
+      "status": "not_implemented",
+      "evidence": null,
+      "blockedBy": null
+    },
+    {
+      "id": "T26",
+      "category": "infrastructure",
+      "title": "Policy store returns a substituted policy",
+      "expected": "Deny",
+      "properties": ["P3", "A4"],
+      "status": "not_implemented",
+      "evidence": null,
+      "blockedBy": null
+    },
+    {
+      "id": "T27",
+      "category": "infrastructure",
+      "title": "Audit or evidence store write fails",
+      "expected": "No execution without a recorded refusal",
+      "properties": ["P1"],
+      "status": "not_implemented",
+      "evidence": null,
+      "blockedBy": null
+    },
+    {
+      "id": "T28",
+      "category": "correspondence",
+      "title": "Dispatch hash omitted or altered in the record",
+      "expected": "Not passed",
+      "properties": ["P2"],
+      "status": "implemented",
+      "evidence": "EM-04",
+      "blockedBy": null
+    },
+    {
+      "id": "T29",
+      "category": "correspondence",
+      "title": "Connector reports success, but the request it sent differs",
+      "expected": "Detected",
+      "properties": ["P2", "A6"],
+      "status": "partial",
+      "evidence": null,
+      "blockedBy": "D10"
+    },
+    {
+      "id": "T30",
+      "category": "infrastructure",
+      "title": "Revocation propagates late",
+      "expected": "Denied after the defined window",
+      "properties": ["P6"],
+      "status": "not_implemented",
+      "evidence": null,
+      "blockedBy": null
+    }
+  ]
+}
