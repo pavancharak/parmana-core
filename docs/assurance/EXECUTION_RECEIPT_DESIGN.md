@@ -100,3 +100,23 @@ Not done, and needed before the benchmark can run EM-01, EM-02 and EM-04:
 - No independent verifier calls `checkExecutionCorrespondence` yet. The gateway records the field, and the shared check is tested, but no verifier applies it to stored records.
 - A hash at the connector's outbound payload (see limitation above).
 - The benchmark tests have not been run.
+
+## 9. Verifier step (14 November 2026)
+
+Done:
+
+- `checkTrustRecordCorrespondenceOffline(trustRecord)` in `packages/crypto/src/ExecutionCorrespondenceOffline.ts`, exported from `@parmana/crypto`. It is stateless and offline, like `verifyExecutionTrustRecordOffline`. It checks every execution against the authorization the record embeds.
+- Overall status: `failed` if any execution fails; otherwise `not_checked` if there are no executions or any execution cannot be checked; otherwise `passed`. A single unchecked execution never gives `passed`.
+- 8 unit tests in `packages/crypto/tests/unit/execution-correspondence-offline.test.ts`, all passing on Node 24.22.2.
+- `verifyExecutionTrustRecordOffline` is unchanged. Its result shape is not altered. The new check is a separate function, so the existing verifier's behaviour and any frozen-core rule (decision D8) are untouched.
+
+Semantics to state in any paper:
+
+- The correspondence result is meaningful only when the record's signatures also verify. A record changed without re-signing fails the signature check first.
+- The check compares the hashes the record holds. It does not check that the connector sent that content. Connector-level evidence is still open.
+
+Still open:
+
+1. The connector-level hash, at the outbound payload.
+2. CE-04, reconciliation of the ledger against stored evidence.
+3. Running the benchmark, and recording the results, including any failures, in the results log.

@@ -2,7 +2,7 @@
 
 **Status:** Specification only. No test has been run. Every result is "not run" until it is measured.
 **Source:** [PoAE formal security specification v0.1](../../docs/ASSURANCE_TESTING_PLAN.md) (plan Section 12). Threats T01 to T10 and properties POAE-01 to POAE-06 are defined there.
-**Decisions:** D6 to D8 in [ASSURANCE_DECISIONS.md](../../docs/ASSURANCE_DECISIONS.md) were decided on 14 November 2026 (see D6 to D8). Gap tests cannot run until the matching product change is decided and built.
+**Decisions:** D6 to D8 in [ASSURANCE_DECISIONS.md](../../docs/ASSURANCE_DECISIONS.md) were decided on 14 November 2026 (see D6 to D8). Record-level correspondence (EM-01, EM-02, EM-04) is implemented. The connector-level hash and CE-04 are not.
 
 ## Method
 
@@ -21,12 +21,12 @@ Status values:
 
 ## Gaps referenced
 
-| Gap | Missing piece                                                                                                                            | Blocks              |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| G-A | Authority version binding. The grant identifier is present; the version is not.                                                          | AM-04               |
-| G-P | Closed. `policyContentHash` is bound and checked at execution.                                                                           | None                |
-| G-R | Exact correspondence between the authorized and dispatched content hashes. Design revised: `docs/assurance/EXECUTION_RECEIPT_DESIGN.md`. | EM-01, EM-02, EM-04 |
-| G-L | Independent reconciliation of the ledger against evidence                                                                                | CE-04               |
+| Gap | Missing piece                                                                                                                 | Blocks               |
+| --- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| G-A | Authority version binding. The grant identifier is present; the version is not.                                               | AM-04                |
+| G-P | Closed. `policyContentHash` is bound and checked at execution.                                                                | None                 |
+| G-R | Record-level correspondence is implemented (`checkTrustRecordCorrespondenceOffline`). The connector-level hash is still open. | None at record level |
+| G-L | Independent reconciliation of the ledger against evidence                                                                     | CE-04                |
 
 ## The 20 tests
 
@@ -50,12 +50,12 @@ Status values:
 
 ### Execution manipulation (EM)
 
-| ID    | Threat | Property | Mutation                                                     | Expected        | Status       |
-| ----- | ------ | -------- | ------------------------------------------------------------ | --------------- | ------------ |
-| EM-01 | T02    | POAE-03  | Vendor changed between approval and execution                | Deny            | Gap G-R      |
-| EM-02 | T07    | POAE-03  | Amount changed between approval and execution                | Reject mismatch | Gap G-R      |
-| EM-03 | —      | POAE-03  | Execution called directly, bypassing the gateway (attack 44) | Deny            | Testable now |
-| EM-04 | —      | POAE-03  | Receipt omits or alters the action hash                      | Reject          | Gap G-R      |
+| ID    | Threat | Property | Mutation                                                     | Expected        | Status                                                 |
+| ----- | ------ | -------- | ------------------------------------------------------------ | --------------- | ------------------------------------------------------ |
+| EM-01 | T02    | POAE-03  | Vendor changed between approval and execution                | Deny            | Testable at record level. Connector level not covered. |
+| EM-02 | T07    | POAE-03  | Amount changed between approval and execution                | Reject mismatch | Testable at record level. Connector level not covered. |
+| EM-03 | —      | POAE-03  | Execution called directly, bypassing the gateway (attack 44) | Deny            | Testable now                                           |
+| EM-04 | —      | POAE-03  | Record omits or alters the dispatched hash                   | Reject          | Testable at record level                               |
 
 ### Cryptographic evidence manipulation (CE)
 
@@ -81,10 +81,10 @@ Status values:
 | ----------------------------------- | -----: | -----------: | ----: |
 | Authority manipulation              |      4 |            3 |     1 |
 | Authorization manipulation          |      4 |            4 |     0 |
-| Execution manipulation              |      4 |            1 |     3 |
+| Execution manipulation              |      4 |            4 |     0 |
 | Cryptographic evidence manipulation |      4 |            3 |     1 |
 | Replay and temporal attacks         |      4 |            4 |     0 |
-| **Total**                           | **20** |       **15** | **5** |
+| **Total**                           | **20** |       **18** | **2** |
 
 XM-03 is testable now. The policy-change behaviour still needs the decision in plan Section 9, item 3.
 
@@ -105,3 +105,8 @@ Each result must be reported as measured, using `testing/templates/assurance-res
 | ID     | Result  | Commit | Date |
 | ------ | ------- | ------ | ---- |
 | All 20 | Not run |        |      |
+
+## Limits of the record-level tests
+
+- EM-01, EM-02 and EM-04 test the correspondence check on a trust record. They show that a record whose dispatched hash differs from the authorized hash is reported as failed. They do not show that the connector sent what the record claims. A connector-level hash is needed for that.
+- The offline check is only meaningful together with the record's signature check. A record changed without re-signing is caught by the signature check first.
