@@ -205,3 +205,29 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 | ----------------------------------------- | ---------------------------------------------------- |
 | docs/assurance/OPEN_ITEMS.md              | P-5 closed for the version. Caller check still open. |
 | docs/assurance/POLICY_BINDING_RAZORPAY.md | Status and section 3 updated to show the decision.   |
+
+---
+
+## D15. Drop the razorpay:refund policy binding (14 November 2026)
+
+- **Reference:** D15
+- **Source:** docs/assurance/POLICY_BINDING_RAZORPAY.md, section 2
+- **Date recorded:** 2026-11-14
+- **Owner:** Pavan Charak
+
+**Question:** The binding `razorpay:refund` to `customer-refund` 1.3.0 (D14) conflicts with the G-77 classification assertion, which requires every bound capability to be a read. How should this be resolved?
+
+**Options considered:**
+
+1. Relax the G-77 classification assertion, so bound writes are checked by the per-capability test.
+2. Keep the strict assertion, and drop the binding.
+
+**Owner decision:** Option 2. Keep the strict G-77 assertion and drop the binding.
+
+**Effect on the documents**
+
+| Document                                  | Change                                                             |
+| ----------------------------------------- | ------------------------------------------------------------------ |
+| docs/assurance/POLICY_BINDING_RAZORPAY.md | Rewritten: gap stays open; binding dropped; revert state recorded. |
+| docs/assurance/OPEN_ITEMS.md              | P-5 closed as superseded by D15. Razorpay binding row: gap open.   |
+| docs/ASSURANCE_RESULTS.md                 | Dated entry for the revert and the checks run after it.            |

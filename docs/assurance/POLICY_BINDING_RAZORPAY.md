@@ -1,75 +1,48 @@
-# Policy binding: razorpay:refund to customer-refund
+# razorpay:refund and customer-refund: the policy binding gap
 
-**Status:** Implemented on branch `claude/bind-razorpay-refund`. Not merged. The policy version 1.3.0 is confirmed by the owner (D14, in ASSURANCE_DECISIONS.md). There is no live traffic for this capability (section 4).
-**Date:** 14 November 2026
+**Status:** Gap open. The binding attempted on branch `claude/bind-razorpay-refund` was dropped by owner decision D15 (14 November 2026). Nothing binds `razorpay:refund` to a policy in `parmana-core`.
 **Owner:** Pavan Charak
 
 ## 1. The gap
 
-The Razorpay connector in `parmana-connectors` runs one capability, `razorpay:refund` (`RAZORPAY_REFUND_CAPABILITY` in `src/connectors/razorpay/razorpay-connector.ts`). Before this change nothing in `parmana-core` tied that capability to the `customer-refund` policy:
+The Razorpay connector in `parmana-connectors` runs one capability, `razorpay:refund` (`RAZORPAY_REFUND_CAPABILITY` in `src/connectors/razorpay/razorpay-connector.ts`). Nothing in `parmana-core` ties that capability to the `customer-refund` policy:
 
-1. `razorpay:refund` is a built-in connector namespace. External connector registrations refuse built-in namespaces (`packages/api/src/routes/external-connectors.ts`, ADR-0013), so the link could not be made through that route.
-2. The canonical table `CANONICAL_CAPABILITY_POLICY_BINDINGS` in `packages/capability-registry/src/CapabilityPolicyBinding.ts` was empty. Its test asserted that the table had no entries.
-3. The `customer-refund` policies (1.0.0 to 1.3.0 under `policies/customer-refund/`) have no `capability` field, so nothing in the policy names the capability either.
+1. `razorpay:refund` is a built-in connector namespace. External connector registrations refuse built-in namespaces (`packages/api/src/routes/external-connectors.ts`, ADR-0013), so the link cannot be made through that route.
+2. The canonical table `CANONICAL_CAPABILITY_POLICY_BINDINGS` in `packages/capability-registry/src/CapabilityPolicyBinding.ts` is empty.
+3. The `customer-refund` policies (1.0.0 to 1.3.0 under `policies/customer-refund/`) have no `capability` field.
 
-Result: a request for `razorpay:refund` could declare any approved policy, including an unrelated one, and the binder would not refuse it.
+Result: a request for `razorpay:refund` can declare any approved policy, including an unrelated one, and the binder does not refuse it.
 
-Note: the audit note `docs/audit/2026-11-11/gaps/G-27.md` names the capability `razorpay:refund-create`. The connector source uses `razorpay:refund`, so that name is out of date. The binding uses the connector's name.
+Note: the audit note `docs/audit/2026-11-11/gaps/G-27.md` names the capability `razorpay:refund-create`. The connector source uses `razorpay:refund`. The audit note is out of date.
 
-## 2. What changed
+## 2. What was attempted
 
-`CANONICAL_CAPABILITY_POLICY_BINDINGS` now contains one entry:
+Branch `claude/bind-razorpay-refund` (pull request [#635](https://github.com/pavancharak/parmana-core/pull/635)) added a canonical entry binding `razorpay:refund` to `customer-refund` 1.3.0, with four binder tests and an updated canonical-table test. The owner confirmed version 1.3.0 (D14).
 
-| Capability        | Policy            | Version | Schema version |
-| ----------------- | ----------------- | ------- | -------------- |
-| `razorpay:refund` | `customer-refund` | `1.3.0` | `1.0.0`        |
+Running the full suite under Node 24.22.2 showed a conflict with the G-77 guard, `packages/api/tests/unit/connector-policies-not-self-authorizing.test.ts`. Its first assertion requires every bound capability to be in the read set, so any write binding fails it. The per-capability check for `razorpay:refund` passed: the approve rules of `customer-refund` 1.3.0 require a trusted fact. The conflict is in the classification assertion, not in the policy.
 
-`CapabilityPolicyBinder.findViolation("razorpay:refund", declared)` now returns a violation unless `declared` names `customer-refund` at version `1.3.0`.
+## 3. Decision
 
-Files:
+Owner decision D15 (14 November 2026): keep the strict G-77 assertion and drop the binding. The G-77 guard is not changed. The binding is removed from the canonical table, and its tests are removed.
 
-- `packages/capability-registry/src/CapabilityPolicyBinding.ts`: the new entry, with a comment that records the owner's confirmation of the version (D14).
-- `packages/capability-registry/tests/unit/razorpay-refund-binding.test.ts`: new. Four cases:
-  - the bound policy and version are accepted;
-  - the same policy at another version is refused;
-  - an unrelated policy is refused;
-  - a capability with no entry (`paytm:refund`) is unaffected.
-- `packages/capability-registry/tests/unit/CapabilityPolicyBinder.test.ts`: the test that asserted an empty table now asserts that the only entry is `razorpay:refund`, bound to `customer-refund` 1.3.0.
+## 4. State after the revert
 
-## 3. Decision (owner, D14)
+- `CANONICAL_CAPABILITY_POLICY_BINDINGS` is empty, as before the attempt.
+- `CapabilityPolicyBinder.test.ts` and `CapabilityPolicyBinding.ts` match the base commit `d7082f0c`.
+- The binding test file is removed.
+- Checks run after the revert, on the revert commit: `npm run typecheck` exit 0; `vitest run packages/capability-registry packages/api/tests/unit/connector-policies-not-self-authorizing.test.ts` (Node 24.22.2) 3 files, 29 tests, all passed.
 
-Version `1.3.0` is confirmed by the owner: "policy is correct" (14 November 2026). The version is confirmed. The owner also stated that there is no live traffic for this capability (section 4).
+Not run: the full suite after the revert.
 
-## 4. Risk to live refunds
+## 5. What is needed to bind it later
 
-The binding refuses any `razorpay:refund` request that declares a version other than `customer-refund` 1.3.0, including 1.0.0, 1.1.0 and 1.2.0.
+The binding can be added again only after the owner decides how G-77 classifies writes. Options for that decision:
 
-**Owner statement (14 November 2026):** there is no live traffic for `razorpay:refund`. No live caller is affected by the binding. This session did not check logs to confirm this.
+1. Change the classification assertion, so that bound writes are checked by the per-capability test. That test already passes for `razorpay:refund`.
+2. Keep the strict assertion, and find another way to link the capability, such as a policy field or a connector-level binding.
 
-An earlier draft of this record said live traffic already used 1.3.0. That misread the owner's words and is withdrawn.
+The version to bind is 1.3.0 (D14). Live traffic: the owner states there is none for `razorpay:refund`.
 
-## 5. Rollback
+## 6. Commit and signing
 
-Remove the `razorpay:refund` entry from `CANONICAL_CAPABILITY_POLICY_BINDINGS` and revert the test change. The table then returns to its previous empty state, and the binder behaves as it did before. No data migration is needed, because the table is in code.
-
-## 6. Evidence
-
-Run in this session, on `claude/bind-razorpay-refund`, after `npm run build:packages`, using Node 24.22.2:
-
-- `npm run typecheck`: exit 0.
-- `vitest run packages/capability-registry` (Node 24.22.2): 3 files, 32 tests, all passed.
-
-Not run: the full suite, the frozen-core test, and the Razorpay live integration test. None of these were run in this session.
-
-## 7. What this does not prove
-
-- It does not show that the `customer-refund` policy is itself correct for refunds.
-- It does not check the connector's own refund logic. That is covered by `parmana-connectors`.
-- The link is enforced by the binder only. Whether every request path calls the binder is a separate question, not answered here.
-
-## 8. Commit and signing
-
-- Commit: `6b573f63` on `claude/bind-razorpay-refund`, pushed to `origin`. It is based on `d7082f0c`.
-- Sign-off: present (`Signed-off-by`), as CLAUDE.md requires.
-- Signature: **not signed.** Git reported `gpg.ssh.allowedSignersFile needs to be configured and exist` and the commit was made without a signature. CLAUDE.md requires signing where a key is configured, and the `verified-commits` check will fail until this is fixed. The fix is to configure the repository's signing key and re-sign the commit before merge. This session has no signing key.
-- Runtime of the test run: not measured.
+- The commits on the branch are signed off (`Signed-off-by`) but not signed. Git reported that `gpg.ssh.allowedSignersFile` is not configured. The key file `/home/claude/.ssh/commit_signing_key.pub` is empty and no private key is present, so this session cannot sign commits. Signing must be fixed before merge.
