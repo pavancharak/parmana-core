@@ -332,6 +332,12 @@ Full suite on the same commit: a first run had one failure, an existing exact as
 
 ---
 
+### 2026-11-14: dated note on paths in earlier entries
+
+Earlier entries in this log refer to `testing/poae/` and to `docs/assurance/EXECUTION_RECEIPT_DESIGN.md`. Those research files moved to the `parmana-poae-benchmark` repository (`claude/poae-migration`, commit `1ae9801`, README in commit `2f2a30d`) and were removed from this repository in commit `5c7e8c4b`. The earlier entries are not rewritten. The runner, `tests/assurance/poae/poae-benchmark.test.ts`, is unchanged in location and still runs in CI.
+
+---
+
 ### Entry template
 
 Copy this for each new run.
