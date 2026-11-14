@@ -1,4 +1,5 @@
 # Can Tests Detect Broken Trust?
+
 ## Evaluating Cryptographic Integrity Guarantees Through Mutation Testing in Autonomous Systems
 
 **Research Publication — Parmana Systems**
@@ -104,13 +105,13 @@ The intended outcome is a reproducible experimental framework that can be applie
 
 ## 5. Research Hypotheses
 
-| Hypothesis | Expected observation |
-|---|---|
-| H1 | Deliberate mutations to critical cryptographic operations will expose test-suite weaknesses. |
-| H2 | Mutations involving authorization boundaries and fail-closed behaviour will reveal important gaps in security assertions. |
-| H3 | Surviving meaningful mutants will decrease after targeted test improvements. |
-| H4 | Independent verification tests will detect evidence-tampering mutations that ordinary execution tests may miss. |
-| H5 | Repeated mutation testing will provide a measurable basis for comparing test effectiveness across releases. |
+| Hypothesis | Expected observation                                                                                                      |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------- |
+| H1         | Deliberate mutations to critical cryptographic operations will expose test-suite weaknesses.                              |
+| H2         | Mutations involving authorization boundaries and fail-closed behaviour will reveal important gaps in security assertions. |
+| H3         | Surviving meaningful mutants will decrease after targeted test improvements.                                              |
+| H4         | Independent verification tests will detect evidence-tampering mutations that ordinary execution tests may miss.           |
+| H5         | Repeated mutation testing will provide a measurable basis for comparing test effectiveness across releases.               |
 
 These hypotheses will be evaluated against experimental results. They are not assumed to be true in advance. Section 12 states what the current data does and does not show for each.
 
@@ -158,16 +159,16 @@ Examples include:
 
 The following properties define the experimental security boundary.
 
-| Property | Required guarantee |
-|---|---|
+| Property                | Required guarantee                                                          |
+| ----------------------- | --------------------------------------------------------------------------- |
 | Serialization integrity | Equivalent structured inputs produce the required canonical representation. |
-| Hash integrity | Hashes correspond to the intended canonical bytes. |
-| Signature integrity | Invalid signatures are rejected. |
-| Trust integrity | Untrusted signing keys are not accepted. |
-| Authorization integrity | Actions outside declared authority are rejected. |
-| Expiry integrity | Expired authorization material is rejected. |
-| Chain integrity | Invalid predecessor hashes are detected. |
-| Failure integrity | Verification failures cannot silently authorize execution. |
+| Hash integrity          | Hashes correspond to the intended canonical bytes.                          |
+| Signature integrity     | Invalid signatures are rejected.                                            |
+| Trust integrity         | Untrusted signing keys are not accepted.                                    |
+| Authorization integrity | Actions outside declared authority are rejected.                            |
+| Expiry integrity        | Expired authorization material is rejected.                                 |
+| Chain integrity         | Invalid predecessor hashes are detected.                                    |
+| Failure integrity       | Verification failures cannot silently authorize execution.                  |
 
 ### 7.3 Out-of-scope threats
 
@@ -276,19 +277,19 @@ The experiment must avoid changing the baseline implementation and test configur
 
 The following matrix defines the initial test campaign.
 
-| ID | Mutation scenario | Expected behaviour |
-|---|---|---|
-| M01 | Change SHA-256 input | Integrity verification detects mismatch. |
-| M02 | Remove canonicalization | Canonical representation tests fail. |
-| M03 | Alter canonical JSON output | Verification detects inconsistent representation. |
-| M04 | Bypass signature verification | Invalid signatures are rejected by tests. |
-| M05 | Accept an untrusted key | Trust validation fails. |
-| M06 | Remove expiry validation | Expired authorization is rejected. |
-| M07 | Weaken authorization comparison | Out-of-scope action is rejected. |
-| M08 | Ignore predecessor hash | Broken evidence chain is rejected. |
-| M09 | Modify a previously recorded entry | Evidence verification detects tampering. |
-| M10 | Change verification failure to acceptance | Fail-closed tests fail. |
-| M11 | Remove a required policy condition | Policy integrity tests fail. |
+| ID  | Mutation scenario                             | Expected behaviour                                        |
+| --- | --------------------------------------------- | --------------------------------------------------------- |
+| M01 | Change SHA-256 input                          | Integrity verification detects mismatch.                  |
+| M02 | Remove canonicalization                       | Canonical representation tests fail.                      |
+| M03 | Alter canonical JSON output                   | Verification detects inconsistent representation.         |
+| M04 | Bypass signature verification                 | Invalid signatures are rejected by tests.                 |
+| M05 | Accept an untrusted key                       | Trust validation fails.                                   |
+| M06 | Remove expiry validation                      | Expired authorization is rejected.                        |
+| M07 | Weaken authorization comparison               | Out-of-scope action is rejected.                          |
+| M08 | Ignore predecessor hash                       | Broken evidence chain is rejected.                        |
+| M09 | Modify a previously recorded entry            | Evidence verification detects tampering.                  |
+| M10 | Change verification failure to acceptance     | Fail-closed tests fail.                                   |
+| M11 | Remove a required policy condition            | Policy integrity tests fail.                              |
 | M12 | Change signature verification result handling | Invalid verification outcomes cannot authorize execution. |
 
 These are semantic test scenarios. The actual generated mutants and their source locations must be recorded separately. A mutation operator does not necessarily generate every scenario in this table. The campaign reported in Section 11 was not organised around these scenarios, so Section 11 does not show which of M01–M12 the generated mutants covered.
@@ -317,15 +318,15 @@ The Stryker score reported in Section 11 counts caught mutants (killed plus time
 
 ### 10.2 Secondary metrics
 
-| Metric | Purpose |
-|---|---|
-| Mutant kill rate | Measures detected mutations. |
-| Survival rate | Identifies mutations not detected by tests. |
-| Equivalent mutant rate | Measures non-meaningful generated mutations. |
-| Timeout rate | Identifies inconclusive executions. |
+| Metric                      | Purpose                                                                   |
+| --------------------------- | ------------------------------------------------------------------------- |
+| Mutant kill rate            | Measures detected mutations.                                              |
+| Survival rate               | Identifies mutations not detected by tests.                               |
+| Equivalent mutant rate      | Measures non-meaningful generated mutations.                              |
+| Timeout rate                | Identifies inconclusive executions.                                       |
 | Critical invariant coverage | Measures whether each defined integrity property has corresponding tests. |
-| Regression effectiveness | Measures whether previously surviving mutants are now detected. |
-| Reproducibility | Measures whether repeated experiments produce consistent outcomes. |
+| Regression effectiveness    | Measures whether previously surviving mutants are now detected.           |
+| Reproducibility             | Measures whether repeated experiments produce consistent outcomes.        |
 
 ### 10.3 Invariant-level measurement
 
@@ -361,16 +362,16 @@ Execution command:
 
 `npm run mutation -- crypto`
 
-| Measurement | Observed value |
-|---|---:|
-| Mutants generated | 1,316 |
-| Killed by tests | 1,185 |
-| Timed out (counted as caught) | 30 |
-| Survived | 101 |
-| Caught (killed plus timed out) | 1,215 |
-| Stryker mutation score (caught / generated) | 92.3% |
-| Runtime | Node 24.18 |
-| Duration | 92 minutes |
+| Measurement                                 | Observed value |
+| ------------------------------------------- | -------------: |
+| Mutants generated                           |          1,316 |
+| Killed by tests                             |          1,185 |
+| Timed out (counted as caught)               |             30 |
+| Survived                                    |            101 |
+| Caught (killed plus timed out)              |          1,215 |
+| Stryker mutation score (caught / generated) |          92.3% |
+| Runtime                                     |     Node 24.18 |
+| Duration                                    |     92 minutes |
 
 The 92.3% figure is the Stryker score. It is not yet the MS value defined in Section 10.1, because equivalent mutants have not been classified for this campaign.
 
@@ -378,17 +379,17 @@ The 92.3% figure is the Stryker score. It is not yet the MS value defined in Sec
 
 The campaign report lists nine files. Survivors in those files, lowest score first:
 
-| File | Score | Survived |
-|---|---:|---:|
-| `KeyGeneration.ts` | 73.1% | 25 |
-| `CallerAuditChainVerifier.ts` | 63.8% | 21 |
-| `AuthorizationSigner.ts` | 67.7% | 21 |
-| `KeyBootstrap.ts` | 64.3% | 5 |
-| `CryptoBootstrap.ts` | 61.1% | 7 |
-| `ExecutionIntentCrypto.ts` | 66.7% | 3 |
-| `CryptoError.ts` | 33.3% | 2 |
-| `KeyProvider.ts` | 100% | 0 |
-| `KmsSigner.ts` | 100% | 0 |
+| File                          | Score | Survived |
+| ----------------------------- | ----: | -------: |
+| `KeyGeneration.ts`            | 73.1% |       25 |
+| `CallerAuditChainVerifier.ts` | 63.8% |       21 |
+| `AuthorizationSigner.ts`      | 67.7% |       21 |
+| `KeyBootstrap.ts`             | 64.3% |        5 |
+| `CryptoBootstrap.ts`          | 61.1% |        7 |
+| `ExecutionIntentCrypto.ts`    | 66.7% |        3 |
+| `CryptoError.ts`              | 33.3% |        2 |
+| `KeyProvider.ts`              |  100% |        0 |
+| `KmsSigner.ts`                |  100% |        0 |
 
 These nine files account for 84 of the 101 survivors. The remaining 17 survivors are in files not itemised in the current report. They have not been reviewed for this draft.
 
