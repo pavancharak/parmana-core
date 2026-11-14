@@ -196,37 +196,37 @@ This section records a check of the proposal "Parmana Verification and Assurance
 
 ### 11.1 Claims checked
 
-| Claim in proposal | Result | Evidence |
-| --- | --- | --- |
-| Mutation testing is "already running" | Out of date. The crypto run is complete. | Section 2; results log entry 2026-11-14 |
-| Packages are `@parmanasystems/crypto`, `verifier`, `governance`, `execution`, `bundle`, `server`, `audit-db` | Incorrect. Names are `@parmana/*`. Six of the seven have no directory under that name. | `packages/*/package.json` |
-| `@parmana/verifier` is the independent verifier | Incorrect name. The package is `@parmana/envelope-verifier`. | `packages/envelope-verifier/package.json` |
-| fast-check should be added | Already a dependency and in use. | Root `package.json`; Section 2 |
-| Property-based tests for canonical JSON and signatures are needed | Partly in place. A canonical-serializer property test and an offline-verifier fuzz test exist. | Section 2 |
-| RFC 8785 vectors are needed | A test file exists. Vector coverage not reviewed. | `canonical-serializer-rfc8785.test.ts` |
-| Fuzzing of parsers and inputs is needed | Fuzz tests exist for policy, approval, api and crypto. Coverage not reviewed. | Section 2 |
-| Chain-head check is uncovered | Gap confirmed by the mutation run and still open. Tests reference `CallerAuditChainVerifier`, but whether any covers the chain-head check has not been confirmed. | Section 2; results log open item 1 |
-| Semgrep, OWASP ZAP, Socket and OSS-Fuzz are recommended | Not in CI. Semgrep and ZAP do not appear anywhere in the repository. OSS-Fuzz appears only in this plan. Socket appears only in a handbook page. | Repository search |
-| Probe-style tests for bypass and kill switch | Workflows exist. Their scope is not reviewed. | Section 2 |
-| Concurrency, fault injection and load are needed | Confirmed. Phase 4 covers them. | Section 5, Phase 4 |
-| Reproducibility is needed | Confirmed. Phase 5 covers it. | Section 5, Phase 5 |
+| Claim in proposal                                                                                            | Result                                                                                                                                                            | Evidence                                  |
+| ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| Mutation testing is "already running"                                                                        | Out of date. The crypto run is complete.                                                                                                                          | Section 2; results log entry 2026-11-14   |
+| Packages are `@parmanasystems/crypto`, `verifier`, `governance`, `execution`, `bundle`, `server`, `audit-db` | Incorrect. Names are `@parmana/*`. Six of the seven have no directory under that name.                                                                            | `packages/*/package.json`                 |
+| `@parmana/verifier` is the independent verifier                                                              | Incorrect name. The package is `@parmana/envelope-verifier`.                                                                                                      | `packages/envelope-verifier/package.json` |
+| fast-check should be added                                                                                   | Already a dependency and in use.                                                                                                                                  | Root `package.json`; Section 2            |
+| Property-based tests for canonical JSON and signatures are needed                                            | Partly in place. A canonical-serializer property test and an offline-verifier fuzz test exist.                                                                    | Section 2                                 |
+| RFC 8785 vectors are needed                                                                                  | A test file exists. Vector coverage not reviewed.                                                                                                                 | `canonical-serializer-rfc8785.test.ts`    |
+| Fuzzing of parsers and inputs is needed                                                                      | Fuzz tests exist for policy, approval, api and crypto. Coverage not reviewed.                                                                                     | Section 2                                 |
+| Chain-head check is uncovered                                                                                | Gap confirmed by the mutation run and still open. Tests reference `CallerAuditChainVerifier`, but whether any covers the chain-head check has not been confirmed. | Section 2; results log open item 1        |
+| Semgrep, OWASP ZAP, Socket and OSS-Fuzz are recommended                                                      | Not in CI. Semgrep and ZAP do not appear anywhere in the repository. OSS-Fuzz appears only in this plan. Socket appears only in a handbook page.                  | Repository search                         |
+| Probe-style tests for bypass and kill switch                                                                 | Workflows exist. Their scope is not reviewed.                                                                                                                     | Section 2                                 |
+| Concurrency, fault injection and load are needed                                                             | Confirmed. Phase 4 covers them.                                                                                                                                   | Section 5, Phase 4                        |
+| Reproducibility is needed                                                                                    | Confirmed. Phase 5 covers it.                                                                                                                                     | Section 5, Phase 5                        |
 
 ### 11.2 Mapping the 12 categories to the plan
 
-| Category in proposal | Where it sits in this plan | Gap |
-| --- | --- | --- |
-| 1. Mutation | Phase 1 | Survivor classification |
-| 2. Property-based | Phase 1, item 3 | Complete suite not yet written |
-| 3. Fuzz | Phase 3, item 2 | None yet beyond existing fuzz tests |
-| 4. Cryptographic verification | Phase 1, items 4–5 | Cross-verification suite |
-| 5. Authorization boundary | Phase 2, item 1; Section 6 | Automation |
-| 6. Adversarial security | Phase 3, items 1 and 3 | API, static and dependency scans |
-| 7. Integration | Not in plan | Gap. Proposed in 11.4. |
-| 8. End-to-end | Not in plan | Gap. Proposed in 11.4. |
-| 9. Concurrency | Phase 4, item 1 | Real storage tests |
-| 10. Fault injection | Phase 2, item 3; Phase 4, item 2 | Harness |
-| 11. Performance and load | Phase 4, item 3 | None yet |
-| 12. Reproducibility | Phase 5, item 1 | None yet |
+| Category in proposal          | Where it sits in this plan       | Gap                                 |
+| ----------------------------- | -------------------------------- | ----------------------------------- |
+| 1. Mutation                   | Phase 1                          | Survivor classification             |
+| 2. Property-based             | Phase 1, item 3                  | Complete suite not yet written      |
+| 3. Fuzz                       | Phase 3, item 2                  | None yet beyond existing fuzz tests |
+| 4. Cryptographic verification | Phase 1, items 4–5               | Cross-verification suite            |
+| 5. Authorization boundary     | Phase 2, item 1; Section 6       | Automation                          |
+| 6. Adversarial security       | Phase 3, items 1 and 3           | API, static and dependency scans    |
+| 7. Integration                | Not in plan                      | Gap. Proposed in 11.4.              |
+| 8. End-to-end                 | Not in plan                      | Gap. Proposed in 11.4.              |
+| 9. Concurrency                | Phase 4, item 1                  | Real storage tests                  |
+| 10. Fault injection           | Phase 2, item 3; Phase 4, item 2 | Harness                             |
+| 11. Performance and load      | Phase 4, item 3                  | None yet                            |
+| 12. Reproducibility           | Phase 5, item 1                  | None yet                            |
 
 Integration and end-to-end testing are the only categories without a home in the plan. They are not adopted here.
 
@@ -259,15 +259,15 @@ Checked on 14 November 2026 against the public repository (`google-deepmind/code
 
 **Verified**
 
-| Claim | Result |
-| --- | --- |
-| Lean 4 formalizations of Signal `libsignal` security proofs | Verified |
-| Two arguments: symbolic (Dolev–Yao) and computational (game-based) | Verified |
-| Security claim for compiled AArch64 machine code | Verified, with a narrower scope. The README says "two AI-generated proofs of security" for a CLI harness "with hooked cryptographic primitives". |
-| Toolchain: Lean 4.34.0, Rust 1.98.1, LLVM `ld.lld` 22.1.8, Zig 0.16.0 | Verified |
-| Full build: several hours, about 15–34 GiB peak RAM | Verified |
-| Lean Comparator: checks statement match, allowed axioms (`propext`, `Quot.sound`, `Classical.choice`) and replay in a fresh kernel | Verified. Linux only, because it uses Landlock sandboxing. |
-| Non-vacuity | Partly verified. The term appears in the deviation register (DEV-PQ3, "proved non-vacuity on reachable/honest states"). Its general use as a principle is not confirmed. |
+| Claim                                                                                                                                          | Result                                                                                                                                                                                                                                                                   |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Lean 4 formalizations of Signal `libsignal` security proofs                                                                                    | Verified                                                                                                                                                                                                                                                                 |
+| Two arguments: symbolic (Dolev–Yao) and computational (game-based)                                                                             | Verified                                                                                                                                                                                                                                                                 |
+| Security claim for compiled AArch64 machine code                                                                                               | Verified, with a narrower scope. The README says "two AI-generated proofs of security" for a CLI harness "with hooked cryptographic primitives".                                                                                                                         |
+| Toolchain: Lean 4.34.0, Rust 1.98.1, LLVM `ld.lld` 22.1.8, Zig 0.16.0                                                                          | Verified                                                                                                                                                                                                                                                                 |
+| Full build: several hours, about 15–34 GiB peak RAM                                                                                            | Verified                                                                                                                                                                                                                                                                 |
+| Lean Comparator: checks statement match, allowed axioms (`propext`, `Quot.sound`, `Classical.choice`) and replay in a fresh kernel             | Verified. Linux only, because it uses Landlock sandboxing.                                                                                                                                                                                                               |
+| Non-vacuity                                                                                                                                    | Partly verified. The term appears in the deviation register (DEV-PQ3, "proved non-vacuity on reachable/honest states"). Its general use as a principle is not confirmed.                                                                                                 |
 | Bug injection examples: dropped post-quantum ratchet key, leaked authentication key, retained rotated-out keys, skipped message authentication | **Not verified.** The cited page does not contain these. It documents two upstream bugs (removal of `EdwardsPoint::is_torsion_free`, and an SPQR chain key read without commitment) and synthetic mutants it does not list. Do not cite the four examples as DeepMind's. |
 
 **Omitted from the proposal, and relevant to Parmana**

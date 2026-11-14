@@ -24,19 +24,19 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 **Recommendation:** ATS-001 to ATS-012 governs. Map the plan's eight principles onto it, and add the four missing principles (trust, revocation, evidence, supply chain) to plan Section 7 by reference.
 
-| Plan principle | ATS ID |
-|---|---|
-| Determinism | ATS-001 |
-| Authorization | ATS-002 |
-| Integrity | ATS-003 |
-| Verification | ATS-004 |
-| Isolation | ATS-006 |
-| Concurrency | ATS-008 |
-| Fail-closed | ATS-009 |
-| Reproducibility | ATS-011 |
-| _(not in plan)_ Trust | ATS-005 |
-| _(not in plan)_ Revocation | ATS-007 |
-| _(not in plan)_ Evidence | ATS-010 |
+| Plan principle               | ATS ID  |
+| ---------------------------- | ------- |
+| Determinism                  | ATS-001 |
+| Authorization                | ATS-002 |
+| Integrity                    | ATS-003 |
+| Verification                 | ATS-004 |
+| Isolation                    | ATS-006 |
+| Concurrency                  | ATS-008 |
+| Fail-closed                  | ATS-009 |
+| Reproducibility              | ATS-011 |
+| _(not in plan)_ Trust        | ATS-005 |
+| _(not in plan)_ Revocation   | ATS-007 |
+| _(not in plan)_ Evidence     | ATS-010 |
 | _(not in plan)_ Supply chain | ATS-012 |
 
 **Owner decision:** **ATS list governs.**
@@ -60,14 +60,14 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 **Owner decision:** **Accept the recommendation.**
 
-| Item | Decision |
-|---|---|
-| Integration testing | Add now |
-| End-to-end (one payment test) | Add now, as one test |
-| Credential scope, tenant isolation | Add in Phase 2 |
-| Fail-closed partial execution | Add in Phase 2 |
-| Concurrency: revocation, policy change | Add in Phase 4 |
-| Supply chain as release gate | Add in Phase 5 |
+| Item                                   | Decision             |
+| -------------------------------------- | -------------------- |
+| Integration testing                    | Add now              |
+| End-to-end (one payment test)          | Add now, as one test |
+| Credential scope, tenant isolation     | Add in Phase 2       |
+| Fail-closed partial execution          | Add in Phase 2       |
+| Concurrency: revocation, policy change | Add in Phase 4       |
+| Supply chain as release gate           | Add in Phase 5       |
 
 **Notes:** Nothing starts before Phase 2 is underway.
 
@@ -102,10 +102,10 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 ## Record
 
-| Decision | Owner decision | Date | Recorded by |
-|---|---|---|---|
-| D1 | Adopt (candidate mappings still open) | 2026-11-14 | Recorded in session at owner's direction |
-| D2 | ATS list governs | 2026-11-14 | Recorded in session at owner's direction |
-| D3 | Accept recommendation | 2026-11-14 | Recorded in session at owner's direction |
-| D4 | (a) Yes; (b) yes, boundary suites | 2026-11-14 | Recorded in session at owner's direction |
-| D5 | Revisit after Phase 2 | 2026-11-14 | Recorded in session at owner's direction |
+| Decision | Owner decision                        | Date       | Recorded by                              |
+| -------- | ------------------------------------- | ---------- | ---------------------------------------- |
+| D1       | Adopt (candidate mappings still open) | 2026-11-14 | Recorded in session at owner's direction |
+| D2       | ATS list governs                      | 2026-11-14 | Recorded in session at owner's direction |
+| D3       | Accept recommendation                 | 2026-11-14 | Recorded in session at owner's direction |
+| D4       | (a) Yes; (b) yes, boundary suites     | 2026-11-14 | Recorded in session at owner's direction |
+| D5       | Revisit after Phase 2                 | 2026-11-14 | Recorded in session at owner's direction |
