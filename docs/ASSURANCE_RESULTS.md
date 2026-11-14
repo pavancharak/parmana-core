@@ -11,13 +11,13 @@ This log records assurance test runs against the plan in
 
 ## Phase status
 
-| Phase                      | Status      | Notes                                                                                                                                                                                                  |
-| -------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1. Cryptographic assurance | In progress | Crypto re-run 14 Nov: 91.3% on origin/main (114 survived, not yet classified). KMS signer tests added; KmsSigner-only run leaves 4 survivors. Full-suite re-run and chain-head check still to confirm. |
-| 2. Authorization assurance | Not started |                                                                                                                                                                                                        |
-| 3. Adversarial assurance   | Not started |                                                                                                                                                                                                        |
-| 4. Operational assurance   | Not started |                                                                                                                                                                                                        |
-| 5. Release assurance       | Not started |                                                                                                                                                                                                        |
+| Phase                      | Status      | Notes                                                                                                                                                                                                                                     |
+| -------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Cryptographic assurance | In progress | Crypto re-run 14 Nov: 91.3% on origin/main (114 survived, not yet classified). KMS signer tests merged (PR #630). KmsSigner-only run leaves 4 survivors. Full-suite re-run and chain-head check still to confirm. Stamp-fix PR #631 open. |
+| 2. Authorization assurance | Not started |                                                                                                                                                                                                                                           |
+| 3. Adversarial assurance   | Not started |                                                                                                                                                                                                                                           |
+| 4. Operational assurance   | Not started |                                                                                                                                                                                                                                           |
+| 5. Release assurance       | Not started |                                                                                                                                                                                                                                           |
 
 ## Entries
 
@@ -161,6 +161,8 @@ Survivor classification: 0 of 4 classified. The two line-89 mutants are suspecte
 1. Re-run the full crypto suite with `kms-signer.survivors.test.ts` in place, and re-measure `KmsSigner.ts` in the full run.
 2. Write a test for the line-318 cache cleanup. It needs a cache entry that is replaced before an older load fails, which requires fake timers to pass the cache TTL.
 3. Confirm the two line-89 mutants are equivalent before recording them as such.
+
+**Dated note, 14 November 2026:** the test file from this run is merged as PR #630 (`claude/kms-signer-tests`, merged 12:24 UTC into `main`, merge commit `6df7bd19` is the base it was tested against). The open items above are unchanged; item 1 now needs only the full-suite run on `main`. The stamp fix needed for that run is in PR #631, which is not yet merged.
 
 ### Entry template
 
