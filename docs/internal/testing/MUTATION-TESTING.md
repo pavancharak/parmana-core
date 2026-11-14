@@ -192,18 +192,3 @@ What the survivors show:
 
 The full reports are written by the run to `reports/mutation/crypto.html` and `crypto.json`, which
 are gitignored.
-
-## What is left
-
-The remaining survivors are, in nearly every case, one of:
-
-- **Equivalent:** a guard that a later check repeats (the gateway's `passed &&` before each
-  check), a check that cannot be reached because an earlier one already refused (the key file
-  containment check in `FileKeyProvider`), or a fallback that gives the same answer (the
-  envelope verifier's checks when no key resolves).
-- **Advisory:** `PolicyValidator.findRuleConflicts`, which only logs possible rule overlaps.
-- **Text:** wording and plural forms in error messages, request formatting in the built in
-  connectors.
-
-Survivors in a check that refuses an action were each given a test, checked by putting the
-change back by hand.
