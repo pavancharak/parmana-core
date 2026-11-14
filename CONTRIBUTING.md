@@ -13,6 +13,10 @@ Thank you for helping. Parmana decides whether an automated action may run, and 
 
 1. Install **Node.js 24**. On Node 22 the build passes but tests fail: the `distrustCompromisedRoots` tests expect Node's bundled root certificates, and the `re2` native module built for Node 22 does not load under Node 24. If you switch Node versions after `npm ci`, run `npm rebuild re2`.
 2. Run `npm ci`. Its `prepare` step points Git at the hooks in `scripts/git-hooks`.
+   `npm test` and `npm run mutation` rebuild the workspace packages first with
+   `npm run build:packages` (TypeScript project references, so packages build in dependency
+   order). Tests import packages through `dist/`, so run `npm run build:packages` by hand after
+   changing a package's source and before running a script that imports it directly.
 3. Install [gitleaks](https://github.com/gitleaks/gitleaks#installing) or Docker. The pre-commit hook scans staged files for secrets with one of them, and refuses the commit if neither is available. Do not skip it with `--no-verify` unless you have reviewed the staged files yourself.
 4. For the database tests, start the local Postgres service and apply the migrations:
 
