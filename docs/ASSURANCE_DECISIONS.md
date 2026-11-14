@@ -140,7 +140,7 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 **Recommendation:** Define it in writing before relying on the rule. The definition should list the files and the change process. No file should be frozen until it is listed.
 
-**Owner decision:** **Define as proposed.** Keep the list small, and review it once a year.
+**Owner decision:** **Define as proposed.** Confirmed 14 November 2026 with the draft list in docs/assurance/COVERAGE_REGISTER.md, section 3.
 **Notes:**
 
 ---

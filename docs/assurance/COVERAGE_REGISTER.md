@@ -26,7 +26,7 @@
 - XM-01 and XM-02 test the content hash, not a policy limit or an approved vendor list.
 - EM-01, EM-02 and EM-04 are record-level tests.
 
-## 3. Frozen cryptographic core (draft for owner confirmation, D8)
+## 3. Frozen cryptographic core (confirmed 14 November 2026, D8)
 
 These files would be frozen. A change needs an owner review and new test vectors:
 
@@ -40,7 +40,7 @@ These files would be frozen. A change needs an owner review and new test vectors
 
 Not frozen: `ExecutionCorrespondenceOffline.ts`, which is new and additive.
 
-The list is a draft. It is not enforced until the owner confirms it.
+Confirmed by the owner under D8. It is not yet enforced by a test; enforcing it is a separate step.
 
 ## 4. Open items
 
