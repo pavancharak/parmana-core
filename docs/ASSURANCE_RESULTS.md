@@ -222,6 +222,43 @@ Passed: AM-01, XM-01, XM-02, RT-01, RT-02, RT-03, CE-03, EM-01 (record level), E
 
 ---
 
+### 2026-11-14: PoAE benchmark re-run after decision D9
+
+- **Command:** `npm run build:packages`, then `node_modules/vitest/vitest.mjs run tests/assurance/poae`, then the full suite `node_modules/vitest/vitest.mjs run`. Both under Node 24.22.2.
+- **Runtime:** Node 24.22.2, vitest 5.1.0, Linux container. Full-suite duration as reported by vitest.
+- **Commit tested:** `035e1697715da917899eaf4cb7112a5fb4393020`
+- **Branch:** `claude/lucid-sagan-1gs4xj`
+- **Run by:** session (Claude Code), at the owner's direction
+
+**Results**
+
+| Measurement                                 |                                                      Value |
+| ------------------------------------------- | ---------------------------------------------------------: |
+| PoAE benchmark tests implemented            |                                                         11 |
+| PoAE benchmark: passed                      |                                                         11 |
+| PoAE benchmark: failed                      |                                                          0 |
+| Not run (no change from the previous entry) |                                                          9 |
+| Full suite: test files passed               |                                           401 (29 skipped) |
+| Full suite: tests passed                    | 3951 (106 skipped, 1 expected fail, from an existing test) |
+| Full suite: failed                          |                                                          0 |
+
+CE-02 now passes. The fix rejects non-canonical base64 signature encodings. The previous entry (commit `d7b4e48d`) recorded the failure and is unchanged.
+
+**Limits:** unchanged from the previous entry. XM-01 and XM-02 test the content hash. EM tests are record-level. The legacy policy path is used. One run only.
+
+**Survivor classification:** not applicable. No mutation run.
+
+**Open items**
+
+1. Implement the seven testable benchmark tests not yet in the runner: AM-02, AM-03, XM-03, XM-04, EM-03, CE-01, RT-04.
+2. XM-03 must run with the policy binding enabled.
+3. The connector-level hash, so the EM results cover the outbound request.
+4. Ledger reconciliation for CE-04 (gap G-L).
+
+**Phase status change:** none.
+
+---
+
 ### Entry template
 
 Copy this for each new run.

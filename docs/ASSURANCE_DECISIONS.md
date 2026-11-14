@@ -155,14 +155,14 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 **Recommendation:** Reject non-canonical encodings: decode the signature, re-encode it, and compare with the input. This is a small change, but it is in the verifier, so it needs review. Check first whether any stored record or receipt hashes the signature string, since such a change would alter those hashes.
 
-**Owner decision:** _[ ] Reject non-canonical encodings [ ] Accept as is, with a documented note [ ] Other_
+**Owner decision:** **Reject non-canonical encodings.** Implemented in `035e1697`.
 **Notes:**
 
 ## Record (PoAE)
 
-| Decision | Owner decision          | Date       | Recorded by                              |
-| -------- | ----------------------- | ---------- | ---------------------------------------- |
-| D6       | Separate research track | 2026-11-14 | Recorded in session at owner's direction |
-| D7       | In scope                | 2026-11-14 | Recorded in session at owner's direction |
-| D8       | Define as proposed      | 2026-11-14 | Recorded in session at owner's direction |
-| D9       | Pending                 |            |                                          |
+| Decision | Owner decision                 | Date       | Recorded by                              |
+| -------- | ------------------------------ | ---------- | ---------------------------------------- |
+| D6       | Separate research track        | 2026-11-14 | Recorded in session at owner's direction |
+| D7       | In scope                       | 2026-11-14 | Recorded in session at owner's direction |
+| D8       | Define as proposed             | 2026-11-14 | Recorded in session at owner's direction |
+| D9       | Reject non-canonical encodings | 2026-11-14 | Recorded in session at owner's direction |
