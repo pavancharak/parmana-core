@@ -11,7 +11,12 @@ Parmana authorizes AI-agent actions that move money or change data, and proves a
 
 This is an overview from the code, not a full trace.
 
-1. **Declare.** A caller sends a Business Transaction: the authority (who is asking), the action (a capability such as `razorpay:refund`), its parameters (for example the amount), and the policy name and version it relies on. The caller's API key identifies it. The key's holder type (human or service) is recorded when the key is issued.
+1. **Declare.** The caller sends one request, `POST /transactions`, with a Business Transaction. Declaring and executing are one call in the code: the handler passes the transaction straight to execution, and there is no separate stored declare step. The request has these parts:
+   - **Caller identity.** The `Authorization` key identifies the caller (`callerId`). It does not identify the transaction. The key's holder type (human or service) is set by the operator when the key is issued. If it is absent, the key is treated as non-human.
+   - **Authority.** `authority.principalId` and `authority.authorityType` are asserted by the caller. The server checks only that the key is allowed to assert that principal.
+   - **Action and parameters.** `intent.action` is the capability, such as `razorpay:refund`. `intent.parameters` (for example the amount) are supplied by the caller. The policy uses only the parameters bound to its signals.
+   - **Policy.** `policy.name` and `policy.version` are named by the caller (D17). Governance decides whether that version is the one in effect (D18).
+   - **Transaction ID.** `businessTransactionId` identifies the transaction (`DECLARE_STAGE.md`, section 5).
 2. **Authorize.** The runtime loads the named policy version and checks it against:
    - **Governance:** the version must have a signed approval record, and it must be the most recently approved version for that name (`PolicyGovernanceExecutionVerifier`).
    - **Signals:** facts the policy needs. Some come from the caller; others are verified by a trusted source.

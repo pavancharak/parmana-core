@@ -1,13 +1,13 @@
 # The declare stage: what is sent and what happens
 
-**Status:** Written 14 November 2026 from `packages/api/src/routes/transactions.ts` and the Business Transaction types in `packages/shared/src/domain`. The order of checks below was read from the handler. It has not been run against a live server in this document.
+**Status:** Written 14 November 2026. Revised the same day to clarify the caller, authority and policy fields. from `packages/api/src/routes/transactions.ts` and the Business Transaction types in `packages/shared/src/domain`. The order of checks below was read from the handler. It has not been run against a live server in this document.
 **Owner:** Pavan Charak
 
 ## 1. The request
 
-`POST /transactions` with a Business Transaction in the body. The request carries one header:
+`POST /transactions` with a Business Transaction in the body. Declaring and executing are one call: the handler passes the transaction straight to execution, and no separate declare step is stored before it. The request carries one header:
 
-- `Authorization: Bearer <caller key>`. The server uses it to identify the caller and its holder type.
+- `Authorization: Bearer <caller key>`. The key identifies the caller (`callerId`), not the transaction. Its holder type (human or service) is set by the operator at issue time; if absent it is treated as non-human.
 
 The body has these parts.
 
