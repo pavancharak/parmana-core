@@ -45,20 +45,24 @@ The metadata type is `TransactionMetadata` (`packages/shared/src/domain/metadata
 
 Correction: an earlier version of this document listed `createdBy` and `createdAt` as metadata fields. They are not in the type. `createdAt` exists on the Business Transaction itself, and is the time Parmana accepted it; the caller does not set it.
 
-| Field                   | Required | Set by        | Purpose                                                                                                                                                                                                  |
-| ----------------------- | -------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `businessTransactionId` | Yes      | Caller        | The primary identifier of the transaction. It is also the idempotency key (a repeat is refused) and the root identifier of the Execution Trust Record. Must equal the top-level `businessTransactionId`. |
-| `correlationId`         | No       | Caller        | Ties this request to other requests across systems, for tracing. Parmana stores it; the type does not say it affects any decision.                                                                       |
-| `tenantId`              | No       | Caller        | Labels which tenant the transaction belongs to, for separating records. The type does not describe any enforcement based on it.                                                                          |
-| `sourceSystem`          | No       | Caller        | Names the application or service that sent the transaction, for audit.                                                                                                                                   |
-| `submittedBy`           | No       | Server        | The identity of the authenticated caller. The type says it is server-set and never trusted from the client.                                                                                              |
-| `grantedCapability`     | No       | Server        | The capability (`intent.action`) that the caller was checked and allowed to invoke. It is signed into the authorization payload. Present only when caller authentication is enabled.                     |
-| `submittedAt`           | No       | Not confirmed | The UTC time the transaction was submitted. The type does not say whether the caller or the server sets it.                                                                                              |
+| Field                   | Required | Set by          | Purpose                                                                                                                                                                                                  |
+| ----------------------- | -------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `businessTransactionId` | Yes      | Caller          | The primary identifier of the transaction. It is also the idempotency key (a repeat is refused) and the root identifier of the Execution Trust Record. Must equal the top-level `businessTransactionId`. |
+| `correlationId`         | No       | Caller          | Ties this request to other requests across systems, for tracing. Parmana stores it; the type does not say it affects any decision.                                                                       |
+| `tenantId`              | No       | Caller          | Selects the signing key (`tenant.<tenantId>`). Checked: a caller may name only a tenant its own key lists, otherwise `403` with `TENANT_NOT_ALLOWED`. `null` and absent both mean no tenant.             |
+| `sourceSystem`          | No       | Caller          | Names the application or service that sent the transaction, for audit.                                                                                                                                   |
+| `submittedBy`           | No       | Server          | The identity of the authenticated caller. The type says it is server-set and never trusted from the client.                                                                                              |
+| `grantedCapability`     | No       | Server          | The capability (`intent.action`) that the caller was checked and allowed to invoke. It is signed into the authorization payload. Present only when caller authentication is enabled.                     |
+| `submittedAt`           | No       | Caller, as sent | `POST /transactions` does not set it; the value is stored as the caller sent it, and is not validated. Only the inbound partner flow sets it (`inbound-checks.ts`).                                      |
 
-**Open points for this section:**
+**Checks on these fields, from the code:**
 
-- Who sets `submittedAt`. The type comment does not say, and the handler was not read for it.
-- Whether `tenantId`, `correlationId` or `sourceSystem` are validated in any way. The validator checks the trust-chain IDs; I did not find checks for these three.
+- `tenantId` is checked on `POST /transactions` (`packages/api/src/routes/transactions.ts`), after the principal check and before execution. Its value also selects the signing key.
+- `submittedBy` and `grantedCapability` are set by the server from the authenticated caller and the capability check.
+- `submittedAt` is not validated and not set on this path. It is stored as the caller sent it.
+- `correlationId` and `sourceSystem` are not validated on any path reviewed. Neither is used in a decision; they are recorded only.
+
+**Still open for the owner:** whether `submittedAt` should be server-set, and whether `correlationId` and `sourceSystem` need length or format limits.
 
 ## 3. What is not yet confirmed
 
