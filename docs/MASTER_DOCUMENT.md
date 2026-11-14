@@ -105,3 +105,4 @@ All branches named in this document are unmerged. None has been merged to `main`
 - Plan: `docs/ASSURANCE_TESTING_PLAN.md`
 - Frozen cryptographic core: `docs/assurance/FROZEN_CORE.md`
 - Coverage: `docs/assurance/COVERAGE_REGISTER.md`
+- Declare stage (request fields and checks): `docs/DECLARE_STAGE.md`
