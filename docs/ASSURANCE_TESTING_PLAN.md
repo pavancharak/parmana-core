@@ -331,6 +331,15 @@ Checked on 14 November 2026 against commit `4a29854` and the working tree of `cl
 | Mutation testing on evidence and records                                                                 | Not implemented. Stryker mutates source code only. An artifact-level harness does not exist yet.                                                                                                   | `stryker.config.mjs`; Section 4.1          |
 | Crypto tests for policy change, execution intent and verification authorization                          | Present: `policy-change-crypto.test.ts`, `execution-intent-crypto.test.ts`, `verification-crypto-authorization.test.ts`. Coverage of T03 and T07 not reviewed.                                     | Repository file list                       |
 
+### 12.1a Correction (14 November 2026)
+
+Two items in 12.1 were wrong. A later search found the following.
+
+- **Policy binding exists.** The authorization carries `policyContentHash`, and the gateway checks it against the live policy before release. The earlier search missed it because it looked for `policyHash`. XM-03 is therefore testable now.
+- **Authority identifier exists.** The authorization carries `authorityGrant.grantId`. Only the version is missing.
+
+Also, a signed Receipt already exists, and so does a connector evidence hash. The gap is an exact comparison between the authorized content hash and the dispatched content hash. The connector hash is computed over a redacted summary, so it can't be compared exactly. See `docs/assurance/EXECUTION_RECEIPT_DESIGN.md`.
+
 ### 12.2 Consequences for the plan
 
 - POAE-03 (execution correspondence) cannot be tested until an execution receipt binding the executed action hash exists. That is a product gap, not only a testing gap.

@@ -21,12 +21,12 @@ Status values:
 
 ## Gaps referenced
 
-| Gap | Missing piece                                                 | Blocks              |
-| --- | ------------------------------------------------------------- | ------------------- |
-| G-A | Authority identifier and version binding in the authorization | AM-04               |
-| G-P | Policy-bundle hash bound to the authorization                 | XM-03               |
-| G-R | Execution receipt carrying the executed action hash (D7)      | EM-01, EM-02, EM-04 |
-| G-L | Independent reconciliation of the ledger against evidence     | CE-04               |
+| Gap | Missing piece                                                                                                                            | Blocks              |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| G-A | Authority version binding. The grant identifier is present; the version is not.                                                          | AM-04               |
+| G-P | Closed. `policyContentHash` is bound and checked at execution.                                                                           | None                |
+| G-R | Exact correspondence between the authorized and dispatched content hashes. Design revised: `docs/assurance/EXECUTION_RECEIPT_DESIGN.md`. | EM-01, EM-02, EM-04 |
+| G-L | Independent reconciliation of the ledger against evidence                                                                                | CE-04               |
 
 ## The 20 tests
 
@@ -41,12 +41,12 @@ Status values:
 
 ### Authorization manipulation (XM)
 
-| ID    | Threat | Property | Mutation                           | Expected                   | Status                                  |
-| ----- | ------ | -------- | ---------------------------------- | -------------------------- | --------------------------------------- |
-| XM-01 | T01    | POAE-02  | Amount above the authorized limit  | Deny                       | Testable now                            |
-| XM-02 | —      | POAE-02  | Vendor not in the authorized set   | Deny                       | Testable now                            |
-| XM-03 | T03    | POAE-02  | Policy changed after authorization | Reject stale authorization | Gap G-P, and decision 9.3               |
-| XM-04 | T08    | POAE-02  | Authorization service unavailable  | Fail closed                | Testable now (fault injection, Phase 2) |
+| ID    | Threat | Property | Mutation                           | Expected                   | Status                                                |
+| ----- | ------ | -------- | ---------------------------------- | -------------------------- | ----------------------------------------------------- |
+| XM-01 | T01    | POAE-02  | Amount above the authorized limit  | Deny                       | Testable now                                          |
+| XM-02 | —      | POAE-02  | Vendor not in the authorized set   | Deny                       | Testable now                                          |
+| XM-03 | T03    | POAE-02  | Policy changed after authorization | Reject stale authorization | Testable now (`policyContentHash` checked at execute) |
+| XM-04 | T08    | POAE-02  | Authorization service unavailable  | Fail closed                | Testable now (fault injection, Phase 2)               |
 
 ### Execution manipulation (EM)
 
@@ -80,13 +80,13 @@ Status values:
 | Category                            |  Tests | Testable now |   Gap |
 | ----------------------------------- | -----: | -----------: | ----: |
 | Authority manipulation              |      4 |            3 |     1 |
-| Authorization manipulation          |      4 |            3 |     1 |
+| Authorization manipulation          |      4 |            4 |     0 |
 | Execution manipulation              |      4 |            1 |     3 |
 | Cryptographic evidence manipulation |      4 |            3 |     1 |
 | Replay and temporal attacks         |      4 |            4 |     0 |
-| **Total**                           | **20** |       **14** | **6** |
+| **Total**                           | **20** |       **15** | **5** |
 
-XM-03 counts as a gap because it needs G-P, and the policy decision is still open.
+XM-03 is testable now. The policy-change behaviour still needs the decision in plan Section 9, item 3.
 
 ## Success criteria
 
