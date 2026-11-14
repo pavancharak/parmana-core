@@ -202,3 +202,15 @@ The change was made, measured, and then reverted, so the branch stays green.
 Option 1 is the practical route, but it is the same relaxation moved into the test setup, so it needs an explicit decision. The backfill script (`scripts/backfill-legacy-policy-approvals.ts`) creates approvals under a synthetic system identity, and it should not be used as the test fixture without a decision.
 
 **Also outside D19:** the signing-readiness check (`createSigningReadiness`) has its own environment rule, `SIGNING_READINESS_CHECK`. It is not covered by D19 and is unchanged. The doctor check (`packages/shared/src/config/Doctor.ts`) still lists the flag as a known setting; removing it from the list would make the doctor report a misleading typo.
+
+## 20. Owner decision: bind to razorpay-refund 1.1.0 (D20, 14 November 2026)
+
+The owner decided that `razorpay:refund` binds to `razorpay-refund` version `1.1.0`. This supersedes D14, which named `customer-refund` 1.3.0. The reason is in section 8: `customer-refund` 1.3.0 rejects every refund, and `razorpay-refund` 1.1.0 is the policy that approves them.
+
+**Blocked:** `razorpay:refund` is a write. The strict G-77 classification test (`packages/api/tests/unit/connector-policies-not-self-authorizing.test.ts`) requires every bound capability to be a read, so this binding fails it. The classification decision in section 5 is needed before the binding can go in. The per-capability check for `razorpay-refund` 1.1.0 has not been run.
+
+**Consequences:**
+
+- D14 is superseded.
+- D16 names `customer-refund` 1.3.0 in the capability name. It must be revisited before it is implemented.
+- The intent name in section 7 (`customer-refund`) should read `razorpay-refund`, to match the policy the owner chose.

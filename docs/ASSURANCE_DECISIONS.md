@@ -149,16 +149,22 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 ## Record
 
-| Decision | Owner decision                          | Date       | Recorded by                              |
-| -------- | --------------------------------------- | ---------- | ---------------------------------------- |
-| D7       | In scope                                | 2026-11-14 | Recorded in session at owner's direction |
-| D8       | Define as proposed                      | 2026-11-14 | Recorded in session at owner's direction |
-| D9       | Reject non-canonical encodings          | 2026-11-14 | Recorded in session at owner's direction |
-| D10      | Pending                                 |            |                                          |
-| D11      | Pending                                 |            |                                          |
-| D12      | Pending                                 |            |                                          |
-| D13      | Adopted: permanent direction            | 2026-11-14 | Recorded in session at owner's direction |
-| D14      | Adopted: razorpay:refund policy version | 2026-11-14 | Owner confirmed version 1.3.0            |
+| Decision | Owner decision                                                                        | Date       | Recorded by                                                         |
+| -------- | ------------------------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------- |
+| D7       | In scope                                                                              | 2026-11-14 | Recorded in session at owner's direction                            |
+| D8       | Define as proposed                                                                    | 2026-11-14 | Recorded in session at owner's direction                            |
+| D9       | Reject non-canonical encodings                                                        | 2026-11-14 | Recorded in session at owner's direction                            |
+| D10      | Pending                                                                               |            |                                                                     |
+| D11      | Pending                                                                               |            |                                                                     |
+| D12      | Pending                                                                               |            |                                                                     |
+| D13      | Adopted: permanent direction                                                          | 2026-11-14 | Recorded in session at owner's direction                            |
+| D14      | Superseded by D20: razorpay:refund policy version 1.3.0                               | 2026-11-14 | Owner confirmed 1.3.0; superseded                                   |
+| D15      | Adopted: drop razorpay:refund binding; G-77 kept strict                               | 2026-11-14 | Owner decision in session                                           |
+| D16      | Adopted: capability name format A (`razorpay_customer-refund_1-3-0`), not implemented | 2026-11-14 | Names a superseded policy; revisit before implementing              |
+| D17      | Adopted: the request defines the policy version                                       | 2026-11-14 | Owner decision in session                                           |
+| D18      | Adopted and implemented: no fallback to the canonical table version                   | 2026-11-14 | Commit 6b07e947 on this branch                                      |
+| D19      | Adopted: execution-time governance follows the same rule everywhere                   | 2026-11-14 | Implemented on claude/d19-governance-everywhere; harnesses not done |
+| D20      | Adopted: bind razorpay:refund to razorpay-refund 1.1.0                                | 2026-11-14 | Blocked until G-77 classifies writes (D15)                          |
 
 ---
 
@@ -297,3 +303,20 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 **Owner decision:** Yes, the same rule. No relaxation by environment.
 
 **Effect:** not implemented. The unit test suite, `vitest.setup.ts` and 27 files that reference the opt-in flag would need changing, with test fixtures that seed approval records.
+
+---
+
+## D20. Bind razorpay:refund to razorpay-refund 1.1.0 (14 November 2026)
+
+- **Reference:** D20
+- **Source:** docs/assurance/POLICY_BINDING_RAZORPAY.md, section 20
+- **Date recorded:** 2026-11-14
+- **Owner:** Pavan Charak
+
+**Question:** Which policy and version should `razorpay:refund` bind to?
+
+**Owner decision:** `razorpay-refund` version 1.1.0. This supersedes D14 (`customer-refund` 1.3.0). `customer-refund` 1.3.0 rejects every refund; `razorpay-refund` 1.1.0 is the policy that approves Razorpay refunds.
+
+**Blocked:** D15 dropped the binding because `razorpay:refund` is a write, and the strict G-77 classification test requires every bound capability to be a read. Adding this binding needs the owner's decision on G-77 classification for writes (POLICY_BINDING_RAZORPAY.md, section 5). Until then the binding is not in the code.
+
+**Effect on other records:** D14 is superseded. D16 names the superseded policy and must be revisited before it is implemented.
