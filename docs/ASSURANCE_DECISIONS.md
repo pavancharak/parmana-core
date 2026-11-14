@@ -1,9 +1,9 @@
 # Assurance decisions
 
-**Status:** Draft for owner decision. Owner: Pavan Charak.
+**Status:** Decisions recorded 14 November 2026. Owner: Pavan Charak.
 **Source:** [ASSURANCE_TESTING_PLAN.md](ASSURANCE_TESTING_PLAN.md) Section 9 (decisions 1 to 4) and Section 11.4 and 11.6. Standard: [ASSURANCE_TESTING_STANDARD.md](ASSURANCE_TESTING_STANDARD.md).
 
-No decision below is in force until the owner records it in the **Owner decision** field. Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and acceptance principles need the owner's decision. The recommendations are not decisions.
+Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and acceptance principles need the owner's decision. The decisions below were recorded from the owner's agreement with the recommendations in this session.
 
 ---
 
@@ -13,8 +13,8 @@ No decision below is in force until the owner records it in the **Owner decision
 
 **Recommendation:** Adopt it once D2 is decided and the candidate package mappings in its Section 3 are confirmed.
 
-**Owner decision:** _[ ] Adopt  [ ] Adopt with changes  [ ] Do not adopt_
-**Notes:**
+**Owner decision:** **Adopt.** D2 is decided. The candidate package mappings in Section 3 are not yet confirmed and remain open items.
+**Notes:** The standard's status is updated to adopted. Its Appendix A open items still apply.
 
 ---
 
@@ -39,8 +39,8 @@ No decision below is in force until the owner records it in the **Owner decision
 | _(not in plan)_ Evidence | ATS-010 |
 | _(not in plan)_ Supply chain | ATS-012 |
 
-**Owner decision:** _[ ] ATS list governs  [ ] Plan Section 7 governs  [ ] Other_
-**Notes:**
+**Owner decision:** **ATS list governs.**
+**Notes:** Plan Section 7 now carries the mapping and the four added principles.
 
 ---
 
@@ -58,18 +58,18 @@ No decision below is in force until the owner records it in the **Owner decision
 - **Supply chain:** keep as a Phase 5 release gate. ATS-012 already covers it, so it needs no separate category.
 - **Timing:** start none of these before Phase 2 is underway.
 
-**Owner decision:**
+**Owner decision:** **Accept the recommendation.**
 
-| Item | Add now | Add in Phase 2 | Add in Phase 4 | Reject |
-|---|---|---|---|---|
-| Integration testing | [ ] | [ ] | [ ] | [ ] |
-| End-to-end (one payment test) | [ ] | [ ] | [ ] | [ ] |
-| Credential scope, tenant isolation | [ ] | [ ] | [ ] | [ ] |
-| Fail-closed partial execution | [ ] | [ ] | [ ] | [ ] |
-| Concurrency: revocation, policy change | [ ] | [ ] | [ ] | [ ] |
-| Supply chain as release gate | [ ] | [ ] | [ ] | [ ] |
+| Item | Decision |
+|---|---|
+| Integration testing | Add now |
+| End-to-end (one payment test) | Add now, as one test |
+| Credential scope, tenant isolation | Add in Phase 2 |
+| Fail-closed partial execution | Add in Phase 2 |
+| Concurrency: revocation, policy change | Add in Phase 4 |
+| Supply chain as release gate | Add in Phase 5 |
 
-**Notes:**
+**Notes:** Nothing starts before Phase 2 is underway.
 
 ---
 
@@ -83,8 +83,8 @@ No decision below is in force until the owner records it in the **Owner decision
 
 **Recommendation (b):** Yes, for authorization-boundary suites only, not every test in the repository. This prevents a system that always denies from passing.
 
-**Owner decision (a):** _[ ] Yes  [ ] No  [ ] Later, after Phase 2_
-**Owner decision (b):** _[ ] Yes, boundary suites  [ ] Yes, all tests  [ ] No_
+**Owner decision (a):** **Yes.**
+**Owner decision (b):** **Yes, boundary suites only.**
 **Notes:**
 
 ---
@@ -95,8 +95,8 @@ No decision below is in force until the owner records it in the **Owner decision
 
 **Recommendation:** Not now. Revisit after Phase 2, once the D4 specification exists. If it goes ahead, limit it to the payment workflow, and name an owner and a budget. The DeepMind reference project needs multi-hour builds, 15 to 34 GiB of RAM and Linux-only tooling, and its results are scoped to one binary with hooked cryptographic primitives.
 
-**Owner decision:** _[ ] Not in scope  [ ] Revisit after Phase 2  [ ] In scope now, limited to payment workflow_
-**Owner and budget, if in scope:**
+**Owner decision:** **Revisit after Phase 2.** Not in scope now.
+**Owner and budget, if in scope:** Not applicable now.
 
 ---
 
@@ -104,8 +104,8 @@ No decision below is in force until the owner records it in the **Owner decision
 
 | Decision | Owner decision | Date | Recorded by |
 |---|---|---|---|
-| D1 | | | |
-| D2 | | | |
-| D3 | | | |
-| D4 | | | |
-| D5 | | | |
+| D1 | Adopt (candidate mappings still open) | 2026-11-14 | Recorded in session at owner's direction |
+| D2 | ATS list governs | 2026-11-14 | Recorded in session at owner's direction |
+| D3 | Accept recommendation | 2026-11-14 | Recorded in session at owner's direction |
+| D4 | (a) Yes; (b) yes, boundary suites | 2026-11-14 | Recorded in session at owner's direction |
+| D5 | Revisit after Phase 2 | 2026-11-14 | Recorded in session at owner's direction |

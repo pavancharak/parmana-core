@@ -3,7 +3,7 @@
 
 **Document:** PARMANA-ATS-001
 **Version:** 1.0
-**Status:** Proposed engineering standard. **Not adopted.** Adoption is decision 9.1 in [ASSURANCE_TESTING_PLAN.md](ASSURANCE_TESTING_PLAN.md) and needs a decision from Pavan Charak.
+**Status:** Adopted as the repository standard on 14 November 2026 (decision D1 in [ASSURANCE_DECISIONS.md](ASSURANCE_DECISIONS.md)). The candidate package mappings in Section 3 remain open items (Appendix A).
 **Scope:** Parmana Core and all published packages
 **Verified:** against the repository at commit `4a29854` on 14 November 2026. Corrections are listed in Appendix A.
 

@@ -156,6 +156,8 @@ The "policy changed after approval" row needs a decision before it can be tested
 
 These are proposed requirements, not validated claims.
 
+**Decided 14 November 2026 (D2, see [ASSURANCE_DECISIONS.md](ASSURANCE_DECISIONS.md)):** ATS-001 to ATS-012 in the Assurance Testing Standard governs. The eight principles above map to ATS-001, 002, 003, 004, 006, 008, 009 and 011. The four principles not listed here are added by reference: Trust (ATS-005), Revocation (ATS-007), Evidence (ATS-010) and Supply chain (ATS-012).
+
 | Principle       | Requirement                                         |
 | --------------- | --------------------------------------------------- |
 | Determinism     | Identical inputs produce identical defined outputs. |
@@ -179,7 +181,7 @@ These are proposed requirements, not validated claims.
 
 ## 9. Decisions needed
 
-1. Should `docs/ASSURANCE_TESTING_STANDARD.md` be adopted as the repository standard?
+1. Should `docs/ASSURANCE_TESTING_STANDARD.md` be adopted as the repository standard? **Decided 14 November 2026: adopted (D1).** Candidate package mappings remain open.
 2. Should fast-check be added as a dependency?
 3. What is the defined behaviour for a policy change after approval?
 4. Is OSS-Fuzz worth the setup cost for this repository? It is optional, and adapting it is not trivial.
