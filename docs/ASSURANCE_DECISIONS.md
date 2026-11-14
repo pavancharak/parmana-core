@@ -130,7 +130,7 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 **Recommendation:** Yes, as a product change on its own branch. It closes the gap for POAE-03 and tests EM-01, EM-02 and EM-04. It needs its own review, because it changes what the system outputs.
 
 **Owner decision:** **In scope.** Build on its own branch, with a versioned format and verifier checks.
-**Notes:** Premise revised on 14 November 2026: a signed receipt already exists, so the design now extends the existing signed records. See docs/assurance/EXECUTION_RECEIPT_DESIGN.md. Owner to confirm before code.
+**Notes:** Premise revised on 14 November 2026: a signed receipt already exists, so the design now extends the existing signed records. See the design note (moved to parmana-poae-benchmark). Owner to confirm before code.
 
 ---
 

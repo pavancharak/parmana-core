@@ -1,5 +1,5 @@
 /**
- * PoAE benchmark runner (specification: testing/poae/benchmark-spec.md).
+ * PoAE benchmark runner. The specification lives in the parmana-poae-benchmark repository.
  *
  * Runs the tests that map onto existing mechanisms. Each test asserts the
  * expected result of its benchmark ID. The benchmark tests that are not

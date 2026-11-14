@@ -338,7 +338,7 @@ Two items in 12.1 were wrong. A later search found the following.
 - **Policy binding exists.** The authorization carries `policyContentHash`, and the gateway checks it against the live policy before release. The earlier search missed it because it looked for `policyHash`. XM-03 is therefore testable now.
 - **Authority identifier exists.** The authorization carries `authorityGrant.grantId`. Only the version is missing.
 
-Also, a signed Receipt already exists, and so does a connector evidence hash. The gap is an exact comparison between the authorized content hash and the dispatched content hash. The connector hash is computed over a redacted summary, so it can't be compared exactly. See `docs/assurance/EXECUTION_RECEIPT_DESIGN.md`.
+Also, a signed Receipt already exists, and so does a connector evidence hash. The gap is an exact comparison between the authorized content hash and the dispatched content hash. The connector hash is computed over a redacted summary, so it can't be compared exactly. See the execution receipt design (moved to parmana-poae-benchmark).
 
 ### 12.2 Consequences for the plan
 

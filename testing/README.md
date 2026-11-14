@@ -40,10 +40,6 @@ When a request says **"updated documentation"**, **"testing results"** or simila
 - A check that was not run is recorded as "not run", with the reason.
 - Survivor classifications are kept separate from mutation scores.
 
-## PoAE benchmark
-
-The benchmark specification lives in [`poae/`](poae/README.md). Update [`poae/benchmark-spec.md`](poae/benchmark-spec.md) when a gap closes or a test is run. Record results with the templates above.
-
 ## Coverage and direction
 
 - [`docs/assurance/COVERAGE_REGISTER.md`](../docs/assurance/COVERAGE_REGISTER.md) lists what each product claim covers. Update it whenever coverage changes.

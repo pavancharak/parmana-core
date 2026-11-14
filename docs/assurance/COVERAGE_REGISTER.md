@@ -20,7 +20,7 @@
 
 ## 2. Benchmark coverage
 
-- 20 tests in the specification (`testing/poae/benchmark-spec.md`).
+- 20 tests in the specification (the PoAE specification (moved to parmana-poae-benchmark)).
 - 18 run in `tests/assurance/poae/poae-benchmark.test.ts`, all passing on commit `bbe92321`.
 - EM-03 is covered by an existing architecture test. AM-04 is a gap.
 - XM-01 and XM-02 test the content hash, not a policy limit or an approved vendor list.

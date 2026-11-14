@@ -2,7 +2,7 @@
 
 **Status:** Proposed, with decisions needed. Nothing here is implemented.
 **Date:** 14 November 2026
-**Related:** [EXECUTION_RECEIPT_DESIGN.md](EXECUTION_RECEIPT_DESIGN.md) section 10, [benchmark-spec.md](../../testing/poae/benchmark-spec.md), and the results entry of 14 November 2026 in [ASSURANCE_RESULTS.md](../ASSURANCE_RESULTS.md).
+**Related:** section 10 of the execution receipt design (moved to parmana-poae-benchmark), the PoAE benchmark specification (moved to parmana-poae-benchmark), and the results entry of 14 November 2026 in [ASSURANCE_RESULTS.md](../ASSURANCE_RESULTS.md).
 
 These are the three items left open after the connector hash and reconciliation work. Each section states what the repository already does, what is missing, the options, and the decision needed.
 
