@@ -127,4 +127,78 @@ describe("CallerAuditChainVerifier", () => {
 
     expect(result).toEqual({ valid: true });
   });
+
+  describe("anchored chain head", () => {
+    it("accepts a chain that ends exactly at the anchored head", async () => {
+      const rows = await buildValidChain("caller-1", 3);
+
+      const result = await new CallerAuditChainVerifier().verifyChain(rows, {
+        chainPosition: 3,
+        chainHash: rows[2]!.chainHash!,
+      });
+
+      expect(result).toEqual({ valid: true });
+    });
+
+    it("refuses a chain truncated at the end when an anchor is given", async () => {
+      // The newest row was deleted. The rows that remain are a valid chain
+      // on their own, so only the anchor can tell that anything is missing.
+      const rows = await buildValidChain("caller-1", 3);
+
+      const result = await new CallerAuditChainVerifier().verifyChain(
+        [rows[0]!, rows[1]!],
+        { chainPosition: 3, chainHash: rows[2]!.chainHash! },
+      );
+
+      expect(result.valid).toBe(false);
+      expect(result.brokenAtPosition).toBe(2);
+      expect(result.reason).toContain("anchored chain head");
+    });
+
+    it("refuses an empty chain when an anchor is given", async () => {
+      const result = await new CallerAuditChainVerifier().verifyChain([], {
+        chainPosition: 1,
+        chainHash: "a".repeat(64),
+      });
+
+      expect(result.valid).toBe(false);
+      expect(result.brokenAtPosition).toBe(0);
+      expect(result.reason).toContain("anchored chain head");
+    });
+
+    it("refuses a chain whose last position differs from the anchor, even when the hash matches", async () => {
+      const rows = await buildValidChain("caller-1", 3);
+
+      const result = await new CallerAuditChainVerifier().verifyChain(rows, {
+        chainPosition: 4,
+        chainHash: rows[2]!.chainHash!,
+      });
+
+      expect(result.valid).toBe(false);
+      expect(result.reason).toContain("anchored chain head");
+    });
+
+    it("refuses a chain whose last hash differs from the anchor, even when the position matches", async () => {
+      const rows = await buildValidChain("caller-1", 3);
+
+      const result = await new CallerAuditChainVerifier().verifyChain(rows, {
+        chainPosition: 3,
+        chainHash: "b".repeat(64),
+      });
+
+      expect(result.valid).toBe(false);
+      expect(result.reason).toContain("anchored chain head");
+    });
+
+    it("cannot detect a truncated chain without an anchor (documented limit)", async () => {
+      const rows = await buildValidChain("caller-1", 3);
+
+      const result = await new CallerAuditChainVerifier().verifyChain([
+        rows[0]!,
+        rows[1]!,
+      ]);
+
+      expect(result).toEqual({ valid: true });
+    });
+  });
 });
