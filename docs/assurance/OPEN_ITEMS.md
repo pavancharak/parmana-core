@@ -55,13 +55,13 @@ Each row names the item, what is needed, who decides, and the document with the 
 
 ## 5. Governance and review
 
-| ID              | Item                                                                         | Status                                                                            |
-| --------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Protect         | Branch protection on `main` requiring the code-owner review for frozen paths | Owner action in repository settings. Not verified from here.                      |
-| PR-633          | CI on PR #633                                                                | Pending. The `python-sdk (3.13)` failure has a fix (`e1c186d4`). Re-check needed. |
-| PR-633-merge    | Merge of PR #633 into `main`                                                 | Not done. Needs review.                                                           |
-| Challenge       | ChallengeRecord (RFC-0022) for the signature-encoding correction             | Reviewer to decide                                                                |
-| Verifier-review | Independent review of the verifier                                           | Not started                                                                       |
+| ID              | Item                                                                         | Status                                                                                  |
+| --------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Protect         | Branch protection on `main` requiring the code-owner review for frozen paths | Owner action in repository settings. Not verified from here.                            |
+| PR-633          | CI on PR #633                                                                | Merged into `main` as `0c1773d4`. Required checks passed on the last head before merge. |
+| PR-633-merge    | Merge of PR #633 into `main`                                                 | Done (`0c1773d4`).                                                                      |
+| Challenge       | ChallengeRecord (RFC-0022) for the signature-encoding correction             | Reviewer to decide                                                                      |
+| Verifier-review | Independent review of the verifier                                           | Not started                                                                             |
 
 ## 6. Closed in this work (for reference)
 
