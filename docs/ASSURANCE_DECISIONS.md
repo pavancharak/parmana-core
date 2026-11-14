@@ -118,7 +118,7 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 **Recommendation:** A separate research track. It should use the Phase 2 tests where they overlap, and it should not add new phases.
 
-**Owner decision:** _[ ] Separate research track [ ] Part of Phase 2 [ ] Other_
+**Owner decision:** **Separate research track.** Share the Phase 2 authorization tests rather than duplicating them.
 **Notes:**
 
 ---
@@ -129,7 +129,7 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 **Recommendation:** Yes, as a product change on its own branch. It closes the gap for POAE-03 and tests EM-01, EM-02 and EM-04. It needs its own review, because it changes what the system outputs.
 
-**Owner decision:** _[ ] In scope [ ] Not in scope [ ] Revisit after Phase 2_
+**Owner decision:** **In scope.** Build on its own branch, with a versioned format and verifier checks.
 **Notes:**
 
 ---
@@ -140,15 +140,15 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 **Recommendation:** Define it in writing before relying on the rule. The definition should list the files and the change process. No file should be frozen until it is listed.
 
-**Owner decision:** _[ ] Define as proposed [ ] Define with changes [ ] No frozen core_
+**Owner decision:** **Define as proposed.** Keep the list small, and review it once a year.
 **Notes:**
 
 ---
 
 ## Record (PoAE)
 
-| Decision | Owner decision | Date | Recorded by |
-| -------- | -------------- | ---- | ----------- |
-| D6       | Pending        |      |             |
-| D7       | Pending        |      |             |
-| D8       | Pending        |      |             |
+| Decision | Owner decision          | Date       | Recorded by                              |
+| -------- | ----------------------- | ---------- | ---------------------------------------- |
+| D6       | Separate research track | 2026-11-14 | Recorded in session at owner's direction |
+| D7       | In scope                | 2026-11-14 | Recorded in session at owner's direction |
+| D8       | Define as proposed      | 2026-11-14 | Recorded in session at owner's direction |

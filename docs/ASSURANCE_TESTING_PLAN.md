@@ -338,9 +338,9 @@ Checked on 14 November 2026 against commit `4a29854` and the working tree of `cl
 - T10 (evidence removed from the ledger, detected by independent reconciliation) has no reconciliation component in the repository yet. Two candidate sources exist: the policy-log drift workflow and the caller audit chain. Neither has been reviewed for this purpose.
 - The proposal's "frozen core" rule cannot be enforced until it is defined in writing.
 
-### 12.3 Decisions needed (not adopted)
+### 12.3 Decisions (items 1 to 3 decided 14 November 2026, see D6 to D8)
 
-1. Is PoAE a research track alongside the plan, or part of Phase 2? Owner decision.
+1. Decided (D6): a separate research track, sharing the Phase 2 authorization tests.
 2. Define the "frozen cryptographic integrity core" in writing, with the files it covers, before it is relied on.
 3. Is a new execution receipt in scope? It is a product change and needs its own decision.
 4. Approve the `parmana-poae-benchmark` structure only after items 1 to 3 are decided. Its experiments map to the existing phases, not new ones.

@@ -2,7 +2,7 @@
 
 **Status:** Specification only. No test has been run. Every result is "not run" until it is measured.
 **Source:** [PoAE formal security specification v0.1](../../docs/ASSURANCE_TESTING_PLAN.md) (plan Section 12). Threats T01 to T10 and properties POAE-01 to POAE-06 are defined there.
-**Decisions:** D6 to D8 in [ASSURANCE_DECISIONS.md](../../docs/ASSURANCE_DECISIONS.md) are pending. Gap tests cannot run until the matching product change is decided and built.
+**Decisions:** D6 to D8 in [ASSURANCE_DECISIONS.md](../../docs/ASSURANCE_DECISIONS.md) were decided on 14 November 2026 (see D6 to D8). Gap tests cannot run until the matching product change is decided and built.
 
 ## Method
 
