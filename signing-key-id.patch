@@ -1,0 +1,396 @@
+diff --git a/.env.example b/.env.example
+index 344843b..daa85dc 100644
+--- a/.env.example
++++ b/.env.example
+@@ -54,6 +54,12 @@ PARMANA_KEY_DIR=./keys
+ # verifier key cannot release a write. Default: signal-verifier.
+ # PARMANA_VERIFIER_KEY_ID=signal-verifier
+ 
++# Logical key id this deployment signs with. Default: "default" (the shared
++# alias/default under KEY_PROVIDER=aws-kms). Set it per environment so each
++# deployment uses its own key, e.g. PARMANA_SIGNING_KEY_ID=alias/parmana-prod.
++# Verification follows this value unless PARMANA_VERIFICATION_KEY_ID is set.
++# PARMANA_SIGNING_KEY_ID=default
++
+ # Signing readiness (docs/internal/adr/ADR-0011). ENFORCED BY DEFAULT. Before an action is
+ # released to a connector, the runtime signs and verifies a probe artifact through
+ # the evidence signing key and refuses with 503 SIGNING_UNAVAILABLE if that fails.
+diff --git a/packages/api/src/bootstrap/assertSigningKeyMaterialConfigured.ts b/packages/api/src/bootstrap/assertSigningKeyMaterialConfigured.ts
+index beb2051..0dcfd05 100644
+--- a/packages/api/src/bootstrap/assertSigningKeyMaterialConfigured.ts
++++ b/packages/api/src/bootstrap/assertSigningKeyMaterialConfigured.ts
+@@ -6,6 +6,7 @@ import {
+   DEFAULT_KEY_ID,
+   DEFAULT_SECONDARY_KEY_ID,
+   SignerBootstrap,
++  currentSigningKeyId,
+   currentVerificationKeyId,
+   currentVerificationSecondaryKeyId,
+ } from "@parmana/crypto";
+@@ -124,16 +125,16 @@ export async function assertKmsSigningKeyReachable(): Promise<void> {
+ 
+   const signer = await SignerBootstrap.create();
+ 
+-  if (!(await signer.hasKey(DEFAULT_KEY_ID))) {
++  if (!(await signer.hasKey(currentSigningKeyId()))) {
+     throw new Error(
+-      `KEY_PROVIDER=aws-kms is configured, but no KMS key named "${DEFAULT_KEY_ID}" ` +
++      `KEY_PROVIDER=aws-kms is configured, but no KMS key named "${currentSigningKeyId()}" ` +
+         "is reachable. Refusing to start: every execution authorization, receipt, " +
+         "verification, and settlement confirmation this process signs requires this " +
+         "key. Verify AWS_REGION/AWS_ROLE_ARN and the key's existence/permissions.",
+     );
+   }
+ 
+-  await signer.getMetadata(DEFAULT_KEY_ID);
++  await signer.getMetadata(currentSigningKeyId());
+ }
+ 
+ /**
+diff --git a/packages/api/src/bootstrap/createGatewayPublicKey.ts b/packages/api/src/bootstrap/createGatewayPublicKey.ts
+index 4bfadc8..b4e3549 100644
+--- a/packages/api/src/bootstrap/createGatewayPublicKey.ts
++++ b/packages/api/src/bootstrap/createGatewayPublicKey.ts
+@@ -1,6 +1,6 @@
+ import type { KeyObject } from "node:crypto";
+ 
+-import { DEFAULT_KEY_ID, SignerBootstrap, type Signer } from "@parmana/crypto";
++import { currentSigningKeyId, SignerBootstrap, type Signer } from "@parmana/crypto";
+ 
+ /**
+  * Loads the gateway verification public key.
+@@ -26,5 +26,5 @@ export async function createGatewayPublicKey(
+ ): Promise<KeyObject> {
+   const resolvedSigner = signer ?? (await SignerBootstrap.create());
+ 
+-  return resolvedSigner.getPublicKey(DEFAULT_KEY_ID);
++  return resolvedSigner.getPublicKey(currentSigningKeyId());
+ }
+diff --git a/packages/api/src/business-sources/HttpBusinessSignalSource.ts b/packages/api/src/business-sources/HttpBusinessSignalSource.ts
+index 43589cb..ab24f2c 100644
+--- a/packages/api/src/business-sources/HttpBusinessSignalSource.ts
++++ b/packages/api/src/business-sources/HttpBusinessSignalSource.ts
+@@ -2,7 +2,7 @@ import crypto from "node:crypto";
+ 
+ import {
+   CanonicalSerializer,
+-  DEFAULT_KEY_ID,
++  currentSigningKeyId,
+   SignerBootstrap,
+   type Signer,
+ } from "@parmana/crypto";
+@@ -174,7 +174,7 @@ export class HttpBusinessSignalSource implements BusinessSignalSource {
+       ).toISOString(),
+     };
+ 
+-    const keyId = this.options.keyId ?? DEFAULT_KEY_ID;
++    const keyId = this.options.keyId ?? currentSigningKeyId();
+     const signer = this.options.signer ?? (await SignerBootstrap.create());
+     const signed: SignedBusinessSignalQuery = {
+       query: message,
+diff --git a/packages/crypto/src/ExecutionChainCrypto.ts b/packages/crypto/src/ExecutionChainCrypto.ts
+index cb1dff5..203ea03 100644
+--- a/packages/crypto/src/ExecutionChainCrypto.ts
++++ b/packages/crypto/src/ExecutionChainCrypto.ts
+@@ -6,7 +6,7 @@ import { ExecutionChainHasher } from "./ExecutionChainHasher.js";
+ import { ArtifactSigner } from "./ArtifactSigner.js";
+ import { SignatureVerifier } from "./SignatureVerifier.js";
+ import { SignerBootstrap } from "./SignerBootstrap.js";
+-import { DEFAULT_KEY_ID } from "./KeyProvider.js";
++import { currentSigningKeyId } from "./KeyProvider.js";
+ 
+ /**
+  * Result of computing one Execution's chain fields.
+@@ -108,7 +108,7 @@ export class ExecutionChainCrypto {
+ 
+     const chainHash = await this.chainHasher.hash(entry);
+ 
+-    const keyId = DEFAULT_KEY_ID;
++    const keyId = currentSigningKeyId();
+ 
+     const signer = await this.signerPromise;
+ 
+diff --git a/packages/crypto/src/KeyProvider.ts b/packages/crypto/src/KeyProvider.ts
+index 7a5102b..ad224b9 100644
+--- a/packages/crypto/src/KeyProvider.ts
++++ b/packages/crypto/src/KeyProvider.ts
+@@ -22,6 +22,24 @@ export const DEFAULT_KEY_ID = "default";
+  */
+ export const DEFAULT_SECONDARY_KEY_ID = "default-secondary";
+ 
++/**
++ * Resolves the logical keyId this process signs with. Defaults to
++ * DEFAULT_KEY_ID, so existing deployments are unchanged. Set
++ * PARMANA_SIGNING_KEY_ID to point a deployment at its own signing key
++ * (for example a per-environment KMS alias such as "alias/parmana-prod"
++ * under KEY_PROVIDER=aws-kms), so environments never share a key through
++ * a shared alias. Read fresh on every call. The KMS signer maps the
++ * value to an alias the same way it maps DEFAULT_KEY_ID, and a value
++ * that cannot be mapped is rejected when the key is first used.
++ */
++export function currentSigningKeyId(): string {
++  const configured = process.env.PARMANA_SIGNING_KEY_ID;
++
++  return configured === undefined || configured.trim() === ""
++    ? DEFAULT_KEY_ID
++    : configured.trim();
++}
++
+ /**
+  * Resolves the keyId that VerificationCrypto/RefusalCrypto/
+  * AuditEventCrypto -- the durable-evidence signers (Trust Records,
+@@ -50,7 +68,7 @@ export const DEFAULT_SECONDARY_KEY_ID = "default-secondary";
+  * validation is duplicated here.
+  */
+ export function currentVerificationKeyId(): string {
+-  return process.env.PARMANA_VERIFICATION_KEY_ID ?? DEFAULT_KEY_ID;
++  return process.env.PARMANA_VERIFICATION_KEY_ID ?? currentSigningKeyId();
+ }
+ 
+ /**
+diff --git a/packages/crypto/src/PolicyChangeCrypto.ts b/packages/crypto/src/PolicyChangeCrypto.ts
+index 116c18e..9d23cfd 100644
+--- a/packages/crypto/src/PolicyChangeCrypto.ts
++++ b/packages/crypto/src/PolicyChangeCrypto.ts
+@@ -5,7 +5,7 @@ import { TrustRecordHasher } from "./TrustRecordHasher.js";
+ import { ArtifactSigner } from "./ArtifactSigner.js";
+ import { SignatureVerifier } from "./SignatureVerifier.js";
+ import { SignerBootstrap } from "./SignerBootstrap.js";
+-import { DEFAULT_KEY_ID } from "./KeyProvider.js";
++import { currentSigningKeyId } from "./KeyProvider.js";
+ 
+ /**
+  * Policy Change cryptographic operations (Policy Governance,
+@@ -77,7 +77,7 @@ export class PolicyChangeCrypto {
+    * Approval Record.
+    */
+   async sign(record: PolicyChangeApprovalRecord): Promise<Signature> {
+-    const keyId = DEFAULT_KEY_ID;
++    const keyId = currentSigningKeyId();
+ 
+     const signer = await this.signerPromise;
+ 
+diff --git a/packages/crypto/src/ReceiptCrypto.ts b/packages/crypto/src/ReceiptCrypto.ts
+index 942992f..b344002 100644
+--- a/packages/crypto/src/ReceiptCrypto.ts
++++ b/packages/crypto/src/ReceiptCrypto.ts
+@@ -10,7 +10,7 @@ import { TrustRecordHasher } from "./TrustRecordHasher.js";
+ 
+ import { SignerBootstrap } from "./SignerBootstrap.js";
+ import { FileKeyProvider } from "./providers/key/FileKeyProvider.js";
+-import { DEFAULT_KEY_ID, DEFAULT_SECONDARY_KEY_ID } from "./KeyProvider.js";
++import { currentSigningKeyId, DEFAULT_SECONDARY_KEY_ID } from "./KeyProvider.js";
+ 
+ /**
+  * Schema version stamped on `signatures`-bearing Receipts. See the
+@@ -60,7 +60,7 @@ export class ReceiptCrypto {
+   async sign(value: unknown): Promise<string> {
+     const signer = await this.signerPromise;
+ 
+-    return this.signer.signWithSigner(value, DEFAULT_KEY_ID, signer);
++    return this.signer.signWithSigner(value, currentSigningKeyId(), signer);
+   }
+ 
+   /**
+@@ -104,7 +104,7 @@ export class ReceiptCrypto {
+ 
+         schemaVersion: HYBRID_SCHEMA_VERSION,
+       },
+-      DEFAULT_KEY_ID,
++      currentSigningKeyId(),
+       DEFAULT_SECONDARY_KEY_ID,
+     );
+ 
+diff --git a/packages/crypto/src/providers/signer/KmsSigner.ts b/packages/crypto/src/providers/signer/KmsSigner.ts
+index 24c8aca..cc0ad57 100644
+--- a/packages/crypto/src/providers/signer/KmsSigner.ts
++++ b/packages/crypto/src/providers/signer/KmsSigner.ts
+@@ -11,7 +11,7 @@ import {
+ import { SignatureAlgorithms, type SignatureAlgorithm } from "@parmana/shared";
+ 
+ import {
+-  DEFAULT_KEY_ID,
++  currentSigningKeyId,
+   currentVerificationKeyId,
+   type KeyMetadata,
+ } from "../../KeyProvider.js";
+@@ -253,7 +253,7 @@ export class KmsSigner implements Signer {
+    */
+   async listKeys(): Promise<string[]> {
+     const candidates = [
+-      ...new Set([DEFAULT_KEY_ID, currentVerificationKeyId()]),
++      ...new Set([currentSigningKeyId(), currentVerificationKeyId()]),
+     ];
+ 
+     const present = await Promise.all(
+diff --git a/packages/crypto/tests/unit/signing-key-id.test.ts b/packages/crypto/tests/unit/signing-key-id.test.ts
+new file mode 100644
+index 0000000..d576936
+--- /dev/null
++++ b/packages/crypto/tests/unit/signing-key-id.test.ts
+@@ -0,0 +1,50 @@
++import { afterEach, beforeEach, describe, expect, it } from "vitest";
++
++import {
++  DEFAULT_KEY_ID,
++  currentSigningKeyId,
++  currentVerificationKeyId,
++} from "../../src/KeyProvider.js";
++
++const ENV_KEYS = ["PARMANA_SIGNING_KEY_ID", "PARMANA_VERIFICATION_KEY_ID"] as const;
++
++describe("signing key id selection", () => {
++  let saved: Record<string, string | undefined>;
++
++  beforeEach(() => {
++    saved = Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]]));
++    for (const k of ENV_KEYS) delete process.env[k];
++  });
++
++  afterEach(() => {
++    for (const k of ENV_KEYS) {
++      if (saved[k] === undefined) delete process.env[k];
++      else process.env[k] = saved[k];
++    }
++  });
++
++  it("defaults to DEFAULT_KEY_ID when unset", () => {
++    expect(currentSigningKeyId()).toBe(DEFAULT_KEY_ID);
++  });
++
++  it("treats an empty or whitespace value as unset", () => {
++    process.env.PARMANA_SIGNING_KEY_ID = "   ";
++    expect(currentSigningKeyId()).toBe(DEFAULT_KEY_ID);
++  });
++
++  it("uses PARMANA_SIGNING_KEY_ID when set, trimmed", () => {
++    process.env.PARMANA_SIGNING_KEY_ID = " alias/parmana-prod ";
++    expect(currentSigningKeyId()).toBe("alias/parmana-prod");
++  });
++
++  it("verification key follows the signing key when no verification key is set", () => {
++    process.env.PARMANA_SIGNING_KEY_ID = "alias/parmana-prod";
++    expect(currentVerificationKeyId()).toBe("alias/parmana-prod");
++  });
++
++  it("an explicit verification key still wins", () => {
++    process.env.PARMANA_SIGNING_KEY_ID = "alias/parmana-prod";
++    process.env.PARMANA_VERIFICATION_KEY_ID = "old-key";
++    expect(currentVerificationKeyId()).toBe("old-key");
++  });
++});
+diff --git a/packages/execution-gateway/src/connector-execution/GatewayExternalAdapter.ts b/packages/execution-gateway/src/connector-execution/GatewayExternalAdapter.ts
+index a9cc74c..b0db705 100644
+--- a/packages/execution-gateway/src/connector-execution/GatewayExternalAdapter.ts
++++ b/packages/execution-gateway/src/connector-execution/GatewayExternalAdapter.ts
+@@ -12,7 +12,7 @@ import {
+ } from "@parmana/connector-sdk";
+ import {
+   CanonicalSerializer,
+-  DEFAULT_KEY_ID,
++  currentSigningKeyId,
+   SignerBootstrap,
+   type Signer,
+ } from "@parmana/crypto";
+@@ -229,7 +229,7 @@ export class GatewayExternalAdapter implements Connector {
+     this.url = checked.url;
+     this.connectorId = `ext-${target.capability}`;
+     this.capabilities = connectorCapabilities([target.capability]);
+-    this.keyId = options.keyId ?? DEFAULT_KEY_ID;
++    this.keyId = options.keyId ?? currentSigningKeyId();
+     this.lookup = options.lookup ?? systemEndpointAddressLookup;
+     this.transport = options.transport ?? createPinnedHttpsTransport();
+     this.now = options.now ?? (() => new Date());
+diff --git a/packages/runtime/src/BusinessTrustRecordBuilder.ts b/packages/runtime/src/BusinessTrustRecordBuilder.ts
+index f596955..e961f43 100644
+--- a/packages/runtime/src/BusinessTrustRecordBuilder.ts
++++ b/packages/runtime/src/BusinessTrustRecordBuilder.ts
+@@ -2,7 +2,7 @@ import crypto from "node:crypto";
+ 
+ import {
+   CryptoBootstrap,
+-  DEFAULT_KEY_ID,
++  currentSigningKeyId,
+   TrustRecordHasher,
+   VerificationCrypto,
+ } from "@parmana/crypto";
+@@ -150,7 +150,7 @@ export class BusinessTrustRecordBuilder {
+       signature: {
+         algorithm: CryptoBootstrap.create().signature.algorithm,
+ 
+-        keyId: DEFAULT_KEY_ID,
++        keyId: currentSigningKeyId(),
+ 
+         value: "",
+ 
+diff --git a/packages/runtime/src/ExecutionIntentBuilder.ts b/packages/runtime/src/ExecutionIntentBuilder.ts
+index a0f4277..06b8dd3 100644
+--- a/packages/runtime/src/ExecutionIntentBuilder.ts
++++ b/packages/runtime/src/ExecutionIntentBuilder.ts
+@@ -2,7 +2,7 @@ import crypto from "node:crypto";
+ 
+ import {
+   CryptoBootstrap,
+-  DEFAULT_KEY_ID,
++  currentSigningKeyId,
+   ExecutionIntentCrypto,
+ } from "@parmana/crypto";
+ 
+@@ -84,7 +84,7 @@ export class ExecutionIntentBuilder {
+       signature: {
+         algorithm: CryptoBootstrap.create().signature.algorithm,
+ 
+-        keyId: DEFAULT_KEY_ID,
++        keyId: currentSigningKeyId(),
+ 
+         value: "",
+ 
+diff --git a/packages/runtime/src/RefusalRecordBuilder.ts b/packages/runtime/src/RefusalRecordBuilder.ts
+index 867e003..a27049e 100644
+--- a/packages/runtime/src/RefusalRecordBuilder.ts
++++ b/packages/runtime/src/RefusalRecordBuilder.ts
+@@ -2,7 +2,7 @@ import crypto from "node:crypto";
+ 
+ import {
+   CryptoBootstrap,
+-  DEFAULT_KEY_ID,
++  currentSigningKeyId,
+   RefusalCrypto,
+ } from "@parmana/crypto";
+ 
+@@ -76,7 +76,7 @@ export class RefusalRecordBuilder {
+       signature: {
+         algorithm: CryptoBootstrap.create().signature.algorithm,
+ 
+-        keyId: DEFAULT_KEY_ID,
++        keyId: currentSigningKeyId(),
+ 
+         value: "",
+ 
+diff --git a/packages/runtime/src/TenantKeyResolver.ts b/packages/runtime/src/TenantKeyResolver.ts
+index 5bc47dd..d700b00 100644
+--- a/packages/runtime/src/TenantKeyResolver.ts
++++ b/packages/runtime/src/TenantKeyResolver.ts
+@@ -1,4 +1,4 @@
+-import { DEFAULT_KEY_ID } from "@parmana/crypto";
++import { currentSigningKeyId } from "@parmana/crypto";
+ 
+ /**
+  * Resolves which signing keyId an Execution Authorization for a given
+@@ -41,7 +41,7 @@ export class FileTenantKeyResolver implements TenantKeyResolver {
+ 
+   async resolveKeyId(tenantId: string | undefined): Promise<string> {
+     if (tenantId === undefined) {
+-      return DEFAULT_KEY_ID;
++      return currentSigningKeyId();
+     }
+ 
+     const candidate = `${TENANT_KEY_PREFIX}${tenantId}`;
+@@ -55,6 +55,6 @@ export class FileTenantKeyResolver implements TenantKeyResolver {
+       // rather than fail signing over a per-tenant provisioning gap.
+     }
+ 
+-    return DEFAULT_KEY_ID;
++    return currentSigningKeyId();
+   }
+ }

@@ -16,12 +16,12 @@ The plan asks a sharper question for each claim: would our tests notice if the m
 
 The plan is built from four promises:
 
-| Promise | Meaning |
-|---|---|
-| Authority is explicit | Business limits are declared, versioned and tied to the actions they cover. |
-| Authorization is deterministic | The same input and policy give the same decision. |
-| Execution stays within authority | An action cannot exceed the authority granted. |
-| Evidence is verifiable | A third party can check a record without trusting the system that produced it. |
+| Promise                          | Meaning                                                                        |
+| -------------------------------- | ------------------------------------------------------------------------------ |
+| Authority is explicit            | Business limits are declared, versioned and tied to the actions they cover.    |
+| Authorization is deterministic   | The same input and policy give the same decision.                              |
+| Execution stays within authority | An action cannot exceed the authority granted.                                 |
+| Evidence is verifiable           | A third party can check a record without trusting the system that produced it. |
 
 Fail-closed behaviour applies to all four. When a check cannot be completed, the action is refused.
 
@@ -90,19 +90,19 @@ Each of these is tied to a specific commit, configuration and suite. A change to
 
 ## 6. Current state
 
-| Area | State |
-|---|---|
-| Crypto mutation campaign (14 Nov 2026) | Complete: 92.3% Stryker score, 1,215 of 1,316 caught, 101 survived |
-| Survivor classification | 0 of 101 classified |
-| Chain-head check (`CallerAuditChainVerifier.ts`) | Not covered by tests |
-| Property-based tests | Not started |
-| RFC 8785 vectors | Not started |
-| Cross-verification | Not started |
-| Authorization boundary matrix | Not automated |
-| Attack examples as CI tests | Not confirmed |
-| Fuzzing | Not started |
-| Concurrency and fault injection | Not started |
-| Reproducibility check | Not started |
+| Area                                             | State                                                              |
+| ------------------------------------------------ | ------------------------------------------------------------------ |
+| Crypto mutation campaign (14 Nov 2026)           | Complete: 92.3% Stryker score, 1,215 of 1,316 caught, 101 survived |
+| Survivor classification                          | 0 of 101 classified                                                |
+| Chain-head check (`CallerAuditChainVerifier.ts`) | Not covered by tests                                               |
+| Property-based tests                             | Not started                                                        |
+| RFC 8785 vectors                                 | Not started                                                        |
+| Cross-verification                               | Not started                                                        |
+| Authorization boundary matrix                    | Not automated                                                      |
+| Attack examples as CI tests                      | Not confirmed                                                      |
+| Fuzzing                                          | Not started                                                        |
+| Concurrency and fault injection                  | Not started                                                        |
+| Reproducibility check                            | Not started                                                        |
 
 ## 7. Open decisions
 
