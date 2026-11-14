@@ -250,3 +250,43 @@ The proposal's package mapping for the rest of the work, with its order of prior
 ### 11.5 Proposed engineering standard
 
 The proposed Assurance Testing Standard (PARMANA-ATS-001) is saved at [ASSURANCE_TESTING_STANDARD.md](ASSURANCE_TESTING_STANDARD.md) and marked not adopted. Its factual claims were checked against the repository, and the corrections are in its Appendix A. Adoption is decision 9.1 in Section 9. Its invariant list (ATS-001 to ATS-012) differs from Section 7 of this plan, and the owner needs to decide which list governs.
+
+### 11.6 Formal assurance: DeepMind `code-verification` (research reference, proposed)
+
+Checked on 14 November 2026 against the public repository (`google-deepmind/code-verification`) through its README and linked documents. The repository is not in this session's GitHub scope, so nothing was read through the GitHub tools.
+
+**Verified**
+
+| Claim | Result |
+| --- | --- |
+| Lean 4 formalizations of Signal `libsignal` security proofs | Verified |
+| Two arguments: symbolic (Dolev–Yao) and computational (game-based) | Verified |
+| Security claim for compiled AArch64 machine code | Verified, with a narrower scope. The README says "two AI-generated proofs of security" for a CLI harness "with hooked cryptographic primitives". |
+| Toolchain: Lean 4.34.0, Rust 1.98.1, LLVM `ld.lld` 22.1.8, Zig 0.16.0 | Verified |
+| Full build: several hours, about 15–34 GiB peak RAM | Verified |
+| Lean Comparator: checks statement match, allowed axioms (`propext`, `Quot.sound`, `Classical.choice`) and replay in a fresh kernel | Verified. Linux only, because it uses Landlock sandboxing. |
+| Non-vacuity | Partly verified. The term appears in the deviation register (DEV-PQ3, "proved non-vacuity on reachable/honest states"). Its general use as a principle is not confirmed. |
+| Bug injection examples: dropped post-quantum ratchet key, leaked authentication key, retained rotated-out keys, skipped message authentication | **Not verified.** The cited page does not contain these. It documents two upstream bugs (removal of `EdwardsPoint::is_torsion_free`, and an SPQR chain key read without commitment) and synthetic mutants it does not list. Do not cite the four examples as DeepMind's. |
+
+**Omitted from the proposal, and relevant to Parmana**
+
+- The proofs cover one pinned ELF built with a specific toolchain and linker script. Other builds are not covered (DEV-M7).
+- Cryptographic primitives are hooked, meaning trusted models, not verified as machine code. This includes SHA-256, AES-256-CBC, X25519, the Ed25519 curve core and Kyber1024 (DEV-E8, DEV-PQ1).
+- **Every PQXDH result is classical.** "No post-quantum or HNDL security is claimed" (DEV-PQ19). Parmana's post-quantum signing (ML-DSA, in `packages/crypto/src/support/MlDsaSupport.ts` and `providers/signature/Dilithium3SignatureProvider.ts`) must not be described with stronger claims than the code and tests support.
+- Fixed memory layout, a process per CLI call, an allocator that never frees, and public test identity keys (DEV-M6, DEV-E6, DEV-M10, DEV-M11).
+- The project is "not an official Google product" and is provided "AS IS".
+
+**Parmana corrections to the proposal**
+
+- The package table uses names that do not exist (`verifier`, `governance`, `execution`, `bundle`, `audit-db`, `server`). Use the mapping in the Assurance Testing Standard, Section 3.
+- The repository contains no Lean, TLA+ or Alloy files. No formal specification of the authority invariant exists yet.
+- The authority invariant `Executed(a) ⇒ Authorized(a)` is a proposed property. The predicates `CorrectAgent`, `CorrectScope`, `ValidCredential`, `ValidPolicy` and `ApprovedActionMatches` have no code definitions yet. Each needs one before it can be stated or tested.
+- The image in the proposal is linked from an `images.openai.com` address and labelled as the DeepMind logo. It was not verified and was not used.
+
+**Proposals for owner decision (not adopted)**
+
+1. Write a plain-language specification of the authority invariant and its predicates before any prover is chosen. This is the first step in the proposal and is consistent with Section 6 of the plan.
+2. Add a non-vacuity requirement: every deny test has a paired allow test on the same path. This would extend Section 4.4 of the Standard.
+3. Build a bug-injection harness that pairs each injected defect with a named detection. Stryker mutators can be used for the code-level part. The proposal's expected-detection table is a proposal and has not been checked against code.
+4. Decide whether a formal proof effort is in scope. The proposal's first target, one payment workflow, would need its own scope and owner.
+5. Decide whether the research publication described in the proposal is a goal.
