@@ -75,3 +75,39 @@ Correction: an earlier version of this document listed `createdBy` and `createdA
 - **D17:** the request defines the policy version. The request must name `policy.name` and `policy.version`; governance decides only whether that version is the one in effect (D18).
 - **D18:** the version in effect comes from governance records, with no fallback to the canonical table.
 - **D15 and D14:** `razorpay:refund` is not bound to any policy in code, so a declare request for that capability does not yet reach a policy check it can be bound to. See `docs/assurance/POLICY_BINDING_RAZORPAY.md`.
+
+## 7. Long-term fix for the declare stage (agreed plan, 14 November 2026)
+
+**Why this section exists.** The earlier description of this stage was written from memory of the concepts, not from the handler. Nothing checked it against the code, so it contained errors: the key was described as identifying the authority, `createdBy` and `createdAt` were listed as metadata, and `tenantId` was described as a label. This plan prevents that from happening again.
+
+### 7.1 Contract test (no owner decision needed)
+
+- **What:** a test, in `packages/api/tests/integration/`, that sends `POST /transactions` requests and checks the behaviour this document describes.
+- **It must check:**
+  1. Each required field: a request without `businessTransactionId`, `metadata.businessTransactionId`, `authority`, `authorization`, `intent` or `policy` is refused.
+  2. The structural check: a malformed `businessTransactionId` returns `400` and writes `caller.structural_rejected`.
+  3. The principal check: a principal the key may not assert returns `403` and writes `caller.principal_denied`.
+  4. The capability check: an action the key may not invoke returns `403` and writes `caller.capability_denied`.
+  5. The tenant check: a `tenantId` the key does not list returns `403` with `TENANT_NOT_ALLOWED`.
+  6. The ID match: a mismatched `metadata.businessTransactionId` is refused.
+  7. The duplicate check: a reused `businessTransactionId` returns `409`.
+  8. The order: a request that fails check 2 is refused before check 3 is reached, and no policy is loaded for any refusal in checks 1 to 5.
+- **Done when:** the test passes on `main`, and it fails if any one of those checks is removed from the handler.
+
+### 7.2 Field tables generated from the types (no owner decision needed)
+
+- **What:** the tables in sections 1 and 6 are generated from `TransactionMetadata`, `Authority`, `Authorization`, `Intent` and `PolicyReference` in `packages/shared/src/domain/`.
+- **Done when:** a script regenerates the tables, and CI fails if the committed document differs from the generated output.
+
+### 7.3 Whether declare is a separate step (owner decision)
+
+- **Today:** `POST /transactions` declares and executes in one call. A caller cannot see the policy decision before execution.
+- **Option A:** keep one call. This is the current behaviour, and it needs no change.
+- **Option B:** split into two calls. The first declares and returns the policy decision without executing. The second executes a declared transaction. This changes the API and needs a new contract test.
+- **Until the owner decides,** this document describes Option A, the current behaviour.
+
+### 7.4 Order of work
+
+1. Contract test (7.1).
+2. Generated tables (7.2).
+3. Owner decision on 7.3, then any change it requires.

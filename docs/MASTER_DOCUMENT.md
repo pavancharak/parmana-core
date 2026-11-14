@@ -112,3 +112,7 @@ All branches named in this document are unmerged. None has been merged to `main`
 - Frozen cryptographic core: `docs/assurance/FROZEN_CORE.md`
 - Coverage: `docs/assurance/COVERAGE_REGISTER.md`
 - Declare stage (request fields and checks): `docs/DECLARE_STAGE.md`
+
+## 9. Declare-stage documentation: agreed plan (14 November 2026)
+
+The plan is in `docs/DECLARE_STAGE.md`, section 7. In order: a contract test that checks the documented behaviour against the handler; field tables generated from the types; and an owner decision on whether declare is a separate step (Option A keeps one call, the current behaviour; Option B splits it into two). The contract test and generated tables need no decision and are the next work. Option B is for the owner to decide.
