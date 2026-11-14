@@ -1,8 +1,8 @@
 # Why We Are Testing Whether Our Tests Can Be Trusted
 
-*The engineering thinking behind mutation testing at Parmana Systems*
+_The engineering thinking behind mutation testing at Parmana Systems_
 
-*Suggested subtitle: Why building trustworthy autonomous systems requires us to test not just our code, but whether our tests can detect when that code is wrong.*
+_Suggested subtitle: Why building trustworthy autonomous systems requires us to test not just our code, but whether our tests can detect when that code is wrong._
 
 ---
 
@@ -133,4 +133,4 @@ Authority must be enforced. Evidence must be verifiable. And the tests that prot
 
 ---
 
-*Parmana Systems: Accountability infrastructure for autonomous systems. Authority defines the boundaries. Parmana enforces them. Evidence establishes accountability.*
+_Parmana Systems: Accountability infrastructure for autonomous systems. Authority defines the boundaries. Parmana enforces them. Evidence establishes accountability._
