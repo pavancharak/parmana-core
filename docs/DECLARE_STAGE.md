@@ -30,6 +30,15 @@ The body has these parts.
 
 Refusals in steps 1 to 3 happen before any policy is loaded. Nothing reaches the connector from them.
 
+## 5. The Business Transaction ID
+
+`businessTransactionId` identifies one business transaction. The caller generates it. It is a UUID.
+
+- **Format:** checked first, at the declare stage (step 1 above). An invalid value is refused with `400`.
+- **Metadata match:** `metadata.businessTransactionId` must equal the top-level `businessTransactionId`. The runtime validator refuses the transaction otherwise (`packages/runtime/src/validators/BusinessTransactionValidator.ts`, "metadata.businessTransactionId must match businessTransactionId"). This check runs inside execution, after the declare-stage checks.
+- **Uniqueness:** submitting an ID that was already used is refused with `409`, through `DuplicateBusinessTransactionError` (`packages/api/src/middleware/error-handler.ts`). The test suite checks this on `POST /execute`. The `POST /transactions` path shares the same error handler; a direct test of it was not found in this review.
+- **Purpose:** the ID ties together the request, its audit events, and its execution record. A retry with the same ID is refused rather than executed twice.
+
 ## 3. What is not yet confirmed
 
 - Whether the transaction is stored before step 4, or only after the execution result. The handler does not show it in the section read.
