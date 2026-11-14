@@ -9,6 +9,8 @@
  * ExecutionEvidence for storage in the Execution
  * Trust Record.
  */
+import type { ExecutionCorrespondence } from "./execution-evidence.js";
+
 export interface ExecutionResult {
   /**
    * Business Transaction that was executed.
@@ -51,4 +53,10 @@ export interface ExecutionResult {
    * - Deployment ID
    */
   readonly metadata?: Readonly<Record<string, unknown>>;
+
+  /**
+   * Correspondence between the authorization and the content dispatched
+   * to the connector. Set by the Execution Gateway.
+   */
+  readonly correspondence?: ExecutionCorrespondence;
 }

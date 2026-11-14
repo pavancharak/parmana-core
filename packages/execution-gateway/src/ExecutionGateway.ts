@@ -39,6 +39,7 @@ import {
   type AuthorityGrantRepository,
   type ExecutionOutcomeStore,
   type ExecutionResult,
+  type ExecutionCorrespondence,
   type ReleaseApproval,
 } from "@parmana/shared";
 
@@ -808,11 +809,43 @@ export class ExecutionGateway implements ExecutionSystem {
       throw error;
     }
 
+    //
+    // Correspondence (ExecutionCorrespondence). The hash is taken over the
+    // verified content object that was handed to the connector, with the
+    // same hasher as businessTransactionHash, so it is comparable. The
+    // record is attached before the outcome is stored, so a replayed
+    // outcome carries the same record.
+    //
+    const withCorrespondence: ExecutionResult = {
+      ...dispatched,
+      correspondence: await this.correspondenceFor(request, transaction),
+    };
+
     if (this.executionOutcomeStore !== undefined) {
-      await this.executionOutcomeStore.complete(nonce, dispatched);
+      await this.executionOutcomeStore.complete(nonce, withCorrespondence);
     }
 
-    return dispatched;
+    return withCorrespondence;
+  }
+
+  private async correspondenceFor(
+    request: ExecutionRequest,
+    transaction: Readonly<ExecutableContent>,
+  ): Promise<ExecutionCorrespondence> {
+    const payload = request.authorization.payload;
+
+    return {
+      schemaVersion: 1,
+      authorizationNonce: payload.nonce,
+      authorizedContentHash: payload.businessTransactionHash,
+      dispatchedContentHash: await this.contentHasher.hash(transaction),
+      ...(payload.policyContentHash !== undefined && {
+        policyContentHash: payload.policyContentHash,
+      }),
+      ...(payload.authorityGrant !== undefined && {
+        authorityGrantId: payload.authorityGrant.grantId,
+      }),
+    };
   }
 
   /**

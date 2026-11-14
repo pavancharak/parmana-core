@@ -87,8 +87,16 @@ Done, on `claude/lucid-sagan-1gs4xj`:
 - 10 unit tests in `packages/shared/tests/unit/execution-correspondence.test.ts`. All pass on Node 24.22.2.
 - Shared and crypto suites: 545 passed, 1 skipped, on Node 24.22.2.
 
+Done since (gateway step):
+
+- `ExecutionResult.correspondence` (optional), copied into the evidence by `ExecutionEvidenceBuilder` in `packages/runtime`.
+- `ExecutionGateway.execute()` attaches the record to every released result, before the outcome is stored, so a replay returns the same record. The dispatched hash uses the same `ExecutableContentHasher` as `businessTransactionHash`.
+- 3 new gateway tests in `packages/execution-gateway/tests/unit/execution-gateway.test.ts`. All 17 tests in that file pass on Node 24.22.2.
+
+**Limitation, which must be stated in any paper:** the dispatched hash is computed over the verified content object that the gateway hands to the connector. It is not computed over the outbound HTTP payload that a connector builds. A change made inside a connector, after the gateway's hash, would not be detected by this record. Closing that needs a hash in the connector adapter, which is a further step.
+
 Not done, and needed before the benchmark can run EM-01, EM-02 and EM-04:
 
-- The gateway does not yet fill `correspondence`. It must hash the exact content passed to the connector, using the same canonical hasher as `businessTransactionHash`, and store only the hash.
-- No verifier calls `checkExecutionCorrespondence` yet.
+- No independent verifier calls `checkExecutionCorrespondence` yet. The gateway records the field, and the shared check is tested, but no verifier applies it to stored records.
+- A hash at the connector's outbound payload (see limitation above).
 - The benchmark tests have not been run.
