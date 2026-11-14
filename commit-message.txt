@@ -1,0 +1,19 @@
+Make the KMS signing key configurable per deployment
+
+Signing with KEY_PROVIDER=aws-kms was hard-wired to the logical key
+"default", which resolves to the shared alias/default. Every environment
+using KMS therefore shared one key through one alias, and a test or
+drill could not run without repointing it.
+
+Add PARMANA_SIGNING_KEY_ID (default "default", so existing deployments
+are unchanged) and route the signing call sites through
+currentSigningKeyId(). Verification now defaults to the signing key
+unless PARMANA_VERIFICATION_KEY_ID is set. The KMS startup reachability
+check and the public key lookup use the configured key too.
+
+Covers crypto signers, runtime record builders, TenantKeyResolver, the
+execution gateway external adapter, the business signal source, and the
+gateway public key bootstrap. Adds unit tests for the key-id selection
+and documents the variable in .env.example.
+
+Claude-Session: https://claude.ai/code/session_016dzNue1YK7mehuYrYYaQNn
