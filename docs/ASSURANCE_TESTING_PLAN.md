@@ -246,3 +246,7 @@ These are not adopted. Each needs a decision from Pavan Charak, as rule 5 of `CL
 5. Decide whether the proposal's "Phase 1 first" ordering stands. It matches this plan.
 
 The proposal's package mapping for the rest of the work, with its order of priority, is not adopted until the names are corrected as in Section 3.
+
+### 11.5 Proposed engineering standard
+
+The proposed Assurance Testing Standard (PARMANA-ATS-001) is saved at [ASSURANCE_TESTING_STANDARD.md](ASSURANCE_TESTING_STANDARD.md) and marked not adopted. Its factual claims were checked against the repository, and the corrections are in its Appendix A. Adoption is decision 9.1 in Section 9. Its invariant list (ATS-001 to ATS-012) differs from Section 7 of this plan, and the owner needs to decide which list governs.
