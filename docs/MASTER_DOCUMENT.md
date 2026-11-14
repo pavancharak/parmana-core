@@ -35,26 +35,26 @@ This is an overview from the code, not a full trace.
 
 Owner decisions are recorded in `docs/ASSURANCE_DECISIONS.md`. The status below is as of this document.
 
-| ID  | Decision                                                                                                   | Status                                                                                                               |
-| --- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| D1  | Adopt the assurance standard (candidate mappings still open)                                               | Adopted                                                                                                              |
-| D2  | The ATS list governs                                                                                       | Adopted                                                                                                              |
-| D3  | Accept the recommendation                                                                                  | Adopted                                                                                                              |
-| D4  | Yes, with boundary suites                                                                                  | Adopted                                                                                                              |
-| D5  | Revisit after Phase 2                                                                                      | Adopted                                                                                                              |
-| D7  | In scope                                                                                                   | Adopted                                                                                                              |
-| D8  | Define as proposed                                                                                         | Adopted                                                                                                              |
-| D9  | Reject non-canonical signature encodings                                                                   | Adopted                                                                                                              |
-| D10 | Vendor adapter hash                                                                                        | Pending                                                                                                              |
-| D11 | Ledger connection and anchor                                                                               | Pending                                                                                                              |
-| D12 | Authority version (AM-04)                                                                                  | Pending                                                                                                              |
-| D13 | Permanent direction for assurance                                                                          | Adopted                                                                                                              |
-| D14 | `razorpay:refund` policy version 1.3.0                                                                     | Adopted, but flagged for review (see section 5)                                                                      |
-| D15 | Drop the `razorpay:refund` binding; keep the G-77 check strict                                             | Adopted                                                                                                              |
-| D16 | Capability names use the connector, policy and version format, option A (`razorpay_customer-refund_1-3-0`) | Adopted, not implemented; depends on the policy question in section 5                                                |
-| D17 | The request defines the policy version                                                                     | Adopted                                                                                                              |
-| D18 | No fallback to the canonical table version; version in effect comes from governance only                   | Adopted and implemented                                                                                              |
-| D19 | Execution-time governance follows the same rule in every environment                                       | Adopted; implemented in the code and tests on `claude/d19-governance-everywhere`; harnesses and some docs still open |
+| ID  | Decision                                                                                            | Status                                                                                                               | Where the change is                                                                      |
+| --- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| D1  | Adopt the assurance standard (candidate mappings still open)                                        | Adopted                                                                                                              | Docs only                                                                                |
+| D2  | The ATS list governs                                                                                | Adopted                                                                                                              | Docs only                                                                                |
+| D3  | Accept the recommendation                                                                           | Adopted                                                                                                              | Docs only                                                                                |
+| D4  | Yes, with boundary suites                                                                           | Adopted                                                                                                              | Docs only                                                                                |
+| D5  | Revisit after Phase 2                                                                               | Adopted                                                                                                              | Docs only                                                                                |
+| D7  | In scope                                                                                            | Adopted                                                                                                              | Docs only                                                                                |
+| D8  | Define as proposed                                                                                  | Adopted                                                                                                              | Docs only                                                                                |
+| D9  | Reject non-canonical signature encodings                                                            | Adopted                                                                                                              | Implemented in `canonicalSignatureBytes`; tested in the crypto package                   |
+| D10 | Vendor adapter hash                                                                                 | Pending owner decision                                                                                               | None                                                                                     |
+| D11 | Ledger connection and anchor                                                                        | Pending owner decision                                                                                               | None                                                                                     |
+| D12 | Authority version (AM-04)                                                                           | Pending owner decision                                                                                               | None                                                                                     |
+| D13 | Permanent direction for assurance                                                                   | Adopted                                                                                                              | Docs only                                                                                |
+| D14 | `razorpay:refund` policy version 1.3.0                                                              | Owner confirmed. Under review: this policy rejects every refund (section 5)                                          | Record only; no binding in code                                                          |
+| D15 | Drop the `razorpay:refund` binding; keep the G-77 check strict                                      | Adopted                                                                                                              | Branch `claude/bind-razorpay-refund` (PR #635)                                           |
+| D16 | Capability names: connector, policy and version format, option A (`razorpay_customer-refund_1-3-0`) | Owner chose option A. Not implemented; depends on section 5, item 1                                                  | Record only                                                                              |
+| D17 | The request defines the policy version                                                              | Adopted                                                                                                              | Record only; the binder already compares the declared version                            |
+| D18 | No fallback to the canonical table version; version in effect comes from governance only            | Adopted and implemented                                                                                              | Branch `claude/bind-razorpay-refund` (commit `6b07e947`)                                 |
+| D19 | Execution-time governance follows the same rule in every environment                                | Adopted. Implemented in code and tests. Out-of-process harnesses and the Postgres tie-break are not done (section 5) | Branch `claude/d19-governance-everywhere` (commits `c66125b3`, `61541dc7`); no PR opened |
 
 ## 5. Open issues, most important first
 
@@ -65,7 +65,7 @@ Owner decisions are recorded in `docs/ASSURANCE_DECISIONS.md`. The status below 
 5. **Signing.** The commits on the working branches are signed off but not signed. This session has no signing key, so `verified-commits` will fail until they are re-signed.
 6. **Signing readiness** (`createSigningReadiness`) has its own environment rule (`SIGNING_READINESS_CHECK`). It is outside D19 and unchanged.
 7. **Capability naming and G-77** are linked to items 1 and 2.
-8. **PoAE.** The poae repository's README next-step section is updated on `claude/readme-next-step`. Per earlier notes, PRs #8 and #9 in that repository await the owner. Gate G2 review and the grant-capability name are open.
+8. **PoAE.** The README next-step section is updated on branch `claude/readme-next-step` in `parmana-poae-benchmark` (commit `49f3e32`), not merged. Two pull requests in that repository, #8 and #9, were listed in an earlier session and were not re-checked for this document. Gate G2 review and the grant-capability name are open.
 
 ## 6. What has been verified, and how
 
@@ -83,6 +83,8 @@ Owner decisions are recorded in `docs/ASSURANCE_DECISIONS.md`. The status below 
 - The Postgres repository's behaviour on ties.
 - The live Razorpay path. There is no live traffic for `razorpay:refund` (owner statement).
 - Whether anything reached `main`. Several branches are open and unmerged.
+
+All branches named in this document are unmerged. None has been merged to `main`.
 
 ## 7. Decisions still needed from the owner, in order
 
