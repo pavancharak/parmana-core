@@ -77,16 +77,16 @@ Status values:
 
 ## Count
 
-| Category                            |  Tests | Testable now |   Gap |
-| ----------------------------------- | -----: | -----------: | ----: |
-| Authority manipulation              |      4 |            3 |     1 |
-| Authorization manipulation          |      4 |            4 |     0 |
-| Execution manipulation              |      4 |            4 |     0 |
-| Cryptographic evidence manipulation |      4 |            3 |     1 |
-| Replay and temporal attacks         |      4 |            4 |     0 |
-| **Total**                           | **20** |       **18** | **2** |
+| Category                            |  Tests | Implemented |   Gap |
+| ----------------------------------- | -----: | ----------: | ----: |
+| Authority manipulation              |      4 |           3 |     1 |
+| Authorization manipulation          |      4 |           4 |     0 |
+| Execution manipulation              |      4 |           4 |     0 |
+| Cryptographic evidence manipulation |      4 |           4 |     0 |
+| Replay and temporal attacks         |      4 |           4 |     0 |
+| **Total**                           | **20** |      **19** | **1** |
 
-XM-03 is testable now. The policy-change behaviour still needs the decision in plan Section 9, item 3.
+"Implemented" includes EM-03, which is covered by the existing architecture boundary test rather than by this runner. The one gap is AM-04 (gap G-A).
 
 ## Success criteria
 
@@ -105,8 +105,13 @@ Each result must be reported as measured, using `testing/templates/assurance-res
 | ID                                           | Result                                                           | Commit                                   | Date       |
 | -------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------- | ---------- |
 | Re-run 14 Nov 2026 after D9 (11 implemented) | 11 passed, 0 failed, 9 not run. Details in ASSURANCE_RESULTS.md. | 035e1697715da917899eaf4cb7112a5fb4393020 | 2026-11-14 |
+| Run 14 Nov 2026, all implementable tests     | 18 passed, 0 failed. EM-03 covered elsewhere. AM-04 gap.         | bbe92321e32c9aed8dbc452dbb14f440fa66c43c | 2026-11-14 |
 
 ## Limits of the record-level tests
 
 - EM-01, EM-02 and EM-04 test the correspondence check on a trust record. They show that a record whose dispatched hash differs from the authorized hash is reported as failed. They do not show that the connector sent what the record claims. A connector-level hash is needed for that.
 - The offline check is only meaningful together with the record's signature check. A record changed without re-signing is caught by the signature check first.
+
+## Connector level
+
+The HTTP connector now hashes the body it sends (`wireContentHash`), and the gateway records its source. Vendor adapters are not covered. A hash over their requests needs a mapping specification first.

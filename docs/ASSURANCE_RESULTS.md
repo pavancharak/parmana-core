@@ -259,6 +259,48 @@ CE-02 now passes. The fix rejects non-canonical base64 signature encodings. The 
 
 ---
 
+### 2026-11-14: PoAE benchmark, all implementable tests, and connector-level hash
+
+- **Command:** `npm run build:packages`, then `node_modules/vitest/vitest.mjs run tests/assurance/poae`, then the full suite `node_modules/vitest/vitest.mjs run`. Both under Node 24.22.2.
+- **Runtime:** Node 24.22.2, vitest 5.1.0, Linux container. Benchmark file 1.29 s.
+- **Commit tested:** `bbe92321e32c9aed8dbc452dbb14f440fa66c43c`
+- **Branch:** `claude/lucid-sagan-1gs4xj`
+- **Run by:** session (Claude Code), at the owner's direction
+
+**Results**
+
+| Measurement                                                                   | Value |
+| ----------------------------------------------------------------------------- | ----: |
+| Benchmark tests in the specification                                          |    20 |
+| Implemented in the runner and passed                                          |    18 |
+| Failed                                                                        |     0 |
+| Covered by an existing test, not run here (EM-03, architecture boundary test) |     1 |
+| Gap, not implemented (AM-04, authority version binding absent)                |     1 |
+
+The 18 passing tests: AM-01, AM-02, AM-03, XM-01, XM-02, XM-03, XM-04, RT-01, RT-02, RT-03, RT-04, CE-01, CE-02, CE-03, CE-04, EM-01 (record level), EM-02 (record level), EM-04 (record level). Each deny case has a paired allow case, so a system that always denies cannot pass.
+
+Full suite on the same commit: a first run had one failure, an existing exact assertion on the HTTP connector's return value, which now expects the new `wireContentHash` field. That file passes after the fix in this commit. The first run's tallies were 3965 passed, 1 expected fail (existing), 106 skipped.
+
+**Limits:**
+
+- XM-01 and XM-02 test the content hash. They do not test a policy limit or an approved vendor list.
+- EM-01, EM-02 and EM-04 test the record-level check. The HTTP connector now hashes the body it sends, so the dispatched hash for the generic connector reflects the outbound request. The vendor adapters are not covered.
+- CE-04 tests the pure reconciliation function. The connection to the stored ledger is not implemented.
+- One run, not repeated.
+
+**Survivor classification:** not applicable. No mutation run.
+
+**Open items**
+
+1. Vendor adapters (`GatewayHttpAdapter`, `GatewayExternalAdapter`): their outbound requests are transformed from the content, so a hash over the request needs a mapping specification.
+2. Connect the reconciliation to the stored ledger (gap G-L).
+3. AM-04: authority version binding (gap G-A).
+4. EM-03 is covered by the architecture boundary test. Run it as part of the benchmark report, not as a separate test.
+
+**Phase status change:** none.
+
+---
+
 ### Entry template
 
 Copy this for each new run.

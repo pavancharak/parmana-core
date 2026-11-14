@@ -120,3 +120,16 @@ Still open:
 1. The connector-level hash, at the outbound payload.
 2. CE-04, reconciliation of the ledger against stored evidence.
 3. Running the benchmark, and recording the results, including any failures, in the results log.
+
+## 10. Status after the connector and reconciliation steps (14 November 2026)
+
+Done:
+
+- **Connector-level hash for the HTTP connector.** `HttpConnector` hashes the body it sends and returns `wireContentHash`. The gateway uses it as the dispatched hash and records `dispatchedHashSource: "connector-wire"`. Test: `packages/execution-gateway/tests/unit/http-connector-wire-hash.test.ts`.
+- **Ledger reconciliation (pure).** `reconcileExecutionEvidence` in `packages/shared/src/domain/execution-reconciliation.ts` fails when a completed execution has no trust record. An empty or in-flight set is not reported as passed.
+
+Still open:
+
+- Vendor adapters (`GatewayHttpAdapter`, `GatewayExternalAdapter`). Their requests are transformed from the content, so they need a mapping specification before a hash over the request can be compared with the authorized content.
+- Connecting the reconciliation to the stored ledger (gap G-L).
+- Authority version binding (gap G-A).
