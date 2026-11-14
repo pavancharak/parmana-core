@@ -112,25 +112,14 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 ---
 
-## D6. PoAE as a research track (plan Section 12.3, item 1)
-
-**Question:** Is the PoAE formal security specification (v0.1) a separate research track, or part of Phase 2?
-
-**Recommendation:** A separate research track. It should use the Phase 2 tests where they overlap, and it should not add new phases.
-
-**Owner decision:** **Separate research track.** Share the Phase 2 authorization tests rather than duplicating them.
-**Notes:**
-
----
-
 ## D7. Execution receipt in scope (plan Section 12.3, item 3)
 
 **Question:** Should Parmana add an execution receipt that binds the executed action hash to the authorization?
 
-**Recommendation:** Yes, as a product change on its own branch. It closes the gap for POAE-03 and tests EM-01, EM-02 and EM-04. It needs its own review, because it changes what the system outputs.
+**Recommendation:** Yes, as a product change on its own branch. It closes the record-level correspondence gap. It needs its own review, because it changes what the system outputs.
 
 **Owner decision:** **In scope.** Build on its own branch, with a versioned format and verifier checks.
-**Notes:** Premise revised on 14 November 2026: a signed receipt already exists, so the design now extends the existing signed records. See docs/assurance/EXECUTION_RECEIPT_DESIGN.md. Owner to confirm before code.
+**Notes:** Premise revised on 14 November 2026: a signed receipt already exists, so the design now extends the existing signed records. Owner to confirm before code.
 
 ---
 
@@ -147,7 +136,7 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 ---
 
-## D9. Reject non-canonical signature encodings (benchmark CE-02, results 14 November 2026)
+## D9. Reject non-canonical signature encodings (14 November 2026)
 
 **Question:** Should signature verification reject any base64 string that is not the canonical encoding of the signature bytes?
 
@@ -158,11 +147,10 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 **Owner decision:** **Reject non-canonical encodings.** Implemented in `035e1697`.
 **Notes:**
 
-## Record (PoAE)
+## Record
 
 | Decision | Owner decision                 | Date       | Recorded by                              |
 | -------- | ------------------------------ | ---------- | ---------------------------------------- |
-| D6       | Separate research track        | 2026-11-14 | Recorded in session at owner's direction |
 | D7       | In scope                       | 2026-11-14 | Recorded in session at owner's direction |
 | D8       | Define as proposed             | 2026-11-14 | Recorded in session at owner's direction |
 | D9       | Reject non-canonical encodings | 2026-11-14 | Recorded in session at owner's direction |
@@ -189,6 +177,6 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 **Question:** Should the long-term direction in [assurance/PERMANENT_DIRECTION.md](assurance/PERMANENT_DIRECTION.md) be adopted as the standing reference?
 
-**Recommendation:** Adopt it. It covers: claims limited to the coverage register; the benchmark as a CI gate; the frozen-core list written down; one source of truth per fact; independent review of the verifier; small pull requests.
+**Recommendation:** Adopt it. It covers: claims limited to the coverage register; the frozen-core list written down; one source of truth per fact; independent review of the verifier; small pull requests.
 
 **Owner decision:** **Agreed.** Adopted as the standing direction. Coverage claims follow [assurance/COVERAGE_REGISTER.md](assurance/COVERAGE_REGISTER.md). The frozen-core list in that register still needs confirmation under D8.

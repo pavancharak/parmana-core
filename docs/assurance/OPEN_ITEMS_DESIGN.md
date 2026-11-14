@@ -2,7 +2,7 @@
 
 **Status:** Proposed, with decisions needed. Nothing here is implemented.
 **Date:** 14 November 2026
-**Related:** [EXECUTION_RECEIPT_DESIGN.md](EXECUTION_RECEIPT_DESIGN.md) section 10, [benchmark-spec.md](../../testing/poae/benchmark-spec.md), and the results entry of 14 November 2026 in [ASSURANCE_RESULTS.md](../ASSURANCE_RESULTS.md).
+**Related:** [ASSURANCE_RESULTS.md](../ASSURANCE_RESULTS.md) (results of 14 November 2026).
 
 These are the three items left open after the connector hash and reconciliation work. Each section states what the repository already does, what is missing, the options, and the decision needed.
 
@@ -43,7 +43,7 @@ Also, an execution is written to the outcome store before its trust record exist
 
 **Decision needed (D11):** choose A, B or C, the window length, and whether the listing methods may be added to the storage interfaces.
 
-## 3. Authority version (gap G-A, benchmark AM-04)
+## 3. Authority version (gap G-A)
 
 **Already done.** The authorization binds `authorityGrant.grantId`, and the gateway checks that the grant is still the caller's active grant (`checkAuthorityGrant`).
 
