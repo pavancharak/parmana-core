@@ -23,7 +23,7 @@ from .business_transaction import (
     BusinessTransaction,
 )
 from .signature import SignatureAlgorithm, Signature, SignatureEntry
-from .execution_evidence import ExecutionEvidence
+from .execution_evidence import ExecutionEvidence, ExecutionCorrespondence
 from .business_validation import (
     AuthorityStatus,
     BusinessValidationStatus,
@@ -94,6 +94,7 @@ __all__ = [
     "ExecutionAssessment",
     "ExecutionAssessmentStatus",
     "ExecutionAuthorizationPayload",
+    "ExecutionCorrespondence",
     "ExecutionEvidence",
     "ExecutionIntent",
     "ExecutionIntentFinalizationMode",

@@ -39,6 +39,7 @@ import {
   type AuthorityGrantRepository,
   type ExecutionOutcomeStore,
   type ExecutionResult,
+  type ExecutionCorrespondence,
   type ReleaseApproval,
 } from "@parmana/shared";
 
@@ -808,11 +809,58 @@ export class ExecutionGateway implements ExecutionSystem {
       throw error;
     }
 
+    //
+    // Correspondence (ExecutionCorrespondence). The hash is taken over the
+    // verified content object that was handed to the connector, with the
+    // same hasher as businessTransactionHash, so it is comparable. The
+    // record is attached before the outcome is stored, so a replayed
+    // outcome carries the same record.
+    //
+    const withCorrespondence: ExecutionResult = {
+      ...dispatched,
+      correspondence: await this.correspondenceFor(
+        request,
+        transaction,
+        dispatched,
+      ),
+    };
+
     if (this.executionOutcomeStore !== undefined) {
-      await this.executionOutcomeStore.complete(nonce, dispatched);
+      await this.executionOutcomeStore.complete(nonce, withCorrespondence);
     }
 
-    return dispatched;
+    return withCorrespondence;
+  }
+
+  private async correspondenceFor(
+    request: ExecutionRequest,
+    transaction: Readonly<ExecutableContent>,
+    dispatched: ExecutionResult,
+  ): Promise<ExecutionCorrespondence> {
+    const payload = request.authorization.payload;
+
+    //
+    // A connector that hashed the body it sent is the closer evidence of
+    // what left the process, so its hash is used. Otherwise the gateway
+    // hashes the verified content it handed over.
+    //
+    const wireHash = dispatched.wireContentHash;
+
+    return {
+      schemaVersion: 1,
+      authorizationNonce: payload.nonce,
+      authorizedContentHash: payload.businessTransactionHash,
+      dispatchedContentHash:
+        wireHash ?? (await this.contentHasher.hash(transaction)),
+      dispatchedHashSource:
+        wireHash !== undefined ? "connector-wire" : "gateway",
+      ...(payload.policyContentHash !== undefined && {
+        policyContentHash: payload.policyContentHash,
+      }),
+      ...(payload.authorityGrant !== undefined && {
+        authorityGrantId: payload.authorityGrant.grantId,
+      }),
+    };
   }
 
   /**

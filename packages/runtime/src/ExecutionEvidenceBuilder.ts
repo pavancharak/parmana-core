@@ -22,6 +22,10 @@ export class ExecutionEvidenceBuilder {
       ...(result.metadata && {
         attributes: result.metadata,
       }),
+
+      ...(result.correspondence && {
+        correspondence: result.correspondence,
+      }),
     };
   }
 }

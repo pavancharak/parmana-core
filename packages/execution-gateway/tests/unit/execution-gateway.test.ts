@@ -13,6 +13,7 @@ import { MemoryNonceStore } from "@parmana/envelope-verifier";
 import type { ExecutionRequest } from "@parmana/execution-system";
 
 import {
+  checkExecutionCorrespondence,
   NonceAlreadyConsumedError,
   OutcomeUnknownError,
   type ExecutableContent,
@@ -532,5 +533,81 @@ describe("ExecutionGateway", () => {
     const result = await gateway.execute(originalRequest);
     expect(result.success).toBe(true);
     expect(connector.lastRequest?.verification.valid).toBe(true);
+  });
+});
+
+describe("ExecutionGateway correspondence", () => {
+  it("records the authorized and dispatched content hashes on a released result", async () => {
+    const { privateKey, publicKey } = generateKeyPair();
+    const authorization = await signAuthorization(privateKey);
+
+    const connector = new RecordingConnector();
+    const gateway = new ExecutionGateway({
+      allowUnverifiedPolicy: true,
+      publicKey,
+      nonceStore: new MemoryNonceStore(),
+      connector,
+    });
+
+    const result = await gateway.execute(
+      buildRequest(SAMPLE_EXECUTABLE_CONTENT, authorization),
+    );
+
+    expect(result.correspondence).toBeDefined();
+    expect(result.correspondence?.schemaVersion).toBe(1);
+    expect(result.correspondence?.authorizationNonce).toBe(
+      authorization.payload.nonce,
+    );
+    expect(result.correspondence?.authorizedContentHash).toBe(
+      authorization.payload.businessTransactionHash,
+    );
+    expect(result.correspondence?.dispatchedContentHash).toBe(
+      authorization.payload.businessTransactionHash,
+    );
+  });
+
+  it("produces a correspondence record the shared check accepts", async () => {
+    const { privateKey, publicKey } = generateKeyPair();
+    const authorization = await signAuthorization(privateKey);
+
+    const gateway = new ExecutionGateway({
+      allowUnverifiedPolicy: true,
+      publicKey,
+      nonceStore: new MemoryNonceStore(),
+      connector: new RecordingConnector(),
+    });
+
+    const result = await gateway.execute(
+      buildRequest(SAMPLE_EXECUTABLE_CONTENT, authorization),
+    );
+
+    expect(
+      checkExecutionCorrespondence(result.correspondence, {
+        nonce: authorization.payload.nonce,
+        businessTransactionHash: authorization.payload.businessTransactionHash,
+        ...(authorization.payload.policyContentHash !== undefined && {
+          policyContentHash: authorization.payload.policyContentHash,
+        }),
+      }),
+    ).toEqual({ status: "passed" });
+  });
+
+  it("carries the same correspondence record on a replayed outcome", async () => {
+    const { privateKey, publicKey } = generateKeyPair();
+    const authorization = await signAuthorization(privateKey);
+
+    const gateway = new ExecutionGateway({
+      allowUnverifiedPolicy: true,
+      publicKey,
+      nonceStore: new MemoryNonceStore(),
+      connector: new RecordingConnector(),
+      executionOutcomeStore: new MemoryExecutionOutcomeStore(),
+    });
+
+    const request = buildRequest(SAMPLE_EXECUTABLE_CONTENT, authorization);
+    const first = await gateway.execute(request);
+    const replayed = await gateway.execute(request);
+
+    expect(replayed.correspondence).toEqual(first.correspondence);
   });
 });

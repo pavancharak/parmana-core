@@ -156,9 +156,14 @@ describe("outcome record for a release refused before dispatch", () => {
     expect(await store.get(authorization.payload.nonce)).toBeUndefined();
 
     // The row was removed, so the retry runs the release again and succeeds.
-    await expect(gateway.execute(request(authorization))).resolves.toEqual(
-      SUCCESS,
-    );
+    await expect(gateway.execute(request(authorization))).resolves.toEqual({
+      ...SUCCESS,
+      // The gateway attaches the correspondence record to every released result.
+      correspondence: expect.objectContaining({
+        authorizedContentHash: authorization.payload.businessTransactionHash,
+        dispatchedContentHash: authorization.payload.businessTransactionHash,
+      }),
+    });
     expect(scripted.calls).toBe(2);
   });
 

@@ -4,6 +4,7 @@ import { SignatureAlgorithms, type SignatureAlgorithm } from "@parmana/shared";
 
 import type { SignatureProvider } from "../SignatureProvider.js";
 import { assertKeyType } from "./assertKeyType.js";
+import { canonicalSignatureBytes } from "./canonicalSignatureBytes.js";
 
 const NODE_KEY_TYPE = "ml-dsa-65";
 
@@ -43,11 +44,12 @@ export class Dilithium3SignatureProvider implements SignatureProvider {
   ): Promise<boolean> {
     assertKeyType(publicKey, NODE_KEY_TYPE, "verify");
 
-    return verify(
-      null,
-      Buffer.from(data),
-      publicKey,
-      Buffer.from(signature, "base64"),
-    );
+    const signatureBytes = canonicalSignatureBytes(signature);
+
+    if (signatureBytes === undefined) {
+      return false;
+    }
+
+    return verify(null, Buffer.from(data), publicKey, signatureBytes);
   }
 }

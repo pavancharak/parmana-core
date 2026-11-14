@@ -40,4 +40,43 @@ export interface ExecutionEvidence {
    * Optional execution-system-specific evidence.
    */
   readonly attributes?: Readonly<Record<string, unknown>>;
+
+  /**
+   * Correspondence between the authorization and the content that was
+   * dispatched. Absent on records written before this field existed; such
+   * records are reported as "not checked", never as passed.
+   */
+  readonly correspondence?: ExecutionCorrespondence;
+}
+
+/**
+ * Hash-level correspondence between an authorization and the dispatched
+ * content. The dispatched hash is computed over the exact canonical content
+ * passed to the connector, not over a redacted summary.
+ */
+export interface ExecutionCorrespondence {
+  /** Version of this correspondence record. */
+  readonly schemaVersion: 1;
+
+  /** Nonce of the authorization this execution relied on. */
+  readonly authorizationNonce: string;
+
+  /** Authorization's businessTransactionHash (canonical content hash). */
+  readonly authorizedContentHash: string;
+
+  /** Canonical hash of the content actually passed to the connector. */
+  readonly dispatchedContentHash: string;
+
+  /** Policy content hash the authorization was signed against, when bound. */
+  readonly policyContentHash?: string;
+
+  /** Authority grant identifier the authorization relied on, when present. */
+  readonly authorityGrantId?: string;
+
+  /**
+   * Where the dispatched hash was taken: "connector-wire" when the connector
+   * hashed the body it sent, "gateway" when the gateway hashed the verified
+   * content it handed over. Absent on records written before this field.
+   */
+  readonly dispatchedHashSource?: "gateway" | "connector-wire";
 }

@@ -109,3 +109,86 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 | D3       | Accept recommendation                 | 2026-11-14 | Recorded in session at owner's direction |
 | D4       | (a) Yes; (b) yes, boundary suites     | 2026-11-14 | Recorded in session at owner's direction |
 | D5       | Revisit after Phase 2                 | 2026-11-14 | Recorded in session at owner's direction |
+
+---
+
+## D6. PoAE as a research track (plan Section 12.3, item 1)
+
+**Question:** Is the PoAE formal security specification (v0.1) a separate research track, or part of Phase 2?
+
+**Recommendation:** A separate research track. It should use the Phase 2 tests where they overlap, and it should not add new phases.
+
+**Owner decision:** **Separate research track.** Share the Phase 2 authorization tests rather than duplicating them.
+**Notes:**
+
+---
+
+## D7. Execution receipt in scope (plan Section 12.3, item 3)
+
+**Question:** Should Parmana add an execution receipt that binds the executed action hash to the authorization?
+
+**Recommendation:** Yes, as a product change on its own branch. It closes the gap for POAE-03 and tests EM-01, EM-02 and EM-04. It needs its own review, because it changes what the system outputs.
+
+**Owner decision:** **In scope.** Build on its own branch, with a versioned format and verifier checks.
+**Notes:** Premise revised on 14 November 2026: a signed receipt already exists, so the design now extends the existing signed records. See docs/assurance/EXECUTION_RECEIPT_DESIGN.md. Owner to confirm before code.
+
+---
+
+## D8. Definition of the frozen cryptographic core (plan Section 12.3, item 2)
+
+**Question:** Which files form the "frozen" cryptographic integrity core, and what changes are allowed to them?
+
+**Recommendation:** Define it in writing before relying on the rule. The definition should list the files and the change process. No file should be frozen until it is listed.
+
+**Owner decision:** **Define as proposed.** Confirmed 14 November 2026 with the draft list in docs/assurance/COVERAGE_REGISTER.md, section 3.
+**Notes:**
+
+---
+
+---
+
+## D9. Reject non-canonical signature encodings (benchmark CE-02, results 14 November 2026)
+
+**Question:** Should signature verification reject any base64 string that is not the canonical encoding of the signature bytes?
+
+**Finding:** Changing the final base64 character of an Ed25519 signature still verifies. The signature bytes are unchanged, so this is not a forgery. The verifier accepts more than one encoding of one signature.
+
+**Recommendation:** Reject non-canonical encodings: decode the signature, re-encode it, and compare with the input. This is a small change, but it is in the verifier, so it needs review. Check first whether any stored record or receipt hashes the signature string, since such a change would alter those hashes.
+
+**Owner decision:** **Reject non-canonical encodings.** Implemented in `035e1697`.
+**Notes:**
+
+## Record (PoAE)
+
+| Decision | Owner decision                 | Date       | Recorded by                              |
+| -------- | ------------------------------ | ---------- | ---------------------------------------- |
+| D6       | Separate research track        | 2026-11-14 | Recorded in session at owner's direction |
+| D7       | In scope                       | 2026-11-14 | Recorded in session at owner's direction |
+| D8       | Define as proposed             | 2026-11-14 | Recorded in session at owner's direction |
+| D9       | Reject non-canonical encodings | 2026-11-14 | Recorded in session at owner's direction |
+| D10      | Pending                        |            |                                          |
+| D11      | Pending                        |            |                                          |
+| D12      | Pending                        |            |                                          |
+| D13      | Adopted: permanent direction   | 2026-11-14 | Recorded in session at owner's direction |
+
+---
+
+## D10 to D12. Open items after the connector and reconciliation work (plan: docs/assurance/OPEN_ITEMS_DESIGN.md)
+
+**D10, vendor adapter hash.** Choose how the in-repository vendor adapters are covered. Recommended: a declared mapping per adapter (option A). External connectors later (option B). Owner decision: _[ ] A [ ] B [ ] C (accept the gap) [ ] Other_
+
+**D11, ledger connection.** Choose how reconciliation reads the stored ledger. Recommended: a scheduled job (option A), with the window set from measured write latency, and listing methods added to the outcome and trust-record stores. Owner decision: _[ ] A [ ] B [ ] C [ ] Other_. Window: _____. Listing methods may be added: _[ ] yes [ ] no_
+
+**D12, authority version (AM-04).** Choose how re-issued authority is handled. Recommended: immutable grant identifiers (option B), if the registry can enforce them. Owner decision: _[ ] A (version field) [ ] B (immutable IDs) [ ] C (leave as is)_. Registry can enforce immutable IDs: _[ ] yes [ ] no_
+
+**Long-term recommendation (not a decision):** A now, and B for external connectors later (D10). A now, with an external anchor (C) as the target, because only an anchor lets an outside party detect removal (D11). B, enforced by a database constraint (D12). Details: docs/assurance/OPEN_ITEMS_DESIGN.md.
+
+---
+
+## D13. Permanent direction for Parmana assurance (14 November 2026)
+
+**Question:** Should the long-term direction in [assurance/PERMANENT_DIRECTION.md](assurance/PERMANENT_DIRECTION.md) be adopted as the standing reference?
+
+**Recommendation:** Adopt it. It covers: claims limited to the coverage register; the benchmark as a CI gate; the frozen-core list written down; one source of truth per fact; independent review of the verifier; small pull requests.
+
+**Owner decision:** **Agreed.** Adopted as the standing direction. Coverage claims follow [assurance/COVERAGE_REGISTER.md](assurance/COVERAGE_REGISTER.md). The frozen-core list in that register still needs confirmation under D8.

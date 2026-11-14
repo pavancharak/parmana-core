@@ -23,3 +23,8 @@
 /.github/ @pavancharak
 /package.json @pavancharak
 /package-lock.json @pavancharak
+
+# Frozen cryptographic core: the manifest of approved hashes, and the test
+# that enforces it. A change to either needs the owner's review (decision D8).
+/docs/assurance/frozen-core.manifest.json @pavancharak
+/tests/assurance/frozen-core.test.ts @pavancharak

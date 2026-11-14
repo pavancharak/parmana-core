@@ -395,7 +395,7 @@ const MODULES: ModuleSpec[] = [
   },
   {
     file: "execution_evidence",
-    types: ["ExecutionEvidence"],
+    types: ["ExecutionEvidence", "ExecutionCorrespondence"],
     docSource: "domain/execution-evidence.ts",
   },
   {
