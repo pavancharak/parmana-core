@@ -221,7 +221,7 @@ Supersedes section 18's "reverted" state. Branch `claude/d19-governance-everywhe
 **Not done:**
 
 1. **Out-of-process harnesses.** These start a separate API server, which has no approval records, so they will now be refused: the three Python live-server tests, `scripts/load-test.ts`, `scripts/run-examples.ts`, `scripts/drills/outage-drill.sh`, the docker smoke test in `.github/workflows/docker-image.yml`, and `examples/tutorials/81-connector-execution-gateway/run.ts` (in-process, not yet checked). They need a real approval path (the maker-checker API or `parmana-ops policy`) run before the server is used. This is a design decision with CI impact; it is not done.
-2. **Internal runbooks and generated files:** `docs/internal/runbooks/ENV-VARIABLE-REFERENCE.md`, `ENV-FILE.md`, `PRODUCTION-ENVIRONMENT.md`, `docs/internal/testing/FAULT-INJECTION.md`, `docs/site/llms-full.txt` (generated), and the claims log. They still describe the relaxation.
-3. **`packages/shared/src/config/Doctor.ts`** still lists the flag as a known setting. Removing it would make the doctor report a misleading typo; a warning that it is ignored would be better. Not changed.
+2. **Runbooks and generated site text: done** for `ENV-VARIABLE-REFERENCE.md`, `ENV-FILE.md`, `PRODUCTION-ENVIRONMENT.md`, `FAULT-INJECTION.md`, and `llms-full.txt` (regenerated with `scripts/generate-llms-txt.ts`). The claims log (`CLAIMS-CHANGELOG.md`, `CLAIMS.md`) and the audit archive are historical records and are not edited.
+3. **Doctor: done.** The flag is removed from `KNOWN_PARMANA_SETTINGS`. Setting it now produces "not read by any Parmana component, so it has no effect". Shared package tests: 175 pass.
 4. **Signing readiness** (`createSigningReadiness`) has its own environment rule (`SIGNING_READINESS_CHECK`). It is not part of D19 and is unchanged.
-5. **Postgres tie-break** (above).
+5. **Postgres tie-break** (above). Not fixed. Fixing it needs a schema change (an insertion-order column, ordered on) and a migration, which needs your approval.

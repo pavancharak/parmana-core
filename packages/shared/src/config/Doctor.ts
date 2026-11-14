@@ -64,7 +64,6 @@ const SCHEMA_NAME = /^[a-z_][a-z0-9_]{0,62}$/;
  * reported as a probable typo, because the server ignores it without a word.
  */
 export const KNOWN_PARMANA_SETTINGS: readonly string[] = [
-  "PARMANA_ALLOW_UNGOVERNED_POLICY",
   "PARMANA_API_BASE_URL",
   "PARMANA_API_KEYS",
   "PARMANA_API_URL",
