@@ -46,3 +46,5 @@ When a request says **"updated documentation"**, **"testing results"** or simila
 - [`docs/assurance/PERMANENT_DIRECTION.md`](../docs/assurance/PERMANENT_DIRECTION.md) is the standing reference for priorities.
 - [`docs/assurance/FROZEN_CORE.md`](../docs/assurance/FROZEN_CORE.md) is the rule and the procedure for changing the frozen cryptographic core.
 - [`docs/assurance/OPEN_ITEMS.md`](../docs/assurance/OPEN_ITEMS.md) lists every open item, with the decision or action it needs.
+
+- PoAE research (specification, scenarios, benchmark runner and results) lives in [`pavancharak/parmana-poae-benchmark`](https://github.com/pavancharak/parmana-poae-benchmark), not in this repository. See [`docs/assurance/POAE.md`](../docs/assurance/POAE.md).
