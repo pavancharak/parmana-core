@@ -15,7 +15,7 @@ This records the long-term direction the owner agreed to. It is the standing ref
 
 1. **Never claim more than the coverage register shows.** Every product claim links to [COVERAGE_REGISTER.md](COVERAGE_REGISTER.md). A claim with no entry there is not made.
 2. **Run the benchmark as a CI gate.** In place. The build-and-test job runs `npm test`, which includes `tests/assurance/poae/`, so a failing benchmark test blocks the merge. It must not be skipped to get green.
-3. **Write the frozen-core list.** Done and confirmed under D8 (see [COVERAGE_REGISTER.md](COVERAGE_REGISTER.md), section 3). Enforcing it by a test is the next step.
+3. **Write the frozen-core list.** Done, confirmed under D8, and enforced by `tests/assurance/frozen-core.test.ts` against a hash manifest. The manifest is owner-reviewed through CODEOWNERS.
 4. **One source of truth for each fact.** Plan, results log, decision record and design notes overlap. Where a fact appears in more than one document, the document named as its source wins, and the others link to it. Architecture tests that check documents against code are the preferred way to keep them consistent.
 5. **Independent review of the verifier.** The signature encoding defect was found by the benchmark, not by review. Before the verifier is relied on externally, it needs an outside review and fuzz tests on the parsers.
 6. **Keep pull requests small.** Nothing in this branch reaches `main` until its PR merges. Merge in small, reviewable steps.

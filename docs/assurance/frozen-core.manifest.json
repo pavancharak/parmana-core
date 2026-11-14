@@ -1,0 +1,12 @@
+{
+  "packages/crypto/src/ArtifactSigner.ts": "c1bafefbf5cb2e5c2ea5143c6c02fc0245aaad463ab58c448856210a5d5e1170",
+  "packages/crypto/src/CanonicalSerializer.ts": "cd4ba2131a3455aa870b3e909032a095ee561341917ccbfc3b0988ed5102ea04",
+  "packages/crypto/src/ExecutionTrustRecordCanonicalView.ts": "a49bdbd08ae425ba4ba43e39df75123df01b7d26c1a3e1b891e69ec818c4fed5",
+  "packages/crypto/src/OfflineVerifier.ts": "fc5c8b0ee53dc5ac749af3bd621a936b29b3d12c61c9ba6cb22a95154e2f4562",
+  "packages/crypto/src/TrustRecordHasher.ts": "5894209863b95639c2a342a637dbaa1f8fe5f1b9acfaa58ee0577079a86913dc",
+  "packages/crypto/src/providers/hash/SHA256HashProvider.ts": "4725e3762c01467687749b96d3209630abba8edb9cb20d5e5fe308dfc2f3ff43",
+  "packages/crypto/src/providers/signature/Dilithium3SignatureProvider.ts": "30e2f0a451764220c5cbb6495f5f2a8c37607f571c855ba09de552cdca51f8ee",
+  "packages/crypto/src/providers/signature/Ed25519SignatureProvider.ts": "91521651f2679785de679413744f797970d83ed5ffe5cca989d5d6793cf7f60d",
+  "packages/crypto/src/providers/signature/assertKeyType.ts": "1bcc8af9093a2de9a98ac57d9f0cec7ae1969ef69fa54220aab16667b66b65c2",
+  "packages/crypto/src/providers/signature/canonicalSignatureBytes.ts": "3b37f43f1ee706340ea4109086522e12807c79648d5485906c5bda24f5a7b9ce"
+}

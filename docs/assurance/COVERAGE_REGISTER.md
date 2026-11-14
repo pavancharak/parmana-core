@@ -40,7 +40,7 @@ These files would be frozen. A change needs an owner review and new test vectors
 
 Not frozen: `ExecutionCorrespondenceOffline.ts`, which is new and additive.
 
-Confirmed by the owner under D8. It is not yet enforced by a test; enforcing it is a separate step.
+Confirmed by the owner under D8. Enforced by `tests/assurance/frozen-core.test.ts` against `docs/assurance/frozen-core.manifest.json`. A change to a frozen file fails the test until the manifest is regenerated. The manifest and the test are owned in `.github/CODEOWNERS`, and `packages/crypto/` already requires the owner's review.
 
 ## 4. Open items
 
@@ -49,5 +49,5 @@ Confirmed by the owner under D8. It is not yet enforced by a test; enforcing it 
 | Vendor adapter hash                   | D10      | Pending                                                                                 |
 | Ledger connection and external anchor | D11      | Pending                                                                                 |
 | Authority version                     | D12      | Pending                                                                                 |
-| Frozen-core list                      | D8       | Confirmed; enforcement by test not yet built                                            |
+| Frozen-core list                      | D8       | Confirmed and enforced by test (`tests/assurance/frozen-core.test.ts`)                  |
 | CI gate for the benchmark             | D13      | In place: the build-and-test job runs `npm test`, which includes `tests/assurance/poae` |
