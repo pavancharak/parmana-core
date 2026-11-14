@@ -44,10 +44,10 @@ Confirmed by the owner under D8. It is not yet enforced by a test; enforcing it 
 
 ## 4. Open items
 
-| Item                                  | Decision | Status                                     |
-| ------------------------------------- | -------- | ------------------------------------------ |
-| Vendor adapter hash                   | D10      | Pending                                    |
-| Ledger connection and external anchor | D11      | Pending                                    |
-| Authority version                     | D12      | Pending                                    |
-| Frozen-core list                      | D8       | Draft in section 3, pending confirmation   |
-| CI gate for the benchmark             | D13      | Accepted in principle; not yet implemented |
+| Item                                  | Decision | Status                                                                                  |
+| ------------------------------------- | -------- | --------------------------------------------------------------------------------------- |
+| Vendor adapter hash                   | D10      | Pending                                                                                 |
+| Ledger connection and external anchor | D11      | Pending                                                                                 |
+| Authority version                     | D12      | Pending                                                                                 |
+| Frozen-core list                      | D8       | Confirmed; enforcement by test not yet built                                            |
+| CI gate for the benchmark             | D13      | In place: the build-and-test job runs `npm test`, which includes `tests/assurance/poae` |
