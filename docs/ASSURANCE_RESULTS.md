@@ -11,13 +11,13 @@ This log records assurance test runs against the plan in
 
 ## Phase status
 
-| Phase                      | Status      | Notes                                                                                                                                                         |
-| -------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1. Cryptographic assurance | In progress | Mutation re-run 14 Nov: 91.3% on origin/main (114 survived, not yet classified). KMS signer tests added. Chain-head coverage to be confirmed from the report. |
-| 2. Authorization assurance | Not started |                                                                                                                                                               |
-| 3. Adversarial assurance   | Not started |                                                                                                                                                               |
-| 4. Operational assurance   | Not started |                                                                                                                                                               |
-| 5. Release assurance       | Not started |                                                                                                                                                               |
+| Phase                      | Status      | Notes                                                                                                                                                                                                  |
+| -------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1. Cryptographic assurance | In progress | Crypto re-run 14 Nov: 91.3% on origin/main (114 survived, not yet classified). KMS signer tests added; KmsSigner-only run leaves 4 survivors. Full-suite re-run and chain-head check still to confirm. |
+| 2. Authorization assurance | Not started |                                                                                                                                                                                                        |
+| 3. Adversarial assurance   | Not started |                                                                                                                                                                                                        |
+| 4. Operational assurance   | Not started |                                                                                                                                                                                                        |
+| 5. Release assurance       | Not started |                                                                                                                                                                                                        |
 
 ## Entries
 
@@ -102,6 +102,65 @@ The difference from the earlier 92.3% has not been explained.
 4. Classify all 114 survivors (Phase 1 item 1).
 5. Re-run the full crypto suite with the KMS tests included, and re-measure `KmsSigner.ts`.
 6. Two survivors on line 318 of `KmsSigner.ts` (cache cleanup on a failed load) are not yet covered. They need a test that replaces the cache entry before the old load fails.
+
+### 2026-11-14: envelope-verifier mutation re-run, with key-validity tests
+
+- **Command:** `npm run mutation -- envelope-verifier`
+- **Runtime:** Node 24.22.1 (Linux sandbox)
+- **Commit tested:** `72de667` (origin/main at that time), with two uncommitted changes: the content-based dist-stamp fix (not on main at that point), and a new test file `key-validity-reporting.test.ts`. The test file is on branch `envelope-tests` in the sandbox and is not committed. Exit code 0.
+- **Branch:** none (sandbox working copy).
+
+Results:
+
+| Measurement                        | Value |
+| ---------------------------------- | ----: |
+| Mutants generated                  |   130 |
+| Caught                             |   119 |
+| Survived                           |    11 |
+| Stryker score (caught / generated) | 91.5% |
+
+The first run on the same base, before the new test file, scored 90.8% (118 caught, 12 survived). The new file killed one survivor, the spread on line 250 of `EnvelopeVerifier.ts`.
+
+Survivors (all in `EnvelopeVerifier.ts`): line 175 (BlockStatement), lines 214 and 216 (BooleanLiteral), line 233 (EqualityOperator), line 236 (ConditionalExpression, two mutants), line 237 (ConditionalExpression and EqualityOperator), line 243 (ConditionalExpression and LogicalOperator, three mutants).
+
+Survivor classification: 0 of 11 classified. Lines 236 to 243 are suspected equivalent, since a false `keyValid` implies a false `signatureVerified`. Not verified.
+
+**Open items**
+
+1. Explain why the line 233 equality mutant survives the key-validity tests.
+2. Check the suspected equivalent mutants on lines 236 to 243 before writing tests for them.
+3. Classify the remaining survivors on lines 175, 214 and 216.
+4. Commit the key-validity test file on its own branch, after the stamp fix is on main.
+
+---
+
+### 2026-11-14: KmsSigner.ts mutation run, KMS tests only
+
+- **Command:** `npx stryker run` on `packages/crypto/src/providers/signer/KmsSigner.ts`, with a temporary config whose test command runs only `packages/crypto/tests/unit/kms-signer`. The temporary config was not committed.
+- **Runtime:** Node 24.22.1 (Linux sandbox)
+- **Commit tested:** `72de667`, with the stamp fix applied locally and the KMS test files from the working copy (`kms-signer.test.ts` from main, and `kms-signer.survivors.test.ts`, not on main).
+- **Branch:** none (sandbox working copy).
+
+Results:
+
+| Measurement                        | Before the slash-alias test | After the slash-alias test |
+| ---------------------------------- | --------------------------: | -------------------------: |
+| Mutants generated                  |                         132 |                        132 |
+| Caught                             |                         127 |                        128 |
+| Survived                           |                           5 |                          4 |
+| Stryker score (caught / generated) |                       96.2% |                      97.0% |
+
+The 97.0% figure covers this file, with only the KMS tests as the test command. It is not comparable with the full crypto run, where `KmsSigner.ts` had 19 survivors and 132 mutants. The full crypto suite has not been re-run with these tests.
+
+Survivors after the slash-alias test: line 89 (ConditionalExpression), line 89 (StringLiteral), line 318 (ConditionalExpression), line 318 (OptionalChaining).
+
+Survivor classification: 0 of 4 classified. The two line-89 mutants are suspected equivalent: the key-id pattern rejects an empty name either way. Not verified.
+
+**Open items**
+
+1. Re-run the full crypto suite with `kms-signer.survivors.test.ts` in place, and re-measure `KmsSigner.ts` in the full run.
+2. Write a test for the line-318 cache cleanup. It needs a cache entry that is replaced before an older load fails, which requires fake timers to pass the cache TTL.
+3. Confirm the two line-89 mutants are equivalent before recording them as such.
 
 ### Entry template
 
