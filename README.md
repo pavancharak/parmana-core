@@ -68,15 +68,16 @@ The project uses npm workspaces with TypeScript and Vitest. Its scripts are defi
 
 ## Learn more
 
-| Topic                              | Read                                                               |
-| ---------------------------------- | ------------------------------------------------------------------ |
-| What it does, and its limits       | [docs/dev/OVERVIEW.md](docs/dev/OVERVIEW.md)                       |
-| Architecture                       | [docs/dev/ARCHITECTURE.md](docs/dev/ARCHITECTURE.md)               |
-| Connect a system you run           | [docs/dev/CONNECTORS.md](docs/dev/CONNECTORS.md)                   |
-| Packages, SDKs and CLI             | [docs/dev/PACKAGES.md](docs/dev/PACKAGES.md)                       |
-| Tests, evidence and status         | [docs/dev/STATUS-AND-EVIDENCE.md](docs/dev/STATUS-AND-EVIDENCE.md) |
-| Contributing, security and license | [docs/dev/COMMUNITY.md](docs/dev/COMMUNITY.md)                     |
-| Everything, indexed                | [docs/dev/README.md](docs/dev/README.md)                           |
+| Topic                              | Read                                                                                                                       |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| What it does, and its limits       | [docs/dev/OVERVIEW.md](docs/dev/OVERVIEW.md)                                                                               |
+| Architecture                       | [docs/dev/ARCHITECTURE.md](docs/dev/ARCHITECTURE.md)                                                                       |
+| Connect a system you run           | [docs/dev/CONNECTORS.md](docs/dev/CONNECTORS.md)                                                                           |
+| Packages, SDKs and CLI             | [docs/dev/PACKAGES.md](docs/dev/PACKAGES.md)                                                                               |
+| Tests, evidence and status         | [docs/dev/STATUS-AND-EVIDENCE.md](docs/dev/STATUS-AND-EVIDENCE.md)                                                         |
+| Essay: can our tests be trusted?   | [docs/essays/why-we-are-testing-whether-our-tests-can-be-trusted.md](docs/essays/why-we-are-testing-whether-our-tests-can-be-trusted.md) |
+| Contributing, security and license | [docs/dev/COMMUNITY.md](docs/dev/COMMUNITY.md)                                                                             |
+| Everything, indexed                | [docs/dev/README.md](docs/dev/README.md)                                                                                   |
 
 Hosted docs: [docs.parmanasystems.com](https://docs.parmanasystems.com).
 
