@@ -197,7 +197,7 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 **Recommendation:** 1.3.0, the latest in the repository.
 
-**Owner decision:** **Policy is correct.** Version 1.3.0 is confirmed. Owner also confirmed that live traffic already uses the correct version, so the caller check in POLICY_BINDING_RAZORPAY.md, section 4 is closed by the owner's statement. The check was not verified against logs in this session.
+**Owner decision:** **Policy is correct.** Version 1.3.0 is confirmed. Owner also stated that there is no live traffic for `razorpay:refund`, so no live caller can be refused by the binding. Correction: an earlier draft of this entry said live traffic already uses 1.3.0. That was a misreading of the owner's words and is withdrawn.
 
 **Effect on the documents**
 

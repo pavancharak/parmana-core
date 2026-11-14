@@ -14,7 +14,7 @@ Each row names the item, what is needed, who decides, and the document with the 
 | D12 | Authority version (AM-04)                       | Choose: immutable grant IDs (recommended), version field, or leave as is                                                               | [OPEN_ITEMS_DESIGN.md](OPEN_ITEMS_DESIGN.md) section 3                    |
 | P-3 | Policy change after approval: defined behaviour | Ratify the behaviour: a changed policy is denied. Plan Section 9, item 3.                                                              | [ASSURANCE_TESTING_PLAN.md](../ASSURANCE_TESTING_PLAN.md)                 |
 | P-2 | fast-check as the property library              | Confirm. It is already a dependency and in use.                                                                                        | Plan Section 9, item 2                                                    |
-| P-5 | razorpay:refund caller version check            | Closed (D14): owner confirmed version 1.3.0 and that live traffic uses the correct version. Not verified against logs in this session. | [POLICY_BINDING_RAZORPAY.md](POLICY_BINDING_RAZORPAY.md) sections 4 and 8 |
+| P-5 | razorpay:refund caller version check            | Closed (D14): owner confirmed version 1.3.0. Owner states there is no live traffic for razorpay:refund, so no live caller is affected. | [POLICY_BINDING_RAZORPAY.md](POLICY_BINDING_RAZORPAY.md) sections 4 and 8 |
 | P-4 | OSS-Fuzz                                        | Decide whether it is worth the setup cost                                                                                              | Plan Section 9, item 4                                                    |
 
 ## 2. Gaps in the product
