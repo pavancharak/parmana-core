@@ -8,7 +8,8 @@
  * the share of those changes the tests catch. It says more about the
  * tests than a count of tests or line coverage does.
  *
- * Reports: reports/mutation/<package>.html and .json (gitignored).
+ * Reports: reports/mutation/<name>.html and .json (gitignored), where
+ * <name> is the package, or STRYKER_REPORT_NAME if that is set.
  * Slow: every mutant runs the package's whole test suite.
  */
 
@@ -28,6 +29,13 @@ if (packages.length === 0) {
   console.error(
     "Usage: npm run mutation -- <package> [<package> ...]  (for example envelope-verifier)",
   );
+  process.exit(2);
+}
+
+// A custom report name applies to one package. Several packages would
+// overwrite each other's report.
+if (process.env.STRYKER_REPORT_NAME && packages.length > 1) {
+  console.error("STRYKER_REPORT_NAME works with one package at a time.");
   process.exit(2);
 }
 
@@ -66,8 +74,12 @@ for (const pkg of packages) {
     summary.push(`${pkg}: Stryker exited with ${run.status}`);
     continue;
   }
+  const reportName = process.env.STRYKER_REPORT_NAME ?? pkg;
   const report = JSON.parse(
-    readFileSync(path.join(root, "reports", "mutation", `${pkg}.json`), "utf8"),
+    readFileSync(
+      path.join(root, "reports", "mutation", `${reportName}.json`),
+      "utf8",
+    ),
   ) as MutantReport;
   const statuses = Object.values(report.files).flatMap((file) =>
     file.mutants.map((mutant) => mutant.status),
