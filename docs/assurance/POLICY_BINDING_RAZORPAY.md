@@ -65,3 +65,10 @@ Not run: the full suite, the frozen-core test, and the Razorpay live integration
 - It does not show that the `customer-refund` policy is itself correct for refunds.
 - It does not check the connector's own refund logic. That is covered by `parmana-connectors`.
 - The link is enforced by the binder only. Whether every request path calls the binder is a separate question, not answered here.
+
+## 8. Commit and signing
+
+- Commit: `6b573f63` on `claude/bind-razorpay-refund`, pushed to `origin`. It is based on `d7082f0c`.
+- Sign-off: present (`Signed-off-by`), as CLAUDE.md requires.
+- Signature: **not signed.** Git reported `gpg.ssh.allowedSignersFile needs to be configured and exist` and the commit was made without a signature. CLAUDE.md requires signing where a key is configured, and the `verified-commits` check will fail until this is fixed. The fix is to configure the repository's signing key and re-sign the commit before merge. This session has no signing key.
+- Runtime of the test run: not measured.
