@@ -12,6 +12,16 @@ When asked to run, update or report assurance testing:
 6. Do not rewrite earlier entries in the results log. Correct them with a dated note.
 7. Commit on a `claude/` branch and open a pull request for the update. Do not push to `main`.
 
+## Documentation and testing updates
+
+When asked for "updated documentation", "testing results" or similar:
+
+1. Read `testing/README.md` for the map of documents and the templates.
+2. Identify every document the change affects, and update each one. Do not stop at the first document.
+3. Use the templates under `testing/templates/`: `assurance-results-entry.md` for results, `assurance-run-report.json` for the machine-readable report, `documentation-update.md` for a documentation checklist, and `decision-record.md` for owner decisions.
+4. Record only outputs that were actually produced. Write "not run" for anything not run, with the reason.
+5. Commit on a `claude/` branch with a sign-off, and push to that branch. Open a pull request only when the user asks for one.
+
 ## Commits
 
 - Sign off every commit with `Signed-off-by`, as the DCO check requires.
