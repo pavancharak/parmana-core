@@ -11,13 +11,13 @@ This log records assurance test runs against the plan in
 
 ## Phase status
 
-| Phase                      | Status      | Notes                                                                                                                                                                                                                                     |
-| -------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1. Cryptographic assurance | In progress | Crypto re-run 14 Nov: 91.3% on origin/main (114 survived, not yet classified). KMS signer tests merged (PR #630). KmsSigner-only run leaves 4 survivors. Full-suite re-run and chain-head check still to confirm. Stamp-fix PR #631 open. |
-| 2. Authorization assurance | Not started |                                                                                                                                                                                                                                           |
-| 3. Adversarial assurance   | Not started |                                                                                                                                                                                                                                           |
-| 4. Operational assurance   | Not started |                                                                                                                                                                                                                                           |
-| 5. Release assurance       | Not started |                                                                                                                                                                                                                                           |
+| Phase                      | Status      | Notes                                                                                                                                                                                                                                                        |
+| -------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1. Cryptographic assurance | In progress | Crypto on merged main (a0f1167): 92.4%, 100 survived, not yet classified. Full-suite run done; KMS tests merged (PR #630). Chain-head survivor count still to confirm. Survivor classification and property, vector and cross-verification work not started. |
+| 2. Authorization assurance | Not started |                                                                                                                                                                                                                                                              |
+| 3. Adversarial assurance   | Not started |                                                                                                                                                                                                                                                              |
+| 4. Operational assurance   | Not started |                                                                                                                                                                                                                                                              |
+| 5. Release assurance       | Not started |                                                                                                                                                                                                                                                              |
 
 ## Entries
 
@@ -367,6 +367,64 @@ The PoAE benchmark runner (`tests/assurance/poae/poae-benchmark.test.ts`) and it
 **Open items:** none added by this run.
 
 **Phase status change:** none.
+
+---
+
+### 2026-11-14: crypto mutation run on merged main
+
+- **Command:** `npm run mutation -- crypto`
+- **Runtime:** Node 24.22.1 (Linux sandbox). The run's own elapsed counter reached 1h 38m at 96% and finished shortly after.
+- **Commit tested:** `a0f1167` (origin/main, the PR #631 merge commit). PR #630 (KMS signer tests) and PR #631 (dist stamps) are both in this commit's history.
+- **Branch:** none. Detached worktree of `a0f1167` with no local changes. `node_modules` was a symlink to the sandbox install, not a separate copy. Exit code 0.
+
+Results:
+
+| Measurement                        | Value |
+| ---------------------------------- | ----: |
+| Mutants generated                  | 1,316 |
+| Caught                             | 1,216 |
+| Survived                           |   100 |
+| Stryker score (caught / generated) | 92.4% |
+
+Timeouts are not recorded separately in the final output; the summary line counts them as caught.
+
+Survivors by file (the 12 files with the most survivors, from `reports/mutation/crypto.json`):
+
+| File                                                 | Survived |
+| ---------------------------------------------------- | -------: |
+| `OfflineVerifier.ts`                                 |       13 |
+| `support/MlDsaSupport.ts`                            |       11 |
+| `PolicyChangeStepUpAuthorizationCrypto.ts`           |       10 |
+| `VerificationCrypto.ts`                              |        9 |
+| `KeyGeneration.ts`                                   |        6 |
+| `providers/key/FileKeyProvider.ts`                   |        6 |
+| `SignerBootstrap.ts`                                 |        5 |
+| `KeyBootstrap.ts`                                    |        4 |
+| `providers/signature/Dilithium3SignatureProvider.ts` |        4 |
+| `providers/signature/Ed25519SignatureProvider.ts`    |        4 |
+| `providers/signer/KmsSigner.ts`                      |        4 |
+| `providers/SignerKeyProviderAdapter.ts`              |        3 |
+
+`CallerAuditChainVerifier.ts` is not in the top 12. Its survivor count is still not recorded.
+
+**Comparison with earlier full runs:**
+
+- Full run on `4a298547` (before PR #630), on the owner's Windows machine: 91.3%, 1,202 caught, 114 survived. `KmsSigner.ts` had 19 survivors in that run.
+- This run: 92.4%, 1,216 caught, 100 survived. `KmsSigner.ts` has 4 survivors.
+- The change is +14 caught and -14 survivors overall. `KmsSigner.ts` accounts for -15 survivors, so the other files together gained one survivor. That one-mutant difference is not explained.
+- The earlier 92.3% run (1,215 caught, 101 survived, recorded in `MUTATION-TESTING.md`) is within one mutant of this run. Its per-file table is not reproduced here.
+
+Survivor classification: 0 of 100 classified in this entry.
+
+**Open items**
+
+1. Classify all 100 survivors (Phase 1 item 1). The largest groups are `OfflineVerifier.ts`, `MlDsaSupport.ts` and `PolicyChangeStepUpAuthorizationCrypto.ts`.
+2. Confirm the survivor count for `CallerAuditChainVerifier.ts` from `reports/mutation/crypto.json`. Phase 1 item 2 depends on it.
+3. The `KmsSigner.ts` survivors: two on line 89 are suspected equivalent, and two on line 318 are not yet covered (cache cleanup on a failed load).
+4. Explain the one-mutant difference in the non-KMS files between the `4a298547` run and this run.
+5. Confirm the earlier 92.3% per-file table in `MUTATION-TESTING.md`, or correct it with a dated note.
+
+---
 
 ---
 
