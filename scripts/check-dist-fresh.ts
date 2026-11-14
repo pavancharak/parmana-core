@@ -1,103 +1,72 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
+/**
+ * Fails when a workspace package's dist/ was not built from its current
+ * source. Cross-package tests import workspace packages through dist/, so a
+ * stale build runs old code and can pass when the source would fail.
+ *
+ * The comparison is by content, not timestamps: write-dist-stamps.ts records
+ * the source fingerprint in dist/ after each build, and this check recomputes
+ * it. Timestamps lie after a git checkout, a copy or a CI cache, so this
+ * check must not depend on them.
+ *
+ * Inside a Stryker mutation sandbox the source is instrumented on purpose, so
+ * it is expected to differ from the stamps; the check is skipped there.
+ *
+ * This only detects staleness; it never rebuilds.
+ */
+
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { SOURCE_STAMP_FILE, sourceFingerprint } from "./source-fingerprint.js";
 
-const root = path.resolve(__dirname, "..");
-
-/**
- * Guards against the exact failure class behind the MUST-FIX-1 finding of an
- * earlier repository gap audit (in git history): workspace packages resolve each other through
- * package.json `exports` -> `dist/`, so a `dist/` compiled before
- * the last `src/` edit silently overrides current source for
- * every cross-package consumer, while a package's own tests
- * (importing `../src` directly) keep passing and hide it.
- *
- * This only detects staleness — it never rebuilds. Auto-fixing
- * here would just be a slower, quieter version of the same bug.
- */
-
-/**
- * Newest mtime found anywhere under `dir`, or undefined if `dir`
- * doesn't exist or contains no files.
- */
-function newestMtimeMs(dir: string): number | undefined {
-  let newest: number | undefined;
-
-  let entries;
-  try {
-    entries = readdirSync(dir, { withFileTypes: true });
-  } catch {
-    return undefined;
-  }
-
-  for (const entry of entries) {
-    const entryPath = path.join(dir, entry.name);
-
-    if (entry.isDirectory()) {
-      const childNewest = newestMtimeMs(entryPath);
-      if (
-        childNewest !== undefined &&
-        (newest === undefined || childNewest > newest)
-      ) {
-        newest = childNewest;
-      }
-      continue;
-    }
-
-    const mtimeMs = statSync(entryPath).mtimeMs;
-    if (newest === undefined || mtimeMs > newest) {
-      newest = mtimeMs;
-    }
-  }
-
-  return newest;
-}
-
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const packagesDir = path.join(root, "packages");
 
-const packageDirs = readdirSync(packagesDir, { withFileTypes: true })
-  .filter((entry) => entry.isDirectory())
-  .map((entry) => entry.name)
-  .filter((name) => {
-    // Only packages that publish compiled output other
-    // workspace packages consume are in scope for this check.
-    try {
-      statSync(path.join(packagesDir, name, "src"));
-      return true;
-    } catch {
-      return false;
-    }
-  });
+// Accepts either separator, since Windows paths can arrive with "/".
+if (/[\\/]\.stryker-tmp[\\/]/.test(root)) {
+  console.log(
+    "check-dist-fresh: skipped inside a mutation sandbox (instrumented source is expected to differ).",
+  );
+  process.exit(0);
+}
 
 const stale: { name: string; reason: string }[] = [];
 
-for (const dirName of packageDirs) {
-  const packageJsonPath = path.join(packagesDir, dirName, "package.json");
+for (const dirName of readdirSync(packagesDir, { withFileTypes: true })
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => entry.name)) {
+  const packageDir = path.join(packagesDir, dirName);
+  const expected = sourceFingerprint(path.join(packageDir, "src"));
+
+  // Only packages with source are in scope.
+  if (expected === undefined) continue;
 
   let packageName = dirName;
   try {
-    packageName = JSON.parse(readFileSync(packageJsonPath, "utf8")).name;
+    packageName = JSON.parse(
+      readFileSync(path.join(packageDir, "package.json"), "utf8"),
+    ).name;
   } catch {
     // Fall back to the directory name if package.json is unreadable.
   }
 
-  const srcNewest = newestMtimeMs(path.join(packagesDir, dirName, "src"));
-  const distNewest = newestMtimeMs(path.join(packagesDir, dirName, "dist"));
+  const stampPath = path.join(packageDir, "dist", SOURCE_STAMP_FILE);
 
-  if (srcNewest === undefined) {
-    continue;
+  let recorded: string | undefined;
+  try {
+    recorded = readFileSync(stampPath, "utf8").trim();
+  } catch {
+    recorded = undefined;
   }
 
-  if (distNewest === undefined) {
-    stale.push({ name: packageName, reason: "dist/ is missing" });
-    continue;
-  }
-
-  if (srcNewest > distNewest) {
-    stale.push({ name: packageName, reason: "dist/ is older than src/" });
+  if (recorded === undefined) {
+    stale.push({ name: packageName, reason: "dist/ has no source stamp" });
+  } else if (recorded !== expected) {
+    stale.push({
+      name: packageName,
+      reason: "dist/ was built from different source",
+    });
   }
 }
 
@@ -105,15 +74,16 @@ if (stale.length > 0) {
   console.error("check-dist-fresh: stale build output detected.\n");
   for (const { name, reason } of stale) {
     console.error(
-      `  dist/ is stale in ${name} (${reason}) — run npm run build.`,
+      `  dist/ is stale in ${name} (${reason}) — run npm run build:packages.`,
     );
   }
   console.error(
-    "\nTests import workspace packages through node_modules/@parmana/*, which " +
-      "resolves to dist/, not src/. A stale dist/ silently runs old code — " +
-      "rebuild before testing.",
+    "\nTests import workspace packages through dist/, not src/. A stale dist/ " +
+      "silently runs old code — rebuild before testing.",
   );
   process.exit(1);
 }
 
-console.log("check-dist-fresh: all workspace packages' dist/ are up to date.");
+console.log(
+  "check-dist-fresh: all workspace packages' dist/ match their source.",
+);
