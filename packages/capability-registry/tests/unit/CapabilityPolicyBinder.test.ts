@@ -140,8 +140,15 @@ describe("CapabilityPolicyBinder", () => {
     expect(CANONICAL_CAPABILITY_POLICY_BINDINGS.size).toBe(seenActions.size);
   });
 
-  it("binds no capability in this version, because every built in connector has moved out of core", () => {
-    expect(CANONICAL_CAPABILITY_POLICY_BINDINGS.size).toBe(0);
+  it("binds only razorpay:refund to customer-refund in this version", () => {
+    expect([...CANONICAL_CAPABILITY_POLICY_BINDINGS.keys()]).toEqual([
+      "razorpay:refund",
+    ]);
+    expect(CANONICAL_CAPABILITY_POLICY_BINDINGS.get("razorpay:refund")).toEqual({
+      name: "customer-refund",
+      version: "1.3.0",
+      schemaVersion: "1.0.0",
+    });
   });
 
   describe("with the version taken from policy governance (G-66)", () => {

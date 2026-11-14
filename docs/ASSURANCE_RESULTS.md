@@ -370,6 +370,23 @@ The PoAE benchmark runner (`tests/assurance/poae/poae-benchmark.test.ts`) and it
 
 ---
 
+### 2026-11-14: razorpay:refund policy binding (capability-registry)
+
+- Command: `npm run typecheck`; `node_modules/vitest/vitest.mjs run packages/capability-registry` (Node 24.22.2), after `npm run build:packages`
+- Runtime: not recorded
+- Commit tested: the working tree on branch `claude/bind-razorpay-refund`, based on `d7082f0c`. The commit SHA is not recorded here, because the change is not yet committed.
+- Branch: `claude/bind-razorpay-refund`
+
+Results: typecheck exit 0. capability-registry: 3 files, 32 tests, all passed. Before the fix, one existing test (which asserted an empty canonical table) failed; it was updated to assert the single new entry.
+
+Survivor classification: not applicable. No mutation run.
+
+Open items: P-5, confirmation of the policy version (`docs/assurance/POLICY_BINDING_RAZORPAY.md`). Full suite, frozen-core test and Razorpay live test not run.
+
+Phase status change: none.
+
+---
+
 ### Entry template
 
 Copy this for each new run.
