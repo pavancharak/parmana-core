@@ -7,25 +7,28 @@ Each row names the item, what is needed, who decides, and the document with the 
 
 ## 1. Decisions waiting for the owner
 
-| ID  | Item                                            | Needed                                                                                                                 | Detail                                                    |
-| --- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| D10 | Vendor adapter hash                             | Choose: declared mapping per adapter (recommended), attestation, or accept the gap                                     | [OPEN_ITEMS_DESIGN.md](OPEN_ITEMS_DESIGN.md) section 1    |
-| D11 | Ledger connection and anchor                    | Choose: scheduled job (recommended now), anchor as the target. Set the window. Approve listing methods on both stores. | [OPEN_ITEMS_DESIGN.md](OPEN_ITEMS_DESIGN.md) section 2    |
-| D12 | Authority version (AM-04)                       | Choose: immutable grant IDs (recommended), version field, or leave as is                                               | [OPEN_ITEMS_DESIGN.md](OPEN_ITEMS_DESIGN.md) section 3    |
-| P-3 | Policy change after approval: defined behaviour | Ratify the behaviour: a changed policy is denied. Plan Section 9, item 3.                                              | [ASSURANCE_TESTING_PLAN.md](../ASSURANCE_TESTING_PLAN.md) |
-| P-2 | fast-check as the property library              | Confirm. It is already a dependency and in use.                                                                        | Plan Section 9, item 2                                    |
-| P-4 | OSS-Fuzz                                        | Decide whether it is worth the setup cost                                                                              | Plan Section 9, item 4                                    |
+| ID  | Item                                            | Needed                                                                                                                      | Detail                                                              |
+| --- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| D10 | Vendor adapter hash                             | Choose: declared mapping per adapter (recommended), attestation, or accept the gap                                          | [OPEN_ITEMS_DESIGN.md](OPEN_ITEMS_DESIGN.md) section 1              |
+| D11 | Ledger connection and anchor                    | Choose: scheduled job (recommended now), anchor as the target. Set the window. Approve listing methods on both stores.      | [OPEN_ITEMS_DESIGN.md](OPEN_ITEMS_DESIGN.md) section 2              |
+| D12 | Authority version (AM-04)                       | Choose: immutable grant IDs (recommended), version field, or leave as is                                                    | [OPEN_ITEMS_DESIGN.md](OPEN_ITEMS_DESIGN.md) section 3              |
+| P-3 | Policy change after approval: defined behaviour | Ratify the behaviour: a changed policy is denied. Plan Section 9, item 3.                                                   | [ASSURANCE_TESTING_PLAN.md](../ASSURANCE_TESTING_PLAN.md)           |
+| P-2 | fast-check as the property library              | Confirm. It is already a dependency and in use.                                                                             | Plan Section 9, item 2                                              |
+| D16 | Capability name format                          | Option A chosen: `razorpay_customer-refund_1-3-0`. Not implemented. Settle the policy first (embeds customer-refund 1.3.0). | [POLICY_BINDING_RAZORPAY.md](POLICY_BINDING_RAZORPAY.md) section 12 |
+| P-5 | razorpay:refund policy version                  | Superseded by D15. The binding was dropped; see POLICY_BINDING_RAZORPAY.md.                                                 | [POLICY_BINDING_RAZORPAY.md](POLICY_BINDING_RAZORPAY.md)            |
+| P-4 | OSS-Fuzz                                        | Decide whether it is worth the setup cost                                                                                   | Plan Section 9, item 4                                              |
 
 ## 2. Gaps in the product
 
-| ID           | Item                                                | Status                                                                                  | Detail                                           |
-| ------------ | --------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| G-A / AM-04  | Authority version binding                           | Open. The grant ID is bound; the version is not.                                        | D12                                              |
-| G-L / CE-04  | Ledger reconciliation in production                 | Pure function done. No listing methods on the outcome store or trust-record repository. | D11                                              |
-| G-R (vendor) | Dispatched hash for vendor adapters                 | Open. Only the HTTP connector hashes the body it sends.                                 | D10                                              |
-| Anchor       | External anchor for trust records                   | Target, not started                                                                     | D11, option C                                    |
-| Verifier     | Verifier that runs without Parmana's infrastructure | Target, not started                                                                     | [PERMANENT_DIRECTION.md](PERMANENT_DIRECTION.md) |
-| Python       | Generated Python types for correspondence fields    | Typed `Any` by the generator's fallback                                                 | Commit `e1c186d4`                                |
+| ID            | Item                                                | Status                                                                                                                                                   | Detail                                                   |
+| ------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| G-A / AM-04   | Authority version binding                           | Open. The grant ID is bound; the version is not.                                                                                                         | D12                                                      |
+| G-L / CE-04   | Ledger reconciliation in production                 | Pure function done. No listing methods on the outcome store or trust-record repository.                                                                  | D11                                                      |
+| G-R (vendor)  | Dispatched hash for vendor adapters                 | Open. Only the HTTP connector hashes the body it sends.                                                                                                  | D10                                                      |
+| Anchor        | External anchor for trust records                   | Target, not started                                                                                                                                      | D11, option C                                            |
+| Verifier      | Verifier that runs without Parmana's infrastructure | Target, not started                                                                                                                                      | [PERMANENT_DIRECTION.md](PERMANENT_DIRECTION.md)         |
+| Razorpay bind | razorpay:refund has no policy binding               | Open. Dropped on branch `claude/bind-razorpay-refund` by D15, because it conflicted with the G-77 assertion. Needs a G-77 classification decision first. | [POLICY_BINDING_RAZORPAY.md](POLICY_BINDING_RAZORPAY.md) |
+| Python        | Generated Python types for correspondence fields    | Typed `Any` by the generator's fallback                                                                                                                  | Commit `e1c186d4`                                        |
 
 ## 3. Testing
 
