@@ -225,7 +225,7 @@ Passed: AM-01, XM-01, XM-02, RT-01, RT-02, RT-03, CE-03, EM-01 (record level), E
 ### 2026-11-14: PoAE benchmark re-run after decision D9
 
 - **Command:** `npm run build:packages`, then `node_modules/vitest/vitest.mjs run tests/assurance/poae`, then the full suite `node_modules/vitest/vitest.mjs run`. Both under Node 24.22.2.
-- **Runtime:** Node 24.22.2, vitest 5.1.0, Linux container. Full-suite duration as reported by vitest.
+- **Runtime:** Node 24.22.2, vitest 5.1.0, Linux container. Full suite 102.70 s as reported by vitest.
 - **Commit tested:** `035e1697715da917899eaf4cb7112a5fb4393020`
 - **Branch:** `claude/lucid-sagan-1gs4xj`
 - **Run by:** session (Claude Code), at the owner's direction
