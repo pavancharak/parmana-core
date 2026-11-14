@@ -818,7 +818,11 @@ export class ExecutionGateway implements ExecutionSystem {
     //
     const withCorrespondence: ExecutionResult = {
       ...dispatched,
-      correspondence: await this.correspondenceFor(request, transaction),
+      correspondence: await this.correspondenceFor(
+        request,
+        transaction,
+        dispatched,
+      ),
     };
 
     if (this.executionOutcomeStore !== undefined) {
@@ -831,14 +835,25 @@ export class ExecutionGateway implements ExecutionSystem {
   private async correspondenceFor(
     request: ExecutionRequest,
     transaction: Readonly<ExecutableContent>,
+    dispatched: ExecutionResult,
   ): Promise<ExecutionCorrespondence> {
     const payload = request.authorization.payload;
+
+    //
+    // A connector that hashed the body it sent is the closer evidence of
+    // what left the process, so its hash is used. Otherwise the gateway
+    // hashes the verified content it handed over.
+    //
+    const wireHash = dispatched.wireContentHash;
 
     return {
       schemaVersion: 1,
       authorizationNonce: payload.nonce,
       authorizedContentHash: payload.businessTransactionHash,
-      dispatchedContentHash: await this.contentHasher.hash(transaction),
+      dispatchedContentHash:
+        wireHash ?? (await this.contentHasher.hash(transaction)),
+      dispatchedHashSource:
+        wireHash !== undefined ? "connector-wire" : "gateway",
       ...(payload.policyContentHash !== undefined && {
         policyContentHash: payload.policyContentHash,
       }),

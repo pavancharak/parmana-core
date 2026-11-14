@@ -87,8 +87,11 @@ describe("HttpConnector", () => {
       authorization: { keyId: "default" },
     } as never;
 
+    // The connector also returns the hash of the body it sent; its value is
+    // checked in http-connector-wire-hash.test.ts.
     await expect(connector.execute(request)).resolves.toEqual({
       success: true,
+      wireContentHash: expect.any(String),
     });
     const [url, init] = fetchSpy.mock.calls[0]!;
     expect(String(url)).toBe("http://127.0.0.1:9/execute");

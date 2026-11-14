@@ -59,4 +59,11 @@ export interface ExecutionResult {
    * to the connector. Set by the Execution Gateway.
    */
   readonly correspondence?: ExecutionCorrespondence;
+
+  /**
+   * Hash of the request body the connector sent over the wire, when the
+   * connector computes one. Set by HttpConnector, which hashes the JSON it
+   * actually sent. The gateway uses it as the dispatched content hash.
+   */
+  readonly wireContentHash?: string;
 }

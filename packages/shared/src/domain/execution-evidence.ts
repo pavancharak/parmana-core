@@ -72,4 +72,11 @@ export interface ExecutionCorrespondence {
 
   /** Authority grant identifier the authorization relied on, when present. */
   readonly authorityGrantId?: string;
+
+  /**
+   * Where the dispatched hash was taken: "connector-wire" when the connector
+   * hashed the body it sent, "gateway" when the gateway hashed the verified
+   * content it handed over. Absent on records written before this field.
+   */
+  readonly dispatchedHashSource?: "gateway" | "connector-wire";
 }
