@@ -164,17 +164,17 @@ Stryker counts as caught; 101 survived). The run took 92 minutes.
 
 Survivors by file, lowest score first:
 
-| File                          | Score  | Survived |
-| ----------------------------- | ------ | -------- |
-| `KeyGeneration.ts`            | 73.1%  | 25       |
-| `CallerAuditChainVerifier.ts` | 63.8%  | 21       |
-| `AuthorizationSigner.ts`      | 67.7%  | 21       |
-| `KeyBootstrap.ts`             | 64.3%  | 5        |
-| `CryptoBootstrap.ts`          | 61.1%  | 7        |
-| `ExecutionIntentCrypto.ts`    | 66.7%  | 3        |
-| `CryptoError.ts`              | 33.3%  | 2        |
-| `KeyProvider.ts`              | 100%   | 0        |
-| `KmsSigner.ts`                | 100%   | 0        |
+| File                          | Score | Survived |
+| ----------------------------- | ----- | -------- |
+| `KeyGeneration.ts`            | 73.1% | 25       |
+| `CallerAuditChainVerifier.ts` | 63.8% | 21       |
+| `AuthorizationSigner.ts`      | 67.7% | 21       |
+| `KeyBootstrap.ts`             | 64.3% | 5        |
+| `CryptoBootstrap.ts`          | 61.1% | 7        |
+| `ExecutionIntentCrypto.ts`    | 66.7% | 3        |
+| `CryptoError.ts`              | 33.3% | 2        |
+| `KeyProvider.ts`              | 100%  | 0        |
+| `KmsSigner.ts`                | 100%  | 0        |
 
 What the survivors show:
 
