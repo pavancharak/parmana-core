@@ -267,3 +267,18 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 **Owner decision:** Option 1. The request must define the policy version.
 
 **Effect:** callers declare the version. A new approved version needs callers to change their declared version. The governance version source is not used for this capability.
+
+---
+
+## D18. No fallback to the canonical table version (14 November 2026)
+
+- **Reference:** D18
+- **Source:** docs/assurance/POLICY_BINDING_RAZORPAY.md, section 15
+- **Date recorded:** 2026-11-14
+- **Owner:** Pavan Charak
+
+**Question:** When governance is relaxed (test and development), should the version in the canonical table be used as a fallback?
+
+**Owner decision:** No fallback. The version in effect comes from governance records only.
+
+**Effect:** a bound capability with no governance record is refused. Code and test changes are not made yet; their scope is listed in section 15.

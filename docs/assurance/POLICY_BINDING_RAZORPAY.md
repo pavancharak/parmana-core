@@ -141,3 +141,21 @@ Checked by reading the code. Not tested.
 5. **External connectors.** Capabilities outside the built-in table use external bindings (`externalPolicyInEffect`). Their rule is not covered here.
 
 **Open:** D17 should say exactly what it means: the request names a version, and the version accepted is the one in effect. Owner to confirm the wording, and whether the environment difference in item 1 is acceptable.
+
+## 15. Decision: no fallback (owner, 14 November 2026)
+
+**Owner decision:** no fallback. The version in effect comes from governance records only. The version written in the canonical table is not used as a fallback when governance is relaxed (test and development).
+
+**What the code does today** (read, not changed):
+
+- `createCurrentPolicyVersionSource` returns nothing when governance is relaxed. The binder then uses the version in the canonical table (`policyInEffect`, when `currentVersions` is undefined).
+- Removing the fallback means that, with governance relaxed, a bound capability has no version in effect and its requests are refused.
+
+**Implications to settle before code changes:**
+
+- Test and development suites that rely on the table version will fail or need governance records. Which suites depend on it has not been checked.
+- Without an approval record for `razorpay-refund` 1.1.0, `razorpay:refund` is refused in every environment.
+
+**Not done:** no code or test has changed. The binding is still not written (D15), and the naming format (D16) is still unimplemented.
+
+Recorded as D18 in `docs/ASSURANCE_DECISIONS.md`.
