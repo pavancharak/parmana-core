@@ -50,7 +50,13 @@ The handler makes these checks before it calls execution. Each refusal writes an
 
 When the capability check passes, the handler writes `caller.capability_granted`.
 
-The relative order of the principal, tenant and capability checks is set by the contract test (section 6, item 1).
+**Order.** The checks run in this order, and a refusal stops the request:
+
+1. Structural check (`businessTransactionId` format), for every request.
+2. Principal check, tenant check, capability check, in that order. These three run only when the request carries an authenticated caller (`req.callerId` is set). Without an authenticated caller they are skipped.
+3. Execution (`application.execute`), reached only when every check above passes.
+
+Source: `packages/api/src/routes/transactions.ts`. The structural check is at the start of the handler; the principal, tenant and capability checks are inside the `req.callerId !== undefined` block; `application.execute` is called after that block.
 
 ## 4. Checks made at execution, as the first step of `application.execute`
 
