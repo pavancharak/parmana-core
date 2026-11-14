@@ -338,6 +338,12 @@ Earlier entries in this log refer to `testing/poae/` and to `docs/assurance/EXEC
 
 ---
 
+### 2026-11-14: dated note on PoAE benchmark entries
+
+The PoAE benchmark runner (`tests/assurance/poae/poae-benchmark.test.ts`) and its research material were removed from this repository on 14 November 2026. The entries above that refer to the runner, to `testing/poae/`, or to the 18-test result describe runs of that removed code. They are kept unchanged, as the rules require. The results are no longer reproducible from this repository's current tree, and they are not evidence for any claim in it.
+
+---
+
 ### Entry template
 
 Copy this for each new run.

@@ -12,7 +12,7 @@ export interface ConsumedOutcome {
  * Result of reconciling outcomes against stored trust records.
  *
  * - "failed": a completed execution has no trust record. Its evidence is
- *   missing from the ledger (benchmark CE-04).
+ *   missing from the ledger (CE-04).
  * - "not_checked": no outcomes were supplied, or an execution is still in
  *   flight, so its evidence cannot yet be expected to exist.
  * - "passed": every completed execution has a matching trust record.

@@ -44,7 +44,7 @@ Do not regenerate the manifest to get a passing build without a review. A regene
 
 - The test reads the files on disk. It cannot stop a change made by someone who also edits the manifest. CODEOWNERS is what makes that change visible and needs an approval. Branch protection must require that review for it to be enforced.
 - The repository's dist-freshness guard also stops a run when a source file changes after the last build. That guard is separate. It means the frozen test only runs after a rebuild.
-- The test checks that the files have not changed. It does not check that they are correct. Correctness is covered by the vectors and the benchmark.
+- The test checks that the files have not changed. It does not check that they are correct. Correctness is covered by the test vectors.
 - The list is confirmed for the current files. A new cryptographic file outside the two directories is not frozen until it is added to the list and the manifest.
 
 ## Probe
