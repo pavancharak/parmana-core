@@ -46,3 +46,20 @@ The version to bind is 1.3.0 (D14). Live traffic: the owner states there is none
 ## 6. Commit and signing
 
 - The commits on the branch are signed off (`Signed-off-by`) but not signed. Git reported that `gpg.ssh.allowedSignersFile` is not configured. The key file `/home/claude/.ssh/commit_signing_key.pub` is empty and no private key is present, so this session cannot sign commits. Signing must be fixed before merge.
+
+## 7. Capability connection (as it stands)
+
+| Field           | Value                                                                                                 | Where it is defined                                                  |
+| --------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Capability name | `razorpay:refund`                                                                                     | `parmana-connectors` `src/connectors/razorpay/razorpay-connector.ts` |
+| Intent name     | **Not defined.** No intent name for this capability exists in `parmana-core` or `parmana-connectors`. | Not applicable                                                       |
+| Policy name     | `customer-refund`                                                                                     | `policies/customer-refund/`                                          |
+| Policy version  | `1.3.0` (owner confirmed, D14). Latest version in the repo.                                           | D14 in `docs/ASSURANCE_DECISIONS.md`                                 |
+| Binding in code | **None.** `CANONICAL_CAPABILITY_POLICY_BINDINGS` is empty (D15).                                      | `packages/capability-registry/src/CapabilityPolicyBinding.ts`        |
+
+Two other places the link could live, both to verify before any binding is designed:
+
+- `docs/guides/production-integration-guide.md` says a capability (for example `razorpay:refund`) is bound to an endpoint and a policy, and is registered through maker-checker. If that registration records the policy, it is a second connection path and was not checked here.
+- `docs/audit/2026-11-11/STALE-DOCUMENTS.md` and G-66 cite `paytm:refund` to `customer-refund` as an example of the canonical table. That example is stale: the table is empty.
+
+The intent name must be defined by the owner before a binding is designed, if the binding is to carry one.
