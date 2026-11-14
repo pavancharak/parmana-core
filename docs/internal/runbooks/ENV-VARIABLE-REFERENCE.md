@@ -313,7 +313,7 @@ These names may appear in a development file. The API server does not read them.
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `PARMANA_AUTH_DISABLED=true`           | Turns off caller authentication                                                                              |
 | `NODE_ENV=test` or `development`       | Turns off safety gates                                                                                       |
-| `PARMANA_ALLOW_UNGOVERNED_POLICY=true` | Retired (D19): has no effect; governance is enforced in every environment                                     |
+| `PARMANA_ALLOW_UNGOVERNED_POLICY=true` | Retired (D19): has no effect; governance is enforced in every environment                                    |
 | `DATABASE_PROVIDER` (any value)        | Retired. Refused at module load: "DATABASE_PROVIDER is no longer read; set PARMANA_STORAGE instead" (tested) |
 
 ---
