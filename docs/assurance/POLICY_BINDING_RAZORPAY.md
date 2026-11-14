@@ -79,3 +79,11 @@ The owner confirmed `customer-refund` 1.3.0 as correct (D14). That confirmation 
 Intent name check in code: `packages/shared/src/domain/intent.ts` has no `name` or `policy` field, so the code does not link an intent to a policy by name. Whether an intent name equal to the policy name is accepted by any code path was not established.
 
 Not changed: D14 and D15 are the owner's recorded decisions and are left as they stand.
+
+## 9. Capability naming (owner statement, 14 November 2026)
+
+The owner states: "connectorname_policyname_version is capability." No further detail was given. This is recorded as stated; it has not been confirmed as the intended format.
+
+Code as it stands: capability names are validated as `namespace:verb`, one colon, lowercase letters, digits and hyphens. This is enforced in `packages/api/src/routes/external-connectors.ts` (`CAPABILITY_PATTERN`), `packages/api/src/routes/inbound-checks.ts` and `packages/api/src/routes/authority-grants.ts`. The form `connectorname_policyname_version` does not match that pattern (it uses underscores and has no colon). The connector uses `razorpay:refund`.
+
+Open question for the owner: does "capability" in the owner's statement mean a new naming format, or a label for the combination of connector, policy and version? The answer decides whether the existing validation changes.
