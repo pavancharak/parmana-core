@@ -231,3 +231,22 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 | docs/assurance/POLICY_BINDING_RAZORPAY.md | Rewritten: gap stays open; binding dropped; revert state recorded. |
 | docs/assurance/OPEN_ITEMS.md              | P-5 closed as superseded by D15. Razorpay binding row: gap open.   |
 | docs/ASSURANCE_RESULTS.md                 | Dated entry for the revert and the checks run after it.            |
+
+---
+
+## D16. Capability naming (14 November 2026)
+
+- **Reference:** D16
+- **Source:** docs/assurance/POLICY_BINDING_RAZORPAY.md, sections 9 and 11
+- **Date recorded:** 2026-11-14
+- **Owner:** Pavan Charak
+
+**Question:** Should capability names follow the connector, policy and version format the owner described, or keep `namespace:verb`?
+
+**Options considered:** 1. Change the format to connector, policy and version. 2. Keep `namespace:verb` and record the combination as a label.
+
+**Owner decision:** Option 1.
+
+**Not decided:** the exact format. Dots in `1.3.0` are not allowed by the current pattern. Options A (hyphens), B (major version only) and C (other) are open.
+
+**Effect on the documents:** POLICY_BINDING_RAZORPAY.md, section 11. OPEN_ITEMS.md: a row for the format.

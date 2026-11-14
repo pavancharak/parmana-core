@@ -93,3 +93,17 @@ Open question for the owner: does "capability" in the owner's statement mean a n
 The owner states there are no live customers. So no customer is affected by the binding question, either way, now.
 
 This does not change section 8. Binding `razorpay:refund` to `customer-refund` 1.3.0 would still reject every refund, and the binding would still point at the wrong policy. The risk is to correctness before launch, not to customers today.
+
+## 11. Decision: capability naming (owner, 14 November 2026)
+
+**Owner decision: option 1.** Capability names change to a connector, policy and version format. Recorded as D16 in `docs/ASSURANCE_DECISIONS.md`.
+
+**Not yet decided:** the exact format. Version `1.3.0` contains dots, which the current name pattern does not allow. Options put to the owner:
+
+- A: `razorpay_customer-refund_1-3-0` (dots replaced by hyphens).
+- B: `razorpay_customer-refund_v1` (major version only).
+- C: another format.
+
+**Not yet done:** no code, connector or record has been changed. The change would touch the name check in `external-connectors.ts`, `inbound-checks.ts` and `authority-grants.ts`, the connector in `parmana-connectors` (which uses `razorpay:refund`), and any stored records.
+
+**Open with this decision:** the policy the capability should point at. `customer-refund` 1.3.0 rejects every refund. The policy that approves Razorpay refunds is `razorpay-refund` 1.1.0. A rename does not fix this.
