@@ -1,0 +1,45 @@
+{
+  "rules": [
+    {
+      "id": "approve-github-pr-comment",
+      "outcome": {
+        "action": "approve",
+        "reason": "Comment authorized. A signed approval covers this exact pull request, and a second signed approval covers this exact comment text."
+      },
+      "condition": {
+        "all": [
+          { "fact": "targetApproved", "operator": "is_true" },
+          { "fact": "bodyApproved", "operator": "is_true" }
+        ]
+      }
+    },
+    {
+      "id": "reject-default",
+      "outcome": {
+        "action": "reject",
+        "reason": "Comment rejected because a signed approval does not cover both this pull request and this exact comment text."
+      },
+      "condition": {
+        "always": true
+      }
+    }
+  ],
+  "policyId": "github-pr-comment",
+  "description": "Authorizes one comment on a GitHub pull request. Two signed approvals from trusted people are required: one covers the exact pull request (the target), and one covers the exact comment text (the body). Nothing else authorizes the comment.",
+  "policyVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "signalsSchema": {
+    "targetApproved": "boolean",
+    "bodyApproved": "boolean"
+  },
+  "approvalSignals": {
+    "targetApproved": {
+      "resourceId": "target",
+      "artifact": "targetApprovalArtifact"
+    },
+    "bodyApproved": {
+      "resourceId": "parameters.body",
+      "artifact": "bodyApprovalArtifact"
+    }
+  }
+}
