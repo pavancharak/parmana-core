@@ -113,8 +113,27 @@ export class PostgresRateLimitStore implements RateLimitStoreLike {
     return { totalHits: row.count, resetTime: new Date(row.reset_time) };
   }
 
+  /**
+   * express-rate-limit calls decrement() after the response has already
+   * been sent, with no error handler. A rejection here used to escape as
+   * an unhandled rejection, which Node 24 treats as fatal: during a
+   * database outage the whole API process exited (found by the outage
+   * drill, Fault 1). A failed decrement is logged instead. The counter
+   * stays one higher until the window resets, which only makes the limit
+   * slightly stricter, and the request was already answered. increment()
+   * still rejects, so a database outage fails new requests closed.
+   */
   async decrement(key: string): Promise<void> {
-    await this.pool.query(DECREMENT_SQL, [this.prefix + key]);
+    try {
+      await this.pool.query(DECREMENT_SQL, [this.prefix + key]);
+    } catch (error) {
+      console.error(
+        JSON.stringify({
+          event: "rate_limit_decrement_failed",
+          message: error instanceof Error ? error.message : String(error),
+        }),
+      );
+    }
   }
 
   async resetKey(key: string): Promise<void> {
