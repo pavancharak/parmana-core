@@ -25,7 +25,7 @@ The body has these parts.
 1. **Structural check.** `businessTransactionId` must be a valid UUID. If not, the response is `400` and an audit event `caller.structural_rejected` is written, when an audit sink is configured.
 2. **Principal check.** If the key is identified, `authority.principalId` must be allowed for that key. If not, the response is `403` ("Caller is not permitted to assert this authority.principalId") and an audit event `caller.principal_denied` is written. An unset allowed-principal list means the key may assert only its own caller ID.
 3. **Capability check.** `intent.action` must be allowed for that key. If not, the response is `403` ("Caller is not permitted to invoke this capability") and an audit event `caller.capability_denied` is written. When allowed, `caller.capability_granted` is written.
-4. **Execution.** The transaction is passed to `application.execute`. This starts the runtime: it loads the named policy version, checks governance, evaluates the policy, and, on approval, signs an authorization envelope. The later stages are in `docs/MASTER_DOCUMENT.md`, section 2.
+4. **Execution.** The transaction is passed to `application.execute`. Its first step is `accept`, which runs the ID match check and the duplicate check (section 5). This starts the runtime: it loads the named policy version, checks governance, evaluates the policy, and, on approval, signs an authorization envelope. The later stages are in `docs/MASTER_DOCUMENT.md`, section 2.
 5. **Response.** On success the response is `201` with the execution result.
 
 Refusals in steps 1 to 3 happen before any policy is loaded. Nothing reaches the connector from them.
@@ -35,8 +35,8 @@ Refusals in steps 1 to 3 happen before any policy is loaded. Nothing reaches the
 `businessTransactionId` identifies one business transaction. The caller generates it. It is a UUID.
 
 - **Format:** checked first, at the declare stage (step 1 above). An invalid value is refused with `400`.
-- **Metadata match:** `metadata.businessTransactionId` must equal the top-level `businessTransactionId`. The runtime validator refuses the transaction otherwise (`packages/runtime/src/validators/BusinessTransactionValidator.ts`, "metadata.businessTransactionId must match businessTransactionId"). This check runs inside execution, after the declare-stage checks.
-- **Uniqueness:** submitting an ID that was already used is refused with `409`, through `DuplicateBusinessTransactionError` (`packages/api/src/middleware/error-handler.ts`). The test suite checks this on `POST /execute`. The `POST /transactions` path shares the same error handler; a direct test of it was not found in this review.
+- **Metadata match: confirmed in code.** `metadata.businessTransactionId` must equal the top-level `businessTransactionId`. The path is: `POST /transactions` handler, then `application.execute` (built by `RuntimeFactory`), then `ExecutionTrustApplication.execute`, then `BusinessTransactionService.accept`, which calls `BusinessTransactionValidator.validate` (`packages/runtime/src/validators/BusinessTransactionValidator.ts`, "metadata.businessTransactionId must match businessTransactionId"). A mismatch is refused with a validation error before any policy is loaded. The test suite does not have a dedicated test for this check on `POST /transactions` that this review found.
+- **Uniqueness: confirmed in code.** The same `accept` step checks whether the ID already exists and refuses a duplicate with `DuplicateBusinessTransactionError`, which the error handler maps to `409` (`packages/api/src/middleware/error-handler.ts`). The test suite checks this on `POST /execute`. The `POST /transactions` path uses the same `accept` step.
 - **Purpose:** the ID ties together the request, its audit events, and its execution record. A retry with the same ID is refused rather than executed twice.
 
 ## 3. What is not yet confirmed
