@@ -30,10 +30,16 @@ export function createCallerAuthenticator(
   config: Config = loadConfig(),
 ): CallerAuthBootstrap {
   if (config.auth.disabled) {
-    if (process.env.NODE_ENV === "production") {
+    // Fail closed: caller authentication may be disabled only when NODE_ENV
+    // is exactly "development" or "test". Any other value, including unset,
+    // is refused, so a deployment with a missing or unexpected NODE_ENV cannot
+    // run without caller authentication.
+    const nodeEnv = process.env.NODE_ENV;
+    if (nodeEnv !== "development" && nodeEnv !== "test") {
       throw new Error(
-        "PARMANA_AUTH_DISABLED=true is refused when NODE_ENV=production. " +
-          "Caller authentication cannot be disabled in production.",
+        "PARMANA_AUTH_DISABLED=true is refused unless NODE_ENV is exactly " +
+          '"development" or "test". Caller authentication cannot be disabled ' +
+          "in any other environment.",
       );
     }
 

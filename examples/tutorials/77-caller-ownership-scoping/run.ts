@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import path from "node:path";
 
 import type { BusinessTransaction } from "@parmana/shared";
 import {
@@ -96,6 +97,56 @@ console.log();
 
 const executionSystem = await createExecutionSystem();
 const application = createApplication(executionSystem, demoApprovalVerifier());
+
+//
+// Governance is always on (D19). vendor-payment 2.1.0 must have a signed
+// policy-governance approval record before it can execute, so this tutorial
+// approves it through the real PolicyChangeApprovalService, the same way
+// tutorial 103 does, with a maker and a different checker.
+//
+async function approveVendorPaymentPolicy(): Promise<void> {
+  const { PolicyChangeApprovalService } =
+    await import("../../../packages/api/src/governance/PolicyChangeApprovalService.js");
+  const { policyChangeApprovalRecordRepository } =
+    await import("../../../packages/api/src/repositories.js");
+  const { PolicyChangeCrypto } = await import("@parmana/crypto");
+  const { FilePolicyRepository } = await import("@parmana/policy");
+  const { PendingPolicyChangeStatus } = await import("@parmana/shared");
+
+  const dir = path.resolve(
+    process.cwd(),
+    process.env.PARMANA_POLICY_DIR ?? "./policies",
+  );
+  const base = new FilePolicyRepository(dir);
+  const readOnly = {
+    load: (name: string, version: string) => base.load(name, version),
+    save: async () => undefined,
+  };
+  const service = new PolicyChangeApprovalService({
+    policyRepository: readOnly,
+    policyChangeCrypto: new PolicyChangeCrypto(),
+    policyChangeApprovalRecordRepository,
+  });
+
+  const policy = await base.load("vendor-payment", "2.1.0");
+
+  await service.approve(
+    {
+      pendingPolicyChangeId: "tutorial-77-vendor-payment-2.1.0",
+      policyName: "vendor-payment",
+      policyVersion: "2.1.0",
+      proposedContent:
+        policy as unknown as import("@parmana/shared").PendingPolicyChange["proposedContent"],
+      proposedBy: "tutorial-77-maker",
+      proposedAt: new Date(),
+      status: PendingPolicyChangeStatus.PENDING_APPROVAL,
+      reason: "tutorial 77: policy-governance approval",
+    },
+    "tutorial-77-checker",
+  );
+}
+
+await approveVendorPaymentPolicy();
 
 const transaction = vendorPaymentTransaction("caller-a");
 await application.execute(await withDemoApproval(transaction));

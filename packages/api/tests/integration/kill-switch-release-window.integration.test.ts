@@ -1,5 +1,5 @@
 import request from "supertest";
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import { createApplication } from "../../src/application.js";
 import { createApp } from "../../src/app.js";
@@ -12,6 +12,7 @@ import {
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
 import type { ConnectorExecutor } from "@parmana/execution-control";
+import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
 
 /**
  * A trip that lands after the HTTP guard has passed a request, but before the
@@ -83,4 +84,8 @@ describe("kill switch between the HTTP guard and release", () => {
     expect(response.status).toBe(200);
     expect(execute).toHaveBeenCalledTimes(1);
   });
+});
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
 });

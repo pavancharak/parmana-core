@@ -1,11 +1,12 @@
 import request from "supertest";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import { createApplication } from "../../src/application.js";
 import { createApp } from "../../src/app.js";
 
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
+import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
 
 /**
  * EV-10: a connector's credential never reaches the caller, the decision
@@ -75,4 +76,8 @@ describe("Credential non-exposure (HTTP boundary)", () => {
     expect(JSON.stringify(response.body)).not.toContain(SECRET);
     expect(JSON.stringify(auditSink.events)).not.toContain(SECRET);
   });
+});
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
 });

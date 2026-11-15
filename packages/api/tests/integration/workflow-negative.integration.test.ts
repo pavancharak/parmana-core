@@ -8,6 +8,7 @@ beforeAll(() => {
 
 import app from "../test-app.js";
 import { resolveDatabaseGate } from "../helpers/database-availability.js";
+import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
 
 const databaseConfigured = resolveDatabaseGate("Negative Workflow Integration");
 
@@ -74,4 +75,8 @@ describe.skipIf(!databaseConfigured)("Negative Workflow Integration", () => {
 
     expect(response.status).toBe(400);
   });
+});
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
 });

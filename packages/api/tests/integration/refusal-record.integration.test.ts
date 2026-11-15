@@ -1,5 +1,5 @@
 import request from "supertest";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import { createApplication } from "../../src/application.js";
 import { createApp } from "../../src/app.js";
@@ -10,6 +10,7 @@ import { InMemoryCallerAuditSink } from "../../src/auth/InMemoryCallerAuditSink.
 
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
+import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
 
 /**
  * HTTP-level proof of RFC-0021: a policy REJECT (both the ordinary
@@ -270,4 +271,8 @@ describe("Refusal Record ownership scoping (RFC-0021, IDOR regression)", () => {
     expect(verifyResponse.status).toBe(200);
     expect(verifyResponse.body.valid).toBe(true);
   });
+});
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
 });

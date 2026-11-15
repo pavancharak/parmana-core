@@ -1,11 +1,12 @@
 import request from "supertest";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import { createApplication } from "../../src/application.js";
 import { createApp } from "../../src/app.js";
 
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { createInspectableExecutionSystem } from "../bootstrap/createInspectableExecutionSystem.js";
+import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
 
 /**
  * Phase 2D — restored.
@@ -164,4 +165,8 @@ describe("Execution Failure", () => {
       expect(response.body.code).toBe("EXECUTION_OUTCOME_UNKNOWN");
     }
   });
+});
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
 });

@@ -19,7 +19,7 @@ Every claim is taken from the code, unless marked **(not tested)**. Read [ENV-FI
 - **If missing:** the value is `development`. Gates relaxed in `development` are then relaxed on your server. For a real deployment this is wrong.
 - **Values:**
   - `production`: every gate on. Use it for any real deployment.
-  - `development`: relaxes some gates (for example `PARMANA_ALLOW_UNGOVERNED_POLICY` is honored, and `EXECUTION_INTENTS_CHECK` and `SIGNING_READINESS_CHECK` can be turned off).
+  - `development`: relaxes some gates (`EXECUTION_INTENTS_CHECK` and `SIGNING_READINESS_CHECK` can be turned off). Policy governance is not relaxed (D19).
   - `test`: skips most startup checks and uses in-memory stores. Never in production.
   - Any other string: treated as not `test` or `development`, so gates stay on.
 
@@ -107,26 +107,15 @@ Every claim is taken from the code, unless marked **(not tested)**. Read [ENV-FI
 
 ### POLICY_EXECUTION_VERIFICATION_ENFORCED
 
-- **What it is:** an override that matters only in one narrow case.
-- **Required:** no.
-- **Used:** only in `policyGovernanceRelaxed.ts`. Governance is relaxed only when all three hold: `NODE_ENV` is `test` or `development`, `PARMANA_ALLOW_UNGOVERNED_POLICY=true`, and this variable is not `true`.
-- **If missing:** governance is enforced. In production it is always enforced.
-- **Values:**
-  - `true`: governance is enforced, even when relaxation would otherwise apply.
-  - `false`, or unset: the relaxation rule applies, if the other two conditions also hold.
-  - The older template comments that describe "detection" and "prevention" modes are not in the code.
+- **What it is:** retired. Policy governance is enforced in every environment (D19), so this variable has no effect.
+- **Used:** nowhere in the code.
+- **Values:** any value is ignored.
 
 ### PARMANA_ALLOW_UNGOVERNED_POLICY
 
-- **What it is:** lets unapproved policies run, in `test` or `development` only.
-- **Required:** no.
-- **Used:** in `policyGovernanceRelaxed.ts`.
-- **If missing:** governance is enforced.
-- **Values:** `true` relaxes governance in `test` or `development`. Any other value does not. Never set it in production.
-
----
-
-## Callers
+- **What it is:** retired (D19). It has no effect in any environment.
+- **Used:** nowhere in the code. The doctor reports it as not read by any component.
+- **Values:** any value is ignored. Governance is enforced in `test`, `development` and every other environment.
 
 ### PARMANA_API_KEYS
 
@@ -324,7 +313,7 @@ These names may appear in a development file. The API server does not read them.
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `PARMANA_AUTH_DISABLED=true`           | Turns off caller authentication                                                                              |
 | `NODE_ENV=test` or `development`       | Turns off safety gates                                                                                       |
-| `PARMANA_ALLOW_UNGOVERNED_POLICY=true` | Lets unapproved policies run (only honored in `test` or `development`)                                       |
+| `PARMANA_ALLOW_UNGOVERNED_POLICY=true` | Retired (D19): has no effect; governance is enforced in every environment                                    |
 | `DATABASE_PROVIDER` (any value)        | Retired. Refused at module load: "DATABASE_PROVIDER is no longer read; set PARMANA_STORAGE instead" (tested) |
 
 ---

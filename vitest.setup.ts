@@ -97,8 +97,6 @@ const LOCAL_TEST_DEFAULTS: Record<string, string> = {
   PARMANA_STORAGE: "memory",
   KEY_PROVIDER: "local",
   PRIMARY_SIGNATURE_PROVIDER: "ed25519",
-  // Explicit opt-in: unit and integration tests run without governance records.
-  PARMANA_ALLOW_UNGOVERNED_POLICY: "true",
 };
 
 for (const [name, value] of Object.entries(LOCAL_TEST_DEFAULTS)) {

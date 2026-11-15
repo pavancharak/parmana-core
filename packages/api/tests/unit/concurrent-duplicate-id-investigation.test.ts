@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import request from "supertest";
 
 import app from "../test-app.js";
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
+import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
 
 /**
  * Investigation-only test, not part of any fix. Proves empirically whether
@@ -50,4 +51,8 @@ describe("Concurrent same-id resubmission investigation", () => {
       persistedAction,
     );
   });
+});
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
 });

@@ -8,6 +8,7 @@ beforeAll(() => {
 import app from "../test-app.js";
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
 import { resolveDatabaseGate } from "../helpers/database-availability.js";
+import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
 
 const databaseConfigured = resolveDatabaseGate(
   "Transactions API (persistence cases)",
@@ -120,4 +121,8 @@ describe("POST /transactions", () => {
       );
     },
   );
+});
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
 });

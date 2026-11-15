@@ -19,6 +19,10 @@ import {
 import { createApplication, policyRepository } from "../../src/application.js";
 import { createExecutionGateway } from "../../src/bootstrap/createExecutionGateway.js";
 import { DEFAULT_VERIFIER_KEY_ID } from "../../src/bootstrap/verifierKeyId.js";
+import {
+  approvePolicyVersion,
+  seedPolicyGovernanceApprovals,
+} from "../../../../test-support/policy-governance.js";
 
 /**
  * End to end through the production gateway factory (createExecutionGateway),
@@ -128,10 +132,13 @@ function requestFor(
 }
 
 describe("production gateway, end to end", () => {
-  beforeAll(() => {
+  beforeAll(async () => {
     // Production binds the signal verifier here (application.ts, G-31). The
     // gateway refuses every release until it is bound, so bind it first.
     createApplication();
+    await seedPolicyGovernanceApprovals();
+    // This file executes access-control 1.0.0, so make it the version in effect.
+    await approvePolicyVersion(POLICY_NAME, POLICY_VERSION);
   });
 
   it("verifies a runtime-signed authorization against the real policy hash", async () => {
@@ -205,4 +212,8 @@ describe("production gateway, end to end", () => {
     expect(result.checks.verificationKeyScope).toBe(true);
     expect(result.valid).toBe(true);
   });
+});
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
 });

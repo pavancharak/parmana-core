@@ -31,15 +31,6 @@ import { executionGatewaySignalStateVerifier } from "./executionGatewaySignalSta
 import { verificationOnlyKeysConfig } from "./verifierKeyId.js";
 
 /**
- * Used only when governance is explicitly relaxed (test/development opt-in).
- * Approves every policy's governance check; the policy content hash check
- * still runs.
- */
-const ungovernedPolicyVerifier: PolicyExecutionVerifier = {
-  verify: async () => undefined,
-};
-
-/**
  * Constructs the production Execution Gateway.
  *
  * Wires two additive verification checks beyond the envelope's own
@@ -103,20 +94,13 @@ export async function createExecutionGateway(): Promise<ExecutionSystem> {
   );
 
   //
-  // Fail-closed policy binding: undefined only in NODE_ENV test or
-  // development (see createPolicyExecutionVerifier.ts). Everywhere else
-  // the gateway is constructed without allowUnverifiedPolicy, so it
+  // Fail-closed policy binding, in every environment (D19). The gateway
   // requires the repository and the approval verifier, rejects an
   // authorization with no policyContentHash, and requires the approval
   // record's hash to equal the authorization's and the live hash.
+  // allowUnverifiedPolicy is never set here.
   //
-  //
-  // Governance is skipped only in the explicit opt-in mode (see
-  // policyGovernanceRelaxed.ts). Even then the policy content hash stays
-  // required: allowUnverifiedPolicy is never set here.
-  //
-  const policyApprovalVerifier =
-    createPolicyExecutionVerifier() ?? ungovernedPolicyVerifier;
+  const policyApprovalVerifier = createPolicyExecutionVerifier();
 
   return new ExecutionGateway({
     publicKey,

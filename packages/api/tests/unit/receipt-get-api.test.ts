@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import request from "supertest";
 
 import app from "../test-app.js";
 import { createBusinessTransaction } from "../fixtures/business-transaction.js";
+import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
 
 describe("GET /receipt/latest/:id", () => {
   it("returns 404 when the Execution Trust Record does not exist", async () => {
@@ -50,4 +51,8 @@ describe("GET /receipt/latest/:id", () => {
     // a new one (POST /receipt does the latter).
     expect(response.body.trustRecordHash).toBe(execute.body.trustRecordHash);
   });
+});
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
 });

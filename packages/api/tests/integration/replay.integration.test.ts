@@ -8,6 +8,7 @@ beforeAll(() => {
 
 import app from "../test-app.js";
 import { resolveDatabaseGate } from "../helpers/database-availability.js";
+import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-governance.js";
 
 const databaseConfigured = resolveDatabaseGate("Replay Integration");
 
@@ -75,4 +76,8 @@ describe.skipIf(!databaseConfigured)("Replay Integration", () => {
 
     expect(response.body.error).toBe("Execution Trust Record not found.");
   });
+});
+
+beforeAll(async () => {
+  await seedPolicyGovernanceApprovals();
 });

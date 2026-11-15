@@ -68,7 +68,7 @@ The script (`scripts/drills/outage-drill.sh`) does the following:
 
 Scope: refusal and outage paths only. An approved execution needs a trusted approver. Neither the drill nor CI sets one up.
 
-**Drill-only settings.** The server runs with `NODE_ENV=development`, `PARMANA_ALLOW_UNGOVERNED_POLICY=true` (no policy governance records), and the checks `EXECUTION_INTENTS_CHECK` and `SIGNING_READINESS_CHECK` on. **`NODE_ENV=test` forces in-memory storage** (`packages/storage/src/StorageFactory.ts`), so the drill must not use it.
+**Drill-only settings.** The server runs with `NODE_ENV=development`, and no policy governance records (`PARMANA_ALLOW_UNGOVERNED_POLICY` was removed in D19, so this drill must now seed real approvals before it runs; not yet done), and the checks `EXECUTION_INTENTS_CHECK` and `SIGNING_READINESS_CHECK` on. **`NODE_ENV=test` forces in-memory storage** (`packages/storage/src/StorageFactory.ts`), so the drill must not use it.
 
 ### Results (local run, before and after the fix)
 
