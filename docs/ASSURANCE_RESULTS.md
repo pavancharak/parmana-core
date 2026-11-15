@@ -21,6 +21,37 @@ This log records assurance test runs against the plan in
 
 ## Entries
 
+### 2026-11-15: published verifier CLIs on parmana-core records (closes G-121)
+
+- **Command:** `node bin/parmana-verify.mjs <record> <trust>` from the extracted `@parmana/verifier@2.0.1` package, for the v3, v2 and single-algorithm fixtures; `python3 -I -c "...from parmana_verifier.cli import main..." <record> <trust>` from the extracted `parmana_verifier-2.0.1` wheel. Fixtures in `test/vectors/parmana-core-generated`.
+- **Runtime:** Node 24 (`/opt/node24/bin/node`); Python from the sandbox `python3` (versions not recorded).
+- **Commit tested:** parmana-core `7e9a54fb` (fixtures). Published packages: `@parmana/verifier` 2.0.1 (npm) and `parmana-verifier` 2.0.1 (PyPI).
+- **Branch:** `claude/docs-schema-v3-verification`.
+- **Run by:** session, with the owner's permission to run the CLIs.
+
+**Results**
+
+| Record | npm `@parmana/verifier` 2.0.1 | PyPI `parmana-verifier` 2.0.1 |
+| --- | --- | --- |
+| v3 (`v3-record-1.json`) | valid, `coverage: full`, exit 0 | valid, `coverage: full`, exit 0 |
+| v2 (`v2-record-1.json`) | refused by default, exit 1 | refused by default, exit 1 |
+| single-algorithm (`single-record-1.json`) | refused by default, exit 1 | refused by default, exit 1 |
+
+**Checks not run**
+
+- The published CLIs against the tampered v3 record: not run in this pass. The same tamper was refused by both published SDKs earlier on 2026-11-15.
+- The v2 and single-algorithm records with `allowLegacyV2` set: not run. Both verifiers accept them with that setting in the repo's tests.
+- The TypeScript and Python SDK sync: not part of this run.
+
+**Survivor classification:** not applicable (no mutation run).
+
+**Open items**
+
+1. Owner to confirm which package gap G-121 means. It names "public verifier 0.3.0", which is not a published version of either package.
+2. The default schema change to v3 is a separate decision, not part of this closure.
+
+**Phase status change:** none.
+
 ### 2026-11-15: published SDK verification of parmana-core records
 
 - **Command:** `npm pack @parmana/sdk@2.0.2`; `pip download parmana==2.0.1 --no-deps`; `node run-npm.mjs <fixtures>` and `node tamper.mjs <fixtures>` (Node 24, using the published `package/dist/crypto/offline-verifier.js`); the extracted wheel's `parmana/crypto/offline_verifier.py` run with the same fixtures (no install). Repo comparison: `diff -rq python/parmana <wheel>/parmana`.
