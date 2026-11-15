@@ -151,28 +151,38 @@ const SELECT_BY_ID_SQL = `
   SELECT * FROM policy_change_approval_records WHERE policy_change_approval_record_id = $1
 `;
 
+/**
+ * "Most recent" first: approved_at, then insertion order, then the record id.
+ * approval_sequence is NULL for records written before migration
+ * 20261115120000; NULLS LAST ranks them below a new record with the same
+ * approved_at. Matches the in-memory repository, which keeps the later-inserted
+ * record on a tie.
+ */
+const MOST_RECENT_FIRST =
+  "approved_at DESC, approval_sequence DESC NULLS LAST, policy_change_approval_record_id DESC";
+
 const SELECT_BY_PENDING_CHANGE_SQL = `
   SELECT * FROM policy_change_approval_records
   WHERE pending_policy_change_id = $1
-  ORDER BY approved_at DESC, policy_change_approval_record_id DESC
+  ORDER BY ${MOST_RECENT_FIRST}
   LIMIT 1
 `;
 
 const SELECT_ALL_SQL = `
-  SELECT * FROM policy_change_approval_records ORDER BY approved_at DESC
+  SELECT * FROM policy_change_approval_records ORDER BY ${MOST_RECENT_FIRST}
 `;
 
 const SELECT_MOST_RECENT_FOR_NAME_SQL = `
   SELECT * FROM policy_change_approval_records
   WHERE policy_name = $1
-  ORDER BY approved_at DESC, policy_change_approval_record_id DESC
+  ORDER BY ${MOST_RECENT_FIRST}
   LIMIT 1
 `;
 
 const SELECT_MOST_RECENT_FOR_SQL = `
   SELECT * FROM policy_change_approval_records
   WHERE policy_name = $1 AND policy_version = $2
-  ORDER BY approved_at DESC
+  ORDER BY ${MOST_RECENT_FIRST}
   LIMIT 1
 `;
 
