@@ -82,13 +82,26 @@ describe("BusinessTransactionService: signals against the declared signal schema
     ).resolves.toBeDefined();
   });
 
-  it("accepts a request that omits a signal the schema declares (the decision refuses that, not this step)", async () => {
+  it("refuses a request that omits signals altogether, with 400, before the decision", async () => {
     const service = new BusinessTransactionService(
       transactions,
       policies({ amount: "number" }),
     );
 
-    await expect(service.accept(transaction(undefined))).resolves.toBeDefined();
+    await expect(service.accept(transaction(undefined))).rejects.toThrow(
+      new BusinessTransactionValidationError(
+        "signals is required and must be an object.",
+      ),
+    );
+  });
+
+  it("accepts an empty signals object when the policy declares no signals", async () => {
+    const service = new BusinessTransactionService(
+      transactions,
+      policies(undefined),
+    );
+
+    await expect(service.accept(transaction({}))).resolves.toBeDefined();
   });
 
   it("does not check a signal the schema does not declare", async () => {

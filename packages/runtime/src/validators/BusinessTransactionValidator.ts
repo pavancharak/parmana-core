@@ -26,6 +26,7 @@ function assertShape(transaction: unknown): void {
     "authorization",
     "intent",
     "policy",
+    "signals",
   ] as const) {
     if (!isObject(transaction[key])) {
       throw new BusinessTransactionValidationError(
