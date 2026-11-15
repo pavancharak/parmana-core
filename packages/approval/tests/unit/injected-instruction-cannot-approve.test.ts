@@ -108,6 +108,12 @@ const REFUSED = {
   actualValue: false,
 };
 
+// The same approval, a second time: its nonce is already recorded, and the refusal says so.
+const REPLAYED = {
+  ...REFUSED,
+  reason: "the signed approval has already been used",
+};
+
 describe("an injected instruction cannot make a write approved (G-141)", () => {
   it("control: a human-signed approval for this refund passes", async () => {
     const verifier = setup();
@@ -177,7 +183,7 @@ describe("an injected instruction cannot make a write approved (G-141)", () => {
 
     expect(await verifier.findViolations(refundRequest(), signals)).toEqual([]);
     expect(await verifier.findViolations(refundRequest(), signals)).toEqual([
-      REFUSED,
+      REPLAYED,
     ]);
   });
 

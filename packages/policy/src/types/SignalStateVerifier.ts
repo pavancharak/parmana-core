@@ -82,6 +82,11 @@ export interface SignalStateViolation {
   readonly signalKey: string;
   readonly declaredValue: unknown;
   readonly actualValue: unknown;
+  /**
+   * Why the verified state differs, when the verifier knows it. Shown to the caller in place of the declared and
+   * actual values, which say nothing about a refused approval (for example, "the approval has already been used").
+   */
+  readonly reason?: string;
 }
 
 /**

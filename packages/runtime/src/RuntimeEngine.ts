@@ -717,15 +717,7 @@ export class RuntimeEngine {
               policyId: policy.policyId,
               policyVersion: policy.policyVersion,
               outcome: PolicyOutcome.REJECT,
-              reason:
-                "Rejected: declared signal(s) do not match independently verified state (" +
-                stateViolations
-                  .map(
-                    (violation) =>
-                      `${violation.signalKey}=${JSON.stringify(violation.declaredValue)} != verified ${violation.signalKey}=${JSON.stringify(violation.actualValue)}`,
-                  )
-                  .join(", ") +
-                ").",
+              reason: describeStateViolations(stateViolations),
               matchedRuleId: "signal-state-verification-violation",
               evaluatedRules: 0,
               matchedPath: [],
@@ -1349,4 +1341,38 @@ export class RuntimeEngine {
   public size(): number {
     return this.pipeline.size();
   }
+}
+
+/**
+ * The reason a decision gives when the signals it declared do not match the
+ * verified state. A violation that names its own reason (a consumed approval,
+ * for example) is said in those words; the others are the declared and actual
+ * values, as before.
+ */
+function describeStateViolations(
+  violations: readonly SignalStateViolation[],
+): string {
+  const mismatches = violations.filter((v) => v.reason === undefined);
+  const named = violations.filter((v) => v.reason !== undefined);
+
+  const parts: string[] = [];
+
+  if (mismatches.length > 0) {
+    parts.push(
+      "declared signal(s) do not match independently verified state (" +
+        mismatches
+          .map(
+            (violation) =>
+              `${violation.signalKey}=${JSON.stringify(violation.declaredValue)} != verified ${violation.signalKey}=${JSON.stringify(violation.actualValue)}`,
+          )
+          .join(", ") +
+        ")",
+    );
+  }
+
+  for (const violation of named) {
+    parts.push(`signal '${violation.signalKey}': ${violation.reason}`);
+  }
+
+  return `Rejected: ${parts.join("; ")}.`;
 }

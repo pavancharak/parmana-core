@@ -209,6 +209,12 @@ describe("approval race, end to end through the engine (D24)", () => {
     expect((await recorder.current(second.businessTransactionId))?.status).toBe(
       "REJECTED",
     );
+    // The reason says the approval was used, not that a signal fails to match the verified state.
+    const reason = (await recorder.current(second.businessTransactionId))
+      ?.reason;
+    expect(reason).toBe(
+      "Rejected: signal 'humanApproved': the signed approval has already been used.",
+    );
     expect(
       (await recorder.history(second.businessTransactionId)).some(
         (e) => e.status === "APPROVED",
