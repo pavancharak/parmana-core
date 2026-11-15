@@ -17,7 +17,7 @@ export interface ExecutionCorrespondenceEntry {
  * Overall correspondence report for a trust record.
  *
  * - "failed": at least one execution does not correspond to the authorization.
- * - "not_checked": no execution was checked, or at least one could not be checked.
+ * - "not_checked": no execution was checked, or at least one could not be checked (no evidence, or no authorization to compare with).
  * - "passed": every execution was checked and corresponds.
  *
  * Fails closed: a single unchecked execution prevents "passed".
@@ -56,11 +56,12 @@ export function checkTrustRecordCorrespondenceOffline(
   const executions: ExecutionCorrespondenceEntry[] = trustRecord.executions.map(
     (execution) => {
       if (authorization === undefined) {
+        // Nothing to compare with: the check was not performed. It is not a mismatch, so it is not "failed".
         return {
           executionId: execution.executionId,
           result: {
-            status: "failed",
-            failures: ["no authorization is embedded in the trust record"],
+            status: "not_checked",
+            reason: "no authorization is embedded in the trust record",
           },
         };
       }

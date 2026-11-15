@@ -21,6 +21,78 @@ This log records assurance test runs against the plan in
 
 ## Entries
 
+### 2026-11-15: published verifier CLIs on parmana-core records (closes G-121)
+
+- **Command:** `node bin/parmana-verify.mjs <record> <trust>` from the extracted `@parmana/verifier@2.0.1` package, for the v3, v2 and single-algorithm fixtures; `python3 -I -c "...from parmana_verifier.cli import main..." <record> <trust>` from the extracted `parmana_verifier-2.0.1` wheel. Fixtures in `test/vectors/parmana-core-generated`.
+- **Runtime:** Node 24 (`/opt/node24/bin/node`); Python from the sandbox `python3` (versions not recorded).
+- **Commit tested:** parmana-core `7e9a54fb` (fixtures). Published packages: `@parmana/verifier` 2.0.1 (npm) and `parmana-verifier` 2.0.1 (PyPI).
+- **Branch:** `claude/docs-schema-v3-verification`.
+- **Run by:** session, with the owner's permission to run the CLIs.
+
+**Results**
+
+| Record                                    | npm `@parmana/verifier` 2.0.1   | PyPI `parmana-verifier` 2.0.1   |
+| ----------------------------------------- | ------------------------------- | ------------------------------- |
+| v3 (`v3-record-1.json`)                   | valid, `coverage: full`, exit 0 | valid, `coverage: full`, exit 0 |
+| v2 (`v2-record-1.json`)                   | refused by default, exit 1      | refused by default, exit 1      |
+| single-algorithm (`single-record-1.json`) | refused by default, exit 1      | refused by default, exit 1      |
+
+**Checks not run**
+
+- The published CLIs against the tampered v3 record: not run in this pass. The same tamper was refused by both published SDKs earlier on 2026-11-15.
+- The v2 and single-algorithm records with `allowLegacyV2` set: not run. Both verifiers accept them with that setting in the repo's tests.
+- The TypeScript and Python SDK sync: not part of this run.
+
+**Survivor classification:** not applicable (no mutation run).
+
+**Open items**
+
+1. Owner to confirm which package gap G-121 means. It names "public verifier 0.3.0", which is not a published version of either package.
+2. The default schema change to v3 is a separate decision, not part of this closure.
+
+**Phase status change:** none.
+
+### 2026-11-15: published SDK verification of parmana-core records
+
+- **Command:** `npm pack @parmana/sdk@2.0.2`; `pip download parmana==2.0.1 --no-deps`; `node run-npm.mjs <fixtures>` and `node tamper.mjs <fixtures>` (Node 24, using the published `package/dist/crypto/offline-verifier.js`); the extracted wheel's `parmana/crypto/offline_verifier.py` run with the same fixtures (no install). Repo comparison: `diff -rq python/parmana <wheel>/parmana`.
+- **Runtime:** Node 24 (`/opt/node24/bin/node`; patch version not recorded). Python from the sandbox `python3` (version not recorded).
+- **Commit tested:** parmana-core `7e9a54fb` for the fixtures and the repo comparison. Published packages: `@parmana/sdk@2.0.2`, `parmana@2.0.1`.
+- **Branch:** `claude/docs-schema-v3-verification` (from `claude/status-events-code`).
+- **Run by:** session
+
+**Results**
+
+| Measurement                                                     | Value                                                                                                                                                                                                                        |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| npm 2.0.2, schema v3 record (`v3-record-1.json`)                | valid: true, hashValid: true, errors: none                                                                                                                                                                                   |
+| npm 2.0.2, schema v2 record (default trust)                     | valid: true                                                                                                                                                                                                                  |
+| npm 2.0.2, single-algorithm record (default trust)              | valid: true                                                                                                                                                                                                                  |
+| npm 2.0.2, schema v3 record with `updatedAt` changed            | valid: false (ed25519 and dilithium3 signatures fail)                                                                                                                                                                        |
+| PyPI 2.0.1, schema v3 record                                    | valid: True, errors: none                                                                                                                                                                                                    |
+| PyPI 2.0.1, schema v2 record                                    | valid: True                                                                                                                                                                                                                  |
+| PyPI 2.0.1, single-algorithm record                             | valid: True                                                                                                                                                                                                                  |
+| PyPI 2.0.1, schema v3 record with `updatedAt` changed           | valid: False (both signatures fail)                                                                                                                                                                                          |
+| Repo `python/parmana/crypto/offline_verifier.py` vs 2.0.1 wheel | identical                                                                                                                                                                                                                    |
+| Repo Python files that differ from the 2.0.1 wheel              | 7 (the D23 client: `execution_api.py`, `transaction_api.py`, `client.py`, `errors/__init__.py`, `models/__init__.py`, `models/execution_evidence.py`, plus the new `execution_pending_error.py` and `transaction_status.py`) |
+
+**Checks not run**
+
+- TypeScript source against the published `@parmana/sdk@2.0.2` build: not compared.
+- The separately published verifier (`@parmana/verifier`, `parmana-verifier`): not read.
+- The Python SDK installed through pip: not installed. The check ran against the extracted wheel. An install attempt was denied by the environment's permission classifier, so the run used the extracted files only.
+- Publishing either SDK: not run. No npm or PyPI credentials in the session environment.
+
+**Survivor classification:** not applicable (no mutation run).
+
+**Open items**
+
+1. Default schema: owner decision is v3 by default. Not done. Gated on the separately published verifier (G-121).
+2. SDK sync: the repo's Python SDK has the D23 client additions that the published 2.0.1 lacks. The TypeScript side is not compared.
+3. Publish: needs npm and PyPI credentials.
+4. Policy: the published SDKs accept v2 and single-algorithm records by default, and the verifier in parmana-verifier PR #39 refuses them. Owner decision.
+
+**Phase status change:** none.
+
 ### 2026-11-14: crypto mutation campaign
 
 - **Command:** `npm run mutation -- crypto`
