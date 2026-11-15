@@ -76,7 +76,7 @@ describe("checkTrustRecordCorrespondenceOffline", () => {
 
     expect(report.status).toBe("not_checked");
     expect(JSON.stringify(report)).toContain("no authorization");
-    expect(JSON.stringify(report)).not.toContain("\"failed\"");
+    expect(JSON.stringify(report)).not.toContain('"failed"');
   });
 
   it("reports not checked when the record has no executions", () => {
