@@ -26,6 +26,7 @@ import type {
 import { ExecutionApi } from "../src/client/ExecutionApi.js";
 import { VerificationApi } from "../src/client/VerificationApi.js";
 import { TransactionApi } from "../src/client/TransactionApi.js";
+import { ExecutionPendingError } from "../src/errors/ExecutionPendingError.js";
 import { ParmanaClient } from "../src/client/ParmanaClient.js";
 import { HttpTransport } from "../src/transport/HttpTransport.js";
 
@@ -121,6 +122,62 @@ describe("TransactionApi.execute", () => {
     expect(transport.lastRequest?.method).toBe("POST");
     expect(transport.lastRequest?.path).toBe("/transactions/tx-1/execute");
     expect(transport.lastRequest?.body).toBeUndefined();
+  });
+});
+
+class StatusFake implements Transport {
+  public lastRequest: TransportRequest | undefined;
+
+  constructor(
+    private readonly status: number,
+    private readonly body: unknown,
+  ) {}
+
+  async send<T>(request: TransportRequest): Promise<TransportResponse<T>> {
+    this.lastRequest = request;
+    return { status: this.status, headers: {}, body: this.body as T };
+  }
+}
+
+describe("TransactionApi.execute: the 202 pending answer", () => {
+  const pending = {
+    businessTransactionId: "tx-1",
+    status: "EXECUTING",
+    outcome: "pending",
+    reconcile: "/transactions/tx-1/reconcile",
+    record: { trustRecordId: "tr-1", businessTransactionId: "tx-1" },
+  };
+
+  it("asks for 202 as a non-throwing status, so the body reaches the SDK", async () => {
+    const transport = new StatusFake(200, { trustRecordId: "tr-1" });
+
+    await new TransactionApi(transport).execute("tx-1");
+
+    expect(transport.lastRequest?.nonThrowingStatuses).toEqual([202]);
+  });
+
+  it("throws ExecutionPendingError on 202, carrying the record and the reconcile path", async () => {
+    const transport = new StatusFake(202, pending);
+
+    const error = await new TransactionApi(transport)
+      .execute("tx-1")
+      .catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ExecutionPendingError);
+    const typed = error as ExecutionPendingError;
+    expect(typed.code).toBe("EXECUTION_STATUS_PENDING");
+    expect(typed.businessTransactionId).toBe("tx-1");
+    expect(typed.record).toEqual(pending.record);
+    expect(typed.reconcilePath).toBe("/transactions/tx-1/reconcile");
+  });
+
+  it("returns the record normally on 200", async () => {
+    const record = { trustRecordId: "tr-1" };
+    const result = await new TransactionApi(
+      new StatusFake(200, record),
+    ).execute("tx-1");
+
+    expect(result).toEqual(record);
   });
 });
 

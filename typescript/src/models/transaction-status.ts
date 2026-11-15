@@ -4,6 +4,8 @@
  * API returns; the shared domain types are in packages/shared.
  */
 
+import type { ExecutionTrustRecord } from "./trust-record.js";
+
 /** The statuses a Business Transaction moves through (decision D23). */
 export type TransactionStatusValue =
   | "RECEIVED"
@@ -14,6 +16,18 @@ export type TransactionStatusValue =
   | "EXECUTED"
   | "FAILED"
   | "VERIFIED";
+
+/**
+ * The 202 response of POST /transactions/{id}/execute: the release happened
+ * and the signed record exists, but the status is still EXECUTING.
+ */
+export interface PendingExecutionResponse {
+  readonly businessTransactionId: string;
+  readonly status: "EXECUTING";
+  readonly outcome: "pending";
+  readonly reconcile: string;
+  readonly record: ExecutionTrustRecord;
+}
 
 /** The stage that wrote a status event. */
 export type TransactionStatusStage =

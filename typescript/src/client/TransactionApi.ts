@@ -8,9 +8,12 @@ import type {
   BusinessTransaction,
   DeclaredTransaction,
   ExecutionTrustRecord,
+  PendingExecutionResponse,
   ReconcileResult,
   TransactionStatusResult,
 } from "../models/index.js";
+
+import { ExecutionPendingError } from "../errors/ExecutionPendingError.js";
 
 import type { Transport } from "../config/Transport.js";
 
@@ -56,12 +59,30 @@ export class TransactionApi {
   public async execute(
     businessTransactionId: string,
   ): Promise<ExecutionTrustRecord> {
-    const response = await this.transport.send<ExecutionTrustRecord>({
+    const response = await this.transport.send<
+      ExecutionTrustRecord | PendingExecutionResponse
+    >({
       method: "POST",
       path: `/transactions/${encodeURIComponent(businessTransactionId)}/execute`,
+      nonThrowingStatuses: [202],
     });
 
-    return response.body;
+    //
+    // 202: the release happened and the record exists, but the status is
+    // EXECUTING. Raised, not returned as a record, so a caller cannot treat
+    // the transaction as complete.
+    //
+    if (response.status === 202) {
+      const pending = response.body as PendingExecutionResponse;
+
+      throw new ExecutionPendingError({
+        businessTransactionId,
+        record: pending.record,
+        reconcilePath: pending.reconcile,
+      });
+    }
+
+    return response.body as ExecutionTrustRecord;
   }
 
   /**

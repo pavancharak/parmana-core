@@ -376,6 +376,7 @@
               "sdks/reference/python/crypto/step_up",
               "sdks/reference/python/errors/api_error",
               "sdks/reference/python/errors/configuration_error",
+              "sdks/reference/python/errors/execution_pending_error",
               "sdks/reference/python/errors/http_error",
               "sdks/reference/python/errors/network_error",
               "sdks/reference/python/errors/replay_error",

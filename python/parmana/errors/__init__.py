@@ -1,5 +1,6 @@
 from .api_error import ApiError, ParmanaError
 from .configuration_error import ConfigurationError
+from .execution_pending_error import ExecutionPendingError
 from .http_error import (
     AuthenticationError,
     AuthorizationError,
@@ -22,6 +23,7 @@ __all__ = [
     "AuthorizationError",
     "ConfigurationError",
     "ConflictError",
+    "ExecutionPendingError",
     "ExecutionRejectedError",
     "InternalServerError",
     "NetworkError",
