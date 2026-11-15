@@ -39,8 +39,8 @@ const ALLOWED_NEXT: Readonly<
   RECEIVED: ["POLICY_EVALUATED"],
   POLICY_EVALUATED: ["APPROVED", "REJECTED"],
   // FAILED from APPROVED: a release refused or failed before EXECUTING (for
-  // example signing), so nothing reached the connector. Not in the design's
-  // section 4 table yet; see the commit message.
+  // example signing), so nothing reached the connector. The design's section 4
+  // table lists this move (owner decision, D23 open point 1).
   APPROVED: ["EXECUTING", "FAILED"],
   EXECUTING: ["EXECUTED", "FAILED"],
   EXECUTED: ["VERIFIED"],
