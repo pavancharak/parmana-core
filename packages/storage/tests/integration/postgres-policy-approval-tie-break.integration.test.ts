@@ -41,7 +41,12 @@ describe.skipIf(!databaseConfigured)(
            (pending_policy_change_id, policy_name, policy_version, proposed_content_json,
             proposed_by, proposed_at, status, reason)
          VALUES ($1, $2, $3, '{}'::jsonb, 'maker', $4, 'APPROVED', 'tie-break test')`,
-        [pendingPolicyChangeId, policyName, policyVersion, "2026-11-15T09:00:00.000Z"],
+        [
+          pendingPolicyChangeId,
+          policyName,
+          policyVersion,
+          "2026-11-15T09:00:00.000Z",
+        ],
       );
     }
 
@@ -79,16 +84,15 @@ describe.skipIf(!databaseConfigured)(
       await insertPendingChange(name, "1.0.0", `ppc-aaa-second-${name}`);
 
       // Inserted first, with the larger record id.
-      await repository.create(
-        approval(name, "1.1.0", `zzz-first-${name}`, at),
-      );
+      await repository.create(approval(name, "1.1.0", `zzz-first-${name}`, at));
       // Inserted second, with the smaller record id.
       await repository.create(
         approval(name, "1.0.0", `aaa-second-${name}`, at),
       );
 
       expect(
-        (await repository.findMostRecentForName(name))?.policyChangeApprovalRecordId,
+        (await repository.findMostRecentForName(name))
+          ?.policyChangeApprovalRecordId,
       ).toBe(`aaa-second-${name}`);
       expect(
         (await repository.findMostRecentFor(name, "1.1.0"))
@@ -131,7 +135,8 @@ describe.skipIf(!databaseConfigured)(
       await repository.create(approval(name, "1.1.0", `aaa-new-${name}`, at));
 
       expect(
-        (await repository.findMostRecentForName(name))?.policyChangeApprovalRecordId,
+        (await repository.findMostRecentForName(name))
+          ?.policyChangeApprovalRecordId,
       ).toBe(`aaa-new-${name}`);
     });
   },
