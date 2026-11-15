@@ -674,7 +674,8 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [businessTransactionId, status, outcome, reconcile, record]
+                required:
+                  [businessTransactionId, status, outcome, reconcile, record]
                 properties:
                   businessTransactionId:
                     type: string
@@ -1617,7 +1618,7 @@ paths:
                       authorization:
                         authorizationId: 5f112f4c-a43d-41dd-bfee-66a49efe33de
                         authorityId: f10f016f-b7c0-443e-8307-d26f5fa98067
-                        purpose: 'API reference example: refund authorization'
+                        purpose: "API reference example: refund authorization"
                         issuedAt: 2026-09-14 17:17:50+00:00
                       intent:
                         intentId: 462c2efd-3b88-4f59-8c47-8ba01a63d37e
@@ -1663,83 +1664,83 @@ paths:
                       algorithm: ed25519
                     overrides: []
                     executions:
-                    - executionId: 21a57d3e-bed5-4a73-8af9-2ac2d7e8326e
-                      businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
-                      decision:
-                        decisionId: b83deff8-ef50-49d0-830f-741cba8f5668
-                        intentId: 462c2efd-3b88-4f59-8c47-8ba01a63d37e
-                        policy:
-                          name: vendor-payment
-                          version: 2.0.0
-                          schemaVersion: 1.0.0
-                        signals:
-                          vendorVerified: true
-                          invoiceVerified: true
-                          paymentApproved: true
-                          sufficientFunds: true
-                          paymentAmount: 1000
-                          riskScore: 5
-                          vendorId: vendor://payments
-                        outcome: APPROVED
-                        reason: Vendor payment authorized. Vendor verification, invoice verification, payment approval, funding, and risk assessment requirements were satisfied.
-                        evaluatedAt: 2026-09-14 17:17:55.626000+00:00
-                      status: COMPLETED
-                      mode: SYNC
-                      startedAt: 2026-09-14 17:17:55.631000+00:00
-                      metadata:
-                        authorizationId: 381ef27a-0955-4085-9e5d-e4223fef2986
-                      previousChainHash: null
-                      chainHash: f6f885358ddb3c820b3499d45c2a90a2624032ceece7bd53ece36809783e3220
-                      chainSignature:
-                        algorithm: ed25519
-                        keyId: default
-                        value: uXnVWKHYHDf8xRsl9oYdfFCem3f0n6IBzm2uYmxDnEkIU8FyOKxxWxeTidnF3A0UH2XSNNIROeeRzET6X/67BQ==
-                        signedAt: 2026-09-14 17:17:55.652000+00:00
-                      evidence:
+                      - executionId: 21a57d3e-bed5-4a73-8af9-2ac2d7e8326e
                         businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
-                        action: test:fixture-execute
-                        target: vendor://payments
-                        parameters:
-                          amount: 1000
-                          currency: USD
-                        success: true
-                        executedAt: 2026-09-14 17:17:55.646000+00:00
-                        attributes:
-                          connector:
-                            connectorId: test-fixture
-                            connectorVersion: 1.0.0
-                            capability: test:fixture-execute
-                            sanitizedEndpoint: vendor://payments
-                            credentialProviderId: static
-                            requestSummary:
-                              businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
-                              action: test:fixture-execute
-                              target: vendor://payments
-                              parameters:
-                                amount: 1000
-                                currency: USD
-                            responseSummary:
-                              success: true
-                              metadata: {}
-                            startedAt: 2026-09-14 17:17:55.645000+00:00
-                            completedAt: 2026-09-14 17:17:55.646000+00:00
-                            connectorEvidenceHash: 887b000a355c96ca432c7a709b24b50e89d879bc50699bc5b5280a957d981f70
-                      completedAt: 2026-09-14 17:17:55.650000+00:00
+                        decision:
+                          decisionId: b83deff8-ef50-49d0-830f-741cba8f5668
+                          intentId: 462c2efd-3b88-4f59-8c47-8ba01a63d37e
+                          policy:
+                            name: vendor-payment
+                            version: 2.0.0
+                            schemaVersion: 1.0.0
+                          signals:
+                            vendorVerified: true
+                            invoiceVerified: true
+                            paymentApproved: true
+                            sufficientFunds: true
+                            paymentAmount: 1000
+                            riskScore: 5
+                            vendorId: vendor://payments
+                          outcome: APPROVED
+                          reason: Vendor payment authorized. Vendor verification, invoice verification, payment approval, funding, and risk assessment requirements were satisfied.
+                          evaluatedAt: 2026-09-14 17:17:55.626000+00:00
+                        status: COMPLETED
+                        mode: SYNC
+                        startedAt: 2026-09-14 17:17:55.631000+00:00
+                        metadata:
+                          authorizationId: 381ef27a-0955-4085-9e5d-e4223fef2986
+                        previousChainHash: null
+                        chainHash: f6f885358ddb3c820b3499d45c2a90a2624032ceece7bd53ece36809783e3220
+                        chainSignature:
+                          algorithm: ed25519
+                          keyId: default
+                          value: uXnVWKHYHDf8xRsl9oYdfFCem3f0n6IBzm2uYmxDnEkIU8FyOKxxWxeTidnF3A0UH2XSNNIROeeRzET6X/67BQ==
+                          signedAt: 2026-09-14 17:17:55.652000+00:00
+                        evidence:
+                          businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
+                          action: test:fixture-execute
+                          target: vendor://payments
+                          parameters:
+                            amount: 1000
+                            currency: USD
+                          success: true
+                          executedAt: 2026-09-14 17:17:55.646000+00:00
+                          attributes:
+                            connector:
+                              connectorId: test-fixture
+                              connectorVersion: 1.0.0
+                              capability: test:fixture-execute
+                              sanitizedEndpoint: vendor://payments
+                              credentialProviderId: static
+                              requestSummary:
+                                businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
+                                action: test:fixture-execute
+                                target: vendor://payments
+                                parameters:
+                                  amount: 1000
+                                  currency: USD
+                              responseSummary:
+                                success: true
+                                metadata: {}
+                              startedAt: 2026-09-14 17:17:55.645000+00:00
+                              completedAt: 2026-09-14 17:17:55.646000+00:00
+                              connectorEvidenceHash: 887b000a355c96ca432c7a709b24b50e89d879bc50699bc5b5280a957d981f70
+                        completedAt: 2026-09-14 17:17:55.650000+00:00
                     verifications:
-                    - verificationId: 0e7de678-bb48-4fa0-ad53-3664d78d954b
-                      businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
-                      status: VERIFIED
-                      message: Execution Trust Record verified successfully.
-                      verifiedAt: 2026-09-14 17:17:55.661000+00:00
-                      trustRecordHash: cd261f8b33ebd435ce31bdcafc971044aae165d12695446f587068052ce52807
+                      - verificationId: 0e7de678-bb48-4fa0-ad53-3664d78d954b
+                        businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
+                        status: VERIFIED
+                        message: Execution Trust Record verified successfully.
+                        verifiedAt: 2026-09-14 17:17:55.661000+00:00
+                        trustRecordHash: cd261f8b33ebd435ce31bdcafc971044aae165d12695446f587068052ce52807
                     receipts:
-                    - receiptId: cf5f9ef1-1e53-459a-8f58-01c9dbe50f84
-                      businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
-                      trustRecordHash: cd261f8b33ebd435ce31bdcafc971044aae165d12695446f587068052ce52807
-                      receiptHash: 3a028e197e0c297761fd675696a6d418ffb67a10a07954cf4ed004e4ceb9f4f0
-                      issuedAt: 2026-09-14 17:17:55.662000+00:00
-                      algorithm: ed25519
-                      signature: S0rbIGkdEIWtk1fVqcEq8I+d2xUZHZQW28SFDolnLcd3hYYAWz2YQ+LkvlQc9OzbPE0vF/75VUrvlvIcbaOTAw==
+                      - receiptId: cf5f9ef1-1e53-459a-8f58-01c9dbe50f84
+                        businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
+                        trustRecordHash: cd261f8b33ebd435ce31bdcafc971044aae165d12695446f587068052ce52807
+                        receiptHash: 3a028e197e0c297761fd675696a6d418ffb67a10a07954cf4ed004e4ceb9f4f0
+                        issuedAt: 2026-09-14 17:17:55.662000+00:00
+                        algorithm: ed25519
+                        signature: S0rbIGkdEIWtk1fVqcEq8I+d2xUZHZQW28SFDolnLcd3hYYAWz2YQ+LkvlQc9OzbPE0vF/75VUrvlvIcbaOTAw==
                     createdAt: 2026-09-14 17:17:55.652000+00:00
                     updatedAt: 2026-09-14 17:17:55.652000+00:00
                     trustRecordHash: cd261f8b33ebd435ce31bdcafc971044aae165d12695446f587068052ce52807
@@ -1754,7 +1755,8 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [businessTransactionId, status, outcome, reconcile, record]
+                required:
+                  [businessTransactionId, status, outcome, reconcile, record]
                 properties:
                   businessTransactionId:
                     type: string
@@ -7627,7 +7629,16 @@ components:
     TransactionStatusEvent:
       type: object
       description: One append-only status event of a Business Transaction (decision D23).
-      required: [eventId, businessTransactionId, sequence, status, stage, occurredAt, legacy]
+      required:
+        [
+          eventId,
+          businessTransactionId,
+          sequence,
+          status,
+          stage,
+          occurredAt,
+          legacy,
+        ]
       properties:
         eventId:
           type: string
@@ -7640,7 +7651,17 @@ components:
           description: Position in the transaction's history, starting at 1.
         status:
           type: string
-          enum: [RECEIVED, POLICY_EVALUATED, APPROVED, REJECTED, EXECUTING, EXECUTED, FAILED, VERIFIED]
+          enum:
+            [
+              RECEIVED,
+              POLICY_EVALUATED,
+              APPROVED,
+              REJECTED,
+              EXECUTING,
+              EXECUTED,
+              FAILED,
+              VERIFIED,
+            ]
         stage:
           type: string
           enum: [declare, decide, sign, execute, verify, reconcile]
