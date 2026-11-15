@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import {
+  type AppendTransactionStatusEvent,
   type TransactionStatus,
   type TransactionStatusEvent,
   type TransactionStatusEventRepository,
@@ -41,6 +42,23 @@ export class TransactionStatusRecorder {
       ...(options.reason !== undefined && { reason: options.reason }),
       ...(options.recordRef !== undefined && { recordRef: options.recordRef }),
     });
+  }
+
+  /**
+   * The RECEIVED event the declare stage writes, built here so a declaration
+   * store can write it together with the transaction (design section 3).
+   */
+  declarationEvent(
+    businessTransactionId: string,
+  ): AppendTransactionStatusEvent {
+    return {
+      eventId: this.newEventId(),
+      businessTransactionId,
+      from: null,
+      to: "RECEIVED",
+      stage: "declare",
+      occurredAt: this.now(),
+    };
   }
 
   current(

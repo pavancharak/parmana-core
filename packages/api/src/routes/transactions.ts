@@ -444,6 +444,24 @@ export function createTransactionsRouter(
             });
             return;
           }
+
+          //
+          // The same tenant rule as declare: the key must list the tenant the
+          // transaction names. The key may have changed since the declare.
+          //
+          const tenantId = transaction.metadata?.tenantId;
+
+          if (
+            tenantId !== undefined &&
+            tenantId !== null &&
+            !(req.callerAllowedTenantIds ?? []).includes(tenantId)
+          ) {
+            res.status(403).json({
+              error: "Caller is not permitted to act for this tenantId.",
+              code: "TENANT_NOT_ALLOWED",
+            });
+            return;
+          }
         }
 
         const record = await application.executeAccepted(businessTransactionId);

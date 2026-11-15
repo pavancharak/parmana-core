@@ -73,6 +73,14 @@ export const transactionStatusEventRepository = lazyRepository(
   (provider) => provider.transactionStatusEvents,
 );
 
+export const transactionDeclarationStore = lazyRepository(
+  (provider) => provider.transactionDeclarations,
+);
+
+export const transactionExecutionLockStore = lazyRepository(
+  (provider) => provider.transactionExecutionLocks,
+);
+
 export const pendingPolicyChangeRepository = lazyRepository(
   (provider) => provider.pendingPolicyChanges,
 );

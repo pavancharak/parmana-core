@@ -7,6 +7,9 @@ import {
 import {
   BusinessTransaction,
   BusinessTransactionNotFoundError,
+  EXECUTION_LOCK_TIMEOUT_MS,
+  type TransactionDeclarationStore,
+  type TransactionExecutionLock,
   ExecutionIntent,
   ExecutionTrustRecord,
   ExecutionTrustRecordRepository,
@@ -91,6 +94,16 @@ export class ExecutionTrustApplication {
      * reconcileTransaction refuses to run.
      */
     private readonly statusRecorder?: TransactionStatusRecorder,
+    /**
+     * Writes a declared transaction and its RECEIVED event in one step. Optional;
+     * without it, declare writes them one after the other.
+     */
+    private readonly declarationStore?: TransactionDeclarationStore,
+    /**
+     * One lock per transaction, held for each execute and reconcile. Optional;
+     * without it, two concurrent executes are not serialised.
+     */
+    private readonly executionLock?: TransactionExecutionLock,
   ) {
     Object.freeze(this);
   }
@@ -111,6 +124,21 @@ export class ExecutionTrustApplication {
   async declare(
     transaction: BusinessTransaction,
   ): Promise<BusinessTransaction> {
+    //
+    // With a declaration store, the transaction and its RECEIVED event are
+    // written in one step (design section 3). Without one, they are written
+    // one after the other, as before.
+    //
+    if (this.statusRecorder && this.declarationStore) {
+      await this.transactions.validateForAccept(transaction);
+      await this.declarationStore.declare(
+        transaction,
+        this.statusRecorder.declarationEvent(transaction.businessTransactionId),
+      );
+
+      return transaction;
+    }
+
     const accepted = await this.transactions.accept(transaction);
 
     await this.statusRecorder?.advance(
@@ -131,6 +159,46 @@ export class ExecutionTrustApplication {
   async executeAccepted(
     businessTransactionId: string,
   ): Promise<ExecutionTrustRecord> {
+    return this.withTransactionLock(businessTransactionId, () =>
+      this.runExecuteAccepted(businessTransactionId),
+    );
+  }
+
+  /**
+   * Runs `work` while holding the transaction's lock (design section 7a,
+   * decision 4). A second call waits up to EXECUTION_LOCK_TIMEOUT_MS, then is
+   * refused with 409, and nothing is decided or released.
+   */
+  private async withTransactionLock<T>(
+    businessTransactionId: string,
+    work: () => Promise<T>,
+  ): Promise<T> {
+    if (!this.executionLock) {
+      return work();
+    }
+
+    const lease = await this.executionLock.acquire(
+      businessTransactionId,
+      EXECUTION_LOCK_TIMEOUT_MS,
+    );
+
+    if (!lease) {
+      throw new InvalidStatusTransitionError(
+        businessTransactionId,
+        "another execute or reconcile of this transaction is in progress; this call did not start",
+      );
+    }
+
+    try {
+      return await work();
+    } finally {
+      await lease.release();
+    }
+  }
+
+  private async runExecuteAccepted(
+    businessTransactionId: string,
+  ): Promise<ExecutionTrustRecord> {
     const transaction = await this.transactions.get(businessTransactionId);
 
     if (!transaction) {
@@ -144,6 +212,16 @@ export class ExecutionTrustApplication {
         throw new InvalidStatusTransitionError(
           businessTransactionId,
           notExecutableReason(current?.status ?? null),
+        );
+      }
+
+      // A legacy transaction was declared before status events existed. It may
+      // already have been released by the one-call route, and nothing records
+      // that release, so the declared-transaction route refuses it.
+      if (current.legacy) {
+        throw new InvalidStatusTransitionError(
+          businessTransactionId,
+          "legacy transaction: declared before status events existed, so an earlier release is not recorded; it is not executed through this route",
         );
       }
     }
@@ -281,6 +359,15 @@ export class ExecutionTrustApplication {
    * allows only human operators.
    */
   async reconcileTransaction(
+    businessTransactionId: string,
+    operatorId: string,
+  ): Promise<{ changed: boolean; status: TransactionStatus }> {
+    return this.withTransactionLock(businessTransactionId, () =>
+      this.runReconcile(businessTransactionId, operatorId),
+    );
+  }
+
+  private async runReconcile(
     businessTransactionId: string,
     operatorId: string,
   ): Promise<{ changed: boolean; status: TransactionStatus }> {

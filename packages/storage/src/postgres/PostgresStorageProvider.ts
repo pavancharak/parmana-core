@@ -7,6 +7,8 @@ import type {
   BusinessTransactionRepository,
   ExecutionIntentRepository,
   TransactionStatusEventRepository,
+  TransactionDeclarationStore,
+  TransactionExecutionLock,
   ExecutionTrustRecordRepository,
   HandbookDownloadLeadRepository,
   PendingPolicyChangeRepository,
@@ -30,6 +32,8 @@ import { PostgresExecutionTrustRecordRepository } from "./PostgresExecutionTrust
 
 import { PostgresExecutionIntentRepository } from "./PostgresExecutionIntentRepository.js";
 import { PostgresTransactionStatusEventRepository } from "./PostgresTransactionStatusEventRepository.js";
+import { PostgresTransactionDeclarationStore } from "./PostgresTransactionDeclarationStore.js";
+import { PostgresTransactionExecutionLock } from "./PostgresTransactionExecutionLock.js";
 import { PostgresRefusalRecordRepository } from "./PostgresRefusalRecordRepository.js";
 import { PostgresInboundCheckRepository } from "./PostgresInboundCheckRepository.js";
 import { PostgresInboundDecisionRepository } from "./PostgresInboundDecisionRepository.js";
@@ -67,6 +71,8 @@ export class PostgresStorageProvider implements StorageProvider {
   readonly inboundOutcomes: InboundOutcomeRepository;
   readonly executionIntents: ExecutionIntentRepository;
   readonly transactionStatusEvents: TransactionStatusEventRepository;
+  readonly transactionDeclarations: TransactionDeclarationStore;
+  readonly transactionExecutionLocks: TransactionExecutionLock;
   readonly pendingPolicyChanges: PendingPolicyChangeRepository;
   readonly policyChangeApprovalRecords: PolicyChangeApprovalRecordRepository;
   readonly handbookDownloadLeads: HandbookDownloadLeadRepository;
@@ -95,6 +101,10 @@ export class PostgresStorageProvider implements StorageProvider {
     this.transactionStatusEvents = new PostgresTransactionStatusEventRepository(
       pool,
     );
+    this.transactionDeclarations = new PostgresTransactionDeclarationStore(
+      pool,
+    );
+    this.transactionExecutionLocks = new PostgresTransactionExecutionLock(pool);
 
     this.pendingPolicyChanges = new PostgresPendingPolicyChangeRepository(pool);
 

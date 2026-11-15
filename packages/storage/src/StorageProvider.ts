@@ -8,6 +8,8 @@ import type {
   ExecutionIntentRepository,
   ExecutionTrustRecordRepository,
   TransactionStatusEventRepository,
+  TransactionDeclarationStore,
+  TransactionExecutionLock,
   HandbookDownloadLeadRepository,
   PendingPolicyChangeRepository,
   PolicyChangeApprovalRecordRepository,
@@ -61,6 +63,15 @@ export interface StorageProvider {
    * per business transaction.
    */
   readonly transactionStatusEvents: TransactionStatusEventRepository;
+
+  /**
+   * Stores a declared transaction and its RECEIVED event in one step (design
+   * section 3).
+   */
+  readonly transactionDeclarations: TransactionDeclarationStore;
+
+  /** One lock per transaction, held for each execute (design section 7a, decision 4). */
+  readonly transactionExecutionLocks: TransactionExecutionLock;
 
   /**
    * Pending Policy Change repository (Policy Governance,

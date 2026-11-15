@@ -75,3 +75,7 @@ export * from "./postgres/PostgresChallengeRecordRepository.js";
 export * from "./postgres/PostgresRateLimitStore.js";
 export * from "./memory/MemoryTransactionStatusEventRepository.js";
 export * from "./postgres/PostgresTransactionStatusEventRepository.js";
+export * from "./memory/MemoryTransactionDeclarationStore.js";
+export * from "./memory/MemoryTransactionExecutionLock.js";
+export * from "./postgres/PostgresTransactionDeclarationStore.js";
+export * from "./postgres/PostgresTransactionExecutionLock.js";

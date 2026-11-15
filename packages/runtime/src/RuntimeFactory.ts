@@ -17,6 +17,8 @@ import {
   ExecutionTrustRecordRepository,
   RefusalRecordRepository,
   TransactionStatusEventRepository,
+  TransactionDeclarationStore,
+  TransactionExecutionLock,
 } from "@parmana/shared";
 
 import type { ExecutionSystem } from "@parmana/execution-system";
@@ -67,6 +69,8 @@ export class RuntimeFactory {
     authorityGrants?: AuthorityGrantSource,
     hooks?: RuntimeHook[],
     transactionStatusEvents?: TransactionStatusEventRepository,
+    transactionDeclarations?: TransactionDeclarationStore,
+    transactionExecutionLocks?: TransactionExecutionLock,
   ): ExecutionTrustApplication {
     //
     // Application Services
@@ -191,6 +195,8 @@ export class RuntimeFactory {
       executionIntentService,
       executionIntentFinalizer,
       statusRecorder,
+      transactionDeclarations,
+      transactionExecutionLocks,
     );
   }
 }

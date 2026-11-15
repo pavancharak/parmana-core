@@ -273,3 +273,79 @@ describe("Transaction status (D23) over HTTP", () => {
     });
   });
 });
+
+describe("Transaction status (D23): tenant on execute, and two executes at once", () => {
+  const IN_KEY = "tenant-in-raw-key-for-tests-only";
+  const OUT_KEY = "tenant-out-raw-key-for-tests-only";
+
+  function buildTenantApp() {
+    const { executionSystem } = createInspectableExecutionSystem();
+    const application = createApplication(executionSystem);
+    // Two keys of one caller: the key changed its tenant list after the declare.
+    const authenticator = new StaticKeyAuthenticator([
+      {
+        callerId: "tenant-caller",
+        keyHash: hashApiKey(IN_KEY),
+        allowedPrincipalIds: ["integration-test"],
+        allowedCapabilities: ["test:fixture-execute"],
+        allowedTenantIds: ["acme"],
+      },
+      {
+        callerId: "tenant-caller",
+        keyHash: hashApiKey(OUT_KEY),
+        allowedPrincipalIds: ["integration-test"],
+        allowedCapabilities: ["test:fixture-execute"],
+        allowedTenantIds: [],
+      },
+    ]);
+    return createApp(application, {
+      callerAuth: { authenticator, auditSink: new InMemoryCallerAuditSink() },
+    });
+  }
+
+  it("refuses execute with 403 TENANT_NOT_ALLOWED when the key no longer lists the tenant", async () => {
+    const app = buildTenantApp();
+    const transaction = await createBusinessTransaction();
+    const declared = await request(app)
+      .post("/transactions")
+      .set("Authorization", `Bearer ${IN_KEY}`)
+      .send({
+        ...transaction,
+        metadata: { ...transaction.metadata, tenantId: "acme" },
+      });
+    expect(declared.status).toBe(201);
+
+    const response = await request(app)
+      .post(`/transactions/${declared.body.businessTransactionId}/execute`)
+      .set("Authorization", `Bearer ${OUT_KEY}`)
+      .send();
+
+    expect(response.status).toBe(403);
+    expect(response.body.code).toBe("TENANT_NOT_ALLOWED");
+  });
+
+  it("serialises two executes of one transaction: one is released, the other is refused with 409", async () => {
+    const app = buildTenantApp();
+    const declared = await request(app)
+      .post("/transactions")
+      .set("Authorization", `Bearer ${IN_KEY}`)
+      .send(await createBusinessTransaction());
+    expect(declared.status).toBe(201);
+    const id = declared.body.businessTransactionId;
+
+    const [a, b] = await Promise.all([
+      request(app)
+        .post(`/transactions/${id}/execute`)
+        .set("Authorization", `Bearer ${IN_KEY}`)
+        .send(),
+      request(app)
+        .post(`/transactions/${id}/execute`)
+        .set("Authorization", `Bearer ${IN_KEY}`)
+        .send(),
+    ]);
+
+    expect([a.status, b.status].sort()).toEqual([200, 409]);
+    const refused = a.status === 409 ? a : b;
+    expect(refused.body.code).toBe("INVALID_STATUS_TRANSITION");
+  }, 20000);
+});

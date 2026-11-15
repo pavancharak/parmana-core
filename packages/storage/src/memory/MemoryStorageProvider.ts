@@ -7,6 +7,8 @@ import type {
   BusinessTransactionRepository,
   ExecutionIntentRepository,
   TransactionStatusEventRepository,
+  TransactionDeclarationStore,
+  TransactionExecutionLock,
   ExecutionTrustRecordRepository,
   HandbookDownloadLeadRepository,
   PendingPolicyChangeRepository,
@@ -27,6 +29,8 @@ import { MemoryExecutionTrustRecordRepository } from "./MemoryExecutionTrustReco
 
 import { MemoryExecutionIntentRepository } from "./MemoryExecutionIntentRepository.js";
 import { MemoryTransactionStatusEventRepository } from "./MemoryTransactionStatusEventRepository.js";
+import { MemoryTransactionDeclarationStore } from "./MemoryTransactionDeclarationStore.js";
+import { MemoryTransactionExecutionLock } from "./MemoryTransactionExecutionLock.js";
 import { MemoryRefusalRecordRepository } from "./MemoryRefusalRecordRepository.js";
 import { MemoryInboundCheckRepository } from "./MemoryInboundCheckRepository.js";
 import { MemoryInboundDecisionRepository } from "./MemoryInboundDecisionRepository.js";
@@ -63,6 +67,8 @@ export class MemoryStorageProvider implements StorageProvider {
   readonly executionIntents: ExecutionIntentRepository;
 
   readonly transactionStatusEvents: TransactionStatusEventRepository;
+  readonly transactionDeclarations: TransactionDeclarationStore;
+  readonly transactionExecutionLocks: TransactionExecutionLock;
 
   readonly pendingPolicyChanges: PendingPolicyChangeRepository;
 
@@ -95,6 +101,13 @@ export class MemoryStorageProvider implements StorageProvider {
     this.transactionStatusEvents = new MemoryTransactionStatusEventRepository(
       async (id) => (await this.businessTransactions.findById(id)) !== null,
     );
+
+    this.transactionDeclarations = new MemoryTransactionDeclarationStore(
+      this.businessTransactions,
+      this.transactionStatusEvents,
+    );
+
+    this.transactionExecutionLocks = new MemoryTransactionExecutionLock();
 
     this.pendingPolicyChanges = new MemoryPendingPolicyChangeRepository();
 
