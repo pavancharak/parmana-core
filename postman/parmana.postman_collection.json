@@ -240,7 +240,7 @@
                 }
               ]
             },
-            "description": "operationId: executeDeclaredTransaction\n\nDecides, signs and releases a Business Transaction that was declared with `POST /transactions`,\nthen verifies it. The caller must be the one that declared it. The status walks\n`RECEIVED` → `POLICY_EVALUATED` → `APPROVED` (or `REJECTED`) → `EXECUTING` → `EXECUTED` → `VERIFIED`.\nA transaction that is not `RECEIVED` is never released again by this call. One that is `EXECUTING`\nis refused with `409` and the reason `outcome pending`: its outcome is decided by reconciliation."
+            "description": "operationId: executeDeclaredTransaction\n\nDecides, signs and releases a Business Transaction that was declared with `POST /transactions`,\nthen verifies it. The caller must be the one that declared it. The status walks\n`RECEIVED` → `POLICY_EVALUATED` → `APPROVED` (or `REJECTED`) → `EXECUTING` → `EXECUTED` → `VERIFIED`.\nA transaction that is not `RECEIVED` is never released again by this call. One that is `EXECUTING`\nis refused with `409` and the reason `outcome pending`: its outcome is decided by reconciliation.\nIf the action was released but the status could not be set to `EXECUTED`, the call answers `202` with `outcome: pending`, `status: EXECUTING` and the signed record. Nothing is released again; reconcile with `POST /transactions/{businessTransactionId}/reconcile`."
           }
         },
         {

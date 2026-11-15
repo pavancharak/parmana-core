@@ -35,6 +35,7 @@ import type {
   ResolveExecutionIntentResult,
 } from "./ExecutionIntentService.js";
 import { ExecutionIntentNotResolvableError } from "./errors/ExecutionIntentNotResolvableError.js";
+import { ExecutionStatusPendingError } from "./errors/ExecutionStatusPendingError.js";
 import { Runtime } from "./Runtime.js";
 import type { DecisionRequest } from "./RuntimeEngine.js";
 import { RuntimeError } from "./errors/RuntimeError.js";
@@ -240,10 +241,20 @@ export class ExecutionTrustApplication {
     // Verification. Recorded as VERIFIED only when it passes; a failed
     // verification leaves the status EXECUTED (design section 6).
     //
+    //
+    // Status (D23, finding 18). After a successful release the status is
+    // EXECUTED. If it is still EXECUTING, the EXECUTED write failed: the
+    // action ran and the trust record exists, but the status is outcome
+    // pending. VERIFIED is not attempted then, since EXECUTING has no move
+    // to it, and the caller is answered with the pending outcome.
+    //
+    const outcomePending = await this.isOutcomePending(businessTransactionId);
+
     const verification = await this.verification.verify(businessTransactionId);
 
     if (
       this.statusRecorder &&
+      !outcomePending &&
       verification.status === VerificationStatus.VERIFIED
     ) {
       try {
@@ -278,7 +289,25 @@ export class ExecutionTrustApplication {
       throw new Error("Execution Trust Record not found.");
     }
 
+    if (outcomePending) {
+      throw new ExecutionStatusPendingError(businessTransactionId, trustRecord);
+    }
+
     return trustRecord;
+  }
+
+  /**
+   * True when the status is EXECUTING after the release returned: the
+   * EXECUTED write failed, so the outcome is pending (D23, finding 18).
+   */
+  private async isOutcomePending(
+    businessTransactionId: string,
+  ): Promise<boolean> {
+    if (!this.statusRecorder) return false;
+
+    const current = await this.statusRecorder.current(businessTransactionId);
+
+    return current?.status === "EXECUTING";
   }
 
   /**

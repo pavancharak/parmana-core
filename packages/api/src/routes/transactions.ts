@@ -5,6 +5,7 @@ import type { ExecutionTrustApplication } from "@parmana/runtime";
 import {
   BusinessTransactionValidationError,
   DuplicateBusinessTransactionError,
+  ExecutionStatusPendingError,
 } from "@parmana/runtime";
 import { BusinessTransactionMapper } from "../mappers/BusinessTransactionMapper.js";
 import { isPrincipalAllowed } from "../auth/isPrincipalAllowed.js";
@@ -464,7 +465,29 @@ export function createTransactionsRouter(
           }
         }
 
-        const record = await application.executeAccepted(businessTransactionId);
+        let record;
+
+        try {
+          record = await application.executeAccepted(businessTransactionId);
+        } catch (error) {
+          //
+          // The action was released and its record is signed, but the status
+          // could not be set to EXECUTED (D23, finding 18). 202, not 200: the
+          // transaction is not complete until reconciliation writes EXECUTED.
+          //
+          if (error instanceof ExecutionStatusPendingError) {
+            res.status(202).json({
+              businessTransactionId,
+              status: "EXECUTING",
+              outcome: "pending",
+              reconcile: `/transactions/${businessTransactionId}/reconcile`,
+              record: error.record,
+            });
+            return;
+          }
+
+          throw error;
+        }
 
         res.status(200).json(record);
         return;

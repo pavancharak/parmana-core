@@ -287,8 +287,13 @@ describe.skipIf(!databaseConfigured)(
         .send();
       g.__failExecutedWriteOnce = false;
 
-      // Finding 18: the caller is answered 200, while the status is still EXECUTING.
-      expect(executed.status).toBe(200);
+      // Finding 18: the release happened, so the caller gets the signed record
+      // with outcome pending (202), while the status is still EXECUTING.
+      expect(executed.status).toBe(202);
+      expect(executed.body.outcome).toBe("pending");
+      expect(executed.body.status).toBe("EXECUTING");
+      expect(executed.body.record.businessTransactionId).toBe(id);
+      expect(executed.body.record.signature).toBeDefined();
       const before = await events(id);
       expect(before.map((e) => e.status)).toEqual([
         "RECEIVED",

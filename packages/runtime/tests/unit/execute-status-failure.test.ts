@@ -10,6 +10,7 @@ import {
 } from "@parmana/shared";
 
 import { ExecutionTrustApplication } from "../../src/ExecutionTrustApplication.js";
+import { ExecutionStatusPendingError } from "../../src/errors/ExecutionStatusPendingError.js";
 import { TransactionStatusRecorder } from "../../src/services/TransactionStatusRecorder.js";
 
 class FakeStatusEvents implements TransactionStatusEventRepository {
@@ -120,5 +121,43 @@ describe("ExecutionTrustApplication: a failure before the release", () => {
     );
 
     expect(events.events.at(-1)?.status).toBe("EXECUTING");
+  });
+});
+
+describe("ExecutionTrustApplication: the EXECUTED write fails after a release", () => {
+  it("answers with a pending outcome and the record, and does not write VERIFIED", async () => {
+    const { app, events } = application(async (recorder) => {
+      await recorder.advance(TX_ID, "POLICY_EVALUATED", "decide");
+      await recorder.advance(TX_ID, "APPROVED", "decide");
+      await recorder.advance(TX_ID, "EXECUTING", "execute");
+      // The connector answered; the EXECUTED write is not made.
+    });
+    await app.declare({ businessTransactionId: TX_ID } as never);
+
+    const error = await app.executeAccepted(TX_ID).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ExecutionStatusPendingError);
+    expect(
+      (error as ExecutionStatusPendingError).record.businessTransactionId,
+    ).toBe(TX_ID);
+    expect(events.events.at(-1)?.status).toBe("EXECUTING");
+    expect(events.events.some((e) => e.status === "VERIFIED")).toBe(false);
+  });
+
+  it("returns the record without error when EXECUTED is written, and writes VERIFIED", async () => {
+    const { app, events } = application(async (recorder) => {
+      await recorder.advance(TX_ID, "POLICY_EVALUATED", "decide");
+      await recorder.advance(TX_ID, "APPROVED", "decide");
+      await recorder.advance(TX_ID, "EXECUTING", "execute");
+      await recorder.advance(TX_ID, "EXECUTED", "execute", {
+        recordRef: "auth-1",
+      });
+    });
+    await app.declare({ businessTransactionId: TX_ID } as never);
+
+    await expect(app.executeAccepted(TX_ID)).resolves.toMatchObject({
+      businessTransactionId: TX_ID,
+    });
+    expect(events.events.at(-1)?.status).toBe("VERIFIED");
   });
 });

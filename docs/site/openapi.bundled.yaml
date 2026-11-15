@@ -2429,6 +2429,11 @@ paths:
 
         is refused with `409` and the reason `outcome pending`: its outcome is
         decided by reconciliation.
+
+        If the action was released but the status could not be set to
+        `EXECUTED`, the call answers `202` with `outcome: pending`, `status:
+        EXECUTING` and the signed record. Nothing is released again; reconcile
+        with `POST /transactions/{businessTransactionId}/reconcile`.
       parameters:
         - name: businessTransactionId
           in: path
@@ -2601,6 +2606,48 @@ paths:
                       keyId: default
                       value: lPz+IbGAQwPuLEzB7fEgiKU3dZTEeT3aIFqC/6LIRMBGK7UZor2nVkmItNUXu9RBCziAUH3yj2EchtwX6GAXBQ==
                       signedAt: 2026-09-14 17:17:55.655000+00:00
+        "202":
+          description: "Released, and the signed record was written, but the status could
+            not be set to EXECUTED. The status is EXECUTING: the outcome is
+            pending until an operator reconciles it."
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - businessTransactionId
+                  - status
+                  - outcome
+                  - reconcile
+                  - record
+                properties:
+                  businessTransactionId:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum:
+                      - EXECUTING
+                  outcome:
+                    type: string
+                    enum:
+                      - pending
+                  reconcile:
+                    type: string
+                    description: The path to reconcile the transaction with.
+                  record:
+                    type: object
+                    description: The signed Execution Trust Record, as in the 200 response.
+              examples:
+                status-write-failed:
+                  summary: The release happened; the EXECUTED status write failed
+                  value:
+                    businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
+                    status: EXECUTING
+                    outcome: pending
+                    reconcile: /transactions/e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a/reconcile
+                    record:
+                      businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
