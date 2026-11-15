@@ -86,7 +86,9 @@ describe("findMostRecentForName", () => {
 
     const sql = queries[0].text.replace(/\s+/g, " ");
     expect(queries[0].values).toEqual(["customer-refund"]);
-    expect(sql).toContain("WHERE policy_name = $1 ORDER BY approved_at DESC");
+    expect(sql).toContain(
+      "WHERE policy_name = $1 ORDER BY approved_at DESC, approval_sequence DESC NULLS LAST, policy_change_approval_record_id DESC",
+    );
     expect(sql).not.toContain("policy_version =");
     expect(sql).toContain("LIMIT 1");
   });

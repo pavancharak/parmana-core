@@ -287,9 +287,9 @@ The signed record of a checker's decision on a pending change. Created with
 `pending_policy_change_id` (a restricting foreign key to `pending_policy_changes`),
 `policy_name`, `policy_version`, `proposed_by`, `approved_by`, `proposed_at`, `approved_at`,
 `content_hash_before` (nullable), `content_hash_after TEXT NOT NULL`,
-`signature_json JSONB NOT NULL`. `20260907130000` added `previous_record_hash` (nullable),
+`signature_json JSONB NOT NULL`. `20260907130000` added `previous_record_hash` (nullable). `20261115120000` added `approval_sequence` (nullable, a `BIGINT` from a sequence): the insertion order that decides a tie on `approved_at`. Rows written before that migration stay `NULL`, and rank below a new record with the same `approved_at`.
 which chains the approval history itself; `content_hash_after` only proves the live policy
-matches what was approved. Indexed on `(policy_name, policy_version, approved_at DESC)`.
+matches what was approved. Indexed on `(policy_name, policy_version, approved_at DESC)`, and on `(policy_name, approved_at DESC, approval_sequence DESC NULLS LAST, policy_change_approval_record_id DESC)`, the order every "most recent" query uses.
 
 This is the only table with a real RLS policy. Migration `20260818150000` grants a read-only
 role `SELECT` here. Nothing in the approval workflow uses that grant any more. The pull request gate
