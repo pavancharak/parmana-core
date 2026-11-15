@@ -983,6 +983,12 @@ paths:
         could not be produced. Do not
            resend. An operator rebuilds it with `POST /execution-intents/{businessTransactionId}/finalize`.
 
+        If the action was released but the status could not be set to
+        `EXECUTED`, the call answers `202` with `outcome: pending`, `status:
+        EXECUTING` and the signed record. Nothing is released again; reconcile
+        with `POST /transactions/{businessTransactionId}/reconcile`.
+
+
         The examples named `vendor-payment-flow` show the response shape; their
         `payments:execute` action no
 
@@ -1369,6 +1375,48 @@ paths:
                       keyId: default
                       value: gjDYmHUBKIrv7bT3uwAkt3wHeoSwz5uANXQV5MfsFgbUIh83KiufZwxht3F3Een+7K/ZW9SRn0F0J7ACJRLbAg==
                       signedAt: 2026-07-13T17:36:00.972Z
+        "202":
+          description: "Released, and the signed record was written, but the status could
+            not be set to EXECUTED. The status is EXECUTING: the outcome is
+            pending until an operator reconciles it."
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - businessTransactionId
+                  - status
+                  - outcome
+                  - reconcile
+                  - record
+                properties:
+                  businessTransactionId:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum:
+                      - EXECUTING
+                  outcome:
+                    type: string
+                    enum:
+                      - pending
+                  reconcile:
+                    type: string
+                    description: The path to reconcile the transaction with.
+                  record:
+                    type: object
+                    description: The signed Execution Trust Record, as in the 200 response.
+              examples:
+                status-write-failed:
+                  summary: The release happened; the EXECUTED status write failed
+                  value:
+                    businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
+                    status: EXECUTING
+                    outcome: pending
+                    reconcile: /transactions/e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a/reconcile
+                    record:
+                      businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
         "400":
           description: The request is malformed and nothing was stored.
             `businessTransactionId` is missing or not a UUID, or the trust chain

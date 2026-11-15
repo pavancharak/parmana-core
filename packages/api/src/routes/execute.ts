@@ -9,6 +9,7 @@ import { recordCallerAuditEvent } from "../auth/recordCallerAuditEvent.js";
 import {
   BusinessTransactionValidationError,
   DuplicateBusinessTransactionError,
+  ExecutionStatusPendingError,
 } from "@parmana/runtime";
 import type { ExecutionTrustApplication } from "@parmana/runtime";
 
@@ -233,7 +234,30 @@ export function createExecuteRouter(
           };
         }
 
-        const result = await application.execute(transaction);
+        let result;
+
+        try {
+          result = await application.execute(transaction);
+        } catch (error) {
+          //
+          // The release happened and its record is signed, but the status
+          // could not be set to EXECUTED (D23, finding 18). The same 202 as the
+          // declared route, with the record, not the error body the generic
+          // handler would write for a RuntimeError.
+          //
+          if (error instanceof ExecutionStatusPendingError) {
+            res.status(202).json({
+              businessTransactionId: error.businessTransactionId,
+              status: "EXECUTING",
+              outcome: "pending",
+              reconcile: `/transactions/${error.businessTransactionId}/reconcile`,
+              record: error.record,
+            });
+            return;
+          }
+
+          throw error;
+        }
 
         res.json(result);
         return;

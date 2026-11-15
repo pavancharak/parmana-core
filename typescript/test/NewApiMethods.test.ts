@@ -181,6 +181,27 @@ describe("TransactionApi.execute: the 202 pending answer", () => {
   });
 });
 
+describe("ExecutionApi.execute: the 202 pending answer", () => {
+  it("throws ExecutionPendingError on 202 from the one-call route, with the record", async () => {
+    const pending = {
+      businessTransactionId: "tx-2",
+      status: "EXECUTING",
+      outcome: "pending",
+      reconcile: "/transactions/tx-2/reconcile",
+      record: { trustRecordId: "tr-2", businessTransactionId: "tx-2" },
+    };
+    const transport = new StatusFake(202, pending);
+
+    const error = await new ExecutionApi(transport)
+      .execute({ businessTransactionId: "tx-2" } as never)
+      .catch((e: unknown) => e);
+
+    expect(transport.lastRequest?.nonThrowingStatuses).toEqual([202]);
+    expect(error).toBeInstanceOf(ExecutionPendingError);
+    expect((error as ExecutionPendingError).record).toEqual(pending.record);
+  });
+});
+
 describe("TransactionApi.create", () => {
   it("declares and then executes: POST /transactions, then POST /transactions/{id}/execute", async () => {
     const transport = new FakeTransport({

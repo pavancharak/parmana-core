@@ -574,6 +574,8 @@ paths:
         7. `500` `EXECUTION_RECORD_INCOMPLETE`: released, but the signed record could not be produced. Do not
            resend. An operator rebuilds it with `POST /execution-intents/{businessTransactionId}/finalize`.
 
+        If the action was released but the status could not be set to `EXECUTED`, the call answers `202` with `outcome: pending`, `status: EXECUTING` and the signed record. Nothing is released again; reconcile with `POST /transactions/{businessTransactionId}/reconcile`.
+
         The examples named `vendor-payment-flow` show the response shape; their `payments:execute` action no
         longer exists. See [Integrate Parmana](/agents/integrate) and the
         [Error catalog](/api-reference/error-catalog).
@@ -666,6 +668,39 @@ paths:
       responses:
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "202":
+          description: "Released, and the signed record was written, but the status could not be set to EXECUTED. The status is EXECUTING: the outcome is pending until an operator reconciles it."
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [businessTransactionId, status, outcome, reconcile, record]
+                properties:
+                  businessTransactionId:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum: [EXECUTING]
+                  outcome:
+                    type: string
+                    enum: [pending]
+                  reconcile:
+                    type: string
+                    description: The path to reconcile the transaction with.
+                  record:
+                    type: object
+                    description: The signed Execution Trust Record, as in the 200 response.
+              examples:
+                status-write-failed:
+                  summary: The release happened; the EXECUTED status write failed
+                  value:
+                    businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
+                    status: EXECUTING
+                    outcome: pending
+                    reconcile: /transactions/e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a/reconcile
+                    record:
+                      businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
         "200":
           description: "Approved and released. The body is the signed Execution Trust Record; `executions[0].result` holds the connector's answer."
           content:

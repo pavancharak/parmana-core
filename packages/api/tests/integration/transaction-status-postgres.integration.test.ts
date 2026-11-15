@@ -236,6 +236,27 @@ describe.skipIf(!databaseConfigured)(
       expect(await events(id)).toHaveLength(6);
     }, 60000);
 
+    it("answers the one-call route with 202 and the record when the EXECUTED write fails", async () => {
+      const tx = await createBusinessTransaction();
+      const id = tx.businessTransactionId;
+      const g = globalThis as { __failExecutedWriteOnce?: boolean };
+
+      g.__failExecutedWriteOnce = true;
+      const response = await request(app)
+        .post("/execute")
+        .set("Authorization", `Bearer ${CALLER_KEY}`)
+        .send(tx);
+      g.__failExecutedWriteOnce = false;
+
+      // The same answer as the declared route: the signed record, with outcome
+      // pending, not an error body.
+      expect(response.status).toBe(202);
+      expect(response.body.outcome).toBe("pending");
+      expect(response.body.status).toBe("EXECUTING");
+      expect(response.body.record.businessTransactionId).toBe(id);
+      expect(response.body.error).toBeUndefined();
+    }, 60000);
+
     it("refuses a legacy transaction through both execute routes, and never releases it", async () => {
       // Released before status events existed: the row and its one legacy event
       // are present, as they are after the migration's backfill. The declared

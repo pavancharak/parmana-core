@@ -9,9 +9,10 @@ from __future__ import annotations
 from typing import Any, cast
 
 from parmana.config.transport import Transport
+from parmana.errors.execution_pending_error import ExecutionPendingError
 from parmana.models.business_transaction import BusinessTransaction
 from parmana.models.trust_record import ExecutionTrustRecord
-from parmana.serialization import encode
+from parmana.serialization import decode, encode
 
 
 class ExecutionApi:
@@ -84,9 +85,20 @@ class ExecutionApi:
         Execution Trust Record.
         """
 
-        return self._transport.send(
+        payload = self._transport.send(
             method="POST",
             path="/execute",
             body=encode(transaction),
-            response_model=ExecutionTrustRecord,
+            non_throwing_statuses=frozenset({202}),
         )
+
+        # 202: released, but the status is still EXECUTING. Raised, as for
+        # TransactionApi.execute. A trust record never carries "outcome".
+        if isinstance(payload, dict) and payload.get("outcome") == "pending":
+            raise ExecutionPendingError(
+                payload["businessTransactionId"],
+                decode(payload["record"], ExecutionTrustRecord),
+                payload["reconcile"],
+            )
+
+        return decode(payload, ExecutionTrustRecord)
