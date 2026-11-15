@@ -21,14 +21,14 @@ from parmana.api.receipt_api import ReceiptApi
 from parmana.api.refusal_api import RefusalApi
 from parmana.api.replay_api import ReplayApi
 from parmana.api.transaction_api import TransactionApi
+from parmana.api.trust_record_api import TrustRecordApi
+from parmana.api.verification_api import VerificationApi
+from parmana.errors.configuration_error import ConfigurationError
 from parmana.models.transaction_status import (
     DeclaredTransaction,
     ReconcileResult,
     TransactionStatusResult,
 )
-from parmana.api.trust_record_api import TrustRecordApi
-from parmana.api.verification_api import VerificationApi
-from parmana.errors.configuration_error import ConfigurationError
 from parmana.transport.http_transport import HttpTransport
 from parmana.version import __version__
 

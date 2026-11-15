@@ -161,7 +161,9 @@ class TransactionApi:
 
         return self._transport.send(
             method="GET",
-            path=f"/transactions/{quote(business_transaction_id, safe='')}/status{query}",
+            path=(
+                f"/transactions/{quote(business_transaction_id, safe='')}/status{query}"
+            ),
             response_model=TransactionStatusResult,
         )
 
