@@ -1,5 +1,6 @@
 import type {
   ApprovalIssuerRepository,
+  ApprovalNonceLedger,
   CallerKeyRevocationRepository,
   ExternalConnectorRepository,
   BusinessSignalSourceRepository,
@@ -57,6 +58,12 @@ export interface StorageProvider {
    * Execution Intent repository (ADR-0012).
    */
   readonly executionIntents: ExecutionIntentRepository;
+
+  /**
+   * Consumed Approval Artifact nonces (decision D24). The status event that
+   * moves a transaction to APPROVED consumes its approvals in the same step.
+   */
+  readonly approvalNonces: ApprovalNonceLedger;
 
   /**
    * Transaction status events (decision D23): append-only, one status history

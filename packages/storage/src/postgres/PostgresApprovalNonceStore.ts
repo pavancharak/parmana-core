@@ -1,4 +1,8 @@
-import type { Pool } from "pg";
+import type { Pool, PoolClient } from "pg";
+import {
+  ApprovalNonceAlreadyConsumedError,
+  type ApprovalNonceLedger,
+} from "@parmana/shared";
 
 import type { NonceStore } from "@parmana/envelope-verifier";
 
@@ -28,8 +32,19 @@ import { isUniqueViolation } from "../errors/PostgresErrorCodes.js";
  * closed), same NODE_ENV=test / production split convention
  * (see packages/api/src/bootstrap/createApprovalNonceStore.ts).
  */
-export class PostgresApprovalNonceStore implements NonceStore {
+export class PostgresApprovalNonceStore
+  implements NonceStore, ApprovalNonceLedger
+{
   constructor(private readonly pool: Pool) {}
+
+  /** True when the nonce is already recorded. Reads only. */
+  async isConsumed(nonce: string): Promise<boolean> {
+    const result = await this.pool.query(
+      "SELECT 1 FROM consumed_approval_nonces WHERE nonce = $1",
+      [nonce],
+    );
+    return (result.rowCount ?? 0) > 0;
+  }
 
   async checkAndRecord(nonce: string, expiresAt: string): Promise<boolean> {
     try {
@@ -64,6 +79,29 @@ const DELETE_EXPIRED_APPROVAL_NONCES_SQL = `
   DELETE FROM consumed_approval_nonces
   WHERE expires_at < $1
 `;
+
+/**
+ * Records one approval nonce on the given connection, so the caller can make it part of its own transaction (decision
+ * D24: the nonce is consumed by the same transaction that writes APPROVED). A nonce already recorded is refused with
+ * ApprovalNonceAlreadyConsumedError, and the caller's transaction is then rolled back.
+ */
+export async function insertConsumedApprovalNonce(
+  queryable: Pick<PoolClient, "query">,
+  nonce: string,
+  expiresAt: string,
+): Promise<void> {
+  try {
+    await queryable.query(INSERT_CONSUMED_APPROVAL_NONCE_SQL, [
+      nonce,
+      expiresAt,
+    ]);
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      throw new ApprovalNonceAlreadyConsumedError(nonce);
+    }
+    throw error;
+  }
+}
 
 const INSERT_CONSUMED_APPROVAL_NONCE_SQL = `
   INSERT INTO consumed_approval_nonces (nonce, expires_at)

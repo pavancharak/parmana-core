@@ -11,6 +11,8 @@ import {
 
 import type { Pool, PoolClient } from "pg";
 
+import { insertConsumedApprovalNonce } from "./PostgresApprovalNonceStore.js";
+
 interface EventRow {
   event_id: string;
   business_transaction_id: string;
@@ -90,6 +92,16 @@ export class PostgresTransactionStatusEventRepository implements TransactionStat
         throw new InvalidStatusTransitionError(
           id,
           `status cannot move from ${current ?? "none"} to ${input.to}`,
+        );
+      }
+
+      // Approvals are consumed in this transaction, with the event (decision D24). A nonce already recorded refuses
+      // the whole write: the catch below rolls it back, so the transaction stays where it was.
+      for (const consumed of input.consumeApprovalNonces ?? []) {
+        await insertConsumedApprovalNonce(
+          client,
+          consumed.nonce,
+          consumed.expiresAt,
         );
       }
 

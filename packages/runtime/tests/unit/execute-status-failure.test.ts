@@ -134,6 +134,22 @@ describe("ExecutionTrustApplication: a failure before the release", () => {
   });
 });
 
+describe("ExecutionTrustApplication: a decision that throws before APPROVED (D24)", () => {
+  it("leaves the transaction RECEIVED, so it can be executed again", async () => {
+    const { app, events } = application(async () => {
+      // The decision fails before any status is written, as a read of signals or policies would.
+      throw new Error("signal store unavailable");
+    });
+    await app.declare({ businessTransactionId: TX_ID } as never);
+
+    await expect(app.executeAccepted(TX_ID)).rejects.toThrow(
+      "signal store unavailable",
+    );
+
+    expect(events.events.map((e) => e.status)).toEqual(["RECEIVED"]);
+  });
+});
+
 describe("ExecutionTrustApplication: the EXECUTED write fails after a release", () => {
   it("answers with a pending outcome and the record, and does not write VERIFIED", async () => {
     const { app, events } = application(async (recorder) => {

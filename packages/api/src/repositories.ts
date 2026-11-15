@@ -69,6 +69,10 @@ export const executionIntentRepository = lazyRepository(
   (provider) => provider.executionIntents,
 );
 
+export const approvalNonceLedger = lazyRepository(
+  (provider) => provider.approvalNonces,
+);
+
 export const transactionStatusEventRepository = lazyRepository(
   (provider) => provider.transactionStatusEvents,
 );

@@ -16,6 +16,7 @@ import {
   type DecisionAssessment,
   BusinessTransaction,
   BusinessTransactionStatus,
+  ApprovalNonceAlreadyConsumedError,
   Decision,
   DecisionOutcome,
   ExecutableContent,
@@ -91,6 +92,11 @@ export type DecisionRequest = Omit<
 export interface DecideOptions {
   /** Inbound checks consume approvals with their decision record, not here (G-143, O1). */
   readonly deferApprovalConsumption?: boolean;
+  /**
+   * Execute with status events on (decision D24): approvals are checked here but consumed by the APPROVED status write,
+   * in the same transaction. A nonce already consumed fails the decision.
+   */
+  readonly consumeApprovalsWithStatus?: boolean;
 }
 
 export class RuntimeEngine {
@@ -677,7 +683,9 @@ export class RuntimeEngine {
                 add: (approval) => usedApprovals.push(approval),
               },
               deferApprovalConsumption:
-                options.deferApprovalConsumption === true,
+                options.deferApprovalConsumption === true ||
+                options.consumeApprovalsWithStatus === true,
+              checkApprovalNonce: options.consumeApprovalsWithStatus === true,
             },
             evaluatedSignals,
           )
@@ -803,6 +811,7 @@ export class RuntimeEngine {
       authority,
       businessValidation,
       usedApprovals,
+      bindingViolations,
     };
   }
 
@@ -819,12 +828,20 @@ export class RuntimeEngine {
       policyDecision,
       authority,
       businessValidation,
-    } = await this.decide(transaction);
+      usedApprovals,
+      bindingViolations,
+    } = await this.decide(transaction, {
+      // With status events on, the APPROVED write consumes the approvals (decision D24).
+      consumeApprovalsWithStatus: this.transactionStatus !== undefined,
+    });
 
     //
     // Status: the policy decision (D23). A decision that does not allow
     // execution is recorded as REJECTED before the enforce below refuses it.
     //
+    // Set when the APPROVED write loses a race for an approval: the refusal that is enforced below instead.
+    let refusal: typeof decision | undefined;
+
     if (this.transactionStatus) {
       const businessTransactionId = transaction.businessTransactionId;
 
@@ -835,11 +852,44 @@ export class RuntimeEngine {
       );
 
       if (this.executionGate.canExecute(decision)) {
-        await this.transactionStatus.advance(
-          businessTransactionId,
-          "APPROVED",
-          "decide",
-        );
+        const approvalNonces = usedApprovals.map((approval) => ({
+          nonce: approval.nonce,
+          expiresAt: approval.expiresAt,
+        }));
+
+        try {
+          await this.transactionStatus.advance(
+            businessTransactionId,
+            "APPROVED",
+            "decide",
+            { consumeApprovalNonces: approvalNonces },
+          );
+        } catch (error) {
+          if (!(error instanceof ApprovalNonceAlreadyConsumedError)) {
+            throw error;
+          }
+
+          // Another transaction consumed one of these approvals first. This one is still POLICY_EVALUATED, so it is
+          // refused as a decision that did not verify is: REJECTED, with a refusal record.
+          const reason = `approval already used: ${error.message}`;
+          refusal = {
+            ...decision,
+            outcome: DecisionOutcome.REJECTED,
+            reason,
+          };
+          await this.transactionStatus.advance(
+            businessTransactionId,
+            "REJECTED",
+            "decide",
+            { reason },
+          );
+          await this.writeRefusalRecord(
+            transaction,
+            refusal,
+            bindingViolations,
+            policyContentHash,
+          );
+        }
       } else {
         await this.transactionStatus.advance(
           businessTransactionId,
@@ -854,7 +904,7 @@ export class RuntimeEngine {
     // Enforce
     //
 
-    this.executionGate.enforce(decision);
+    this.executionGate.enforce(refusal ?? decision);
 
     const executableContent: ExecutableContent = toExecutableContent({
       businessTransactionId: transaction.businessTransactionId,

@@ -130,6 +130,8 @@ export class ApprovalSignalVerifier implements SignalStateVerifier {
         ...approval.request,
         // An inbound check consumes its approvals with the decision record (G-143, O1). Otherwise, consume now.
         consumeNonce: request.deferApprovalConsumption !== true,
+        // A decision that consumes approvals with its APPROVED write (D24) reads the nonce here, and records it there.
+        checkNonce: request.checkApprovalNonce === true,
       });
 
       if (!result.valid) {

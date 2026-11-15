@@ -7,6 +7,8 @@ import {
   type TransactionStatusEventRepository,
 } from "@parmana/shared";
 
+import type { MemoryApprovalNonceLedger } from "./MemoryApprovalNonceLedger.js";
+
 /**
  * In-memory implementation of TransactionStatusEventRepository.
  *
@@ -22,6 +24,7 @@ export class MemoryTransactionStatusEventRepository implements TransactionStatus
 
   constructor(
     private readonly transactionExists: (id: string) => Promise<boolean>,
+    private readonly approvalNonces: MemoryApprovalNonceLedger,
   ) {}
 
   async append(
@@ -47,6 +50,11 @@ export class MemoryTransactionStatusEventRepository implements TransactionStatus
         id,
         `status cannot move from ${current ?? "none"} to ${input.to}`,
       );
+    }
+
+    // Approvals are consumed by the same step as the event (decision D24): both or neither.
+    if (input.consumeApprovalNonces !== undefined) {
+      this.approvalNonces.recordAll(input.consumeApprovalNonces);
     }
 
     const event: TransactionStatusEvent = {

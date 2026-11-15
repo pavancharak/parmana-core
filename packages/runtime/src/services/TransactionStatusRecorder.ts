@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import {
+  type ApprovalNonceConsumption,
   type AppendTransactionStatusEvent,
   type TransactionStatus,
   type TransactionStatusEvent,
@@ -28,7 +29,11 @@ export class TransactionStatusRecorder {
     businessTransactionId: string,
     to: TransactionStatus,
     stage: TransactionStatusStage,
-    options: { reason?: string; recordRef?: string } = {},
+    options: {
+      reason?: string;
+      recordRef?: string;
+      consumeApprovalNonces?: readonly ApprovalNonceConsumption[];
+    } = {},
   ): Promise<TransactionStatusEvent> {
     const current = await this.events.current(businessTransactionId);
 
@@ -41,6 +46,9 @@ export class TransactionStatusRecorder {
       occurredAt: this.now(),
       ...(options.reason !== undefined && { reason: options.reason }),
       ...(options.recordRef !== undefined && { recordRef: options.recordRef }),
+      ...(options.consumeApprovalNonces !== undefined && {
+        consumeApprovalNonces: options.consumeApprovalNonces,
+      }),
     });
   }
 

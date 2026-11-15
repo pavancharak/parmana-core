@@ -1,7 +1,6 @@
 import { SignatureVerifier } from "@parmana/crypto";
 import type { CryptoProvider } from "@parmana/crypto";
-import type { NonceStore } from "@parmana/envelope-verifier";
-import type { SignedApproval } from "@parmana/shared";
+import type { ApprovalNonceLedger, SignedApproval } from "@parmana/shared";
 
 import type { ApprovalIssuerRegistry } from "./ApprovalIssuerRegistry.js";
 import { evaluateApprovalScope } from "./ApprovalScopeEvaluator.js";
@@ -37,6 +36,14 @@ export interface ApprovalVerificationRequest {
    * the result of those other checks, since the nonce is not looked at.
    */
   readonly consumeNonce?: boolean;
+
+  /**
+   * Whether to read, without recording, whether the nonce is already consumed (decision D24). An approval whose
+   * nonce is already recorded fails this check. The status write that consumes it records the nonce later, in the same
+   * transaction as APPROVED, and refuses the write if another transaction recorded it first. Ignored when consumeNonce
+   * is true, which checks and records in one step.
+   */
+  readonly checkNonce?: boolean;
 }
 
 /**
@@ -103,7 +110,7 @@ export class ApprovalVerifier {
     private readonly options: {
       readonly crypto: CryptoProvider;
       readonly issuerRegistry: ApprovalIssuerRegistry;
-      readonly nonceStore: NonceStore;
+      readonly nonceStore: ApprovalNonceLedger;
     },
   ) {
     this.signatureVerifier = new SignatureVerifier(options.crypto);
@@ -190,7 +197,9 @@ export class ApprovalVerifier {
             artifact.payload.nonce,
             artifact.payload.expiresAt,
           )
-        : true;
+        : request.checkNonce === true
+          ? !(await this.options.nonceStore.isConsumed(artifact.payload.nonce))
+          : true;
 
     return {
       valid: priorChecksPassed && nonceUnseen,

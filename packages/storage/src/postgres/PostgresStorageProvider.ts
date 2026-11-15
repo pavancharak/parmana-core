@@ -32,6 +32,7 @@ import { PostgresExecutionTrustRecordRepository } from "./PostgresExecutionTrust
 
 import { PostgresExecutionIntentRepository } from "./PostgresExecutionIntentRepository.js";
 import { PostgresTransactionStatusEventRepository } from "./PostgresTransactionStatusEventRepository.js";
+import { PostgresApprovalNonceStore } from "./PostgresApprovalNonceStore.js";
 import { PostgresTransactionDeclarationStore } from "./PostgresTransactionDeclarationStore.js";
 import { PostgresTransactionExecutionLock } from "./PostgresTransactionExecutionLock.js";
 import { PostgresRefusalRecordRepository } from "./PostgresRefusalRecordRepository.js";
@@ -70,6 +71,7 @@ export class PostgresStorageProvider implements StorageProvider {
   readonly inboundChecks: InboundCheckRepository;
   readonly inboundOutcomes: InboundOutcomeRepository;
   readonly executionIntents: ExecutionIntentRepository;
+  readonly approvalNonces: PostgresApprovalNonceStore;
   readonly transactionStatusEvents: TransactionStatusEventRepository;
   readonly transactionDeclarations: TransactionDeclarationStore;
   readonly transactionExecutionLocks: TransactionExecutionLock;
@@ -98,6 +100,8 @@ export class PostgresStorageProvider implements StorageProvider {
     this.inboundOutcomes = new PostgresInboundOutcomeRepository(pool);
 
     this.executionIntents = new PostgresExecutionIntentRepository(pool);
+    this.approvalNonces = new PostgresApprovalNonceStore(pool);
+
     this.transactionStatusEvents = new PostgresTransactionStatusEventRepository(
       pool,
     );

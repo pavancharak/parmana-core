@@ -28,6 +28,7 @@ import { MemoryExecutionAuditSink } from "./MemoryExecutionAuditSink.js";
 import { MemoryExecutionTrustRecordRepository } from "./MemoryExecutionTrustRecordRepository.js";
 
 import { MemoryExecutionIntentRepository } from "./MemoryExecutionIntentRepository.js";
+import { MemoryApprovalNonceLedger } from "./MemoryApprovalNonceLedger.js";
 import { MemoryTransactionStatusEventRepository } from "./MemoryTransactionStatusEventRepository.js";
 import { MemoryTransactionDeclarationStore } from "./MemoryTransactionDeclarationStore.js";
 import { MemoryTransactionExecutionLock } from "./MemoryTransactionExecutionLock.js";
@@ -66,6 +67,7 @@ export class MemoryStorageProvider implements StorageProvider {
 
   readonly executionIntents: ExecutionIntentRepository;
 
+  readonly approvalNonces: MemoryApprovalNonceLedger;
   readonly transactionStatusEvents: TransactionStatusEventRepository;
   readonly transactionDeclarations: TransactionDeclarationStore;
   readonly transactionExecutionLocks: TransactionExecutionLock;
@@ -98,8 +100,11 @@ export class MemoryStorageProvider implements StorageProvider {
 
     this.executionIntents = new MemoryExecutionIntentRepository();
 
+    this.approvalNonces = new MemoryApprovalNonceLedger();
+
     this.transactionStatusEvents = new MemoryTransactionStatusEventRepository(
       async (id) => (await this.businessTransactions.findById(id)) !== null,
+      this.approvalNonces,
     );
 
     this.transactionDeclarations = new MemoryTransactionDeclarationStore(

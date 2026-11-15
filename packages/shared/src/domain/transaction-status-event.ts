@@ -2,6 +2,7 @@ import type {
   TransactionStatus,
   TransactionStatusStage,
 } from "./transaction-status.js";
+import type { ApprovalNonceConsumption } from "../repositories/approval-nonce-ledger.js";
 
 /** One recorded status change of a business transaction. Append-only. */
 export interface TransactionStatusEvent {
@@ -31,4 +32,9 @@ export interface AppendTransactionStatusEvent {
   readonly occurredAt: Date;
   readonly recordRef?: string;
   readonly reason?: string;
+  /**
+   * Approval nonces this event consumes, written in the same database transaction as
+   * the event (decision D24). Only the APPROVED event of an execute carries them.
+   */
+  readonly consumeApprovalNonces?: readonly ApprovalNonceConsumption[];
 }

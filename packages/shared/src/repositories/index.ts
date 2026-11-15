@@ -15,5 +15,6 @@ export * from "./handbook-download-lead-repository.js";
 export * from "./inbound-decision-repository.js";
 export * from "./inbound-outcome-repository.js";
 export * from "./transaction-status-event-repository.js";
+export * from "./approval-nonce-ledger.js";
 export * from "./transaction-declaration-store.js";
 export * from "./transaction-execution-lock.js";
