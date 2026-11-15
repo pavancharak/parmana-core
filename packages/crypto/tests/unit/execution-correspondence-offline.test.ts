@@ -69,13 +69,14 @@ describe("checkTrustRecordCorrespondenceOffline", () => {
     expect(report.status).toBe("failed");
   });
 
-  it("fails when the record embeds no authorization", () => {
+  it("is not checked, not failed, when the record embeds no authorization", () => {
     const report = checkTrustRecordCorrespondenceOffline(
       record([execution("e1", correspondence())], false),
     );
 
-    expect(report.status).toBe("failed");
+    expect(report.status).toBe("not_checked");
     expect(JSON.stringify(report)).toContain("no authorization");
+    expect(JSON.stringify(report)).not.toContain("\"failed\"");
   });
 
   it("reports not checked when the record has no executions", () => {
