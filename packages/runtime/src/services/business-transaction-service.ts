@@ -31,6 +31,21 @@ export class BusinessTransactionService {
    * Accepts a new Business Transaction.
    */
   async accept(transaction: BusinessTransaction): Promise<BusinessTransaction> {
+    await this.validateForAccept(transaction);
+
+    //
+    // Persist immutable transaction.
+    //
+    return this.repository.create(transaction);
+  }
+
+  /**
+   * The checks of the accept step, without the write: the trust-chain
+   * invariants, the signal types against the policy, and that the ID is not
+   * already accepted. Used by accept, and by the declaration store, which
+   * writes the transaction and its first event together.
+   */
+  async validateForAccept(transaction: BusinessTransaction): Promise<void> {
     //
     // Validate trust-chain invariants.
     //
@@ -53,11 +68,6 @@ export class BusinessTransactionService {
         transaction.businessTransactionId,
       );
     }
-
-    //
-    // Persist immutable transaction.
-    //
-    return this.repository.create(transaction);
   }
 
   /**

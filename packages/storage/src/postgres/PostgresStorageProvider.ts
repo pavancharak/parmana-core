@@ -6,6 +6,9 @@ import type {
   AuthorityGrantRepository,
   BusinessTransactionRepository,
   ExecutionIntentRepository,
+  TransactionStatusEventRepository,
+  TransactionDeclarationStore,
+  TransactionExecutionLock,
   ExecutionTrustRecordRepository,
   HandbookDownloadLeadRepository,
   PendingPolicyChangeRepository,
@@ -28,6 +31,10 @@ import { PostgresBusinessTransactionRepository } from "./PostgresBusinessTransac
 import { PostgresExecutionTrustRecordRepository } from "./PostgresExecutionTrustRecordRepository.js";
 
 import { PostgresExecutionIntentRepository } from "./PostgresExecutionIntentRepository.js";
+import { PostgresTransactionStatusEventRepository } from "./PostgresTransactionStatusEventRepository.js";
+import { PostgresApprovalNonceStore } from "./PostgresApprovalNonceStore.js";
+import { PostgresTransactionDeclarationStore } from "./PostgresTransactionDeclarationStore.js";
+import { PostgresTransactionExecutionLock } from "./PostgresTransactionExecutionLock.js";
 import { PostgresRefusalRecordRepository } from "./PostgresRefusalRecordRepository.js";
 import { PostgresInboundCheckRepository } from "./PostgresInboundCheckRepository.js";
 import { PostgresInboundDecisionRepository } from "./PostgresInboundDecisionRepository.js";
@@ -64,6 +71,10 @@ export class PostgresStorageProvider implements StorageProvider {
   readonly inboundChecks: InboundCheckRepository;
   readonly inboundOutcomes: InboundOutcomeRepository;
   readonly executionIntents: ExecutionIntentRepository;
+  readonly approvalNonces: PostgresApprovalNonceStore;
+  readonly transactionStatusEvents: TransactionStatusEventRepository;
+  readonly transactionDeclarations: TransactionDeclarationStore;
+  readonly transactionExecutionLocks: TransactionExecutionLock;
   readonly pendingPolicyChanges: PendingPolicyChangeRepository;
   readonly policyChangeApprovalRecords: PolicyChangeApprovalRecordRepository;
   readonly handbookDownloadLeads: HandbookDownloadLeadRepository;
@@ -89,6 +100,15 @@ export class PostgresStorageProvider implements StorageProvider {
     this.inboundOutcomes = new PostgresInboundOutcomeRepository(pool);
 
     this.executionIntents = new PostgresExecutionIntentRepository(pool);
+    this.approvalNonces = new PostgresApprovalNonceStore(pool);
+
+    this.transactionStatusEvents = new PostgresTransactionStatusEventRepository(
+      pool,
+    );
+    this.transactionDeclarations = new PostgresTransactionDeclarationStore(
+      pool,
+    );
+    this.transactionExecutionLocks = new PostgresTransactionExecutionLock(pool);
 
     this.pendingPolicyChanges = new PostgresPendingPolicyChangeRepository(pool);
 

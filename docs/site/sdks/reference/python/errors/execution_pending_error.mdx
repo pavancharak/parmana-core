@@ -1,0 +1,19 @@
+---
+sidebar_label: execution_pending_error
+title: parmana.errors.execution_pending_error
+description: "Python SDK reference: Raised when an execute released the action but its EXECUTED status write failed, so the outcome is pending until reconciled."
+---
+
+## ExecutionPendingError Objects
+
+```python
+class ExecutionPendingError(ParmanaError)
+```
+
+The execute call released the action and its signed record exists, but
+the transaction's status could not be set to EXECUTED. The status is
+still EXECUTING, so the outcome is pending until an operator reconciles
+it (the server answers 202 for this case).
+
+The action ran. Do not execute the transaction again: reconcile it with
+a human-credentialed client.

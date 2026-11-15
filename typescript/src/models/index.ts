@@ -20,3 +20,4 @@ export * from "./replay-result.js";
 export * from "./signature.js";
 export * from "./trust-record.js";
 export * from "./verification.js";
+export * from "./transaction-status.js";

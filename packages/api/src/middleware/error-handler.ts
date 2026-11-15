@@ -20,6 +20,8 @@ import {
   ReleaseNotDispatchedError,
   AuthorizationNoLongerValidError,
   AuthorizationVerificationFailedError,
+  BusinessTransactionNotFoundError,
+  InvalidStatusTransitionError,
 } from "@parmana/shared";
 
 import type { CallerAuditSink } from "../auth/CallerAuditSink.js";
@@ -158,6 +160,30 @@ export function createErrorHandler(auditSink?: CallerAuditSink) {
       error instanceof SignalValidationError
     ) {
       res.status(400).json({
+        error: error.message,
+      });
+
+      return;
+    }
+
+    //
+    // Business Transaction status (D23): a transition the status does not
+    // allow, or an execute while the outcome is pending. Carries the code.
+    //
+    if (error instanceof InvalidStatusTransitionError) {
+      res.status(409).json({
+        error: error.message,
+        code: error.code,
+      });
+
+      return;
+    }
+
+    //
+    // Unknown Business Transaction
+    //
+    if (error instanceof BusinessTransactionNotFoundError) {
+      res.status(404).json({
         error: error.message,
       });
 

@@ -130,4 +130,33 @@ describe("checkExecutionCorrespondence", () => {
       ).status,
     ).toBe("passed");
   });
+
+  it("passes when the dispatched hash source is absent, or one of the two known sources", () => {
+    expect(checkExecutionCorrespondence(matching(), AUTH)).toEqual({
+      status: "passed",
+    });
+    expect(
+      checkExecutionCorrespondence(
+        matching({ dispatchedHashSource: "gateway" }),
+        AUTH,
+      ),
+    ).toEqual({ status: "passed" });
+    expect(
+      checkExecutionCorrespondence(
+        matching({ dispatchedHashSource: "connector-wire" }),
+        AUTH,
+      ),
+    ).toEqual({ status: "passed" });
+  });
+
+  it("fails a record whose dispatched hash source is not a known value", () => {
+    const result = checkExecutionCorrespondence(
+      matching({ dispatchedHashSource: "unknown" as never }),
+      AUTH,
+    );
+    expect(result).toEqual({
+      status: "failed",
+      failures: ["dispatchedHashSource unknown is not a known source"],
+    });
+  });
 });

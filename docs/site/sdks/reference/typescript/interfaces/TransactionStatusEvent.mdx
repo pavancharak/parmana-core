@@ -1,0 +1,19 @@
+---
+title: "Interface: TransactionStatusEvent"
+---
+
+One append-only status event.
+
+## Members
+
+| Name                    | Kind     | Type                                                                                       | Description                                                                                  |
+| ----------------------- | -------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `eventId`               | Property | `string`                                                                                   |                                                                                              |
+| `businessTransactionId` | Property | `string`                                                                                   |                                                                                              |
+| `sequence`              | Property | `number`                                                                                   | Position in the history, starting at 1.                                                      |
+| `status`                | Property | [`TransactionStatusValue`](/sdks/reference/typescript/type-aliases/TransactionStatusValue) |                                                                                              |
+| `stage`                 | Property | [`TransactionStatusStage`](/sdks/reference/typescript/type-aliases/TransactionStatusStage) |                                                                                              |
+| `occurredAt`            | Property | `string`                                                                                   |                                                                                              |
+| `recordRef?`            | Property | `string \| undefined`                                                                      |                                                                                              |
+| `reason?`               | Property | `string \| undefined`                                                                      |                                                                                              |
+| `legacy`                | Property | `boolean`                                                                                  | True for the RECEIVED event written for a transaction declared before status events existed. |

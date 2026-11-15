@@ -13,6 +13,7 @@ from parmana.models.intent import Intent
 from parmana.models.policy import PolicyReference
 from parmana.models.signature import Signature, SignatureAlgorithm
 from parmana.models.trust_record import ExecutionTrustRecord
+from parmana.serialization import encode
 
 
 class FakeTransport:
@@ -30,14 +31,16 @@ class FakeTransport:
         path,
         body=None,
         response_model=None,
+        non_throwing_statuses=frozenset(),
     ):
         self.called = True
         self.method = method
         self.path = path
         self.body = body
         self.response_model = response_model
+        self.non_throwing_statuses = non_throwing_statuses
 
-        return ExecutionTrustRecord(
+        record = ExecutionTrustRecord(
             trust_record_id="tr-001",
             business_transaction_id="tx-001",
             transaction=None,
@@ -55,6 +58,10 @@ class FakeTransport:
             created_at=datetime.now(UTC),
             updated_at=datetime.now(UTC),
         )
+        if non_throwing_statuses:
+            # The API decodes the wire payload: round-trip the record.
+            return encode(record)
+        return record
 
 
 def test_execute():
@@ -116,7 +123,7 @@ def test_execute():
 
     assert transport.path == "/execute"
 
-    assert transport.response_model is ExecutionTrustRecord
+    assert transport.non_throwing_statuses == frozenset({202})
 
     assert isinstance(
         record,
@@ -124,3 +131,38 @@ def test_execute():
     )
 
     assert record.signature.algorithm == SignatureAlgorithm.ED25519
+
+
+def test_execute_raises_execution_pending_on_the_202_answer(monkeypatch):
+    import pytest
+
+    import parmana.api.execution_api as module
+    from parmana.errors import ExecutionPendingError
+
+    monkeypatch.setattr(
+        module,
+        "decode",
+        lambda payload, model: ("decoded", model, payload),
+    )
+    monkeypatch.setattr(module, "encode", lambda value: value)
+
+    class PendingTransport(FakeTransport):
+        def send(self, **kwargs):
+            self.called = True
+            return {
+                "businessTransactionId": "tx-001",
+                "status": "EXECUTING",
+                "outcome": "pending",
+                "reconcile": "/transactions/tx-001/reconcile",
+                "record": {"trustRecordId": "tr-001"},
+            }
+
+    api = ExecutionApi(PendingTransport())
+    transaction = None
+
+    with pytest.raises(ExecutionPendingError) as raised:
+        api.execute(transaction)
+
+    assert raised.value.code == "EXECUTION_STATUS_PENDING"
+    assert raised.value.business_transaction_id == "tx-001"
+    assert raised.value.reconcile_path == "/transactions/tx-001/reconcile"

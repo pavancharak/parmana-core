@@ -6,13 +6,20 @@ import {
 
 import {
   BusinessTransaction,
+  BusinessTransactionNotFoundError,
+  EXECUTION_LOCK_TIMEOUT_MS,
+  type TransactionDeclarationStore,
+  type TransactionExecutionLock,
   ExecutionIntent,
   ExecutionTrustRecord,
   ExecutionTrustRecordRepository,
+  InvalidStatusTransitionError,
   Receipt,
   RefusalRecord,
   RefusalRecordRepository,
   StoredExecutionIntent,
+  TransactionStatus,
+  TransactionStatusEvent,
   Verification,
   VerificationStatus,
 } from "@parmana/shared";
@@ -28,6 +35,7 @@ import type {
   ResolveExecutionIntentResult,
 } from "./ExecutionIntentService.js";
 import { ExecutionIntentNotResolvableError } from "./errors/ExecutionIntentNotResolvableError.js";
+import { ExecutionStatusPendingError } from "./errors/ExecutionStatusPendingError.js";
 import { Runtime } from "./Runtime.js";
 import type { DecisionRequest } from "./RuntimeEngine.js";
 import { RuntimeError } from "./errors/RuntimeError.js";
@@ -35,6 +43,7 @@ import { RuntimeError } from "./errors/RuntimeError.js";
 import { VerificationFailedError } from "./errors/VerificationFailedError.js";
 import { BusinessTransactionService } from "./services/business-transaction-service.js";
 import { ReceiptService } from "./services/receipt-service.js";
+import type { TransactionStatusRecorder } from "./services/TransactionStatusRecorder.js";
 import { VerificationService } from "./services/verification-service.js";
 
 /**
@@ -80,14 +89,26 @@ export class ExecutionTrustApplication {
      */
     private readonly executionIntents?: ExecutionIntentService,
     private readonly executionIntentFinalizer?: ExecutionIntentFinalizer,
+    /**
+     * Transaction status events (decision D23). Optional and trailing. When
+     * omitted, declare and execute run without recording status, and
+     * reconcileTransaction refuses to run.
+     */
+    private readonly statusRecorder?: TransactionStatusRecorder,
+    /**
+     * Writes a declared transaction and its RECEIVED event in one step. Optional;
+     * without it, declare writes them one after the other.
+     */
+    private readonly declarationStore?: TransactionDeclarationStore,
+    /**
+     * One lock per transaction, held for each execute and reconcile. Optional;
+     * without it, two concurrent executes are not serialised.
+     */
+    private readonly executionLock?: TransactionExecutionLock,
   ) {
     Object.freeze(this);
   }
 
-  /**
-   * Execute Business Transaction through the
-   * complete Execution Trust pipeline.
-   */
   /**
    * Decides an inbound request (RFC-0024) without executing it. Runs the same policy, verification
    * and binding checks as execute(), and returns the decision.
@@ -97,41 +118,368 @@ export class ExecutionTrustApplication {
     return this.runtime.decide(request, { deferApprovalConsumption: true });
   }
 
-  async execute(
+  /**
+   * Declare: accepts a Business Transaction and records it as RECEIVED. Nothing
+   * is decided, signed or released here (decision D23).
+   */
+  async declare(
     transaction: BusinessTransaction,
+  ): Promise<BusinessTransaction> {
+    //
+    // With a declaration store, the transaction and its RECEIVED event are
+    // written in one step (design section 3). Without one, they are written
+    // one after the other, as before.
+    //
+    if (this.statusRecorder) {
+      //
+      // Fail closed: with status events on, a declaration written in two
+      // steps can leave a transaction with no status, which nothing can
+      // execute or reconcile. Without the store the server is misconfigured.
+      //
+      if (!this.declarationStore) {
+        throw new Error(
+          "Transaction declaration store is not configured: refusing to declare a transaction in two writes while status events are on.",
+        );
+      }
+
+      await this.transactions.validateForAccept(transaction);
+      await this.declarationStore.declare(
+        transaction,
+        this.statusRecorder.declarationEvent(transaction.businessTransactionId),
+      );
+
+      return transaction;
+    }
+
+    return this.transactions.accept(transaction);
+  }
+
+  /**
+   * Execute an accepted Business Transaction through the complete Execution
+   * Trust pipeline. Requires the transaction's status to be RECEIVED. A
+   * transaction in EXECUTING is never released again here: its outcome is
+   * pending until reconcileTransaction decides it (design section 6a).
+   */
+  async executeAccepted(
+    businessTransactionId: string,
   ): Promise<ExecutionTrustRecord> {
-    //
-    // Accept Business Transaction
-    //
-    await this.transactions.accept(transaction);
+    return this.withTransactionLock(businessTransactionId, () =>
+      this.runExecuteAccepted(businessTransactionId),
+    );
+  }
+
+  /**
+   * Runs `work` while holding the transaction's lock (design section 7a,
+   * decision 4). A second call waits up to EXECUTION_LOCK_TIMEOUT_MS, then is
+   * refused with 409, and nothing is decided or released.
+   */
+  private async withTransactionLock<T>(
+    businessTransactionId: string,
+    work: () => Promise<T>,
+  ): Promise<T> {
+    if (!this.executionLock) {
+      //
+      // Fail closed: the status check is made inside the lock, and approvals
+      // are consumed by the decision, which runs after that check. Without
+      // a lock, two executes can both consume an approval (finding 3).
+      //
+      if (this.statusRecorder) {
+        throw new Error(
+          "Transaction execution lock is not configured: refusing to execute or reconcile while status events are on.",
+        );
+      }
+
+      return work();
+    }
+
+    const lease = await this.executionLock.acquire(
+      businessTransactionId,
+      EXECUTION_LOCK_TIMEOUT_MS,
+    );
+
+    if (!lease) {
+      throw new InvalidStatusTransitionError(
+        businessTransactionId,
+        "another execute or reconcile of this transaction is in progress; this call did not start",
+      );
+    }
+
+    try {
+      return await work();
+    } finally {
+      await lease.release();
+    }
+  }
+
+  private async runExecuteAccepted(
+    businessTransactionId: string,
+  ): Promise<ExecutionTrustRecord> {
+    const transaction = await this.transactions.get(businessTransactionId);
+
+    if (!transaction) {
+      throw new BusinessTransactionNotFoundError(businessTransactionId);
+    }
+
+    if (this.statusRecorder) {
+      const current = await this.statusRecorder.current(businessTransactionId);
+
+      if (current?.status !== "RECEIVED") {
+        throw new InvalidStatusTransitionError(
+          businessTransactionId,
+          notExecutableReason(current?.status ?? null),
+        );
+      }
+
+      // A legacy transaction was declared before status events existed. It may
+      // already have been released by the one-call route, and nothing records
+      // that release, so the declared-transaction route refuses it.
+      if (current.legacy) {
+        throw new InvalidStatusTransitionError(
+          businessTransactionId,
+          "legacy transaction: declared before status events existed, so an earlier release is not recorded; it is not executed through this route",
+        );
+      }
+    }
 
     //
     // Execute Runtime
     //
-    await this.runtime.execute(transaction);
+    try {
+      await this.runtime.execute(transaction);
+    } catch (error) {
+      await this.failIfNotReleased(businessTransactionId, error);
+      throw error;
+    }
 
     //
-    // Verification
+    // Verification. Recorded as VERIFIED only when it passes; a failed
+    // verification leaves the status EXECUTED (design section 6).
     //
-    await this.verification.verify(transaction.businessTransactionId);
+    //
+    // Status (D23, finding 18). After a successful release the status is
+    // EXECUTED. If it is still EXECUTING, the EXECUTED write failed: the
+    // action ran and the trust record exists, but the status is outcome
+    // pending. VERIFIED is not attempted then, since EXECUTING has no move
+    // to it, and the caller is answered with the pending outcome.
+    //
+    const outcomePending = await this.isOutcomePending(businessTransactionId);
+
+    const verification = await this.verification.verify(businessTransactionId);
+
+    if (
+      this.statusRecorder &&
+      !outcomePending &&
+      verification.status === VerificationStatus.VERIFIED
+    ) {
+      try {
+        await this.statusRecorder.advance(
+          businessTransactionId,
+          "VERIFIED",
+          "verify",
+        );
+      } catch (error) {
+        console.error({
+          event: "transaction_status_write_failed",
+          businessTransactionId,
+          status: "VERIFIED",
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
 
     //
     // Receipt
     //
-    await this.receipts.generate(transaction.businessTransactionId);
+    await this.receipts.generate(businessTransactionId);
 
     //
     // Load completed Trust Record
     //
     const trustRecord = await this.trustRecords.findByTransactionId(
-      transaction.businessTransactionId,
+      businessTransactionId,
     );
 
     if (!trustRecord) {
       throw new Error("Execution Trust Record not found.");
     }
 
+    if (outcomePending) {
+      throw new ExecutionStatusPendingError(businessTransactionId, trustRecord);
+    }
+
     return trustRecord;
+  }
+
+  /**
+   * True when the status is EXECUTING after the release returned: the
+   * EXECUTED write failed, so the outcome is pending (D23, finding 18).
+   */
+  private async isOutcomePending(
+    businessTransactionId: string,
+  ): Promise<boolean> {
+    if (!this.statusRecorder) return false;
+
+    const current = await this.statusRecorder.current(businessTransactionId);
+
+    return current?.status === "EXECUTING";
+  }
+
+  /**
+   * A failure after APPROVED and before EXECUTING means nothing was released
+   * (the release is recorded as EXECUTING first), so the transaction ends as
+   * FAILED and the caller declares it again. Any later status is left as it
+   * is: EXECUTING is outcome pending, and reconciliation decides it.
+   */
+  private async failIfNotReleased(
+    businessTransactionId: string,
+    error: unknown,
+  ): Promise<void> {
+    if (!this.statusRecorder) return;
+
+    const current = await this.statusRecorder.current(businessTransactionId);
+
+    if (current?.status !== "APPROVED") return;
+
+    try {
+      await this.statusRecorder.advance(
+        businessTransactionId,
+        "FAILED",
+        "execute",
+        {
+          reason: error instanceof Error ? error.message : String(error),
+        },
+      );
+    } catch (recordError) {
+      console.error({
+        event: "transaction_status_write_failed",
+        businessTransactionId,
+        status: "FAILED",
+        error:
+          recordError instanceof Error
+            ? recordError.message
+            : String(recordError),
+      });
+    }
+  }
+
+  /**
+   * Declares and then executes a Business Transaction in one call. Kept for
+   * in-process callers; the API uses declare and executeAccepted separately.
+   */
+  async execute(
+    transaction: BusinessTransaction,
+  ): Promise<ExecutionTrustRecord> {
+    const accepted = await this.declare(transaction);
+
+    return this.executeAccepted(accepted.businessTransactionId);
+  }
+
+  /**
+   * Returns the current status event of a Business Transaction, or null when no
+   * status is recorded.
+   */
+  async getTransactionStatus(
+    businessTransactionId: string,
+  ): Promise<TransactionStatusEvent | null> {
+    return this.statusRecorder?.current(businessTransactionId) ?? null;
+  }
+
+  /** Returns the status history of a Business Transaction, oldest first. */
+  async getTransactionStatusHistory(
+    businessTransactionId: string,
+  ): Promise<readonly TransactionStatusEvent[]> {
+    return this.statusRecorder
+      ? this.statusRecorder.history(businessTransactionId)
+      : [];
+  }
+
+  /**
+   * Reconciliation (design section 6a). For a transaction left in EXECUTING, it
+   * writes the terminal status from the execution intent for it: EXECUTED when
+   * the release is recorded, FAILED when an operator recorded that nothing was
+   * released. When the outcome cannot be established, it changes nothing and
+   * refuses with the outcome unknown. It never releases anything. The route
+   * allows only human operators.
+   */
+  async reconcileTransaction(
+    businessTransactionId: string,
+    operatorId: string,
+  ): Promise<{ changed: boolean; status: TransactionStatus }> {
+    return this.withTransactionLock(businessTransactionId, () =>
+      this.runReconcile(businessTransactionId, operatorId),
+    );
+  }
+
+  private async runReconcile(
+    businessTransactionId: string,
+    operatorId: string,
+  ): Promise<{ changed: boolean; status: TransactionStatus }> {
+    if (!this.statusRecorder) {
+      throw new Error("Transaction status events are not configured.");
+    }
+
+    const transaction = await this.transactions.get(businessTransactionId);
+
+    if (!transaction) {
+      throw new BusinessTransactionNotFoundError(businessTransactionId);
+    }
+
+    const current = await this.statusRecorder.current(businessTransactionId);
+
+    if (!current) {
+      throw new InvalidStatusTransitionError(
+        businessTransactionId,
+        "no status is recorded for this transaction",
+      );
+    }
+
+    // A terminal status is never changed here (design section 6a, rule 5).
+    if (current.status !== "EXECUTING") {
+      return { changed: false, status: current.status };
+    }
+
+    const stored = await this.executionIntents?.get(businessTransactionId);
+    const state = stored?.status.state;
+    const resolution = stored?.status.resolution;
+
+    const released =
+      state === "RELEASED" ||
+      state === "FINALIZED" ||
+      (state === "RESOLVED" && resolution === "EXECUTED");
+
+    const notReleased = state === "RESOLVED" && resolution === "NOT_EXECUTED";
+
+    if (released && stored) {
+      const event = await this.statusRecorder.advance(
+        businessTransactionId,
+        "EXECUTED",
+        "reconcile",
+        {
+          reason: `reconciled by operator ${operatorId}: the release is recorded`,
+          recordRef: stored.intent.authorizationId,
+        },
+      );
+
+      return { changed: true, status: event.status };
+    }
+
+    if (notReleased) {
+      const event = await this.statusRecorder.advance(
+        businessTransactionId,
+        "FAILED",
+        "reconcile",
+        {
+          reason: `reconciled by operator ${operatorId}: ${stored?.status.resolutionNote ?? "nothing was released"}`,
+        },
+      );
+
+      return { changed: true, status: event.status };
+    }
+
+    throw new InvalidStatusTransitionError(
+      businessTransactionId,
+      "outcome unknown: the release is not confirmed; no automatic action was taken",
+    );
   }
 
   /**
@@ -435,4 +783,20 @@ export class ExecutionTrustApplication {
   ): Promise<readonly BusinessTransaction[]> {
     return this.transactions.list(page, pageSize);
   }
+}
+
+/**
+ * Why a transaction cannot be executed now, stated for the caller (design
+ * section 2). A transaction in EXECUTING is reported as outcome pending.
+ */
+function notExecutableReason(status: TransactionStatus | null): string {
+  if (status === null) {
+    return "no status is recorded for this transaction";
+  }
+
+  if (status === "EXECUTING") {
+    return "status is EXECUTING: outcome pending";
+  }
+
+  return `status is ${status}; execution is allowed only from RECEIVED`;
 }

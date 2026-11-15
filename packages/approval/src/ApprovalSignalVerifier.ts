@@ -114,7 +114,7 @@ export class ApprovalSignalVerifier implements SignalStateVerifier {
       });
 
       if (!result.valid) {
-        violations.push(refused(approval.signalKey));
+        violations.push(refusedBy(approval.signalKey, result));
       }
     }
 
@@ -130,10 +130,12 @@ export class ApprovalSignalVerifier implements SignalStateVerifier {
         ...approval.request,
         // An inbound check consumes its approvals with the decision record (G-143, O1). Otherwise, consume now.
         consumeNonce: request.deferApprovalConsumption !== true,
+        // A decision that consumes approvals with its APPROVED write (D24) reads the nonce here, and records it there.
+        checkNonce: request.checkApprovalNonce === true,
       });
 
       if (!result.valid) {
-        violations.push(refused(approval.signalKey));
+        violations.push(refusedBy(approval.signalKey, result));
       } else {
         // Record who approved, for the caller. Only an approval that verified and was consumed is recorded.
         request.usedApprovals?.add({
@@ -203,6 +205,27 @@ export class ApprovalSignalVerifier implements SignalStateVerifier {
 
 function refused(signalKey: string): SignalStateViolation {
   return { signalKey, declaredValue: true, actualValue: false };
+}
+
+/**
+ * A refusal that says why, when the verifier can tell: an approval whose nonce is already recorded was used by an
+ * earlier transaction (decision D24). Other failures keep the plain refusal.
+ */
+function refusedBy(
+  signalKey: string,
+  result: { readonly checks: Readonly<Record<string, boolean>> },
+): SignalStateViolation {
+  // nonceUnseen is also false when another check failed, so the reason is given only when the nonce is the one failure.
+  const { nonceUnseen, ...otherChecks } = result.checks;
+  const onlyNonceFailed =
+    nonceUnseen === false && Object.values(otherChecks).every((check) => check);
+
+  return onlyNonceFailed
+    ? {
+        ...refused(signalKey),
+        reason: "the signed approval has already been used",
+      }
+    : refused(signalKey);
 }
 
 function missing(signalKey: string, reason: string): SignalStateViolation {

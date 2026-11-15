@@ -173,6 +173,7 @@
                   "sdks/reference/typescript/classes/ConflictError",
                   "sdks/reference/typescript/classes/ExecutionApi",
                   "sdks/reference/typescript/classes/ExecutionIntentApi",
+                  "sdks/reference/typescript/classes/ExecutionPendingError",
                   "sdks/reference/typescript/classes/ExecutionRejectedError",
                   "sdks/reference/typescript/classes/ExternalConnectorApi",
                   "sdks/reference/typescript/classes/HealthApi",
@@ -217,6 +218,7 @@
                   "sdks/reference/typescript/interfaces/Configuration",
                   "sdks/reference/typescript/interfaces/CreateBusinessTransactionOptions",
                   "sdks/reference/typescript/interfaces/Decision",
+                  "sdks/reference/typescript/interfaces/DeclaredTransaction",
                   "sdks/reference/typescript/interfaces/EvidenceAnchor",
                   "sdks/reference/typescript/interfaces/Execution",
                   "sdks/reference/typescript/interfaces/ExecutionIntent",
@@ -232,6 +234,7 @@
                   "sdks/reference/typescript/interfaces/ParmanaErrorOptions",
                   "sdks/reference/typescript/interfaces/ParmanaRelease",
                   "sdks/reference/typescript/interfaces/ParmanaReleaseCondition",
+                  "sdks/reference/typescript/interfaces/PendingExecutionResponse",
                   "sdks/reference/typescript/interfaces/PendingPolicyChange",
                   "sdks/reference/typescript/interfaces/PolicyChangeForReview",
                   "sdks/reference/typescript/interfaces/PolicyChangeStepUpAuthorization",
@@ -245,6 +248,7 @@
                   "sdks/reference/typescript/interfaces/ProposedPolicyChange",
                   "sdks/reference/typescript/interfaces/PublicKeyInfo",
                   "sdks/reference/typescript/interfaces/Receipt",
+                  "sdks/reference/typescript/interfaces/ReconcileResult",
                   "sdks/reference/typescript/interfaces/RefusalBindingViolation",
                   "sdks/reference/typescript/interfaces/RefusalIntentSnapshot",
                   "sdks/reference/typescript/interfaces/RefusalRecord",
@@ -256,6 +260,8 @@
                   "sdks/reference/typescript/interfaces/SignPolicyChangeStepUpInput",
                   "sdks/reference/typescript/interfaces/Signature",
                   "sdks/reference/typescript/interfaces/SignedApproval",
+                  "sdks/reference/typescript/interfaces/TransactionStatusEvent",
+                  "sdks/reference/typescript/interfaces/TransactionStatusResult",
                   "sdks/reference/typescript/interfaces/Transport",
                   "sdks/reference/typescript/interfaces/TransportRequest",
                   "sdks/reference/typescript/interfaces/TransportResponse",
@@ -294,6 +300,8 @@
                   "sdks/reference/typescript/type-aliases/PublicKeys",
                   "sdks/reference/typescript/type-aliases/ResolveExecutionIntentOutcome",
                   "sdks/reference/typescript/type-aliases/SignatureAlgorithm",
+                  "sdks/reference/typescript/type-aliases/TransactionStatusStage",
+                  "sdks/reference/typescript/type-aliases/TransactionStatusValue",
                   "sdks/reference/typescript/type-aliases/VerificationStatus"
                 ]
               },
@@ -370,6 +378,7 @@
               "sdks/reference/python/crypto/step_up",
               "sdks/reference/python/errors/api_error",
               "sdks/reference/python/errors/configuration_error",
+              "sdks/reference/python/errors/execution_pending_error",
               "sdks/reference/python/errors/http_error",
               "sdks/reference/python/errors/network_error",
               "sdks/reference/python/errors/replay_error",
@@ -383,6 +392,7 @@
               "sdks/reference/python/models/policy_change_results",
               "sdks/reference/python/models/policy_in_effect",
               "sdks/reference/python/models/replay_result",
+              "sdks/reference/python/models/transaction_status",
               "sdks/reference/python/serialization/decoder",
               "sdks/reference/python/serialization/encoder",
               "sdks/reference/python/transport/http_transport"
@@ -436,7 +446,10 @@
             "pages": [
               "api-reference/endpoints/list-transactions",
               "api-reference/endpoints/create-transaction",
-              "api-reference/endpoints/get-transaction"
+              "api-reference/endpoints/get-transaction",
+              "api-reference/endpoints/execute-declared-transaction",
+              "api-reference/endpoints/get-transaction-status",
+              "api-reference/endpoints/reconcile-transaction"
             ]
           },
           {

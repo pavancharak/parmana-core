@@ -172,7 +172,11 @@ client.verification.get_latest(id)                # GET /verification/:id (cache
 client.receipt.generate(id)                       # POST /receipt
 client.receipt.get_latest(id)                     # GET /receipt/latest/:id
 client.replay.replay(id)                          # POST /replay
-client.transactions.create(transaction)           # POST /transactions
+client.transactions.declare(transaction)         # POST /transactions
+client.transactions.execute(id)                   # POST /transactions/:id/execute
+client.transactions.status(id, history=True)      # GET /transactions/:id/status
+client.transactions.reconcile(id)                 # POST /transactions/:id/reconcile
+client.transactions.create(transaction)           # declare, then execute
 client.transactions.get(id)                       # GET /transactions/:id
 client.transactions.list()                        # GET /transactions
 client.trust_records.get(id)                      # GET /trust-records/:id
@@ -198,9 +202,9 @@ client.callers.public_key(key_id)                 # GET /keys/:keyId            
 
 The routes that have no method, and why, are listed on [SDK coverage of the API](/sdks/api-coverage#operations-with-no-sdk-method-and-why): the readiness probe, the JWKS document, the API's own description files and the handbook download. That page also maps every method to its TypeScript equivalent.
 
-`client.transactions.create()` covers `POST /transactions`, a second independent entry point
-into the identical execution pipeline as `execute()`, differing only in its `201` status
-code. `policy.validate` takes `(policy_id, policy_version)`, not a policy document, matching
+`client.transactions.declare()` is `POST /transactions`: the transaction is recorded as
+`RECEIVED` and nothing is released. `client.transactions.execute(id)` releases it.
+`client.transactions.create()` does both in two calls. `policy.validate` takes `(policy_id, policy_version)`, not a policy document, matching
 what the route actually reads.
 
 <Note>

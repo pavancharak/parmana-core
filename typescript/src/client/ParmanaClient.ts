@@ -36,6 +36,11 @@ import type {
   Verification,
 } from "../models/index.js";
 
+import type {
+  DeclaredTransaction,
+  ReconcileResult,
+  TransactionStatusResult,
+} from "../models/transaction-status.js";
 import type { ReplayResult } from "../models/replay-result.js";
 import type { CallerIdentity, PublicKeyInfo } from "../models/caller.js";
 import type { PolicyInEffect } from "../models/policy-in-effect.js";
@@ -306,14 +311,43 @@ export class ParmanaClient {
   }
 
   /**
-   * Creates (executes) a Business Transaction via POST /transactions,
-   * a second, independent entry point into the identical execution
-   * pipeline as execute() (POST /execute). See TransactionApi.create.
+   * Declares and then executes a Business Transaction, in two calls:
+   * POST /transactions, then POST /transactions/{id}/execute. See
+   * TransactionApi.create.
    */
   public createTransaction(
     transaction: BusinessTransaction,
   ): Promise<ExecutionTrustRecord> {
     return this.transactionApi.create(transaction);
+  }
+
+  /** Declares a Business Transaction (POST /transactions). See TransactionApi.declare. */
+  public declareTransaction(
+    transaction: BusinessTransaction,
+  ): Promise<DeclaredTransaction> {
+    return this.transactionApi.declare(transaction);
+  }
+
+  /** Executes a declared Business Transaction. See TransactionApi.execute. */
+  public executeTransaction(
+    businessTransactionId: string,
+  ): Promise<ExecutionTrustRecord> {
+    return this.transactionApi.execute(businessTransactionId);
+  }
+
+  /** Reads a Business Transaction's status. See TransactionApi.status. */
+  public transactionStatus(
+    businessTransactionId: string,
+    options?: { history?: boolean },
+  ): Promise<TransactionStatusResult> {
+    return this.transactionApi.status(businessTransactionId, options);
+  }
+
+  /** Reconciles a Business Transaction whose outcome is pending. See TransactionApi.reconcile. */
+  public reconcileTransaction(
+    businessTransactionId: string,
+  ): Promise<ReconcileResult> {
+    return this.transactionApi.reconcile(businessTransactionId);
   }
 
   /**

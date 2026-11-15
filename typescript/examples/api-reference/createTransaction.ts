@@ -27,9 +27,8 @@ const transaction = createBusinessTransaction({
   },
 });
 
-const record = await client.createTransaction(transaction);
+// Declares only: the transaction is recorded as RECEIVED and nothing is released.
+// Release it with executeTransaction(declared.businessTransactionId).
+const declared = await client.declareTransaction(transaction);
 
-console.log(
-  record.businessTransactionId,
-  record.executions[0]?.decision.outcome,
-);
+console.log(declared.businessTransactionId, declared.status);

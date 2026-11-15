@@ -43,6 +43,7 @@ import type { RuntimeComponent } from "./RuntimeComponent.js";
 
 import type { RuntimeHook } from "./hooks/RuntimeHook.js";
 import type { ApprovalNeededNotifier } from "./ApprovalNeededNotifier.js";
+import type { TransactionStatusRecorder } from "./services/TransactionStatusRecorder.js";
 
 /**
  * Canonical Runtime Builder.
@@ -69,6 +70,8 @@ export class RuntimeBuilder {
   private signingReadiness?: SigningReadiness;
 
   private executionIntents?: ExecutionIntentService;
+
+  private transactionStatus?: TransactionStatusRecorder;
 
   private approvalNeededNotifier?: ApprovalNeededNotifier;
 
@@ -198,6 +201,18 @@ export class RuntimeBuilder {
   }
 
   /**
+   * Transaction status events (decision D23). Each execute step is recorded
+   * through this recorder.
+   */
+  public withTransactionStatusRecorder(
+    recorder: TransactionStatusRecorder,
+  ): this {
+    this.transactionStatus = recorder;
+
+    return this;
+  }
+
+  /**
    * Add runtime stage.
    */
   public addStage(component: RuntimeComponent): this {
@@ -322,6 +337,7 @@ export class RuntimeBuilder {
       this.approvalNeededNotifier,
       new TrustedSignalResolver(this.businessSignalSources),
       new AuthorityGrantEvaluator(this.authorityGrants),
+      this.transactionStatus,
     );
 
     //

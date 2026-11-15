@@ -217,10 +217,13 @@ kept in sync field-for-field against the real JSON schemas (`schemas/common/*.sc
 
 ## `POST /transactions`
 
-`client.createTransaction(transaction)` is a second, independent entry point into the
-identical execution pipeline as `execute()` (`POST /execute`), differing only in its `201`
-status code. It's a stable, long-standing route with dedicated test coverage
-(`packages/api/tests/unit/transactions-api.test.ts`), not a new or evolving surface.
+The transactions API takes two calls (decision D23). `client.declareTransaction(transaction)`
+is `POST /transactions`: the transaction is checked, accepted and recorded as `RECEIVED`, and
+nothing is released. `client.executeTransaction(id)` is `POST /transactions/{id}/execute`: it
+decides, signs and releases the declared transaction, then verifies it, and returns the Execution
+Trust Record. `client.transactionStatus(id, { history: true })` reads the status and its history.
+`client.createTransaction(transaction)` declares and then executes in those two calls, for callers
+that want one call. The release path is the same as `client.execute()` (`POST /execute`).
 
 ## `createBusinessTransaction()`, no more hand-synced ids
 
