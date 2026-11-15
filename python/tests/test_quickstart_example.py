@@ -59,9 +59,8 @@ def quickstart_server() -> str:
         env = {
             **os.environ,
             "NODE_ENV": "test",
-            # Test-only: skip the approval-record check for vendor-payment, which these
-            # tests run without maker-checker records. Never set in a deployment.
-            "PARMANA_ALLOW_UNGOVERNED_POLICY": "true",
+            # Approval records for the policies are seeded by
+            # test-support/start-test-server.ts (D19).
             # Trusts the local test approver (tests/local_approver.py).
             **local_approver_env(),
             "PARMANA_STORAGE": "memory",
@@ -75,7 +74,7 @@ def quickstart_server() -> str:
         }
 
         process = subprocess.Popen(
-            "npx tsx packages/api/src/server.ts",
+            "npx tsx test-support/start-test-server.ts",
             cwd=str(REPO_ROOT),
             env=env,
             stdout=subprocess.PIPE,
