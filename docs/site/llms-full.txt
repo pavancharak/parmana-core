@@ -5478,12 +5478,18 @@ Source: https://docs.parmanasystems.com/sdks/typescript
   Bearer-key authentication, a real thrown error taxonomy, and full test
   coverage are all in place, along with corrected model types (see below),
   `client.verify()`/`client.version()`, and `client.createTransaction()`.
-  v2.0.1, published 2026-11-10, is the current version. It aligns the SDK with
-  the other 2.0.1 packages and changes no code. v2.0.0, published 2026-11-07,
-  added full hybrid verification to the offline verifier: it verifies hybrid
-  records in full, with a `signatures` array holding one Ed25519 and one
-  ML-DSA-65 entry, including the whole-record message of schema version 3. Its
-  results report `coverage` (`"full"` or `"legacy"`) and
+  v2.0.3, published 2026-11-15, is the current version. It adds the declare and
+  execute flow: `declare()` records a transaction without deciding or releasing
+  it, `execute()` decides, signs, releases and verifies it, `status()` reads the
+  status history, and `reconcile()` settles a transaction left `EXECUTING`.
+  `create()` is kept, and now calls `declare()` then `execute()`.
+  `ExecutionPendingError` is raised for a `202` answer. The new routes need a
+  server that includes decision D23. v2.0.1, published 2026-11-10, aligned the
+  SDK with the other 2.0.1 packages and changed no code. v2.0.0, published
+  2026-11-07, added full hybrid verification to the offline verifier: it
+  verifies hybrid records in full, with a `signatures` array holding one Ed25519
+  and one ML-DSA-65 entry, including the whole-record message of schema version
+  3. Its results report `coverage` (`"full"` or `"legacy"`) and
   `hybridSignaturesValid`. ML-DSA-65 needs Node 24 or later with OpenSSL 3.5 or
   later. v1.6.3, published 2026-11-01, changed only documentation, formatting
   and tests. v1.6.1, published 2026-10-22, removed the links to a private
@@ -6659,33 +6665,38 @@ Source: https://docs.parmanasystems.com/sdks/python
   and the `offline_verifier.py` fix. Two quick follow-up releases, v1.1.3 and
   v1.1.4, corrected the published package metadata (repo name, docs domain,
   added a `Website` URL); v1.1.5 and v1.1.6, both published 2026-09-20, follow;
-  v2.0.1, published 2026-11-10, is the current version. It aligns the SDK with
-  the other 2.0.1 packages and changes no code. v2.0.0, published 2026-11-07,
-  added full hybrid verification to the offline verifier: it verifies hybrid
-  records in full, with a `signatures` array holding one Ed25519 and one
-  ML-DSA-65 entry, including the whole-record message of schema version 3. Its
-  results report `coverage` (`"full"` or `"legacy"`) and
-  `hybrid_signatures_valid`. ML-DSA-65 needs `cryptography` 47.0.0 or later.
-  Execution models accept an optional `evaluation_method`. v1.6.3, published
-  2026-11-01, changed only documentation, formatting and tests. v1.6.1,
-  published 2026-10-22, removed the links to a private repository from the
-  package metadata. v1.6.0, published 2026-10-11, added the business signal
-  source and authority grant methods, and `conditions` on a release: see [New in
-  1.6.0](#new-in-160). v1.5.0, published 2026-10-04, added the external
-  connector methods, `policy_in_effect()` and `verify_parmana_release()`, fixed
-  offline verification of a decoded record, and moved to the Apache License 2.0:
-  see [New in 1.5.0](#new-in-150). v1.4.0, published 2026-09-29, added
-  `sign_approval()` and the approver methods: see [New in 1.4.0](#new-in-140).
-  v1.3.0, published 2026-09-25, added policy governance, step up signing,
-  `caller()`, `public_key()`, `trust_records.list()` and `latest_receipt()`, and
-  lets the offline verifiers take the SDK's own models: see [New in
-  1.3.0](#new-in-130). v1.2.0, published 2026-09-21, added the Execution Intent
-  methods and an offline intent verifier. v1.1.6 adds `server_code` to
-  `InternalServerError`. v1.1.5 lets the offline verifier accept records over
-  4096 bytes that AWS KMS signed as a fixed size commitment, and declares its
-  `cryptography` dependency as the optional `verify` extra (`pip install
-  "parmana[verify]"`). v1.1.4 was published 2026-09-14. See
-  [Changelog](/changelog) and the fix history at the bottom of this page.
+  v2.0.3, published 2026-11-15, is the current version. It adds the same declare
+  and execute flow as the TypeScript SDK: `declare()`, `execute()`, `status()`,
+  `reconcile()`, and `ExecutionPendingError` for a `202` answer. `create()` is
+  kept, and now calls `declare()` then `execute()`. There was no Python 2.0.2
+  release. The new routes need a server that includes decision D23. v2.0.1,
+  published 2026-11-10, aligned the SDK with the other 2.0.1 packages and
+  changed no code. v2.0.0, published 2026-11-07, added full hybrid verification
+  to the offline verifier: it verifies hybrid records in full, with a
+  `signatures` array holding one Ed25519 and one ML-DSA-65 entry, including the
+  whole-record message of schema version 3. Its results report `coverage`
+  (`"full"` or `"legacy"`) and `hybrid_signatures_valid`. ML-DSA-65 needs
+  `cryptography` 47.0.0 or later. Execution models accept an optional
+  `evaluation_method`. v1.6.3, published 2026-11-01, changed only documentation,
+  formatting and tests. v1.6.1, published 2026-10-22, removed the links to a
+  private repository from the package metadata. v1.6.0, published 2026-10-11,
+  added the business signal source and authority grant methods, and `conditions`
+  on a release: see [New in 1.6.0](#new-in-160). v1.5.0, published 2026-10-04,
+  added the external connector methods, `policy_in_effect()` and
+  `verify_parmana_release()`, fixed offline verification of a decoded record,
+  and moved to the Apache License 2.0: see [New in 1.5.0](#new-in-150). v1.4.0,
+  published 2026-09-29, added `sign_approval()` and the approver methods: see
+  [New in 1.4.0](#new-in-140). v1.3.0, published 2026-09-25, added policy
+  governance, step up signing, `caller()`, `public_key()`,
+  `trust_records.list()` and `latest_receipt()`, and lets the offline verifiers
+  take the SDK's own models: see [New in 1.3.0](#new-in-130). v1.2.0, published
+  2026-09-21, added the Execution Intent methods and an offline intent verifier.
+  v1.1.6 adds `server_code` to `InternalServerError`. v1.1.5 lets the offline
+  verifier accept records over 4096 bytes that AWS KMS signed as a fixed size
+  commitment, and declares its `cryptography` dependency as the optional
+  `verify` extra (`pip install "parmana[verify]"`). v1.1.4 was published
+  2026-09-14. See [Changelog](/changelog) and the fix history at the bottom of
+  this page.
 </Info>
 
 ## Install

@@ -11,7 +11,7 @@ v3 records are hybrid-signed: one Ed25519 entry and one ML-DSA-65 entry (`dilith
 ## Current state
 
 - The SDKs verify v3 hybrid records (parmana-core PR #491, merged or open at the time of reading).
-- Status, 2026-11-15: gap G-121 is closed. The published `@parmana/verifier` 2.0.1, `parmana-verifier` 2.0.1, `@parmana/sdk` 2.0.2 and `parmana` 2.0.1 all verify the v3 fixture from parmana-core `7e9a54fb`. Precondition 4 holds for the verifiers and the SDKs as published (see the G-121 closure note). The default is still v2. Nothing in this runbook has run on Preview or Production.
+- Status, 2026-11-15: the SDK and verifier packages at 2.0.3 are published on npm and PyPI, and read schema version 3. Gap G-121 is closed. The published `@parmana/verifier` 2.0.1, `parmana-verifier` 2.0.1, `@parmana/sdk` 2.0.2 and `parmana` 2.0.1 all verify the v3 fixture from parmana-core `7e9a54fb`. Precondition 4 holds for the verifiers and the SDKs as published (see the G-121 closure note). The default is still v2. Nothing in this runbook has run on Preview or Production.
 - The verifier reads v3 (parmana-verifier PR #34).
 - The server issues v2 everywhere. Nothing in production issues hybrid records today (gap G-119).
 - Preview on Vercel shows Node 26.x through an override. Production shows the same. See `NODE-VERSION.md`.
