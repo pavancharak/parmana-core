@@ -46,6 +46,7 @@ This page replaces the 2026-11-05 version. The gap table now lives in `VERIFICAT
 - **Node version: 24.x everywhere.** The Vercel project currently shows 26.x through a dashboard override, which must be changed.
 - **Schema v3 is turned on Preview first, production later, as separate decisions.** The gate is in `runbooks/SCHEMA-V3-ROLLOUT.md`.
 - **No ML-DSA-65 private key goes into an environment variable** for the schema v3 Preview test, unless the owner accepts that exposure in writing.
+- **Default schema (owner decision, 2026-11-15): v3 by default, subject to gate G-121.** Not yet changed. The published SDKs verify v3 (checked 2026-11-15). The separately published verifier is not yet checked, and the SDKs still accept v2 by default, which the verifier in parmana-verifier PR #39 does not.
 
 ## 3. What remains, in order
 

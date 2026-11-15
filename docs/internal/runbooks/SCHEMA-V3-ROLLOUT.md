@@ -11,6 +11,7 @@ v3 records are hybrid-signed: one Ed25519 entry and one ML-DSA-65 entry (`dilith
 ## Current state
 
 - The SDKs verify v3 hybrid records (parmana-core PR #491, merged or open at the time of reading).
+- Status, 2026-11-15: the published `@parmana/sdk@2.0.2` and `parmana@2.0.1` verify the v3 fixture and reject a tampered one. Precondition 4 holds for the SDKs as published. It does not yet hold for the separately published verifier (see gap G-121). The default is still v2. Nothing in this runbook has run.
 - The verifier reads v3 (parmana-verifier PR #34).
 - The server issues v2 everywhere. Nothing in production issues hybrid records today (gap G-119).
 - Preview on Vercel shows Node 26.x through an override. Production shows the same. See `NODE-VERSION.md`.
