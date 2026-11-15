@@ -73,3 +73,5 @@ export * from "./postgres/PostgresExecutionAuditSink.js";
 export * from "./postgres/PostgresPoolFactory.js";
 export * from "./postgres/PostgresChallengeRecordRepository.js";
 export * from "./postgres/PostgresRateLimitStore.js";
+export * from "./memory/MemoryTransactionStatusEventRepository.js";
+export * from "./postgres/PostgresTransactionStatusEventRepository.js";

@@ -29,3 +29,4 @@ export * from "./same-actor-cannot-approve-own-change-error.js";
 export * from "./step-up-authorization-invalid-error.js";
 export * from "./release-not-dispatched-error.js";
 export * from "./authorization-verification-failed-error.js";
+export * from "./invalid-status-transition-error.js";
