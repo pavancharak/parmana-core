@@ -31,11 +31,11 @@ This log records assurance test runs against the plan in
 
 **Results**
 
-| Record | npm `@parmana/verifier` 2.0.1 | PyPI `parmana-verifier` 2.0.1 |
-| --- | --- | --- |
-| v3 (`v3-record-1.json`) | valid, `coverage: full`, exit 0 | valid, `coverage: full`, exit 0 |
-| v2 (`v2-record-1.json`) | refused by default, exit 1 | refused by default, exit 1 |
-| single-algorithm (`single-record-1.json`) | refused by default, exit 1 | refused by default, exit 1 |
+| Record                                    | npm `@parmana/verifier` 2.0.1   | PyPI `parmana-verifier` 2.0.1   |
+| ----------------------------------------- | ------------------------------- | ------------------------------- |
+| v3 (`v3-record-1.json`)                   | valid, `coverage: full`, exit 0 | valid, `coverage: full`, exit 0 |
+| v2 (`v2-record-1.json`)                   | refused by default, exit 1      | refused by default, exit 1      |
+| single-algorithm (`single-record-1.json`) | refused by default, exit 1      | refused by default, exit 1      |
 
 **Checks not run**
 
@@ -62,18 +62,18 @@ This log records assurance test runs against the plan in
 
 **Results**
 
-| Measurement                                                       | Value                                          |
-| ----------------------------------------------------------------- | ---------------------------------------------- |
-| npm 2.0.2, schema v3 record (`v3-record-1.json`)                  | valid: true, hashValid: true, errors: none     |
-| npm 2.0.2, schema v2 record (default trust)                       | valid: true                                    |
-| npm 2.0.2, single-algorithm record (default trust)                | valid: true                                    |
-| npm 2.0.2, schema v3 record with `updatedAt` changed              | valid: false (ed25519 and dilithium3 signatures fail) |
-| PyPI 2.0.1, schema v3 record                                      | valid: True, errors: none                      |
-| PyPI 2.0.1, schema v2 record                                      | valid: True                                    |
-| PyPI 2.0.1, single-algorithm record                               | valid: True                                    |
-| PyPI 2.0.1, schema v3 record with `updatedAt` changed             | valid: False (both signatures fail)            |
-| Repo `python/parmana/crypto/offline_verifier.py` vs 2.0.1 wheel   | identical                                      |
-| Repo Python files that differ from the 2.0.1 wheel                | 7 (the D23 client: `execution_api.py`, `transaction_api.py`, `client.py`, `errors/__init__.py`, `models/__init__.py`, `models/execution_evidence.py`, plus the new `execution_pending_error.py` and `transaction_status.py`) |
+| Measurement                                                     | Value                                                                                                                                                                                                                        |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| npm 2.0.2, schema v3 record (`v3-record-1.json`)                | valid: true, hashValid: true, errors: none                                                                                                                                                                                   |
+| npm 2.0.2, schema v2 record (default trust)                     | valid: true                                                                                                                                                                                                                  |
+| npm 2.0.2, single-algorithm record (default trust)              | valid: true                                                                                                                                                                                                                  |
+| npm 2.0.2, schema v3 record with `updatedAt` changed            | valid: false (ed25519 and dilithium3 signatures fail)                                                                                                                                                                        |
+| PyPI 2.0.1, schema v3 record                                    | valid: True, errors: none                                                                                                                                                                                                    |
+| PyPI 2.0.1, schema v2 record                                    | valid: True                                                                                                                                                                                                                  |
+| PyPI 2.0.1, single-algorithm record                             | valid: True                                                                                                                                                                                                                  |
+| PyPI 2.0.1, schema v3 record with `updatedAt` changed           | valid: False (both signatures fail)                                                                                                                                                                                          |
+| Repo `python/parmana/crypto/offline_verifier.py` vs 2.0.1 wheel | identical                                                                                                                                                                                                                    |
+| Repo Python files that differ from the 2.0.1 wheel              | 7 (the D23 client: `execution_api.py`, `transaction_api.py`, `client.py`, `errors/__init__.py`, `models/__init__.py`, `models/execution_evidence.py`, plus the new `execution_pending_error.py` and `transaction_status.py`) |
 
 **Checks not run**
 

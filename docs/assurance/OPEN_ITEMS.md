@@ -62,14 +62,14 @@ Each row names the item, what is needed, who decides, and the document with the 
 
 ## 6. Schema v3 default and SDK release (added 2026-11-15)
 
-| ID             | Item                                                                                              | Status                                                                                                  |
-| -------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| V3-default     | Make schema v3 the default in parmana-core                                                        | Owner decision: v3 by default. Not done. Waits for the G-121 verifier check and a release.              |
-| G-121-verifier | The separately published verifier reads schema v3                                                 | Closed 2026-11-15: `@parmana/verifier` 2.0.1 and `parmana-verifier` 2.0.1 verify v3. Owner to confirm the package G-121 meant (it names "0.3.0"). |
-| SDK-sync-py    | The repo's Python SDK (2.0.2) has the D23 client additions. PyPI's latest is 2.0.1                | Open. Its verifier code is byte-identical to the published 2.0.1. A release is needed to publish the additions. |
-| SDK-sync-ts    | The repo's TypeScript SDK against the published `@parmana/sdk@2.0.2`                              | Not compared.                                                                                           |
-| SDK-publish    | Publish the SDKs (npm and PyPI)                                                                   | Blocked. No npm or PyPI credentials in the session environment (`npm whoami` returns ENEEDAUTH).       |
-| SDK-policy     | The published SDKs accept schema v2 and single-algorithm records by default. parmana-verifier PR #39 refuses them | Owner decision: which default the SDKs and the verifier should share.                              |
+| ID             | Item                                                                                                              | Status                                                                                                                                            |
+| -------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| V3-default     | Make schema v3 the default in parmana-core                                                                        | Owner decision: v3 by default. Not done. Waits for the G-121 verifier check and a release.                                                        |
+| G-121-verifier | The separately published verifier reads schema v3                                                                 | Closed 2026-11-15: `@parmana/verifier` 2.0.1 and `parmana-verifier` 2.0.1 verify v3. Owner to confirm the package G-121 meant (it names "0.3.0"). |
+| SDK-sync-py    | The repo's Python SDK (2.0.2) has the D23 client additions. PyPI's latest is 2.0.1                                | Open. Its verifier code is byte-identical to the published 2.0.1. A release is needed to publish the additions.                                   |
+| SDK-sync-ts    | The repo's TypeScript SDK against the published `@parmana/sdk@2.0.2`                                              | Not compared.                                                                                                                                     |
+| SDK-publish    | Publish the SDKs (npm and PyPI)                                                                                   | Blocked. No npm or PyPI credentials in the session environment (`npm whoami` returns ENEEDAUTH).                                                  |
+| SDK-policy     | The published SDKs accept schema v2 and single-algorithm records by default. parmana-verifier PR #39 refuses them | Owner decision: which default the SDKs and the verifier should share.                                                                             |
 
 ## 7. Closed in this work (for reference)
 
