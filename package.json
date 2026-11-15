@@ -80,7 +80,7 @@
     "@types/swagger-ui-express": "^4.1.8",
     "@vitest/coverage-v8": "^5.1.0",
     "ajv": "^8.20.0",
-    "autocannon": "^8.0.0",
+    "autocannon": "^9.0.0",
     "dependency-cruiser": "^18.7.2",
     "dotenv": "^18.0.10",
     "esbuild": "^0.28.2",
