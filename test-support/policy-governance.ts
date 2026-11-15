@@ -10,7 +10,10 @@ import {
 } from "@parmana/shared";
 
 import { PolicyChangeApprovalService } from "../packages/api/src/governance/PolicyChangeApprovalService.js";
-import { policyChangeApprovalRecordRepository } from "../packages/api/src/repositories.js";
+import {
+  pendingPolicyChangeRepository,
+  policyChangeApprovalRecordRepository,
+} from "../packages/api/src/repositories.js";
 
 /**
  * TEST DATA ONLY. Never imported by production code.
@@ -95,7 +98,16 @@ export async function approvePolicyVersion(
     reason: "test fixture: seeded policy-governance approval",
   };
 
+  // The change is stored before it is approved, as the production flow does.
+  // Postgres enforces the approval's reference to it.
+  await pendingPolicyChangeRepository.create(change);
   await service.approve(change, FIXTURE_CHECKER);
+  // The approve route records the resolution after the approval (as in
+  // pending-policy-changes.ts), so the change is no longer pending.
+  await pendingPolicyChangeRepository.resolve(change.pendingPolicyChangeId, {
+    outcome: "approved",
+    resolvedBy: FIXTURE_CHECKER,
+  });
 }
 
 /**
