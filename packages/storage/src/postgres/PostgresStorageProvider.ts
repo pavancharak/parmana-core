@@ -6,6 +6,7 @@ import type {
   AuthorityGrantRepository,
   BusinessTransactionRepository,
   ExecutionIntentRepository,
+  TransactionStatusEventRepository,
   ExecutionTrustRecordRepository,
   HandbookDownloadLeadRepository,
   PendingPolicyChangeRepository,
@@ -28,6 +29,7 @@ import { PostgresBusinessTransactionRepository } from "./PostgresBusinessTransac
 import { PostgresExecutionTrustRecordRepository } from "./PostgresExecutionTrustRecordRepository.js";
 
 import { PostgresExecutionIntentRepository } from "./PostgresExecutionIntentRepository.js";
+import { PostgresTransactionStatusEventRepository } from "./PostgresTransactionStatusEventRepository.js";
 import { PostgresRefusalRecordRepository } from "./PostgresRefusalRecordRepository.js";
 import { PostgresInboundCheckRepository } from "./PostgresInboundCheckRepository.js";
 import { PostgresInboundDecisionRepository } from "./PostgresInboundDecisionRepository.js";
@@ -64,6 +66,7 @@ export class PostgresStorageProvider implements StorageProvider {
   readonly inboundChecks: InboundCheckRepository;
   readonly inboundOutcomes: InboundOutcomeRepository;
   readonly executionIntents: ExecutionIntentRepository;
+  readonly transactionStatusEvents: TransactionStatusEventRepository;
   readonly pendingPolicyChanges: PendingPolicyChangeRepository;
   readonly policyChangeApprovalRecords: PolicyChangeApprovalRecordRepository;
   readonly handbookDownloadLeads: HandbookDownloadLeadRepository;
@@ -89,6 +92,9 @@ export class PostgresStorageProvider implements StorageProvider {
     this.inboundOutcomes = new PostgresInboundOutcomeRepository(pool);
 
     this.executionIntents = new PostgresExecutionIntentRepository(pool);
+    this.transactionStatusEvents = new PostgresTransactionStatusEventRepository(
+      pool,
+    );
 
     this.pendingPolicyChanges = new PostgresPendingPolicyChangeRepository(pool);
 

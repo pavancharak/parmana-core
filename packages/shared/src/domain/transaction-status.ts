@@ -38,7 +38,10 @@ const ALLOWED_NEXT: Readonly<
 > = {
   RECEIVED: ["POLICY_EVALUATED"],
   POLICY_EVALUATED: ["APPROVED", "REJECTED"],
-  APPROVED: ["EXECUTING"],
+  // FAILED from APPROVED: a release refused or failed before EXECUTING (for
+  // example signing), so nothing reached the connector. Not in the design's
+  // section 4 table yet; see the commit message.
+  APPROVED: ["EXECUTING", "FAILED"],
   EXECUTING: ["EXECUTED", "FAILED"],
   EXECUTED: ["VERIFIED"],
   REJECTED: [],

@@ -1692,21 +1692,23 @@ paths:
     post:
       tags:
         - Transactions
-      summary: Create (execute) a Business Transaction
+      summary: Declare a Business Transaction
       operationId: createTransaction
       description: >
+        Declares a Business Transaction: it is checked, accepted and recorded
+        with the status `RECEIVED`.
+
+        Nothing is decided, signed or released by this call. Release it with
+
+        `POST /transactions/{businessTransactionId}/execute`, and read its
+        status with
+
+        `GET /transactions/{businessTransactionId}/status`.
+
         In the sandbox, each `businessTransactionId` works once: a prefilled id
         returns `409` after its first use.
 
         For a new id each run, use the cURL sample, which generates one.
-
-        The same as `POST /execute` in every way except the success status,
-        `201` instead of `200`. Use
-
-        whichever fits your client. Read [Execute a Business
-        Transaction](/api-reference/endpoints/execute-transaction)
-
-        for the full behavior, the outcomes and what to do after each.
       requestBody:
         required: true
         content:
@@ -1800,295 +1802,38 @@ paths:
                   unexpectedField: should-not-be-persisted
       responses:
         "201":
-          description: Approved and released. The body is the signed Execution Trust Record.
+          description: Accepted and recorded as RECEIVED. Nothing has been released.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/execution-trust-record-response.schema"
-              examples:
-                test-fixture-flow:
-                  summary: Real captured response, currently runnable (pairs with the
-                    test-fixture-flow request example above; APPROVED, 201)
-                  value:
-                    trustRecordId: 2770d2b5-9464-4c74-87aa-7a23ae4be7cd
-                    businessTransactionId: 4cfe5661-42a6-4db0-8372-2d24dca235f2
-                    transaction:
-                      businessTransactionId: 4cfe5661-42a6-4db0-8372-2d24dca235f2
-                      metadata:
-                        businessTransactionId: 4cfe5661-42a6-4db0-8372-2d24dca235f2
-                        sourceSystem: docs-api-reference
-                        submittedBy: docs-example
-                      authority:
-                        authorityId: be8afa44-ee3c-44c2-a4a2-ba119e128948
-                        authorityType: SERVICE
-                        principalId: docs-example-caller
-                        issuedAt: 2026-09-14T17:18:27.000Z
-                      authorization:
-                        authorizationId: 81a1c120-d296-458b-bbe5-824a8617f23a
-                        authorityId: be8afa44-ee3c-44c2-a4a2-ba119e128948
-                        purpose: "API reference example: transactions endpoint"
-                        issuedAt: 2026-09-14T17:18:27.000Z
-                      intent:
-                        intentId: ceb89d68-13ac-4ff9-b7b9-dd0e15637baa
-                        authorizationId: 81a1c120-d296-458b-bbe5-824a8617f23a
-                        action: test:fixture-execute
-                        target: vendor://payments
-                        parameters:
-                          amount: 250
-                          currency: USD
-                        createdAt: 2026-09-14T17:18:27.000Z
-                      policy:
-                        name: vendor-payment
-                        version: 2.0.0
-                        schemaVersion: 1.0.0
-                        contentHash: 27b396d84540aa792d88566da38537b671195c0c0049bac3aca41d4544a12b1a
-                      signals:
-                        vendorVerified: true
-                        invoiceVerified: true
-                        paymentApproved: true
-                        sufficientFunds: true
-                        paymentAmount: 250
-                        riskScore: 5
-                        vendorId: vendor://payments
-                      status: RECEIVED
-                      createdAt: 2026-09-14T17:18:27.958Z
-                    authorization:
-                      payload:
-                        version: 1
-                        authorizationId: 232afef4-b320-4596-906c-b6adf6ef83ff
-                        nonce: b138d6ca-c509-4b3d-a2d1-09abd113d5a0
-                        decisionId: ac059ca3-9c2c-4e32-b4ad-bb8787444b2c
-                        businessTransactionId: 4cfe5661-42a6-4db0-8372-2d24dca235f2
-                        policyName: vendor-payment
-                        policyVersion: 2.0.0
-                        policyContentHash: 27b396d84540aa792d88566da38537b671195c0c0049bac3aca41d4544a12b1a
-                        signalsHash: 7518e06daf697fbdbacfb7f0f88d42cbe24aefae6e82b3801e60efa22c62f12c
-                        submittedBy: docs-example
-                        authorizedAt: 2026-09-14T17:18:27.960Z
-                        expiresAt: 2026-09-14T17:20:27.960Z
-                        businessTransactionHash: aa491841d05ce70f7f7157fbb8ba6fee0c4f886ea5fc16fa22de21e1bcaf25da
-                      signature: 01OnI4GwrHrDeVneUHn01CnLnkwRN+pTHYQmHfEFJUIjIKIHmqe28QWe6KEcEYkzAhtJIS8ZmpvNVvW2pn5IBA==
-                      keyId: default
-                      algorithm: ed25519
-                    overrides: []
-                    executions:
-                      - executionId: d5a2dfb7-c642-43bc-a8ad-132df83a4a5a
-                        businessTransactionId: 4cfe5661-42a6-4db0-8372-2d24dca235f2
-                        decision:
-                          decisionId: ac059ca3-9c2c-4e32-b4ad-bb8787444b2c
-                          intentId: ceb89d68-13ac-4ff9-b7b9-dd0e15637baa
-                          policy:
-                            name: vendor-payment
-                            version: 2.0.0
-                            schemaVersion: 1.0.0
-                          signals:
-                            vendorVerified: true
-                            invoiceVerified: true
-                            paymentApproved: true
-                            sufficientFunds: true
-                            paymentAmount: 250
-                            riskScore: 5
-                            vendorId: vendor://payments
-                          outcome: APPROVED
-                          reason: Vendor payment authorized. Vendor verification, invoice verification,
-                            payment approval, funding, and risk assessment
-                            requirements were satisfied.
-                          evaluatedAt: 2026-09-14T17:18:27.960Z
-                        status: COMPLETED
-                        mode: SYNC
-                        startedAt: 2026-09-14T17:18:27.963Z
-                        metadata:
-                          authorizationId: 232afef4-b320-4596-906c-b6adf6ef83ff
-                        previousChainHash: null
-                        chainHash: bb16b8a121a770e956bd2b81ca23e9f73fc69ce5213d6711b4f3aa29aed37d5f
-                        chainSignature:
-                          algorithm: ed25519
-                          keyId: default
-                          value: wgxGxFN6lFvet10b3M01GliPAnazoYFFHh498w6vc/Stm1xTpe9af/Ee+9SsngEylzqs4E7EAbfG8+ehgyOHCw==
-                          signedAt: 2026-09-14T17:18:27.975Z
-                        evidence:
-                          businessTransactionId: 4cfe5661-42a6-4db0-8372-2d24dca235f2
-                          action: test:fixture-execute
-                          target: vendor://payments
-                          parameters:
-                            amount: 250
-                            currency: USD
-                          success: true
-                          executedAt: 2026-09-14T17:18:27.971Z
-                          attributes:
-                            connector:
-                              connectorId: test-fixture
-                              connectorVersion: 1.0.0
-                              capability: test:fixture-execute
-                              sanitizedEndpoint: vendor://payments
-                              credentialProviderId: static
-                              requestSummary:
-                                businessTransactionId: 4cfe5661-42a6-4db0-8372-2d24dca235f2
-                                action: test:fixture-execute
-                                target: vendor://payments
-                                parameters:
-                                  amount: 250
-                                  currency: USD
-                              responseSummary:
-                                success: true
-                                metadata: {}
-                              startedAt: 2026-09-14T17:18:27.971Z
-                              completedAt: 2026-09-14T17:18:27.971Z
-                              connectorEvidenceHash: af0c1560344e9376c903ad77ae5574ae5cb7f81e968d286b9e33e66b790059ea
-                        completedAt: 2026-09-14T17:18:27.973Z
-                    verifications:
-                      - verificationId: db0a48c7-893f-4cec-982f-f95e23608e5b
-                        businessTransactionId: 4cfe5661-42a6-4db0-8372-2d24dca235f2
-                        status: VERIFIED
-                        message: Execution Trust Record verified successfully.
-                        verifiedAt: 2026-09-14T17:18:27.981Z
-                        trustRecordHash: 05fe72e8943fca8f451f631cd4f3ae61f8b62e0e8e92410d13166c67605d7892
-                    receipts:
-                      - receiptId: 0601d04d-3d3c-4b0c-9b37-e811b7eb8375
-                        businessTransactionId: 4cfe5661-42a6-4db0-8372-2d24dca235f2
-                        trustRecordHash: 05fe72e8943fca8f451f631cd4f3ae61f8b62e0e8e92410d13166c67605d7892
-                        receiptHash: f95295cb63aa045e17835fc06b367cb5305878e8ce13b268c9b72371c0da05f6
-                        issuedAt: 2026-09-14T17:18:27.981Z
-                        algorithm: ed25519
-                        signature: PYhfZtyR+ON2X94ik82TSlh+IgBJT3PPz9FieAwgwepHR7K+LDNOHtVwpCbOakw2z3yeF+S/a8CGRBwGLUSxCA==
-                    createdAt: 2026-09-14T17:18:27.975Z
-                    updatedAt: 2026-09-14T17:18:27.975Z
-                    trustRecordHash: 05fe72e8943fca8f451f631cd4f3ae61f8b62e0e8e92410d13166c67605d7892
-                    signature:
-                      algorithm: ed25519
-                      keyId: default
-                      value: 7q+9s+1mzxTdnwL5ogZnVHdNP4RqrBfJICu+tYdtQw+JObBcLVi1BESqin8KpJ+uZrmo+AcEgigmyKmCnc4ADQ==
-                      signedAt: 2026-09-14T17:18:27.977Z
-                vendor-payment-flow-transactions-endpoint:
-                  summary: "Real captured response, the client-supplied status (APPROVED) and
-                    unexpectedField from the request example above are both
-                    absent: status is server-set to RECEIVED and the
-                    unrecognized field was silently dropped"
-                  value:
-                    trustRecordId: d2111a67-86bb-4d5f-952c-a5a44d5e5144
-                    businessTransactionId: a0477e25-db8d-447d-9dbe-633e4705275f
-                    transaction:
-                      businessTransactionId: a0477e25-db8d-447d-9dbe-633e4705275f
-                      metadata:
-                        businessTransactionId: a0477e25-db8d-447d-9dbe-633e4705275f
-                        correlationId: a6ea6a80-d032-4749-9872-1843efaac04c
-                        sourceSystem: vendor-payment-service
-                        submittedBy: ap-automation
-                        submittedAt: 2026-07-13T17:36:20.390Z
-                      authority:
-                        authorityId: a9c3938d-de22-454a-a75c-1666f3c1693d
-                        authorityType: SERVICE
-                        principalId: ap-automation-svc
-                        displayName: Accounts Payable Automation
-                        issuedAt: 2026-07-13T17:36:20.390Z
-                      authorization:
-                        authorizationId: b45f2e89-6c0b-4534-8047-9a75734ccecf
-                        authorityId: a9c3938d-de22-454a-a75c-1666f3c1693d
-                        purpose: Authorize vendor payment disbursement
-                        issuedAt: 2026-07-13T17:36:20.390Z
-                      intent:
-                        intentId: 578850fb-277a-4bb7-99dd-6761961e10e1
-                        authorizationId: b45f2e89-6c0b-4534-8047-9a75734ccecf
-                        action: payments:execute
-                        target: vendor/V-700
-                        parameters:
-                          amount: 3300
-                          currency: USD
-                        createdAt: 2026-07-13T17:36:20.390Z
-                      policy:
-                        name: vendor-payment
-                        version: 2.0.0
-                        schemaVersion: 1.0.0
-                      signals:
-                        vendorVerified: true
-                        invoiceVerified: true
-                        paymentApproved: true
-                        sufficientFunds: true
-                        paymentAmount: 3300
-                        riskScore: 9
-                      status: RECEIVED
-                      createdAt: 2026-07-13T17:36:20.483Z
-                    overrides: []
-                    executions:
-                      - executionId: 028cdd7b-d04a-400f-ad1a-08eedc69e31e
-                        businessTransactionId: a0477e25-db8d-447d-9dbe-633e4705275f
-                        decision:
-                          decisionId: d70f66bd-2674-4c07-8c2f-f9a19f8f5fd2
-                          intentId: 578850fb-277a-4bb7-99dd-6761961e10e1
-                          policy:
-                            name: vendor-payment
-                            version: 2.0.0
-                            schemaVersion: 1.0.0
-                          signals:
-                            vendorVerified: true
-                            invoiceVerified: true
-                            paymentApproved: true
-                            sufficientFunds: true
-                            paymentAmount: 3300
-                            riskScore: 9
-                          outcome: APPROVED
-                          reason: Vendor payment authorized. Vendor verification, invoice verification,
-                            payment approval, funding, and risk assessment
-                            requirements were satisfied.
-                          evaluatedAt: 2026-07-13T17:36:20.484Z
-                        status: COMPLETED
-                        mode: SYNC
-                        startedAt: 2026-07-13T17:36:20.485Z
-                        metadata:
-                          authorizationId: 3a71d9ab-5f36-42b0-ba5b-214179fde2d9
-                        evidence:
-                          businessTransactionId: a0477e25-db8d-447d-9dbe-633e4705275f
-                          action: payments:execute
-                          target: vendor/V-700
-                          parameters:
-                            amount: 3300
-                            currency: USD
-                          success: true
-                          executedAt: 2026-07-13T17:36:20.486Z
-                          attributes:
-                            connector:
-                              connectorId: vendor-payment
-                              connectorVersion: 1.0.0
-                              capability: payments:execute
-                              sanitizedEndpoint: vendor/V-700
-                              credentialProviderId: environment
-                              requestSummary:
-                                businessTransactionId: a0477e25-db8d-447d-9dbe-633e4705275f
-                                action: payments:execute
-                                target: vendor/V-700
-                                parameters:
-                                  amount: 3300
-                                  currency: USD
-                              responseSummary:
-                                success: true
-                                metadata: {}
-                              startedAt: 2026-07-13T17:36:20.486Z
-                              completedAt: 2026-07-13T17:36:20.486Z
-                              connectorEvidenceHash: d172eee9244766ced4e30678711bdb3093250cf3a93adb4b0ab41914b2da36c6
-                        completedAt: 2026-07-13T17:36:20.486Z
-                    verifications:
-                      - verificationId: 39a20fd1-50a9-4b3a-a38b-7d261c616f41
-                        businessTransactionId: a0477e25-db8d-447d-9dbe-633e4705275f
-                        status: VERIFIED
-                        message: Execution Trust Record verified successfully.
-                        verifiedAt: 2026-07-13T17:36:20.487Z
-                        trustRecordHash: 20f53f013d8fb7a93666bdeca0fc6015b009406e4ae686e74244a626a66dd781
-                    receipts:
-                      - receiptId: 7bd6d010-a9c1-440f-9823-501fc116e64f
-                        businessTransactionId: a0477e25-db8d-447d-9dbe-633e4705275f
-                        trustRecordHash: 20f53f013d8fb7a93666bdeca0fc6015b009406e4ae686e74244a626a66dd781
-                        receiptHash: fa267b72b5fdce8e4ab5e3273f788f08ffaadb27c7af47c34b94aa872b37ca40
-                        issuedAt: 2026-07-13T17:36:20.487Z
-                        algorithm: ed25519
-                        signature: XZ4/ADgeML5fI7iWhTECN+dA642KROMjSLkMJdHGITNBXkryK+NWKkzzw9VGorBlBynrPHPF70OhgbNtrxqgAg==
-                    createdAt: 2026-07-13T17:36:20.486Z
-                    updatedAt: 2026-07-13T17:36:20.486Z
-                    trustRecordHash: 20f53f013d8fb7a93666bdeca0fc6015b009406e4ae686e74244a626a66dd781
-                    signature:
-                      algorithm: ed25519
-                      keyId: default
-                      value: teph6TYn3Q0s+/hjz3TQr4uNmaRrGaPsozXkbiEkf0MjfPDIEChYa2pBjrQktLFwXW8X8cnih8/z3Sd8vjasDA==
-                      signedAt: 2026-07-13T17:36:20.487Z
+                type: object
+                required:
+                  - businessTransactionId
+                  - status
+                  - transaction
+                properties:
+                  businessTransactionId:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum:
+                      - RECEIVED
+                  acceptedAt:
+                    type: string
+                    format: date-time
+                  transaction:
+                    type: object
+                    description: The Business Transaction as stored.
+              example:
+                businessTransactionId: 9b2c4f1e-3d7a-4e8b-9f10-2a6c5d7e8f90
+                status: RECEIVED
+                acceptedAt: 2026-11-15T10:00:00.000Z
+                transaction:
+                  businessTransactionId: 9b2c4f1e-3d7a-4e8b-9f10-2a6c5d7e8f90
+                  intent:
+                    action: sandbox:receipt
+                    target: order-docs-example
         "400":
           description: The request is malformed and nothing was stored. The same checks as
             `POST /execute`.
@@ -2109,39 +1854,22 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
-          description: Refused, with the same codes and meaning as `POST /execute`.
+          description: The caller is not permitted to assert this authority.principalId,
+            to act for this tenantId, or to invoke this capability.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/error.schema"
-              examples:
-                principalNotAllowed:
-                  summary: Real captured response, principalId not permitted for this caller
-                  value:
-                    error: Caller is not permitted to assert this authority.principalId.
-                capabilityNotAllowed:
-                  summary: The key may not invoke this action
-                  value:
-                    error: Caller is not permitted to invoke this capability.
-                    code: CAPABILITY_NOT_ALLOWED
-                policyDenied:
-                  summary: A policy rejected the transaction, a final decision
-                  value:
-                    error: "Execution rejected: Vendor payment rejected because the assessed payment
-                      risk exceeds the maximum permitted threshold."
-                    code: POLICY_DENIED
-        "404":
-          description: "`policy.name` and `policy.version` do not match a policy this
-            server has."
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error.schema"
-              examples:
-                policyNotFound:
-                  summary: Real captured response, unknown policy referenced by the transaction
-                  value:
-                    error: Policy 'does-not-exist' version '9.9.9' was not found.
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+              example:
+                error: Caller is not permitted to invoke this capability.
+                code: CAPABILITY_NOT_ALLOWED
         "409":
           description: This `businessTransactionId` was already used. Nothing ran again.
           content:
@@ -2176,30 +1904,6 @@ paths:
                       events for this businessTransactionId. authorizationId:
                       381ef27a-0955-4085-9e5d-e4223fef2986."
                     code: EXECUTION_RECORD_INCOMPLETE
-        "502":
-          description: "`EXECUTION_OUTCOME_UNKNOWN`: released, then the connector call
-            failed. Do not resend under a new id; check the target system, then
-            resolve the intent. See `POST /execute`."
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error.schema"
-              examples:
-                executionOutcomeUnknown:
-                  summary: The action was released and the connector call failed
-                  value:
-                    error: "The action for business transaction
-                      '38dcf000-99ed-43af-8666-46c63c8ada74' was released to the
-                      execution system, but the call failed, so whether it was
-                      performed is unknown. Do not retry as a new transaction:
-                      check the target system, then close the Execution Intent
-                      with POST
-                      /execution-intents/38dcf000-99ed-43af-8666-46c63c8ada74/r\
-                      esolve. authorizationId:
-                      4d291c90-9e93-4a8a-b214-8cc6526fe2e3."
-                    code: EXECUTION_OUTCOME_UNKNOWN
-        "503":
-          $ref: "#/components/responses/SigningUnavailable"
       x-codeSamples:
         - lang: bash
           label: cURL
@@ -2293,13 +1997,16 @@ paths:
             });
 
 
-            const record = await client.createTransaction(transaction);
+            // Declares only: the transaction is recorded as RECEIVED and
+            nothing is released.
+
+            // Release it with
+            executeTransaction(declared.businessTransactionId).
+
+            const declared = await client.declareTransaction(transaction);
 
 
-            console.log(
-              record.businessTransactionId,
-              record.executions[0]?.decision.outcome,
-            );
+            console.log(declared.businessTransactionId, declared.status);
         - lang: python
           label: Python
           source: >-
@@ -2345,11 +2052,16 @@ paths:
             )
 
 
-            record = client.create_transaction(transaction)
+            # Declares only: the transaction is recorded as RECEIVED and nothing
+            is released.
+
+            # Release it with
+            client.execute_transaction(declared.business_transaction_id).
+
+            declared = client.declare_transaction(transaction)
 
 
-            print(record.business_transaction_id,
-            record.executions[0].decision.outcome)
+            print(declared.business_transaction_id, declared.status)
     get:
       tags:
         - Transactions
@@ -2696,6 +2408,708 @@ paths:
 
 
             print(transaction.intent.action)
+  /transactions/{businessTransactionId}/execute:
+    post:
+      tags:
+        - Transactions
+      summary: Execute a declared Business Transaction
+      operationId: executeDeclaredTransaction
+      description: >
+        Decides, signs and releases a Business Transaction that was declared
+        with `POST /transactions`,
+
+        then verifies it. The caller must be the one that declared it. The
+        status walks
+
+        `RECEIVED` → `POLICY_EVALUATED` → `APPROVED` (or `REJECTED`) →
+        `EXECUTING` → `EXECUTED` → `VERIFIED`.
+
+        A transaction that is not `RECEIVED` is never released again by this
+        call. One that is `EXECUTING`
+
+        is refused with `409` and the reason `outcome pending`: its outcome is
+        decided by reconciliation.
+      parameters:
+        - name: businessTransactionId
+          in: path
+          required: true
+          description: The businessTransactionId the transaction was declared with.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Released and recorded. The body is the signed Execution Trust Record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/execution-trust-record-response.schema"
+              examples:
+                test-fixture-flow:
+                  summary: Real captured response, currently runnable (pairs with the
+                    test-fixture-flow request example above; APPROVED)
+                  value:
+                    trustRecordId: 7ec8745e-fa10-4506-a247-c5a8b794eaa5
+                    businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
+                    transaction:
+                      businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
+                      metadata:
+                        businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
+                        correlationId: 9c039d73-7fb1-461f-908f-c646c905633c
+                        sourceSystem: docs-api-reference
+                        submittedBy: docs-example
+                        submittedAt: 2026-09-14 17:17:50+00:00
+                      authority:
+                        authorityId: f10f016f-b7c0-443e-8307-d26f5fa98067
+                        authorityType: SERVICE
+                        principalId: docs-example-caller
+                        displayName: Docs Example Caller
+                        issuedAt: 2026-09-14 17:17:50+00:00
+                      authorization:
+                        authorizationId: 5f112f4c-a43d-41dd-bfee-66a49efe33de
+                        authorityId: f10f016f-b7c0-443e-8307-d26f5fa98067
+                        purpose: "API reference example: refund authorization"
+                        issuedAt: 2026-09-14 17:17:50+00:00
+                      intent:
+                        intentId: 462c2efd-3b88-4f59-8c47-8ba01a63d37e
+                        authorizationId: 5f112f4c-a43d-41dd-bfee-66a49efe33de
+                        action: test:fixture-execute
+                        target: vendor://payments
+                        parameters:
+                          amount: 1000
+                          currency: USD
+                        createdAt: 2026-09-14 17:17:50+00:00
+                      policy:
+                        name: vendor-payment
+                        version: 2.0.0
+                        schemaVersion: 1.0.0
+                        contentHash: 27b396d84540aa792d88566da38537b671195c0c0049bac3aca41d4544a12b1a
+                      signals:
+                        vendorVerified: true
+                        invoiceVerified: true
+                        paymentApproved: true
+                        sufficientFunds: true
+                        paymentAmount: 1000
+                        riskScore: 5
+                        vendorId: vendor://payments
+                      status: RECEIVED
+                      createdAt: 2026-09-14 17:17:55.617000+00:00
+                    authorization:
+                      payload:
+                        version: 1
+                        authorizationId: 381ef27a-0955-4085-9e5d-e4223fef2986
+                        nonce: ed25c17c-c0b2-4600-b445-3c8cb557ac12
+                        decisionId: b83deff8-ef50-49d0-830f-741cba8f5668
+                        businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
+                        policyName: vendor-payment
+                        policyVersion: 2.0.0
+                        policyContentHash: 27b396d84540aa792d88566da38537b671195c0c0049bac3aca41d4544a12b1a
+                        signalsHash: 50d0c4e1e3b0190c2074068627086e59049b0d2d224a71cb4fc9adf7124be287
+                        submittedBy: docs-example
+                        authorizedAt: 2026-09-14 17:17:55.627000+00:00
+                        expiresAt: 2026-09-14 17:19:55.627000+00:00
+                        businessTransactionHash: ba5498ce2474e9ef58a9c368c70fd4cf0a497a84199218783d3b2992799a77bc
+                      signature: HZaohm/v3xrJTp+VrcJmLLcIG1SMl3LyPcHQUF6UHo7J9Z/KY92brpU92xVnPhVJJMaB+fd7nVRQ96k3OP7DBQ==
+                      keyId: default
+                      algorithm: ed25519
+                    overrides: []
+                    executions:
+                      - executionId: 21a57d3e-bed5-4a73-8af9-2ac2d7e8326e
+                        businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
+                        decision:
+                          decisionId: b83deff8-ef50-49d0-830f-741cba8f5668
+                          intentId: 462c2efd-3b88-4f59-8c47-8ba01a63d37e
+                          policy:
+                            name: vendor-payment
+                            version: 2.0.0
+                            schemaVersion: 1.0.0
+                          signals:
+                            vendorVerified: true
+                            invoiceVerified: true
+                            paymentApproved: true
+                            sufficientFunds: true
+                            paymentAmount: 1000
+                            riskScore: 5
+                            vendorId: vendor://payments
+                          outcome: APPROVED
+                          reason: Vendor payment authorized. Vendor verification, invoice verification,
+                            payment approval, funding, and risk assessment
+                            requirements were satisfied.
+                          evaluatedAt: 2026-09-14 17:17:55.626000+00:00
+                        status: COMPLETED
+                        mode: SYNC
+                        startedAt: 2026-09-14 17:17:55.631000+00:00
+                        metadata:
+                          authorizationId: 381ef27a-0955-4085-9e5d-e4223fef2986
+                        previousChainHash: null
+                        chainHash: f6f885358ddb3c820b3499d45c2a90a2624032ceece7bd53ece36809783e3220
+                        chainSignature:
+                          algorithm: ed25519
+                          keyId: default
+                          value: uXnVWKHYHDf8xRsl9oYdfFCem3f0n6IBzm2uYmxDnEkIU8FyOKxxWxeTidnF3A0UH2XSNNIROeeRzET6X/67BQ==
+                          signedAt: 2026-09-14 17:17:55.652000+00:00
+                        evidence:
+                          businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
+                          action: test:fixture-execute
+                          target: vendor://payments
+                          parameters:
+                            amount: 1000
+                            currency: USD
+                          success: true
+                          executedAt: 2026-09-14 17:17:55.646000+00:00
+                          attributes:
+                            connector:
+                              connectorId: test-fixture
+                              connectorVersion: 1.0.0
+                              capability: test:fixture-execute
+                              sanitizedEndpoint: vendor://payments
+                              credentialProviderId: static
+                              requestSummary:
+                                businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
+                                action: test:fixture-execute
+                                target: vendor://payments
+                                parameters:
+                                  amount: 1000
+                                  currency: USD
+                              responseSummary:
+                                success: true
+                                metadata: {}
+                              startedAt: 2026-09-14 17:17:55.645000+00:00
+                              completedAt: 2026-09-14 17:17:55.646000+00:00
+                              connectorEvidenceHash: 887b000a355c96ca432c7a709b24b50e89d879bc50699bc5b5280a957d981f70
+                        completedAt: 2026-09-14 17:17:55.650000+00:00
+                    verifications:
+                      - verificationId: 0e7de678-bb48-4fa0-ad53-3664d78d954b
+                        businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
+                        status: VERIFIED
+                        message: Execution Trust Record verified successfully.
+                        verifiedAt: 2026-09-14 17:17:55.661000+00:00
+                        trustRecordHash: cd261f8b33ebd435ce31bdcafc971044aae165d12695446f587068052ce52807
+                    receipts:
+                      - receiptId: cf5f9ef1-1e53-459a-8f58-01c9dbe50f84
+                        businessTransactionId: e54187e6-431f-4e1c-9c0e-ff2cb5d6d40a
+                        trustRecordHash: cd261f8b33ebd435ce31bdcafc971044aae165d12695446f587068052ce52807
+                        receiptHash: 3a028e197e0c297761fd675696a6d418ffb67a10a07954cf4ed004e4ceb9f4f0
+                        issuedAt: 2026-09-14 17:17:55.662000+00:00
+                        algorithm: ed25519
+                        signature: S0rbIGkdEIWtk1fVqcEq8I+d2xUZHZQW28SFDolnLcd3hYYAWz2YQ+LkvlQc9OzbPE0vF/75VUrvlvIcbaOTAw==
+                    createdAt: 2026-09-14 17:17:55.652000+00:00
+                    updatedAt: 2026-09-14 17:17:55.652000+00:00
+                    trustRecordHash: cd261f8b33ebd435ce31bdcafc971044aae165d12695446f587068052ce52807
+                    signature:
+                      algorithm: ed25519
+                      keyId: default
+                      value: lPz+IbGAQwPuLEzB7fEgiKU3dZTEeT3aIFqC/6LIRMBGK7UZor2nVkmItNUXu9RBCziAUH3yj2EchtwX6GAXBQ==
+                      signedAt: 2026-09-14 17:17:55.655000+00:00
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: Refused, with the same codes and meaning as `POST /execute`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error.schema"
+              examples:
+                principalNotAllowed:
+                  summary: Real captured response, principalId not permitted for this caller
+                  value:
+                    error: Caller is not permitted to assert this authority.principalId.
+                capabilityNotAllowed:
+                  summary: The key may not invoke this action
+                  value:
+                    error: Caller is not permitted to invoke this capability.
+                    code: CAPABILITY_NOT_ALLOWED
+                policyDenied:
+                  summary: A policy rejected the transaction, a final decision
+                  value:
+                    error: "Execution rejected: Vendor payment rejected because the assessed payment
+                      risk exceeds the maximum permitted threshold."
+                    code: POLICY_DENIED
+        "404":
+          description: "`policy.name` and `policy.version` do not match a policy this
+            server has."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error.schema"
+              examples:
+                policyNotFound:
+                  summary: Real captured response, unknown policy referenced by the transaction
+                  value:
+                    error: Policy 'does-not-exist' version '9.9.9' was not found.
+        "409":
+          description: The status does not allow execution (for example VERIFIED), or the
+            outcome is pending (EXECUTING, `outcome pending`). Nothing ran
+            again.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+              example:
+                error: "Business Transaction '11111111-1111-4111-8111-111111111111': status is
+                  EXECUTING: outcome pending"
+                code: INVALID_STATUS_TRANSITION
+        "502":
+          description: "`EXECUTION_OUTCOME_UNKNOWN`: released, then the connector call
+            failed. Do not resend under a new id; check the target system, then
+            resolve the intent. See `POST /execute`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error.schema"
+              examples:
+                executionOutcomeUnknown:
+                  summary: The action was released and the connector call failed
+                  value:
+                    error: "The action for business transaction
+                      '38dcf000-99ed-43af-8666-46c63c8ada74' was released to the
+                      execution system, but the call failed, so whether it was
+                      performed is unknown. Do not retry as a new transaction:
+                      check the target system, then close the Execution Intent
+                      with POST
+                      /execution-intents/38dcf000-99ed-43af-8666-46c63c8ada74/r\
+                      esolve. authorizationId:
+                      4d291c90-9e93-4a8a-b214-8cc6526fe2e3."
+                    code: EXECUTION_OUTCOME_UNKNOWN
+        "503":
+          $ref: "#/components/responses/SigningUnavailable"
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: >-
+            # Executes a declared Business Transaction. Declare it first with
+            POST /transactions
+
+            # (see the createTransaction sample), then set TXN_ID to its
+            businessTransactionId.
+
+            # Nothing is released before this call.
+
+            TXN_ID="6f6582a1-4e1a-4800-a73b-cb4c3aa32110"
+
+            curl -X POST
+            "https://parmana-api-real.vercel.app/transactions/$TXN_ID/execute" \
+              --silent \
+              -H "Authorization: Bearer $PARMANA_API_KEY"
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            import { createBusinessTransaction, ParmanaClient } from
+            "@parmana/sdk";
+
+            import { readFileSync } from "node:fs";
+
+
+            const client = new ParmanaClient({
+              endpoint: "https://parmana-api-real.vercel.app",
+              apiKey: process.env.PARMANA_API_KEY!,
+            });
+
+
+            const inEffect = await client.policyInEffect("paytm:refund");
+
+
+            // The signed approval the approver sent, for this order and up to
+            this amount.
+
+            const approval = JSON.parse(readFileSync("approval.json", "utf8"));
+
+
+            const transaction = createBusinessTransaction({
+              principalId: (await client.caller()).callerId,
+              purpose: "Refund order ORD-1042",
+              action: "paytm:refund",
+              target: "ORD-1042",
+              parameters: { orderId: "ORD-1042", transactionId: "TXN-9", amount: 750 },
+              policy: inEffect.policy,
+              signals: {
+                refundEligible: true,
+                fraudCheckPassed: true,
+                refundAmount: 750,
+                managerApproved: true,
+                approvalArtifact: approval,
+              },
+            });
+
+
+            const declared = await client.declareTransaction(transaction);
+
+
+            // Nothing is released until this call.
+
+            const record = await
+            client.executeTransaction(declared.businessTransactionId);
+
+
+            console.log(
+              record.businessTransactionId,
+              record.executions[0]?.decision.outcome,
+            );
+        - lang: python
+          label: Python
+          source: >-
+            import json
+
+            import os
+
+            from pathlib import Path
+
+
+            from parmana import ParmanaClient, create_business_transaction
+
+
+            client = ParmanaClient(
+                endpoint="https://parmana-api-real.vercel.app",
+                api_key=os.environ["PARMANA_API_KEY"],
+            )
+
+
+            in_effect = client.policy_in_effect("erp:invoice-pay")
+
+
+            # The signed approval the approver sent, for this order and up to
+            this amount.
+
+            approval = json.loads(Path("approval.json").read_text())
+
+
+            transaction = create_business_transaction(
+                principal_id=client.caller().caller_id,
+                purpose="Refund order ORD-1042",
+                action="erp:invoice-pay",
+                target="ORD-1042",
+                parameters={"orderId": "ORD-1042", "transactionId": "TXN-9", "amount": 750},
+                policy=in_effect.policy,
+                signals={
+                    "refundEligible": True,
+                    "fraudCheckPassed": True,
+                    "refundAmount": 750,
+                    "managerApproved": True,
+                    "approvalArtifact": approval,
+                },
+            )
+
+
+            declared = client.declare_transaction(transaction)
+
+
+            # Nothing is released until this call.
+
+            record =
+            client.execute_transaction(declared.business_transaction_id)
+
+
+            print(record.business_transaction_id,
+            record.executions[0].decision.outcome)
+  /transactions/{businessTransactionId}/status:
+    get:
+      tags:
+        - Transactions
+      summary: Get the status of a Business Transaction
+      operationId: getTransactionStatus
+      description: >
+        Returns the current status event of a Business Transaction. With
+        `?history=true`, returns every
+
+        status event in order, oldest first. Each event has a `sequence`, its
+        `stage` (declare, decide,
+
+        sign, execute, verify or reconcile), `occurredAt`, and a `reason` where
+        one was recorded.
+
+        Transactions declared before status events existed have one `RECEIVED`
+        event marked `legacy: true`.
+      parameters:
+        - name: businessTransactionId
+          in: path
+          required: true
+          description: The businessTransactionId the transaction was declared with.
+          schema:
+            type: string
+            format: uuid
+        - name: history
+          in: query
+          required: false
+          description: Set to true to include the full status history.
+          schema:
+            type: string
+            enum:
+              - "true"
+              - "false"
+      responses:
+        "200":
+          description: The current status, and the history when requested.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - businessTransactionId
+                  - current
+                properties:
+                  businessTransactionId:
+                    type: string
+                  current:
+                    $ref: "#/components/schemas/TransactionStatusEvent"
+                  history:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TransactionStatusEvent"
+              example:
+                businessTransactionId: 9b2c4f1e-3d7a-4e8b-9f10-2a6c5d7e8f90
+                current:
+                  eventId: 0c5f7a2e-8d41-4b6a-9e3c-1f2a7b8c9d01
+                  businessTransactionId: 9b2c4f1e-3d7a-4e8b-9f10-2a6c5d7e8f90
+                  sequence: 6
+                  status: VERIFIED
+                  stage: verify
+                  occurredAt: 2026-11-15T10:00:02.000Z
+                  legacy: false
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: No Business Transaction with this id was declared by this caller,
+            or no status is recorded for it.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+              example:
+                error: Business Transaction not found.
+                code: NOT_FOUND
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: |-
+            # Reads the status of a declared Business Transaction, with its full history.
+            # Replace the id with the businessTransactionId you declared.
+            TXN_ID="6f6582a1-4e1a-4800-a73b-cb4c3aa32110"
+            curl "https://parmana-api-real.vercel.app/transactions/$TXN_ID/status?history=true" \
+              --silent \
+              -H "Authorization: Bearer $PARMANA_API_KEY"
+        - lang: typescript
+          label: TypeScript
+          source: >-
+            import { ParmanaClient } from "@parmana/sdk";
+
+
+            const client = new ParmanaClient({
+              endpoint: "https://parmana-api-real.vercel.app",
+              apiKey: process.env.PARMANA_API_KEY!,
+            });
+
+
+            // Replace the id with the businessTransactionId you declared.
+
+            const status = await client.transactionStatus(
+              "6f6582a1-4e1a-4800-a73b-cb4c3aa32110",
+              { history: true },
+            );
+
+
+            console.log(status.current.status, status.current.stage);
+
+
+            for (const event of status.history ?? []) {
+              console.log(event.sequence, event.status, event.stage, event.occurredAt);
+            }
+        - lang: python
+          label: Python
+          source: >-
+            import os
+
+
+            from parmana import ParmanaClient
+
+
+            client = ParmanaClient(
+                endpoint="https://parmana-api-real.vercel.app",
+                api_key=os.environ["PARMANA_API_KEY"],
+            )
+
+
+            # Replace the id with the businessTransactionId you declared.
+
+            status = client.transaction_status(
+                "6f6582a1-4e1a-4800-a73b-cb4c3aa32110",
+                history=True,
+            )
+
+
+            print(status.current.status, status.current.stage)
+
+
+            for event in status.history or []:
+                print(event.sequence, event.status, event.stage, event.occurred_at)
+  /transactions/{businessTransactionId}/reconcile:
+    post:
+      tags:
+        - Transactions
+      summary: Reconcile a Business Transaction whose outcome is pending
+      operationId: reconcileTransaction
+      description: >
+        For a Business Transaction left in `EXECUTING`, writes its terminal
+        status from the execution
+
+        intent: `EXECUTED` when the release is recorded, or `FAILED` when an
+        operator recorded that nothing
+
+        was released. When the outcome cannot be established, nothing is changed
+        and the call returns `409`
+
+        with the reason `outcome unknown`. A transaction that is already
+        terminal is not changed.
+
+        Reconciliation never releases anything. Only human operator credentials
+        may call it (`403` otherwise).
+      parameters:
+        - name: businessTransactionId
+          in: path
+          required: true
+          description: The businessTransactionId the transaction was declared with.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The outcome of the reconciliation. changed is false when the
+            transaction was already terminal.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  businessTransactionId:
+                    type: string
+                  changed:
+                    type: boolean
+                  status:
+                    type: string
+              example:
+                businessTransactionId: 9b2c4f1e-3d7a-4e8b-9f10-2a6c5d7e8f90
+                changed: true
+                status: EXECUTED
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: The credential is not a human operator credential.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+              example:
+                error: Reconciliation is available only to human operator credentials.
+                code: NON_HUMAN_CALLER_DENIED
+        "404":
+          description: No Business Transaction with this id exists.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+              example:
+                error: Business Transaction not found.
+                code: NOT_FOUND
+        "409":
+          description: "The outcome is unknown: the release is not confirmed, so no
+            automatic action was taken."
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: string
+                  code:
+                    type: string
+              example:
+                error: "Business Transaction 'x': outcome unknown: the release is not confirmed;
+                  no automatic action was taken"
+                code: INVALID_STATUS_TRANSITION
+      x-codeSamples:
+        - lang: bash
+          label: cURL
+          source: >-
+            # Reconciles a transaction whose outcome is pending (status
+            EXECUTING). Operator
+
+            # credentials only: a plain API key is refused with 403. Nothing is
+            released.
+
+            TXN_ID="6f6582a1-4e1a-4800-a73b-cb4c3aa32110"
+
+            curl -X POST
+            "https://parmana-api-real.vercel.app/transactions/$TXN_ID/reconcile"
+            \
+              --silent \
+              -H "Authorization: Bearer $PARMANA_OPERATOR_KEY"
+        - lang: typescript
+          label: TypeScript
+          source: |-
+            import { ParmanaClient } from "@parmana/sdk";
+
+            // Operator credentials only: a plain API key is refused with 403.
+            const client = new ParmanaClient({
+              endpoint: "https://parmana-api-real.vercel.app",
+              apiKey: process.env.PARMANA_OPERATOR_KEY!,
+            });
+
+            const result = await client.reconcileTransaction(
+              "6f6582a1-4e1a-4800-a73b-cb4c3aa32110",
+            );
+
+            console.log(result.status, result.changed);
+        - lang: python
+          label: Python
+          source: >-
+            import os
+
+
+            from parmana import ParmanaClient
+
+
+            # Operator credentials only: a plain API key is refused with 403.
+
+            client = ParmanaClient(
+                endpoint="https://parmana-api-real.vercel.app",
+                api_key=os.environ["PARMANA_OPERATOR_KEY"],
+            )
+
+
+            result =
+            client.reconcile_transaction("6f6582a1-4e1a-4800-a73b-cb4c3aa32110")
+
+
+            print(result.status, result.changed)
   /verify:
     post:
       tags:
@@ -10755,6 +11169,61 @@ paths:
             print(response.status_code, approval)
 components:
   schemas:
+    TransactionStatusEvent:
+      type: object
+      description: One append-only status event of a Business Transaction (decision D23).
+      required:
+        - eventId
+        - businessTransactionId
+        - sequence
+        - status
+        - stage
+        - occurredAt
+        - legacy
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        businessTransactionId:
+          type: string
+        sequence:
+          type: integer
+          minimum: 1
+          description: Position in the transaction's history, starting at 1.
+        status:
+          type: string
+          enum:
+            - RECEIVED
+            - POLICY_EVALUATED
+            - APPROVED
+            - REJECTED
+            - EXECUTING
+            - EXECUTED
+            - FAILED
+            - VERIFIED
+        stage:
+          type: string
+          enum:
+            - declare
+            - decide
+            - sign
+            - execute
+            - verify
+            - reconcile
+        occurredAt:
+          type: string
+          format: date-time
+        recordRef:
+          type: string
+          description: The authorization the event refers to, where there is one.
+        reason:
+          type: string
+          description: Why the status is FAILED, REJECTED or a reconciliation outcome.
+        legacy:
+          type: boolean
+          description: True for the one RECEIVED event written for a transaction declared
+            before status events existed. Its later status is not derived, so it
+            is not a fully traced history.
     Error:
       $ref: "#/components/schemas/error.schema"
     root-response.schema:

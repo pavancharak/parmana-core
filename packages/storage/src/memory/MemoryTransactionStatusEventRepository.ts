@@ -14,15 +14,14 @@ import {
  * interleave with it, which is the same guarantee the Postgres implementation
  * gets from its row lock.
  *
- * Transactions are looked up through `knownTransactions`, the set of business
- * transaction IDs that exist, so an event for an unknown transaction is refused
- * the same way Postgres refuses it (the foreign key).
+ * `transactionExists` is asked before any write, so an event for an unknown
+ * transaction is refused the same way Postgres refuses it (the foreign key).
  */
 export class MemoryTransactionStatusEventRepository implements TransactionStatusEventRepository {
   private readonly events = new Map<string, TransactionStatusEvent[]>();
 
   constructor(
-    private readonly knownTransactions: { has(id: string): boolean },
+    private readonly transactionExists: (id: string) => Promise<boolean>,
   ) {}
 
   async append(
@@ -30,7 +29,7 @@ export class MemoryTransactionStatusEventRepository implements TransactionStatus
   ): Promise<TransactionStatusEvent> {
     const id = input.businessTransactionId;
 
-    if (!this.knownTransactions.has(id)) {
+    if (!(await this.transactionExists(id))) {
       throw new BusinessTransactionNotFoundError(id);
     }
 

@@ -16,6 +16,7 @@ import {
   ExecutionIntentRepository,
   ExecutionTrustRecordRepository,
   RefusalRecordRepository,
+  TransactionStatusEventRepository,
 } from "@parmana/shared";
 
 import type { ExecutionSystem } from "@parmana/execution-system";
@@ -37,6 +38,7 @@ import { ExecutionRequestBuilder } from "./ExecutionRequestBuilder.js";
 import { BusinessTransactionService } from "./services/business-transaction-service.js";
 import { ExecutionService } from "./services/execution-service.js";
 import { ReceiptService } from "./services/receipt-service.js";
+import { TransactionStatusRecorder } from "./services/TransactionStatusRecorder.js";
 import { VerificationService } from "./services/verification-service.js";
 import type { ApprovalNeededNotifier } from "./ApprovalNeededNotifier.js";
 
@@ -64,6 +66,7 @@ export class RuntimeFactory {
     businessSignalSources?: BusinessSignalSourceRegistry,
     authorityGrants?: AuthorityGrantSource,
     hooks?: RuntimeHook[],
+    transactionStatusEvents?: TransactionStatusEventRepository,
   ): ExecutionTrustApplication {
     //
     // Application Services
@@ -150,6 +153,19 @@ export class RuntimeFactory {
       builder.withExecutionIntents(executionIntentService);
     }
 
+    //
+    // Transaction status (D23). One recorder is shared by the runtime (which
+    // records each step of execute) and the application (declare, verify,
+    // reconcile, reads).
+    //
+    const statusRecorder = transactionStatusEvents
+      ? new TransactionStatusRecorder(transactionStatusEvents)
+      : undefined;
+
+    if (statusRecorder) {
+      builder.withTransactionStatusRecorder(statusRecorder);
+    }
+
     const runtime: Runtime = builder
       .addStage(new TrustChainValidationComponent())
       .addStage(
@@ -174,6 +190,7 @@ export class RuntimeFactory {
       refusalRecords,
       executionIntentService,
       executionIntentFinalizer,
+      statusRecorder,
     );
   }
 }

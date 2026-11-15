@@ -9,6 +9,7 @@ import { CryptoBootstrap, TrustRecordHasher } from "@parmana/crypto";
 import {
   AuthorityStatus,
   BusinessValidationStatus,
+  ConnectorNotRegisteredError,
   ExecutionAssessmentStatus,
   type AuthorityAssessment,
   type BusinessValidationAssessment,
@@ -53,6 +54,7 @@ import { ExecutionOutcomeUnknownError } from "./errors/ExecutionOutcomeUnknownEr
 import { RuntimeError } from "./errors/RuntimeError.js";
 import type { SigningReadiness } from "./SigningReadiness.js";
 import type { ExecutionIntentService } from "./ExecutionIntentService.js";
+import type { TransactionStatusRecorder } from "./services/TransactionStatusRecorder.js";
 import {
   findNeededApprovals,
   type ApprovalNeededNotifier,
@@ -248,6 +250,14 @@ export class RuntimeEngine {
     private readonly authorityGrantEvaluator: AuthorityGrantEvaluator = new AuthorityGrantEvaluator(
       undefined,
     ),
+    /**
+     * Transaction status events (decision D23). Optional and trailing, like
+     * every dependency above. When omitted, no status is recorded and execute
+     * behaves exactly as before. When supplied, each step of execute is
+     * recorded as a status event, and a failure to record a step before the
+     * release stops the release.
+     */
+    private readonly transactionStatus?: TransactionStatusRecorder,
   ) {
     if (!pipeline) {
       throw new Error("RuntimePipeline is required.");
@@ -812,6 +822,35 @@ export class RuntimeEngine {
     } = await this.decide(transaction);
 
     //
+    // Status: the policy decision (D23). A decision that does not allow
+    // execution is recorded as REJECTED before the enforce below refuses it.
+    //
+    if (this.transactionStatus) {
+      const businessTransactionId = transaction.businessTransactionId;
+
+      await this.transactionStatus.advance(
+        businessTransactionId,
+        "POLICY_EVALUATED",
+        "decide",
+      );
+
+      if (this.executionGate.canExecute(decision)) {
+        await this.transactionStatus.advance(
+          businessTransactionId,
+          "APPROVED",
+          "decide",
+        );
+      } else {
+        await this.transactionStatus.advance(
+          businessTransactionId,
+          "REJECTED",
+          "decide",
+          { reason: decision.reason ?? "Policy rejected execution." },
+        );
+      }
+    }
+
+    //
     // Enforce
     //
 
@@ -938,6 +977,16 @@ export class RuntimeEngine {
       await this.executionIntents?.prepare(context);
 
       //
+      // Status: the release is about to start (D23). Recorded before the
+      // connector is called. If this cannot be recorded, nothing is released.
+      //
+      await this.transactionStatus?.advance(
+        context.transaction.businessTransactionId,
+        "EXECUTING",
+        "execute",
+      );
+
+      //
       // Runtime Pipeline. The action is released to the connector inside
       // this call.
       //
@@ -950,6 +999,20 @@ export class RuntimeEngine {
         // The release stage raised an error. The action may still have been
         // executed, so the intent is marked ERRORED, not "not released".
         //
+        //
+        // A connector that is not registered is refused before anything is
+        // sent, so the release certainly did not happen: FAILED. Any other
+        // error leaves the status EXECUTING (outcome unknown, D23 section 6a).
+        //
+        if (error instanceof ConnectorNotRegisteredError) {
+          await this.recordStatusAfterRelease(
+            context.transaction.businessTransactionId,
+            "FAILED",
+            "execute",
+            { reason: error.message },
+          );
+        }
+
         await this.executionIntents?.markErrored(
           context.transaction.businessTransactionId,
           error,
@@ -964,6 +1027,18 @@ export class RuntimeEngine {
       // without calling the connector again. Best effort, never throws.
       //
       await this.executionIntents?.markReleased(processedContext);
+
+      //
+      // Status: the connector answered (D23). If this write fails, the status
+      // stays EXECUTING with the outcome on record, and reconciliation
+      // (design section 6a) writes EXECUTED later. The release is not undone.
+      //
+      await this.recordStatusAfterRelease(
+        processedContext.transaction.businessTransactionId,
+        "EXECUTED",
+        "execute",
+        { recordRef: authorization.payload.authorizationId },
+      );
 
       //
       // From here the action has been released. Any failure to produce
@@ -996,6 +1071,36 @@ export class RuntimeEngine {
       await this.hookRunner.onRuntimeError(context, error as Error);
 
       throw error;
+    }
+  }
+
+  /**
+   * Records a status event after the release has been attempted. A failure is
+   * logged, not thrown: the release has happened or may have, so the caller
+   * must still get its answer. The state is repaired by reconciliation.
+   */
+  private async recordStatusAfterRelease(
+    businessTransactionId: string,
+    to: "FAILED" | "EXECUTED",
+    stage: "execute",
+    options: { reason?: string; recordRef?: string } = {},
+  ): Promise<void> {
+    if (!this.transactionStatus) return;
+
+    try {
+      await this.transactionStatus.advance(
+        businessTransactionId,
+        to,
+        stage,
+        options,
+      );
+    } catch (error) {
+      console.error({
+        event: "transaction_status_write_failed",
+        businessTransactionId,
+        status: to,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 

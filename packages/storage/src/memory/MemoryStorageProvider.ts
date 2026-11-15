@@ -6,6 +6,7 @@ import type {
   AuthorityGrantRepository,
   BusinessTransactionRepository,
   ExecutionIntentRepository,
+  TransactionStatusEventRepository,
   ExecutionTrustRecordRepository,
   HandbookDownloadLeadRepository,
   PendingPolicyChangeRepository,
@@ -25,6 +26,7 @@ import { MemoryExecutionAuditSink } from "./MemoryExecutionAuditSink.js";
 import { MemoryExecutionTrustRecordRepository } from "./MemoryExecutionTrustRecordRepository.js";
 
 import { MemoryExecutionIntentRepository } from "./MemoryExecutionIntentRepository.js";
+import { MemoryTransactionStatusEventRepository } from "./MemoryTransactionStatusEventRepository.js";
 import { MemoryRefusalRecordRepository } from "./MemoryRefusalRecordRepository.js";
 import { MemoryInboundCheckRepository } from "./MemoryInboundCheckRepository.js";
 import { MemoryInboundDecisionRepository } from "./MemoryInboundDecisionRepository.js";
@@ -60,6 +62,8 @@ export class MemoryStorageProvider implements StorageProvider {
 
   readonly executionIntents: ExecutionIntentRepository;
 
+  readonly transactionStatusEvents: TransactionStatusEventRepository;
+
   readonly pendingPolicyChanges: PendingPolicyChangeRepository;
 
   readonly policyChangeApprovalRecords: PolicyChangeApprovalRecordRepository;
@@ -87,6 +91,10 @@ export class MemoryStorageProvider implements StorageProvider {
     this.inboundOutcomes = new MemoryInboundOutcomeRepository();
 
     this.executionIntents = new MemoryExecutionIntentRepository();
+
+    this.transactionStatusEvents = new MemoryTransactionStatusEventRepository(
+      async (id) => (await this.businessTransactions.findById(id)) !== null,
+    );
 
     this.pendingPolicyChanges = new MemoryPendingPolicyChangeRepository();
 

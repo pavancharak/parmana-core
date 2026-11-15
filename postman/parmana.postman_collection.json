@@ -131,7 +131,7 @@
           }
         },
         {
-          "name": "Create (execute) a Business Transaction (sandbox-receipt)",
+          "name": "Declare a Business Transaction (sandbox-receipt)",
           "request": {
             "method": "POST",
             "header": [
@@ -158,11 +158,11 @@
                 "transactions"
               ]
             },
-            "description": "The public sandbox's receipt action, sent without an approval. The sandbox refuses it (403 POLICY_DENIED). Get a demo approval from POST /sandbox/approvals for the same target and add it to signals to release it.\n\noperationId: createTransaction\n\nIn the sandbox, each `businessTransactionId` works once: a prefilled id returns `409` after its first use.\nFor a new id each run, use the cURL sample, which generates one.\nThe same as `POST /execute` in every way except the success status, `201` instead of `200`. Use\nwhichever fits your client. Read [Execute a Business Transaction](/api-reference/endpoints/execute-transaction)\nfor the full behavior, the outcomes and what to do after each."
+            "description": "The public sandbox's receipt action, sent without an approval. The sandbox refuses it (403 POLICY_DENIED). Get a demo approval from POST /sandbox/approvals for the same target and add it to signals to release it.\n\noperationId: createTransaction\n\nDeclares a Business Transaction: it is checked, accepted and recorded with the status `RECEIVED`.\nNothing is decided, signed or released by this call. Release it with\n`POST /transactions/{businessTransactionId}/execute`, and read its status with\n`GET /transactions/{businessTransactionId}/status`.\nIn the sandbox, each `businessTransactionId` works once: a prefilled id returns `409` after its first use.\nFor a new id each run, use the cURL sample, which generates one."
           }
         },
         {
-          "name": "Create (execute) a Business Transaction (vendor-payment-flow-transactions-endpoint)",
+          "name": "Declare a Business Transaction (vendor-payment-flow-transactions-endpoint)",
           "request": {
             "method": "POST",
             "header": [
@@ -189,7 +189,7 @@
                 "transactions"
               ]
             },
-            "description": "Real captured request (vendor-payment 2.0.0, APPROVED), includes a client-supplied status and an unrecognized top-level field to demonstrate both are rejected/dropped, never persisted (see the 201 response below)\n\noperationId: createTransaction\n\nIn the sandbox, each `businessTransactionId` works once: a prefilled id returns `409` after its first use.\nFor a new id each run, use the cURL sample, which generates one.\nThe same as `POST /execute` in every way except the success status, `201` instead of `200`. Use\nwhichever fits your client. Read [Execute a Business Transaction](/api-reference/endpoints/execute-transaction)\nfor the full behavior, the outcomes and what to do after each."
+            "description": "Real captured request (vendor-payment 2.0.0, APPROVED), includes a client-supplied status and an unrecognized top-level field to demonstrate both are rejected/dropped, never persisted (see the 201 response below)\n\noperationId: createTransaction\n\nDeclares a Business Transaction: it is checked, accepted and recorded with the status `RECEIVED`.\nNothing is decided, signed or released by this call. Release it with\n`POST /transactions/{businessTransactionId}/execute`, and read its status with\n`GET /transactions/{businessTransactionId}/status`.\nIn the sandbox, each `businessTransactionId` works once: a prefilled id returns `409` after its first use.\nFor a new id each run, use the cURL sample, which generates one."
           }
         },
         {
@@ -215,6 +215,92 @@
               ]
             },
             "description": "operationId: getTransaction\n\nReturns one Business Transaction as it was stored. For the signed outcome, what was decided and\nexecuted, use `GET /trust-records/{businessTransactionId}`."
+          }
+        },
+        {
+          "name": "Execute a declared Business Transaction",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/transactions/:businessTransactionId/execute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions",
+                ":businessTransactionId",
+                "execute"
+              ],
+              "variable": [
+                {
+                  "key": "businessTransactionId",
+                  "value": "",
+                  "description": "The businessTransactionId the transaction was declared with."
+                }
+              ]
+            },
+            "description": "operationId: executeDeclaredTransaction\n\nDecides, signs and releases a Business Transaction that was declared with `POST /transactions`,\nthen verifies it. The caller must be the one that declared it. The status walks\n`RECEIVED` → `POLICY_EVALUATED` → `APPROVED` (or `REJECTED`) → `EXECUTING` → `EXECUTED` → `VERIFIED`.\nA transaction that is not `RECEIVED` is never released again by this call. One that is `EXECUTING`\nis refused with `409` and the reason `outcome pending`: its outcome is decided by reconciliation."
+          }
+        },
+        {
+          "name": "Get the status of a Business Transaction",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/transactions/:businessTransactionId/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions",
+                ":businessTransactionId",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "history",
+                  "value": "",
+                  "description": "Set to true to include the full status history.",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "businessTransactionId",
+                  "value": "",
+                  "description": "The businessTransactionId the transaction was declared with."
+                }
+              ]
+            },
+            "description": "operationId: getTransactionStatus\n\nReturns the current status event of a Business Transaction. With `?history=true`, returns every\nstatus event in order, oldest first. Each event has a `sequence`, its `stage` (declare, decide,\nsign, execute, verify or reconcile), `occurredAt`, and a `reason` where one was recorded.\nTransactions declared before status events existed have one `RECEIVED` event marked `legacy: true`."
+          }
+        },
+        {
+          "name": "Reconcile a Business Transaction whose outcome is pending",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/transactions/:businessTransactionId/reconcile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions",
+                ":businessTransactionId",
+                "reconcile"
+              ],
+              "variable": [
+                {
+                  "key": "businessTransactionId",
+                  "value": "",
+                  "description": "The businessTransactionId the transaction was declared with."
+                }
+              ]
+            },
+            "description": "operationId: reconcileTransaction\n\nFor a Business Transaction left in `EXECUTING`, writes its terminal status from the execution\nintent: `EXECUTED` when the release is recorded, or `FAILED` when an operator recorded that nothing\nwas released. When the outcome cannot be established, nothing is changed and the call returns `409`\nwith the reason `outcome unknown`. A transaction that is already terminal is not changed.\nReconciliation never releases anything. Only human operator credentials may call it (`403` otherwise)."
           }
         }
       ]

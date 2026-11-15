@@ -40,5 +40,6 @@
   "models/replay_result": "Python SDK reference: Parmana Replay Result.",
   "serialization/decoder": "Python SDK reference: Parmana Model Decoder.",
   "serialization/encoder": "Python SDK reference: Parmana Model Encoder.",
-  "transport/http_transport": "Python SDK reference: Parmana HTTP Transport."
+  "transport/http_transport": "Python SDK reference: Parmana HTTP Transport.",
+  "models/transaction_status": "Python SDK reference: the response types for declaring, executing, reading and reconciling a Business Transaction (decision D23)."
 }

@@ -7,6 +7,7 @@ import type {
   BusinessTransactionRepository,
   ExecutionIntentRepository,
   ExecutionTrustRecordRepository,
+  TransactionStatusEventRepository,
   HandbookDownloadLeadRepository,
   PendingPolicyChangeRepository,
   PolicyChangeApprovalRecordRepository,
@@ -54,6 +55,12 @@ export interface StorageProvider {
    * Execution Intent repository (ADR-0012).
    */
   readonly executionIntents: ExecutionIntentRepository;
+
+  /**
+   * Transaction status events (decision D23): append-only, one status history
+   * per business transaction.
+   */
+  readonly transactionStatusEvents: TransactionStatusEventRepository;
 
   /**
    * Pending Policy Change repository (Policy Governance,

@@ -21,6 +21,11 @@ from parmana.api.receipt_api import ReceiptApi
 from parmana.api.refusal_api import RefusalApi
 from parmana.api.replay_api import ReplayApi
 from parmana.api.transaction_api import TransactionApi
+from parmana.models.transaction_status import (
+    DeclaredTransaction,
+    ReconcileResult,
+    TransactionStatusResult,
+)
 from parmana.api.trust_record_api import TrustRecordApi
 from parmana.api.verification_api import VerificationApi
 from parmana.errors.configuration_error import ConfigurationError
@@ -279,11 +284,41 @@ class ParmanaClient:
         self, transaction: BusinessTransaction
     ) -> ExecutionTrustRecord:
         """
-        Creates (executes) a Business Transaction via POST /transactions,
-        a second, independent entry point into the identical execution
-        pipeline as execute() (POST /execute).
+        Declares and then executes a Business Transaction, in two calls:
+        POST /transactions, then POST /transactions/{id}/execute.
+        See TransactionApi.create.
         """
         return self.transactions.create(transaction)
+
+    def declare_transaction(
+        self, transaction: BusinessTransaction
+    ) -> DeclaredTransaction:
+        """
+        Declares a Business Transaction (POST /transactions). Nothing is
+        released. See TransactionApi.declare.
+        """
+        return self.transactions.declare(transaction)
+
+    def execute_transaction(self, business_transaction_id: str) -> ExecutionTrustRecord:
+        """
+        Executes a declared Business Transaction. See TransactionApi.execute.
+        """
+        return self.transactions.execute(business_transaction_id)
+
+    def transaction_status(
+        self, business_transaction_id: str, *, history: bool = False
+    ) -> TransactionStatusResult:
+        """
+        Reads a Business Transaction's status. See TransactionApi.status.
+        """
+        return self.transactions.status(business_transaction_id, history=history)
+
+    def reconcile_transaction(self, business_transaction_id: str) -> ReconcileResult:
+        """
+        Reconciles a Business Transaction whose outcome is pending. See
+        TransactionApi.reconcile.
+        """
+        return self.transactions.reconcile(business_transaction_id)
 
     def transaction(self, business_transaction_id: str) -> BusinessTransaction:
         """

@@ -12,6 +12,8 @@ import { isCapabilityAllowed } from "../auth/isCapabilityAllowed.js";
 import type { CallerAuditSink } from "../auth/CallerAuditSink.js";
 import { recordCallerAuditEvent } from "../auth/recordCallerAuditEvent.js";
 import { parsePagination } from "./pagination.js";
+import { NonHumanCallerDeniedError } from "@parmana/shared";
+import { isHumanCaller } from "../auth/isHumanCaller.js";
 
 export function createTransactionsRouter(
   application: ExecutionTrustApplication,
@@ -283,9 +285,22 @@ export function createTransactionsRouter(
           };
         }
 
-        const result = await application.execute(transaction);
+        //
+        // Declare only (decision D23): the transaction is accepted and recorded
+        // as RECEIVED. Nothing is decided, signed or released. The caller
+        // releases it with POST /transactions/{id}/execute.
+        //
+        const accepted = await application.declare(transaction);
+        const received = await application.getTransactionStatus(
+          accepted.businessTransactionId,
+        );
 
-        res.status(201).json(result);
+        res.status(201).json({
+          businessTransactionId: accepted.businessTransactionId,
+          status: received?.status ?? null,
+          acceptedAt: received?.occurredAt,
+          transaction: accepted,
+        });
         return;
       } catch (error) {
         //
@@ -314,6 +329,166 @@ export function createTransactionsRouter(
           if (!recorded) return;
         }
 
+        next(error);
+        return;
+      }
+    },
+  );
+
+  /**
+   * GET /transactions/:id/status
+   *
+   * Returns the current status of a Business Transaction, and with
+   * ?history=true the full status history, oldest first (decision D23).
+   */
+  router.get(
+    "/:id/status",
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const businessTransactionId = String(req.params.id);
+        const transaction = await application.getTransaction(
+          businessTransactionId,
+        );
+
+        if (
+          !transaction ||
+          (req.callerId !== undefined &&
+            transaction.metadata?.submittedBy !== req.callerId)
+        ) {
+          res.status(404).json({
+            error: "Business Transaction not found.",
+          });
+          return;
+        }
+
+        const current = await application.getTransactionStatus(
+          businessTransactionId,
+        );
+
+        if (!current) {
+          res.status(404).json({
+            error: "No status is recorded for this Business Transaction.",
+          });
+          return;
+        }
+
+        const includeHistory = req.query.history === "true";
+
+        res.json({
+          businessTransactionId,
+          current,
+          ...(includeHistory && {
+            history: await application.getTransactionStatusHistory(
+              businessTransactionId,
+            ),
+          }),
+        });
+        return;
+      } catch (error) {
+        next(error);
+        return;
+      }
+    },
+  );
+
+  /**
+   * POST /transactions/:id/execute
+   *
+   * Decides, signs and releases a declared Business Transaction, then verifies
+   * it (decision D23). The caller must be the one that declared it, and must
+   * still be allowed the principal and capability the transaction names.
+   */
+  router.post(
+    "/:id/execute",
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        const businessTransactionId = String(req.params.id);
+        const transaction = await application.getTransaction(
+          businessTransactionId,
+        );
+
+        if (
+          !transaction ||
+          (req.callerId !== undefined &&
+            transaction.metadata?.submittedBy !== req.callerId)
+        ) {
+          res.status(404).json({
+            error: "Business Transaction not found.",
+          });
+          return;
+        }
+
+        if (req.callerId !== undefined) {
+          const principalId = transaction.authority?.principalId;
+
+          if (
+            !isPrincipalAllowed(
+              principalId,
+              req.callerId,
+              req.callerAllowedPrincipalIds,
+            )
+          ) {
+            res.status(403).json({
+              error:
+                "Caller is not permitted to assert this authority.principalId.",
+            });
+            return;
+          }
+
+          const action = transaction.intent?.action;
+
+          if (!isCapabilityAllowed(action, req.callerAllowedCapabilities)) {
+            res.status(403).json({
+              error: "Caller is not permitted to invoke this capability.",
+              code: "CAPABILITY_NOT_ALLOWED",
+            });
+            return;
+          }
+        }
+
+        const record = await application.executeAccepted(businessTransactionId);
+
+        res.status(200).json(record);
+        return;
+      } catch (error) {
+        next(error);
+        return;
+      }
+    },
+  );
+
+  /**
+   * POST /transactions/:id/reconcile
+   *
+   * Operator reconciliation of a transaction left in EXECUTING (design section
+   * 6a). Human operator credentials only. Never releases anything.
+   */
+  router.post(
+    "/:id/reconcile",
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      try {
+        if (!isHumanCaller(req.callerCredentialHolderType)) {
+          const denied = new NonHumanCallerDeniedError();
+
+          res.status(denied.status).json({
+            error: denied.message,
+            code: denied.code,
+          });
+          return;
+        }
+
+        const businessTransactionId = String(req.params.id);
+        const result = await application.reconcileTransaction(
+          businessTransactionId,
+          req.callerId ?? "unidentified-operator",
+        );
+
+        res.status(200).json({
+          businessTransactionId,
+          ...result,
+        });
+        return;
+      } catch (error) {
         next(error);
         return;
       }

@@ -5,7 +5,10 @@
  * audit that previously had zero SDK coverage:
  * - GET /version (ExecutionApi.version / ParmanaClient.version)
  * - POST /verify (VerificationApi.verify / ParmanaClient.verify)
- * - POST /transactions (TransactionApi.create / ParmanaClient.createTransaction)
+ * - POST /transactions (TransactionApi.declare / ParmanaClient.declareTransaction)
+ * - POST /transactions/{id}/execute (TransactionApi.execute / ParmanaClient.executeTransaction)
+ * - GET /transactions/{id}/status (TransactionApi.status / ParmanaClient.transactionStatus)
+ * - POST /transactions/{id}/reconcile (TransactionApi.reconcile / ParmanaClient.reconcileTransaction)
  *
  * Each test proves the method sends the right method/path/body against
  * a minimal fake Transport, mirroring the fixture pattern already used
@@ -89,8 +92,40 @@ describe("VerificationApi.verify", () => {
   });
 });
 
-describe("TransactionApi.create", () => {
+describe("TransactionApi.declare", () => {
   it("sends POST /transactions with the transaction as the body", async () => {
+    const declared = {
+      businessTransactionId: "tx-1",
+      status: "RECEIVED",
+      transaction: {},
+    };
+    const transport = new FakeTransport(declared);
+
+    const transaction = { businessTransactionId: "tx-1" } as never;
+
+    const result = await new TransactionApi(transport).declare(transaction);
+
+    expect(transport.lastRequest?.method).toBe("POST");
+    expect(transport.lastRequest?.path).toBe("/transactions");
+    expect(transport.lastRequest?.body).toBe(transaction);
+    expect(result).toEqual(declared);
+  });
+});
+
+describe("TransactionApi.execute", () => {
+  it("sends POST /transactions/{id}/execute with no body", async () => {
+    const transport = new FakeTransport({ trustRecordId: "tr-1" });
+
+    await new TransactionApi(transport).execute("tx-1");
+
+    expect(transport.lastRequest?.method).toBe("POST");
+    expect(transport.lastRequest?.path).toBe("/transactions/tx-1/execute");
+    expect(transport.lastRequest?.body).toBeUndefined();
+  });
+});
+
+describe("TransactionApi.create", () => {
+  it("declares and then executes: POST /transactions, then POST /transactions/{id}/execute", async () => {
     const transport = new FakeTransport({
       trustRecordId: "tr-1",
       businessTransactionId: "tx-1",
@@ -101,11 +136,44 @@ describe("TransactionApi.create", () => {
     const result = await new TransactionApi(transport).create(transaction);
 
     expect(transport.lastRequest?.method).toBe("POST");
-    expect(transport.lastRequest?.path).toBe("/transactions");
-    expect(transport.lastRequest?.body).toBe(transaction);
+    expect(transport.lastRequest?.path).toBe("/transactions/tx-1/execute");
     expect(result).toEqual({
       trustRecordId: "tr-1",
       businessTransactionId: "tx-1",
+    });
+  });
+});
+
+describe("TransactionApi.status and reconcile", () => {
+  it("sends GET /transactions/{id}/status, with ?history=true when history is asked for", async () => {
+    const transport = new FakeTransport({ businessTransactionId: "tx-1" });
+    const api = new TransactionApi(transport);
+
+    await api.status("tx-1");
+    expect(transport.lastRequest?.method).toBe("GET");
+    expect(transport.lastRequest?.path).toBe("/transactions/tx-1/status");
+
+    await api.status("tx-1", { history: true });
+    expect(transport.lastRequest?.path).toBe(
+      "/transactions/tx-1/status?history=true",
+    );
+  });
+
+  it("sends POST /transactions/{id}/reconcile", async () => {
+    const transport = new FakeTransport({
+      businessTransactionId: "tx-1",
+      changed: false,
+      status: "VERIFIED",
+    });
+
+    const result = await new TransactionApi(transport).reconcile("tx-1");
+
+    expect(transport.lastRequest?.method).toBe("POST");
+    expect(transport.lastRequest?.path).toBe("/transactions/tx-1/reconcile");
+    expect(result).toEqual({
+      businessTransactionId: "tx-1",
+      changed: false,
+      status: "VERIFIED",
     });
   });
 });
@@ -138,8 +206,11 @@ describe("ParmanaClient wiring", () => {
     expect(transport.lastRequest?.path).toBe("/verify");
   });
 
-  it("client.createTransaction() delegates to TransactionApi.create()", async () => {
-    const transport = new FakeTransport({ trustRecordId: "tr-1" });
+  it("client.createTransaction() delegates to TransactionApi.create(): declare, then execute", async () => {
+    const transport = new FakeTransport({
+      trustRecordId: "tr-1",
+      businessTransactionId: "tx-1",
+    });
 
     const client = new ParmanaClient({
       endpoint: "http://localhost:3000",
@@ -149,7 +220,29 @@ describe("ParmanaClient wiring", () => {
     await client.createTransaction({ businessTransactionId: "tx-1" } as never);
 
     expect(transport.lastRequest?.method).toBe("POST");
+    expect(transport.lastRequest?.path).toBe("/transactions/tx-1/execute");
+  });
+
+  it("client.declareTransaction(), executeTransaction(), transactionStatus() and reconcileTransaction() reach their routes", async () => {
+    const transport = new FakeTransport({ businessTransactionId: "tx-1" });
+    const client = new ParmanaClient({
+      endpoint: "http://localhost:3000",
+      transport,
+    });
+
+    await client.declareTransaction({ businessTransactionId: "tx-1" } as never);
     expect(transport.lastRequest?.path).toBe("/transactions");
+
+    await client.executeTransaction("tx-1");
+    expect(transport.lastRequest?.path).toBe("/transactions/tx-1/execute");
+
+    await client.transactionStatus("tx-1", { history: true });
+    expect(transport.lastRequest?.path).toBe(
+      "/transactions/tx-1/status?history=true",
+    );
+
+    await client.reconcileTransaction("tx-1");
+    expect(transport.lastRequest?.path).toBe("/transactions/tx-1/reconcile");
   });
 
   it("wires a real HttpTransport identically to a fake one (construction sanity check)", () => {

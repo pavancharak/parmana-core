@@ -7,9 +7,9 @@ import { MemoryTransactionStatusEventRepository } from "../../src/memory/MemoryT
 const KNOWN = new Set(["btx-1", "btx-2"]);
 
 function repo() {
-  return new MemoryTransactionStatusEventRepository({
-    has: (id) => KNOWN.has(id),
-  });
+  return new MemoryTransactionStatusEventRepository(async (id) =>
+    KNOWN.has(id),
+  );
 }
 
 let counter = 0;

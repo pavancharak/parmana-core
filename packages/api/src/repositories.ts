@@ -69,6 +69,10 @@ export const executionIntentRepository = lazyRepository(
   (provider) => provider.executionIntents,
 );
 
+export const transactionStatusEventRepository = lazyRepository(
+  (provider) => provider.transactionStatusEvents,
+);
+
 export const pendingPolicyChangeRepository = lazyRepository(
   (provider) => provider.pendingPolicyChanges,
 );

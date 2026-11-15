@@ -18,7 +18,9 @@ Transaction API.
 
 ## Responsibilities
 
-- Create (execute) a Business Transaction via POST /transactions
+- Declare a Business Transaction (POST /transactions), then execute it
+  (POST /transactions/\{id\}/execute), as two calls (decision D23)
+- Read its status, and reconcile one whose outcome is pending
 - Retrieve Business Transactions
 - List Business Transactions
 
@@ -28,19 +30,54 @@ This API does NOT:
 - replay executions
 - generate receipts
 
+#### declare
+
+```python
+def declare(transaction: BusinessTransaction) -> DeclaredTransaction
+```
+
+Declare a Business Transaction (POST /transactions).
+
+The transaction is accepted and recorded as RECEIVED. Nothing is
+decided, signed or released; call execute() to release it.
+
+## Parameters
+
+transaction:
+Business Transaction to declare.
+
+## Returns
+
+The declared transaction, with status RECEIVED.
+
+#### execute
+
+```python
+def execute(business_transaction_id: str) -> ExecutionTrustRecord
+```
+
+Execute a declared Business Transaction (POST
+/transactions/\{id\}/execute).
+
+## Parameters
+
+business_transaction_id:
+Identifier of a transaction declared with declare().
+
+## Returns
+
+Execution Trust Record.
+
 #### create
 
 ```python
 def create(transaction: BusinessTransaction) -> ExecutionTrustRecord
 ```
 
-Create (execute) a Business Transaction.
+Declare and then execute a Business Transaction, in two calls.
 
-Maps to POST /transactions: a second, independent entry point
-into the identical application.execute() pipeline as
-ExecutionApi.execute() (POST /execute). The only behavioral
-difference is the success status code, 201 instead of 200; the
-response body shape is otherwise identical.
+Before decision D23 the API offered this as one call. It is kept
+so existing callers keep working.
 
 ## Parameters
 
@@ -50,6 +87,47 @@ Business Transaction submitted to the Parmana Runtime.
 ## Returns
 
 Execution Trust Record.
+
+#### status
+
+```python
+def status(business_transaction_id: str,
+           *,
+           history: bool = False) -> TransactionStatusResult
+```
+
+Read the status of a Business Transaction (GET
+/transactions/\{id\}/status).
+
+## Parameters
+
+business_transaction_id:
+Business Transaction identifier.
+
+history:
+Include every status event, oldest first.
+
+## Returns
+
+The current status, and the history when requested.
+
+#### reconcile
+
+```python
+def reconcile(business_transaction_id: str) -> ReconcileResult
+```
+
+Reconcile a Business Transaction whose outcome is pending (POST
+/transactions/\{id\}/reconcile). Operator credentials only.
+
+## Parameters
+
+business_transaction_id:
+Business Transaction identifier.
+
+## Returns
+
+Whether the status changed, and the status now.
 
 #### get
 

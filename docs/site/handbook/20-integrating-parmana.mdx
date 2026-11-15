@@ -52,8 +52,9 @@ before a Business Transaction is even constructed.
 `ParmanaClient` composes sixteen sub APIs (`HealthApi`, `ExecutionApi`, `VerificationApi`,
 `ReplayApi`, `ReceiptApi`, `TransactionApi`, `TrustRecordApi`, `PolicyApi`, `RefusalApi`,
 `AuditApi`, `ApproverApi`, `ExternalConnectorApi`, `BusinessSignalSourceApi`, `AuthorityGrantApi`, `ExecutionIntentApi`, `CallerApi`), each a thin wrapper over one or more HTTP calls through the shared `Transport`. The
-public surface includes `execute()`, `createTransaction()` (a second, independent entry point
-into the identical pipeline via `POST /transactions`), `verify()`, `getLatestVerification()`,
+public surface includes `execute()`, `declareTransaction()` (`POST /transactions`, which records
+a transaction as `RECEIVED` without releasing it), `executeTransaction()` and `transactionStatus()`
+for the two-call flow, `createTransaction()` (declare and execute in two calls), `verify()`, `getLatestVerification()`,
 `replay()`, `receipt()`, `transaction()`/`transactions()`, `trustRecord()`, `validatePolicy()`,
 `refusalRecord()`/`verifyRefusalRecord()`, and `verifyAuditEvent()`.
 

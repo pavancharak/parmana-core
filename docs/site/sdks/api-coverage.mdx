@@ -15,12 +15,16 @@ Both SDKs cover the same operations. TypeScript exposes each as a method on `Par
 
 ## Executing and deciding
 
-| Operation                | TypeScript                       | Python                                                                |
-| ------------------------ | -------------------------------- | --------------------------------------------------------------------- |
-| `POST /execute`          | `execute(transaction)`           | `execute(transaction)`, `execution.execute(transaction)`              |
-| `POST /transactions`     | `createTransaction(transaction)` | `create_transaction(transaction)`, `transactions.create(transaction)` |
-| `GET /transactions`      | `transactions(page, pageSize)`   | `transactions(page=, page_size=)`, `transactions.list(...)`           |
-| `GET /transactions/{id}` | `transaction(id)`                | `transaction(id)`, `transactions.get(id)`                             |
+| Operation                                                | TypeScript                           | Python                                                                  |
+| -------------------------------------------------------- | ------------------------------------ | ----------------------------------------------------------------------- |
+| `POST /execute`                                          | `execute(transaction)`               | `execute(transaction)`, `execution.execute(transaction)`                |
+| `POST /transactions`                                     | `declareTransaction(transaction)`    | `declare_transaction(transaction)`, `transactions.declare(transaction)` |
+| `POST /transactions/{id}/execute`                        | `executeTransaction(id)`             | `execute_transaction(id)`, `transactions.execute(id)`                   |
+| `GET /transactions/{id}/status`                          | `transactionStatus(id, { history })` | `transaction_status(id, history=)`, `transactions.status(id)`           |
+| `POST /transactions/{id}/reconcile`                      | `reconcileTransaction(id)`           | `reconcile_transaction(id)`, `transactions.reconcile(id)`               |
+| `POST /transactions` + `POST /transactions/{id}/execute` | `createTransaction(transaction)`     | `create_transaction(transaction)`, `transactions.create(transaction)`   |
+| `GET /transactions`                                      | `transactions(page, pageSize)`       | `transactions(page=, page_size=)`, `transactions.list(...)`             |
+| `GET /transactions/{id}`                                 | `transaction(id)`                    | `transaction(id)`, `transactions.get(id)`                               |
 
 ## Evidence and verification
 

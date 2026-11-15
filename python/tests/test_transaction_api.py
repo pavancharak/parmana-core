@@ -12,6 +12,11 @@ from parmana.models.business_transaction import (
 from parmana.models.intent import Intent
 from parmana.models.policy import PolicyReference
 from parmana.models.signature import Signature, SignatureAlgorithm
+from parmana.models.transaction_status import (
+    DeclaredTransaction,
+    ReconcileResult,
+    TransactionStatusResult,
+)
 from parmana.models.trust_record import ExecutionTrustRecord
 
 
@@ -98,16 +103,7 @@ class FakeTransport:
         return transaction
 
 
-def test_create():
-    """
-    POST /transactions: a second, independent entry point into the
-    identical application.execute() pipeline as ExecutionApi.execute()
-    (POST /execute). Previously had zero SDK coverage.
-    """
-    transport = FakeTransport()
-
-    api = TransactionApi(transport)
-
+def _sample_transaction() -> BusinessTransaction:
     now = datetime.now(UTC)
     transaction = BusinessTransaction(
         business_transaction_id="tx-001",
@@ -140,16 +136,81 @@ def test_create():
         created_at=now,
     )
 
+    return transaction
+
+
+def test_create():
+    """
+    create() declares and then executes: POST /transactions, then POST
+    /transactions/{id}/execute (decision D23). The last request is the
+    execute call.
+    """
+    transport = FakeTransport()
+
+    api = TransactionApi(transport)
+
+    transaction = _sample_transaction()
+
     record = api.create(transaction)
 
     assert transport.called
     assert transport.method == "POST"
-    assert transport.path == "/transactions"
+    assert transport.path == "/transactions/tx-001/execute"
     assert transport.response_model is ExecutionTrustRecord
-    assert transport.body["businessTransactionId"] == "tx-001"
 
     assert isinstance(record, ExecutionTrustRecord)
     assert record.business_transaction_id == "tx-001"
+
+
+def test_declare_posts_the_transaction_and_returns_the_declared_record():
+    transport = FakeTransport()
+
+    api = TransactionApi(transport)
+
+    transaction = _sample_transaction()
+    api.declare(transaction)
+
+    assert transport.method == "POST"
+    assert transport.path == "/transactions"
+    assert transport.body["businessTransactionId"] == "tx-001"
+    assert transport.response_model is DeclaredTransaction
+
+
+def test_execute_posts_to_the_execute_route_without_a_body():
+    transport = FakeTransport()
+
+    api = TransactionApi(transport)
+    api.execute("tx-001")
+
+    assert transport.method == "POST"
+    assert transport.path == "/transactions/tx-001/execute"
+    assert transport.body is None
+    assert transport.response_model is ExecutionTrustRecord
+
+
+def test_status_reads_the_route_and_asks_for_history_when_requested():
+    transport = FakeTransport()
+
+    api = TransactionApi(transport)
+
+    api.status("tx-001")
+    assert transport.method == "GET"
+    assert transport.path == "/transactions/tx-001/status"
+
+    api.status("tx-001", history=True)
+    assert transport.path == "/transactions/tx-001/status?history=true"
+    assert transport.response_model is TransactionStatusResult
+
+
+def test_reconcile_posts_to_the_reconcile_route():
+    transport = FakeTransport()
+
+    api = TransactionApi(transport)
+    api.reconcile("tx-001")
+
+    assert transport.method == "POST"
+    assert transport.path == "/transactions/tx-001/reconcile"
+    assert transport.response_model is ReconcileResult
 
 
 def test_get():
