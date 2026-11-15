@@ -40,7 +40,6 @@ class FakeTransport:
         self.response_model = response_model
         self.non_throwing_statuses = non_throwing_statuses
 
-
         record = ExecutionTrustRecord(
             trust_record_id="tr-001",
             business_transaction_id="tx-001",
