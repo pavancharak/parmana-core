@@ -451,7 +451,8 @@ function checkHybrid(env: Env, add: (check: DoctorCheck) => void): void {
     add({
       name: "HYBRID_SCHEMA_VERSION",
       level: "fail",
-      message: "HYBRID_SCHEMA_VERSION must be 2 or 3, or unset (the default, 3)",
+      message:
+        "HYBRID_SCHEMA_VERSION must be 2 or 3, or unset (the default, 3)",
       fix: "Unset HYBRID_SCHEMA_VERSION for version 3 (ADR-0016), or set it to 2 for the older envelope",
     });
   }

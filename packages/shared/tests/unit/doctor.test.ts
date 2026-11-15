@@ -264,10 +264,8 @@ describe("configuration doctor, local deployment", () => {
       ).level,
     ).toBe("pass");
     expect(
-      check(
-        diagnoseConfiguration(env({}), readers()),
-        "HYBRID_SCHEMA_VERSION",
-      ).level,
+      check(diagnoseConfiguration(env({}), readers()), "HYBRID_SCHEMA_VERSION")
+        .level,
     ).toBe("pass");
   });
 
