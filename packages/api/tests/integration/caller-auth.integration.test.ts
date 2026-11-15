@@ -257,12 +257,24 @@ describe("Caller authentication (HTTP boundary)", () => {
         "test:fixture-execute",
       );
 
-      const transactionsResponse = await request(app)
+      // D23: POST /transactions declares only; POST /transactions/:id/execute
+      // releases. The grant is recorded at declare and carried to execute.
+      const declareResponse = await request(app)
         .post("/transactions")
         .set("Authorization", `Bearer ${CALLER_A_KEY}`)
         .send(await createBusinessTransaction());
 
-      expect(transactionsResponse.status).toBe(201);
+      expect(declareResponse.status).toBe(201);
+      expect(declareResponse.body.status).toBe("RECEIVED");
+
+      const transactionsResponse = await request(app)
+        .post(
+          `/transactions/${declareResponse.body.businessTransactionId}/execute`,
+        )
+        .set("Authorization", `Bearer ${CALLER_A_KEY}`)
+        .send();
+
+      expect(transactionsResponse.status).toBe(200);
       expect(
         transactionsResponse.body.authorization.payload.grantedCapability,
       ).toBe("test:fixture-execute");

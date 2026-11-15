@@ -1,0 +1,26 @@
+---
+title: "Class: ExecutionPendingError"
+---
+
+The execute call released the action and its signed record exists, but the
+transaction's status could not be set to EXECUTED. The status is still
+EXECUTING, so the outcome is pending until an operator reconciles it (the
+server answers 202 for this case; see POST /transactions/\{id\}/execute).
+
+The action ran. Do not execute the transaction again: call
+`reconcile(businessTransactionId)` on a human-credentialed client.
+
+## Members
+
+| Name                    | Kind     | Type                                                                                 | Description                                                                                                                                                                                                                                  |
+| ----------------------- | -------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `businessTransactionId` | Property | `string`                                                                             | The transaction whose outcome is pending.                                                                                                                                                                                                    |
+| `record`                | Property | [`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord) | The signed Execution Trust Record for the release that happened.                                                                                                                                                                             |
+| `reconcilePath`         | Property | `string`                                                                             | The path the server names for reconciliation.                                                                                                                                                                                                |
+| `code`                  | Property | [`ErrorCode`](/sdks/reference/typescript/enumerations/ErrorCode)                     | Stable machine-readable error code.                                                                                                                                                                                                          |
+| `requestId?`            | Property | `string \| undefined`                                                                | Optional request identifier.                                                                                                                                                                                                                 |
+| `cause?`                | Property | `unknown`                                                                            | Optional underlying cause.                                                                                                                                                                                                                   |
+| `statusCode?`           | Property | `number \| undefined`                                                                | The HTTP status of the response this error was made from, for example 403 or 503. Absent when no response was received (a network error or a timeout) and for errors raised by the SDK itself. The Python SDK's equivalent is `status_code`. |
+| `name`                  | Property | `string`                                                                             |                                                                                                                                                                                                                                              |
+| `message`               | Property | `string`                                                                             |                                                                                                                                                                                                                                              |
+| `stack?`                | Property | `string \| undefined`                                                                |                                                                                                                                                                                                                                              |

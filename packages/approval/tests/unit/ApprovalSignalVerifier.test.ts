@@ -421,7 +421,12 @@ describe("ApprovalSignalVerifier", () => {
           refundRequest({ businessTransactionId: "bt-2" }),
           signals,
         ),
-      ).toEqual([REFUSED("managerApproved")]);
+      ).toEqual([
+        {
+          ...REFUSED("managerApproved"),
+          reason: "the signed approval has already been used",
+        },
+      ]);
     });
 
     it("does not use an approval at release", async () => {

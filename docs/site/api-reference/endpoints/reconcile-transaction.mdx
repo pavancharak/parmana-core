@@ -1,0 +1,5 @@
+---
+title: "Reconcile a Business Transaction whose outcome is pending"
+description: "For a Business Transaction left in `EXECUTING`, writes its terminal status from the execution intent: `EXECUTED` when the release is recorded, or `FAILED` when an operator recorded that nothing was released."
+openapi: "/openapi.bundled.yaml POST /transactions/{businessTransactionId}/reconcile"
+---

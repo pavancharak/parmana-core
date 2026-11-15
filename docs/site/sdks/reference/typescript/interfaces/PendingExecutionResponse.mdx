@@ -1,0 +1,16 @@
+---
+title: "Interface: PendingExecutionResponse"
+---
+
+The 202 response of POST /transactions/\{id\}/execute: the release happened
+and the signed record exists, but the status is still EXECUTING.
+
+## Members
+
+| Name                    | Kind     | Type                                                                                 | Description |
+| ----------------------- | -------- | ------------------------------------------------------------------------------------ | ----------- |
+| `businessTransactionId` | Property | `string`                                                                             |             |
+| `status`                | Property | `"EXECUTING"`                                                                        |             |
+| `outcome`               | Property | `"pending"`                                                                          |             |
+| `reconcile`             | Property | `string`                                                                             |             |
+| `record`                | Property | [`ExecutionTrustRecord`](/sdks/reference/typescript/interfaces/ExecutionTrustRecord) |             |

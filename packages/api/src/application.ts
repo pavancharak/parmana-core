@@ -27,6 +27,9 @@ import type { ExecutionSystem } from "@parmana/execution-system";
 
 import {
   businessTransactionRepository,
+  transactionStatusEventRepository,
+  transactionDeclarationStore,
+  transactionExecutionLockStore,
   executionTrustRecordRepository,
   refusalRecordRepository,
   businessSignalSourceRepository,
@@ -146,5 +149,9 @@ export function createApplication(
       // G-138: one alert per decision, sent without waiting for delivery.
       ...(alertSink === undefined ? [] : [new DecisionAlertHook(alertSink)]),
     ],
+    // D23: each execute step is recorded as a status event.
+    transactionStatusEventRepository,
+    transactionDeclarationStore,
+    transactionExecutionLockStore,
   );
 }

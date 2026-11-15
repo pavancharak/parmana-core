@@ -1,5 +1,6 @@
 import type {
   ApprovalIssuerRepository,
+  ApprovalNonceLedger,
   CallerKeyRevocationRepository,
   ExternalConnectorRepository,
   BusinessSignalSourceRepository,
@@ -7,6 +8,9 @@ import type {
   BusinessTransactionRepository,
   ExecutionIntentRepository,
   ExecutionTrustRecordRepository,
+  TransactionStatusEventRepository,
+  TransactionDeclarationStore,
+  TransactionExecutionLock,
   HandbookDownloadLeadRepository,
   PendingPolicyChangeRepository,
   PolicyChangeApprovalRecordRepository,
@@ -54,6 +58,27 @@ export interface StorageProvider {
    * Execution Intent repository (ADR-0012).
    */
   readonly executionIntents: ExecutionIntentRepository;
+
+  /**
+   * Consumed Approval Artifact nonces (decision D24). The status event that
+   * moves a transaction to APPROVED consumes its approvals in the same step.
+   */
+  readonly approvalNonces: ApprovalNonceLedger;
+
+  /**
+   * Transaction status events (decision D23): append-only, one status history
+   * per business transaction.
+   */
+  readonly transactionStatusEvents: TransactionStatusEventRepository;
+
+  /**
+   * Stores a declared transaction and its RECEIVED event in one step (design
+   * section 3).
+   */
+  readonly transactionDeclarations: TransactionDeclarationStore;
+
+  /** One lock per transaction, held for each execute (design section 7a, decision 4). */
+  readonly transactionExecutionLocks: TransactionExecutionLock;
 
   /**
    * Pending Policy Change repository (Policy Governance,

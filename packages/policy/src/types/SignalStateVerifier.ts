@@ -50,6 +50,11 @@ export interface SignalStateVerificationRequest {
    * The database uniqueness of the nonce is then the guard against a second use.
    */
   readonly deferApprovalConsumption?: boolean;
+  /**
+   * When true, an approval whose nonce is already consumed fails this decision. The nonce is not recorded here; the
+   * caller records it with its APPROVED status write (decision D24). Used by the execute path.
+   */
+  readonly checkApprovalNonce?: boolean;
 }
 
 /** An approval a verifier accepted: who approved, with which key, and when. */
@@ -77,6 +82,11 @@ export interface SignalStateViolation {
   readonly signalKey: string;
   readonly declaredValue: unknown;
   readonly actualValue: unknown;
+  /**
+   * Why the verified state differs, when the verifier knows it. Shown to the caller in place of the declared and
+   * actual values, which say nothing about a refused approval (for example, "the approval has already been used").
+   */
+  readonly reason?: string;
 }
 
 /**

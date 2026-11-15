@@ -9,9 +9,15 @@ from __future__ import annotations
 from urllib.parse import quote
 
 from parmana.config.transport import Transport
+from parmana.errors.execution_pending_error import ExecutionPendingError
 from parmana.models.business_transaction import BusinessTransaction
+from parmana.models.transaction_status import (
+    DeclaredTransaction,
+    ReconcileResult,
+    TransactionStatusResult,
+)
 from parmana.models.trust_record import ExecutionTrustRecord
-from parmana.serialization import encode
+from parmana.serialization import decode, encode
 
 
 class TransactionApi:
@@ -20,7 +26,9 @@ class TransactionApi:
 
     Responsibilities
     ----------------
-    - Create (execute) a Business Transaction via POST /transactions
+    - Declare a Business Transaction (POST /transactions), then execute it
+      (POST /transactions/{id}/execute), as two calls (decision D23)
+    - Read its status, and reconcile one whose outcome is pending
     - Retrieve Business Transactions
     - List Business Transactions
 
@@ -36,18 +44,81 @@ class TransactionApi:
     ) -> None:
         self._transport = transport
 
+    def declare(
+        self,
+        transaction: BusinessTransaction,
+    ) -> DeclaredTransaction:
+        """
+        Declare a Business Transaction (POST /transactions).
+
+        The transaction is accepted and recorded as RECEIVED. Nothing is
+        decided, signed or released; call execute() to release it.
+
+        Parameters
+        ----------
+        transaction:
+            Business Transaction to declare.
+
+        Returns
+        -------
+        The declared transaction, with status RECEIVED.
+        """
+
+        return self._transport.send(
+            method="POST",
+            path="/transactions",
+            body=encode(transaction),
+            response_model=DeclaredTransaction,
+        )
+
+    def execute(
+        self,
+        business_transaction_id: str,
+    ) -> ExecutionTrustRecord:
+        """
+        Execute a declared Business Transaction (POST
+        /transactions/{id}/execute).
+
+        Parameters
+        ----------
+        business_transaction_id:
+            Identifier of a transaction declared with declare().
+
+        Returns
+        -------
+        Execution Trust Record.
+        """
+
+        payload = self._transport.send(
+            method="POST",
+            path=f"/transactions/{quote(business_transaction_id, safe='')}/execute",
+            non_throwing_statuses=frozenset({202}),
+        )
+
+        #
+        # 202: the release happened and the record exists, but the status is
+        # EXECUTING. Raised, so a caller cannot take it for a completed
+        # transaction. A trust record never carries "outcome", so the body
+        # tells the two answers apart.
+        #
+        if isinstance(payload, dict) and payload.get("outcome") == "pending":
+            raise ExecutionPendingError(
+                business_transaction_id,
+                decode(payload["record"], ExecutionTrustRecord),
+                payload["reconcile"],
+            )
+
+        return decode(payload, ExecutionTrustRecord)
+
     def create(
         self,
         transaction: BusinessTransaction,
     ) -> ExecutionTrustRecord:
         """
-        Create (execute) a Business Transaction.
+        Declare and then execute a Business Transaction, in two calls.
 
-        Maps to POST /transactions: a second, independent entry point
-        into the identical application.execute() pipeline as
-        ExecutionApi.execute() (POST /execute). The only behavioral
-        difference is the success status code, 201 instead of 200; the
-        response body shape is otherwise identical.
+        Before decision D23 the API offered this as one call. It is kept
+        so existing callers keep working.
 
         Parameters
         ----------
@@ -59,11 +130,65 @@ class TransactionApi:
         Execution Trust Record.
         """
 
+        declared = self.declare(transaction)
+
+        return self.execute(declared.business_transaction_id)
+
+    def status(
+        self,
+        business_transaction_id: str,
+        *,
+        history: bool = False,
+    ) -> TransactionStatusResult:
+        """
+        Read the status of a Business Transaction (GET
+        /transactions/{id}/status).
+
+        Parameters
+        ----------
+        business_transaction_id:
+            Business Transaction identifier.
+
+        history:
+            Include every status event, oldest first.
+
+        Returns
+        -------
+        The current status, and the history when requested.
+        """
+
+        query = "?history=true" if history else ""
+
+        return self._transport.send(
+            method="GET",
+            path=(
+                f"/transactions/{quote(business_transaction_id, safe='')}/status{query}"
+            ),
+            response_model=TransactionStatusResult,
+        )
+
+    def reconcile(
+        self,
+        business_transaction_id: str,
+    ) -> ReconcileResult:
+        """
+        Reconcile a Business Transaction whose outcome is pending (POST
+        /transactions/{id}/reconcile). Operator credentials only.
+
+        Parameters
+        ----------
+        business_transaction_id:
+            Business Transaction identifier.
+
+        Returns
+        -------
+        Whether the status changed, and the status now.
+        """
+
         return self._transport.send(
             method="POST",
-            path="/transactions",
-            body=encode(transaction),
-            response_model=ExecutionTrustRecord,
+            path=f"/transactions/{quote(business_transaction_id, safe='')}/reconcile",
+            response_model=ReconcileResult,
         )
 
     def get(

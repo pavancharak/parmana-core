@@ -142,8 +142,11 @@ This file is generated from the documentation navigation. Do not edit it by hand
 ## REST API: Transactions
 
 * [List Business Transactions](https://docs.parmanasystems.com/api-reference/endpoints/list-transactions): Lists the Business Transactions your key submitted, as a bare array with no paging metadata.
-* [Create (execute) a Business Transaction](https://docs.parmanasystems.com/api-reference/endpoints/create-transaction): In the sandbox, each `businessTransactionId` works once: a prefilled id returns `409` after its first use.
+* [Declare a Business Transaction](https://docs.parmanasystems.com/api-reference/endpoints/create-transaction): Declares a Business Transaction: it is checked, accepted and recorded with the status `RECEIVED`.
 * [Get Business Transaction](https://docs.parmanasystems.com/api-reference/endpoints/get-transaction): Returns one Business Transaction as it was stored.
+* [Execute a declared Business Transaction](https://docs.parmanasystems.com/api-reference/endpoints/execute-declared-transaction): Decides, signs and releases a Business Transaction that was declared with `POST /transactions`, then verifies it.
+* [Get the status of a Business Transaction](https://docs.parmanasystems.com/api-reference/endpoints/get-transaction-status): Returns the current status event of a Business Transaction.
+* [Reconcile a Business Transaction whose outcome is pending](https://docs.parmanasystems.com/api-reference/endpoints/reconcile-transaction): For a Business Transaction left in `EXECUTING`, writes its terminal status from the execution intent: `EXECUTED` when the release is recorded, or `FAILED` when an operator recorded that nothing was released.
 ## REST API: Verification
 
 * [Verify an Execution Trust Record](https://docs.parmanasystems.com/api-reference/endpoints/verify-transaction): Checks a Trust Record again on the server: recomputes its hash, verifies its signature and checks that every approved execution is bound to its authorization.

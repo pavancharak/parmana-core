@@ -33,17 +33,7 @@ export class PostgresBusinessTransactionRepository implements BusinessTransactio
    */
   async create(transaction: BusinessTransaction): Promise<BusinessTransaction> {
     try {
-      await this.pool.query(INSERT_BUSINESS_TRANSACTION_SQL, [
-        transaction.businessTransactionId,
-        transaction.status,
-        JSON.stringify(transaction.authority),
-        JSON.stringify(transaction.authorization),
-        JSON.stringify(transaction.intent),
-        JSON.stringify(transaction.metadata),
-        JSON.stringify(transaction.policy),
-        JSON.stringify(transaction.signals),
-        transaction.createdAt.toISOString(),
-      ]);
+      await insertBusinessTransactionRow(this.pool, transaction);
     } catch (error) {
       if (isUniqueViolation(error)) {
         throw new DuplicateBusinessTransactionError(
@@ -98,6 +88,27 @@ export class PostgresBusinessTransactionRepository implements BusinessTransactio
 
     return (rows as BusinessTransactionRow[]).map(rowToBusinessTransaction);
   }
+}
+
+/**
+ * Inserts one business transaction row. Accepts the pool or a client inside a
+ * database transaction, so the same insert serves both.
+ */
+export async function insertBusinessTransactionRow(
+  queryable: Pick<Pool, "query">,
+  transaction: BusinessTransaction,
+): Promise<void> {
+  await queryable.query(INSERT_BUSINESS_TRANSACTION_SQL, [
+    transaction.businessTransactionId,
+    transaction.status,
+    JSON.stringify(transaction.authority),
+    JSON.stringify(transaction.authorization),
+    JSON.stringify(transaction.intent),
+    JSON.stringify(transaction.metadata),
+    JSON.stringify(transaction.policy),
+    JSON.stringify(transaction.signals),
+    transaction.createdAt.toISOString(),
+  ]);
 }
 
 const INSERT_BUSINESS_TRANSACTION_SQL = `

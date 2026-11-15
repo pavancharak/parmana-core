@@ -59,7 +59,7 @@
                 "execute"
               ]
             },
-            "description": "The public sandbox's receipt action, sent without an approval. The sandbox refuses it (403 POLICY_DENIED). Get a demo approval from POST /sandbox/approvals for the same target and add it to signals to release it.\n\noperationId: executeTransaction\n\nIn the sandbox, each `businessTransactionId` works once: a prefilled id returns `409` after its first use.\nFor a new id each run, use the cURL sample, which generates one.\nSends one action for a decision and, if approved, performs it. This is the call an agent makes. The\nserver stores the Business Transaction, evaluates the policy, checks any signed human approval the\npolicy requires, releases the action to its connector, and returns the signed Execution Trust Record.\nIt runs synchronously: an approved action that calls an external system took 24 to 32 seconds in\nproduction, so set your client timeout to 120 seconds.\n\n**Before you send:** ask `GET /policies/in-effect?capability=<action>` which policy and version to\ndeclare and which facts to carry.\n\n**Idempotency:** `businessTransactionId` is a UUID you choose and the idempotency key. Sending the\nsame id again returns `409`; it never runs twice. After a timeout, read\n`GET /execution-intents/{businessTransactionId}` before sending anything new.\n\n**What the server sets:** `status`, `createdAt` and `metadata.submittedBy` (from your key). Top level\nfields not in the schema are dropped.\n\n**Outcomes:**\n1. `200`: approved and released. The body is the signed Trust Record.\n2. `403` `POLICY_DENIED`: the policy refused. Final; nothing was released. A Refusal Record is kept at\n   `GET /refusal/{businessTransactionId}`.\n3. `403` `CAPABILITY_NOT_ALLOWED`, or no code: your key may not invoke this action, or may not act for\n   this principal.\n4. `503`: refused before release; nothing was executed. See the codes on that response.\n5. `502` `EXECUTION_OUTCOME_UNKNOWN`, `executionStatus: EXECUTION_UNKNOWN`: released, then the\n   connector call failed, so the outcome is unknown. Do not resend under a new id. Check the target\n   system, then close the intent with `POST /execution-intents/{businessTransactionId}/resolve`.\n6. `409` `AUTHORIZATION_NO_LONGER_VALID`, `executionStatus: NOT_EXECUTED`: decided, but at release a\n   business fact it rested on was past its `validUntil`, or the authority grant had expired or been\n   revoked (RFC-0023 phase 4). Nothing was sent. Send a new request.\n7. `500` `EXECUTION_RECORD_INCOMPLETE`: released, but the signed record could not be produced. Do not\n   resend. An operator rebuilds it with `POST /execution-intents/{businessTransactionId}/finalize`.\n\nThe examples named `vendor-payment-flow` show the response shape; their `payments:execute` action no\nlonger exists. See [Integrate Parmana](/agents/integrate) and the\n[Error catalog](/api-reference/error-catalog)."
+            "description": "The public sandbox's receipt action, sent without an approval. The sandbox refuses it (403 POLICY_DENIED). Get a demo approval from POST /sandbox/approvals for the same target and add it to signals to release it.\n\noperationId: executeTransaction\n\nIn the sandbox, each `businessTransactionId` works once: a prefilled id returns `409` after its first use.\nFor a new id each run, use the cURL sample, which generates one.\nSends one action for a decision and, if approved, performs it. This is the call an agent makes. The\nserver stores the Business Transaction, evaluates the policy, checks any signed human approval the\npolicy requires, releases the action to its connector, and returns the signed Execution Trust Record.\nIt runs synchronously: an approved action that calls an external system took 24 to 32 seconds in\nproduction, so set your client timeout to 120 seconds.\n\n**Before you send:** ask `GET /policies/in-effect?capability=<action>` which policy and version to\ndeclare and which facts to carry.\n\n**Idempotency:** `businessTransactionId` is a UUID you choose and the idempotency key. Sending the\nsame id again returns `409`; it never runs twice. After a timeout, read\n`GET /execution-intents/{businessTransactionId}` before sending anything new.\n\n**What the server sets:** `status`, `createdAt` and `metadata.submittedBy` (from your key). Top level\nfields not in the schema are dropped.\n\n**Outcomes:**\n1. `200`: approved and released. The body is the signed Trust Record.\n2. `403` `POLICY_DENIED`: the policy refused. Final; nothing was released. A Refusal Record is kept at\n   `GET /refusal/{businessTransactionId}`.\n3. `403` `CAPABILITY_NOT_ALLOWED`, or no code: your key may not invoke this action, or may not act for\n   this principal.\n4. `503`: refused before release; nothing was executed. See the codes on that response.\n5. `502` `EXECUTION_OUTCOME_UNKNOWN`, `executionStatus: EXECUTION_UNKNOWN`: released, then the\n   connector call failed, so the outcome is unknown. Do not resend under a new id. Check the target\n   system, then close the intent with `POST /execution-intents/{businessTransactionId}/resolve`.\n6. `409` `AUTHORIZATION_NO_LONGER_VALID`, `executionStatus: NOT_EXECUTED`: decided, but at release a\n   business fact it rested on was past its `validUntil`, or the authority grant had expired or been\n   revoked (RFC-0023 phase 4). Nothing was sent. Send a new request.\n7. `500` `EXECUTION_RECORD_INCOMPLETE`: released, but the signed record could not be produced. Do not\n   resend. An operator rebuilds it with `POST /execution-intents/{businessTransactionId}/finalize`.\n\nIf the action was released but the status could not be set to `EXECUTED`, the call answers `202` with `outcome: pending`, `status: EXECUTING` and the signed record. Nothing is released again; reconcile with `POST /transactions/{businessTransactionId}/reconcile`.\n\nThe examples named `vendor-payment-flow` show the response shape; their `payments:execute` action no\nlonger exists. See [Integrate Parmana](/agents/integrate) and the\n[Error catalog](/api-reference/error-catalog)."
           }
         },
         {
@@ -90,7 +90,7 @@
                 "execute"
               ]
             },
-            "description": "Historical capture (vendor-payment 2.0.0, approved). The payments:execute action no longer exists on a current server. Shown for the response shape only.\n\noperationId: executeTransaction\n\nIn the sandbox, each `businessTransactionId` works once: a prefilled id returns `409` after its first use.\nFor a new id each run, use the cURL sample, which generates one.\nSends one action for a decision and, if approved, performs it. This is the call an agent makes. The\nserver stores the Business Transaction, evaluates the policy, checks any signed human approval the\npolicy requires, releases the action to its connector, and returns the signed Execution Trust Record.\nIt runs synchronously: an approved action that calls an external system took 24 to 32 seconds in\nproduction, so set your client timeout to 120 seconds.\n\n**Before you send:** ask `GET /policies/in-effect?capability=<action>` which policy and version to\ndeclare and which facts to carry.\n\n**Idempotency:** `businessTransactionId` is a UUID you choose and the idempotency key. Sending the\nsame id again returns `409`; it never runs twice. After a timeout, read\n`GET /execution-intents/{businessTransactionId}` before sending anything new.\n\n**What the server sets:** `status`, `createdAt` and `metadata.submittedBy` (from your key). Top level\nfields not in the schema are dropped.\n\n**Outcomes:**\n1. `200`: approved and released. The body is the signed Trust Record.\n2. `403` `POLICY_DENIED`: the policy refused. Final; nothing was released. A Refusal Record is kept at\n   `GET /refusal/{businessTransactionId}`.\n3. `403` `CAPABILITY_NOT_ALLOWED`, or no code: your key may not invoke this action, or may not act for\n   this principal.\n4. `503`: refused before release; nothing was executed. See the codes on that response.\n5. `502` `EXECUTION_OUTCOME_UNKNOWN`, `executionStatus: EXECUTION_UNKNOWN`: released, then the\n   connector call failed, so the outcome is unknown. Do not resend under a new id. Check the target\n   system, then close the intent with `POST /execution-intents/{businessTransactionId}/resolve`.\n6. `409` `AUTHORIZATION_NO_LONGER_VALID`, `executionStatus: NOT_EXECUTED`: decided, but at release a\n   business fact it rested on was past its `validUntil`, or the authority grant had expired or been\n   revoked (RFC-0023 phase 4). Nothing was sent. Send a new request.\n7. `500` `EXECUTION_RECORD_INCOMPLETE`: released, but the signed record could not be produced. Do not\n   resend. An operator rebuilds it with `POST /execution-intents/{businessTransactionId}/finalize`.\n\nThe examples named `vendor-payment-flow` show the response shape; their `payments:execute` action no\nlonger exists. See [Integrate Parmana](/agents/integrate) and the\n[Error catalog](/api-reference/error-catalog)."
+            "description": "Historical capture (vendor-payment 2.0.0, approved). The payments:execute action no longer exists on a current server. Shown for the response shape only.\n\noperationId: executeTransaction\n\nIn the sandbox, each `businessTransactionId` works once: a prefilled id returns `409` after its first use.\nFor a new id each run, use the cURL sample, which generates one.\nSends one action for a decision and, if approved, performs it. This is the call an agent makes. The\nserver stores the Business Transaction, evaluates the policy, checks any signed human approval the\npolicy requires, releases the action to its connector, and returns the signed Execution Trust Record.\nIt runs synchronously: an approved action that calls an external system took 24 to 32 seconds in\nproduction, so set your client timeout to 120 seconds.\n\n**Before you send:** ask `GET /policies/in-effect?capability=<action>` which policy and version to\ndeclare and which facts to carry.\n\n**Idempotency:** `businessTransactionId` is a UUID you choose and the idempotency key. Sending the\nsame id again returns `409`; it never runs twice. After a timeout, read\n`GET /execution-intents/{businessTransactionId}` before sending anything new.\n\n**What the server sets:** `status`, `createdAt` and `metadata.submittedBy` (from your key). Top level\nfields not in the schema are dropped.\n\n**Outcomes:**\n1. `200`: approved and released. The body is the signed Trust Record.\n2. `403` `POLICY_DENIED`: the policy refused. Final; nothing was released. A Refusal Record is kept at\n   `GET /refusal/{businessTransactionId}`.\n3. `403` `CAPABILITY_NOT_ALLOWED`, or no code: your key may not invoke this action, or may not act for\n   this principal.\n4. `503`: refused before release; nothing was executed. See the codes on that response.\n5. `502` `EXECUTION_OUTCOME_UNKNOWN`, `executionStatus: EXECUTION_UNKNOWN`: released, then the\n   connector call failed, so the outcome is unknown. Do not resend under a new id. Check the target\n   system, then close the intent with `POST /execution-intents/{businessTransactionId}/resolve`.\n6. `409` `AUTHORIZATION_NO_LONGER_VALID`, `executionStatus: NOT_EXECUTED`: decided, but at release a\n   business fact it rested on was past its `validUntil`, or the authority grant had expired or been\n   revoked (RFC-0023 phase 4). Nothing was sent. Send a new request.\n7. `500` `EXECUTION_RECORD_INCOMPLETE`: released, but the signed record could not be produced. Do not\n   resend. An operator rebuilds it with `POST /execution-intents/{businessTransactionId}/finalize`.\n\nIf the action was released but the status could not be set to `EXECUTED`, the call answers `202` with `outcome: pending`, `status: EXECUTING` and the signed record. Nothing is released again; reconcile with `POST /transactions/{businessTransactionId}/reconcile`.\n\nThe examples named `vendor-payment-flow` show the response shape; their `payments:execute` action no\nlonger exists. See [Integrate Parmana](/agents/integrate) and the\n[Error catalog](/api-reference/error-catalog)."
           }
         }
       ]
@@ -131,7 +131,7 @@
           }
         },
         {
-          "name": "Create (execute) a Business Transaction (sandbox-receipt)",
+          "name": "Declare a Business Transaction (sandbox-receipt)",
           "request": {
             "method": "POST",
             "header": [
@@ -158,11 +158,11 @@
                 "transactions"
               ]
             },
-            "description": "The public sandbox's receipt action, sent without an approval. The sandbox refuses it (403 POLICY_DENIED). Get a demo approval from POST /sandbox/approvals for the same target and add it to signals to release it.\n\noperationId: createTransaction\n\nIn the sandbox, each `businessTransactionId` works once: a prefilled id returns `409` after its first use.\nFor a new id each run, use the cURL sample, which generates one.\nThe same as `POST /execute` in every way except the success status, `201` instead of `200`. Use\nwhichever fits your client. Read [Execute a Business Transaction](/api-reference/endpoints/execute-transaction)\nfor the full behavior, the outcomes and what to do after each."
+            "description": "The public sandbox's receipt action, sent without an approval. The sandbox refuses it (403 POLICY_DENIED). Get a demo approval from POST /sandbox/approvals for the same target and add it to signals to release it.\n\noperationId: createTransaction\n\nDeclares a Business Transaction: it is checked, accepted and recorded with the status `RECEIVED`.\nNothing is decided, signed or released by this call. Release it with\n`POST /transactions/{businessTransactionId}/execute`, and read its status with\n`GET /transactions/{businessTransactionId}/status`.\nIn the sandbox, each `businessTransactionId` works once: a prefilled id returns `409` after its first use.\nFor a new id each run, use the cURL sample, which generates one."
           }
         },
         {
-          "name": "Create (execute) a Business Transaction (vendor-payment-flow-transactions-endpoint)",
+          "name": "Declare a Business Transaction (vendor-payment-flow-transactions-endpoint)",
           "request": {
             "method": "POST",
             "header": [
@@ -189,7 +189,7 @@
                 "transactions"
               ]
             },
-            "description": "Real captured request (vendor-payment 2.0.0, APPROVED), includes a client-supplied status and an unrecognized top-level field to demonstrate both are rejected/dropped, never persisted (see the 201 response below)\n\noperationId: createTransaction\n\nIn the sandbox, each `businessTransactionId` works once: a prefilled id returns `409` after its first use.\nFor a new id each run, use the cURL sample, which generates one.\nThe same as `POST /execute` in every way except the success status, `201` instead of `200`. Use\nwhichever fits your client. Read [Execute a Business Transaction](/api-reference/endpoints/execute-transaction)\nfor the full behavior, the outcomes and what to do after each."
+            "description": "Real captured request (vendor-payment 2.0.0, APPROVED), includes a client-supplied status and an unrecognized top-level field to demonstrate both are rejected/dropped, never persisted (see the 201 response below)\n\noperationId: createTransaction\n\nDeclares a Business Transaction: it is checked, accepted and recorded with the status `RECEIVED`.\nNothing is decided, signed or released by this call. Release it with\n`POST /transactions/{businessTransactionId}/execute`, and read its status with\n`GET /transactions/{businessTransactionId}/status`.\nIn the sandbox, each `businessTransactionId` works once: a prefilled id returns `409` after its first use.\nFor a new id each run, use the cURL sample, which generates one."
           }
         },
         {
@@ -215,6 +215,92 @@
               ]
             },
             "description": "operationId: getTransaction\n\nReturns one Business Transaction as it was stored. For the signed outcome, what was decided and\nexecuted, use `GET /trust-records/{businessTransactionId}`."
+          }
+        },
+        {
+          "name": "Execute a declared Business Transaction",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/transactions/:businessTransactionId/execute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions",
+                ":businessTransactionId",
+                "execute"
+              ],
+              "variable": [
+                {
+                  "key": "businessTransactionId",
+                  "value": "",
+                  "description": "The businessTransactionId the transaction was declared with."
+                }
+              ]
+            },
+            "description": "operationId: executeDeclaredTransaction\n\nDecides, signs and releases a Business Transaction that was declared with `POST /transactions`,\nthen verifies it. The caller must be the one that declared it. The status walks\n`RECEIVED` → `POLICY_EVALUATED` → `APPROVED` (or `REJECTED`) → `EXECUTING` → `EXECUTED` → `VERIFIED`.\nA transaction that is not `RECEIVED` is never released again by this call. One that is `EXECUTING`\nis refused with `409` and the reason `outcome pending`: its outcome is decided by reconciliation.\nIf the action was released but the status could not be set to `EXECUTED`, the call answers `202` with `outcome: pending`, `status: EXECUTING` and the signed record. Nothing is released again; reconcile with `POST /transactions/{businessTransactionId}/reconcile`."
+          }
+        },
+        {
+          "name": "Get the status of a Business Transaction",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/transactions/:businessTransactionId/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions",
+                ":businessTransactionId",
+                "status"
+              ],
+              "query": [
+                {
+                  "key": "history",
+                  "value": "",
+                  "description": "Set to true to include the full status history.",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "businessTransactionId",
+                  "value": "",
+                  "description": "The businessTransactionId the transaction was declared with."
+                }
+              ]
+            },
+            "description": "operationId: getTransactionStatus\n\nReturns the current status event of a Business Transaction. With `?history=true`, returns every\nstatus event in order, oldest first. Each event has a `sequence`, its `stage` (declare, decide,\nsign, execute, verify or reconcile), `occurredAt`, and a `reason` where one was recorded.\nTransactions declared before status events existed have one `RECEIVED` event marked `legacy: true`."
+          }
+        },
+        {
+          "name": "Reconcile a Business Transaction whose outcome is pending",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/transactions/:businessTransactionId/reconcile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions",
+                ":businessTransactionId",
+                "reconcile"
+              ],
+              "variable": [
+                {
+                  "key": "businessTransactionId",
+                  "value": "",
+                  "description": "The businessTransactionId the transaction was declared with."
+                }
+              ]
+            },
+            "description": "operationId: reconcileTransaction\n\nFor a Business Transaction left in `EXECUTING`, writes its terminal status from the execution\nintent: `EXECUTED` when the release is recorded, or `FAILED` when an operator recorded that nothing\nwas released. When the outcome cannot be established, nothing is changed and the call returns `409`\nwith the reason `outcome unknown`. A transaction that is already terminal is not changed.\nReconciliation never releases anything. Only human operator credentials may call it (`403` otherwise)."
           }
         }
       ]

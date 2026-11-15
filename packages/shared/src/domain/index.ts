@@ -36,3 +36,5 @@ export * from "./authority-grant.js";
 export * from "./policy-change-approval-record.js";
 export * from "./policy-change-step-up-authorization.js";
 export * from "./execution-audit-event.js";
+export * from "./transaction-status.js";
+export * from "./transaction-status-event.js";

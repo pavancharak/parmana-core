@@ -1,0 +1,13 @@
+---
+title: "Interface: TransactionStatusResult"
+---
+
+The response of GET /transactions/\{id\}/status.
+
+## Members
+
+| Name                    | Kind     | Type                                                                                                                 | Description                                           |
+| ----------------------- | -------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `businessTransactionId` | Property | `string`                                                                                                             |                                                       |
+| `current`               | Property | [`TransactionStatusEvent`](/sdks/reference/typescript/interfaces/TransactionStatusEvent)                             |                                                       |
+| `history?`              | Property | `readonly `[`TransactionStatusEvent`](/sdks/reference/typescript/interfaces/TransactionStatusEvent)`[] \| undefined` | Present when the history was requested. Oldest first. |

@@ -9,12 +9,14 @@ import { CryptoBootstrap, TrustRecordHasher } from "@parmana/crypto";
 import {
   AuthorityStatus,
   BusinessValidationStatus,
+  ConnectorNotRegisteredError,
   ExecutionAssessmentStatus,
   type AuthorityAssessment,
   type BusinessValidationAssessment,
   type DecisionAssessment,
   BusinessTransaction,
   BusinessTransactionStatus,
+  ApprovalNonceAlreadyConsumedError,
   Decision,
   DecisionOutcome,
   ExecutableContent,
@@ -53,6 +55,7 @@ import { ExecutionOutcomeUnknownError } from "./errors/ExecutionOutcomeUnknownEr
 import { RuntimeError } from "./errors/RuntimeError.js";
 import type { SigningReadiness } from "./SigningReadiness.js";
 import type { ExecutionIntentService } from "./ExecutionIntentService.js";
+import type { TransactionStatusRecorder } from "./services/TransactionStatusRecorder.js";
 import {
   findNeededApprovals,
   type ApprovalNeededNotifier,
@@ -89,6 +92,11 @@ export type DecisionRequest = Omit<
 export interface DecideOptions {
   /** Inbound checks consume approvals with their decision record, not here (G-143, O1). */
   readonly deferApprovalConsumption?: boolean;
+  /**
+   * Execute with status events on (decision D24): approvals are checked here but consumed by the APPROVED status write,
+   * in the same transaction. A nonce already consumed fails the decision.
+   */
+  readonly consumeApprovalsWithStatus?: boolean;
 }
 
 export class RuntimeEngine {
@@ -248,6 +256,14 @@ export class RuntimeEngine {
     private readonly authorityGrantEvaluator: AuthorityGrantEvaluator = new AuthorityGrantEvaluator(
       undefined,
     ),
+    /**
+     * Transaction status events (decision D23). Optional and trailing, like
+     * every dependency above. When omitted, no status is recorded and execute
+     * behaves exactly as before. When supplied, each step of execute is
+     * recorded as a status event, and a failure to record a step before the
+     * release stops the release.
+     */
+    private readonly transactionStatus?: TransactionStatusRecorder,
   ) {
     if (!pipeline) {
       throw new Error("RuntimePipeline is required.");
@@ -667,7 +683,9 @@ export class RuntimeEngine {
                 add: (approval) => usedApprovals.push(approval),
               },
               deferApprovalConsumption:
-                options.deferApprovalConsumption === true,
+                options.deferApprovalConsumption === true ||
+                options.consumeApprovalsWithStatus === true,
+              checkApprovalNonce: options.consumeApprovalsWithStatus === true,
             },
             evaluatedSignals,
           )
@@ -699,15 +717,7 @@ export class RuntimeEngine {
               policyId: policy.policyId,
               policyVersion: policy.policyVersion,
               outcome: PolicyOutcome.REJECT,
-              reason:
-                "Rejected: declared signal(s) do not match independently verified state (" +
-                stateViolations
-                  .map(
-                    (violation) =>
-                      `${violation.signalKey}=${JSON.stringify(violation.declaredValue)} != verified ${violation.signalKey}=${JSON.stringify(violation.actualValue)}`,
-                  )
-                  .join(", ") +
-                ").",
+              reason: describeStateViolations(stateViolations),
               matchedRuleId: "signal-state-verification-violation",
               evaluatedRules: 0,
               matchedPath: [],
@@ -793,6 +803,7 @@ export class RuntimeEngine {
       authority,
       businessValidation,
       usedApprovals,
+      bindingViolations,
     };
   }
 
@@ -809,13 +820,83 @@ export class RuntimeEngine {
       policyDecision,
       authority,
       businessValidation,
-    } = await this.decide(transaction);
+      usedApprovals,
+      bindingViolations,
+    } = await this.decide(transaction, {
+      // With status events on, the APPROVED write consumes the approvals (decision D24).
+      consumeApprovalsWithStatus: this.transactionStatus !== undefined,
+    });
+
+    //
+    // Status: the policy decision (D23). A decision that does not allow
+    // execution is recorded as REJECTED before the enforce below refuses it.
+    //
+    // Set when the APPROVED write loses a race for an approval: the refusal that is enforced below instead.
+    let refusal: typeof decision | undefined;
+
+    if (this.transactionStatus) {
+      const businessTransactionId = transaction.businessTransactionId;
+
+      await this.transactionStatus.advance(
+        businessTransactionId,
+        "POLICY_EVALUATED",
+        "decide",
+      );
+
+      if (this.executionGate.canExecute(decision)) {
+        const approvalNonces = usedApprovals.map((approval) => ({
+          nonce: approval.nonce,
+          expiresAt: approval.expiresAt,
+        }));
+
+        try {
+          await this.transactionStatus.advance(
+            businessTransactionId,
+            "APPROVED",
+            "decide",
+            { consumeApprovalNonces: approvalNonces },
+          );
+        } catch (error) {
+          if (!(error instanceof ApprovalNonceAlreadyConsumedError)) {
+            throw error;
+          }
+
+          // Another transaction consumed one of these approvals first. This one is still POLICY_EVALUATED, so it is
+          // refused as a decision that did not verify is: REJECTED, with a refusal record.
+          const reason = `approval already used: ${error.message}`;
+          refusal = {
+            ...decision,
+            outcome: DecisionOutcome.REJECTED,
+            reason,
+          };
+          await this.transactionStatus.advance(
+            businessTransactionId,
+            "REJECTED",
+            "decide",
+            { reason },
+          );
+          await this.writeRefusalRecord(
+            transaction,
+            refusal,
+            bindingViolations,
+            policyContentHash,
+          );
+        }
+      } else {
+        await this.transactionStatus.advance(
+          businessTransactionId,
+          "REJECTED",
+          "decide",
+          { reason: decision.reason ?? "Policy rejected execution." },
+        );
+      }
+    }
 
     //
     // Enforce
     //
 
-    this.executionGate.enforce(decision);
+    this.executionGate.enforce(refusal ?? decision);
 
     const executableContent: ExecutableContent = toExecutableContent({
       businessTransactionId: transaction.businessTransactionId,
@@ -938,6 +1019,16 @@ export class RuntimeEngine {
       await this.executionIntents?.prepare(context);
 
       //
+      // Status: the release is about to start (D23). Recorded before the
+      // connector is called. If this cannot be recorded, nothing is released.
+      //
+      await this.transactionStatus?.advance(
+        context.transaction.businessTransactionId,
+        "EXECUTING",
+        "execute",
+      );
+
+      //
       // Runtime Pipeline. The action is released to the connector inside
       // this call.
       //
@@ -950,6 +1041,20 @@ export class RuntimeEngine {
         // The release stage raised an error. The action may still have been
         // executed, so the intent is marked ERRORED, not "not released".
         //
+        //
+        // A connector that is not registered is refused before anything is
+        // sent, so the release certainly did not happen: FAILED. Any other
+        // error leaves the status EXECUTING (outcome unknown, D23 section 6a).
+        //
+        if (error instanceof ConnectorNotRegisteredError) {
+          await this.recordStatusAfterRelease(
+            context.transaction.businessTransactionId,
+            "FAILED",
+            "execute",
+            { reason: error.message },
+          );
+        }
+
         await this.executionIntents?.markErrored(
           context.transaction.businessTransactionId,
           error,
@@ -964,6 +1069,18 @@ export class RuntimeEngine {
       // without calling the connector again. Best effort, never throws.
       //
       await this.executionIntents?.markReleased(processedContext);
+
+      //
+      // Status: the connector answered (D23). If this write fails, the status
+      // stays EXECUTING with the outcome on record, and reconciliation
+      // (design section 6a) writes EXECUTED later. The release is not undone.
+      //
+      await this.recordStatusAfterRelease(
+        processedContext.transaction.businessTransactionId,
+        "EXECUTED",
+        "execute",
+        { recordRef: authorization.payload.authorizationId },
+      );
 
       //
       // From here the action has been released. Any failure to produce
@@ -996,6 +1113,36 @@ export class RuntimeEngine {
       await this.hookRunner.onRuntimeError(context, error as Error);
 
       throw error;
+    }
+  }
+
+  /**
+   * Records a status event after the release has been attempted. A failure is
+   * logged, not thrown: the release has happened or may have, so the caller
+   * must still get its answer. The state is repaired by reconciliation.
+   */
+  private async recordStatusAfterRelease(
+    businessTransactionId: string,
+    to: "FAILED" | "EXECUTED",
+    stage: "execute",
+    options: { reason?: string; recordRef?: string } = {},
+  ): Promise<void> {
+    if (!this.transactionStatus) return;
+
+    try {
+      await this.transactionStatus.advance(
+        businessTransactionId,
+        to,
+        stage,
+        options,
+      );
+    } catch (error) {
+      console.error({
+        event: "transaction_status_write_failed",
+        businessTransactionId,
+        status: to,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -1194,4 +1341,38 @@ export class RuntimeEngine {
   public size(): number {
     return this.pipeline.size();
   }
+}
+
+/**
+ * The reason a decision gives when the signals it declared do not match the
+ * verified state. A violation that names its own reason (a consumed approval,
+ * for example) is said in those words; the others are the declared and actual
+ * values, as before.
+ */
+function describeStateViolations(
+  violations: readonly SignalStateViolation[],
+): string {
+  const mismatches = violations.filter((v) => v.reason === undefined);
+  const named = violations.filter((v) => v.reason !== undefined);
+
+  const parts: string[] = [];
+
+  if (mismatches.length > 0) {
+    parts.push(
+      "declared signal(s) do not match independently verified state (" +
+        mismatches
+          .map(
+            (violation) =>
+              `${violation.signalKey}=${JSON.stringify(violation.declaredValue)} != verified ${violation.signalKey}=${JSON.stringify(violation.actualValue)}`,
+          )
+          .join(", ") +
+        ")",
+    );
+  }
+
+  for (const violation of named) {
+    parts.push(`signal '${violation.signalKey}': ${violation.reason}`);
+  }
+
+  return `Rejected: ${parts.join("; ")}.`;
 }

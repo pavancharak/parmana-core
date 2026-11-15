@@ -27,6 +27,7 @@
   "errors/configuration_error": "Python SDK reference: Raised when SDK configuration is invalid (e.g. a missing Runtime endpoint).",
   "errors/http_error": "Python SDK reference: Base class for errors raised from a non-2xx Runtime HTTP response.",
   "errors/network_error": "Raised when the SDK cannot communicate with the Parmana Runtime.",
+  "errors/execution_pending_error": "Python SDK reference: Raised when an execute released the action but its EXECUTED status write failed, so the outcome is pending until reconciled.",
   "errors/replay_error": "Python SDK reference: Raised when deterministic replay fails.",
   "errors/verification_error": "Python SDK reference: Raised when verification fails.",
   "models/approval_issuer": "Python SDK reference: Parmana approvers managed without a deploy.",
@@ -40,5 +41,6 @@
   "models/replay_result": "Python SDK reference: Parmana Replay Result.",
   "serialization/decoder": "Python SDK reference: Parmana Model Decoder.",
   "serialization/encoder": "Python SDK reference: Parmana Model Encoder.",
-  "transport/http_transport": "Python SDK reference: Parmana HTTP Transport."
+  "transport/http_transport": "Python SDK reference: Parmana HTTP Transport.",
+  "models/transaction_status": "Python SDK reference: the response types for declaring, executing, reading and reconciling a Business Transaction (decision D23)."
 }

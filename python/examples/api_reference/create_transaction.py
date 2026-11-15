@@ -30,6 +30,8 @@ transaction = create_business_transaction(
     },
 )
 
-record = client.create_transaction(transaction)
+# Declares only: the transaction is recorded as RECEIVED and nothing is released.
+# Release it with client.execute_transaction(declared.business_transaction_id).
+declared = client.declare_transaction(transaction)
 
-print(record.business_transaction_id, record.executions[0].decision.outcome)
+print(declared.business_transaction_id, declared.status)

@@ -34,10 +34,13 @@ describe("Concurrent same-id resubmission investigation", () => {
 
     const statuses = [responseA.status, responseB.status].sort();
 
-    // Exactly one 200 and one 409 -- never 200/200 (both executed) and
-    // never 409/409 (neither executed, which would itself be a different,
-    // separate bug).
-    expect(statuses).toEqual([200, 409]);
+    // Exactly one request passes the duplicate check and is decided, and the
+    // other is refused as a duplicate with 409. Which request is first is set
+    // by timing, so the decided one is either the first variant (200, released)
+    // or the second (403, refused by policy: delete-account is not an allowed
+    // capability). Never 200/200, and never 409/409.
+    expect(statuses[1]).toBe(409);
+    expect([200, 403]).toContain(statuses[0]);
 
     // Whichever one succeeded, confirm the persisted record reflects only
     // ONE coherent set of values, not some mixed/corrupted state.

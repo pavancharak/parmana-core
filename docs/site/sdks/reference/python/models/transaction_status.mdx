@@ -1,0 +1,48 @@
+---
+sidebar_label: transaction_status
+title: parmana.models.transaction_status
+description: "Python SDK reference: the response types for declaring, executing, reading and reconciling a Business Transaction (decision D23)."
+---
+
+Transaction status (decision D23): response types for the declare, execute,
+status and reconcile routes.
+
+Hand-written, not generated: they mirror the JSON the API returns. The
+statuses and stages are kept as plain strings, so a status added by a later
+version of the API still decodes.
+
+## TransactionStatusEvent Objects
+
+```python
+@dataclass(frozen=True)
+class TransactionStatusEvent()
+```
+
+One append-only status event of a Business Transaction.
+
+## DeclaredTransaction Objects
+
+```python
+@dataclass(frozen=True)
+class DeclaredTransaction()
+```
+
+The response of POST /transactions (declare).
+
+## TransactionStatusResult Objects
+
+```python
+@dataclass(frozen=True)
+class TransactionStatusResult()
+```
+
+The response of GET /transactions/\{id\}/status.
+
+## ReconcileResult Objects
+
+```python
+@dataclass(frozen=True)
+class ReconcileResult()
+```
+
+The response of POST /transactions/\{id\}/reconcile.
