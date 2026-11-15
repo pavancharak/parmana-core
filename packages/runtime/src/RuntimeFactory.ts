@@ -68,7 +68,10 @@ export class RuntimeFactory {
     //
     // Application Services
     //
-    const transactionService = new BusinessTransactionService(transactions);
+    const transactionService = new BusinessTransactionService(
+      transactions,
+      policyRepository,
+    );
 
     const executionService = new ExecutionService(transactions, trustRecords);
 
