@@ -297,3 +297,25 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 **Owner decision:** Yes, the same rule. No relaxation by environment.
 
 **Effect:** not implemented. The unit test suite, `vitest.setup.ts` and 27 files that reference the opt-in flag would need changing, with test fixtures that seed approval records.
+
+## D21. Signals are required at declare (15 November 2026)
+
+- **Reference:** D21
+- **Source:** docs/DECLARE_STAGE.md, section 4; schemas/requests/transaction-create-request.schema.json (already lists `signals` as required)
+- **Date recorded:** 2026-11-15
+- **Owner:** Pavan Charak
+
+**Question:** The request type marks `signals` as required, but the runtime accepted a request without it and treated the absent value as `{}`. Should declare refuse a request that has no `signals` object?
+
+**Options considered:**
+
+1. Require it. Declare refuses a request without a `signals` object with 400.
+2. Make it optional in the type, and document that an absent value means no signals.
+
+**Recommendation:** Option 1. A missing value should fail at the point the request is made, not become `{}` silently and surface later only if a policy reads a fact. The published request schema already lists `signals` as required.
+
+**Owner decision:** Require it.
+
+**Effect:** `BusinessTransactionValidator` refuses a transaction whose `signals` is missing, null or not an object, with 400 (`signals is required and must be an object.`). The SDKs already require the field. Callers that omit it will now receive 400.
+
+**Not changed by this decision:** whether an absent _fact_ that a policy reads is refused at evaluation (it still is, per `signalTypes.ts`); the type check of present signals (D-level change in `BusinessTransactionService.accept`, on branch `claude/declare-signal-schema`).
