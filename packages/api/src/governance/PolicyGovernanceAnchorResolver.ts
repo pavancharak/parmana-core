@@ -9,10 +9,9 @@ import type { PolicyChangeApprovalRecordRepository } from "@parmana/shared";
  * Production implementation of PolicyGovernanceAnchorResolver
  * (@parmana/policy). Wired unconditionally into RuntimeEngine
  * (createPolicyGovernanceAnchorResolver.ts) -- unlike
- * PolicyGovernanceExecutionVerifier, which is gated behind
- * POLICY_EXECUTION_VERIFICATION_ENFORCED because a false positive
- * there refuses real executions, this class only ever records what it
- * found. A NO_APPROVAL_RECORD result for every one of this
+ * PolicyGovernanceExecutionVerifier, which runs in every environment
+ * (D19) and refuses an execution whose policy has no approval record,
+ * this class only ever records what it found and never refuses. A NO_APPROVAL_RECORD result for every one of this
  * deployment's ten real policies today is the expected, informative
  * answer (see docs/internal/CLAIMS.md §2.26's "Legacy-policy backfill"), not a
  * fail-closed condition to guard against.
