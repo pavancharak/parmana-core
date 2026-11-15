@@ -319,3 +319,25 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 **Effect:** `BusinessTransactionValidator` refuses a transaction whose `signals` is missing, null or not an object, with 400 (`signals is required and must be an object.`). The SDKs already require the field. Callers that omit it will now receive 400.
 
 **Not changed by this decision:** whether an absent _fact_ that a policy reads is refused at evaluation (it still is, per `signalTypes.ts`); the type check of present signals (D-level change in `BusinessTransactionService.accept`, on branch `claude/declare-signal-schema`).
+
+## D22. Authorize is a stage of its own (15 November 2026)
+
+- **Reference:** D22
+- **Source:** finalflowparmana `02-authorize/OPEN.md`; the code at `parmana-core` `509a47e5`: `RuntimeEngine.decide` and `RuntimeEngine.execute`; `ExecutionGateway` checks at release
+- **Date recorded:** 2026-11-15
+- **Owner:** Pavan Charak
+
+**Question:** Is Authorize a stage of its own, or part of Execute?
+
+**Options considered:**
+
+1. Keep Authorize as its own stage. The decision is made and recorded before anything is signed; the signed execution authorization is the handoff to Execute.
+2. Treat Authorize as part of Execute, and describe one stage that decides, signs and releases.
+
+**Recommendation:** Option 1. The code already separates them: `decide` makes and records the decision, and `execute` signs only after the approve gate passes. The gateway checks the signed authorization again at release, independently. The approval verifier runs at both `authorize` and `release`, and the stage it runs at decides when an approval nonce is consumed. From the caller's side, `POST /transactions` runs both in one request, so the separation is internal to the runtime and does not change the API.
+
+**Owner decision:** Keep Authorize as its own stage. The handoff from Authorize to Execute is the signed execution authorization.
+
+**Effect on the documents:** the finalflowparmana `02-authorize` documents describe Authorize as a stage of its own, with the signed authorization named as the handoff. The open point is closed.
+
+**Not changed by this decision:** the API, the runtime's code, and the gateway's checks. No code changes.
