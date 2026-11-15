@@ -20,6 +20,7 @@ function valid(): Record<string, unknown> {
     authorization: { authorizationId: "z-1", authorityId: "a-1" },
     intent: { authorizationId: "z-1", action: "pay" },
     policy: { name: "p", version: "1.0.0" },
+    signals: {},
   };
 }
 
@@ -39,19 +40,23 @@ describe("BusinessTransactionValidator shape checks (G-87)", () => {
     );
   });
 
-  it.each(["metadata", "authority", "authorization", "intent", "policy"])(
-    "refuses a missing, null or non-object %s, naming it",
-    (key) => {
-      for (const value of [undefined, null, "x", []]) {
-        const body = valid();
-        if (value === undefined) delete body[key];
-        else body[key] = value;
-        expect(validate(body)).toThrow(
-          `${key} is required and must be an object.`,
-        );
-      }
-    },
-  );
+  it.each([
+    "metadata",
+    "authority",
+    "authorization",
+    "intent",
+    "policy",
+    "signals",
+  ])("refuses a missing, null or non-object %s, naming it", (key) => {
+    for (const value of [undefined, null, "x", []]) {
+      const body = valid();
+      if (value === undefined) delete body[key];
+      else body[key] = value;
+      expect(validate(body)).toThrow(
+        `${key} is required and must be an object.`,
+      );
+    }
+  });
 
   const DELETE = Symbol("delete");
 

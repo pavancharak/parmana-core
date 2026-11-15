@@ -62,7 +62,7 @@ Source: `packages/api/src/routes/transactions.ts`. The structural check is at th
 
 ## 4. Checks made at execution, as the first step of `application.execute`
 
-1. **Trust-chain validation.** `metadata.businessTransactionId` must equal `businessTransactionId`. A mismatch is refused. Code: `BusinessTransactionValidator.validate`, called from `BusinessTransactionService.accept`.
+1. **Shape and trust-chain validation.** Every object the validator reads must be present and an object: `metadata`, `authority`, `authorization`, `intent`, `policy`, and `signals` (D21: a missing `signals` is refused with 400). Then `metadata.businessTransactionId` must equal `businessTransactionId`. A mismatch is refused. Code: `BusinessTransactionValidator.validate`, called from `BusinessTransactionService.accept`.
 2. **Signal types.** Each signal present in the request must have the type the policy declares for it in `signalsSchema`. A mistyped signal is refused with `400` (`BusinessTransactionValidationError`), naming the signal and both types, for example `signals.amount must be a number; got string.` The rule is the one the policy engine applies at evaluation (`findSignalTypeViolations`). An absent signal and an undeclared one are not checked here. If the policy cannot be loaded, this step does not refuse; the decision reports that. Code: `BusinessTransactionService.accept`, which receives the policy repository from `RuntimeFactory`.
 3. **Duplicate check.** A `businessTransactionId` already accepted is refused with `409` (`DuplicateBusinessTransactionError`).
 
