@@ -109,6 +109,8 @@ function executingWithIntent(
     { get: async () => storedIntent } as never,
     undefined,
     recorder,
+    undefined,
+    { acquire: async () => ({ release: async () => undefined }) } as never,
   );
   return { app, events };
 }

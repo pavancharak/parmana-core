@@ -139,8 +139,17 @@ function build(options: {
     undefined,
     undefined,
     recorder,
-    options.declarationStore,
-    options.lock,
+    "declarationStore" in options
+      ? options.declarationStore
+      : {
+          declare: async (tx: BusinessTransaction, firstEvent: unknown) => {
+            await events.append(firstEvent as never);
+            return tx;
+          },
+        },
+    "lock" in options
+      ? options.lock
+      : { acquire: async () => ({ release: async () => undefined }) },
   );
 
   return { app, events, calls };
@@ -233,12 +242,25 @@ describe("ExecutionTrustApplication: declare writes the transaction and its even
     expect(events.events).toHaveLength(0);
   });
 
-  it("without a store, writes the transaction with accept and then the RECEIVED event", async () => {
-    const { app, events, calls } = build({});
+  it("refuses to declare in two writes when status events are on, and writes nothing", async () => {
+    const { app, events, calls } = build({ declarationStore: undefined });
 
-    await app.declare({ businessTransactionId: TX } as never);
+    await expect(
+      app.declare({ businessTransactionId: TX } as never),
+    ).rejects.toThrow(/declaration store is not configured/);
 
-    expect(calls.accept).toBe(1);
-    expect(events.events.map((e) => e.status)).toEqual(["RECEIVED"]);
+    expect(calls.accept).toBe(0);
+    expect(events.events).toHaveLength(0);
+  });
+});
+
+describe("ExecutionTrustApplication: fail closed without a lock", () => {
+  it("refuses to execute, and releases nothing, when status events are on and no lock is configured", async () => {
+    const { app, calls } = build({ lock: undefined });
+
+    await expect(app.executeAccepted(TX)).rejects.toThrow(
+      /lock is not configured/,
+    );
+    expect(calls.runtime).toBe(0);
   });
 });

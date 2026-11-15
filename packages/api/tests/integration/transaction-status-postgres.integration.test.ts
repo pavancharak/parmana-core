@@ -236,6 +236,59 @@ describe.skipIf(!databaseConfigured)(
       expect(await events(id)).toHaveLength(6);
     }, 60000);
 
+    it("refuses a legacy transaction through both execute routes, and never releases it", async () => {
+      // Released before status events existed: the row and its one legacy event
+      // are present, as they are after the migration's backfill. The declared
+      // route refuses it as legacy; the one-call route refuses the same id as a
+      // duplicate, because it declares first.
+      const legacy = await createBusinessTransaction();
+      const id = legacy.businessTransactionId;
+      legacy.metadata = { ...legacy.metadata, submittedBy: "pg-caller" };
+      await pool.query(
+        `INSERT INTO business_transactions
+         (business_transaction_id, status, authority_json, authorization_json, intent_json,
+          metadata_json, policy_json, signals_json, created_at)
+       VALUES ($1, 'RECEIVED', $2::jsonb, $3::jsonb, $4::jsonb, $5::jsonb, $6::jsonb, $7::jsonb, now())`,
+        [
+          id,
+          JSON.stringify(legacy.authority),
+          JSON.stringify(legacy.authorization),
+          JSON.stringify(legacy.intent),
+          JSON.stringify(legacy.metadata),
+          JSON.stringify(legacy.policy),
+          JSON.stringify(legacy.signals),
+        ],
+      );
+      await pool.query(
+        `INSERT INTO transaction_status_events
+         (event_id, business_transaction_id, sequence, status, stage, occurred_at, legacy)
+       VALUES (gen_random_uuid(), $1, 1, 'RECEIVED', 'declare', now(), true)`,
+        [id],
+      );
+
+      const declared = await request(app)
+        .post(`/transactions/${id}/execute`)
+        .set("Authorization", `Bearer ${CALLER_KEY}`)
+        .send();
+      expect(declared.status).toBe(409);
+      expect(declared.body.error).toMatch(/legacy transaction/);
+
+      const oneCall = await request(app)
+        .post("/execute")
+        .set("Authorization", `Bearer ${CALLER_KEY}`)
+        .send(legacy);
+      expect(oneCall.status).toBe(409);
+      expect(typeof oneCall.body.error).toBe("string");
+
+      // Nothing was written: still one legacy event, and no trust record.
+      expect(await events(id)).toHaveLength(1);
+      const records = await pool.query(
+        "SELECT count(*)::int AS n FROM execution_trust_records WHERE business_transaction_id = $1",
+        [id],
+      );
+      expect(records.rows[0].n).toBe(0);
+    }, 60000);
+
     it("refuses a legacy transaction on Postgres, and writes no event", async () => {
       // A transaction declared before status events existed: its row, and the one
       // RECEIVED event the migration would have written, marked legacy.

@@ -130,7 +130,18 @@ export class ExecutionTrustApplication {
     // written in one step (design section 3). Without one, they are written
     // one after the other, as before.
     //
-    if (this.statusRecorder && this.declarationStore) {
+    if (this.statusRecorder) {
+      //
+      // Fail closed: with status events on, a declaration written in two
+      // steps can leave a transaction with no status, which nothing can
+      // execute or reconcile. Without the store the server is misconfigured.
+      //
+      if (!this.declarationStore) {
+        throw new Error(
+          "Transaction declaration store is not configured: refusing to declare a transaction in two writes while status events are on.",
+        );
+      }
+
       await this.transactions.validateForAccept(transaction);
       await this.declarationStore.declare(
         transaction,
@@ -140,15 +151,7 @@ export class ExecutionTrustApplication {
       return transaction;
     }
 
-    const accepted = await this.transactions.accept(transaction);
-
-    await this.statusRecorder?.advance(
-      accepted.businessTransactionId,
-      "RECEIVED",
-      "declare",
-    );
-
-    return accepted;
+    return this.transactions.accept(transaction);
   }
 
   /**
@@ -175,6 +178,17 @@ export class ExecutionTrustApplication {
     work: () => Promise<T>,
   ): Promise<T> {
     if (!this.executionLock) {
+      //
+      // Fail closed: the status check is made inside the lock, and approvals
+      // are consumed by the decision, which runs after that check. Without
+      // a lock, two executes can both consume an approval (finding 3).
+      //
+      if (this.statusRecorder) {
+        throw new Error(
+          "Transaction execution lock is not configured: refusing to execute or reconcile while status events are on.",
+        );
+      }
+
       return work();
     }
 

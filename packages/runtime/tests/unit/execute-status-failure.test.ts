@@ -63,10 +63,18 @@ function application(
     () => `evt-${++n}`,
   );
   const transaction = { businessTransactionId: TX_ID } as BusinessTransaction;
+  const declarationStore = {
+    declare: async (tx: BusinessTransaction, firstEvent: unknown) => {
+      await events.append(firstEvent as never);
+      return tx;
+    },
+  };
+  const lock = { acquire: async () => ({ release: async () => undefined }) };
 
   const app = new ExecutionTrustApplication(
     {
       accept: async () => transaction,
+      validateForAccept: async () => undefined,
       get: async () => transaction,
     } as never,
     {
@@ -81,6 +89,8 @@ function application(
     undefined,
     undefined,
     recorder,
+    declarationStore as never,
+    lock as never,
   );
 
   return { app, events };
