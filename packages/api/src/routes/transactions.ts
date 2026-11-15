@@ -13,8 +13,39 @@ import { isCapabilityAllowed } from "../auth/isCapabilityAllowed.js";
 import type { CallerAuditSink } from "../auth/CallerAuditSink.js";
 import { recordCallerAuditEvent } from "../auth/recordCallerAuditEvent.js";
 import { parsePagination } from "./pagination.js";
-import { NonHumanCallerDeniedError } from "@parmana/shared";
+import { NonHumanCallerDeniedError, type BusinessTransaction } from "@parmana/shared";
 import { isHumanCaller } from "../auth/isHumanCaller.js";
+
+/**
+ * True when a stored transaction and an incoming one have the same declared
+ * body. createdAt is left out: the server sets it on every request, so it
+ * always differs on a repeat. Both sides are reduced to JSON with sorted keys,
+ * so key order in the request does not matter.
+ */
+function sameDeclaredBody(stored: BusinessTransaction, incoming: BusinessTransaction): boolean {
+  return canonicalJson(withoutCreatedAt(stored)) === canonicalJson(withoutCreatedAt(incoming));
+}
+
+function withoutCreatedAt(transaction: BusinessTransaction): unknown {
+  const copy = Object.fromEntries(
+    Object.entries(transaction).filter(([key]) => key !== "createdAt"),
+  );
+  return JSON.parse(JSON.stringify(copy));
+}
+
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map(canonicalJson).join(",")}]`;
+  }
+  if (value !== null && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    const members = Object.keys(record)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`);
+    return `{${members.join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
 
 export function createTransactionsRouter(
   application: ExecutionTrustApplication,
@@ -124,6 +155,8 @@ export function createTransactionsRouter(
       // needs it too (G-29 audit), and `try`/`catch` are separate block
       // scopes -- a `const` declared inside `try` is not visible there.
       const { businessTransactionId } = req.body ?? {};
+      // Set once the body is mapped. The catch below uses it to answer a repeat.
+      let transaction: BusinessTransaction | undefined;
 
       try {
         if (!isValidBusinessTransactionId(businessTransactionId)) {
@@ -155,7 +188,7 @@ export function createTransactionsRouter(
           return;
         }
 
-        let transaction = BusinessTransactionMapper.fromRequest(req.body);
+        transaction = BusinessTransactionMapper.fromRequest(req.body);
 
         if (req.callerId !== undefined) {
           const principalId = transaction.authority?.principalId;
@@ -304,6 +337,29 @@ export function createTransactionsRouter(
         });
         return;
       } catch (error) {
+        //
+        // A repeat of an identical declaration gets the stored record with 200, so a
+        // client that retries after a lost answer is not refused (declare open point 15,
+        // decided 2026-11-15). The same ID with a different body is still refused below
+        // with 409. The caller's checks ran before this point, and submittedBy is part
+        // of the body, so another caller's repeat never matches.
+        //
+        if (error instanceof DuplicateBusinessTransactionError && transaction !== undefined) {
+          const stored = await application.getTransaction(transaction.businessTransactionId);
+
+          if (stored !== null && sameDeclaredBody(stored, transaction)) {
+            const status = await application.getTransactionStatus(stored.businessTransactionId);
+
+            res.status(200).json({
+              businessTransactionId: stored.businessTransactionId,
+              status: status?.status ?? null,
+              acceptedAt: status?.occurredAt,
+              transaction: stored,
+            });
+            return;
+          }
+        }
+
         //
         // Structural rejection audit trail (G-29, docs/internal/VERIFICATION-GAPS.md).
         // See execute.ts's identical block for the full rationale.
