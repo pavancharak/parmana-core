@@ -95,3 +95,7 @@ Until the gate opens, a deployment that sets `HYBRID_SCHEMA_VERSION=3` is runnin
 ## Addendum (2026-10-31): offline verifiers refuse legacy-only records by default
 
 Option 2 required a verifier to reject a post-cutover record with no hybrid envelope. Without a cutover date, the offline verifier also accepted a record with its envelope removed, because a missing envelope counted as a pass. That is fixed: a record with no envelope is accepted only if it predates a supplied `hybridRequiredFrom`, or if no cutover is set and the caller passes `allowLegacyOnly: true` (the `allowLegacyOnly` trust-file field in `parmana-verifier`). A cutover, when given, decides alone. Affected: `verifyExecutionTrustRecordOffline` in `packages/crypto`, and `parmana-verifier` (Node and Python). The in-browser verifier in `docs/site/snippets/record-verifier.jsx` applies the same default, with an explicit reader opt-in.
+
+---
+
+**Update, 2026-11-15.** The issuance gate in this ADR is closed. Gap G-121 was closed on 2026-11-15: the published `@parmana/verifier`, `parmana-verifier`, `@parmana/sdk` and `parmana` packages read schema version 3. The owner then made schema version 3 the default. `HYBRID_SCHEMA_VERSION` unset means 3, `2` remains available, and `HYBRID_SCHEMA_V3_ACKNOWLEDGED` is no longer read. The rest of this ADR is unchanged.

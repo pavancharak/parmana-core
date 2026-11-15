@@ -23,7 +23,7 @@ v3 records are hybrid-signed: one Ed25519 entry and one ML-DSA-65 entry (`dilith
 3. **Node 24.x** is the runtime of that environment. ML-DSA-65 needs Node 24 or later with OpenSSL 3.5 or later. Confirm the patch from the build log's `Using Node.js` line.
 4. **The verifier and SDK versions** that will read the records are released or pinned: parmana-verifier with v3 support, and the SDKs from PR #491.
 
-Do not proceed if any precondition is missing. The server refuses `HYBRID_SCHEMA_VERSION=3` without `HYBRID_SCHEMA_V3_ACKNOWLEDGED=true`, and refuses hybrid mode with `KEY_PROVIDER=aws-kms`.
+Do not proceed if any precondition is missing. The acknowledgement gate was removed on 2026-11-15, when gap G-121 closed: `HYBRID_SCHEMA_VERSION` now defaults to 3, and `HYBRID_SCHEMA_V3_ACKNOWLEDGED` is no longer read. The server still refuses hybrid mode with `KEY_PROVIDER=aws-kms`.
 
 ## Gate: no ML-DSA-65 key in an environment variable
 
@@ -45,7 +45,6 @@ Set these on the Vercel **Preview** environment only. Production must not have t
 | `SECONDARY_SIGNATURE_PROVIDER`          | `ml-dsa-65`                        |
 | `PARMANA_VERIFICATION_SECONDARY_KEY_ID` | the ML-DSA-65 key id (not the key) |
 | `HYBRID_SCHEMA_VERSION`                 | `3`                                |
-| `HYBRID_SCHEMA_V3_ACKNOWLEDGED`         | `true`                             |
 
 Set the Preview Node.js Version to `24.x` and redeploy the Preview branch.
 
@@ -71,7 +70,7 @@ Do not start this step until Preview has run cleanly for an agreed period, and t
 
 ## Rollback
 
-- **Preview or Production, records look wrong:** unset `HYBRID_SCHEMA_VERSION` (or set it to `2`), then redeploy. New records are v2 again. Existing v3 records still verify, because they carry their own `schemaVersion`.
+- **Preview or Production, records look wrong:** set `HYBRID_SCHEMA_VERSION=2`, then redeploy. New records are v2 again. Unsetting the variable no longer gives v2: unset means 3. Existing v3 records still verify, because they carry their own `schemaVersion`.
 - **Signing fails:** unset `CRYPTO_MODE` (or set it to `single`), then redeploy. Records are issued with the legacy signature only.
 - **Key problem:** revoke the ML-DSA-65 key through the owner's key process. Do not delete key files on the host. Record the incident in `04-INCIDENTS-LOG.md`.
 

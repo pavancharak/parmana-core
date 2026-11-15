@@ -46,7 +46,7 @@ This page replaces the 2026-11-05 version. The gap table now lives in `VERIFICAT
 - **Node version: 24.x everywhere.** The Vercel project currently shows 26.x through a dashboard override, which must be changed.
 - **Schema v3 is turned on Preview first, production later, as separate decisions.** The gate is in `runbooks/SCHEMA-V3-ROLLOUT.md`.
 - **No ML-DSA-65 private key goes into an environment variable** for the schema v3 Preview test, unless the owner accepts that exposure in writing.
-- **Default schema (owner decision, 2026-11-15): v3 by default.** Gate G-121 is closed (2026-11-15): the published verifiers and SDKs read v3. The default is not yet changed; that is a separate change. The published SDKs still accept v2 and single-algorithm records by default, and the verifier in parmana-verifier PR #39 refuses them.
+- **Default schema is v3 (owner decision, 2026-11-15).** Gate G-121 is closed. The change is on `claude/default-schema-v3` in parmana-core: unset `HYBRID_SCHEMA_VERSION` means 3, `2` is still accepted, and the acknowledgement gate is removed. It takes effect only in `CRYPTO_MODE=hybrid`. The published SDKs still accept v2 and single-algorithm records by default, and the verifier in parmana-verifier PR #39 refuses them.
 
 ## 3. What remains, in order
 
@@ -84,7 +84,7 @@ Option A authenticates with the server's Vercel OIDC identity. This is not set u
 This starts only after 3.3 and 3.4 have run on Preview, or once the owner has accepted the exposure in writing. See the gate in `runbooks/SCHEMA-V3-ROLLOUT.md`.
 
 1. Load the ML-DSA-65 key through option A, not an environment variable.
-2. On Preview only, set `CRYPTO_MODE=hybrid`, `PRIMARY_SIGNATURE_PROVIDER=ed25519`, `SECONDARY_SIGNATURE_PROVIDER=ml-dsa-65`, `PARMANA_VERIFICATION_SECONDARY_KEY_ID`, `HYBRID_SCHEMA_VERSION=3` and `HYBRID_SCHEMA_V3_ACKNOWLEDGED=true`.
+2. On Preview only, set `CRYPTO_MODE=hybrid`, `PRIMARY_SIGNATURE_PROVIDER=ed25519`, `SECONDARY_SIGNATURE_PROVIDER=ml-dsa-65` and `PARMANA_VERIFICATION_SECONDARY_KEY_ID`. Schema version 3 is the default, so `HYBRID_SCHEMA_VERSION` can stay unset.
 3. Redeploy Preview. Create one trust record. Check that it has `schemaVersion: 3` and two signatures.
 4. Verify it with the TypeScript and Python SDKs. Expect `valid: true` and `coverage: "full"`. Add a field to a copy: both must report `valid: false`.
 5. Watch Preview's logs for signing errors over a day.
@@ -93,7 +93,7 @@ This starts only after 3.3 and 3.4 have run on Preview, or once the owner has ac
 
 Only after 3.5 has run cleanly. Follow the Production steps in `runbooks/SCHEMA-V3-ROLLOUT.md`.
 
-Rollback: unset `HYBRID_SCHEMA_VERSION` and `CRYPTO_MODE`, then redeploy.
+Rollback: set `HYBRID_SCHEMA_VERSION=2` (unset means 3) and unset `CRYPTO_MODE`, then redeploy.
 
 ### 3.7 Older review decisions (owner)
 

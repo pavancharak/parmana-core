@@ -61,27 +61,33 @@ describe("loadConfig hybridSchemaVersion (ADR-0016)", () => {
     }
   });
 
-  it("defaults to schema version 2 when HYBRID_SCHEMA_VERSION is unset", () => {
+  it("defaults to schema version 3 when HYBRID_SCHEMA_VERSION is unset", () => {
     process.env.PARMANA_POLICY_DIR = "./policies";
     delete process.env.HYBRID_SCHEMA_VERSION;
+
+    expect(loadConfig().crypto.hybridSchemaVersion).toBe(3);
+  });
+
+  it("treats a blank HYBRID_SCHEMA_VERSION as the default, version 3", () => {
+    process.env.PARMANA_POLICY_DIR = "./policies";
+    process.env.HYBRID_SCHEMA_VERSION = "   ";
+
+    expect(loadConfig().crypto.hybridSchemaVersion).toBe(3);
+  });
+
+  it("keeps schema version 2 available when set explicitly", () => {
+    process.env.PARMANA_POLICY_DIR = "./policies";
+    process.env.HYBRID_SCHEMA_VERSION = "2";
 
     expect(loadConfig().crypto.hybridSchemaVersion).toBe(2);
   });
 
-  it("refuses schema version 3 unless the acknowledgement is set", () => {
+  it("accepts schema version 3 without any acknowledgement (the gate is closed, G-121)", () => {
     process.env.PARMANA_POLICY_DIR = "./policies";
     process.env.HYBRID_SCHEMA_VERSION = "3";
     delete process.env.HYBRID_SCHEMA_V3_ACKNOWLEDGED;
 
-    expect(() => loadConfig()).toThrow("HYBRID_SCHEMA_V3_ACKNOWLEDGED=true");
-  });
-
-  it("refuses schema version 3 when the acknowledgement is anything but the exact string true", () => {
-    process.env.PARMANA_POLICY_DIR = "./policies";
-    process.env.HYBRID_SCHEMA_VERSION = "3";
-    process.env.HYBRID_SCHEMA_V3_ACKNOWLEDGED = "yes";
-
-    expect(() => loadConfig()).toThrow("HYBRID_SCHEMA_V3_ACKNOWLEDGED=true");
+    expect(loadConfig().crypto.hybridSchemaVersion).toBe(3);
   });
 
   it("accepts schema version 3 when acknowledged", () => {
