@@ -168,7 +168,11 @@ async function databaseRecords(): Promise<LoggedApprovalRecord[]> {
   try {
     const { rows } = await pool.query(
       "SELECT * FROM policy_change_approval_records " +
-        "ORDER BY approved_at ASC, policy_change_approval_record_id ASC",
+        // Ascending, so the last row is the most recent. On a tie the
+        // insertion order decides, as in the repository queries
+        // (migration 20261115120000); NULLS FIRST keeps rows from before
+        // the column existed below a new record with the same approved_at.
+        "ORDER BY approved_at ASC, approval_sequence ASC NULLS FIRST, policy_change_approval_record_id ASC",
     );
     return rows.map((row) =>
       recordFromRow(normalizeDbRow(row as Record<string, unknown>)),
