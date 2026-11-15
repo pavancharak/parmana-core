@@ -521,9 +521,12 @@ describe.skipIf(!isMlDsa65Supported())(
     const saved = { ...process.env };
 
     // Set before every test: the shared single-mode helper clears these before each test.
+    // This block tests the schema version 2 envelope, so it pins version 2: the default is now 3 (ADR-0016).
+    // Schema version 3 is covered by verification-service-hybrid.test.ts.
     beforeEach(() => {
       process.env.CRYPTO_MODE = "hybrid";
       process.env.SECONDARY_SIGNATURE_PROVIDER = "dilithium3";
+      process.env.HYBRID_SCHEMA_VERSION = "2";
     });
 
     beforeAll(() => {

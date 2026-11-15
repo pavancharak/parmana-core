@@ -59,7 +59,6 @@ process.env.CRYPTO_MODE = "hybrid";
 process.env.PRIMARY_SIGNATURE_PROVIDER = "ed25519";
 process.env.SECONDARY_SIGNATURE_PROVIDER = "ml-dsa-65";
 process.env.HYBRID_SCHEMA_VERSION = "3";
-process.env.HYBRID_SCHEMA_V3_ACKNOWLEDGED = "true";
 
 const { VerificationCrypto } = await import("@parmana/crypto");
 

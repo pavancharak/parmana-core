@@ -256,25 +256,28 @@ describe("configuration doctor, local deployment", () => {
     expect(JSON.stringify(checks)).not.toContain(secret);
   });
 
-  it("fails hybrid schema version 3 without the acknowledgement", () => {
+  it("passes hybrid schema version 3 with no acknowledgement, and an unset version (the default)", () => {
     expect(
       check(
         diagnoseConfiguration(env({ HYBRID_SCHEMA_VERSION: "3" }), readers()),
         "HYBRID_SCHEMA_VERSION",
       ).level,
-    ).toBe("fail");
+    ).toBe("pass");
     expect(
       check(
-        diagnoseConfiguration(
-          env({
-            HYBRID_SCHEMA_VERSION: "3",
-            HYBRID_SCHEMA_V3_ACKNOWLEDGED: "true",
-          }),
-          readers(),
-        ),
+        diagnoseConfiguration(env({}), readers()),
         "HYBRID_SCHEMA_VERSION",
       ).level,
     ).toBe("pass");
+  });
+
+  it("fails an unknown hybrid schema version", () => {
+    expect(
+      check(
+        diagnoseConfiguration(env({ HYBRID_SCHEMA_VERSION: "4" }), readers()),
+        "HYBRID_SCHEMA_VERSION",
+      ).level,
+    ).toBe("fail");
   });
 
   it("fails a cutover timestamp that is not UTC", () => {

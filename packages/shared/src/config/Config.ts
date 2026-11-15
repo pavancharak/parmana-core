@@ -351,36 +351,22 @@ export interface LoggingConfig {
  * should be accessed.
  */
 /**
- * HYBRID_SCHEMA_VERSION: unset means 2. Any other value must be exactly
- * 2 or 3, and anything else throws, so a typo cannot pick a schema
- * version silently.
+ * HYBRID_SCHEMA_VERSION: unset or blank means 3, the default (ADR-0016).
+ * "2" selects the older envelope, which signs seven top-level fields only.
+ * "3" is accepted explicitly. Any other value throws, so a typo cannot pick a
+ * schema version silently.
+ *
+ * Schema version 3 was gated on the SDKs and the published verifiers reading
+ * it (gap G-121). Those now read it, so the gate is gone. The schema version
+ * only applies in CRYPTO_MODE=hybrid.
  */
-export function parseHybridSchemaVersion(
-  value: string | undefined,
-  acknowledged: string | undefined,
-): 2 | 3 {
-  if (value === undefined || value.trim() === "") {
-    return 2;
+export function parseHybridSchemaVersion(value: string | undefined): 2 | 3 {
+  if (value === undefined || value.trim() === "" || value === "3") {
+    return 3;
   }
 
   if (value === "2") {
     return 2;
-  }
-
-  if (value === "3") {
-    //
-    // Schema version 3 records are not readable by the SDKs and by
-    // the published third-party verifier until those are updated (ADR-0016 issuance gate).
-    // Refuse to start unless the operator also sets the acknowledgement,
-    // so a stray value cannot switch v3 on.
-    //
-    if (acknowledged !== "true") {
-      throw new Error(
-        "HYBRID_SCHEMA_VERSION=3 is refused unless HYBRID_SCHEMA_V3_ACKNOWLEDGED=true is also set (ADR-0016 issuance gate).",
-      );
-    }
-
-    return 3;
   }
 
   throw new Error(`HYBRID_SCHEMA_VERSION must be 2 or 3, got "${value}".`);
@@ -448,7 +434,6 @@ export function loadConfig(): Readonly<Config> {
 
       hybridSchemaVersion: parseHybridSchemaVersion(
         process.env.HYBRID_SCHEMA_VERSION,
-        process.env.HYBRID_SCHEMA_V3_ACKNOWLEDGED,
       ),
     }),
 

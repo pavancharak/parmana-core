@@ -441,10 +441,7 @@ function checkCrypto(
 
 function checkHybrid(env: Env, add: (check: DoctorCheck) => void): void {
   try {
-    parseHybridSchemaVersion(
-      env.HYBRID_SCHEMA_VERSION,
-      env.HYBRID_SCHEMA_V3_ACKNOWLEDGED,
-    );
+    parseHybridSchemaVersion(env.HYBRID_SCHEMA_VERSION);
     add({
       name: "HYBRID_SCHEMA_VERSION",
       level: "pass",
@@ -454,9 +451,8 @@ function checkHybrid(env: Env, add: (check: DoctorCheck) => void): void {
     add({
       name: "HYBRID_SCHEMA_VERSION",
       level: "fail",
-      message:
-        "HYBRID_SCHEMA_VERSION must be 2 or 3. Version 3 also needs HYBRID_SCHEMA_V3_ACKNOWLEDGED=true",
-      fix: "Set HYBRID_SCHEMA_VERSION to 2, or set both values for version 3 (ADR-0016)",
+      message: "HYBRID_SCHEMA_VERSION must be 2 or 3, or unset (the default, 3)",
+      fix: "Unset HYBRID_SCHEMA_VERSION for version 3 (ADR-0016), or set it to 2 for the older envelope",
     });
   }
 

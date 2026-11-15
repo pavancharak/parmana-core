@@ -185,7 +185,8 @@ describe.skipIf(!isMlDsa65Supported())(
     it("builds and verifies a hybrid-signed record end to end", async () => {
       const trustRecord = await buildTrustRecord("txn-hybrid-valid");
 
-      expect(trustRecord.schemaVersion).toBe(2);
+      // The default is schema version 3 (ADR-0016): unset HYBRID_SCHEMA_VERSION means 3.
+      expect(trustRecord.schemaVersion).toBe(3);
       expect(trustRecord.signatures).toHaveLength(2);
       expect(
         trustRecord.signatures?.map((entry) => entry.algorithm).sort(),
