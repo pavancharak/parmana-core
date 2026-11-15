@@ -7,11 +7,10 @@ import type { PolicyChangeApprovalRecordRepository } from "@parmana/shared";
 
 /**
  * Production implementation of PolicyExecutionVerifier (@parmana/policy).
- * Wired into RuntimeEngine only when POLICY_EXECUTION_VERIFICATION_ENFORCED
- * is enabled (see createPolicyExecutionVerifier.ts) -- when it is, no
- * policy executes without a PolicyChangeApprovalRecord whose signature
- * verifies and whose contentHashAfter matches the content actually
- * being evaluated.
+ * Wired into RuntimeEngine in every environment (D19; see
+ * createPolicyExecutionVerifier.ts). No policy executes without a
+ * PolicyChangeApprovalRecord whose signature verifies and whose
+ * contentHashAfter matches the content actually being evaluated.
  *
  * Reuses exactly the same three checks
  * verifyPolicyGovernanceIntegrityAtStartup.ts already performs for
