@@ -9,9 +9,9 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/pavancharak/parmana-core/badge)](https://scorecard.dev/viewer/?uri=github.com/pavancharak/parmana-core)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15846/badge)](https://www.bestpractices.dev/projects/15846)
 
-**Parmana makes sure every caller takes only the actions your business has approved, even when they could technically do more.**
+**Your AI agents propose. Parmana decides what happens, and keeps the proof.**
 
-Parmana is an open-source authorization gate for actions. Whether a person, an application or an AI agent is acting, Parmana checks the action against the limits you set, requires a signed approval where your policy needs one, and keeps a signed record of what was authorized and what happened.
+Parmana is open source. It applies to AI agents the same policies you already set for employees. An agent can only propose an action. Parmana checks each proposal against your policies first. Actions that need a person's approval wait for it. Every action leaves a signed record, so you can show later what was allowed and what happened.
 
 ## The problem
 
