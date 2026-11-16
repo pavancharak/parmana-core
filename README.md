@@ -1,5 +1,7 @@
 # Parmana
 
+> **Under intense development. Not ready for public use.** Interfaces, policies and storage formats may change without notice.
+
 [![CI](https://github.com/pavancharak/parmana-core/actions/workflows/ci.yml/badge.svg)](https://github.com/pavancharak/parmana-core/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/pavancharak/parmana-core/actions/workflows/codeql.yml/badge.svg)](https://github.com/pavancharak/parmana-core/actions/workflows/codeql.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
