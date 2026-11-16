@@ -11,20 +11,39 @@ import { readFileSync, writeFileSync } from "node:fs";
 const args = process.argv.slice(2);
 const inputPath = args.find((a) => !a.startsWith("--") && !isValue(a));
 if (!inputPath) {
-  console.error("usage: node list-approval-refusals.mjs <ids file> [--rule <ruleId>]... [--out <file>]");
+  console.error("usage: node list-approval-refusals.mjs <ids file> [--rule <ruleId>]... [--approval-signal <name>] [--out <file>]");
   process.exit(2);
 }
 const approvalRules = [];
 let outPath;
+let approvalSignal = "managerApproved";
 for (let i = 0; i < args.length; i++) {
   if (args[i] === "--rule") approvalRules.push(args[++i]);
   if (args[i] === "--out") outPath = args[++i];
+  if (args[i] === "--approval-signal") approvalSignal = args[++i];
 }
 if (approvalRules.length === 0) approvalRules.push("reject-manager-approval-required");
 
 function isValue(a) {
   const i = args.indexOf(a);
-  return i > 0 && (args[i - 1] === "--rule" || args[i - 1] === "--out");
+  return i > 0 && ["--rule", "--out", "--approval-signal"].includes(args[i - 1]);
+}
+
+/**
+ * The start-here guide's test for "a person's signed approval is needed":
+ * the refusal came from an approval rule, the approval signal was not true,
+ * and every other boolean signal was true. Anything else is not sorted as an
+ * approval case, so it goes to manual review.
+ */
+function classify(decision) {
+  if (!approvalRules.includes(decision.matchedRuleId)) return "final_refusal";
+  const signals = decision.signals ?? {};
+  if (signals[approvalSignal] === true) return "manual_review";
+  for (const [name, value] of Object.entries(signals)) {
+    if (name === approvalSignal) continue;
+    if (typeof value === "boolean" && value !== true) return "manual_review";
+  }
+  return "retry_after_approval";
 }
 
 const base = (process.env.PARMANA_BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
@@ -61,9 +80,7 @@ for (const id of ids) {
       row.reason = d.reason;
       row.refusalRecordId = rec.refusalRecordId;
       row.createdAt = rec.createdAt;
-      row.category = approvalRules.includes(d.matchedRuleId)
-        ? "retry_after_approval"
-        : "final_refusal";
+      row.category = classify(d);
     }
   } catch (err) {
     row.category = "lookup_failed";

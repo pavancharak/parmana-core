@@ -25,6 +25,27 @@ const records: Record<string, unknown> = {
       policy: { name: "customer-refund", version: "1.2.0" },
       matchedRuleId: "reject-manager-approval-required",
       reason: "needs a signed approval",
+      signals: {
+        refundEligible: true,
+        fraudCheckPassed: true,
+        managerApproved: false,
+        refundAmount: 50000,
+      },
+    },
+  },
+  "tx-review": {
+    refusalRecordId: "r-3",
+    createdAt: "2026-11-01T00:00:00Z",
+    decision: {
+      policy: { name: "customer-refund", version: "1.2.0" },
+      matchedRuleId: "reject-manager-approval-required",
+      reason: "needs a signed approval",
+      signals: {
+        refundEligible: true,
+        fraudCheckPassed: false,
+        managerApproved: false,
+        refundAmount: 50000,
+      },
     },
   },
   "tx-final": {
@@ -34,6 +55,7 @@ const records: Record<string, unknown> = {
       policy: { name: "customer-refund", version: "1.2.0" },
       matchedRuleId: "reject-above-maximum",
       reason: "over the maximum",
+      signals: { refundEligible: true, fraudCheckPassed: true, managerApproved: true, refundAmount: 150000 },
     },
   },
 };
@@ -91,7 +113,7 @@ describe("list-approval-refusals", () => {
     const dir = await mkdtemp(join(tmpdir(), "refusals-"));
     const ids = join(dir, "ids.txt");
     const out = join(dir, "report.json");
-    await writeFile(ids, "tx-approval\ntx-final\ntx-missing\n");
+    await writeFile(ids, "tx-approval\ntx-final\ntx-review\ntx-missing\n");
 
     const result = await run([ids, "--out", out], {
       PARMANA_BASE_URL: baseUrl,
@@ -103,6 +125,7 @@ describe("list-approval-refusals", () => {
     expect(report.counts).toEqual({
       retry_after_approval: 1,
       final_refusal: 1,
+      manual_review: 1,
       not_found: 1,
     });
     const byId = Object.fromEntries(
@@ -117,7 +140,30 @@ describe("list-approval-refusals", () => {
       matchedRuleId: "reject-manager-approval-required",
     });
     expect(byId["tx-final"].category).toBe("final_refusal");
+    expect(byId["tx-review"].category).toBe("manual_review");
     expect(byId["tx-missing"].category).toBe("not_found");
+  });
+
+  it("sends to manual review when the approval signal is true, not false", async () => {
+    records["tx-approved-anyway"] = {
+      refusalRecordId: "r-4",
+      createdAt: "2026-11-01T00:00:00Z",
+      decision: {
+        policy: { name: "customer-refund", version: "1.2.0" },
+        matchedRuleId: "reject-manager-approval-required",
+        reason: "x",
+        signals: { refundEligible: true, fraudCheckPassed: true, managerApproved: true },
+      },
+    };
+    const dir = await mkdtemp(join(tmpdir(), "refusals-"));
+    const ids = join(dir, "ids.txt");
+    const out = join(dir, "report.json");
+    await writeFile(ids, "tx-approved-anyway\n");
+
+    await run([ids, "--out", out], { PARMANA_BASE_URL: baseUrl, PARMANA_API_KEY: KEY });
+
+    const report = JSON.parse(await readFile(out, "utf8"));
+    expect(report.rows[0].category).toBe("manual_review");
   });
 
   it("uses only GET requests", () => {
