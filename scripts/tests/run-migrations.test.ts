@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { resolveDatabaseTarget } from "../../test-support/database-target.js";
+import { databaseRequired } from "../../test-support/database-gate.js";
 import {
   applyPendingMigrations,
   baselineMigrations,
@@ -222,6 +223,14 @@ describe("migration lock (concurrent runners)", () => {
  */
 const realTarget = resolveDatabaseTarget(process.env);
 const realUrl = realTarget.kind === "local" ? realTarget.url : undefined;
+
+// On CI (PARMANA_REQUIRE_DATABASE=1) this suite must run, so a missing local target fails it.
+if (databaseRequired() && realUrl === undefined) {
+  throw new Error(
+    "migration lock against real PostgreSQL: PARMANA_REQUIRE_DATABASE=1 is set, but TEST_DATABASE_URL " +
+      "is not a local database. A skipped database suite fails the run.",
+  );
+}
 
 describe.skipIf(!realUrl)("migration lock against real PostgreSQL", () => {
   it("applies a migration once when two runners start together", async () => {
