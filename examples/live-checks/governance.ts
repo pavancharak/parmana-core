@@ -221,7 +221,7 @@ async function issuerRequest<T>(
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
   const text = await response.text();
   const parsed: unknown = text === "" ? {} : JSON.parse(text);

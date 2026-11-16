@@ -58,7 +58,7 @@ async function call(method: string, path: string, key: string, body?: unknown) {
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/json",
     },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
   const text = await response.text();
   return { status: response.status, body: text ? JSON.parse(text) : undefined };

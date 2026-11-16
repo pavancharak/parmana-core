@@ -213,7 +213,6 @@ async function main(): Promise<void> {
   });
 
   const release: ExecutionRelease = {
-    connectorName: "sap",
     authorization,
     executableContent: content,
     verifiedTransaction: {

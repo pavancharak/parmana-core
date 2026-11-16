@@ -9,6 +9,7 @@ import {
   demoApprovalSignalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import { withRequiredFields } from "../../shared/helpers/business-transaction.js";
 
 async function main(): Promise<void> {
   console.log();
@@ -36,7 +37,7 @@ async function main(): Promise<void> {
   console.log();
 
   const { context } = await runtime.execute(
-    await withDemoApproval(transaction),
+    await withDemoApproval(withRequiredFields(transaction)),
   );
 
   console.log("✓ Policy approved.");
@@ -46,38 +47,6 @@ async function main(): Promise<void> {
   console.log("------------------------------");
 
   console.dir(context.authorization, { depth: null });
-
-  return;
-
-  console.log(`Authorization ID : ${permit.authorizationId}`);
-
-  console.log(`Decision ID      : ${permit.decisionId}`);
-
-  console.log(
-    `Policy           : ${permit.policyName}@${permit.policyVersion}`,
-  );
-
-  console.log(`Issued At        : ${permit.authorizedAt.toISOString()}`);
-
-  console.log(`Expires At       : ${permit.expiresAt.toISOString()}`);
-
-  console.log();
-
-  console.log("Permit Signature");
-  console.log("------------------------------");
-
-  console.log(`Algorithm : ${context.authorization.algorithm}`);
-
-  console.log(`Key ID    : ${context.authorization.keyId}`);
-
-  console.log(`Signature : ${context.authorization.signature}`);
-
-  console.log();
-
-  console.log("✓ Signature generated.");
-
-  console.log();
-  console.log("Tutorial completed successfully.");
 }
 
 main().catch((error) => {

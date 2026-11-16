@@ -9,6 +9,7 @@ import {
   demoApprovalSignalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import { withRequiredFields } from "../../shared/helpers/business-transaction.js";
 
 async function main(): Promise<void> {
   console.log();
@@ -27,7 +28,9 @@ async function main(): Promise<void> {
 
   console.log("Executing Business Transaction...");
 
-  const result = await runtime.execute(await withDemoApproval(transaction));
+  const result = await runtime.execute(
+    await withDemoApproval(withRequiredFields(transaction)),
+  );
 
   const { context, trustRecord } = result;
 

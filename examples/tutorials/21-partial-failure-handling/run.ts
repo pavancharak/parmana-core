@@ -15,6 +15,7 @@ import {
   demoApprovalSignalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import { withRequiredFields } from "../../shared/helpers/business-transaction.js";
 
 type Failure = {
   businessTransactionId: string;
@@ -54,7 +55,7 @@ async function main(): Promise<void> {
 
     try {
       const { context } = await runtime.execute(
-        await withDemoApproval(transaction),
+        await withDemoApproval(withRequiredFields(transaction)),
       );
 
       console.log(`✓ ${context.decision.outcome}`);

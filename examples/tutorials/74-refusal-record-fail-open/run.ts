@@ -92,6 +92,18 @@ class FixedPolicyRepository implements PolicyRepository {
   async load(): Promise<Policy> {
     return REJECT_POLICY;
   }
+
+  async save(): Promise<void> {
+    throw new Error("FixedPolicyRepository is read-only.");
+  }
+
+  async listAll(): Promise<
+    ReadonlyArray<{ readonly name: string; readonly version: string }>
+  > {
+    return [
+      { name: REJECT_POLICY.policyId, version: REJECT_POLICY.policyVersion },
+    ];
+  }
 }
 
 function createTransaction(): BusinessTransaction {

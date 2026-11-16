@@ -39,7 +39,7 @@
     "generate:typescript-sdk-reference": "tsx scripts/generate-typescript-sdk-reference.ts",
     "generate:python-sdk-reference": "tsx scripts/generate-python-sdk-reference.ts",
     "rotate:verification-key": "tsx scripts/rotate-verification-key.ts",
-    "typecheck": "node node_modules/typescript7/bin/tsc --noEmit -p tsconfig.json",
+    "typecheck": "node node_modules/typescript7/bin/tsc --noEmit -p tsconfig.json && node node_modules/typescript7/bin/tsc --noEmit -p examples/tsconfig.json",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "format": "prettier --write .",

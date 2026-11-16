@@ -163,7 +163,7 @@ console.log();
 if (
   genuineVerification.status === "VERIFIED" &&
   tamperedVerification.status === "FAILED" &&
-  tamperedVerification.message.includes("Signature check failed")
+  tamperedVerification.message?.includes("Signature check failed")
 ) {
   console.log(
     "✓ Genuine record verified; tampered record correctly rejected -- not a silent downgrade to the legacy signature alone.",

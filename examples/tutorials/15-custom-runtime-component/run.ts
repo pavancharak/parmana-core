@@ -5,9 +5,10 @@ import { FilePolicyRepository } from "@parmana/policy";
 
 import { RuntimeBuilder } from "@parmana/runtime";
 
-import { DefaultExecutionSystem } from "@parmana/execution-system";
-
-import { MemoryExecutionTrustRecordRepository } from "@parmana/storage";
+import {
+  MemoryExecutionTrustRecordRepository,
+  MemoryRefusalRecordRepository,
+} from "@parmana/storage";
 
 import type { BusinessTransaction } from "@parmana/shared";
 
@@ -28,8 +29,7 @@ const policyRepository = new FilePolicyRepository(
 );
 
 const trustRecords = new MemoryExecutionTrustRecordRepository();
-
-const executionSystem = new DefaultExecutionSystem();
+const refusalRecords = new MemoryRefusalRecordRepository();
 
 //
 // Build a custom runtime.
@@ -38,7 +38,7 @@ const runtime = new RuntimeBuilder()
   .withSignalStateVerifier(demoApprovalSignalVerifier())
   .withPolicyRepository(policyRepository)
   .addStage(new LoggingRuntimeComponent())
-  .build(trustRecords, executionSystem);
+  .build(trustRecords, refusalRecords);
 
 //
 // Execute.

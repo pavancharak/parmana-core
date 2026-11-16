@@ -91,7 +91,7 @@ const storedSequential = await repository.findById(
   "txn-tutorial-78-sequential",
 );
 console.log(
-  `Stored amount : ${(storedSequential?.intent as { parameters: { amount: number } }).parameters.amount} (the first write, never overwritten)`,
+  `Stored amount : ${(storedSequential?.intent?.parameters as { amount: number } | undefined)?.amount} (the first write, never overwritten)`,
 );
 console.log();
 

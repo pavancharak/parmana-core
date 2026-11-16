@@ -10,11 +10,19 @@ export class CustomRuntimeComponent implements RuntimeComponent {
   async execute(context: RuntimeContext): Promise<RuntimeContext> {
     console.log("[Component] Enriching execution metadata.");
 
-    context.execution.metadata = {
-      ...context.execution.metadata,
-      tutorial: "19-runtime-composition",
-      processedBy: "CustomRuntimeComponent",
-    };
+    if (context.execution === undefined) {
+      throw new Error(
+        "CustomRuntimeComponent runs after the execution is recorded.",
+      );
+    }
+
+    Object.assign(context.execution, {
+      metadata: {
+        ...context.execution.metadata,
+        tutorial: "19-runtime-composition",
+        processedBy: "CustomRuntimeComponent",
+      },
+    });
 
     return context;
   }
