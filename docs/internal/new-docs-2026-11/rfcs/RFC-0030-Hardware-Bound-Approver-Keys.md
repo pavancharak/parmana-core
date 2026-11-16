@@ -69,6 +69,46 @@ Version 1 (Ed25519 file keys) keeps working during migration. It is refused for 
 - Revoking a key uses the existing `revoked` flag, through the same two-person change.
 - A lost token is revoked on the same day. A replacement token is registered through a new two-person change, with a new key id.
 
+## 6. Confirmation on a second device (draft)
+
+A compromised approver workstation can show the approver a false request, and the approver's touch would then sign
+it. The control that addresses this is a separate display. The approval request is sent to a second device the
+workstation cannot write to, such as the approver's phone. That device shows the canonical payload (action, resource,
+amount, expiry, and the parameter hash from section 7). The approver confirms on that device, and the token signature
+is produced for the payload that device displayed.
+
+- The workstation shows a short summary and a QR code or code phrase. The second device recomputes the payload from the
+  code, so the workstation cannot display one request while the phone confirms another.
+- The phone must be enrolled as the approver's second device through the same two-person change as the key (Phase 2). Its key is attested like the token.
+- Limits: a device compromised together with the workstation defeats the separation, and the approver can still confirm
+  an action they did not read properly. Section 7 and dual control (section 8) reduce both.
+
+## 7. The approval is bound to the parameters that will run (RFC-0027)
+
+Version 2 carries the parameter hash defined in RFC-0027. The gateway releases an action only when the executed
+parameters hash to the value the approver confirmed. This removes the case where the approver approved one set of
+parameters and a different set ran. It does not stop an approver from approving something they misread, which is why
+the displayed payload in section 6 matters too.
+
+## 8. Dual control above a threshold (draft)
+
+Actions above a value set by the owner, or in a sensitive category, need two approvals from two approvers. Each
+confirms on their own second device. The two approvals must come from different approver keys, and the maker cannot
+be either approver. A compromised workstation then has to deceive two people, on two separate devices.
+
+## 9. Limits and monitoring (draft)
+
+Each approver token has a rate limit and an amount limit on approvals. Parmana records each approval attempt. An
+approval outside the approver's normal pattern is refused or raises an alert to the owner. These limit the damage from
+a successful attack. They do not stop one.
+
+What the controls do not stop:
+
+- An approver who confirms an action they did not understand, when it is shown correctly. Training and the displayed
+  payload reduce this. They do not remove it.
+- An attacker who controls both the workstation and the second device. Dual control covers large actions, but not
+  every action.
+
 # Exact steps
 
 Each phase has its own pull request, and no phase starts until the previous phase is merged and its acceptance check passes. Commands are run from the repository root.
@@ -163,6 +203,10 @@ Each phase has its own pull request, and no phase starts until the previous phas
 5. Cutover date for refusing version 1 and file keys.
 6. Whether approvals must show the full payload to the approver before signing (section 5.1), and by which client.
 7. Whether RFC-0027 parameter binding ships before or with version 2. Recommended: with, so one signed payload carries both.
+8. Second device for confirmation (section 6): which device, and how the payload is shown to the approver.
+9. Dual control (section 8): the amount or category that needs two approvers, and whether the two approvers must hold
+   different token models.
+10. Limits (section 9): the default rate and amount limits per token, and who receives alerts.
 
 # Open questions
 
@@ -190,3 +234,5 @@ Recorded as facts, with the commit or file that shows each one.
   GitHub Actions run of the branch passed (job 133205179580).
 - **Phase 0 (not started).** The section 9 decisions are open. No owner decision is recorded.
 - **Phases 2 to 6 (not started).** Nothing in them is built.
+- **Draft sections added (2026-11-16).** Sections 6 to 9 (second-device confirmation, parameter binding, dual control,
+  limits) and decisions 8 to 10. These are proposals, not decisions.
