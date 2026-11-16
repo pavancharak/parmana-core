@@ -109,16 +109,9 @@ describe.skipIf(!databaseConfigured)(
       previousIntentsCheck = process.env.EXECUTION_INTENTS_CHECK;
       process.env.EXECUTION_INTENTS_CHECK = "true";
       // The governance rows and the status events are append-only, so this suite
-      // cannot clean up after itself. It needs a database made from the migrations
-      // and nothing else.
-      const { rows } = await pool.query(
-        "SELECT count(*)::int AS n FROM business_transactions",
-      );
-      if (rows[0].n > 0) {
-        throw new Error(
-          `this suite needs an empty test database, and found ${rows[0].n} business transactions. Recreate the database from the migrations, then run it again.`,
-        );
-      }
+      // does not clean up. It works in a database that already holds rows from
+      // earlier runs: every id it writes is unique to the run, and every assertion
+      // reads its own transaction by id.
       const { executionSystem } = createInspectableExecutionSystem();
       const application = createApplication(executionSystem);
       const authenticator = new StaticKeyAuthenticator([

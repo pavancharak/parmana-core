@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { readdirSync, existsSync } from "node:fs";
 import path from "node:path";
 
@@ -29,6 +30,7 @@ const FIXTURE_MAKER = "test-fixture-maker";
 const FIXTURE_CHECKER = "test-fixture-checker";
 
 let approvalCounter = 0;
+const RUN_ID = randomUUID();
 
 function compareVersions(a: string, b: string): number {
   const pa = a.split(".").map((n) => Number.parseInt(n, 10));
@@ -87,7 +89,9 @@ export async function approvePolicyVersion(
   approvalCounter += 1;
 
   const change: PendingPolicyChange = {
-    pendingPolicyChangeId: `test-ppc-${name}-${version}-${approvalCounter}`,
+    // Unique per process and per run. A counter alone repeats across runs, and the
+    // table is append-only, so a second run on the same database would collide.
+    pendingPolicyChangeId: `test-ppc-${name}-${version}-${approvalCounter}-${RUN_ID}`,
     policyName: name,
     policyVersion: version,
     proposedContent:
