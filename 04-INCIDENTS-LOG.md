@@ -546,6 +546,13 @@ date checks, and `archive/` is not type-checked.
 
 ---
 
+**Open (owner action):** the Open issues table on `docs/site/security/limitations.mdx` lost its header and its first column
+in `3d89f49`. The issue names are not in the repository. The block was rebuilt in `0191a2a` as a list of operator
+actions, with the cut sentence restored. The owner needs to confirm the list and restore any open issue that was
+dropped. The sentence "Production was not affected." was removed from the public list, because it needs its own source.
+
+---
+
 ## Minor / dead-code findings (logged, non-urgent)
 
 - `LedgerSerializer.serialize()` — replacer-array misuse silently drops nested payload
