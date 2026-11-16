@@ -35,11 +35,22 @@ const MANAGER = { approverId: "manager-priya", keyId: "manager-priya-key-1" };
 
 // The trust list as the operator has it before revocation.
 const trusted = new StaticApprovalIssuerRegistry([
-  { ...MANAGER, publicKey: manager.publicKey, revoked: false },
+  {
+    ...MANAGER,
+    publicKey: manager.publicKey,
+    revoked: false,
+    // An approver may approve only the capabilities listed here (G-50).
+    capabilities: [REFUND_ACTION],
+  },
 ]);
 // The same manager after revocation. Only the revoked flag differs.
 const revoked = new StaticApprovalIssuerRegistry([
-  { ...MANAGER, publicKey: manager.publicKey, revoked: true },
+  {
+    ...MANAGER,
+    publicKey: manager.publicKey,
+    revoked: true,
+    capabilities: [REFUND_ACTION],
+  },
 ]);
 
 const gate = new RefundGate(policy);

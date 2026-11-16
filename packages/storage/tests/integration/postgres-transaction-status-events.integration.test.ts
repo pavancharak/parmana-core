@@ -11,6 +11,8 @@ import {
 
 import { PostgresTransactionStatusEventRepository } from "../../src/postgres/PostgresTransactionStatusEventRepository.js";
 
+import { insertBusinessTransaction } from "../helpers/business-transaction-fixture.js";
+
 import { resolveDatabaseGate } from "../helpers/database-availability.js";
 
 /**
@@ -38,10 +40,7 @@ describe.skipIf(!databaseConfigured)(
 
     async function newTransaction(): Promise<string> {
       const id = `status-live-${crypto.randomUUID()}`;
-      await pool.query(
-        "INSERT INTO business_transactions (business_transaction_id) VALUES ($1)",
-        [id],
-      );
+      await insertBusinessTransaction(pool, id);
       return id;
     }
 

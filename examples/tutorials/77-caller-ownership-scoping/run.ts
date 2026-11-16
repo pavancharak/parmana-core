@@ -121,6 +121,7 @@ async function approveVendorPaymentPolicy(): Promise<void> {
   const readOnly = {
     load: (name: string, version: string) => base.load(name, version),
     save: async () => undefined,
+    listAll: () => base.listAll(),
   };
   const service = new PolicyChangeApprovalService({
     policyRepository: readOnly,

@@ -6,8 +6,6 @@ import {
   FileKeyProvider,
 } from "@parmana/crypto";
 
-import { FileKeyProvider } from "@parmana/crypto";
-
 async function main(): Promise<void> {
   console.log();
   console.log("==================================================");

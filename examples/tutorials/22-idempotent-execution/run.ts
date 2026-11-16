@@ -9,6 +9,7 @@ import {
   demoApprovalSignalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import { withRequiredFields } from "../../shared/helpers/business-transaction.js";
 
 async function main(): Promise<void> {
   console.log();
@@ -43,7 +44,7 @@ async function main(): Promise<void> {
 
   try {
     const { context } = await runtime.execute(
-      await withDemoApproval(transaction),
+      await withDemoApproval(withRequiredFields(transaction)),
     );
 
     console.log(`✓ ${context.decision.outcome}`);
@@ -62,7 +63,9 @@ async function main(): Promise<void> {
   console.log("Retry #1...");
 
   try {
-    await runtime.execute(await withDemoApproval(transaction));
+    await runtime.execute(
+      await withDemoApproval(withRequiredFields(transaction)),
+    );
 
     console.log("✓ Transaction executed again.");
   } catch (error) {
@@ -80,7 +83,9 @@ async function main(): Promise<void> {
   console.log("Retry #2...");
 
   try {
-    await runtime.execute(await withDemoApproval(transaction));
+    await runtime.execute(
+      await withDemoApproval(withRequiredFields(transaction)),
+    );
 
     console.log("✓ Transaction executed again.");
   } catch (error) {

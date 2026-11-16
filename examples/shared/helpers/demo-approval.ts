@@ -11,8 +11,8 @@ import {
   APPROVAL_ARTIFACT_CRYPTO_PROVIDER,
   ApprovalArtifactSigner,
 } from "@parmana/crypto";
-import { MemoryNonceStore } from "@parmana/envelope-verifier";
 import type { Policy } from "@parmana/policy";
+import { MemoryApprovalNonceLedger } from "@parmana/storage";
 import type { BusinessTransaction } from "@parmana/shared";
 
 /**
@@ -74,7 +74,9 @@ export function demoApprovalVerifier(): ApprovalVerifier {
         capabilities: DEMO_CAPABILITIES,
       },
     ]),
-    nonceStore: new MemoryNonceStore(),
+    // The approval verifier needs the approval ledger (checks isConsumed and
+    // records nonces), not the envelope verifier's checkAndRecord-only store.
+    nonceStore: new MemoryApprovalNonceLedger(),
   });
 }
 

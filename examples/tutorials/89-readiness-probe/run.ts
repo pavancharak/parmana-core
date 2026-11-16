@@ -19,7 +19,7 @@ async function buildApp() {
   return createApp(application, { callerAuth: "disabled" });
 }
 
-async function startServer(app: ReturnType<typeof buildApp>) {
+async function startServer(app: Awaited<ReturnType<typeof buildApp>>) {
   const server = app.listen(0);
   const address = server.address();
   const baseUrl = `http://127.0.0.1:${typeof address === "object" && address !== null ? address.port : 0}`;

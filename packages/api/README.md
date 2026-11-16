@@ -26,7 +26,12 @@ A local PostgreSQL 16 database works. Apply the migrations first, for example wi
 without `ALLOW_LIVE_SUPABASE=1` skips these suites with a logged reason. Setting
 `ALLOW_LIVE_SUPABASE=1` without a visible `TEST_DATABASE_URL` is a hard failure, not a skip.
 
-The shared gate is `tests/helpers/database-availability.ts` (`resolveDatabaseGate`). It is used by
+CI sets `PARMANA_REQUIRE_DATABASE=1`. With it, a database suite that would skip fails the run
+instead, so a green CI run means these suites ran. The rule lives in
+`test-support/database-gate.ts`, which both `packages/api` and `packages/storage` use.
+
+The shared gate is `tests/helpers/database-availability.ts` (`resolveDatabaseGate`), which re-exports
+`test-support/database-gate.ts`. It is used by
 these suites, among others:
 
 - `tests/integration/evidence-append-only.integration.test.ts` (the database rejects updates, deletes and truncates on evidence tables)

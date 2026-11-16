@@ -12,7 +12,6 @@ import {
   APPROVAL_ARTIFACT_CRYPTO_PROVIDER,
   ApprovalArtifactSigner,
 } from "@parmana/crypto";
-import { MemoryNonceStore } from "@parmana/envelope-verifier";
 import {
   PolicyEngine,
   PolicyOutcome,
@@ -22,6 +21,7 @@ import {
   type SignalStateVerificationRequest,
 } from "@parmana/policy";
 import type { SignedApproval } from "@parmana/shared";
+import { MemoryApprovalNonceLedger } from "@parmana/storage";
 
 //
 // Human approval for one action: a person signs off on a single refund.
@@ -76,7 +76,7 @@ const approvalVerifier = new ApprovalVerifier({
       capabilities: ["erp:invoice-pay"],
     },
   ]),
-  nonceStore: new MemoryNonceStore(),
+  nonceStore: new MemoryApprovalNonceLedger(),
 });
 const approvalSignals = new ApprovalSignalVerifier(approvalVerifier);
 const engine = new PolicyEngine();

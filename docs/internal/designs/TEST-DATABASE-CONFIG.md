@@ -47,17 +47,19 @@ Checked on `main` at `ceeaada`, before PR #532:
 
 ## 3. Decisions and status
 
-| #   | Decision                                                                                                            | Status                                                                                            |
-| --- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| D1  | Tests read one variable: `TEST_DATABASE_URL`.                                                                       | Done (PR #533). `DATABASE_URL` is also set to the same validated value for `PostgresPoolFactory`. |
-| D2  | `.env` never supplies a test database URL. Setup loads `.env.test` only.                                            | Done (PR #532). Tested (PR #535).                                                                 |
-| D3  | A project allowlist (`PARMANA_TEST_PROJECT_REFS`). An empty list refuses every hosted target.                       | Done (PR #532).                                                                                   |
-| D4  | A project on `PARMANA_PRODUCTION_PROJECT_REFS` is refused even if it is also allowed.                               | Done (PR #532). Run end to end with a made-up ID (PR #535).                                       |
-| D5  | The setup logs the target's project ID, never the connection string. A hosted target needs `ALLOW_LIVE_SUPABASE=1`. | Done (PR #532). Log line tested (PR #535).                                                        |
-| D6  | With no `TEST_DATABASE_URL`, database suites skip, with one visible summary line.                                   | Done (PR #532).                                                                                   |
-| D7  | A suite that needs a database fails when the opt-in is set but the URL is missing.                                  | Done. Tested (PR #535).                                                                           |
-| D8  | One template, `.env.test.example`, with a local option (default) and a hosted option.                               | Done (PR #533).                                                                                   |
-| D9  | `PARMANA_TEST_DATABASE_URL` removed from `Doctor.ts`.                                                               | Done (PR #533).                                                                                   |
+| #   | Decision                                                                                                                                                                                                             | Status                                                                                            |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| D1  | Tests read one variable: `TEST_DATABASE_URL`.                                                                                                                                                                        | Done (PR #533). `DATABASE_URL` is also set to the same validated value for `PostgresPoolFactory`. |
+| D2  | `.env` never supplies a test database URL. Setup loads `.env.test` only.                                                                                                                                             | Done (PR #532). Tested (PR #535).                                                                 |
+| D3  | A project allowlist (`PARMANA_TEST_PROJECT_REFS`). An empty list refuses every hosted target.                                                                                                                        | Done (PR #532).                                                                                   |
+| D4  | A project on `PARMANA_PRODUCTION_PROJECT_REFS` is refused even if it is also allowed.                                                                                                                                | Done (PR #532). Run end to end with a made-up ID (PR #535).                                       |
+| D5  | The setup logs the target's project ID, never the connection string. A hosted target needs `ALLOW_LIVE_SUPABASE=1`.                                                                                                  | Done (PR #532). Log line tested (PR #535).                                                        |
+| D6  | With no `TEST_DATABASE_URL`, database suites skip, with one visible summary line (unless D10 applies).                                                                                                               | Done (PR #532). D10 changes it in CI.                                                             |
+| D7  | A suite that needs a database fails when the opt-in is set but the URL is missing.                                                                                                                                   | Done. Tested (PR #535).                                                                           |
+| D8  | One template, `.env.test.example`, with a local option (default) and a hosted option.                                                                                                                                | Done (PR #533).                                                                                   |
+| D9  | `PARMANA_TEST_DATABASE_URL` removed from `Doctor.ts`.                                                                                                                                                                | Done (PR #533).                                                                                   |
+| D10 | With `PARMANA_REQUIRE_DATABASE=1` (set in CI), a database suite that would skip fails its file instead. The rule is one shared gate, `test-support/database-gate.ts`, used by `packages/api` and `packages/storage`. | Done (2026-11-16, `4a6121b`). CI run passed on the branch.                                        |
+| D11 | Each database suite works in a schema or on ids of its own. Suites do not rely on a database being empty, and the migration race test drops only its own schema.                                                     | Done (2026-11-16, `5bb3f13`).                                                                     |
 
 ## 4. Implementation
 
@@ -162,3 +164,52 @@ it is recorded in the handover.
   production items; see the handover for their state.
 - The owner decisions in section 8 are recorded in this document. **Partly.** Items 1 and 3 are recorded. Items 2 and 4 are
   open.
+
+## 11. CI gate, and reproducing the CI job locally (2026-11-16)
+
+### What changed
+
+- A suite that needs a database and would skip now fails, when `PARMANA_REQUIRE_DATABASE=1`. Without the flag,
+  a developer machine with no database still skips, as in D6.
+- CI's `build-and-test` job sets `PARMANA_REQUIRE_DATABASE=1` and `ALLOW_LIVE_SUPABASE=1`. Its `Prepare the test
+database` step applies the roles, the `auth` schema stubs and `scripts/apply-all-migrations.sql`, before `Test`.
+  The replay step runs only its own test now.
+- The migration race test (`scripts/tests/run-migrations.test.ts`) fails under the flag when no local target is
+  configured, and it works in its own schema.
+
+### Why
+
+A run that reports "passed" should mean the database suites ran. Before this change, CI skipped them, because the
+job never set `ALLOW_LIVE_SUPABASE=1`. See INC-13 in `04-INCIDENTS-LOG.md`.
+
+### Reproducing the CI job on a machine with Postgres
+
+The steps below match the CI job. Run them from the repository root. The database name and password here are for a
+throwaway local cluster only.
+
+1. Create an empty database, and apply the roles and the auth stubs (the SQL is in the `Prepare the test database`
+   step of `.github/workflows/ci.yml`).
+2. Apply the bundle: `psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -q -f scripts/apply-all-migrations.sql`.
+3. Run the suite with the job's environment, and nothing else from `.env.test` in the shell:
+
+   ```text
+   env -i PATH="$PATH" HOME="$HOME" NODE_ENV=test \
+     TEST_DATABASE_URL="$URL" DATABASE_URL="$URL" \
+     PARMANA_POLICY_DIR=./policies PARMANA_STORAGE=memory \
+     KEY_PROVIDER=local PRIMARY_SIGNATURE_PROVIDER=ed25519 \
+     ALLOW_LIVE_SUPABASE=1 PARMANA_REQUIRE_DATABASE=1 CI=true \
+     npm test
+   ```
+
+The run was done on 2026-11-16 against a local Postgres 16 with a fresh database: 449 of 449 test files passed and
+4171 tests passed, with no skipped database suite. The same branch then passed `build-and-test` on GitHub Actions.
+
+### Negative check
+
+With the flag set and no `TEST_DATABASE_URL`, a database suite fails with
+`must run, but TEST_DATABASE_URL is not set`. Without the flag, the same suite skips with `[SKIP]`. Both were run on
+2026-11-16 with `.env.test` moved aside, because `vitest.setup.ts` loads `.env.test` and would otherwise supply a URL.
+
+### Still open
+
+- Branch protection on `main` does not yet require `build-and-test`. That is a repository setting for the owner.

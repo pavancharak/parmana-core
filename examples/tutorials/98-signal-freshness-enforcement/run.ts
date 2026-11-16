@@ -25,6 +25,7 @@ import {
   demoApprovalSignalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import { withRequiredFields } from "../../shared/helpers/business-transaction.js";
 
 //
 // A trivial Connector: this tutorial cares about whether the Execution
@@ -105,7 +106,7 @@ async function main(): Promise<void> {
   console.log("Authorizing payment...");
 
   // A person signs an approval for this payment; the agent attaches it.
-  const approved = await withDemoApproval(transaction);
+  const approved = await withDemoApproval(withRequiredFields(transaction));
 
   const { context } = await runtime.execute(approved);
 

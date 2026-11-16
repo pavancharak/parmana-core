@@ -3,7 +3,6 @@ import { join } from "node:path";
 
 import { ApprovalSignalVerifier, ApprovalVerifier } from "@parmana/approval";
 import { APPROVAL_ARTIFACT_CRYPTO_PROVIDER } from "@parmana/crypto";
-import { MemoryNonceStore } from "@parmana/envelope-verifier";
 import {
   PolicyEngine,
   PolicyOutcome,
@@ -13,6 +12,7 @@ import {
   type SignalStateVerificationRequest,
 } from "@parmana/policy";
 import type { SignedApproval } from "@parmana/shared";
+import { MemoryApprovalNonceLedger } from "@parmana/storage";
 
 /**
  * The Parmana side of the refund integration.
@@ -94,7 +94,7 @@ export class RefundGate {
   private readonly engine = new PolicyEngine();
   // Shared across stages, so an approval consumed at authorize cannot be
   // used again. The release stage verifies without consuming.
-  private readonly nonceStore = new MemoryNonceStore();
+  private readonly nonceStore = new MemoryApprovalNonceLedger();
 
   constructor(private readonly policy: Policy) {}
 

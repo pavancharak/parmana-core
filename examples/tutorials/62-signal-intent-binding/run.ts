@@ -11,6 +11,10 @@ import {
   demoApprovalSignalVerifier,
   withDemoApproval,
 } from "../../shared/helpers/demo-approval.js";
+import {
+  fromFixture,
+  withRequiredFields,
+} from "../../shared/helpers/business-transaction.js";
 
 async function main(): Promise<void> {
   console.log();
@@ -60,7 +64,11 @@ async function main(): Promise<void> {
   console.log();
 
   try {
-    await runtime.execute(await withDemoApproval(mismatchedSignalTransaction));
+    await runtime.execute(
+      await withDemoApproval(
+        withRequiredFields(fromFixture(mismatchedSignalTransaction)),
+      ),
+    );
 
     throw new Error(
       "Expected this transaction to be rejected, but it was approved. " +
@@ -92,7 +100,9 @@ async function main(): Promise<void> {
   console.log();
 
   const { context } = await runtime.execute(
-    await withDemoApproval(correctlyBoundTransaction),
+    await withDemoApproval(
+      withRequiredFields(fromFixture(correctlyBoundTransaction)),
+    ),
   );
 
   console.log(`✓ ${context.decision.outcome}`);

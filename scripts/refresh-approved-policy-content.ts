@@ -20,7 +20,9 @@ function argument(args: string[], name: string, fallback?: string): string {
     throw new Error(`Missing argument: ${name}`);
   }
 
-  return args[index + 1];
+  const value = args[index + 1];
+  if (value === undefined) throw new Error(`Missing argument: ${name}`);
+  return value;
 }
 
 /**

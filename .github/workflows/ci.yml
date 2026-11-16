@@ -42,12 +42,15 @@ jobs:
       # points at the repo's own committed reference policies, not a
       # separate fixtures directory.
       PARMANA_POLICY_DIR: ./policies
-      # Explicit default; keeps the live-database integration tests
-      # (packages/api/tests/helpers/database-availability.ts) skipped
-      # unless TEST_DATABASE_URL and ALLOW_LIVE_SUPABASE=1 are both set.
+      # Explicit default for the in-memory storage provider.
       PARMANA_STORAGE: memory
       KEY_PROVIDER: local
       PRIMARY_SIGNATURE_PROVIDER: ed25519
+      # The database suites run in this job, against the service above. With
+      # PARMANA_REQUIRE_DATABASE=1 a suite that would skip fails the run instead
+      # (test-support/database-gate.ts), so a green run means they ran.
+      ALLOW_LIVE_SUPABASE: "1"
+      PARMANA_REQUIRE_DATABASE: "1"
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -140,16 +143,12 @@ jobs:
             exit 1
           fi
 
-      - name: Test
-        run: npm test
-
-      # The replay integration test is skipped by default, because it needs a
-      # database with the migrations applied. Apply them to a fresh database
-      # and run it, so replay is exercised on every push.
-      - name: Replay integration against a migrated database
+      - name: Prepare the test database
+        # The database suites run in the Test step, so the database must hold the
+        # migrations first. Roles and the auth schema come first, because some
+        # migrations grant to them. The steps after Test use the same database.
         env:
           DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
-          ALLOW_LIVE_SUPABASE: "1"
         run: |
           # psql comes from the postgres:16 image the service already uses, so this
           # step needs no apt mirror (apt failed on a DNS lookup in CI).
@@ -166,7 +165,18 @@ jobs:
           CREATE OR REPLACE FUNCTION auth.jwt() RETURNS jsonb LANGUAGE sql STABLE AS 'SELECT NULL::jsonb';
           SQL
           $PSQL "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f scripts/apply-all-migrations.sql
-          npx vitest run packages/api/tests/integration/replay.integration.test.ts
+
+      - name: Test
+        run: npm test
+
+      # The replay integration test is skipped by default, because it needs a
+      # database with the migrations applied. Apply them to a fresh database
+      # and run it, so replay is exercised on every push.
+      - name: Replay integration
+        # The database was migrated in the Prepare step, before Test.
+        env:
+          DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+        run: npx vitest run packages/api/tests/integration/replay.integration.test.ts
 
       - name: Storage provider contract against a migrated database
         # ADR-0021, migration step 1. The same contract runs against the memory

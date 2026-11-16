@@ -11,6 +11,7 @@ import {
 import { PostgresApprovalNonceStore } from "../../src/postgres/PostgresApprovalNonceStore.js";
 import { PostgresTransactionStatusEventRepository } from "../../src/postgres/PostgresTransactionStatusEventRepository.js";
 
+import { insertBusinessTransaction } from "../helpers/business-transaction-fixture.js";
 import { resolveDatabaseGate } from "../helpers/database-availability.js";
 
 /**
@@ -42,14 +43,7 @@ describe.skipIf(!databaseConfigured)(
 
     async function newTransactionAtPolicyEvaluated(): Promise<string> {
       const id = `approval-live-${crypto.randomUUID()}`;
-      await pool.query(
-        `INSERT INTO business_transactions
-           (business_transaction_id, status, authority_json, authorization_json,
-            intent_json, metadata_json, policy_json, signals_json, created_at)
-         VALUES ($1, 'RECEIVED', '{}'::jsonb, '{}'::jsonb, '{}'::jsonb,
-                 '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, now())`,
-        [id],
-      );
+      await insertBusinessTransaction(pool, id);
       const step = (
         from: AppendTransactionStatusEvent["from"],
         to: AppendTransactionStatusEvent["to"],

@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { resolveDatabaseTarget } from "../../test-support/database-target.js";
+import { databaseRequired } from "../../test-support/database-gate.js";
 import {
   applyPendingMigrations,
   baselineMigrations,
@@ -215,17 +216,30 @@ describe("migration lock (concurrent runners)", () => {
  * tracking insert or on the table it tries to create. With it, the second
  * waits, sees the migration recorded, and applies nothing.
  *
- * Runs only against a local database, because it drops and recreates the tables it uses. A hosted
+ * Runs only against a local database. It works in a schema of its own and drops only that schema, so it never
+ * touches the tracking table or any other table in the shared test database. A hosted
  * project is never used here, even when it is validated for other suites. The target comes from
  * TEST_DATABASE_URL (docs/internal/designs/TEST-DATABASE-CONFIG.md).
  */
 const realTarget = resolveDatabaseTarget(process.env);
 const realUrl = realTarget.kind === "local" ? realTarget.url : undefined;
 
+// On CI (PARMANA_REQUIRE_DATABASE=1) this suite must run, so a missing local target fails it.
+if (databaseRequired() && realUrl === undefined) {
+  throw new Error(
+    "migration lock against real PostgreSQL: PARMANA_REQUIRE_DATABASE=1 is set, but TEST_DATABASE_URL " +
+      "is not a local database. A skipped database suite fails the run.",
+  );
+}
+
 describe.skipIf(!realUrl)("migration lock against real PostgreSQL", () => {
   it("applies a migration once when two runners start together", async () => {
     const pg = await import("pg");
     const dir = mkdtempSync(join(tmpdir(), "migrations-race-"));
+    // A schema of its own for this run. The tracking table and the demo table
+    // live here, so the test never drops tables another run or suite uses in
+    // the shared test database.
+    const schema = `migrations_race_${crypto.randomUUID().replace(/-/g, "")}`;
 
     writeFileSync(
       join(dir, "001_demo.sql"),
@@ -238,13 +252,13 @@ describe.skipIf(!realUrl)("migration lock against real PostgreSQL", () => {
 
     const admin = new pg.default.Client({ connectionString: realUrl });
     await admin.connect();
-    await admin.query("DROP TABLE IF EXISTS demo_effect");
-    await admin.query("DROP TABLE IF EXISTS parmana_schema_migrations");
+    await admin.query(`CREATE SCHEMA "${schema}"`);
 
     const runner = async () => {
       const client = new pg.default.Client({ connectionString: realUrl });
       await client.connect();
       try {
+        await client.query(`SET search_path TO "${schema}"`);
         return await applyPendingMigrations(client as never, dir);
       } finally {
         await client.end();
@@ -261,12 +275,11 @@ describe.skipIf(!realUrl)("migration lock against real PostgreSQL", () => {
       expect(applied.sort()).toEqual([0, 1]);
 
       const { rows } = await admin.query(
-        "SELECT count(*)::int AS n FROM demo_effect",
+        `SELECT count(*)::int AS n FROM "${schema}".demo_effect`,
       );
       expect(rows[0]?.n).toBe(1);
     } finally {
-      await admin.query("DROP TABLE IF EXISTS demo_effect");
-      await admin.query("DROP TABLE IF EXISTS parmana_schema_migrations");
+      await admin.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
       await admin.end();
       rmSync(dir, { recursive: true, force: true });
     }

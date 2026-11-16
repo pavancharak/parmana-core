@@ -70,7 +70,7 @@ export class ParmanaError extends Error {
   /**
    * Optional underlying cause.
    */
-  public readonly cause?: unknown;
+  public override readonly cause?: unknown;
 
   /**
    * The HTTP status of the response this error was made from, for example

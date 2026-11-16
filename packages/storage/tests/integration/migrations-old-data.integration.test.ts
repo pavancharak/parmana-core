@@ -4,6 +4,7 @@ import { fileURLToPath, URL } from "node:url";
 
 import pg from "pg";
 import { describe, expect, it } from "vitest";
+import { resolveDatabaseGate } from "../helpers/database-availability.js";
 
 /**
  * Regression test: the migrations apply to a database that already holds
@@ -21,9 +22,7 @@ import { describe, expect, it } from "vitest";
  * ALLOW_LIVE_SUPABASE=1 is set, the same opt-in as the other database suites.
  */
 
-const enabled =
-  Boolean(process.env.TEST_DATABASE_URL?.trim()) &&
-  process.env.ALLOW_LIVE_SUPABASE === "1";
+const enabled = resolveDatabaseGate("Migrations against old audit rows");
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const migrationsDir = join(repoRoot, "supabase", "migrations");

@@ -159,8 +159,8 @@ console.log(
 const listed = await dbRepo.listAll();
 const listedCorrectly =
   listed.length === 1 &&
-  listed[0].name === "tutorial-116-policy" &&
-  listed[0].version === "1.0.0";
+  listed[0]?.name === "tutorial-116-policy" &&
+  listed[0]?.version === "1.0.0";
 console.log(
   `  listAll() reports the saved (name, version) : ${listedCorrectly}`,
 );

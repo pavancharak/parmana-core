@@ -389,11 +389,9 @@ async function main(): Promise<void> {
     "RECEIVING SIDE: Scenario 4 - Missing authorization (an agent bypasses Parmana)",
   );
 
-  const requestWithoutAuthorization = {
-    ...outgoingWireBody,
-  };
-
-  delete requestWithoutAuthorization.authorization;
+  // The request with its authorization removed.
+  const { authorization: _omitted, ...requestWithoutAuthorization } =
+    outgoingWireBody;
 
   const missing = await postToReceivingSide(requestWithoutAuthorization);
 

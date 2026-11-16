@@ -8,6 +8,7 @@ import { PaymentService } from "./PaymentService.js";
 
 import transaction from "./transaction.json" with { type: "json" };
 import { demoApprovalSignalVerifier } from "../../shared/helpers/demo-approval.js";
+import { withRequiredFields } from "../../shared/helpers/business-transaction.js";
 
 async function main(): Promise<void> {
   console.log();
@@ -41,7 +42,9 @@ async function main(): Promise<void> {
 
   console.log("Submitting payment request...");
 
-  const trustRecord = await paymentService.releasePayment(transaction);
+  const trustRecord = await paymentService.releasePayment(
+    withRequiredFields(transaction),
+  );
 
   console.log("✓ Payment released.");
 

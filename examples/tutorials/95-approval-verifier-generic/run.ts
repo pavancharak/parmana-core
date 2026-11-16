@@ -5,8 +5,8 @@ import {
   StaticApprovalIssuerRegistry,
 } from "@parmana/approval";
 import { ArtifactSigner, CryptoBootstrap } from "@parmana/crypto";
-import { MemoryNonceStore } from "@parmana/envelope-verifier";
 import type { ApprovalPayload, SignedApproval } from "@parmana/shared";
+import { MemoryApprovalNonceLedger } from "@parmana/storage";
 
 //
 // Tutorial 72 exercises ApprovalVerifier wired through the
@@ -87,7 +87,7 @@ console.log("--------------------------------------------------");
   const verifier = new ApprovalVerifier({
     crypto,
     issuerRegistry: registry,
-    nonceStore: new MemoryNonceStore(),
+    nonceStore: new MemoryApprovalNonceLedger(),
   });
   const artifact = await signPayload(buildPayload(), privateKey);
   const result = await verifier.verify(
@@ -124,7 +124,7 @@ console.log("--------------------------------------------------");
   const verifier = new ApprovalVerifier({
     crypto,
     issuerRegistry: registry,
-    nonceStore: new MemoryNonceStore(),
+    nonceStore: new MemoryApprovalNonceLedger(),
   });
   const artifact = await signPayload(
     buildPayload({ version: 2 as unknown as 1 }),
@@ -146,7 +146,7 @@ console.log("--------------------------------------------------");
   const verifier = new ApprovalVerifier({
     crypto,
     issuerRegistry: registry,
-    nonceStore: new MemoryNonceStore(),
+    nonceStore: new MemoryApprovalNonceLedger(),
   });
   const artifact = await signPayload(buildPayload(), privateKey);
   const result = await verifier.verify(artifact, {
@@ -173,7 +173,7 @@ console.log("--------------------------------------------------");
   const verifier = new ApprovalVerifier({
     crypto,
     issuerRegistry: registry,
-    nonceStore: new MemoryNonceStore(),
+    nonceStore: new MemoryApprovalNonceLedger(),
   });
   const artifact = await signPayload(buildPayload(), privateKey);
   const result = await verifier.verify(
@@ -206,7 +206,7 @@ console.log("--------------------------------------------------");
   const verifier = new ApprovalVerifier({
     crypto,
     issuerRegistry: registry,
-    nonceStore: new MemoryNonceStore(),
+    nonceStore: new MemoryApprovalNonceLedger(),
   });
   const artifact = await signPayload(buildPayload(), privateKey);
   const tampered: SignedApproval = {
@@ -245,7 +245,7 @@ console.log("--------------------------------------------------");
   const verifier = new ApprovalVerifier({
     crypto,
     issuerRegistry: registry,
-    nonceStore: new MemoryNonceStore(),
+    nonceStore: new MemoryApprovalNonceLedger(),
   });
   const forged = await signPayload(buildPayload(), forger.privateKey);
   const result = await verifier.verify(
@@ -280,7 +280,7 @@ console.log("--------------------------------------------------");
   const verifier = new ApprovalVerifier({
     crypto,
     issuerRegistry: registry,
-    nonceStore: new MemoryNonceStore(),
+    nonceStore: new MemoryApprovalNonceLedger(),
   });
   const now = new Date();
   const artifact = await signPayload(
@@ -318,7 +318,7 @@ console.log("--------------------------------------------------");
   const verifier = new ApprovalVerifier({
     crypto,
     issuerRegistry: registry,
-    nonceStore: new MemoryNonceStore(),
+    nonceStore: new MemoryApprovalNonceLedger(),
   });
   const artifact = await signPayload(buildPayload(), privateKey);
   const result = await verifier.verify(
@@ -349,7 +349,7 @@ console.log("--------------------------------------------------");
   const verifier = new ApprovalVerifier({
     crypto,
     issuerRegistry: registry,
-    nonceStore: new MemoryNonceStore(),
+    nonceStore: new MemoryApprovalNonceLedger(),
   });
   const artifact = await signPayload(buildPayload(), privateKey);
   const result = await verifier.verify(
@@ -380,7 +380,7 @@ console.log("--------------------------------------------------");
   const verifier = new ApprovalVerifier({
     crypto,
     issuerRegistry: registry,
-    nonceStore: new MemoryNonceStore(),
+    nonceStore: new MemoryApprovalNonceLedger(),
   });
   const artifact = await signPayload(
     buildPayload({
@@ -426,7 +426,7 @@ console.log("--------------------------------------------------");
   const verifier = new ApprovalVerifier({
     crypto,
     issuerRegistry: registry,
-    nonceStore: new MemoryNonceStore(),
+    nonceStore: new MemoryApprovalNonceLedger(),
   });
   const artifact = await signPayload(buildPayload(), privateKey);
   const request = {
@@ -458,7 +458,7 @@ console.log("--------------------------------------------------");
   const verifier = new ApprovalVerifier({
     crypto,
     issuerRegistry: registry,
-    nonceStore: new MemoryNonceStore(),
+    nonceStore: new MemoryApprovalNonceLedger(),
   });
   const artifact = await signPayload(buildPayload(), privateKey);
   const now = new Date();
@@ -496,7 +496,7 @@ console.log("--------------------------------------------------");
       capabilities: ["erp:record-update", "erp:invoice-pay"],
     },
   ]);
-  const sharedNonceStore = new MemoryNonceStore();
+  const sharedNonceStore = new MemoryApprovalNonceLedger();
   const artifact = await signPayload(buildPayload(), privateKey);
   const request = {
     action: "erp:record-update",

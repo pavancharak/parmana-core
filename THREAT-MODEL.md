@@ -133,7 +133,11 @@ Applications (2026), see [OWASP mapping](https://docs.parmanasystems.com/securit
 These are not defended. A review should state them as assumptions:
 
 1. Signing keys (default, gateway) are not compromised. Under AWS KMS the key cannot be exported, but a process that can call kms:Sign can still sign. Key registration, validation and status are specified in RFC-0028 (v1 scope). Until they are implemented, a signing key that is later found to be compromised is not detected by Parmana, and records it signed still verify as valid signatures. Revocation distribution to external verifiers is deferred to the ETVM specification.
-2. Approver and step up keys are held by the people they name.
+2. Approver and step up keys are held by the people they name. Parmana does not check where an approver key is
+   kept. If the key sits on a machine the agent can read, the agent can sign approvals and Parmana accepts them.
+   Until RFC-0030 is implemented, the rule is: an approver generates the key and keeps the private key on the
+   approver's own machine, never on a host the agent runs on. The approver guide states it, and RFC-0030 is the
+   permanent fix (hardware-bound keys, attested at registration).
 3. The maker and the checker are two people.
 4. The database is not writable by an attacker.
 5. Connector credentials are held only by Parmana's execution control.

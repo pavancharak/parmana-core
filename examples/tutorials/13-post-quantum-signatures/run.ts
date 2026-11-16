@@ -82,7 +82,7 @@ console.log("========================================");
 
 console.log();
 
-console.log(`Signature Provider : ${config.crypto.signatureProvider}`);
+console.log(`Signature Provider : ${config.crypto.primarySignatureProvider}`);
 
 console.log();
 
