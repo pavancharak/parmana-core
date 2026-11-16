@@ -1,6 +1,6 @@
 # RFC-0030 — Hardware-bound approver keys
 
-Status: Proposed. Nothing is built yet. Decisions in section 9 need the owner's decision before Phase 2.
+Status: Proposed. Phase 1 is partly done (see Progress). Decisions in section 9 need the owner's decision before Phase 2.
 
 Created: 2026-11-16
 
@@ -174,3 +174,19 @@ Each phase has its own pull request, and no phase starts until the previous phas
 - This RFC does not stop an approver from approving something they misread. Showing the full payload (section 5.1) reduces that risk.
 - It does not change the server's own keys, which are covered by RFC-0028 and the KMS/HSM key providers.
 - It does not change how policies decide what needs approval.
+
+# Progress
+
+Recorded as facts, with the commit or file that shows each one.
+
+- **Phase 1, step 1.1 (done, 2026-11-16).** `THREAT-MODEL.md` assumption 2 now states the interim rule: approver private
+  keys stay on the approver's machine, never on the agent's host. Parmana does not enforce it.
+- **Phase 1, step 1.2 (done, 2026-11-16).** `docs/site/guides/manage-approvers.mdx` has a section, "Where the private
+  key is kept".
+- **Phase 1, step 1.3 (done, 2026-11-16).** `packages/api/tests/unit/approval-issuers-governance.test.ts` (10 tests)
+  covers the approver-change routes: human-only proposals, the same-actor refusal, step-up bound to the change, applied
+  add and revoke, and rejection. These tests pass locally. The commit is `5bb3f13`.
+- **Phase 1, step 1.4 (done, 2026-11-16).** The full suite passes under the CI job's flags (449 of 449 files). The
+  GitHub Actions run of the branch passed (job 133205179580).
+- **Phase 0 (not started).** The section 9 decisions are open. No owner decision is recorded.
+- **Phases 2 to 6 (not started).** Nothing in them is built.

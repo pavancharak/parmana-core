@@ -458,6 +458,94 @@ check the next npm group pull request's diff.
 
 ---
 
+## INC-13 — Database test suites skipped in CI, so most database-backed defects went unseen (TEST INFRASTRUCTURE)
+
+**What:** the `build-and-test` job in `.github/workflows/ci.yml` runs a Postgres 16 service and sets
+`TEST_DATABASE_URL`, but it did not set `ALLOW_LIVE_SUPABASE=1` for the `Test` step. The database gate
+(`resolveDatabaseGate`, shared by `packages/api` and `packages/storage`) skips a suite when the opt-in is missing,
+and it logs a line instead of failing. Two maker-checker rules for approver changes were covered only by such a
+suite. Found on 2026-11-16 while reviewing why earlier database defects had not been caught.
+
+**Impact:** from the gate code and the workflow file, the database suites were skipped in CI, so they could not
+catch a defect in their own code. Two concrete cases: the status-event integration test inserted a
+`business_transactions` row without the required `status` and JSON columns (fixed in `175ec96`), and the approver
+change routes had no unit test at all (fixed in `5bb3f13`, 10 tests). The CI log from before the change was not
+inspected, so the exact count of skipped suites in CI before 2026-11-16 is not recorded here.
+
+**Root cause:** a skip is the gate's designed behaviour for a developer machine with no database. CI shares that
+behaviour, with no requirement that the database suites run. Nothing in CI failed when they did not.
+
+**Resolution:** `4a6121b`. `test-support/database-gate.ts` is the one gate. With `PARMANA_REQUIRE_DATABASE=1`, a
+suite that would skip fails its file. CI sets the flag and `ALLOW_LIVE_SUPABASE=1`, and runs the migrations in a
+`Prepare the test database` step before `Test`. Verified: the job's environment on a fresh database gave 449 of 449
+files passing with no skipped database suite. The first GitHub Actions run of this change on branch
+`ccr-3b0d4923-4ua9y2` (job 133205179580, run 43839750968) passed, including `Test`, the replay step and the storage
+contract step.
+
+**Still open:** the rule is enforced by the CI job, not by branch protection. Requiring `build-and-test` on `main` is a
+repository setting, which the owner has not yet set.
+
+---
+
+## INC-14 — Shared test database state: a migration test dropped the tracking table, and a suite needed an empty database (TEST INFRASTRUCTURE)
+
+**What:** two tests changed state in the database they shared with others.
+
+- `scripts/tests/run-migrations.test.ts` dropped and recreated `parmana_schema_migrations` on whatever
+  `TEST_DATABASE_URL` pointed to. Its guard checked that the database was local, not that it was dedicated to the
+  test. A full test run on the shared local database removed the table, and the next migration check then failed.
+- `packages/api/tests/integration/transaction-status-postgres.integration.test.ts` refused to run unless the
+  `business_transactions` table was empty. The cause was in `test-support/policy-governance.ts`: pending-change ids were
+  built from a counter that restarts with each process, and the governance tables are append-only, so a second run
+  collided with the first. The empty-table guard was a workaround for that collision.
+
+**Impact:** a green run could not be repeated on the same database, and one test's cleanup broke another's checks.
+
+**Resolution:** `5bb3f13`. The migration race test runs in its own schema and drops only that schema. Governance
+pending-change ids include a per-run value, and the empty-table guard is removed. Verified: the transaction-status
+suite passes twice in a row on one database, and the migration tracking table survives a run of the migration test.
+
+**Environment note:** during this work the agent's shell had a hosted Supabase `DATABASE_URL` set. The test guard
+refused it, which is the intended behaviour. The tests were run against a local Postgres 16 with the URL taken from
+`.env.test` instead. No hosted database was written to.
+
+---
+
+## INC-15 — Examples were never type-checked, and they had drifted from the current APIs (CORRECTNESS, TEST INFRASTRUCTURE)
+
+**What:** `examples/tsconfig.json` extended `../tsconfig.base.json`, which does not exist, so no example was type-checked,
+and `npm run typecheck` did not include them. The examples runner checks only that each example exits 0. Once the
+examples were type-checked (`ea8f27a`), the check found real defects:
+
+- `demoApprovalVerifier` and three more approval verifiers (tutorials 95 and 119, and the google-ax refund gate) passed the
+  envelope verifier's `MemoryNonceStore`, which has no `isConsumed`. Tutorial 77 failed at runtime with
+  `nonceStore.isConsumed is not a function`, and the examples runner stopped there. The other call sites were confirmed
+  only by the type error, not by a runtime failure.
+- Tutorials 15 and 16 passed the execution system where the runtime takes the refusal-record repository. The refusal
+  path would have failed.
+- The google-ax refund approver had no `capabilities`, so it could approve nothing (G-50).
+- Tutorial 13 printed a field that does not exist, so it printed `undefined`.
+- Tutorial 25 had unreachable code after a `return`, which referenced an undefined `permit`.
+- Tutorial 89 passed an unawaited promise to `startServer`.
+- Most of the rest were `BusinessTransaction` literals and JSON fixtures missing required fields, and repository doubles
+  missing methods of the current interfaces.
+
+**Impact:** the examples are the public documentation for the API. Several of them failed or never ran their
+refusal paths, and nothing reported it.
+
+**Root cause:** the examples were written against earlier interfaces. The typecheck that would have caught the drift
+was not configured, and the runner's exit-0 check cannot see a path that is never reached.
+
+**Resolution:** `30e18a1` (the nonce store) and `ea8f27a` (the typecheck and the rest). `npm run typecheck` now checks
+`examples/`, with `archive/` excluded because the runner does not run it. Two helpers, `withRequiredFields` and
+`fromFixture` in `examples/shared/helpers/business-transaction.ts`, complete the transaction bookkeeping and convert the
+tutorial 62 JSON fixtures. Verified: the typecheck passes, and the full examples runner exits 0.
+
+**Still open:** the two helpers are shims for the tutorial data. They do not validate the fixtures beyond the enum and
+date checks, and `archive/` is not type-checked.
+
+---
+
 ## Minor / dead-code findings (logged, non-urgent)
 
 - `LedgerSerializer.serialize()` — replacer-array misuse silently drops nested payload

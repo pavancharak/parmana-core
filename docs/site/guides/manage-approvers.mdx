@@ -67,6 +67,19 @@ The deployment needs the migration `20260929120000_add_approval_issuers.sql`. Se
 deployments apply it on start. Otherwise run `npm run db:migrate -- apply` before deploying
 this version, as in [Production deployment, step 2](/deployment/production#step-2-create-the-database-schema).
 
+## Where the private key is kept
+
+Parmana does not check where an approver's private key is kept. The rule is yours to follow:
+
+- Generate the key on the approver's own machine, with `scripts/generate-approver-key.ts`, and keep the private key
+  there. The signing script (`scripts/sign-approval.ts`) also runs on that machine.
+- Never keep an approver private key on the host, container or workstation that runs the agent. An agent that can read
+  the key can sign approvals, and Parmana will accept them.
+- Parmana sees only the public key and the signed approval. It cannot tell which machine produced a signature.
+
+A future version will require keys that cannot be copied off a hardware token. See RFC-0030 in
+`docs/internal/new-docs-2026-11/rfcs/`.
+
 ## Step 1: The approver makes a key pair
 
 On the approver's own machine:
