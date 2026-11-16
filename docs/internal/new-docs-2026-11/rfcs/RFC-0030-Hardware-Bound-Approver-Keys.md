@@ -109,6 +109,46 @@ What the controls do not stop:
 - An attacker who controls both the workstation and the second device. Dual control covers large actions, but not
   every action.
 
+# Why hardware
+
+A software key is a file, or an entry in a keychain, on a machine the agent can also run code on. Three properties
+are needed, and only hardware gives all three:
+
+1. **The private key cannot be copied.** A software key is copied by copying a file. A hardware token generates the key
+   on the device, and the private key never leaves it.
+2. **A person was present for each signature.** A signature needs a physical confirmation on the token. A script that
+   runs on the same computer cannot produce one without the person.
+3. **Parmana can check where the key came from.** Attestation proves the key was created on a genuine token. Parmana
+   can refuse a key that was imported from a file. Today a file-generated key cannot be told apart from a genuine one.
+
+# Alternatives considered
+
+| Alternative                                                                                              | What it gives                                                                                 | Why it is not enough alone                                                                                                                                                                                      |
+| -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Keep file keys, and keep them off the agent's host (the interim rule, in `THREAT-MODEL.md` assumption 2) | No cost. Done as an interim control.                                                          | Parmana cannot check the rule. A copied key still works, and there is no proof a person was present. Kept as the interim control only.                                                                          |
+| Keys in the OS keychain or a TPM on the approver's computer                                              | The key is bound to the device. Stored by the platform.                                       | Any code running on that device can ask the key to sign, and no touch is required by default. The device is the place the attack happens.                                                                       |
+| Platform passkeys (for example a phone or laptop passkey)                                                | A user-verified signature, with a clear enrolment flow.                                       | Signing still depends on the device's software. The key is not attested to a dedicated hardware token in the way section 2 needs. Could be reconsidered if its attestation is strong enough.                    |
+| Cloud KMS, with the approver logging in to sign                                                          | The key never sits on a workstation. Access can be audited.                                   | Trust moves to the cloud account and its administrators. Separation depends on how that account is run, which Parmana does not check. Could serve as the server's own key store (RFC-0028), not the approver's. |
+| Hardware token with per-approval touch (proposed)                                                        | Non-exportable key, a physical confirmation per signature, and attestation Parmana can check. | Does not stop malware from asking for a signature. Requires a second device to show the payload (section 6), and token loss handling.                                                                           |
+
+The proposal is hardware with a per-approval touch, plus a second device for confirmation. The table shows that neither
+part is sufficient on its own.
+
+# Cost and effort (estimate)
+
+These are estimates for planning. They have not been measured, and prices change, so check current figures before
+budgeting.
+
+- **Owner time:** days, for Phase 0 decisions. This is the main schedule risk, because later phases wait for it.
+- **Engineering:** roughly 8 to 12 weeks in total for one or two engineers, across Phases 2 to 6. Phase 5, the approver
+  display, is the largest uncertainty: a companion app for a phone is several weeks to months, and a web page is
+  cheaper but gives weaker separation.
+- **Hardware:** roughly $25 to $70 per token, with two tokens per approver recommended, so the cost scales with the
+  number of approvers.
+- **Operations:** a lost-token procedure, re-enrolment of every approver at cutover, and support for approvers.
+- **Cheaper partial scope:** Phases 2 to 4 with a token and no second-device display takes about half the effort. It
+  closes the "key on the agent's host" gap, and it does not close the malware or misreading gaps.
+
 # Exact steps
 
 Each phase has its own pull request, and no phase starts until the previous phase is merged and its acceptance check passes. Commands are run from the repository root.
