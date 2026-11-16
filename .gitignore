@@ -36,6 +36,10 @@ node_modules/
 # Build output
 dist/
 **/dist/
+
+# Local build output from a developer's own build step (not produced by this repository's scripts).
+dist-connector/
+dist-py/
 *.tsbuildinfo
 .typedoc-staging/
 
