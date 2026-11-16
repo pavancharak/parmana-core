@@ -21,6 +21,7 @@ Operator guides for running Parmana in production and for working on it locally.
 | Commits show as unverified on GitHub, or `git commit` fails at signing                                 | [SIGNING-COMMITS.md](SIGNING-COMMITS.md)                                     |
 | A Dependabot alert is open, or you need to check that a dependency fix is on `main`                    | [DEPENDABOT-ALERTS.md](DEPENDABOT-ALERTS.md)                                 |
 | `npm audit` reports a finding or the audit gate fails in CI, or a dependency override is changed       | [NPM-AUDIT-RECORD.md](NPM-AUDIT-RECORD.md)                                   |
+| Refusals were recorded and you need the ones refused for a missing human approval, to retry after approval | [APPROVAL-REFUSAL-LISTER.md](APPROVAL-REFUSAL-LISTER.md)                     |
 
 ## Rules that apply to every runbook
 
