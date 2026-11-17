@@ -25,11 +25,10 @@ description: "Generated models, bearer-key authentication, and a typed error tax
   decision D23; the new routes do not exist on older servers. v2.0.2, published
   2026-11-11, adds approver-key commands to the CLI. v2.0.1, published
   2026-11-10, aligns the SDK with the other 2.0.1 packages. v2.0.0, published
-  2026-11-07,
-  added full hybrid verification to the offline verifier: it verifies hybrid
-  records in full, with a `signatures` array holding one Ed25519 and one
-  ML-DSA-65 entry, including the whole-record message of schema version 3. Its
-  results report `coverage` (`"full"` or `"legacy"`) and
+  2026-11-07, added full hybrid verification to the offline verifier: it
+  verifies hybrid records in full, with a `signatures` array holding one Ed25519
+  and one ML-DSA-65 entry, including the whole-record message of schema version
+  3. Its results report `coverage` (`"full"` or `"legacy"`) and
   `hybrid_signatures_valid`. ML-DSA-65 needs `cryptography` 47.0.0 or later.
   Execution models accept an optional `evaluation_method`. v1.6.3, published
   2026-11-01, changed only documentation, formatting and tests. v1.6.1,

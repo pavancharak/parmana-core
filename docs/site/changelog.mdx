@@ -10,6 +10,15 @@ product version). The SDKs are versioned independently on their own registries, 
 and per-version notes. This page covers changes that affect what you can build against, not
 every commit, run `git log` in the repository for the complete record.
 
+## 2026-11-17
+
+**Released: version 3.0.0 of every Parmana package in this repository**
+
+- The version number moves to 3.0.0 across the repository, including `@parmana/sdk`, `parmana`, `@parmana/connector-sdk`, `parmana-connector-sdk`, `@parmana/shared`, `@parmana/crypto` and `@parmana/cli`. The published versions on npm and PyPI are 2.0.3 until the 3.0.0 packages are published. The [TypeScript SDK](/sdks/typescript) and [Python SDK](/sdks/python) pages name the published version.
+- The SDK code changed only in one place since 2.0.3: `ParmanaError.cause` in the TypeScript SDK is declared with `override`. This is a type-level change. The Python SDK code did not change.
+- No breaking change to the SDK's public API was made in this release.
+- Policy version 2 is built and is described on [Policy version 2](/guides/policy-version-2). It is not part of any SDK or server release yet.
+
 ## 2026-11-01
 
 **Changed: the server refuses at startup the configuration values it does not implement**

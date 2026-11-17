@@ -4,10 +4,10 @@ description: "What policy version 2 is: signed, checked policies with named limi
 ---
 
 <Warning>
-  Policy version 2 is built and merged, but it is **not yet released**. No SDK or
-  server release includes it, and the pages on this site that describe released
-  behaviour do not yet cover it. Treat this page as a description of the design
-  as built, not as something you can install today.
+  Policy version 2 is built and merged, but it is **not yet released**. No SDK
+  or server release includes it, and the pages on this site that describe
+  released behaviour do not yet cover it. Treat this page as a description of
+  the design as built, not as something you can install today.
 </Warning>
 
 Policy version 2 changes how Parmana decides whether an action may proceed. It
@@ -22,11 +22,11 @@ A policy names the action it decides (for example `erp:pay-invoice`), its owner,
 and every value its rules read. Each value has a **provenance**, which says
 where it may come from:
 
-| Provenance | Meaning                                                                                     |
-| ---------- | ------------------------------------------------------------------------------------------- |
-| `sourced`  | A registered business system establishes the value. It counts only if the system signed it. |
-| `approved` | A person approved it. It counts only if the approval verifies and matches exactly.          |
-| `untrusted`| Anything else. A policy may use it to refuse or to route to review, never to approve.       |
+| Provenance  | Meaning                                                                                     |
+| ----------- | ------------------------------------------------------------------------------------------- |
+| `sourced`   | A registered business system establishes the value. It counts only if the system signed it. |
+| `approved`  | A person approved it. It counts only if the approval verifies and matches exactly.          |
+| `untrusted` | Anything else. A policy may use it to refuse or to route to review, never to approve.       |
 
 Trust comes from the signature, not from the sender. An unsigned value is
 untrusted, whoever sent it.
@@ -75,16 +75,16 @@ change, so a change and its record are saved together or not at all.
 
 ## Status
 
-| Part                                             | Status                    |
-| ------------------------------------------------ | ------------------------- |
-| Policy format and validator                      | Built                     |
-| Signed source answers and approvals              | Built                     |
-| Decisions, reviews and alerts                    | Built                     |
-| Register, roles and go-live gate                 | Built                     |
-| Evidence log and replay                          | Built                     |
-| Notifications and delivery feedback              | Built                     |
-| Released in an SDK or server release             | **Not yet**               |
-| Connected business systems (sources)             | Not yet connected         |
+| Part                                 | Status            |
+| ------------------------------------ | ----------------- |
+| Policy format and validator          | Built             |
+| Signed source answers and approvals  | Built             |
+| Decisions, reviews and alerts        | Built             |
+| Register, roles and go-live gate     | Built             |
+| Evidence log and replay              | Built             |
+| Notifications and delivery feedback  | Built             |
+| Released in an SDK or server release | **Not yet**       |
+| Connected business systems (sources) | Not yet connected |
 
 Sources, the second email provider and the business inputs for each policy are
 not connected yet. Until they are, sourced values refuse rather than guess.
