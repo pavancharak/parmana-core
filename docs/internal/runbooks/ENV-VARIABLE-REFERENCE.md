@@ -286,6 +286,42 @@ Every claim is taken from the code, unless marked **(not tested)**. Read [ENV-FI
 - **Used:** only in `createExecutionIntents.ts`. The check can be turned off only when `NODE_ENV` is `test` or `development` and this is not `true`.
 - **In production:** the check is always on, and this variable has no effect.
 
+## Policy version 2
+
+These variables switch on the policy version 2 runtime. They are read when the server starts (`server.ts`, through `createPolicyV2Runtime.ts`), so a change takes effect on the next start. The runtime is off unless `PARMANA_POLICY_V2_DECISIONS` is `true`. Routes: [POLICY-V2-REGISTER-API.md](../design/POLICY-V2-REGISTER-API.md).
+
+### PARMANA_POLICY_V2_DECISIONS
+
+- **What it is:** the switch for the policy version 2 runtime: the decision route and the register route.
+- **Required:** no. Off by default.
+- **Used:** at module load, in `createPolicyV2Runtime.ts`.
+- **If missing:** the runtime is off. Neither `/v2/decisions` nor `/v2/register` is mounted.
+- **Values:**
+  - `true`: the runtime is on. It then needs `PARMANA_POLICY_V2_CAPABILITIES` and a configured database.
+  - `false`, or empty: off.
+  - Any other value, for example `yes`: refused at module load. Every request fails.
+- **Note:** the decision route releases nothing. It records each decision, and the response always says `released: false`.
+
+### PARMANA_POLICY_V2_CAPABILITIES
+
+- **What it is:** the capabilities that accept policy version 2 decisions. A comma-separated list, for example `erp:pay-invoice`.
+- **Required:** yes, when `PARMANA_POLICY_V2_DECISIONS=true`.
+- **Used:** at module load, in `createPolicyV2Runtime.ts`.
+- **If missing or empty:** refused at module load, with a message that names the variable.
+- **Effect:** a decision for any other capability returns 404 `not_enabled`, before anything is read.
+- **Note:** no approved policy exists yet, so every enabled capability refuses for now.
+
+### PARMANA_POLICY_V2_BOOTSTRAP_OWNER
+
+- **What it is:** the caller id of the first Parmana owner.
+- **Required:** no. Needed once, to set up the first owner. Nothing can change roles until an owner exists.
+- **Used:** at startup, in `server.ts`, through `bootstrapPolicyV2Owner`.
+- **If missing or empty:** nothing is set up. The register has no owner until one is granted some other way.
+- **Effect:** if the register has no Parmana owner, this id becomes the owner, and a `role.bootstrap` event is written to the audit log. If an owner already exists, the variable does nothing. Setting it again later changes nothing.
+- **Care:** the id is whatever the caller authenticates as. Set it to an id that only the first owner controls. A wrong id that is set while the register is empty becomes the owner, and only that id can then grant other roles.
+- **After the first start:** the variable can be removed. It is not needed again, and it does nothing while an owner exists.
+- **Not tested:** the startup path in `server.ts` is not covered by a test. The bootstrap method itself is tested.
+
 ### SIGNING_READINESS_CHECK
 
 - **What it is:** an override for the signing check that runs before each release.
