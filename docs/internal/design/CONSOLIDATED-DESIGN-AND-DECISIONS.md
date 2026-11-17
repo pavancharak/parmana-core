@@ -262,6 +262,15 @@ Also confirmed by the owner: manager approval is trusted only when it verifies; 
 
 ## 8. Open items
 
+### 8.0 Deferred until the business supplies information
+
+These items are deferred. Nothing blocks go-live without them, as set out below. They return to the open list when the information is available.
+
+| Item                                       | Why it is deferred                                                                                                                         | What is needed to resume                                                                          | What still works without it                                 |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| A second email provider, beyond Amazon SES | Amazon SES already sends alerts and reports bounces. The SMTP channel accepts any provider added later.                                    | The name of the provider, and whether it reports bounces by webhook or by forwarded message.      | Alerts are sent through SES. Bounces from SES are recorded. |
+| Source systems and their owners            | A policy needs a source only when it uses a value from an outside system. Until then, every value comes from the request and is untrusted. | The systems whose answers the rules rely on, their owners, and whether each can sign its answers. | Policies that use request values only.                      |
+
 ### 8.1 Needs the business to supply
 
 | Item                                                                                                   | Who supplies it              | Where it is recorded         |
