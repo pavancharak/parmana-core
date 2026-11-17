@@ -23,6 +23,28 @@ export function createPolicyV2ReviewsRouter(
 ): Router {
   const router = Router();
 
+  /** The review's status, for the requester who asked for it. Anyone else gets 404. */
+  router.get(
+    "/:id",
+    async (req: Request, res: Response, next: NextFunction) => {
+      const caller = req.callerId;
+      if (caller === undefined) {
+        res.status(401).json({ error: "unauthenticated" });
+        return;
+      }
+      try {
+        const view = await service.requesterView(caller, String(req.params.id));
+        if (view === undefined) {
+          res.status(404).json({ error: "not_found" });
+          return;
+        }
+        res.status(200).json(view);
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
   router.post(
     "/:id/decision",
     async (req: Request, res: Response, next: NextFunction) => {

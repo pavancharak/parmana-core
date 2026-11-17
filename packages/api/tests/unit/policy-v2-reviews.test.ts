@@ -224,3 +224,61 @@ describe("POST /v2/reviews/:id/decision", () => {
     expect(res.body.outcome).toBe("APPROVED");
   });
 });
+
+describe("the requester's view of a review", () => {
+  it("shows the requester the status, and the outcome once the review is finished", async () => {
+    const { item, service } = await setup();
+    expect(await service.requesterView("partner-a", item.id)).toEqual({
+      status: "pending",
+      reasonCode: "UNDER_REVIEW",
+    });
+    await service.decide("rev-1", item.id, "approve");
+    expect(await service.requesterView("partner-a", item.id)).toEqual({
+      status: "approved",
+      reasonCode: "REVIEW_APPROVED",
+    });
+  });
+
+  it("gives no view to anyone who did not ask, including the reviewer", async () => {
+    const { item, service } = await setup();
+    expect(await service.requesterView("rev-1", item.id)).toBeUndefined();
+    expect(await service.requesterView("partner-b", item.id)).toBeUndefined();
+    expect(
+      await service.requesterView("partner-a", "review-999"),
+    ).toBeUndefined();
+  });
+});
+
+describe("GET /v2/reviews/:id", () => {
+  function app(service: PolicyV2ReviewService) {
+    const a = express();
+    a.use(express.json());
+    a.use((req, _res, next) => {
+      const caller = req.headers["x-caller"];
+      if (typeof caller === "string") req.callerId = caller;
+      next();
+    });
+    a.use("/v2/reviews", createPolicyV2ReviewsRouter(service));
+    return a;
+  }
+
+  it("returns 401 with no caller, and 404 to anyone but the requester", async () => {
+    const { item, service } = await setup();
+    expect(
+      (await request(app(service)).get(`/v2/reviews/${item.id}`)).status,
+    ).toBe(401);
+    const other = await request(app(service))
+      .get(`/v2/reviews/${item.id}`)
+      .set("x-caller", "partner-b");
+    expect(other.status).toBe(404);
+  });
+
+  it("returns the status to the requester", async () => {
+    const { item, service } = await setup();
+    const res = await request(app(service))
+      .get(`/v2/reviews/${item.id}`)
+      .set("x-caller", "partner-a");
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe("pending");
+  });
+});

@@ -48,6 +48,24 @@ export class PolicyV2ReviewService {
     this.clock = options.now ?? (() => new Date());
   }
 
+  /**
+   * The review's status for the requester who asked for it. Anyone else, and any item that does not
+   * exist, gets undefined, so the route does not reveal whether an item exists.
+   */
+  async requesterView(
+    callerId: string,
+    itemId: string,
+  ): Promise<policyV2.review.CallerView | undefined> {
+    const reviewState =
+      await this.options.store.load<policyV2.review.ReviewSnapshot>("review");
+    if (reviewState === undefined) return undefined;
+    const queue = new policyV2.review.ReviewQueue(this.clock);
+    queue.load(reviewState.body);
+    const item = queue.get(itemId);
+    if (item === undefined || item.requester !== callerId) return undefined;
+    return queue.callerView(itemId);
+  }
+
   async decide(
     reviewerId: string,
     itemId: string,
