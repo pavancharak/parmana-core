@@ -1,13 +1,13 @@
 import express from "express";
 import request from "supertest";
-import { describe, expect, it } from "vitest";
 import { generateKeyPairSync } from "node:crypto";
+import { describe, expect, it } from "vitest";
 import { policyV2 } from "@parmana/policy";
 
 import {
   PolicyV2ForbiddenError,
   PolicyV2RegisterService,
-  type PolicyV2RoleStoreLike,
+  type PolicyV2RegisterStateStore,
 } from "../../src/policyV2/policyV2Register.js";
 import { createPolicyV2RegisterRouter } from "../../src/routes/policy-v2-register.js";
 
@@ -16,58 +16,25 @@ const PEM = generateKeyPairSync("ed25519")
   .publicKey.export({ type: "spki", format: "pem" })
   .toString();
 
-/** Roles as an append-only event list, with the same last-owner guard as the database store. */
-function memoryRoles(
-  initial: Array<[string, string]> = [],
-): PolicyV2RoleStoreLike & {
-  events: Array<{ callerId: string; role: string; action: string }>;
-} {
-  const events: Array<{ callerId: string; role: string; action: string }> =
-    initial.map(([callerId, role]) => ({ callerId, role, action: "grant" }));
-  const holds = (callerId: string, role: string) => {
-    const latest = [...events]
-      .reverse()
-      .find((e) => e.callerId === callerId && e.role === role);
-    return latest?.action === "grant";
-  };
-  return {
-    events,
-    async rolesOf(callerId) {
-      const roles = new Set(
-        events.filter((e) => e.callerId === callerId).map((e) => e.role),
-      );
-      return [...roles].filter((role) => holds(callerId, role)).sort();
-    },
-    async changeRole({ callerId, role, action }) {
-      if (action === "revoke" && role === "parmana-owner") {
-        const owners = new Set(
-          events
-            .filter((e) => e.role === "parmana-owner")
-            .map((e) => e.callerId),
-        );
-        const holders = [...owners].filter((o) => holds(o, "parmana-owner"));
-        if (holders.length === 1 && holders[0] === callerId) {
-          throw new policyV2.persistence.RoleChangeError(
-            "The last Parmana owner cannot be revoked.",
-          );
-        }
-      }
-      events.push({ callerId, role, action });
-    },
-  };
-}
-
-/** A state store that enforces versions, so a stale save is refused. */
+/**
+ * An in-memory state store with the same rules as the database: a save with a stale version
+ * writes neither the snapshot nor its audit rows.
+ */
 function memoryState() {
   let saved: { body: unknown; version: number } | undefined;
-  return {
+  const audit: policyV2.persistence.AuditRow[] = [];
+  const store: PolicyV2RegisterStateStore & {
+    audit: typeof audit;
+    saved: typeof saved;
+  } = {
+    audit,
     get saved() {
       return saved;
     },
     async load<T>() {
       return saved as { body: T; version: number } | undefined;
     },
-    async save(_component: "register", body: unknown, readVersion: number) {
+    async saveWithAudit(_component, body, readVersion, events) {
       const current = saved?.version ?? 0;
       if (current !== readVersion) {
         throw new policyV2.persistence.PersistenceConflictError(
@@ -75,20 +42,20 @@ function memoryState() {
         );
       }
       saved = { body, version: current + 1 };
+      audit.push(...events);
       return current + 1;
     },
+    async readAudit() {
+      return [...audit];
+    },
   };
+  return store;
 }
 
-function service(
-  roles = memoryRoles([["owner-1", "parmana-owner"]]),
-  state = memoryState(),
-) {
-  return {
-    service: new PolicyV2RegisterService({ state, roles, now: () => NOW }),
-    roles,
-    state,
-  };
+async function serviceWithOwner(state = memoryState()) {
+  const svc = new PolicyV2RegisterService({ state, now: () => NOW });
+  await svc.bootstrapOwner("owner-1");
+  return { svc, state };
 }
 
 const SOURCE = {
@@ -103,7 +70,7 @@ const SOURCE = {
 
 describe("PolicyV2RegisterService", () => {
   it("refuses a caller that holds no register role", async () => {
-    const { service: svc } = service();
+    const { svc } = await serviceWithOwner();
     await expect(svc.read("stranger")).rejects.toBeInstanceOf(
       PolicyV2ForbiddenError,
     );
@@ -112,70 +79,65 @@ describe("PolicyV2RegisterService", () => {
     );
   });
 
+  it("sets up the first owner once", async () => {
+    const { svc } = await serviceWithOwner();
+    expect(await svc.bootstrapOwner("owner-2")).toBe(false);
+  });
+
   it("lets only the Parmana owner grant a role", async () => {
-    const { service: svc, roles } = service(
-      memoryRoles([
-        ["owner-1", "parmana-owner"],
-        ["source-1", "source-owner"],
-      ]),
-    );
+    const { svc, state } = await serviceWithOwner();
+    await svc.grantRole("owner-1", "source-1", "source-owner");
     await expect(
-      svc.grantRole("source-1", "other", "source-owner"),
-    ).rejects.toBeInstanceOf(PolicyV2ForbiddenError);
-    await svc.grantRole("owner-1", "other", "source-owner");
-    expect(await roles.rolesOf("other")).toEqual(["source-owner"]);
+      svc.grantRole("source-1", "other", "reviewer"),
+    ).rejects.toBeInstanceOf(policyV2.register.RegisterError);
+    const body = state.saved!.body as policyV2.register.RegisterSnapshot;
+    expect(body.roles).toContainEqual({
+      callerId: "source-1",
+      role: "source-owner",
+    });
   });
 
   it("lets a source owner propose and a second approver approve a source", async () => {
-    const { service: svc, roles } = service(
-      memoryRoles([
-        ["owner-1", "parmana-owner"],
-        ["source-1", "source-owner"],
-        ["second-1", "second-approver"],
-      ]),
-    );
+    const { svc } = await serviceWithOwner();
+    await svc.grantRole("owner-1", "source-1", "source-owner");
+    await svc.grantRole("owner-1", "second-1", "second-approver");
     await svc.proposeSource("source-1", SOURCE);
     const approved = await svc.approveSource("second-1", "ledger");
     expect(approved.status).toBe("trusted");
-    expect(await roles.rolesOf("second-1")).toEqual(["second-approver"]);
   });
 
   it("refuses a change the register refuses, with its reason", async () => {
-    const { service: svc } = service(
-      memoryRoles([
-        ["owner-1", "parmana-owner"],
-        ["source-1", "source-owner"],
-      ]),
-    );
+    const { svc } = await serviceWithOwner();
+    await svc.grantRole("owner-1", "source-1", "source-owner");
     await expect(
       svc.proposeSource("source-1", { ...SOURCE, dataOwner: "<finance>" }),
     ).rejects.toBeInstanceOf(policyV2.register.RegisterError);
   });
 
   it("refuses to revoke the last Parmana owner", async () => {
-    const { service: svc } = service();
+    const { svc } = await serviceWithOwner();
     await expect(
       svc.revokeRole("owner-1", "owner-1", "parmana-owner"),
-    ).rejects.toBeInstanceOf(policyV2.persistence.RoleChangeError);
+    ).rejects.toBeInstanceOf(policyV2.register.RegisterError);
   });
 
-  it("writes every role change to the register's audit log", async () => {
-    const { service: svc, state } = service();
+  it("saves each role change with its audit event", async () => {
+    const { svc, state } = await serviceWithOwner();
     await svc.grantRole("owner-1", "source-1", "source-owner");
-    const log = (state.saved!.body as policyV2.register.RegisterSnapshot).log;
-    expect(log.map((e) => e.event)).toContain("role.grant");
-    expect(log.find((e) => e.event === "role.grant")!.detail).toBe(
-      "source-1 source-owner",
-    );
+    expect(state.audit.map((e) => e.event)).toEqual([
+      "role.bootstrap",
+      "role.grant",
+    ]);
+    expect(state.audit[1]!.detail).toBe("source-1 source-owner");
   });
 
-  it("refuses a save that read a stale version", async () => {
-    const state = memoryState();
-    const { service: svc } = service(undefined, state);
-    await svc.grantRole("owner-1", "source-1", "source-owner");
+  it("writes neither the register nor its audit when the save is refused", async () => {
+    const { svc, state } = await serviceWithOwner();
+    const auditBefore = state.audit.length;
+    const bodyBefore = JSON.stringify(state.saved);
     const staleLoad = state.load.bind(state);
-    state.load = async <T>() => {
-      const current = (await staleLoad()) as
+    state.load = async <T>(component: "register") => {
+      const current = (await staleLoad(component)) as
         { body: T; version: number } | undefined;
       return current === undefined
         ? undefined
@@ -184,6 +146,14 @@ describe("PolicyV2RegisterService", () => {
     await expect(
       svc.grantRole("owner-1", "x", "reviewer"),
     ).rejects.toBeInstanceOf(policyV2.persistence.PersistenceConflictError);
+    expect(state.audit).toHaveLength(auditBefore);
+    expect(JSON.stringify(state.saved)).toBe(bodyBefore);
+  });
+
+  it("returns the audit log to a caller with a role", async () => {
+    const { svc } = await serviceWithOwner();
+    const audit = await svc.auditLog("owner-1");
+    expect(audit.map((e) => e.event)).toEqual(["role.bootstrap"]);
   });
 });
 
@@ -201,19 +171,21 @@ describe("POST /v2/register", () => {
   }
 
   it("returns 401 with no caller", async () => {
-    const res = await request(app(service().service)).get("/v2/register");
-    expect(res.status).toBe(401);
+    const { svc } = await serviceWithOwner();
+    expect((await request(app(svc)).get("/v2/register")).status).toBe(401);
   });
 
   it("returns 403 for a caller with no role", async () => {
-    const res = await request(app(service().service))
+    const { svc } = await serviceWithOwner();
+    const res = await request(app(svc))
       .get("/v2/register")
       .set("x-caller", "stranger");
     expect(res.status).toBe(403);
   });
 
   it("returns 400 for an unknown role", async () => {
-    const res = await request(app(service().service))
+    const { svc } = await serviceWithOwner();
+    const res = await request(app(svc))
       .post("/v2/register/roles/grant")
       .set("x-caller", "owner-1")
       .send({ callerId: "x", role: "emperor" });
@@ -221,16 +193,9 @@ describe("POST /v2/register", () => {
   });
 
   it("returns 422 with the reason for a refused change", async () => {
-    const res = await request(
-      app(
-        service(
-          memoryRoles([
-            ["owner-1", "parmana-owner"],
-            ["source-1", "source-owner"],
-          ]),
-        ).service,
-      ),
-    )
+    const { svc } = await serviceWithOwner();
+    await svc.grantRole("owner-1", "source-1", "source-owner");
+    const res = await request(app(svc))
       .post("/v2/register/sources")
       .set("x-caller", "source-1")
       .send({ ...SOURCE, dataOwner: "<finance>" });
@@ -238,28 +203,28 @@ describe("POST /v2/register", () => {
     expect(res.body.error).toBe("refused");
   });
 
-  it("returns 403 when a non-owner grants a role", async () => {
-    const res = await request(
-      app(
-        service(
-          memoryRoles([
-            ["owner-1", "parmana-owner"],
-            ["source-1", "source-owner"],
-          ]),
-        ).service,
-      ),
-    )
+  it("returns 422 when a non-owner grants a role", async () => {
+    const { svc } = await serviceWithOwner();
+    await svc.grantRole("owner-1", "source-1", "source-owner");
+    const res = await request(app(svc))
       .post("/v2/register/roles/grant")
       .set("x-caller", "source-1")
       .send({ callerId: "x", role: "reviewer" });
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(422);
   });
 
-  it("returns the register to a caller with a role", async () => {
-    const res = await request(app(service().service))
+  it("returns the register and its audit log to a caller with a role", async () => {
+    const { svc } = await serviceWithOwner();
+    const register = await request(app(svc))
       .get("/v2/register")
       .set("x-caller", "owner-1");
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ sources: [], thresholds: [], actions: [] });
+    expect(register.status).toBe(200);
+    expect(register.body).toEqual({ sources: [], thresholds: [], actions: [] });
+    const audit = await request(app(svc))
+      .get("/v2/register/audit")
+      .set("x-caller", "owner-1");
+    expect(audit.body.events.map((e: { event: string }) => e.event)).toEqual([
+      "role.bootstrap",
+    ]);
   });
 });

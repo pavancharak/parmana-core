@@ -53,10 +53,6 @@ function sendError(res: Response, error: unknown, next: NextFunction): void {
     res.status(400).json({ error: "invalid_request", message: error.message });
     return;
   }
-  if (error instanceof policyV2.persistence.RoleChangeError) {
-    res.status(422).json({ error: "refused", message: error.message });
-    return;
-  }
   if (error instanceof policyV2.persistence.PersistenceConflictError) {
     res.status(409).json({
       error: "conflict",
@@ -102,6 +98,19 @@ export function createPolicyV2RegisterRouter(
         sendError(res, error, next);
       }
     };
+
+  router.get("/audit", async (req, res, next) => {
+    const callerId = req.callerId;
+    if (callerId === undefined) {
+      res.status(401).json({ error: "unauthenticated" });
+      return;
+    }
+    try {
+      res.status(200).json({ events: await service.auditLog(callerId) });
+    } catch (error) {
+      sendError(res, error, next);
+    }
+  });
 
   router.get("/", async (req, res, next) => {
     const callerId = req.callerId;

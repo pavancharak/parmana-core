@@ -1,34 +1,25 @@
 import { policyV2 } from "@parmana/policy";
 
 /**
- * The register's write path for policy version 2. A caller's roles come from the role store,
- * never from the request. Each change loads the register, makes the change, and saves it back
- * at the version it read, so two writers cannot overwrite each other.
+ * The register's write path for policy version 2. Roles are part of the register, so a caller's
+ * roles come from the saved register, never from the request. Each change loads the register,
+ * makes the change, and saves it with its audit events in one transaction at the version it read.
  */
 
 export type PolicyV2RegisterRole = policyV2.register.Role;
 
-/** The part of the role store the service uses. */
-export interface PolicyV2RoleStoreLike {
-  rolesOf(callerId: string): Promise<string[]>;
-  changeRole(change: {
-    callerId: string;
-    role: string;
-    action: "grant" | "revoke";
-    byCaller: string;
-  }): Promise<void>;
-}
-
-/** The part of the state store the service uses. */
+/** The part of the state store the service uses. The Postgres store satisfies it. */
 export interface PolicyV2RegisterStateStore {
   load<T>(
     component: "register",
   ): Promise<{ readonly body: T; readonly version: number } | undefined>;
-  save(
+  saveWithAudit(
     component: "register",
     body: unknown,
     readVersion: number,
+    events: readonly policyV2.persistence.AuditRow[],
   ): Promise<number>;
+  readAudit(component: "register"): Promise<policyV2.persistence.AuditRow[]>;
 }
 
 export class PolicyV2ForbiddenError extends Error {
@@ -40,7 +31,6 @@ export class PolicyV2ForbiddenError extends Error {
 
 export interface PolicyV2RegisterServiceOptions {
   readonly state: PolicyV2RegisterStateStore;
-  readonly roles: PolicyV2RoleStoreLike;
   readonly now?: () => Date;
 }
 
@@ -59,9 +49,8 @@ export class PolicyV2RegisterService {
 
   /** The register's contents. Any caller that holds a register role may read them. */
   async read(callerId: string): Promise<PolicyV2RegisterView> {
-    const person = await this.person(callerId);
-    requireAnyRole(person);
-    const register = await this.loadRegister();
+    const { register } = await this.loadRegister();
+    requireAnyRole(callerId, register);
     return {
       sources: register.listSources(),
       thresholds: register.listThresholds(),
@@ -69,22 +58,46 @@ export class PolicyV2RegisterService {
     };
   }
 
-  /** Grants a role. Only the Parmana owner may grant a role. */
-  async grantRole(
+  /** The audit log of the register, oldest first. Any caller that holds a register role may read it. */
+  async auditLog(callerId: string): Promise<policyV2.persistence.AuditRow[]> {
+    const { register } = await this.loadRegister();
+    requireAnyRole(callerId, register);
+    return this.options.state.readAudit("register");
+  }
+
+  /** Grants a role. Only the Parmana owner may grant one. */
+  grantRole(
     byCaller: string,
     callerId: string,
     role: PolicyV2RegisterRole,
   ): Promise<void> {
-    await this.changeRole(byCaller, callerId, role, "grant");
+    return this.write(byCaller, (r, p) => r.grantRole(p, callerId, role));
   }
 
   /** Revokes a role. Only the Parmana owner may revoke one, and the last owner cannot be revoked. */
-  async revokeRole(
+  revokeRole(
     byCaller: string,
     callerId: string,
     role: PolicyV2RegisterRole,
   ): Promise<void> {
-    await this.changeRole(byCaller, callerId, role, "revoke");
+    return this.write(byCaller, (r, p) => r.revokeRole(p, callerId, role));
+  }
+
+  /**
+   * Sets up the first Parmana owner. Does nothing and returns false once an owner exists.
+   * Used by the runtime at startup, from the operator's configuration.
+   */
+  async bootstrapOwner(callerId: string): Promise<boolean> {
+    const { register, version } = await this.loadRegister();
+    const done = register.bootstrapOwner(callerId);
+    if (!done) return false;
+    await this.options.state.saveWithAudit(
+      "register",
+      register.snapshot(),
+      version,
+      toRows(register.takeEvents()),
+    );
+    return true;
   }
 
   proposeSource(
@@ -131,42 +144,17 @@ export class PolicyV2RegisterService {
     return this.write(byCaller, (r, p) => r.registerAction(input, p));
   }
 
-  private async person(callerId: string): Promise<policyV2.register.Person> {
-    const roles = await this.options.roles.rolesOf(callerId);
-    return {
-      id: callerId,
-      roles: roles as PolicyV2RegisterRole[],
-    };
-  }
-
-  private async loadRegister(): Promise<policyV2.register.PolicyRegister> {
+  private async loadRegister(): Promise<{
+    register: policyV2.register.PolicyRegister;
+    version: number;
+  }> {
     const register = new policyV2.register.PolicyRegister(this.clock);
     const saved =
       await this.options.state.load<policyV2.register.RegisterSnapshot>(
         "register",
       );
     if (saved !== undefined) register.load(saved.body);
-    return register;
-  }
-
-  private async changeRole(
-    byCaller: string,
-    callerId: string,
-    role: PolicyV2RegisterRole,
-    action: "grant" | "revoke",
-  ): Promise<void> {
-    const actor = await this.person(byCaller);
-    requireOwner(actor);
-    // The role change is recorded first, so the last-owner guard decides before the audit line is written.
-    await this.options.roles.changeRole({
-      callerId,
-      role,
-      action,
-      byCaller,
-    });
-    await this.write(byCaller, (register, p) =>
-      register.recordRoleChange(p, callerId, role, action),
-    );
+    return { register, version: saved?.version ?? 0 };
   }
 
   private async write<T>(
@@ -176,34 +164,40 @@ export class PolicyV2RegisterService {
       person: policyV2.register.Person,
     ) => T,
   ): Promise<T> {
-    const person = await this.person(byCaller);
-    requireAnyRole(person);
-    const saved =
-      await this.options.state.load<policyV2.register.RegisterSnapshot>(
-        "register",
-      );
-    const register = new policyV2.register.PolicyRegister(this.clock);
-    if (saved !== undefined) register.load(saved.body);
+    const { register, version } = await this.loadRegister();
+    requireAnyRole(byCaller, register);
+    const person: policyV2.register.Person = {
+      id: byCaller,
+      roles: register.rolesOf(byCaller),
+    };
     const result = mutate(register, person);
-    await this.options.state.save(
+    await this.options.state.saveWithAudit(
       "register",
       register.snapshot(),
-      saved?.version ?? 0,
+      version,
+      toRows(register.takeEvents()),
     );
     return result;
   }
 }
 
-function requireAnyRole(person: policyV2.register.Person): void {
-  if (person.roles.length === 0) {
-    throw new PolicyV2ForbiddenError("The caller holds no register role.");
-  }
+function toRows(
+  events: readonly policyV2.register.AuditEvent[],
+): policyV2.persistence.AuditRow[] {
+  return events.map((e) => ({
+    component: "register",
+    at: e.at,
+    by: e.by,
+    event: e.event,
+    detail: e.detail,
+  }));
 }
 
-function requireOwner(person: policyV2.register.Person): void {
-  if (!person.roles.includes("parmana-owner")) {
-    throw new PolicyV2ForbiddenError(
-      "Only the Parmana owner may change roles.",
-    );
+function requireAnyRole(
+  callerId: string,
+  register: policyV2.register.PolicyRegister,
+): void {
+  if (register.rolesOf(callerId).length === 0) {
+    throw new PolicyV2ForbiddenError("The caller holds no register role.");
   }
 }

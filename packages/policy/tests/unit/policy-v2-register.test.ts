@@ -424,3 +424,57 @@ describe("the register and the validator", () => {
     ).toEqual([]);
   });
 });
+
+describe("roles in the register", () => {
+  const owner: Person = { id: "owner-1", roles: [] };
+  const other: Person = { id: "other-1", roles: [] };
+
+  it("sets up one Parmana owner, and only while none exists", () => {
+    const r = new PolicyRegister(() => NOW);
+    expect(r.bootstrapOwner("owner-1")).toBe(true);
+    expect(r.bootstrapOwner("owner-2")).toBe(false);
+    expect(r.holdersOf("parmana-owner")).toEqual(["owner-1"]);
+  });
+
+  it("lets only the Parmana owner grant a role", () => {
+    const r = new PolicyRegister(() => NOW);
+    r.bootstrapOwner("owner-1");
+    r.grantRole(owner, "source-1", "source-owner");
+    expect(r.rolesOf("source-1")).toEqual(["source-owner"]);
+    r.grantRole(owner, "source-1", "source-owner");
+    expect(r.auditLog().filter((e) => e.event === "role.grant")).toHaveLength(
+      1,
+    );
+    expect(() => r.grantRole(other, "x", "reviewer")).toThrow(RegisterError);
+  });
+
+  it("refuses to revoke the last Parmana owner, and allows it when another remains", () => {
+    const r = new PolicyRegister(() => NOW);
+    r.bootstrapOwner("owner-1");
+    expect(() => r.revokeRole(owner, "owner-1", "parmana-owner")).toThrow(
+      /last Parmana owner/,
+    );
+    r.grantRole(owner, "owner-2", "parmana-owner");
+    r.revokeRole(owner, "owner-1", "parmana-owner");
+    expect(r.holdersOf("parmana-owner")).toEqual(["owner-2"]);
+  });
+
+  it("queues each role change's audit event once, until it is taken", () => {
+    const r = new PolicyRegister(() => NOW);
+    r.bootstrapOwner("owner-1");
+    r.grantRole(owner, "source-1", "source-owner");
+    const taken = r.takeEvents().map((e) => e.event);
+    expect(taken).toEqual(["role.bootstrap", "role.grant"]);
+    expect(r.takeEvents()).toEqual([]);
+  });
+
+  it("keeps roles through a snapshot and a load", () => {
+    const r = new PolicyRegister(() => NOW);
+    r.bootstrapOwner("owner-1");
+    r.grantRole(owner, "source-1", "source-owner");
+    const restored = new PolicyRegister(() => NOW);
+    restored.load(JSON.parse(JSON.stringify(r.snapshot())));
+    expect(restored.rolesOf("source-1")).toEqual(["source-owner"]);
+    expect(restored.holdersOf("parmana-owner")).toEqual(["owner-1"]);
+  });
+});

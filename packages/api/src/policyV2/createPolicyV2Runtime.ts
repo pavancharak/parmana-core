@@ -43,7 +43,6 @@ export function createPolicyV2Runtime(
   assertDatabaseUrlConfigured("PolicyV2");
   const pool = PostgresPoolFactory.create();
   const store = new policyV2.persistence.PolicyV2Store(pool);
-  const roles = new policyV2.persistence.PolicyV2RoleStore(pool);
 
   const decisions = new PolicyV2DecisionService({
     store,
@@ -58,7 +57,21 @@ export function createPolicyV2Runtime(
     nonces: new policyV2.persistence.PolicyV2NonceStore(pool),
   });
 
-  const register = new PolicyV2RegisterService({ state: store, roles });
+  const register = new PolicyV2RegisterService({ state: store });
 
   return { decisions, register };
+}
+
+/**
+ * Sets up the first Parmana owner from PARMANA_POLICY_V2_BOOTSTRAP_OWNER. It takes effect only
+ * while the register has no owner, so setting it again later changes nothing. Returns true if
+ * an owner was set up by this call.
+ */
+export async function bootstrapPolicyV2Owner(
+  runtime: PolicyV2Runtime,
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<boolean> {
+  const owner = env.PARMANA_POLICY_V2_BOOTSTRAP_OWNER?.trim();
+  if (owner === undefined || owner === "") return false;
+  return runtime.register.bootstrapOwner(owner);
 }
