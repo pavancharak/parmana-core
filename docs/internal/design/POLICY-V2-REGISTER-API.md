@@ -103,7 +103,7 @@ Email is sent over SMTP when `PARMANA_POLICY_V2_SMTP_URL` is set, which works wi
 
 ## Bounces and complaints
 
-Delivery reports from any provider are accepted in one neutral form at `POST /v2/notifications/events`, signed with an HMAC over the raw body using `PARMANA_POLICY_V2_EVENTS_SECRET`. A provider adapter translates its own reports into that form. `POST /v2/notifications/ses` is the optional Amazon SNS adapter for SES, enabled by `PARMANA_POLICY_V2_SNS_EVENTS`.
+Delivery reports from any provider are accepted in one neutral form at `POST /v2/notifications/events`, signed with an HMAC over the raw body using `PARMANA_POLICY_V2_EVENTS_SECRET`. A provider adapter translates its own reports into that form. The adapter for each provider, and how to write one, is in [PROVIDER-EVENT-ADAPTERS.md](PROVIDER-EVENT-ADAPTERS.md). `POST /v2/notifications/ses` is the optional Amazon SNS adapter for SES, enabled by `PARMANA_POLICY_V2_SNS_EVENTS`.
 
 `POST /v2/notifications/ses` receives SES bounces and complaints from Amazon SNS. It sits outside caller authentication, because SNS has no caller key. Each message is verified against its signature, and its certificate must come from an SNS host, before anything in it is read. A message that does not verify gets 403.
 
