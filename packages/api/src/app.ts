@@ -29,6 +29,8 @@ import { createExecuteRouter } from "./routes/execute.js";
 import { createInboundCheckRouter } from "./routes/inbound-checks.js";
 import { createKillSwitchRouter } from "./routes/kill-switch.js";
 import { killSwitchGuard } from "./killSwitch/killSwitchGuard.js";
+import type { PolicyV2DecisionService } from "./policyV2/policyV2Decisions.js";
+import { createPolicyV2DecisionsRouter } from "./routes/policy-v2-decisions.js";
 import type { KillSwitchService } from "./killSwitch/KillSwitchService.js";
 import healthRoutes from "./routes/health.js";
 import openapiRoutes from "./routes/openapi.js";
@@ -179,6 +181,8 @@ export interface CreateAppOptions {
   readonly stepUpVerifier?: PolicyChangeStepUpVerifier;
   /** Operator kill switch (ADR-0017). Mounted only when supplied; the server supplies a durable one when KILL_SWITCH_ENABLED=true. */
   readonly killSwitch?: KillSwitchService;
+  /** Policy version 2 decisions, first slice. Mounted only when supplied. Behind caller auth. */
+  readonly policyV2Decisions?: PolicyV2DecisionService;
   /** Which callers may approve each policy's changes (G-50). Unset lists no one. */
   readonly policyChangeCheckers?: PolicyChangeCheckerScope;
 
@@ -370,6 +374,13 @@ export function createApp(
    * and exactly what it's authorized to do").
    */
   app.use("/callers/me", createCallersMeRouter());
+
+  if (options.policyV2Decisions !== undefined) {
+    app.use(
+      "/v2/decisions",
+      createPolicyV2DecisionsRouter(options.policyV2Decisions),
+    );
+  }
 
   /**
    * ADR-0014: the sandbox's demo approver. Exists only in sandbox mode.

@@ -1,0 +1,196 @@
+/**
+ * Runtime decisions under policy version 2, first slice.
+ *
+ * A decision is run and recorded: the outcome, the signed inputs and the snapshot of keys and
+ * thresholds go into the hash-chained evidence log. A decision that needs review opens a review
+ * item and an alert. Nothing is released. The caller receives the outcome and a record id, and
+ * the response states released: false. No executor is called from here.
+ *
+ * Not yet built, and so refused or left out:
+ *   - approved policy versions (no maker-checker for policies yet), so no capability approves;
+ *   - source integrations, so sourced values refuse with SOURCE_UNAVAILABLE;
+ *   - approver key registration, so approvals refuse;
+ *   - durable nonce storage, so replay protection lasts for the life of the process.
+ */
+
+import { policyV2 } from "@parmana/policy";
+
+export type PolicyV2Component = policyV2.persistence.Component;
+
+/** The part of the store the service uses. The Postgres store satisfies it; tests use an in-memory one. */
+export interface PolicyV2StateStore {
+  load<T>(
+    component: PolicyV2Component,
+  ): Promise<{ readonly body: T; readonly version: number } | undefined>;
+  save(
+    component: PolicyV2Component,
+    body: unknown,
+    readVersion: number,
+  ): Promise<number>;
+  appendEvidence(record: policyV2.evidence.EvidenceRecord): Promise<void>;
+  readEvidence(): Promise<policyV2.evidence.EvidenceRecord[]>;
+}
+
+export class PolicyV2NotEnabledError extends Error {
+  constructor(capability: string) {
+    super(`Policy version 2 is not enabled for "${capability}".`);
+    this.name = "PolicyV2NotEnabledError";
+  }
+}
+
+export interface PolicyV2DecisionServiceOptions {
+  readonly store: PolicyV2StateStore;
+  /** Capabilities that accept decisions. Any other capability is refused before anything is read. */
+  readonly enabledCapabilities: ReadonlySet<string>;
+  /** Approved policy versions by capability. */
+  readonly policies: (
+    capability: string,
+  ) => policyV2.decision.ApprovedPolicy | undefined;
+  readonly sources: policyV2.decision.SourceClient;
+  readonly approvers: policyV2.approvals.ApproverKeys;
+  readonly now?: () => Date;
+}
+
+export interface PolicyV2DecisionResponse {
+  readonly outcome: policyV2.decision.Outcome;
+  readonly reason: string;
+  readonly tier?: string;
+  readonly refusal?: policyV2.decision.Refusal;
+  readonly recordId: string;
+  /** Always false in this slice. Nothing is released from here. */
+  readonly released: false;
+  /** Set when the decision is waiting for review. The caller can read its status by this id. */
+  readonly reviewId?: string;
+}
+
+/** Reviews are assigned to the reviewers' queue, not to one person, until assignment is built. */
+const REVIEW_ASSIGNEE = "reviewers";
+
+function notifyConsole(): boolean {
+  // Alerts are shown on the console. Email and phone channels are not built yet, so there is nothing to fail.
+  return true;
+}
+
+export class PolicyV2DecisionService {
+  private readonly clock: () => Date;
+  /** One store for the life of the process, so a source answer or approval cannot be used twice. */
+  private readonly nonces: policyV2.sourceAnswer.MemoryNonceStore;
+
+  constructor(private readonly options: PolicyV2DecisionServiceOptions) {
+    this.clock = options.now ?? (() => new Date());
+    this.nonces = new policyV2.sourceAnswer.MemoryNonceStore(this.clock);
+  }
+
+  async decide(
+    request: policyV2.decision.DecisionRequest,
+    caller: string,
+  ): Promise<PolicyV2DecisionResponse> {
+    if (!this.options.enabledCapabilities.has(request.capability)) {
+      throw new PolicyV2NotEnabledError(request.capability);
+    }
+    const now = this.clock();
+    const store = this.options.store;
+
+    const registerState =
+      await store.load<policyV2.register.RegisterSnapshot>("register");
+    const reviewState =
+      await store.load<policyV2.review.ReviewSnapshot>("review");
+    const alertState =
+      await store.load<policyV2.alerts.AlertSnapshot>("alerts");
+
+    const register = new policyV2.register.PolicyRegister(this.clock);
+    if (registerState !== undefined) register.load(registerState.body);
+    const queue = new policyV2.review.ReviewQueue(this.clock);
+    if (reviewState !== undefined) queue.load(reviewState.body);
+    const board = new policyV2.alerts.AlertBoard(
+      this.clock,
+      notifyConsole,
+      () => true,
+    );
+    if (alertState !== undefined) board.load(alertState.body);
+
+    const log = new policyV2.evidence.EvidenceLog();
+    log.load(await store.readEvidence());
+
+    const decision = await policyV2.decision.decide(request, {
+      policies: this.options.policies,
+      register,
+      sources: this.options.sources,
+      nonces: this.nonces,
+      approvals: policyV2.approvals.approvalChecker({
+        approvers: this.options.approvers,
+        nonces: this.nonces,
+      }),
+      now: this.clock,
+    });
+
+    const policy = this.options.policies(request.capability)?.policy as
+      { thresholds?: Record<string, unknown> } | undefined;
+    const snapshot = policyV2.evidence.snapshotFor(
+      policy,
+      request.capability,
+      decision.inputs,
+      register,
+      this.options.approvers,
+    );
+    // The evidence append is the commit point: it refuses unless it links to the last stored record.
+    const record = policyV2.evidence.recordDecision(
+      log,
+      request,
+      decision,
+      snapshot,
+      now,
+    );
+    await store.appendEvidence(record);
+
+    let reviewId: string | undefined;
+    if (decision.outcome === "REVIEW") {
+      // highValue is set true until the risk function is wired. That only requires more reviewers, so it fails safe.
+      const item = queue.open({
+        capability: request.capability,
+        target: request.target,
+        requester: caller,
+        decisionRef: {
+          policyHash: decision.policy.hash,
+          matchedRuleId: decision.matchedRuleId ?? "",
+        },
+        reason: decision.reason,
+        view: {
+          capability: request.capability,
+          target: request.target,
+          values: decision.values,
+        } as unknown as policyV2.approvals.ApprovalView,
+        highValue: true,
+        windowBusinessDays: policyV2.review.MAX_REVIEW_WINDOW_BUSINESS_DAYS,
+      });
+      board.raise({
+        ref: `review-${item.id}`,
+        kind: "review",
+        class: "immediate",
+        assignee: REVIEW_ASSIGNEE,
+        openedAt: now.toISOString(),
+        deadline: policyV2.review
+          .addBusinessDays(now, policyV2.review.MAX_REVIEW_WINDOW_BUSINESS_DAYS)
+          .toISOString(),
+        explanation: `A decision on ${request.capability} for ${request.target} is waiting for review.`,
+        consequence:
+          "The decision is not released until it is reviewed. If the window passes, it expires.",
+        steps: ["Review the decision, then approve or reject it."],
+        helpRef: "reviewers",
+      });
+      reviewId = item.id;
+      await store.save("review", queue.snapshot(), reviewState?.version ?? 0);
+      await store.save("alerts", board.snapshot(), alertState?.version ?? 0);
+    }
+
+    return {
+      outcome: decision.outcome,
+      reason: decision.reason,
+      ...(decision.tier !== undefined ? { tier: decision.tier } : {}),
+      ...(decision.refusal !== undefined ? { refusal: decision.refusal } : {}),
+      recordId: record.recordId,
+      released: false,
+      ...(reviewId !== undefined ? { reviewId } : {}),
+    };
+  }
+}
