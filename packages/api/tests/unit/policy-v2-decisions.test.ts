@@ -224,6 +224,7 @@ describe("a decision under an approved policy", () => {
     register.grantRole(owner, "action-1", "action-owner");
     register.grantRole(owner, "second-1", "second-approver");
     register.grantRole(owner, "gate-1", "gate-owner");
+    register.grantRole(owner, "gate-2", "gate-owner");
     register.registerAction(
       {
         capability: CAPABILITY,
