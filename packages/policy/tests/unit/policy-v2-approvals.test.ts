@@ -97,14 +97,14 @@ const expected = (
 });
 
 describe("the view and its digest", () => {
-  it("is the same for the same content, and does not depend on the transaction id", () => {
+  it("is the same for the same content, and does not depend on the transaction id", async () => {
     expect(viewDigest(view())).toBe(viewDigest(view()));
     // A retry under a new transaction id shows the same content, so it has the same digest.
     const retry = view();
     expect(viewDigest(retry)).toBe(viewDigest(view()));
   });
 
-  it("changes when any shown value changes", () => {
+  it("changes when any shown value changes", async () => {
     expect(
       viewDigest(
         view({
@@ -119,7 +119,7 @@ describe("the view and its digest", () => {
 });
 
 describe("signing an approval", () => {
-  it("refuses if the request changed after the approver read it", () => {
+  it("refuses if the request changed after the approver read it", async () => {
     const shown = view();
     const changed = view({
       values: {
@@ -147,13 +147,13 @@ describe("signing an approval", () => {
     ).toThrow(/changed after it was shown/);
   });
 
-  it("refuses a value that was not the one shown", () => {
+  it("refuses a value that was not the one shown", async () => {
     expect(() => sign(view(), { value: 9999 })).toThrow(
       /must be the one shown/,
     );
   });
 
-  it("refuses a validity above the cap, or below one minute", () => {
+  it("refuses a validity above the cap, or below one minute", async () => {
     expect(() => sign(view(), { validityMinutes: 61 })).toThrow(
       /between 1 and 60/,
     );
@@ -162,7 +162,7 @@ describe("signing an approval", () => {
     );
   });
 
-  it("refuses a confirmation made by someone other than the approver", () => {
+  it("refuses a confirmation made by someone other than the approver", async () => {
     const v = view();
     expect(() =>
       signApproval({
@@ -186,41 +186,45 @@ describe("signing an approval", () => {
 });
 
 describe("verifying an approval", () => {
-  it("accepts an approval for the exact value, once", () => {
+  it("accepts an approval for the exact value, once", async () => {
     const approvals = sign();
     const nonces = new MemoryNonceStore(() => NOW);
     expect(
-      verifyApproval(approvals, expected(), {
+      await verifyApproval(approvals, expected(), {
         approvers: approversWith(),
         nonces,
       }),
     ).toEqual({ ok: true });
     expect(
-      verifyApproval(approvals, expected(), {
+      await verifyApproval(approvals, expected(), {
         approvers: approversWith(),
         nonces,
       }),
     ).toMatchObject({ ok: false, code: "REPLAYED" });
   });
 
-  it("refuses a different amount, because an approval is exact", () => {
-    const result = verifyApproval(sign(), expected({ value: 9500 }), {
+  it("refuses a different amount, because an approval is exact", async () => {
+    const result = await verifyApproval(sign(), expected({ value: 9500 }), {
       approvers: approversWith(),
       nonces: new MemoryNonceStore(() => NOW),
     });
     expect(result).toMatchObject({ ok: false, code: "MISMATCH" });
   });
 
-  it("refuses an approval for a different resource", () => {
-    const result = verifyApproval(sign(), expected({ resource: "INV-2002" }), {
-      approvers: approversWith(),
-      nonces: new MemoryNonceStore(() => NOW),
-    });
+  it("refuses an approval for a different resource", async () => {
+    const result = await verifyApproval(
+      sign(),
+      expected({ resource: "INV-2002" }),
+      {
+        approvers: approversWith(),
+        nonces: new MemoryNonceStore(() => NOW),
+      },
+    );
     expect(result).toMatchObject({ ok: false, code: "MISMATCH" });
   });
 
-  it("refuses an approval whose digest no longer matches what is being decided", () => {
-    const result = verifyApproval(
+  it("refuses an approval whose digest no longer matches what is being decided", async () => {
+    const result = await verifyApproval(
       sign(),
       expected({ digest: "0".repeat(64) }),
       { approvers: approversWith(), nonces: new MemoryNonceStore(() => NOW) },
@@ -228,16 +232,16 @@ describe("verifying an approval", () => {
     expect(result).toMatchObject({ ok: false, code: "DIGEST_MISMATCH" });
   });
 
-  it("refuses an expired approval", () => {
+  it("refuses an expired approval", async () => {
     const later = new Date(NOW.getTime() + 16 * 60_000);
-    const result = verifyApproval(sign(), expected({ now: later }), {
+    const result = await verifyApproval(sign(), expected({ now: later }), {
       approvers: approversWith(),
       nonces: new MemoryNonceStore(() => later),
     });
     expect(result).toMatchObject({ ok: false, code: "EXPIRED" });
   });
 
-  it("refuses a tampered approval", () => {
+  it("refuses a tampered approval", async () => {
     const approval = sign();
     const tampered = {
       ...approval,
@@ -248,14 +252,14 @@ describe("verifying an approval", () => {
         expiresAt: new Date(NOW.getTime() + 59 * 60_000).toISOString(),
       },
     };
-    const result = verifyApproval(tampered, expected(), {
+    const result = await verifyApproval(tampered, expected(), {
       approvers: approversWith(),
       nonces: new MemoryNonceStore(() => NOW),
     });
     expect(result).toMatchObject({ ok: false, code: "BAD_SIGNATURE" });
   });
 
-  it("refuses an approval signed with another approver's key", () => {
+  it("refuses an approval signed with another approver's key", async () => {
     const v = view();
     const forged = signApproval({
       view: v,
@@ -273,49 +277,49 @@ describe("verifying an approval", () => {
       nonce: "n",
       now: NOW,
     });
-    const result = verifyApproval(forged, expected(), {
+    const result = await verifyApproval(forged, expected(), {
       approvers: approversWith(),
       nonces: new MemoryNonceStore(() => NOW),
     });
     expect(result).toMatchObject({ ok: false, code: "BAD_SIGNATURE" });
   });
 
-  it("refuses an approver who is not registered", () => {
-    const result = verifyApproval(sign(), expected(), {
+  it("refuses an approver who is not registered", async () => {
+    const result = await verifyApproval(sign(), expected(), {
       approvers: new ApproverKeys(),
       nonces: new MemoryNonceStore(() => NOW),
     });
     expect(result).toMatchObject({ ok: false, code: "UNKNOWN_APPROVER" });
   });
 
-  it("refuses an approval once its approver is revoked", () => {
-    const result = verifyApproval(sign(), expected(), {
+  it("refuses an approval once its approver is revoked", async () => {
+    const result = await verifyApproval(sign(), expected(), {
       approvers: approversWith({ revoked: true }),
       nonces: new MemoryNonceStore(() => NOW),
     });
     expect(result).toMatchObject({ ok: false, code: "REVOKED" });
   });
 
-  it("does not use up the approval when it is refused for another reason", () => {
+  it("does not use up the approval when it is refused for another reason", async () => {
     const nonces = new MemoryNonceStore(() => NOW);
     const approval = sign(view(), { nonce: "shared" });
     expect(
-      verifyApproval(approval, expected({ value: 9500 }), {
+      await verifyApproval(approval, expected({ value: 9500 }), {
         approvers: approversWith(),
         nonces,
       }),
     ).toMatchObject({ code: "MISMATCH" });
     expect(
-      verifyApproval(approval, expected(), {
+      await verifyApproval(approval, expected(), {
         approvers: approversWith(),
         nonces,
       }),
     ).toEqual({ ok: true });
   });
 
-  it("is refused if the approval is dated in the future beyond the clock skew", () => {
+  it("is refused if the approval is dated in the future beyond the clock skew", async () => {
     const earlier = new Date(NOW.getTime() - 120_000);
-    const result = verifyApproval(sign(), expected({ now: earlier }), {
+    const result = await verifyApproval(sign(), expected({ now: earlier }), {
       approvers: approversWith(),
       nonces: new MemoryNonceStore(() => earlier),
     });

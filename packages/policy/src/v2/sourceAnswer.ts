@@ -48,8 +48,11 @@ export type KeyLookup = (
 
 /** Remembers nonces, so an answer cannot be used twice. */
 export interface NonceStore {
-  /** Records the nonce if it is new. Returns false if it was already used. */
-  consume(nonce: string, expiresAt: string): boolean;
+  /**
+   * Records the nonce if it is new. Returns false if it was already used. Asynchronous, so a
+   * store shared by several processes can answer atomically.
+   */
+  consume(nonce: string, expiresAt: string): Promise<boolean>;
 }
 
 export type RefusalCode =
@@ -138,7 +141,7 @@ function isPayload(value: unknown): value is AnswerPayload {
  * this order. The nonce is consumed last, so an answer refused for another
  * reason can still be sent again.
  */
-export function verifySourceAnswer(
+export async function verifySourceAnswer(
   answer: unknown,
   expected: ExpectedQuery,
   deps: {
@@ -146,7 +149,7 @@ export function verifySourceAnswer(
     readonly nonces: NonceStore;
     readonly now: Date;
   },
-): VerifyResult {
+): Promise<VerifyResult> {
   const refuse = (code: RefusalCode, reason: string): VerifyResult => ({
     ok: false,
     code,
@@ -221,7 +224,7 @@ export function verifySourceAnswer(
   if (deps.now.getTime() >= expires)
     return refuse("EXPIRED", "The answer has expired.");
 
-  if (!deps.nonces.consume(payload.nonce, payload.expiresAt)) {
+  if (!(await deps.nonces.consume(payload.nonce, payload.expiresAt))) {
     return refuse("REPLAYED", "This answer has already been used.");
   }
   return { ok: true, value: payload.value };
@@ -233,7 +236,7 @@ export class MemoryNonceStore implements NonceStore {
 
   constructor(private readonly now: () => Date = () => new Date()) {}
 
-  consume(nonce: string, expiresAt: string): boolean {
+  async consume(nonce: string, expiresAt: string): Promise<boolean> {
     const nowMs = this.now().getTime();
     for (const [key, until] of this.used) {
       if (until <= nowMs) this.used.delete(key);

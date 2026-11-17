@@ -48,51 +48,57 @@ const keyFor: KeyLookup = (source, keyId) =>
     ? ledger.publicKey
     : undefined;
 
-function verify(
+async function verify(
   answer: unknown,
   nonces = new MemoryNonceStore(() => NOW),
   now = NOW,
 ) {
-  return verifySourceAnswer(answer, query, { keyFor, nonces, now });
+  return await verifySourceAnswer(answer, query, { keyFor, nonces, now });
 }
 
 describe("verifySourceAnswer", () => {
-  it("accepts an answer signed with the registered key", () => {
+  it("accepts an answer signed with the registered key", async () => {
     const answer = signAnswer(payload(), ledger.privateKey);
-    expect(verify(answer)).toEqual({ ok: true, value: true });
+    expect(await verify(answer)).toEqual({ ok: true, value: true });
   });
 
-  it("refuses an unsigned answer", () => {
-    const result = verify({ payload: payload() });
+  it("refuses an unsigned answer", async () => {
+    const result = await verify({ payload: payload() });
     expect(result).toMatchObject({ ok: false, code: "UNSIGNED" });
   });
 
-  it("refuses an answer signed with another key", () => {
+  it("refuses an answer signed with another key", async () => {
     const answer = signAnswer(payload(), otherKey.privateKey);
-    expect(verify(answer)).toMatchObject({ ok: false, code: "BAD_SIGNATURE" });
-  });
-
-  it("refuses an answer whose value was changed after signing", () => {
-    const answer = signAnswer(payload({ value: false }), ledger.privateKey);
-    const tampered = { ...answer, payload: { ...answer.payload, value: true } };
-    expect(verify(tampered)).toMatchObject({
+    expect(await verify(answer)).toMatchObject({
       ok: false,
       code: "BAD_SIGNATURE",
     });
   });
 
-  it("refuses an answer whose key id is not registered for the source", () => {
+  it("refuses an answer whose value was changed after signing", async () => {
+    const answer = signAnswer(payload({ value: false }), ledger.privateKey);
+    const tampered = { ...answer, payload: { ...answer.payload, value: true } };
+    expect(await verify(tampered)).toMatchObject({
+      ok: false,
+      code: "BAD_SIGNATURE",
+    });
+  });
+
+  it("refuses an answer whose key id is not registered for the source", async () => {
     const answer = signAnswer(
       payload({ keyId: "unknown-key" }),
       ledger.privateKey,
     );
-    expect(verify(answer)).toMatchObject({ ok: false, code: "UNKNOWN_KEY" });
+    expect(await verify(answer)).toMatchObject({
+      ok: false,
+      code: "UNKNOWN_KEY",
+    });
   });
 
-  it("refuses an answer from a revoked source", () => {
+  it("refuses an answer from a revoked source", async () => {
     const revoked: KeyLookup = () => "revoked";
     const answer = signAnswer(payload(), ledger.privateKey);
-    const result = verifySourceAnswer(answer, query, {
+    const result = await verifySourceAnswer(answer, query, {
       keyFor: revoked,
       nonces: new MemoryNonceStore(() => NOW),
       now: NOW,
@@ -100,55 +106,61 @@ describe("verifySourceAnswer", () => {
     expect(result).toMatchObject({ ok: false, code: "KEY_REVOKED" });
   });
 
-  it("refuses an expired answer", () => {
+  it("refuses an expired answer", async () => {
     const answer = signAnswer(
       payload({ expiresAt: ISO(NOW.getTime() - 1) }),
       ledger.privateKey,
     );
-    expect(verify(answer)).toMatchObject({ ok: false, code: "EXPIRED" });
+    expect(await verify(answer)).toMatchObject({ ok: false, code: "EXPIRED" });
   });
 
-  it("refuses an answer observed in the future beyond the clock skew", () => {
+  it("refuses an answer observed in the future beyond the clock skew", async () => {
     const answer = signAnswer(
       payload({ observedAt: ISO(NOW.getTime() + 120_000) }),
       ledger.privateKey,
     );
-    expect(verify(answer)).toMatchObject({ ok: false, code: "NOT_YET_VALID" });
+    expect(await verify(answer)).toMatchObject({
+      ok: false,
+      code: "NOT_YET_VALID",
+    });
   });
 
-  it("refuses a replayed answer, but accepts it the first time", () => {
+  it("refuses a replayed answer, but accepts it the first time", async () => {
     const nonces = new MemoryNonceStore(() => NOW);
     const answer = signAnswer(
       payload({ nonce: "fixed-nonce" }),
       ledger.privateKey,
     );
-    expect(verify(answer, nonces).ok).toBe(true);
-    expect(verify(answer, nonces)).toMatchObject({
+    expect((await verify(answer, nonces)).ok).toBe(true);
+    expect(await verify(answer, nonces)).toMatchObject({
       ok: false,
       code: "REPLAYED",
     });
   });
 
-  it("does not use up a nonce on an answer refused for another reason", () => {
+  it("does not use up a nonce on an answer refused for another reason", async () => {
     const nonces = new MemoryNonceStore(() => NOW);
     const expired = signAnswer(
       payload({ nonce: "shared", expiresAt: ISO(NOW.getTime() - 1) }),
       ledger.privateKey,
     );
-    expect(verify(expired, nonces)).toMatchObject({ code: "EXPIRED" });
+    expect(await verify(expired, nonces)).toMatchObject({ code: "EXPIRED" });
     const fresh = signAnswer(payload({ nonce: "shared" }), ledger.privateKey);
-    expect(verify(fresh, nonces).ok).toBe(true);
+    expect((await verify(fresh, nonces)).ok).toBe(true);
   });
 
-  it("refuses an answer for a different subject, claim, action or transaction", () => {
+  it("refuses an answer for a different subject, claim, action or transaction", async () => {
     const answer = signAnswer(payload({ subject: "ACC-2" }), ledger.privateKey);
-    expect(verify(answer)).toMatchObject({ ok: false, code: "QUERY_MISMATCH" });
+    expect(await verify(answer)).toMatchObject({
+      ok: false,
+      code: "QUERY_MISMATCH",
+    });
   });
 
-  it("refuses an incomplete answer", () => {
-    expect(verify("not an answer")).toMatchObject({ code: "MALFORMED" });
+  it("refuses an incomplete answer", async () => {
+    expect(await verify("not an answer")).toMatchObject({ code: "MALFORMED" });
     expect(
-      verify({ payload: { source: "ledger" }, signature: "x" }),
+      await verify({ payload: { source: "ledger" }, signature: "x" }),
     ).toMatchObject({ code: "MALFORMED" });
   });
 });
@@ -157,7 +169,7 @@ describe("the register and the signing contract together", () => {
   const sourceOwner: Person = { id: "owner-1", roles: ["source-owner"] };
   const second: Person = { id: "second-1", roles: ["second-approver"] };
 
-  it("verifies an answer against the key the register holds, and refuses it once the source is revoked", () => {
+  it("verifies an answer against the key the register holds, and refuses it once the source is revoked", async () => {
     const register = new PolicyRegister(() => NOW);
     register.proposeSource(
       {
@@ -177,20 +189,19 @@ describe("the register and the signing contract together", () => {
     const nonces = new MemoryNonceStore(() => NOW);
     const answer = signAnswer(payload(), ledger.privateKey);
 
-    expect(
-      verifySourceAnswer(answer, query, {
-        keyFor: (s, k) => register.keyFor(s, k),
-        nonces,
-        now: NOW,
-      }).ok,
-    ).toBe(true);
+    const beforeRevoke = await verifySourceAnswer(answer, query, {
+      keyFor: (s, k) => register.keyFor(s, k),
+      nonces,
+      now: NOW,
+    });
+    expect(beforeRevoke.ok).toBe(true);
 
     register.revokeSource(
       "ledger",
       { id: "parmana-1", roles: ["parmana-owner"] },
       "key exposed",
     );
-    const afterRevoke = verifySourceAnswer(
+    const afterRevoke = await verifySourceAnswer(
       signAnswer(payload(), ledger.privateKey),
       query,
       {

@@ -8,12 +8,12 @@
  * Evidence is appended, never updated. Each append runs under a database lock and
  * is refused unless it links to the record before it.
  *
- * Standalone. The runtime does not use it yet.
  */
 
 import type { Pool } from "pg";
 
 import type { EvidenceRecord } from "./evidence.js";
+import type { NonceStore } from "./sourceAnswer.js";
 
 export type Component = "register" | "review" | "alerts";
 
@@ -128,5 +128,30 @@ export class PolicyV2Store {
       "SELECT body FROM policy_v2_evidence ORDER BY seq ASC",
     );
     return result.rows.map((row) => row.body);
+  }
+}
+
+/**
+ * Nonces for source answers and approvals, stored in policy_v2_nonces. Each nonce is
+ * recorded once. The insert is atomic, so two processes cannot both use the same nonce.
+ * Expired rows are removed on each call, so the table holds only nonces still in force.
+ */
+export class PolicyV2NonceStore implements NonceStore {
+  constructor(
+    private readonly pool: Pool,
+    private readonly now: () => Date = () => new Date(),
+  ) {}
+
+  async consume(nonce: string, expiresAt: string): Promise<boolean> {
+    await this.pool.query(
+      "DELETE FROM policy_v2_nonces WHERE expires_at <= $1",
+      [this.now().toISOString()],
+    );
+    const inserted = await this.pool.query(
+      `INSERT INTO policy_v2_nonces (nonce, expires_at) VALUES ($1, $2)
+       ON CONFLICT (nonce) DO NOTHING RETURNING nonce`,
+      [nonce, expiresAt],
+    );
+    return (inserted.rowCount ?? 0) === 1;
   }
 }
