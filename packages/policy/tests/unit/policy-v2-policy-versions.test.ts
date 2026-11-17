@@ -75,7 +75,9 @@ function registerWithAction(): PolicyRegister {
   r.bootstrapOwner(OWNER.id);
   r.grantRole(OWNER, ACTION_OWNER.id, "action-owner");
   r.grantRole(OWNER, SECOND.id, "second-approver");
+  r.grantRole(OWNER, GATE.id, "operator");
   r.grantRole(OWNER, GATE.id, "gate-owner");
+  r.grantRole(OWNER, GATE_DEPUTY.id, "operator");
   r.grantRole(OWNER, GATE_DEPUTY.id, "gate-owner");
   r.registerAction(
     {
@@ -220,7 +222,9 @@ describe("using the approved version", () => {
     r.proposePolicy(minimal(), ACTION_OWNER);
     r.approvePolicy(CAP, "2.0.0", SECOND);
     expect(r.activePolicy(CAP)).toBeUndefined();
+    r.grantRole(OWNER, GATE.id, "operator");
     r.grantRole(OWNER, GATE.id, "gate-owner");
+    r.grantRole(OWNER, GATE_DEPUTY.id, "operator");
     r.grantRole(OWNER, GATE_DEPUTY.id, "gate-owner");
     r.recordTest(CAP, "reject", GATE);
     expect(r.runGoLive(CAP, GATE).ok).toBe(true);
@@ -296,6 +300,7 @@ describe("gate segregation", () => {
     expect(() =>
       r.recordTest(CAP, "reject", { id: "action-1", roles: ["gate-owner"] }),
     ).toThrow(/owner or successor/);
+    r.grantRole(OWNER, "action-2", "operator");
     r.grantRole(OWNER, "action-2", "gate-owner");
     expect(() =>
       r.runGoLive(CAP, { id: "action-2", roles: ["gate-owner"] }),
@@ -307,6 +312,7 @@ describe("gate segregation", () => {
     r.bootstrapOwner(OWNER.id);
     r.grantRole(OWNER, ACTION_OWNER.id, "action-owner");
     r.grantRole(OWNER, SECOND.id, "second-approver");
+    r.grantRole(OWNER, GATE.id, "operator");
     r.grantRole(OWNER, GATE.id, "gate-owner");
     r.registerAction(
       {
@@ -326,6 +332,7 @@ describe("gate segregation", () => {
     ]);
     expect(r.runGoLive(CAP, GATE).ok).toBe(false);
 
+    r.grantRole(OWNER, GATE_DEPUTY.id, "operator");
     r.grantRole(OWNER, GATE_DEPUTY.id, "gate-owner");
     expect(r.goLiveChecklist(CAP)).toEqual([]);
     expect(r.runGoLive(CAP, GATE).ok).toBe(true);

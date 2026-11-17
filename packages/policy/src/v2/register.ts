@@ -25,7 +25,8 @@ export type Role =
   | "source-owner"
   | "action-owner"
   | "gate-owner"
-  | "reviewer";
+  | "reviewer"
+  | "operator";
 
 /** A person acting in the register. Roles are granted by the Parmana owner. */
 export interface Person {
@@ -291,6 +292,11 @@ export class PolicyRegister {
       "change roles",
     );
     if (this.roles.get(callerId)?.has(role)) return;
+    // A gate owner works in Operations, so only a person holding the operator role can be one.
+    if (role === "gate-owner" && !this.rolesOf(callerId).includes("operator"))
+      throw new RegisterError(
+        `${callerId} must hold the operator role before being granted the gate-owner role.`,
+      );
     this.addRole(callerId, role);
     this.record(by.id, "role.grant", `${callerId} ${role}`);
   }
@@ -313,6 +319,11 @@ export class PolicyRegister {
     )
       throw new RegisterError(
         "The last Parmana owner cannot be revoked. Grant another Parmana owner first.",
+      );
+    // The operator role cannot go while the person still runs a gate.
+    if (role === "operator" && this.roles.get(callerId)?.has("gate-owner"))
+      throw new RegisterError(
+        `${callerId} still holds the gate-owner role. Revoke gate-owner first.`,
       );
     this.roles.get(callerId)!.delete(role);
     if (this.roles.get(callerId)!.size === 0) this.roles.delete(callerId);

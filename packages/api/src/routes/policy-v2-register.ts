@@ -25,6 +25,7 @@ const ROLES: readonly PolicyV2RegisterRole[] = [
   "action-owner",
   "gate-owner",
   "reviewer",
+  "operator",
 ];
 
 /** A body that is missing a required field or has the wrong type. */

@@ -445,6 +445,7 @@ describe("the go-live gate through the routes", () => {
 
   it("reads the checklist, and refuses a go-live run that is not passed with the missing items", async () => {
     const { svc } = await serviceWithOwner();
+    await svc.grantRole("owner-1", "gate-1", "operator");
     await svc.grantRole("owner-1", "gate-1", "gate-owner");
     await svc.grantRole("owner-1", "action-1", "action-owner");
     await svc.registerAction("owner-1", {
@@ -469,7 +470,9 @@ describe("the go-live gate through the routes", () => {
     const { svc } = await serviceWithOwner();
     await svc.grantRole("owner-1", "action-1", "action-owner");
     await svc.grantRole("owner-1", "second-1", "second-approver");
+    await svc.grantRole("owner-1", "gate-1", "operator");
     await svc.grantRole("owner-1", "gate-1", "gate-owner");
+    await svc.grantRole("owner-1", "gate-2", "operator");
     await svc.grantRole("owner-1", "gate-2", "gate-owner");
     await svc.registerAction("owner-1", {
       capability: CAP,
@@ -594,5 +597,25 @@ describe("contacts through the routes", () => {
       .send({ personId: "rev-1", email: "r@example.com" });
     expect(ok.status).toBe(200);
     expect(ok.body.email).toBe("r@example.com");
+  });
+});
+
+describe("the operator rule through the routes", () => {
+  it("refuses a gate-owner grant to a person who is not an operator, with 422", async () => {
+    const { svc } = await serviceWithOwner();
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+      const caller = req.headers["x-caller"];
+      if (typeof caller === "string") req.callerId = caller;
+      next();
+    });
+    app.use("/v2/register", createPolicyV2RegisterRouter(svc));
+    const res = await request(app)
+      .post("/v2/register/roles/grant")
+      .set("x-caller", "owner-1")
+      .send({ callerId: "builder-1", role: "gate-owner" });
+    expect(res.status).toBe(422);
+    expect(res.body.message).toMatch(/operator role before/);
   });
 });

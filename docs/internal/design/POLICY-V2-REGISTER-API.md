@@ -13,15 +13,16 @@ Status: built. Routes are mounted under `/v2/register` when the policy version 2
 
 A caller may hold any of these roles. A role is held by one caller id; a caller may hold several.
 
-| Role              | Used for                                                                                                                     |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `parmana-owner`   | Grants and revokes roles. Registers an action. Approves a source that can approve, and every intermediary. Revokes a source. |
-| `second-approver` | Approves a new source. One of the approvals a threshold needs.                                                               |
-| `source-owner`    | Proposes sources. Revokes a source.                                                                                          |
-| `action-owner`    | Proposes a threshold for its action.                                                                                         |
-| `risk-function`   | Approves the risk view of a high-value threshold.                                                                            |
-| `gate-owner`      | Records a test for an action, and runs the go-live gate.                                                                     |
-| `reviewer`        | Not used by the register. Reviewers act on the review queue.                                                                 |
+| Role              | Used for                                                                                                                                      |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `parmana-owner`   | Grants and revokes roles. Registers an action. Approves a source that can approve, and every intermediary. Revokes a source.                  |
+| `second-approver` | Approves a new source. One of the approvals a threshold needs.                                                                                |
+| `source-owner`    | Proposes sources. Revokes a source.                                                                                                           |
+| `action-owner`    | Proposes a threshold for its action.                                                                                                          |
+| `risk-function`   | Approves the risk view of a high-value threshold.                                                                                             |
+| `gate-owner`      | Records a test for an action, and runs the go-live gate.                                                                                      |
+| `operator`        | Operations. Only a person holding this role can be granted the gate-owner role. It cannot be removed while the person still holds gate-owner. |
+| `reviewer`        | Not used by the register. Reviewers act on the review queue.                                                                                  |
 
 Only the Parmana owner may grant or revoke a role. The last Parmana owner cannot be revoked. The first Parmana owner is set up once, at startup, from `PARMANA_POLICY_V2_BOOTSTRAP_OWNER`.
 
@@ -71,7 +72,7 @@ A policy version is proposed by the action owner of its action. Once proposed it
 
 Approval needs a second approver, who is not the proposer. A policy that reads a source that can approve, or an intermediary, also needs the Parmana owner. A person may approve a version once. Approving the last required approval makes the version the approved one for its action, and the previous approved version becomes superseded.
 
-A version is used for decisions only when its action has passed the go-live gate. The gate needs its owner, successor, reviewers, sources and thresholds recorded and approved, and a recorded test for each tier. Until then the version is approved but not used, and decisions for the action refuse. The gate owner records a test for each tier and runs the gate. The action's owner and successor may not record a test or run the gate. The gate also lists, as missing, any time fewer than two gate owners outside the owner and successor hold the role. The gate reads the sources, thresholds and tiers from the approved version, never from the request, so a request cannot leave out an item. Once the gate passes, the action is live and its approved version is used for decisions. A later change to a source or threshold that the version uses stops the version from being used at once.
+A version is used for decisions only when its action has passed the go-live gate. The gate needs its owner, successor, reviewers, sources and thresholds recorded and approved, and a recorded test for each tier. Until then the version is approved but not used, and decisions for the action refuse. The gate owner records a test for each tier and runs the gate. The action's owner and successor may not record a test or run the gate. The gate also lists, as missing, any time fewer than two gate owners outside the owner and successor hold the role. A gate owner must also hold the operator role, so membership of Operations is enforced by the register. The gate reads the sources, thresholds and tiers from the approved version, never from the request, so a request cannot leave out an item. Once the gate passes, the action is live and its approved version is used for decisions. A later change to a source or threshold that the version uses stops the version from being used at once.
 
 The design says a policy change is a new version approved through maker-checker, and does not name the roles. The Parmana owner confirmed the roles on 2026-11-17: the action owner proposes a policy version. A second approver approves it, never the proposer. The Parmana owner also approves when the policy reads a source that can approve, or an intermediary.
 
