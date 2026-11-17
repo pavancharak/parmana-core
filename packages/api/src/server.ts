@@ -26,6 +26,8 @@ import { createKillSwitch } from "./bootstrap/createKillSwitch.js";
 import {
   bootstrapPolicyV2Owner,
   createPolicyV2Runtime,
+  policyV2SweepSecondsFrom,
+  startPolicyV2SweepTimer,
 } from "./policyV2/createPolicyV2Runtime.js";
 import { createAlertSink } from "./bootstrap/createAlertSink.js";
 import { createApp } from "./app.js";
@@ -76,6 +78,12 @@ const executionSystem = await createExecutionSystem();
 const killSwitch = createKillSwitch();
 const policyV2 = createPolicyV2Runtime();
 if (policyV2) await bootstrapPolicyV2Owner(policyV2);
+const policyV2SweepSeconds = policyV2SweepSecondsFrom();
+if (policyV2 && policyV2SweepSeconds !== undefined) {
+  startPolicyV2SweepTimer(policyV2.sweeps, policyV2SweepSeconds, (error) => {
+    console.error("Policy version 2 sweep failed.", error);
+  });
+}
 
 const application = createApplication(
   executionSystem,
