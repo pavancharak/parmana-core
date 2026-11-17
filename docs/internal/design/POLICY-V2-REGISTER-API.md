@@ -86,6 +86,10 @@ The routes above grant and revoke reviews. A granted reviewer decides a review i
 
 An approver's key is proposed by the Parmana owner. It is pending until a second approver confirms it. The confirmer must not be the proposer, and must not be the approver whose key it is. A pending key counts for no approval. A revoked key takes effect at once, and an approval signed with it is refused by name.
 
+## Replay
+
+`GET /v2/evidence/:recordId/replay` re-runs a recorded decision from its evidence and reports whether it reproduces. It uses the policy versions the register holds, matched by hash, and the keys, approvers and thresholds recorded with the decision. A caller must hold a register role. The replay changes nothing. A record whose policy version is no longer in the register does not reproduce, and the response says why. An unknown record returns 404, and a caller with no role returns 403.
+
 ## Audit events
 
 Each change adds these events to the audit log, with the caller as `by`:
