@@ -126,3 +126,4 @@ A refused change adds no events.
 - The role rules for approving a threshold or an action are the register's own rules. This document does not restate them.
 - There is no route to read a single source, threshold or action. The list route returns all of them.
 - There is no route to change the audit log, and none is planned.
+- Source integrations are not connected, so a sourced value is refused as unavailable. See CONSOLIDATED-DESIGN-AND-DECISIONS.md, section 8.0.

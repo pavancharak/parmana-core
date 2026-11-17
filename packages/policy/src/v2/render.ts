@@ -4,8 +4,8 @@
  * Plain HTML from the console's data. No framework, no server, no scripts. Access
  * is checked by the console functions this calls, so a role that may not open a
  * screen gets an error and no HTML. The screens show what each role may see, and
- * they do not contain buttons that change anything: acting on an item needs
- * endpoints that are not built yet.
+ * they do not contain buttons that change anything. Acting on an item is done
+ * through the API routes.
  *
  * Every value is escaped. An alert is shown in full, has no close control, and
  * stays at the top of every screen while it is open.

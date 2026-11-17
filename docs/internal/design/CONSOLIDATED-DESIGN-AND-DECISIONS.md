@@ -302,13 +302,15 @@ These items are deferred. Nothing blocks go-live without them, as set out below.
 
 ### 8.3 Not yet done
 
-- **Build.** Nothing is built. The build order is in section 9. It waits for your go-ahead.
-- **Validation.** The two example policies in the spec have not been run through a validator, because none exists yet. The first validator tests should run them.
+- **Build.** Steps 1 to 8 of section 9 are built and merged to `main`. The items still open are in section 8.0 and 8.1.
+- **Validation.** The validator's tests run the spec's two example policies (`packages/policy/tests/unit/policy-v2-validator.test.ts`).
 - **Help contacts.** The contacts in the help guide are placeholders.
 
 ## 9. Build order
 
 Each step is complete when its tests pass. Each is reviewed before the next begins.
+
+**Status:** steps 1 to 8 are built and merged to `main`. The current state is in `docs/internal/design/CHECKPOINT.md`.
 
 1. **Register:** sources, keys, actions, thresholds, with owners and approvers.
 2. **Source signing:** the contract in 4.1, with tests for unsigned, wrong key, replayed, expired and revoked answers.

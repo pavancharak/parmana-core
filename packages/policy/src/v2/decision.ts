@@ -9,7 +9,7 @@
  *   5. the tiers, in order: the first matching rule decides;
  *   6. the decision record.
  *
- * Standalone. The runtime does not use it yet. Every refusal names its cause.
+ * Used by the runtime. Every refusal names its cause.
  */
 
 import { createHash } from "node:crypto";

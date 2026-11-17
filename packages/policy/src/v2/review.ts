@@ -8,7 +8,7 @@
  * as REVIEW_EXPIRED, and is never approved by default. The final result is a separate
  * record that refers back to the item. The caller sees only a status and a reason code.
  *
- * Standalone. The runtime does not use it yet.
+ * Used by the runtime: the decision service opens items, the reviewer route decides them, and the sweeps expire them.
  */
 
 import { viewDigest, type ApprovalView } from "./approvals.js";

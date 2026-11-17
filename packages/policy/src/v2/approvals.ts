@@ -6,7 +6,7 @@
  * after reading. The signature covers a digest of exactly what was displayed, the
  * exact value approved, and a short validity. An approval is used once.
  *
- * Standalone. The runtime does not use it yet.
+ * Used by the runtime: the decision service checks approvals against the approver keys held in the register.
  */
 
 import { createHash, sign, verify, type KeyObject } from "node:crypto";

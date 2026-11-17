@@ -2,6 +2,14 @@
 
 Last updated: 2026-11-17. Read this first when resuming.
 
+## 0. Current state
+
+- The policy version 2 build, steps 1 to 8 of `CONSOLIDATED-DESIGN-AND-DECISIONS.md` section 9, is built and merged to `main`. The work is in pull requests #676 to #698. PR #692 was closed unmerged, because #693 superseded it.
+- Built since the earlier checkpoint: the decision endpoint, durable nonces, the register write path with roles, approver keys, approved policy versions with the go-live gate, reviewer grants and decisions, atomic decision commits, the requester view, replay, gate separation, the operator role, notifications, the console route, SMTP and signed delivery events, and the review and alert sweeps.
+- Open, and waiting for information from the business: a bounce adapter for a provider other than SES, and the source systems. Both are recorded as deferred in section 8.0 of the consolidated design.
+- Open business inputs: owner names, threshold values, intermediary operators, contacts, and the owner's confirmation of decisions D6 to D19.
+- No pull requests are open.
+
 ## 1. Completed
 
 ### Repository (parmana-core)

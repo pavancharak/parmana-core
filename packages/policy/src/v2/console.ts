@@ -4,9 +4,9 @@
  * Each screen is a function that checks the permission table before it returns
  * anything. A role that is not allowed a screen gets an error, not an empty list.
  * The screens are read-only views of the register, the review queue, the alert
- * board and the evidence log. They change nothing. The rendering is not built here.
+ * board and the evidence log. They change nothing. Rendering is in render.ts.
  *
- * Standalone. Nothing calls this from the runtime, and no caller has access.
+ * Served by the console route, which checks each screen's access before anything is read.
  */
 
 import type {
