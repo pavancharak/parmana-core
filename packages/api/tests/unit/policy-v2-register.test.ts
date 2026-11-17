@@ -284,6 +284,7 @@ describe("POST /v2/register", () => {
       actions: [],
       approverKeys: [],
       policyVersions: [],
+      reviewGrants: [],
     });
     const audit = await request(app(svc))
       .get("/v2/register/audit")
@@ -482,5 +483,81 @@ describe("the go-live gate through the routes", () => {
       .set("x-caller", "gate-1");
     expect(live.status).toBe(200);
     expect(live.body).toEqual({ live: true });
+  });
+});
+
+describe("reviewer grants through the routes", () => {
+  const CAP = "erp:pay-invoice";
+
+  function app(svc: PolicyV2RegisterService) {
+    const a = express();
+    a.use(express.json());
+    a.use((req, _res, next) => {
+      const caller = req.headers["x-caller"];
+      if (typeof caller === "string") req.callerId = caller;
+      next();
+    });
+    a.use("/v2/register", createPolicyV2RegisterRouter(svc));
+    return a;
+  }
+
+  async function withAction() {
+    const { svc } = await serviceWithOwner();
+    await svc.grantRole("owner-1", "action-1", "action-owner");
+    await svc.grantRole("owner-1", "rev-1", "reviewer");
+    await svc.registerAction("owner-1", {
+      capability: CAP,
+      owner: "action-1",
+      successor: "action-2",
+      reviewers: ["rev-1", "rev-2", "rev-3"],
+      review: { reviewWindowBusinessDays: 1, approvalValidityMinutes: 15 },
+    });
+    return svc;
+  }
+
+  it("grants a review from the action owner, and refuses one from anyone else", async () => {
+    const svc = await withAction();
+    const granted = await request(app(svc))
+      .post(`/v2/register/actions/${CAP}/reviewers`)
+      .set("x-caller", "action-1")
+      .send({ reviewerId: "rev-1", maxAmount: 5000 });
+    expect(granted.status).toBe(200);
+    expect(granted.body.status).toBe("active");
+
+    const refused = await request(app(svc))
+      .post(`/v2/register/actions/${CAP}/reviewers`)
+      .set("x-caller", "rev-1")
+      .send({ reviewerId: "rev-1" });
+    expect(refused.status).toBe(422);
+  });
+
+  it("returns 400 for a grant with no reviewer, or an amount that is not a number", async () => {
+    const svc = await withAction();
+    const missing = await request(app(svc))
+      .post(`/v2/register/actions/${CAP}/reviewers`)
+      .set("x-caller", "action-1")
+      .send({});
+    expect(missing.status).toBe(400);
+    const badAmount = await request(app(svc))
+      .post(`/v2/register/actions/${CAP}/reviewers`)
+      .set("x-caller", "action-1")
+      .send({ reviewerId: "rev-1", maxAmount: "lots" });
+    expect(badAmount.status).toBe(400);
+  });
+
+  it("revokes a grant with a reason, and returns 400 without one", async () => {
+    const svc = await withAction();
+    await svc.grantReview("action-1", CAP, "rev-1");
+    const noReason = await request(app(svc))
+      .post(`/v2/register/actions/${CAP}/reviewers/rev-1/revoke`)
+      .set("x-caller", "action-1")
+      .send({});
+    expect(noReason.status).toBe(400);
+    const revoked = await request(app(svc))
+      .post(`/v2/register/actions/${CAP}/reviewers/rev-1/revoke`)
+      .set("x-caller", "action-1")
+      .send({ reason: "left the team" });
+    expect(revoked.status).toBe(200);
+    expect(revoked.body.status).toBe("revoked");
   });
 });

@@ -235,6 +235,42 @@ export function createPolicyV2RegisterRouter(
   );
 
   router.post(
+    "/actions/:capability/reviewers",
+    act((by, body, params) => {
+      if (
+        typeof body.reviewerId !== "string" ||
+        body.reviewerId.trim() === ""
+      ) {
+        throw new InvalidBody("A reviewerId is required.");
+      }
+      if (body.maxAmount !== undefined && typeof body.maxAmount !== "number") {
+        throw new InvalidBody("maxAmount must be a number.");
+      }
+      return service.grantReview(
+        by,
+        String(params.capability),
+        body.reviewerId,
+        typeof body.maxAmount === "number" ? body.maxAmount : undefined,
+      );
+    }),
+  );
+
+  router.post(
+    "/actions/:capability/reviewers/:reviewerId/revoke",
+    act((by, body, params) => {
+      if (typeof body.reason !== "string") {
+        throw new InvalidBody("A reason is required.");
+      }
+      return service.revokeReview(
+        by,
+        String(params.capability),
+        String(params.reviewerId),
+        body.reason,
+      );
+    }),
+  );
+
+  router.post(
     "/actions/:capability/tests",
     act((by, body, params) => {
       if (typeof body.tier !== "string" || body.tier.trim() === "") {

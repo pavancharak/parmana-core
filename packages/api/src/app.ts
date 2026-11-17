@@ -31,6 +31,8 @@ import { createKillSwitchRouter } from "./routes/kill-switch.js";
 import { killSwitchGuard } from "./killSwitch/killSwitchGuard.js";
 import type { PolicyV2DecisionService } from "./policyV2/policyV2Decisions.js";
 import type { PolicyV2RegisterService } from "./policyV2/policyV2Register.js";
+import type { PolicyV2ReviewService } from "./policyV2/policyV2Reviews.js";
+import { createPolicyV2ReviewsRouter } from "./routes/policy-v2-reviews.js";
 import { createPolicyV2DecisionsRouter } from "./routes/policy-v2-decisions.js";
 import { createPolicyV2RegisterRouter } from "./routes/policy-v2-register.js";
 import type { KillSwitchService } from "./killSwitch/KillSwitchService.js";
@@ -187,6 +189,8 @@ export interface CreateAppOptions {
   readonly policyV2Decisions?: PolicyV2DecisionService;
   /** Policy version 2 register write path. Mounted only when supplied. Behind caller auth. */
   readonly policyV2Register?: PolicyV2RegisterService;
+  /** Reviewers' decisions on review items. Mounted only when supplied. Behind caller auth. */
+  readonly policyV2Reviews?: PolicyV2ReviewService;
   /** Which callers may approve each policy's changes (G-50). Unset lists no one. */
   readonly policyChangeCheckers?: PolicyChangeCheckerScope;
 
@@ -390,6 +394,13 @@ export function createApp(
     app.use(
       "/v2/register",
       createPolicyV2RegisterRouter(options.policyV2Register),
+    );
+  }
+
+  if (options.policyV2Reviews !== undefined) {
+    app.use(
+      "/v2/reviews",
+      createPolicyV2ReviewsRouter(options.policyV2Reviews),
     );
   }
 

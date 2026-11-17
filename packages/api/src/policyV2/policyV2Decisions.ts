@@ -98,6 +98,15 @@ export class PolicyV2DecisionService {
     if (registerState !== undefined) register.load(registerState.body);
     const queue = new policyV2.review.ReviewQueue(this.clock);
     if (reviewState !== undefined) queue.load(reviewState.body);
+    queue.replaceGrants(
+      register.activeReviewGrants().map((grant) => ({
+        reviewerId: grant.reviewerId,
+        capability: grant.capability,
+        ...(grant.maxAmount !== undefined
+          ? { maxAmount: grant.maxAmount }
+          : {}),
+      })),
+    );
     const board = new policyV2.alerts.AlertBoard(
       this.clock,
       notifyConsole,

@@ -149,6 +149,17 @@ export class ReviewQueue {
     this.record(by, "grant.revoked", `${reviewerId} for ${capability}`);
   }
 
+  /** Replaces the grants with the register's. The register is the source of truth for reviewer grants. */
+  replaceGrants(grants: readonly Omit<ReviewGrant, "revoked">[]): void {
+    this.grants.clear();
+    for (const grant of grants) {
+      this.grants.set(`${grant.capability}/${grant.reviewerId}`, {
+        ...grant,
+        revoked: false,
+      });
+    }
+  }
+
   // ---- Items ---------------------------------------------------------------
 
   /** Opens a review item for a decision the policy sent to review. */
