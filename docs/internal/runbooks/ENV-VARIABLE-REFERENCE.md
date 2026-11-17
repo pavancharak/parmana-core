@@ -320,6 +320,26 @@ These variables switch on the policy version 2 runtime. They are read when the s
 - **Effect:** the server runs one sweep per interval. A sweep that loses a race to another writer is skipped, and the next run picks it up. A sweep that changes nothing writes nothing.
 - **Tested:** the interval parsing, the timer, and the start from the runtime. The server stops the timer when it shuts down.
 
+### PARMANA_POLICY_V2_SMTP_URL
+
+- **What it is:** the connection to an SMTP server, as a URL, for example `smtps://user:password@mail.example.com:465`. It is the default way to send alert email, because SMTP works with any provider.
+- **Required:** no. Unset, email uses Amazon SES if `PARMANA_POLICY_V2_EMAIL_FROM` is set, or is not sent at all.
+- **Used:** at startup, in `sesEmailChannel.ts`, through `smtpEmailChannel.ts`.
+- **Values:** an SMTP URL. The password belongs in the secrets store. Changing provider changes this URL only.
+- **Needs:** `PARMANA_POLICY_V2_EMAIL_FROM`, an address the server accepts as a sender.
+
+### PARMANA_POLICY_V2_SNS_EVENTS
+
+- **What it is:** turns on the Amazon SNS endpoint for SES bounce and complaint reports.
+- **Required:** no. Off unless set to `true`.
+- **Values:** `true` turns it on. Only Amazon SES needs it. A provider that is not SES does not.
+
+### PARMANA_POLICY_V2_EVENTS_SECRET
+
+- **What it is:** the shared secret that signs the neutral delivery-events endpoint, `POST /v2/notifications/events`.
+- **Required:** no. Unset, the endpoint is not mounted.
+- **Values:** at least 32 characters. Anything shorter is refused at startup. Each provider adapter signs its requests with this secret as `X-Parmana-Signature: sha256=<hex>`, and must send the body as `text/plain`.
+
 ### PARMANA_POLICY_V2_EMAIL_FROM
 
 - **What it is:** the sender address for alert emails, sent through Amazon SES. It must be an address in a domain verified in SES.

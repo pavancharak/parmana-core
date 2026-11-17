@@ -142,6 +142,7 @@ const app = createApp(application, {
   ...(policyV2 ? { policyV2Replay: policyV2.replay } : {}),
   ...(policyV2 ? { policyV2Console: policyV2.console } : {}),
   ...(policyV2 ? { policyV2Bounces: policyV2.bounces } : {}),
+  ...(policyV2?.events ? { policyV2Events: policyV2.events } : {}),
   ...(inboundDecisions ? { inboundDecisions } : {}),
   callerAuth: callerAuth.disabled
     ? "disabled"

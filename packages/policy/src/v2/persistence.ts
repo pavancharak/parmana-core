@@ -336,7 +336,7 @@ export interface DeliveryEventRow {
   readonly eventKey: string;
   readonly eventType: "Bounce" | "Complaint" | "Delivery";
   readonly bounceType?: string;
-  readonly sesMessageId: string;
+  readonly messageId: string;
   readonly recipient: string;
   readonly detail: unknown;
 }
@@ -354,14 +354,14 @@ export class PolicyV2DeliveryStore {
     for (const event of events) {
       const inserted = await this.pool.query<{ event_key: string }>(
         `INSERT INTO policy_v2_delivery_events
-           (event_key, event_type, bounce_type, ses_message_id, recipient, detail)
+           (event_key, event_type, bounce_type, message_id, recipient, detail)
          VALUES ($1, $2, $3, $4, $5, $6)
          ON CONFLICT (event_key) DO NOTHING RETURNING event_key`,
         [
           event.eventKey,
           event.eventType,
           event.bounceType ?? null,
-          event.sesMessageId,
+          event.messageId,
           event.recipient.toLowerCase(),
           JSON.stringify(event.detail),
         ],

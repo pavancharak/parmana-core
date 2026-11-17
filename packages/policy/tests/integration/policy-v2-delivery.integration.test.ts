@@ -38,7 +38,7 @@ describe.skipIf(!databaseConfigured)(
       eventKey: key,
       eventType: "Bounce" as const,
       bounceType: type,
-      sesMessageId: "ses-1",
+      messageId: "ses-1",
       recipient,
       detail: {},
     });

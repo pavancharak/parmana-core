@@ -1,4 +1,4 @@
--- Policy version 2 delivery events (design: alert delivery, bounces and complaints from SES).
+-- Policy version 2 delivery events (design: alert delivery, bounces and complaints from any provider).
 --
 -- policy_v2_delivery_events: each bounce, complaint or delivery that SES reports for a recipient,
 -- one row per recipient. event_key is the SNS message id and the recipient, so a retried SNS
@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS policy_v2_delivery_events (
   received_at timestamptz NOT NULL DEFAULT now(),
   event_type text NOT NULL CHECK (event_type IN ('Bounce', 'Complaint', 'Delivery')),
   bounce_type text,
-  ses_message_id text NOT NULL,
+  message_id text NOT NULL,
   recipient text NOT NULL,
   detail jsonb NOT NULL
 );

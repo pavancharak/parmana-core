@@ -1,5 +1,7 @@
 import { SendEmailCommand, SESClient } from "@aws-sdk/client-ses";
 
+import { SmtpEmailChannel, smtpTransportFromUrl } from "./smtpEmailChannel.js";
+
 import type {
   NotificationChannel,
   NotificationChannels,
@@ -54,6 +56,17 @@ export function policyV2ChannelsFromEnv(
   client?: SesSender,
 ): NotificationChannels {
   const from = env.PARMANA_POLICY_V2_EMAIL_FROM?.trim();
+  const smtpUrl = env.PARMANA_POLICY_V2_SMTP_URL?.trim();
+  if (smtpUrl !== undefined && smtpUrl !== "") {
+    // SMTP is the default, and works with any provider that speaks it.
+    if (from === undefined || !EMAIL.test(from)) {
+      throw new Error(
+        "PARMANA_POLICY_V2_EMAIL_FROM must be an email address when PARMANA_POLICY_V2_SMTP_URL is set.",
+      );
+    }
+    const transport = smtpTransportFromUrl(smtpUrl);
+    return { email: new SmtpEmailChannel(transport, from) };
+  }
   if (from === undefined || from === "") return {};
   if (!EMAIL.test(from)) {
     throw new Error(

@@ -36,6 +36,10 @@ import { createPolicyV2ReviewsRouter } from "./routes/policy-v2-reviews.js";
 import { createPolicyV2ReplayRouter } from "./routes/policy-v2-replay.js";
 import { createPolicyV2ConsoleRouter } from "./routes/policy-v2-console.js";
 import { createPolicyV2BouncesRouter } from "./routes/policy-v2-bounces.js";
+import {
+  createPolicyV2EventsRouter,
+  type PolicyV2EventsEndpoint,
+} from "./routes/policy-v2-events.js";
 import type { PolicyV2BounceService } from "./policyV2/policyV2Bounces.js";
 import type { PolicyV2ConsoleService } from "./policyV2/policyV2Console.js";
 import type { PolicyV2ReplayService } from "./policyV2/policyV2Replay.js";
@@ -203,6 +207,8 @@ export interface CreateAppOptions {
   readonly policyV2Console?: PolicyV2ConsoleService;
   /** Amazon SNS posts SES bounces and complaints here. Outside caller auth: each message is verified. */
   readonly policyV2Bounces?: PolicyV2BounceService;
+  /** The neutral delivery-events endpoint, signed with a shared secret. Outside caller auth. */
+  readonly policyV2Events?: PolicyV2EventsEndpoint;
   /** Which callers may approve each policy's changes (G-50). Unset lists no one. */
   readonly policyChangeCheckers?: PolicyChangeCheckerScope;
 
@@ -369,6 +375,12 @@ export function createApp(
     app.use(
       "/v2/notifications",
       createPolicyV2BouncesRouter(options.policyV2Bounces),
+    );
+  }
+  if (options.policyV2Events !== undefined) {
+    app.use(
+      "/v2/notifications/events",
+      createPolicyV2EventsRouter(options.policyV2Events),
     );
   }
   if (options.callerAuth !== "disabled") {

@@ -95,13 +95,15 @@ An approver's key is proposed by the Parmana owner. It is pending until a second
 
 An alert is sent to the people it names, through channels. Email goes to every alert. Phone is also sent once an alert escalates to the Parmana owner. A message goes to the contact the register holds for the person, and a group such as `parmana-owner` or `reviewers` goes to each member's contact. The Parmana owner sets contacts. A person with no contact for a channel is a delivery failure, and Operations is alerted.
 
-Email is sent through Amazon SES when `PARMANA_POLICY_V2_EMAIL_FROM` is set. Phone has no provider yet, so phone messages are skipped. A message for a channel with no provider is skipped, and the console still shows the alert.
+Email is sent over SMTP when `PARMANA_POLICY_V2_SMTP_URL` is set, which works with any provider. Otherwise it is sent through Amazon SES when `PARMANA_POLICY_V2_EMAIL_FROM` is set. Phone has no provider yet, so phone messages are skipped. A message for a channel with no provider is skipped, and the console still shows the alert.
 
 ## Console
 
 `GET /v2/console/:screen` serves one screen of the governance console as HTML. The screens are home, register, changes, reviews, approvals, gate, decisions and audit. A caller sees a screen only if its register roles allow it: a role not allowed a screen gets 403 before anything is read. A caller with no register role gets 403, and an unknown screen gets 404. The gate screen takes a `capability` query, and shows the checklist for that action's approved version. The console is read-only, and all text from the register and alerts is escaped.
 
 ## Bounces and complaints
+
+Delivery reports from any provider are accepted in one neutral form at `POST /v2/notifications/events`, signed with an HMAC over the raw body using `PARMANA_POLICY_V2_EVENTS_SECRET`. A provider adapter translates its own reports into that form. `POST /v2/notifications/ses` is the optional Amazon SNS adapter for SES, enabled by `PARMANA_POLICY_V2_SNS_EVENTS`.
 
 `POST /v2/notifications/ses` receives SES bounces and complaints from Amazon SNS. It sits outside caller authentication, because SNS has no caller key. Each message is verified against its signature, and its certificate must come from an SNS host, before anything in it is read. A message that does not verify gets 403.
 

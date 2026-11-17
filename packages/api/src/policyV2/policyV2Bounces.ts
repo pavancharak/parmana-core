@@ -9,35 +9,97 @@ import {
 } from "./policyV2Sns.js";
 
 /**
- * Bounces and complaints that SES reports, delivered by Amazon SNS. A message is verified before
- * it is read. Each bounce or complaint is stored once per recipient. A permanent bounce or a
- * complaint raises a delivery-failure alert, and suppresses the address, so no further message is
- * sent to it.
+ * Delivery events from any mail provider, in one neutral form. A provider adapter turns its own
+ * bounce or complaint reports into these events. The core stores each event once, raises a
+ * delivery-failure alert for a permanent bounce or a complaint, and suppresses the address. Amazon
+ * SNS is one adapter, and it is optional.
  */
 
-/** The part of the delivery store the bounces use. The Postgres store satisfies it. */
+/** One bounce, complaint or delivery, for one recipient. eventId is unique for each. */
+export interface NeutralDeliveryEvent {
+  readonly eventId: string;
+  readonly type: "bounce" | "complaint" | "delivery";
+  readonly bounceKind?: "permanent" | "transient";
+  readonly messageId: string;
+  readonly recipient: string;
+}
+
+/** The part of the delivery store the core uses. The Postgres store satisfies it. */
 export interface PolicyV2BounceDeliveryStore {
   recordEvents(
     events: readonly policyV2.persistence.DeliveryEventRow[],
   ): Promise<string[]>;
 }
 
-/** The part of the state store the bounces use: the register for contacts, and the alerts. */
+/** The part of the state store the core uses: the alerts. */
 export interface PolicyV2BounceStateStore {
   load<T>(
-    component: "register" | "alerts",
+    component: "alerts",
   ): Promise<{ readonly body: T; readonly version: number } | undefined>;
   commitSnapshots(commit: policyV2.persistence.SnapshotCommit): Promise<void>;
 }
 
-export interface PolicyV2BounceServiceOptions {
+export interface PolicyV2BounceCoreDeps {
   readonly deliveries: PolicyV2BounceDeliveryStore;
   readonly state: PolicyV2BounceStateStore;
+  readonly now: () => Date;
+}
+
+/** Stores the events and raises the alerts they call for. Returns the number of new events. */
+export async function recordDeliveryEvents(
+  events: readonly NeutralDeliveryEvent[],
+  deps: PolicyV2BounceCoreDeps,
+): Promise<number> {
+  const rows: policyV2.persistence.DeliveryEventRow[] = [];
+  for (const event of events) {
+    if (event.type !== "bounce" && event.type !== "complaint") continue;
+    const bounceType =
+      event.type === "bounce"
+        ? event.bounceKind === "permanent"
+          ? "Permanent"
+          : "Transient"
+        : undefined;
+    rows.push({
+      eventKey: event.eventId,
+      eventType: event.type === "bounce" ? "Bounce" : "Complaint",
+      ...(bounceType !== undefined ? { bounceType } : {}),
+      messageId: event.messageId,
+      recipient: event.recipient,
+      detail: event,
+    });
+  }
+  if (rows.length === 0) return 0;
+  const fresh = new Set(await deps.deliveries.recordEvents(rows));
+  const failures = rows
+    .filter(
+      (row) =>
+        fresh.has(row.eventKey) &&
+        (row.eventType === "Complaint" || row.bounceType === "Permanent"),
+    )
+    .map((row) => ({
+      to: row.recipient,
+      channel: "email" as const,
+      alertId: `msg-${row.messageId}`,
+      reason: `the provider reported a ${row.eventType === "Complaint" ? "complaint" : "permanent bounce"} for this address`,
+    }));
+  await recordDeliveryFailures(deps.state, failures, deps.now());
+  return fresh.size;
+}
+
+/** The neutral endpoint's service: events that a provider adapter has already translated. */
+export class PolicyV2EventService {
+  constructor(private readonly deps: PolicyV2BounceCoreDeps) {}
+
+  async handle(events: readonly NeutralDeliveryEvent[]): Promise<number> {
+    return recordDeliveryEvents(events, this.deps);
+  }
+}
+
+export interface PolicyV2BounceServiceOptions extends PolicyV2BounceCoreDeps {
   /** Fetches the certificate SNS names for a signature. */
   readonly fetchCertificate: (url: string) => Promise<string>;
   /** Confirms a subscription by fetching the URL SNS names. */
   readonly confirmSubscription: (url: string) => Promise<void>;
-  readonly now?: () => Date;
 }
 
 export interface PolicyV2BounceResult {
@@ -45,12 +107,9 @@ export interface PolicyV2BounceResult {
   readonly recorded: number;
 }
 
+/** The Amazon SNS adapter: verifies an SNS message and translates SES reports into neutral events. */
 export class PolicyV2BounceService {
-  private readonly clock: () => Date;
-
-  constructor(private readonly options: PolicyV2BounceServiceOptions) {
-    this.clock = options.now ?? (() => new Date());
-  }
+  constructor(private readonly options: PolicyV2BounceServiceOptions) {}
 
   /** Handles one message from SNS. Throws SnsRefused if the message does not verify. */
   async handle(body: string): Promise<PolicyV2BounceResult> {
@@ -83,12 +142,12 @@ export class PolicyV2BounceService {
     const event = JSON.parse(envelope.Message) as Record<string, unknown>;
     const kind = (event.eventType ?? event.notificationType) as
       string | undefined;
-    const sesMessageId = (event.mail as { messageId?: unknown } | undefined)
+    const messageId = (event.mail as { messageId?: unknown } | undefined)
       ?.messageId;
-    if (typeof sesMessageId !== "string")
+    if (typeof messageId !== "string")
       return { handled: "ignored", recorded: 0 };
 
-    const rows: policyV2.persistence.DeliveryEventRow[] = [];
+    const neutral: NeutralDeliveryEvent[] = [];
     if (kind === "Bounce") {
       const bounce = event.bounce as {
         bounceType?: unknown;
@@ -96,16 +155,14 @@ export class PolicyV2BounceService {
       };
       for (const r of bounce.bouncedRecipients ?? []) {
         if (typeof r.emailAddress !== "string") continue;
-        rows.push(
-          this.row(
-            envelope.MessageId,
-            "Bounce",
-            r.emailAddress,
-            sesMessageId,
-            event,
-            bounce.bounceType,
-          ),
-        );
+        neutral.push({
+          eventId: `${envelope.MessageId}/${r.emailAddress.toLowerCase()}`,
+          type: "bounce",
+          bounceKind:
+            bounce.bounceType === "Permanent" ? "permanent" : "transient",
+          messageId,
+          recipient: r.emailAddress,
+        });
       }
     } else if (kind === "Complaint") {
       const complaint = event.complaint as {
@@ -113,51 +170,16 @@ export class PolicyV2BounceService {
       };
       for (const r of complaint.complainedRecipients ?? []) {
         if (typeof r.emailAddress !== "string") continue;
-        rows.push(
-          this.row(
-            envelope.MessageId,
-            "Complaint",
-            r.emailAddress,
-            sesMessageId,
-            event,
-          ),
-        );
+        neutral.push({
+          eventId: `${envelope.MessageId}/${r.emailAddress.toLowerCase()}`,
+          type: "complaint",
+          messageId,
+          recipient: r.emailAddress,
+        });
       }
     }
-    if (rows.length === 0) return { handled: "ignored", recorded: 0 };
-
-    const fresh = new Set(await this.options.deliveries.recordEvents(rows));
-    const failures = rows
-      .filter(
-        (row) =>
-          fresh.has(row.eventKey) &&
-          (row.eventType === "Complaint" || row.bounceType === "Permanent"),
-      )
-      .map((row) => ({
-        to: row.recipient,
-        channel: "email" as const,
-        alertId: `ses-${row.sesMessageId}`,
-        reason: `SES reported a ${row.eventType === "Complaint" ? "complaint" : "permanent bounce"} for this address`,
-      }));
-    await recordDeliveryFailures(this.options.state, failures, this.clock());
-    return { handled: "recorded", recorded: fresh.size };
-  }
-
-  private row(
-    snsMessageId: string,
-    eventType: "Bounce" | "Complaint",
-    recipient: string,
-    sesMessageId: string,
-    detail: unknown,
-    bounceType?: unknown,
-  ): policyV2.persistence.DeliveryEventRow {
-    return {
-      eventKey: `${snsMessageId}/${recipient.toLowerCase()}`,
-      eventType,
-      ...(typeof bounceType === "string" ? { bounceType } : {}),
-      sesMessageId,
-      recipient,
-      detail,
-    };
+    if (neutral.length === 0) return { handled: "ignored", recorded: 0 };
+    const recorded = await recordDeliveryEvents(neutral, this.options);
+    return { handled: "recorded", recorded };
   }
 }
