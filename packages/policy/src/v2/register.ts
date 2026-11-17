@@ -10,7 +10,10 @@
  * ValidationRegister that validatePolicyV2 checks against.
  */
 
+import type { KeyObject } from "node:crypto";
+
 import type { ValidationRegister } from "./validatePolicyV2.js";
+import { readEd25519PublicKey } from "./sourceAnswer.js";
 
 export type Role =
   | "second-approver"
@@ -46,6 +49,8 @@ export interface SourceInput {
   readonly dataOwner: string;
   readonly signer: SignerInput;
   readonly keyId: string;
+  /** The Ed25519 public key (PEM) the source signs its answers with. Required (design 5.1). */
+  readonly publicKeyPem: string;
   /** Claim name to the unit the source states for it. */
   readonly claims: Readonly<Record<string, string>>;
   /** True if any policy uses this source to approve (tier 1 or tier 2). Set from the policies that use it. */
@@ -158,6 +163,20 @@ export class PolicyRegister {
     requireRole(by, "source-owner", "propose a source");
     if (this.sources.has(input.name))
       throw new RegisterError(`Source "${input.name}" already exists.`);
+    if (!isNonEmpty(input.publicKeyPem)) {
+      throw new RegisterError(
+        "A source must register a public key. Answers that are not signed are untrusted.",
+      );
+    }
+    try {
+      readEd25519PublicKey(input.publicKeyPem);
+    } catch (error) {
+      throw new RegisterError(
+        error instanceof Error
+          ? error.message
+          : "The public key could not be read.",
+      );
+    }
     if (input.signer.kind === "intermediary") {
       if (
         !isNonEmpty(input.signer.operator) ||
@@ -425,6 +444,20 @@ export class PolicyRegister {
       };
     }
     return { sources };
+  }
+
+  /**
+   * The key the verifier uses for an answer. Undefined if the source is unknown,
+   * not yet approved, or the key id is not the registered one. "revoked" if the
+   * source has been revoked or retired.
+   */
+  keyFor(source: string, keyId: string): KeyObject | "revoked" | undefined {
+    const record = this.sources.get(source);
+    if (record === undefined || record.keyId !== keyId) return undefined;
+    if (record.status === "untrusted" || record.status === "retired")
+      return "revoked";
+    if (record.status === "pending") return undefined;
+    return readEd25519PublicKey(record.publicKeyPem);
   }
 
   getSource(name: string): SourceRecord | undefined {

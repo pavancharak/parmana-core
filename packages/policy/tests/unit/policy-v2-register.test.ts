@@ -1,3 +1,4 @@
+import { generateKeyPairSync } from "node:crypto";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -13,6 +14,11 @@ import { validatePolicyV2 } from "../../src/v2/validatePolicyV2.js";
 /** Tests for the policy version 2 register (design: CONSOLIDATED-DESIGN-AND-DECISIONS.md, sections 4.2 and 5). */
 
 const NOW = new Date("2026-11-18T09:00:00.000Z");
+
+const ledgerKeys = generateKeyPairSync("ed25519");
+const LEDGER_PUBLIC_PEM = ledgerKeys.publicKey
+  .export({ type: "spki", format: "pem" })
+  .toString();
 const clock = () => NOW;
 
 const sourceOwner: Person = { id: "src-owner-1", roles: ["source-owner"] };
@@ -30,6 +36,7 @@ function systemSource(overrides: Partial<SourceInput> = {}): SourceInput {
     dataOwner: "finance-team",
     signer: { kind: "system" },
     keyId: "ledger-key-1",
+    publicKeyPem: LEDGER_PUBLIC_PEM,
     claims: { "funds.available": "" },
     canApprove: false,
     ...overrides,
@@ -69,6 +76,29 @@ function trustedLedger(register: PolicyRegister): void {
 }
 
 describe("sources", () => {
+  it("refuses a source without a public key, and a key that is not Ed25519", () => {
+    const register = new PolicyRegister(clock);
+    expect(() =>
+      register.proposeSource(systemSource({ publicKeyPem: "" }), sourceOwner),
+    ).toThrow(/public key/);
+    const rsa = generateKeyPairSync("rsa", { modulusLength: 2048 })
+      .publicKey.export({ type: "spki", format: "pem" })
+      .toString();
+    expect(() =>
+      register.proposeSource(systemSource({ publicKeyPem: rsa }), sourceOwner),
+    ).toThrow(/Ed25519/);
+  });
+
+  it("gives the verifier the key while trusted, and refuses it once revoked or for another key id", () => {
+    const register = new PolicyRegister(clock);
+    expect(register.keyFor("ledger", "ledger-key-1")).toBeUndefined();
+    trustedLedger(register);
+    expect(register.keyFor("ledger", "ledger-key-1")).toBeDefined();
+    expect(register.keyFor("ledger", "some-other-key")).toBeUndefined();
+    register.revokeSource("ledger", parmanaOwner, "key exposed");
+    expect(register.keyFor("ledger", "ledger-key-1")).toBe("revoked");
+  });
+
   it("is pending until a second approver approves it", () => {
     const register = new PolicyRegister(clock);
     const proposed = register.proposeSource(systemSource(), sourceOwner);
