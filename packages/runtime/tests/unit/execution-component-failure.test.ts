@@ -1,9 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import {
-  type Execution,
-  type ExecutionResult,
-} from "@parmana/shared";
+import { type Execution, type ExecutionResult } from "@parmana/shared";
 
 import { ExecutionComponent } from "../../src/components/ExecutionComponent.js";
 import type { RuntimeContext } from "../../src/context/RuntimeContext.js";
