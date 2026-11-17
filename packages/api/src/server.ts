@@ -132,6 +132,7 @@ const app = createApp(application, {
   ...(killSwitch ? { killSwitch } : {}),
   ...(policyV2 ? { policyV2Decisions: policyV2.decisions } : {}),
   ...(policyV2 ? { policyV2Register: policyV2.register } : {}),
+  ...(policyV2 ? { policyV2Reviews: policyV2.reviews } : {}),
   ...(inboundDecisions ? { inboundDecisions } : {}),
   callerAuth: callerAuth.disabled
     ? "disabled"

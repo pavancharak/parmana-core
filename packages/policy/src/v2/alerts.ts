@@ -269,6 +269,11 @@ export class AlertBoard {
     this.counter = snapshot.counter;
   }
 
+  /** The alert raised for a pending item, by the item's reference, if there is one. */
+  findByRef(ref: string): Alert | undefined {
+    return [...this.alerts.values()].find((alert) => alert.ref === ref);
+  }
+
   get(id: string): Alert | undefined {
     return this.alerts.get(id);
   }

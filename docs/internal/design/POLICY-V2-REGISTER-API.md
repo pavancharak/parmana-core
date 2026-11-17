@@ -80,7 +80,7 @@ The action owner or the Parmana owner grants a reviewer the right to review the 
 
 A grant counts only while the reviewer is still named on the action and still holds the reviewer role. A reviewer who loses either stops counting at once. Each decision reads the active grants from the register, so the review queue always reflects the register.
 
-The routes above grant and revoke reviews. The reviewer's own decision on a review item has no route yet.
+The routes above grant and revoke reviews. A granted reviewer decides a review item with `POST /v2/reviews/:id/decision`, with a body of `{ "decision": "approve" | "reject" }`. The queue enforces the grant, the requester exclusion, the amount limit and one decision per reviewer. A review is finished by its outcome: APPROVED or REFUSED. The decision releases nothing. A refused decision returns 422, and a stale save returns 409.
 
 ## Approver keys
 

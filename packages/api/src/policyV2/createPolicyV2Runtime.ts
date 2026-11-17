@@ -5,10 +5,12 @@ import { assertDatabaseUrlConfigured } from "../bootstrap/assertDatabaseUrlConfi
 
 import { PolicyV2DecisionService } from "./policyV2Decisions.js";
 import { PolicyV2RegisterService } from "./policyV2Register.js";
+import { PolicyV2ReviewService } from "./policyV2Reviews.js";
 
 export interface PolicyV2Runtime {
   readonly decisions: PolicyV2DecisionService;
   readonly register: PolicyV2RegisterService;
+  readonly reviews: PolicyV2ReviewService;
 }
 
 /**
@@ -55,8 +57,9 @@ export function createPolicyV2Runtime(
   });
 
   const register = new PolicyV2RegisterService({ state: store });
+  const reviews = new PolicyV2ReviewService({ store });
 
-  return { decisions, register };
+  return { decisions, register, reviews };
 }
 
 /**
