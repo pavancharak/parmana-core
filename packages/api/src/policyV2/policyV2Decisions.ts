@@ -46,7 +46,6 @@ export interface PolicyV2DecisionServiceOptions {
     capability: string,
   ) => policyV2.decision.ApprovedPolicy | undefined;
   readonly sources: policyV2.decision.SourceClient;
-  readonly approvers: policyV2.approvals.ApproverKeys;
   /** Records used nonces. Durable in production; in memory when none is given. */
   readonly nonces?: policyV2.sourceAnswer.NonceStore;
   readonly now?: () => Date;
@@ -113,13 +112,14 @@ export class PolicyV2DecisionService {
     const log = new policyV2.evidence.EvidenceLog();
     log.load(await store.readEvidence());
 
+    const approvers = approverKeysFrom(register);
     const decision = await policyV2.decision.decide(request, {
       policies: this.options.policies,
       register,
       sources: this.options.sources,
       nonces: this.nonces,
       approvals: policyV2.approvals.approvalChecker({
-        approvers: this.options.approvers,
+        approvers,
         nonces: this.nonces,
       }),
       now: this.clock,
@@ -132,7 +132,7 @@ export class PolicyV2DecisionService {
       request.capability,
       decision.inputs,
       register,
-      this.options.approvers,
+      approvers,
     );
     // The evidence append is the commit point: it refuses unless it links to the last stored record.
     const record = policyV2.evidence.recordDecision(
@@ -194,4 +194,17 @@ export class PolicyV2DecisionService {
       ...(reviewId !== undefined ? { reviewId } : {}),
     };
   }
+}
+
+/** The approver keys the register holds, as the approval checker reads them. Only active keys count; revoked keys stay so they can be refused by name. */
+export function approverKeysFrom(
+  register: policyV2.register.PolicyRegister,
+): policyV2.approvals.ApproverKeys {
+  const keys = new policyV2.approvals.ApproverKeys();
+  for (const key of register.listApproverKeys()) {
+    if (key.status === "pending") continue;
+    keys.register(key.approverId, key.keyId, key.publicKeyPem);
+    if (key.status === "revoked") keys.revoke(key.approverId, key.keyId);
+  }
+  return keys;
 }

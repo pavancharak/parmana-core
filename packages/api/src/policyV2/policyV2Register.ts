@@ -41,6 +41,7 @@ export interface PolicyV2RegisterView {
   readonly sources: readonly policyV2.register.SourceRecord[];
   readonly thresholds: readonly policyV2.register.ThresholdRecord[];
   readonly actions: readonly policyV2.register.ActionRecord[];
+  readonly approverKeys: readonly policyV2.register.ApproverKeyRecord[];
 }
 
 export class PolicyV2RegisterService {
@@ -58,6 +59,7 @@ export class PolicyV2RegisterService {
       sources: register.listSources(),
       thresholds: register.listThresholds(),
       actions: register.listActions(),
+      approverKeys: register.listApproverKeys(),
     };
   }
 
@@ -160,6 +162,34 @@ export class PolicyV2RegisterService {
     input: policyV2.register.ActionInput,
   ): Promise<policyV2.register.ActionRecord> {
     return this.write(byCaller, (r, p) => r.registerAction(input, p));
+  }
+
+  proposeApproverKey(
+    byCaller: string,
+    input: policyV2.register.ApproverKeyInput,
+  ): Promise<policyV2.register.ApproverKeyRecord> {
+    return this.write(byCaller, (r, p) => r.proposeApproverKey(input, p));
+  }
+
+  approveApproverKey(
+    byCaller: string,
+    approverId: string,
+    keyId: string,
+  ): Promise<policyV2.register.ApproverKeyRecord> {
+    return this.write(byCaller, (r, p) =>
+      r.approveApproverKey(approverId, keyId, p),
+    );
+  }
+
+  revokeApproverKey(
+    byCaller: string,
+    approverId: string,
+    keyId: string,
+    reason: string,
+  ): Promise<policyV2.register.ApproverKeyRecord> {
+    return this.write(byCaller, (r, p) =>
+      r.revokeApproverKey(approverId, keyId, p, reason),
+    );
   }
 
   private async loadRegister(): Promise<{

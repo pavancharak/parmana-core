@@ -10,6 +10,7 @@ import {
   type PolicyV2RegisterStateStore,
 } from "../../src/policyV2/policyV2Register.js";
 import { createPolicyV2RegisterRouter } from "../../src/routes/policy-v2-register.js";
+import { approverKeysFrom } from "../../src/policyV2/policyV2Decisions.js";
 
 const NOW = new Date("2026-11-18T09:00:00Z");
 const PEM = generateKeyPairSync("ed25519")
@@ -179,6 +180,33 @@ describe("PolicyV2RegisterService", () => {
   });
 });
 
+describe("approver keys through the service", () => {
+  const KEY = { approverId: "approver-1", keyId: "k1", publicKeyPem: PEM };
+
+  it("activates a key only after the owner proposes it and a second approver confirms it", async () => {
+    const { svc } = await serviceWithOwner();
+    await svc.grantRole("owner-1", "second-1", "second-approver");
+    await svc.proposeApproverKey("owner-1", KEY);
+    expect((await svc.read("owner-1")).approverKeys[0]!.status).toBe("pending");
+    await svc.approveApproverKey("second-1", "approver-1", "k1");
+    expect((await svc.read("owner-1")).approverKeys[0]!.status).toBe("active");
+  });
+
+  it("refuses a key proposal from a caller who is not the Parmana owner", async () => {
+    const { svc } = await serviceWithOwner();
+    await svc.grantRole("owner-1", "source-1", "source-owner");
+    await expect(
+      svc.proposeApproverKey("source-1", KEY),
+    ).rejects.toBeInstanceOf(policyV2.register.RegisterError);
+  });
+});
+
+const KEY_FOR_ROUTE = {
+  approverId: "approver-1",
+  keyId: "k1",
+  publicKeyPem: PEM,
+};
+
 describe("POST /v2/register", () => {
   function app(svc: PolicyV2RegisterService) {
     const a = express();
@@ -214,6 +242,15 @@ describe("POST /v2/register", () => {
     expect(res.status).toBe(400);
   });
 
+  it("returns 422 when a confirmation comes from a caller without the second-approver role", async () => {
+    const { svc } = await serviceWithOwner();
+    await svc.proposeApproverKey("owner-1", KEY_FOR_ROUTE);
+    const res = await request(app(svc))
+      .post("/v2/register/approver-keys/approver-1/k1/approve")
+      .set("x-caller", "owner-1");
+    expect(res.status).toBe(422);
+  });
+
   it("returns 422 with the reason for a refused change", async () => {
     const { svc } = await serviceWithOwner();
     await svc.grantRole("owner-1", "source-1", "source-owner");
@@ -241,7 +278,12 @@ describe("POST /v2/register", () => {
       .get("/v2/register")
       .set("x-caller", "owner-1");
     expect(register.status).toBe(200);
-    expect(register.body).toEqual({ sources: [], thresholds: [], actions: [] });
+    expect(register.body).toEqual({
+      sources: [],
+      thresholds: [],
+      actions: [],
+      approverKeys: [],
+    });
     const audit = await request(app(svc))
       .get("/v2/register/audit")
       .set("x-caller", "owner-1");
@@ -257,5 +299,42 @@ describe("POST /v2/register", () => {
       .get("/v2/register/audit?limit=100000")
       .set("x-caller", "owner-1");
     expect(res.status).toBe(400);
+  });
+});
+
+describe("the approver keys the decision service reads", () => {
+  const KEY = { approverId: "approver-1", keyId: "k1", publicKeyPem: PEM };
+
+  function registerWith(steps: "pending" | "active" | "revoked") {
+    const r = new policyV2.register.PolicyRegister(() => NOW);
+    r.bootstrapOwner("owner-1");
+    r.grantRole({ id: "owner-1", roles: [] }, "second-1", "second-approver");
+    r.proposeApproverKey(KEY, { id: "owner-1", roles: [] });
+    if (steps !== "pending")
+      r.approveApproverKey("approver-1", "k1", { id: "second-1", roles: [] });
+    if (steps === "revoked")
+      r.revokeApproverKey(
+        "approver-1",
+        "k1",
+        { id: "owner-1", roles: [] },
+        "lost",
+      );
+    return r;
+  }
+
+  it("does not read a pending key", () => {
+    const keys = approverKeysFrom(registerWith("pending"));
+    expect(keys.keyFor("approver-1", "k1")).toBeUndefined();
+  });
+
+  it("reads an active key", () => {
+    const keys = approverKeysFrom(registerWith("active"));
+    expect(keys.keyFor("approver-1", "k1")).toBeDefined();
+    expect(keys.keyFor("approver-1", "k1")).not.toBe("revoked");
+  });
+
+  it("names a revoked key as revoked", () => {
+    const keys = approverKeysFrom(registerWith("revoked"));
+    expect(keys.keyFor("approver-1", "k1")).toBe("revoked");
   });
 });

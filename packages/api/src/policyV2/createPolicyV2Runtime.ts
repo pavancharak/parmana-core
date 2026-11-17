@@ -53,7 +53,6 @@ export function createPolicyV2Runtime(
     sources: async () => {
       throw new Error("No source integration is connected.");
     },
-    approvers: new policyV2.approvals.ApproverKeys(),
     nonces: new policyV2.persistence.PolicyV2NonceStore(pool),
   });
 
