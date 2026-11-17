@@ -11,7 +11,7 @@
 
 **Your AI agents propose. Parmana decides what happens, and keeps the proof.**
 
-Parmana is open source. It applies to AI agents the same policies you already set for employees. An agent can only propose an action. Parmana checks each proposal against your policies first. Actions that need a person's approval wait for it. Every action leaves a signed record, so you can show later what was allowed and what happened.
+Identity establishes who is acting. Runtime authorization evaluates what an agent can do. Business authority establishes what the organization has actually permitted. Cryptographic evidence proves what happened.
 
 ## The problem
 
