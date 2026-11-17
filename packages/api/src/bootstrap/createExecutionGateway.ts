@@ -13,7 +13,6 @@ import {
 } from "@parmana/execution-control";
 
 import type { ExecutionSystem } from "@parmana/execution-system";
-import type { PolicyExecutionVerifier } from "@parmana/policy";
 
 import { policyRepository } from "../application.js";
 import { authorityGrantRepository } from "../repositories.js";
