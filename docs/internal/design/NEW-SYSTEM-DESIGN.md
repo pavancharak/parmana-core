@@ -121,7 +121,7 @@ These are operational decisions, not part of the design. They are listed so they
 - Who owns each source and action (named in the register).
 - Which threshold values are chosen (set by owners).
 - How the system is deployed and when it goes live.
-- How any data that exists before go-live is treated.
+- When the first action goes live.
 
 ## 13. Build order
 

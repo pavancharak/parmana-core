@@ -149,7 +149,7 @@ The system does not need all of these before go-live. It needs them before an ac
 
 **Placeholders.** Until the business supplies them, every owner name, threshold value, unit, date and model name is a placeholder written as `<angle-brackets>`, for example `<action owner>`. A placeholder is never a real value. An approved policy or register entry that still contains a placeholder is refused, and the refusal names the placeholder.
 
-### 4.11 Intermediaries, windows, go-live, existing data and confirmation
+### 4.11 Intermediaries, windows, go-live and confirmation
 
 **Intermediaries.** The source owner names the intermediary and the team that operates it in the register. Its key is registered through maker-checker. Each intermediary is reviewed yearly, and the goal is native signing. A source with no registered signer stays untrusted.
 
@@ -157,7 +157,7 @@ The system does not need all of these before go-live. It needs them before an ac
 
 **Go-live.** An action goes live only when its owner, thresholds, sources and review path are recorded in the register and tested. Operations names one person to own this gate.
 
-**Existing data.** Existing decision records are kept read-only and retained under the retention policy. No approval from before go-live is reused. A request that was in progress at go-live is decided again under the new system, not carried over.
+**No existing data.** Nothing is live. No policy version is approved, and no customers or vendors use the system. There are no earlier decisions or approvals to carry over. Decision records are kept read-only and retained under the retention policy from the first decision.
 
 **Confirmation of decisions.** The Parmana owner confirms each decision (D6 to D19) in a dated decision record. That record is the only place a decision is marked confirmed. A decision that changes later is recorded as a new decision, not edited in place.
 
@@ -255,17 +255,17 @@ Each step is complete when its tests pass. Each step is reviewed before the next
 ## 8. Out of scope
 
 - Which owners are named, and which threshold values are set. These are business decisions.
-- Deployment and go-live, including how any data that exists before go-live is handled. These are operational decisions.
+- Deployment, and the first go-live of each action. These are operational decisions.
 - Hardware-bound approver keys (RFC-0030). Not being implemented.
 - Visual design of any public website. The claims process (D15) applies first.
 
 ## 9. Open items
 
-| Item                                                                       | Owner                                                                                       |
-| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Owner and successor for each action; data owner and signer for each source | The business, recorded in the register (4.10)                                               |
-| Threshold values, with reason and evidence                                 | Action owners proposed; a second person approves; risk function for high-value (4.10)       |
-| Intermediary for each source that cannot sign                              | Source owners name it in the register; registered key; yearly review (4.11)                 |
-| Review and approval windows per action class                               | Action owners, within the platform caps; second approver for changes (4.11)                 |
-| Go-live and treatment of existing data                                     | Operations names one gate owner; existing records read-only; no old approvals reused (4.11) |
-| Confirmation of D6 to D19                                                  | Parmana owner, in a dated decision record; changes are new decisions (4.11)                 |
+| Item                                                                       | Owner                                                                                                            |
+| -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Owner and successor for each action; data owner and signer for each source | The business, recorded in the register (4.10)                                                                    |
+| Threshold values, with reason and evidence                                 | Action owners proposed; a second person approves; risk function for high-value (4.10)                            |
+| Intermediary for each source that cannot sign                              | Source owners name it in the register; registered key; yearly review (4.11)                                      |
+| Review and approval windows per action class                               | Action owners, within the platform caps; second approver for changes (4.11)                                      |
+| Go-live gate owner and first go-live                                       | Operations names one gate owner; no existing data; records read-only and retained from the first decision (4.11) |
+| Confirmation of D6 to D19                                                  | Parmana owner, in a dated decision record; changes are new decisions (4.11)                                      |

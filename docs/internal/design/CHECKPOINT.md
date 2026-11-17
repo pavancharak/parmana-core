@@ -43,7 +43,7 @@ Last updated: 2026-11-17. Read this first when resuming.
 
 - D6 to D19. Recommended answers:
   - D6 derive provenance; D7 REVIEW as its own record type; D8 intermediary as signer with data owner recorded; D9 thresholds set by the business through a process; D10 new policy format (version 2); D11 review and approval caps; D12 exact approvals; D13 explicit tier field; D14 full redesign, staged; D15 claims review for the website; D16 no comparison of two values in a rule; D17 units; D18 every number a named threshold, except zero; D19 registered sources and claims.
-- Section 4.11 of the plan: intermediaries, windows, go-live gate, existing data, decision confirmation.
+- Section 4.11 of the plan: intermediaries, windows, go-live gate, decision confirmation.
 - Platform caps: three business days for review, 60 minutes for approval validity.
 - Section 4.12 of the plan: two reviewers for high-value items; sign-off by source type; two backup reviewers per action; alert rules.
 - Website option: claims review first (D15).
@@ -73,7 +73,7 @@ Phase 1 (the validator) does not depend on any open decision. It can start on yo
 
 ### Operations and outside the repository
 
-- Go-live and treatment of existing data are decided in principle (plan 4.11) but not scheduled. Operations must name the gate owner.
+- The first go-live of each action is decided in principle (plan 4.11) but not scheduled. There is no existing data. Operations must name the gate owner.
 - Nothing has been sent to the business for the owner, threshold or intermediary inputs.
 
 ### Housekeeping
