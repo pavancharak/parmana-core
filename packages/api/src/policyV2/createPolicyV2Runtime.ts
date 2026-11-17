@@ -9,6 +9,11 @@ import { PolicyV2ReviewService } from "./policyV2Reviews.js";
 import { PolicyV2SweepService } from "./policyV2Sweeps.js";
 import { PolicyV2ReplayService } from "./policyV2Replay.js";
 import { PolicyV2ConsoleService } from "./policyV2Console.js";
+import {
+  PolicyV2BounceService,
+  PolicyV2EventService,
+} from "./policyV2Bounces.js";
+import type { PolicyV2EventsEndpoint } from "../routes/policy-v2-events.js";
 import type { NotificationChannels } from "./policyV2Notifications.js";
 
 export interface PolicyV2Runtime {
@@ -18,6 +23,10 @@ export interface PolicyV2Runtime {
   readonly sweeps: PolicyV2SweepService;
   readonly replay: PolicyV2ReplayService;
   readonly console: PolicyV2ConsoleService;
+  /** Amazon SNS reports from SES. Off unless PARMANA_POLICY_V2_SNS_EVENTS is true. */
+  readonly bounces?: PolicyV2BounceService;
+  /** The neutral events endpoint. Off unless PARMANA_POLICY_V2_EVENTS_SECRET is set. */
+  readonly events?: PolicyV2EventsEndpoint;
 }
 
 /**
@@ -55,7 +64,11 @@ export function createPolicyV2Runtime(
   const pool = PostgresPoolFactory.create();
   const store = new policyV2.persistence.PolicyV2Store(pool);
 
+  const deliveries = new policyV2.persistence.PolicyV2DeliveryStore(pool);
+  const isSuppressed = (address: string) => deliveries.isSuppressed(address);
+
   const decisions = new PolicyV2DecisionService({
+    isSuppressed,
     channels,
     store,
     enabledCapabilities: new Set(capabilities),
@@ -69,12 +82,50 @@ export function createPolicyV2Runtime(
   const register = new PolicyV2RegisterService({ state: store });
   const reviews = new PolicyV2ReviewService({ store });
 
-  const sweeps = new PolicyV2SweepService({ store, channels });
+  const sweeps = new PolicyV2SweepService({ store, channels, isSuppressed });
 
   const replay = new PolicyV2ReplayService({ store });
   const console = new PolicyV2ConsoleService({ store });
+  const coreDeps = { deliveries, state: store, now: () => new Date() };
+  const bounces =
+    env.PARMANA_POLICY_V2_SNS_EVENTS === "true"
+      ? new PolicyV2BounceService({
+          ...coreDeps,
+          fetchCertificate: fetchText,
+          confirmSubscription: async (url) => {
+            const response = await fetch(url);
+            if (!response.ok)
+              throw new Error(
+                `The subscription could not be confirmed (${response.status}).`,
+              );
+          },
+        })
+      : undefined;
+  const eventsSecret = env.PARMANA_POLICY_V2_EVENTS_SECRET?.trim();
+  if (
+    eventsSecret !== undefined &&
+    eventsSecret !== "" &&
+    eventsSecret.length < 32
+  ) {
+    throw new Error(
+      "PARMANA_POLICY_V2_EVENTS_SECRET must be at least 32 characters.",
+    );
+  }
+  const events =
+    eventsSecret !== undefined && eventsSecret !== ""
+      ? { service: new PolicyV2EventService(coreDeps), secret: eventsSecret }
+      : undefined;
 
-  return { decisions, register, reviews, sweeps, replay, console };
+  return {
+    decisions,
+    register,
+    reviews,
+    sweeps,
+    replay,
+    console,
+    ...(bounces !== undefined ? { bounces } : {}),
+    ...(events !== undefined ? { events } : {}),
+  };
 }
 
 /**
@@ -142,4 +193,14 @@ export function startPolicyV2Sweeps(
   const seconds = policyV2SweepSecondsFrom(env);
   if (seconds === undefined) return undefined;
   return startPolicyV2SweepTimer(runtime.sweeps, seconds, onError);
+}
+
+/** Fetches the text at an SNS address. */
+async function fetchText(url: string): Promise<string> {
+  const response = await fetch(url);
+  if (!response.ok)
+    throw new Error(
+      `The SNS certificate could not be fetched (${response.status}).`,
+    );
+  return response.text();
 }

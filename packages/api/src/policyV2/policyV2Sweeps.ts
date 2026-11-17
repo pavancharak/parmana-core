@@ -33,6 +33,7 @@ export interface PolicyV2SweepResult {
 export interface PolicyV2SweepServiceOptions {
   readonly store: PolicyV2SweepStateStore;
   readonly channels?: NotificationChannels;
+  readonly isSuppressed?: (address: string) => Promise<boolean>;
   readonly now?: () => Date;
 }
 
@@ -99,6 +100,9 @@ export class PolicyV2SweepService {
       register,
 
       channels: this.options.channels ?? {},
+      ...(this.options.isSuppressed !== undefined
+        ? { isSuppressed: this.options.isSuppressed }
+        : {}),
     });
 
     await recordDeliveryFailures(store, delivery.failures, this.clock());

@@ -330,3 +330,56 @@ export class PolicyV2NonceStore implements NonceStore {
     return (inserted.rowCount ?? 0) === 1;
   }
 }
+
+/** One delivery event reported for one recipient. */
+export interface DeliveryEventRow {
+  readonly eventKey: string;
+  readonly eventType: "Bounce" | "Complaint" | "Delivery";
+  readonly bounceType?: string;
+  readonly messageId: string;
+  readonly recipient: string;
+  readonly detail: unknown;
+}
+
+/**
+ * Delivery events reported by SES. An event is stored once, under its key, so a retried SNS
+ * message does not count twice. A recipient with a permanent bounce or a complaint is suppressed.
+ */
+export class PolicyV2DeliveryStore {
+  constructor(private readonly pool: Pool) {}
+
+  /** Stores the events. Returns the keys of the ones that were new. */
+  async recordEvents(events: readonly DeliveryEventRow[]): Promise<string[]> {
+    const fresh: string[] = [];
+    for (const event of events) {
+      const inserted = await this.pool.query<{ event_key: string }>(
+        `INSERT INTO policy_v2_delivery_events
+           (event_key, event_type, bounce_type, message_id, recipient, detail)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (event_key) DO NOTHING RETURNING event_key`,
+        [
+          event.eventKey,
+          event.eventType,
+          event.bounceType ?? null,
+          event.messageId,
+          event.recipient.toLowerCase(),
+          JSON.stringify(event.detail),
+        ],
+      );
+      if ((inserted.rowCount ?? 0) === 1) fresh.push(event.eventKey);
+    }
+    return fresh;
+  }
+
+  /** True if SES reported a permanent bounce or a complaint for this address. */
+  async isSuppressed(recipient: string): Promise<boolean> {
+    const result = await this.pool.query(
+      `SELECT 1 FROM policy_v2_delivery_events
+       WHERE recipient = $1
+         AND (event_type = 'Complaint' OR (event_type = 'Bounce' AND bounce_type = 'Permanent'))
+       LIMIT 1`,
+      [recipient.toLowerCase()],
+    );
+    return (result.rowCount ?? 0) > 0;
+  }
+}
