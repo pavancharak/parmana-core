@@ -1,0 +1,90 @@
+---
+title: "Policy version 2"
+description: "What policy version 2 is: signed, checked policies with named limits, reviews, a register of who may change what, and an evidence log. Built, not yet released."
+---
+
+<Warning>
+  Policy version 2 is built and merged, but it is **not yet released**. No SDK
+  or server release includes it, and the pages on this site that describe
+  released behaviour do not yet cover it. Treat this page as a description of
+  the design as built, not as something you can install today.
+</Warning>
+
+Policy version 2 changes how Parmana decides whether an action may proceed. It
+keeps the same goal as the current policies: an agent takes only the actions
+your business has approved. It adds three things: every value a policy uses
+declares where it came from, every limit is named and has an owner, and every
+change to the governance itself is recorded.
+
+## What a policy declares
+
+A policy names the action it decides (for example `erp:pay-invoice`), its owner,
+and every value its rules read. Each value has a **provenance**, which says
+where it may come from:
+
+| Provenance  | Meaning                                                                                     |
+| ----------- | ------------------------------------------------------------------------------------------- |
+| `sourced`   | A registered business system establishes the value. It counts only if the system signed it. |
+| `approved`  | A person approved it. It counts only if the approval verifies and matches exactly.          |
+| `untrusted` | Anything else. A policy may use it to refuse or to route to review, never to approve.       |
+
+Trust comes from the signature, not from the sender. An unsigned value is
+untrusted, whoever sent it.
+
+Rules are checked in a fixed order: refuse, then review, then the two approval
+tiers, then reject. A rule must name its tier. A policy that fails the validator
+does not run.
+
+Limits are named thresholds with a unit, an owner and an approver. A rule
+compares a value with a threshold, never with another value, and the only
+literal number a rule may use is zero.
+
+## Reviews and approvals
+
+An action that a rule sends to review is held as a review item. Reviewers
+decide it from a queue. The requester cannot review its own item, and a
+high-value item needs two reviewers. A review has a window of at most three
+business days. If the window passes without a decision, the item expires and is
+refused. Each reviewer decides once.
+
+An approval is tied to the exact values shown to the person who gave it. It is
+valid for at most 60 minutes and can be used once.
+
+Alerts that need action cannot be dismissed. They escalate from the named backup
+to the Parmana owner and then to Operations.
+
+## The register
+
+Who may change a policy is recorded in a register, not assumed. The register
+holds the sources, thresholds, actions, roles, approver keys, policy versions,
+reviewer grants and contacts.
+
+- Only the Parmana owner grants or revokes roles. The last Parmana owner cannot be revoked.
+- A policy version is immutable once proposed. Each action has one approved version at a time.
+- A policy may go live only through the go-live gate. The owner and the successor of an action cannot run that gate, and it needs at least two gate owners who are not the owner or the successor. Every gate owner must hold the operator role.
+
+## Evidence
+
+Each decision is written to an evidence log. Each record is linked to the one
+before it, and the log is append-only: a record cannot be changed or removed at
+the database. A replay re-runs a recorded decision against the policy it used,
+so you can check that the same inputs give the same outcome.
+
+Every register change writes an audit event in the same transaction as the
+change, so a change and its record are saved together or not at all.
+
+## Status
+
+| Part                                 | Status            |
+| ------------------------------------ | ----------------- |
+| Policy format and validator          | Built             |
+| Signed source answers and approvals  | Built             |
+| Decisions, reviews and alerts        | Built             |
+| Register, roles and go-live gate     | Built             |
+| Evidence log and replay              | Built             |
+| Notifications and delivery feedback  | Built             |
+| Released in an SDK or server release | **Not yet**       |
+| Connected business systems (sources) | Not yet connected |
+
+Sources, the second email provider and the business inputs for each policy are
+not connected yet. Until they are, sourced values refuse rather than guess.
