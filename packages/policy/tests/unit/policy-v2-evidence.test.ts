@@ -259,12 +259,6 @@ function world(): World {
   };
 }
 
-const funds = (invoice: number) => ({
-  invoice,
-  vendorVerified: true,
-  fundsAvailable: true,
-});
-
 /** Decides a request against the live world and records it with its snapshot. */
 async function decideAndRecord(
   w: World,
