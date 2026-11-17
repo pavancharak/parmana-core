@@ -25,7 +25,7 @@ export interface PolicyV2StateStore {
     body: unknown,
     readVersion: number,
   ): Promise<number>;
-  appendEvidence(record: policyV2.evidence.EvidenceRecord): Promise<void>;
+  commitDecision(commit: policyV2.persistence.DecisionCommit): Promise<void>;
   readEvidence(): Promise<policyV2.evidence.EvidenceRecord[]>;
 }
 
@@ -147,9 +147,9 @@ export class PolicyV2DecisionService {
       snapshot,
       now,
     );
-    await store.appendEvidence(record);
 
     let reviewId: string | undefined;
+    let reviewed = false;
     if (decision.outcome === "REVIEW") {
       // highValue is set true until the risk function is wired. That only requires more reviewers, so it fails safe.
       const item = queue.open({
@@ -185,9 +185,24 @@ export class PolicyV2DecisionService {
         helpRef: "reviewers",
       });
       reviewId = item.id;
-      await store.save("review", queue.snapshot(), reviewState?.version ?? 0);
-      await store.save("alerts", board.snapshot(), alertState?.version ?? 0);
+      reviewed = true;
     }
+
+    await store.commitDecision({
+      record,
+      ...(reviewed
+        ? {
+            review: {
+              body: queue.snapshot(),
+              readVersion: reviewState?.version ?? 0,
+            },
+            alerts: {
+              body: board.snapshot(),
+              readVersion: alertState?.version ?? 0,
+            },
+          }
+        : {}),
+    });
 
     return {
       outcome: decision.outcome,
