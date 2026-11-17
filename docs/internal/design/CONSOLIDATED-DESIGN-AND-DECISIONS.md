@@ -138,6 +138,7 @@ Set by the process in section 5.2. A change is a new policy version.
 - Every action and every source has one named owner, recorded as a role with a named person and a successor.
 - No action owner is an engineer who builds the system, unless the action is purely technical.
 - Owners re-confirm quarterly. An unconfirmed owner suspends the action from tier 1, and a source stays untrusted.
+- Roles are part of the register. Only the Parmana owner grants or revokes a role, and the last Parmana owner cannot be revoked. The first Parmana owner is set up once, at startup. The register and its roles are saved with their audit events in one transaction. The routes are in [POLICY-V2-REGISTER-API.md](POLICY-V2-REGISTER-API.md).
 
 ### 5.2 Thresholds
 
@@ -216,7 +217,7 @@ Full design in `GOVERNANCE-CONSOLE-DESIGN.md`. In summary:
 
 **Screens.** Home (needs me, overdue, blocked, recent decisions); register (sources, actions, thresholds); change queue (maker-checker); review queue; informed approval; go-live gate; decisions and records (read-only); audit log (read-only).
 
-**Permissions.** No one approves their own change or review. Every human action is written to an append-only audit log. No caller has access. No role can change a decision or an audit entry.
+**Permissions.** No one approves their own change or review. Every human action is written to an append-only audit log, saved in the same transaction as the change it records. The audit log is read in pages. No caller has access. No role can change a decision or an audit entry.
 
 **States.** Review item: open, assigned, approved, rejected, expired. Proposed change: proposed, approved, rejected, withdrawn, published. Threshold: proposed, approved, active, superseded. Source: pending, trusted, untrusted, retired. Action: not live, live, suspended.
 
