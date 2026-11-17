@@ -114,6 +114,12 @@ async function insertEvidence(
   );
 }
 
+/** Snapshots written together, each at the version read. */
+export interface SnapshotCommit {
+  readonly review?: { readonly body: unknown; readonly readVersion: number };
+  readonly alerts?: { readonly body: unknown; readonly readVersion: number };
+}
+
 /** One decision's writes: its evidence record, and the snapshots it changed, each at the version read. */
 export interface DecisionCommit {
   readonly record: EvidenceRecord;
@@ -218,6 +224,37 @@ export class PolicyV2Store {
     try {
       await client.query("BEGIN");
       await insertEvidence(client, record);
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Writes the review and alert snapshots together, each at the version read. If either check
+   * fails, neither is written. Used by the sweeps, which change no evidence.
+   */
+  async commitSnapshots(commit: SnapshotCommit): Promise<void> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN");
+      if (commit.review !== undefined)
+        await writeSnapshot(
+          client,
+          "review",
+          commit.review.body,
+          commit.review.readVersion,
+        );
+      if (commit.alerts !== undefined)
+        await writeSnapshot(
+          client,
+          "alerts",
+          commit.alerts.body,
+          commit.alerts.readVersion,
+        );
       await client.query("COMMIT");
     } catch (error) {
       await client.query("ROLLBACK");

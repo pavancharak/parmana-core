@@ -113,5 +113,20 @@ describe.skipIf(!databaseConfigured)(
       expect(await store.readEvidence()).toHaveLength(1);
       expect(await store.load("review")).toBeUndefined();
     });
+
+    it("writes neither snapshot when the alert version is stale", async () => {
+      await store.save("review", { items: [] }, 0);
+      await store.save("alerts", { alerts: [] }, 0);
+      await expect(
+        store.commitSnapshots({
+          review: { body: { items: [{ id: "review-1" }] }, readVersion: 1 },
+          alerts: { body: { alerts: [] }, readVersion: 0 },
+        }),
+      ).rejects.toBeInstanceOf(PersistenceConflictError);
+      expect(
+        (await store.load<{ items: unknown[] }>("review"))!.body.items,
+      ).toEqual([]);
+      expect(await store.load("review")).toMatchObject({ version: 1 });
+    });
   },
 );

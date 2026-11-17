@@ -6,11 +6,13 @@ import { assertDatabaseUrlConfigured } from "../bootstrap/assertDatabaseUrlConfi
 import { PolicyV2DecisionService } from "./policyV2Decisions.js";
 import { PolicyV2RegisterService } from "./policyV2Register.js";
 import { PolicyV2ReviewService } from "./policyV2Reviews.js";
+import { PolicyV2SweepService } from "./policyV2Sweeps.js";
 
 export interface PolicyV2Runtime {
   readonly decisions: PolicyV2DecisionService;
   readonly register: PolicyV2RegisterService;
   readonly reviews: PolicyV2ReviewService;
+  readonly sweeps: PolicyV2SweepService;
 }
 
 /**
@@ -59,7 +61,9 @@ export function createPolicyV2Runtime(
   const register = new PolicyV2RegisterService({ state: store });
   const reviews = new PolicyV2ReviewService({ store });
 
-  return { decisions, register, reviews };
+  const sweeps = new PolicyV2SweepService({ store });
+
+  return { decisions, register, reviews, sweeps };
 }
 
 /**
@@ -74,4 +78,57 @@ export async function bootstrapPolicyV2Owner(
   const owner = env.PARMANA_POLICY_V2_BOOTSTRAP_OWNER?.trim();
   if (owner === undefined || owner === "") return false;
   return runtime.register.bootstrapOwner(owner);
+}
+
+/**
+ * The interval, in seconds, at which the sweeps run, from PARMANA_POLICY_V2_SWEEP_SECONDS. Unset
+ * means the sweeps do not run on a timer. A value that is not a whole number from 1 to 86400 is
+ * refused.
+ */
+export function policyV2SweepSecondsFrom(
+  env: NodeJS.ProcessEnv = process.env,
+): number | undefined {
+  const raw = env.PARMANA_POLICY_V2_SWEEP_SECONDS;
+  if (raw === undefined || raw.trim() === "") return undefined;
+  if (!/^\d+$/.test(raw.trim()) || Number(raw) < 1 || Number(raw) > 86400) {
+    throw new Error(
+      `PARMANA_POLICY_V2_SWEEP_SECONDS must be a whole number from 1 to 86400, got "${raw}".`,
+    );
+  }
+  return Number(raw);
+}
+
+/**
+ * Runs the sweeps on an interval. A sweep that loses a race to another writer is skipped, and the
+ * next run picks it up. Any other failure is passed to onError.
+ */
+export function startPolicyV2SweepTimer(
+  sweeps: PolicyV2SweepService,
+  seconds: number,
+  onError: (error: unknown) => void,
+): ReturnType<typeof setInterval> {
+  return setInterval(() => {
+    sweeps.run().catch((error: unknown) => {
+      if (error instanceof policyV2.persistence.PersistenceConflictError)
+        return;
+      onError(error);
+    });
+  }, seconds * 1000);
+}
+
+/**
+ * Starts the sweep timer for a runtime, if PARMANA_POLICY_V2_SWEEP_SECONDS is set. Returns the
+ * timer so the caller can clear it on shutdown, or undefined if no timer was started.
+ */
+export function startPolicyV2Sweeps(
+  runtime: PolicyV2Runtime | undefined,
+  env: NodeJS.ProcessEnv = process.env,
+  onError: (error: unknown) => void = (error) => {
+    console.error("Policy version 2 sweep failed.", error);
+  },
+): ReturnType<typeof setInterval> | undefined {
+  if (runtime === undefined) return undefined;
+  const seconds = policyV2SweepSecondsFrom(env);
+  if (seconds === undefined) return undefined;
+  return startPolicyV2SweepTimer(runtime.sweeps, seconds, onError);
 }
