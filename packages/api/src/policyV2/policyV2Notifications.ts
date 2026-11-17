@@ -103,6 +103,8 @@ export async function dispatchNotifications(
   deps: {
     readonly register: policyV2.register.PolicyRegister;
     readonly channels: NotificationChannels;
+    /** True for an address that SES reported as bouncing or complaining. Such an address is not sent to. */
+    readonly isSuppressed?: (address: string) => Promise<boolean>;
   },
 ): Promise<DispatchResult> {
   let sent = 0;
@@ -125,6 +127,18 @@ export async function dispatchNotifications(
       continue;
     }
     for (const address of addresses) {
+      if (
+        deps.isSuppressed !== undefined &&
+        (await deps.isSuppressed(address))
+      ) {
+        failures.push({
+          to: message.to,
+          channel: message.channel,
+          alertId: message.alertId,
+          reason: "the address is suppressed after an SES bounce or complaint",
+        });
+        continue;
+      }
       const accepted = await channel
         .send({ to: address, subject: message.subject, body: message.body })
         .catch(() => false);

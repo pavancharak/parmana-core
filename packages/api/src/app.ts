@@ -35,6 +35,8 @@ import type { PolicyV2ReviewService } from "./policyV2/policyV2Reviews.js";
 import { createPolicyV2ReviewsRouter } from "./routes/policy-v2-reviews.js";
 import { createPolicyV2ReplayRouter } from "./routes/policy-v2-replay.js";
 import { createPolicyV2ConsoleRouter } from "./routes/policy-v2-console.js";
+import { createPolicyV2BouncesRouter } from "./routes/policy-v2-bounces.js";
+import type { PolicyV2BounceService } from "./policyV2/policyV2Bounces.js";
 import type { PolicyV2ConsoleService } from "./policyV2/policyV2Console.js";
 import type { PolicyV2ReplayService } from "./policyV2/policyV2Replay.js";
 import { createPolicyV2DecisionsRouter } from "./routes/policy-v2-decisions.js";
@@ -199,6 +201,8 @@ export interface CreateAppOptions {
   readonly policyV2Replay?: PolicyV2ReplayService;
   /** The governance console, served as HTML. Mounted only when supplied. Behind caller auth. */
   readonly policyV2Console?: PolicyV2ConsoleService;
+  /** Amazon SNS posts SES bounces and complaints here. Outside caller auth: each message is verified. */
+  readonly policyV2Bounces?: PolicyV2BounceService;
   /** Which callers may approve each policy's changes (G-50). Unset lists no one. */
   readonly policyChangeCheckers?: PolicyChangeCheckerScope;
 
@@ -361,6 +365,12 @@ export function createApp(
    */
   app.use("/handbook", publicRateLimiter, createHandbookRouter());
 
+  if (options.policyV2Bounces !== undefined) {
+    app.use(
+      "/v2/notifications",
+      createPolicyV2BouncesRouter(options.policyV2Bounces),
+    );
+  }
   if (options.callerAuth !== "disabled") {
     app.use(
       createAuthFailureRateLimiter(

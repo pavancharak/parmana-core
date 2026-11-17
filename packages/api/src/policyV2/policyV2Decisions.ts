@@ -54,6 +54,7 @@ export interface PolicyV2DecisionServiceOptions {
   readonly nonces?: policyV2.sourceAnswer.NonceStore;
   /** The channels that send alerts. A channel that is not configured is skipped. */
   readonly channels?: NotificationChannels;
+  readonly isSuppressed?: (address: string) => Promise<boolean>;
   readonly now?: () => Date;
 }
 
@@ -213,6 +214,9 @@ export class PolicyV2DecisionService {
     const delivery = await dispatchNotifications(outbox.take(), {
       register,
       channels: this.options.channels ?? {},
+      ...(this.options.isSuppressed !== undefined
+        ? { isSuppressed: this.options.isSuppressed }
+        : {}),
     });
     await recordDeliveryFailures(store, delivery.failures, now);
 

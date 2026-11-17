@@ -101,6 +101,14 @@ Email is sent through Amazon SES when `PARMANA_POLICY_V2_EMAIL_FROM` is set. Pho
 
 `GET /v2/console/:screen` serves one screen of the governance console as HTML. The screens are home, register, changes, reviews, approvals, gate, decisions and audit. A caller sees a screen only if its register roles allow it: a role not allowed a screen gets 403 before anything is read. A caller with no register role gets 403, and an unknown screen gets 404. The gate screen takes a `capability` query, and shows the checklist for that action's approved version. The console is read-only, and all text from the register and alerts is escaped.
 
+## Bounces and complaints
+
+`POST /v2/notifications/ses` receives SES bounces and complaints from Amazon SNS. It sits outside caller authentication, because SNS has no caller key. Each message is verified against its signature, and its certificate must come from an SNS host, before anything in it is read. A message that does not verify gets 403.
+
+A bounce or complaint is stored once per recipient, so a retried SNS message counts once. A permanent bounce or a complaint raises a delivery-failure alert for Operations, and suppresses the address. A suppressed address is not sent to, and the skipped send is recorded as a delivery failure. Transient bounces are stored but raise no alert.
+
+Operations sets this up once: an SNS topic, an HTTPS subscription to this endpoint, and a configuration set in SES that publishes bounces and complaints to the topic.
+
 ## Audit events
 
 Each change adds these events to the audit log, with the caller as `by`:

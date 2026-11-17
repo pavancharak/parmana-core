@@ -9,6 +9,7 @@ import { PolicyV2ReviewService } from "./policyV2Reviews.js";
 import { PolicyV2SweepService } from "./policyV2Sweeps.js";
 import { PolicyV2ReplayService } from "./policyV2Replay.js";
 import { PolicyV2ConsoleService } from "./policyV2Console.js";
+import { PolicyV2BounceService } from "./policyV2Bounces.js";
 import type { NotificationChannels } from "./policyV2Notifications.js";
 
 export interface PolicyV2Runtime {
@@ -18,6 +19,7 @@ export interface PolicyV2Runtime {
   readonly sweeps: PolicyV2SweepService;
   readonly replay: PolicyV2ReplayService;
   readonly console: PolicyV2ConsoleService;
+  readonly bounces: PolicyV2BounceService;
 }
 
 /**
@@ -55,7 +57,11 @@ export function createPolicyV2Runtime(
   const pool = PostgresPoolFactory.create();
   const store = new policyV2.persistence.PolicyV2Store(pool);
 
+  const deliveries = new policyV2.persistence.PolicyV2DeliveryStore(pool);
+  const isSuppressed = (address: string) => deliveries.isSuppressed(address);
+
   const decisions = new PolicyV2DecisionService({
+    isSuppressed,
     channels,
     store,
     enabledCapabilities: new Set(capabilities),
@@ -69,12 +75,24 @@ export function createPolicyV2Runtime(
   const register = new PolicyV2RegisterService({ state: store });
   const reviews = new PolicyV2ReviewService({ store });
 
-  const sweeps = new PolicyV2SweepService({ store, channels });
+  const sweeps = new PolicyV2SweepService({ store, channels, isSuppressed });
 
   const replay = new PolicyV2ReplayService({ store });
   const console = new PolicyV2ConsoleService({ store });
+  const bounces = new PolicyV2BounceService({
+    deliveries,
+    state: store,
+    fetchCertificate: fetchText,
+    confirmSubscription: async (url) => {
+      const response = await fetch(url);
+      if (!response.ok)
+        throw new Error(
+          `The subscription could not be confirmed (${response.status}).`,
+        );
+    },
+  });
 
-  return { decisions, register, reviews, sweeps, replay, console };
+  return { decisions, register, reviews, sweeps, replay, console, bounces };
 }
 
 /**
@@ -142,4 +160,14 @@ export function startPolicyV2Sweeps(
   const seconds = policyV2SweepSecondsFrom(env);
   if (seconds === undefined) return undefined;
   return startPolicyV2SweepTimer(runtime.sweeps, seconds, onError);
+}
+
+/** Fetches the text at an SNS address. */
+async function fetchText(url: string): Promise<string> {
+  const response = await fetch(url);
+  if (!response.ok)
+    throw new Error(
+      `The SNS certificate could not be fetched (${response.status}).`,
+    );
+  return response.text();
 }
