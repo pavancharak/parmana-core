@@ -97,6 +97,10 @@ An alert is sent to the people it names, through channels. Email goes to every a
 
 No email or phone provider is configured yet. A message for a channel with no provider is skipped, and the console still shows the alert. A provider is passed to the runtime; none is read from the environment yet.
 
+## Console
+
+`GET /v2/console/:screen` serves one screen of the governance console as HTML. The screens are home, register, changes, reviews, approvals, gate, decisions and audit. A caller sees a screen only if its register roles allow it: a role not allowed a screen gets 403 before anything is read. A caller with no register role gets 403, and an unknown screen gets 404. The gate screen takes a `capability` query, and shows the checklist for that action's approved version. The console is read-only, and all text from the register and alerts is escaped.
+
 ## Audit events
 
 Each change adds these events to the audit log, with the caller as `by`:

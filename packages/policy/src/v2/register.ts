@@ -710,6 +710,14 @@ export class PolicyRegister {
     };
   }
 
+  /** The sources, thresholds and tiers of the approved version of an action, or undefined if none is approved. */
+  usesOfApproved(
+    capability: string,
+  ): { sources: string[]; thresholds: string[]; tiers: string[] } | undefined {
+    const approved = this.approvedVersion(capability);
+    return approved === undefined ? undefined : usesOf(approved.policy);
+  }
+
   private approvedVersion(capability: string): PolicyVersionRecord | undefined {
     return [...this.policyVersions.values()].find(
       (r) => r.capability === capability && r.status === "approved",

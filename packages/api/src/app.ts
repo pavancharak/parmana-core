@@ -34,6 +34,8 @@ import type { PolicyV2RegisterService } from "./policyV2/policyV2Register.js";
 import type { PolicyV2ReviewService } from "./policyV2/policyV2Reviews.js";
 import { createPolicyV2ReviewsRouter } from "./routes/policy-v2-reviews.js";
 import { createPolicyV2ReplayRouter } from "./routes/policy-v2-replay.js";
+import { createPolicyV2ConsoleRouter } from "./routes/policy-v2-console.js";
+import type { PolicyV2ConsoleService } from "./policyV2/policyV2Console.js";
 import type { PolicyV2ReplayService } from "./policyV2/policyV2Replay.js";
 import { createPolicyV2DecisionsRouter } from "./routes/policy-v2-decisions.js";
 import { createPolicyV2RegisterRouter } from "./routes/policy-v2-register.js";
@@ -195,6 +197,8 @@ export interface CreateAppOptions {
   readonly policyV2Reviews?: PolicyV2ReviewService;
   /** Replay of recorded policy version 2 decisions. Mounted only when supplied. Behind caller auth. */
   readonly policyV2Replay?: PolicyV2ReplayService;
+  /** The governance console, served as HTML. Mounted only when supplied. Behind caller auth. */
+  readonly policyV2Console?: PolicyV2ConsoleService;
   /** Which callers may approve each policy's changes (G-50). Unset lists no one. */
   readonly policyChangeCheckers?: PolicyChangeCheckerScope;
 
@@ -409,6 +413,12 @@ export function createApp(
   }
   if (options.policyV2Replay !== undefined) {
     app.use("/v2/evidence", createPolicyV2ReplayRouter(options.policyV2Replay));
+  }
+  if (options.policyV2Console !== undefined) {
+    app.use(
+      "/v2/console",
+      createPolicyV2ConsoleRouter(options.policyV2Console),
+    );
   }
 
   /**
