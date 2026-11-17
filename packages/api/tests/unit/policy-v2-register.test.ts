@@ -570,3 +570,29 @@ describe("reviewer grants through the routes", () => {
     expect(revoked.body.status).toBe("revoked");
   });
 });
+
+describe("contacts through the routes", () => {
+  it("sets a contact for the Parmana owner, and refuses one from anyone else", async () => {
+    const { svc } = await serviceWithOwner();
+    await svc.grantRole("owner-1", "rev-1", "reviewer");
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+      const caller = req.headers["x-caller"];
+      if (typeof caller === "string") req.callerId = caller;
+      next();
+    });
+    app.use("/v2/register", createPolicyV2RegisterRouter(svc));
+    const refused = await request(app)
+      .post("/v2/register/contacts")
+      .set("x-caller", "rev-1")
+      .send({ personId: "rev-1", email: "r@example.com" });
+    expect(refused.status).toBe(422);
+    const ok = await request(app)
+      .post("/v2/register/contacts")
+      .set("x-caller", "owner-1")
+      .send({ personId: "rev-1", email: "r@example.com" });
+    expect(ok.status).toBe(200);
+    expect(ok.body.email).toBe("r@example.com");
+  });
+});

@@ -44,6 +44,22 @@ function memoryStore() {
       }
       evidence.push(record);
     },
+    async commitSnapshots(commit: policyV2.persistence.SnapshotCommit) {
+      for (const component of ["review", "alerts"] as const) {
+        const written = commit[component];
+        if (written !== undefined) {
+          if ((state.get(component)?.version ?? 0) !== written.readVersion) {
+            throw new policyV2.persistence.PersistenceConflictError(
+              `${component} changed.`,
+            );
+          }
+          state.set(component, {
+            body: written.body,
+            version: written.readVersion + 1,
+          });
+        }
+      }
+    },
     async commitDecision(commit: policyV2.persistence.DecisionCommit) {
       const last = evidence.at(-1)?.hash ?? "genesis";
       if (commit.record.prevHash !== last) {

@@ -130,6 +130,11 @@ export interface RegisterSnapshot {
   readonly policyVersions?: readonly PolicyVersionRecord[];
   /** Missing in snapshots saved before reviewer grants existed; read as none. */
   readonly reviewGrants?: readonly ReviewGrantRecord[];
+  /** Missing in snapshots saved before contacts existed; read as none. */
+  readonly contacts?: ReadonlyArray<{
+    readonly personId: string;
+    readonly contact: Contact;
+  }>;
 }
 
 /**
@@ -144,6 +149,12 @@ export interface ReviewGrantRecord {
   readonly maxAmount?: number;
   readonly status: "active" | "revoked";
   readonly grantedBy: string;
+}
+
+/** How to reach a person about an alert. Set by the Parmana owner. */
+export interface Contact {
+  readonly email?: string;
+  readonly phone?: string;
 }
 
 export type PolicyVersionStatus = "proposed" | "approved" | "superseded";
@@ -198,6 +209,8 @@ export const MAX_REVIEW_WINDOW_BUSINESS_DAYS = 3;
 export const MAX_APPROVAL_VALIDITY_MINUTES = 60;
 
 const PLACEHOLDER = /<[^<>]+>/;
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE = /^\+[1-9]\d{6,14}$/;
 const CAPABILITY = /^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$/;
 
 function hasRole(person: Person, role: Role): boolean {
@@ -235,6 +248,7 @@ export class PolicyRegister {
   private readonly approverKeys = new Map<string, ApproverKeyRecord>();
   private readonly policyVersions = new Map<string, PolicyVersionRecord>();
   private readonly reviewGrants = new Map<string, ReviewGrantRecord>();
+  private readonly contacts = new Map<string, Contact>();
   private readonly log: AuditEvent[] = [];
   private pending: AuditEvent[] = [];
 
@@ -513,6 +527,44 @@ export class PolicyRegister {
 
   listReviewGrants(): readonly ReviewGrantRecord[] {
     return [...this.reviewGrants.values()];
+  }
+
+  // ---- Contacts ------------------------------------------------------------
+
+  /**
+   * Sets how to reach a person about an alert. Only the Parmana owner sets a contact. An address
+   * must look like an address, and a phone number must be in international form.
+   */
+  setContact(personId: string, contact: Contact, by: Person): Contact {
+    requireRole(
+      { id: by.id, roles: this.rolesOf(by.id) },
+      "parmana-owner",
+      "set a contact",
+    );
+    if (!isNonEmpty(personId))
+      throw new RegisterError("A contact needs a person id.");
+    if (contact.email === undefined && contact.phone === undefined)
+      throw new RegisterError(
+        "A contact needs an email address or a phone number.",
+      );
+    if (contact.email !== undefined && !EMAIL.test(contact.email))
+      throw new RegisterError(`"${contact.email}" is not an email address.`);
+    if (contact.phone !== undefined && !PHONE.test(contact.phone))
+      throw new RegisterError(
+        `"${contact.phone}" is not a phone number in international form.`,
+      );
+    const stored: Contact = {
+      ...(contact.email !== undefined ? { email: contact.email } : {}),
+      ...(contact.phone !== undefined ? { phone: contact.phone } : {}),
+    };
+    this.contacts.set(personId, stored);
+    this.record(by.id, "contact.set", personId);
+    return stored;
+  }
+
+  /** The contact for a person, if one is set. */
+  getContact(personId: string): Contact | undefined {
+    return this.contacts.get(personId);
   }
 
   // ---- Policy versions -----------------------------------------------------
@@ -1112,6 +1164,9 @@ export class PolicyRegister {
           reviewGrantId(b.capability, b.reviewerId),
         ),
       ),
+      contacts: [...this.contacts.entries()]
+        .map(([personId, contact]) => ({ personId, contact }))
+        .sort((a, b) => a.personId.localeCompare(b.personId)),
       policyVersions: [...this.policyVersions.values()].sort((a, b) =>
         policyVersionId(a.capability, a.policyVersion).localeCompare(
           policyVersionId(b.capability, b.policyVersion),
@@ -1151,6 +1206,9 @@ export class PolicyRegister {
     this.approverKeys.clear();
     for (const key of snapshot.approverKeys ?? [])
       this.approverKeys.set(approverKeyId(key.approverId, key.keyId), key);
+    this.contacts.clear();
+    for (const entry of snapshot.contacts ?? [])
+      this.contacts.set(entry.personId, entry.contact);
     this.reviewGrants.clear();
     for (const grant of snapshot.reviewGrants ?? [])
       this.reviewGrants.set(

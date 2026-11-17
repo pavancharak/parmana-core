@@ -45,6 +45,7 @@ All routes need an authenticated caller. Errors use one shape: `{ "error": "<cod
 | `POST /v2/register/actions/:capability/tests`                        | `{ tier }`                                                                              | gate owner                                                                                                | 200: the action, with the tier recorded                               |
 | `GET /v2/register/actions/:capability/go-live`                       | none                                                                                    | any caller holding a role                                                                                 | 200: `{ missing }`, the checklist for the approved version, read only |
 | `POST /v2/register/actions/:capability/go-live`                      | none                                                                                    | gate owner                                                                                                | 200: `{ live: true }`, or 422 `refused` with `missing`                |
+| `POST /v2/register/contacts`                                         | `{ personId, email?, phone? }`                                                          | Parmana owner                                                                                             | 200: the contact stored                                               |
 | `POST /v2/register/policies`                                         | a policy (its `capability` and `policyVersion` are inside it)                           | action owner for the policy's action                                                                      | 200: the version, proposed                                            |
 | `POST /v2/register/policies/:capability/:policyVersion/approve`      | none                                                                                    | second approver, and the Parmana owner when the policy reads a source that can approve or an intermediary | 200: the version, approved once every required approval is in         |
 | `POST /v2/register/approver-keys`                                    | `{ approverId, keyId, publicKeyPem }` (Ed25519)                                         | Parmana owner                                                                                             | 200: the key, pending                                                 |
@@ -89,6 +90,12 @@ An approver's key is proposed by the Parmana owner. It is pending until a second
 ## Replay
 
 `GET /v2/evidence/:recordId/replay` re-runs a recorded decision from its evidence and reports whether it reproduces. It uses the policy versions the register holds, matched by hash, and the keys, approvers and thresholds recorded with the decision. A caller must hold a register role. The replay changes nothing. A record whose policy version is no longer in the register does not reproduce, and the response says why. An unknown record returns 404, and a caller with no role returns 403.
+
+## Notifications
+
+An alert is sent to the people it names, through channels. Email goes to every alert. Phone is also sent once an alert escalates to the Parmana owner. A message goes to the contact the register holds for the person, and a group such as `parmana-owner` or `reviewers` goes to each member's contact. The Parmana owner sets contacts. A person with no contact for a channel is a delivery failure, and Operations is alerted.
+
+No email or phone provider is configured yet. A message for a channel with no provider is skipped, and the console still shows the alert. A provider is passed to the runtime; none is read from the environment yet.
 
 ## Audit events
 

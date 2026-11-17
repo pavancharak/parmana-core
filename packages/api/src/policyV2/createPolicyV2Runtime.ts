@@ -8,6 +8,7 @@ import { PolicyV2RegisterService } from "./policyV2Register.js";
 import { PolicyV2ReviewService } from "./policyV2Reviews.js";
 import { PolicyV2SweepService } from "./policyV2Sweeps.js";
 import { PolicyV2ReplayService } from "./policyV2Replay.js";
+import type { NotificationChannels } from "./policyV2Notifications.js";
 
 export interface PolicyV2Runtime {
   readonly decisions: PolicyV2DecisionService;
@@ -25,6 +26,8 @@ export interface PolicyV2Runtime {
  */
 export function createPolicyV2Runtime(
   env: NodeJS.ProcessEnv = process.env,
+  /** The channels that send alerts. None by default: alerts are then shown on the console only. */
+  channels: NotificationChannels = {},
 ): PolicyV2Runtime | undefined {
   const flag = env.PARMANA_POLICY_V2_DECISIONS;
   if (flag === undefined || flag.trim() === "" || flag === "false") {
@@ -51,6 +54,7 @@ export function createPolicyV2Runtime(
   const store = new policyV2.persistence.PolicyV2Store(pool);
 
   const decisions = new PolicyV2DecisionService({
+    channels,
     store,
     enabledCapabilities: new Set(capabilities),
     // No source integration is connected, so sourced values refuse as unavailable.
@@ -63,7 +67,7 @@ export function createPolicyV2Runtime(
   const register = new PolicyV2RegisterService({ state: store });
   const reviews = new PolicyV2ReviewService({ store });
 
-  const sweeps = new PolicyV2SweepService({ store });
+  const sweeps = new PolicyV2SweepService({ store, channels });
 
   const replay = new PolicyV2ReplayService({ store });
 

@@ -307,6 +307,20 @@ export function createPolicyV2RegisterRouter(
   );
 
   router.post(
+    "/contacts",
+    act((by, body) => {
+      if (typeof body.personId !== "string" || body.personId.trim() === "") {
+        throw new InvalidBody("A personId is required.");
+      }
+      const contact: policyV2.register.Contact = {
+        ...(typeof body.email === "string" ? { email: body.email } : {}),
+        ...(typeof body.phone === "string" ? { phone: body.phone } : {}),
+      };
+      return service.setContact(by, body.personId, contact);
+    }),
+  );
+
+  router.post(
     "/policies",
     act((by, body) => service.proposePolicy(by, body)),
   );
