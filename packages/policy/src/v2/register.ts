@@ -375,16 +375,14 @@ export class PolicyRegister {
   }
 
   /**
-   * The go-live gate (design 5.7). Returns every item that is missing. The action
-   * goes live only when none are missing.
+   * The go-live checklist, read only (design 5.7). Lists every item that is missing,
+   * without running the gate. The console shows this to the gate owner.
    */
-  goLive(
+  gateMissing(
     capability: string,
     usedSources: readonly string[],
     usedThresholds: readonly string[],
-    by: Person,
-  ): { ok: boolean; missing: string[] } {
-    requireRole(by, "gate-owner", "run the go-live gate");
+  ): string[] {
     const action = this.requireAction(capability);
     const missing: string[] = [];
     if (!isNonEmpty(action.owner)) missing.push("owner");
@@ -411,6 +409,22 @@ export class PolicyRegister {
     }
     if (action.testedTiers.length === 0)
       missing.push("a test run for each tier");
+    return missing;
+  }
+
+  /**
+   * The go-live gate (design 5.7). Returns every item that is missing. The action
+   * goes live only when none are missing.
+   */
+  goLive(
+    capability: string,
+    usedSources: readonly string[],
+    usedThresholds: readonly string[],
+    by: Person,
+  ): { ok: boolean; missing: string[] } {
+    requireRole(by, "gate-owner", "run the go-live gate");
+    const missing = this.gateMissing(capability, usedSources, usedThresholds);
+    const action = this.requireAction(capability);
     if (missing.length === 0) {
       this.actions.set(capability, { ...action, live: true });
       this.record(by.id, "action.live", capability);
@@ -458,6 +472,18 @@ export class PolicyRegister {
       return "revoked";
     if (record.status === "pending") return undefined;
     return readEd25519PublicKey(record.publicKeyPem);
+  }
+
+  listSources(): readonly SourceRecord[] {
+    return [...this.sources.values()];
+  }
+
+  listThresholds(): readonly ThresholdRecord[] {
+    return [...this.thresholds.values()];
+  }
+
+  listActions(): readonly ActionRecord[] {
+    return [...this.actions.values()];
   }
 
   getSource(name: string): SourceRecord | undefined {

@@ -307,6 +307,23 @@ export class ReviewQueue {
     }
   }
 
+  /** Every item, open or closed, oldest first. */
+  listItems(): readonly ReviewItem[] {
+    return [...this.items.values()];
+  }
+
+  /** Whether a reviewer may decide this item now: an active grant that covers it, and not the requester. */
+  canReview(id: string, reviewerId: string): boolean {
+    const item = this.items.get(id);
+    if (item === undefined) return false;
+    try {
+      this.requireEligible(item, reviewerId);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   auditLog(): readonly ReviewEvent[] {
     return [...this.events];
   }
