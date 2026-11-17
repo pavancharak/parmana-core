@@ -244,6 +244,19 @@ export class PolicyRegister {
     return updated;
   }
 
+  /**
+   * Records a change to a person's roles in the audit log. The roles themselves are held by
+   * the role store, which the register does not read.
+   */
+  recordRoleChange(
+    by: Person,
+    callerId: string,
+    role: Role,
+    action: "grant" | "revoke",
+  ): void {
+    this.record(by.id, `role.${action}`, `${callerId} ${role}`);
+  }
+
   /** Revokes a source at once. Its answers stop being used for new decisions (design 3). */
   revokeSource(name: string, by: Person, reason: string): SourceRecord {
     const source = this.requireSource(name);

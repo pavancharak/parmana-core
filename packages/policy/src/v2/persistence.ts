@@ -155,3 +155,89 @@ export class PolicyV2NonceStore implements NonceStore {
     return (inserted.rowCount ?? 0) === 1;
   }
 }
+
+export type RoleAction = "grant" | "revoke";
+
+export class RoleChangeError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "RoleChangeError";
+  }
+}
+
+/** A fixed lock key for role changes, so the last-owner check and the change cannot interleave. */
+const ROLE_LOCK = 0x72_6f_6c_65; // "role"
+
+/**
+ * Roles held by callers, from the append-only role events. A caller holds a role when its
+ * latest event for that role is a grant.
+ */
+export class PolicyV2RoleStore {
+  constructor(private readonly pool: Pool) {}
+
+  /** The roles a caller currently holds, sorted. */
+  async rolesOf(callerId: string): Promise<string[]> {
+    const result = await this.pool.query<{ role: string }>(
+      `SELECT role FROM (
+         SELECT DISTINCT ON (role) role, action FROM policy_v2_role_events
+         WHERE caller_id = $1 ORDER BY role, seq DESC
+       ) latest WHERE action = 'grant' ORDER BY role`,
+      [callerId],
+    );
+    return result.rows.map((row) => row.role);
+  }
+
+  /** The callers that currently hold a role, sorted. */
+  async holdersOf(role: string): Promise<string[]> {
+    const result = await this.pool.query<{ caller_id: string }>(
+      `SELECT caller_id FROM (
+         SELECT DISTINCT ON (caller_id) caller_id, action FROM policy_v2_role_events
+         WHERE role = $1 ORDER BY caller_id, seq DESC
+       ) latest WHERE action = 'grant' ORDER BY caller_id`,
+      [role],
+    );
+    return result.rows.map((row) => row.caller_id);
+  }
+
+  /**
+   * Grants or revokes a role. Revoking the last Parmana owner is refused, and the check and
+   * the change run under a lock so two revocations cannot both pass it.
+   */
+  async changeRole(change: {
+    callerId: string;
+    role: string;
+    action: RoleAction;
+    byCaller: string;
+  }): Promise<void> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("SELECT pg_advisory_xact_lock($1)", [ROLE_LOCK]);
+      if (change.action === "revoke" && change.role === "parmana-owner") {
+        const owners = await client.query<{ caller_id: string }>(
+          `SELECT caller_id FROM (
+             SELECT DISTINCT ON (caller_id) caller_id, action FROM policy_v2_role_events
+             WHERE role = 'parmana-owner' ORDER BY caller_id, seq DESC
+           ) latest WHERE action = 'grant'`,
+        );
+        const holds = owners.rows.some((r) => r.caller_id === change.callerId);
+        if (holds && owners.rowCount === 1) {
+          throw new RoleChangeError(
+            "The last Parmana owner cannot be revoked. Grant another Parmana owner first.",
+          );
+        }
+      }
+      await client.query(
+        `INSERT INTO policy_v2_role_events (caller_id, role, action, by_caller)
+         VALUES ($1, $2, $3, $4)`,
+        [change.callerId, change.role, change.action, change.byCaller],
+      );
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+}
