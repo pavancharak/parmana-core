@@ -2,13 +2,13 @@
 
 Status: complete as of this version. Nothing is built. This document is the single reference. It replaces reading the plan, spec, governance design and owner help guide separately. Where a detail is long, the source document is named.
 
-Source documents (in the scratchpad):
+Source documents (in this folder):
 
-- `trusted-untrusted-plan.md`: the plan, with phases, decisions and open items.
-- `policy-v2-spec.md`: the policy format and validator checks.
-- `governance-ui-design.md`: the governance console, roles, screens and alerts.
-- `owner-help-guide.md`: task-by-task instructions for owners.
-- `new-system-design.md`: the design from requirements.
+- `TRUSTED-UNTRUSTED-PLAN.md`: the plan, with phases, decisions and open items.
+- `POLICY-V2-SPEC.md`: the policy format and validator checks.
+- `GOVERNANCE-CONSOLE-DESIGN.md`: the governance console, roles, screens and alerts.
+- `OWNER-HELP-GUIDE.md`: task-by-task instructions for owners.
+- `NEW-SYSTEM-DESIGN.md`: the design from requirements.
 
 ## 1. Requirements
 
@@ -70,7 +70,7 @@ A policy can name only registered sources, claims and capabilities. The validato
 
 ### 4.3 Policy format (version 2)
 
-Specified in `policy-v2-spec.md`. In summary:
+Specified in `POLICY-V2-SPEC.md`. In summary:
 
 - Every value is declared with a provenance: sourced, approved, AI or untrusted.
 - Rules are in a fixed tier order: refuse, review, tier 1, tier 2, reject.
@@ -212,7 +212,7 @@ Owner names, approvers, threshold values, units, dates, contacts and model names
 
 ## 6. Governance console
 
-Full design in `governance-ui-design.md`. In summary:
+Full design in `GOVERNANCE-CONSOLE-DESIGN.md`. In summary:
 
 **Screens.** Home (needs me, overdue, blocked, recent decisions); register (sources, actions, thresholds); change queue (maker-checker); review queue; informed approval; go-live gate; decisions and records (read-only); audit log (read-only).
 
@@ -231,7 +231,7 @@ Full design in `governance-ui-design.md`. In summary:
 
 **Alert classes.** Immediate (review or approval deadline near, revoked key in use, live source down). Due (threshold review, owner re-confirmation, intermediary review, shown seven days before). Blocking (gate incomplete, placeholder, missing owner).
 
-**Help.** Every owner task has an entry in `owner-help-guide.md`. The console links each task to its entry and cannot offer a task that has none.
+**Help.** Every owner task has an entry in `OWNER-HELP-GUIDE.md`. The console links each task to its entry and cannot offer a task that has none.
 
 ## 7. Decisions
 
