@@ -72,7 +72,7 @@ describe("release order threats", () => {
   });
 
   it("a release the verifier refuses creates no session and calls no connector", async () => {
-    const { service, registry, sessions } = serviceWith({
+    const { service, sessions } = serviceWith({
       authenticates: true,
       verifyRelease: async () => {
         throw new Error(
