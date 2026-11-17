@@ -3,7 +3,7 @@ import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { policyV2 } from "@parmana/policy";
 
-import { createPolicyV2Decisions } from "../../src/policyV2/createPolicyV2Decisions.js";
+import { createPolicyV2Runtime } from "../../src/policyV2/createPolicyV2Runtime.js";
 import {
   PolicyV2DecisionService,
   PolicyV2NotEnabledError,
@@ -77,21 +77,21 @@ const REQUEST = {
 
 describe("createPolicyV2Decisions (environment)", () => {
   it("is off when the flag is unset or false", () => {
-    expect(createPolicyV2Decisions({})).toBeUndefined();
+    expect(createPolicyV2Runtime({})).toBeUndefined();
     expect(
-      createPolicyV2Decisions({ PARMANA_POLICY_V2_DECISIONS: "false" }),
+      createPolicyV2Runtime({ PARMANA_POLICY_V2_DECISIONS: "false" }),
     ).toBeUndefined();
   });
 
   it("refuses a flag that is not true or false", () => {
     expect(() =>
-      createPolicyV2Decisions({ PARMANA_POLICY_V2_DECISIONS: "yes" }),
+      createPolicyV2Runtime({ PARMANA_POLICY_V2_DECISIONS: "yes" }),
     ).toThrow(/must be "true" or "false"/);
   });
 
   it("refuses to start with no capability named", () => {
     expect(() =>
-      createPolicyV2Decisions({ PARMANA_POLICY_V2_DECISIONS: "true" }),
+      createPolicyV2Runtime({ PARMANA_POLICY_V2_DECISIONS: "true" }),
     ).toThrow(/must name at least one capability/);
   });
 });

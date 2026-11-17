@@ -4,15 +4,22 @@ import { PostgresPoolFactory } from "@parmana/storage";
 import { assertDatabaseUrlConfigured } from "../bootstrap/assertDatabaseUrlConfigured.js";
 
 import { PolicyV2DecisionService } from "./policyV2Decisions.js";
+import { PolicyV2RegisterService } from "./policyV2Register.js";
+
+export interface PolicyV2Runtime {
+  readonly decisions: PolicyV2DecisionService;
+  readonly register: PolicyV2RegisterService;
+}
 
 /**
- * Builds the policy version 2 decision service from the environment. Off unless
+ * Builds the policy version 2 runtime from the environment. Off unless
  * PARMANA_POLICY_V2_DECISIONS is "true". When it is on, PARMANA_POLICY_V2_CAPABILITIES names the
- * capabilities that accept decisions, and the database must be configured.
+ * capabilities that accept decisions, and the database must be configured. The register's write
+ * path is on whenever the runtime is on.
  */
-export function createPolicyV2Decisions(
+export function createPolicyV2Runtime(
   env: NodeJS.ProcessEnv = process.env,
-): PolicyV2DecisionService | undefined {
+): PolicyV2Runtime | undefined {
   const flag = env.PARMANA_POLICY_V2_DECISIONS;
   if (flag === undefined || flag.trim() === "" || flag === "false") {
     return undefined;
@@ -33,11 +40,11 @@ export function createPolicyV2Decisions(
     );
   }
 
-  assertDatabaseUrlConfigured("PolicyV2Decisions");
+  assertDatabaseUrlConfigured("PolicyV2");
   const pool = PostgresPoolFactory.create();
   const store = new policyV2.persistence.PolicyV2Store(pool);
 
-  return new PolicyV2DecisionService({
+  const decisions = new PolicyV2DecisionService({
     store,
     enabledCapabilities: new Set(capabilities),
     // No approved policy versions exist yet, so every capability refuses. Policy approval is not built.
@@ -49,4 +56,22 @@ export function createPolicyV2Decisions(
     approvers: new policyV2.approvals.ApproverKeys(),
     nonces: new policyV2.persistence.PolicyV2NonceStore(pool),
   });
+
+  const register = new PolicyV2RegisterService({ state: store });
+
+  return { decisions, register };
+}
+
+/**
+ * Sets up the first Parmana owner from PARMANA_POLICY_V2_BOOTSTRAP_OWNER. It takes effect only
+ * while the register has no owner, so setting it again later changes nothing. Returns true if
+ * an owner was set up by this call.
+ */
+export async function bootstrapPolicyV2Owner(
+  runtime: PolicyV2Runtime,
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<boolean> {
+  const owner = env.PARMANA_POLICY_V2_BOOTSTRAP_OWNER?.trim();
+  if (owner === undefined || owner === "") return false;
+  return runtime.register.bootstrapOwner(owner);
 }

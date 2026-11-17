@@ -23,7 +23,10 @@ import { schedulePolicyGovernanceIntegrityCheck } from "./bootstrap/schedulePoli
 import { createRateLimitStore } from "./bootstrap/createRateLimitStore.js";
 import { createSandboxOptions } from "./bootstrap/createSandboxOptions.js";
 import { createKillSwitch } from "./bootstrap/createKillSwitch.js";
-import { createPolicyV2Decisions } from "./policyV2/createPolicyV2Decisions.js";
+import {
+  bootstrapPolicyV2Owner,
+  createPolicyV2Runtime,
+} from "./policyV2/createPolicyV2Runtime.js";
 import { createAlertSink } from "./bootstrap/createAlertSink.js";
 import { createApp } from "./app.js";
 import {
@@ -71,7 +74,8 @@ const executionSystem = await createExecutionSystem();
 
 // ADR-0017: the kill switch is off unless KILL_SWITCH_ENABLED=true.
 const killSwitch = createKillSwitch();
-const policyV2Decisions = createPolicyV2Decisions();
+const policyV2 = createPolicyV2Runtime();
+if (policyV2) await bootstrapPolicyV2Owner(policyV2);
 
 const application = createApplication(
   executionSystem,
@@ -126,7 +130,8 @@ const inboundDecisions = inboundDecisionOptions();
 
 const app = createApp(application, {
   ...(killSwitch ? { killSwitch } : {}),
-  ...(policyV2Decisions ? { policyV2Decisions } : {}),
+  ...(policyV2 ? { policyV2Decisions: policyV2.decisions } : {}),
+  ...(policyV2 ? { policyV2Register: policyV2.register } : {}),
   ...(inboundDecisions ? { inboundDecisions } : {}),
   callerAuth: callerAuth.disabled
     ? "disabled"

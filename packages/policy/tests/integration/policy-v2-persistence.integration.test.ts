@@ -1,8 +1,12 @@
 import { generateKeyPairSync } from "node:crypto";
-import { Pool } from "pg";
+import { Pool, type PoolClient } from "pg";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { resolveDatabaseGate } from "../../../../test-support/database-gate.js";
+import {
+  acquirePolicyV2SuiteLock,
+  releasePolicyV2SuiteLock,
+} from "../helpers/policy-v2-database-lock.js";
 import { AlertBoard } from "../../src/v2/alerts.js";
 import { EvidenceLog, type EvidenceRecord } from "../../src/v2/evidence.js";
 import {
@@ -57,10 +61,12 @@ describe.skipIf(!databaseConfigured)(
   "policy v2 persistence (live database)",
   () => {
     let pool: Pool;
+    let lock: PoolClient | undefined;
     let store: PolicyV2Store;
 
-    beforeAll(() => {
+    beforeAll(async () => {
       pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
+      lock = await acquirePolicyV2SuiteLock(pool);
       store = new PolicyV2Store(pool);
     });
 
@@ -69,6 +75,7 @@ describe.skipIf(!databaseConfigured)(
     });
 
     afterAll(async () => {
+      await releasePolicyV2SuiteLock(lock!);
       await pool.end();
     });
 

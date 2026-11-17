@@ -106,12 +106,21 @@ export interface AuditEvent {
   readonly detail: string;
 }
 
-/** The register's contents as plain data. */
+/** A role held by a caller. */
+export interface RoleGrant {
+  readonly callerId: string;
+  readonly role: Role;
+}
+
+/**
+ * The register's contents as plain data. The audit log is not part of it: each change's
+ * audit events are taken with takeEvents and stored with the snapshot, in one write.
+ */
 export interface RegisterSnapshot {
   readonly sources: readonly SourceRecord[];
   readonly thresholds: readonly ThresholdRecord[];
   readonly actions: readonly ActionRecord[];
-  readonly log: readonly AuditEvent[];
+  readonly roles: readonly RoleGrant[];
 }
 
 export class RegisterError extends Error {
@@ -159,9 +168,89 @@ export class PolicyRegister {
   private readonly sources = new Map<string, SourceRecord>();
   private readonly thresholds = new Map<string, ThresholdRecord>();
   private readonly actions = new Map<string, ActionRecord>();
+  private readonly roles = new Map<string, Set<Role>>();
   private readonly log: AuditEvent[] = [];
+  private pending: AuditEvent[] = [];
 
   constructor(private readonly now: () => Date = () => new Date()) {}
+
+  // ---- Roles ---------------------------------------------------------------
+
+  /** The roles a caller holds, sorted. */
+  rolesOf(callerId: string): Role[] {
+    return [...(this.roles.get(callerId) ?? [])].sort();
+  }
+
+  /** The callers that hold a role, sorted. */
+  holdersOf(role: Role): string[] {
+    return [...this.roles.keys()]
+      .filter((callerId) => this.roles.get(callerId)?.has(role))
+      .sort();
+  }
+
+  /**
+   * Sets up the first Parmana owner. Allowed only while no owner exists, so it cannot be used
+   * to take over a register that already has one. Returns false if an owner already exists.
+   */
+  bootstrapOwner(callerId: string): boolean {
+    if (!isNonEmpty(callerId))
+      throw new RegisterError("A caller id is required.");
+    if (this.holdersOf("parmana-owner").length > 0) return false;
+    this.addRole(callerId, "parmana-owner");
+    this.record("bootstrap", "role.bootstrap", `${callerId} parmana-owner`);
+    return true;
+  }
+
+  /** Grants a role. Only the Parmana owner may grant one. */
+  grantRole(by: Person, callerId: string, role: Role): void {
+    if (!isNonEmpty(callerId))
+      throw new RegisterError("A caller id is required.");
+    requireRole(
+      { id: by.id, roles: this.rolesOf(by.id) },
+      "parmana-owner",
+      "change roles",
+    );
+    if (this.roles.get(callerId)?.has(role)) return;
+    this.addRole(callerId, role);
+    this.record(by.id, "role.grant", `${callerId} ${role}`);
+  }
+
+  /**
+   * Revokes a role. Only the Parmana owner may revoke one. The last Parmana owner cannot be
+   * revoked, so the register always has an owner who can change roles.
+   */
+  revokeRole(by: Person, callerId: string, role: Role): void {
+    requireRole(
+      { id: by.id, roles: this.rolesOf(by.id) },
+      "parmana-owner",
+      "change roles",
+    );
+    if (!this.roles.get(callerId)?.has(role))
+      throw new RegisterError(`${callerId} does not hold the ${role} role.`);
+    if (
+      role === "parmana-owner" &&
+      this.holdersOf("parmana-owner").length === 1
+    )
+      throw new RegisterError(
+        "The last Parmana owner cannot be revoked. Grant another Parmana owner first.",
+      );
+    this.roles.get(callerId)!.delete(role);
+    if (this.roles.get(callerId)!.size === 0) this.roles.delete(callerId);
+    this.record(by.id, "role.revoke", `${callerId} ${role}`);
+  }
+
+  /** The audit events recorded since the last call, and clears them. Saved with the snapshot. */
+  takeEvents(): AuditEvent[] {
+    const events = this.pending;
+    this.pending = [];
+    return events;
+  }
+
+  private addRole(callerId: string, role: Role): void {
+    const held = this.roles.get(callerId) ?? new Set<Role>();
+    held.add(role);
+    this.roles.set(callerId, held);
+  }
 
   // ---- Sources -------------------------------------------------------------
 
@@ -242,6 +331,19 @@ export class PolicyRegister {
       `${name} as ${role}; status ${status}`,
     );
     return updated;
+  }
+
+  /**
+   * Records a change to a person's roles in the audit log. The roles themselves are held by
+   * the role store, which the register does not read.
+   */
+  recordRoleChange(
+    by: Person,
+    callerId: string,
+    role: Role,
+    action: "grant" | "revoke",
+  ): void {
+    this.record(by.id, `role.${action}`, `${callerId} ${role}`);
   }
 
   /** Revokes a source at once. Its answers stop being used for new decisions (design 3). */
@@ -488,7 +590,15 @@ export class PolicyRegister {
       sources: [...this.sources.values()],
       thresholds: [...this.thresholds.values()],
       actions: [...this.actions.values()],
-      log: [...this.log],
+      roles: [...this.roles.entries()]
+        .flatMap(([callerId, held]) =>
+          [...held].map((role) => ({ callerId, role })),
+        )
+        .sort((a, b) =>
+          a.callerId === b.callerId
+            ? a.role.localeCompare(b.role)
+            : a.callerId.localeCompare(b.callerId),
+        ),
     };
   }
 
@@ -497,12 +607,15 @@ export class PolicyRegister {
     this.sources.clear();
     this.thresholds.clear();
     this.actions.clear();
+    this.roles.clear();
     this.log.length = 0;
+    this.pending = [];
     for (const s of snapshot.sources) this.sources.set(s.name, s);
     for (const t of snapshot.thresholds)
       this.thresholds.set(`${t.action}/${t.name}`, t);
     for (const a of snapshot.actions) this.actions.set(a.capability, a);
-    this.log.push(...snapshot.log);
+    for (const grant of snapshot.roles)
+      this.addRole(grant.callerId, grant.role);
   }
 
   listSources(): readonly SourceRecord[] {
@@ -582,7 +695,9 @@ export class PolicyRegister {
   }
 
   private record(by: string, event: string, detail: string): void {
-    this.log.push({ at: this.timestamp(), by, event, detail });
+    const entry = { at: this.timestamp(), by, event, detail };
+    this.log.push(entry);
+    this.pending.push(entry);
   }
 }
 
