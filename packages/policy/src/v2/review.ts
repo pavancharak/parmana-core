@@ -106,6 +106,16 @@ export function addBusinessDays(from: Date, days: number): Date {
   return result;
 }
 
+/** The review queue's contents as plain data. */
+export interface ReviewSnapshot {
+  readonly items: readonly ReviewItem[];
+  readonly results: readonly ReviewResult[];
+  readonly grants: readonly ReviewGrant[];
+  readonly events: readonly ReviewEvent[];
+  readonly alerted: readonly string[];
+  readonly counter: number;
+}
+
 export class ReviewQueue {
   private readonly items = new Map<string, ReviewItem>();
   private readonly results = new Map<string, ReviewResult>();
@@ -305,6 +315,35 @@ export class ReviewQueue {
       default:
         return { status: "pending", reasonCode: "UNDER_REVIEW" };
     }
+  }
+
+  /** The queue's contents as plain data, for storage. */
+  snapshot(): ReviewSnapshot {
+    return {
+      items: [...this.items.values()],
+      results: [...this.results.values()],
+      grants: [...this.grants.values()],
+      events: [...this.events],
+      alerted: [...this.alerted],
+      counter: this.counter,
+    };
+  }
+
+  /** Replaces the queue's contents with a snapshot taken earlier. */
+  load(snapshot: ReviewSnapshot): void {
+    this.items.clear();
+    this.results.clear();
+    this.grants.clear();
+    this.events.length = 0;
+    this.alerted.clear();
+    for (const item of snapshot.items) this.items.set(item.id, item);
+    for (const result of snapshot.results)
+      this.results.set(result.reviewId, result);
+    for (const grant of snapshot.grants)
+      this.grants.set(`${grant.capability}/${grant.reviewerId}`, grant);
+    this.events.push(...snapshot.events);
+    for (const id of snapshot.alerted) this.alerted.add(id);
+    this.counter = snapshot.counter;
   }
 
   /** Every item, open or closed, oldest first. */

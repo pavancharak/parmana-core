@@ -106,6 +106,14 @@ export interface AuditEvent {
   readonly detail: string;
 }
 
+/** The register's contents as plain data. */
+export interface RegisterSnapshot {
+  readonly sources: readonly SourceRecord[];
+  readonly thresholds: readonly ThresholdRecord[];
+  readonly actions: readonly ActionRecord[];
+  readonly log: readonly AuditEvent[];
+}
+
 export class RegisterError extends Error {
   constructor(message: string) {
     super(message);
@@ -472,6 +480,29 @@ export class PolicyRegister {
       return "revoked";
     if (record.status === "pending") return undefined;
     return readEd25519PublicKey(record.publicKeyPem);
+  }
+
+  /** The whole register as plain data, for storage. */
+  snapshot(): RegisterSnapshot {
+    return {
+      sources: [...this.sources.values()],
+      thresholds: [...this.thresholds.values()],
+      actions: [...this.actions.values()],
+      log: [...this.log],
+    };
+  }
+
+  /** Replaces the register's contents with a snapshot taken earlier. */
+  load(snapshot: RegisterSnapshot): void {
+    this.sources.clear();
+    this.thresholds.clear();
+    this.actions.clear();
+    this.log.length = 0;
+    for (const s of snapshot.sources) this.sources.set(s.name, s);
+    for (const t of snapshot.thresholds)
+      this.thresholds.set(`${t.action}/${t.name}`, t);
+    for (const a of snapshot.actions) this.actions.set(a.capability, a);
+    this.log.push(...snapshot.log);
   }
 
   listSources(): readonly SourceRecord[] {
