@@ -1065,6 +1065,11 @@ export class PolicyRegister {
       missing.push(
         "two gate owners who are not the action's owner or successor",
       );
+    // Every gate owner must be in Operations, even one stored before the operator rule existed.
+    for (const id of this.holdersOf("gate-owner")) {
+      if (!this.rolesOf(id).includes("operator"))
+        missing.push(`gate owner ${id} does not hold the operator role`);
+    }
     if (action.testedTiers.length === 0)
       missing.push("a test run for each tier");
     for (const tier of usedTiers) {
