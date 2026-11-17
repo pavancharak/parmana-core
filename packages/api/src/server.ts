@@ -28,6 +28,7 @@ import {
   createPolicyV2Runtime,
   startPolicyV2Sweeps,
 } from "./policyV2/createPolicyV2Runtime.js";
+import { policyV2ChannelsFromEnv } from "./policyV2/sesEmailChannel.js";
 import { createAlertSink } from "./bootstrap/createAlertSink.js";
 import { createApp } from "./app.js";
 import {
@@ -75,7 +76,10 @@ const executionSystem = await createExecutionSystem();
 
 // ADR-0017: the kill switch is off unless KILL_SWITCH_ENABLED=true.
 const killSwitch = createKillSwitch();
-const policyV2 = createPolicyV2Runtime();
+const policyV2 = createPolicyV2Runtime(
+  process.env,
+  policyV2ChannelsFromEnv(process.env),
+);
 if (policyV2) await bootstrapPolicyV2Owner(policyV2);
 const policyV2SweepTimer = startPolicyV2Sweeps(policyV2);
 

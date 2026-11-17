@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.1167.0",
+    "@aws-sdk/client-ses": "3.1167.0",
     "@parmana/approval": "2.0.2",
     "@parmana/connector-sdk": "2.0.2",
     "@parmana/crypto": "2.0.2",

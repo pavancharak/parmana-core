@@ -320,6 +320,15 @@ These variables switch on the policy version 2 runtime. They are read when the s
 - **Effect:** the server runs one sweep per interval. A sweep that loses a race to another writer is skipped, and the next run picks it up. A sweep that changes nothing writes nothing.
 - **Tested:** the interval parsing, the timer, and the start from the runtime. The server stops the timer when it shuts down.
 
+### PARMANA_POLICY_V2_EMAIL_FROM
+
+- **What it is:** the sender address for alert emails, sent through Amazon SES. It must be an address in a domain verified in SES.
+- **Required:** no. Unset, no email is sent, and alerts show on the console only.
+- **Used:** at startup, in `sesEmailChannel.ts`, through `server.ts`.
+- **Values:** an email address. Anything else is refused at startup. `AWS_REGION` must also be set, and credentials come from the AWS credential chain.
+- **Care:** a new SES account can send only to verified addresses until AWS grants production access. Until then, most alert emails will be refused by SES, and each refusal is recorded as a delivery failure.
+- **Not built:** bounce and complaint notifications are not read back, so a bounce after SES accepts a message is not recorded yet.
+
 ### PARMANA_POLICY_V2_BOOTSTRAP_OWNER
 
 - **What it is:** the caller id of the first Parmana owner.

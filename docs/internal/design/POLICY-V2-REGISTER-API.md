@@ -95,7 +95,7 @@ An approver's key is proposed by the Parmana owner. It is pending until a second
 
 An alert is sent to the people it names, through channels. Email goes to every alert. Phone is also sent once an alert escalates to the Parmana owner. A message goes to the contact the register holds for the person, and a group such as `parmana-owner` or `reviewers` goes to each member's contact. The Parmana owner sets contacts. A person with no contact for a channel is a delivery failure, and Operations is alerted.
 
-No email or phone provider is configured yet. A message for a channel with no provider is skipped, and the console still shows the alert. A provider is passed to the runtime; none is read from the environment yet.
+Email is sent through Amazon SES when `PARMANA_POLICY_V2_EMAIL_FROM` is set. Phone has no provider yet, so phone messages are skipped. A message for a channel with no provider is skipped, and the console still shows the alert.
 
 ## Console
 
