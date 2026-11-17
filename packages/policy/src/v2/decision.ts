@@ -14,7 +14,9 @@
 
 import { createHash } from "node:crypto";
 
-import { PolicyRegister } from "./register.js";
+import type { KeyObject } from "node:crypto";
+
+import type { ValidationRegister } from "./validatePolicyV2.js";
 import {
   canonicalize,
   verifySourceAnswer,
@@ -51,7 +53,27 @@ export interface DecisionValue {
   readonly provenance: Provenance;
 }
 
-export interface Decision {
+/** What the register must answer for a decision: keys, thresholds and the validator's view. */
+export interface DecisionRegister {
+  keyFor(source: string, keyId: string): KeyObject | "revoked" | undefined;
+  getThreshold(
+    capability: string,
+    name: string,
+  ):
+    | { readonly status: string; readonly value: number; readonly unit: string }
+    | undefined;
+  toValidationRegister(): ValidationRegister;
+}
+
+/** The signed inputs a decision used. They are stored with the decision so it can be replayed. */
+export interface DecisionInputs {
+  /** The signed answer for each sourced signal. */
+  readonly answers: Readonly<Record<string, SignedAnswer>>;
+  /** The approval artifact for each approval signal, as presented. */
+  readonly approvals: Readonly<Record<string, unknown>>;
+}
+
+export interface CoreDecision {
   readonly outcome: Outcome;
   readonly reason: string;
   readonly refusal?: Refusal;
@@ -59,6 +81,10 @@ export interface Decision {
   readonly tier?: string;
   readonly policy: { readonly capability: string; readonly hash: string };
   readonly values: Readonly<Record<string, DecisionValue>>;
+}
+
+export interface Decision extends CoreDecision {
+  readonly inputs: DecisionInputs;
 }
 
 /** The request as the caller sends it. Its signals are untrusted; its approvals are checked. */
@@ -102,7 +128,7 @@ export type ApprovalChecker = (
 
 export interface DecisionDeps {
   readonly policies: (capability: string) => ApprovedPolicy | undefined;
-  readonly register: PolicyRegister;
+  readonly register: DecisionRegister;
   readonly sources: SourceClient;
   readonly nonces: NonceStore;
   readonly approvals: ApprovalChecker;
@@ -138,7 +164,7 @@ function refuse(
   detail: string,
   errors?: readonly ValidationError[],
   values: Record<string, DecisionValue> = {},
-): Decision {
+): CoreDecision {
   return {
     outcome: "REJECT",
     reason: `Refused: ${detail}`,
@@ -254,11 +280,42 @@ function thresholdsOf(condition: unknown, out: Set<string>): void {
   }
 }
 
-/** Decides one request. Returns a decision, which is recorded whatever the outcome. */
+/** Signals in name order, so every run walks them the same way, whatever order the policy's keys were written in. */
+function sortedSignals(
+  policy: PolicyShape,
+): [string, PolicyShape["signals"][string]][] {
+  return Object.entries(policy.signals).sort(([a], [b]) =>
+    a < b ? -1 : a > b ? 1 : 0,
+  );
+}
+
+/** Decides one request. Returns a decision, which is recorded whatever the outcome, with the signed inputs it used. */
 export async function decide(
   request: DecisionRequest,
   deps: DecisionDeps,
 ): Promise<Decision> {
+  const inputs: {
+    answers: Record<string, SignedAnswer>;
+    approvals: Record<string, unknown>;
+  } = { answers: {}, approvals: {} };
+  const core = await decideCore(request, deps, inputs);
+  return {
+    ...core,
+    inputs: {
+      answers: { ...inputs.answers },
+      approvals: { ...inputs.approvals },
+    },
+  };
+}
+
+async function decideCore(
+  request: DecisionRequest,
+  deps: DecisionDeps,
+  inputs: {
+    answers: Record<string, SignedAnswer>;
+    approvals: Record<string, unknown>;
+  },
+): Promise<CoreDecision> {
   const now = deps.now();
   const approved = deps.policies(request.capability);
   const bare = { capability: request.capability, hash: "" };
@@ -287,7 +344,7 @@ export async function decide(
 
   // 2. Sourced values: ask, verify, check freshness and agreement.
   const values: Record<string, DecisionValue> = {};
-  for (const [name, decl] of Object.entries(policy.signals)) {
+  for (const [name, decl] of sortedSignals(policy)) {
     if (decl.provenance !== "sourced") continue;
     const subject = resolveSubject(decl.subject ?? "", request);
     if (subject === undefined)
@@ -341,6 +398,7 @@ export async function decide(
       );
     }
     const signed = answer as SignedAnswer;
+    inputs.answers[name] = signed;
     const observed = Date.parse(signed.payload.observedAt);
     if (
       decl.maxAgeSeconds !== undefined &&
@@ -378,7 +436,7 @@ export async function decide(
   }
 
   // Untrusted and AI values come from the caller. An AI value must be in its closed set.
-  for (const [name, decl] of Object.entries(policy.signals)) {
+  for (const [name, decl] of sortedSignals(policy)) {
     if (decl.provenance !== "untrusted" && decl.provenance !== "ai") continue;
     const value = request.signals[name];
     if (value === undefined)
@@ -418,15 +476,16 @@ export async function decide(
   }
 
   // 4. Approvals: verified for the exact value they name. A missing or failed approval is false.
-  for (const [name, decl] of Object.entries(policy.signals)) {
+  for (const [name, decl] of sortedSignals(policy)) {
     if (decl.provenance !== "approved") continue;
     const target = decl.approvalFor?.value;
     const expectedValue =
       target !== undefined ? values[target]?.value : undefined;
     const artifact = request.approvals?.[name];
+    if (artifact !== undefined) inputs.approvals[name] = artifact;
     let verified = false;
     if (artifact !== undefined && expectedValue !== undefined) {
-      verified = await deps.approvals(name, artifact, {
+      verified = await deps.approvals(target ?? name, artifact, {
         resource: request.target,
         value: expectedValue,
         action: request.capability,
