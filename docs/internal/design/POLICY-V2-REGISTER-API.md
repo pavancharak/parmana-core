@@ -1,0 +1,70 @@
+# Policy version 2: register API
+
+Status: built. Routes are mounted under `/v2/register` when the policy version 2 runtime is on (see the environment reference, `PARMANA_POLICY_V2_DECISIONS`). Design: [CONSOLIDATED-DESIGN-AND-DECISIONS.md](CONSOLIDATED-DESIGN-AND-DECISIONS.md), section 5.
+
+## Principles
+
+- The caller is the authenticated caller. Its roles come from the saved register, never from the request.
+- A register change is one saved change. The register, its roles and the audit events for the change are saved together, at the version the change read. If another writer saved first, the change is refused and nothing is written.
+- The audit log is append only. A row cannot be changed or removed, at the database.
+- The register never records a placeholder, a missing public key, or an intermediary without a named operator and review date. Those refusals come from the register's own rules.
+
+## Roles
+
+A caller may hold any of these roles. A role is held by one caller id; a caller may hold several.
+
+| Role              | Used for                                                                                                                     |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `parmana-owner`   | Grants and revokes roles. Registers an action. Approves a source that can approve, and every intermediary. Revokes a source. |
+| `second-approver` | Approves a new source. One of the approvals a threshold needs.                                                               |
+| `source-owner`    | Proposes sources. Revokes a source.                                                                                          |
+| `action-owner`    | Proposes a threshold for its action.                                                                                         |
+| `risk-function`   | Approves the risk view of a high-value threshold.                                                                            |
+| `gate-owner`      | Records a test for an action, and runs the go-live gate.                                                                     |
+| `reviewer`        | Not used by the register. Reviewers act on the review queue.                                                                 |
+
+Only the Parmana owner may grant or revoke a role. The last Parmana owner cannot be revoked. The first Parmana owner is set up once, at startup, from `PARMANA_POLICY_V2_BOOTSTRAP_OWNER`.
+
+## Routes
+
+All routes need an authenticated caller. Errors use one shape: `{ "error": "<code>", "message": "<reason>" }`, except where a route returns a body of its own.
+
+| Method and path                                      | Body or query                                                                           | Who may call it                               | Success                                 |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------- | --------------------------------------- |
+| `GET /v2/register`                                   | none                                                                                    | any caller holding a role                     | 200: `{ sources, thresholds, actions }` |
+| `GET /v2/register/audit`                             | `after` (whole number, default 0), `limit` (1 to 500, default 100)                      | any caller holding a role                     | 200: `{ events, next }`                 |
+| `POST /v2/register/roles/grant`                      | `{ callerId, role }`                                                                    | Parmana owner                                 | 200: `{ granted: true }`                |
+| `POST /v2/register/roles/revoke`                     | `{ callerId, role }`                                                                    | Parmana owner                                 | 200: `{ revoked: true }`                |
+| `POST /v2/register/sources`                          | a source (name, dataOwner, signer, keyId, publicKeyPem, claims, canApprove)             | source owner                                  | 200: the source, pending                |
+| `POST /v2/register/sources/:name/approve`            | none                                                                                    | a role the register assigns for the source    | 200: the source                         |
+| `POST /v2/register/sources/:name/revoke`             | `{ reason }`                                                                            | Parmana owner or source owner                 | 200: the source, untrusted              |
+| `POST /v2/register/thresholds`                       | a threshold (action, name, value, unit, owner, reason, evidence, nextReview, highValue) | action owner                                  | 200: the threshold, proposed            |
+| `POST /v2/register/thresholds/:action/:name/approve` | none                                                                                    | a role the register assigns for the threshold | 200: the threshold                      |
+| `POST /v2/register/actions`                          | an action (capability, owner, successor, reviewers, review settings)                    | Parmana owner                                 | 200: the action                         |
+
+`GET /v2/register/audit` returns the events in order. Pass the `next` value as `after` to read the next page. `next` is `null` when the page is the last one.
+
+### Responses
+
+| Status | Code              | When                                                                                                                                                          |
+| ------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 400    | `invalid_request` | The body is not a JSON object, a required field is missing or of the wrong type, `role` is not one of the roles above, or a paging parameter is out of range. |
+| 401    | `unauthenticated` | No authenticated caller.                                                                                                                                      |
+| 403    | `forbidden`       | The caller holds no role at all.                                                                                                                              |
+| 409    | `conflict`        | Another writer saved the register first. Nothing was written. Read the register again and retry.                                                              |
+| 422    | `refused`         | The register refused the change. The message gives the reason. This includes a non-owner trying to grant a role, and revoking the last Parmana owner.         |
+
+## Audit events
+
+Each change adds these events to the audit log, with the caller as `by`:
+
+- `role.bootstrap`, `role.grant`, `role.revoke`
+- the events the register records for sources, thresholds and actions, for example `source.proposed`, `source.approved`, `source.revoked`
+
+A refused change adds no events.
+
+## Not built here
+
+- The role rules for approving a threshold or an action are the register's own rules. This document does not restate them.
+- There is no route to read a single source, threshold or action. The list route returns all of them.
+- There is no route to change the audit log, and none is planned.
