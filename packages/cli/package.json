@@ -1,6 +1,6 @@
 {
   "name": "@parmana/cli",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Command-line tool for Parmana policy governance: propose a policy change, sign and submit a checker's step-up approval, and verify or export the signed approval log.",
   "type": "module",
   "main": "./dist/index.js",
@@ -9,6 +9,7 @@
   },
   "files": [
     "dist",
+    "!dist/.tsbuildinfo",
     "LICENSE",
     "NOTICE"
   ],
@@ -18,7 +19,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@parmana/crypto": "3.0.0"
+    "@parmana/crypto": "3.0.1"
   },
   "engines": {
     "node": ">=24"
