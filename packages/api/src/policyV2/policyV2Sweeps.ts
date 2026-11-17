@@ -1,5 +1,12 @@
 import { policyV2 } from "@parmana/policy";
 
+import {
+  dispatchNotifications,
+  NotificationOutbox,
+  recordDeliveryFailures,
+  type NotificationChannels,
+} from "./policyV2Notifications.js";
+
 /**
  * The sweeps for policy version 2. A sweep expires review items whose window has passed, closes
  * their alerts, records reminders for items past half their window, and escalates open alerts that
@@ -10,7 +17,7 @@ import { policyV2 } from "@parmana/policy";
 /** The part of the state store the sweep uses. The Postgres store satisfies it. */
 export interface PolicyV2SweepStateStore {
   load<T>(
-    component: "review" | "alerts",
+    component: "register" | "review" | "alerts",
   ): Promise<{ readonly body: T; readonly version: number } | undefined>;
   commitSnapshots(commit: policyV2.persistence.SnapshotCommit): Promise<void>;
 }
@@ -25,6 +32,7 @@ export interface PolicyV2SweepResult {
 
 export interface PolicyV2SweepServiceOptions {
   readonly store: PolicyV2SweepStateStore;
+  readonly channels?: NotificationChannels;
   readonly now?: () => Date;
 }
 
@@ -41,15 +49,20 @@ export class PolicyV2SweepService {
       await store.load<policyV2.review.ReviewSnapshot>("review");
     const alertState =
       await store.load<policyV2.alerts.AlertSnapshot>("alerts");
+    const registerState =
+      await store.load<policyV2.register.RegisterSnapshot>("register");
     if (reviewState === undefined && alertState === undefined) {
       return { reminders: 0, expired: 0, escalated: 0, written: false };
     }
 
     const queue = new policyV2.review.ReviewQueue(this.clock);
     if (reviewState !== undefined) queue.load(reviewState.body);
+    const register = new policyV2.register.PolicyRegister(this.clock);
+    if (registerState !== undefined) register.load(registerState.body);
+    const outbox = new NotificationOutbox();
     const board = new policyV2.alerts.AlertBoard(
       this.clock,
-      () => true,
+      outbox.notify,
       () => true,
     );
     if (alertState !== undefined) board.load(alertState.body);
@@ -81,6 +94,14 @@ export class PolicyV2SweepService {
       },
       alerts: { body: board.snapshot(), readVersion: alertState?.version ?? 0 },
     });
+
+    const delivery = await dispatchNotifications(outbox.take(), {
+      register,
+
+      channels: this.options.channels ?? {},
+    });
+
+    await recordDeliveryFailures(store, delivery.failures, this.clock());
     return { reminders, expired, escalated, written: true };
   }
 }

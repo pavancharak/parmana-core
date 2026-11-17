@@ -211,6 +211,15 @@ export class PolicyV2RegisterService {
     );
   }
 
+  /** Sets how to reach a person about an alert. Only the Parmana owner sets a contact. */
+  setContact(
+    byCaller: string,
+    personId: string,
+    contact: policyV2.register.Contact,
+  ): Promise<policyV2.register.Contact> {
+    return this.write(byCaller, (r, p) => r.setContact(personId, contact, p));
+  }
+
   /** Records that a test ran for a tier. Only the gate owner records one. */
   recordTest(
     byCaller: string,

@@ -13,6 +13,13 @@
 
 import { policyV2 } from "@parmana/policy";
 
+import {
+  dispatchNotifications,
+  NotificationOutbox,
+  recordDeliveryFailures,
+  type NotificationChannels,
+} from "./policyV2Notifications.js";
+
 export type PolicyV2Component = policyV2.persistence.Component;
 
 /** The part of the store the service uses. The Postgres store satisfies it; tests use an in-memory one. */
@@ -26,6 +33,7 @@ export interface PolicyV2StateStore {
     readVersion: number,
   ): Promise<number>;
   commitDecision(commit: policyV2.persistence.DecisionCommit): Promise<void>;
+  commitSnapshots(commit: policyV2.persistence.SnapshotCommit): Promise<void>;
   readEvidence(): Promise<policyV2.evidence.EvidenceRecord[]>;
 }
 
@@ -44,6 +52,8 @@ export interface PolicyV2DecisionServiceOptions {
   readonly sources: policyV2.decision.SourceClient;
   /** Records used nonces. Durable in production; in memory when none is given. */
   readonly nonces?: policyV2.sourceAnswer.NonceStore;
+  /** The channels that send alerts. A channel that is not configured is skipped. */
+  readonly channels?: NotificationChannels;
   readonly now?: () => Date;
 }
 
@@ -61,11 +71,6 @@ export interface PolicyV2DecisionResponse {
 
 /** Reviews are assigned to the reviewers' queue, not to one person, until assignment is built. */
 const REVIEW_ASSIGNEE = "reviewers";
-
-function notifyConsole(): boolean {
-  // Alerts are shown on the console. Email and phone channels are not built yet, so there is nothing to fail.
-  return true;
-}
 
 export class PolicyV2DecisionService {
   private readonly clock: () => Date;
@@ -107,9 +112,10 @@ export class PolicyV2DecisionService {
           : {}),
       })),
     );
+    const outbox = new NotificationOutbox();
     const board = new policyV2.alerts.AlertBoard(
       this.clock,
-      notifyConsole,
+      outbox.notify,
       () => true,
     );
     if (alertState !== undefined) board.load(alertState.body);
@@ -203,6 +209,12 @@ export class PolicyV2DecisionService {
           }
         : {}),
     });
+
+    const delivery = await dispatchNotifications(outbox.take(), {
+      register,
+      channels: this.options.channels ?? {},
+    });
+    await recordDeliveryFailures(store, delivery.failures, now);
 
     return {
       outcome: decision.outcome,
