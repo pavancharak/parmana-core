@@ -128,6 +128,22 @@ export interface RegisterSnapshot {
   readonly approverKeys?: readonly ApproverKeyRecord[];
   /** Missing in snapshots saved before policy versions existed; read as none. */
   readonly policyVersions?: readonly PolicyVersionRecord[];
+  /** Missing in snapshots saved before reviewer grants existed; read as none. */
+  readonly reviewGrants?: readonly ReviewGrantRecord[];
+}
+
+/**
+ * A reviewer's grant to review an action's decisions. A grant names the reviewer, the action,
+ * and an optional amount limit. It counts only while the reviewer is still named on the action
+ * and still holds the reviewer role.
+ */
+export interface ReviewGrantRecord {
+  readonly capability: string;
+  readonly reviewerId: string;
+  /** The largest amount this reviewer may decide. Absent means no amount limit. */
+  readonly maxAmount?: number;
+  readonly status: "active" | "revoked";
+  readonly grantedBy: string;
 }
 
 export type PolicyVersionStatus = "proposed" | "approved" | "superseded";
@@ -218,6 +234,7 @@ export class PolicyRegister {
   private readonly roles = new Map<string, Set<Role>>();
   private readonly approverKeys = new Map<string, ApproverKeyRecord>();
   private readonly policyVersions = new Map<string, PolicyVersionRecord>();
+  private readonly reviewGrants = new Map<string, ReviewGrantRecord>();
   private readonly log: AuditEvent[] = [];
   private pending: AuditEvent[] = [];
 
@@ -393,6 +410,109 @@ export class PolicyRegister {
     action: "grant" | "revoke",
   ): void {
     this.record(by.id, `role.${action}`, `${callerId} ${role}`);
+  }
+
+  // ---- Reviewer grants -----------------------------------------------------
+
+  /**
+   * Grants a reviewer the right to review an action's decisions. Only the action owner or the
+   * Parmana owner grants one. The reviewer must be named on the action, hold the reviewer role,
+   * and not be the action's owner or successor. An amount limit, if given, must be positive.
+   */
+  grantReview(
+    capability: string,
+    reviewerId: string,
+    by: Person,
+    maxAmount?: number,
+  ): ReviewGrantRecord {
+    const action = this.requireAction(capability);
+    if (!isNonEmpty(reviewerId))
+      throw new RegisterError("A reviewer id is required.");
+    const isOwner =
+      by.id === action.owner || this.rolesOf(by.id).includes("parmana-owner");
+    if (!isOwner)
+      throw new RegisterError(
+        `Only the action owner (${action.owner}) or the Parmana owner grants a review for ${capability}.`,
+      );
+    if (!action.reviewers.includes(reviewerId))
+      throw new RegisterError(
+        `${reviewerId} is not a named reviewer for ${capability}.`,
+      );
+    if (reviewerId === action.owner || reviewerId === action.successor)
+      throw new RegisterError(
+        `${reviewerId} is the action's owner or successor, and cannot review it.`,
+      );
+    if (!this.rolesOf(reviewerId).includes("reviewer"))
+      throw new RegisterError(`${reviewerId} holds no reviewer role.`);
+    if (maxAmount !== undefined && !(maxAmount > 0))
+      throw new RegisterError("An amount limit must be a positive number.");
+    const key = reviewGrantId(capability, reviewerId);
+    const record: ReviewGrantRecord = {
+      capability,
+      reviewerId,
+      ...(maxAmount !== undefined ? { maxAmount } : {}),
+      status: "active",
+      grantedBy: by.id,
+    };
+    this.reviewGrants.set(key, record);
+    this.record(
+      by.id,
+      "review.grant",
+      `${reviewerId} for ${capability}${maxAmount !== undefined ? ` up to ${maxAmount}` : ""}`,
+    );
+    return record;
+  }
+
+  /** Revokes a reviewer's grant at once. Only the action owner or the Parmana owner revokes one, with a reason. */
+  revokeReview(
+    capability: string,
+    reviewerId: string,
+    by: Person,
+    reason: string,
+  ): ReviewGrantRecord {
+    const action = this.requireAction(capability);
+    const key = reviewGrantId(capability, reviewerId);
+    const existing = this.reviewGrants.get(key);
+    if (existing === undefined)
+      throw new RegisterError(
+        `${reviewerId} holds no review grant for ${capability}.`,
+      );
+    const isOwner =
+      by.id === action.owner || this.rolesOf(by.id).includes("parmana-owner");
+    if (!isOwner)
+      throw new RegisterError(
+        `Only the action owner or the Parmana owner revokes a review for ${capability}.`,
+      );
+    if (!isNonEmpty(reason))
+      throw new RegisterError("A revocation needs a reason.");
+    const updated: ReviewGrantRecord = { ...existing, status: "revoked" };
+    this.reviewGrants.set(key, updated);
+    this.record(
+      by.id,
+      "review.revoke",
+      `${reviewerId} for ${capability}: ${reason}`,
+    );
+    return updated;
+  }
+
+  /**
+   * The grants that count now: active, and the reviewer is still named on the action and still
+   * holds the reviewer role. A reviewer who loses either stops counting at once.
+   */
+  activeReviewGrants(): ReviewGrantRecord[] {
+    return [...this.reviewGrants.values()].filter((grant) => {
+      if (grant.status !== "active") return false;
+      const action = this.actions.get(grant.capability);
+      return (
+        action !== undefined &&
+        action.reviewers.includes(grant.reviewerId) &&
+        this.rolesOf(grant.reviewerId).includes("reviewer")
+      );
+    });
+  }
+
+  listReviewGrants(): readonly ReviewGrantRecord[] {
+    return [...this.reviewGrants.values()];
   }
 
   // ---- Policy versions -----------------------------------------------------
@@ -974,6 +1094,11 @@ export class PolicyRegister {
       sources: [...this.sources.values()],
       thresholds: [...this.thresholds.values()],
       actions: [...this.actions.values()],
+      reviewGrants: [...this.reviewGrants.values()].sort((a, b) =>
+        reviewGrantId(a.capability, a.reviewerId).localeCompare(
+          reviewGrantId(b.capability, b.reviewerId),
+        ),
+      ),
       policyVersions: [...this.policyVersions.values()].sort((a, b) =>
         policyVersionId(a.capability, a.policyVersion).localeCompare(
           policyVersionId(b.capability, b.policyVersion),
@@ -1013,6 +1138,12 @@ export class PolicyRegister {
     this.approverKeys.clear();
     for (const key of snapshot.approverKeys ?? [])
       this.approverKeys.set(approverKeyId(key.approverId, key.keyId), key);
+    this.reviewGrants.clear();
+    for (const grant of snapshot.reviewGrants ?? [])
+      this.reviewGrants.set(
+        reviewGrantId(grant.capability, grant.reviewerId),
+        grant,
+      );
     this.policyVersions.clear();
     for (const version of snapshot.policyVersions ?? [])
       this.policyVersions.set(
@@ -1168,4 +1299,8 @@ function usesOf(policy: unknown): {
       ),
     ],
   };
+}
+
+function reviewGrantId(capability: string, reviewerId: string): string {
+  return `${capability}/${reviewerId}`;
 }

@@ -43,6 +43,7 @@ export interface PolicyV2RegisterView {
   readonly actions: readonly policyV2.register.ActionRecord[];
   readonly approverKeys: readonly policyV2.register.ApproverKeyRecord[];
   readonly policyVersions: readonly policyV2.register.PolicyVersionRecord[];
+  readonly reviewGrants: readonly policyV2.register.ReviewGrantRecord[];
 }
 
 export class PolicyV2RegisterService {
@@ -62,6 +63,7 @@ export class PolicyV2RegisterService {
       actions: register.listActions(),
       approverKeys: register.listApproverKeys(),
       policyVersions: register.listPolicyVersions(),
+      reviewGrants: register.listReviewGrants(),
     };
   }
 
@@ -182,6 +184,30 @@ export class PolicyV2RegisterService {
   ): Promise<policyV2.register.PolicyVersionRecord> {
     return this.write(byCaller, (r, p) =>
       r.approvePolicy(capability, policyVersion, p),
+    );
+  }
+
+  /** Grants a reviewer the right to review an action's decisions. Only the action owner or the Parmana owner grants one. */
+  grantReview(
+    byCaller: string,
+    capability: string,
+    reviewerId: string,
+    maxAmount?: number,
+  ): Promise<policyV2.register.ReviewGrantRecord> {
+    return this.write(byCaller, (r, p) =>
+      r.grantReview(capability, reviewerId, p, maxAmount),
+    );
+  }
+
+  /** Revokes a reviewer's grant at once, with a reason. */
+  revokeReview(
+    byCaller: string,
+    capability: string,
+    reviewerId: string,
+    reason: string,
+  ): Promise<policyV2.register.ReviewGrantRecord> {
+    return this.write(byCaller, (r, p) =>
+      r.revokeReview(capability, reviewerId, p, reason),
     );
   }
 
