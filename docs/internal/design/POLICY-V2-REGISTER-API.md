@@ -29,18 +29,21 @@ Only the Parmana owner may grant or revoke a role. The last Parmana owner cannot
 
 All routes need an authenticated caller. Errors use one shape: `{ "error": "<code>", "message": "<reason>" }`, except where a route returns a body of its own.
 
-| Method and path                                      | Body or query                                                                           | Who may call it                               | Success                                 |
-| ---------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------- | --------------------------------------- |
-| `GET /v2/register`                                   | none                                                                                    | any caller holding a role                     | 200: `{ sources, thresholds, actions }` |
-| `GET /v2/register/audit`                             | `after` (whole number, default 0), `limit` (1 to 500, default 100)                      | any caller holding a role                     | 200: `{ events, next }`                 |
-| `POST /v2/register/roles/grant`                      | `{ callerId, role }`                                                                    | Parmana owner                                 | 200: `{ granted: true }`                |
-| `POST /v2/register/roles/revoke`                     | `{ callerId, role }`                                                                    | Parmana owner                                 | 200: `{ revoked: true }`                |
-| `POST /v2/register/sources`                          | a source (name, dataOwner, signer, keyId, publicKeyPem, claims, canApprove)             | source owner                                  | 200: the source, pending                |
-| `POST /v2/register/sources/:name/approve`            | none                                                                                    | a role the register assigns for the source    | 200: the source                         |
-| `POST /v2/register/sources/:name/revoke`             | `{ reason }`                                                                            | Parmana owner or source owner                 | 200: the source, untrusted              |
-| `POST /v2/register/thresholds`                       | a threshold (action, name, value, unit, owner, reason, evidence, nextReview, highValue) | action owner                                  | 200: the threshold, proposed            |
-| `POST /v2/register/thresholds/:action/:name/approve` | none                                                                                    | a role the register assigns for the threshold | 200: the threshold                      |
-| `POST /v2/register/actions`                          | an action (capability, owner, successor, reviewers, review settings)                    | Parmana owner                                 | 200: the action                         |
+| Method and path                                              | Body or query                                                                           | Who may call it                                     | Success                                 |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------- |
+| `GET /v2/register`                                           | none                                                                                    | any caller holding a role                           | 200: `{ sources, thresholds, actions }` |
+| `GET /v2/register/audit`                                     | `after` (whole number, default 0), `limit` (1 to 500, default 100)                      | any caller holding a role                           | 200: `{ events, next }`                 |
+| `POST /v2/register/roles/grant`                              | `{ callerId, role }`                                                                    | Parmana owner                                       | 200: `{ granted: true }`                |
+| `POST /v2/register/roles/revoke`                             | `{ callerId, role }`                                                                    | Parmana owner                                       | 200: `{ revoked: true }`                |
+| `POST /v2/register/sources`                                  | a source (name, dataOwner, signer, keyId, publicKeyPem, claims, canApprove)             | source owner                                        | 200: the source, pending                |
+| `POST /v2/register/sources/:name/approve`                    | none                                                                                    | a role the register assigns for the source          | 200: the source                         |
+| `POST /v2/register/sources/:name/revoke`                     | `{ reason }`                                                                            | Parmana owner or source owner                       | 200: the source, untrusted              |
+| `POST /v2/register/thresholds`                               | a threshold (action, name, value, unit, owner, reason, evidence, nextReview, highValue) | action owner                                        | 200: the threshold, proposed            |
+| `POST /v2/register/thresholds/:action/:name/approve`         | none                                                                                    | a role the register assigns for the threshold       | 200: the threshold                      |
+| `POST /v2/register/approver-keys`                            | `{ approverId, keyId, publicKeyPem }` (Ed25519)                                         | Parmana owner                                       | 200: the key, pending                   |
+| `POST /v2/register/approver-keys/:approverId/:keyId/approve` | none                                                                                    | second approver, not the proposer, not the approver | 200: the key, active                    |
+| `POST /v2/register/approver-keys/:approverId/:keyId/revoke`  | `{ reason }`                                                                            | Parmana owner                                       | 200: the key, revoked                   |
+| `POST /v2/register/actions`                                  | an action (capability, owner, successor, reviewers, review settings)                    | Parmana owner                                       | 200: the action                         |
 
 `GET /v2/register/audit` returns the events in order. Pass the `next` value as `after` to read the next page. `next` is `null` when the page is the last one.
 
@@ -54,12 +57,16 @@ All routes need an authenticated caller. Errors use one shape: `{ "error": "<cod
 | 409    | `conflict`        | Another writer saved the register first. Nothing was written. Read the register again and retry.                                                              |
 | 422    | `refused`         | The register refused the change. The message gives the reason. This includes a non-owner trying to grant a role, and revoking the last Parmana owner.         |
 
+## Approver keys
+
+An approver's key is proposed by the Parmana owner. It is pending until a second approver confirms it. The confirmer must not be the proposer, and must not be the approver whose key it is. A pending key counts for no approval. A revoked key takes effect at once, and an approval signed with it is refused by name.
+
 ## Audit events
 
 Each change adds these events to the audit log, with the caller as `by`:
 
 - `role.bootstrap`, `role.grant`, `role.revoke`
-- the events the register records for sources, thresholds and actions, for example `source.proposed`, `source.approved`, `source.revoked`
+- the events the register records for sources, thresholds, actions and approver keys, for example `source.proposed`, `source.approved`, `source.revoked`, `approver-key.proposed`, `approver-key.approved`, `approver-key.revoked`
 
 A refused change adds no events.
 
