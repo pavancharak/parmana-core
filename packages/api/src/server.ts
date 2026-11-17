@@ -136,6 +136,7 @@ const app = createApp(application, {
   ...(policyV2 ? { policyV2Register: policyV2.register } : {}),
   ...(policyV2 ? { policyV2Reviews: policyV2.reviews } : {}),
   ...(policyV2 ? { policyV2Replay: policyV2.replay } : {}),
+  ...(policyV2 ? { policyV2Console: policyV2.console } : {}),
   ...(inboundDecisions ? { inboundDecisions } : {}),
   callerAuth: callerAuth.disabled
     ? "disabled"

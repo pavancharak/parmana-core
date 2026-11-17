@@ -10,3 +10,5 @@ export * as review from "./review.js";
 export * as alerts from "./alerts.js";
 export * as evidence from "./evidence.js";
 export * as persistence from "./persistence.js";
+export * as console from "./console.js";
+export * as render from "./render.js";

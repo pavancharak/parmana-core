@@ -8,6 +8,7 @@ import { PolicyV2RegisterService } from "./policyV2Register.js";
 import { PolicyV2ReviewService } from "./policyV2Reviews.js";
 import { PolicyV2SweepService } from "./policyV2Sweeps.js";
 import { PolicyV2ReplayService } from "./policyV2Replay.js";
+import { PolicyV2ConsoleService } from "./policyV2Console.js";
 import type { NotificationChannels } from "./policyV2Notifications.js";
 
 export interface PolicyV2Runtime {
@@ -16,6 +17,7 @@ export interface PolicyV2Runtime {
   readonly reviews: PolicyV2ReviewService;
   readonly sweeps: PolicyV2SweepService;
   readonly replay: PolicyV2ReplayService;
+  readonly console: PolicyV2ConsoleService;
 }
 
 /**
@@ -70,8 +72,9 @@ export function createPolicyV2Runtime(
   const sweeps = new PolicyV2SweepService({ store, channels });
 
   const replay = new PolicyV2ReplayService({ store });
+  const console = new PolicyV2ConsoleService({ store });
 
-  return { decisions, register, reviews, sweeps, replay };
+  return { decisions, register, reviews, sweeps, replay, console };
 }
 
 /**
