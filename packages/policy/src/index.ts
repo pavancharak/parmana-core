@@ -111,3 +111,6 @@ export {
   type SignalType,
   type SignalTypeViolation,
 } from "./signalTypes.js";
+
+// Policy version 2 (design in docs/internal/design). Exported as namespaces.
+export * as policyV2 from "./v2/index.js";

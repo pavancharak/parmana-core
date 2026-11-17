@@ -90,6 +90,13 @@ export class AlertError extends Error {
   }
 }
 
+/** The alert board's contents as plain data. */
+export interface AlertSnapshot {
+  readonly alerts: readonly Alert[];
+  readonly events: readonly AlertEvent[];
+  readonly counter: number;
+}
+
 export class AlertBoard {
   private readonly alerts = new Map<string, Alert>();
   private readonly events: AlertEvent[] = [];
@@ -242,6 +249,24 @@ export class AlertBoard {
       };
     }
     return { allowed: true, reason: "No open alert blocks this action." };
+  }
+
+  /** The board's contents as plain data, for storage. */
+  snapshot(): AlertSnapshot {
+    return {
+      alerts: [...this.alerts.values()],
+      events: [...this.events],
+      counter: this.counter,
+    };
+  }
+
+  /** Replaces the board's contents with a snapshot taken earlier. */
+  load(snapshot: AlertSnapshot): void {
+    this.alerts.clear();
+    this.events.length = 0;
+    for (const alert of snapshot.alerts) this.alerts.set(alert.id, alert);
+    this.events.push(...snapshot.events);
+    this.counter = snapshot.counter;
   }
 
   get(id: string): Alert | undefined {

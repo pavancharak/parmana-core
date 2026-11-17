@@ -121,6 +121,17 @@ export class EvidenceLog {
     return record;
   }
 
+  /** The log's records as plain data, for storage. */
+  snapshot(): readonly EvidenceRecord[] {
+    return [...this.records];
+  }
+
+  /** Replaces the log with records read back from storage. The chain is checked separately. */
+  load(records: readonly EvidenceRecord[]): void {
+    this.records.length = 0;
+    this.records.push(...records);
+  }
+
   all(): readonly EvidenceRecord[] {
     return [...this.records];
   }
