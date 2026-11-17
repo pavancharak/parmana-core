@@ -73,7 +73,7 @@ Approval needs a second approver, who is not the proposer. A policy that reads a
 
 A version is used for decisions only when its action has passed the go-live gate. The gate needs its owner, successor, reviewers, sources and thresholds recorded and approved, and a recorded test for each tier. Until then the version is approved but not used, and decisions for the action refuse. The gate owner records a test for each tier and runs the gate. The action's owner and successor may not record a test or run the gate. The gate also lists, as missing, any time fewer than two gate owners outside the owner and successor hold the role. The gate reads the sources, thresholds and tiers from the approved version, never from the request, so a request cannot leave out an item. Once the gate passes, the action is live and its approved version is used for decisions. A later change to a source or threshold that the version uses stops the version from being used at once.
 
-The roles that propose and approve a policy version are a decision of this build, not of the design documents. The design says a policy change is a new version approved through maker-checker, and does not name the roles. These roles are open for the owner to confirm.
+The design says a policy change is a new version approved through maker-checker, and does not name the roles. The Parmana owner confirmed the roles on 2026-11-17: the action owner proposes a policy version. A second approver approves it, never the proposer. The Parmana owner also approves when the policy reads a source that can approve, or an intermediary.
 
 ## Reviewer grants
 
