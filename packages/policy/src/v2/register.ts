@@ -4,7 +4,7 @@
  *
  * Design: docs/internal/design/CONSOLIDATED-DESIGN-AND-DECISIONS.md, sections 4.2, 5.1 to 5.7.
  *
- * Standalone. The runtime does not use it yet. Every change is proposed by one
+ * Used by the runtime. Every change is proposed by one
  * person and approved by another. Placeholders are refused. Every change is
  * written to an append-only audit log. The register can be read as the
  * ValidationRegister that validatePolicyV2 checks against.

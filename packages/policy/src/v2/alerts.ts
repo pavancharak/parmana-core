@@ -7,7 +7,7 @@
  * then the Parmana owner, then Operations. A pending item that blocks an action stops
  * that action from approving. If an alert cannot be shown, the decision waits.
  *
- * Standalone. The console screens and the notification channels are not built here.
+ * Shown by the console route. Messages are queued by policyV2Notifications.ts in the API package.
  */
 
 export type AlertClass = "immediate" | "due" | "blocking";

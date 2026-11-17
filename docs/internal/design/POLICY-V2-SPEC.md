@@ -1,6 +1,6 @@
 # Policy schema version 2: generic specification
 
-Status: proposed for finalisation. Covers decisions D10, D13, D14 and D16 to D19 in the plan. Not yet built. This specification does not depend on any existing policy. It applies to any business system.
+Status: proposed for finalisation. Covers decisions D10, D13, D14 and D16 to D19 in the plan. Built: the runtime applies this specification (see CONSOLIDATED-DESIGN-AND-DECISIONS.md, section 9). This specification does not depend on any existing policy. It applies to any business system.
 
 ## 1. Purpose
 

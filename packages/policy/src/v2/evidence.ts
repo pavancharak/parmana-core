@@ -8,7 +8,7 @@
  * Replay re-runs the decision from the record alone, at the time it was made, and
  * reports any difference. Provenance is not stored: it is derived from the policy.
  *
- * Standalone. The runtime does not use it yet.
+ * Used by the runtime: each decision is recorded, and the replay route re-runs it.
  */
 
 import { createHash, createPublicKey, type KeyObject } from "node:crypto";

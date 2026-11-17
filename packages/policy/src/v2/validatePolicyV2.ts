@@ -3,7 +3,7 @@
  *
  * Specification: docs/internal/design/POLICY-V2-SPEC.md, section 7.
  *
- * Standalone. The runtime does not call this yet. It returns every error it
+ * The register calls this when a policy is proposed and when it is approved. It returns every error it
  * finds, each tagged with the check number from the specification, so a
  * policy can be refused at load time and at proposal time.
  */

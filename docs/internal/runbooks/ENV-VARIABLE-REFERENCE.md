@@ -347,7 +347,7 @@ These variables switch on the policy version 2 runtime. They are read when the s
 - **Used:** at startup, in `sesEmailChannel.ts`, through `server.ts`.
 - **Values:** an email address. Anything else is refused at startup. `AWS_REGION` must also be set, and credentials come from the AWS credential chain.
 - **Care:** a new SES account can send only to verified addresses until AWS grants production access. Until then, most alert emails will be refused by SES, and each refusal is recorded as a delivery failure.
-- **Not built:** bounce and complaint notifications are not read back, so a bounce after SES accepts a message is not recorded yet.
+- **Bounces:** SES bounces and complaints reach the system through the SNS adapter, when `PARMANA_POLICY_V2_SNS_EVENTS` is `true`. Any other provider needs its own adapter. See [PROVIDER-EVENT-ADAPTERS.md](../design/PROVIDER-EVENT-ADAPTERS.md).
 
 ### PARMANA_POLICY_V2_BOOTSTRAP_OWNER
 

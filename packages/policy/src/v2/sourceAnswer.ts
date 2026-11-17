@@ -6,7 +6,7 @@
  * and the transaction ID. The verifier accepts an answer only when every check
  * passes, and it says which check failed.
  *
- * Standalone. The runtime does not use it yet.
+ * Used by the runtime: the decision service verifies each sourced answer with it. No source is connected yet, so no answer is received.
  */
 
 import { createPublicKey, sign, verify, type KeyObject } from "node:crypto";
