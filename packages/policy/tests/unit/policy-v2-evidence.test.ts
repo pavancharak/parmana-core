@@ -327,16 +327,18 @@ function approvalChecker(approvers: ApproverKeys) {
       now: Date;
     },
   ) => {
-    return verifyApproval(
-      artifact,
-      {
-        signal,
-        capability: expected.action,
-        resource: expected.resource,
-        value: expected.value,
-        now: expected.now,
-      },
-      { approvers, nonces: new MemoryNonceStore(() => NOW) },
+    return (
+      await verifyApproval(
+        artifact,
+        {
+          signal,
+          capability: expected.action,
+          resource: expected.resource,
+          value: expected.value,
+          now: expected.now,
+        },
+        { approvers, nonces: new MemoryNonceStore(() => NOW) },
+      )
     ).ok;
   };
 }
@@ -480,7 +482,7 @@ describe("replay", () => {
 });
 
 describe("the policy store", () => {
-  it("returns the policy under its hash, and nothing for an unknown hash", () => {
+  it("returns the policy under its hash, and nothing for an unknown hash", async () => {
     const store = new PolicyStore();
     const hash = store.put(policy);
     expect(store.get(hash)).toEqual(JSON.parse(JSON.stringify(policy)));

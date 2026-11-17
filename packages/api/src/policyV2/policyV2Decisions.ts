@@ -10,7 +10,6 @@
  *   - approved policy versions (no maker-checker for policies yet), so no capability approves;
  *   - source integrations, so sourced values refuse with SOURCE_UNAVAILABLE;
  *   - approver key registration, so approvals refuse;
- *   - durable nonce storage, so replay protection lasts for the life of the process.
  */
 
 import { policyV2 } from "@parmana/policy";
@@ -48,6 +47,8 @@ export interface PolicyV2DecisionServiceOptions {
   ) => policyV2.decision.ApprovedPolicy | undefined;
   readonly sources: policyV2.decision.SourceClient;
   readonly approvers: policyV2.approvals.ApproverKeys;
+  /** Records used nonces. Durable in production; in memory when none is given. */
+  readonly nonces?: policyV2.sourceAnswer.NonceStore;
   readonly now?: () => Date;
 }
 
@@ -73,12 +74,12 @@ function notifyConsole(): boolean {
 
 export class PolicyV2DecisionService {
   private readonly clock: () => Date;
-  /** One store for the life of the process, so a source answer or approval cannot be used twice. */
-  private readonly nonces: policyV2.sourceAnswer.MemoryNonceStore;
+  private readonly nonces: policyV2.sourceAnswer.NonceStore;
 
   constructor(private readonly options: PolicyV2DecisionServiceOptions) {
     this.clock = options.now ?? (() => new Date());
-    this.nonces = new policyV2.sourceAnswer.MemoryNonceStore(this.clock);
+    this.nonces =
+      options.nonces ?? new policyV2.sourceAnswer.MemoryNonceStore(this.clock);
   }
 
   async decide(

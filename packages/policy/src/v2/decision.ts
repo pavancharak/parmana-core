@@ -373,7 +373,7 @@ async function decideCore(
         values,
       );
     }
-    const verified = verifySourceAnswer(
+    const verified = await verifySourceAnswer(
       answer,
       {
         source: decl.source ?? "",

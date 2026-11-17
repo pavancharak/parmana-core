@@ -219,11 +219,13 @@ function isPayload(value: unknown): value is ApprovalPayload {
  * Verifies an approval. Checks run in this order, and the nonce is used last, so an
  * approval refused for another reason is not used up.
  */
-export function verifyApproval(
+export async function verifyApproval(
   artifact: unknown,
   expected: ApprovalExpectation,
   deps: { readonly approvers: ApproverKeys; readonly nonces: NonceStore },
-): { ok: true } | { ok: false; code: ApprovalRefusalCode; reason: string } {
+): Promise<
+  { ok: true } | { ok: false; code: ApprovalRefusalCode; reason: string }
+> {
   const refuse = (code: ApprovalRefusalCode, reason: string) => ({
     ok: false as const,
     code,
@@ -306,7 +308,7 @@ export function verifyApproval(
   if (expected.now.getTime() >= expires)
     return refuse("EXPIRED", "The approval has expired.");
 
-  if (!deps.nonces.consume(payload.nonce, payload.expiresAt)) {
+  if (!(await deps.nonces.consume(payload.nonce, payload.expiresAt))) {
     return refuse("REPLAYED", "This approval has already been used.");
   }
   return { ok: true };
@@ -330,7 +332,7 @@ export function approvalChecker(deps: {
       readonly now: Date;
     },
   ): Promise<boolean> => {
-    const result = verifyApproval(
+    const result = await verifyApproval(
       artifact,
       {
         signal,

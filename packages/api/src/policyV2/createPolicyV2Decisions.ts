@@ -34,9 +34,8 @@ export function createPolicyV2Decisions(
   }
 
   assertDatabaseUrlConfigured("PolicyV2Decisions");
-  const store = new policyV2.persistence.PolicyV2Store(
-    PostgresPoolFactory.create(),
-  );
+  const pool = PostgresPoolFactory.create();
+  const store = new policyV2.persistence.PolicyV2Store(pool);
 
   return new PolicyV2DecisionService({
     store,
@@ -48,5 +47,6 @@ export function createPolicyV2Decisions(
       throw new Error("No source integration is connected.");
     },
     approvers: new policyV2.approvals.ApproverKeys(),
+    nonces: new policyV2.persistence.PolicyV2NonceStore(pool),
   });
 }
