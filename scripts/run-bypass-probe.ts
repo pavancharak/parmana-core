@@ -3,8 +3,9 @@
  *
  *   BYPASS_PROBE_TARGET_URL=https://... BYPASS_PROBE_SIGNING_KEY_PEM="$(cat key.pem)" npx tsx scripts/run-bypass-probe.ts
  *
- * Exit codes: 0 nothing configured, or the route refused the request. 1 a configuration error, or the probe could
- * not verify protection. 2 the route accepted a request with no approval (a bypass).
+ * Exit codes: 0 nothing configured on a manual run, or the route refused the request. 1 a configuration error, a
+ * scheduled run with no route configured (it probed nothing, so it must not look healthy), or the probe could not
+ * verify protection. 2 the route accepted a request with no approval (a bypass).
  */
 
 import { runBypassProbeFromEnv } from "../packages/api/src/inbound/bypassProbeFromEnv.js";
@@ -13,6 +14,14 @@ const result = await runBypassProbeFromEnv(process.env);
 
 if (result.kind === "not-configured") {
   console.log(result.message);
+  // GITHUB_EVENT_NAME is set by GitHub Actions. A scheduled run that probes nothing is a failure: the
+  // schedule exists to prove protection, so an empty run must not show as a passing check.
+  if (process.env.GITHUB_EVENT_NAME === "schedule") {
+    console.error(
+      "bypass probe: this scheduled run probed nothing. Set BYPASS_PROBE_TARGET_URL and BYPASS_PROBE_SIGNING_KEY_PEM.",
+    );
+    process.exit(1);
+  }
   process.exit(0);
 }
 

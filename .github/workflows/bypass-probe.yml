@@ -1,8 +1,8 @@
 name: Bypass probe
 
 # RFC-0024 decision 6, gap G-146. Sends one request with no approval to each business-system route that is
-# configured, and fails the run if the route accepts it. Until the secret BYPASS_PROBE_TARGET_URL is set, every
-# run does nothing and reports that.
+# configured, and fails the run if the route accepts it. Until the secret BYPASS_PROBE_TARGET_URL is set, a scheduled
+# run fails (it probes nothing); a manual run reports that and passes.
 #
 # Secrets: BYPASS_PROBE_TARGET_URL (https route to test), BYPASS_PROBE_SIGNING_KEY_PEM (Ed25519 private key that
 # signs each record). Neither is a Parmana credential, and the probe sends none.
