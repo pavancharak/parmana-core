@@ -220,6 +220,42 @@ export function createPolicyV2RegisterRouter(
   );
 
   router.post(
+    "/approver-keys",
+    act((by, body) =>
+      service.proposeApproverKey(
+        by,
+        body as unknown as policyV2.register.ApproverKeyInput,
+      ),
+    ),
+  );
+
+  router.post(
+    "/approver-keys/:approverId/:keyId/approve",
+    act((by, _body, params) =>
+      service.approveApproverKey(
+        by,
+        String(params.approverId),
+        String(params.keyId),
+      ),
+    ),
+  );
+
+  router.post(
+    "/approver-keys/:approverId/:keyId/revoke",
+    act((by, body, params) => {
+      if (typeof body.reason !== "string") {
+        throw new InvalidBody("A reason is required.");
+      }
+      return service.revokeApproverKey(
+        by,
+        String(params.approverId),
+        String(params.keyId),
+        body.reason,
+      );
+    }),
+  );
+
+  router.post(
     "/actions",
     act((by, body) =>
       service.registerAction(

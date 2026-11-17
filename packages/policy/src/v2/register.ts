@@ -121,6 +121,23 @@ export interface RegisterSnapshot {
   readonly thresholds: readonly ThresholdRecord[];
   readonly actions: readonly ActionRecord[];
   readonly roles: readonly RoleGrant[];
+  /** Missing in snapshots saved before approver keys existed; read as none. */
+  readonly approverKeys?: readonly ApproverKeyRecord[];
+}
+
+/** An approver's public key. Approvals signed with it count only while the key is active. */
+export interface ApproverKeyInput {
+  readonly approverId: string;
+  readonly keyId: string;
+  readonly publicKeyPem: string;
+}
+
+export type ApproverKeyStatus = "pending" | "active" | "revoked";
+
+export interface ApproverKeyRecord extends ApproverKeyInput {
+  readonly status: ApproverKeyStatus;
+  readonly proposedBy: string;
+  readonly approvals: readonly Approval[];
 }
 
 export class RegisterError extends Error {
@@ -169,6 +186,7 @@ export class PolicyRegister {
   private readonly thresholds = new Map<string, ThresholdRecord>();
   private readonly actions = new Map<string, ActionRecord>();
   private readonly roles = new Map<string, Set<Role>>();
+  private readonly approverKeys = new Map<string, ApproverKeyRecord>();
   private readonly log: AuditEvent[] = [];
   private pending: AuditEvent[] = [];
 
@@ -344,6 +362,107 @@ export class PolicyRegister {
     action: "grant" | "revoke",
   ): void {
     this.record(by.id, `role.${action}`, `${callerId} ${role}`);
+  }
+
+  // ---- Approver keys -------------------------------------------------------
+
+  /**
+   * Proposes an approver's public key. Only the Parmana owner proposes one. The key is pending
+   * until a second approver confirms it, and it counts for no approval until then.
+   */
+  proposeApproverKey(input: ApproverKeyInput, by: Person): ApproverKeyRecord {
+    refusePlaceholders(input, "approver key");
+    requireRole(
+      { id: by.id, roles: this.rolesOf(by.id) },
+      "parmana-owner",
+      "propose an approver key",
+    );
+    if (!isNonEmpty(input.approverId) || !isNonEmpty(input.keyId))
+      throw new RegisterError(
+        "An approver key needs an approver id and a key id.",
+      );
+    const id = approverKeyId(input.approverId, input.keyId);
+    if (this.approverKeys.has(id))
+      throw new RegisterError(`Approver key ${id} already exists.`);
+    if (!isNonEmpty(input.publicKeyPem))
+      throw new RegisterError("An approver key needs a public key.");
+    try {
+      readEd25519PublicKey(input.publicKeyPem);
+    } catch (error) {
+      throw new RegisterError(
+        error instanceof Error
+          ? error.message
+          : "The public key could not be read.",
+      );
+    }
+    const record: ApproverKeyRecord = {
+      ...input,
+      status: "pending",
+      proposedBy: by.id,
+      approvals: [],
+    };
+    this.approverKeys.set(id, record);
+    this.record(by.id, "approver-key.proposed", id);
+    return record;
+  }
+
+  /**
+   * Confirms a pending approver key. The confirmer must hold the second-approver role, must
+   * not be the one who proposed the key, and must not be the approver whose key it is.
+   */
+  approveApproverKey(
+    approverId: string,
+    keyId: string,
+    by: Person,
+  ): ApproverKeyRecord {
+    const id = approverKeyId(approverId, keyId);
+    const key = this.requireApproverKey(id);
+    if (key.status !== "pending")
+      throw new RegisterError(
+        `Approver key ${id} is ${key.status}, not pending.`,
+      );
+    requireRole(
+      { id: by.id, roles: this.rolesOf(by.id) },
+      "second-approver",
+      "confirm an approver key",
+    );
+    if (by.id === key.proposedBy)
+      throw new RegisterError("A person cannot confirm their own proposal.");
+    if (by.id === approverId)
+      throw new RegisterError("An approver cannot confirm their own key.");
+    const updated: ApproverKeyRecord = {
+      ...key,
+      status: "active",
+      approvals: [
+        ...key.approvals,
+        { by: by.id, role: "second-approver", at: this.timestamp() },
+      ],
+    };
+    this.approverKeys.set(id, updated);
+    this.record(by.id, "approver-key.approved", id);
+    return updated;
+  }
+
+  /** Revokes an approver key at once. Only the Parmana owner revokes one, and a reason is required. */
+  revokeApproverKey(
+    approverId: string,
+    keyId: string,
+    by: Person,
+    reason: string,
+  ): ApproverKeyRecord {
+    const id = approverKeyId(approverId, keyId);
+    const key = this.requireApproverKey(id);
+    requireRole(
+      { id: by.id, roles: this.rolesOf(by.id) },
+      "parmana-owner",
+      "revoke an approver key",
+    );
+    if (!isNonEmpty(reason))
+      throw new RegisterError("A revocation needs a reason.");
+    const updated: ApproverKeyRecord = { ...key, status: "revoked" };
+    this.approverKeys.set(id, updated);
+    this.record(by.id, "approver-key.revoked", `${id}: ${reason}`);
+    return updated;
   }
 
   /** Revokes a source at once. Its answers stop being used for new decisions (design 3). */
@@ -590,6 +709,11 @@ export class PolicyRegister {
       sources: [...this.sources.values()],
       thresholds: [...this.thresholds.values()],
       actions: [...this.actions.values()],
+      approverKeys: [...this.approverKeys.values()].sort((a, b) =>
+        approverKeyId(a.approverId, a.keyId).localeCompare(
+          approverKeyId(b.approverId, b.keyId),
+        ),
+      ),
       roles: [...this.roles.entries()]
         .flatMap(([callerId, held]) =>
           [...held].map((role) => ({ callerId, role })),
@@ -616,6 +740,27 @@ export class PolicyRegister {
     for (const a of snapshot.actions) this.actions.set(a.capability, a);
     for (const grant of snapshot.roles)
       this.addRole(grant.callerId, grant.role);
+    this.approverKeys.clear();
+    for (const key of snapshot.approverKeys ?? [])
+      this.approverKeys.set(approverKeyId(key.approverId, key.keyId), key);
+  }
+
+  listApproverKeys(): readonly ApproverKeyRecord[] {
+    return [...this.approverKeys.values()];
+  }
+
+  getApproverKey(
+    approverId: string,
+    keyId: string,
+  ): ApproverKeyRecord | undefined {
+    return this.approverKeys.get(approverKeyId(approverId, keyId));
+  }
+
+  private requireApproverKey(id: string): ApproverKeyRecord {
+    const key = this.approverKeys.get(id);
+    if (key === undefined)
+      throw new RegisterError(`Approver key ${id} is not registered.`);
+    return key;
   }
 
   listSources(): readonly SourceRecord[] {
@@ -707,6 +852,10 @@ function requireRole(person: Person, role: Role, action: string): void {
       `${person.id} may not ${action}: the ${role} role is needed.`,
     );
   }
+}
+
+function approverKeyId(approverId: string, keyId: string): string {
+  return `${approverId}/${keyId}`;
 }
 
 function isNonEmpty(value: unknown): value is string {

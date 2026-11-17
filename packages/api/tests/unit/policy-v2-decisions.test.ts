@@ -62,7 +62,6 @@ function service(
     sources: async () => {
       throw new Error("no source");
     },
-    approvers: new policyV2.approvals.ApproverKeys(),
     now: () => NOW,
   });
 }

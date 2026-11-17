@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   PolicyRegister,
+  type RegisterSnapshot,
   RegisterError,
   type ActionInput,
   type Person,
@@ -476,5 +477,96 @@ describe("roles in the register", () => {
     restored.load(JSON.parse(JSON.stringify(r.snapshot())));
     expect(restored.rolesOf("source-1")).toEqual(["source-owner"]);
     expect(restored.holdersOf("parmana-owner")).toEqual(["owner-1"]);
+  });
+});
+
+describe("approver keys in the register", () => {
+  const ownerPerson: Person = { id: "owner-1", roles: [] };
+  const confirmer: Person = { id: "second-1", roles: [] };
+  const input = {
+    approverId: "approver-1",
+    keyId: "k1",
+    publicKeyPem: LEDGER_PUBLIC_PEM,
+  };
+
+  function withRoles() {
+    const r = new PolicyRegister(() => NOW);
+    r.bootstrapOwner("owner-1");
+    r.grantRole(ownerPerson, "second-1", "second-approver");
+    return r;
+  }
+
+  it("lets only the Parmana owner propose a key, and keeps it pending", () => {
+    const r = withRoles();
+    expect(() =>
+      r.proposeApproverKey(input, { id: "second-1", roles: [] }),
+    ).toThrow(RegisterError);
+    const key = r.proposeApproverKey(input, ownerPerson);
+    expect(key.status).toBe("pending");
+  });
+
+  it("activates a key only when a second approver confirms it", () => {
+    const r = withRoles();
+    r.proposeApproverKey(input, ownerPerson);
+    expect(() =>
+      r.approveApproverKey("approver-1", "k1", { id: "owner-1", roles: [] }),
+    ).toThrow(RegisterError);
+    const active = r.approveApproverKey("approver-1", "k1", confirmer);
+    expect(active.status).toBe("active");
+    expect(active.approvals.map((a) => a.role)).toEqual(["second-approver"]);
+  });
+
+  it("refuses a confirmation by the approver whose key it is", () => {
+    const r = withRoles();
+    r.grantRole(ownerPerson, "approver-1", "second-approver");
+    r.proposeApproverKey(input, ownerPerson);
+    expect(() =>
+      r.approveApproverKey("approver-1", "k1", { id: "approver-1", roles: [] }),
+    ).toThrow(/own key/);
+  });
+
+  it("revokes a key at once, and needs the Parmana owner and a reason", () => {
+    const r = withRoles();
+    r.proposeApproverKey(input, ownerPerson);
+    r.approveApproverKey("approver-1", "k1", confirmer);
+    expect(() =>
+      r.revokeApproverKey("approver-1", "k1", confirmer, "lost"),
+    ).toThrow(RegisterError);
+    expect(() =>
+      r.revokeApproverKey("approver-1", "k1", ownerPerson, " "),
+    ).toThrow(RegisterError);
+    expect(
+      r.revokeApproverKey("approver-1", "k1", ownerPerson, "lost").status,
+    ).toBe("revoked");
+  });
+
+  it("refuses a second key with the same id, and a key that is not Ed25519", () => {
+    const r = withRoles();
+    r.proposeApproverKey(input, ownerPerson);
+    expect(() => r.proposeApproverKey(input, ownerPerson)).toThrow(
+      /already exists/,
+    );
+    expect(() =>
+      r.proposeApproverKey(
+        { ...input, keyId: "k2", publicKeyPem: "not a key" },
+        ownerPerson,
+      ),
+    ).toThrow(RegisterError);
+  });
+
+  it("keeps keys through a snapshot and a load, and reads an older snapshot as none", () => {
+    const r = withRoles();
+    r.proposeApproverKey(input, ownerPerson);
+    const restored = new PolicyRegister(() => NOW);
+    restored.load(JSON.parse(JSON.stringify(r.snapshot())));
+    expect(restored.getApproverKey("approver-1", "k1")?.status).toBe("pending");
+
+    const older = {
+      ...r.snapshot(),
+      approverKeys: undefined,
+    } as unknown as RegisterSnapshot;
+    const fromOlder = new PolicyRegister(() => NOW);
+    fromOlder.load(older);
+    expect(fromOlder.listApproverKeys()).toEqual([]);
   });
 });
