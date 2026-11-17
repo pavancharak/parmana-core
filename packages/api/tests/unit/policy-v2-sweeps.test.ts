@@ -8,6 +8,7 @@ import {
 import {
   policyV2SweepSecondsFrom,
   startPolicyV2SweepTimer,
+  startPolicyV2Sweeps,
 } from "../../src/policyV2/createPolicyV2Runtime.js";
 
 const NOW = new Date("2026-11-18T09:00:00Z");
@@ -202,5 +203,41 @@ describe("the sweep interval and timer", () => {
     clearInterval(handle);
     await vi.advanceTimersByTimeAsync(120_000);
     expect(run).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("starting the sweeps from the runtime", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("starts nothing without a runtime, or without the setting", () => {
+    expect(
+      startPolicyV2Sweeps(undefined, { PARMANA_POLICY_V2_SWEEP_SECONDS: "60" }),
+    ).toBeUndefined();
+    const runtime = { sweeps: { run: vi.fn() } } as unknown as Parameters<
+      typeof startPolicyV2Sweeps
+    >[0];
+    expect(startPolicyV2Sweeps(runtime, {})).toBeUndefined();
+  });
+
+  it("starts the timer from the setting, and the timer runs the sweep", async () => {
+    vi.useFakeTimers();
+    const run = vi.fn().mockResolvedValue({
+      reminders: 0,
+      expired: 0,
+      escalated: 0,
+      written: false,
+    });
+    const runtime = { sweeps: { run } } as unknown as Parameters<
+      typeof startPolicyV2Sweeps
+    >[0];
+    const handle = startPolicyV2Sweeps(runtime, {
+      PARMANA_POLICY_V2_SWEEP_SECONDS: "60",
+    });
+    expect(handle).toBeDefined();
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(run).toHaveBeenCalledTimes(1);
+    clearInterval(handle!);
   });
 });

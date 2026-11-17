@@ -135,3 +135,26 @@ describe("createGracefulShutdown", () => {
     expect(exit).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("the shutdown hook", () => {
+  it("runs once, before the server closes, even if a second signal arrives", () => {
+    const order: string[] = [];
+    const server = {
+      close: (callback: (error?: Error) => void) => {
+        order.push("close");
+        callback();
+      },
+    };
+    const shutdown = createGracefulShutdown({
+      server,
+      timeoutMs: 1000,
+      exit: () => {},
+      log: () => {},
+      logError: () => {},
+      onShutdown: () => order.push("onShutdown"),
+    });
+    shutdown("SIGTERM");
+    shutdown("SIGINT");
+    expect(order).toEqual(["onShutdown", "close"]);
+  });
+});

@@ -115,3 +115,20 @@ export function startPolicyV2SweepTimer(
     });
   }, seconds * 1000);
 }
+
+/**
+ * Starts the sweep timer for a runtime, if PARMANA_POLICY_V2_SWEEP_SECONDS is set. Returns the
+ * timer so the caller can clear it on shutdown, or undefined if no timer was started.
+ */
+export function startPolicyV2Sweeps(
+  runtime: PolicyV2Runtime | undefined,
+  env: NodeJS.ProcessEnv = process.env,
+  onError: (error: unknown) => void = (error) => {
+    console.error("Policy version 2 sweep failed.", error);
+  },
+): ReturnType<typeof setInterval> | undefined {
+  if (runtime === undefined) return undefined;
+  const seconds = policyV2SweepSecondsFrom(env);
+  if (seconds === undefined) return undefined;
+  return startPolicyV2SweepTimer(runtime.sweeps, seconds, onError);
+}

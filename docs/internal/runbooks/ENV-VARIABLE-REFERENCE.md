@@ -318,7 +318,7 @@ These variables switch on the policy version 2 runtime. They are read when the s
 - **Used:** at startup, in `createPolicyV2Runtime.ts` and `server.ts`.
 - **Values:** a whole number from 1 to 86400. Anything else is refused at startup.
 - **Effect:** the server runs one sweep per interval. A sweep that loses a race to another writer is skipped, and the next run picks it up. A sweep that changes nothing writes nothing.
-- **Not tested:** the startup path in `server.ts` is not covered by a test. The interval parsing and the timer are tested.
+- **Tested:** the interval parsing, the timer, and the start from the runtime. The server stops the timer when it shuts down.
 
 ### PARMANA_POLICY_V2_BOOTSTRAP_OWNER
 

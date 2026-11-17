@@ -26,8 +26,7 @@ import { createKillSwitch } from "./bootstrap/createKillSwitch.js";
 import {
   bootstrapPolicyV2Owner,
   createPolicyV2Runtime,
-  policyV2SweepSecondsFrom,
-  startPolicyV2SweepTimer,
+  startPolicyV2Sweeps,
 } from "./policyV2/createPolicyV2Runtime.js";
 import { createAlertSink } from "./bootstrap/createAlertSink.js";
 import { createApp } from "./app.js";
@@ -78,12 +77,7 @@ const executionSystem = await createExecutionSystem();
 const killSwitch = createKillSwitch();
 const policyV2 = createPolicyV2Runtime();
 if (policyV2) await bootstrapPolicyV2Owner(policyV2);
-const policyV2SweepSeconds = policyV2SweepSecondsFrom();
-if (policyV2 && policyV2SweepSeconds !== undefined) {
-  startPolicyV2SweepTimer(policyV2.sweeps, policyV2SweepSeconds, (error) => {
-    console.error("Policy version 2 sweep failed.", error);
-  });
-}
+const policyV2SweepTimer = startPolicyV2Sweeps(policyV2);
 
 const application = createApplication(
   executionSystem,
@@ -219,6 +213,9 @@ const SHUTDOWN_TIMEOUT_MS = Number(process.env.SHUTDOWN_TIMEOUT_MS ?? 10_000);
 const shutdown = createGracefulShutdown({
   server,
   timeoutMs: SHUTDOWN_TIMEOUT_MS,
+  onShutdown: () => {
+    if (policyV2SweepTimer !== undefined) clearInterval(policyV2SweepTimer);
+  },
 });
 
 process.on("SIGTERM", () => shutdown("SIGTERM"));

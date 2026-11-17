@@ -12,6 +12,8 @@ export interface GracefulShutdownOptions {
   readonly timeoutMs: number;
   /** Defaults to process.exit. Injectable so tests never actually exit the test process. */
   readonly exit?: (code: number) => void;
+  /** Called once, when shutdown begins, before the server stops accepting connections. */
+  readonly onShutdown?: () => void;
   readonly log?: (message: string) => void;
   readonly logError?: (message: string, error?: unknown) => void;
 }
@@ -42,6 +44,7 @@ export function createGracefulShutdown(
   return function shutdown(signal: string): void {
     if (shuttingDown) return;
     shuttingDown = true;
+    options.onShutdown?.();
 
     log(
       `[SHUTDOWN] ${signal} received: closing server (no new connections; in-flight requests finish)`,
