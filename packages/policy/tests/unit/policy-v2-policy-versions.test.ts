@@ -17,6 +17,7 @@ const OWNER: Person = { id: "owner-1", roles: ["parmana-owner"] };
 const ACTION_OWNER: Person = { id: "action-1", roles: [] };
 const SECOND: Person = { id: "second-1", roles: ["second-approver"] };
 const GATE: Person = { id: "gate-1", roles: ["gate-owner"] };
+const GATE_DEPUTY: Person = { id: "gate-2", roles: ["gate-owner"] };
 
 /** A policy the validator accepts, with no source: it only refuses. */
 function minimal(version = "2.0.0") {
@@ -75,6 +76,7 @@ function registerWithAction(): PolicyRegister {
   r.grantRole(OWNER, ACTION_OWNER.id, "action-owner");
   r.grantRole(OWNER, SECOND.id, "second-approver");
   r.grantRole(OWNER, GATE.id, "gate-owner");
+  r.grantRole(OWNER, GATE_DEPUTY.id, "gate-owner");
   r.registerAction(
     {
       capability: CAP,
@@ -219,6 +221,7 @@ describe("using the approved version", () => {
     r.approvePolicy(CAP, "2.0.0", SECOND);
     expect(r.activePolicy(CAP)).toBeUndefined();
     r.grantRole(OWNER, GATE.id, "gate-owner");
+    r.grantRole(OWNER, GATE_DEPUTY.id, "gate-owner");
     r.recordTest(CAP, "reject", GATE);
     expect(r.runGoLive(CAP, GATE).ok).toBe(true);
     expect(r.activePolicy(CAP)?.policyVersion).toBe("2.0.0");
@@ -284,5 +287,47 @@ describe("the go-live gate run", () => {
     r.approvePolicy(CAP, "2.0.0", SECOND);
     expect(r.goLiveChecklist(CAP)).toEqual([]);
     expect(r.getAction(CAP)?.live).toBe(false);
+  });
+});
+
+describe("gate segregation", () => {
+  it("refuses a test record or a gate run from the action's owner or successor", () => {
+    const r = registerWithAction();
+    expect(() =>
+      r.recordTest(CAP, "reject", { id: "action-1", roles: ["gate-owner"] }),
+    ).toThrow(/owner or successor/);
+    r.grantRole(OWNER, "action-2", "gate-owner");
+    expect(() =>
+      r.runGoLive(CAP, { id: "action-2", roles: ["gate-owner"] }),
+    ).toThrow(/owner or successor/);
+  });
+
+  it("lists a missing second gate owner in the checklist, and passes once there are two", () => {
+    const r = new PolicyRegister(() => NOW);
+    r.bootstrapOwner(OWNER.id);
+    r.grantRole(OWNER, ACTION_OWNER.id, "action-owner");
+    r.grantRole(OWNER, SECOND.id, "second-approver");
+    r.grantRole(OWNER, GATE.id, "gate-owner");
+    r.registerAction(
+      {
+        capability: CAP,
+        owner: ACTION_OWNER.id,
+        successor: "action-2",
+        reviewers: ["rev-1", "rev-2", "rev-3"],
+        review: { reviewWindowBusinessDays: 1, approvalValidityMinutes: 15 },
+      },
+      OWNER,
+    );
+    r.recordTest(CAP, "reject", GATE);
+    r.proposePolicy(minimal(), ACTION_OWNER);
+    r.approvePolicy(CAP, "2.0.0", SECOND);
+    expect(r.goLiveChecklist(CAP)).toEqual([
+      "two gate owners who are not the action's owner or successor",
+    ]);
+    expect(r.runGoLive(CAP, GATE).ok).toBe(false);
+
+    r.grantRole(OWNER, GATE_DEPUTY.id, "gate-owner");
+    expect(r.goLiveChecklist(CAP)).toEqual([]);
+    expect(r.runGoLive(CAP, GATE).ok).toBe(true);
   });
 });

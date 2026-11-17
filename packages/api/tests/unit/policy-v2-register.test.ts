@@ -446,6 +446,14 @@ describe("the go-live gate through the routes", () => {
   it("reads the checklist, and refuses a go-live run that is not passed with the missing items", async () => {
     const { svc } = await serviceWithOwner();
     await svc.grantRole("owner-1", "gate-1", "gate-owner");
+    await svc.grantRole("owner-1", "action-1", "action-owner");
+    await svc.registerAction("owner-1", {
+      capability: CAP,
+      owner: "action-1",
+      successor: "action-2",
+      reviewers: ["rev-1", "rev-2", "rev-3"],
+      review: { reviewWindowBusinessDays: 1, approvalValidityMinutes: 15 },
+    });
     const checklist = await request(app(svc))
       .get(`/v2/register/actions/${CAP}/go-live`)
       .set("x-caller", "gate-1");
@@ -462,6 +470,7 @@ describe("the go-live gate through the routes", () => {
     await svc.grantRole("owner-1", "action-1", "action-owner");
     await svc.grantRole("owner-1", "second-1", "second-approver");
     await svc.grantRole("owner-1", "gate-1", "gate-owner");
+    await svc.grantRole("owner-1", "gate-2", "gate-owner");
     await svc.registerAction("owner-1", {
       capability: CAP,
       owner: "action-1",

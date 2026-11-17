@@ -943,6 +943,7 @@ export class PolicyRegister {
   recordTest(capability: string, tier: string, by: Person): ActionRecord {
     const action = this.requireAction(capability);
     requireRole(by, "gate-owner", "record a test");
+    refuseGateByOwnerOrSuccessor(action, by, "record a test");
     const updated: ActionRecord = {
       ...action,
       testedTiers: [...new Set([...action.testedTiers, tier])],
@@ -986,6 +987,13 @@ export class PolicyRegister {
       else if (threshold.status !== "approved")
         missing.push(`threshold "${name}" is ${threshold.status}`);
     }
+    const eligibleGateOwners = this.holdersOf("gate-owner").filter(
+      (id) => id !== action.owner && id !== action.successor,
+    );
+    if (eligibleGateOwners.length < 2)
+      missing.push(
+        "two gate owners who are not the action's owner or successor",
+      );
     if (action.testedTiers.length === 0)
       missing.push("a test run for each tier");
     for (const tier of usedTiers) {
@@ -1011,6 +1019,11 @@ export class PolicyRegister {
     requireRole(
       { id: by.id, roles: this.rolesOf(by.id) },
       "gate-owner",
+      "run the go-live gate",
+    );
+    refuseGateByOwnerOrSuccessor(
+      this.requireAction(capability),
+      by,
       "run the go-live gate",
     );
     const approved = this.approvedVersion(capability);
@@ -1303,4 +1316,20 @@ function usesOf(policy: unknown): {
 
 function reviewGrantId(capability: string, reviewerId: string): string {
   return `${capability}/${reviewerId}`;
+}
+
+/**
+ * The action's owner and successor cannot run its gate. The person who wants the action live
+ * cannot also clear it.
+ */
+function refuseGateByOwnerOrSuccessor(
+  action: ActionRecord,
+  by: Person,
+  step: string,
+): void {
+  if (by.id === action.owner || by.id === action.successor) {
+    throw new RegisterError(
+      `${by.id} is the action's owner or successor, and may not ${step} for ${action.capability}.`,
+    );
+  }
 }

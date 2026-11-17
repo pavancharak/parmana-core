@@ -194,7 +194,7 @@ An action goes live only when all of these are recorded in the register and test
 - at least two eligible reviewers,
 - a test run recorded for each tier.
 
-The gate owner is a role in Operations, with a named deputy. The gate owner signs off.
+The gate owner is a role in Operations, with a named deputy. The gate owner signs off. The register enforces the deputy and the separation: at least two gate owners who are not the action's owner or successor must hold the role, and the owner or successor may not record a test or run the gate. Membership of Operations is not recorded in the register.
 
 ### 5.8 No existing data
 
