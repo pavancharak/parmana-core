@@ -98,7 +98,8 @@ export class ConsoleError extends Error {
   }
 }
 
-function requireScreen(viewer: Viewer, screen: Screen): void {
+/** Throws if the viewer may not open the screen. Exported so every renderer checks access the same way. */
+export function requireScreen(viewer: Viewer, screen: Screen): void {
   if (!viewer.roles.some((role) => SCREEN_ACCESS[screen].includes(role))) {
     throw new ConsoleError(`${viewer.id} may not open the ${screen} screen.`);
   }
