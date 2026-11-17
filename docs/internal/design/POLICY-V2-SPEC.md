@@ -163,6 +163,7 @@ The same format is used in each. The names differ, and the structure does not.
     }
   },
 
+  "review": { "reviewWindowBusinessDays": 1, "approvalValidityMinutes": 15 },
   "rules": [
     {
       "id": "refuse-vendor-not-verified",
@@ -281,12 +282,24 @@ The same format is used in each. The names differ, and the structure does not.
     "serviceOwnerApproval": {
       "type": "approval",
       "provenance": "approved",
-      "approvalFor": { "resourceId": "target", "value": "parameters.changeId" },
+      "approvalFor": { "resourceId": "target", "value": "changeId" },
       "scope": "exact"
+    },
+    "changeId": {
+      "type": "string",
+      "provenance": "sourced",
+      "source": "change-system",
+      "claim": "change.id",
+      "subject": "target",
+      "maxAgeSeconds": 300
     },
     "blastRadius": {
       "type": "number",
-      "provenance": "untrusted",
+      "provenance": "sourced",
+      "source": "change-system",
+      "claim": "change.blastRadius",
+      "subject": "target",
+      "maxAgeSeconds": 300,
       "unit": "services"
     },
     "assistantRiskNote": {
@@ -309,6 +322,7 @@ The same format is used in each. The names differ, and the structure does not.
     }
   },
 
+  "review": { "reviewWindowBusinessDays": 2, "approvalValidityMinutes": 30 },
   "rules": [
     {
       "id": "refuse-change-not-approved",
