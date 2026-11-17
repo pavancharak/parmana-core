@@ -239,7 +239,9 @@ describe("a decision under an approved policy", () => {
     register.bootstrapOwner("owner-1");
     register.grantRole(owner, "action-1", "action-owner");
     register.grantRole(owner, "second-1", "second-approver");
+    register.grantRole(owner, "gate-1", "operator");
     register.grantRole(owner, "gate-1", "gate-owner");
+    register.grantRole(owner, "gate-2", "operator");
     register.grantRole(owner, "gate-2", "gate-owner");
     register.registerAction(
       {

@@ -346,6 +346,7 @@ describe("actions and the go-live gate", () => {
   it("refuses a go-live run without an approved policy version", () => {
     const register = new PolicyRegister(clock);
     register.bootstrapOwner(parmanaOwner.id);
+    register.grantRole(parmanaOwner, gateOwner.id, "operator");
     register.grantRole(parmanaOwner, gateOwner.id, "gate-owner");
     register.registerAction(action(), parmanaOwner);
     expect(() => register.runGoLive("erp:pay-invoice", gateOwner)).toThrow(

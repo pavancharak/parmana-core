@@ -76,7 +76,9 @@ async function setup() {
   register.bootstrapOwner(OWNER.id);
   register.grantRole(OWNER, "action-1", "action-owner");
   register.grantRole(OWNER, "second-1", "second-approver");
+  register.grantRole(OWNER, "gate-1", "operator");
   register.grantRole(OWNER, "gate-1", "gate-owner");
+  register.grantRole(OWNER, "gate-2", "operator");
   register.grantRole(OWNER, "gate-2", "gate-owner");
   register.registerAction(
     {
