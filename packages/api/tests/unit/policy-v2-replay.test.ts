@@ -77,6 +77,7 @@ async function setup() {
   register.grantRole(OWNER, "action-1", "action-owner");
   register.grantRole(OWNER, "second-1", "second-approver");
   register.grantRole(OWNER, "gate-1", "gate-owner");
+  register.grantRole(OWNER, "gate-2", "gate-owner");
   register.registerAction(
     {
       capability: CAP,
@@ -115,6 +116,9 @@ async function setup() {
     },
     "partner-a",
   );
+  // The decision must have used the approved policy. Otherwise replay would have nothing to check.
+  expect(response.refusal).toBeUndefined();
+  expect(response.outcome).toBe("REJECT");
   return {
     store,
     recordId: response.recordId,
