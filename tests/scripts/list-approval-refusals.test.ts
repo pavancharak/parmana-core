@@ -55,7 +55,12 @@ const records: Record<string, unknown> = {
       policy: { name: "customer-refund", version: "1.2.0" },
       matchedRuleId: "reject-above-maximum",
       reason: "over the maximum",
-      signals: { refundEligible: true, fraudCheckPassed: true, managerApproved: true, refundAmount: 150000 },
+      signals: {
+        refundEligible: true,
+        fraudCheckPassed: true,
+        managerApproved: true,
+        refundAmount: 150000,
+      },
     },
   },
 };
@@ -152,7 +157,11 @@ describe("list-approval-refusals", () => {
         policy: { name: "customer-refund", version: "1.2.0" },
         matchedRuleId: "reject-manager-approval-required",
         reason: "x",
-        signals: { refundEligible: true, fraudCheckPassed: true, managerApproved: true },
+        signals: {
+          refundEligible: true,
+          fraudCheckPassed: true,
+          managerApproved: true,
+        },
       },
     };
     const dir = await mkdtemp(join(tmpdir(), "refusals-"));
@@ -160,7 +169,10 @@ describe("list-approval-refusals", () => {
     const out = join(dir, "report.json");
     await writeFile(ids, "tx-approved-anyway\n");
 
-    await run([ids, "--out", out], { PARMANA_BASE_URL: baseUrl, PARMANA_API_KEY: KEY });
+    await run([ids, "--out", out], {
+      PARMANA_BASE_URL: baseUrl,
+      PARMANA_API_KEY: KEY,
+    });
 
     const report = JSON.parse(await readFile(out, "utf8"));
     expect(report.rows[0].category).toBe("manual_review");

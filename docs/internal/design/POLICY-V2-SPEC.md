@@ -17,29 +17,29 @@ The validator must be able to check all of this before the policy runs. Nothing 
 
 ## 2. Top-level fields
 
-| Field | Required | Meaning |
-|---|---|---|
-| `policyId` | yes | Name of the policy, for example `vendor-payment`. |
-| `policyVersion` | yes | Semantic version of this policy. |
-| `schemaVersion` | yes | `2.0.0` for this format. |
-| `capability` | yes | The action this policy decides, named as `<system>:<action>`, for example `erp:pay-invoice`. |
-| `description` | yes | Plain statement of what the policy authorises and what it does not. |
-| `owner` | yes | The named action owner, from the register in plan section 15. |
-| `signals` | yes | Every value the rules use, with its declaration (section 3). |
-| `thresholds` | no | Named limits (section 4). Every number used in a rule is one of these, except zero. |
-| `review` | no | Review window and approval validity for this action, within the platform caps (D11). Required if the policy has any `review` or `tier2` rule. |
-| `rules` | yes | Ordered rules, each with an explicit `tier` (section 5). |
+| Field           | Required | Meaning                                                                                                                                       |
+| --------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `policyId`      | yes      | Name of the policy, for example `vendor-payment`.                                                                                             |
+| `policyVersion` | yes      | Semantic version of this policy.                                                                                                              |
+| `schemaVersion` | yes      | `2.0.0` for this format.                                                                                                                      |
+| `capability`    | yes      | The action this policy decides, named as `<system>:<action>`, for example `erp:pay-invoice`.                                                  |
+| `description`   | yes      | Plain statement of what the policy authorises and what it does not.                                                                           |
+| `owner`         | yes      | The named action owner, from the register in plan section 15.                                                                                 |
+| `signals`       | yes      | Every value the rules use, with its declaration (section 3).                                                                                  |
+| `thresholds`    | no       | Named limits (section 4). Every number used in a rule is one of these, except zero.                                                           |
+| `review`        | no       | Review window and approval validity for this action, within the platform caps (D11). Required if the policy has any `review` or `tier2` rule. |
+| `rules`         | yes      | Ordered rules, each with an explicit `tier` (section 5).                                                                                      |
 
 ## 3. Signal declarations
 
 Every value a rule reads must be declared in `signals`. Each declaration has a `provenance`:
 
-| Provenance | Meaning | Required fields |
-|---|---|---|
-| `sourced` | A registered business system establishes the value. Trusted only if signed and verified. | `source` (registered name), `claim` (registered name), `subject` (the Intent path that identifies the object), `maxAgeSeconds`, `unit` for numbers. The policy names the data owner's source. The register names the signer, which may be an intermediary (D8), and each decision records both. |
-| `approved` | A verified, signed human approval. Trusted only when verified. | `approvalFor` (the resource and the value it must match), `scope` (`exact` only). |
-| `ai` | Produced by a model. Untrusted. | `model`, `values` (a closed set), `permittedUse` (`refuse` or `review`). |
-| `untrusted` | Supplied by the caller. Untrusted. | `unit` for numbers. Permitted uses: refuse or review. |
+| Provenance  | Meaning                                                                                  | Required fields                                                                                                                                                                                                                                                                                 |
+| ----------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sourced`   | A registered business system establishes the value. Trusted only if signed and verified. | `source` (registered name), `claim` (registered name), `subject` (the Intent path that identifies the object), `maxAgeSeconds`, `unit` for numbers. The policy names the data owner's source. The register names the signer, which may be an intermediary (D8), and each decision records both. |
+| `approved`  | A verified, signed human approval. Trusted only when verified.                           | `approvalFor` (the resource and the value it must match), `scope` (`exact` only).                                                                                                                                                                                                               |
+| `ai`        | Produced by a model. Untrusted.                                                          | `model`, `values` (a closed set), `permittedUse` (`refuse` or `review`).                                                                                                                                                                                                                        |
+| `untrusted` | Supplied by the caller. Untrusted.                                                       | `unit` for numbers. Permitted uses: refuse or review.                                                                                                                                                                                                                                           |
 
 Common fields: `type`, one of `boolean`, `number`, `string`, `enum`, `approval`.
 
@@ -101,34 +101,143 @@ The same format is used in each. The names differ, and the structure does not.
   "owner": "<finance action owner>",
 
   "signals": {
-    "invoiceAmount": { "type": "number", "provenance": "sourced", "source": "procurement-system", "claim": "invoice.amount", "subject": "target", "maxAgeSeconds": 60, "unit": "<currency>" },
-    "vendorVerified": { "type": "boolean", "provenance": "sourced", "source": "vendor-master", "claim": "vendor.verified", "subject": "parameters.vendorId", "maxAgeSeconds": 300 },
-    "fundsAvailable": { "type": "boolean", "provenance": "sourced", "source": "ledger", "claim": "funds.available", "subject": "parameters.accountId", "maxAgeSeconds": 60 },
-    "financeApproval": { "type": "approval", "provenance": "approved", "approvalFor": { "resourceId": "target", "value": "invoiceAmount" }, "scope": "exact" },
-    "requestedAmount": { "type": "number", "provenance": "untrusted", "unit": "<currency>" },
-    "riskScore": { "type": "number", "provenance": "untrusted", "unit": "points" }
+    "invoiceAmount": {
+      "type": "number",
+      "provenance": "sourced",
+      "source": "procurement-system",
+      "claim": "invoice.amount",
+      "subject": "target",
+      "maxAgeSeconds": 60,
+      "unit": "<currency>"
+    },
+    "vendorVerified": {
+      "type": "boolean",
+      "provenance": "sourced",
+      "source": "vendor-master",
+      "claim": "vendor.verified",
+      "subject": "parameters.vendorId",
+      "maxAgeSeconds": 300
+    },
+    "fundsAvailable": {
+      "type": "boolean",
+      "provenance": "sourced",
+      "source": "ledger",
+      "claim": "funds.available",
+      "subject": "parameters.accountId",
+      "maxAgeSeconds": 60
+    },
+    "financeApproval": {
+      "type": "approval",
+      "provenance": "approved",
+      "approvalFor": { "resourceId": "target", "value": "invoiceAmount" },
+      "scope": "exact"
+    },
+    "requestedAmount": {
+      "type": "number",
+      "provenance": "untrusted",
+      "unit": "<currency>"
+    },
+    "riskScore": {
+      "type": "number",
+      "provenance": "untrusted",
+      "unit": "points"
+    }
   },
 
   "thresholds": {
-    "automaticLimit": { "value": 5000, "unit": "<currency>", "owner": "<finance action owner>", "approvedBy": "<second approver>", "reason": "Payments up to this value are automated after trusted checks pass.", "nextReview": "<date>" },
-    "reviewRiskScoreAbove": { "value": 80, "unit": "points", "owner": "<risk owner>", "approvedBy": "<second approver>", "reason": "A caller risk score above this needs a person to check the payment.", "nextReview": "<date>" }
+    "automaticLimit": {
+      "value": 5000,
+      "unit": "<currency>",
+      "owner": "<finance action owner>",
+      "approvedBy": "<second approver>",
+      "reason": "Payments up to this value are automated after trusted checks pass.",
+      "nextReview": "<date>"
+    },
+    "reviewRiskScoreAbove": {
+      "value": 80,
+      "unit": "points",
+      "owner": "<risk owner>",
+      "approvedBy": "<second approver>",
+      "reason": "A caller risk score above this needs a person to check the payment.",
+      "nextReview": "<date>"
+    }
   },
 
   "rules": [
-    { "id": "refuse-vendor-not-verified", "tier": "refuse", "when": { "fact": "vendorVerified", "operator": "is_false" }, "outcome": { "action": "reject", "reason": "The vendor master does not verify this vendor." } },
-    { "id": "refuse-no-funds", "tier": "refuse", "when": { "fact": "fundsAvailable", "operator": "is_false" }, "outcome": { "action": "reject", "reason": "The ledger does not show enough funds." } },
-    { "id": "review-high-risk-score", "tier": "review", "when": { "fact": "riskScore", "operator": "gt", "value": { "threshold": "reviewRiskScoreAbove" } }, "outcome": { "action": "review", "reason": "The caller's risk score is high. A person should check the payment." } },
-    { "id": "tier1-automatic-payment", "tier": "tier1", "when": { "all": [
-        { "fact": "vendorVerified", "operator": "is_true" },
-        { "fact": "fundsAvailable", "operator": "is_true" },
-        { "fact": "invoiceAmount", "operator": "lte", "value": { "threshold": "automaticLimit" } }
-      ] }, "outcome": { "action": "approve", "reason": "Every check was confirmed by a trusted source, and the amount is within the automatic limit." } },
-    { "id": "tier2-finance-approved-payment", "tier": "tier2", "when": { "all": [
-        { "fact": "vendorVerified", "operator": "is_true" },
-        { "fact": "fundsAvailable", "operator": "is_true" },
-        { "fact": "financeApproval", "operator": "is_true" }
-      ] }, "outcome": { "action": "approve", "reason": "Every check was confirmed by a trusted source, and a finance approver approved this exact amount." } },
-    { "id": "reject-default", "tier": "reject", "when": { "always": true }, "outcome": { "action": "reject", "reason": "The payment does not meet the policy. Human approval or review is needed." } }
+    {
+      "id": "refuse-vendor-not-verified",
+      "tier": "refuse",
+      "when": { "fact": "vendorVerified", "operator": "is_false" },
+      "outcome": {
+        "action": "reject",
+        "reason": "The vendor master does not verify this vendor."
+      }
+    },
+    {
+      "id": "refuse-no-funds",
+      "tier": "refuse",
+      "when": { "fact": "fundsAvailable", "operator": "is_false" },
+      "outcome": {
+        "action": "reject",
+        "reason": "The ledger does not show enough funds."
+      }
+    },
+    {
+      "id": "review-high-risk-score",
+      "tier": "review",
+      "when": {
+        "fact": "riskScore",
+        "operator": "gt",
+        "value": { "threshold": "reviewRiskScoreAbove" }
+      },
+      "outcome": {
+        "action": "review",
+        "reason": "The caller's risk score is high. A person should check the payment."
+      }
+    },
+    {
+      "id": "tier1-automatic-payment",
+      "tier": "tier1",
+      "when": {
+        "all": [
+          { "fact": "vendorVerified", "operator": "is_true" },
+          { "fact": "fundsAvailable", "operator": "is_true" },
+          {
+            "fact": "invoiceAmount",
+            "operator": "lte",
+            "value": { "threshold": "automaticLimit" }
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Every check was confirmed by a trusted source, and the amount is within the automatic limit."
+      }
+    },
+    {
+      "id": "tier2-finance-approved-payment",
+      "tier": "tier2",
+      "when": {
+        "all": [
+          { "fact": "vendorVerified", "operator": "is_true" },
+          { "fact": "fundsAvailable", "operator": "is_true" },
+          { "fact": "financeApproval", "operator": "is_true" }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Every check was confirmed by a trusted source, and a finance approver approved this exact amount."
+      }
+    },
+    {
+      "id": "reject-default",
+      "tier": "reject",
+      "when": { "always": true },
+      "outcome": {
+        "action": "reject",
+        "reason": "The payment does not meet the policy. Human approval or review is needed."
+      }
+    }
   ]
 }
 ```
@@ -145,35 +254,138 @@ The same format is used in each. The names differ, and the structure does not.
   "owner": "<platform action owner>",
 
   "signals": {
-    "changeApproved": { "type": "boolean", "provenance": "sourced", "source": "change-system", "claim": "change.approved", "subject": "target", "maxAgeSeconds": 300 },
-    "inMaintenanceWindow": { "type": "boolean", "provenance": "sourced", "source": "change-calendar", "claim": "window.open", "subject": "parameters.service", "maxAgeSeconds": 60 },
-    "rollbackVerified": { "type": "boolean", "provenance": "sourced", "source": "release-system", "claim": "rollback.verified", "subject": "target", "maxAgeSeconds": 300 },
-    "serviceOwnerApproval": { "type": "approval", "provenance": "approved", "approvalFor": { "resourceId": "target", "value": "parameters.changeId" }, "scope": "exact" },
-    "blastRadius": { "type": "number", "provenance": "untrusted", "unit": "services" },
-    "assistantRiskNote": { "type": "enum", "provenance": "ai", "model": "change-risk-classifier", "values": ["low", "medium", "high"], "permittedUse": ["review"] }
+    "changeApproved": {
+      "type": "boolean",
+      "provenance": "sourced",
+      "source": "change-system",
+      "claim": "change.approved",
+      "subject": "target",
+      "maxAgeSeconds": 300
+    },
+    "inMaintenanceWindow": {
+      "type": "boolean",
+      "provenance": "sourced",
+      "source": "change-calendar",
+      "claim": "window.open",
+      "subject": "parameters.service",
+      "maxAgeSeconds": 60
+    },
+    "rollbackVerified": {
+      "type": "boolean",
+      "provenance": "sourced",
+      "source": "release-system",
+      "claim": "rollback.verified",
+      "subject": "target",
+      "maxAgeSeconds": 300
+    },
+    "serviceOwnerApproval": {
+      "type": "approval",
+      "provenance": "approved",
+      "approvalFor": { "resourceId": "target", "value": "parameters.changeId" },
+      "scope": "exact"
+    },
+    "blastRadius": {
+      "type": "number",
+      "provenance": "untrusted",
+      "unit": "services"
+    },
+    "assistantRiskNote": {
+      "type": "enum",
+      "provenance": "ai",
+      "model": "change-risk-classifier",
+      "values": ["low", "medium", "high"],
+      "permittedUse": ["review"]
+    }
   },
 
   "thresholds": {
-    "automaticBlastRadius": { "value": 1, "unit": "services", "owner": "<platform action owner>", "approvedBy": "<second approver>", "reason": "Changes touching at most this many services are automated after trusted checks pass.", "nextReview": "<date>" }
+    "automaticBlastRadius": {
+      "value": 1,
+      "unit": "services",
+      "owner": "<platform action owner>",
+      "approvedBy": "<second approver>",
+      "reason": "Changes touching at most this many services are automated after trusted checks pass.",
+      "nextReview": "<date>"
+    }
   },
 
   "rules": [
-    { "id": "refuse-change-not-approved", "tier": "refuse", "when": { "fact": "changeApproved", "operator": "is_false" }, "outcome": { "action": "reject", "reason": "The change system has no approval for this change." } },
-    { "id": "refuse-outside-window", "tier": "refuse", "when": { "fact": "inMaintenanceWindow", "operator": "is_false" }, "outcome": { "action": "reject", "reason": "The release falls outside the maintenance window." } },
-    { "id": "review-high-risk-note", "tier": "review", "when": { "fact": "assistantRiskNote", "operator": "eq", "value": "high" }, "outcome": { "action": "review", "reason": "The risk classifier flagged this change as high risk. A person should check it." } },
-    { "id": "tier1-small-change", "tier": "tier1", "when": { "all": [
-        { "fact": "changeApproved", "operator": "is_true" },
-        { "fact": "inMaintenanceWindow", "operator": "is_true" },
-        { "fact": "rollbackVerified", "operator": "is_true" },
-        { "fact": "blastRadius", "operator": "lte", "value": { "threshold": "automaticBlastRadius" } }
-      ] }, "outcome": { "action": "approve", "reason": "The change is approved, inside the window, rollback is verified, and the change touches few services." } },
-    { "id": "tier2-owner-approved-change", "tier": "tier2", "when": { "all": [
-        { "fact": "changeApproved", "operator": "is_true" },
-        { "fact": "inMaintenanceWindow", "operator": "is_true" },
-        { "fact": "rollbackVerified", "operator": "is_true" },
-        { "fact": "serviceOwnerApproval", "operator": "is_true" }
-      ] }, "outcome": { "action": "approve", "reason": "The change is approved and inside the window, rollback is verified, and the service owner approved this change." } },
-    { "id": "reject-default", "tier": "reject", "when": { "always": true }, "outcome": { "action": "reject", "reason": "The release does not meet the policy. Human approval or review is needed." } }
+    {
+      "id": "refuse-change-not-approved",
+      "tier": "refuse",
+      "when": { "fact": "changeApproved", "operator": "is_false" },
+      "outcome": {
+        "action": "reject",
+        "reason": "The change system has no approval for this change."
+      }
+    },
+    {
+      "id": "refuse-outside-window",
+      "tier": "refuse",
+      "when": { "fact": "inMaintenanceWindow", "operator": "is_false" },
+      "outcome": {
+        "action": "reject",
+        "reason": "The release falls outside the maintenance window."
+      }
+    },
+    {
+      "id": "review-high-risk-note",
+      "tier": "review",
+      "when": {
+        "fact": "assistantRiskNote",
+        "operator": "eq",
+        "value": "high"
+      },
+      "outcome": {
+        "action": "review",
+        "reason": "The risk classifier flagged this change as high risk. A person should check it."
+      }
+    },
+    {
+      "id": "tier1-small-change",
+      "tier": "tier1",
+      "when": {
+        "all": [
+          { "fact": "changeApproved", "operator": "is_true" },
+          { "fact": "inMaintenanceWindow", "operator": "is_true" },
+          { "fact": "rollbackVerified", "operator": "is_true" },
+          {
+            "fact": "blastRadius",
+            "operator": "lte",
+            "value": { "threshold": "automaticBlastRadius" }
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "The change is approved, inside the window, rollback is verified, and the change touches few services."
+      }
+    },
+    {
+      "id": "tier2-owner-approved-change",
+      "tier": "tier2",
+      "when": {
+        "all": [
+          { "fact": "changeApproved", "operator": "is_true" },
+          { "fact": "inMaintenanceWindow", "operator": "is_true" },
+          { "fact": "rollbackVerified", "operator": "is_true" },
+          { "fact": "serviceOwnerApproval", "operator": "is_true" }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "The change is approved and inside the window, rollback is verified, and the service owner approved this change."
+      }
+    },
+    {
+      "id": "reject-default",
+      "tier": "reject",
+      "when": { "always": true },
+      "outcome": {
+        "action": "reject",
+        "reason": "The release does not meet the policy. Human approval or review is needed."
+      }
+    }
   ]
 }
 ```
@@ -250,16 +462,16 @@ The decision already records the policy hash and the matched rule id (plan D13).
 
 ## 12. Decisions
 
-| ID | Decision | Status |
-|---|---|---|
-| D16 | Rules never compare two values. Agreement with a sourced value is a platform check. | Recommended long-term answer (not yet confirmed) |
-| D17 | Every numeric value and threshold declares a unit. Comparisons need matching units. Sources state their units. | Recommended long-term answer (not yet confirmed) |
-| D18 | Every number in a rule is a named threshold, except zero. | Recommended long-term answer (not yet confirmed) |
-| D19 | Sourced values name a registered source and claim, checked at load time. | Recommended long-term answer (not yet confirmed) |
-| D7 | REVIEW is its own record type, which refers to the decision that opened it. | Recommended long-term answer (not yet confirmed) |
-| D8 | An intermediary may be the signer for a source that cannot sign. The data owner stays accountable. Both are recorded. | Recommended long-term answer (not yet confirmed) |
-| D9 | Thresholds are set by the business, with a second approver, reason and review date. A standing group reviews them. | Recommended long-term answer (not yet confirmed) |
-| D11 | Review windows and approval validity are set per action, within caps of three business days and 60 minutes. | Recommended long-term answer (not yet confirmed) |
+| ID  | Decision                                                                                                              | Status                                           |
+| --- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| D16 | Rules never compare two values. Agreement with a sourced value is a platform check.                                   | Recommended long-term answer (not yet confirmed) |
+| D17 | Every numeric value and threshold declares a unit. Comparisons need matching units. Sources state their units.        | Recommended long-term answer (not yet confirmed) |
+| D18 | Every number in a rule is a named threshold, except zero.                                                             | Recommended long-term answer (not yet confirmed) |
+| D19 | Sourced values name a registered source and claim, checked at load time.                                              | Recommended long-term answer (not yet confirmed) |
+| D7  | REVIEW is its own record type, which refers to the decision that opened it.                                           | Recommended long-term answer (not yet confirmed) |
+| D8  | An intermediary may be the signer for a source that cannot sign. The data owner stays accountable. Both are recorded. | Recommended long-term answer (not yet confirmed) |
+| D9  | Thresholds are set by the business, with a second approver, reason and review date. A standing group reviews them.    | Recommended long-term answer (not yet confirmed) |
+| D11 | Review windows and approval validity are set per action, within caps of three business days and 60 minutes.           | Recommended long-term answer (not yet confirmed) |
 
 ## 13. Open points
 

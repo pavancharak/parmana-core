@@ -189,4 +189,3 @@ describe("refund amount scenarios", () => {
     "a refund approval covers only the sourced amount, not the caller's proposal",
   );
 });
-

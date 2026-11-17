@@ -4,23 +4,23 @@ Operator guides for running Parmana in production and for working on it locally.
 
 ## Which runbook to open
 
-| You are stuck on                                                                                       | Open                                                                         |
-| ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
-| Production returns 500, the startup log shows an error, or `/ready` fails                              | [PRODUCTION-TROUBLESHOOTING.md](PRODUCTION-TROUBLESHOOTING.md), sections 1–3 |
-| `STEP_UP_AUTHORIZATION_INVALID`, `CHECKER_NOT_IN_SCOPE`, or a policy change will not approve or reject | [POLICY-CHANGE-APPROVAL.md](POLICY-CHANGE-APPROVAL.md)                       |
-| An environment variable is missing, wrong, or set when it should not be                                | [PRODUCTION-ENVIRONMENT.md](PRODUCTION-ENVIRONMENT.md)                       |
-| A change is not live after you saved it, or you need to roll back                                      | [PRODUCTION-DEPLOY-AND-ROLLBACK.md](PRODUCTION-DEPLOY-AND-ROLLBACK.md)       |
-| A key is lost, shared, or may be exposed, or you need to rotate one                                    | [KEY-ROTATION.md](KEY-ROTATION.md)                                           |
-| Creating or checking the `.env` file, or a setting's allowed values                                    | [ENV-FILE.md](ENV-FILE.md)                                                   |
-| The local build, typecheck or tests fail, or the local tools cannot import a package                   | [LOCAL-DEVELOPMENT.md](LOCAL-DEVELOPMENT.md)                                 |
-| What one environment variable means, why it is required, and what happens if it is missing             | [ENV-VARIABLE-REFERENCE.md](ENV-VARIABLE-REFERENCE.md)                       |
-| The kill switch is on, or the probe reports it                                                         | [KILL-SWITCH-OPERATIONS.md](KILL-SWITCH-OPERATIONS.md)                       |
-| An approval signed by an approver is refused, or you need to add or revoke an approval issuer          | [APPROVAL-ISSUERS.md](APPROVAL-ISSUERS.md)                                   |
-| A revoked caller API key still works, or a caller is refused after a revocation                        | [CALLER-KEY-REVOCATION.md](CALLER-KEY-REVOCATION.md)                         |
-| A file was deleted by mistake                                                                          | [PRODUCTION-TROUBLESHOOTING.md](PRODUCTION-TROUBLESHOOTING.md), section 12   |
-| Commits show as unverified on GitHub, or `git commit` fails at signing                                 | [SIGNING-COMMITS.md](SIGNING-COMMITS.md)                                     |
-| A Dependabot alert is open, or you need to check that a dependency fix is on `main`                    | [DEPENDABOT-ALERTS.md](DEPENDABOT-ALERTS.md)                                 |
-| `npm audit` reports a finding or the audit gate fails in CI, or a dependency override is changed       | [NPM-AUDIT-RECORD.md](NPM-AUDIT-RECORD.md)                                   |
+| You are stuck on                                                                                           | Open                                                                         |
+| ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Production returns 500, the startup log shows an error, or `/ready` fails                                  | [PRODUCTION-TROUBLESHOOTING.md](PRODUCTION-TROUBLESHOOTING.md), sections 1–3 |
+| `STEP_UP_AUTHORIZATION_INVALID`, `CHECKER_NOT_IN_SCOPE`, or a policy change will not approve or reject     | [POLICY-CHANGE-APPROVAL.md](POLICY-CHANGE-APPROVAL.md)                       |
+| An environment variable is missing, wrong, or set when it should not be                                    | [PRODUCTION-ENVIRONMENT.md](PRODUCTION-ENVIRONMENT.md)                       |
+| A change is not live after you saved it, or you need to roll back                                          | [PRODUCTION-DEPLOY-AND-ROLLBACK.md](PRODUCTION-DEPLOY-AND-ROLLBACK.md)       |
+| A key is lost, shared, or may be exposed, or you need to rotate one                                        | [KEY-ROTATION.md](KEY-ROTATION.md)                                           |
+| Creating or checking the `.env` file, or a setting's allowed values                                        | [ENV-FILE.md](ENV-FILE.md)                                                   |
+| The local build, typecheck or tests fail, or the local tools cannot import a package                       | [LOCAL-DEVELOPMENT.md](LOCAL-DEVELOPMENT.md)                                 |
+| What one environment variable means, why it is required, and what happens if it is missing                 | [ENV-VARIABLE-REFERENCE.md](ENV-VARIABLE-REFERENCE.md)                       |
+| The kill switch is on, or the probe reports it                                                             | [KILL-SWITCH-OPERATIONS.md](KILL-SWITCH-OPERATIONS.md)                       |
+| An approval signed by an approver is refused, or you need to add or revoke an approval issuer              | [APPROVAL-ISSUERS.md](APPROVAL-ISSUERS.md)                                   |
+| A revoked caller API key still works, or a caller is refused after a revocation                            | [CALLER-KEY-REVOCATION.md](CALLER-KEY-REVOCATION.md)                         |
+| A file was deleted by mistake                                                                              | [PRODUCTION-TROUBLESHOOTING.md](PRODUCTION-TROUBLESHOOTING.md), section 12   |
+| Commits show as unverified on GitHub, or `git commit` fails at signing                                     | [SIGNING-COMMITS.md](SIGNING-COMMITS.md)                                     |
+| A Dependabot alert is open, or you need to check that a dependency fix is on `main`                        | [DEPENDABOT-ALERTS.md](DEPENDABOT-ALERTS.md)                                 |
+| `npm audit` reports a finding or the audit gate fails in CI, or a dependency override is changed           | [NPM-AUDIT-RECORD.md](NPM-AUDIT-RECORD.md)                                   |
 | Refusals were recorded and you need the ones refused for a missing human approval, to retry after approval | [APPROVAL-REFUSAL-LISTER.md](APPROVAL-REFUSAL-LISTER.md)                     |
 
 ## Rules that apply to every runbook

@@ -27,13 +27,13 @@ node scripts/list-approval-refusals.mjs ids.txt --out report.json
 
 Each record is checked in this order:
 
-| Category | Meaning | What to do |
-|---|---|---|
-| `retry_after_approval` | The refusal came from an approval rule, the approval signal is not true, and every other boolean signal is true. This matches the start-here guide's case for "a person's signed approval is needed". | Candidate for retry, once the steps below are complete. |
-| `manual_review` | The refusal came from an approval rule, but the signals do not match that pattern. For example, the approval signal is true, or another boolean signal is false. | Read the record and decide. Do not retry automatically. |
-| `final_refusal` | The refusal came from any other rule. | Do not retry. Report the refusal. |
-| `not_found` | The server has no refusal record for the ID (HTTP `404`). | Check the ID. |
-| `lookup_failed` | Any other HTTP status, a network failure or a bad response. The report includes the status or error. | Check the key, the URL and the server, then run again for these IDs. |
+| Category               | Meaning                                                                                                                                                                                               | What to do                                                           |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `retry_after_approval` | The refusal came from an approval rule, the approval signal is not true, and every other boolean signal is true. This matches the start-here guide's case for "a person's signed approval is needed". | Candidate for retry, once the steps below are complete.              |
+| `manual_review`        | The refusal came from an approval rule, but the signals do not match that pattern. For example, the approval signal is true, or another boolean signal is false.                                      | Read the record and decide. Do not retry automatically.              |
+| `final_refusal`        | The refusal came from any other rule.                                                                                                                                                                 | Do not retry. Report the refusal.                                    |
+| `not_found`            | The server has no refusal record for the ID (HTTP `404`).                                                                                                                                             | Check the ID.                                                        |
+| `lookup_failed`        | Any other HTTP status, a network failure or a bad response. The report includes the status or error.                                                                                                  | Check the key, the URL and the server, then run again for these IDs. |
 
 A `retry_after_approval` result is a candidate, not a guarantee. A retry still needs:
 

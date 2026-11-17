@@ -30,21 +30,21 @@ R6. When a required fact cannot be verified, the request is refused, not approve
 
 ## 3. Parties and roles
 
-| Party | Role |
-|---|---|
-| Source | A business system that establishes facts. Trusted if it signs under a registered key. |
-| Data owner | The system whose data a source provides. Accountable for accuracy. |
-| Signer | The system itself, or a named intermediary that signs on its behalf. |
-| Approver | A named person who signs an approval for one exact action. |
-| Caller | Any party that submits a request. Untrusted. |
-| Action owner | Accountable for an action's policy and limits. |
-| Source owner | Accountable for a source's answers and key. |
-| Second approver | Approves changes proposed by another person. |
-| Risk function | Approves high-value thresholds. |
-| Reviewer | A registered approver with a grant for an action, who is not the requester. |
-| Parmana owner | Owns the platform: caps, go-live gates for approving sources, and decision confirmation. |
-| Operations | Runs the go-live gate and handles alerts that have no owner. |
-| Auditor | Reads everything. Changes nothing. |
+| Party           | Role                                                                                     |
+| --------------- | ---------------------------------------------------------------------------------------- |
+| Source          | A business system that establishes facts. Trusted if it signs under a registered key.    |
+| Data owner      | The system whose data a source provides. Accountable for accuracy.                       |
+| Signer          | The system itself, or a named intermediary that signs on its behalf.                     |
+| Approver        | A named person who signs an approval for one exact action.                               |
+| Caller          | Any party that submits a request. Untrusted.                                             |
+| Action owner    | Accountable for an action's policy and limits.                                           |
+| Source owner    | Accountable for a source's answers and key.                                              |
+| Second approver | Approves changes proposed by another person.                                             |
+| Risk function   | Approves high-value thresholds.                                                          |
+| Reviewer        | A registered approver with a grant for an action, who is not the requester.              |
+| Parmana owner   | Owns the platform: caps, go-live gates for approving sources, and decision confirmation. |
+| Operations      | Runs the go-live gate and handles alerts that have no owner.                             |
+| Auditor         | Reads everything. Changes nothing.                                                       |
 
 Nine console roles are defined in the governance design (section 2): action owner, second approver, risk function, source owner, reviewer, approver, Parmana owner, auditor and operator.
 
@@ -96,13 +96,13 @@ Outcomes: APPROVE, REJECT, REVIEW, and refusals for source unavailable, invalid 
 
 ### 4.5 Tiers
 
-| Tier | Applies when | Outcome |
-|---|---|---|
-| Refuse | A verified value says no, or a required verified value is missing. | Reject. |
-| Review | An untrusted or AI value would change the outcome. | Review record. |
+| Tier   | Applies when                                                        | Outcome                |
+| ------ | ------------------------------------------------------------------- | ---------------------- |
+| Refuse | A verified value says no, or a required verified value is missing.  | Reject.                |
+| Review | An untrusted or AI value would change the outcome.                  | Review record.         |
 | Tier 1 | Every value read is sourced and verified, and within its threshold. | Approve automatically. |
-| Tier 2 | Everything in tier 1, plus a verified approval for the exact value. | Approve. |
-| Reject | Nothing else matched. | Reject. |
+| Tier 2 | Everything in tier 1, plus a verified approval for the exact value. | Approve.               |
+| Reject | Nothing else matched.                                               | Reject.                |
 
 Until a threshold has an approved value, its action cannot reach tier 1.
 
@@ -235,27 +235,27 @@ Full design in `GOVERNANCE-CONSOLE-DESIGN.md`. In summary:
 
 ## 7. Decisions
 
-| ID | Decision | Status |
-|---|---|---|
-| D1 | The validator applies to all policies. No grandfathering. | Confirmed by owner |
-| D2 | Intent values are not trusted. | Confirmed by owner |
-| D3 | A verified signed human approval is a trusted source. | Confirmed by owner |
-| D4 | The policy language is extended for AI values. | Confirmed by owner |
-| D5 | Every trusted source has a key. | Confirmed by owner |
-| D6 | Provenance is derived from the policy, not stored. | Recommended, not confirmed |
-| D7 | REVIEW is its own record type, referring to the decision that opened it. | Recommended, not confirmed |
-| D8 | An intermediary may sign for a source that cannot sign. The data owner and the signer are both recorded. | Recommended, not confirmed |
-| D9 | Thresholds are set by the business through the process in 5.2. | Recommended, not confirmed |
-| D10 | The policy format is a new version (version 2). No compatibility constraint. | Recommended, not confirmed |
-| D11 | Review and approval windows are set per action within the caps in 5.6. | Recommended, not confirmed |
-| D12 | Approvals are always exact. | Recommended, not confirmed |
-| D13 | Each rule has an explicit tier field, checked by the validator. | Recommended, not confirmed |
-| D14 | The policy format is fully redesigned, built in stages. | Recommended, not confirmed |
-| D15 | External claims go through a claims review, linked to tests or documents. | Recommended, not confirmed |
-| D16 | Rules never compare two values. Agreement with a sourced value is a platform check. | Recommended, not confirmed |
-| D17 | Every numeric value and threshold has a unit. Comparisons need matching units. | Recommended, not confirmed |
-| D18 | Every number in a rule is a named threshold, except zero. | Recommended, not confirmed |
-| D19 | Sourced values name a registered source and claim, checked at load time. | Recommended, not confirmed |
+| ID  | Decision                                                                                                 | Status                     |
+| --- | -------------------------------------------------------------------------------------------------------- | -------------------------- |
+| D1  | The validator applies to all policies. No grandfathering.                                                | Confirmed by owner         |
+| D2  | Intent values are not trusted.                                                                           | Confirmed by owner         |
+| D3  | A verified signed human approval is a trusted source.                                                    | Confirmed by owner         |
+| D4  | The policy language is extended for AI values.                                                           | Confirmed by owner         |
+| D5  | Every trusted source has a key.                                                                          | Confirmed by owner         |
+| D6  | Provenance is derived from the policy, not stored.                                                       | Recommended, not confirmed |
+| D7  | REVIEW is its own record type, referring to the decision that opened it.                                 | Recommended, not confirmed |
+| D8  | An intermediary may sign for a source that cannot sign. The data owner and the signer are both recorded. | Recommended, not confirmed |
+| D9  | Thresholds are set by the business through the process in 5.2.                                           | Recommended, not confirmed |
+| D10 | The policy format is a new version (version 2). No compatibility constraint.                             | Recommended, not confirmed |
+| D11 | Review and approval windows are set per action within the caps in 5.6.                                   | Recommended, not confirmed |
+| D12 | Approvals are always exact.                                                                              | Recommended, not confirmed |
+| D13 | Each rule has an explicit tier field, checked by the validator.                                          | Recommended, not confirmed |
+| D14 | The policy format is fully redesigned, built in stages.                                                  | Recommended, not confirmed |
+| D15 | External claims go through a claims review, linked to tests or documents.                                | Recommended, not confirmed |
+| D16 | Rules never compare two values. Agreement with a sourced value is a platform check.                      | Recommended, not confirmed |
+| D17 | Every numeric value and threshold has a unit. Comparisons need matching units.                           | Recommended, not confirmed |
+| D18 | Every number in a rule is a named threshold, except zero.                                                | Recommended, not confirmed |
+| D19 | Sourced values name a registered source and claim, checked at load time.                                 | Recommended, not confirmed |
 
 Also confirmed by the owner: manager approval is trusted only when it verifies; the review design (who may review, what a reviewer may do, where items are stored); and the tiered approach.
 
@@ -263,32 +263,32 @@ Also confirmed by the owner: manager approval is trusted only when it verifies; 
 
 ### 8.1 Needs the business to supply
 
-| Item | Who supplies it | Where it is recorded |
-|---|---|---|
-| Owners and successors for each action | Business leadership | Register |
-| Data owner and signer for each source | Source owners | Register |
-| Threshold values, each with reason, evidence, second approver and risk-function approval if high-value | Action owners and approvers | Register, as policy versions |
-| Named intermediary operators | Source owners | Register |
-| The go-live gate owner (a role in Operations, with a deputy) | Operations | Register |
-| Role-based contacts for the Parmana owner and Operations | Parmana owner and Operations | Help guide |
+| Item                                                                                                   | Who supplies it              | Where it is recorded         |
+| ------------------------------------------------------------------------------------------------------ | ---------------------------- | ---------------------------- |
+| Owners and successors for each action                                                                  | Business leadership          | Register                     |
+| Data owner and signer for each source                                                                  | Source owners                | Register                     |
+| Threshold values, each with reason, evidence, second approver and risk-function approval if high-value | Action owners and approvers  | Register, as policy versions |
+| Named intermediary operators                                                                           | Source owners                | Register                     |
+| The go-live gate owner (a role in Operations, with a deputy)                                           | Operations                   | Register                     |
+| Role-based contacts for the Parmana owner and Operations                                               | Parmana owner and Operations | Help guide                   |
 
 ### 8.2 Needs confirmation (recommendations)
 
-| Item | Recommendation | Reference |
-|---|---|---|
-| D6 to D19 | As in section 7 | Section 7 |
-| Intermediaries | Registered key, named operator, yearly review, native signing as goal | 5.3 |
-| Windows | Set per action within caps | 5.6 |
-| Go-live gate | Gate owner in Operations, checklist in 5.7 | 5.7 |
-| Existing data | Read-only, retained, no reused approvals, in-progress requests re-decided | 5.8 |
-| Decision confirmation | Dated decision records by the Parmana owner | 5.9 |
-| Platform caps | Three business days for review, 60 minutes for approval validity | 5.6 |
-| High-value reviewers | Two, distinct, neither requester nor proposer | 5.5 |
-| Sign-off by source type | As in 5.4 | 5.4 |
-| Backup reviewers | Two per action, alerted at half window | 5.5 |
-| Alert rules | As in section 6 | 6 |
-| Website | Claims review first, rewrite after version 2 | D15 |
-| Policy redesign scope | Full version 2, staged, validator first | D14 |
+| Item                    | Recommendation                                                            | Reference |
+| ----------------------- | ------------------------------------------------------------------------- | --------- |
+| D6 to D19               | As in section 7                                                           | Section 7 |
+| Intermediaries          | Registered key, named operator, yearly review, native signing as goal     | 5.3       |
+| Windows                 | Set per action within caps                                                | 5.6       |
+| Go-live gate            | Gate owner in Operations, checklist in 5.7                                | 5.7       |
+| Existing data           | Read-only, retained, no reused approvals, in-progress requests re-decided | 5.8       |
+| Decision confirmation   | Dated decision records by the Parmana owner                               | 5.9       |
+| Platform caps           | Three business days for review, 60 minutes for approval validity          | 5.6       |
+| High-value reviewers    | Two, distinct, neither requester nor proposer                             | 5.5       |
+| Sign-off by source type | As in 5.4                                                                 | 5.4       |
+| Backup reviewers        | Two per action, alerted at half window                                    | 5.5       |
+| Alert rules             | As in section 6                                                           | 6         |
+| Website                 | Claims review first, rewrite after version 2                              | D15       |
+| Policy redesign scope   | Full version 2, staged, validator first                                   | D14       |
 
 ### 8.3 Not yet done
 

@@ -11,7 +11,9 @@ import { readFileSync, writeFileSync } from "node:fs";
 const args = process.argv.slice(2);
 const inputPath = args.find((a) => !a.startsWith("--") && !isValue(a));
 if (!inputPath) {
-  console.error("usage: node list-approval-refusals.mjs <ids file> [--rule <ruleId>]... [--approval-signal <name>] [--out <file>]");
+  console.error(
+    "usage: node list-approval-refusals.mjs <ids file> [--rule <ruleId>]... [--approval-signal <name>] [--out <file>]",
+  );
   process.exit(2);
 }
 const approvalRules = [];
@@ -22,11 +24,14 @@ for (let i = 0; i < args.length; i++) {
   if (args[i] === "--out") outPath = args[++i];
   if (args[i] === "--approval-signal") approvalSignal = args[++i];
 }
-if (approvalRules.length === 0) approvalRules.push("reject-manager-approval-required");
+if (approvalRules.length === 0)
+  approvalRules.push("reject-manager-approval-required");
 
 function isValue(a) {
   const i = args.indexOf(a);
-  return i > 0 && ["--rule", "--out", "--approval-signal"].includes(args[i - 1]);
+  return (
+    i > 0 && ["--rule", "--out", "--approval-signal"].includes(args[i - 1])
+  );
 }
 
 /**
@@ -46,7 +51,10 @@ function classify(decision) {
   return "retry_after_approval";
 }
 
-const base = (process.env.PARMANA_BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+const base = (process.env.PARMANA_BASE_URL ?? "http://localhost:3000").replace(
+  /\/$/,
+  "",
+);
 const key = process.env.PARMANA_API_KEY;
 if (!key) {
   console.error("PARMANA_API_KEY is not set");
@@ -56,7 +64,10 @@ if (!key) {
 const raw = readFileSync(inputPath, "utf8").trim();
 const ids = raw.startsWith("[")
   ? JSON.parse(raw)
-  : raw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+  : raw
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter(Boolean);
 
 const rows = [];
 for (const id of ids) {
@@ -75,7 +86,9 @@ for (const id of ids) {
     } else {
       const rec = await res.json();
       const d = rec.decision ?? {};
-      row.policy = d.policy ? `${d.policy.name}@${d.policy.version}` : undefined;
+      row.policy = d.policy
+        ? `${d.policy.name}@${d.policy.version}`
+        : undefined;
       row.matchedRuleId = d.matchedRuleId;
       row.reason = d.reason;
       row.refusalRecordId = rec.refusalRecordId;
@@ -100,7 +113,9 @@ const report = {
 
 console.log(JSON.stringify(counts, null, 2));
 for (const r of rows.filter((r) => r.category === "retry_after_approval")) {
-  console.log(`retry_after_approval  ${r.businessTransactionId}  ${r.matchedRuleId}`);
+  console.log(
+    `retry_after_approval  ${r.businessTransactionId}  ${r.matchedRuleId}`,
+  );
 }
 if (outPath) {
   writeFileSync(outPath, JSON.stringify(report, null, 2));

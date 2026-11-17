@@ -8,17 +8,17 @@ One console where the business manages who owns what, which sources and threshol
 
 ## 2. Roles and permissions
 
-| Role | Can see | Can do |
-|---|---|---|
-| Action owner | Their actions, thresholds, review windows | Propose threshold and window changes; propose a successor |
-| Second approver | Proposed changes to any action they are assigned | Approve or reject a proposed change |
-| Risk function | Proposed high-value thresholds | Approve or reject high-value thresholds |
-| Source owner | Their sources, signer, key status | Propose signer and key changes |
-| Reviewer | Review items they are granted for, within their amount limit | Approve or reject a review item |
-| Approver (signer) | Requests they are asked to approve | Confirm, then sign an informed approval |
-| Parmana owner | Everything | Approve platform caps and go-live gates; confirm decisions |
-| Auditor | Everything, read-only | Export records |
-| Operator | Health, queues, overdue items | Nothing that changes a decision or a register entry |
+| Role              | Can see                                                      | Can do                                                     |
+| ----------------- | ------------------------------------------------------------ | ---------------------------------------------------------- |
+| Action owner      | Their actions, thresholds, review windows                    | Propose threshold and window changes; propose a successor  |
+| Second approver   | Proposed changes to any action they are assigned             | Approve or reject a proposed change                        |
+| Risk function     | Proposed high-value thresholds                               | Approve or reject high-value thresholds                    |
+| Source owner      | Their sources, signer, key status                            | Propose signer and key changes                             |
+| Reviewer          | Review items they are granted for, within their amount limit | Approve or reject a review item                            |
+| Approver (signer) | Requests they are asked to approve                           | Confirm, then sign an informed approval                    |
+| Parmana owner     | Everything                                                   | Approve platform caps and go-live gates; confirm decisions |
+| Auditor           | Everything, read-only                                        | Export records                                             |
+| Operator          | Health, queues, overdue items                                | Nothing that changes a decision or a register entry        |
 
 Rules that hold for every role:
 
@@ -226,8 +226,8 @@ Closing a browser window, logging out or navigating away does not clear it.
 
 **11.12 Alert classes and urgency.**
 
-| Class | Examples | Urgency |
-|---|---|---|
-| Immediate | A review or approval whose deadline is near; a revoked key in use; a source down for a live action | Shown at once, escalated at half the window |
-| Due | A threshold review date, an owner re-confirmation, a yearly intermediary review | Shown seven days before the date, escalated on the date |
-| Blocking | A gate incomplete, a placeholder, a missing owner | Shown until the action is unblocked |
+| Class     | Examples                                                                                           | Urgency                                                 |
+| --------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Immediate | A review or approval whose deadline is near; a revoked key in use; a source down for a live action | Shown at once, escalated at half the window             |
+| Due       | A threshold review date, an owner re-confirmation, a yearly intermediary review                    | Shown seven days before the date, escalated on the date |
+| Blocking  | A gate incomplete, a placeholder, a missing owner                                                  | Shown until the action is unblocked                     |

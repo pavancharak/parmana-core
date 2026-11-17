@@ -22,14 +22,14 @@ R6. When a required fact cannot be verified, the request is refused, not approve
 
 ## 3. Parties
 
-| Party | Role |
-|---|---|
-| Source | A business system that establishes facts. Trusted if it signs its answers under a registered key. |
-| Approver | A named person who signs an approval for one exact action. |
-| Caller | Any party that submits a request. Untrusted. |
-| Action owner | Accountable for an action's policy and limits. Sets them, with a second approver. |
-| Source owner | Accountable for a source's answers and key. Chooses how the source signs. |
-| Reviewer | A registered approver with a grant for the action, who is not the requester. |
+| Party        | Role                                                                                              |
+| ------------ | ------------------------------------------------------------------------------------------------- |
+| Source       | A business system that establishes facts. Trusted if it signs its answers under a registered key. |
+| Approver     | A named person who signs an approval for one exact action.                                        |
+| Caller       | Any party that submits a request. Untrusted.                                                      |
+| Action owner | Accountable for an action's policy and limits. Sets them, with a second approver.                 |
+| Source owner | Accountable for a source's answers and key. Chooses how the source signs.                         |
+| Reviewer     | A registered approver with a grant for the action, who is not the requester.                      |
 
 ## 4. Design
 
@@ -77,13 +77,13 @@ Outcomes: APPROVE, REJECT, REVIEW, and refusals for source unavailable, invalid 
 
 ### 4.5 Tiers
 
-| Tier | Applies when | Outcome |
-|---|---|---|
-| Refuse | A verified value says no, or a required verified value is missing. | Reject. |
-| Review | An untrusted or AI value would change the outcome. | Review item. |
+| Tier   | Applies when                                                        | Outcome                |
+| ------ | ------------------------------------------------------------------- | ---------------------- |
+| Refuse | A verified value says no, or a required verified value is missing.  | Reject.                |
+| Review | An untrusted or AI value would change the outcome.                  | Review item.           |
 | Tier 1 | Every value read is sourced and verified, and within its threshold. | Approve automatically. |
-| Tier 2 | Everything in tier 1, plus a verified approval for the exact value. | Approve. |
-| Reject | Nothing else matched. | Reject. |
+| Tier 2 | Everything in tier 1, plus a verified approval for the exact value. | Approve.               |
+| Reject | Nothing else matched.                                               | Reject.                |
 
 Until a threshold has an approved value, the action cannot reach tier 1.
 
@@ -204,27 +204,27 @@ The full design is in `GOVERNANCE-CONSOLE-DESIGN.md`, and the task-by-task instr
 
 ## 5. Decisions
 
-| ID | Decision | Status |
-|---|---|---|
-| D1 | Validator applies to all policies. No grandfathering. | Confirmed by owner |
-| D2 | Intent values are not trusted. | Confirmed by owner |
-| D3 | A verified signed human approval is a trusted source. | Confirmed by owner |
-| D4 | The policy language is extended for AI values. | Confirmed by owner |
-| D5 | Every trusted source has a key. | Confirmed by owner |
-| D6 | Provenance is derived from the policy, not stored. | Recommended, not yet confirmed |
-| D7 | REVIEW is a first-class outcome with its own record type, which refers to the decision that opened it. | Recommended long-term answer, not yet confirmed |
-| D8 | An intermediary may be the signer of record for a source that cannot sign. The register and every decision name both the data owner and the signer. The data owner stays accountable for accuracy. Native signing is the goal, and each intermediary is reviewed yearly. | Recommended long-term answer, not yet confirmed |
-| D9 | The business sets thresholds, not engineering. Each action has a named owner. Each threshold has a second approver, a reason and a review date. High-value thresholds need the risk function. A standing group of the action owner, the risk function and a second approver reviews thresholds on a schedule. | Recommended long-term answer, not yet confirmed |
-| D10 | The policy format is new. No compatibility constraint is part of the design. | Recommended, not yet confirmed |
-| D11 | Review window and approval validity are set per action class, within platform caps: a review window of at most three business days, and an approval validity of at most 60 minutes. A new action class starts at the shortest values, and lengthening needs a recorded reason. | Recommended long-term answer, not yet confirmed |
-| D12 | Approvals are always exact. | Recommended, not yet confirmed |
-| D13 | Tier is explicit in each rule, and the validator checks it. | Recommended, not yet confirmed |
-| D14 | The policy format is fully redesigned. | Recommended, not yet confirmed |
-| D15 | External claims go through a claims review, linked to tests or documents. | Recommended, not yet confirmed |
-| D16 | Rules never compare two values. Agreement with a sourced value is a platform check. | Recommended, not yet confirmed |
-| D17 | Every numeric value and threshold has a unit. Comparisons need matching units. | Recommended, not yet confirmed |
-| D18 | Every number in a rule is a named threshold, except zero. | Recommended, not yet confirmed |
-| D19 | Sourced values name a registered source and claim, checked at load time. | Recommended, not yet confirmed |
+| ID  | Decision                                                                                                                                                                                                                                                                                                      | Status                                          |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| D1  | Validator applies to all policies. No grandfathering.                                                                                                                                                                                                                                                         | Confirmed by owner                              |
+| D2  | Intent values are not trusted.                                                                                                                                                                                                                                                                                | Confirmed by owner                              |
+| D3  | A verified signed human approval is a trusted source.                                                                                                                                                                                                                                                         | Confirmed by owner                              |
+| D4  | The policy language is extended for AI values.                                                                                                                                                                                                                                                                | Confirmed by owner                              |
+| D5  | Every trusted source has a key.                                                                                                                                                                                                                                                                               | Confirmed by owner                              |
+| D6  | Provenance is derived from the policy, not stored.                                                                                                                                                                                                                                                            | Recommended, not yet confirmed                  |
+| D7  | REVIEW is a first-class outcome with its own record type, which refers to the decision that opened it.                                                                                                                                                                                                        | Recommended long-term answer, not yet confirmed |
+| D8  | An intermediary may be the signer of record for a source that cannot sign. The register and every decision name both the data owner and the signer. The data owner stays accountable for accuracy. Native signing is the goal, and each intermediary is reviewed yearly.                                      | Recommended long-term answer, not yet confirmed |
+| D9  | The business sets thresholds, not engineering. Each action has a named owner. Each threshold has a second approver, a reason and a review date. High-value thresholds need the risk function. A standing group of the action owner, the risk function and a second approver reviews thresholds on a schedule. | Recommended long-term answer, not yet confirmed |
+| D10 | The policy format is new. No compatibility constraint is part of the design.                                                                                                                                                                                                                                  | Recommended, not yet confirmed                  |
+| D11 | Review window and approval validity are set per action class, within platform caps: a review window of at most three business days, and an approval validity of at most 60 minutes. A new action class starts at the shortest values, and lengthening needs a recorded reason.                                | Recommended long-term answer, not yet confirmed |
+| D12 | Approvals are always exact.                                                                                                                                                                                                                                                                                   | Recommended, not yet confirmed                  |
+| D13 | Tier is explicit in each rule, and the validator checks it.                                                                                                                                                                                                                                                   | Recommended, not yet confirmed                  |
+| D14 | The policy format is fully redesigned.                                                                                                                                                                                                                                                                        | Recommended, not yet confirmed                  |
+| D15 | External claims go through a claims review, linked to tests or documents.                                                                                                                                                                                                                                     | Recommended, not yet confirmed                  |
+| D16 | Rules never compare two values. Agreement with a sourced value is a platform check.                                                                                                                                                                                                                           | Recommended, not yet confirmed                  |
+| D17 | Every numeric value and threshold has a unit. Comparisons need matching units.                                                                                                                                                                                                                                | Recommended, not yet confirmed                  |
+| D18 | Every number in a rule is a named threshold, except zero.                                                                                                                                                                                                                                                     | Recommended, not yet confirmed                  |
+| D19 | Sourced values name a registered source and claim, checked at load time.                                                                                                                                                                                                                                      | Recommended, not yet confirmed                  |
 
 Confirmed by the owner, in addition to the table above: manager approval is trusted only when it verifies; the review design (who may review, what a reviewer may do, where items are stored); and the tiered approach, with human approval only where risk needs it.
 
@@ -261,11 +261,11 @@ Each step is complete when its tests pass. Each step is reviewed before the next
 
 ## 9. Open items
 
-| Item | Owner |
-|---|---|
-| Owner and successor for each action; data owner and signer for each source | The business, recorded in the register (4.10) |
-| Threshold values, with reason and evidence | Action owners proposed; a second person approves; risk function for high-value (4.10) |
-| Intermediary for each source that cannot sign | Source owners name it in the register; registered key; yearly review (4.11) |
-| Review and approval windows per action class | Action owners, within the platform caps; second approver for changes (4.11) |
-| Go-live and treatment of existing data | Operations names one gate owner; existing records read-only; no old approvals reused (4.11) |
-| Confirmation of D6 to D19 | Parmana owner, in a dated decision record; changes are new decisions (4.11) |
+| Item                                                                       | Owner                                                                                       |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Owner and successor for each action; data owner and signer for each source | The business, recorded in the register (4.10)                                               |
+| Threshold values, with reason and evidence                                 | Action owners proposed; a second person approves; risk function for high-value (4.10)       |
+| Intermediary for each source that cannot sign                              | Source owners name it in the register; registered key; yearly review (4.11)                 |
+| Review and approval windows per action class                               | Action owners, within the platform caps; second approver for changes (4.11)                 |
+| Go-live and treatment of existing data                                     | Operations names one gate owner; existing records read-only; no old approvals reused (4.11) |
+| Confirmation of D6 to D19                                                  | Parmana owner, in a dated decision record; changes are new decisions (4.11)                 |

@@ -13,14 +13,14 @@ R6. When a required fact cannot be verified, the request is refused, not approve
 
 ## 2. Parties
 
-| Party | Role | Trust |
-|---|---|---|
-| Source | A business system that establishes facts, such as an order system or a ledger. | Trusted if it signs its answers under a registered key. |
-| Approver | A named person who signs an approval for one exact action. | Trusted if the approval verifies against a registered key. |
-| Caller | Any party that submits a request: an agent, an integration, a person, or an AI model. | Untrusted. All values it sends are untrusted. |
-| Action owner | The person accountable for an action's policy and limits. | Sets limits; a second person approves them. |
-| Source owner | The person accountable for a source's answers and its key. | Chooses how the source signs. |
-| Reviewer | A registered approver with a grant for the action, who is not the requester. | Decides review items within their grant. |
+| Party        | Role                                                                                  | Trust                                                      |
+| ------------ | ------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Source       | A business system that establishes facts, such as an order system or a ledger.        | Trusted if it signs its answers under a registered key.    |
+| Approver     | A named person who signs an approval for one exact action.                            | Trusted if the approval verifies against a registered key. |
+| Caller       | Any party that submits a request: an agent, an integration, a person, or an AI model. | Untrusted. All values it sends are untrusted.              |
+| Action owner | The person accountable for an action's policy and limits.                             | Sets limits; a second person approves them.                |
+| Source owner | The person accountable for a source's answers and its key.                            | Chooses how the source signs.                              |
+| Reviewer     | A registered approver with a grant for the action, who is not the requester.          | Decides review items within their grant.                   |
 
 Parties are the same in every domain. Nothing here is specific to payments.
 
@@ -36,11 +36,11 @@ Parties are the same in every domain. Nothing here is specific to payments.
 
 Every source and every action is listed in a register, which is the only place that defines which source and claim a policy may use.
 
-| Entry | Fields |
-|---|---|
-| Source | name, owner, signer (the system itself or a named intermediary), key identifier, status (trusted or untrusted), the claims it provides, units of each claim |
-| Action | capability name (`<system>:<action>`), owner, the tiers and thresholds in force |
-| Threshold | name, value, unit, owner, approver, reason, next review date |
+| Entry     | Fields                                                                                                                                                      |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Source    | name, owner, signer (the system itself or a named intermediary), key identifier, status (trusted or untrusted), the claims it provides, units of each claim |
+| Action    | capability name (`<system>:<action>`), owner, the tiers and thresholds in force                                                                             |
+| Threshold | name, value, unit, owner, approver, reason, next review date                                                                                                |
 
 A policy can name only registered sources, claims and capabilities. The validator checks this at load time (D19).
 
@@ -72,13 +72,13 @@ Possible outcomes: APPROVE, REJECT, REVIEW, and refusals for source unavailable,
 
 ## 7. Tiers, in practice
 
-| Tier | Applies when | Outcome |
-|---|---|---|
-| Refuse | A verified value says no, or a required verified value is missing. | Reject. |
-| Review | An untrusted or AI value would change the outcome. | Review item. |
+| Tier   | Applies when                                                                          | Outcome                |
+| ------ | ------------------------------------------------------------------------------------- | ---------------------- |
+| Refuse | A verified value says no, or a required verified value is missing.                    | Reject.                |
+| Review | An untrusted or AI value would change the outcome.                                    | Review item.           |
 | Tier 1 | Every value the rule reads is sourced and verified, and each is within its threshold. | Approve automatically. |
-| Tier 2 | Everything in tier 1, plus a verified approval for the exact value. | Approve. |
-| Reject | Nothing else matched. | Reject. |
+| Tier 2 | Everything in tier 1, plus a verified approval for the exact value.                   | Approve.               |
+| Reject | Nothing else matched.                                                                 | Reject.                |
 
 Thresholds decide where tier 1 ends. The owner sets them. Until a threshold has an approved value, the action cannot reach tier 1, and everything goes to tier 2 or review.
 
@@ -139,11 +139,11 @@ Each step is complete when its tests pass.
 
 ## 14. Decisions still to finalise
 
-| ID | Decision | Recommendation |
-|---|---|---|
-| A | Signer for sources that cannot sign natively | Intermediary, recorded in the register. No special route. |
-| B | Review and approval windows | Per action class, within the caps in section 8. |
-| C | Whether the REVIEW outcome is a separate record type | Yes. |
-| D | Whether provenance is stored or derived | Derived. |
-| E | Owners of each source and action | Named by the business (section 12). |
-| F | Threshold values | Set by owners (section 10). |
+| ID  | Decision                                             | Recommendation                                            |
+| --- | ---------------------------------------------------- | --------------------------------------------------------- |
+| A   | Signer for sources that cannot sign natively         | Intermediary, recorded in the register. No special route. |
+| B   | Review and approval windows                          | Per action class, within the caps in section 8.           |
+| C   | Whether the REVIEW outcome is a separate record type | Yes.                                                      |
+| D   | Whether provenance is stored or derived              | Derived.                                                  |
+| E   | Owners of each source and action                     | Named by the business (section 12).                       |
+| F   | Threshold values                                     | Set by owners (section 10).                               |
