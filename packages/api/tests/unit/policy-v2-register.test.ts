@@ -283,6 +283,7 @@ describe("POST /v2/register", () => {
       thresholds: [],
       actions: [],
       approverKeys: [],
+      policyVersions: [],
     });
     const audit = await request(app(svc))
       .get("/v2/register/audit")
@@ -336,5 +337,63 @@ describe("the approver keys the decision service reads", () => {
   it("names a revoked key as revoked", () => {
     const keys = approverKeysFrom(registerWith("revoked"));
     expect(keys.keyFor("approver-1", "k1")).toBe("revoked");
+  });
+});
+
+describe("policy versions through the service", () => {
+  it("proposes a policy as the action owner, and makes it the approved version once a second approver approves it", async () => {
+    const { svc, state } = await serviceWithOwner();
+    await svc.grantRole("owner-1", "action-1", "action-owner");
+    await svc.grantRole("owner-1", "second-1", "second-approver");
+    await svc.registerAction("owner-1", {
+      capability: "erp:pay-invoice",
+      owner: "action-1",
+      successor: "action-2",
+      reviewers: ["rev-1", "rev-2", "rev-3"],
+      review: { reviewWindowBusinessDays: 1, approvalValidityMinutes: 15 },
+    });
+    const policy = {
+      policyId: "minimal",
+      policyVersion: "2.0.0",
+      schemaVersion: "2.0.0",
+      capability: "erp:pay-invoice",
+      description: "A minimal policy for tests.",
+      owner: "finance-owner",
+      signals: {
+        requestedAmount: {
+          type: "number",
+          provenance: "untrusted",
+          unit: "USD",
+        },
+      },
+      review: { reviewWindowBusinessDays: 1, approvalValidityMinutes: 15 },
+      rules: [
+        {
+          id: "reject-all",
+          tier: "reject",
+          when: { always: true },
+          outcome: { action: "reject", reason: "Rejected." },
+        },
+      ],
+    };
+    const proposed = await svc.proposePolicy("action-1", policy);
+    expect(proposed.status).toBe("proposed");
+    const approved = await svc.approvePolicy(
+      "second-1",
+      "erp:pay-invoice",
+      "2.0.0",
+    );
+    expect(approved.status).toBe("approved");
+    expect(state.saved).toBeDefined();
+  });
+
+  it("refuses a policy proposal from anyone but the action owner", async () => {
+    const { svc } = await serviceWithOwner();
+    await expect(
+      svc.proposePolicy("owner-1", {
+        capability: "erp:pay-invoice",
+        policyVersion: "2.0.0",
+      }),
+    ).rejects.toBeInstanceOf(policyV2.register.RegisterError);
   });
 });

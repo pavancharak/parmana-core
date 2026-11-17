@@ -47,8 +47,6 @@ export function createPolicyV2Runtime(
   const decisions = new PolicyV2DecisionService({
     store,
     enabledCapabilities: new Set(capabilities),
-    // No approved policy versions exist yet, so every capability refuses. Policy approval is not built.
-    policies: () => undefined,
     // No source integration is connected, so sourced values refuse as unavailable.
     sources: async () => {
       throw new Error("No source integration is connected.");

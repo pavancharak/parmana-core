@@ -220,6 +220,22 @@ export function createPolicyV2RegisterRouter(
   );
 
   router.post(
+    "/policies",
+    act((by, body) => service.proposePolicy(by, body)),
+  );
+
+  router.post(
+    "/policies/:capability/:policyVersion/approve",
+    act((by, _body, params) =>
+      service.approvePolicy(
+        by,
+        String(params.capability),
+        String(params.policyVersion),
+      ),
+    ),
+  );
+
+  router.post(
     "/approver-keys",
     act((by, body) =>
       service.proposeApproverKey(
