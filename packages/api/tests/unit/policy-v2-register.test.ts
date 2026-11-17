@@ -22,7 +22,7 @@ const PEM = generateKeyPairSync("ed25519")
  */
 function memoryState() {
   let saved: { body: unknown; version: number } | undefined;
-  const audit: policyV2.persistence.AuditRow[] = [];
+  const audit: policyV2.persistence.StoredAuditRow[] = [];
   const store: PolicyV2RegisterStateStore & {
     audit: typeof audit;
     saved: typeof saved;
@@ -42,11 +42,12 @@ function memoryState() {
         );
       }
       saved = { body, version: current + 1 };
-      audit.push(...events);
+      for (const event of events)
+        audit.push({ ...event, seq: audit.length + 1 });
       return current + 1;
     },
-    async readAudit() {
-      return [...audit];
+    async readAuditPage(_component, { after, limit }) {
+      return audit.filter((row) => row.seq > after).slice(0, limit);
     },
   };
   return store;
@@ -152,8 +153,29 @@ describe("PolicyV2RegisterService", () => {
 
   it("returns the audit log to a caller with a role", async () => {
     const { svc } = await serviceWithOwner();
-    const audit = await svc.auditLog("owner-1");
-    expect(audit.map((e) => e.event)).toEqual(["role.bootstrap"]);
+    const page = await svc.auditPage("owner-1", { after: 0, limit: 2 });
+    expect(page.events.map((e) => e.event)).toEqual(["role.bootstrap"]);
+    expect(page.next).toBeNull();
+  });
+
+  it("pages the audit log, with a cursor until the last page", async () => {
+    const { svc } = await serviceWithOwner();
+    await svc.grantRole("owner-1", "a", "reviewer");
+    await svc.grantRole("owner-1", "b", "reviewer");
+
+    const first = await svc.auditPage("owner-1", { after: 0, limit: 2 });
+    expect(first.events.map((e) => e.event)).toEqual([
+      "role.bootstrap",
+      "role.grant",
+    ]);
+    expect(first.next).toBe(2);
+
+    const second = await svc.auditPage("owner-1", {
+      after: first.next!,
+      limit: 2,
+    });
+    expect(second.events.map((e) => e.event)).toEqual(["role.grant"]);
+    expect(second.next).toBeNull();
   });
 });
 
@@ -226,5 +248,14 @@ describe("POST /v2/register", () => {
     expect(audit.body.events.map((e: { event: string }) => e.event)).toEqual([
       "role.bootstrap",
     ]);
+    expect(audit.body.next).toBeNull();
+  });
+
+  it("returns 400 for a page size that is out of range", async () => {
+    const { svc } = await serviceWithOwner();
+    const res = await request(app(svc))
+      .get("/v2/register/audit?limit=100000")
+      .set("x-caller", "owner-1");
+    expect(res.status).toBe(400);
   });
 });

@@ -40,6 +40,11 @@ export interface AuditRow {
   readonly detail: string;
 }
 
+/** An audit row as stored, with its sequence number. */
+export interface StoredAuditRow extends AuditRow {
+  readonly seq: number;
+}
+
 /** A fixed lock key for the evidence log, so only one append runs at a time. */
 const EVIDENCE_LOCK = 0x70_6f_6c_79; // "poly"
 
@@ -135,20 +140,28 @@ export class PolicyV2Store {
     }
   }
 
-  /** The audit events of a component, oldest first. */
-  async readAudit(component: Component): Promise<AuditRow[]> {
+  /**
+   * One page of a component's audit events, oldest first, after the sequence number given.
+   * Each row carries its sequence number, so the next page starts after the last one.
+   */
+  async readAuditPage(
+    component: Component,
+    options: { readonly after: number; readonly limit: number },
+  ): Promise<StoredAuditRow[]> {
     const result = await this.pool.query<{
+      seq: string;
       component: Component;
       at: Date;
       by_id: string;
       event: string;
       detail: string;
     }>(
-      `SELECT component, at, by_id, event, detail FROM policy_v2_audit
-       WHERE component = $1 ORDER BY seq`,
-      [component],
+      `SELECT seq, component, at, by_id, event, detail FROM policy_v2_audit
+       WHERE component = $1 AND seq > $2 ORDER BY seq LIMIT $3`,
+      [component, options.after, options.limit],
     );
     return result.rows.map((row) => ({
+      seq: Number(row.seq),
       component: row.component,
       at: new Date(row.at).toISOString(),
       by: row.by_id,

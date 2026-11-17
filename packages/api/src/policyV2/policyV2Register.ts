@@ -19,7 +19,10 @@ export interface PolicyV2RegisterStateStore {
     readVersion: number,
     events: readonly policyV2.persistence.AuditRow[],
   ): Promise<number>;
-  readAudit(component: "register"): Promise<policyV2.persistence.AuditRow[]>;
+  readAuditPage(
+    component: "register",
+    options: { readonly after: number; readonly limit: number },
+  ): Promise<policyV2.persistence.StoredAuditRow[]>;
 }
 
 export class PolicyV2ForbiddenError extends Error {
@@ -58,11 +61,26 @@ export class PolicyV2RegisterService {
     };
   }
 
-  /** The audit log of the register, oldest first. Any caller that holds a register role may read it. */
-  async auditLog(callerId: string): Promise<policyV2.persistence.AuditRow[]> {
+  /**
+   * One page of the register's audit log, oldest first. Pass the sequence number of the last
+   * event you have; next is that number of the last event returned, or null if there are no more.
+   */
+  async auditPage(
+    callerId: string,
+    options: { readonly after: number; readonly limit: number },
+  ): Promise<{
+    readonly events: readonly policyV2.persistence.StoredAuditRow[];
+    readonly next: number | null;
+  }> {
     const { register } = await this.loadRegister();
     requireAnyRole(callerId, register);
-    return this.options.state.readAudit("register");
+    const events = await this.options.state.readAuditPage("register", options);
+    const last = events.at(-1);
+    return {
+      events,
+      next:
+        events.length === options.limit && last !== undefined ? last.seq : null,
+    };
   }
 
   /** Grants a role. Only the Parmana owner may grant one. */

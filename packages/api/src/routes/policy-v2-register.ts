@@ -30,6 +30,22 @@ const ROLES: readonly PolicyV2RegisterRole[] = [
 /** A body that is missing a required field or has the wrong type. */
 class InvalidBody extends Error {}
 
+const AUDIT_PAGE_DEFAULT = 100;
+const AUDIT_PAGE_MAX = 500;
+
+/** Reads a whole-number query parameter, or returns undefined if it is present and not one. */
+function parseIntParam(
+  value: unknown,
+  fallback: number,
+  min: number,
+  max: number,
+): number | undefined {
+  if (value === undefined) return fallback;
+  if (typeof value !== "string" || !/^\d+$/.test(value)) return undefined;
+  const n = Number(value);
+  return n >= min && n <= max ? n : undefined;
+}
+
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -105,8 +121,22 @@ export function createPolicyV2RegisterRouter(
       res.status(401).json({ error: "unauthenticated" });
       return;
     }
+    const after = parseIntParam(req.query.after, 0, 0, Number.MAX_SAFE_INTEGER);
+    const limit = parseIntParam(
+      req.query.limit,
+      AUDIT_PAGE_DEFAULT,
+      1,
+      AUDIT_PAGE_MAX,
+    );
+    if (after === undefined || limit === undefined) {
+      res.status(400).json({
+        error: "invalid_request",
+        message: `after must be a whole number, and limit a whole number from 1 to ${AUDIT_PAGE_MAX}.`,
+      });
+      return;
+    }
     try {
-      res.status(200).json({ events: await service.auditLog(callerId) });
+      res.status(200).json(await service.auditPage(callerId, { after, limit }));
     } catch (error) {
       sendError(res, error, next);
     }

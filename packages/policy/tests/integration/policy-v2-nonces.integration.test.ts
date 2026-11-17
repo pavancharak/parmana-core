@@ -1,7 +1,11 @@
-import { Pool } from "pg";
+import { Pool, type PoolClient } from "pg";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { resolveDatabaseGate } from "../../../../test-support/database-gate.js";
+import {
+  acquirePolicyV2SuiteLock,
+  releasePolicyV2SuiteLock,
+} from "../helpers/policy-v2-database-lock.js";
 import { PolicyV2NonceStore } from "../../src/v2/persistence.js";
 
 /** Durable nonces for policy version 2 against a real database (plan 4.5 and 4.6). */
@@ -13,9 +17,11 @@ const EARLIER = "2026-11-18T08:59:00.000Z";
 
 describe.skipIf(!databaseConfigured)("policy v2 nonces (live database)", () => {
   let pool: Pool;
+  let lock: PoolClient | undefined;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     pool = new Pool({ connectionString: process.env.TEST_DATABASE_URL });
+    lock = await acquirePolicyV2SuiteLock(pool);
   });
 
   beforeEach(async () => {
@@ -23,6 +29,7 @@ describe.skipIf(!databaseConfigured)("policy v2 nonces (live database)", () => {
   });
 
   afterAll(async () => {
+    await releasePolicyV2SuiteLock(lock!);
     await pool.end();
   });
 
