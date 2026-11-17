@@ -195,11 +195,11 @@ An action goes live only when all of these are recorded in the register and test
 
 The gate owner is a role in Operations, with a named deputy. The gate owner signs off.
 
-### 5.8 Existing data
+### 5.8 No existing data
 
-- Existing decision records are kept read-only, under the retention policy.
-- No approval from before go-live is reused.
-- A request in progress at go-live is decided again under the new system, not carried over.
+- Nothing is live. No policy version is approved, and no customers or vendors use the system.
+- There are no earlier decisions or approvals to carry over.
+- Decision records are kept read-only, under the retention policy, from the first decision.
 
 ### 5.9 Decision confirmation
 
@@ -274,21 +274,21 @@ Also confirmed by the owner: manager approval is trusted only when it verifies; 
 
 ### 8.2 Needs confirmation (recommendations)
 
-| Item                    | Recommendation                                                            | Reference |
-| ----------------------- | ------------------------------------------------------------------------- | --------- |
-| D6 to D19               | As in section 7                                                           | Section 7 |
-| Intermediaries          | Registered key, named operator, yearly review, native signing as goal     | 5.3       |
-| Windows                 | Set per action within caps                                                | 5.6       |
-| Go-live gate            | Gate owner in Operations, checklist in 5.7                                | 5.7       |
-| Existing data           | Read-only, retained, no reused approvals, in-progress requests re-decided | 5.8       |
-| Decision confirmation   | Dated decision records by the Parmana owner                               | 5.9       |
-| Platform caps           | Three business days for review, 60 minutes for approval validity          | 5.6       |
-| High-value reviewers    | Two, distinct, neither requester nor proposer                             | 5.5       |
-| Sign-off by source type | As in 5.4                                                                 | 5.4       |
-| Backup reviewers        | Two per action, alerted at half window                                    | 5.5       |
-| Alert rules             | As in section 6                                                           | 6         |
-| Website                 | Claims review first, rewrite after version 2                              | D15       |
-| Policy redesign scope   | Full version 2, staged, validator first                                   | D14       |
+| Item                    | Recommendation                                                                                        | Reference |
+| ----------------------- | ----------------------------------------------------------------------------------------------------- | --------- |
+| D6 to D19               | As in section 7                                                                                       | Section 7 |
+| Intermediaries          | Registered key, named operator, yearly review, native signing as goal                                 | 5.3       |
+| Windows                 | Set per action within caps                                                                            | 5.6       |
+| Go-live gate            | Gate owner in Operations, checklist in 5.7                                                            | 5.7       |
+| No existing data        | Nothing live; no earlier records or approvals; records read-only and retained from the first decision | 5.8       |
+| Decision confirmation   | Dated decision records by the Parmana owner                                                           | 5.9       |
+| Platform caps           | Three business days for review, 60 minutes for approval validity                                      | 5.6       |
+| High-value reviewers    | Two, distinct, neither requester nor proposer                                                         | 5.5       |
+| Sign-off by source type | As in 5.4                                                                                             | 5.4       |
+| Backup reviewers        | Two per action, alerted at half window                                                                | 5.5       |
+| Alert rules             | As in section 6                                                                                       | 6         |
+| Website                 | Claims review first, rewrite after version 2                                                          | D15       |
+| Policy redesign scope   | Full version 2, staged, validator first                                                               | D14       |
 
 ### 8.3 Not yet done
 
@@ -325,6 +325,6 @@ Phase 1 of the old plan (the validator) corresponds to step 3 here. It does not 
 ## 11. Out of scope
 
 - Naming owners and setting threshold values. These are business decisions.
-- Deployment and go-live, including the treatment of existing data beyond section 5.8.
+- Deployment and the first go-live of each action.
 - Hardware-bound approver keys (RFC-0030). Not being implemented.
 - Visual design of any public website, which follows D15.
