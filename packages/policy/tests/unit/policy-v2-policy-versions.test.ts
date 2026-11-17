@@ -218,7 +218,9 @@ describe("using the approved version", () => {
     r.proposePolicy(minimal(), ACTION_OWNER);
     r.approvePolicy(CAP, "2.0.0", SECOND);
     expect(r.activePolicy(CAP)).toBeUndefined();
+    r.grantRole(OWNER, GATE.id, "gate-owner");
     r.recordTest(CAP, "reject", GATE);
+    expect(r.runGoLive(CAP, GATE).ok).toBe(true);
     expect(r.activePolicy(CAP)?.policyVersion).toBe("2.0.0");
   });
 
@@ -228,6 +230,8 @@ describe("using the approved version", () => {
     r.proposePolicy(sourced(), ACTION_OWNER);
     r.approvePolicy(CAP, "2.0.0", SECOND);
     r.approvePolicy(CAP, "2.0.0", OWNER);
+    r.recordTest(CAP, "refuse", GATE);
+    expect(r.runGoLive(CAP, GATE).ok).toBe(true);
     expect(r.activePolicy(CAP)?.policyVersion).toBe("2.0.0");
     r.revokeSource("ledger", OWNER, "key exposed");
     expect(r.activePolicy(CAP)).toBeUndefined();
@@ -237,6 +241,7 @@ describe("using the approved version", () => {
     const r = registerWithAction();
     r.proposePolicy(minimal(), ACTION_OWNER);
     r.approvePolicy(CAP, "2.0.0", SECOND);
+    r.runGoLive(CAP, GATE);
     const restored = new PolicyRegister(() => NOW);
     restored.load(JSON.parse(JSON.stringify(r.snapshot())));
     expect(restored.activePolicy(CAP)?.policyVersion).toBe("2.0.0");
@@ -248,5 +253,36 @@ describe("using the approved version", () => {
     const fromOlder = new PolicyRegister(() => NOW);
     fromOlder.load(older);
     expect(fromOlder.listPolicyVersions()).toEqual([]);
+  });
+});
+
+describe("the go-live gate run", () => {
+  it("goes live when the approved version's gate passes", () => {
+    const r = registerWithAction();
+    r.proposePolicy(minimal(), ACTION_OWNER);
+    r.approvePolicy(CAP, "2.0.0", SECOND);
+    expect(r.runGoLive(CAP, GATE)).toEqual({ ok: true, missing: [] });
+    expect(r.getAction(CAP)?.live).toBe(true);
+  });
+
+  it("refuses to go live while a tier the policy uses has no test", () => {
+    const r = registerWithAction();
+    registerSource(r);
+    r.proposePolicy(sourced(), ACTION_OWNER);
+    r.approvePolicy(CAP, "2.0.0", SECOND);
+    r.approvePolicy(CAP, "2.0.0", OWNER);
+    const result = r.runGoLive(CAP, GATE);
+    expect(result.ok).toBe(false);
+    expect(result.missing).toContain('a test run for tier "refuse"');
+    expect(r.getAction(CAP)?.live).toBe(false);
+  });
+
+  it("reads the checklist for the approved version without changing anything", () => {
+    const r = registerWithAction();
+    expect(r.goLiveChecklist(CAP)).toEqual(["an approved policy version"]);
+    r.proposePolicy(minimal(), ACTION_OWNER);
+    r.approvePolicy(CAP, "2.0.0", SECOND);
+    expect(r.goLiveChecklist(CAP)).toEqual([]);
+    expect(r.getAction(CAP)?.live).toBe(false);
   });
 });

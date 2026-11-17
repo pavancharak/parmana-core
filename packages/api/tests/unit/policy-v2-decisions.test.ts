@@ -238,6 +238,7 @@ describe("a decision under an approved policy", () => {
       id: "second-1",
       roles: ["second-approver"],
     });
+    register.runGoLive(CAPABILITY, { id: "gate-1", roles: ["gate-owner"] });
 
     const store = memoryStore();
     await store.save("register", register.snapshot(), 0);

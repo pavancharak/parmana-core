@@ -288,25 +288,25 @@ describe("actions and the go-live gate", () => {
     ).toThrow(/minutes/);
   });
 
-  it("refuses to go live with a missing source, threshold, reviewer or tier test", () => {
+  it("lists every gate item that is missing, for the checklist", () => {
     const register = new PolicyRegister(clock);
     register.registerAction(
       action({ reviewers: ["reviewer-1"] }),
       parmanaOwner,
     );
-    const result = register.goLive(
+    const missing = register.gateMissing(
       "erp:pay-invoice",
       ["ledger"],
       ["automaticLimit"],
-      gateOwner,
+      ["tier1"],
     );
-    expect(result.ok).toBe(false);
-    expect(result.missing).toEqual(
+    expect(missing).toEqual(
       expect.arrayContaining([
         'source "ledger" is not registered',
         'threshold "automaticLimit" is not registered',
         "at least two eligible reviewers",
         "a test run for each tier",
+        'a test run for tier "tier1"',
       ]),
     );
     expect(register.getAction("erp:pay-invoice")?.live).toBe(false);
@@ -318,23 +318,24 @@ describe("actions and the go-live gate", () => {
       action({ reviewers: ["action-owner-1", "action-owner-2", "reviewer-1"] }),
       parmanaOwner,
     );
-    const result = register.goLive("erp:pay-invoice", [], [], gateOwner);
-    expect(result.missing).toContain("at least two eligible reviewers");
+    expect(register.gateMissing("erp:pay-invoice", [], [], [])).toContain(
+      "at least two eligible reviewers",
+    );
   });
 
-  it("refuses to go live with an untrusted source or an unapproved threshold", () => {
+  it("refuses an untrusted source or an unapproved threshold in the checklist", () => {
     const register = new PolicyRegister(clock);
     register.registerAction(action(), parmanaOwner);
     register.proposeSource(systemSource(), sourceOwner);
     register.proposeThreshold(threshold(), actionOwner);
     register.recordTest("erp:pay-invoice", "tier1", gateOwner);
-    const result = register.goLive(
+    const missing = register.gateMissing(
       "erp:pay-invoice",
       ["ledger"],
       ["automaticLimit"],
-      gateOwner,
+      ["tier1"],
     );
-    expect(result.missing).toEqual(
+    expect(missing).toEqual(
       expect.arrayContaining([
         'source "ledger" is pending',
         'threshold "automaticLimit" is proposed',
@@ -342,28 +343,20 @@ describe("actions and the go-live gate", () => {
     );
   });
 
-  it("goes live when every item is in place", () => {
+  it("refuses a go-live run without an approved policy version", () => {
     const register = new PolicyRegister(clock);
+    register.bootstrapOwner(parmanaOwner.id);
+    register.grantRole(parmanaOwner, gateOwner.id, "gate-owner");
     register.registerAction(action(), parmanaOwner);
-    trustedLedger(register);
-    register.proposeThreshold(threshold(), actionOwner);
-    register.approveThreshold("erp:pay-invoice", "automaticLimit", second);
-    register.recordTest("erp:pay-invoice", "tier1", gateOwner);
-    register.recordTest("erp:pay-invoice", "tier2", gateOwner);
-    const result = register.goLive(
-      "erp:pay-invoice",
-      ["ledger"],
-      ["automaticLimit"],
-      gateOwner,
+    expect(() => register.runGoLive("erp:pay-invoice", gateOwner)).toThrow(
+      /approved policy version/,
     );
-    expect(result).toEqual({ ok: true, missing: [] });
-    expect(register.getAction("erp:pay-invoice")?.live).toBe(true);
   });
 
-  it("refuses a go-live gate run by someone without the gate-owner role", () => {
+  it("refuses a go-live run by someone without the gate-owner role", () => {
     const register = new PolicyRegister(clock);
     register.registerAction(action(), parmanaOwner);
-    expect(() => register.goLive("erp:pay-invoice", [], [], second2)).toThrow(
+    expect(() => register.runGoLive("erp:pay-invoice", second2)).toThrow(
       /gate-owner/,
     );
   });

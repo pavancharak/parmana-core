@@ -513,21 +513,19 @@ export class PolicyRegister {
    * action has passed the go-live gate. Returns undefined otherwise.
    */
   activePolicy(capability: string): ActivePolicy | undefined {
-    const active = [...this.policyVersions.values()].find(
-      (r) => r.capability === capability && r.status === "approved",
-    );
+    const active = this.approvedVersion(capability);
     if (active === undefined) return undefined;
-    const body = active.policy as {
-      signals?: Record<string, { source?: unknown }>;
-      thresholds?: Record<string, unknown>;
-    };
-    const usedSources = Object.values(body.signals ?? {})
-      .map((signal) => signal.source)
-      .filter(isNonEmpty);
-    const usedThresholds = Object.keys(body.thresholds ?? {});
+    const action = this.actions.get(capability);
+    if (action === undefined || !action.live) return undefined;
+    const used = usesOf(active.policy);
     let missing: string[];
     try {
-      missing = this.gateMissing(capability, usedSources, usedThresholds);
+      missing = this.gateMissing(
+        capability,
+        used.sources,
+        used.thresholds,
+        used.tiers,
+      );
     } catch {
       return undefined;
     }
@@ -538,6 +536,12 @@ export class PolicyRegister {
       policy: active.policy,
       hash: active.hash,
     };
+  }
+
+  private approvedVersion(capability: string): PolicyVersionRecord | undefined {
+    return [...this.policyVersions.values()].find(
+      (r) => r.capability === capability && r.status === "approved",
+    );
   }
 
   getPolicyVersion(
@@ -836,6 +840,7 @@ export class PolicyRegister {
     capability: string,
     usedSources: readonly string[],
     usedThresholds: readonly string[],
+    usedTiers: readonly string[] = [],
   ): string[] {
     const action = this.requireAction(capability);
     const missing: string[] = [];
@@ -863,6 +868,10 @@ export class PolicyRegister {
     }
     if (action.testedTiers.length === 0)
       missing.push("a test run for each tier");
+    for (const tier of usedTiers) {
+      if (!action.testedTiers.includes(tier))
+        missing.push(`a test run for tier "${tier}"`);
+    }
     return missing;
   }
 
@@ -870,20 +879,51 @@ export class PolicyRegister {
    * The go-live gate (design 5.7). Returns every item that is missing. The action
    * goes live only when none are missing.
    */
-  goLive(
+  /**
+   * Runs the go-live gate (design 5.7) against the approved policy version. The sources,
+   * thresholds and tiers come from that version, never from the caller. Only the gate owner
+   * runs it. The action goes live only when nothing is missing.
+   */
+  runGoLive(
     capability: string,
-    usedSources: readonly string[],
-    usedThresholds: readonly string[],
     by: Person,
   ): { ok: boolean; missing: string[] } {
-    requireRole(by, "gate-owner", "run the go-live gate");
-    const missing = this.gateMissing(capability, usedSources, usedThresholds);
+    requireRole(
+      { id: by.id, roles: this.rolesOf(by.id) },
+      "gate-owner",
+      "run the go-live gate",
+    );
+    const approved = this.approvedVersion(capability);
+    if (approved === undefined)
+      throw new RegisterError(
+        `${capability} has no approved policy version to go live with.`,
+      );
+    const used = usesOf(approved.policy);
+    const missing = this.gateMissing(
+      capability,
+      used.sources,
+      used.thresholds,
+      used.tiers,
+    );
     const action = this.requireAction(capability);
     if (missing.length === 0) {
       this.actions.set(capability, { ...action, live: true });
       this.record(by.id, "action.live", capability);
     }
     return { ok: missing.length === 0, missing };
+  }
+
+  /** The go-live checklist for the approved policy version, read only. */
+  goLiveChecklist(capability: string): string[] {
+    const approved = this.approvedVersion(capability);
+    if (approved === undefined) return ["an approved policy version"];
+    const used = usesOf(approved.policy);
+    return this.gateMissing(
+      capability,
+      used.sources,
+      used.thresholds,
+      used.tiers,
+    );
   }
 
   // ---- Reading -------------------------------------------------------------
@@ -1104,4 +1144,28 @@ function policyVersionId(capability: string, policyVersion: string): string {
 
 function hashOf(policy: unknown): string {
   return createHash("sha256").update(canonicalize(policy)).digest("hex");
+}
+
+/** The sources, thresholds and tiers a policy uses. The go-live gate checks each of them. */
+function usesOf(policy: unknown): {
+  sources: string[];
+  thresholds: string[];
+  tiers: string[];
+} {
+  const body = policy as {
+    signals?: Record<string, { source?: unknown }>;
+    thresholds?: Record<string, unknown>;
+    rules?: Array<{ tier?: unknown }>;
+  };
+  return {
+    sources: Object.values(body.signals ?? {})
+      .map((signal) => signal.source)
+      .filter(isNonEmpty),
+    thresholds: Object.keys(body.thresholds ?? {}),
+    tiers: [
+      ...new Set(
+        (body.rules ?? []).map((rule) => rule.tier).filter(isNonEmpty),
+      ),
+    ],
+  };
 }
