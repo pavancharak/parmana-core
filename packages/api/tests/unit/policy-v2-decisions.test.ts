@@ -44,6 +44,35 @@ function memoryStore() {
       }
       evidence.push(record);
     },
+    async commitDecision(commit: policyV2.persistence.DecisionCommit) {
+      const last = evidence.at(-1)?.hash ?? "genesis";
+      if (commit.record.prevHash !== last) {
+        throw new policyV2.persistence.PersistenceConflictError(
+          "Does not link.",
+        );
+      }
+      for (const component of ["review", "alerts"] as const) {
+        const written = commit[component];
+        if (
+          written !== undefined &&
+          (state.get(component)?.version ?? 0) !== written.readVersion
+        ) {
+          throw new policyV2.persistence.PersistenceConflictError(
+            `${component} changed.`,
+          );
+        }
+      }
+      evidence.push(commit.record);
+      for (const component of ["review", "alerts"] as const) {
+        const written = commit[component];
+        if (written !== undefined) {
+          state.set(component, {
+            body: written.body,
+            version: written.readVersion + 1,
+          });
+        }
+      }
+    },
     async readEvidence() {
       return [...evidence];
     },

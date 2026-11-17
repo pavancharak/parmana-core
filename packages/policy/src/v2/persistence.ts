@@ -82,6 +82,45 @@ async function writeSnapshot(
   return updated.rows[0]!.version;
 }
 
+/**
+ * Appends an evidence record on the given connection, inside the caller's transaction. Takes the
+ * evidence lock, so two appends cannot both link to the same record.
+ */
+async function insertEvidence(
+  client: PoolClient,
+  record: EvidenceRecord,
+): Promise<void> {
+  await client.query("SELECT pg_advisory_xact_lock($1)", [EVIDENCE_LOCK]);
+  const last = await client.query<{ hash: string }>(
+    "SELECT hash FROM policy_v2_evidence ORDER BY seq DESC LIMIT 1",
+  );
+  const lastHash = last.rows[0]?.hash ?? "genesis";
+  if (record.prevHash !== lastHash) {
+    throw new PersistenceConflictError(
+      `The record does not link to the last stored record (${lastHash}).`,
+    );
+  }
+  await client.query(
+    `INSERT INTO policy_v2_evidence (record_id, policy_hash, prev_hash, hash, body, decided_at)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [
+      record.recordId,
+      record.policyHash,
+      record.prevHash,
+      record.hash,
+      JSON.stringify(record),
+      record.decidedAt,
+    ],
+  );
+}
+
+/** One decision's writes: its evidence record, and the snapshots it changed, each at the version read. */
+export interface DecisionCommit {
+  readonly record: EvidenceRecord;
+  readonly review?: { readonly body: unknown; readonly readVersion: number };
+  readonly alerts?: { readonly body: unknown; readonly readVersion: number };
+}
+
 export class PolicyV2Store {
   constructor(private readonly pool: Pool) {}
 
@@ -178,28 +217,40 @@ export class PolicyV2Store {
     const client = await this.pool.connect();
     try {
       await client.query("BEGIN");
-      await client.query("SELECT pg_advisory_xact_lock($1)", [EVIDENCE_LOCK]);
-      const last = await client.query<{ hash: string }>(
-        "SELECT hash FROM policy_v2_evidence ORDER BY seq DESC LIMIT 1",
-      );
-      const lastHash = last.rows[0]?.hash ?? "genesis";
-      if (record.prevHash !== lastHash) {
-        throw new PersistenceConflictError(
-          `The record does not link to the last stored record (${lastHash}).`,
+      await insertEvidence(client, record);
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Commits one policy version 2 decision: its evidence record, and the review and alert
+   * snapshots it changed. All of them are written, or none is. A stale snapshot or a record that
+   * does not link to the last one refuses the whole commit.
+   */
+  async commitDecision(commit: DecisionCommit): Promise<void> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN");
+      await insertEvidence(client, commit.record);
+      if (commit.review !== undefined)
+        await writeSnapshot(
+          client,
+          "review",
+          commit.review.body,
+          commit.review.readVersion,
         );
-      }
-      await client.query(
-        `INSERT INTO policy_v2_evidence (record_id, policy_hash, prev_hash, hash, body, decided_at)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [
-          record.recordId,
-          record.policyHash,
-          record.prevHash,
-          record.hash,
-          JSON.stringify(record),
-          record.decidedAt,
-        ],
-      );
+      if (commit.alerts !== undefined)
+        await writeSnapshot(
+          client,
+          "alerts",
+          commit.alerts.body,
+          commit.alerts.readVersion,
+        );
       await client.query("COMMIT");
     } catch (error) {
       await client.query("ROLLBACK");
