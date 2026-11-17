@@ -30,6 +30,13 @@ const ROLES: readonly PolicyV2RegisterRole[] = [
 /** A body that is missing a required field or has the wrong type. */
 class InvalidBody extends Error {}
 
+/** The go-live gate was run and not passed. The missing items are listed. */
+class GateRefused extends Error {
+  constructor(readonly missing: string[]) {
+    super("The go-live gate is not passed.");
+  }
+}
+
 const AUDIT_PAGE_DEFAULT = 100;
 const AUDIT_PAGE_MAX = 500;
 
@@ -63,6 +70,14 @@ function sendError(res: Response, error: unknown, next: NextFunction): void {
   }
   if (error instanceof policyV2.register.RegisterError) {
     res.status(422).json({ error: "refused", message: error.message });
+    return;
+  }
+  if (error instanceof GateRefused) {
+    res.status(422).json({
+      error: "refused",
+      message: error.message,
+      missing: error.missing,
+    });
     return;
   }
   if (error instanceof InvalidBody) {
@@ -216,6 +231,58 @@ export function createPolicyV2RegisterRouter(
     "/thresholds/:action/:name/approve",
     act((by, _body, params) =>
       service.approveThreshold(by, String(params.action), String(params.name)),
+    ),
+  );
+
+  router.post(
+    "/actions/:capability/tests",
+    act((by, body, params) => {
+      if (typeof body.tier !== "string" || body.tier.trim() === "") {
+        throw new InvalidBody("A tier is required.");
+      }
+      return service.recordTest(by, String(params.capability), body.tier);
+    }),
+  );
+
+  router.get("/actions/:capability/go-live", async (req, res, next) => {
+    const callerId = req.callerId;
+    if (callerId === undefined) {
+      res.status(401).json({ error: "unauthenticated" });
+      return;
+    }
+    try {
+      const missing = await service.goLiveChecklist(
+        callerId,
+        String(req.params.capability),
+      );
+      res.status(200).json({ missing });
+    } catch (error) {
+      sendError(res, error, next);
+    }
+  });
+
+  router.post(
+    "/actions/:capability/go-live",
+    act(async (by, _body, params) => {
+      const result = await service.runGoLive(by, String(params.capability));
+      if (!result.ok) throw new GateRefused(result.missing);
+      return { live: true };
+    }),
+  );
+
+  router.post(
+    "/policies",
+    act((by, body) => service.proposePolicy(by, body)),
+  );
+
+  router.post(
+    "/policies/:capability/:policyVersion/approve",
+    act((by, _body, params) =>
+      service.approvePolicy(
+        by,
+        String(params.capability),
+        String(params.policyVersion),
+      ),
     ),
   );
 

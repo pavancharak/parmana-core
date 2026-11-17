@@ -7,7 +7,6 @@
  * the response states released: false. No executor is called from here.
  *
  * Not yet built, and so refused or left out:
- *   - approved policy versions (no maker-checker for policies yet), so no capability approves;
  *   - source integrations, so sourced values refuse with SOURCE_UNAVAILABLE;
  *   - approver key registration, so approvals refuse;
  */
@@ -42,9 +41,6 @@ export interface PolicyV2DecisionServiceOptions {
   /** Capabilities that accept decisions. Any other capability is refused before anything is read. */
   readonly enabledCapabilities: ReadonlySet<string>;
   /** Approved policy versions by capability. */
-  readonly policies: (
-    capability: string,
-  ) => policyV2.decision.ApprovedPolicy | undefined;
   readonly sources: policyV2.decision.SourceClient;
   /** Records used nonces. Durable in production; in memory when none is given. */
   readonly nonces?: policyV2.sourceAnswer.NonceStore;
@@ -114,7 +110,7 @@ export class PolicyV2DecisionService {
 
     const approvers = approverKeysFrom(register);
     const decision = await policyV2.decision.decide(request, {
-      policies: this.options.policies,
+      policies: approvedPolicyFrom(register),
       register,
       sources: this.options.sources,
       nonces: this.nonces,
@@ -125,7 +121,7 @@ export class PolicyV2DecisionService {
       now: this.clock,
     });
 
-    const policy = this.options.policies(request.capability)?.policy as
+    const policy = approvedPolicyFrom(register)(request.capability)?.policy as
       { thresholds?: Record<string, unknown> } | undefined;
     const snapshot = policyV2.evidence.snapshotFor(
       policy,
@@ -207,4 +203,17 @@ export function approverKeysFrom(
     if (key.status === "revoked") keys.revoke(key.approverId, key.keyId);
   }
   return keys;
+}
+
+/**
+ * The policy a decision may use for each capability: the approved version, once the action has
+ * passed the go-live gate. Read from the register at each decision, so an approval counts at once.
+ */
+export function approvedPolicyFrom(
+  register: policyV2.register.PolicyRegister,
+): (capability: string) => policyV2.decision.ApprovedPolicy | undefined {
+  return (capability) => {
+    const active = register.activePolicy(capability);
+    return active === undefined ? undefined : { policy: active.policy };
+  };
 }

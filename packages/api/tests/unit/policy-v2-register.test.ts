@@ -283,6 +283,7 @@ describe("POST /v2/register", () => {
       thresholds: [],
       actions: [],
       approverKeys: [],
+      policyVersions: [],
     });
     const audit = await request(app(svc))
       .get("/v2/register/audit")
@@ -336,5 +337,150 @@ describe("the approver keys the decision service reads", () => {
   it("names a revoked key as revoked", () => {
     const keys = approverKeysFrom(registerWith("revoked"));
     expect(keys.keyFor("approver-1", "k1")).toBe("revoked");
+  });
+});
+
+describe("policy versions through the service", () => {
+  it("proposes a policy as the action owner, and makes it the approved version once a second approver approves it", async () => {
+    const { svc, state } = await serviceWithOwner();
+    await svc.grantRole("owner-1", "action-1", "action-owner");
+    await svc.grantRole("owner-1", "second-1", "second-approver");
+    await svc.registerAction("owner-1", {
+      capability: "erp:pay-invoice",
+      owner: "action-1",
+      successor: "action-2",
+      reviewers: ["rev-1", "rev-2", "rev-3"],
+      review: { reviewWindowBusinessDays: 1, approvalValidityMinutes: 15 },
+    });
+    const policy = {
+      policyId: "minimal",
+      policyVersion: "2.0.0",
+      schemaVersion: "2.0.0",
+      capability: "erp:pay-invoice",
+      description: "A minimal policy for tests.",
+      owner: "finance-owner",
+      signals: {
+        requestedAmount: {
+          type: "number",
+          provenance: "untrusted",
+          unit: "USD",
+        },
+      },
+      review: { reviewWindowBusinessDays: 1, approvalValidityMinutes: 15 },
+      rules: [
+        {
+          id: "reject-all",
+          tier: "reject",
+          when: { always: true },
+          outcome: { action: "reject", reason: "Rejected." },
+        },
+      ],
+    };
+    const proposed = await svc.proposePolicy("action-1", policy);
+    expect(proposed.status).toBe("proposed");
+    const approved = await svc.approvePolicy(
+      "second-1",
+      "erp:pay-invoice",
+      "2.0.0",
+    );
+    expect(approved.status).toBe("approved");
+    expect(state.saved).toBeDefined();
+  });
+
+  it("refuses a policy proposal from anyone but the action owner", async () => {
+    const { svc } = await serviceWithOwner();
+    await expect(
+      svc.proposePolicy("owner-1", {
+        capability: "erp:pay-invoice",
+        policyVersion: "2.0.0",
+      }),
+    ).rejects.toBeInstanceOf(policyV2.register.RegisterError);
+  });
+});
+
+describe("the go-live gate through the routes", () => {
+  const CAP = "erp:pay-invoice";
+  const policy = {
+    policyId: "minimal",
+    policyVersion: "2.0.0",
+    schemaVersion: "2.0.0",
+    capability: CAP,
+    description: "A minimal policy for tests.",
+    owner: "finance-owner",
+    signals: {
+      requestedAmount: { type: "number", provenance: "untrusted", unit: "USD" },
+    },
+    review: { reviewWindowBusinessDays: 1, approvalValidityMinutes: 15 },
+    rules: [
+      {
+        id: "reject-all",
+        tier: "reject",
+        when: { always: true },
+        outcome: { action: "reject", reason: "Rejected." },
+      },
+    ],
+  };
+
+  function app(svc: PolicyV2RegisterService) {
+    const a = express();
+    a.use(express.json());
+    a.use((req, _res, next) => {
+      const caller = req.headers["x-caller"];
+      if (typeof caller === "string") req.callerId = caller;
+      next();
+    });
+    a.use("/v2/register", createPolicyV2RegisterRouter(svc));
+    return a;
+  }
+
+  it("refuses a test record from a caller without the gate-owner role", async () => {
+    const { svc } = await serviceWithOwner();
+    const res = await request(app(svc))
+      .post(`/v2/register/actions/${CAP}/tests`)
+      .set("x-caller", "owner-1")
+      .send({ tier: "reject" });
+    expect(res.status).toBe(422);
+  });
+
+  it("reads the checklist, and refuses a go-live run that is not passed with the missing items", async () => {
+    const { svc } = await serviceWithOwner();
+    await svc.grantRole("owner-1", "gate-1", "gate-owner");
+    const checklist = await request(app(svc))
+      .get(`/v2/register/actions/${CAP}/go-live`)
+      .set("x-caller", "gate-1");
+    expect(checklist.body.missing).toEqual(["an approved policy version"]);
+    const refused = await request(app(svc))
+      .post(`/v2/register/actions/${CAP}/go-live`)
+      .set("x-caller", "gate-1");
+    expect(refused.status).toBe(422);
+    expect(refused.body.message).toMatch(/approved policy version/);
+  });
+
+  it("takes an action live through the routes once every item is in place", async () => {
+    const { svc } = await serviceWithOwner();
+    await svc.grantRole("owner-1", "action-1", "action-owner");
+    await svc.grantRole("owner-1", "second-1", "second-approver");
+    await svc.grantRole("owner-1", "gate-1", "gate-owner");
+    await svc.registerAction("owner-1", {
+      capability: CAP,
+      owner: "action-1",
+      successor: "action-2",
+      reviewers: ["rev-1", "rev-2", "rev-3"],
+      review: { reviewWindowBusinessDays: 1, approvalValidityMinutes: 15 },
+    });
+    await svc.proposePolicy("action-1", policy);
+    await svc.approvePolicy("second-1", CAP, "2.0.0");
+
+    const test = await request(app(svc))
+      .post(`/v2/register/actions/${CAP}/tests`)
+      .set("x-caller", "gate-1")
+      .send({ tier: "reject" });
+    expect(test.status).toBe(200);
+
+    const live = await request(app(svc))
+      .post(`/v2/register/actions/${CAP}/go-live`)
+      .set("x-caller", "gate-1");
+    expect(live.status).toBe(200);
+    expect(live.body).toEqual({ live: true });
   });
 });

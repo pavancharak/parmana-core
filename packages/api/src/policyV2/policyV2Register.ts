@@ -42,6 +42,7 @@ export interface PolicyV2RegisterView {
   readonly thresholds: readonly policyV2.register.ThresholdRecord[];
   readonly actions: readonly policyV2.register.ActionRecord[];
   readonly approverKeys: readonly policyV2.register.ApproverKeyRecord[];
+  readonly policyVersions: readonly policyV2.register.PolicyVersionRecord[];
 }
 
 export class PolicyV2RegisterService {
@@ -60,6 +61,7 @@ export class PolicyV2RegisterService {
       thresholds: register.listThresholds(),
       actions: register.listActions(),
       approverKeys: register.listApproverKeys(),
+      policyVersions: register.listPolicyVersions(),
     };
   }
 
@@ -162,6 +164,52 @@ export class PolicyV2RegisterService {
     input: policyV2.register.ActionInput,
   ): Promise<policyV2.register.ActionRecord> {
     return this.write(byCaller, (r, p) => r.registerAction(input, p));
+  }
+
+  /** Proposes a new version of a policy. Only the action owner proposes it. */
+  proposePolicy(
+    byCaller: string,
+    policy: unknown,
+  ): Promise<policyV2.register.PolicyVersionRecord> {
+    return this.write(byCaller, (r, p) => r.proposePolicy(policy, p));
+  }
+
+  /** Approves a proposed policy version. Once every required approval is in, it is the approved version. */
+  approvePolicy(
+    byCaller: string,
+    capability: string,
+    policyVersion: string,
+  ): Promise<policyV2.register.PolicyVersionRecord> {
+    return this.write(byCaller, (r, p) =>
+      r.approvePolicy(capability, policyVersion, p),
+    );
+  }
+
+  /** Records that a test ran for a tier. Only the gate owner records one. */
+  recordTest(
+    byCaller: string,
+    capability: string,
+    tier: string,
+  ): Promise<policyV2.register.ActionRecord> {
+    return this.write(byCaller, (r, p) => r.recordTest(capability, tier, p));
+  }
+
+  /** The go-live checklist for the approved policy version, read only. Any caller that holds a register role may read it. */
+  async goLiveChecklist(
+    callerId: string,
+    capability: string,
+  ): Promise<string[]> {
+    const { register } = await this.loadRegister();
+    requireAnyRole(callerId, register);
+    return register.goLiveChecklist(capability);
+  }
+
+  /** Runs the go-live gate for an action. Only the gate owner runs it. */
+  runGoLive(
+    byCaller: string,
+    capability: string,
+  ): Promise<{ readonly ok: boolean; readonly missing: string[] }> {
+    return this.write(byCaller, (r, p) => r.runGoLive(capability, p));
   }
 
   proposeApproverKey(

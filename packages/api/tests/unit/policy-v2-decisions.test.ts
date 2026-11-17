@@ -58,7 +58,6 @@ function service(
   return new PolicyV2DecisionService({
     store,
     enabledCapabilities: new Set(capabilities),
-    policies: () => undefined,
     sources: async () => {
       throw new Error("no source");
     },
@@ -182,5 +181,75 @@ describe("POST /v2/decisions", () => {
     expect(res.body.released).toBe(false);
     expect(res.body.outcome).toBe("REJECT");
     expect(res.body.recordId).toBe("ev-1");
+  });
+});
+
+describe("a decision under an approved policy", () => {
+  it("decides with the approved version, not as a refusal for want of a policy", async () => {
+    const owner: policyV2.register.Person = {
+      id: "owner-1",
+      roles: ["parmana-owner"],
+    };
+    const register = new policyV2.register.PolicyRegister(() => NOW);
+    register.bootstrapOwner("owner-1");
+    register.grantRole(owner, "action-1", "action-owner");
+    register.grantRole(owner, "second-1", "second-approver");
+    register.grantRole(owner, "gate-1", "gate-owner");
+    register.registerAction(
+      {
+        capability: CAPABILITY,
+        owner: "action-1",
+        successor: "action-2",
+        reviewers: ["rev-1", "rev-2", "rev-3"],
+        review: { reviewWindowBusinessDays: 1, approvalValidityMinutes: 15 },
+      },
+      owner,
+    );
+    register.recordTest(CAPABILITY, "reject", {
+      id: "gate-1",
+      roles: ["gate-owner"],
+    });
+    const policy = {
+      policyId: "minimal",
+      policyVersion: "2.0.0",
+      schemaVersion: "2.0.0",
+      capability: CAPABILITY,
+      description: "A minimal policy for tests.",
+      owner: "finance-owner",
+      signals: {
+        requestedAmount: {
+          type: "number",
+          provenance: "untrusted",
+          unit: "USD",
+        },
+      },
+      review: { reviewWindowBusinessDays: 1, approvalValidityMinutes: 15 },
+      rules: [
+        {
+          id: "reject-all",
+          tier: "reject",
+          when: { always: true },
+          outcome: { action: "reject", reason: "Rejected." },
+        },
+      ],
+    };
+    register.proposePolicy(policy, { id: "action-1", roles: [] });
+    register.approvePolicy(CAPABILITY, "2.0.0", {
+      id: "second-1",
+      roles: ["second-approver"],
+    });
+    register.runGoLive(CAPABILITY, { id: "gate-1", roles: ["gate-owner"] });
+
+    const store = memoryStore();
+    await store.save("register", register.snapshot(), 0);
+    const response = await service(store).decide(
+      { ...REQUEST, signals: { requestedAmount: 100 } },
+      "partner-a",
+    );
+
+    expect(response.outcome).toBe("REJECT");
+    expect(response.refusal).toBeUndefined();
+    expect(response.reason).toBe("Rejected.");
+    expect(response.released).toBe(false);
   });
 });

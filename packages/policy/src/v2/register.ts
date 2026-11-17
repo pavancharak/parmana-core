@@ -10,10 +10,13 @@
  * ValidationRegister that validatePolicyV2 checks against.
  */
 
-import type { KeyObject } from "node:crypto";
+import { createHash, type KeyObject } from "node:crypto";
 
-import type { ValidationRegister } from "./validatePolicyV2.js";
-import { readEd25519PublicKey } from "./sourceAnswer.js";
+import {
+  validatePolicyV2,
+  type ValidationRegister,
+} from "./validatePolicyV2.js";
+import { canonicalize, readEd25519PublicKey } from "./sourceAnswer.js";
 
 export type Role =
   | "second-approver"
@@ -123,6 +126,33 @@ export interface RegisterSnapshot {
   readonly roles: readonly RoleGrant[];
   /** Missing in snapshots saved before approver keys existed; read as none. */
   readonly approverKeys?: readonly ApproverKeyRecord[];
+  /** Missing in snapshots saved before policy versions existed; read as none. */
+  readonly policyVersions?: readonly PolicyVersionRecord[];
+}
+
+export type PolicyVersionStatus = "proposed" | "approved" | "superseded";
+
+/**
+ * A policy version. Once proposed it cannot change: a change is a new version. Only one version
+ * of an action is approved at a time; approving a new one supersedes the old.
+ */
+export interface PolicyVersionRecord {
+  readonly capability: string;
+  readonly policyVersion: string;
+  /** The policy as proposed, in canonical form. */
+  readonly policy: unknown;
+  readonly hash: string;
+  readonly proposedBy: string;
+  readonly status: PolicyVersionStatus;
+  readonly approvals: readonly Approval[];
+}
+
+/** The approved version of an action, if it may be used now. */
+export interface ActivePolicy {
+  readonly capability: string;
+  readonly policyVersion: string;
+  readonly policy: unknown;
+  readonly hash: string;
 }
 
 /** An approver's public key. Approvals signed with it count only while the key is active. */
@@ -187,6 +217,7 @@ export class PolicyRegister {
   private readonly actions = new Map<string, ActionRecord>();
   private readonly roles = new Map<string, Set<Role>>();
   private readonly approverKeys = new Map<string, ApproverKeyRecord>();
+  private readonly policyVersions = new Map<string, PolicyVersionRecord>();
   private readonly log: AuditEvent[] = [];
   private pending: AuditEvent[] = [];
 
@@ -362,6 +393,204 @@ export class PolicyRegister {
     action: "grant" | "revoke",
   ): void {
     this.record(by.id, `role.${action}`, `${callerId} ${role}`);
+  }
+
+  // ---- Policy versions -----------------------------------------------------
+
+  /**
+   * Proposes a new version of a policy. Only the action owner proposes. The policy must name
+   * the action, carry a new policyVersion, and pass every validator check against the register.
+   */
+  proposePolicy(policy: unknown, by: Person): PolicyVersionRecord {
+    refusePlaceholders(policy, "policy");
+    const body = policy as { capability?: unknown; policyVersion?: unknown };
+    if (!isNonEmpty(body.capability))
+      throw new RegisterError("A policy needs a capability.");
+    const action = this.requireAction(body.capability);
+    if (by.id !== action.owner)
+      throw new RegisterError(
+        `Only the action owner (${action.owner}) proposes a policy for ${body.capability}.`,
+      );
+    if (!isNonEmpty(body.policyVersion))
+      throw new RegisterError("A policy needs a policyVersion.");
+    const id = policyVersionId(body.capability, body.policyVersion);
+    if (this.policyVersions.has(id))
+      throw new RegisterError(
+        `Policy version ${body.policyVersion} of ${body.capability} already exists. A change is a new version.`,
+      );
+    this.requireValid(policy);
+    const record: PolicyVersionRecord = {
+      capability: body.capability,
+      policyVersion: body.policyVersion,
+      policy: JSON.parse(canonicalize(policy)),
+      hash: hashOf(policy),
+      proposedBy: by.id,
+      status: "proposed",
+      approvals: [],
+    };
+    this.policyVersions.set(id, record);
+    this.record(by.id, "policy.proposed", id);
+    return record;
+  }
+
+  /**
+   * Approves a proposed policy version. A second approver is always needed. A policy that
+   * uses a source able to approve, or an intermediary, also needs the Parmana owner. The policy
+   * is checked against the register again, so a source or threshold that has changed since the
+   * proposal stops it. Approving the last required approval supersedes the approved version.
+   */
+  approvePolicy(
+    capability: string,
+    policyVersion: string,
+    by: Person,
+  ): PolicyVersionRecord {
+    const id = policyVersionId(capability, policyVersion);
+    const record = this.requirePolicyVersion(id);
+    if (record.status !== "proposed")
+      throw new RegisterError(
+        `Policy version ${policyVersion} is ${record.status}, not proposed.`,
+      );
+    if (by.id === record.proposedBy)
+      throw new RegisterError("A person cannot approve their own proposal.");
+    if (record.approvals.some((a) => a.by === by.id))
+      throw new RegisterError(
+        `${by.id} has already approved this policy version.`,
+      );
+
+    const needsOwner = this.policyNeedsOwnerApproval(record.policy);
+    const held = this.rolesOf(by.id);
+    const haveSecond = record.approvals.some(
+      (a) => a.role === "second-approver",
+    );
+    const haveOwner = record.approvals.some((a) => a.role === "parmana-owner");
+    let role: Role;
+    if (!haveSecond && held.includes("second-approver"))
+      role = "second-approver";
+    else if (needsOwner && !haveOwner && held.includes("parmana-owner"))
+      role = "parmana-owner";
+    else
+      throw new RegisterError(
+        `${by.id} holds no role that this policy version still needs.`,
+      );
+
+    this.requireValid(record.policy);
+    const approvals = [
+      ...record.approvals,
+      { by: by.id, role, at: this.timestamp() },
+    ];
+    const complete =
+      approvals.some((a) => a.role === "second-approver") &&
+      (!needsOwner || approvals.some((a) => a.role === "parmana-owner"));
+
+    if (complete) {
+      for (const other of this.policyVersions.values()) {
+        if (other.capability === capability && other.status === "approved")
+          this.policyVersions.set(
+            policyVersionId(other.capability, other.policyVersion),
+            {
+              ...other,
+              status: "superseded",
+            },
+          );
+      }
+    }
+    const updated: PolicyVersionRecord = {
+      ...record,
+      approvals,
+      status: complete ? "approved" : "proposed",
+    };
+    this.policyVersions.set(id, updated);
+    this.record(
+      by.id,
+      complete ? "policy.approved" : "policy.approval",
+      `${id} as ${role}`,
+    );
+    return updated;
+  }
+
+  /**
+   * The approved version of an action, if it may be used now. It is not used until the
+   * action has passed the go-live gate. Returns undefined otherwise.
+   */
+  activePolicy(capability: string): ActivePolicy | undefined {
+    const active = this.approvedVersion(capability);
+    if (active === undefined) return undefined;
+    const action = this.actions.get(capability);
+    if (action === undefined || !action.live) return undefined;
+    const used = usesOf(active.policy);
+    let missing: string[];
+    try {
+      missing = this.gateMissing(
+        capability,
+        used.sources,
+        used.thresholds,
+        used.tiers,
+      );
+    } catch {
+      return undefined;
+    }
+    if (missing.length > 0) return undefined;
+    return {
+      capability,
+      policyVersion: active.policyVersion,
+      policy: active.policy,
+      hash: active.hash,
+    };
+  }
+
+  private approvedVersion(capability: string): PolicyVersionRecord | undefined {
+    return [...this.policyVersions.values()].find(
+      (r) => r.capability === capability && r.status === "approved",
+    );
+  }
+
+  getPolicyVersion(
+    capability: string,
+    policyVersion: string,
+  ): PolicyVersionRecord | undefined {
+    return this.policyVersions.get(policyVersionId(capability, policyVersion));
+  }
+
+  listPolicyVersions(): readonly PolicyVersionRecord[] {
+    return [...this.policyVersions.values()];
+  }
+
+  private requirePolicyVersion(id: string): PolicyVersionRecord {
+    const record = this.policyVersions.get(id);
+    if (record === undefined)
+      throw new RegisterError(`Policy version ${id} is not proposed.`);
+    return record;
+  }
+
+  /** Refuses a policy that the validator rejects against the current register. */
+  private requireValid(policy: unknown): void {
+    const result = validatePolicyV2(policy, this.toValidationRegister());
+    if (!result.ok) {
+      const first = result.errors
+        .slice(0, 3)
+        .map((e) => `check ${e.check} at ${e.path}: ${e.message}`)
+        .join("; ");
+      throw new RegisterError(`The policy is not valid. ${first}`);
+    }
+  }
+
+  /** True if the policy reads a source that can approve, or an intermediary. Those need the Parmana owner. */
+  private policyNeedsOwnerApproval(policy: unknown): boolean {
+    const signals =
+      (
+        policy as {
+          signals?: Record<string, { provenance?: unknown; source?: unknown }>;
+        }
+      ).signals ?? {};
+    return Object.values(signals).some((signal) => {
+      if (signal.provenance !== "sourced" || typeof signal.source !== "string")
+        return false;
+      const source = this.sources.get(signal.source);
+      return (
+        source !== undefined &&
+        (source.canApprove || source.signer.kind === "intermediary")
+      );
+    });
   }
 
   // ---- Approver keys -------------------------------------------------------
@@ -611,6 +840,7 @@ export class PolicyRegister {
     capability: string,
     usedSources: readonly string[],
     usedThresholds: readonly string[],
+    usedTiers: readonly string[] = [],
   ): string[] {
     const action = this.requireAction(capability);
     const missing: string[] = [];
@@ -638,6 +868,10 @@ export class PolicyRegister {
     }
     if (action.testedTiers.length === 0)
       missing.push("a test run for each tier");
+    for (const tier of usedTiers) {
+      if (!action.testedTiers.includes(tier))
+        missing.push(`a test run for tier "${tier}"`);
+    }
     return missing;
   }
 
@@ -645,20 +879,51 @@ export class PolicyRegister {
    * The go-live gate (design 5.7). Returns every item that is missing. The action
    * goes live only when none are missing.
    */
-  goLive(
+  /**
+   * Runs the go-live gate (design 5.7) against the approved policy version. The sources,
+   * thresholds and tiers come from that version, never from the caller. Only the gate owner
+   * runs it. The action goes live only when nothing is missing.
+   */
+  runGoLive(
     capability: string,
-    usedSources: readonly string[],
-    usedThresholds: readonly string[],
     by: Person,
   ): { ok: boolean; missing: string[] } {
-    requireRole(by, "gate-owner", "run the go-live gate");
-    const missing = this.gateMissing(capability, usedSources, usedThresholds);
+    requireRole(
+      { id: by.id, roles: this.rolesOf(by.id) },
+      "gate-owner",
+      "run the go-live gate",
+    );
+    const approved = this.approvedVersion(capability);
+    if (approved === undefined)
+      throw new RegisterError(
+        `${capability} has no approved policy version to go live with.`,
+      );
+    const used = usesOf(approved.policy);
+    const missing = this.gateMissing(
+      capability,
+      used.sources,
+      used.thresholds,
+      used.tiers,
+    );
     const action = this.requireAction(capability);
     if (missing.length === 0) {
       this.actions.set(capability, { ...action, live: true });
       this.record(by.id, "action.live", capability);
     }
     return { ok: missing.length === 0, missing };
+  }
+
+  /** The go-live checklist for the approved policy version, read only. */
+  goLiveChecklist(capability: string): string[] {
+    const approved = this.approvedVersion(capability);
+    if (approved === undefined) return ["an approved policy version"];
+    const used = usesOf(approved.policy);
+    return this.gateMissing(
+      capability,
+      used.sources,
+      used.thresholds,
+      used.tiers,
+    );
   }
 
   // ---- Reading -------------------------------------------------------------
@@ -709,6 +974,11 @@ export class PolicyRegister {
       sources: [...this.sources.values()],
       thresholds: [...this.thresholds.values()],
       actions: [...this.actions.values()],
+      policyVersions: [...this.policyVersions.values()].sort((a, b) =>
+        policyVersionId(a.capability, a.policyVersion).localeCompare(
+          policyVersionId(b.capability, b.policyVersion),
+        ),
+      ),
       approverKeys: [...this.approverKeys.values()].sort((a, b) =>
         approverKeyId(a.approverId, a.keyId).localeCompare(
           approverKeyId(b.approverId, b.keyId),
@@ -743,6 +1013,12 @@ export class PolicyRegister {
     this.approverKeys.clear();
     for (const key of snapshot.approverKeys ?? [])
       this.approverKeys.set(approverKeyId(key.approverId, key.keyId), key);
+    this.policyVersions.clear();
+    for (const version of snapshot.policyVersions ?? [])
+      this.policyVersions.set(
+        policyVersionId(version.capability, version.policyVersion),
+        version,
+      );
   }
 
   listApproverKeys(): readonly ApproverKeyRecord[] {
@@ -860,4 +1136,36 @@ function approverKeyId(approverId: string, keyId: string): string {
 
 function isNonEmpty(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+function policyVersionId(capability: string, policyVersion: string): string {
+  return `${capability}@${policyVersion}`;
+}
+
+function hashOf(policy: unknown): string {
+  return createHash("sha256").update(canonicalize(policy)).digest("hex");
+}
+
+/** The sources, thresholds and tiers a policy uses. The go-live gate checks each of them. */
+function usesOf(policy: unknown): {
+  sources: string[];
+  thresholds: string[];
+  tiers: string[];
+} {
+  const body = policy as {
+    signals?: Record<string, { source?: unknown }>;
+    thresholds?: Record<string, unknown>;
+    rules?: Array<{ tier?: unknown }>;
+  };
+  return {
+    sources: Object.values(body.signals ?? {})
+      .map((signal) => signal.source)
+      .filter(isNonEmpty),
+    thresholds: Object.keys(body.thresholds ?? {}),
+    tiers: [
+      ...new Set(
+        (body.rules ?? []).map((rule) => rule.tier).filter(isNonEmpty),
+      ),
+    ],
+  };
 }
