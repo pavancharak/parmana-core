@@ -1,5 +1,5 @@
 {
-  "version": "4.1.0",
+  "version": "4.1.1",
   "npm": [
     "@parmana/sdk",
     "@parmana/connector-sdk",
