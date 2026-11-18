@@ -16,7 +16,8 @@ const SIGNING_READINESS_TTL_MS = 60_000;
  * signing path must prove it can produce a signature that verifies, or the
  * request is refused with 503 SIGNING_UNAVAILABLE and nothing is executed.
  *
- * Same environment rule as createPolicyExecutionVerifier(): relaxed only
+ * This check has its own environment rule, which is not the policy verifier's
+ * (createPolicyExecutionVerifier() is on in every environment). Relaxed only
  * when NODE_ENV is exactly "test" or "development", where it stays off
  * unless SIGNING_READINESS_CHECK is exactly "true". In production, or with
  * NODE_ENV unset or any other value, it is enforced and no variable can
