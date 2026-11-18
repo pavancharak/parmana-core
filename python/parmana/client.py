@@ -6,7 +6,7 @@ Main entry point for the Parmana Python SDK.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from parmana.api.approver_api import ApproverApi
 from parmana.api.audit_api import AuditApi
@@ -17,6 +17,7 @@ from parmana.api.execution_api import ExecutionApi
 from parmana.api.execution_intent_api import ExecutionIntentApi
 from parmana.api.external_connector_api import ExternalConnectorApi
 from parmana.api.policy_api import PolicyApi
+from parmana.api.policy_v2_api import PolicyV2Api
 from parmana.api.receipt_api import ReceiptApi
 from parmana.api.refusal_api import RefusalApi
 from parmana.api.replay_api import ReplayApi
@@ -24,6 +25,11 @@ from parmana.api.transaction_api import TransactionApi
 from parmana.api.trust_record_api import TrustRecordApi
 from parmana.api.verification_api import VerificationApi
 from parmana.errors.configuration_error import ConfigurationError
+from parmana.models.policy_v2 import (
+    PolicyV2Decision,
+    PolicyV2ReviewDecision,
+    PolicyV2ReviewView,
+)
 from parmana.models.transaction_status import (
     DeclaredTransaction,
     ReconcileResult,
@@ -211,6 +217,10 @@ class ParmanaClient:
         )
 
         self.approvers = ApproverApi(
+            self._transport,
+        )
+
+        self.policy_v2 = PolicyV2Api(
             self._transport,
         )
 
@@ -499,6 +509,50 @@ class ParmanaClient:
         return self.policy.reject_change(
             pending_policy_change_id, rejection_reason, step_up_authorization
         )
+
+    def decide_policy_v2(
+        self,
+        *,
+        capability: str,
+        transaction_id: str,
+        target: str,
+        parameters: dict[str, Any] | None = None,
+        signals: dict[str, Any] | None = None,
+        approvals: dict[str, Any] | None = None,
+    ) -> PolicyV2Decision:
+        """
+        Decide an action under policy version 2. See PolicyV2Api.decide.
+        Nothing is released by a decision; the result reports released False.
+        """
+
+        return self.policy_v2.decide(
+            capability=capability,
+            transaction_id=transaction_id,
+            target=target,
+            parameters=parameters,
+            signals=signals,
+            approvals=approvals,
+        )
+
+    def policy_v2_review(self, item_id: str) -> PolicyV2ReviewView:
+        """
+        The status of a policy version 2 review item, for its requester. See
+        PolicyV2Api.review.
+        """
+
+        return self.policy_v2.review(item_id)
+
+    def decide_policy_v2_review(
+        self,
+        item_id: str,
+        decision: Literal["approve", "reject"],
+    ) -> PolicyV2ReviewDecision:
+        """
+        A reviewer approves or rejects a policy version 2 review item. See
+        PolicyV2Api.decide_review.
+        """
+
+        return self.policy_v2.decide_review(item_id, decision)
 
     def list_approvers(self) -> list[ApprovalIssuer]:
         """

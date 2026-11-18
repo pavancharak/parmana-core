@@ -72,6 +72,13 @@ import type {
   ProposePolicyChangeInput,
   ProposedPolicyChange,
 } from "../models/policy-change.js";
+import type {
+  PolicyV2Decision,
+  PolicyV2DecisionRequest,
+  PolicyV2ReviewDecision,
+  PolicyV2ReviewDecisionValue,
+  PolicyV2ReviewView,
+} from "../models/policy-v2.js";
 
 import type { Configuration } from "../config/Configuration.js";
 import { assertSafeEndpoint } from "../config/assertSafeEndpoint.js";
@@ -98,6 +105,7 @@ import { TrustRecordApi } from "./TrustRecordApi.js";
 
 import { PolicyApi, type PolicyValidationResult } from "./PolicyApi.js";
 import { ApproverApi } from "./ApproverApi.js";
+import { PolicyV2Api } from "./PolicyV2Api.js";
 import { ExternalConnectorApi } from "./ExternalConnectorApi.js";
 import { BusinessSignalSourceApi } from "./BusinessSignalSourceApi.js";
 import { AuthorityGrantApi } from "./AuthorityGrantApi.js";
@@ -163,6 +171,7 @@ export class ParmanaClient {
   private readonly policyApi: PolicyApi;
 
   private readonly approverApi: ApproverApi;
+  private readonly policyV2Api: PolicyV2Api;
 
   private readonly externalConnectorApi: ExternalConnectorApi;
 
@@ -233,6 +242,7 @@ export class ParmanaClient {
     this.policyApi = new PolicyApi(this.transport);
 
     this.approverApi = new ApproverApi(this.transport);
+    this.policyV2Api = new PolicyV2Api(this.transport);
 
     this.externalConnectorApi = new ExternalConnectorApi(this.transport);
     this.businessSignalSourceApi = new BusinessSignalSourceApi(this.transport);
@@ -771,5 +781,34 @@ export class ParmanaClient {
       rejectionReason,
       stepUpAuthorization,
     );
+  }
+
+  /**
+   * Decides an action under policy version 2. See PolicyV2Api.decide.
+   * Nothing is released by a decision; the result reports released: false.
+   */
+  public decidePolicyV2(
+    request: PolicyV2DecisionRequest,
+  ): Promise<PolicyV2Decision> {
+    return this.policyV2Api.decide(request);
+  }
+
+  /**
+   * The status of a policy version 2 review item, for its requester. See
+   * PolicyV2Api.review.
+   */
+  public policyV2Review(itemId: string): Promise<PolicyV2ReviewView> {
+    return this.policyV2Api.review(itemId);
+  }
+
+  /**
+   * A reviewer approves or rejects a policy version 2 review item. See
+   * PolicyV2Api.decideReview.
+   */
+  public decidePolicyV2Review(
+    itemId: string,
+    decision: PolicyV2ReviewDecisionValue,
+  ): Promise<PolicyV2ReviewDecision> {
+    return this.policyV2Api.decideReview(itemId, decision);
   }
 }

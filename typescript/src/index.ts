@@ -27,6 +27,7 @@ export { HealthApi } from "./client/HealthApi.js";
 export { ExecutionApi } from "./client/ExecutionApi.js";
 export { VerificationApi } from "./client/VerificationApi.js";
 export { ReplayApi } from "./client/ReplayApi.js";
+export { PolicyV2Api } from "./client/PolicyV2Api.js";
 export { PolicyApi, type PolicyValidationResult } from "./client/PolicyApi.js";
 
 // -----------------------------------------------------------------------------
