@@ -12,7 +12,7 @@
 
 FROM node:24-slim
 
-ARG PARMANA_CLI_VERSION=4.0.0
+ARG PARMANA_CLI_VERSION=4.0.1
 
 # The package is installed from npm, the same artifact users install directly.
 RUN npm install -g "@parmana/cli@${PARMANA_CLI_VERSION}" \
