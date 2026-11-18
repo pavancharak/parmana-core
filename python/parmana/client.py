@@ -477,7 +477,7 @@ class ParmanaClient:
     ) -> PendingPolicyChange:
         """
         Approve a policy change with a signed step up authorization. See
-        PolicyApi.approve_change and parmana.crypto.sign_policy_change_step_up.
+        PolicyApi.approve_change and [parmana.crypto.sign_policy_change_step_up](/sdks/reference/python/crypto/step_up).
         """
 
         return self.policy.approve_change(

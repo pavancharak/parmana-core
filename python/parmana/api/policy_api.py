@@ -187,7 +187,7 @@ class PolicyApi:
         Maps to POST /policies/pending-changes/{id}/approve. The API key must
         belong to a verified human with a registered step up key, who is not
         the proposer. Make `step_up_authorization` with
-        `parmana.crypto.sign_policy_change_step_up(action="approve", ...)`;
+        [`parmana.crypto.sign_policy_change_step_up(action="approve", ...)`](/sdks/reference/python/crypto/step_up);
         it is valid once, for 120 seconds by default.
         """
 
