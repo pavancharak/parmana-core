@@ -6824,6 +6824,7 @@ Enums are real Python `str, Enum` classes (e.g. `SignatureAlgorithm`,
 ## Errors, correctly mapped to real conditions
 
 ```python
+transaction = ...  # a BusinessTransaction you already created, as in create_business_transaction() below
 from parmana import ConflictError, NotFoundError, ValidationError
 
 try:
@@ -6867,6 +6868,10 @@ GETs with backoff on 429/502/503/504, POSTs are never retried.
 ## Every product endpoint has a method
 
 ```python
+transaction = ...  # a BusinessTransaction, built as in create_business_transaction() below
+id = "<businessTransactionId>"  # an id you already have
+record = ...  # an ExecutionTrustRecord you already have
+step_up = ...  # the checker's signed step up authorization, from "Approve a policy change" below
 client.execution.execute(transaction)             # POST /execute
 client.execution.health()                         # GET /health
 client.execution.version()                        # GET /version (the server's version)
@@ -6934,6 +6939,8 @@ automatically:
 ```python
 from parmana import ParmanaClient, PolicyReference, create_business_transaction
 
+endpoint = "http://127.0.0.1:3000"
+approval = ...  # the approver's signed approval, from sign_approval() in "Sign an approval" below
 client = ParmanaClient(endpoint=endpoint)
 
 transaction = create_business_transaction(
@@ -7025,6 +7032,7 @@ Say which agent may have which action decided, within which limits, until when. 
 decides a request only for a caller holding a grant in force.
 
 ```python
+step_up = ...  # the checker's signed step up authorization, from "Approve a policy change" below
 change = maker.authority_grants.propose_grant(
     caller_id="warehouse-agent",
     capability="erp:release-goods",
