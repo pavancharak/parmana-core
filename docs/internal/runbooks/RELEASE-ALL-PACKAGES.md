@@ -16,6 +16,65 @@ This runbook covers a release of the four SDK packages in this repository and th
 
 The per-package release notes are `typescript/RELEASING.md`, `python/RELEASING.md` and `RELEASING.md` in the verifier repository. This runbook ties them together and records what went wrong on the last release.
 
+## 0. Exact steps (follow in order)
+
+Use the sections below for detail. This list is the order. Do not skip a check, and do not start a step until the one before it has passed. Replace `X.Y.Z` with the new version, for example `4.1.1`.
+
+**Before you start**
+
+1. Read the release notes of the last release, so you know what changed.
+2. On the machine that publishes, confirm the tools: `node --version` shows 24.x, `npm whoami` shows the owner account, and `python -m twine --version` works.
+
+**The version bump (section 1)**
+
+3. From an up-to-date `main`, create `claude/release-X-Y-Z`.
+4. Change the version as section 1 says, run `npm install --package-lock-only --ignore-scripts`, add the changelog entry, and run `npm run generate:llms-txt`.
+5. Run `npm run build:packages` and `npx vitest run tests/architecture`. Both must pass.
+6. Commit with a sign-off. Push the branch and open the bump PR only when the owner asks. Merge it to `main`.
+
+**Build and release (sections 2 and 3)**
+
+7. On `main`, pull, then run `npm run build:packages`. Stop if it fails.
+8. Create the GitHub release: tag `sdk-vX.Y.Z`, target `main`, title `Parmana X.Y.Z`. Do not publish anything yet.
+9. Wait until **Release artifacts**, **CLI image** and **Server image** are all green in the Actions tab. If one is red, read its log, fix the cause, and re-run the failed jobs. Do not publish while anything is red.
+
+**Verify the release files (section 4)**
+
+10. Download the nine package files and `multiple.intoto.jsonl` from the release into one new, empty folder.
+11. Check each file's SHA-256 against the release's digest. In PowerShell: `Get-FileHash -Algorithm SHA256 .\<file>`. Every hash must match. If any does not, stop.
+12. Run `slsa-verifier verify-artifact` on each `.tgz`, with `--source-uri github.com/pavancharak/parmana-core --source-tag sdk-vX.Y.Z`. Each must print `PASSED`.
+
+**Publish npm, in this order (section 5)**
+
+13. Publish `@parmana/shared`, then `@parmana/crypto`, then `@parmana/cli`, then `@parmana/connector-sdk`, then `@parmana/sdk`. For each one: `npm publish <file>.tgz --access public`.
+14. After each publish, run `npm view @parmana/<name>@X.Y.Z version`. If it prints nothing, wait a few minutes and check again. Do not publish the same package again.
+15. If npm says `409 Cannot publish over previously staged version`, run `npm stage list` and `npm view` first. Never retry blindly.
+
+**Publish PyPI (section 5)**
+
+16. Run `Get-FileHash` on the four Python files and compare with the release digests.
+17. `python -m twine upload parmana-X.Y.Z-py3-none-any.whl parmana-X.Y.Z.tar.gz`, then `python -m twine upload parmana_connector_sdk-X.Y.Z-py3-none-any.whl parmana_connector_sdk-X.Y.Z.tar.gz`. Paste the API token at the prompt, never in chat.
+
+**Confirm (section 6)**
+
+18. Run `python -I .github/release/check-registry-matches-release.py X.Y.Z` from the repository. It must end with `All 9 registry files match`. If any line says `DIFFERS`, `NOT IN PROVENANCE` or `NOT ON REGISTRY`, stop and report it. The release is not complete.
+
+**Docs (section 7)**
+
+19. On a new branch from `main`, run `npm run record:published-sdk -- --typescript X.Y.Z --python X.Y.Z`, then update the version statements listed in section 7 and run `npm run generate:llms-txt`. Commit with a sign-off. Push and open the PR only when the owner asks.
+
+**Never**
+
+- Publish a local build. Publish the release's files, checked in steps 10 to 12.
+- Publish or re-publish a version that the registry check has not confirmed is the release file, unless the owner decides it.
+- Use `--no-verify` on a commit or a push. If a hook fails, fix the cause (gitleaks on `PATH`, a running test database).
+- Push to `main` directly, or push to a branch that isn't your own `claude/` branch.
+
+**Environment for the commit and push hooks**
+
+- The pre-commit hook needs `gitleaks` on `PATH`.
+- The pre-push hook runs the database-backed tests. It needs the test database from `.env.test.example`, running on port 54329 (or the setup script in this environment, which starts it each session).
+
 ## 1. Prepare the version bump
 
 Use the same version for every package in a repository.
