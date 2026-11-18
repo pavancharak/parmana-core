@@ -101,6 +101,14 @@ python -c "import urllib.request,json; print(json.load(urllib.request.urlopen('h
 
 Each should print the new version. For each registry file, compare the npm `dist.shasum` (SHA-1) or the PyPI `sha256` digest with the release file. They must match.
 
+**The release is not complete until the registry check passes.** Run the **Registry check** workflow from the Actions tab with the version, or run it locally:
+
+```bash
+python -I .github/release/check-registry-matches-release.py <version>
+```
+
+It downloads every file the npm and PyPI registries serve for the version, and compares its SHA-256 with the release provenance. It must end with `All ... registry files match`. If any line says `DIFFERS`, `NOT IN PROVENANCE` or `NOT ON REGISTRY`, stop and report it; do not announce the release.
+
 ## 7. Update the docs
 
 Change the published-version statements, and nothing else that is historical:

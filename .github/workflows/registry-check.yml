@@ -1,0 +1,34 @@
+# Checks that every npm and PyPI file for an SDK release is byte for byte the
+# file the release's SLSA provenance covers (see
+# .github/release/check-registry-matches-release.py). Run it by hand after the
+# release is published to npm and PyPI, and before the release is announced.
+# The run fails if any registry file differs.
+
+name: Registry check
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "SDK version to check, for example 4.0.1 (its sdk-v<version> release must exist)"
+        required: true
+        type: string
+
+permissions: read-all
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+
+      - name: Compare the registries with the release
+        env:
+          VERSION: ${{ inputs.version }}
+        run: python -I .github/release/check-registry-matches-release.py "$VERSION"
