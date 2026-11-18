@@ -62,7 +62,7 @@ Cleaned up the same day: grant `4b60507f-adb8-4fe0-82b3-a83c41e09022` revoked (r
 Run everything in one Windows PowerShell window, from the repository root. Set these once:
 
 ```powershell
-$env:PARMANA_URL = "https://parmana-api-real.vercel.app"
+$env:PARMANA_ENDPOINT = "https://parmana-api-real.vercel.app"
 function Use-Key([string]$label) {
   $env:PARMANA_API_KEY = [System.Net.NetworkCredential]::new("", (Read-Host "$label API key" -AsSecureString)).Password.Trim()
   "  $label key: $($env:PARMANA_API_KEY.Length) characters"

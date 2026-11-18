@@ -34,7 +34,7 @@ Follow it literally, as `agents/integrate` is followed. If your situation is not
 
 | Input              | What it is                                                                                                                                           | How to check it                                                                                          |
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `PARMANA_URL`      | The Parmana server, without a trailing slash.                                                                                                        | Step 1.                                                                                                  |
+| `PARMANA_ENDPOINT` | The Parmana server, without a trailing slash.                                                                                                        | Step 1.                                                                                                  |
 | `PROPOSER_KEY`     | The maker's API key, added as a human (`credentialHolderType USER`).                                                                                 | `GET /callers/me` answers `200`.                                                                         |
 | `APPROVER_KEY`     | A second person's API key, added as a human, with a step up public key registered on it, and that person's step up private key on their own machine. | See [Policy lifecycle and approvals](/guides/policy-lifecycle-and-approvals), "Set up the people, once". |
 | `CAPABILITY`       | The action, `namespace:verb`, for example `erp:create-invoice`. Lowercase letters and digits, words joined by `-` or `_`, at most 128 characters.    | Not in a built in namespace (for example `test`).                                                        |
@@ -47,7 +47,7 @@ Follow it literally, as `agents/integrate` is followed. If your situation is not
 
 ## Step 1: check the server
 
-**Do:** `GET {PARMANA_URL}/health` and `GET {PARMANA_URL}/ready`.
+**Do:** `GET {PARMANA_ENDPOINT}/health` and `GET {PARMANA_ENDPOINT}/ready`.
 
 **Expect:** `200 {"status":"UP"}`, and `200` with `"status":"READY"` and `"authDisabled":false`.
 
@@ -113,7 +113,7 @@ With `"value": "parameters.amount"`, an approval also caps the amount. Leave `va
 
 ## Step 3: propose the policy (maker)
 
-**Do:** with `PROPOSER_KEY`, `POST {PARMANA_URL}/policies/{POLICY_NAME}/{POLICY_VERSION}/pending-changes` with
+**Do:** with `PROPOSER_KEY`, `POST {PARMANA_ENDPOINT}/policies/{POLICY_NAME}/{POLICY_VERSION}/pending-changes` with
 `{"reason": "...", "proposedContent": <the policy file, unchanged>}`. The exact commands, in Bash and PowerShell, are in
 [Policy lifecycle and approvals](/guides/policy-lifecycle-and-approvals), step 3.
 
@@ -146,7 +146,7 @@ again). Then repeat this step.
 - TypeScript: `typescript/examples/07-external-connector-endpoint.ts`, `createReleaseHandler({ publicKeys, audience, act })`.
 - Python: `python/examples/13_external_connector_endpoint.py`, `create_release_handler(public_keys=..., audience=..., act=...)`.
 
-Give it Parmana's public key (`GET {PARMANA_URL}/keys/default`, or `client.publicKey("default")`) and `ENDPOINT_URL`
+Give it Parmana's public key (`GET {PARMANA_ENDPOINT}/keys/default`, or `client.publicKey("default")`) and `ENDPOINT_URL`
 exactly as you will register it. Serve it over HTTPS at `ENDPOINT_URL`. Keep its record of answers by
 `businessTransactionId` in durable storage, not in memory: Parmana may send the same release again after a timeout, and
 the endpoint must answer with its first result, not act twice.
@@ -176,7 +176,7 @@ verified release, and answers `200` with:
 **Do:** with `PROPOSER_KEY`:
 
 ```bash
-curl -s -X POST $PARMANA_URL/external-connectors/changes \
+curl -s -X POST $PARMANA_ENDPOINT/external-connectors/changes \
   -H "Authorization: Bearer $PROPOSER_KEY" -H "Content-Type: application/json" \
   -d '{
     "action": "register",
@@ -218,7 +218,7 @@ npx tsx scripts/sign-policy-change-step-up.ts \
   --private-key-file step-up.private.pem --key-id <approver caller id> \
   --pending-policy-change-id "$CHANGE_ID" --action approve > signed.txt
 
-curl -s -X POST $PARMANA_URL/external-connectors/changes/$CHANGE_ID/approve \
+curl -s -X POST $PARMANA_ENDPOINT/external-connectors/changes/$CHANGE_ID/approve \
   -H "Authorization: Bearer $APPROVER_KEY" -H "Content-Type: application/json" \
   -d "{\"stepUpAuthorization\":$(grep '^{' signed.txt)}"
 ```
@@ -234,7 +234,7 @@ curl -s -X POST $PARMANA_URL/external-connectors/changes/$CHANGE_ID/approve \
 
 ## Step 8: check the policy in effect for the capability
 
-**Do:** `GET {PARMANA_URL}/policies/in-effect?capability={CAPABILITY}` with any human key or the agent's key.
+**Do:** `GET {PARMANA_ENDPOINT}/policies/in-effect?capability={CAPABILITY}` with any human key or the agent's key.
 
 **Expect:** `200` with `"policy": {"name": POLICY_NAME, "version": POLICY_VERSION, "schemaVersion": "1.0.0"}` and
 `signals.approval` naming your approval signal.
@@ -251,13 +251,13 @@ curl -s -X POST $PARMANA_URL/external-connectors/changes/$CHANGE_ID/approve \
 **Do:** add `CAPABILITY` to `allowedCapabilities` of the agent's entry in the server's API keys, keeping every other
 entry, and deploy. See the warning in [Connect an agent](/guides/connect-an-agent), step 3.
 
-**Expect:** `GET {PARMANA_URL}/callers/me` with the agent's key lists `CAPABILITY` in `allowedCapabilities`.
+**Expect:** `GET {PARMANA_ENDPOINT}/callers/me` with the agent's key lists `CAPABILITY` in `allowedCapabilities`.
 
 **If not:** the key was not updated or the deploy has not finished. Do not grant `"*"` instead.
 
 ## Step 10: make sure an approver is trusted
 
-**Do:** `GET {PARMANA_URL}/approval-issuers` with a human key.
+**Do:** `GET {PARMANA_ENDPOINT}/approval-issuers` with a human key.
 
 **Expect:** the action approver's `approverId` and `keyId`, with `"revoked": false`.
 

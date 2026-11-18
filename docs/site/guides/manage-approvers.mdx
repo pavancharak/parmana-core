@@ -104,7 +104,7 @@ later key can have the next one.
 <CodeGroup>
 
 ```bash curl
-curl -X POST "$PARMANA_URL/approval-issuers/changes" \
+curl -X POST "$PARMANA_ENDPOINT/approval-issuers/changes" \
   -H "Authorization: Bearer $PROPOSER_KEY" \
   -H "Content-Type: application/json" \
   --data "$(jq -n --rawfile pem approver-example__approver-example-key-1.public.pem '{
@@ -121,7 +121,7 @@ import { readFileSync } from "node:fs";
 import { ParmanaClient } from "@parmana/sdk";
 
 const proposer = new ParmanaClient({
-  endpoint: process.env.PARMANA_URL!,
+  endpoint: process.env.PARMANA_ENDPOINT!,
   apiKey: process.env.PROPOSER_KEY,
 });
 
@@ -144,7 +144,7 @@ import os
 from pathlib import Path
 from parmana import ParmanaClient
 
-proposer = ParmanaClient(endpoint=os.environ["PARMANA_URL"], api_key=os.environ["PROPOSER_KEY"])
+proposer = ParmanaClient(endpoint=os.environ["PARMANA_ENDPOINT"], api_key=os.environ["PROPOSER_KEY"])
 
 change = proposer.approvers.propose_add(
     approver_id="approver-example",
@@ -181,7 +181,7 @@ The server stores the key in canonical PEM. A key that is not Ed25519 is refused
 <CodeGroup>
 
 ```bash curl
-curl "$PARMANA_URL/approval-issuers/changes?status=PENDING_APPROVAL" \
+curl "$PARMANA_ENDPOINT/approval-issuers/changes?status=PENDING_APPROVAL" \
   -H "Authorization: Bearer $CHECKER_KEY"
 ```
 
@@ -213,7 +213,7 @@ npx tsx scripts/sign-policy-change-step-up.ts \
   --pending-policy-change-id ba7c5827-5844-4069-94fc-9b438ef08f78 \
   --action approve > step-up.json
 
-curl -X POST "$PARMANA_URL/approval-issuers/changes/ba7c5827-5844-4069-94fc-9b438ef08f78/approve" \
+curl -X POST "$PARMANA_ENDPOINT/approval-issuers/changes/ba7c5827-5844-4069-94fc-9b438ef08f78/approve" \
   -H "Authorization: Bearer $CHECKER_KEY" \
   -H "Content-Type: application/json" \
   --data "{\"stepUpAuthorization\": $(cat step-up.json)}"
@@ -224,7 +224,7 @@ import { readFileSync } from "node:fs";
 import { ParmanaClient, signPolicyChangeStepUp } from "@parmana/sdk";
 
 const checker = new ParmanaClient({
-  endpoint: process.env.PARMANA_URL!,
+  endpoint: process.env.PARMANA_ENDPOINT!,
   apiKey: process.env.CHECKER_KEY,
 });
 
@@ -277,7 +277,7 @@ From the next request on, approvals signed with `approver-example-key-1` verify.
 <CodeGroup>
 
 ```bash curl
-curl "$PARMANA_URL/approval-issuers" -H "Authorization: Bearer $CHECKER_KEY"
+curl "$PARMANA_ENDPOINT/approval-issuers" -H "Authorization: Bearer $CHECKER_KEY"
 ```
 
 ```typescript TypeScript
@@ -336,7 +336,7 @@ approved, every approval the key ever signed is refused, including ones not used
 <CodeGroup>
 
 ```bash curl
-curl -X POST "$PARMANA_URL/approval-issuers/changes" \
+curl -X POST "$PARMANA_ENDPOINT/approval-issuers/changes" \
   -H "Authorization: Bearer $PROPOSER_KEY" \
   -H "Content-Type: application/json" \
   --data '{"action":"revoke","approverId":"approver-example","keyId":"approver-example-key-1","reason":"The approver moved to another team."}'
@@ -392,7 +392,7 @@ commit;
 <CodeGroup>
 
 ```bash curl
-curl -X POST "$PARMANA_URL/approval-issuers/changes/$CHANGE_ID/reject" \
+curl -X POST "$PARMANA_ENDPOINT/approval-issuers/changes/$CHANGE_ID/reject" \
   -H "Authorization: Bearer $CHECKER_KEY" \
   -H "Content-Type: application/json" \
   --data "{\"rejectionReason\": \"The approver stays on refunds until 31 October.\", \"stepUpAuthorization\": $(cat step-up-reject.json)}"

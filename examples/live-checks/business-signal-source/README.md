@@ -61,7 +61,7 @@ Before deployment, the bundle `build-endpoint.ts` makes answered Parmana's own q
 Set these once, in one Windows PowerShell window, from the repository root:
 
 ```powershell
-$env:PARMANA_URL = "https://parmana-api-real.vercel.app"
+$env:PARMANA_ENDPOINT = "https://parmana-api-real.vercel.app"
 function Use-Key([string]$label) {
   $env:PARMANA_API_KEY = [System.Net.NetworkCredential]::new("", (Read-Host "$label API key" -AsSecureString)).Password.Trim()
   "  $label key: $($env:PARMANA_API_KEY.Length) characters"
@@ -83,7 +83,7 @@ $approverArgs = @("--approver-key-file", $approver, "--approver-id", "manager-pa
 New-Item -ItemType Directory -Force $keyDir | Out-Null
 node -e "const c=require('crypto');const k=c.generateKeyPairSync('ed25519');const f=require('fs');f.writeFileSync(process.argv[1]+'/private.pem',k.privateKey.export({format:'pem',type:'pkcs8'}));f.writeFileSync(process.argv[1]+'/public.pem',k.publicKey.export({format:'pem',type:'spki'}))" $keyDir
 
-npx tsx "$here/build-endpoint.ts" --parmana-url $env:PARMANA_URL --endpoint-url $sourceUrl --key-id livecheck-erp-1 --out $deployDir
+npx tsx "$here/build-endpoint.ts" --parmana-url $env:PARMANA_ENDPOINT --endpoint-url $sourceUrl --key-id livecheck-erp-1 --out $deployDir
 $repo = Get-Location
 Set-Location $deployDir   # deploy from inside the folder: run from the repository, Vercel applies its vercel.json
 vercel link --yes --project parmana-signal-check --scope pavan-dev-singh-charaks-projects
@@ -117,7 +117,7 @@ The release check endpoint (`../external-connector`) now logs the `conditions` a
 
 ```powershell
 $releaseDir = Join-Path (Split-Path (Get-Location)) "parmana-release-check"
-npx tsx examples/live-checks/external-connector/build-endpoint.ts --parmana-url $env:PARMANA_URL --endpoint-url https://parmana-release-check.vercel.app/api/release --out $releaseDir
+npx tsx examples/live-checks/external-connector/build-endpoint.ts --parmana-url $env:PARMANA_ENDPOINT --endpoint-url https://parmana-release-check.vercel.app/api/release --out $releaseDir
 $repo = Get-Location; Set-Location $releaseDir
 vercel deploy --prod --yes --scope pavan-dev-singh-charaks-projects
 Set-Location $repo

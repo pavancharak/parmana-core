@@ -19,7 +19,7 @@ background to interpret. If your situation is not covered, **stop and ask the op
 
 | Input              | Where it comes from                                                                                                                                                                             | How to check it                                                                                                                       |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `PARMANA_URL`      | The operator. The base URL of the Parmana server, without a trailing slash.                                                                                                                     | It must start with `https://`, except for a local server, which uses `http://localhost:3000`.                                         |
+| `PARMANA_ENDPOINT` | The operator. The base URL of the Parmana server, without a trailing slash.                                                                                                                     | It must start with `https://`, except for a local server, which uses `http://localhost:3000`.                                         |
 | `PARMANA_API_KEY`  | The operator. A secret string issued for you.                                                                                                                                                   | It is non empty. Never print it, log it or put it in a URL.                                                                           |
 | `APPROVAL_SIGNALS` | Step 3: the keys of `signals.approval` in the server's answer. The table in [Every action needs a signed approval](#every-action-needs-a-signed-approval) shows them for the connector actions. | It is never empty. Every action needs one, reads included. If the operator says none, stop: that is not possible on a current server. |
 | `ACTION`           | The operator. The capability name, for example `erp:invoice-pay`.                                                                                                                               | Step 2 checks your key may use it.                                                                                                    |
@@ -56,7 +56,7 @@ Every request below carries this header: `Authorization: Bearer <PARMANA_API_KEY
 
 ## Step 1: check the server is reachable and safe
 
-**Do:** send `GET {PARMANA_URL}/health`, then `GET {PARMANA_URL}/ready`. Neither needs the header.
+**Do:** send `GET {PARMANA_ENDPOINT}/health`, then `GET {PARMANA_ENDPOINT}/ready`. Neither needs the header.
 
 **Expect:**
 
@@ -72,7 +72,7 @@ Every request below carries this header: `Authorization: Bearer <PARMANA_API_KEY
 
 ## Step 2: check what your key may do
 
-**Do:** send `GET {PARMANA_URL}/callers/me` with the header.
+**Do:** send `GET {PARMANA_ENDPOINT}/callers/me` with the header.
 
 **Expect:** HTTP `200` and a body like this:
 
@@ -97,7 +97,7 @@ Keep `callerId`. Your `authority.principalId` in step 4 must be one of `allowedP
 
 ## Step 3: find the policy in effect
 
-**Do:** send `GET {PARMANA_URL}/policies/in-effect?capability=<ACTION>` with the header.
+**Do:** send `GET {PARMANA_ENDPOINT}/policies/in-effect?capability=<ACTION>` with the header.
 
 **Expect:** HTTP `200` and a body like:
 
@@ -273,7 +273,7 @@ With a signed approval, send the signal as `true` and put the approval, exactly 
 
 ## Step 5: send it
 
-**Do:** send `POST {PARMANA_URL}/execute` with the header, `Content-Type: application/json`, and the object from step 4.
+**Do:** send `POST {PARMANA_ENDPOINT}/execute` with the header, `Content-Type: application/json`, and the object from step 4.
 
 **Set a client timeout of at least 120 seconds.** The request runs the whole pipeline before it answers, including the
 call to the connector.
@@ -336,13 +336,13 @@ If any is missing, treat the action as **not confirmed** and tell the operator. 
 `businessTransactionId` together. They are your proof.
 
 **After a `409`, a timeout, no response, `EXECUTION_RECORD_INCOMPLETE` or `EXECUTION_OUTCOME_UNKNOWN`,** find out what the server recorded. Send
-`GET {PARMANA_URL}/trust-records/{businessTransactionId}` with the header.
+`GET {PARMANA_ENDPOINT}/trust-records/{businessTransactionId}` with the header.
 
-| The lookup returns                                                                                   | Meaning                                                                          | Do                                                                                                        |
-| ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| HTTP `200` and a record                                                                              | The request was processed.                                                       | Apply step 6 to the record: check `decision.outcome`, `verifications[0].status` and `receipts[0]`.        |
-| HTTP `404` on the record, and `GET {PARMANA_URL}/transactions/{businessTransactionId}` returns `200` | The server accepted it but has no record. It may still be running, or it failed. | Wait 30 seconds and look up once more. If still no record, **stop and tell the operator.** Do not resend. |
-| HTTP `404` on both                                                                                   | The server never recorded it.                                                    | It is safe to send again with a **new** `businessTransactionId`.                                          |
+| The lookup returns                                                                                        | Meaning                                                                          | Do                                                                                                        |
+| --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| HTTP `200` and a record                                                                                   | The request was processed.                                                       | Apply step 6 to the record: check `decision.outcome`, `verifications[0].status` and `receipts[0]`.        |
+| HTTP `404` on the record, and `GET {PARMANA_ENDPOINT}/transactions/{businessTransactionId}` returns `200` | The server accepted it but has no record. It may still be running, or it failed. | Wait 30 seconds and look up once more. If still no record, **stop and tell the operator.** Do not resend. |
+| HTTP `404` on both                                                                                        | The server never recorded it.                                                    | It is safe to send again with a **new** `businessTransactionId`.                                          |
 
 ## Rules that are never broken
 
@@ -358,9 +358,9 @@ If any is missing, treat the action as **not confirmed** and tell the operator. 
 
 | Source                  | URL                                             | Use it for                                                               |
 | ----------------------- | ----------------------------------------------- | ------------------------------------------------------------------------ |
-| OpenAPI, JSON           | `{PARMANA_URL}/openapi.json`                    | Exact request and response schemas for every endpoint.                   |
-| OpenAPI, YAML           | `{PARMANA_URL}/openapi.yaml`                    | The same, as YAML.                                                       |
-| API manifest            | `{PARMANA_URL}/api-manifest.json`               | The API version, the authentication scheme and the current SDK versions. |
+| OpenAPI, JSON           | `{PARMANA_ENDPOINT}/openapi.json`               | Exact request and response schemas for every endpoint.                   |
+| OpenAPI, YAML           | `{PARMANA_ENDPOINT}/openapi.yaml`               | The same, as YAML.                                                       |
+| API manifest            | `{PARMANA_ENDPOINT}/api-manifest.json`          | The API version, the authentication scheme and the current SDK versions. |
 | Docs index for agents   | `https://docs.parmanasystems.com/llms.txt`      | A list of every documentation page with a one line description.          |
 | Docs in full for agents | `https://docs.parmanasystems.com/llms-full.txt` | The integration pages concatenated into one file.                        |
 

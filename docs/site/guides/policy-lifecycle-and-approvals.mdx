@@ -68,13 +68,13 @@ The request carries the whole policy and a reason. The name and version in the U
 <CodeGroup>
 
 ```bash Bash
-export PARMANA_URL=https://your-parmana-host
+export PARMANA_ENDPOINT=https://your-parmana-host
 export PROPOSER_KEY=<the proposer's API key>
 
 printf '{"reason":"Why this should take effect.","proposedContent":%s}' \
   "$(cat policies/customer-refund/1.2.0/policy.json)" > proposal.json
 
-curl -s -X POST $PARMANA_URL/policies/customer-refund/1.2.0/pending-changes \
+curl -s -X POST $PARMANA_ENDPOINT/policies/customer-refund/1.2.0/pending-changes \
   -H "Authorization: Bearer $PROPOSER_KEY" -H "Content-Type: application/json" \
   --data @proposal.json
 ```
@@ -102,7 +102,7 @@ Send the file's content unchanged. The approval stores a hash of the approved po
 The approver lists what is waiting and reads the proposed content before signing:
 
 ```bash
-curl -s "$PARMANA_URL/policies/pending-changes?status=PENDING_APPROVAL" \
+curl -s "$PARMANA_ENDPOINT/policies/pending-changes?status=PENDING_APPROVAL" \
   -H "Authorization: Bearer $APPROVER_KEY"
 ```
 
@@ -119,7 +119,7 @@ npx tsx scripts/sign-policy-change-step-up.ts \
   --private-key-file step-up.private.pem --key-id <approver caller id> \
   --pending-policy-change-id "$CHANGE_ID" --action approve > signed.txt
 
-curl -s -X POST $PARMANA_URL/policies/pending-changes/$CHANGE_ID/approve \
+curl -s -X POST $PARMANA_ENDPOINT/policies/pending-changes/$CHANGE_ID/approve \
   -H "Authorization: Bearer $APPROVER_KEY" -H "Content-Type: application/json" \
   -d "{\"stepUpAuthorization\":$(grep '^{' signed.txt)}"
 ```

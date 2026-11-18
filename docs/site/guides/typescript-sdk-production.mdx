@@ -28,11 +28,13 @@ itself in production (Docker, or any Node-compatible platform).
 
 ## Environment variables
 
+These are names your application reads and passes to the client. The SDK does not read environment variables itself. The wrapper below reads them.
+
 | Variable                | Required               | Purpose                                                                                                                                                                                       |
 | ----------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `PARMANA_ENDPOINT`      | Yes                    | Your Runtime's base URL.                                                                                                                                                                      |
 | `PARMANA_API_KEY`       | Yes, outside local dev | Bearer key minted by `scripts/generate-api-key.ts`. Omitting it only works against a Runtime started with `PARMANA_AUTH_DISABLED=true` — see [Authentication](/api-reference/authentication). |
-| `PARMANA_TIMEOUT_MS`    | No                     | Request timeout. The SDK default is 30000 ms; use 120000.                                                                                                                                     |
+| `PARMANA_TIMEOUT_MS`    | No                     | Request timeout in milliseconds. The SDK default is 30000 ms. The wrapper below uses 120000 when this is not set.                                                                             |
 | `PARMANA_RETRY_ENABLED` | No                     | Whether your wrapper enables the SDK's retry policy (see below).                                                                                                                              |
 
 ## A production-safe client wrapper

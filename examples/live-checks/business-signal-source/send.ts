@@ -14,7 +14,7 @@
  *                    refused, INVALID (the source says false)
  *   --case unknown   INV-LC-NONE: refused, MISSING_DATA (not_found)
  *
- *   $env:PARMANA_URL = "https://parmana-api-real.vercel.app"
+ *   $env:PARMANA_ENDPOINT = "https://parmana-api-real.vercel.app"
  *   $env:PARMANA_API_KEY = <the livecheck-agent key, read hidden>
  *   npx tsx examples/live-checks/business-signal-source/send.ts --case paid `
  *     --approver-key-file <approver>.private.pem --approver-id manager-pavan --approver-key-id manager-pavan-key-1 `
@@ -120,7 +120,7 @@ async function main(): Promise<void> {
 
   // An approved request in production took 24 to 32 seconds (G-84).
   const parmana = new ParmanaClient({
-    endpoint: env("PARMANA_URL").replace(/\/+$/, ""),
+    endpoint: env("PARMANA_ENDPOINT").replace(/\/+$/, ""),
     apiKey: env("PARMANA_API_KEY"),
     timeout: 120_000,
   });

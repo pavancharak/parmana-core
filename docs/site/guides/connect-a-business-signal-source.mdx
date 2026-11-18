@@ -32,14 +32,14 @@ Follow it literally. If your situation is not covered, **stop and ask the operat
 
 ## Inputs you need before you start
 
-| Input          | What it is                                                                                    | How to check it                                                                                          |
-| -------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `PARMANA_URL`  | The Parmana server, without a trailing slash.                                                 | `GET /health` answers `200`.                                                                             |
-| `PROPOSER_KEY` | The maker's API key, added as a human (`credentialHolderType USER`).                          | `GET /callers/me` answers `200`.                                                                         |
-| `APPROVER_KEY` | A second person's human API key, with a step up public key registered on it.                  | See [Policy lifecycle and approvals](/guides/policy-lifecycle-and-approvals), "Set up the people, once". |
-| `SOURCE_NAME`  | The name policies will use, for example `erp`.                                                | `^[a-z0-9][a-z0-9-]{0,62}$`.                                                                             |
-| `ENDPOINT_URL` | Where the endpoint will be reached, for example `https://orders.example.com/parmana/signals`. | `https`, a host name with a domain, no IP address, no `localhost`, resolving only to public addresses.   |
-| `CLAIMS`       | What the source answers, for example `invoice.paid`, and for which business objects.          | Agreed with the system's owner.                                                                          |
+| Input              | What it is                                                                                    | How to check it                                                                                          |
+| ------------------ | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `PARMANA_ENDPOINT` | The Parmana server, without a trailing slash.                                                 | `GET /health` answers `200`.                                                                             |
+| `PROPOSER_KEY`     | The maker's API key, added as a human (`credentialHolderType USER`).                          | `GET /callers/me` answers `200`.                                                                         |
+| `APPROVER_KEY`     | A second person's human API key, with a step up public key registered on it.                  | See [Policy lifecycle and approvals](/guides/policy-lifecycle-and-approvals), "Set up the people, once". |
+| `SOURCE_NAME`      | The name policies will use, for example `erp`.                                                | `^[a-z0-9][a-z0-9-]{0,62}$`.                                                                             |
+| `ENDPOINT_URL`     | Where the endpoint will be reached, for example `https://orders.example.com/parmana/signals`. | `https`, a host name with a domain, no IP address, no `localhost`, resolving only to public addresses.   |
+| `CLAIMS`           | What the source answers, for example `invoice.paid`, and for which business objects.          | Agreed with the system's owner.                                                                          |
 
 ## Step 1: make the source's signing key
 
@@ -56,7 +56,7 @@ alone, and the Trusted Signal does not prove the source said it. Register the ke
 ## Step 2: run the endpoint
 
 **Do:** run `typescript/examples/08-business-signal-source.ts` in front of your system, replacing `lookupInvoice` with
-a read from your records. Parmana's public key is the `pem` field of `GET {PARMANA_URL}/keys/default`.
+a read from your records. Parmana's public key is the `pem` field of `GET {PARMANA_ENDPOINT}/keys/default`.
 
 ```bash
 PARMANA_PUBLIC_KEY_PEM="$(cat parmana-default.pem)" \
@@ -72,7 +72,7 @@ Serve it over HTTPS behind your TLS terminating proxy. Parmana asks only `https`
 
 ## Step 3: propose the registration
 
-**Do:** as the maker, `POST {PARMANA_URL}/business-signal-sources/changes`:
+**Do:** as the maker, `POST {PARMANA_ENDPOINT}/business-signal-sources/changes`:
 
 ```json
 {
@@ -97,7 +97,7 @@ already registered or has a change pending. See
 ## Step 4: approve it
 
 **Do:** as the second person, sign a step up authorization for `changeId` and action `approve`, then
-`POST {PARMANA_URL}/business-signal-sources/changes/{changeId}/approve` with `{ "stepUpAuthorization": … }`.
+`POST {PARMANA_ENDPOINT}/business-signal-sources/changes/{changeId}/approve` with `{ "stepUpAuthorization": … }`.
 
 **Expect:** `200` with `"status": "APPROVED"`. `GET /business-signal-sources` lists the source as `active`.
 

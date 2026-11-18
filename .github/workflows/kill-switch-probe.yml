@@ -27,7 +27,7 @@ jobs:
     timeout-minutes: 5
 
     env:
-      PARMANA_URL: https://parmana-api-real.vercel.app
+      PARMANA_ENDPOINT: https://parmana-api-real.vercel.app
       PARMANA_PROBE_KEY: ${{ secrets.PARMANA_PROBE_KEY }}
 
     steps:
@@ -43,7 +43,7 @@ jobs:
           set -uo pipefail
           code=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer $PARMANA_PROBE_KEY" \
-            "$PARMANA_URL/kill-switch/status?nonce=probe-key-check")
+            "$PARMANA_ENDPOINT/kill-switch/status?nonce=probe-key-check")
           if [ "$code" = "401" ] || [ "$code" = "403" ]; then
             echo "Parmana rejected the probe key (HTTP $code). The repository secret PARMANA_PROBE_KEY does not match the probe key in production. Rotate it: see docs/internal/runbooks/KEY-ROTATION.md, section 6." >&2
             exit 1
@@ -58,7 +58,7 @@ jobs:
           set -uo pipefail
           body="$RUNNER_TEMP/execute-body.json"
           status=$(curl -s -o "$body" -w "%{http_code}" \
-            -X POST "$PARMANA_URL/execute" \
+            -X POST "$PARMANA_ENDPOINT/execute" \
             -H "Authorization: Bearer $PARMANA_PROBE_KEY" \
             -H "Content-Type: application/json" \
             -d '{}')
@@ -74,7 +74,7 @@ jobs:
             --arg errorCode "$PROBE_ERROR_CODE" \
             '{status: $status} + (if $errorCode == "" then {} else {errorCode: $errorCode} end)')
           response=$(curl -s -w "\n%{http_code}" \
-            -X POST "$PARMANA_URL/kill-switch/probes" \
+            -X POST "$PARMANA_ENDPOINT/kill-switch/probes" \
             -H "Authorization: Bearer $PARMANA_PROBE_KEY" \
             -H "Content-Type: application/json" \
             -d "$payload")

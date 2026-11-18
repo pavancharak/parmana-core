@@ -3,7 +3,7 @@
  * review and approve it as the checker. One command per call, so the
  * maker and the checker can be different people on different machines.
  *
- *   $env:PARMANA_URL = "https://parmana-api-real.vercel.app"
+ *   $env:PARMANA_ENDPOINT = "https://parmana-api-real.vercel.app"
  *   $env:PARMANA_API_KEY = <the maker's or the checker's key, read hidden>
  *
  *   npx tsx examples/live-checks/governance.ts propose-policy --file examples/live-checks/authority-grant/policy.json
@@ -62,11 +62,11 @@ function kind(): Kind {
 }
 
 function client(): ParmanaClient {
-  const endpoint = process.env.PARMANA_URL?.trim().replace(/\/+$/, "");
+  const endpoint = process.env.PARMANA_ENDPOINT?.trim().replace(/\/+$/, "");
   const apiKey = process.env.PARMANA_API_KEY?.trim();
 
   if (!endpoint || !apiKey) {
-    throw new Error("Set PARMANA_URL and PARMANA_API_KEY.");
+    throw new Error("Set PARMANA_ENDPOINT and PARMANA_API_KEY.");
   }
 
   return new ParmanaClient({ endpoint, apiKey, timeout: 60_000 });
@@ -208,11 +208,11 @@ async function issuerRequest<T>(
   path: string,
   body?: object,
 ): Promise<T> {
-  const endpoint = process.env.PARMANA_URL?.trim().replace(/\/+$/, "");
+  const endpoint = process.env.PARMANA_ENDPOINT?.trim().replace(/\/+$/, "");
   const apiKey = process.env.PARMANA_API_KEY?.trim();
 
   if (!endpoint || !apiKey) {
-    throw new Error("Set PARMANA_URL and PARMANA_API_KEY.");
+    throw new Error("Set PARMANA_ENDPOINT and PARMANA_API_KEY.");
   }
 
   const response = await fetch(`${endpoint}${path}`, {

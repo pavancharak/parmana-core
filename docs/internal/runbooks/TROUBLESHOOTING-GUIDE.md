@@ -261,8 +261,8 @@ npx vercel whoami
 **General checks for any API problem:**
 
 ```powershell
-curl.exe -s "$env:PARMANA_URL/health"
-curl.exe -s "$env:PARMANA_URL/ready"
+curl.exe -s "$env:PARMANA_ENDPOINT/health"
+curl.exe -s "$env:PARMANA_ENDPOINT/ready"
 ```
 
 Expected: `{"status":"UP"}` and `READY`. If `/health` answers but `/ready` does not, the service is up but not ready (check the environment and the database).
@@ -299,7 +299,7 @@ The server refuses to start (PR #487). Its Node build's bundled certificate stor
 **Cause:** a change for that version is waiting for approval.
 
 ```powershell
-curl.exe -s "$env:PARMANA_URL/policies/pending-changes" -H "Authorization: Bearer $k"
+curl.exe -s "$env:PARMANA_ENDPOINT/policies/pending-changes" -H "Authorization: Bearer $k"
 ```
 
 **Fix:** approve it, or leave it and propose a new version for new content. A duplicate of the version in force does nothing harmful.
@@ -307,7 +307,7 @@ curl.exe -s "$env:PARMANA_URL/policies/pending-changes" -H "Authorization: Beare
 ### 6.2 `Capability '<cap>' already has an active external connector. Revoke it first.`
 
 ```powershell
-curl.exe -s "$env:PARMANA_URL/external-connectors" -H "Authorization: Bearer $k"
+curl.exe -s "$env:PARMANA_ENDPOINT/external-connectors" -H "Authorization: Bearer $k"
 ```
 
 **Fix:** if the connector should change, propose a revoke, have it approved, then propose the new connector.
@@ -315,7 +315,7 @@ curl.exe -s "$env:PARMANA_URL/external-connectors" -H "Authorization: Bearer $k"
 ### 6.3 `'<caller>' already holds a grant for '<cap>'. Revoke it first.`
 
 ```powershell
-curl.exe -s "$env:PARMANA_URL/authority-grants" -H "Authorization: Bearer $k"
+curl.exe -s "$env:PARMANA_ENDPOINT/authority-grants" -H "Authorization: Bearer $k"
 ```
 
 Check `validUntil`. An `active` grant with a past `validUntil` is not in force, but it still blocks a new grant.
@@ -339,8 +339,8 @@ Check `validUntil`. An `active` grant with a past `validUntil` is not in force, 
 **Checks:**
 
 ```powershell
-curl.exe -s "$env:PARMANA_URL/policies/in-effect?capability=<cap>" -H "Authorization: Bearer $k"
-curl.exe -s "$env:PARMANA_URL/authority-grants" -H "Authorization: Bearer $k"
+curl.exe -s "$env:PARMANA_ENDPOINT/policies/in-effect?capability=<cap>" -H "Authorization: Bearer $k"
+curl.exe -s "$env:PARMANA_ENDPOINT/authority-grants" -H "Authorization: Bearer $k"
 ```
 
 For a grant, confirm `validUntil` is in the future and the limits are right. For a policy, confirm the version in force is the new one.
@@ -464,8 +464,8 @@ See section 5.2.
 **Checks:**
 
 ```powershell
-curl.exe -s "$env:PARMANA_URL/kill-switch/status?nonce=check" -H "Authorization: Bearer $k"
-curl.exe -s "$env:PARMANA_URL/ready"
+curl.exe -s "$env:PARMANA_ENDPOINT/kill-switch/status?nonce=check" -H "Authorization: Bearer $k"
+curl.exe -s "$env:PARMANA_ENDPOINT/ready"
 ```
 
 If `active` is `false` and `/ready` is `READY`, the refusal is a policy or grant refusal. Read the refusal record.
@@ -581,12 +581,12 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
    - `signal-state-verification-violation`: the approval was used already, or does not match. Create a new approval.
 3. Check the grant if the amount is the problem:
    ```powershell
-   curl.exe -s "$env:PARMANA_URL/authority-grants" -H "Authorization: Bearer $k"
+   curl.exe -s "$env:PARMANA_ENDPOINT/authority-grants" -H "Authorization: Bearer $k"
    ```
    Why: the grant shows `limits` and `validUntil`. An expired grant that still says `active` blocks new grants and gives no approval.
 4. Check the policy in force, if the rule looks wrong:
    ```powershell
-   curl.exe -s "$env:PARMANA_URL/policies/in-effect?capability=erp:invoice-pay" -H "Authorization: Bearer $k"
+   curl.exe -s "$env:PARMANA_ENDPOINT/policies/in-effect?capability=erp:invoice-pay" -H "Authorization: Bearer $k"
    ```
    Why: the answer shows which policy version decided the request.
 5. Read the refusal record for the transaction (`GET /refusal/<businessTransactionId>`) if you need the signed detail.
@@ -609,7 +609,7 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
    ```
    Use the same `$value` as before. If it is gone, rebuild it from `parmana-entries` (ceremony runbook, section 8).
 2. Redeploy from current `main`: `git switch main`, `git pull origin main`, then `npx vercel deploy --prod --yes`. Why: list changes are read at startup.
-3. Check each caller on its own machine: `curl.exe -s -o NUL -w "%{http_code}\n" "$env:PARMANA_URL/callers/me" -H "Authorization: Bearer $k"`. Expect `200`.
+3. Check each caller on its own machine: `curl.exe -s -o NUL -w "%{http_code}\n" "$env:PARMANA_ENDPOINT/callers/me" -H "Authorization: Bearer $k"`. Expect `200`.
 4. For a caller that is still `401`, check its key against its entry (section 8.1 of this guide).
 
 **Success.** All callers return `200`. Record the time, the cause and the fix in the incident log.
@@ -626,7 +626,7 @@ Each scenario gives the situation, the goal, the steps in order with the reason 
 
 1. List the pending changes so you have the id and the content:
    ```powershell
-   curl.exe -s "$env:PARMANA_URL/policies/pending-changes" -H "Authorization: Bearer $k"
+   curl.exe -s "$env:PARMANA_ENDPOINT/policies/pending-changes" -H "Authorization: Bearer $k"
    ```
    Why: the list shows the proposer, the time, and the reason, which the checker needs.
 2. Tell the checker the id and what it does. Why: changes wait for a checker; there is no timeout.

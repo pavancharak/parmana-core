@@ -2,7 +2,7 @@
 
 How a policy change is proposed, approved or rejected in production, and what each refusal means. Written from `packages/api/src/routes/pending-policy-changes.ts`, `packages/api/src/governance/policyChangeCheckers.ts` and `packages/api/src/auth/PolicyChangeStepUpVerifier.ts`. For the conceptual rules, read `docs/site/handbook/07-policy-governance-maker-checker.mdx`. This page covers the operations.
 
-Set `$env:PARMANA_URL` to the production base URL first.
+Set `$env:PARMANA_ENDPOINT` to the production base URL first.
 
 ---
 
@@ -22,7 +22,7 @@ A maker cannot approve their own proposal. The server refuses it with `SameActor
 
 ```powershell
 $body = @{ proposedContent = $policy; reason = "why this change" } | ConvertTo-Json -Depth 20
-Invoke-RestMethod -Method Post -Uri "$env:PARMANA_URL/policies/<name>/<version>/pending-changes" -Headers @{ Authorization = "Bearer $maker" } -ContentType "application/json" -Body $body
+Invoke-RestMethod -Method Post -Uri "$env:PARMANA_ENDPOINT/policies/<name>/<version>/pending-changes" -Headers @{ Authorization = "Bearer $maker" } -ContentType "application/json" -Body $body
 ```
 
 - `<name>` and `<version>` are the URL path. They must match `proposedContent.policyId` and `proposedContent.policyVersion`.
@@ -41,7 +41,7 @@ The checker signs an envelope for this exact change and this exact action, then 
 $out = npx tsx scripts/sign-policy-change-step-up.ts --private-key-file <checker.step-up.private.pem> --key-id checker-step-up --pending-policy-change-id <ID> --action approve
 $envelope = $out | Where-Object { $_ -like '{"payload"*' }
 $body = '{"stepUpAuthorization":' + $envelope + '}'
-Invoke-RestMethod -Method Post -Uri "$env:PARMANA_URL/policies/pending-changes/<ID>/approve" -Headers @{ Authorization = "Bearer $checker" } -ContentType "application/json" -Body $body
+Invoke-RestMethod -Method Post -Uri "$env:PARMANA_ENDPOINT/policies/pending-changes/<ID>/approve" -Headers @{ Authorization = "Bearer $checker" } -ContentType "application/json" -Body $body
 ```
 
 Send `$body` exactly as built. Do not run the envelope through `ConvertFrom-Json` and back. Windows PowerShell rewrites the timestamps, and the signature then fails.
@@ -71,7 +71,7 @@ Check 5 is checked before the signature, so an out-of-scope checker is refused w
 
 ```powershell
 $rb = '{"stepUpAuthorization":' + $envelope + ',"rejectionReason":"why"}'
-Invoke-RestMethod -Method Post -Uri "$env:PARMANA_URL/policies/pending-changes/<ID>/reject" -Headers @{ Authorization = "Bearer $checker" } -ContentType "application/json" -Body $rb
+Invoke-RestMethod -Method Post -Uri "$env:PARMANA_ENDPOINT/policies/pending-changes/<ID>/reject" -Headers @{ Authorization = "Bearer $checker" } -ContentType "application/json" -Body $rb
 ```
 
 Sign the envelope with `--action reject`. The checks run in this order: caller authentication, human caller, `rejectionReason` required (`400`), change exists, maker is not the checker, `POLICY_CHANGE_CHECKERS` scope (`403 CHECKER_NOT_IN_SCOPE`), then step-up.
@@ -95,7 +95,7 @@ Created by `scripts/sign-policy-change-step-up.ts`. The server verifies:
 
 ```powershell
 "local UTC: $((Get-Date).ToUniversalTime().ToString('o'))"
-try { Invoke-RestMethod "$env:PARMANA_URL/policies" } catch { $_.Exception.Response.Headers['Date'] }
+try { Invoke-RestMethod "$env:PARMANA_ENDPOINT/policies" } catch { $_.Exception.Response.Headers['Date'] }
 ```
 
 Fix with `w32tm /resync` from an administrator PowerShell, or turn **Set time automatically** off and on in Windows settings.
