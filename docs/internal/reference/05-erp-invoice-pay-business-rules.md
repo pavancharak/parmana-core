@@ -1,5 +1,7 @@
 # Business rules: `erp:invoice-pay`
 
+> **REFERENCE ONLY. NOT A REAL RECORD.** This document is a reference. It is not a decision, an approval, a register entry, or a test result. Values marked ASSUMED are working assumptions, and nothing here enables a capability. Do not cite this document as evidence of any decision or approval.
+
 **Status:** reference. The rules are the working assumption (**ASSUMED**). Every number and tier is **NOT DECIDED**: they are a business decision for the owner, and no value is assumed here.
 **Owner:** Mohinder. **Successor:** Pavan.
 

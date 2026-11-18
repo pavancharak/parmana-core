@@ -1,5 +1,7 @@
 # Decision: the rules for `crm:read`
 
+> **REFERENCE ONLY. NOT A REAL RECORD.** This document is a reference. It is not a decision, an approval, a register entry, or a test result. Values marked ASSUMED are working assumptions, and nothing here enables a capability. Do not cite this document as evidence of any decision or approval.
+
 - **Reference:** D-CRM-01
 - **Source:** `CRM-READ-ENABLEMENT.md` section 1; `POLICY-V2-SOURCE-INTEGRATION.md` section 6
 - **Date recorded:** 2026-11-18 (working assumption; owner decision pending)

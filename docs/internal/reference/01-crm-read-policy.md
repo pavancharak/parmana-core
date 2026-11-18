@@ -1,5 +1,7 @@
 # Policy: `crm:read`
 
+> **REFERENCE ONLY. NOT A REAL RECORD.** This document is a reference. It is not a decision, an approval, a register entry, or a test result. Values marked ASSUMED are working assumptions, and nothing here enables a capability. Do not cite this document as evidence of any decision or approval.
+
 **Status:** reference. The rules below are the working assumption (**ASSUMED**): they are used as the reference text until the owner confirms or replaces them.
 **Owner (action owner):** Mohinder. **Successor:** Pavan.
 **Capability:** `crm:read`. **Sourced values:** none.

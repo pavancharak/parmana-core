@@ -1,5 +1,7 @@
 # Alerts setup
 
+> **REFERENCE ONLY. NOT A REAL RECORD.** This document is a reference. It is not a decision, an approval, a register entry, or a test result. Values marked ASSUMED are working assumptions, and nothing here enables a capability. Do not cite this document as evidence of any decision or approval.
+
 **Status:** reference. The contacts are as the owner gave them. The channel choice is an **OWNER DECISION** (see the question at the end); until it is made, alerts are on the console only, which is the default.
 
 ## What is configured

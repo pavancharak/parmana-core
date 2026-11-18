@@ -1,5 +1,7 @@
 # Role assignments (register)
 
+> **REFERENCE ONLY. NOT A REAL RECORD.** This document is a reference. It is not a decision, an approval, a register entry, or a test result. Values marked ASSUMED are working assumptions, and nothing here enables a capability. Do not cite this document as evidence of any decision or approval.
+
 **Status:** reference. Names are as the owner gave them. Each grant is still approved in the register; the approval columns stay blank until that is done.
 **Granted by:** the Parmana owner (roles are granted by the Parmana owner, per the register code).
 

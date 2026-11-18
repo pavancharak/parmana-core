@@ -1,5 +1,7 @@
 # Key management: the accounts source signing key
 
+> **REFERENCE ONLY. NOT A REAL RECORD.** This document is a reference. It is not a decision, an approval, a register entry, or a test result. Values marked ASSUMED are working assumptions, and nothing here enables a capability. Do not cite this document as evidence of any decision or approval.
+
 **Status:** reference. The holder is the adapter operator (**ASSUMED**), to be named once the accounts system is named. Storage is the adapter's secret store (**ASSUMED**).
 
 ## Who holds what
