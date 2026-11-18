@@ -324,8 +324,9 @@ nothing was done. The example endpoints take this check as `conditionsHold` (Typ
   are refused with `503 CONNECTOR_NOT_REGISTERED`.
 - **Change the policy:** propose and approve a new version of `POLICY_NAME` (steps 3 and 4). It takes effect at once;
   the registration does not change.
-- **Stop it:** revoke it. Nothing is deleted: `GET /external-connectors` keeps listing it as `revoked`, so every release
-  ever made to it stays explainable.
+- **Stop it:** revoke it. From the approved revoke, requests for the capability are refused with
+  `503 CONNECTOR_NOT_REGISTERED`, and nothing is executed. Nothing is deleted: `GET /external-connectors` keeps
+  listing it as `revoked`, so every release ever made to it stays explainable.
 
 ## Rules that are never broken
 
