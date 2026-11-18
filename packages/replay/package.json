@@ -1,6 +1,6 @@
 {
   "name": "@parmana/replay",
-  "version": "4.0.2",
+  "version": "4.0.3",
   "description": "Parmana Replay Engine - Deterministic execution reconstruction system",
   "type": "module",
   "main": "./dist/index.js",
@@ -23,8 +23,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@parmana/policy": "4.0.2",
-    "@parmana/shared": "4.0.2"
+    "@parmana/policy": "4.0.3",
+    "@parmana/shared": "4.0.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
