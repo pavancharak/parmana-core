@@ -4659,14 +4659,14 @@ to `true`, and the approval in `signals.approvalArtifact`. See
 
 ## Delivery
 
-| Behavior   | Detail                                                                                                                  |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Attempts   | One. There is no retry.                                                                                                 |
-| Timeout    | 3 seconds. Answer quickly and do slow work afterwards.                                                                  |
-| Success    | Any `2xx`. Anything else, a timeout, a redirect, or a network error is logged as `approval_needed_notification_failed`. |
-| Effect     | None on the request. It is refused either way, and the agent's response is the same.                                    |
-| Ordering   | Events are sent in the order requests are refused, but may arrive out of order.                                         |
-| Duplicates | Each refused request sends at most one event. An agent that retries sends one per request.                              |
+| Behavior   | Detail                                                                                                                          |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Attempts   | One. There is no retry.                                                                                                         |
+| Timeout    | 3 seconds. The refused request's response waits for the webhook up to this long, so answer quickly and do slow work afterwards. |
+| Success    | Any `2xx`. Anything else, a timeout, a redirect, or a network error is logged as `approval_needed_notification_failed`.         |
+| Effect     | None on the request. It is refused either way, and the agent's response is the same.                                            |
+| Ordering   | Events are sent in the order requests are refused, but may arrive out of order.                                                 |
+| Duplicates | Each refused request sends at most one event. An agent that retries sends one per request.                                      |
 
 Because delivery is best effort, the Refusal Records remain the complete list of waiting
 requests. For a daily sweep, see [Review refused requests](/concepts/human-approval#review-refused-requests).
