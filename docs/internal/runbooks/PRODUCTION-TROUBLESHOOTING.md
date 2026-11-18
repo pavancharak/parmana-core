@@ -4,7 +4,7 @@ Built from the real incidents and fixes in this project. Each entry gives the **
 
 Conventions used below:
 
-- `$env:PARMANA_URL` = `https://parmana-api-real.vercel.app`
+- `$env:PARMANA_ENDPOINT` = `https://parmana-api-real.vercel.app`
 - `$link` = `"$env:USERPROFILE\parmana-vercel-link"` (the Vercel-linked folder). Set it in every new PowerShell window.
 - Run commands in **Windows PowerShell** from `D:\last\parmana-core`.
 
@@ -32,7 +32,7 @@ Conventions used below:
 **Check (fast):**
 
 ```powershell
-try { Invoke-RestMethod "$env:PARMANA_URL/policies" } catch { "$($_.Exception.Response.StatusCode.value__) $($_.ErrorDetails.Message)" }
+try { Invoke-RestMethod "$env:PARMANA_ENDPOINT/policies" } catch { "$($_.Exception.Response.StatusCode.value__) $($_.ErrorDetails.Message)" }
 ```
 
 - `401 authentication required` = healthy.
@@ -190,7 +190,7 @@ This was the longest problem. Work through the checks in order.
 
 ```powershell
 "local UTC: $((Get-Date).ToUniversalTime().ToString('o'))"
-try { Invoke-RestMethod "$env:PARMANA_URL/policies" } catch { $_.Exception.Response.Headers['Date'] }
+try { Invoke-RestMethod "$env:PARMANA_ENDPOINT/policies" } catch { $_.Exception.Response.Headers['Date'] }
 ```
 
 Compare the two times. If they differ by more than about a minute, fix the clock. As administrator: `w32tm /resync`, or in **Settings → Time & language → Date & time**, turn **Set time automatically** off and on, then **Sync now**.
@@ -201,7 +201,7 @@ Compare the two times. If they differ by more than about a minute, fix the clock
 $out = npx tsx scripts/sign-policy-change-step-up.ts --private-key-file D:\secrets3\checker.step-up.private.pem --key-id checker-step-up --pending-policy-change-id <ID> --action approve
 $envelope = $out | Where-Object { $_ -like '{"payload"*' }
 $body = '{"stepUpAuthorization":' + $envelope + '}'
-Invoke-RestMethod -Method Post -Uri "$env:PARMANA_URL/policies/pending-changes/<ID>/approve" -Headers @{ Authorization = "Bearer $checker" } -ContentType "application/json" -Body $body
+Invoke-RestMethod -Method Post -Uri "$env:PARMANA_ENDPOINT/policies/pending-changes/<ID>/approve" -Headers @{ Authorization = "Bearer $checker" } -ContentType "application/json" -Body $body
 ```
 
 - Send the envelope **as printed**. Don't round-trip it through `ConvertFrom-Json`/`ConvertTo-Json`. Windows PowerShell rewrites the timestamps, which breaks the signature.
@@ -355,7 +355,7 @@ Check the length: `([System.IO.File]::ReadAllText('D:\secrets3\<name>.txt')).Tri
 **Check:** `/api/diag` now returns `401`, the same as any path that doesn't exist, so it is behind the auth gate. To verify, compare with a nonexistent path:
 
 ```powershell
-try { (Invoke-WebRequest "$env:PARMANA_URL/api/does-not-exist" -UseBasicParsing).StatusCode } catch { "nonexistent: $($_.Exception.Response.StatusCode.value__)" }
+try { (Invoke-WebRequest "$env:PARMANA_ENDPOINT/api/does-not-exist" -UseBasicParsing).StatusCode } catch { "nonexistent: $($_.Exception.Response.StatusCode.value__)" }
 ```
 
 **Fix (optional, clean):** redeploy from `main` so the build has no leftover files.

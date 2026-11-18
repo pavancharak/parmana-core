@@ -67,7 +67,7 @@ Revoked key <first 12 characters>... for caller <callerId>. It is refused from t
 1. A request with the revoked key is refused:
 
    ```powershell
-   try { Invoke-RestMethod "$env:PARMANA_URL/policies" -Headers @{ Authorization = "Bearer $key" } } catch { "$($_.Exception.Response.StatusCode.value__) $($_.ErrorDetails.Message)" }
+   try { Invoke-RestMethod "$env:PARMANA_ENDPOINT/policies" -Headers @{ Authorization = "Bearer $key" } } catch { "$($_.Exception.Response.StatusCode.value__) $($_.ErrorDetails.Message)" }
    ```
 
    Expect `401 {"error":"authentication required"}`.

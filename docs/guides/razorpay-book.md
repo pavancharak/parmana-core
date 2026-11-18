@@ -181,7 +181,7 @@ The migration that dropped them states that no other table references them.
 **Send one refund request**
 
 ```bash
-export PARMANA_URL=https://parmana-api-real.vercel.app
+export PARMANA_ENDPOINT=https://parmana-api-real.vercel.app
 export PARMANA_API_KEY=...   # the agent's key, from your password manager, never in chat
 npx tsx examples/razorpay-refund-agent/send.ts --payment pay_XXXXXXXX --amount 100 \
   --approval-file approval.json --out record.json

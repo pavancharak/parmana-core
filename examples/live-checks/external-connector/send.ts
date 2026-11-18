@@ -9,7 +9,7 @@
  *      the server's public key alone.
  *   3. The same approval again: refused, an approval is used once.
  *
- *   $env:PARMANA_URL = "https://parmana-api-real.vercel.app"
+ *   $env:PARMANA_ENDPOINT = "https://parmana-api-real.vercel.app"
  *   $env:PARMANA_API_KEY = <the agent key, read with Read-Host -AsSecureString>
  *   npx tsx examples/live-checks/external-connector/send.ts --approval approval.json --target live-check-1 --out record.json
  *
@@ -80,7 +80,7 @@ async function verifyOnly(
 }
 
 async function main(): Promise<void> {
-  const endpoint = required("PARMANA_URL").replace(/\/+$/, "");
+  const endpoint = required("PARMANA_ENDPOINT").replace(/\/+$/, "");
   const out = argument("--out");
 
   // An approved request in production took longer than the SDK's default
