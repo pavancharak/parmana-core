@@ -10,6 +10,15 @@ product version). The SDKs are versioned independently on their own registries, 
 and per-version notes. This page covers changes that affect what you can build against, not
 every commit, run `git log` in the repository for the complete record.
 
+## 2026-11-18 (4.1.1)
+
+**Released: version 4.1.1 of every Parmana package in this repository**
+
+- The version number moves to 4.1.1 across the repository. The packages change in no other way since 4.1.0.
+- The build timestamp of the release packages now comes from the version bump, not from the head of `main`. The npm and Python files of a release are the same bytes whichever later commit the release is created from. In 4.1.0 the npm copies and the release files had identical contents but different timestamps.
+- The release checklist in the internal runbook sets the order in which the npm and PyPI packages are published.
+- The published versions named in the docs remain 4.1.0 until 4.1.1 is published on npm and PyPI.
+
 ## 2026-11-18 (4.1.0)
 
 **Released: version 4.1.0 of every Parmana package in this repository**
