@@ -42,6 +42,14 @@ Run the full test suite from the repository root. In `parmana-core`, that is `np
 
 Pack the npm packages and build the Python packages, then run `twine check`. The npm tarball must contain only the files listed in its `files` field.
 
+To pack the npm packages the way the release workflow does, set `SOURCE_DATE_EPOCH` to the commit time and normalize each tarball. The normalizer writes the same bytes for the same source, with the command files (the `bin` entries in `package.json`) executable:
+
+```bash
+export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct HEAD)"
+npm pack --workspace=typescript --workspace=packages/connector-sdk --workspace=packages/shared --workspace=packages/crypto --workspace=packages/cli --pack-destination /tmp/parmana-npm
+for tgz in /tmp/parmana-npm/*.tgz; do python .github/release/normalize_sdist.py "$tgz"; done
+```
+
 ## 3. Create the GitHub release
 
 On GitHub, open **Releases → Draft a new release**. Create the tag (`sdk-v<version>` or `verifier-v<version>`) on `main`, and publish the release.
@@ -129,6 +137,7 @@ Open a pull request for the docs update and merge it.
 ## Known gaps
 
 - **4.0.0 and 4.0.1 on PyPI.** The `parmana` and `parmana-connector-sdk` files for these two versions were built on a local machine, before the release build was made reproducible. Their SHA-256 values differ from the Python files attached to the `sdk-v4.0.0` and `sdk-v4.0.1` releases, so the release provenance does not cover the PyPI copies. The npm packages match. Those PyPI files cannot be replaced, because PyPI does not allow a version to be re-uploaded. The first release built with the reproducible build is the next one.
+- **`@parmana/cli` 4.0.2 on npm.** The npm file differs from the `sdk-v4.0.2` release file only in the file mode of `dist/index.js` (`0755` on npm, `0644` in the release). Contents and timestamps are identical. The npm copy cannot be replaced. Releases from the reproducible npm packing (this change) write the same mode in both places.
 - The Python verifier has no SBOM in its release. The SDK's Python SBOM script lives in `parmana-core` and has not been copied to the verifier repository.
 - `parmana-api` (the server image) is published to GHCR as `ghcr.io/pavancharak/parmana-api`. Check that it is Public after each server release. An anonymous pull of its manifest confirms it: the token request and the manifest request should both return 200.
 - Some older sections still describe earlier versions. They are historical and are kept on purpose.
