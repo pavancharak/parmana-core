@@ -1,0 +1,24 @@
+# Role assignments (register)
+
+**Status:** reference draft. Names are **ASSUMED** from the owner's message; each grant must be approved in the register.
+**Granted by:** the Parmana owner (roles are granted by the Parmana owner, per the register code).
+
+| Person   | Roles to grant           | Why                                       | Approved by | Date |
+| -------- | ------------------------ | ----------------------------------------- | ----------- | ---- |
+| Mohinder | `action-owner`           | Owner of `crm:read` and `erp:invoice-pay` |             |      |
+| Pavan    | `action-owner`           | Successor of both actions                 |             |      |
+| Asha     | `gate-owner`, `operator` | Runs the go-live gate                     |             |      |
+| Mamta    | `gate-owner`, `operator` | Runs the go-live gate                     |             |      |
+| Shalini  | `reviewer`               | Reviews cases both actions send to review |             |      |
+| Mahendra | `reviewer`               | Reviews cases both actions send to review |             |      |
+
+## Rules this table must satisfy
+
+- A `gate-owner` must also hold `operator`.
+- The owner and successor of an action cannot run its go-live gate.
+- Reviewers cannot be the owner or successor of the action they review.
+- Grants are made with `POST /roles/grant`; revocations with `POST /roles/revoke`. Check the required role for each route in its handler.
+
+## Check before the gate runs
+
+- `GET /actions/{capability}/go-live` lists any gate owner who lacks `operator`, and any missing reviewer.
