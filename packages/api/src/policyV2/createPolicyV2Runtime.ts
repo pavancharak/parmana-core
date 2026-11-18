@@ -4,6 +4,7 @@ import { PostgresPoolFactory } from "@parmana/storage";
 import { assertDatabaseUrlConfigured } from "../bootstrap/assertDatabaseUrlConfigured.js";
 
 import { PolicyV2DecisionService } from "./policyV2Decisions.js";
+import { createPolicyV2SourceClient } from "./policyV2SourceClient.js";
 import { PolicyV2RegisterService } from "./policyV2Register.js";
 import { PolicyV2ReviewService } from "./policyV2Reviews.js";
 import { PolicyV2SweepService } from "./policyV2Sweeps.js";
@@ -15,6 +16,29 @@ import {
 } from "./policyV2Bounces.js";
 import type { PolicyV2EventsEndpoint } from "../routes/policy-v2-events.js";
 import type { NotificationChannels } from "./policyV2Notifications.js";
+
+/**
+ * The source client for sourced claims. PARMANA_POLICY_V2_SOURCE_URL names the source adapter and
+ * PARMANA_POLICY_V2_SOURCE_TOKEN is its bearer token. Without a URL no source is connected, and
+ * every sourced claim refuses with SOURCE_UNAVAILABLE. A URL without a token stops the start-up.
+ */
+export function sourceClientFrom(
+  env: NodeJS.ProcessEnv,
+): policyV2.decision.SourceClient {
+  const url = env.PARMANA_POLICY_V2_SOURCE_URL?.trim();
+  if (url === undefined || url === "") {
+    return async () => {
+      throw new Error("No source integration is connected.");
+    };
+  }
+  const token = env.PARMANA_POLICY_V2_SOURCE_TOKEN?.trim();
+  if (token === undefined || token === "") {
+    throw new Error(
+      "PARMANA_POLICY_V2_SOURCE_TOKEN must be set when PARMANA_POLICY_V2_SOURCE_URL is set.",
+    );
+  }
+  return createPolicyV2SourceClient({ url, token });
+}
 
 export interface PolicyV2Runtime {
   readonly decisions: PolicyV2DecisionService;
@@ -72,10 +96,7 @@ export function createPolicyV2Runtime(
     channels,
     store,
     enabledCapabilities: new Set(capabilities),
-    // No source integration is connected, so sourced values refuse as unavailable.
-    sources: async () => {
-      throw new Error("No source integration is connected.");
-    },
+    sources: sourceClientFrom(env),
     nonces: new policyV2.persistence.PolicyV2NonceStore(pool),
   });
 
