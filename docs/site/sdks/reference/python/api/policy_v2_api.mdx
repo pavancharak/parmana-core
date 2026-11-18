@@ -1,0 +1,75 @@
+---
+sidebar_label: policy_v2_api
+title: parmana.api.policy_v2_api
+description: "Python SDK reference: Parmana policy version 2 API."
+---
+
+Policy version 2 API.
+
+Decide an action under policy version 2, and read or decide the review items
+that a decision can open. Nothing here releases an action: a decision records
+the outcome and reports released: False.
+
+## PolicyV2Api Objects
+
+```python
+class PolicyV2Api()
+```
+
+Policy version 2 API.
+
+#### decide
+
+```python
+def decide(*,
+           capability: str,
+           transaction_id: str,
+           target: str,
+           parameters: dict[str, Any] | None = None,
+           signals: dict[str, Any] | None = None,
+           approvals: dict[str, Any] | None = None) -> PolicyV2Decision
+```
+
+Run and record a decision under policy version 2. The caller must be
+authenticated.
+
+Maps to POST /v2/decisions.
+
+## Parameters
+
+capability:
+Namespace and verb, for example `erp:pay-invoice`.
+transaction_id:
+The Business Transaction this decision is for.
+target:
+The system the action is for.
+parameters:
+The action's parameters.
+signals:
+Caller values, by signal name. Untrusted unless a registered source
+signed them.
+approvals:
+Approval artifacts, by approval signal name. The server checks them.
+
+#### review
+
+```python
+def review(item_id: str) -> PolicyV2ReviewView
+```
+
+The status of a review item, for the requester who asked for it.
+
+Maps to GET /v2/reviews/\{item_id\}. Any other caller gets 404.
+
+#### decide_review
+
+```python
+def decide_review(
+        item_id: str, decision: Literal["approve",
+                                        "reject"]) -> PolicyV2ReviewDecision
+```
+
+A reviewer approves or rejects a review item. The reviewer must hold an
+active grant for the item's action.
+
+Maps to POST /v2/reviews/\{item_id\}/decision.

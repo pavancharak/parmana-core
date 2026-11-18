@@ -362,6 +362,42 @@ def reject_policy_change(
 Reject a policy change with a reason and a signed step up
 authorization. See PolicyApi.reject_change.
 
+#### decide_policy_v2
+
+```python
+def decide_policy_v2(
+        *,
+        capability: str,
+        transaction_id: str,
+        target: str,
+        parameters: dict[str, Any] | None = None,
+        signals: dict[str, Any] | None = None,
+        approvals: dict[str, Any] | None = None) -> PolicyV2Decision
+```
+
+Decide an action under policy version 2. See PolicyV2Api.decide.
+Nothing is released by a decision; the result reports released False.
+
+#### policy_v2_review
+
+```python
+def policy_v2_review(item_id: str) -> PolicyV2ReviewView
+```
+
+The status of a policy version 2 review item, for its requester. See
+PolicyV2Api.review.
+
+#### decide_policy_v2_review
+
+```python
+def decide_policy_v2_review(
+        item_id: str, decision: Literal["approve",
+                                        "reject"]) -> PolicyV2ReviewDecision
+```
+
+A reviewer approves or rejects a policy version 2 review item. See
+PolicyV2Api.decide_review.
+
 #### list_approvers
 
 ```python
