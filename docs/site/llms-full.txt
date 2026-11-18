@@ -3055,8 +3055,8 @@ nothing was done. The example endpoints take this check as `conditionsHold` (Typ
 
 - Parmana releases only to an `https` host that resolves only to public addresses, checked when the registration is
   proposed, when it is approved, and at every release. It connects to the address it checked and follows no redirect.
-- A release names one capability, target and parameter set a person approved, is addressed to one endpoint, and expires
-  60 seconds after it is issued. No shared secret is involved: the signature is the authentication.
+- A release names one capability, target and parameter set a person approved, is addressed to one endpoint, and expires 60 seconds after it is issued, or sooner when a fact it rests on
+  expires first (the earliest `validUntil` of the approval conditions). No shared secret is involved: the signature is the authentication.
 
 ## See it run
 
