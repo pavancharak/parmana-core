@@ -318,7 +318,7 @@ def test_503_signing_unavailable_keeps_server_code():
         _transport().send(method="POST", path="/execute", body={})
 
     assert excinfo.value.status_code == 503
-    assert excinfo.value.code == "SERVER_ERROR"
+    assert excinfo.value.code == "INTERNAL_SERVER_ERROR"
     assert excinfo.value.server_code == "SIGNING_UNAVAILABLE"
 
 

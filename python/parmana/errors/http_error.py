@@ -164,7 +164,7 @@ class NotFoundError(ParmanaHttpError):
         super().__init__(
             message,
             status_code=404,
-            code="NOT_FOUND",
+            code="NOT_FOUND_ERROR",
             request_id=request_id,
         )
 
@@ -186,7 +186,7 @@ class ConflictError(ParmanaHttpError):
         super().__init__(
             message,
             status_code=409,
-            code="CONFLICT",
+            code="CONFLICT_ERROR",
             request_id=request_id,
         )
 
@@ -241,7 +241,7 @@ class InternalServerError(ParmanaHttpError):
         super().__init__(
             message,
             status_code=status_code,
-            code="SERVER_ERROR",
+            code="INTERNAL_SERVER_ERROR",
             request_id=request_id,
         )
 

@@ -10,6 +10,14 @@ product version). The SDKs are versioned independently on their own registries, 
 and per-version notes. This page covers changes that affect what you can build against, not
 every commit, run `git log` in the repository for the complete record.
 
+## 2026-11-18 (unreleased)
+
+**Changed: the Python SDK error codes now match the TypeScript SDK**
+
+- `NOT_FOUND` is now `NOT_FOUND_ERROR`, `CONFLICT` is now `CONFLICT_ERROR`, and `SERVER_ERROR` is now `INTERNAL_SERVER_ERROR`, on the `code` attribute of the Python SDK's errors.
+- This is a breaking change for Python code that matches on these strings. Match on the error class or the HTTP status, or update the strings.
+- Not yet released. It needs a version number before it ships.
+
 ## 2026-11-17 (3.0.1)
 
 **Released: version 3.0.1 of every Parmana package in this repository**

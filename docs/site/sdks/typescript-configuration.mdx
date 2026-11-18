@@ -95,7 +95,7 @@ The `code` property on every error is a fixed string, so you can branch on it wi
 | `REPLAY_ERROR`             | `ReplayError`            | Exported for callers. The SDK does not throw it.                                                                                           |
 | `VERIFICATION_ERROR`       | `VerificationError`      | Exported for callers. The SDK does not throw it.                                                                                           |
 
-The Python SDK uses the same codes except for three, which are named differently: `NOT_FOUND` (not `NOT_FOUND_ERROR`), `CONFLICT` (not `CONFLICT_ERROR`) and `SERVER_ERROR` (not `INTERNAL_SERVER_ERROR`). If your code must work with both SDKs, branch on the error class or on the HTTP status, not on the `code` string for these three.
+Both SDKs use the same code for each condition, so the same string means the same thing in either language.
 
 Several `InternalServerError` cases need different handling, and from 1.1.3 you can tell them apart with `error.serverCode`:
 

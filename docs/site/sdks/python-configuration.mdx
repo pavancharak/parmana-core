@@ -62,7 +62,7 @@ Every non 2xx response, and every failure to get one, is raised as a typed error
 | The request timed out                         | `TimeoutError`           | A subclass of `NetworkError`.                                                                                      |
 | A missing or empty `endpoint`                 | `ConfigurationError`     | Raised by the constructor.                                                                                         |
 
-Every HTTP error has `status_code`, `code` and `request_id`. **The `code` is the SDK's own code** (for example `SERVER_ERROR`), not the server's. The server's code is preserved on `server_code` for `CAPABILITY_NOT_ALLOWED` and, from 1.1.6, on any `InternalServerError`.
+Every HTTP error has `status_code`, `code` and `request_id`. **The `code` is the SDK's own code** (for example `INTERNAL_SERVER_ERROR`), not the server's. The server's code is preserved on `server_code` for `CAPABILITY_NOT_ALLOWED` and, from 1.1.6, on any `InternalServerError`.
 
 The `code` attribute on every error is a fixed string. These are the values in the Python SDK:
 
@@ -71,11 +71,11 @@ The `code` attribute on every error is a fixed string. These are the values in t
 | `AUTHENTICATION_ERROR`     | `AuthenticationError`    | HTTP `401`.                                                                                                     |
 | `AUTHORIZATION_ERROR`      | `AuthorizationError`     | HTTP `403` with code `CAPABILITY_NOT_ALLOWED`, or with no code.                                                 |
 | `VALIDATION_ERROR`         | `ValidationError`        | HTTP `400`.                                                                                                     |
-| `NOT_FOUND`                | `NotFoundError`          | HTTP `404`.                                                                                                     |
-| `CONFLICT`                 | `ConflictError`          | HTTP `409`.                                                                                                     |
+| `NOT_FOUND_ERROR`          | `NotFoundError`          | HTTP `404`.                                                                                                     |
+| `CONFLICT_ERROR`           | `ConflictError`          | HTTP `409`.                                                                                                     |
 | `RATE_LIMIT_ERROR`         | `RateLimitError`         | HTTP `429`.                                                                                                     |
 | `EXECUTION_REJECTED`       | `ExecutionRejectedError` | HTTP `403` with code `POLICY_DENIED`. A policy refused the action.                                              |
-| `SERVER_ERROR`             | `InternalServerError`    | Any `5xx` response, including `500` and `503`.                                                                  |
+| `INTERNAL_SERVER_ERROR`    | `InternalServerError`    | Any `5xx` response, including `500` and `503`.                                                                  |
 | `HTTP_ERROR`               | `ParmanaHttpError`       | Any other non 2xx response. The base class for the HTTP errors above.                                           |
 | `EXECUTION_STATUS_PENDING` | `ExecutionPendingError`  | `execute` answered `202`: the action was released and its record is signed, but the status is not yet recorded. |
 | `NETWORK_ERROR`            | `NetworkError`           | The connection failed.                                                                                          |
@@ -84,7 +84,7 @@ The `code` attribute on every error is a fixed string. These are the values in t
 | `REPLAY_ERROR`             | `ReplayError`            | Exported for callers. The SDK does not raise it.                                                                |
 | `VERIFICATION_ERROR`       | `VerificationError`      | Exported for callers. The SDK does not raise it.                                                                |
 
-The TypeScript SDK uses the same codes except for three: `NOT_FOUND_ERROR` (not `NOT_FOUND`), `CONFLICT_ERROR` (not `CONFLICT`) and `INTERNAL_SERVER_ERROR` (not `SERVER_ERROR`). If your code must work with both SDKs, branch on the error class or on the HTTP status.
+Both SDKs use the same code for each condition, so the same string means the same thing in either language.
 
 That matters for the server errors that all arrive as `InternalServerError`:
 
