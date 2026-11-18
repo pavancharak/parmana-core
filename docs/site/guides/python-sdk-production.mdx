@@ -150,6 +150,7 @@ try:
 except ServerError as exc:
     if exc.server_code in NOTHING_RAN:
         # Nothing was executed. Retry later with a NEW business_transaction_id....
+        pass
     else:
         # EXECUTION_RECORD_INCOMPLETE (500) or EXECUTION_OUTCOME_UNKNOWN (502): the action
         # was released. Never resend; the operator finalizes or resolves the Execution Intent.
