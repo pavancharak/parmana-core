@@ -10,6 +10,15 @@ product version). The SDKs are versioned independently on their own registries, 
 and per-version notes. This page covers changes that affect what you can build against, not
 every commit, run `git log` in the repository for the complete record.
 
+## 2026-11-18 (4.1.0)
+
+**Released: version 4.1.0 of every Parmana package in this repository**
+
+- **Added: policy version 2 decisions and reviews in both SDKs.** TypeScript: `decidePolicyV2`, `policyV2Review` and `decidePolicyV2Review`. Python: `decide_policy_v2`, `policy_v2_review` and `decide_policy_v2_review`. They call `POST /v2/decisions`, `GET /v2/reviews/{id}` and `POST /v2/reviews/{id}/decision`. Nothing is released by a decision, which reports `released: false`.
+- A deployment must enable each capability on the server. Until it does, a decision for that capability returns HTTP 404 with the error code `not_enabled`. Enabling a capability is a separate decision and is not part of this release.
+- Not in the SDKs yet: register writes, the console, the webhooks and replay.
+- The published versions named in the docs remain 4.0.3 until 4.1.0 is published on npm and PyPI.
+
 ## 2026-11-18 (4.0.3)
 
 **Released: version 4.0.3 of every Parmana package in this repository**
