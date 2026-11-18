@@ -103,13 +103,13 @@ Rolling back does not undo register changes. A policy that has gone live stays l
 
 Record each decision here before the first capability is enabled.
 
-| Decision                       | Answer | Decided by | Date |
-| ------------------------------ | ------ | ---------- | ---- |
-| First capability               |        |            |      |
-| Action owner and successor     |        |            |      |
-| Two gate owners                |        |            |      |
-| Reviewers                      |        |            |      |
-| Uses sourced values?           |        |            |      |
-| Approver keys and their owners |        |            |      |
-| Alert channels                 |        |            |      |
-| First deployment               |        |            |      |
+| Decision                       | Answer                                                                                    | Decided by        | Date                                                                                   |
+| ------------------------------ | ----------------------------------------------------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------- |
+| First capabilities             | `crm:read` and `erp:invoice-pay` (both planned; neither enabled)                          | Owner, 2026-11-18 | Not yet written: `crm:read` rules. `erp:invoice-pay` needs a source integration first. |
+| Action owner and successor     | Owner: Mohinder. Successor: Pavan. (Both actions, assumed the same.)                      | Owner, 2026-11-18 |                                                                                        |
+| Two gate owners                | Asha and Mamta. Each must hold the `operator` role, and neither may be Mohinder or Pavan. | Owner, 2026-11-18 |                                                                                        |
+| Reviewers                      | Shalini and Mahendra. Neither may be Mohinder or Pavan.                                   | Owner, 2026-11-18 |                                                                                        |
+| Uses sourced values?           | `erp:invoice-pay`: yes (invoice details). `crm:read`: not decided, pending its rules.     | Owner, 2026-11-18 | Source integration needed for `erp:invoice-pay`.                                       |
+| Approver keys and their owners |                                                                                           |                   |                                                                                        |
+| Alert channels                 |                                                                                           |                   |                                                                                        |
+| First deployment               |                                                                                           |                   |                                                                                        |
