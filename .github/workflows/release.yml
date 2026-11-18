@@ -55,10 +55,40 @@ jobs:
             --pack-destination release-dist
 
       - name: Build the Python packages
+        # Reproducible: the same commit gives the same bytes, so a PyPI upload
+        # made from these files matches the files attached to the release.
+        # The timestamp is the commit's; the build tools are the hash-pinned
+        # versions in build-requirements.txt, used without build isolation so
+        # the build backend cannot be a different version from the pinned one.
         run: |
           pip install --require-hashes -r .github/release/build-requirements.txt
-          python -m build python --outdir release-dist
-          python -m build python-connector-sdk --outdir release-dist
+          export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct HEAD)"
+          python -m build --no-isolation python --outdir release-dist
+          python -m build --no-isolation python-connector-sdk --outdir release-dist
+          for sdist in release-dist/*.tar.gz; do
+            python .github/release/normalize_sdist.py "$sdist"
+          done
+
+      - name: Check the Python packages rebuild identically
+        # A second build of the same commit must give the same bytes. If it does
+        # not, the release files cannot be matched by anyone else's build, so the
+        # release stops here rather than attaching files nobody can reproduce.
+        run: |
+          export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct HEAD)"
+          mkdir -p rebuild-check
+          python -m build --no-isolation python --outdir rebuild-check
+          python -m build --no-isolation python-connector-sdk --outdir rebuild-check
+          for sdist in rebuild-check/*.tar.gz; do
+            python .github/release/normalize_sdist.py "$sdist"
+          done
+          for file in release-dist/*.whl release-dist/*.tar.gz; do
+            name="$(basename "$file")"
+            if ! cmp -s "$file" "rebuild-check/$name"; then
+              echo "$name differs between two builds of the same commit; not attaching the release files."
+              exit 1
+            fi
+            echo "$name rebuilds identically"
+          done
 
       - name: Write the SBOMs
         # One CycloneDX 1.5 file per package, named after it:

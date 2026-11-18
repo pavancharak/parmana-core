@@ -65,6 +65,34 @@ jobs:
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
+      - name: Wait until the npm tarballs can be downloaded
+        # npm lists a version before its tarball is served everywhere. The
+        # image build installs @parmana/cli and its @parmana/* dependencies
+        # (shared is one of them, through crypto), so a build that starts right
+        # after a publish can fail with 404. Wait for the tarball of every npm
+        # package the release publishes (the set release.yml packs) to download,
+        # for up to 15 minutes each.
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          for name in @parmana/sdk @parmana/connector-sdk @parmana/shared @parmana/crypto @parmana/cli; do
+            url="$(npm view "$name@$VERSION" dist.tarball)"
+            ok=""
+            for attempt in $(seq 1 30); do
+              if curl -fsSL -o /dev/null "$url"; then
+                ok=yes
+                break
+              fi
+              echo "$url not downloadable yet (attempt $attempt of 30); waiting 30 seconds"
+              sleep 30
+            done
+            if [ -z "$ok" ]; then
+              echo "$url is still not downloadable after 15 minutes; not building the image."
+              exit 1
+            fi
+            echo "$url is downloadable"
+          done
+
       - name: Build the image
         env:
           VERSION: ${{ steps.version.outputs.version }}

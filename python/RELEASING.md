@@ -10,13 +10,23 @@ Run these from the repository root. The package version is `version` in `python/
 
 ## 2. Build and check
 
+Build the way the release workflow does, so the output is the same bytes. The build tools are the
+hash-pinned ones in `.github/release/build-requirements.txt`, and the timestamp is the commit's:
+
 ```bash
-python -m pip install --upgrade build twine
-python -m build --outdir /tmp/parmana-dist python
+python -m venv /tmp/parmana-build
+/tmp/parmana-build/bin/pip install --require-hashes -r .github/release/build-requirements.txt
+export PATH=/tmp/parmana-build/bin:$PATH
+export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct HEAD)"
+mkdir -p /tmp/parmana-dist
+python -m build --no-isolation --outdir /tmp/parmana-dist python
+for sdist in /tmp/parmana-dist/*.tar.gz; do python .github/release/normalize_sdist.py "$sdist"; done
 python -m twine check /tmp/parmana-dist/*
 ```
 
-Both the wheel and the source distribution must report `PASSED`.
+Install `twine` separately for the check step if it is not already installed. Both the wheel and the
+source distribution must report `PASSED`. The release workflow runs the same build twice and fails if
+the bytes differ, so a local build of the same commit should match the files on the release page.
 
 ## 3. Test the built artifact in a clean environment
 
