@@ -165,7 +165,7 @@ Binding a built in action to a different policy name still needs a code change a
 - The gateway checks the approval record again just before release.
 - At startup, the server checks every policy against its latest approval record and logs the result.
 
-These checks are on whenever `NODE_ENV` is anything other than `test` or `development`, and nothing switches them off in production. In `test` or `development` they are off unless `POLICY_EXECUTION_VERIFICATION_ENFORCED=true`. So approve every policy a deployment executes against **before** promoting it; a policy still `PENDING_APPROVAL`, or rejected with no approved replacement, is refused on the first request.
+These checks are on in every environment, including `test` and `development`. No environment variable and no `NODE_ENV` value turns them off. So approve every policy a deployment executes against **before** promoting it; a policy still `PENDING_APPROVAL`, or rejected with no approved replacement, is refused on the first request.
 
 ### 8. Check what is approved
 
