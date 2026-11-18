@@ -249,7 +249,7 @@ switch ($Stage) {
     if (-not (Test-Path $approvalFile)) { Stop-Run "Signing the approval failed." }
 
     Step "The agent sends three requests"
-    $env:PARMANA_URL = $ApiUrl
+    $env:PARMANA_ENDPOINT = $ApiUrl
     $env:PARMANA_API_KEY = Read-Secret "livecheck-agent API key"
     $record = Join-Path $Here "live-check-record.json"
     Invoke-Native {
@@ -265,7 +265,7 @@ switch ($Stage) {
   "Verify" {
     if (-not $BusinessTransactionId) { Stop-Run "Pass -BusinessTransactionId." }
     Step "Fetch and verify the record of $BusinessTransactionId"
-    $env:PARMANA_URL = $ApiUrl
+    $env:PARMANA_ENDPOINT = $ApiUrl
     $env:PARMANA_API_KEY = Read-Secret "livecheck-agent API key"
     $record = Join-Path $Here "live-check-record-$BusinessTransactionId.json"
     Invoke-Native {

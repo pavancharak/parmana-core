@@ -5,7 +5,7 @@ How production is deployed on Vercel (`parmana-api-real`), how to confirm a depl
 Set these in each new PowerShell window:
 
 ```powershell
-$env:PARMANA_URL = "https://parmana-api-real.vercel.app"
+$env:PARMANA_ENDPOINT = "https://parmana-api-real.vercel.app"
 $link = "$env:USERPROFILE\parmana-vercel-link"
 ```
 
@@ -50,7 +50,7 @@ Run in this order. Stop at the first failure.
 **3a. The process starts and rejects unauthenticated requests:**
 
 ```powershell
-try { Invoke-RestMethod "$env:PARMANA_URL/policies" } catch { "$($_.Exception.Response.StatusCode.value__) $($_.ErrorDetails.Message)" }
+try { Invoke-RestMethod "$env:PARMANA_ENDPOINT/policies" } catch { "$($_.Exception.Response.StatusCode.value__) $($_.ErrorDetails.Message)" }
 ```
 
 Expect `401 {"error":"authentication required"}`.
@@ -60,8 +60,8 @@ Expect `401 {"error":"authentication required"}`.
 **3b. Health and readiness:** `GET /health` should return `200` with `{"status":"UP"}`. It shows the process is running and checks nothing else. `GET /ready` should return `200` with `"status":"READY"` and `"authDisabled":false`. It checks the database and that the `execution_intents` table exists.
 
 ```powershell
-Invoke-RestMethod "$env:PARMANA_URL/health"
-Invoke-RestMethod "$env:PARMANA_URL/ready"
+Invoke-RestMethod "$env:PARMANA_ENDPOINT/health"
+Invoke-RestMethod "$env:PARMANA_ENDPOINT/ready"
 ```
 
 **3c. The kill-switch probe.** Run the **kill-switch-probe** workflow in GitHub Actions. Expect a green run. A `201` from `POST /kill-switch/probes` means the probe key works.

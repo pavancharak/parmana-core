@@ -118,7 +118,7 @@ vercel redeploy <current-production-url> --target production --cwd $link
 Then check (expect `401`):
 
 ```powershell
-try { Invoke-RestMethod "$env:PARMANA_URL/policies" } catch { "$($_.Exception.Response.StatusCode.value__) $($_.ErrorDetails.Message)" }
+try { Invoke-RestMethod "$env:PARMANA_ENDPOINT/policies" } catch { "$($_.Exception.Response.StatusCode.value__) $($_.ErrorDetails.Message)" }
 ```
 
 **The old key stops working as soon as the new list is live.** Do the upload, then update everything that uses the old key, in this order:

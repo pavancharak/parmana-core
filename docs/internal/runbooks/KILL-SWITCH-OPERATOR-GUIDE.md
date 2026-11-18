@@ -42,7 +42,7 @@ A key without the matching capability gets `403 CAPABILITY_NOT_ALLOWED`. A reque
 Run in PowerShell, in a new window, on your own machine:
 
 ```powershell
-$env:PARMANA_URL = "https://parmana-api-real.vercel.app"
+$env:PARMANA_ENDPOINT = "https://parmana-api-real.vercel.app"
 
 function Read-Secret([string]$Name) {
   $secure = Get-Content "$env:USERPROFILE\parmana-secrets\$Name.dpapi" | ConvertTo-SecureString
@@ -68,8 +68,8 @@ Every command below uses `$k`. Remove it after each command (`Remove-Variable k`
 Status is open to any valid key. Use it before you do anything else.
 
 ```powershell
-curl.exe -s "$env:PARMANA_URL/ready"
-curl.exe -s "$env:PARMANA_URL/kill-switch/status?nonce=check-<yyyymmdd-hhmm>" -H "Authorization: Bearer $k"
+curl.exe -s "$env:PARMANA_ENDPOINT/ready"
+curl.exe -s "$env:PARMANA_ENDPOINT/kill-switch/status?nonce=check-<yyyymmdd-hhmm>" -H "Authorization: Bearer $k"
 ```
 
 What you should see:
@@ -98,7 +98,7 @@ Use only for a real stop or an agreed drill. Operator 1 runs these steps.
 
 ```powershell
 $k = <your operator-a key, as in section 3>
-curl.exe -s -X POST "$env:PARMANA_URL/kill-switch/trip" -H "Authorization: Bearer $k" -H "Content-Type: application/json" -d "{\"reason\":\"<short reason, for example: incident INC-123, suspected unauthorised refund>\"}"
+curl.exe -s -X POST "$env:PARMANA_ENDPOINT/kill-switch/trip" -H "Authorization: Bearer $k" -H "Content-Type: application/json" -d "{\"reason\":\"<short reason, for example: incident INC-123, suspected unauthorised refund>\"}"
 Remove-Variable k
 ```
 
@@ -126,7 +126,7 @@ Start a reset only when the cause is known, written down and agreed with Operato
 
 ```powershell
 $k = <your operator-a key>
-curl.exe -s -X POST "$env:PARMANA_URL/kill-switch/reset" -H "Authorization: Bearer $k" -H "Content-Type: application/json" -d "{\"reason\":\"<cause and what was checked>\"}"
+curl.exe -s -X POST "$env:PARMANA_ENDPOINT/kill-switch/reset" -H "Authorization: Bearer $k" -H "Content-Type: application/json" -d "{\"reason\":\"<cause and what was checked>\"}"
 Remove-Variable k
 ```
 
@@ -152,7 +152,7 @@ Operator 2 completes a reset only after checking the cause themselves. Operator 
 
 ```powershell
 $k = <your operator-b key>
-curl.exe -s -X POST "$env:PARMANA_URL/kill-switch/reset" -H "Authorization: Bearer $k" -H "Content-Type: application/json" -d "{\"reason\":\"<cause resolved, what you checked>\"}"
+curl.exe -s -X POST "$env:PARMANA_ENDPOINT/kill-switch/reset" -H "Authorization: Bearer $k" -H "Content-Type: application/json" -d "{\"reason\":\"<cause resolved, what you checked>\"}"
 Remove-Variable k
 ```
 
@@ -217,14 +217,14 @@ Read the trust record for each suspect transaction, with the affected caller's k
 
 ```powershell
 $k = <the affected caller's key>
-curl.exe -s "$env:PARMANA_URL/trust-records/<businessTransactionId>" -H "Authorization: Bearer $k"
+curl.exe -s "$env:PARMANA_ENDPOINT/trust-records/<businessTransactionId>" -H "Authorization: Bearer $k"
 Remove-Variable k
 ```
 
 Read the refusal record for a refused transaction:
 
 ```powershell
-curl.exe -s "$env:PARMANA_URL/refusal/<businessTransactionId>" -H "Authorization: Bearer $k"
+curl.exe -s "$env:PARMANA_ENDPOINT/refusal/<businessTransactionId>" -H "Authorization: Bearer $k"
 ```
 
 Save the output to a file in the incident folder. Do not delete anything. The external system (for example the payment provider dashboard) is the final evidence of what happened to money.
