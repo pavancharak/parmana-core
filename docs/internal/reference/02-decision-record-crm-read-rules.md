@@ -2,7 +2,7 @@
 
 - **Reference:** D-CRM-01
 - **Source:** `CRM-READ-ENABLEMENT.md` section 1; `POLICY-V2-SOURCE-INTEGRATION.md` section 6
-- **Date recorded:** 2026-11-18 (drafted; not decided)
+- **Date recorded:** 2026-11-18 (working assumption; owner decision pending)
 - **Owner:** Mohinder
 
 ## Question
@@ -21,7 +21,7 @@ Option 1, with name and contact details only. It is the narrowest rule, every re
 
 ## Owner decision
 
-_To be recorded by the owner in their own words._
+**Working assumption (ASSUMED): option 1 is adopted for reference.** The owner's own decision is still to be recorded in their words.
 
 ## Effect on the documents
 

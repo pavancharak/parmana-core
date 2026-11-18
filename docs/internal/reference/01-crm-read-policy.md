@@ -1,6 +1,6 @@
 # Policy: `crm:read`
 
-**Status:** reference draft. Rules are **ASSUMED** until the owner confirms them.
+**Status:** reference. The rules below are the working assumption (**ASSUMED**): they are used as the reference text until the owner confirms or replaces them.
 **Owner (action owner):** Mohinder. **Successor:** Pavan.
 **Capability:** `crm:read`. **Sourced values:** none.
 

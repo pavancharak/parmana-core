@@ -1,6 +1,6 @@
 # Alerts setup
 
-**Status:** reference draft. The channel choice is an **OWNER DECISION** (see the question at the end).
+**Status:** reference. The contacts are as the owner gave them. The channel choice is an **OWNER DECISION** (see the question at the end); until it is made, alerts are on the console only, which is the default.
 
 ## What is configured
 

@@ -1,6 +1,6 @@
 # Business rules: `erp:invoice-pay`
 
-**Status:** reference draft. Every number and tier is **NOT DECIDED**. The owner must set them.
+**Status:** reference. The rules are the working assumption (**ASSUMED**). Every number and tier is **NOT DECIDED**: they are a business decision for the owner, and no value is assumed here.
 **Owner:** Mohinder. **Successor:** Pavan.
 
 ## What the rules do (ASSUMED)

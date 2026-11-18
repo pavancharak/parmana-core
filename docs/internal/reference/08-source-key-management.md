@@ -1,6 +1,6 @@
 # Key management: the accounts source signing key
 
-**Status:** reference draft. Holder and storage are **ASSUMED** until the accounts system is named.
+**Status:** reference. The holder is the adapter operator (**ASSUMED**), to be named once the accounts system is named. Storage is the adapter's secret store (**ASSUMED**).
 
 ## Who holds what
 

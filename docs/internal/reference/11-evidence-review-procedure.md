@@ -1,6 +1,6 @@
 # Evidence review procedure
 
-**Status:** reference draft. The frequency and the reviewers are **PROPOSED**; the owner confirms them.
+**Status:** reference. The reviewers are Asha and Mamta, and the frequency is weekly for the first month, then monthly (**ASSUMED**). The owner confirms them.
 
 ## What is reviewed
 

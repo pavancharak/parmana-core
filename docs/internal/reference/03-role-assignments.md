@@ -1,6 +1,6 @@
 # Role assignments (register)
 
-**Status:** reference draft. Names are **ASSUMED** from the owner's message; each grant must be approved in the register.
+**Status:** reference. Names are as the owner gave them. Each grant is still approved in the register; the approval columns stay blank until that is done.
 **Granted by:** the Parmana owner (roles are granted by the Parmana owner, per the register code).
 
 | Person   | Roles to grant           | Why                                       | Approved by | Date |
