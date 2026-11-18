@@ -98,6 +98,9 @@ What comes back once `execute()` succeeds, a signed record of the decision, the 
 evidence, and the resulting proof:
 
 ```python
+from parmana import ParmanaClient
+
+client = ParmanaClient(endpoint="http://localhost:3000", api_key="my-secret-api-key")
 trust_record = client.execution.execute(transaction)
 
 print(trust_record.trust_record_id)
@@ -117,6 +120,9 @@ server returns a real `403` and the SDK raises:
 
 ```python
 from parmana import ExecutionRejectedError
+from parmana import ParmanaClient
+
+client = ParmanaClient(endpoint="http://localhost:3000", api_key="my-secret-api-key")
 
 try:
     trust_record = client.execution.execute(transaction)

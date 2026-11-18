@@ -9,7 +9,7 @@ executes, not the agent's own judgment call.
 ## The problem
 
 Your AI customer-service agent can refund payments. Without Parmana, the naive integration looks
-like this:
+like this. `agent`, `payment_provider`, `payment_id` and `amount` are placeholders for your own objects, not names this guide defines:
 
 ```python
 # The agent decides everything, and holds the vendor's own credentials.
@@ -23,7 +23,19 @@ vendor's real credentials to act at all.
 ## The solution
 
 ```python
-from parmana import ExecutionRejectedError
+from parmana import ExecutionRejectedError, ParmanaClient, PolicyReference, create_business_transaction
+
+client = ParmanaClient(endpoint="http://localhost:3000", api_key="your-api-key")
+# The same transaction refund_payment() builds below, shown here with placeholder values.
+transaction = create_business_transaction(
+    principal_id="refund-agent",
+    purpose="Customer refund",
+    action="erp:refund",
+    target="erp://invoices/INV-1",
+    parameters={"amount": 100},
+    policy=PolicyReference(name="customer-refund", version="1.2.0", schema_version="1.0.0"),
+    signals={"refundAmount": 100},
+)
 
 try:
     trust_record = client.execution.execute(transaction)  # a named policy decides, not the agent
