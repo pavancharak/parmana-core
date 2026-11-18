@@ -12,29 +12,32 @@ description: "Real client code, bearer-key authentication, and a typed error tax
   Bearer-key authentication, a real thrown error taxonomy, and full test
   coverage are all in place, along with corrected model types (see below),
   `client.verify()`/`client.version()`, and `client.createTransaction()`.
-  v3.0.1, published 2026-11-17, is the current version. It removes the
-  TypeScript build cache from the npm packages and changes no code. v3.0.0,
-  published 2026-11-17, has the same SDK code as 2.0.3 apart from one type
-  change in the TypeScript SDK. v2.0.3, published 2026-11-15, added the
-  declare-then-execute flow: `declare()` records a transaction without deciding
-  or releasing it, and `execute()` then decides, signs, releases and verifies
-  it. It also adds `status()` and `reconcile()`, and `ExecutionPendingError`,
-  which `execute()` raises when the server answers `202`. `create()` still
-  works: it now calls `declare()` and then `execute()`. This version needs a
-  Parmana server that includes decision D23; the new routes do not exist on
-  older servers. v2.0.2, published 2026-11-11, adds approver-key commands to the
-  CLI. v2.0.1, published 2026-11-10, aligns the SDK with the other 2.0.1
-  packages. v2.0.0, published 2026-11-07, added full hybrid verification to the
-  offline verifier: it verifies hybrid records in full, with a `signatures`
-  array holding one Ed25519 and one ML-DSA-65 entry, including the whole-record
-  message of schema version 3. Its results report `coverage` (`"full"` or
-  `"legacy"`) and `hybridSignaturesValid`. ML-DSA-65 needs Node 24 or later with
-  OpenSSL 3.5 or later. v1.6.3, published 2026-11-01, changed only
-  documentation, formatting and tests. v1.6.1, published 2026-10-22, removed the
-  links to a private repository from the package metadata. v1.6.0, published
-  2026-10-11, added the business signal source and authority grant methods, and
-  `conditions` on a release: see [New in 1.6.0](#new-in-160). v1.5.0, published
-  2026-10-04, added the external connector methods, `policyInEffect()` and
+  v4.0.0, published 2026-11-18, is the current version. Its breaking change is
+  in the Python SDK: the error codes NOT_FOUND, CONFLICT and SERVER_ERROR are
+  now NOT_FOUND_ERROR, CONFLICT_ERROR and INTERNAL_SERVER_ERROR, to match the
+  TypeScript SDK. v3.0.1, published 2026-11-17, removed the TypeScript build
+  cache from the npm packages and changed no code. v3.0.0, published 2026-11-17,
+  has the same SDK code as 2.0.3 apart from one type change in the TypeScript
+  SDK. v2.0.3, published 2026-11-15, added the declare-then-execute flow:
+  `declare()` records a transaction without deciding or releasing it, and
+  `execute()` then decides, signs, releases and verifies it. It also adds
+  `status()` and `reconcile()`, and `ExecutionPendingError`, which `execute()`
+  raises when the server answers `202`. `create()` still works: it now calls
+  `declare()` and then `execute()`. This version needs a Parmana server that
+  includes decision D23; the new routes do not exist on older servers. v2.0.2,
+  published 2026-11-11, adds approver-key commands to the CLI. v2.0.1, published
+  2026-11-10, aligns the SDK with the other 2.0.1 packages. v2.0.0, published
+  2026-11-07, added full hybrid verification to the offline verifier: it
+  verifies hybrid records in full, with a `signatures` array holding one Ed25519
+  and one ML-DSA-65 entry, including the whole-record message of schema version
+  3. Its results report `coverage` (`"full"` or `"legacy"`) and
+  `hybridSignaturesValid`. ML-DSA-65 needs Node 24 or later with OpenSSL 3.5 or
+  later. v1.6.3, published 2026-11-01, changed only documentation, formatting
+  and tests. v1.6.1, published 2026-10-22, removed the links to a private
+  repository from the package metadata. v1.6.0, published 2026-10-11, added the
+  business signal source and authority grant methods, and `conditions` on a
+  release: see [New in 1.6.0](#new-in-160). v1.5.0, published 2026-10-04, added
+  the external connector methods, `policyInEffect()` and
   `verifyParmanaRelease()`, and the Apache License 2.0: see [New in
   1.5.0](#new-in-150). v1.4.0, published 2026-09-29, added `signApproval()` and
   the approver methods: see [New in 1.4.0](#new-in-140). v1.3.0, published
