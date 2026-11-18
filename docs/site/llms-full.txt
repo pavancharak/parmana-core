@@ -3879,17 +3879,17 @@ sequenceDiagram
     S-->>G: 200, authorized
 ```
 
-| Rule                                    | What the server does                                                                  |
-| --------------------------------------- | ------------------------------------------------------------------------------------- |
-| Only people change approvers            | Every call needs an API key added as a human (`credentialHolderType USER`)            |
-| The proposer is never the checker       | `403 SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE`, in the API and in the database            |
-| Approve and reject need fresh intent    | A step up authorization for this change and this action, valid once, 120 seconds      |
-| One open change per approver key        | A second proposal for the same key is `409 CONFLICT` until the first is resolved      |
-| Approving applies the change atomically | The key is added or revoked and the change resolved in one database transaction       |
-| A change takes effect at once           | The next approval checked reads the table; nothing is cached                          |
-| Nothing is deleted                      | A revoked key stays listed, so every approval it ever signed can still be explained   |
-| Key ids are used once                   | A key id that exists, revoked or not, cannot be added again: rotate with a new key id |
-| Failures refuse                         | If the table cannot be read, the approver is unknown and the approval is refused      |
+| Rule                                    | What the server does                                                                                                                                                                                                                                                                  |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Only people change approvers            | Every call needs an API key added as a human (`credentialHolderType USER`)                                                                                                                                                                                                            |
+| The proposer is never the checker       | `403 SAME_ACTOR_CANNOT_APPROVE_OWN_CHANGE`, in the API and in the database                                                                                                                                                                                                            |
+| Approve and reject need fresh intent    | A step up authorization for this change and this action, valid once, 120 seconds                                                                                                                                                                                                      |
+| One open change per approver key        | A second proposal for the same key is `409 CONFLICT` until the first is resolved                                                                                                                                                                                                      |
+| Approving applies the change atomically | The key is added or revoked and the change resolved in one database transaction                                                                                                                                                                                                       |
+| A change takes effect at once           | The next approval checked reads the table; nothing is cached                                                                                                                                                                                                                          |
+| Nothing is deleted                      | A revoked key stays listed, so every approval it ever signed can still be explained                                                                                                                                                                                                   |
+| Key ids are used once                   | A key id that exists, revoked or not, cannot be added again: rotate with a new key id                                                                                                                                                                                                 |
+| Failures refuse                         | If the table cannot be read, the approver is treated as unknown and the action is refused with `403 POLICY_DENIED`. The caller sees "declared signal(s) do not match independently verified state", not the cause. The cause is in the server log as `approval_issuer_lookup_failed`. |
 
 ## Before you begin
 
