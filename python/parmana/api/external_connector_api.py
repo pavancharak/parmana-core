@@ -142,7 +142,8 @@ class ExternalConnectorApi:
         Maps to POST /external-connectors/changes/{id}/approve. The caller
         must not be the proposer and must have a registered step up key.
         Make `step_up_authorization` with
-        [`parmana.crypto.sign_policy_change_step_up()`](/sdks/reference/python/crypto/step_up), `change_id` as
+        [`sign_policy_change_step_up()`](/sdks/reference/python/crypto/step_up),
+        `change_id` as
         `pending_policy_change_id`, and action "approve".
         """
 
