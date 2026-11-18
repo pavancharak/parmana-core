@@ -29,7 +29,7 @@ A policy version 2 rule can read a **sourced value**: a fact that a registered b
 ## 4. What does not exist yet
 
 1. **A source integration in the deployment.** The decision service's `sources` option is a function that throws `No source integration is connected.` (`packages/api/src/policyV2/createPolicyV2Runtime.ts`).
-2. **An endpoint that receives signed answers.** No route in `packages/api/src/routes` accepts an answer. The integration must add one, or the accounts system's adapter must call the decision path in another agreed way.
+2. **A source client.** The decision asks for each sourced claim through `deps.sources`, which the deployment provides. Today the deployment provides a function that throws, so every sourced claim refuses with `SOURCE_UNAVAILABLE`. The integration replaces that function with a client that asks the adapter.
 3. **A way for the accounts system to hold a source key** that Parmana trusts, with rotation.
 
 ## 5. Target design for the source integration
@@ -37,7 +37,7 @@ A policy version 2 rule can read a **sourced value**: a fact that a registered b
 ### 5.1 Shape
 
 ```
-accounts system  --(adapter signs answer)-->  answer endpoint  -->  verifier  -->  decision service
+decision service  --(query)-->  source client  --(HTTP)-->  adapter  --(signed answer)-->  verifier  -->  decision
                                                                         |
                                                   register: source key, claims, revocation
 ```
@@ -101,7 +101,7 @@ The rules send a payment to review above a registered threshold, and refuse a bl
 
 ## 8. Test plan
 
-1. **Unit tests** for the answer endpoint: a valid answer is accepted; each refusal code is produced by the matching failure.
+1. **Unit tests** for the source client and the adapter: a valid answer is accepted; each refusal code is produced by the matching failure.
 2. **A fixture source** in the test environment, with a test key that is never used in production. It answers the three claims.
 3. **End-to-end in staging:** a decision for `erp:invoice-pay` uses the fixture source, and the evidence log shows each answer and its check.
 4. **Failure tests:** an expired answer, a replayed nonce, a revoked key and an unavailable source each refuse the decision with the expected code.
