@@ -1,14 +1,17 @@
 ---
 title: "Policy version 2"
-description: "What policy version 2 is: signed, checked policies with named limits, reviews, a register of who may change what, and an evidence log. Built, not yet released."
+description: "What policy version 2 is: signed, checked policies with named limits, reviews, a register of who may change what, and an evidence log. Released in the SDKs as of 4.1.0; each capability must be enabled on the server."
 ---
 
-<Warning>
-  Policy version 2 is built and merged, but it is **not yet released**. No SDK
-  or server release includes it, and the pages on this site that describe
-  released behaviour do not yet cover it. Treat this page as a description of
-  the design as built, not as something you can install today.
-</Warning>
+<Note>
+  From version 4.1.0 the TypeScript and Python SDKs can make policy version 2
+  decisions and read or decide review items: `decidePolicyV2`, `policyV2Review`
+  and `decidePolicyV2Review` in TypeScript, and `decide_policy_v2`,
+  `policy_v2_review` and `decide_policy_v2_review` in Python. The server must
+  also enable each capability. Until it does, a decision for that capability
+  returns HTTP 404 with the error code `not_enabled`. The SDKs do not yet expose
+  register writes, the console, the webhooks or replay.
+</Note>
 
 Policy version 2 changes how Parmana decides whether an action may proceed. It
 keeps the same goal as the current policies: an agent takes only the actions
@@ -75,16 +78,16 @@ change, so a change and its record are saved together or not at all.
 
 ## Status
 
-| Part                                 | Status            |
-| ------------------------------------ | ----------------- |
-| Policy format and validator          | Built             |
-| Signed source answers and approvals  | Built             |
-| Decisions, reviews and alerts        | Built             |
-| Register, roles and go-live gate     | Built             |
-| Evidence log and replay              | Built             |
-| Notifications and delivery feedback  | Built             |
-| Released in an SDK or server release | **Not yet**       |
-| Connected business systems (sources) | Not yet connected |
+| Part                                 | Status                                                                 |
+| ------------------------------------ | ---------------------------------------------------------------------- |
+| Policy format and validator          | Built                                                                  |
+| Signed source answers and approvals  | Built                                                                  |
+| Decisions, reviews and alerts        | Built                                                                  |
+| Register, roles and go-live gate     | Built                                                                  |
+| Evidence log and replay              | Built                                                                  |
+| Notifications and delivery feedback  | Built                                                                  |
+| Released in an SDK or server release | SDK 4.1.0: decisions and reviews; enabled per capability on the server |
+| Connected business systems (sources) | Not yet connected                                                      |
 
 Sources, the second email provider and the business inputs for each policy are
 not connected yet. Until they are, sourced values refuse rather than guess.
