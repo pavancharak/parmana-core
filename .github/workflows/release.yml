@@ -48,11 +48,19 @@ jobs:
         run: npm run build
 
       - name: Pack the npm packages
+        # npm pack records the build machine's file modes and timestamps. The
+        # normalizer writes the same bytes for the same source, with the command
+        # files (the package.json `bin` entries) executable, so the file attached
+        # to the release is the file npm serves to users.
         run: |
+          export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct HEAD)"
           mkdir -p release-dist
           npm pack --workspace=typescript --workspace=packages/connector-sdk \
             --workspace=packages/shared --workspace=packages/crypto --workspace=packages/cli \
             --pack-destination release-dist
+          for tgz in release-dist/*.tgz; do
+            python .github/release/normalize_sdist.py "$tgz"
+          done
 
       - name: Build the Python packages
         # Reproducible: the same commit gives the same bytes, so a PyPI upload
@@ -69,7 +77,7 @@ jobs:
             python .github/release/normalize_sdist.py "$sdist"
           done
 
-      - name: Check the Python packages rebuild identically
+      - name: Check the packages rebuild identically
         # A second build of the same commit must give the same bytes. If it does
         # not, the release files cannot be matched by anyone else's build, so the
         # release stops here rather than attaching files nobody can reproduce.
@@ -78,10 +86,13 @@ jobs:
           mkdir -p rebuild-check
           python -m build --no-isolation python --outdir rebuild-check
           python -m build --no-isolation python-connector-sdk --outdir rebuild-check
-          for sdist in rebuild-check/*.tar.gz; do
-            python .github/release/normalize_sdist.py "$sdist"
+          npm pack --workspace=typescript --workspace=packages/connector-sdk \
+            --workspace=packages/shared --workspace=packages/crypto --workspace=packages/cli \
+            --pack-destination rebuild-check
+          for file in rebuild-check/*.tar.gz rebuild-check/*.tgz; do
+            python .github/release/normalize_sdist.py "$file"
           done
-          for file in release-dist/*.whl release-dist/*.tar.gz; do
+          for file in release-dist/*.whl release-dist/*.tar.gz release-dist/*.tgz; do
             name="$(basename "$file")"
             if ! cmp -s "$file" "rebuild-check/$name"; then
               echo "$name differs between two builds of the same commit; not attaching the release files."
