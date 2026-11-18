@@ -1,6 +1,6 @@
 {
   "name": "@parmana/policy",
-  "version": "4.0.2",
+  "version": "4.0.3",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -21,8 +21,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@parmana/capability-registry": "4.0.2",
-    "@parmana/storage": "4.0.2",
+    "@parmana/capability-registry": "4.0.3",
+    "@parmana/storage": "4.0.3",
     "express": "^5.3.0",
     "pg": "^8.23.1",
     "re2": "^1.27.1",

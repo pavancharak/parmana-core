@@ -1,6 +1,6 @@
 {
   "name": "@parmana/approval",
-  "version": "4.0.2",
+  "version": "4.0.3",
   "description": "Verifies signed Approval Artifacts issued by an external business authority, independent of the AI caller and of Parmana's own runtime",
   "type": "module",
   "main": "./dist/index.js",
@@ -23,10 +23,10 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@parmana/crypto": "4.0.2",
-    "@parmana/envelope-verifier": "4.0.2",
-    "@parmana/policy": "4.0.2",
-    "@parmana/shared": "4.0.2"
+    "@parmana/crypto": "4.0.3",
+    "@parmana/envelope-verifier": "4.0.3",
+    "@parmana/policy": "4.0.3",
+    "@parmana/shared": "4.0.3"
   },
   "devDependencies": {
     "typescript": "^6.0.3",
