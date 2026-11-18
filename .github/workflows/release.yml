@@ -29,6 +29,23 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # The full history is needed to read the timestamp below.
+          fetch-depth: 0
+
+      - name: Set the build timestamp
+        # The timestamp comes from the commit that last changed the release
+        # manifest, which is the version bump. Later commits on main (a docs
+        # change, a runbook change) therefore do not change the bytes of a
+        # package. A build from the same bump gives the same files, whichever
+        # commit the release is created from.
+        run: |
+          epoch="$(git log -1 --format=%ct -- .github/release/release-manifest.json)"
+          if ! [[ "$epoch" =~ ^[0-9]+$ ]]; then
+            echo "The release manifest has no history; not building."
+            exit 1
+          fi
+          echo "SOURCE_DATE_EPOCH=$epoch" >> "$GITHUB_ENV"
+          echo "Build timestamp: $epoch"
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -53,7 +70,6 @@ jobs:
         # files (the package.json `bin` entries) executable, so the file attached
         # to the release is the file npm serves to users.
         run: |
-          export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct HEAD)"
           mkdir -p release-dist
           npm pack --workspace=typescript --workspace=packages/connector-sdk \
             --workspace=packages/shared --workspace=packages/crypto --workspace=packages/cli \
@@ -70,7 +86,6 @@ jobs:
         # the build backend cannot be a different version from the pinned one.
         run: |
           pip install --require-hashes -r .github/release/build-requirements.txt
-          export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct HEAD)"
           python -m build --no-isolation python --outdir release-dist
           python -m build --no-isolation python-connector-sdk --outdir release-dist
           for sdist in release-dist/*.tar.gz; do
@@ -82,7 +97,6 @@ jobs:
         # not, the release files cannot be matched by anyone else's build, so the
         # release stops here rather than attaching files nobody can reproduce.
         run: |
-          export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct HEAD)"
           mkdir -p rebuild-check
           python -m build --no-isolation python --outdir rebuild-check
           python -m build --no-isolation python-connector-sdk --outdir rebuild-check

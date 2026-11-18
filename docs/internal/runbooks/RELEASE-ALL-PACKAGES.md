@@ -32,41 +32,49 @@ Use the sections below for detail. This list is the order. Do not skip a check, 
 5. Run `npm run build:packages` and `npx vitest run tests/architecture`. Both must pass.
 6. Commit with a sign-off. Push the branch and open the bump PR only when the owner asks. Merge it to `main`.
 
-**Build and release (sections 2 and 3)**
+**Build locally (section 2)**
 
-7. On `main`, pull, then run `npm run build:packages`. Stop if it fails.
-8. Create the GitHub release: tag `sdk-vX.Y.Z`, target `main`, title `Parmana X.Y.Z`. Do not publish anything yet.
-9. Wait until **Release artifacts**, **CLI image** and **Server image** are all green in the Actions tab. If one is red, read its log, fix the cause, and re-run the failed jobs. Do not publish while anything is red.
+7. From an up-to-date `main`, run `npm run build:packages`. Then build the packages with the commands in section 2. Both use this timestamp, which is the version bump's commit time and does not change with later commits on `main`:
 
-**Verify the release files (section 4)**
+   ```bash
+   export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct -- .github/release/release-manifest.json)"
+   ```
 
-10. Download the nine package files and `multiple.intoto.jsonl` from the release into one new, empty folder.
-11. Check each file's SHA-256 against the release's digest. In PowerShell: `Get-FileHash -Algorithm SHA256 .\<file>`. Every hash must match. If any does not, stop.
-12. Run `slsa-verifier verify-artifact` on each `.tgz`, with `--source-uri github.com/pavancharak/parmana-core --source-tag sdk-vX.Y.Z`. Each must print `PASSED`.
+   Keep the folder. Record the SHA-256 of each file (`Get-FileHash` on Windows).
 
-**Publish npm, in this order (section 5)**
+**Create the release (section 3)**
 
-13. Publish `@parmana/shared`, then `@parmana/crypto`, then `@parmana/cli`, then `@parmana/connector-sdk`, then `@parmana/sdk`. For each one: `npm publish <file>.tgz --access public`.
-14. After each publish, run `npm view @parmana/<name>@X.Y.Z version`. If it prints nothing, wait a few minutes and check again. Do not publish the same package again.
-15. If npm says `409 Cannot publish over previously staged version`, run `npm stage list` and `npm view` first. Never retry blindly.
+8. Create the GitHub release: tag `sdk-vX.Y.Z`, target `main`, title `Parmana X.Y.Z`, with the description from section 3. Release artifacts and CLI image will fail at this point. That is expected: they install the packages from npm, which is not published yet. Do not re-run them until step 10 is done.
 
-**Publish PyPI (section 5)**
+**Publish npm, from the step 7 files (section 5)**
 
-16. Run `Get-FileHash` on the four Python files and compare with the release digests.
-17. `python -m twine upload parmana-X.Y.Z-py3-none-any.whl parmana-X.Y.Z.tar.gz`, then `python -m twine upload parmana_connector_sdk-X.Y.Z-py3-none-any.whl parmana_connector_sdk-X.Y.Z.tar.gz`. Paste the API token at the prompt, never in chat.
+9. Check the npm files' SHA-256 against the step 7 record. Publish `@parmana/shared`, then `@parmana/crypto`, then `@parmana/cli`, then `@parmana/connector-sdk`, then `@parmana/sdk`. For each one: `npm publish <file>.tgz --access public`, then `npm view @parmana/<name>@X.Y.Z version`. If `npm view` prints nothing, wait a few minutes and check again. Do not publish the same package again.
+10. If npm says `409 Cannot publish over previously staged version`, run `npm stage list` and `npm view` first. Never retry blindly.
+
+**Confirm the release files (section 4)**
+
+11. Re-run **Release artifacts** and **CLI image** from their run pages (Re-run failed jobs). Both must be green.
+12. Download the nine package files and `multiple.intoto.jsonl` from the release into one new, empty folder. Check each release file's SHA-256 against the step 7 record. The release files must match the step 7 files exactly. If any differ, stop and report it. npm already has the step 7 files, so the release is then the one that is wrong.
+13. Run `slsa-verifier verify-artifact` on each `.tgz` and each Python file, with `--source-uri github.com/pavancharak/parmana-core --source-tag sdk-vX.Y.Z`. Each must print `PASSED`.
+
+**Publish PyPI, from the release files (section 5)**
+
+14. `python -m twine upload parmana-X.Y.Z-py3-none-any.whl parmana-X.Y.Z.tar.gz`, then `python -m twine upload parmana_connector_sdk-X.Y.Z-py3-none-any.whl parmana_connector_sdk-X.Y.Z.tar.gz`. Paste the API token at the prompt, never in chat.
 
 **Confirm (section 6)**
 
-18. Run `python -I .github/release/check-registry-matches-release.py X.Y.Z` from the repository. It must end with `All 9 registry files match`. If any line says `DIFFERS`, `NOT IN PROVENANCE` or `NOT ON REGISTRY`, stop and report it. The release is not complete.
+15. Run `python -I .github/release/check-registry-matches-release.py X.Y.Z` from the repository. It must end with `All 9 registry files match`. If any line says `DIFFERS`, `NOT IN PROVENANCE` or `NOT ON REGISTRY`, stop and report it. The release is not complete.
 
 **Docs (section 7)**
 
-19. On a new branch from `main`, run `npm run record:published-sdk -- --typescript X.Y.Z --python X.Y.Z`, then update the version statements listed in section 7 and run `npm run generate:llms-txt`. Commit with a sign-off. Push and open the PR only when the owner asks.
+16. On a new branch from `main`, run `npm run record:published-sdk -- --typescript X.Y.Z --python X.Y.Z`, then update the version statements listed in section 7 and run `npm run generate:llms-txt`. Commit with a sign-off. Push and open the PR only when the owner asks.
 
 **Never**
 
-- Publish a local build. Publish the release's files, checked in steps 10 to 12.
-- Publish or re-publish a version that the registry check has not confirmed is the release file, unless the owner decides it.
+- Publish npm files that differ from the step 7 record. Check them in step 9 before you publish.
+- Publish PyPI files from anything other than the release files checked in steps 12 and 13.
+- Publish or re-publish a version that steps 12, 13 or 15 has not confirmed, unless the owner decides it.
+- Re-run **Release artifacts** or **CLI image** before the npm packages are published. They fail until then.
 - Use `--no-verify` on a commit or a push. If a hook fails, fix the cause (gitleaks on `PATH`, a running test database).
 - Push to `main` directly, or push to a branch that isn't your own `claude/` branch.
 
@@ -104,7 +112,7 @@ Pack the npm packages and build the Python packages, then run `twine check`. The
 To pack the npm packages the way the release workflow does, set `SOURCE_DATE_EPOCH` to the commit time and normalize each tarball. The normalizer writes the same bytes for the same source, with the command files (the `bin` entries in `package.json`) executable:
 
 ```bash
-export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct HEAD)"
+export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct -- .github/release/release-manifest.json)"
 npm pack --workspace=typescript --workspace=packages/connector-sdk --workspace=packages/shared --workspace=packages/crypto --workspace=packages/cli --pack-destination /tmp/parmana-npm
 for tgz in /tmp/parmana-npm/*.tgz; do python .github/release/normalize_sdist.py "$tgz"; done
 ```
@@ -195,6 +203,7 @@ Open a pull request for the docs update and merge it.
 
 ## Known gaps
 
+- **`@parmana/*` 4.1.0 on npm.** The five npm packages were built from the commit of PR #722, and the release files from the later commit of PR #723. Their contents and modes are identical, but the timestamps differ, so the registry check reports them as `DIFFERS`. The npm copies cannot be replaced. The timestamp rule in section 0, step 7 prevents this from recurring.
 - **4.0.0 and 4.0.1 on PyPI.** The `parmana` and `parmana-connector-sdk` files for these two versions were built on a local machine, before the release build was made reproducible. Their SHA-256 values differ from the Python files attached to the `sdk-v4.0.0` and `sdk-v4.0.1` releases, so the release provenance does not cover the PyPI copies. The npm packages match. Those PyPI files cannot be replaced, because PyPI does not allow a version to be re-uploaded. The first release built with the reproducible build is the next one.
 - **`@parmana/cli` 4.0.2 on npm.** The npm file differs from the `sdk-v4.0.2` release file only in the file mode of `dist/index.js` (`0755` on npm, `0644` in the release). Contents and timestamps are identical. The npm copy cannot be replaced. Releases from the reproducible npm packing (this change) write the same mode in both places.
 - The Python verifier has no SBOM in its release. The SDK's Python SBOM script lives in `parmana-core` and has not been copied to the verifier repository.
