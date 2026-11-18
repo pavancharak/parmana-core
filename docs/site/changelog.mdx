@@ -17,7 +17,7 @@ every commit, run `git log` in the repository for the complete record.
 - The version number moves to 4.0.2 across the repository. The packages change in no other way since 4.0.1.
 - The Python packages are built reproducibly. The release workflow builds them with pinned build tools and a fixed timestamp, and checks that a second build gives the same bytes. The Python files on the release page are the files to upload to PyPI.
 - The release workflow now fails if the Python packages do not rebuild identically, and a manual registry check compares every npm and PyPI file with the release provenance.
-- The published versions named in the docs remain 4.0.1 until 4.0.2 is published on npm and PyPI.
+- The published versions named in the docs are 4.0.2 on npm and PyPI. Version 4.0.2 was published on 2026-11-18.
 - The 4.0.0 and 4.0.1 Python files on PyPI were built before this change. They differ from the Python files attached to their releases, and the release provenance does not cover them.
 
 ## 2026-11-18 (4.0.1)
