@@ -281,6 +281,20 @@ generated ids round-trip correctly through a real running server, not just in is
 
 ## New in 1.6.0
 
+The examples in this section and the next two use three clients: `maker` proposes a change, `checker` approves it, and `proposer` is the maker's client in the approver examples. Each uses its own API key, and each is a human credential.
+
+```python
+from pathlib import Path
+
+from parmana import ParmanaClient
+from parmana.crypto import sign_approval, sign_policy_change_step_up
+
+endpoint = "http://127.0.0.1:3000"
+maker = ParmanaClient(endpoint=endpoint, api_key="pk_local_... (maker)")
+checker = ParmanaClient(endpoint=endpoint, api_key="pk_local_... (checker)")
+proposer = maker
+```
+
 ### Register a business signal source
 
 Register the business system that owns a fact a policy needs, an ERP, an order system, a CRM, so Parmana asks it
