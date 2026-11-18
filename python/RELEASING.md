@@ -17,7 +17,7 @@ hash-pinned ones in `.github/release/build-requirements.txt`, and the timestamp 
 python -m venv /tmp/parmana-build
 /tmp/parmana-build/bin/pip install --require-hashes -r .github/release/build-requirements.txt
 export PATH=/tmp/parmana-build/bin:$PATH
-export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct HEAD)"
+export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct -- .github/release/release-manifest.json)"
 mkdir -p /tmp/parmana-dist
 python -m build --no-isolation --outdir /tmp/parmana-dist python
 for sdist in /tmp/parmana-dist/*.tar.gz; do python .github/release/normalize_sdist.py "$sdist"; done
