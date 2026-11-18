@@ -159,6 +159,7 @@ try:
 except ExecutionRejectedError as error:
     # 403 POLICY_DENIED: the policy refused, with its reason. Ask a person to
     # sign, then build a NEW transaction with the approval....
+    raise
 ```
 
 </CodeGroup>

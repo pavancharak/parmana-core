@@ -37,6 +37,7 @@
     "generate:build-book-reference": "tsx scripts/generate-build-book-reference.ts",
     "generate:build-book-pdf": "tsx scripts/generate-build-book-pdf.ts",
     "generate:typescript-sdk-reference": "tsx scripts/generate-typescript-sdk-reference.ts",
+    "docs:samples": "tsx scripts/run-docs-samples.ts",
     "generate:python-sdk-reference": "tsx scripts/generate-python-sdk-reference.ts",
     "rotate:verification-key": "tsx scripts/rotate-verification-key.ts",
     "typecheck": "node node_modules/typescript7/bin/tsc --noEmit -p tsconfig.json && node node_modules/typescript7/bin/tsc --noEmit -p examples/tsconfig.json",

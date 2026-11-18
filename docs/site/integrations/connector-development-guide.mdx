@@ -62,35 +62,36 @@ capability throws at connector construction, not at execution time. By conventio
 ## Registering a connector
 
 ```typescript
-import { GatewayConnectorRegistry } from "@parmana/execution-gateway";
+import { createGatewayConnectorRegistry } from "@parmana/execution-gateway";
 import { StaticCredentialProvider, healthyNow } from "@parmana/connector-sdk";
 
-const registry = new GatewayConnectorRegistry();
-
-registry.register({
-  connector: new ExampleConnector(),
-  metadata: {
-    connectorId: "example",
-    displayName: "Example CRM",
-    version: { major: 1, minor: 0, patch: 0 },
-    health: healthyNow(),
+const registry = createGatewayConnectorRegistry([
+  {
+    connector: new ExampleConnector(),
+    metadata: {
+      connectorId: "example",
+      displayName: "Example CRM",
+      version: { major: 1, minor: 0, patch: 0 },
+      health: healthyNow(),
+    },
+    connectorIdentity: {
+      connectorId: "example",
+      publicIdentity: "spiffe://parmana/connectors/example",
+      authenticationMetadata: {},
+    },
+    credentialProvider: new StaticCredentialProvider({
+      example: { token: "..." },
+    }),
+    policy, // a ConnectorPolicy, e.g. CapabilityConnectorPolicy(new DefaultConnectorPolicy(...))
+    gatewayAuthentication,
+    crypto, // @parmana/crypto CryptoProvider, reused for evidence hashing, not reimplemented
   },
-  connectorIdentity: {
-    connectorId: "example",
-    publicIdentity: "spiffe://parmana/connectors/example",
-    authenticationMetadata: {},
-  },
-  credentialProvider: new StaticCredentialProvider({
-    example: { token: "..." },
-  }),
-  policy, // a ConnectorPolicy, e.g. CapabilityConnectorPolicy(new DefaultConnectorPolicy(...))
-  gatewayAuthentication,
-  crypto, // @parmana/crypto CryptoProvider, reused for evidence hashing, not reimplemented
-});
+]);
 ```
 
-`registry` implements `execution-control`'s `ConnectorRegistry` interface (`get()`), so it
-plugs directly into `ExecutionControlService` exactly like `InMemoryConnectorRegistry`.
+`createGatewayConnectorRegistry` returns `execution-control`'s `ConnectorRegistry` interface (`get()`), so
+`registry` plugs directly into `ExecutionControlService` exactly like `InMemoryConnectorRegistry`. Pass one
+registration per connector in the array.
 
 ## Testing your connector hermetically
 
