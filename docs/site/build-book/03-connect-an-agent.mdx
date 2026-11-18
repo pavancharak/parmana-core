@@ -23,7 +23,7 @@ with what to expect and what to do at every step, is
 import { ParmanaClient } from "@parmana/sdk";
 
 const client = new ParmanaClient({
-  endpoint: process.env.PARMANA_URL!,
+  endpoint: process.env.PARMANA_ENDPOINT!,
   apiKey: process.env.PARMANA_API_KEY!,
 });
 
@@ -37,7 +37,7 @@ import os
 
 from parmana import ParmanaClient
 
-client = ParmanaClient(endpoint=os.environ["PARMANA_URL"], api_key=os.environ["PARMANA_API_KEY"])
+client = ParmanaClient(endpoint=os.environ["PARMANA_ENDPOINT"], api_key=os.environ["PARMANA_API_KEY"])
 
 me = client.caller()
 ```
