@@ -25,15 +25,15 @@ Sources are marked. **Repo** means the production docs in this repository. **Acc
 
 ## 2. Where it runs
 
-| Part | Location | Source |
-|---|---|---|
-| Parmana API (governance, approvals, signing) | Vercel project `parmana-api-real` | Repo |
-| Parmana signing key (`alias/default`) | AWS KMS, **ap-south-1 (Mumbai)** | Repo |
-| Parmana production database | Supabase Postgres (transaction pooler) | Repo |
-| `dip-api` service | ECS cluster `dip-prod`, Fargate, **us-east-1 (N. Virginia)** | Account |
-| `dip-api` image | ECR repository `dip-api`, **us-east-1** | Account |
-| `dip-api` database | RDS `dip-postgres`, **us-east-1** | Account |
-| `dip-api` secrets | Secrets Manager, **us-east-1** | Account |
+| Part                                         | Location                                                     | Source  |
+| -------------------------------------------- | ------------------------------------------------------------ | ------- |
+| Parmana API (governance, approvals, signing) | Vercel project `parmana-api-real`                            | Repo    |
+| Parmana signing key (`alias/default`)        | AWS KMS, **ap-south-1 (Mumbai)**                             | Repo    |
+| Parmana production database                  | Supabase Postgres (transaction pooler)                       | Repo    |
+| `dip-api` service                            | ECS cluster `dip-prod`, Fargate, **us-east-1 (N. Virginia)** | Account |
+| `dip-api` image                              | ECR repository `dip-api`, **us-east-1**                      | Account |
+| `dip-api` database                           | RDS `dip-postgres`, **us-east-1**                            | Account |
+| `dip-api` secrets                            | Secrets Manager, **us-east-1**                               | Account |
 
 Two regions are in use. The Parmana signing key is in Mumbai, and the `dip` workload is in N. Virginia. Keep them separate when you make changes.
 
@@ -45,39 +45,39 @@ Two regions are in use. The Parmana signing key is in Mumbai, and the `dip` work
 
 ### 3.1 Parmana (repo)
 
-| Service | Use |
-|---|---|
-| Vercel | Hosts the API (`parmana-api-real`) |
-| AWS KMS | Signs execution trust records, intents, refusal records and approvals. Key alias `default`, in ap-south-1 |
-| IAM (OIDC role) | Lets Vercel assume a signer role, with no stored keys |
-| Supabase Postgres | Production storage (`PARMANA_STORAGE=postgres`) |
+| Service           | Use                                                                                                       |
+| ----------------- | --------------------------------------------------------------------------------------------------------- |
+| Vercel            | Hosts the API (`parmana-api-real`)                                                                        |
+| AWS KMS           | Signs execution trust records, intents, refusal records and approvals. Key alias `default`, in ap-south-1 |
+| IAM (OIDC role)   | Lets Vercel assume a signer role, with no stored keys                                                     |
+| Supabase Postgres | Production storage (`PARMANA_STORAGE=postgres`)                                                           |
 
 ### 3.2 `dip` workload (account)
 
-| Service | Resource | Use |
-|---|---|---|
-| ECS (Fargate) | Cluster `dip-prod`, service `dip-api` | Runs the container. One task, 0.25 vCPU / 0.5 GB (task definition revision 6) |
-| ECR | Repository `dip-api` | Stores the container image. Immutable tags, 9 images |
-| RDS | `dip-postgres`, db.t4g.micro, 20 GB | Database. The app reads its connection from a secret |
-| Secrets Manager | `dip/prod/config`, `dip/prod/operator-key`, `dip/prod/pg-url`, `dip/prod/db-master`, `dip/prod/db-ca` | Configuration, operator key, database connection, master credentials, and the RDS CA certificate |
-| KMS | 9 customer keys in us-east-1 | Encryption for the above. Not yet reviewed in ap-south-1 |
-| IAM | Users `dip-deployer`, `dip-sandbox`, `parmana-kms-drill`, `parmana-kms-operator`, `cost-audit`. Roles `dip-ecs-execution-prod`, `dip-api-signer-prod` | Access control. No user has MFA |
-| CloudWatch | Log group `/ecs/dip-api`, ECS metrics | Logs and utilisation |
-| VPC | Default networking | No NAT gateway, no public IPv4 addresses, no VPC endpoints found |
-| S3 | Small usage | Negligible |
-| Billing | Cost Explorer, Budgets (`Monthly-5-USD`, `Monthly-20-USD`), Credits | Cost tracking and alerts |
+| Service         | Resource                                                                                                                                              | Use                                                                                              |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| ECS (Fargate)   | Cluster `dip-prod`, service `dip-api`                                                                                                                 | Runs the container. One task, 0.25 vCPU / 0.5 GB (task definition revision 6)                    |
+| ECR             | Repository `dip-api`                                                                                                                                  | Stores the container image. Immutable tags, 9 images                                             |
+| RDS             | `dip-postgres`, db.t4g.micro, 20 GB                                                                                                                   | Database. The app reads its connection from a secret                                             |
+| Secrets Manager | `dip/prod/config`, `dip/prod/operator-key`, `dip/prod/pg-url`, `dip/prod/db-master`, `dip/prod/db-ca`                                                 | Configuration, operator key, database connection, master credentials, and the RDS CA certificate |
+| KMS             | 9 customer keys in us-east-1                                                                                                                          | Encryption for the above. Not yet reviewed in ap-south-1                                         |
+| IAM             | Users `dip-deployer`, `dip-sandbox`, `parmana-kms-drill`, `parmana-kms-operator`, `cost-audit`. Roles `dip-ecs-execution-prod`, `dip-api-signer-prod` | Access control. No user has MFA                                                                  |
+| CloudWatch      | Log group `/ecs/dip-api`, ECS metrics                                                                                                                 | Logs and utilisation                                                                             |
+| VPC             | Default networking                                                                                                                                    | No NAT gateway, no public IPv4 addresses, no VPC endpoints found                                 |
+| S3              | Small usage                                                                                                                                           | Negligible                                                                                       |
+| Billing         | Cost Explorer, Budgets (`Monthly-5-USD`, `Monthly-20-USD`), Credits                                                                                   | Cost tracking and alerts                                                                         |
 
 ---
 
 ## 4. When it started
 
-| Date | Event | Source |
-|---|---|---|
-| 1 Sep 2026 (approx.) | AWS Free Tier credit ($100) started. Expires 15 Sep 2027 | Account |
-| 1 Nov 2026 | AWS Activate FOUNDERS credit ($1,000) started. Expires 30 Nov 2028 | Account |
-| 10 Nov 2026 | `dip` resources created: Secrets Manager secrets (07:00 IST), ECR repository (07:21), first image pushes (07:38 to 07:50). ECS service and RDS date from around this time | Account |
-| 10 Nov 2026 | AWS Explore credit ($20) started. Expires 15 Sep 2027 | Account |
-| 18 Nov 2026 | Cost investigation, Fargate right-sizing, CA secret and sslmode hardening, read-only CLI, budget alerts | Account |
+| Date                 | Event                                                                                                                                                                     | Source  |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| 1 Sep 2026 (approx.) | AWS Free Tier credit ($100) started. Expires 15 Sep 2027                                                                                                                  | Account |
+| 1 Nov 2026           | AWS Activate FOUNDERS credit ($1,000) started. Expires 30 Nov 2028                                                                                                        | Account |
+| 10 Nov 2026          | `dip` resources created: Secrets Manager secrets (07:00 IST), ECR repository (07:21), first image pushes (07:38 to 07:50). ECS service and RDS date from around this time | Account |
+| 10 Nov 2026          | AWS Explore credit ($20) started. Expires 15 Sep 2027                                                                                                                     | Account |
+| 18 Nov 2026          | Cost investigation, Fargate right-sizing, CA secret and sslmode hardening, read-only CLI, budget alerts                                                                   | Account |
 
 The `dip` resources are about eight days old at the time of writing. The exact creation date of the ECS service and RDS instance was not checked.
 
@@ -87,40 +87,40 @@ The `dip` resources are about eight days old at the time of writing. The exact c
 
 ### 5.1 Gross charges, 1 to 18 November 2026 (before credits)
 
-| Service | Gross | Notes |
-|---|---|---|
-| ECS (Fargate) | $4.46 | Task ran from 10 Nov at 0.5 vCPU / 1 GB, then 0.25 vCPU / 0.5 GB |
-| RDS | $3.46 | `dip-postgres`, db.t4g.micro |
-| KMS | $1.22 | Customer keys in us-east-1 |
-| VPC | $0.90 | Small leftover data transfer |
-| Secrets Manager | $0.40 | About $0.40 per secret per month |
-| ECR | $0.003 | Image storage |
-| S3 | $0.0001 | |
-| **Total** | **about $10.45** | Matches the $10.46 budget alert |
+| Service         | Gross            | Notes                                                            |
+| --------------- | ---------------- | ---------------------------------------------------------------- |
+| ECS (Fargate)   | $4.46            | Task ran from 10 Nov at 0.5 vCPU / 1 GB, then 0.25 vCPU / 0.5 GB |
+| RDS             | $3.46            | `dip-postgres`, db.t4g.micro                                     |
+| KMS             | $1.22            | Customer keys in us-east-1                                       |
+| VPC             | $0.90            | Small leftover data transfer                                     |
+| Secrets Manager | $0.40            | About $0.40 per secret per month                                 |
+| ECR             | $0.003           | Image storage                                                    |
+| S3              | $0.0001          |                                                                  |
+| **Total**       | **about $10.45** | Matches the $10.46 budget alert                                  |
 
 Cost Explorer, net of credits, shows about $0.00 for every service. The credits cover this period.
 
 ### 5.2 Credits
 
-| Credit | Amount | Expires |
-|---|---|---|
-| AWS Free Tier | $100 | 15 Sep 2027 |
-| AWS Explore (Aurora or RDS) | $20 | 15 Sep 2027 |
-| AWS Activate FOUNDERS | $1,000 | 30 Nov 2028 |
-| **Total available** | **$1,118.45** | |
+| Credit                      | Amount        | Expires     |
+| --------------------------- | ------------- | ----------- |
+| AWS Free Tier               | $100          | 15 Sep 2027 |
+| AWS Explore (Aurora or RDS) | $20           | 15 Sep 2027 |
+| AWS Activate FOUNDERS       | $1,000        | 30 Nov 2028 |
+| **Total available**         | **$1,118.45** |             |
 
 Billed so far: $1.55. Estimated used (Billing page): $12.01.
 
 ### 5.3 Expected run rate (gross, 24/7)
 
-| Item | Approximate monthly |
-|---|---|
-| Fargate, 0.25 vCPU / 0.5 GB (after change) | about $9 |
-| RDS db.t4g.micro | about $12 |
-| KMS keys (about $1 each) | about $2 to $9 |
-| Secrets (about $0.40 each) | about $1 to $2 |
-| ECR, VPC, S3 | under $2 |
-| **Total** | **about $25 to $30 a month** |
+| Item                                       | Approximate monthly          |
+| ------------------------------------------ | ---------------------------- |
+| Fargate, 0.25 vCPU / 0.5 GB (after change) | about $9                     |
+| RDS db.t4g.micro                           | about $12                    |
+| KMS keys (about $1 each)                   | about $2 to $9               |
+| Secrets (about $0.40 each)                 | about $1 to $2               |
+| ECR, VPC, S3                               | under $2                     |
+| **Total**                                  | **about $25 to $30 a month** |
 
 At about $25 to $30 a month, the $1,118 in credits last well past the FOUNDERS expiry in November 2028.
 
