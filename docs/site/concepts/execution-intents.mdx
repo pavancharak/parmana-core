@@ -322,7 +322,7 @@ A non human credential gets an `AuthorizationError`. Resolving an intent that ca
 import { ParmanaClient } from "@parmana/sdk";
 
 const operator = new ParmanaClient({
-  endpoint: "https://parmana-api-real.vercel.app",
+  endpoint: process.env.PARMANA_ENDPOINT!,
   apiKey: process.env.PARMANA_OPERATOR_KEY,
 });
 
@@ -342,7 +342,7 @@ import os
 from parmana import ParmanaClient
 
 operator = ParmanaClient(
-    endpoint="https://parmana-api-real.vercel.app",
+    endpoint=os.environ["PARMANA_ENDPOINT"],
     api_key=os.environ["PARMANA_OPERATOR_KEY"],
 )
 
