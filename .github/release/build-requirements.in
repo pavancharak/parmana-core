@@ -1,1 +1,5 @@
+# Build tools for the Python packages. The build backend is pinned too, so a
+# release built later uses the same setuptools and wheel as one built now.
 build
+setuptools==84.2.1
+wheel==0.48.0

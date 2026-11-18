@@ -76,6 +76,8 @@ npm publish <package>-<version>.tgz --access public
 
 Add `--otp <code>` if the account asks for a one-time code. Publish `@parmana/sdk` and `@parmana/connector-sdk` this way. The release's `.tgz` file name is the one to publish.
 
+Upload the Python files downloaded from the GitHub release in step 4, after their SHA-256 matches the provenance. Do not upload a local build. The release workflow builds the Python packages reproducibly (fixed timestamp, pinned build tools, normalized sdist), so the release files are the files a rebuild of the tag produces. A local build is not guaranteed to match them.
+
 ```powershell
 python -m twine upload <wheel> <sdist>
 ```
@@ -118,6 +120,7 @@ Open a pull request for the docs update and merge it.
 
 ## Known gaps
 
+- **4.0.0 and 4.0.1 on PyPI.** The `parmana` and `parmana-connector-sdk` files for these two versions were built on a local machine, before the release build was made reproducible. Their SHA-256 values differ from the Python files attached to the `sdk-v4.0.0` and `sdk-v4.0.1` releases, so the release provenance does not cover the PyPI copies. The npm packages match. Those PyPI files cannot be replaced, because PyPI does not allow a version to be re-uploaded. The first release built with the reproducible build is the next one.
 - The Python verifier has no SBOM in its release. The SDK's Python SBOM script lives in `parmana-core` and has not been copied to the verifier repository.
 - `parmana-api` (the server image) is published to GHCR as `ghcr.io/pavancharak/parmana-api`. Check that it is Public after each server release. An anonymous pull of its manifest confirms it: the token request and the manifest request should both return 200.
 - Some older sections still describe earlier versions. They are historical and are kept on purpose.
