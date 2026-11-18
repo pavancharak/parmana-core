@@ -6,11 +6,7 @@
  * value (invoice.amount). The vendor claims need the owner's confirmed policy text before they are tested
  * this way.
  */
-import {
-  createPrivateKey,
-  createPublicKey,
-  generateKeyPairSync,
-} from "node:crypto";
+import { createPrivateKey, generateKeyPairSync } from "node:crypto";
 import type { AddressInfo } from "node:net";
 import type { Server } from "node:http";
 
@@ -33,7 +29,6 @@ const privateKey = createPrivateKey(
 const publicKeyPem = pair.publicKey
   .export({ type: "spki", format: "pem" })
   .toString();
-const publicKey = createPublicKey(publicKeyPem);
 
 const owner: policyV2.register.Person = {
   id: "action-owner-1",
