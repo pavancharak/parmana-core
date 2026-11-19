@@ -207,5 +207,5 @@ Tier 1 is not in the example, because the validator does not allow it (section 4
 
 - `docs/internal/design/NEW-SYSTEM-DESIGN.md`: the tiers, the review model and the approval design.
 - `docs/internal/design/POLICY-V2-SPEC.md`: the policy language version 2.
-- `docs/ASSURANCE_DECISIONS.md`: owner decisions, including D14 to D23 for `razorpay:refund`.
+- `docs/ASSURANCE_DECISIONS.md`: owner decisions, including D14 to D23 for `payments:refund`.
 - `docs/internal/designs/VENDOR-CODE-MOVE-PLAN.md`: the plan for vendor code and identifiers.

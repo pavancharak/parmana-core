@@ -66,7 +66,7 @@ describe("sandboxApproverEntries", () => {
       revoked: false,
       capabilities: [
         "paytm:refund",
-        "razorpay:refund",
+        "payments:refund",
         "hubspot:deal-update",
         "github:pr-merge",
         "erp:invoice-pay",

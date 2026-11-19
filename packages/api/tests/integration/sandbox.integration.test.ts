@@ -76,7 +76,7 @@ function sandboxVerifier() {
           "github:pr-merge",
           "erp:invoice-pay",
           "erp:record-update",
-          "razorpay:refund",
+          "payments:refund",
           "sandbox:receipt",
         ],
       },

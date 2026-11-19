@@ -101,7 +101,7 @@ describe("refund amount scenarios", () => {
       claim: PAYMENT_REFUNDABLE_CLAIM,
       subject: "pay_ABC123456",
       subjectPath: "target",
-      action: "razorpay:refund",
+      action: "payments:refund",
       businessTransactionId: "btx-1",
       parameters: { amount: 6_000_000 },
     });

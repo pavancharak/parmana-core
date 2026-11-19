@@ -102,7 +102,7 @@ Read: [examples/live-checks/governance.ts](https://github.com/pavancharak/parman
 
 ## D. Capabilities, connectors and grants
 
-**Capability.** A named action an agent may request, such as `razorpay:refund`. Bound to an endpoint, a policy, and allowed parameters.
+**Capability.** A named action an agent may request, such as `payments:refund`. Bound to an endpoint, a policy, and allowed parameters.
 Read: [external-connectors route](https://github.com/pavancharak/parmana-core/tree/main/packages/api/src/routes) and [ADR-0013](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/adr/ADR-0013-Generic-External-Connector.md).
 
 **Connector.** The service that performs an action in a business system, with its own credential. Lives outside core.

@@ -54,7 +54,7 @@ describe("Caller capability scoping (HTTP boundary)", () => {
         callerId: "unscoped-caller",
         keyHash: hashApiKey(UNSCOPED_KEY),
         allowedPrincipalIds: ["integration-test"],
-        allowedCapabilities: ["razorpay:refund"],
+        allowedCapabilities: ["payments:refund"],
       },
       {
         callerId: "wildcard-caller",
@@ -310,7 +310,7 @@ describe("GET /callers/me (proof artifact)", () => {
         callerId: "caller-a",
         keyHash: hashApiKey(CALLER_A_KEY),
         allowedPrincipalIds: ["integration-test"],
-        allowedCapabilities: ["razorpay:refund", "razorpay:refund-fetch"],
+        allowedCapabilities: ["payments:refund", "payments:refund-fetch"],
       },
       {
         callerId: "caller-b",
@@ -336,7 +336,7 @@ describe("GET /callers/me (proof artifact)", () => {
     expect(response.body).toEqual({
       callerId: "caller-a",
       allowedPrincipalIds: ["integration-test"],
-      allowedCapabilities: ["razorpay:refund", "razorpay:refund-fetch"],
+      allowedCapabilities: ["payments:refund", "payments:refund-fetch"],
       unrestrictedCapabilities: false,
     });
 
