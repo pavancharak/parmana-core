@@ -21,10 +21,10 @@ On **Windows**, use PowerShell. Command lines below use `\` at the end of a line
 
 ## 2. The two main repositories
 
-| Repository           | What you change there                                                            |
-| -------------------- | -------------------------------------------------------------------------------- |
-| `parmana-core`       | The decision engine: policies, approvals, governance, SDKs, signed records, API  |
-| `parmana-connectors` | The services that perform approved actions in business systems, such as Razorpay |
+| Repository           | What you change there                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------------ |
+| `parmana-core`       | The decision engine: policies, approvals, governance, SDKs, signed records, API            |
+| `parmana-connectors` | The services that perform approved actions in business systems, such as payment connectors |
 
 Clone each one into its own folder:
 
@@ -186,11 +186,11 @@ The key-generating commands write files. Keep them out of Git. Never paste a key
 | `npm run check:config`   | Builds, then checks the configuration in `.env` with `dist/service/check-config-cli.js`                                            | Before starting the service, to catch missing or unsafe settings                                                              |
 | `npm run ledger:archive` | Moves finished releases from the replay ledger to an archive, keeping their ids blocked (`dist/service/archive-release-ledger.js`) | Maintenance, with the owner's agreement. It never deletes rows                                                                |
 
-**Razorpay test-mode run** (not an npm script): see section 7.
+**Test-mode run** (not an npm script): see section 7.
 
-## 7. Razorpay test-mode run (`parmana-connectors`)
+## 7. Test-mode run (`parmana-connectors`)
 
-This checks the Razorpay connector against Razorpay's test API. It refunds in test mode, so no money moves.
+This checks a payment connector against the provider's test API. It refunds in test mode, so no money moves.
 
 ```bash
 export RAZORPAY_KEY_PAIR="rzp_test_...:<secret>"
