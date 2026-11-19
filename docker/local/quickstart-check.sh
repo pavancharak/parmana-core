@@ -87,7 +87,7 @@ pass "step 3: keys added"
 
 # The approver is named per run, so the checker list is set here, not in
 # the compose file. Without it every approval is refused (fail closed, G-50).
-export POLICY_CHANGE_CHECKERS="{\"customer-refund\":[\"$approver\"]}"
+export POLICY_CHANGE_CHECKERS="{\"payment-refund\":[\"$approver\"]}"
 
 docker compose restart api >/dev/null 2>&1
 docker compose up -d --wait api >/dev/null 2>&1
@@ -99,7 +99,7 @@ grep -q "callerId=$approver  credentialHolderType=USER  allowedCapabilities=(non
   fail "step 3: list shows the approver"
 pass "step 3: list"
 
-# Step 4. Runs only when customer-refund 1.2.0 has never been approved on
+# Step 4. Runs only when payment-refund 1.0.0 has never been approved on
 # this deployment. If it has, approving the shipped content again would
 # replace whatever version is in effect, so the step is skipped. An open
 # proposal stops the run, because a second one would be refused.
@@ -108,22 +108,22 @@ curl -s "http://127.0.0.1:3000/policies/pending-changes" \
 
 policy_state=$(node -e '
   const { changes } = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
-  const mine = changes.filter((c) => c.policyName === "customer-refund" && c.policyVersion === "1.2.0");
+  const mine = changes.filter((c) => c.policyName === "payment-refund" && c.policyVersion === "1.0.0");
   console.log(mine.some((c) => c.status === "PENDING_APPROVAL") ? "pending"
     : mine.some((c) => c.status === "APPROVED") ? "approved" : "none");
 ' "$work/changes.json")
 
 if [ "$policy_state" = "pending" ]; then
-  fail "step 4: an open proposal for customer-refund 1.2.0 exists; approve or reject it first"
+  fail "step 4: an open proposal for payment-refund 1.0.0 exists; approve or reject it first"
 fi
 
 if [ "$policy_state" = "approved" ]; then
-  echo "SKIP  step 4: customer-refund 1.2.0 is already approved on this deployment"
+  echo "SKIP  step 4: payment-refund 1.0.0 is already approved on this deployment"
 else
-  printf '{"reason":"Adopt the shipped customer-refund policy.","proposedContent":%s}' \
-    "$(cat policies/customer-refund/1.2.0/policy.json)" > "$work/proposal.json"
+  printf '{"reason":"Adopt the shipped payment-refund policy.","proposedContent":%s}' \
+    "$(cat policies/payment-refund/1.0.0/policy.json)" > "$work/proposal.json"
 
-  curl -s -X POST http://127.0.0.1:3000/policies/customer-refund/1.2.0/pending-changes \
+  curl -s -X POST http://127.0.0.1:3000/policies/payment-refund/1.0.0/pending-changes \
     -H "Authorization: Bearer $ALICE_KEY" -H "Content-Type: application/json" \
     --data @"$work/proposal.json" > "$work/proposed.json"
 

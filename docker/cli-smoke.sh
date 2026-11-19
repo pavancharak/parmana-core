@@ -15,7 +15,7 @@ run policy propose --help | grep -q -- "--reason" && echo "   ok"
 
 echo "3. A dry run prints the request with the token masked, and needs no token"
 out="$(docker run --rm -e PARMANA_API_URL=https://example.test "$IMAGE" \
-  policy status customer-refund 1.3.0 --dry-run)"
+  policy status payment-refund 1.0.0 --dry-run)"
 echo "$out" | grep -q "Authorization: Bearer \*\*\*" && echo "   ok"
 
 echo "4. The image runs as a non-root user"
