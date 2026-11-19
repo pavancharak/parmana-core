@@ -36,6 +36,8 @@ const keys = generateKeyPairSync("ed25519");
 
 const policiesDirectory = join(
   dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "fixtures",
   "policies",
 );
 
