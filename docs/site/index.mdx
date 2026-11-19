@@ -1,11 +1,11 @@
 ---
 title: "Welcome"
-description: "The Business Authority Layer for Autonomous Systems. Make sure every action stays within what your business allows, and keep signed proof that it did."
+description: "The Business Authority Layer for Autonomous Systems. Make sure every action stays within what your institution allows, and keep signed proof that it did."
 ---
 
 **The Business Authority Layer for Autonomous Systems.**
 
-AI agents can propose and start actions. Businesses decide what authority to delegate. Parmana checks each action against that authority before it runs, and keeps signed evidence that anyone can verify.
+AI agents can propose and start actions. Institutions decide what authority to delegate. Parmana checks each action against that authority before it runs, and keeps signed evidence that anyone can verify.
 
 <Info>
   **Apache License 2.0.** The whole Parmana repository, including the server, is
@@ -17,13 +17,13 @@ AI agents can propose and start actions. Businesses decide what authority to del
 
 ## Access is not authority
 
-Access controls answer one question: can this agent reach this system? That matters, but it is not the question that matters when an agent is about to issue a refund or change a record. The question is whether this specific action, for this amount and in these circumstances, is within what your business actually delegated.
+Access controls answer one question: can this agent reach this system? That matters, but it is not the question that matters when an agent is about to issue a refund or change a record. The question is whether this specific action, for this amount and in these circumstances, is within what your institution actually delegated.
 
-Parmana answers that question before the action runs, using rules your business writes and a person's signature where the rules require one.
+Parmana answers that question before the action runs, using rules your institution writes and a person's signature where the rules require one.
 
 ## What Parmana controls
 
-1. **Declared.** Your business writes its authority as explicit, versioned rules: what each action may do, up to what amount, and when a person must approve it.
+1. **Declared.** Your institution writes its authority as explicit, versioned rules: what each action may do, up to what amount, and when a person must approve it.
 2. **Authorized.** Each proposed action is checked against those rules. If no rule matches, the action is refused. A rule that needs a person waits for a signed approval for that exact action.
 3. **Executed.** Only permitted actions pass the enforcement boundary. On supported paths, the gateway holds the connector credentials, so the agent never does, and it releases each approved action once.
 4. **Proven.** A signed record of the decision and the release, which anyone can verify offline with the public key they choose to trust.
@@ -36,7 +36,7 @@ A support agent asks to refund 4,000 to a customer. Your policy lets the agent r
 
 Parmana refuses the request, so nothing is refunded. The manager reviews it and signs an approval for that order and amount, valid for 15 minutes and usable once. The agent sends the request again. Parmana releases the refund through your refund system, and the record shows the decision, the approval and the release.
 
-## What the business receives
+## What the institution receives
 
 - **Control.** Rules you can read, change only through a second approver, and enforce whether the caller is a person or an agent.
 - **Accountability.** A signed record of each decision, approval and release, tied to the action it covers.

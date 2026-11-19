@@ -81,7 +81,7 @@ Record: [ADR-0013, generic external connector](https://github.com/pavancharak/pa
 
 **What it does.** An operator can trip a kill switch that refuses new execution, new transactions, policy-change approvals and sandbox approvals before any of them run. The stop is stored in Postgres, so a restart does not clear it. A reset can require a second, different operator.
 
-**Why.** An agent can act at machine speed, so the business needs one control that halts all of it at once. Partial controls, such as refusing an action in policy or revoking a connector or an approver, stop one thing at a time.
+**Why.** An agent can act at machine speed, so the institution needs one control that halts all of it at once. Partial controls, such as refusing an action in policy or revoking a connector or an approver, stop one thing at a time.
 
 **What it costs.** The stop does not recall an action already released, so calls admitted before the trip can still complete. It halts every caller at once, not one agent. A tool an agent reaches directly, bypassing Parmana, is not stopped. The status response is not signed yet, and two-person reset has not been exercised in production with two real operator keys.
 
