@@ -229,7 +229,7 @@ const CASES: readonly Case[] = [
     failing: { riskScore: 99 },
   },
   {
-    name: "nbfc-loan-disbursement",
+    name: "loan-disbursement",
     version: "1.0.0",
     approvalFact: "humanApproved",
     resourceId: "target",

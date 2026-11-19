@@ -2,7 +2,7 @@
 
 ## Objective
 
-Show how the `nbfc-loan-disbursement` 1.0.0 policy decides a loan disbursement: which conditions must hold, which named refusal each one produces, and how a rolling velocity limit stops a run even when every transfer is approved.
+Show how the `loan-disbursement` 1.0.0 policy decides a loan disbursement: which conditions must hold, which named refusal each one produces, and how a rolling velocity limit stops a run even when every transfer is approved.
 
 ## What You'll Learn
 

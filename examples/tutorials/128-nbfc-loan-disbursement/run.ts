@@ -1,4 +1,4 @@
-// Tutorial 128: The nbfc-loan-disbursement 1.0.0 policy approves a loan
+// Tutorial 128: The loan-disbursement 1.0.0 policy approves a loan
 // disbursement only when every condition holds and a verified human approval
 // is present. Each condition has a named refusal, and a rolling velocity limit
 // stops a run even when every transfer is approved. Pure policy evaluation,
@@ -21,7 +21,7 @@ const policy = JSON.parse(
   readFileSync(
     path.resolve(
       import.meta.dirname,
-      "../../../fixtures/policies/nbfc-loan-disbursement/1.0.0/policy.json",
+      "../../../fixtures/policies/loan-disbursement/1.0.0/policy.json",
     ),
     "utf8",
   ),
