@@ -100,7 +100,7 @@ Parmana sits between an agent or application and the business system. The applic
 | Piece         | What you provide                                                         | Where it lives                                                                 |
 | ------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
 | Policy        | Rules: which capability, which signals, which approvals                  | `policies/<name>/<version>/policy.json`, approved through maker-checker        |
-| Capability    | A name (for example `razorpay:refund`) bound to an endpoint and a policy | Registered through maker-checker                                               |
+| Capability    | A name (for example `payments:refund`) bound to an endpoint and a policy | Registered through maker-checker                                               |
 | Connector     | The code that performs the action                                        | A separate service (for example `parmana-connectors`), with its own credential |
 | Signal source | An outside system that establishes facts a policy needs                  | Registered through maker-checker                                               |
 | Caller        | The application or agent, with its API key                               | `PARMANA_API_KEYS`, one entry per caller                                       |

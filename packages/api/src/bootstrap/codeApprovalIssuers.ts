@@ -88,7 +88,7 @@ const TRUSTED_APPROVAL_ISSUERS: readonly ConfiguredApprovalIssuer[] = [
  */
 const SANDBOX_APPROVER_CAPABILITIES: readonly string[] = [
   "paytm:refund",
-  "razorpay:refund",
+  "payments:refund",
   "hubspot:deal-update",
   "github:pr-merge",
   "erp:invoice-pay",

@@ -425,7 +425,7 @@ function requireApproverId(value: string | undefined, flag: string): string {
 export function parseCapabilities(text: string | undefined): string[] {
   if (text === undefined) {
     throw new CliUsageError(
-      "--capabilities is required: a comma-separated list, for example razorpay:refund.",
+      "--capabilities is required: a comma-separated list, for example payments:refund.",
     );
   }
   const list = [

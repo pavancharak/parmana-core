@@ -17,7 +17,7 @@ A **maker** proposes a change. A **checker** reviews it and approves it. The two
 - **Pending change.** The proposed change, in state `PENDING_APPROVAL`, until a checker acts on it.
 - **Step-up.** A short signature from the checker's step-up key, made at the moment of approval. It is valid for 120 seconds at most, and it is single-use.
 - **Approval record.** A signed record that the change was approved, written when the approval goes through.
-- **Capability.** A named action an agent may request, such as `razorpay:refund`. It is bound to an external endpoint, a policy, and the parameters it may carry.
+- **Capability.** A named action an agent may request, such as `payments:refund`. It is bound to an external endpoint, a policy, and the parameters it may carry.
 - **Signal source.** An outside system that can establish a fact a policy needs. Like capabilities, it is registered through maker-checker.
 - **Grant.** Permission for one agent to use one capability, up to a stated limit, for a stated number of days.
 
@@ -80,7 +80,7 @@ The governance script prints the change and waits for `APPROVE` before it signs.
 
 A capability is what lets an agent cause an action in an outside system. Registering one is a maker-checker change, like a policy.
 
-**What a capability record holds:** the capability name (for example `razorpay:refund`), the endpoint URL that receives releases, the policy that governs it, and the parameters the endpoint may receive (for example `amount`).
+**What a capability record holds:** the capability name (for example `payments:refund`), the endpoint URL that receives releases, the policy that governs it, and the parameters the endpoint may receive (for example `amount`).
 
 **Steps:**
 

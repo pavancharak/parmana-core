@@ -38,7 +38,7 @@ const READ_CAPABILITIES = new Set(["github:pr-fetch"]);
  * every approve rule of its policy needs a fact the caller cannot fake
  * (checked below, for every bound capability, read or write).
  */
-const WRITE_CAPABILITIES = new Set(["razorpay:refund"]);
+const WRITE_CAPABILITIES = new Set(["payments:refund"]);
 
 /**
  * Facts a server side verifier checks itself, per write capability.

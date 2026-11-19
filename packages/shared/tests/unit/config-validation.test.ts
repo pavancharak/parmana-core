@@ -228,7 +228,7 @@ describe("parseApiKeys", () => {
           {
             callerId: "caller-1",
             keyHash: validHash,
-            allowedCapabilities: ["razorpay:refund", "razorpay:refund-fetch"],
+            allowedCapabilities: ["payments:refund", "payments:refund-fetch"],
           },
         ]),
       ),
@@ -236,7 +236,7 @@ describe("parseApiKeys", () => {
       {
         callerId: "caller-1",
         keyHash: validHash,
-        allowedCapabilities: ["razorpay:refund", "razorpay:refund-fetch"],
+        allowedCapabilities: ["payments:refund", "payments:refund-fetch"],
       },
     ]);
   });
@@ -272,7 +272,7 @@ describe("parseApiKeys", () => {
           {
             callerId: "caller-1",
             keyHash: validHash,
-            allowedCapabilities: "razorpay:refund",
+            allowedCapabilities: "payments:refund",
           },
         ]),
       ),
@@ -314,7 +314,7 @@ describe("parseApiKeys", () => {
           {
             callerId: "caller-1",
             keyHash: validHash,
-            allowedCapabilities: ["razorpay:refund", ""],
+            allowedCapabilities: ["payments:refund", ""],
           },
         ]),
       ),
