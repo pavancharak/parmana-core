@@ -51,6 +51,16 @@ Each step has a rollback. Steps 2 and 3 are copies first, so core keeps working 
 ## 5. Decisions needed from the owner
 
 1. **Identifier policy.** Keep capability ids, claim names and connector ids as stable contract identifiers, as section 3 proposes? Or rename them, with a new signed policy version and a migration?
+
+   **Proposed permanent fix (answer to the owner's "best long term permanent fix", not yet approved):** rename once, to neutral identifiers, through a versioned migration, with no permanent aliases.
+   - Define neutral ids in the form `<domain>:<action>`, for example `payments:refund` in place of `razorpay:refund`. Keep one registry table that maps each id to its connector, so the connector name appears in one place only.
+   - Introduce the neutral ids in a new signed policy version (for example `payment-refund` 2.0.0) through maker-checker. Core signs and verifies that version. The old policy stays signed and verifiable as history.
+   - Connectors accept both the old and new ids for one transition window. Core issues only the new ids once the new policy version is in effect. The window is set by the owner.
+   - Remove the old ids after the window. This is a separate release, and the removal is recorded in the changelog.
+   - Add a guard test, `tests/architecture/`, that fails if a vendor name appears in a new capability id, claim name or connector id. Old ids are listed explicitly and cannot grow.
+   - No alias is kept permanently, because two live names for one action would let one approval authorise two things. The transition window is the only time both names work.
+   - Owner decisions this needs: the window length, who approves the new policy version, and the deployment order (connectors first, then core).
+
 2. **Step 2.** Move the Razorpay payment source to `parmana-connectors`? If yes, who reviews the copy, and who approves the removal from core?
 3. **Step 3.** Move the GitHub live-availability helper, or leave it in core as a test-only helper?
 
