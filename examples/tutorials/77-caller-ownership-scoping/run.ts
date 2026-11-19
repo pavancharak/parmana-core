@@ -113,10 +113,9 @@ async function approveVendorPaymentPolicy(): Promise<void> {
   const { FilePolicyRepository } = await import("@parmana/policy");
   const { PendingPolicyChangeStatus } = await import("@parmana/shared");
 
-  const dir = path.resolve(
-    process.cwd(),
-    process.env.PARMANA_POLICY_DIR ?? "./fixtures/policies",
-  );
+  // The tutorial approves a fixture policy (payment-limit 1.0.0), which lives in
+  // fixtures/policies, not in the live policies/ folder the runner configures.
+  const dir = path.resolve(process.cwd(), "fixtures/policies");
   const base = new FilePolicyRepository(dir);
   const readOnly = {
     load: (name: string, version: string) => base.load(name, version),
