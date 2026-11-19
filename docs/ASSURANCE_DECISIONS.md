@@ -149,16 +149,17 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 ## Record
 
-| Decision | Owner decision                          | Date       | Recorded by                              |
-| -------- | --------------------------------------- | ---------- | ---------------------------------------- |
-| D7       | In scope                                | 2026-11-14 | Recorded in session at owner's direction |
-| D8       | Define as proposed                      | 2026-11-14 | Recorded in session at owner's direction |
-| D9       | Reject non-canonical encodings          | 2026-11-14 | Recorded in session at owner's direction |
-| D10      | Pending                                 |            |                                          |
-| D11      | Pending                                 |            |                                          |
-| D12      | Pending                                 |            |                                          |
-| D13      | Adopted: permanent direction            | 2026-11-14 | Recorded in session at owner's direction |
-| D14      | Adopted: razorpay:refund policy version | 2026-11-14 | Owner confirmed version 1.3.0            |
+| Decision | Owner decision                                | Date       | Recorded by                              |
+| -------- | --------------------------------------------- | ---------- | ---------------------------------------- |
+| D7       | In scope                                      | 2026-11-14 | Recorded in session at owner's direction |
+| D8       | Define as proposed                            | 2026-11-14 | Recorded in session at owner's direction |
+| D9       | Reject non-canonical encodings                | 2026-11-14 | Recorded in session at owner's direction |
+| D10      | Pending                                       |            |                                          |
+| D11      | Pending                                       |            |                                          |
+| D12      | Pending                                       |            |                                          |
+| D13      | Adopted: permanent direction                  | 2026-11-14 | Recorded in session at owner's direction |
+| D14      | Adopted: razorpay:refund policy version       | 2026-11-14 | Owner confirmed version 1.3.0            |
+| D23      | Partly adopted: G-77 change; the rest pending | 2026-11-19 | Recorded in session at owner's direction |
 
 ---
 
@@ -341,3 +342,27 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 **Effect on the documents:** the finalflowparmana `02-authorize` documents describe Authorize as a stage of its own, with the signed authorization named as the handoff. The open point is closed.
 
 **Not changed by this decision:** the API, the runtime's code, and the gateway's checks. No code changes.
+
+---
+
+## D23. Permanent fix for the razorpay:refund binding gap (19 November 2026)
+
+- **Reference:** D23
+- **Source:** docs/guides/policy-writing.md (sections 4 and 7); the superseded drafts were removed in the same change
+- **Date recorded:** 2026-11-19
+- **Owner:** Pavan Charak
+
+**Question:** How should the G-77 guard and the `razorpay:refund` binding be resolved now that D15 dropped the binding?
+
+**Owner decision, part 1 (adopted):** change the G-77 guard so it classifies every bound capability as a read or a write, and checks every bound capability (read or write) by the trusted-fact property: each approve rule must require a fact the caller cannot declare. The first assertion no longer blocks writes.
+
+**Done:** `claude/capability-binding-fix`, commit e24ee1f0. The guard tests pass (29 tests across the guard and the capability registry). No binding has been added. The canonical table is still empty.
+
+**Not decided (owner, required before any binding):**
+
+1. **Target policy.** D14 named `customer-refund` 1.3.0. That policy has no approve rule and rejects every refund by design (`policies/customer-refund/1.3.0/policy.json`). Binding `razorpay:refund` to it would refuse every refund. An earlier note in this record said its approve rules check a trusted fact; that was wrong, and it is corrected here. The target must be chosen again. The design for a new draft is in `docs/guides/policy-writing.md`, section 7. The draft is not in effect.
+2. **Capability naming.** D16 chose a format that embeds the connector name (`razorpay_customer-refund_1-3-0`). The vendor-neutral identifier plan (`docs/internal/designs/VENDOR-CODE-MOVE-PLAN.md`, decision 1) proposes neutral names. These conflict. The owner must decide which applies to `razorpay:refund`.
+3. **Tier 1.** The design allows automatic approval within a threshold. The validator requires every approve rule to need a signed approval. Either the validator changes (a security change, with its own review and a threshold set by the owner), or tier 2 is the only approval path. Until decided, nothing reaches tier 1.
+4. **Commit signing.** Commits made in this session are signed off but not signed. Signing must be fixed before any merge.
+
+**Effect:** no code or policy changes beyond part 1. D15 stays in force until a target is chosen. The earlier proposal documents (`CAPABILITY-BINDING-PERMANENT-FIX.md` and `RAZORPAY-REFUND-POLICY-DRAFT.md`) are removed. This record and the guide replace them.
