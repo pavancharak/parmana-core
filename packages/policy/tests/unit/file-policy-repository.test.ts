@@ -27,7 +27,10 @@ import type { Policy } from "../../src/types/Policy.js";
  * — this mirrors that fix and that test file's structure.
  */
 describe("FilePolicyRepository name/version sanitization", () => {
-  const basePath = path.resolve(import.meta.dirname, "../../../../policies");
+  const basePath = path.resolve(
+    import.meta.dirname,
+    "../../../../test-support/policies",
+  );
 
   it("rejects a path-traversal name that resolves outside basePath", async () => {
     const repository = new FilePolicyRepository(basePath);

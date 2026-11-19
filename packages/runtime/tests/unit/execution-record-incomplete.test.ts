@@ -43,7 +43,7 @@ import {
  * release must say so explicitly instead of surfacing a generic error.
  */
 const policyRepository = new FilePolicyRepository(
-  path.resolve(import.meta.dirname, "../../../../policies"),
+  path.resolve(import.meta.dirname, "../../../../test-support/policies"),
 );
 
 function transaction(): Promise<BusinessTransaction> {

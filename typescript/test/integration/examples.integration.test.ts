@@ -49,7 +49,7 @@ let endpoint: string;
 
 beforeAll(async () => {
   process.env.PARMANA_POLICY_DIR = fileURLToPath(
-    new URL("../../../policies", import.meta.url),
+    new URL("../../../test-support/policies", import.meta.url),
   );
 
   // Deliberately dynamic imports, deferred until after PARMANA_POLICY_DIR

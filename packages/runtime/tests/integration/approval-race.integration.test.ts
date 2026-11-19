@@ -76,7 +76,7 @@ function setup(ledgerForVerifier: ApprovalNonceLedger = ledger) {
   const runtime = new RuntimeBuilder()
     .withPolicyRepository(
       new FilePolicyRepository(
-        path.resolve(import.meta.dirname, "../../../../policies"),
+        path.resolve(import.meta.dirname, "../../../../test-support/policies"),
       ),
     )
     .withSignalStateVerifier(new ApprovalSignalVerifier(verifier))

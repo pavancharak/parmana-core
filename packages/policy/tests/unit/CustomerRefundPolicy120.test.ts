@@ -21,7 +21,7 @@ describe("customer-refund 1.2.0", () => {
     readFileSync(
       path.resolve(
         import.meta.dirname,
-        "../../../../policies/customer-refund/1.2.0/policy.json",
+        "../../../../test-support/policies/customer-refund/1.2.0/policy.json",
       ),
       "utf8",
     ),

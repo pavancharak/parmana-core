@@ -113,7 +113,7 @@ describe("Reference Policy Evaluation", () => {
         readFileSync(
           path.resolve(
             import.meta.dirname,
-            "../../../../policies",
+            "../../../../test-support/policies",
             testCase.file,
           ),
           "utf8",
@@ -140,7 +140,7 @@ describe("Reference Policy Evaluation", () => {
         readFileSync(
           path.resolve(
             import.meta.dirname,
-            "../../../../policies",
+            "../../../../test-support/policies",
             testCase.file,
           ),
           "utf8",

@@ -25,7 +25,7 @@ import { describe, expect, it } from "vitest";
 
 const root = process.cwd();
 const docsDir = path.join(root, "docs", "site");
-const policiesDir = path.join(root, "policies");
+const policiesDir = path.join(root, "test-support", "policies");
 
 interface Sample {
   readonly file: string;

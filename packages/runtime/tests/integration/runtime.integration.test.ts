@@ -16,7 +16,7 @@ import {
 describe("Runtime Integration", () => {
   it("executes a complete vendor payment transaction", async () => {
     const policyRepository = new FilePolicyRepository(
-      path.resolve(import.meta.dirname, "../../../../policies"),
+      path.resolve(import.meta.dirname, "../../../../test-support/policies"),
     );
 
     const trustRecords = new MemoryExecutionTrustRecordRepository();
