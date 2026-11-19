@@ -261,7 +261,7 @@ describe("Execution Intents (ADR-0012, HTTP boundary): repair after a released a
       new MemoryBusinessTransactionRepository(),
       trustRecords,
       new FilePolicyRepository(
-        path.resolve(import.meta.dirname, "../../../../test-support/policies"),
+        path.resolve(import.meta.dirname, "../../../../fixtures/policies"),
       ),
       executionSystem,
       new MemoryRefusalRecordRepository(),
@@ -430,7 +430,7 @@ describe("Execution Intents (G-54, HTTP boundary): closing an intent reconciled 
       new MemoryBusinessTransactionRepository(),
       trustRecords,
       new FilePolicyRepository(
-        path.resolve(import.meta.dirname, "../../../../test-support/policies"),
+        path.resolve(import.meta.dirname, "../../../../fixtures/policies"),
       ),
       executionSystem,
       new MemoryRefusalRecordRepository(),

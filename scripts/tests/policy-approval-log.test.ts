@@ -316,7 +316,7 @@ describe("the policy approval log", () => {
         ]),
       ),
     ).toEqual([
-      "policies/customer-refund/1.2.0/policy.json does not match its latest logged approval.",
+      "fixtures/policies/customer-refund/1.2.0/policy.json does not match its latest logged approval.",
       "policies/example-post-message/1.1.0/policy.json has no approval in the log.",
     ]);
   });

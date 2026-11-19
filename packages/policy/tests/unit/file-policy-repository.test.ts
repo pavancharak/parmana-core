@@ -29,7 +29,7 @@ import type { Policy } from "../../src/types/Policy.js";
 describe("FilePolicyRepository name/version sanitization", () => {
   const basePath = path.resolve(
     import.meta.dirname,
-    "../../../../test-support/policies",
+    "../../../../fixtures/policies",
   );
 
   it("rejects a path-traversal name that resolves outside basePath", async () => {

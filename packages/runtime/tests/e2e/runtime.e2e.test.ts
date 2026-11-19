@@ -36,7 +36,7 @@ import {
  */
 describe("RuntimeEngine E2E", () => {
   const policyRepository = new FilePolicyRepository(
-    path.resolve(import.meta.dirname, "../../../../test-support/policies"),
+    path.resolve(import.meta.dirname, "../../../../fixtures/policies"),
   );
 
   const router = new PolicyRouter(policyRepository);

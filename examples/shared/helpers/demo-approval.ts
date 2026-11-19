@@ -37,7 +37,7 @@ const keys = generateKeyPairSync("ed25519");
 
 const policiesDirectory = path.resolve(
   import.meta.dirname,
-  "../../../policies",
+  "../../../fixtures/policies",
 );
 
 /**

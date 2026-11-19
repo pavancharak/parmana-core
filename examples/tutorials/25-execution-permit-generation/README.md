@@ -57,7 +57,7 @@ The Runtime generates the Execution Permit automatically.
 
 ```ts
 const runtime = new RuntimeBuilder()
-  .withPolicyRepository(new FilePolicyRepository("policies"))
+  .withPolicyRepository(new FilePolicyRepository("fixtures/policies"))
   .build(repository);
 ```
 

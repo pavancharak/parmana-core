@@ -114,7 +114,7 @@ describe("Reference Policy Determinism", () => {
         readFileSync(
           path.resolve(
             import.meta.dirname,
-            "../../../../test-support/policies",
+            "../../../../fixtures/policies",
             testCase.file,
           ),
           "utf8",

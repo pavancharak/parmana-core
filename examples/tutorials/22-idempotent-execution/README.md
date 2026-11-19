@@ -46,7 +46,7 @@ The same Business Transaction is executed three times using the same `businessTr
 
 ```ts
 const runtime = new RuntimeBuilder()
-  .withPolicyRepository(new FilePolicyRepository("policies"))
+  .withPolicyRepository(new FilePolicyRepository("fixtures/policies"))
   .build(repository);
 ```
 

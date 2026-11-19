@@ -60,7 +60,7 @@ import {
  * without calling the connector again.
  */
 const policyRepository = new FilePolicyRepository(
-  path.resolve(import.meta.dirname, "../../../../test-support/policies"),
+  path.resolve(import.meta.dirname, "../../../../fixtures/policies"),
 );
 
 const TX = "tx-adr0012";

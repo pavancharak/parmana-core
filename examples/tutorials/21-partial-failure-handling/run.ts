@@ -41,7 +41,7 @@ async function main(): Promise<void> {
 
   const runtime = new RuntimeBuilder()
     .withSignalStateVerifier(demoApprovalSignalVerifier())
-    .withPolicyRepository(new FilePolicyRepository("policies"))
+    .withPolicyRepository(new FilePolicyRepository("fixtures/policies"))
     .build(repository);
 
   const transactions = [transaction1, transaction2, transaction3, transaction4];

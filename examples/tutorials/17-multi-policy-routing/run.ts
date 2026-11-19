@@ -25,7 +25,7 @@ const transaction = JSON.parse(
 ) as BusinessTransaction;
 
 const policyRepository = new FilePolicyRepository(
-  path.resolve(root, "../../../policies"),
+  path.resolve(root, "../../../fixtures/policies"),
 );
 
 const transactions = new MemoryBusinessTransactionRepository();

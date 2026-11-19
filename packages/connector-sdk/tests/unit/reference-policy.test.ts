@@ -20,7 +20,7 @@ const policy = JSON.parse(
   readFileSync(
     path.resolve(
       import.meta.dirname,
-      "../../../../test-support/policies/connector-capability/1.1.0/policy.json",
+      "../../../../fixtures/policies/connector-capability/1.1.0/policy.json",
     ),
     "utf8",
   ),

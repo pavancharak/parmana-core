@@ -24,7 +24,7 @@ function loadPolicy(name: string, version: string): Policy {
     readFileSync(
       path.resolve(
         import.meta.dirname,
-        "../../../../test-support/policies",
+        "../../../../fixtures/policies",
         name,
         version,
         "policy.json",

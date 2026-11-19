@@ -22,7 +22,7 @@ import {
 describe("Runtime release refused by a kill switch", () => {
   it("does not release an action when a pre-release hook refuses it", async () => {
     const policyRepository = new FilePolicyRepository(
-      path.resolve(import.meta.dirname, "../../../../test-support/policies"),
+      path.resolve(import.meta.dirname, "../../../../fixtures/policies"),
     );
 
     const runtime = new RuntimeBuilder()

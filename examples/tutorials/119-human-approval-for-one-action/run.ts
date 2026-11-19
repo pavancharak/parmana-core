@@ -26,7 +26,7 @@ import { MemoryApprovalNonceLedger } from "@parmana/storage";
 //
 // Human approval for one action: a person signs off on a single refund.
 //
-// The real policy policies/customer-refund/1.2.0/policy.json says:
+// The real policy fixtures/policies/customer-refund/1.2.0/policy.json says:
 //   * above 0 and up to 100000, a refund needs managerApproved;
 //   * 0 or less, or above 100000, it is refused, approval or not.
 // (1.1.0 approved a refund up to 10000 on the agent's word alone that it
@@ -56,7 +56,14 @@ const repoRoot = dirname(
 
 const policy = JSON.parse(
   readFileSync(
-    join(repoRoot, "policies", "customer-refund", "1.2.0", "policy.json"),
+    join(
+      repoRoot,
+      "fixtures",
+      "policies",
+      "customer-refund",
+      "1.2.0",
+      "policy.json",
+    ),
     "utf8",
   ),
 ) as Policy;

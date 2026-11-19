@@ -2,7 +2,7 @@
 // that expect them unset. Loaders check this flag before reading any file.
 process.env.PARMANA_SKIP_DOTENV = "1";
 // The policy folder for tests is the fixture copy of the older policies in
-// test-support/policies. The live policies/ folder holds only the policies in use.
+// fixtures/policies. The live policies/ folder holds only the policies in use.
 // A developer's own setting is kept.
 import { fileURLToPath as __toPath } from "node:url";
 import { dirname as __dirname, join as __join } from "node:path";

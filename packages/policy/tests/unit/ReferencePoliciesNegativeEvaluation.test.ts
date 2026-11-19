@@ -115,7 +115,7 @@ describe("Reference Policy Negative Evaluation", () => {
         readFileSync(
           path.resolve(
             import.meta.dirname,
-            "../../../../test-support/policies",
+            "../../../../fixtures/policies",
             testCase.file,
           ),
           "utf8",

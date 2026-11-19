@@ -21,7 +21,7 @@ const policy = JSON.parse(
   readFileSync(
     path.resolve(
       import.meta.dirname,
-      "../../../policies/nbfc-loan-disbursement/1.0.0/policy.json",
+      "../../../fixtures/policies/nbfc-loan-disbursement/1.0.0/policy.json",
     ),
     "utf8",
   ),

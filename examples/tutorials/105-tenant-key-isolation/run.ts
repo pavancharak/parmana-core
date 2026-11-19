@@ -51,7 +51,7 @@ const path = await import("node:path");
 const root = path.resolve(import.meta.dirname);
 
 const policyRepository = new FilePolicyRepository(
-  path.resolve(root, "../../../policies"),
+  path.resolve(root, "../../../fixtures/policies"),
 );
 const trustRecords = new MemoryExecutionTrustRecordRepository();
 

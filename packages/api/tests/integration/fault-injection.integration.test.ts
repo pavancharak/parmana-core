@@ -37,7 +37,7 @@ import { testApprovalSignalVerifier } from "../../../../test-support/approvals.j
 
 const POLICY_DIRECTORY = path.resolve(
   import.meta.dirname,
-  "../../../../test-support/policies",
+  "../../../../fixtures/policies",
 );
 
 let previousIntentsCheck: string | undefined;

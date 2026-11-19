@@ -53,7 +53,14 @@ export interface GateDecision {
 export function loadRefundPolicy(repoRoot: string): Policy {
   const policy = JSON.parse(
     readFileSync(
-      join(repoRoot, "policies", "customer-refund", "1.2.0", "policy.json"),
+      join(
+        repoRoot,
+        "fixtures",
+        "policies",
+        "customer-refund",
+        "1.2.0",
+        "policy.json",
+      ),
       "utf8",
     ),
   ) as Policy;

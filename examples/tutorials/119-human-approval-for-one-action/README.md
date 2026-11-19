@@ -4,7 +4,7 @@
 
 Show a person signing off on one critical action: a refund runs only with a signed approval
 from a trusted manager, for that order and at least that amount, used once. It uses the real
-`policies/customer-refund/1.2.0/policy.json` and the real components the server runs.
+`fixtures/policies/customer-refund/1.2.0/policy.json` and the real components the server runs.
 
 ## What the policy says
 

@@ -12,7 +12,7 @@ This is not a hypothetical concern. It closes a real, previously live gap: a cal
 
 ## The Policy Declaration
 
-`policies/vendor-payment/2.1.0/policy.json` declares:
+`fixtures/policies/vendor-payment/2.1.0/policy.json` declares:
 
 ```json
 "boundSignals": {

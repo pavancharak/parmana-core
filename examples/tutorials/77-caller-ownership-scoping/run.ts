@@ -115,7 +115,7 @@ async function approveVendorPaymentPolicy(): Promise<void> {
 
   const dir = path.resolve(
     process.cwd(),
-    process.env.PARMANA_POLICY_DIR ?? "./policies",
+    process.env.PARMANA_POLICY_DIR ?? "./fixtures/policies",
   );
   const base = new FilePolicyRepository(dir);
   const readOnly = {

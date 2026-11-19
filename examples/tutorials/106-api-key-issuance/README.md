@@ -10,7 +10,7 @@ time — no retrofit needed.
 
 ## What You'll Learn
 
-- `policies/api-key-issuance/1.1.0/policy.json` binds its one genuinely Intent-bindable fact
+- `fixtures/policies/api-key-issuance/1.1.0/policy.json` binds its one genuinely Intent-bindable fact
   (`keyLifetimeDays`, an amount-like field) via `boundSignals`, and explicitly acknowledges
   every other fact (`requesterVerified`, `scopeAuthorized`, `riskScore`) in
   `unboundSignalReasons` with a specific reason — `PolicyValidator.validate()` would otherwise
