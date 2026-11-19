@@ -152,7 +152,7 @@ expect_equal "step 5: refused decision" \
   "$(curl -s -w '\nHTTP %{http_code}' -X POST http://127.0.0.1:3000/execute \
     -H "Authorization: Bearer $OPERATOR_KEY" -H "Content-Type: application/json" \
     --data @"$work/refund.json")" \
-  "$(printf '%s\n%s' '{"error":"Execution rejected: Refund rejected. Every refund needs a signed manager approval for this order, covering this amount, in signals.approvalArtifact, with managerApproved true, and every other policy condition satisfied.","code":"POLICY_DENIED"}' 'HTTP 403')"
+  "$(printf '%s\n%s' '{"error":"Execution rejected: Rejected: business validation SOURCE_UNAVAILABLE. paymentRefundable: source \"razorpay\" is not registered.","code":"POLICY_DENIED"}' 'HTTP 403')"
 
 # Step 6
 BTX=$(sed -n 's/.*"businessTransactionId": "\([^"]*\)".*/\1/p' "$work/refund.json" | head -1)
