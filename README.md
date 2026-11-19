@@ -9,7 +9,7 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/pavancharak/parmana-core/badge)](https://scorecard.dev/viewer/?uri=github.com/pavancharak/parmana-core)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15846/badge)](https://www.bestpractices.dev/projects/15846)
 
-**The Business Authority Layer for Autonomous Systems.** Make sure every action stays within what your institution allows.
+**The Institutional Authority Layer for Autonomous Systems.** Make sure every action stays within what your institution allows.
 
 AI agents propose and start actions. Institutions decide what authority to delegate. Parmana checks each action against that authority before it runs, and keeps signed evidence that anyone can verify.
 

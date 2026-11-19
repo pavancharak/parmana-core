@@ -10,7 +10,7 @@ This file concatenates the integration pages of the Parmana documentation. It is
 
 Source: https://docs.parmanasystems.com
 
-**The Business Authority Layer for Autonomous Systems.**
+**The Institutional Authority Layer for Autonomous Systems.**
 
 AI agents can propose and start actions. Institutions decide what authority to delegate. Parmana checks each action against that authority before it runs, and keeps signed evidence that anyone can verify.
 

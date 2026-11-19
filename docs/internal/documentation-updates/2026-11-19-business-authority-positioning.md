@@ -1,4 +1,4 @@
-# Documentation update: Business Authority positioning, marketing content
+# Documentation update: Institutional Authority positioning, marketing content
 
 - **Date:** 2026-11-19
 - **Trigger:** "revise docs site, in parmana core only marketing content", applying the positioning foundation in `docs/internal/positioning/POSITIONING-FOUNDATION.md`

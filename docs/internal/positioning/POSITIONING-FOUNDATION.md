@@ -1,13 +1,13 @@
 # Parmana positioning foundation
 
-- **Status:** approved by the owner, Pavan Charak, on 2026-11-19. Approved with one wording change: "business" is replaced with "institution" in the copy, and "Business Authority Layer" stays as the approved category name. Assets in the repository are revised against this document, one at a time.
+- **Status:** approved by the owner, Pavan Charak, on 2026-11-19. Approved with one wording change: "business" is replaced with "institution" in the copy. The category name is "Institutional Authority Layer" (renamed from "Business Authority Layer" at the owner's request). Assets in the repository are revised against this document, one at a time.
 - **Date:** 2026-11-19
 - **Scope:** marketing content in this repository: the docs site home and comparison pages (`docs/site/`), and the README introduction. Technical reference (concepts, architecture, SDKs, the handbook, the claims register) is not marketing and is not rewritten here.
 - **Evidence rule:** every capability named below is cited to the claim in `docs/internal/CLAIMS.md` that supports it. Anything not yet built is marked as roadmap or as a conceptual proposal.
 
 ## 1. Positioning statement
 
-Parmana is the Business Authority Layer for Autonomous Systems: it makes the authority an institution delegates to AI agents explicit, checks each action against that authority before it runs, and produces evidence that anyone can verify.
+Parmana is the Institutional Authority Layer for Autonomous Systems: it makes the authority an institution delegates to AI agents explicit, checks each action against that authority before it runs, and produces evidence that anyone can verify.
 
 ## 2. Value proposition
 
@@ -71,7 +71,7 @@ Here is a problem most companies will meet this year. They want AI agents to do 
 
 Access control does not solve it. A refund agent that can reach the refunds system has access. It does not follow that a 40,000 refund, to an account the institution has not verified, is within what the institution delegated. Access tells you who can reach a system. Authority tells you what a specific action is permitted to do, under what conditions, and who approved it. Most institutions have authority written in policy documents and in people's heads, and nothing enforces it at the moment an agent acts.
 
-Parmana is the business authority layer for autonomous systems. Here is what it does, in order. The institution declares its authority as versioned rules. An agent proposes an action. Parmana evaluates the action against those rules. If a rule requires a person, the action waits for a signed approval from a trusted approver, for that action and that amount. Only an approved action is released, and the gateway holds the credentials, so the agent never does. Then Parmana produces a signed record of the decision and the release. Anyone can check that record offline, without trusting us or having access to your systems.
+Parmana is the institutional authority layer for autonomous systems. Here is what it does, in order. The institution declares its authority as versioned rules. An agent proposes an action. Parmana evaluates the action against those rules. If a rule requires a person, the action waits for a signed approval from a trusted approver, for that action and that amount. Only an approved action is released, and the gateway holds the credentials, so the agent never does. Then Parmana produces a signed record of the decision and the release. Anyone can check that record offline, without trusting us or having access to your systems.
 
 We are honest about where we are. This is a prototype. It checks actions that go through its gateway, and it does not read model output for harmful content. Some controls are built and tested, and some are still scoped: per-agent grants exist, but no shipped policy requires them yet. We would rather you check our claims than take our word. Every claim has its evidence and its limits written down.
 
@@ -111,6 +111,6 @@ The point of the work is simple. Keep institutional authority in human hands, ev
 ## 13. Decisions for the owner
 
 1. Approve the positioning statement and value proposition in sections 1 and 2 as the foundation for the site and the README.
-2. Approve the category change in claims section 1 (item 6), or keep "Execution Trust Infrastructure" as the technical category beneath the institution positioning.
+2. Approve the category change in claims section 1 (item 6), or keep "Execution Trust Infrastructure" as the technical category beneath the institutional positioning.
 3. Confirm the public status line (item 7). This document recommends "prototype" on the home page and README.
 4. Confirm that the five use cases in section 8 may be shown publicly, with the statuses given.
