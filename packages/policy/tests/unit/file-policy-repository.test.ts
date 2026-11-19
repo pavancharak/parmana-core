@@ -95,7 +95,7 @@ describe("FilePolicyRepository name/version sanitization", () => {
   it("accepts the well-formed name/version used by the rest of the suite", async () => {
     const repository = new FilePolicyRepository(basePath);
 
-    const policy = await repository.load("payment-limit", "2.0.0");
+    const policy = await repository.load("payment-limit", "1.0.0");
 
     expect(policy.policyId).toBe("payment-limit");
   });
