@@ -8,19 +8,24 @@ Every approve rule must require at least one fact the caller cannot declare: a s
 
 ## 2. What the draft says
 
-- Approve only when Razorpay confirms the payment is refundable (`paymentRefundable`, from the `payment.refundable` claim, at most 60 seconds old) and a signed manager approval covers the payment (`managerApproved`).
-- Reject in every other case, with a reason.
-- The refund amount is bound to the Intent's `parameters.amount`, so the amount checked is the amount executed.
-- The validator accepts the draft (`PolicyValidator.validate`).
+The tiers in `docs/internal/design/NEW-SYSTEM-DESIGN.md` are refuse, review, tier 1, tier 2 and reject, in that order. The draft writes these rules, in order:
+
+1. **Refuse** when Razorpay says the payment is not refundable (`paymentRefundable` is false).
+2. **Tier 2** approves when Razorpay confirms the payment is refundable and a signed manager approval covers the exact amount.
+3. **Reject** in every other case, with a reason.
+
+**Tier 1 is not written.** Tier 1 means approving without a human, once every value is sourced, verified and within its threshold. The current validator refuses any approve rule that does not require a signed approval, so tier 1 cannot be written as the design describes until that validator rule changes. This is a conflict between the design and the code, and it needs an owner decision (see section 4).
+
+The refund amount is bound to the Intent's `parameters.amount`, so the amount checked is the amount executed. The draft passes `PolicyValidator.validate`.
 
 ## 3. The draft (JSON)
 
-````json
+```json
 {
   "policyId": "razorpay-refund",
   "policyVersion": "2.0.0-draft",
   "schemaVersion": "1.0.0",
-  "description": "Draft, not in effect. Authorizes a refund of a Razorpay payment only when Razorpay confirms the payment is refundable for the amount, and a signed manager approval covers that payment. Neither fact can be declared by the caller.",
+  "description": "Draft, not in effect. Order: refuse when Razorpay says the payment is not refundable; approve when Razorpay confirms it and a signed manager approval covers the exact amount (tier 2); reject otherwise. The caller cannot declare any fact. Tier 1 (automatic approval within a threshold) is not written: the validator requires every approve rule to need a signed approval.",
   "signalsSchema": {
     "paymentRefundable": "boolean",
     "managerApproved": "boolean",
@@ -35,19 +40,29 @@ Every approve rule must require at least one fact the caller cannot declare: a s
       "claim": "payment.refundable",
       "subject": "target",
       "maxAgeSeconds": 60,
-      "parameters": [
-        "amount"
-      ]
+      "parameters": ["amount"]
     }
   },
   "approvalSignals": {
     "managerApproved": {
-      "resourceId": "target"
+      "resourceId": "target",
+      "value": "parameters.amount"
     }
   },
   "rules": [
     {
-      "id": "approve-refund-when-confirmed-and-approved",
+      "id": "refuse-not-refundable",
+      "condition": {
+        "fact": "paymentRefundable",
+        "operator": "is_false"
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refund refused. Razorpay does not confirm the payment is refundable for this amount."
+      }
+    },
+    {
+      "id": "tier-2-with-exact-approval",
       "condition": {
         "all": [
           {
@@ -62,7 +77,7 @@ Every approve rule must require at least one fact the caller cannot declare: a s
       },
       "outcome": {
         "action": "approve",
-        "reason": "Razorpay confirms the payment is refundable for this amount, and a signed manager approval covers it."
+        "reason": "Tier 2: Razorpay confirms the payment is refundable, and a signed manager approval covers this exact amount."
       }
     },
     {
@@ -72,21 +87,9 @@ Every approve rule must require at least one fact the caller cannot declare: a s
       },
       "outcome": {
         "action": "reject",
-        "reason": "Refund refused. Razorpay did not confirm the payment is refundable for this amount, or no signed manager approval covers it."
+        "reason": "Refund refused. Neither tier applies."
       }
     }
   ]
-}```
-
-## 4. Open questions for the owner
-
-1. **Version.** The draft says `2.0.0-draft`. The owner chooses the real version and its name.
-2. **Approval scope.** The approval signal is bound to `target` (the payment). It does not yet say that the approval must cover the amount. Confirm how `approvalSignals` covers an amount, against the signed approval format, before approval.
-3. **Source.** `razorpay` must be registered in parmana-core as a signal source through maker-checker, and the connectors signal (`src/signal/razorpay-payment-signal.ts`) must answer `payment.refundable` for it.
-4. **Subject.** `target` is the payment id. Confirm that the `razorpay:refund` target is the payment id.
-5. **Freshness.** 60 seconds matches the signal's own validity. Confirm.
-
-## 5. What happens next
-
-If approved: maker-checker proposes the policy, a checker approves it with a step-up signature, the source is registered, and the binding is added to `CANONICAL_CAPABILITY_POLICY_BINDINGS` with the approved version. The G-77 guard then checks it. The steps are in the production integration guide, steps 2 to 5.
-````
+}
+```
