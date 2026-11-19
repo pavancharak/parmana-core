@@ -4,7 +4,7 @@ import type { BusinessSignalQuery } from "../../src/business-validation/Business
 import { createRazorpayPaymentSource } from "../../src/business-validation/razorpay-payment-source.js";
 
 /**
- * The Razorpay payment source establishes "payment.refundable" from Razorpay's own record, and reports it
+ * The payment source establishes "payment.refundable" from the provider's own record, and reports it
  * as an observed value that expires in 60 seconds. A missing payment is not_found; a failed read throws.
  */
 

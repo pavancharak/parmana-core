@@ -78,7 +78,7 @@ Follow [`docs/internal/runbooks/PRODUCTION-DEPLOY-AND-ROLLBACK.md`](https://gith
 
 ### B5. Live money
 
-- **Start in test mode.** Every Razorpay path in the repositories refuses live keys unless explicitly allowed (`PARMANA_ALLOW_LIVE_KEYS=true`).
+- **Start in test mode.** Every payment-connector path in the repositories refuses live keys unless explicitly allowed (`PARMANA_ALLOW_LIVE_KEYS=true`).
 - **A live run needs approval.** The connectors README says live keys are used only after a live test is approved. No live run is recorded.
 - **Limits.** Grant limits apply per request. Cumulative limits are not built (G-93). Until they are, set a conservative per-request limit and monitor totals outside Parmana.
 

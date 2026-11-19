@@ -5,7 +5,7 @@ import type {
 } from "./BusinessSignalSource.js";
 
 /**
- * Establishes "payment.refundable" from Razorpay's own record of the payment, for a refund.
+ * Establishes "payment.refundable" from the provider's own record of the payment, for a refund.
  *
  * It reads GET /v1/payments/{id} and reports whether the payment is captured, not fully refunded, and
  * has at least the requested amount left. The answer is observed, so it becomes a trusted signal only

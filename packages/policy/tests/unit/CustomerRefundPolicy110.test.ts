@@ -15,7 +15,7 @@ import type { PolicySignals } from "../../src/types/PolicySignals.js";
  * above 100000 are refused. managerApproved is only a policy fact here;
  * that it is backed by a signed approval is declared in approvalSignals
  * and enforced by @parmana/approval's ApprovalSignalVerifier, tested
- * there and in the paytm-refund integration test.
+ * there and in the payment refund integration test.
  */
 describe("customer-refund 1.1.0", () => {
   const policy = JSON.parse(

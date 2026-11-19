@@ -118,7 +118,7 @@ export interface ApprovalPayload {
   /**
    * The exact business object this approval covers, in the same
    * identifier shape the capability's own Intent.parameters carries
-   * (e.g. a HubSpot dealId) -- not a wildcard, not a pattern.
+   * (e.g. a CRM deal id) -- not a wildcard, not a pattern.
    * Prevents authorization transfer to another business object.
    */
   readonly resourceId: string;

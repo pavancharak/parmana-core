@@ -66,7 +66,7 @@ const HYPOTHETICAL_EXAMPLE_PATHS = new Set([
  * removed outright, not independently verified (docs/internal/VERIFICATION-GAPS.md
  * G-27) — `createVendorPaymentConnector.ts` and its dedicated credential
  * provider no longer exist anywhere in this repository. The same applies
- * to the Razorpay connector, deliberately removed in full (see the
+ * to the payment connector, deliberately removed in full (see the
  * removal commit and docs/internal/CLAIMS.md's historical §3.4-3.9/3.8/3.9).
  */
 const HISTORICALLY_REAL_NOW_REMOVED_PATHS = new Set([
@@ -84,7 +84,7 @@ const HISTORICALLY_REAL_NOW_REMOVED_PATHS = new Set([
   // this logic lives today" -- moved/refactored during Phase 1C, not
   // deleted, but no longer resolvable at this original path.
   "packages/connector-hubspot/src/HubSpotConnector.ts",
-  // HubSpot connector removed from core (ADR-0018). Cited by docs as history.
+  // CRM connector removed from core (ADR-0018). Cited by docs as history.
   "packages/api/src/bootstrap/createHubSpotConnector.ts",
   "packages/api/src/bootstrap/createHubSpotSignalStateVerifier.ts",
   "packages/api/src/bootstrap/createHubSpotCredentialProvider.ts",
@@ -147,7 +147,7 @@ describe("documentation file references resolve to real files", () => {
  * single exact phrase covers every citation style actually in use, so this
  * matches on proximity: any `N.M` token found shortly after the literal
  * string "CLAIMS.md" on the same line) rather than a file path. Two real
- * instances of this exact bug surfaced during the Razorpay removal
+ * instances of this exact bug surfaced during the payment connector removal
  * (2026-08-12): a citation to `3.4` and an implied `3.6 through 3.9` range,
  * both pointing at sections deleted outright (not renumbered) alongside the
  * connector. A follow-up scan of the whole repo found two more — including

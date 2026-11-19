@@ -1,11 +1,11 @@
 /**
- * Whether a real GitHub App test-mode credential triple is configured in
+ * Whether a real code-host app test-mode credential triple is configured in
  * the environment.
  *
- * Mirrors hubspot-live-availability.ts: the live-gated GitHub suite needs
- * a real GitHub App installation to talk to and cannot run hermetically
+ * Mirrors the other live-availability helper: the live-gated code-host suite needs
+ * a real code-host app installation to talk to and cannot run hermetically
  * from a bare clone (see packages/api/README.md for the env vars that
- * enable it). Unlike HubSpot's single token, GitHub's credential is a
+ * enable it). Unlike a single API token, this credential is a
  * triple (appId, installationId, privateKey) -- all three are required
  * together to mint anything at all.
  */
@@ -18,7 +18,7 @@ export function hasGitHubLiveConfig(): boolean {
 }
 
 /**
- * Resolves whether the live-gated GitHub suite should run, enforcing the
+ * Resolves whether the live-gated code-host suite should run, enforcing the
  * same live-credential opt-in as resolveHubSpotLiveGate: a real
  * TEST_GITHUB_* triple being configured is not by itself enough to run
  * against GitHub's real API. ALLOW_LIVE_GITHUB=1 must also be set

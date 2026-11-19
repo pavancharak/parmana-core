@@ -45,10 +45,10 @@ It is kept only with its own unit test, and can be removed.
 The sibling `@parmana/storage` package uses the same database gate for its live suites, under
 `packages/storage/tests/integration/`.
 
-### HubSpot live integration test
+### CRM connector live integration test
 
-`tests/integration/hubspot-live.integration.test.ts` drives the HubSpot
-connector through a real `POST /execute` against HubSpot's real API — it
+`tests/integration/hubspot-live.integration.test.ts` drives the CRM
+connector through a real `POST /execute` against the provider's real API — it
 cannot run from a bare clone with no credentials, and is skipped
 automatically — with a logged reason — when the required environment
 variables are absent. See that file and `tests/helpers/hubspot-live-availability.ts`

@@ -27,7 +27,7 @@ export interface ExecutionAuditEvent {
    * `parmana-paytm-agent`'s own audit writer (`src/parmana/audit.ts`
    * in that repository), which records it right after independently
    * verifying the Ed25519 authorization signature this service
-   * forwarded to it, before calling Paytm.
+   * forwarded to it, before calling the payment provider.
    */
   readonly type:
     | "session.created"

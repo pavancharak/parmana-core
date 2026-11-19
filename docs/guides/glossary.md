@@ -61,7 +61,7 @@ Read: [CLAIMS.md](https://github.com/pavancharak/parmana-core/blob/main/docs/int
 **Signal source.** An outside system that establishes a fact for a policy. Registered through maker-checker.
 Read: [business-signal-sources route](https://github.com/pavancharak/parmana-core/tree/main/packages/api/src/routes) and [claim 2.54](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/CLAIMS.md).
 
-**Razorpay payment source.** The read-only source that establishes `payment.refundable`. It is on the feature branch, not on `main`: [razorpay-payment-source.ts](https://github.com/pavancharak/parmana-core/blob/feat/razorpay-payment-signal/packages/runtime/src/business-validation/razorpay-payment-source.ts).
+**Payment source.** The read-only source that establishes `payment.refundable`. It is on the feature branch, not on `main`: [razorpay-payment-source.ts](https://github.com/pavancharak/parmana-core/blob/feat/razorpay-payment-signal/packages/runtime/src/business-validation/razorpay-payment-source.ts).
 
 **Approval.** A signed human decision that covers one action, one target, and one amount. Used once.
 Read: [ApprovalSignalVerifier.ts](https://github.com/pavancharak/parmana-core/blob/main/packages/approval/src/ApprovalSignalVerifier.ts) and [claim 2.42](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/CLAIMS.md).
@@ -164,19 +164,19 @@ Read: [verify-kms-signing.ts](https://github.com/pavancharak/parmana-core/blob/m
 
 **PARMANA_KEY_DIR.** The directory the server reads its key files from.
 
-**Paise.** The smallest unit of a rupee. 100 paise is ₹1. All amounts in Razorpay code are in paise.
+**Paise.** The smallest unit of a rupee. 100 paise is ₹1. All amounts in the payment connectors are in paise.
 
 ---
 
-## G. Razorpay
+## G. Payment connector example
 
-**Test mode.** Razorpay's sandbox. Keys start with `rzp_test_`. No real money moves.
+**Test mode.** A payment provider's sandbox. Test keys carry a test prefix. No real money moves.
 
 **Live mode.** Real money. Keys start with `rzp_live_`. Parmana refuses live keys unless explicitly allowed (`PARMANA_ALLOW_LIVE_KEYS=true`).
 
 **Payment id.** Starts with `pay_`, followed by letters and digits.
 
-**Captured.** A payment that Razorpay has taken the money for. Only a captured payment can be refunded.
+**Captured.** A payment that the provider has taken the money for. Only a captured payment can be refunded.
 
 **Refund.** Returns some or all of a captured payment to the payer. A payment can have several refunds.
 
@@ -186,7 +186,7 @@ Read: [razorpay-connector.ts](https://github.com/pavancharak/parmana-connectors/
 **Refund connector.** The connector that refunds a payment once, even when resent. Lives in connectors.
 Read: [src/connectors/razorpay/README.md](https://github.com/pavancharak/parmana-connectors/blob/main/src/connectors/razorpay/README.md).
 
-**Test-mode run.** A script that checks the Razorpay connector against Razorpay's test API.
+**Test-mode run.** A script that checks a payment connector against the provider's test API.
 Read: [test-run.mjs](https://github.com/pavancharak/parmana-connectors/blob/main/src/connectors/razorpay/test-run.mjs).
 
 **Draft policy (razorpay-refund 1.0.0 and 1.1.0).** Drafts on the feature branch. Not active until approved through maker-checker.
