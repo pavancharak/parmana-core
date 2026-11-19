@@ -95,7 +95,7 @@ A capability is what lets an agent cause an action in an outside system. Registe
 3. **Approve.** The checker runs `approve --kind connector --id <id>` with the step-up key.
 4. **Effect.** Once approved, Parmana will release actions for that capability to the endpoint. A release names the endpoint's URL as its audience, and the endpoint refuses a release made for any other URL.
 
-**What the endpoint must do:** verify Parmana's signature, check the audience, refuse capabilities it does not serve, and act only on the parameters the capability allows. The refund endpoint in section 5 of the Razorpay book is an example.
+**What the endpoint must do:** verify Parmana's signature, check the audience, refuse capabilities it does not serve, and act only on the parameters the capability allows. The refund endpoint in section 5 of the refund worked example (`razorpay-book.md`) is an example.
 
 **Revoking** a capability is also a maker-checker change: `propose-revoke --kind connector`, then an approval.
 

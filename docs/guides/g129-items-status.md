@@ -45,7 +45,7 @@ refuses. Five questions in RFC-0026 need answers:
 1. **Source per capability.** Registered through maker-checker, as business signal sources already are.
 2. **Source trust.** Each source has a registered public key, and every answer is signed and checked.
 3. **Latency.** A fixed read timeout (proposed: 10 seconds). An expired read refuses.
-4. **Staleness.** Use the source's own timestamp, with a maximum age per fact, as the Razorpay source already does (60 seconds).
+4. **Staleness.** Use the source's own timestamp, with a maximum age per fact, as the payment source already does (60 seconds).
 5. **Coverage.** A capability whose policy needs a fact with no registered source is refused.
 
 Full answers: `docs/internal/designs/G-144-rfc-0026-answers.md`.
