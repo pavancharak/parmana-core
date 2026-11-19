@@ -40,7 +40,7 @@ const refundPolicy = JSON.parse(
   readFileSync(
     join(
       repoRoot,
-      "test-support",
+      "fixtures",
       "policies",
       "customer-refund",
       "1.2.0",
