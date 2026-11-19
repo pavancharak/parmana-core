@@ -34,6 +34,13 @@ import {
 const READ_CAPABILITIES = new Set(["github:pr-fetch"]);
 
 /**
+ * Capabilities that change something. A write may be bound, but only if
+ * every approve rule of its policy needs a fact the caller cannot fake
+ * (checked below, for every bound capability, read or write).
+ */
+const WRITE_CAPABILITIES = new Set(["razorpay:refund"]);
+
+/**
  * Facts a server side verifier checks itself, per write capability.
  */
 const SERVER_VERIFIED_FACTS: Readonly<Record<string, readonly string[]>> = {};
@@ -97,20 +104,22 @@ function selfAuthorizingRules(
 
 describe("connector policies cannot be satisfied by caller declared facts alone (G-77)", () => {
   // A new capability lands in this list and fails it until someone
-  // decides whether it is a read or a write.
+  // decides whether it is a read or a write. Writes are allowed; they are
+  // then checked by the property test below, like every other bound
+  // capability.
   it("classifies every bound capability as a read or a write", () => {
-    const writes = [...CANONICAL_CAPABILITY_POLICY_BINDINGS.keys()].filter(
-      (capability) => !READ_CAPABILITIES.has(capability),
+    const unclassified = [
+      ...CANONICAL_CAPABILITY_POLICY_BINDINGS.keys(),
+    ].filter(
+      (capability) =>
+        !READ_CAPABILITIES.has(capability) &&
+        !WRITE_CAPABILITIES.has(capability),
     );
 
-    expect(writes.sort()).toEqual([]);
+    expect(unclassified.sort()).toEqual([]);
   });
 
   for (const [capability, reference] of CANONICAL_CAPABILITY_POLICY_BINDINGS) {
-    if (READ_CAPABILITIES.has(capability)) {
-      continue;
-    }
-
     it(`${capability}: every approve rule of ${reference.name} ${reference.version} needs a fact the caller cannot fake`, () => {
       const policy = loadPolicy(reference.name, reference.version);
 

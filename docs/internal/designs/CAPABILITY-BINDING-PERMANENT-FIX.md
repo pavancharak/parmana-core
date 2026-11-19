@@ -49,3 +49,16 @@ This keeps the guard, makes it stricter about the thing that matters, and lets a
 ## 7. Decision needed (D16)
 
 Approve the replacement of the read-set proxy in G-77 with the trusted-fact property (section 3.1), and the restoration of the binding (section 3.2)? Or keep the strict guard and accept that no write capability can be bound?
+
+## 8. Correction (19 November 2026): the target policy is not customer-refund 1.3.0
+
+Section 2 said the per-capability check for `razorpay:refund` against `customer-refund` 1.3.0 passes because its approve rules require a trusted fact. That is not what the policy contains:
+
+- `customer-refund` 1.3.0 has no approve rule. Its only rule rejects every refund, by design (its description says so, and it sends Razorpay refunds to `razorpay-refund`). The per-capability check passes only because there is nothing to check.
+- Binding `razorpay:refund` to it would make the capability refuse every refund.
+
+The policy that fits `razorpay:refund` is `razorpay-refund` 1.1.0. Its approve rule needs the `paymentRefundable` signal source and a signed `managerApproved` approval, so the property check tests something real for it.
+
+Owner decision D14 named `customer-refund` 1.3.0. It needs to be re-confirmed for `razorpay-refund` 1.1.0 before any binding is added (decision D17).
+
+What has changed in code so far (step 1 of section 5): the guard's first test now accepts an explicit write list (`WRITE_CAPABILITIES`) instead of requiring every bound capability to be a read. Writes are then checked by the property test. The guard tests pass (29 tests across the guard and the capability registry). No binding has been added.
