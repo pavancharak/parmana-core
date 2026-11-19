@@ -1,0 +1,25 @@
+{
+  "policyId": "customer-refund",
+  "policyVersion": "1.3.0",
+  "schemaVersion": "1.0.0",
+  "description": "Refuses every customer refund. Caller-declared signals (refundEligible, fraudCheckPassed, managerApproved) can no longer authorize money movement, so this policy has no approve rule. Refunds on Razorpay payments go through razorpay-refund, which checks the payment with Razorpay. Refunds on other rails need their own verified signal and policy before they can be authorized.",
+
+  "signalsSchema": {
+    "refundAmount": "number"
+  },
+
+  "boundSignals": {
+    "refundAmount": "parameters.amount"
+  },
+
+  "rules": [
+    {
+      "id": "reject-all-customer-refunds",
+      "condition": { "always": true },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refund rejected. customer-refund no longer authorizes refunds. Use razorpay-refund for Razorpay payments. Other payment rails need a verified signal before a refund can be authorized."
+      }
+    }
+  ]
+}

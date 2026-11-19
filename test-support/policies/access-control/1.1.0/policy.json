@@ -1,0 +1,102 @@
+{
+  "policyId": "access-control",
+  "policyVersion": "1.1.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes access requests using authentication, authorization, multi-factor authentication, device trust, and session risk evaluation. Every authorization also needs a signed approval from a trusted person for this target, in signals.approvalArtifact with humanApproved true. The other signals can only refuse, never authorize on their own.",
+  "signalsSchema": {
+    "humanApproved": "boolean",
+    "userAuthenticated": "boolean",
+    "userAuthorized": "boolean",
+    "mfaVerified": "boolean",
+    "deviceTrusted": "boolean",
+    "sessionRiskScore": "number"
+  },
+  "unboundSignalReasons": {
+    "userAuthenticated": "Attested by the identity provider at authentication time; no Intent field describes whether the caller authenticated, only what they are asking to do.",
+    "userAuthorized": "Result of an independent authorization check against the requester's entitlements; not something the Intent itself declares.",
+    "mfaVerified": "Attested by the identity provider's MFA challenge; the Intent carries no MFA-completion field to bind against.",
+    "deviceTrusted": "Result of independent device-posture assessment; not a property the Intent's target/parameters could express.",
+    "sessionRiskScore": "A computed risk score from session/behavioral signals, not a value the caller's Intent declares or could be checked against."
+  },
+  "approvalSignals": {
+    "humanApproved": {
+      "resourceId": "target"
+    }
+  },
+  "rules": [
+    {
+      "id": "approve-access",
+      "condition": {
+        "all": [
+          {
+            "fact": "humanApproved",
+            "operator": "is_true"
+          },
+          {
+            "fact": "userAuthenticated",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "userAuthorized",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "mfaVerified",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "deviceTrusted",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "sessionRiskScore",
+            "operator": "lte",
+            "value": 20
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Access authorized. Authentication, authorization, multi-factor authentication, device trust, and session risk requirements were satisfied, with a verified human approval."
+      }
+    },
+    {
+      "id": "reject-high-risk-session",
+      "condition": {
+        "fact": "sessionRiskScore",
+        "operator": "gt",
+        "value": 20
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Access rejected because the assessed session risk exceeds the maximum permitted threshold."
+      }
+    },
+    {
+      "id": "reject-untrusted-device",
+      "condition": {
+        "fact": "deviceTrusted",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Access rejected because the requesting device is not trusted."
+      }
+    },
+    {
+      "id": "reject-default",
+      "condition": {
+        "always": true
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Access rejected because one or more required authorization conditions were not satisfied."
+      }
+    }
+  ]
+}

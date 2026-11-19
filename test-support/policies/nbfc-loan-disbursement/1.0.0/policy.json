@@ -1,0 +1,143 @@
+{
+  "policyId": "nbfc-loan-disbursement",
+  "policyVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes a non-bank lender's loan disbursement instruction to a bank only when the loan account is approved, the beneficiary is on that loan's record, the amount is within the per-transaction limit, and the lender's disbursement activity is within its aggregate velocity limit. Every authorization also needs a signed approval from a trusted person for this loan account, covering this amount, in signals.approvalArtifact with humanApproved true. The other signals can only refuse, never authorize on their own.",
+  "signalsSchema": {
+    "humanApproved": "boolean",
+    "loanAccountApproved": "boolean",
+    "beneficiaryAllowed": "boolean",
+    "withinDisbursementLimit": "boolean",
+    "withinAggregateVelocityLimit": "boolean",
+    "disbursementAmount": "number",
+    "loanAccountId": "string"
+  },
+  "boundSignals": {
+    "disbursementAmount": "parameters.amount",
+    "loanAccountId": "target"
+  },
+  "unboundSignalReasons": {
+    "loanAccountApproved": "Result of checking the loan account against the lender's approved loan records; not a value the Intent itself declares.",
+    "beneficiaryAllowed": "Result of checking the payee against the beneficiary list recorded on the approved loan; not expressible via the Intent's target/parameters.",
+    "withinDisbursementLimit": "Result of comparing the amount against the per-transaction disbursement limit for this lender; computed independently of the Intent.",
+    "withinAggregateVelocityLimit": "Result of an independent check of the lender's disbursements over a rolling window (count and total); not expressible via the Intent's target/parameters."
+  },
+  "approvalSignals": {
+    "humanApproved": {
+      "resourceId": "target",
+      "value": "parameters.amount"
+    }
+  },
+  "rules": [
+    {
+      "id": "approve-loan-disbursement",
+      "condition": {
+        "all": [
+          {
+            "fact": "humanApproved",
+            "operator": "is_true"
+          },
+          {
+            "fact": "loanAccountApproved",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "beneficiaryAllowed",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "withinDisbursementLimit",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "withinAggregateVelocityLimit",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "disbursementAmount",
+            "operator": "gt",
+            "value": 0
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Loan disbursement authorized. Loan account, beneficiary, per-transaction limit and aggregate velocity were satisfied, with a verified human approval."
+      }
+    },
+    {
+      "id": "reject-loan-account-not-approved",
+      "condition": {
+        "fact": "loanAccountApproved",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Loan disbursement rejected because the loan account is not an approved loan record."
+      }
+    },
+    {
+      "id": "reject-beneficiary-not-allowed",
+      "condition": {
+        "fact": "beneficiaryAllowed",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Loan disbursement rejected because the beneficiary is not recorded on the approved loan."
+      }
+    },
+    {
+      "id": "reject-disbursement-limit-exceeded",
+      "condition": {
+        "fact": "withinDisbursementLimit",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Loan disbursement rejected because the amount exceeds the per-transaction disbursement limit."
+      }
+    },
+    {
+      "id": "reject-aggregate-velocity-exceeded",
+      "condition": {
+        "fact": "withinAggregateVelocityLimit",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Loan disbursement rejected because the lender exceeded its aggregate disbursement velocity over the rolling window."
+      }
+    },
+    {
+      "id": "reject-invalid-disbursement-amount",
+      "condition": {
+        "fact": "disbursementAmount",
+        "operator": "lte",
+        "value": 0
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Loan disbursement rejected because the amount must be greater than zero."
+      }
+    },
+    {
+      "id": "reject-default",
+      "condition": {
+        "always": true
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Loan disbursement rejected because one or more required policy conditions were not satisfied."
+      }
+    }
+  ]
+}

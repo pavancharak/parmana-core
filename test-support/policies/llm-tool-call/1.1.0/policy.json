@@ -1,0 +1,94 @@
+{
+  "policyId": "llm-tool-call",
+  "policyVersion": "1.1.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes a tool call an AI model asks for, only with a signed approval from a trusted person for that tool (the Intent's target). The tool, resource, environment and risk signals come from the caller, so they can only refuse a call, never authorize one on their own.",
+
+  "signalsSchema": {
+    "humanApproval": "boolean",
+    "toolAllowed": "boolean",
+    "resourceAuthorized": "boolean",
+    "executionEnvironment": "string",
+    "riskScore": "number"
+  },
+
+  "approvalSignals": {
+    "humanApproval": {
+      "resourceId": "target"
+    }
+  },
+
+  "unboundSignalReasons": {
+    "toolAllowed": "Declared by the caller. It can refuse a call, never authorize one on its own; only the signed approval behind humanApproval authorizes a call.",
+    "resourceAuthorized": "Declared by the caller. It can refuse a call, never authorize one on its own.",
+    "executionEnvironment": "A property of the environment the call runs in, declared by the caller. It can refuse a call, never authorize one on its own.",
+    "riskScore": "A score the caller computes. It can refuse a call, never authorize one on its own."
+  },
+
+  "rules": [
+    {
+      "id": "reject-high-risk-execution",
+      "condition": { "fact": "riskScore", "operator": "gt", "value": 25 },
+      "outcome": {
+        "action": "reject",
+        "reason": "Tool execution rejected because the assessed operational risk exceeds the maximum permitted threshold."
+      }
+    },
+    {
+      "id": "reject-unauthorized-tool",
+      "condition": { "fact": "toolAllowed", "operator": "is_false" },
+      "outcome": {
+        "action": "reject",
+        "reason": "Tool execution rejected because the requested tool is not authorized."
+      }
+    },
+    {
+      "id": "reject-unauthorized-resource",
+      "condition": { "fact": "resourceAuthorized", "operator": "is_false" },
+      "outcome": {
+        "action": "reject",
+        "reason": "Tool execution rejected because the requested resource is not authorized."
+      }
+    },
+    {
+      "id": "reject-invalid-environment",
+      "condition": {
+        "fact": "executionEnvironment",
+        "operator": "neq",
+        "value": "production"
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Tool execution rejected because the execution environment is not authorized."
+      }
+    },
+    {
+      "id": "approve-tool-call-with-approval",
+      "condition": {
+        "all": [
+          { "fact": "humanApproval", "operator": "is_true" },
+          { "fact": "toolAllowed", "operator": "is_true" },
+          { "fact": "resourceAuthorized", "operator": "is_true" },
+          {
+            "fact": "executionEnvironment",
+            "operator": "eq",
+            "value": "production"
+          },
+          { "fact": "riskScore", "operator": "lte", "value": 25 }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Tool execution authorized with a verified human approval for this tool."
+      }
+    },
+    {
+      "id": "reject-approval-required",
+      "condition": { "always": true },
+      "outcome": {
+        "action": "reject",
+        "reason": "Tool execution rejected. A tool call needs a signed human approval for this tool in signals.approvalArtifact, with humanApproval true, and every other policy condition satisfied."
+      }
+    }
+  ]
+}

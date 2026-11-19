@@ -1,0 +1,126 @@
+{
+  "policyId": "production-deployment",
+  "policyVersion": "1.1.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes production deployments after validating deployment approval, successful verification, rollback readiness, maintenance window, and deployment risk assessment. Every authorization also needs a signed approval from a trusted person for this target, in signals.approvalArtifact with humanApproved true. The other signals can only refuse, never authorize on their own.",
+  "signalsSchema": {
+    "humanApproved": "boolean",
+    "deploymentApproved": "boolean",
+    "changeVerified": "boolean",
+    "rollbackReady": "boolean",
+    "maintenanceWindow": "boolean",
+    "riskScore": "number"
+  },
+  "unboundSignalReasons": {
+    "deploymentApproved": "Attested by a separate change-management approval step; the Intent carries no approval-status field to bind against.",
+    "changeVerified": "Result of an independent pre-deployment verification check; not a value the Intent itself declares.",
+    "rollbackReady": "Result of an independent rollback-plan validation; not expressible via the Intent's target/parameters.",
+    "maintenanceWindow": "A point-in-time schedule check against the current clock; not a property of the Intent being executed.",
+    "riskScore": "A computed deployment-risk score, not a value the caller's Intent declares or could be checked against."
+  },
+  "approvalSignals": {
+    "humanApproved": {
+      "resourceId": "target"
+    }
+  },
+  "rules": [
+    {
+      "id": "approve-deployment",
+      "condition": {
+        "all": [
+          {
+            "fact": "humanApproved",
+            "operator": "is_true"
+          },
+          {
+            "fact": "deploymentApproved",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "changeVerified",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "rollbackReady",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "maintenanceWindow",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "riskScore",
+            "operator": "lte",
+            "value": 20
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Production deployment authorized. Deployment approval, change verification, rollback readiness, maintenance window, and risk assessment requirements were satisfied, with a verified human approval."
+      }
+    },
+    {
+      "id": "reject-high-risk-deployment",
+      "condition": {
+        "fact": "riskScore",
+        "operator": "gt",
+        "value": 20
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Production deployment rejected because the assessed deployment risk exceeds the maximum permitted threshold."
+      }
+    },
+    {
+      "id": "reject-unverified-change",
+      "condition": {
+        "fact": "changeVerified",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Production deployment rejected because the change has not been successfully verified."
+      }
+    },
+    {
+      "id": "reject-rollback-not-ready",
+      "condition": {
+        "fact": "rollbackReady",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Production deployment rejected because a validated rollback plan is not available."
+      }
+    },
+    {
+      "id": "reject-outside-maintenance-window",
+      "condition": {
+        "fact": "maintenanceWindow",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Production deployment rejected because execution is outside the approved maintenance window."
+      }
+    },
+    {
+      "id": "reject-default",
+      "condition": {
+        "always": true
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Production deployment rejected because one or more required policy conditions were not satisfied."
+      }
+    }
+  ]
+}

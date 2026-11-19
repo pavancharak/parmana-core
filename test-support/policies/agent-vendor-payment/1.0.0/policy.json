@@ -1,0 +1,117 @@
+{
+  "policyId": "agent-vendor-payment",
+  "policyVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes an autonomous agent's payment to a vendor after validating the vendor is on the agent's allowlist, the payment stays within the agent's credential limit, and the agent has not exceeded its payment velocity limit.",
+
+  "signalsSchema": {
+    "vendorAllowed": "boolean",
+    "withinCredentialLimit": "boolean",
+    "withinVelocityLimit": "boolean",
+    "paymentAmount": "number",
+    "vendorId": "string"
+  },
+
+  "boundSignals": {
+    "paymentAmount": "parameters.amount",
+    "vendorId": "target"
+  },
+
+  "unboundSignalReasons": {
+    "vendorAllowed": "Result of checking the vendor against the agent's issued credential scope; not a value the Intent itself declares.",
+    "withinCredentialLimit": "Result of comparing the payment amount against the agent's issued credential limit; computed independently of the Intent.",
+    "withinVelocityLimit": "Result of an independent check against the agent's recent payment activity; not expressible via the Intent's target/parameters."
+  },
+
+  "rules": [
+    {
+      "id": "approve-agent-payment",
+      "condition": {
+        "all": [
+          {
+            "fact": "vendorAllowed",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "withinCredentialLimit",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "withinVelocityLimit",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "paymentAmount",
+            "operator": "gt",
+            "value": 0
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Agent payment authorized. Vendor allowlist, credential limit, and velocity requirements were satisfied."
+      }
+    },
+    {
+      "id": "reject-vendor-not-allowed",
+      "condition": {
+        "fact": "vendorAllowed",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Agent payment rejected because the vendor is not on the agent's authorized vendor list."
+      }
+    },
+    {
+      "id": "reject-credential-limit-exceeded",
+      "condition": {
+        "fact": "withinCredentialLimit",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Agent payment rejected because the payment amount exceeds the agent's credential limit."
+      }
+    },
+    {
+      "id": "reject-velocity-exceeded",
+      "condition": {
+        "fact": "withinVelocityLimit",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Agent payment rejected because the agent exceeded its allowed payment velocity."
+      }
+    },
+    {
+      "id": "reject-invalid-payment-amount",
+      "condition": {
+        "fact": "paymentAmount",
+        "operator": "lte",
+        "value": 0
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Agent payment rejected because the payment amount must be greater than zero."
+      }
+    },
+    {
+      "id": "reject-default",
+      "condition": {
+        "always": true
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Agent payment rejected because one or more required policy conditions were not satisfied."
+      }
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "policyId": "customer-refund",
+  "policyVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes customer refunds after validating refund eligibility, approval, fraud assessment, and refund amount limits.",
+
+  "signalsSchema": {
+    "refundEligible": "boolean",
+    "managerApproved": "boolean",
+    "fraudCheckPassed": "boolean",
+    "refundAmount": "number"
+  },
+
+  "boundSignals": {
+    "refundAmount": "parameters.amount"
+  },
+
+  "unboundSignalReasons": {
+    "refundEligible": "Result of an independent eligibility check against the customer/order record; not a value the Intent itself declares.",
+    "managerApproved": "Attested by a separate human-approval step; the Intent carries no approval-status field to bind against.",
+    "fraudCheckPassed": "Result of an independent fraud-assessment system; not something the Intent's target/parameters could express."
+  },
+
+  "rules": [
+    {
+      "id": "approve-refund",
+      "condition": {
+        "all": [
+          {
+            "fact": "refundEligible",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "managerApproved",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "fraudCheckPassed",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "refundAmount",
+            "operator": "lte",
+            "value": 10000
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Refund authorized. Eligibility, approval, fraud assessment, and refund amount requirements were satisfied."
+      }
+    },
+    {
+      "id": "reject-excessive-refund",
+      "condition": {
+        "fact": "refundAmount",
+        "operator": "gt",
+        "value": 10000
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refund rejected because the requested refund amount exceeds the maximum permitted threshold."
+      }
+    },
+    {
+      "id": "reject-fraud-check",
+      "condition": {
+        "fact": "fraudCheckPassed",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refund rejected because the transaction did not pass fraud assessment."
+      }
+    },
+    {
+      "id": "reject-default",
+      "condition": {
+        "always": true
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refund rejected because one or more required policy conditions were not satisfied."
+      }
+    }
+  ]
+}

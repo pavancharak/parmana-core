@@ -1,0 +1,112 @@
+{
+  "policyId": "connector-capability",
+  "policyVersion": "1.1.0",
+  "schemaVersion": "1.0.0",
+  "description": "Reference policy demonstrating capability-based authorization for Connector SDK connectors. Outcomes are strictly approve (ALLOW) or reject (BLOCK) — there is no approval-workflow, pending, or human-approval outcome. Every authorization also needs a signed approval from a trusted person for this target, in signals.approvalArtifact with humanApproved true. The other signals can only refuse, never authorize on their own.",
+  "signalsSchema": {
+    "humanApproved": "boolean",
+    "capability": "string",
+    "paymentAmount": "number"
+  },
+  "boundSignals": {
+    "paymentAmount": "parameters.amount"
+  },
+  "unboundSignalReasons": {
+    "capability": "The Intent snapshot boundSignals binds against exposes only { target, parameters } (see SignalIntentBinder), not the executed action itself, so the capability selector has no dot-path to bind to -- it is independently enforced by capability-registry's CANONICAL_CAPABILITY_POLICY_BINDINGS / assertConnectorCapabilitiesBound instead."
+  },
+  "approvalSignals": {
+    "humanApproved": {
+      "resourceId": "target"
+    }
+  },
+  "rules": [
+    {
+      "id": "allow-crm-read",
+      "condition": {
+        "all": [
+          {
+            "fact": "humanApproved",
+            "operator": "is_true"
+          },
+          {
+            "fact": "capability",
+            "operator": "eq",
+            "value": "crm:read"
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "ALLOW: crm:read is authorized read-only CRM access, with a verified human approval."
+      }
+    },
+    {
+      "id": "allow-payments-refund-within-threshold",
+      "condition": {
+        "all": [
+          {
+            "fact": "humanApproved",
+            "operator": "is_true"
+          },
+          {
+            "fact": "capability",
+            "operator": "eq",
+            "value": "payments:refund"
+          },
+          {
+            "fact": "paymentAmount",
+            "operator": "lte",
+            "value": 5000
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "ALLOW: payments:refund is authorized because the requested amount does not exceed the configured refund threshold of 5000, with a verified human approval."
+      }
+    },
+    {
+      "id": "block-crm-delete",
+      "condition": {
+        "fact": "capability",
+        "operator": "eq",
+        "value": "crm:delete"
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "BLOCK: crm:delete is never authorized by this reference policy."
+      }
+    },
+    {
+      "id": "block-payments-refund-above-threshold",
+      "condition": {
+        "all": [
+          {
+            "fact": "capability",
+            "operator": "eq",
+            "value": "payments:refund"
+          },
+          {
+            "fact": "paymentAmount",
+            "operator": "gt",
+            "value": 5000
+          }
+        ]
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "BLOCK: payments:refund is rejected because the requested amount exceeds the configured refund threshold of 5000."
+      }
+    },
+    {
+      "id": "reject-default",
+      "condition": {
+        "always": true
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "BLOCK: capability is not explicitly authorized by this reference policy."
+      }
+    }
+  ]
+}

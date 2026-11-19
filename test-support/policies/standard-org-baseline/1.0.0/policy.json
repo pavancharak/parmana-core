@@ -1,0 +1,105 @@
+{
+  "policyId": "standard-org-baseline",
+  "policyVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "description": "Baseline policy for any organization. Authorizes an agent action only when a signed human approval for this target and amount is present in signals.approvalArtifact with humanApproved true, the assessed risk is at or below 20, and the action is within the organization's configured limits. Every other case is rejected, including the default.",
+  "signalsSchema": {
+    "humanApproved": "boolean",
+    "amount": "number",
+    "riskScore": "number",
+    "withinOrgLimits": "boolean",
+    "targetId": "string"
+  },
+  "boundSignals": {
+    "amount": "parameters.amount",
+    "targetId": "target"
+  },
+  "unboundSignalReasons": {
+    "riskScore": "A computed risk score, not a value the caller's Intent declares or could be checked against.",
+    "withinOrgLimits": "Result of a check against the organization's configured limits; not a value the Intent itself declares."
+  },
+  "approvalSignals": {
+    "humanApproved": {
+      "resourceId": "target",
+      "value": "parameters.amount"
+    }
+  },
+  "rules": [
+    {
+      "id": "approve-standard-action",
+      "condition": {
+        "all": [
+          {
+            "fact": "humanApproved",
+            "operator": "is_true"
+          },
+          {
+            "fact": "withinOrgLimits",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "fact": "amount",
+            "operator": "gt",
+            "value": 0
+          },
+          {
+            "fact": "riskScore",
+            "operator": "lte",
+            "value": 20
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Action authorized. A verified human approval is present, the action is within organization limits, and the assessed risk is within the standard threshold."
+      }
+    },
+    {
+      "id": "reject-high-risk",
+      "condition": {
+        "fact": "riskScore",
+        "operator": "gt",
+        "value": 20
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Action rejected because the assessed risk exceeds the standard maximum of 20."
+      }
+    },
+    {
+      "id": "reject-outside-org-limits",
+      "condition": {
+        "fact": "withinOrgLimits",
+        "operator": "eq",
+        "value": false
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Action rejected because it falls outside the organization's configured limits."
+      }
+    },
+    {
+      "id": "reject-invalid-amount",
+      "condition": {
+        "fact": "amount",
+        "operator": "lte",
+        "value": 0
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Action rejected because the amount must be greater than zero."
+      }
+    },
+    {
+      "id": "reject-default",
+      "condition": {
+        "always": true
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Action rejected because one or more required policy conditions were not satisfied, including a verified human approval."
+      }
+    }
+  ]
+}
