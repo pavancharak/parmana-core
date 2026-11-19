@@ -67,7 +67,7 @@ start_server() {
     PARMANA_STORAGE=postgres \
     DATABASE_URL="postgresql://$PGUSER:$PGPASSWORD@127.0.0.1:$PROXY_LISTEN/postgres" \
     PARMANA_KEY_DIR="$WORK/keys" \
-    PARMANA_POLICY_DIR="$ROOT/policies" \
+    PARMANA_POLICY_DIR="$ROOT/fixtures/policies" \
     PARMANA_API_KEYS="[{\"callerId\":\"drill-caller\",\"keyHash\":\"$API_KEY_HASH\",\"allowedCapabilities\":[\"*\"],\"allowedPrincipalIds\":[\"integration-test\"]}]" \
     PARMANA_PORT="$API_PORT" \
     PORT="$API_PORT" \
@@ -197,7 +197,7 @@ set +e
     NODE_ENV=development \
     PARMANA_STORAGE=memory \
     PARMANA_KEY_DIR="$WORK/keys" \
-    PARMANA_POLICY_DIR="$ROOT/policies" \
+    PARMANA_POLICY_DIR="$ROOT/fixtures/policies" \
     KEY_PROVIDER=aws-kms \
     AWS_REGION=ap-south-1 \
     AWS_ACCESS_KEY_ID=drill-not-real \
