@@ -14,13 +14,13 @@ import { BusinessValidationStatus } from "@parmana/shared";
 
 import {
   StaticBusinessSignalSourceRegistry,
+  type BusinessSignalSource,
   type BusinessSignalSourceAnswer,
 } from "../../src/business-validation/BusinessSignalSource.js";
-import {
-  createRazorpayPaymentSource,
-  RAZORPAY_PAYMENT_CLAIM,
-} from "../../src/business-validation/razorpay-payment-source.js";
 import { TrustedSignalResolver } from "../../src/business-validation/TrustedSignalResolver.js";
+
+/** The claim a payment source establishes for a refund. Served by a source outside core. */
+const PAYMENT_REFUNDABLE_CLAIM = "payment.refundable";
 
 /**
  * Scenarios for a refund amount that is consistent and within limits but wrong
@@ -81,27 +81,24 @@ describe("refund amount scenarios", () => {
   // customer asked for ₹5,000 (500,000 paise), but the caller proposes
   // ₹60,000 (6,000,000 paise). The provider confirms that amount is still
   // refundable, so the source check passes and the wrong amount is accepted.
-  it("C: Razorpay confirms a wrong amount is still refundable, so the source passes", async () => {
-    const fetchStub = (async () =>
-      ({
-        status: 200,
-        json: async () => ({
-          status: "captured",
-          amount: 10_000_000,
-          amount_refunded: 0,
-          refund_status: null,
-        }),
-      }) as unknown as Response) as unknown as typeof fetch;
-
-    const source = createRazorpayPaymentSource({
-      credential: "key_id:key_secret",
-      fetch: fetchStub,
-      now: () => NOW,
-    });
+  it("C: the payment source confirms a wrong amount is still refundable, so the source passes", async () => {
+    // A test stub for a payment source that reports the payment as refundable. The real
+    // payment.refundable signal is served from parmana-connectors (src/signal/razorpay-payment-signal.ts),
+    // and its own tests cover that logic. This test checks how Parmana handles a sourced "true".
+    const source: BusinessSignalSource = {
+      name: "payments",
+      resolve: async () => ({
+        kind: "observed",
+        value: true,
+        sourceIdentity: "test-payment-source",
+        observedAt: NOW,
+        validUntil: new Date(NOW.getTime() + 60_000),
+      }),
+    };
 
     const answer = await source.resolve({
       signalKey: "paymentRefundable",
-      claim: RAZORPAY_PAYMENT_CLAIM,
+      claim: PAYMENT_REFUNDABLE_CLAIM,
       subject: "pay_ABC123456",
       subjectPath: "target",
       action: "razorpay:refund",

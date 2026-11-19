@@ -1,6 +1,6 @@
 # Vendor code out of core: plan
 
-> **Status: PROPOSED. Not started. No code has changed.** This plan needs the owner's decisions in section 5 before any step runs. It follows ADR-0018 (connectors outside core).
+> **Status: steps 2 and 3 DONE on branch `claude/remove-vendor-code`. Owner decisions 2 and 3 approved; decision 1 not answered, so the identifiers stay as section 3 says.** It follows ADR-0018 (connectors outside core).
 
 Owner: Pavan Charak. Decisions: the owner, with the gate owners named in the runbooks.
 
@@ -37,13 +37,12 @@ Environment variables are a deployment contract. They are left alone until the c
 Each step is one pull request. Each runs the full core checks, and a step is not merged until its checks pass.
 
 1. **Decide the identifier policy** (section 5, decision 1). Record it in a decision record. No code change.
-2. **Move the Razorpay payment source.**
-   - Copy the module and its tests to `parmana-connectors`, under `src/connectors/razorpay/`.
-   - Keep the claim name `payment.refundable` and the capability ids unchanged.
-   - Core keeps a neutral interface, if one is still needed, and the claim contract in `packages/policy`.
-   - Remove the module and tests from core only after the connector copy passes its own tests.
-   - Check that policy 1.1.0 still verifies.
-3. **Move the GitHub live-availability helper** to `parmana-connectors`, next to the connector it tests, or to a test-only package. Core's live test then refers to a neutral name.
+2. **Remove the Razorpay payment source from core. Done.**
+   - Finding: `parmana-connectors` already has the same signal (`src/signal/razorpay-payment-signal.ts`), wired into its signal service. Core's copy was a duplicate, and nothing in core's runtime imported it. So no copy was needed.
+   - Its 11 unit-test cases were first ported to `parmana-connectors` (`tests/signal/razorpay-payment-signal.test.ts`, 10 cases; the credential refusal is covered by `config.ts`). Two behaviours differ: a wrong claim or a missing amount is answered `not_found` by connectors, not thrown as in core. The connector tests assert the connector's behaviour.
+   - Core: the module and its test are removed. The scenario test in `refund-amount-scenarios.test.ts` now uses a labelled stub source. That test checks Parmana's handling of a sourced "true", not the signal's logic.
+   - The claim name `payment.refundable` and the capability ids are unchanged. Policy 1.1.0 still refers to the claim.
+3. **Move the GitHub live-availability helper. Done.** It had no importers in core and no live GitHub test exists in `parmana-connectors` yet. It is now `tests/connectors/github/github-live-availability.ts` in `parmana-connectors` (commit `3ef1caf`), with its core-path references marked as cross-repo.
 4. **Neutral names in core where no contract depends on them.** Only identifiers that are internal to core and not part of a signed record, a migration, or a deployment setting. Each rename is checked against section 3 before it is made.
 5. **Rename the stored and signed identifiers, only if decision 2 is yes.** This is a separate, owner-approved change with a new policy version and a migration plan.
 
@@ -52,6 +51,16 @@ Each step has a rollback. Steps 2 and 3 are copies first, so core keeps working 
 ## 5. Decisions needed from the owner
 
 1. **Identifier policy.** Keep capability ids, claim names and connector ids as stable contract identifiers, as section 3 proposes? Or rename them, with a new signed policy version and a migration?
+
+   **Proposed permanent fix (answer to the owner's "best long term permanent fix", not yet approved):** rename once, to neutral identifiers, through a versioned migration, with no permanent aliases.
+   - Define neutral ids in the form `<domain>:<action>`, for example `payments:refund` in place of `razorpay:refund`. Keep one registry table that maps each id to its connector, so the connector name appears in one place only.
+   - Introduce the neutral ids in a new signed policy version (for example `payment-refund` 2.0.0) through maker-checker. Core signs and verifies that version. The old policy stays signed and verifiable as history.
+   - Connectors accept both the old and new ids for one transition window. Core issues only the new ids once the new policy version is in effect. The window is set by the owner.
+   - Remove the old ids after the window. This is a separate release, and the removal is recorded in the changelog.
+   - Add a guard test, `tests/architecture/`, that fails if a vendor name appears in a new capability id, claim name or connector id. Old ids are listed explicitly and cannot grow.
+   - No alias is kept permanently, because two live names for one action would let one approval authorise two things. The transition window is the only time both names work.
+   - Owner decisions this needs: the window length, who approves the new policy version, and the deployment order (connectors first, then core).
+
 2. **Step 2.** Move the Razorpay payment source to `parmana-connectors`? If yes, who reviews the copy, and who approves the removal from core?
 3. **Step 3.** Move the GitHub live-availability helper, or leave it in core as a test-only helper?
 
