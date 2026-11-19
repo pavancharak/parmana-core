@@ -39,7 +39,7 @@ describe("Runtime release refused by a kill switch", () => {
       await withTestApproval({
         policy: {
           name: "payment-limit",
-          version: "2.1.0",
+          version: "1.0.0",
           schemaVersion: "1.0.0",
         },
         signals: {

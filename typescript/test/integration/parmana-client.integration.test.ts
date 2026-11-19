@@ -117,7 +117,7 @@ function buildTransaction(
 
     policy: {
       name: "payment-limit",
-      version: "2.1.0",
+      version: "1.0.0",
       schemaVersion: "1.0.0",
     },
 

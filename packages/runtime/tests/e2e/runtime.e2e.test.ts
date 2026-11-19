@@ -80,7 +80,7 @@ describe("RuntimeEngine E2E", () => {
 
       policy: {
         name: "payment-limit",
-        version: "2.1.0",
+        version: "1.0.0",
         schemaVersion: "1.0.0",
       },
 
@@ -173,7 +173,7 @@ describe("RuntimeEngine E2E", () => {
       // proof it's computed server-side, not merely passed through.
       policy: {
         name: "payment-limit",
-        version: "2.1.0",
+        version: "1.0.0",
         schemaVersion: "1.0.0",
       },
 
@@ -258,7 +258,7 @@ describe("RuntimeEngine E2E", () => {
 
       policy: {
         name: "payment-limit",
-        version: "2.1.0",
+        version: "1.0.0",
         schemaVersion: "1.0.0",
       },
 
@@ -336,7 +336,7 @@ describe("RuntimeEngine E2E", () => {
 
       policy: {
         name: "payment-limit",
-        version: "2.1.0",
+        version: "1.0.0",
         schemaVersion: "1.0.0",
       },
 
@@ -408,7 +408,7 @@ describe("RuntimeEngine E2E", () => {
 
       policy: {
         name: "payment-limit",
-        version: "2.1.0",
+        version: "1.0.0",
         schemaVersion: "1.0.0",
       },
 
@@ -494,7 +494,7 @@ describe("RuntimeEngine E2E", () => {
 
       policy: {
         name: "payment-limit",
-        version: "2.1.0",
+        version: "1.0.0",
         schemaVersion: "1.0.0",
       },
 
@@ -520,7 +520,7 @@ describe("RuntimeEngine E2E", () => {
     expect(result.trustRecord.executions[0]?.decision.outcome).toBe("APPROVED");
 
     expect(resolveCalledWith?.[0]).toBe("payment-limit");
-    expect(resolveCalledWith?.[1]).toBe("2.1.0");
+    expect(resolveCalledWith?.[1]).toBe("1.0.0");
     // Resolved with the same content hash G-24 stamps alongside it.
     expect(resolveCalledWith?.[2]).toBe(
       result.trustRecord.transaction.policy.contentHash,
@@ -582,7 +582,7 @@ describe("RuntimeEngine E2E", () => {
 
       policy: {
         name: "payment-limit",
-        version: "2.1.0",
+        version: "1.0.0",
         schemaVersion: "1.0.0",
       },
 
