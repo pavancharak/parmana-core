@@ -19,12 +19,13 @@ import type { PolicySignals } from "../../src/types/PolicySignals.js";
  * which flag to flip.
  */
 
-function loadPolicy(name: string, version: string): Policy {
+function loadFixture(folder: string, name: string, version: string): Policy {
   return JSON.parse(
     readFileSync(
       path.resolve(
         import.meta.dirname,
-        "../../../../fixtures/policies",
+        "../../../../fixtures",
+        folder,
         name,
         version,
         "policy.json",
@@ -32,6 +33,16 @@ function loadPolicy(name: string, version: string): Policy {
       "utf8",
     ),
   ) as Policy;
+}
+
+/** A policy the current system uses, under its neutral name. */
+function loadPolicy(name: string, version: string): Policy {
+  return loadFixture("policies", name, version);
+}
+
+/** A retired policy kept only as an input the validator must refuse. */
+function loadRefused(name: string, version: string): Policy {
+  return loadFixture("refused", name, version);
 }
 
 /**
@@ -203,8 +214,8 @@ const CASES: readonly Case[] = [
     failing: { riskScore: 99 },
   },
   {
-    name: "vendor-payment",
-    version: "2.1.0",
+    name: "payment-limit",
+    version: "1.0.0",
     approvalFact: "humanApproved",
     resourceId: "target",
     permissive: {
@@ -315,7 +326,7 @@ describe.each([
 ])("%s %s", (name, version) => {
   it("is refused because it approves without a signed human approval", () => {
     expect(() =>
-      new PolicyValidator().validate(loadPolicy(name, version)),
+      new PolicyValidator().validate(loadRefused(name, version)),
     ).toThrow(/approves without a signed human approval/);
   });
 });
