@@ -26,11 +26,20 @@ A policy version 2 rule can read a **sourced value**: a fact that a registered b
 - **Nonces.** A nonce store records each nonce once, so an answer cannot be used twice. The store is shared by all processes.
 - **The decision service** verifies each sourced answer with the verifier before it uses the value.
 
-## 4. What does not exist yet
+## 4. Status
 
-1. **A source integration in the deployment.** The decision service's `sources` option is a function that throws `No source integration is connected.` (`packages/api/src/policyV2/createPolicyV2Runtime.ts`).
-2. **A source client.** The decision asks for each sourced claim through `deps.sources`, which the deployment provides. Today the deployment provides a function that throws, so every sourced claim refuses with `SOURCE_UNAVAILABLE`. The integration replaces that function with a client that asks the adapter.
-3. **A way for the accounts system to hold a source key** that Parmana trusts, with rotation.
+Built in PR #733 (pending merge):
+
+- The source client that the deployment provides as `deps.sources`, in `packages/api/src/policyV2/policyV2SourceClient.ts`.
+- The wiring from `PARMANA_POLICY_V2_SOURCE_URL` and `PARMANA_POLICY_V2_SOURCE_TOKEN`, in `createPolicyV2Runtime.ts`. With no URL, every sourced claim still refuses.
+- A fixture adapter for tests and staging, in `test-support/policy-v2-fixture-source.ts`.
+- Tests for the client, the adapter's refusals, and an end-to-end decision in the test environment.
+
+Not built yet:
+
+1. **The real adapter**, beside the accounts system. It waits until the accounts system is named.
+2. **A way to hold, register and rotate the accounts system's source key** as a tooled procedure. The procedure is written in `docs/internal/reference/08-source-key-management.md`; no tool implements it yet.
+3. **A staging run** of the source path, with the staging environment and its settings.
 
 ## 5. Target design for the source integration
 

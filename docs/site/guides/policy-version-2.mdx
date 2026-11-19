@@ -9,8 +9,10 @@ description: "What policy version 2 is: signed, checked policies with named limi
   and `decidePolicyV2Review` in TypeScript, and `decide_policy_v2`,
   `policy_v2_review` and `decide_policy_v2_review` in Python. The server must
   also enable each capability. Until it does, a decision for that capability
-  returns HTTP 404 with the error code `not_enabled`. The SDKs do not yet expose
-  register writes, the console, the webhooks or replay.
+  returns HTTP 404 with the error code `not_enabled`. The SDKs can also replay a
+  recorded decision (`policyV2Replay` in TypeScript, `policy_v2_replay` in
+  Python); that is in the SDK source and ships in the next release. The SDKs do
+  not yet expose register writes, the console or the webhooks.
 </Note>
 
 Policy version 2 changes how Parmana decides whether an action may proceed. It
