@@ -1,0 +1,71 @@
+{
+  "policyId": "payment-refund",
+  "policyVersion": "1.0.0",
+  "schemaVersion": "1.0.0",
+  "description": "Authorizes a refund of a payment. Tiers, in order: refuse when the payment source says the payment is not refundable; approve when the source confirms it is refundable and a signed manager approval covers the exact amount (tier 2); reject otherwise. The caller cannot declare any fact. Tier 1 (automatic approval within a threshold) is not included: the validator requires a signed approval on every approve rule.",
+  "signalsSchema": {
+    "paymentRefundable": "boolean",
+    "managerApproved": "boolean",
+    "refundAmount": "number"
+  },
+  "boundSignals": {
+    "refundAmount": "parameters.amount"
+  },
+  "signalSources": {
+    "paymentRefundable": {
+      "source": "razorpay",
+      "claim": "payment.refundable",
+      "subject": "target",
+      "maxAgeSeconds": 60,
+      "parameters": ["amount"]
+    }
+  },
+  "approvalSignals": {
+    "managerApproved": {
+      "resourceId": "target",
+      "value": "parameters.amount"
+    }
+  },
+  "rules": [
+    {
+      "id": "refuse-not-refundable",
+      "condition": {
+        "fact": "paymentRefundable",
+        "operator": "is_false"
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refund refused. The payment source does not confirm the payment is refundable for this amount."
+      }
+    },
+    {
+      "id": "tier-2-with-exact-approval",
+      "condition": {
+        "all": [
+          {
+            "fact": "paymentRefundable",
+            "operator": "is_true"
+          },
+          {
+            "fact": "managerApproved",
+            "operator": "is_true"
+          }
+        ]
+      },
+      "outcome": {
+        "action": "approve",
+        "reason": "Tier 2: the payment source confirms the payment is refundable, and a signed manager approval covers this exact amount."
+      }
+    },
+    {
+      "id": "reject-by-default",
+      "condition": {
+        "always": true
+      },
+      "outcome": {
+        "action": "reject",
+        "reason": "Refund refused. Neither tier applies."
+      }
+    }
+  ]
+}
