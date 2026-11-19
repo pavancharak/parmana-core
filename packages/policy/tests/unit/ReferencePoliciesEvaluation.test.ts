@@ -93,8 +93,8 @@ describe("Reference Policy Evaluation", () => {
       },
     },
     {
-      name: "vendor-payment",
-      file: "vendor-payment/2.1.0/policy.json",
+      name: "payment-limit",
+      file: "payment-limit/1.0.0/policy.json",
       signals: {
         humanApproved: true,
         vendorVerified: true,

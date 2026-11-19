@@ -25,7 +25,7 @@ describe("POST /policies/validate", () => {
   it("returns 400 when policyVersion is missing", async () => {
     const response = await request(app)
       .post("/policies/validate")
-      .send({ policyId: "vendor-payment" });
+      .send({ policyId: "payment-limit" });
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({
@@ -37,7 +37,7 @@ describe("POST /policies/validate", () => {
   it("returns 200 with valid: true when the policy is loadable", async () => {
     const response = await request(app)
       .post("/policies/validate")
-      .send({ policyId: "vendor-payment", policyVersion: "2.0.0" });
+      .send({ policyId: "payment-limit", policyVersion: "2.0.0" });
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ valid: true, errors: [] });

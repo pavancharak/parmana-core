@@ -95,8 +95,8 @@ describe("Reference Policy Determinism", () => {
       },
     },
     {
-      name: "vendor-payment",
-      file: "vendor-payment/2.0.0/policy.json",
+      name: "payment-limit",
+      file: "payment-limit/2.0.0/policy.json",
       signals: {
         vendorVerified: true,
         invoiceVerified: true,

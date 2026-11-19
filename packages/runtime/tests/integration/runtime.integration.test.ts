@@ -29,7 +29,7 @@ describe("Runtime Integration", () => {
     const { trustRecord } = await runtime.execute(
       await withTestApproval({
         policy: {
-          name: "vendor-payment",
+          name: "payment-limit",
           version: "2.1.0",
           schemaVersion: "1.0.0",
         },
@@ -41,7 +41,7 @@ describe("Runtime Integration", () => {
           sufficientFunds: true,
           paymentAmount: 5000,
           riskScore: 10,
-          // Must match intent.target exactly: vendor-payment/2.1.0
+          // Must match intent.target exactly: payment-limit/1.0.0
           // declares boundSignals requiring vendorId === intent.target.
           vendorId: "vendor://payments",
         },

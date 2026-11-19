@@ -61,7 +61,7 @@ export function buildBusinessTransaction(
     },
 
     policy: {
-      name: "vendor-payment",
+      name: "payment-limit",
       version: "1.0.0",
       schemaVersion: "1.0.0",
     },
@@ -89,7 +89,7 @@ function buildExecution(
       intentId: crypto.randomUUID(),
 
       policy: {
-        name: "vendor-payment",
+        name: "payment-limit",
         version: "1.0.0",
         schemaVersion: "1.0.0",
       },

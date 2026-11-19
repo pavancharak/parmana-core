@@ -76,7 +76,7 @@ class FakeTransport:
                 created_at=datetime.now(UTC),
             ),
             policy=PolicyReference(
-                name="vendor-payment",
+                name="payment-limit",
                 version="1.0.0",
                 schema_version="1.0.0",
             ),
@@ -137,7 +137,7 @@ def _sample_transaction() -> BusinessTransaction:
             created_at=now,
         ),
         policy=PolicyReference(
-            name="vendor-payment", version="1.0.0", schema_version="1.0.0"
+            name="payment-limit", version="1.0.0", schema_version="1.0.0"
         ),
         signals={},
         status="RECEIVED",

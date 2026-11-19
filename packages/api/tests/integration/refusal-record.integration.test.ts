@@ -17,7 +17,7 @@ import { seedPolicyGovernanceApprovals } from "../../../../test-support/policy-g
  * PolicyEngine.evaluate shape and the G-24 signal/intent-binding
  * shape) now produces a durable, signed, independently verifiable
  * Refusal Record -- proven through the real Express app and the real
- * vendor-payment/2.0.0 policy file (boundSignals: paymentAmount ->
+ * payment-limit/2.0.0 policy file (boundSignals: paymentAmount ->
  * parameters.amount, vendorId -> target), not a stub.
  */
 describe("Refusal Record (RFC-0021, HTTP boundary)", () => {

@@ -18,7 +18,7 @@ function buildRefusalRecord(businessTransactionId: string): RefusalRecord {
       decisionId: `decision-${businessTransactionId}`,
       intentId: `intent-${businessTransactionId}`,
       policy: {
-        name: "vendor-payment",
+        name: "payment-limit",
         version: "2.0.0",
         schemaVersion: "1.0.0",
       },

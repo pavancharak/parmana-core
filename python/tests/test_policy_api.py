@@ -42,13 +42,13 @@ def test_validate_sends_policy_id_and_version():
 
     api = PolicyApi(transport)
 
-    result = api.validate("vendor-payment", "1.0.0")
+    result = api.validate("payment-limit", "1.0.0")
 
     assert transport.called
     assert transport.method == "POST"
     assert transport.path == "/policies/validate"
     assert transport.body == {
-        "policyId": "vendor-payment",
+        "policyId": "payment-limit",
         "policyVersion": "1.0.0",
     }
 

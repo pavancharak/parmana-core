@@ -220,7 +220,7 @@ def _transaction(
         intent=Intent(
             intent_id=intent_id,
             authorization_id=authorization_id,
-            # test:fixture-execute (not payments:execute/vendor-payment,
+            # test:fixture-execute (not payments:execute/payment-limit,
             # removed per docs/internal/VERIFICATION-GAPS.md G-27) -- mirrors
             # typescript/test/integration/parmana-client.integration.test.ts's
             # identical fixture update.
@@ -230,7 +230,7 @@ def _transaction(
             created_at=now,
         ),
         policy=PolicyReference(
-            name="vendor-payment", version="2.1.0", schema_version="1.0.0"
+            name="payment-limit", version="1.0.0", schema_version="1.0.0"
         ),
         signals={
             # Signed by the local test approver: no agent action is

@@ -105,10 +105,10 @@ function buildTransaction(
     intent: {
       intentId,
       authorizationId,
-      // test:fixture-execute (not payments:execute/vendor-payment, removed
+      // test:fixture-execute (not payments:execute/payment-limit, removed
       // per docs/internal/VERIFICATION-GAPS.md G-27) -- registered only when
       // NODE_ENV=test (createTestFixtureConnector.ts). Still governed by
-      // the unchanged vendor-payment/2.1.0 policy below.
+      // the unchanged payment-limit/1.0.0 policy below.
       action: "test:fixture-execute",
       target,
       parameters: { amount: paymentAmount, currency: "USD" },
@@ -116,7 +116,7 @@ function buildTransaction(
     },
 
     policy: {
-      name: "vendor-payment",
+      name: "payment-limit",
       version: "2.1.0",
       schemaVersion: "1.0.0",
     },
@@ -128,7 +128,7 @@ function buildTransaction(
       sufficientFunds: true,
       paymentAmount,
       riskScore: overrides.riskScore ?? 10,
-      // vendor-payment@2.1.0 declares boundSignals: vendorId -> target.
+      // payment-limit@1.0.0 declares boundSignals: vendorId -> target.
       vendorId: target,
     },
 
@@ -155,7 +155,7 @@ beforeAll(async () => {
   // dotenv loads it, not against this file's location. Running this
   // suite via `cd typescript && npm test` (cwd = typescript/) previously
   // resolved that to the nonexistent typescript/policies/, producing a
-  // live "Policy 'vendor-payment' version '2.0.0' was not found" 404 on
+  // live "Policy 'payment-limit' version '2.0.0' was not found" 404 on
   // every test that reached policy evaluation -- invisible from the repo
   // root (ci.yml's `npm test` runs from there, where the same relative
   // path happens to resolve correctly), but real and reproducible from

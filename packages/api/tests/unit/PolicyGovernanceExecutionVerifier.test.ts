@@ -21,7 +21,7 @@ async function fixtureRecord(
     policyChangeApprovalRecordId: `pcar-${Math.random()}`,
     // One approval record per pending change, as the repositories enforce.
     pendingPolicyChangeId: `ppc-${Math.random()}`,
-    policyName: "vendor-payment",
+    policyName: "payment-limit",
     policyVersion: "1.0.0",
     proposedBy: "human-maker",
     approvedBy: "human-checker",
@@ -64,7 +64,7 @@ describe("PolicyGovernanceExecutionVerifier", () => {
     const verifier = new PolicyGovernanceExecutionVerifier(repository, crypto);
 
     const violation = await verifier.verify(
-      "vendor-payment",
+      "payment-limit",
       "1.0.0",
       "hash123",
     );
@@ -83,7 +83,7 @@ describe("PolicyGovernanceExecutionVerifier", () => {
     const verifier = new PolicyGovernanceExecutionVerifier(repository, crypto);
 
     const violation = await verifier.verify(
-      "vendor-payment",
+      "payment-limit",
       "1.0.0",
       "different-live-hash",
     );
@@ -104,7 +104,7 @@ describe("PolicyGovernanceExecutionVerifier", () => {
     const verifier = new PolicyGovernanceExecutionVerifier(repository, crypto);
 
     const violation = await verifier.verify(
-      "vendor-payment",
+      "payment-limit",
       "1.0.0",
       "matching-hash",
     );
@@ -139,11 +139,11 @@ describe("PolicyGovernanceExecutionVerifier", () => {
       );
 
       expect(
-        await verifier.verify("vendor-payment", "1.1.0", "hash-1.1.0"),
+        await verifier.verify("payment-limit", "1.1.0", "hash-1.1.0"),
       ).toBeUndefined();
 
       const violation = await verifier.verify(
-        "vendor-payment",
+        "payment-limit",
         "1.0.0",
         "hash-1.0.0",
       );
@@ -160,11 +160,10 @@ describe("PolicyGovernanceExecutionVerifier", () => {
       );
 
       expect(
-        await verifier.verify("vendor-payment", "1.0.0", "hash-1.0.0"),
+        await verifier.verify("payment-limit", "1.0.0", "hash-1.0.0"),
       ).toBeUndefined();
       expect(
-        (await verifier.verify("vendor-payment", "1.1.0", "hash-1.1.0"))
-          ?.reason,
+        (await verifier.verify("payment-limit", "1.1.0", "hash-1.1.0"))?.reason,
       ).toContain("was superseded");
     });
   });
