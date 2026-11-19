@@ -38,7 +38,14 @@ const NOW = new Date("2026-10-10T12:00:00.000Z");
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const refundPolicy = JSON.parse(
   readFileSync(
-    join(repoRoot, "policies", "customer-refund", "1.2.0", "policy.json"),
+    join(
+      repoRoot,
+      "test-support",
+      "policies",
+      "customer-refund",
+      "1.2.0",
+      "policy.json",
+    ),
     "utf8",
   ),
 ) as Policy;

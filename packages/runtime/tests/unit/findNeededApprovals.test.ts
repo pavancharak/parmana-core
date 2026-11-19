@@ -15,6 +15,7 @@ const refundPolicy = JSON.parse(
       "..",
       "..",
       "..",
+      "test-support",
       "policies",
       "customer-refund",
       "1.2.0",
