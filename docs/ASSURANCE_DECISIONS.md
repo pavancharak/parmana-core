@@ -149,18 +149,18 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 
 ## Record
 
-| Decision | Owner decision                                      | Date       | Recorded by                              |
-| -------- | --------------------------------------------------- | ---------- | ---------------------------------------- |
-| D7       | In scope                                            | 2026-11-14 | Recorded in session at owner's direction |
-| D8       | Define as proposed                                  | 2026-11-14 | Recorded in session at owner's direction |
-| D9       | Reject non-canonical encodings                      | 2026-11-14 | Recorded in session at owner's direction |
-| D10      | Pending                                             |            |                                          |
-| D11      | Pending                                             |            |                                          |
-| D12      | Pending                                             |            |                                          |
-| D13      | Adopted: permanent direction                        | 2026-11-14 | Recorded in session at owner's direction |
-| D14      | Adopted: razorpay:refund policy version             | 2026-11-14 | Owner confirmed version 1.3.0            |
-| D23      | Adopted: G-77 change; points 1 to 3 resolved by D24 | 2026-11-19 | Recorded in session at owner's direction |
-| D24      | Adopted: new policy, neutral name, no tier 1        | 2026-11-19 | Owner approved all three                 |
+| Decision | Owner decision                                               | Date       | Recorded by                              |
+| -------- | ------------------------------------------------------------ | ---------- | ---------------------------------------- |
+| D7       | In scope                                                     | 2026-11-14 | Recorded in session at owner's direction |
+| D8       | Define as proposed                                           | 2026-11-14 | Recorded in session at owner's direction |
+| D9       | Reject non-canonical encodings                               | 2026-11-14 | Recorded in session at owner's direction |
+| D10      | Pending                                                      |            |                                          |
+| D11      | Pending                                                      |            |                                          |
+| D12      | Pending                                                      |            |                                          |
+| D13      | Adopted: permanent direction                                 | 2026-11-14 | Recorded in session at owner's direction |
+| D14      | Adopted: razorpay:refund policy version                      | 2026-11-14 | Owner confirmed version 1.3.0            |
+| D23      | Adopted: G-77 change; points 1 to 3 resolved by D24          | 2026-11-19 | Recorded in session at owner's direction |
+| D24      | Adopted: new policy, neutral name now (no window), no tier 1 | 2026-11-19 | Owner approved all three                 |
 
 ---
 
@@ -381,14 +381,14 @@ Under `CLAUDE.md`, changes to the plan's score policy, exit criteria and accepta
 **Owner decision (approved, all three):**
 
 1. **Policy.** Write a new policy for the refund action from its rule, not from any existing policy. The draft in `docs/guides/policy-writing.md`, section 7, is the starting point. It goes through maker-checker with its own version before it takes effect. Nothing binds to it until it is approved.
-2. **Name.** Use a neutral capability name, of the form `<domain>:<action>` (for example `payments:refund`). The connector name appears in one registry table only. No permanent alias: an old name is kept for one owner-set transition window, then retired, in a separate release. This supersedes D16, which embedded the connector name.
+2. **Name.** Use a neutral capability name, of the form `<domain>:<action>` (for example `payments:refund`). The connector name appears in one registry table only. The old name is removed now, with no transition window and no alias, because there are no existing users or live traffic for it. This supersedes D16, which embedded the connector name.
 3. **Tier 1.** Not added. Every approval keeps a signed human approval, as the validator enforces. Automatic approval within a threshold is not part of this decision and would need its own reviewed change to the validator.
 
 **Steps that follow (each its own change, with its own review):**
 
 1. Maker-checker approves the new policy version (point 1). The owner's approval is needed for the signature.
-2. Add the neutral name to the registry table and make connectors accept both the old and new names during the transition window (point 2). The window length is set by the owner.
+2. Rename the old name to the neutral name in live code and tests, in connectors and in parmana-core, in one change per repository. Signed records (policies, evaluations, proof artifacts, the audit log and the decision log) keep the name they were signed with. They are history, not live code.
 3. Bind the new name to the approved policy version in the canonical table, using the G-77 guard as amended by D23.
-4. Retire the old name after the window, in a separate release recorded in the changelog.
+4. Bind the neutral name to the approved policy version, once step 1 is approved.
 
 **Not changed by this decision:** the validator, the tier model in the design documents, and the signed records that already exist. Commit signing is a separate open item and is not decided here.
