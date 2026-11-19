@@ -8,7 +8,7 @@ import { fileURLToPath as __toPath } from "node:url";
 import { dirname as __dirname, join as __join } from "node:path";
 process.env.PARMANA_POLICY_DIR ??= __join(
   __dirname(__toPath(import.meta.url)),
-  "test-support",
+  "fixtures",
   "policies",
 );
 
@@ -103,7 +103,7 @@ console.info(describeDatabaseTarget(databaseTarget));
  * only when a variable is not already set by the shell or .env.
  */
 const LOCAL_TEST_DEFAULTS: Record<string, string> = {
-  PARMANA_POLICY_DIR: "./policies",
+  PARMANA_POLICY_DIR: "./fixtures/policies",
   PARMANA_STORAGE: "memory",
   KEY_PROVIDER: "local",
   PRIMARY_SIGNATURE_PROVIDER: "ed25519",

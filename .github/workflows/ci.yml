@@ -39,9 +39,9 @@ jobs:
       NODE_ENV: test
       TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
       # Required at startup by packages/shared/src/config/Config.ts —
-      # points at the repo's own committed reference policies, not a
-      # separate fixtures directory.
-      PARMANA_POLICY_DIR: ./policies
+      # points at the fixture policies the tests read (fixtures/policies),
+      # not the live policies/ folder, which holds only the policies in use.
+      PARMANA_POLICY_DIR: ./fixtures/policies
       # Explicit default for the in-memory storage provider.
       PARMANA_STORAGE: memory
       KEY_PROVIDER: local
