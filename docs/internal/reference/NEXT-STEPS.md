@@ -39,8 +39,8 @@ Work through the steps in order. Do not start a step until the one before it is 
 | #   | Step                                                                         | Who                  | Document                                            |
 | --- | ---------------------------------------------------------------------------- | -------------------- | --------------------------------------------------- |
 | C1  | Confirm the design assumptions in section 2, with the accounts system's name | Owner                | `POLICY-V2-SOURCE-INTEGRATION.md`                   |
-| C2  | Build the source client in Parmana, with its tests                           | Engineer             | `ERP-INVOICE-PAY-SOURCE-BUILD.md`, sections 3 and 6 |
-| C3  | Build the fixture adapter and its tests                                      | Engineer             | `ERP-INVOICE-PAY-SOURCE-BUILD.md`, sections 5 and 6 |
+| C2  | Build the source client in Parmana, with its tests (**built, PR #733**)      | Engineer             | `ERP-INVOICE-PAY-SOURCE-BUILD.md`, sections 3 and 6 |
+| C3  | Build the fixture adapter and its tests (**built, PR #733**)                 | Engineer             | `ERP-INVOICE-PAY-SOURCE-BUILD.md`, sections 5 and 6 |
 | C4  | Review and merge the code                                                    | Owner and reviewers  | Pull request                                        |
 | C5  | Register the fixture source in staging, and run the end-to-end test          | Operator             | `07-source-acceptance-test-report.md`               |
 | C6  | Build the real adapter against the accounts system                           | Engineer             | `09-source-adapter-operations.md`                   |

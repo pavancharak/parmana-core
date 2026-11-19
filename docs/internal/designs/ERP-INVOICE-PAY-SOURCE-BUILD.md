@@ -2,7 +2,7 @@
 
 This guide is for the engineer who builds the source integration. It is step 4 of the enablement plan: build the integration, then test it in staging, then enable `erp:invoice-pay`. It follows `POLICY-V2-SOURCE-INTEGRATION.md` (the design), and it states which parts are assumptions.
 
-**Status: not to be built until the owner confirms the assumptions in the design (section 2), and names the accounts system.** The adapter in section 5 depends on that system's API, which is not known yet. Everything else can be built and tested first with a fixture adapter.
+**Status: the source client and the fixture adapter are built (PR #733, pending merge). The real adapter is not built: it waits until the owner confirms the assumptions in the design (section 2) and names the accounts system.** The adapter in section 5 depends on that system's API, which is not known yet. Everything else can be built and tested first with a fixture adapter.
 
 ## 1. What the code already does
 
@@ -35,10 +35,10 @@ decision  --query-->  source client (in Parmana)  --HTTP-->  adapter (beside the
 **Contract:**
 
 - Input: the query `{ source, claim, subject, action, transactionId }`.
-- Request: `POST <PARMANA_POLICY_V2_SOURCE_URL>/answers` with the query as JSON and an `Authorization: Bearer <token>` header. The token is read from `PARMANA_POLICY_V2_SOURCE_TOKEN`. **[PROPOSED]** These two setting names are new; they do not exist in the code yet.
+- Request: `POST <PARMANA_POLICY_V2_SOURCE_URL>/answers` with the query as JSON and an `Authorization: Bearer <token>` header. The token is read from `PARMANA_POLICY_V2_SOURCE_TOKEN`. Both settings are implemented in `createPolicyV2Runtime.ts` (`sourceClientFrom`).
 - Response: a signed answer `{ payload, signature }`. The client returns it as is. It does not read or change the value. The verifier does the checking.
 - Any failure throws, so the decision refuses with `SOURCE_UNAVAILABLE`. A failure is a timeout, a non-200 response, a network error, or a body that is not JSON.
-- **Timeout:** 3 seconds **[PROPOSED]**, so one slow source cannot hold a decision.
+- **Timeout:** 3 seconds, implemented, so one slow source cannot hold a decision.
 - **No retries** on a decision. A retry could repeat a question the nonce store has already consumed.
 
 **Do not:** cache answers across decisions, or accept an answer that does not match the query. The verifier checks the match (`QUERY_MISMATCH`), but the client should not hide a mismatch either.
@@ -76,7 +76,7 @@ Units are part of the claim. An answer in a different unit does not match the re
 **Rules the adapter must follow:**
 
 - **`nonce`:** a new random value for every answer. Never reuse one. The nonce store refuses a second use (`REPLAYED`).
-- **`observedAt` and `expiresAt`:** the time the value was read, and a short expiry. **[PROPOSED]** The expiry is 5 minutes after `observedAt`. Clocks may differ by up to 60 seconds (`MAX_CLOCK_SKEW_MS`).
+- **`observedAt` and `expiresAt`:** the time the value was read, and a short expiry. The expiry is 5 minutes after `observedAt` (**[PROPOSED]**, set by the adapter). Clocks may differ by up to 60 seconds (`MAX_CLOCK_SKEW_MS`).
 - **Echo the query exactly:** `source`, `claim`, `subject`, `action` and `transactionId` must match the query. Otherwise the answer is refused (`QUERY_MISMATCH`).
 - **Private key:** held only by the adapter. Never sent to Parmana, never in the repository, never in chat. Store it in the adapter's secret store.
 - **Unknown subject or claim:** return an error, not a guessed value. Parmana then refuses the decision.
@@ -95,19 +95,19 @@ Build these before the real accounts system is connected.
 
 ## 7. Configuration
 
-| Setting                          | Where                                          | Value                                         |
-| -------------------------------- | ---------------------------------------------- | --------------------------------------------- |
-| `PARMANA_POLICY_V2_SOURCE_URL`   | Parmana deployment **[PROPOSED]**              | the adapter's base URL                        |
-| `PARMANA_POLICY_V2_SOURCE_TOKEN` | Parmana deployment secret store **[PROPOSED]** | the token the adapter checks                  |
-| `PARMANA_POLICY_V2_CAPABILITIES` | Parmana deployment                             | add `erp:invoice-pay` only after step 8 below |
+| Setting                          | Where                           | Value                                                 |
+| -------------------------------- | ------------------------------- | ----------------------------------------------------- |
+| `PARMANA_POLICY_V2_SOURCE_URL`   | Parmana deployment              | the adapter's base URL (https, or loopback for tests) |
+| `PARMANA_POLICY_V2_SOURCE_TOKEN` | Parmana deployment secret store | the token the adapter checks                          |
+| `PARMANA_POLICY_V2_CAPABILITIES` | Parmana deployment              | add `erp:invoice-pay` only after step 8 below         |
 
 Set the token in the deployment's secret store. Never put it in the repository or in chat.
 
 ## 8. Steps, in order
 
 1. Confirm the assumptions in the design, section 2, and name the accounts system.
-2. Build the source client in Parmana, with the tests in section 6.1.
-3. Build the fixture adapter, with the tests in section 6.2 and 6.3.
+2. Build the source client in Parmana, with the tests in section 6.1. **Done in PR #733.**
+3. Build the fixture adapter, with the tests in section 6.2 and 6.3. **Done in PR #733.**
 4. Review both in a pull request. Merge.
 5. Register the fixture source in staging, through section 4, with a test key.
 6. Run the end-to-end test in staging (section 6.4).
@@ -120,5 +120,6 @@ Set the token in the deployment's secret store. Never put it in the repository o
 
 - The accounts system is not named, so the real adapter is not built.
 - The claims' units are not confirmed.
-- `PARMANA_POLICY_V2_SOURCE_URL` and `PARMANA_POLICY_V2_SOURCE_TOKEN` are proposals. They are not in the code.
+- The vendor claims (`vendor.id`, `vendor.status`) are not in the end-to-end test. They need the owner's confirmed policy text.
+- A staging run has not been done. It needs the staging environment and its settings.
 - The `erp:invoice-pay` thresholds and tiers are not decided. They are a business decision for the owner.
