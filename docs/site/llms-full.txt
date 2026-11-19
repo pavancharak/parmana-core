@@ -10,21 +10,52 @@ This file concatenates the integration pages of the Parmana documentation. It is
 
 Source: https://docs.parmanasystems.com
 
-Every action stays within what your business allowed. Parmana checks every action, whether a
-person or a machine takes it, against the limits you set. Then it keeps proof of what happened.
+**The Business Authority Layer for Autonomous Systems.**
 
-Parmana sits between an AI agent (or a script, or a person) and the systems that carry out its
-actions. Before anything executes, Parmana checks it against a policy you write and issues a
-signed, single-use authorization. After it executes, you have an independently verifiable
-signed record of exactly what happened. The [Quickstart](/quickstart) runs a local server step
-by step.
+AI agents can propose and start actions. Businesses decide what authority to delegate. Parmana checks each action against that authority before it runs, and keeps signed evidence that anyone can verify.
 
 <Info>
   **Apache License 2.0.** The whole Parmana repository, including the server, is
   open source under the Apache License 2.0, as are the client and connector
-  SDKs. See [License](/license). Evaluators and auditors start at Evaluate
-  Parmana and the Audit guide.
+  SDKs. See [License](/license). Evaluators and auditors start with [How Parmana
+  compares](/how-parmana-compares) and [Verify
+  independently](/guides/verify-independently).
 </Info>
+
+## Access is not authority
+
+Access controls answer one question: can this agent reach this system? That matters, but it is not the question that matters when an agent is about to issue a refund or change a record. The question is whether this specific action, for this amount and in these circumstances, is within what your business actually delegated.
+
+Parmana answers that question before the action runs, using rules your business writes and a person's signature where the rules require one.
+
+## What Parmana controls
+
+1. **Declared.** Your business writes its authority as explicit, versioned rules: what each action may do, up to what amount, and when a person must approve it.
+2. **Authorized.** Each proposed action is checked against those rules. If no rule matches, the action is refused. A rule that needs a person waits for a signed approval for that exact action.
+3. **Executed.** Only permitted actions pass the enforcement boundary. On supported paths, the gateway holds the connector credentials, so the agent never does, and it releases each approved action once.
+4. **Proven.** A signed record of the decision and the release, which anyone can verify offline with the public key they choose to trust.
+
+Each stage is built and tested. [How Parmana thinks](/how-parmana-thinks) sets out what each stage guarantees, and where it stops.
+
+## An example
+
+A support agent asks to refund 4,000 to a customer. Your policy lets the agent refund up to 500 on its own. Above 500, it needs a signed approval from a named manager for that order and that amount.
+
+Parmana refuses the request, so nothing is refunded. The manager reviews it and signs an approval for that order and amount, valid for 15 minutes and usable once. The agent sends the request again. Parmana releases the refund through your refund system, and the record shows the decision, the approval and the release.
+
+## What the business receives
+
+- **Control.** Rules you can read, change only through a second approver, and enforce whether the caller is a person or an agent.
+- **Accountability.** A signed record of each decision, approval and release, tied to the action it covers.
+- **Independent evidence.** Records that an auditor or regulator can verify without access to your systems or to Parmana.
+
+## What Parmana is not
+
+Parmana does not replace identity and access management, AI security tools or AI governance. Each answers a different question, and Parmana sits after them, in front of the actions an agent takes. [How Parmana compares](/how-parmana-compares) sets out the difference.
+
+## Where Parmana stands
+
+Parmana is a prototype. It checks only actions that go through its gateway, and it does not read the text a model produces. Every claim, with its evidence and its limits, is recorded in the repository.
 
 <Tip>
   **Try it on your own machine.** The [Quickstart](/quickstart) runs a local
@@ -37,50 +68,8 @@ by step.
   single machine-readable index of the OpenAPI spec, auth scheme, and both real
   SDKs with their actual current package versions, no page-scraping required. To
   start, the [Quickstart](/quickstart) gets you a working local server and a
-  test credential (not a production secret) in under 10 minutes.
+  test credential (not a production secret).
 </Note>
-
-## What Parmana is
-
-Think of how a card network authorizes a purchase. Visa doesn't stock the shelves or move the
-money itself. It decides, quickly and cryptographically, whether the transaction is allowed,
-then hands the merchant's bank a signed authorization to act on. **Parmana plays that role for
-automated business actions.** An agent proposes an action. Parmana's policy engine decides,
-deterministically, whether it's allowed. If approved, Parmana issues a signed, single-use,
-time-bounded authorization. Your own systems, through a Connector, are what actually execute
-it. Parmana never touches your systems directly, the same way a card network never touches
-the goods on the shelf.
-
-**No AI agent action is authorized without a signed human approval, reads included.** A policy
-can only approve when a trusted person has signed an approval for that action on that resource,
-and the approval is checked, not taken on the agent's word. See [Human approval](/concepts/human-approval).
-
-## The trust chain, at a glance
-
-```
-Caller (AI agent, script, or person)
-     │  proposes a Business Transaction
-     ▼
-Policy Engine  ──deterministic decision──►  APPROVED or REJECTED
-     │  (no matching rule denies by default: fail closed)
-     ▼  if APPROVED
-Signed Execution Authorization  (single-use, time-bounded, content-bound)
-     │
-     ▼
-Execution Gateway  ──independently re-verifies the signed envelope──►
-     │
-     ├─►  Session Credential Vault  (issues a scoped, single-use credential)
-     ▼
-Connector  (your system: an HTTP call, or a reference mock today)
-     │
-     ▼
-Execution Trust Record  (signed, independently verifiable)
-```
-
-Every stage in that chain is real, tested code, not a diagram of intent. The default local
-server (`packages/api/src/server.ts`) wires the Execution Gateway unconditionally: there is no
-code path where a request skips it. See [How Parmana thinks](/how-parmana-thinks) for what
-each stage guarantees and why.
 
 ## Status tags used throughout this site
 
@@ -104,16 +93,15 @@ A page or section with no tag is a bug in this site, [file it as such](/contribu
 
 <CardGroup cols={2}>
   <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Install to first authorized execution in under 10 minutes, using the
-    in-memory server.
+    Install to first authorized execution, using the in-memory server.
   </Card>
   <Card title="Self hosted" icon="server" href="/self-hosted/overview">
     Run Parmana on your own infrastructure with one Docker Compose command.
     Decisions, keys and records stay in your network.
   </Card>
   <Card title="How Parmana thinks" icon="brain" href="/how-parmana-thinks">
-    The concepts behind the diagram above: policy, authorization, the gateway,
-    trust records.
+    The concepts behind the four stages above: policy, authorization, the
+    gateway, trust records.
   </Card>
   <Card title="SDKs" icon="code" href="/sdks/typescript">
     TypeScript and Python, both published, both with a builder that removes the
@@ -892,7 +880,7 @@ Each decision below links to its record in the repository. The records have the 
 
 **What it costs.** Keys have to be managed carefully. A signature proves who signed a record, not that the decision was wise. Verification tells you the record is intact and was signed by the expected key, nothing more.
 
-Record: [ADR-0003, verification is independent](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0003-Verification-Is-Independent.md). Try it: [verify a record in your browser](/verification/verify-in-browser).
+Record: [ADR-0003, verification is independent](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/adr/ADR-0003-Verification-Is-Independent.md). Try it: [verify a record in your browser](/verification/verify-in-browser).
 
 ## 2. Evidence is added, never edited
 
@@ -902,7 +890,7 @@ Record: [ADR-0003, verification is independent](https://github.com/pavancharak/p
 
 **What it costs.** A mistake stays in the history. Corrections take another record, so the history grows.
 
-Record: [ADR-0005, evidence is append-only](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0005-Evidence-Is-Append-Only.md). See also [detect tampering](/guides/detect-tampering).
+Record: [ADR-0005, evidence is append-only](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/adr/ADR-0005-Evidence-Is-Append-Only.md). See also [detect tampering](/guides/detect-tampering).
 
 ## 3. The same input gives the same decision
 
@@ -912,7 +900,7 @@ Record: [ADR-0005, evidence is append-only](https://github.com/pavancharak/parma
 
 **What it costs.** Rules must be written precisely. A rule cannot depend on something the system cannot see, such as the time of day, unless that value is passed in as a signal.
 
-Record: [ADR-0007, deterministic execution](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0007-Deterministic-Execution.md). See also [determinism and clocks](/concepts/determinism-and-clocks).
+Record: [ADR-0007, deterministic execution](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/adr/ADR-0007-Deterministic-Execution.md). See also [determinism and clocks](/concepts/determinism-and-clocks).
 
 ## 4. What is released is signed before it leaves
 
@@ -922,7 +910,7 @@ Record: [ADR-0007, deterministic execution](https://github.com/pavancharak/parma
 
 **What it costs.** One more step in the request path, and the operator has to resolve intents that end in an unknown outcome.
 
-Record: [ADR-0012, signed execution intent before release](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0012-Signed-Execution-Intent-Before-Release.md). Operator guide: [execution intents](/concepts/execution-intents).
+Record: [ADR-0012, signed execution intent before release](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/adr/ADR-0012-Signed-Execution-Intent-Before-Release.md). Operator guide: [execution intents](/concepts/execution-intents).
 
 ## 5. A person approves each sensitive action
 
@@ -952,17 +940,17 @@ Guides: [policy governance, maker and checker](/guides/policy-governance-maker-c
 
 **What it costs.** The endpoint must implement the check. The SDK helpers do this for you, and the rest of the protocol is in the connect guide.
 
-Record: [ADR-0013, generic external connector](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0013-Generic-External-Connector.md). Guide: [connect any external system](/guides/connect-any-external-system).
+Record: [ADR-0013, generic external connector](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/adr/ADR-0013-Generic-External-Connector.md). Guide: [connect any external system](/guides/connect-any-external-system).
 
-## 8. A stop control is designed, and not yet shipped
+## 8. An operator can stop all execution, with stated limits
 
-**What it does (planned).** An operator kill switch would stop all actions at once, with a fresh check that can be repeated.
+**What it does.** An operator can trip a kill switch that refuses new execution, new transactions, policy-change approvals and sandbox approvals before any of them run. The stop is stored in Postgres, so a restart does not clear it. A reset can require a second, different operator.
 
-**Why.** Today, no single control halts every action. Partial controls exist: approving a policy that refuses the actions, or revoking a connector or an approver.
+**Why.** An agent can act at machine speed, so the business needs one control that halts all of it at once. Partial controls, such as refusing an action in policy or revoking a connector or an approver, stop one thing at a time.
 
-**What it costs.** Until the kill switch is built and deployed, an emergency stop is a set of partial controls, not one switch. Do not rely on the kill switch yet.
+**What it costs.** The stop does not recall an action already released, so calls admitted before the trip can still complete. It halts every caller at once, not one agent. A tool an agent reaches directly, bypassing Parmana, is not stopped. The status response is not signed yet, and two-person reset has not been exercised in production with two real operator keys.
 
-Record: [ADR-0017, operator kill switch](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0017-Operator-Kill-Switch.md). Its status line says it is not merged and not deployed.
+Record: [claim 2.58, "An Operator Can Stop All Execution, and the Stop Survives Restarts"](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/CLAIMS.md#258-an-operator-can-stop-all-execution-and-the-stop-survives-restarts). Decision record: [ADR-0017, operator kill switch](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/adr/ADR-0017-Operator-Kill-Switch.md).
 
 ## Where to go next
 
