@@ -15,7 +15,7 @@ Each decision below links to its record in the repository. The records have the 
 
 **What it costs.** Keys have to be managed carefully. A signature proves who signed a record, not that the decision was wise. Verification tells you the record is intact and was signed by the expected key, nothing more.
 
-Record: [ADR-0003, verification is independent](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0003-Verification-Is-Independent.md). Try it: [verify a record in your browser](/verification/verify-in-browser).
+Record: [ADR-0003, verification is independent](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/adr/ADR-0003-Verification-Is-Independent.md). Try it: [verify a record in your browser](/verification/verify-in-browser).
 
 ## 2. Evidence is added, never edited
 
@@ -25,7 +25,7 @@ Record: [ADR-0003, verification is independent](https://github.com/pavancharak/p
 
 **What it costs.** A mistake stays in the history. Corrections take another record, so the history grows.
 
-Record: [ADR-0005, evidence is append-only](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0005-Evidence-Is-Append-Only.md). See also [detect tampering](/guides/detect-tampering).
+Record: [ADR-0005, evidence is append-only](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/adr/ADR-0005-Evidence-Is-Append-Only.md). See also [detect tampering](/guides/detect-tampering).
 
 ## 3. The same input gives the same decision
 
@@ -35,7 +35,7 @@ Record: [ADR-0005, evidence is append-only](https://github.com/pavancharak/parma
 
 **What it costs.** Rules must be written precisely. A rule cannot depend on something the system cannot see, such as the time of day, unless that value is passed in as a signal.
 
-Record: [ADR-0007, deterministic execution](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0007-Deterministic-Execution.md). See also [determinism and clocks](/concepts/determinism-and-clocks).
+Record: [ADR-0007, deterministic execution](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/adr/ADR-0007-Deterministic-Execution.md). See also [determinism and clocks](/concepts/determinism-and-clocks).
 
 ## 4. What is released is signed before it leaves
 
@@ -45,7 +45,7 @@ Record: [ADR-0007, deterministic execution](https://github.com/pavancharak/parma
 
 **What it costs.** One more step in the request path, and the operator has to resolve intents that end in an unknown outcome.
 
-Record: [ADR-0012, signed execution intent before release](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0012-Signed-Execution-Intent-Before-Release.md). Operator guide: [execution intents](/concepts/execution-intents).
+Record: [ADR-0012, signed execution intent before release](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/adr/ADR-0012-Signed-Execution-Intent-Before-Release.md). Operator guide: [execution intents](/concepts/execution-intents).
 
 ## 5. A person approves each sensitive action
 
@@ -75,17 +75,17 @@ Guides: [policy governance, maker and checker](/guides/policy-governance-maker-c
 
 **What it costs.** The endpoint must implement the check. The SDK helpers do this for you, and the rest of the protocol is in the connect guide.
 
-Record: [ADR-0013, generic external connector](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0013-Generic-External-Connector.md). Guide: [connect any external system](/guides/connect-any-external-system).
+Record: [ADR-0013, generic external connector](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/adr/ADR-0013-Generic-External-Connector.md). Guide: [connect any external system](/guides/connect-any-external-system).
 
-## 8. A stop control is designed, and not yet shipped
+## 8. An operator can stop all execution, with stated limits
 
-**What it does (planned).** An operator kill switch would stop all actions at once, with a fresh check that can be repeated.
+**What it does.** An operator can trip a kill switch that refuses new execution, new transactions, policy-change approvals and sandbox approvals before any of them run. The stop is stored in Postgres, so a restart does not clear it. A reset can require a second, different operator.
 
-**Why.** Today, no single control halts every action. Partial controls exist: approving a policy that refuses the actions, or revoking a connector or an approver.
+**Why.** An agent can act at machine speed, so the business needs one control that halts all of it at once. Partial controls, such as refusing an action in policy or revoking a connector or an approver, stop one thing at a time.
 
-**What it costs.** Until the kill switch is built and deployed, an emergency stop is a set of partial controls, not one switch. Do not rely on the kill switch yet.
+**What it costs.** The stop does not recall an action already released, so calls admitted before the trip can still complete. It halts every caller at once, not one agent. A tool an agent reaches directly, bypassing Parmana, is not stopped. The status response is not signed yet, and two-person reset has not been exercised in production with two real operator keys.
 
-Record: [ADR-0017, operator kill switch](https://github.com/pavancharak/parmana-core/blob/main/docs/adr/ADR-0017-Operator-Kill-Switch.md). Its status line says it is not merged and not deployed.
+Record: [claim 2.58, "An Operator Can Stop All Execution, and the Stop Survives Restarts"](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/CLAIMS.md#258-an-operator-can-stop-all-execution-and-the-stop-survives-restarts). Decision record: [ADR-0017, operator kill switch](https://github.com/pavancharak/parmana-core/blob/main/docs/internal/adr/ADR-0017-Operator-Kill-Switch.md).
 
 ## Where to go next
 
