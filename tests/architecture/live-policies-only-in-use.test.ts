@@ -31,6 +31,11 @@ const RETIRED = [
   "vendor-payment",
 ];
 
+// The approval-log test checks the message the approval-log script prints for a
+// retired policy. That message names the path the script reads, so the file is
+// exempt. Add a file here only with a reason in the same place.
+const ALLOWED_FILES = new Set(["scripts/tests/policy-approval-log.test.ts"]);
+
 const SCANNED = [
   "packages",
   "examples",
@@ -62,6 +67,7 @@ describe("the live policies folder is read only for policies in use", () => {
       const dir = path.join(root, scanned);
       if (!statSync(dir, { throwIfNoEntry: false })?.isDirectory()) continue;
       for (const file of files(dir)) {
+        if (ALLOWED_FILES.has(path.relative(root, file))) continue;
         const text = readFileSync(file, "utf8");
         const lines = text.split("\n");
         lines.forEach((line, index) => {
