@@ -21,7 +21,7 @@ describe("Reference Policy Determinism", () => {
   const cases: TestCase[] = [
     {
       name: "access-control",
-      file: "access-control/1.0.0/policy.json",
+      file: "../refused/access-control/1.0.0/policy.json",
       signals: {
         userAuthenticated: true,
         userAuthorized: true,
@@ -32,7 +32,7 @@ describe("Reference Policy Determinism", () => {
     },
     {
       name: "customer-refund",
-      file: "customer-refund/1.0.0/policy.json",
+      file: "../refused/customer-refund/1.0.0/policy.json",
       signals: {
         refundEligible: true,
         managerApproved: true,
@@ -42,7 +42,7 @@ describe("Reference Policy Determinism", () => {
     },
     {
       name: "customer-refund 1.1.0",
-      file: "customer-refund/1.1.0/policy.json",
+      file: "../refused/customer-refund/1.1.0/policy.json",
       signals: {
         refundEligible: true,
         managerApproved: false,
@@ -52,7 +52,7 @@ describe("Reference Policy Determinism", () => {
     },
     {
       name: "database-change",
-      file: "database-change/3.0.0/policy.json",
+      file: "../refused/database-change/3.0.0/policy.json",
       signals: {
         changeApproved: true,
         migrationValidated: true,
@@ -63,7 +63,7 @@ describe("Reference Policy Determinism", () => {
     },
     {
       name: "llm-tool-call",
-      file: "llm-tool-call/1.0.0/policy.json",
+      file: "../refused/llm-tool-call/1.0.0/policy.json",
       signals: {
         toolAllowed: true,
         resourceAuthorized: true,
@@ -74,7 +74,7 @@ describe("Reference Policy Determinism", () => {
     },
     {
       name: "production-deployment",
-      file: "production-deployment/1.0.0/policy.json",
+      file: "../refused/production-deployment/1.0.0/policy.json",
       signals: {
         deploymentApproved: true,
         changeVerified: true,
@@ -85,7 +85,7 @@ describe("Reference Policy Determinism", () => {
     },
     {
       name: "rag-document-access",
-      file: "rag-document-access/1.0.0/policy.json",
+      file: "../refused/rag-document-access/1.0.0/policy.json",
       signals: {
         requesterAuthenticated: true,
         requesterAuthorized: true,
@@ -96,7 +96,7 @@ describe("Reference Policy Determinism", () => {
     },
     {
       name: "payment-limit",
-      file: "payment-limit/2.0.0/policy.json",
+      file: "payment-limit/1.0.0/policy.json",
       signals: {
         vendorVerified: true,
         invoiceVerified: true,
