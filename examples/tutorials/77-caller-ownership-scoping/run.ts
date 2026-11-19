@@ -115,7 +115,7 @@ async function approveVendorPaymentPolicy(): Promise<void> {
 
   // The tutorial approves a fixture policy (payment-limit 1.0.0), which lives in
   // fixtures/policies, not in the live policies/ folder the runner configures.
-  const dir = path.resolve(process.cwd(), "fixtures/policies");
+  const dir = path.resolve(import.meta.dirname, "../../../fixtures/policies");
   const base = new FilePolicyRepository(dir);
   const readOnly = {
     load: (name: string, version: string) => base.load(name, version),
