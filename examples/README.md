@@ -16,7 +16,7 @@ examples/
 │   ├── expense-approval
 │   └── purchase-order
 ├── audit/
-│   └── AS-001-approved-payment-limit   an example audit package (all evidence from one run)
+│   └── AS-001-approved-vendor-payment   an example audit package (all evidence from one run)
 ├── shared/                 helper functions, reference policies, common transactions
 ├── 04-verified-execution/  runs its own receiving-side HTTP server on a free port
 ├── 05-inbound-decision/    RFC-0025: Parmana decides an inbound refund request (approve, reject, no grant)
@@ -158,7 +158,7 @@ Each scenario executes the complete Parmana lifecycle: authorize, verify, execut
 
 ## Audit
 
-`examples/audit/AS-001-approved-payment-limit/` is an example audit package containing every
+`examples/audit/AS-001-approved-vendor-payment/` is an example audit package containing every
 piece of evidence one real execution produces:
 
 - Business Transaction

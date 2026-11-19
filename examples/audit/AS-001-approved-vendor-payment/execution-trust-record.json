@@ -1,7 +1,7 @@
 {
   "trustRecordId": "etr-000001",
 
-  "businessTransactionId": "txn-payment-limit-000001",
+  "businessTransactionId": "txn-vendor-payment-000001",
 
   "createdAt": "2026-01-01T09:05:03Z",
 
@@ -14,10 +14,10 @@
       "decision": {
         "decisionId": "decision-000001",
 
-        "intentId": "intent-payment-limit-001",
+        "intentId": "intent-vendor-payment-001",
 
         "policy": {
-          "policyId": "payment-limit",
+          "policyId": "vendor-payment",
           "policyVersion": "2.0.0",
           "schemaVersion": "1.0.0"
         },
@@ -32,7 +32,7 @@
           "riskScore": 10
         },
 
-        "matchedRuleId": "approve-payment-limit",
+        "matchedRuleId": "approve-vendor-payment",
 
         "outcome": "APPROVED",
 

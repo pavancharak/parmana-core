@@ -10,15 +10,15 @@
   "recordedDecision": {
     "decisionId": "decision-000001",
 
-    "intentId": "intent-payment-limit-001",
+    "intentId": "intent-vendor-payment-001",
 
     "policy": {
-      "policyId": "payment-limit",
+      "policyId": "vendor-payment",
       "policyVersion": "2.0.0",
       "schemaVersion": "1.0.0"
     },
 
-    "matchedRuleId": "approve-payment-limit",
+    "matchedRuleId": "approve-vendor-payment",
 
     "outcome": "APPROVED",
 
@@ -28,15 +28,15 @@
   "replayedDecision": {
     "decisionId": "decision-000001",
 
-    "intentId": "intent-payment-limit-001",
+    "intentId": "intent-vendor-payment-001",
 
     "policy": {
-      "policyId": "payment-limit",
+      "policyId": "vendor-payment",
       "policyVersion": "2.0.0",
       "schemaVersion": "1.0.0"
     },
 
-    "matchedRuleId": "approve-payment-limit",
+    "matchedRuleId": "approve-vendor-payment",
 
     "outcome": "APPROVED",
 

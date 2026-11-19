@@ -1,11 +1,11 @@
 {
-  "intentId": "intent-payment-limit-001",
+  "intentId": "intent-vendor-payment-001",
 
-  "authorizationId": "authorization-payment-limit-001",
+  "authorizationId": "authorization-vendor-payment-001",
 
   "intentType": "BUSINESS_TRANSACTION",
 
-  "action": "payment-limit",
+  "action": "vendor-payment",
 
   "resource": {
     "resourceType": "Vendor Invoice",

@@ -14,8 +14,8 @@
   "organization": "Example Corporation",
 
   "permissions": [
-    "payment-limit:approve",
-    "payment-limit:view",
+    "vendor-payment:approve",
+    "vendor-payment:view",
     "receipt:view"
   ],
 

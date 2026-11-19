@@ -17,7 +17,7 @@ const root = path.resolve(import.meta.dirname);
 
 const transaction = JSON.parse(
   readFileSync(
-    path.join(root, "../../shared/payment-limit-transaction.json"),
+    path.join(root, "../../shared/vendor-payment-transaction.json"),
     "utf8",
   ),
 ) as BusinessTransaction;

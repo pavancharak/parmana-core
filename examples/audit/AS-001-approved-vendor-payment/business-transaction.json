@@ -1,9 +1,9 @@
 {
-  "businessTransactionId": "txn-payment-limit-000001",
+  "businessTransactionId": "txn-vendor-payment-000001",
 
   "metadata": {
-    "businessTransactionId": "txn-payment-limit-000001",
-    "correlationId": "corr-payment-limit-000001",
+    "businessTransactionId": "txn-vendor-payment-000001",
+    "correlationId": "corr-vendor-payment-000001",
     "createdBy": "accounts-payable",
     "createdAt": "2026-01-01T09:00:00Z"
   },
@@ -13,15 +13,15 @@
   },
 
   "authorization": {
-    "authorizationId": "authorization-payment-limit-001"
+    "authorizationId": "authorization-vendor-payment-001"
   },
 
   "intent": {
-    "intentId": "intent-payment-limit-001"
+    "intentId": "intent-vendor-payment-001"
   },
 
   "policy": {
-    "name": "payment-limit",
+    "name": "vendor-payment",
     "version": "2.0.0",
     "schemaVersion": "1.0.0"
   },
