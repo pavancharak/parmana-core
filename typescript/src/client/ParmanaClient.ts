@@ -76,6 +76,7 @@ import type {
   PolicyV2Decision,
   PolicyV2DecisionRequest,
   PolicyV2ReviewDecision,
+  PolicyV2ReplayResult,
   PolicyV2ReviewDecisionValue,
   PolicyV2ReviewView,
 } from "../models/policy-v2.js";
@@ -810,5 +811,12 @@ export class ParmanaClient {
     decision: PolicyV2ReviewDecisionValue,
   ): Promise<PolicyV2ReviewDecision> {
     return this.policyV2Api.decideReview(itemId, decision);
+  }
+
+  /**
+   * Replays a recorded policy version 2 decision. See PolicyV2Api.replay. Changes nothing.
+   */
+  public policyV2Replay(recordId: string): Promise<PolicyV2ReplayResult> {
+    return this.policyV2Api.replay(recordId);
   }
 }

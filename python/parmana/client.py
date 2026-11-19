@@ -27,6 +27,7 @@ from parmana.api.verification_api import VerificationApi
 from parmana.errors.configuration_error import ConfigurationError
 from parmana.models.policy_v2 import (
     PolicyV2Decision,
+    PolicyV2ReplayResult,
     PolicyV2ReviewDecision,
     PolicyV2ReviewView,
 )
@@ -553,6 +554,14 @@ class ParmanaClient:
         """
 
         return self.policy_v2.decide_review(item_id, decision)
+
+    def policy_v2_replay(self, record_id: str) -> PolicyV2ReplayResult:
+        """
+        Replays a recorded policy version 2 decision. See PolicyV2Api.replay.
+        Changes nothing.
+        """
+
+        return self.policy_v2.replay(record_id)
 
     def list_approvers(self) -> list[ApprovalIssuer]:
         """
