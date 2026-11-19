@@ -73,3 +73,14 @@ A reviewer approves or rejects a review item. The reviewer must hold an
 active grant for the item's action.
 
 Maps to POST /v2/reviews/\{item_id\}/decision.
+
+#### replay
+
+```python
+def replay(record_id: str) -> PolicyV2ReplayResult
+```
+
+Replays a recorded policy version 2 decision from its evidence record.
+The caller must hold a register role. The replay changes nothing.
+
+Maps to GET /v2/evidence/\{record_id\}/replay.

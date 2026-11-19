@@ -91,3 +91,15 @@ export interface PolicyV2ReviewDecision {
   readonly outcome?: "APPROVED" | "REFUSED";
   readonly decisionsRecorded: number;
 }
+
+/**
+ * The result of replaying a recorded decision from its evidence record. reproduced is true when the
+ * replay gives the same outcome and inputs. differences lists what did not match. replayed is the
+ * decision the replay produced; its fields are those of the evidence record, which the SDK does not
+ * type further.
+ */
+export interface PolicyV2ReplayResult {
+  readonly reproduced: boolean;
+  readonly differences: readonly string[];
+  readonly replayed?: Readonly<Record<string, unknown>>;
+}

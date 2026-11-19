@@ -14,6 +14,7 @@ from urllib.parse import quote
 from parmana.config.transport import Transport
 from parmana.models.policy_v2 import (
     PolicyV2Decision,
+    PolicyV2ReplayResult,
     PolicyV2ReviewDecision,
     PolicyV2ReviewView,
 )
@@ -120,3 +121,21 @@ class PolicyV2Api:
         )
 
         return decode(payload, PolicyV2ReviewDecision)
+
+    def replay(self, record_id: str) -> PolicyV2ReplayResult:
+        """
+        Replays a recorded policy version 2 decision from its evidence record.
+        The caller must hold a register role. The replay changes nothing.
+
+        Maps to GET /v2/evidence/{record_id}/replay.
+        """
+
+        payload = cast(
+            "dict[str, Any]",
+            self._transport.send(
+                method="GET",
+                path=f"/v2/evidence/{quote(record_id, safe='')}/replay",
+            ),
+        )
+
+        return decode(payload, PolicyV2ReplayResult)

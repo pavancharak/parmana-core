@@ -398,6 +398,15 @@ def decide_policy_v2_review(
 A reviewer approves or rejects a policy version 2 review item. See
 PolicyV2Api.decide_review.
 
+#### policy_v2_replay
+
+```python
+def policy_v2_replay(record_id: str) -> PolicyV2ReplayResult
+```
+
+Replays a recorded policy version 2 decision. See PolicyV2Api.replay.
+Changes nothing.
+
 #### list_approvers
 
 ```python

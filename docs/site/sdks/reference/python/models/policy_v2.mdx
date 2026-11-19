@@ -72,3 +72,16 @@ class PolicyV2ReviewDecision()
 
 The result of a reviewer's decision. outcome is APPROVED or REFUSED once
 the review is final, and None before that.
+
+## PolicyV2ReplayResult Objects
+
+```python
+@dataclass(frozen=True)
+class PolicyV2ReplayResult()
+```
+
+The result of replaying a recorded decision from its evidence record.
+
+reproduced is True when the replay gives the same outcome and inputs. differences lists what
+did not match. replayed is the decision the replay produced, as a mapping: its fields are those
+of the evidence record, which the SDK does not type further.

@@ -15,6 +15,7 @@ import type {
   PolicyV2DecisionRequest,
   PolicyV2ReviewDecision,
   PolicyV2ReviewDecisionValue,
+  PolicyV2ReplayResult,
   PolicyV2ReviewView,
 } from "../models/policy-v2.js";
 
@@ -63,6 +64,20 @@ export class PolicyV2Api {
       method: "POST",
       path: `/v2/reviews/${encodeURIComponent(itemId)}/decision`,
       body: { decision },
+    });
+
+    return response.body;
+  }
+
+  /**
+   * Replays a recorded policy version 2 decision from its evidence record. Maps to
+   * GET /v2/evidence/{recordId}/replay. The caller must hold a register role. The replay changes
+   * nothing.
+   */
+  public async replay(recordId: string): Promise<PolicyV2ReplayResult> {
+    const response = await this.transport.send<PolicyV2ReplayResult>({
+      method: "GET",
+      path: `/v2/evidence/${encodeURIComponent(recordId)}/replay`,
     });
 
     return response.body;

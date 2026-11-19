@@ -13,6 +13,7 @@ not_enabled.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -99,3 +100,20 @@ class PolicyV2ReviewDecision:
     decisions_recorded: int
 
     outcome: str | None = None
+
+
+@dataclass(frozen=True)
+class PolicyV2ReplayResult:
+    """
+    The result of replaying a recorded decision from its evidence record.
+
+    reproduced is True when the replay gives the same outcome and inputs. differences lists what
+    did not match. replayed is the decision the replay produced, as a mapping: its fields are those
+    of the evidence record, which the SDK does not type further.
+    """
+
+    reproduced: bool
+
+    differences: list[str]
+
+    replayed: dict[str, Any] | None = None
