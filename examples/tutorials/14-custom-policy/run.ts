@@ -28,9 +28,7 @@ const transaction = JSON.parse(
 // Load the custom policy repository for this
 // tutorial instead of the shared repository.
 //
-const policyRepository = new FilePolicyRepository(
-  path.join(root, "fixtures", "policies"),
-);
+const policyRepository = new FilePolicyRepository(path.join(root, "policies"));
 
 const transactions = new MemoryBusinessTransactionRepository();
 
