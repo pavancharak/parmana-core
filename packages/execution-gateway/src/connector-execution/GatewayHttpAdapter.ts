@@ -43,7 +43,7 @@ function isCredentialTokenValue(value: unknown): value is CredentialTokenValue {
  *
  * Gateway-owned production adapter (Phase 1C) — migrated verbatim from
  * @parmana/connector-sdk's HttpConnector; no protected file depended on
- * this one, so it moved wholesale (unlike HubSpot, no capability
+ * this one, so it moved wholesale (unlike the CRM connector, no capability
  * constants needed to stay behind).
  */
 export class GatewayHttpAdapter implements Connector {

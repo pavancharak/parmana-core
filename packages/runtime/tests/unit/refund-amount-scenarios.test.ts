@@ -79,7 +79,7 @@ describe("refund amount scenarios", () => {
 
   // C. The payment is ₹1,00,000 (10,000,000 paise) with nothing refunded. The
   // customer asked for ₹5,000 (500,000 paise), but the caller proposes
-  // ₹60,000 (6,000,000 paise). Razorpay confirms that amount is still
+  // ₹60,000 (6,000,000 paise). The provider confirms that amount is still
   // refundable, so the source check passes and the wrong amount is accepted.
   it("C: Razorpay confirms a wrong amount is still refundable, so the source passes", async () => {
     const fetchStub = (async () =>

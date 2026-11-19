@@ -88,18 +88,18 @@ describe("execution boundary — exactly one production execution pipeline", () 
       // GitHub connector (Claim 1 audit follow-up, 2026-08-19): pull
       // request fetch/merge, proving the credential-isolation pattern
       // against a structurally different (ephemeral, JWT-minted) model
-      // than HubSpot's static token. Same Phase 1C shape: capability
+      // than a static token. Same Phase 1C shape: capability
       // identifiers/DTOs live in @parmana/connector-github, only the
       // executable class lives here. Not yet wired into production
       // bootstrap (no policy file, no createGitHubConnector.ts
       // registration) — scaffold and hermetic tests only.
       "packages/execution-gateway/src/connector-execution/GatewayGitHubAdapter.ts",
-      // Paytm refund connector: a REMOTE connector (forwards an
+      // Payment refund connector: a REMOTE connector (forwards an
       // already-authorized paytm:refund ConnectorRequest to a separate,
-      // trusted, out-of-process Paytm connector service over HTTPS,
-      // never calling Paytm's own API in-process) — see
+      // trusted, out-of-process payment connector service over HTTPS,
+      // never calling the provider's own API in-process) — see
       // docs/internal/connectors/PAYTM_CONNECTOR.md and docs/internal/CLAIMS.md §3.22.
-      // Same Phase 1C shape as HubSpot/GitHub: capability
+      // Same Phase 1C shape as the CRM and code-host connectors: capability
       // identifiers/DTOs live in @parmana/connector-paytm, only the
       // executable class lives here.
       "packages/execution-gateway/src/connector-execution/GatewayPaytmAdapter.ts",
