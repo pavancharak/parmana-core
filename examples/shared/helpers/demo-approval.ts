@@ -47,7 +47,7 @@ const policiesDirectory = path.resolve(
  */
 const DEMO_CAPABILITIES = [
   "release-payment",
-  "vendor-payment",
+  "payment-limit",
   "reject",
   "approve",
   "expense-approval",

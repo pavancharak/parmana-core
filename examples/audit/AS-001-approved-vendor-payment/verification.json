@@ -53,11 +53,11 @@
 
   "verifiedArtifacts": {
     "authority": "authority-finance-manager-001",
-    "authorization": "authorization-vendor-payment-001",
-    "intent": "intent-vendor-payment-001",
-    "businessTransaction": "txn-vendor-payment-000001",
+    "authorization": "authorization-payment-limit-001",
+    "intent": "intent-payment-limit-001",
+    "businessTransaction": "txn-payment-limit-000001",
     "policy": {
-      "policyId": "vendor-payment",
+      "policyId": "payment-limit",
       "policyVersion": "2.0.0"
     },
     "executionTrustRecord": "etr-000001"

@@ -61,7 +61,7 @@ function vendorPaymentTransaction(submittedBy: string): BusinessTransaction {
     intent: {
       intentId,
       authorizationId,
-      // test:fixture-execute (not payments:execute/vendor-payment, removed
+      // test:fixture-execute (not payments:execute/payment-limit, removed
       // per docs/internal/VERIFICATION-GAPS.md G-27) -- see
       // packages/api/tests/fixtures/business-transaction.ts for the same
       // pattern.
@@ -71,8 +71,8 @@ function vendorPaymentTransaction(submittedBy: string): BusinessTransaction {
       createdAt: now,
     },
     policy: {
-      name: "vendor-payment",
-      version: "2.1.0",
+      name: "payment-limit",
+      version: "1.0.0",
       schemaVersion: "1.0.0",
     },
     signals: {
@@ -99,7 +99,7 @@ const executionSystem = await createExecutionSystem();
 const application = createApplication(executionSystem, demoApprovalVerifier());
 
 //
-// Governance is always on (D19). vendor-payment 2.1.0 must have a signed
+// Governance is always on (D19). payment-limit 1.0.0 must have a signed
 // policy-governance approval record before it can execute, so this tutorial
 // approves it through the real PolicyChangeApprovalService, the same way
 // tutorial 103 does, with a maker and a different checker.
@@ -129,13 +129,13 @@ async function approveVendorPaymentPolicy(): Promise<void> {
     policyChangeApprovalRecordRepository,
   });
 
-  const policy = await base.load("vendor-payment", "2.1.0");
+  const policy = await base.load("payment-limit", "1.0.0");
 
   await service.approve(
     {
-      pendingPolicyChangeId: "tutorial-77-vendor-payment-2.1.0",
-      policyName: "vendor-payment",
-      policyVersion: "2.1.0",
+      pendingPolicyChangeId: "tutorial-77-payment-limit-2.1.0",
+      policyName: "payment-limit",
+      policyVersion: "1.0.0",
       proposedContent:
         policy as unknown as import("@parmana/shared").PendingPolicyChange["proposedContent"],
       proposedBy: "tutorial-77-maker",

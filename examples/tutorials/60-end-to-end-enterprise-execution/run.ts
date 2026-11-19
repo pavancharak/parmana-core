@@ -91,7 +91,7 @@ async function main(): Promise<void> {
   console.log("--------------------------------------------------");
 
   const policy: Policy = {
-    policyId: "vendor-payment-policy",
+    policyId: "payment-limit-policy",
     policyVersion: "1.0.0",
     schemaVersion: "1.0.0",
     rules: [

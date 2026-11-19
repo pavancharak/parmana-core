@@ -1,5 +1,5 @@
 {
-  "policyId": "vendor-payment",
+  "policyId": "payment-limit",
   "policyVersion": "2.0.0",
   "schemaVersion": "1.0.0",
 
@@ -16,7 +16,7 @@
 
   "rules": [
     {
-      "id": "approve-vendor-payment",
+      "id": "approve-payment-limit",
       "condition": {
         "all": [
           {

@@ -48,7 +48,7 @@ const runtime = new RuntimeBuilder()
 ```
 
 The builder assembles the runtime pipeline. The signal state verifier checks the signed human
-approval the vendor-payment policy requires; `withDemoApproval` attaches one from a demo
+approval the payment-limit policy requires; `withDemoApproval` attaches one from a demo
 approver.
 
 ---

@@ -16,15 +16,15 @@
   },
 
   "policy": {
-    "policyId": "vendor-payment",
+    "policyId": "payment-limit",
     "policyVersion": "2.0.0",
     "schemaVersion": "1.0.0"
   },
 
   "subject": {
-    "businessTransactionId": "txn-vendor-payment-000001",
-    "intentId": "intent-vendor-payment-001",
-    "authorizationId": "authorization-vendor-payment-001",
+    "businessTransactionId": "txn-payment-limit-000001",
+    "intentId": "intent-payment-limit-001",
+    "authorizationId": "authorization-payment-limit-001",
     "authorityId": "authority-finance-manager-001"
   },
 

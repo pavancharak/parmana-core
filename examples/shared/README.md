@@ -21,7 +21,7 @@ shared/
 │   └── default-policy.json
 │
 └── transactions/
-    ├── vendor-payment.json
+    ├── payment-limit.json
     └── expense-approval.json
 ```
 
@@ -59,7 +59,7 @@ The **transactions** directory contains reusable Business Transaction examples.
 
 Current contents:
 
-- `vendor-payment.json`
+- `payment-limit.json`
 - `expense-approval.json`
 
 These files provide common input data for examples and can also serve as templates when creating new scenarios.
@@ -89,9 +89,7 @@ import { print } from "../shared/helpers/print.js";
 Load a shared transaction:
 
 ```ts
-const transaction = await loadJson(
-  "../shared/transactions/vendor-payment.json",
-);
+const transaction = await loadJson("../shared/transactions/payment-limit.json");
 ```
 
 ---

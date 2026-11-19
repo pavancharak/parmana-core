@@ -12,7 +12,7 @@ This is not a hypothetical concern. It closes a real, previously live gap: a cal
 
 ## The Policy Declaration
 
-`fixtures/policies/vendor-payment/2.1.0/policy.json` declares:
+`fixtures/policies/payment-limit/1.0.0/policy.json` declares:
 
 ```json
 "boundSignals": {
@@ -27,7 +27,7 @@ This means: whatever `signals.vendorId` a caller declares must exactly equal `in
 
 ## Scenario 1: A Missing Signal
 
-`transaction-mismatched-signal.json` declares every other signal `vendor-payment@2.1.0`'s approve rule needs — but never declares `vendorId` at all.
+`transaction-mismatched-signal.json` declares every other signal `payment-limit@2.1.0`'s approve rule needs — but never declares `vendorId` at all.
 
 ```ts
 try {
@@ -66,7 +66,7 @@ boundSignals declares which signal must equal which intent field, so
 the facts a policy approved are guaranteed to describe the same
 real-world action the system actually executes — not just a payload
 that happens to look correct in isolation.
-vendor-payment@2.1.0 declares: boundSignals.vendorId = "target".
+payment-limit@2.1.0 declares: boundSignals.vendorId = "target".
 Every transaction below shares the same intent.target, "sap.payment.release".
 --------------------------------------------------
 Scenario 1: signals.vendorId is not declared

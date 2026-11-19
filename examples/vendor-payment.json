@@ -32,7 +32,7 @@
   },
 
   "policy": {
-    "name": "vendor-payment",
+    "name": "payment-limit",
     "version": "1.0.0"
   },
 

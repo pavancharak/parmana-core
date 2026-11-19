@@ -26,7 +26,7 @@
   "intent": {
     "intentId": "intent-001",
     "authorizationId": "authorization-001",
-    "action": "vendor-payment",
+    "action": "payment-limit",
     "target": "sap.payment.release",
     "parameters": {
       "invoiceId": "invoice-1001",
@@ -38,8 +38,8 @@
   },
 
   "policy": {
-    "name": "vendor-payment",
-    "version": "2.1.0",
+    "name": "payment-limit",
+    "version": "1.0.0",
     "schemaVersion": "1.0.0"
   },
 

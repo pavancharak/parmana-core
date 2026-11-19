@@ -66,8 +66,8 @@ function rejectingTransaction(): BusinessTransaction {
       createdAt: now,
     },
     policy: {
-      name: "vendor-payment",
-      version: "2.1.0",
+      name: "payment-limit",
+      version: "1.0.0",
       schemaVersion: "1.0.0",
     },
     signals: {
@@ -161,7 +161,7 @@ const runtime = new RuntimeBuilder()
 
 const approvedTransaction = {
   businessTransactionId: "22222222-2222-4222-8222-222222222299",
-  policy: { name: "vendor-payment", version: "2.1.0" },
+  policy: { name: "payment-limit", version: "1.0.0" },
   intent: {
     action: "release-payment",
     target: "vendor",
