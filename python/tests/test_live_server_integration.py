@@ -125,7 +125,7 @@ def live_server() -> str:
             # Trusts the local test approver (tests/local_approver.py).
             **local_approver_env(),
             "PARMANA_STORAGE": "memory",
-            "PARMANA_POLICY_DIR": str(REPO_ROOT / "test-support" / "policies"),
+            "PARMANA_POLICY_DIR": str(REPO_ROOT / "fixtures" / "policies"),
             "PARMANA_API_KEYS": api_keys,
             "PARMANA_KEY_DIR": key_dir,
             # Explicit, not inherited: this test exercises real caller-auth
