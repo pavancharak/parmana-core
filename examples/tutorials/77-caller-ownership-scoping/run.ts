@@ -95,11 +95,9 @@ console.log("Tutorial 77 - Caller Ownership Scoping");
 console.log("==================================================");
 console.log();
 
-// The tutorial approves a fixture policy (payment-limit 1.0.0), which lives in
-// fixtures/policies, not in the live policies/ folder the runner configures.
+// The runner starts this example with PARMANA_POLICY_DIR set to fixtures/policies,
+// which holds the payment-limit 1.0.0 policy this tutorial approves.
 const dir = path.resolve(import.meta.dirname, "../../../fixtures/policies");
-// The runtime reads the same folder, so it is set for this process too.
-process.env.PARMANA_POLICY_DIR = dir;
 const executionSystem = await createExecutionSystem();
 const application = createApplication(executionSystem, demoApprovalVerifier());
 

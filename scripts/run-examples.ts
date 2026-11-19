@@ -155,6 +155,12 @@ const LOCAL_DEFAULTS: Record<string, string> = {
   PARMANA_ALLOW_UNGOVERNED_POLICY: "true",
 };
 
+// Examples that approve a fixture policy start with its folder, not the live one.
+const EXAMPLE_POLICY_DIR: Record<string, string> = {
+  "examples/tutorials/77-caller-ownership-scoping/run.ts":
+    "./fixtures/policies",
+};
+
 const appliedDefaults: string[] = [];
 
 for (const [name, value] of Object.entries(LOCAL_DEFAULTS)) {
@@ -222,11 +228,16 @@ async function run(example: string): Promise<void> {
   console.log();
 
   await new Promise<void>((resolve, reject) => {
+    // An example that approves a fixture policy starts with its policy folder set.
+    const exampleEnv = EXAMPLE_POLICY_DIR[example]
+      ? { ...process.env, PARMANA_POLICY_DIR: EXAMPLE_POLICY_DIR[example] }
+      : process.env;
     const child = spawn(
       process.execPath,
       ["./node_modules/tsx/dist/cli.mjs", path.join(root, example)],
       {
         cwd: root,
+        env: exampleEnv,
         stdio: "inherit",
       },
     );
