@@ -33,7 +33,8 @@ Maps to GET /approval-issuers.
 
 ```python
 def propose_add(*, approver_id: str, key_id: str, public_key_pem: str,
-                capabilities: list[str], reason: str) -> ApprovalIssuerChange
+                capabilities: builtins.list[str],
+                reason: str) -> ApprovalIssuerChange
 ```
 
 Propose trusting a new approver key, granted the listed capabilities.
