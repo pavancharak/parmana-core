@@ -35,7 +35,7 @@ import {
  * the connector lookup, which is the refusal these tests assert.
  */
 
-const POLICY_NAME = "access-control";
+const POLICY_NAME = "payment-limit";
 const POLICY_VERSION = "1.0.0";
 const CAPABILITY = "erp:create-invoice";
 

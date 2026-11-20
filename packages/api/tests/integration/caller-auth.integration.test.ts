@@ -329,7 +329,7 @@ describe("Caller authentication (HTTP boundary)", () => {
       const rejectedTransaction = await createBusinessTransaction();
       // @ts-expect-error -- test fixture's signals are typed loosely enough
       // upstream that this direct mutation is the simplest way to force the
-      // real policy engine (policies/vendor-payment/2.0.0/policy.json,
+      // real policy engine (fixtures/policies/payment-limit/2.0.0/policy.json,
       // rule "reject-insufficient-funds") to reject.
       rejectedTransaction.signals.sufficientFunds = false;
 

@@ -26,8 +26,8 @@ import {
  */
 
 const POLICY = {
-  name: "vendor-payment",
-  version: "2.1.0",
+  name: "payment-limit",
+  version: "1.0.0",
   schemaVersion: "1.0.0",
 } as const;
 
@@ -76,7 +76,7 @@ function setup(ledgerForVerifier: ApprovalNonceLedger = ledger) {
   const runtime = new RuntimeBuilder()
     .withPolicyRepository(
       new FilePolicyRepository(
-        path.resolve(import.meta.dirname, "../../../../policies"),
+        path.resolve(import.meta.dirname, "../../../../fixtures/policies"),
       ),
     )
     .withSignalStateVerifier(new ApprovalSignalVerifier(verifier))

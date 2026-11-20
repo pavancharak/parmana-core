@@ -90,8 +90,8 @@ def main() -> None:
         # Use the policy that already exists on the server.
         #
         policy=PolicyReference(
-            name="vendor-payment",
-            version="2.1.0",
+            name="payment-limit",
+            version="1.0.0",
             schema_version="1.0.0",
         ),
         signals={

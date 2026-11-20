@@ -16,7 +16,7 @@ import {
 describe("Runtime Integration", () => {
   it("executes a complete vendor payment transaction", async () => {
     const policyRepository = new FilePolicyRepository(
-      path.resolve(import.meta.dirname, "../../../../policies"),
+      path.resolve(import.meta.dirname, "../../../../fixtures/policies"),
     );
 
     const trustRecords = new MemoryExecutionTrustRecordRepository();
@@ -29,8 +29,8 @@ describe("Runtime Integration", () => {
     const { trustRecord } = await runtime.execute(
       await withTestApproval({
         policy: {
-          name: "vendor-payment",
-          version: "2.1.0",
+          name: "payment-limit",
+          version: "1.0.0",
           schemaVersion: "1.0.0",
         },
 
@@ -41,7 +41,7 @@ describe("Runtime Integration", () => {
           sufficientFunds: true,
           paymentAmount: 5000,
           riskScore: 10,
-          // Must match intent.target exactly: vendor-payment/2.1.0
+          // Must match intent.target exactly: payment-limit/1.0.0
           // declares boundSignals requiring vendorId === intent.target.
           vendorId: "vendor://payments",
         },

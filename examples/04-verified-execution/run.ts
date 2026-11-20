@@ -251,7 +251,7 @@ async function main(): Promise<void> {
   const trustRecords = new MemoryExecutionTrustRecordRepository();
 
   const policyRepository = new FilePolicyRepository(
-    path.join(repoRoot, "policies"),
+    path.join(repoRoot, "fixtures", "policies"),
   );
 
   const gatewayPublicKey = await new FileKeyProvider().getPublicKey("default");

@@ -59,7 +59,7 @@ def test_decode_execution_trust_record():
                 "createdAt": "2026-07-01T00:00:00Z",
             },
             "policy": {
-                "name": "vendor-payment",
+                "name": "payment-limit",
                 "version": "1.0.0",
                 "schemaVersion": "1.0.0",
             },
@@ -223,7 +223,7 @@ def test_decode_execution_includes_evidence_and_metadata():
             "decisionId": "decision-001",
             "intentId": "intent-001",
             "policy": {
-                "name": "vendor-payment",
+                "name": "payment-limit",
                 "version": "1.0.0",
                 "schemaVersion": "1.0.0",
             },

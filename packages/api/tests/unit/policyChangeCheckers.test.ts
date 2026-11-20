@@ -13,11 +13,11 @@ describe("parsePolicyChangeCheckers (G-50)", () => {
 
   it("reads a JSON object of policy name to caller ids", () => {
     const scope = parsePolicyChangeCheckers(
-      '{"vendor-payment":["alice"],"refund":["bob","carol"]}',
+      '{"payment-limit":["alice"],"refund":["bob","carol"]}',
     );
 
     expect(scope).toEqual({
-      "vendor-payment": ["alice"],
+      "payment-limit": ["alice"],
       refund: ["bob", "carol"],
     });
   });
@@ -34,27 +34,27 @@ describe("parsePolicyChangeCheckers (G-50)", () => {
 
   it("refuses an entry that is not an array of non-empty caller ids", () => {
     expect(() =>
-      parsePolicyChangeCheckers('{"vendor-payment":"alice"}'),
+      parsePolicyChangeCheckers('{"payment-limit":"alice"}'),
     ).toThrow("must be an array");
-    expect(() => parsePolicyChangeCheckers('{"vendor-payment":[""]}')).toThrow(
+    expect(() => parsePolicyChangeCheckers('{"payment-limit":[""]}')).toThrow(
       "must be an array",
     );
   });
 });
 
 describe("isCheckerInScope (G-50)", () => {
-  const scope = { "vendor-payment": ["alice"] };
+  const scope = { "payment-limit": ["alice"] };
 
   it("allows a caller listed for that policy", () => {
-    expect(isCheckerInScope(scope, "vendor-payment", "alice")).toBe(true);
+    expect(isCheckerInScope(scope, "payment-limit", "alice")).toBe(true);
   });
 
   it("refuses a caller not listed for that policy", () => {
-    expect(isCheckerInScope(scope, "vendor-payment", "bob")).toBe(false);
+    expect(isCheckerInScope(scope, "payment-limit", "bob")).toBe(false);
   });
 
   it("refuses every caller for a policy with no entry (fail closed)", () => {
     expect(isCheckerInScope(scope, "refund", "alice")).toBe(false);
-    expect(isCheckerInScope({}, "vendor-payment", "alice")).toBe(false);
+    expect(isCheckerInScope({}, "payment-limit", "alice")).toBe(false);
   });
 });

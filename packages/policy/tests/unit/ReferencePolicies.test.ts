@@ -43,7 +43,7 @@ describe("Reference Policy Library", () => {
 
   const policiesRoot = path.resolve(
     import.meta.dirname,
-    "../../../../policies",
+    "../../../../fixtures/policies",
   );
 
   const policyFiles = findPolicyFiles(policiesRoot);

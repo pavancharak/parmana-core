@@ -36,7 +36,7 @@ const record = {
   decision: {
     decisionId: "decision-1",
     intentId: "intent-1",
-    policy: { name: "vendor-payment", version: "2.0.0" },
+    policy: { name: "payment-limit", version: "2.0.0" },
     signals: { riskScore: 999 },
     outcome: "REJECTED",
     reason: "Risk exceeds maximum permitted threshold.",

@@ -90,7 +90,7 @@ try {
     intent: {
       intentId: "intent-1",
       authorizationId: "authorization-1",
-      // test:fixture-execute (not payments:execute/vendor-payment, removed
+      // test:fixture-execute (not payments:execute/payment-limit, removed
       // per docs/internal/VERIFICATION-GAPS.md G-27) -- see
       // packages/api/tests/fixtures/business-transaction.ts for the same
       // pattern.
@@ -100,8 +100,8 @@ try {
       createdAt: now,
     },
     policy: {
-      name: "vendor-payment",
-      version: "2.1.0",
+      name: "payment-limit",
+      version: "1.0.0",
       schemaVersion: "1.0.0",
     },
     signals: {

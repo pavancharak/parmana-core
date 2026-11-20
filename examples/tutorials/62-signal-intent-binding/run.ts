@@ -38,7 +38,7 @@ async function main(): Promise<void> {
   console.log("that happens to look correct in isolation.");
   console.log();
   console.log(
-    'vendor-payment@2.1.0 declares: boundSignals.vendorId = "target".',
+    'payment-limit@2.1.0 declares: boundSignals.vendorId = "target".',
   );
   console.log(
     'Every transaction below shares the same intent.target, "sap.payment.release".',
@@ -51,7 +51,7 @@ async function main(): Promise<void> {
 
   const runtime = new RuntimeBuilder()
     .withSignalStateVerifier(demoApprovalSignalVerifier())
-    .withPolicyRepository(new FilePolicyRepository("policies"))
+    .withPolicyRepository(new FilePolicyRepository("fixtures/policies"))
     .build(new MemoryExecutionTrustRecordRepository());
 
   //

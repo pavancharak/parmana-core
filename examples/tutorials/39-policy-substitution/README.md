@@ -14,17 +14,17 @@ Changing either value invalidates the authorization.
 
 ```text
 Policy Evaluation
-vendor-payment@2.1.0
+payment-limit@2.1.0
         │
         ▼
 Execution Authorization
         │
         ▼
 Attacker changes policy
-vendor-payment@2.1.0
+payment-limit@2.1.0
         │
         ▼
-vendor-payment@3.0.0
+payment-limit@3.0.0
         │
         ▼
 Gateway compares policy
@@ -42,7 +42,7 @@ Execution Rejected
 
 ```text
 Policy Name
-vendor-payment
+payment-limit
 Version
 2.0.0
 ```
@@ -53,7 +53,7 @@ Version
 
 ```text
 Policy Name
-vendor-payment
+payment-limit
 Version
 3.0.0
 ```
@@ -71,9 +71,9 @@ Even though the execution request is identical, the authorization is no longer v
 Tutorial 39 - Policy Substitution
 ==================================================
 Authorized Policy
-vendor-payment@2.1.0
+payment-limit@2.1.0
 Substituted Policy
-vendor-payment@3.0.0
+payment-limit@3.0.0
 ✓ Policy substitution detected.
 Execution rejected.
 Policy Integrity

@@ -39,17 +39,17 @@ const VALID_IDENTITY = {
 
 const PENDING_CHANGE = {
   pendingPolicyChangeId: "ppc-1",
-  policyName: "vendor-payment",
+  policyName: "payment-limit",
   policyVersion: "2.0.0",
-  proposedContent: { policyId: "vendor-payment", policyVersion: "2.0.0" },
+  proposedContent: { policyId: "payment-limit", policyVersion: "2.0.0" },
   proposedBy: "human-maker",
   proposedAt: "2026-08-01T00:00:00.000Z",
   status: "PENDING_APPROVAL",
   reason: "raise the approval threshold",
   diff: {
-    current: { policyId: "vendor-payment", policyVersion: "2.0.0", rules: [] },
+    current: { policyId: "payment-limit", policyVersion: "2.0.0", rules: [] },
     proposed: {
-      policyId: "vendor-payment",
+      policyId: "payment-limit",
       policyVersion: "2.0.0",
       rules: ["new"],
     },
@@ -162,7 +162,7 @@ describe("governance-ui app", () => {
     const listResponse = await agent.get("/");
 
     expect(listResponse.status).toBe(200);
-    expect(listResponse.text).toContain("vendor-payment");
+    expect(listResponse.text).toContain("payment-limit");
     expect(listResponse.text).toContain("human-maker");
     expect(listResponse.text).toContain("Signed in as");
     expect(listResponse.text).toContain("human-checker-1");

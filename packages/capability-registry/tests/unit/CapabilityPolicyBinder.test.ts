@@ -13,7 +13,7 @@ import type { PolicyReference } from "@parmana/shared";
  * boundSignals/SignalStateVerifier protections are declared per-policy
  * and per-action respectively, so a caller could pair a real capability
  * (e.g. fixture:write) with an unrelated, unprotected policy
- * (e.g. vendor-payment/2.0.0, which declares no boundSignals for it)
+ * (e.g. payment-limit/2.0.0, which declares no boundSignals for it)
  * and bypass those protections entirely, since PolicyEngine.evaluate
  * takes no action parameter and nothing else cross-checks policy
  * identity against capability identity. This is the regression suite
@@ -80,10 +80,10 @@ describe("CapabilityPolicyBinder", () => {
     // fixture:write
     // (a data-mutating capability whose protections are scoped to
     // fixture-write's own policy) paired
-    // with vendor-payment/2.0.0, a real, loadable policy that declares
+    // with payment-limit/2.0.0, a real, loadable policy that declares
     // no boundSignals for it.
     const declared: PolicyReference = {
-      name: "vendor-payment",
+      name: "payment-limit",
       version: "2.0.0",
       schemaVersion: "1.0.0",
     };

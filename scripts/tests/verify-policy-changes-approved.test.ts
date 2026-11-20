@@ -45,7 +45,7 @@ function fixtureRecord(
     policyChangeApprovalRecordId: `pcar-${Math.random()}`,
     // One approval record per pending change, as the repositories enforce.
     pendingPolicyChangeId: `ppc-${Math.random()}`,
-    policyName: "vendor-payment",
+    policyName: "payment-limit",
     policyVersion: "1.0.0",
     proposedBy: "human-maker",
     approvedBy: "human-checker",
@@ -82,7 +82,7 @@ describe("verifyPolicyChangesApproved", () => {
     const repository = new MemoryPolicyChangeApprovalRecordRepository();
 
     const approvedContent = {
-      policyId: "vendor-payment",
+      policyId: "payment-limit",
       policyVersion: "2.0.0",
       schemaVersion: "1.0.0",
       rules: [],
@@ -91,13 +91,13 @@ describe("verifyPolicyChangesApproved", () => {
     const contentHashAfter = await crypto.hashPolicyContent(approvedContent);
     await repository.create(
       fixtureRecord({
-        policyName: "vendor-payment",
+        policyName: "payment-limit",
         policyVersion: "2.0.0",
         contentHashAfter,
       }),
     );
 
-    const filePath = policyFilePath("vendor-payment", "2.0.0");
+    const filePath = policyFilePath("payment-limit", "2.0.0");
     files[filePath] = JSON.stringify(approvedContent);
 
     const result = await verifyPolicyChangesApproved([filePath], {
@@ -113,9 +113,9 @@ describe("verifyPolicyChangesApproved", () => {
     const repository = new MemoryPolicyChangeApprovalRecordRepository();
     // No approval record exists at all for this (name, version).
 
-    const filePath = policyFilePath("vendor-payment", "9.9.9");
+    const filePath = policyFilePath("payment-limit", "9.9.9");
     files[filePath] = JSON.stringify({
-      policyId: "vendor-payment",
+      policyId: "payment-limit",
       policyVersion: "9.9.9",
       schemaVersion: "1.0.0",
       rules: [],
@@ -133,7 +133,7 @@ describe("verifyPolicyChangesApproved", () => {
     expect(result.unapprovedFiles).toEqual([
       {
         filePath,
-        policyName: "vendor-payment",
+        policyName: "payment-limit",
         policyVersion: "9.9.9",
         reason: "no-approval-record",
       },
@@ -146,7 +146,7 @@ describe("verifyPolicyChangesApproved", () => {
     const repository = new MemoryPolicyChangeApprovalRecordRepository();
 
     const approvedContent = {
-      policyId: "vendor-payment",
+      policyId: "payment-limit",
       policyVersion: "3.0.0",
       schemaVersion: "1.0.0",
       rules: [],
@@ -154,7 +154,7 @@ describe("verifyPolicyChangesApproved", () => {
 
     await repository.create(
       fixtureRecord({
-        policyName: "vendor-payment",
+        policyName: "payment-limit",
         policyVersion: "3.0.0",
         contentHashAfter: await crypto.hashPolicyContent(approvedContent),
       }),
@@ -162,7 +162,7 @@ describe("verifyPolicyChangesApproved", () => {
 
     // The live file was hand-edited after approval, outside the API.
     const tamperedContent = { ...approvedContent, rules: [{ tampered: true }] };
-    const filePath = policyFilePath("vendor-payment", "3.0.0");
+    const filePath = policyFilePath("payment-limit", "3.0.0");
     files[filePath] = JSON.stringify(tamperedContent);
 
     const result = await verifyPolicyChangesApproved([filePath], {
@@ -176,7 +176,7 @@ describe("verifyPolicyChangesApproved", () => {
     expect(result.unapprovedFiles).toEqual([
       {
         filePath,
-        policyName: "vendor-payment",
+        policyName: "payment-limit",
         policyVersion: "3.0.0",
         reason: "content-hash-mismatch",
       },
@@ -253,9 +253,9 @@ describe("verifyPolicyChangesApproved", () => {
   });
 
   it("fails CLOSED (blocks) when the approval lookup is unreachable, distinct from an unapproved finding", async () => {
-    const filePath = policyFilePath("vendor-payment", "4.0.0");
+    const filePath = policyFilePath("payment-limit", "4.0.0");
     files[filePath] = JSON.stringify({
-      policyId: "vendor-payment",
+      policyId: "payment-limit",
       policyVersion: "4.0.0",
       schemaVersion: "1.0.0",
       rules: [],

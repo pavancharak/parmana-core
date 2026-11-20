@@ -18,7 +18,7 @@ function draftExecution(overrides: Partial<Execution> = {}): Execution {
       decisionId: "decision-1",
       intentId: "intent-1",
       policy: {
-        name: "vendor-payment",
+        name: "payment-limit",
         version: "1.0.0",
         schemaVersion: "1.0.0",
       },

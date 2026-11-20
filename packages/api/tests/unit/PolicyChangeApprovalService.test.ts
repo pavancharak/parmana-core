@@ -12,10 +12,10 @@ import { PolicyChangeApprovalService } from "../../src/governance/PolicyChangeAp
 function pendingChange(): PendingPolicyChange {
   return {
     pendingPolicyChangeId: "ppc-ordering-test",
-    policyName: "vendor-payment",
+    policyName: "payment-limit",
     policyVersion: "1.0.0",
     proposedContent: {
-      policyId: "vendor-payment",
+      policyId: "payment-limit",
       policyVersion: "1.0.0",
       schemaVersion: "1.0.0",
       rules: [],
@@ -34,7 +34,7 @@ describe("PolicyChangeApprovalService ordering: record persisted before the live
 
     const policyRepository: PolicyRepository = {
       async load(): Promise<Policy> {
-        throw new PolicyNotFoundError("vendor-payment", "1.0.0");
+        throw new PolicyNotFoundError("payment-limit", "1.0.0");
       },
       async save(): Promise<void> {
         saveCalled = true;
@@ -85,7 +85,7 @@ describe("PolicyChangeApprovalService ordering: record persisted before the live
 
     const policyRepository: PolicyRepository = {
       async load(): Promise<Policy> {
-        throw new PolicyNotFoundError("vendor-payment", "1.0.0");
+        throw new PolicyNotFoundError("payment-limit", "1.0.0");
       },
       async save(): Promise<void> {
         saveCalled = true;
@@ -142,7 +142,7 @@ describe("PolicyChangeApprovalService retry after a partial failure", () => {
 
     const policyRepository: PolicyRepository = {
       async load(): Promise<Policy> {
-        throw new PolicyNotFoundError("vendor-payment", "1.0.0");
+        throw new PolicyNotFoundError("payment-limit", "1.0.0");
       },
       async save(name: string, version: string): Promise<void> {
         if (failSave) {
@@ -187,7 +187,7 @@ describe("PolicyChangeApprovalService retry after a partial failure", () => {
 
     expect(second).toEqual(first);
     expect(await policyChangeApprovalRecordRepository.list()).toHaveLength(1);
-    expect(saved).toEqual(["vendor-payment@1.0.0"]);
+    expect(saved).toEqual(["payment-limit@1.0.0"]);
   });
 
   it("refuses a different approver with 409 and writes nothing", async () => {

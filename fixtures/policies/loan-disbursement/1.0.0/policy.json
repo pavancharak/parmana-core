@@ -1,8 +1,8 @@
 {
-  "policyId": "nbfc-loan-disbursement",
+  "policyId": "loan-disbursement",
   "policyVersion": "1.0.0",
   "schemaVersion": "1.0.0",
-  "description": "Authorizes a non-bank lender's loan disbursement instruction to a bank only when the loan account is approved, the beneficiary is on that loan's record, the amount is within the per-transaction limit, and the lender's disbursement activity is within its aggregate velocity limit. Every authorization also needs a signed approval from a trusted person for this loan account, covering this amount, in signals.approvalArtifact with humanApproved true. The other signals can only refuse, never authorize on their own.",
+  "description": "Authorizes a loan disbursement instruction to a bank only when the loan account is approved, the beneficiary is on that loan's record, the amount is within the per-transaction limit, and the lender's disbursement activity is within its aggregate velocity limit. Every authorization also needs a signed approval from a trusted person for this loan account, covering this amount, in signals.approvalArtifact with humanApproved true. The other signals can only refuse, never authorize on their own.",
   "signalsSchema": {
     "humanApproved": "boolean",
     "loanAccountApproved": "boolean",

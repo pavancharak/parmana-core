@@ -1,6 +1,16 @@
 // Tests must not read a developer's local .env: it would leak values into tests
 // that expect them unset. Loaders check this flag before reading any file.
 process.env.PARMANA_SKIP_DOTENV = "1";
+// The policy folder for tests is the fixture copy of the older policies in
+// fixtures/policies. The live policies/ folder holds only the policies in use.
+// A developer's own setting is kept.
+import { fileURLToPath as __toPath } from "node:url";
+import { dirname as __dirname, join as __join } from "node:path";
+process.env.PARMANA_POLICY_DIR ??= __join(
+  __dirname(__toPath(import.meta.url)),
+  "fixtures",
+  "policies",
+);
 
 import { generateKeyPairSync } from "node:crypto";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -93,7 +103,7 @@ console.info(describeDatabaseTarget(databaseTarget));
  * only when a variable is not already set by the shell or .env.
  */
 const LOCAL_TEST_DEFAULTS: Record<string, string> = {
-  PARMANA_POLICY_DIR: "./policies",
+  PARMANA_POLICY_DIR: "./fixtures/policies",
   PARMANA_STORAGE: "memory",
   KEY_PROVIDER: "local",
   PRIMARY_SIGNATURE_PROVIDER: "ed25519",

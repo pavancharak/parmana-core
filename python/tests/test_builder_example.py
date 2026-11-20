@@ -62,7 +62,7 @@ def builder_example_server() -> str:
             # Trusts the local test approver (tests/local_approver.py).
             **local_approver_env(),
             "PARMANA_STORAGE": "memory",
-            "PARMANA_POLICY_DIR": str(REPO_ROOT / "policies"),
+            "PARMANA_POLICY_DIR": str(REPO_ROOT / "fixtures" / "policies"),
             "PARMANA_KEY_DIR": key_dir,
             "PARMANA_AUTH_DISABLED": "true",
             "PORT": str(port),
